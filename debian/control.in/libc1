@@ -14,7 +14,7 @@ Architecture: freebsd-i386
 Section: libdevel
 Priority: standard
 Depends: libc1 (= ${Source-Version})
-Recommends: c-compiler
+Recommends: gcc | c-compiler
 Description: GNU C Library: Development Libraries and Header Files
  Contains the symlinks, headers, and object files needed to compile
  and link programs which use the standard C library.
@@ -23,6 +23,7 @@ Package: libc1-dbg
 Architecture: freebsd-i386
 Section: libdevel
 Priority: extra
+Provides: libc-dbg
 Depends: libc1 (= ${Source-Version})
 Description: GNU C Library: Libraries with debugging symbols
  Contains unstripped shared libraries.

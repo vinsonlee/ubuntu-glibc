@@ -16,6 +16,13 @@ $(stamp)binaryinst_$(libc)-pic:: $(stamp)debhelper
 	install --mode=0644 build-tree/$(DEB_HOST_ARCH)-libc/resolv/libresolv_pic.a debian/$(libc)-pic/usr/lib/.
 	install --mode=0644 build-tree/$(DEB_HOST_ARCH)-libc/libresolv.map debian/$(libc)-pic/usr/lib/libresolv_pic.map
 
+$(stamp)binaryinst_zoneinfo-udeb:: $(stamp)debhelper
+	dh_testroot
+	dh_installdirs -p$(curpass)
+	# The udeb only needs to know the list of timezones, not their contents.
+	find debian/tmp-libc/usr/share/zoneinfo -name posix -prune -o -name right -prune -o -name \*.tab -o -type f -printf '%P\n' | sort > debian/zoneinfo-udeb/usr/share/zoneinfo/list.tab
+	chmod 644 debian/zoneinfo-udeb/usr/share/zoneinfo/list.tab
+
 # Some per-package extra files to install.
 define $(libc)_extra_pkg_install
 	install --mode=0644 $(DEB_SRCDIR)/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/changelog
@@ -119,7 +126,7 @@ endif
 	touch $@
 
 $(patsubst %,binaryinst_%,$(DEB_UDEB_PACKAGES)) :: binaryinst_% : $(stamp)binaryinst_%
-$(patsubst %,$(stamp)binaryinst_%,$(DEB_UDEB_PACKAGES)): $(stamp)debhelper
+$(patsubst %,$(stamp)binaryinst_%,$(DEB_UDEB_PACKAGES)):: $(stamp)debhelper
 	@echo Running debhelper for $(curpass)
 	dh_testroot
 	dh_installdirs -p$(curpass)

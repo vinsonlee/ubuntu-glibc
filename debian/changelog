@@ -1,37 +1,443 @@
-glibc (2.3.2.ds1-13ubuntu2.2) warty-security; urgency=low
+glibc (2.3.2.ds1-20ubuntu13) hoary; urgency=low
 
-  * Fix FTBFS.  Add amd64 to debian/control.in/libc6 where it should
-    have been all along.
+  * debian/rules.d/control.mk: Mark debian/control target as phony.
 
- -- LaMont Jones <lamont@mmjgroup.com>  Wed, 27 Oct 2004 04:04:06 +0100
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 23 Mar 2005 18:56:07 +0000
 
-glibc (2.3.2.ds1-13ubuntu2.1) warty-security; urgency=low
+glibc (2.3.2.ds1-20ubuntu12) hoary; urgency=low
 
-  * SECURITY UPDATE: fix insecure temporary file handling
-    (Warty bug #2743)
-  * added patch catchsegv-insecure-temp: use mktemp instead of $$ construction
-    to get temporary file
-    References:
-    - CAN-2004-0968
-    - http://bugs.debian.org/278278
-  * added patch glibcbug-insecure-temp: use mktemp properly, quote all $TEMP
-    and $TEMPx variables (in case the path contains spaces)
-    References:
-    - http://bugs.debian.org/278278
+  * Martin Pitt <martin.pitt@ubuntu.com>
 
- -- Martin Pitt <mpitt@debian.org>  Tue, 26 Oct 2004 12:32:25 +0200
+     - debian/patches/ubuntu-altlocaledir.dpatch: Revert new time
+       comparison result caching from 2.3.2.ds1-20ubuntu11 since this
+       breaks if applications use several translation domains from both
+       /usr/share/locale and /usr/share/locale-langpack/. Now just avoid
+       to stat64() files when we already know that they don't exist.
+       This reduces the number of stat calls at least a bit.
+       (Ubuntu #7835)
+     - debian/local/usr_sbin/remove-language-locales: Never remove the
+       system default locale specified in /etc/environment.
+       (Ubuntu #8000)
 
-glibc (2.3.2.ds1-13ubuntu2) warty; urgency=low
+  * Jeff Bailey <jbailey@ubuntu.com>
 
-  * Fix typo in Replaces.  Closes: #266637, #742
+     - debian/patches/ubuntu-7897-threading.dpatch: Take various patches
+       from upstream to resolve subtle incompatabilities between
+       linuxthreads headers and NPTL compiling.
+       Thanks to Gerald Hochegger for narrowing the patch down.
+       (Ubuntu #7897)
+     - debian/patches/11_cvs_locales.dpatch: Update from CVS HEAD
+       to get current locale information.
+     - debian/patches/11_cvs_timezone.dpatch: Update from tzdata2005c.
+     - debian/patches/ubuntu-26-tls.dpatch: Let xmms work on
+       machines with nVidia binary drivers and tls. (Ubuntu #26)
+     - debian/patches/ubuntu-5604-iso3166.dpatch: Serbia and Montenegro
+       was Yugoslavia. (Ubuntu #5604)
 
- -- LaMont Jones <lamont@mmjgroup.com>  Thu, 19 Aug 2004 07:42:04 -0600
+     - debian/patches/00list: Disable locale-et_EE, provided by CVS update.
+       Disable 90_glibc232-timezones, add 11_cvs_timezone
+       Add ubuntu-26-tls, ubuntu-5604-iso3166.
 
-glibc (2.3.2.ds1-13ubuntu1) warty; urgency=low
+  * Colin Watson <cjwatson@ubuntu.com>
 
-  * Add amd64 support.
+     - debian/debhelper.in/locales.config:  Be careful to set
+       LC_COLLATE=C while sorting locale lists.
+       Sort/uniq locales read from locale.gen to avoid duplicate
+       locales reproducing indefinitely.
+       Avoid generating multiple identical UTF-8 locales for similar
+       legacy locales.
+       Write user-visible messages to stderr, not stdout; the latter
+       belongs to debconf.
 
- -- LaMont Jones <lamont@mmjgroup.com>  Mon, 12 Jul 2004 20:40:18 +0100
+ -- Jeff Bailey <jbailey@ubuntu.com>  Wed, 23 Mar 2005 13:08:26 +0000
+
+glibc (2.3.2.ds1-20ubuntu11) hoary; urgency=low
+
+  * debian/local/usr_sbin/install-language-locales:
+    - Reworked updating of /etc/locale.gen to not sort the file, but only
+      append not yet existing locales.
+    - Use --keep-existing for locale-gen.
+  * debian/patches/ubuntu-altlocaledir.dpatch: Cache time comparison result
+    instead of stat()ing the files over and over again. (Ubuntu #7487)
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Mon, 14 Mar 2005 23:22:54 +0000
+
+glibc (2.3.2.ds1-20ubuntu10) hoary; urgency=low
+
+  * debian/local/usr_sbin/locale-gen: Add --keep-existing option, so that
+    successive calls to locale-gen (e.g. by language packs) don't take
+    O(n^2) time.
+  * debian/local/manpages/locale-gen.8.sgml: Document --keep-existing.
+  * debian/local/usr_sbin/install-language-locales: Use locale-gen
+    --keep-existing.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Thu, 10 Mar 2005 17:11:40 +0000
+
+glibc (2.3.2.ds1-20ubuntu9) hoary; urgency=low
+
+  * debian/local/usr_sbin/install-language-locales: Fixed grepping of locales
+    to install if /etc/locale.gen is not present.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Thu,  3 Mar 2005 18:44:16 +0000
+
+glibc (2.3.2.ds1-20ubuntu8) hoary; urgency=low
+
+  * Don't use parallel make, breaks from time to time.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 10 Feb 2005 13:23:48 +0000
+
+glibc (2.3.2.ds1-20ubuntu7) hoary; urgency=low
+
+  * debian/patches/ubuntu-multiarch.dpatch: Added Tollef Fog Heen's multiarch
+    support.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Wed,  9 Feb 2005 11:50:25 +0100
+
+glibc (2.3.2.ds1-20ubuntu6) hoary; urgency=low
+
+  * Updated patch ubuntu-altlocaledir.dpatch: Also take the very first found
+    domain into account when comparing timestamps. (Ubuntu #6048)
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Tue,  8 Feb 2005 16:26:36 +0100
+
+glibc (2.3.2.ds1-20ubuntu5) hoary; urgency=low
+
+  * Updated patch ubuntu-altlocaledir.dpatch to fix some language pack bugs:
+    - Fix domain lookup for the very first string, which did not look in all
+      available /usr/share/locale-langpack/ locales before. (Ubuntu #6047)
+    - Fix mtime timestamp comparison to actually pick the latest (not the
+      last) one. (Ubuntu #6048)
+    - Changed the looping over all translation domains to be consistent with
+      the other code.
+    - Changed stat() to stat64() to be consistent with the other code.
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Tue,  1 Feb 2005 17:32:03 +0000
+
+glibc (2.3.2.ds1-20ubuntu4) hoary; urgency=low
+
+  * debian/patches/pthread-sigsetjmp.dpatch: Fix __sigsetmask function
+    declaration. Triggered by gcc-4.0.
+
+ -- Matthias Klose <doko@ubuntu.com>  Tue,  1 Feb 2005 13:57:22 +0100
+
+glibc (2.3.2.ds1-20ubuntu3) hoary; urgency=low
+
+  * debian/local/usr_sbin/: Added scripts install-language-locales,
+    remove-language-locales which generate/remove all supported UTF-8 locales
+    (ignoring @euro ones) for a given language code.
+  * debian/local/manpages/: Added install-language-locales.8,
+    remove-language-locales.8
+  * debian/debhelper.in/locales.install, debian/debhelper.in/locales.manpages:
+    install the scripts and manpages
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Mon, 24 Jan 2005 16:24:08 +0100
+
+glibc (2.3.2.ds1-20ubuntu2) hoary; urgency=low
+
+  * debian/debhelper.in/locales.config: Don't attempt to trap ERR, which is
+    not portable (closes: Ubuntu #5458).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Wed, 19 Jan 2005 12:01:41 +0000
+
+glibc (2.3.2.ds1-20ubuntu1) hoary; urgency=low
+
+  * Merge 2.3.2.ds1-20 changes.
+    Backout the change to move the amd64 lib64 symlinks from base-files
+    to glibc. Requires more work.
+
+ -- Matthias Klose <m@klose.in-berlin.de>  Sat,  8 Jan 2005 20:27:52 +0100
+
+glibc (2.3.2.ds1-20) unstable; urgency=high
+
+  * GOTO Masanori <gotom@debian.org>
+
+    - debian/patches/hppa-drop-utimes.dpatch: Fix sudo breakage because
+      system call utimes() is not defined on hppa.  Patched by Randolph Chung
+      <tausq@debian.org>.  (Closes: #284449)
+
+    - Fix ia64 unwind FTBFS.  Patched by Matthias Klose <doko@debian.org>:
+      - debian/patches/glibc232-ia64-unwindinfo.dpatch: Modify Makeconfig
+        which unconditionally set the libunwind macro to -lunwind, until the
+        it's safe again to regenerate the configure script, on advice of
+        Jeff Bailey.  (Closes: #284563)
+      - debian/control.in/main: Tighten build dependency on ia64 to
+        gcc-3.3_3.3.5-5.
+      - debian/control: Likewise.
+
+    - debian/patches/librt-mips.dpatch: Update to provide clock_{set,get}time
+      with versioned symbol both GLIBC_2.0 and GLIBC_2.2.  This patch should
+      be applied until sarge+1 will be released.
+
+    - debian/local/manpages/locale.1: Add the description about
+      /usr/share/i18n/SUPPORTED.  Requested by Guillermo S. Romero
+      <gsromero@alumnos.euitt.upm.es>.  (Closes: #284137)
+
+ -- GOTO Masanori <gotom@debian.org>  Wed, 15 Dec 2004 19:44:47 +0900
+
+glibc (2.3.2.ds1-19ubuntu4) hoary; urgency=low
+
+  * Add zoneinfo-udeb package containing time zone information tables for
+    use in the installer.
+
+ -- Colin Watson <cjwatson@canonical.com>  Fri, 31 Dec 2004 21:35:11 +0000
+
+glibc (2.3.2.ds1-19ubuntu3) hoary; urgency=low
+
+  * debian/debhelper.in/locales.config: Automatically generate UTF-8 locales
+    corresponding to existing legacy locales. Note that this currently
+    happens every time locales.config is run; suggestions for where to
+    record that the migration is complete are welcome.
+
+ -- Colin Watson <cjwatson@canonical.com>  Wed, 22 Dec 2004 04:27:46 +0000
+
+glibc (2.3.2.ds1-19ubuntu2) hoary; urgency=low
+
+  * ubuntu-altlocaledir.dpatch: fix FTBFS by including <stat.h> (brown
+    paperbag...)
+
+ -- Martin Pitt <martin.pitt@canonical.com>  Fri, 17 Dec 2004 09:53:22 +0100
+
+glibc (2.3.2.ds1-19ubuntu1) hoary; urgency=low
+
+  * Added patch ubuntu-altlocaledir.dpatch: support an alternate gettext tree
+    in /usr/share/locale-langpack/
+
+ -- Martin Pitt <martin.pitt@canonical.com>  Fri, 10 Dec 2004 15:00:03 +0000
+
+glibc (2.3.2.ds1-19) unstable; urgency=high
+
+  * GOTO Masanori <gotom@debian.org>
+
+    - debian/local/manpages/gencat.1: Use \fR instead of \fT for bold
+      font, and use .TP instead of .PP for option usage.  Patched by
+      Lars Wirzenius <lars.wirzenius@nokia.com>.  (Closes: #279685)
+    - debian/local/manpages/iconvconfig.8: Likewise + fix typo.
+    - debian/local/manpages/mtrace.1: Likewise.
+    - debian/local/manpages/locale.1: Add "SEE ALSO" to the end of the
+      manual.  (Closes: #282128)
+
+    - debian/sysdeps/linux.mk: Drop -fomit-frame-pointer from compiling
+      option to build NPTL packages in order to get valid backtrace. 
+      -D__USE_STRING_INLINES is also dropped to consider about backtraces.
+      Requested by David Mosberger <davidm@hpl.hp.com>.
+    - debian/sysdeps/amd64.mk: Likewise.
+    - debian/sysdeps/i386.mk: Likewise.
+    - debian/sysdeps/s390.mk: Likewise.
+    - debian/sysdeps/sparc.mk: Likewise.
+
+    - debian/patches/glibc232-hppa-unwindinfo.dpatch: Add for unwind
+      information for hppa plt fixup routine.  Patched by
+      Randolph Chung <tausq@debian.org>.  (Closes: #281993)
+    - debian/patches/glibc232-ia64-unwindinfo.dpatch: Add to work
+      ia64 unwind info and libunwind properly.  Requested by David Mosberger
+      <davidm@napali.hpl.hp.com>.  (Closes: #278837)
+
+    - debian/patches/glibc232-catchsegv-insecure-temp.dpatch: Add fix
+      CAN-2004-0968: catchsegv creates insecure temporary file.
+      (Closes: #278278)
+    - debian/debhelper.in/libc.install: Remove glibcbug to fix CAN-2004-0968,
+      and it's meaningless to include nowadays.  (Closes: #205600)
+    - debian/debhelper.in/libc.manpages: Remove glibcbug.1 from manpage.
+    - debian/patches/glibcbug.dpatch: Add comment to be removed.
+
+    - debian/make-cvs-patch.sh: Change like make-cvs-locales-patch.sh.
+
+    - debian/patches/s390-pthread-fpic.dpatch: Add to fix lam build failure.
+      It changes pthread_atfork in libpthread_nonshared.a is built with
+      -fPIC, not -fpic, that is already applied in libc_nonshared.a.
+      (Closes: #280445)
+
+    - debian/control.in/libc: Add gcc | c-compiler to Recommends of libc-dev.
+      This change avoids that aptitude tries to install various compiler
+      packages if only c-compiler is specified.  (Closes: #283668)
+    - debian/control.in/main: Add Build-Depends: gcc-3.3 (>= 1:3.3.5-3) [ia64]
+      | gcc-3.4 (>= 3.4.3-2) [ia64] because ia64 should be built with gcc
+      which supports libunwind.  Requested by Matthias Klose
+      <doko@debian.org>.
+    - debian/control: Update.
+
+    - debian/patches/nptl-pthread-c++.dpatch: Add to disable using C99
+      designators for nptl pthread.h to fix C++ breakage.  Patched by
+      Andreas Jochens <aj@andaco.de> and Matthias Klose
+      <doko@cs.tu-berlin.de>.  (Closes: #275997, #283461)
+
+ -- GOTO Masanori <gotom@debian.org>  Sat,  6 Nov 2004 19:04:26 +0900
+
+glibc (2.3.2.ds1-18) unstable; urgency=high
+
+  * GOTO Masanori <gotom@debian.org>
+
+    - debian/patches/glibc232-sparc64-softfp.dpatch: Add to fix
+      glibc build breakage on sparc with binutils 2.15.  It's caused by
+      the register misusage, that was allowed by the previous binutils.
+      (Closes: #266598)
+    - debian/debhelper.in/libc.postinst: Fix to execute NSS services
+      correctly when file-rc is used.  (Closes: #275403)
+
+    - debian/patches/90_glibc232-timezones.dpatch: Update to tzdata2004e.
+
+    - debian/debhelper.in/locales.prerm: Add to fix warning not to remove
+      /usr/lib/locale/locale-archive.  (Closes: #264020)
+    - debian/debhelper.in/locales.postrm: Add to remove /etc/locale.gen
+      when purge is specified.
+
+ -- GOTO Masanori <gotom@debian.org>  Tue,  5 Oct 2004 09:32:01 +0900
+
+glibc (2.3.2.ds1-17) unstable; urgency=high
+
+  * GOTO Masanori <gotom@debian.org>
+
+    - debian/sysdeps/depflags.pl: Fix typo, from "kerberos4th-dev" to
+      "kerberos4kth-dev".  (Closes: #266637)
+    - debian/patches/00list: Add locale-byn_ER.dpatch that was missing
+      when I fixed.  (Closes: #270998)
+
+    - debian/patches/glibc23-dlclose-l_opencount.dpatch: Fix reference
+      counter in dl that does not sometimes decrement correctly.
+      (Closes: #233301, #259211)
+    - debian/patches/glibc232-globfree-clear.dpatch: Workaround and
+      to make sure that fix to enforce clear gl_pathc and gl_pathv in
+      globfree() for sarge to conform LFS test, requested by Jeff Licquia.
+      (Closes: #264884)
+
+    - debian/local/manpages/tzselect.1: Fix typo.  (Closes: #269747)
+
+    - debian/debhelper.in/libc.preinst: Don't install glibc when kernel
+      is not 2.6 on amd64.
+    - debian/sysdeps/amd64.mk: Patch from Andreas Jochens:
+       - Drop the 'nptl' pass from GLIBC_PASSES.
+       - Use 'nptl' instead of 'linuxthreads' in the 'libc' pass (this 
+         requires kernel >= 2.6.0, but 2.4 is not supported by the amd64
+         port anyway).
+
+ -- GOTO Masanori <gotom@debian.org>  Thu, 19 Aug 2004 12:39:35 +0900
+
+glibc (2.3.2.ds1-16) unstable; urgency=high
+
+  * GOTO Masanori <gotom@debian.org>
+
+    - debian/FAQ: Add note about errno + NPTL workaround.
+      (Closes: #261035)
+    - debian/patches/glibc232-mips-dl-machine.dpatch: Fix mips/mipsel
+      compilation breakage with the recent binutils.  (Closes: #262646)
+    - debian/patches/glibc232-m68k-reloc.dpatch: Fix m68k compilation
+      breakage with the recent binutils.  (Closes: #263601)
+
+  * Jeff Bailey <jbailey@raspberryginger.com>
+
+    - debian/debhelper.in/libc-dev.install.hurd-i386: Don't install
+      getconf.
+
+ -- GOTO Masanori <gotom@debian.org>  Mon,  2 Aug 2004 11:53:54 +0900
+
+glibc (2.3.2.ds1-15) unstable; urgency=high
+
+  * Jeff Bailey <jbailey@raspberryginger.com>
+
+    - debian/sysdeps/depflags.pl: Replace ${libc}, not libc6.
+      (Closes: #262669)
+
+    - Marking urgency as high, last upload should have been marked
+      this way for RC bug fix.
+
+ -- Jeff Bailey <jbailey@raspberryginger.com>  Sun,  1 Aug 2004 08:50:13 -0400
+
+glibc (2.3.2.ds1-14) unstable; urgency=low
+
+  * GOTO Masanori <gotom@debian.org>
+
+    - debian/patches/glibc232-iconv-ucs2-unalign.dpatch: Add to fix
+      iconv unalignment access with UCS-2BE/UCS-2LE on some architectures.
+      (Closes: #234691)
+    - debian/patches/locale-byn_ER.dpatch: Add to fix byn_ER localedef
+      breakage.  Patched by Denis Barbier <barbier@linuxfr.org>.
+      (Closes: #246270, #257658)
+    - debian/patches/locales-supported.dpatch: Add no_NO.ISO-8859-1 into
+      SUPPORTED.  (Closes: #246170)
+    - debian/patches/glibc232-nptl-posix-timer.dpatch: Fix posix timer
+      SIGEV_THREAD notification is broken.  (Closes: #259878)
+    - debian/patches/glibc232-remove-vsyscall.dpatch: Remove __ASSUME_VSYSCALL
+      to fix the system startup failure on the machine using PAX.
+      (Closes: #245563)
+    - debian/patches/90_glibc232-timezones.dpatch: Updated to tzcode2004b
+      and tzdata2004b.
+    - debian/patches/locale-eu_FR.dpatch: Add eu_FR and eu_FR@euro.
+      Patched by Christian Perrier <bubulle@debian.org>.  (Closes: #257840)
+    - debian/patches/locale-sr_CS.dpatch: Add sr_CS and sr_CS@cyrillic.
+      Patched by Christian Perrier <bubulle@debian.org>.  But this patch is
+      conflicted to sr_YU things - it's disabled for a while.
+
+    - debian/local/etc_init.d/nscd: Rewritten the whole script to make
+      use of the initscript's method.  Patched by Thomas Hood
+      <jdthood@aglu.demon.nl>.
+      (Closes: #229273, #229484, #253119, #252284, #222953)
+
+    - debian/local/manpages/iconv.1: Add small description for `-c' and
+      so on.  (Closes: #189958)
+    - debian/local/manpages/rpcgen.1: Add -M option description.
+      (Closes: #193467)
+    - debian/po/de.po: Updated.  Patched by Helge Kreutzmann
+      <kreutzm@itp.uni-hannover.de>.  (Closes: #251732)
+
+    - debian/debhelper.in/libc.postinst: Add apache-ssl and apache-perl to
+      restart script.  Suggested by Daniel Jacobowitz <dan@debian.org>.
+      (Closes: #208997)
+    - debian/debhelper.in/libc.postinst: Add vsftpd to restart script.
+      Suggested by Jeff Bailey <jbailey@nisa.net>.  (Closes: #213535)
+    - debian/debhelper.in/libc.postinst: Add lpr-ppd.  Change init script
+      name from lpr, lpr-ppd to lpd, lpd-ppd.  (Closes: #205084)
+    - debian/debhelper.in/libc.postinst: Fix package detection failure when
+      uninstalled package is encountered during NSS upgrade.
+      (Closes: #193278)
+    - debian/debhelper.in/libc.postinst: Add export LANG=C to work scripts
+      correctly even if user sets locale environment variable.
+    - debian/debhelper.in/libc.postinst: Change sleep time from 1 to 2.
+      It's work-around fix, actual fix is start-stop-daemon --stop should
+      check the process termination.  See: #211784.
+
+    - debian/local/usr_sbin/tzconfig: Fix typo: old_timezone vs oldtimezone.
+      Reported by Kai Henningsen <kai@khms.westfalen.de>.  (Closes: #213159)
+
+    - debian/control.in/libc-dbg: Add Provides: libc-dbg for -dbg package.
+      (Closes: #219145)
+    - debian/control.in/libc, debian/control: likewise.
+
+    - /usr/bin/getconf and getconf.1 are moved from libc-dev to libc.
+      (Closes: #239170)
+    - debian/debhelper.in/libc-udeb.install: Add libutil* and libcrypt*
+      to -udeb.  (Closes: #258956)
+
+    - Put amd64 port from Andreas Jochens.
+      - debian/control: Updated.
+      - debian/control.in: Modify Build-Depends: gcc-3.3 | gcc-3.4.
+        glibc can build at least gcc-3.3 and later.  And this will make it
+        possible to build glibc with gcc-3.4 when gcc-3.4 becomes the default
+        on amd64 without changing glibc again.
+      - debian/sysdeps/amd64.mk: Use workaround -g0 option when gcc-3.4 is
+        used, because gcc-3.4 on amd64 with -g0 + nested functions are broken:
+        http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=260710
+
+  * Andreas Jochens <aj@andaco.de>
+
+    - debian/rules.d/control.mk: Add amd64 at the appropriate places.
+    - Add debian/patches/amd64-lib.dpatch to disable the biarch lib64 dir on
+      amd64 and enable this patch in debian/patches/00list.  (Closes: #246547)
+    - Add a new file debian/sysdeps/amd64.mk with GLIBC_PASSES += nptl
+      (Closes: #248192)
+    - debian/sysdeps/amd64.mk: Use gcc instead of gcc-3.3 on amd64.
+    - debian/patches/fno-unit-at-a-time.dpatch: Add -fno-unit-at-a-time
+      test to configure for amd64 + gcc-3.4.  (Closes: #261082)
+
+  * Jeff Bailey <jbailey@raspberryginger.com>
+
+    - debian/patches/syslog-locale.dpatch: Include patch from Jakub
+      Jelinek to make sure syslogging happens in the C locale.
+      Thanks to pere for catching this.  (Closes: #161340, #158651)
+
+    - debian/patches/hurd-string.dpatch: New file
+    - debian/patches/00list.hurd-i386: Only load hurd-string on hurd-i386.
+
+ -- GOTO Masanori <gotom@debian.org>  Mon, 31 May 2004 23:43:29 +0900
 
 glibc (2.3.2.ds1-13) unstable; urgency=low
 
@@ -466,7 +872,7 @@ glibc (2.3.2.ds1-8) unstable; urgency=low
       <barbier@debian.org> (Closes: #217865).
     - Re-add debian/patches/80_glibc232-locales-nb_NO-fix.dpatch, which had
       gotten lost.
-    - Re-add typo fixes to iconv.1 and rpcgen.1.
+    - Re-add typo fixes to iconv.1 and rpcgen.1.  (Closes: #202161)
     - Merge iconv.1 fix to iconv.pod.
     - Re-add fix for locale-gen and POSIXLY_CORRECT.
     - Update ldso-disable-hwcap.dpatch and preinst/postinst scripts.

@@ -1,5 +1,6 @@
 10_cvs
 11_cvs_locales
+11_cvs_timezone
 locale-strfmon
 locale-de_CH
 locale-ru_RU
@@ -73,7 +74,7 @@ glibc23-powerpc-sigcontext
 hppa-syscall
 glibc23-errno-hack
 90_glibc232-statvfs
-90_glibc232-timezones
+#90_glibc232-timezones
 90_glibc233_tcsetaddr
 nptl-page-align
 hurd-exit-attr-hidden
@@ -91,9 +92,34 @@ nptl-io-locking
 localedef-fix-trampoline
 alpha-rtsigaction-fix
 #translation-fr - translation maintainer currently reject this patch 2004-04-21
-locale-et_EE
+#locale-et_EE
 locale-ro_RO
 s390-backtrace
 glibc232-misc-syslog
-catchsegv-insecure-temp
-glibcbug-insecure-temp
+glibc232-iconv-ucs2-unalign
+amd64-lib
+glibc232-nptl-posix-timer
+fno-unit-at-a-time
+syslog-locale
+glibc232-remove-vsyscall
+locale-eu_FR
+#locale-sr_CS - sr_YU is needed to be disabled after sarge.
+glibc232-mips-dl-machine
+glibc232-m68k-reloc
+locale-byn_ER
+glibc23-dlclose-l_opencount
+glibc232-globfree-clear
+# nptl-pthread-create-attr - disabled to worry about the ABI/function breakage
+glibc232-sparc64-softfp
+glibc232-hppa-unwindinfo
+glibc232-catchsegv-insecure-temp
+glibc232-ia64-unwindinfo
+s390-pthread-fpic
+nptl-pthread-c++
+ubuntu-altlocaledir
+hppa-drop-utimes
+pthread-sigsetjmp
+ubuntu-multiarch
+ubuntu-7897-threading
+ubuntu-26-tls
+ubuntu-5604-iso3166

@@ -1,4 +1,4 @@
-control_deps := $(addprefix debian/control.in/, libc6 libc6.1 libc0.3 libc1 sparc64 s390x opt)
+control_deps := $(addprefix debian/control.in/, libc6 libc6.1 libc0.3 libc1 sparc64 s390x opt libnss-dns-udeb libnss-files-udeb zoneinfo-udeb)
 
 threads_archs := alpha amd64 arm i386 m68k mips mipsel powerpc sparc ia64 hppa s390 sh3 sh4 sh3eb sh4eb freebsd-i386
 
@@ -27,6 +27,9 @@ debian/control: debian/control.in/main $(control_deps) \
 	cat debian/control.in/opt		>> $@T
 	cat debian/control.in/libnss-dns-udeb	>> $@T
 	cat debian/control.in/libnss-files-udeb	>> $@T
+	cat debian/control.in/zoneinfo-udeb	>> $@T
 	sed -e 's%@libc@%$(libc)%g;s%@glibc@%glibc%g' \
 	    -e 's%@threads_archs@%$(threads_archs)%g' < $@T > $@
 	rm $@T
+
+.PHONY: debian/control

@@ -1,0 +1,103 @@
+#! /bin/sh -e
+
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: support alternative gettext tree in
+# DP: /usr/share/locale-langpack; if a file is present in both trees,
+# DP: prefer the newer one
+# DP: Dpatch author: Martin Pitt <martin.pitt@canonical.com>
+# DP: Patch author: Martin Pitt <martin.pitt@canonical.com>
+# DP: Upstream status: Ubuntu-Specific
+# DP: Date: 2004-12-06 20:44:10 CET
+
+PATCHLEVEL=1
+
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p$PATCHLEVEL < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p$PATCHLEVEL < $0;;
+    *)
+	echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+	exit 1
+esac
+exit 0
+
+# append the patch here and adjust the -p? flag in the patch calls.
+diff -Nur glibc-2.3.2/intl/dcigettext.c glibc-2.3.2.new/intl/dcigettext.c
+--- glibc-2.3.2/intl/dcigettext.c	2002-12-12 00:55:10.000000000 +0000
++++ glibc-2.3.2.new/intl/dcigettext.c	2005-03-22 09:46:26.958973326 +0000
+@@ -29,6 +29,7 @@
+ #endif
+ 
+ #include <sys/types.h>
++#include <sys/stat.h>
+ 
+ #ifdef __GNUC__
+ # define alloca __builtin_alloca
+@@ -391,12 +392,13 @@
+ #ifndef HAVE_ALLOCA
+   struct block_list *block_list = NULL;
+ #endif
+-  struct loaded_l10nfile *domain;
++  struct loaded_l10nfile *domain, *domain2;
++  time_t dom1time = -1, dom2time = -1;
+   struct binding *binding;
+   const char *categoryname;
+   const char *categoryvalue;
+   char *dirname, *xdomainname;
+-  char *single_locale;
++  char *single_locale, *single_locale2;
+   char *retval;
+   size_t retlen;
+   int saved_errno;
+@@ -583,9 +585,47 @@
+ 	}
+ 
+ 
++
+       /* Find structure describing the message catalog matching the
+-	 DOMAINNAME and CATEGORY.  */
++         DOMAINNAME and CATEGORY.  */
++      single_locale2 = strdup (single_locale);
++      if (!single_locale2)
++        return (char *) msgid1;
+       domain = _nl_find_domain (dirname, single_locale, xdomainname, binding);
++      domain2 = _nl_find_domain ("/usr/share/locale-langpack", single_locale2, xdomainname, binding);
++      free (single_locale2);
++
++      /* Iterate through the domain lists and determine the file mtimes */
++      if (domain) {
++        struct stat64 s;
++        int cnt;
++        if (domain->decided <= 0 || domain->data != NULL)
++          if (!stat64 (domain->filename, &s))
++            dom1time = s.st_mtime;
++        for (cnt = 0; domain->successor[cnt] != NULL; cnt++) {
++          if (domain->successor[cnt]->decided <= 0 || domain->successor[cnt]->data != NULL)
++            if (!stat64 (domain->successor[cnt]->filename, &s))
++              if (dom1time < s.st_mtime)
++                dom1time = s.st_mtime;
++        }
++      }
++      if (domain2) {
++        struct stat64 s;
++        int cnt;
++        if (domain->decided <= 0 || domain->data != NULL)
++          if (!stat64 (domain2->filename, &s))
++            dom2time = s.st_mtime;
++        for (cnt = 0; domain2->successor[cnt] != NULL; cnt++) {
++          if (domain2->successor[cnt]->decided <= 0 || domain2->successor[cnt]->data != NULL)
++            if (!stat64 (domain2->successor[cnt]->filename, &s))
++              if (dom2time < s.st_mtime)
++                dom2time = s.st_mtime;
++        }
++      }
++
++      /* If a file is present in both domains, choose the newer files */
++      if (dom2time >= dom1time)
++        domain = domain2;
+ 
+       if (domain != NULL)
+ 	{
