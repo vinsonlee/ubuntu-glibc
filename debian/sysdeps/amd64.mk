@@ -1,0 +1,1 @@
+GLIBC_PASSES += nptl
