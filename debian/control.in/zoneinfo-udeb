@@ -1,0 +1,9 @@
+Package: zoneinfo-udeb
+XC-Package-Type: udeb
+Architecture: all
+Section: debian-installer
+Priority: extra
+Description: GNU C Library: Time zone information tables - udeb
+ Contains time zone information tables for use in the installer. Do not
+ install this package on a normal system.
+

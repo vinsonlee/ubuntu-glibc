@@ -1,0 +1,30 @@
+#!/bin/sh -e
+
+if [ -z "$1" ]; then
+    echo "Usage: $0 <language code>"
+    exit 0
+fi
+
+NEW=$(mktemp -t locale.gen.XXXXXX)
+trap "rm -f $NEW" 0 1 2 3 5 7 10 13 15
+
+if [ -f /etc/locale.gen ]; then
+    grep "^$1_.*UTF-8$" /usr/share/i18n/SUPPORTED | grep -v '@euro' | (
+        while read locale encoding; do
+            if ! grep -q "^$locale" /etc/locale.gen; then
+                echo "$locale $encoding" >> $NEW
+                changed=1
+            fi
+        done
+        [ "$changed" ] || rm -f "$NEW"
+    )
+
+    if [ -f "$NEW" ]; then
+        cat $NEW >> /etc/locale.gen
+        /usr/sbin/locale-gen --keep-existing
+    fi
+else
+    grep "^$1_.*UTF-8$" /usr/share/i18n/SUPPORTED | grep -v '@euro' > /etc/locale.gen
+    /usr/sbin/locale-gen 
+fi
+

@@ -1,0 +1,44 @@
+#! /bin/sh -e
+
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: Yugoslavia is now Serbia and Montenegro
+# DP: Related bugs: 
+# DP: Dpatch author: Jeff Bailey
+# DP: Patch author: 
+# DP: Upstream status: In CVS
+# DP: Status Details: 
+# DP: Date: 2005-03-23
+
+PATCHLEVEL=1
+
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p$PATCHLEVEL < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p$PATCHLEVEL < $0;;
+    *)
+	echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+	exit 1
+esac
+exit 0
+
+# append the patch here and adjust the -p? flag in the patch calls.
+--- libc/locale/iso-3166.def	2001-08-07 14:50:06.000000000 -0400
++++ libc-2.3/locale/iso-3166.def	2004-08-10 01:10:38.000000000 -0400
+@@ -193,6 +195,7 @@
+ DEFINE_COUNTRY_CODE ("SAO TOME AND PRINCIPE", ST, STP, 678)
+ DEFINE_COUNTRY_CODE ("SAUDI ARABIA", SA, SAU, 682)
+ DEFINE_COUNTRY_CODE ("SENEGAL", SN, SEN, 686)
++DEFINE_COUNTRY_CODE ("SERBIA AND MONTENEGRO", CS, SCG, 891)
+ DEFINE_COUNTRY_CODE ("SEYCHELLES", SC, SYC, 690)
+ DEFINE_COUNTRY_CODE ("SIERRA LEONE", SL, SLE, 694)
+ DEFINE_COUNTRY_CODE ("SINGAPORE", SG, SGP, 702)
+@@ -240,6 +243,5 @@
+ DEFINE_COUNTRY_CODE ("WALLIS AND FUTUNA", WF, WLF, 876)
+ DEFINE_COUNTRY_CODE ("WESTERN SAHARA", EH, ESH, 732)
+ DEFINE_COUNTRY_CODE ("YEMEN", YE, YEM, 887)
+-DEFINE_COUNTRY_CODE ("YUGOSLAVIA", YU, YUG, 891)
+ DEFINE_COUNTRY_CODE ("ZAMBIA", ZM, ZMB, 894)
+ DEFINE_COUNTRY_CODE ("ZIMBABWE", ZW, ZWE, 716)

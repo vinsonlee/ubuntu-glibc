@@ -1,0 +1,28 @@
+#! /bin/sh -e
+
+# DP: Fix __sigsetjmp function declaration.
+
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p0 < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p0 < $0;;
+    *)
+        echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+        exit 1
+esac
+exit 0
+
+--- nptl/sysdeps/pthread/pthread.h~	2005-02-01 11:04:08.469025792 +0100
++++ nptl/sysdeps/pthread/pthread.h	2005-02-01 13:52:51.702060448 +0100
+@@ -652,7 +652,7 @@
+ 
+ /* Function used in the macros.  */
+ struct __jmp_buf_tag;
+-extern int __sigsetjmp (struct __jmp_buf_tag __env[1], int __savemask) __THROW;
++extern int __sigsetjmp (struct __jmp_buf_tag *__env, int __savemask) __THROW;
+ 
+ 
+ /* Mutex handling.  */
