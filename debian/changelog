@@ -1,3 +1,26 @@
+glibc (2.3.2.ds1-13ubuntu2.2) warty-security; urgency=low
+
+  * Fix FTBFS.  Add amd64 to debian/control.in/libc6 where it should
+    have been all along.
+
+ -- LaMont Jones <lamont@mmjgroup.com>  Wed, 27 Oct 2004 04:04:06 +0100
+
+glibc (2.3.2.ds1-13ubuntu2.1) warty-security; urgency=low
+
+  * SECURITY UPDATE: fix insecure temporary file handling
+    (Warty bug #2743)
+  * added patch catchsegv-insecure-temp: use mktemp instead of $$ construction
+    to get temporary file
+    References:
+    - CAN-2004-0968
+    - http://bugs.debian.org/278278
+  * added patch glibcbug-insecure-temp: use mktemp properly, quote all $TEMP
+    and $TEMPx variables (in case the path contains spaces)
+    References:
+    - http://bugs.debian.org/278278
+
+ -- Martin Pitt <mpitt@debian.org>  Tue, 26 Oct 2004 12:32:25 +0200
+
 glibc (2.3.2.ds1-13ubuntu2) warty; urgency=low
 
   * Fix typo in Replaces.  Closes: #266637, #742
