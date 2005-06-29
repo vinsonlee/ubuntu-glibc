@@ -26,7 +26,7 @@ Priority: standard
 Provides: i18ndata
 Depends: ${locale:Depends}, debconf (>= 0.2.26)
 Conflicts: localebin, wg15-locale, i18ndata, locale-ja, locale-ko, locale-vi, locale-zh
-Replaces: localebin, wg15-locale, libc6-bin, i18ndata, glibc2, locale-ja, locale-ko, locale-vi, locale-zh
+Replaces: localebin, wg15-locale, libc6.1-bin, i18ndata, glibc2, locale-ja, locale-ko, locale-vi, locale-zh
 Description: GNU C Library: National Language (locale) data [support]
  Machine-readable data files, shared objects and programs used by the
  C library for localization (l10n) and internationalization (i18n) support.
@@ -41,8 +41,8 @@ Package: nscd
 Architecture: alpha amd64 arm i386 m68k mips mipsel powerpc sparc ia64 hppa s390 sh3 sh4 sh3eb sh4eb freebsd-i386
 Section: admin
 Priority: optional
-Depends: libc6 (>= ${Source-Version})
-Replaces: libc6 (<< 2.1-4)
+Depends: libc6.1 (>= ${Source-Version})
+Replaces: libc6.1 (<< 2.1-4)
 Description: GNU C Library: Name Service Cache Daemon
  A daemon which handles passwd, group and host lookups
  for running programs and caches the results for the next
@@ -386,7 +386,7 @@ Package: libc6-sparcv9
 Architecture: sparc
 Section: libs
 Priority: extra
-Pre-Depends: libc6 (= ${Source-Version})
+Pre-Depends: libc6.1 (= ${Source-Version})
 Description: GNU C Library: Shared libraries [v9 optimized]
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C
@@ -404,7 +404,7 @@ Package: libc6-sparcv9b
 Architecture: sparc
 Section: libs
 Priority: extra
-Pre-Depends: libc6 (= ${Source-Version})
+Pre-Depends: libc6.1 (= ${Source-Version})
 Description: GNU C Library: Shared libraries [v9b optimized]
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C
@@ -422,7 +422,7 @@ Package: libc6-i686
 Architecture: i386
 Section: libs
 Priority: extra
-Pre-Depends: libc6 (= ${Source-Version})
+Pre-Depends: libc6.1 (= ${Source-Version})
 Description: GNU C Library: Shared libraries [i686 optimized]
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C
