@@ -1,0 +1,136 @@
+#! /bin/sh -e
+
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: NPTL Lock patch for amd64
+# DP: Related bugs: Ubuntu 11730
+# DP: Dpatch author: Jeff Bailey
+# DP: Patch author: Jakub Jelinek
+# DP: Upstream status: In CVS 
+# DP: Status Details: 2.3 branch
+# DP: Date: 2005-06-27
+
+PATCHLEVEL=1
+
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p$PATCHLEVEL < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p$PATCHLEVEL < $0;;
+    *)
+	echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+	exit 1
+esac
+exit 0
+
+# append the patch here and adjust the -p? flag in the patch calls.
+2004-02-18  Jakub Jelinek  <jakub@redhat.com>
+
+	* sysdeps/unix/sysv/linux/x86_64/pthread_rwlock_unlock.S
+	(__pthread_rwlock_unlock): Access WRITER as 32-bit value.
+	* Makefile (tests): Add tst-rwlock13.
+	* tst-rwlock13.c: New test.
+
+--- libc/nptl/sysdeps/unix/sysv/linux/x86_64/pthread_rwlock_unlock.S.jj	2003-09-22 06:40:52.000000000 +0200
++++ libc/nptl/sysdeps/unix/sysv/linux/x86_64/pthread_rwlock_unlock.S	2004-02-18 13:22:16.620462840 +0100
+@@ -49,12 +49,12 @@ __pthread_rwlock_unlock:
+ #endif
+ 	jnz	1f
+ 
+-2:	cmpq	$0, WRITER(%rdi)
++2:	cmpl	$0, WRITER(%rdi)
+ 	jne	5f
+ 	decl	NR_READERS(%rdi)
+ 	jnz	6f
+ 
+-5:	movq	$0, WRITER(%rdi)
++5:	movl	$0, WRITER(%rdi)
+ 
+ 	movq	$1, %rsi
+ 	leaq	WRITERS_WAKEUP(%rdi), %r10
+--- libc/nptl/Makefile.jj	2004-01-12 10:52:36.000000000 +0100
++++ libc/nptl/Makefile	2004-02-18 13:34:31.600728856 +0100
+@@ -196,7 +196,7 @@ tests = tst-attr1 tst-attr2 tst-attr3 \
+ 	tst-cond8 tst-cond9 tst-cond10 tst-cond11 tst-cond12 tst-cond13 \
+ 	tst-rwlock1 tst-rwlock2 tst-rwlock3 tst-rwlock4 tst-rwlock5 \
+ 	tst-rwlock6 tst-rwlock7 tst-rwlock8 tst-rwlock9 tst-rwlock10 \
+-	tst-rwlock11 tst-rwlock12 \
++	tst-rwlock11 tst-rwlock12 tst-rwlock13 \
+ 	tst-once1 tst-once2 tst-once3 tst-once4 \
+ 	tst-key1 tst-key2 tst-key3 tst-key4 \
+ 	tst-sem1 tst-sem2 tst-sem3 tst-sem4 tst-sem5 tst-sem6 tst-sem7 \
+--- libc/nptl/tst-rwlock13.c.jj	2004-02-18 13:27:50.189752600 +0100
++++ libc/nptl/tst-rwlock13.c	2004-02-18 13:27:45.499465632 +0100
+@@ -0,0 +1,71 @@
++/* Copyright (C) 2004 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, write to the Free
++   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
++   02111-1307 USA.  */
++
++#include <pthread.h>
++#include <stdio.h>
++#include <string.h>
++
++
++static int
++do_test (void)
++{
++  pthread_rwlock_t r;
++  int ret;
++
++  memset (&r, 0xaa, sizeof (r));
++  if ((ret = pthread_rwlock_init (&r, NULL)) != 0)
++    {
++      printf ("rwlock_init failed: %d\n", ret);
++      return 1;
++    }
++
++  if ((ret = pthread_rwlock_rdlock (&r)) != 0)
++    {
++      printf ("rwlock_rdlock failed: %d\n", ret);
++      return 1;
++    }
++
++  if ((ret = pthread_rwlock_unlock (&r)) != 0)
++    {
++      printf ("rwlock_unlock failed: %d\n", ret);
++      return 1;
++    }
++
++  if ((ret = pthread_rwlock_wrlock (&r)) != 0)
++    {
++      printf ("rwlock_wrlock failed: %d\n", ret);
++      return 1;
++    }
++
++  if ((ret = pthread_rwlock_unlock (&r)) != 0)
++    {
++      printf ("second rwlock_unlock failed: %d\n", ret);
++      return 1;
++    }
++
++  if ((ret = pthread_rwlock_destroy (&r)) != 0)
++    {
++      printf ("second rwlock_destroy failed: %d\n", ret);
++      return 1;
++    }
++
++  return 0;
++}
++
++#define TEST_FUNCTION do_test ()
++#include "../test-skeleton.c"
