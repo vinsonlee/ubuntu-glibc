@@ -33,8 +33,11 @@ stamp := $(CURDIR)/stamp-dir/
 DUMMY := $(shell mkdir -p $(stamp))
 
 # The minimum package version with which these packages are compatible.
-shlib_dep_ver = 2.3.2.ds1-4
+include debian/shlibver
 shlib_dep = $(libc) (>= $(shlib_dep_ver))
+
+# The version of the C library that locales needs for its format.
+include debian/locales-shlibver
 
 # Beyond here you shouldn't need to customise anything:
 
@@ -51,11 +54,22 @@ DEB_BUILD_GNU_SYSTEM  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_SYSTEM)
 DEB_HOST_GNU_CPU_ALT  ?=
 DEB_HOST_GNU_TYPE_ALT ?=
 
+# Older versions of dpkg-architecture called it 'linux', newer ones call
+# it 'linux-gnu'
+
+ifeq ($(DEB_HOST_GNU_SYSTEM),linux)
+DEB_HOST_GNU_SYSTEM := linux-gnu
+endif
+
+ifeq ($(DEB_BUILD_GNU_SYSTEM),linux)
+DEB_BUILD_GNU_SYSTEM := linux-gnu
+endif
+
 DEB_SOURCE_PACKAGE := $(strip $(shell egrep '^Source: ' debian/control | cut -f 2 -d ':'))
 
 DEB_VERSION := $(shell dpkg-parsechangelog | egrep '^Version:' | cut -f 2 -d ' ')
 
-DEB_TARBALL ?= $(shell ls glibc-[0-9]*.[0-9]*.[0-9]*.tar.*)
+DEB_TARBALL ?= $(shell ls glibc-[0-9.]*.tar.*)
 
 DEB_SRCDIR ?= $(shell ls -d $(build-tree)/glibc-*)
 DEB_BUILDDIR ?= $(build-tree)/$(DEB_HOST_ARCH)-$(curpass)
@@ -81,13 +95,23 @@ mandir=$(prefix)/share/man
 sbindir=$(prefix)/sbin
 libexecdir=$(prefix)/lib
 
-BUILD_CC = gcc-3.3
+BUILD_CC = gcc-3.4
+BUILD_CXX = g++-3.4
+
+RUN_TESTSUITE = yes
 
 # Set CC for cross-compiling
 ifneq ($(DEB_HOST_ARCH),$(DEB_BUILD_ARCH))
 CC     = $(DEB_HOST_GNU_TYPE)-gcc
 else
 CC     = $(BUILD_CC)
+endif
+#
+# Set CXX for cross-compiling
+ifneq ($(DEB_HOST_ARCH),$(DEB_BUILD_ARCH))
+CXX     = $(DEB_HOST_GNU_TYPE)-g++
+else
+CXX     = $(BUILD_CXX)
 endif
 
 BUILD_CFLAGS = -O2 -g
