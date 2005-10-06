@@ -1,7 +1,7 @@
 Source: glibc
 Section: libs
 Priority: required
-Build-Depends: gettext (>= 0.10.37-1), make (>= 3.80-1), dpkg-dev (>= 1.4.1.5), debianutils (>= 1.13.1), tar (>= 1.13.11), bzip2, texinfo (>= 4.0), linux-kernel-headers (>= 2.5.999-test7-bk-9) [!hurd-i386], mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386], texi2html, file, gcc-3.3 [!ia64] | gcc-3.4 [!ia64], gcc-3.3 (>= 1:3.3.5-6ubuntu1) [ia64] | gcc-3.4 (>= 3.4.3-6ubuntu1) [ia64], autoconf, binutils (>= 2.14.90.0.7-5), sed (>= 4.0.5-4), gawk, debhelper (>= 4.1.76)
+Build-Depends: gettext (>= 0.10.37-1), make (>= 3.80-1), dpkg-dev (>= 1.4.1.5), debianutils (>= 1.13.1), tar (>= 1.13.11), bzip2, texinfo (>= 4.0), linux-kernel-headers (>= 2.6.11.2-0) [!hurd-i386], mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386], texi2html, file, gcc-3.4 [!ia64 !powerpc], gcc-3.4 (>= 3.4.3-6ubuntu1) [ia64], gcc-3.4 (>= 3.4.4-0ubuntu4) [powerpc], g++-3.4, autoconf, binutils (>= 2.16.1-0), sed (>= 4.0.5-4), gawk, debhelper (>= 4.1.76), libc6-dev-ppc64 [powerpc], libc6-dev-amd64 [i386]
 Build-Depends-Indep: perl, po-debconf
 Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
 Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, Philip Blundell <pb@nexus.co.uk>, Jeff Bailey <jbailey@raspberryginger.com>, Daniel Jacobowitz <dan@debian.org>
@@ -26,7 +26,7 @@ Priority: standard
 Provides: i18ndata
 Depends: ${locale:Depends}, debconf (>= 0.2.26)
 Conflicts: localebin, wg15-locale, i18ndata, locale-ja, locale-ko, locale-vi, locale-zh
-Replaces: localebin, wg15-locale, libc6.1-bin, i18ndata, glibc2, locale-ja, locale-ko, locale-vi, locale-zh
+Replaces: localebin, wg15-locale, libc6-bin, i18ndata, glibc2, locale-ja, locale-ko, locale-vi, locale-zh
 Description: GNU C Library: National Language (locale) data [support]
  Machine-readable data files, shared objects and programs used by the
  C library for localization (l10n) and internationalization (i18n) support.
@@ -41,8 +41,8 @@ Package: nscd
 Architecture: alpha amd64 arm i386 m68k mips mipsel powerpc sparc ia64 hppa s390 sh3 sh4 sh3eb sh4eb freebsd-i386
 Section: admin
 Priority: optional
-Depends: libc6.1 (>= ${Source-Version})
-Replaces: libc6.1 (<< 2.1-4)
+Depends: libc6 (>= ${Source-Version})
+Replaces: libc6 (<< 2.1-4)
 Description: GNU C Library: Name Service Cache Daemon
  A daemon which handles passwd, group and host lookups
  for running programs and caches the results for the next
@@ -362,6 +362,7 @@ Description: GNU C Library: 64bit Development Libraries for UltraSPARC
  which use the standard C library. This is the 64bit version of the
  library, meant for UltraSPARC systems.
 
+
 Package: libc6-s390x
 Architecture: s390
 Section: base
@@ -382,29 +383,51 @@ Description: GNU C Library: 64bit Development Libraries for IBM zSeries
  which use the standard C library. This is the 64bit version of the
  library, meant for zSeries systems.
 
-Package: libc6-sparcv9
-Architecture: sparc
-Section: libs
-Priority: extra
-Pre-Depends: libc6.1 (= ${Source-Version})
-Description: GNU C Library: Shared libraries [v9 optimized]
- Contains the standard libraries that are used by nearly all programs on
- the system. This package includes shared versions of the standard C
- library and the standard math library, as well as many others.
- .
- This set of libraries is optimized for the UltraSPARC v9 ABI. It only
- needs to be installed on UltraSPARC machines. If you install this on a
- non-UltraSPARC, it wont even be used.
- .
- WARNING: Some commercial programs do not work well with these libraries.
- Most notably, IBM's JDK. If you experience problems with such
- applications, you will need to remove this package.
+Package: libc6-ppc64
+Architecture: powerpc
+Section: base
+Priority: required
+Depends: libc6 (= ${Source-Version}), lib64gcc1
+Description: GNU C Library: 64bit Shared libraries for PowerPC
+ This package includes shared versions of the standard C library and the
+ standard math library, as well as many others. This is the 64bit version
+ of the library, meant for PowerPC systems.
+
+Package: libc6-dev-ppc64
+Architecture: powerpc
+Section: libdevel
+Priority: standard
+Depends: libc6-ppc64 (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Description: GNU C Library: 64bit Development Libraries for PowerPC
+ Contains the symlinks and object files needed to compile and link programs
+ which use the standard C library. This is the 64bit version of the
+ library, meant for PowerPC systems.
+
+Package: libc6-amd64
+Architecture: i386
+Section: base
+Priority: required
+Depends: libc6 (= ${Source-Version}), lib64gcc1
+Description: GNU C Library: 64bit Shared libraries for amd64
+ This package includes shared versions of the standard C library and the
+ standard math library, as well as many others. This is the 64bit version
+ of the library, meant for amd64 systems.
+
+Package: libc6-dev-amd64
+Architecture: i386
+Section: libdevel
+Priority: standard
+Depends: libc6-amd64 (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Description: GNU C Library: 64bit Development Libraries for amd64
+ Contains the symlinks and object files needed to compile and link programs
+ which use the standard C library. This is the 64bit version of the
+ library, meant for amd64 systems.
 
 Package: libc6-sparcv9b
 Architecture: sparc
 Section: libs
 Priority: extra
-Pre-Depends: libc6.1 (= ${Source-Version})
+Pre-Depends: libc6 (= ${Source-Version})
 Description: GNU C Library: Shared libraries [v9b optimized]
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C
@@ -422,7 +445,7 @@ Package: libc6-i686
 Architecture: i386
 Section: libs
 Priority: extra
-Pre-Depends: libc6.1 (= ${Source-Version})
+Pre-Depends: libc6 (= ${Source-Version})
 Description: GNU C Library: Shared libraries [i686 optimized]
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C

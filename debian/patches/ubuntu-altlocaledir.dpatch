@@ -2,8 +2,7 @@
 
 # All lines beginning with `# DP:' are a description of the patch.
 # DP: Description: support alternative gettext tree in
-# DP: /usr/share/locale-langpack; if a file is present in both trees,
-# DP: prefer the newer one
+# DP: /usr/share/locale-langpack
 # DP: Dpatch author: Martin Pitt <martin.pitt@canonical.com>
 # DP: Patch author: Martin Pitt <martin.pitt@canonical.com>
 # DP: Upstream status: Ubuntu-Specific
@@ -25,79 +24,30 @@ esac
 exit 0
 
 # append the patch here and adjust the -p? flag in the patch calls.
-diff -Nur glibc-2.3.2/intl/dcigettext.c glibc-2.3.2.new/intl/dcigettext.c
---- glibc-2.3.2/intl/dcigettext.c	2002-12-12 00:55:10.000000000 +0000
-+++ glibc-2.3.2.new/intl/dcigettext.c	2005-03-22 09:46:26.958973326 +0000
-@@ -29,6 +29,7 @@
- #endif
+--- glibc-2.3.5.orig/intl/l10nflist.c
++++ glibc-2.3.5/intl/l10nflist.c
+@@ -267,7 +267,7 @@ _nl_make_l10nflist (l10nfile_list, dirli
  
- #include <sys/types.h>
-+#include <sys/stat.h>
- 
- #ifdef __GNUC__
- # define alloca __builtin_alloca
-@@ -391,12 +392,13 @@
- #ifndef HAVE_ALLOCA
-   struct block_list *block_list = NULL;
- #endif
--  struct loaded_l10nfile *domain;
-+  struct loaded_l10nfile *domain, *domain2;
-+  time_t dom1time = -1, dom2time = -1;
-   struct binding *binding;
-   const char *categoryname;
-   const char *categoryvalue;
-   char *dirname, *xdomainname;
--  char *single_locale;
-+  char *single_locale, *single_locale2;
-   char *retval;
-   size_t retlen;
-   int saved_errno;
-@@ -583,9 +585,47 @@
- 	}
- 
- 
-+
-       /* Find structure describing the message catalog matching the
--	 DOMAINNAME and CATEGORY.  */
-+         DOMAINNAME and CATEGORY.  */
-+      single_locale2 = strdup (single_locale);
-+      if (!single_locale2)
-+        return (char *) msgid1;
-       domain = _nl_find_domain (dirname, single_locale, xdomainname, binding);
-+      domain2 = _nl_find_domain ("/usr/share/locale-langpack", single_locale2, xdomainname, binding);
-+      free (single_locale2);
-+
-+      /* Iterate through the domain lists and determine the file mtimes */
-+      if (domain) {
-+        struct stat64 s;
-+        int cnt;
-+        if (domain->decided <= 0 || domain->data != NULL)
-+          if (!stat64 (domain->filename, &s))
-+            dom1time = s.st_mtime;
-+        for (cnt = 0; domain->successor[cnt] != NULL; cnt++) {
-+          if (domain->successor[cnt]->decided <= 0 || domain->successor[cnt]->data != NULL)
-+            if (!stat64 (domain->successor[cnt]->filename, &s))
-+              if (dom1time < s.st_mtime)
-+                dom1time = s.st_mtime;
-+        }
+   retval = (struct loaded_l10nfile *)
+     malloc (sizeof (*retval) + (__argz_count (dirlist, dirlist_len)
+-				* (1 << pop (mask))
++				* 2 * (1 << pop (mask))
+ 				* sizeof (struct loaded_l10nfile *)));
+   if (retval == NULL)
+     return NULL;
+@@ -310,6 +310,15 @@ _nl_make_l10nflist (l10nfile_list, dirli
+ 				  language, territory, codeset,
+ 				  normalized_codeset, modifier, filename, 1);
+       }
++  const char* langpack_dir = "/usr/share/locale-langpack";
++  for (cnt = mask; cnt >= 0; --cnt)
++    if ((cnt & ~mask) == 0)
++      {
++	  retval->successor[entries++]
++	    = _nl_make_l10nflist (l10nfile_list, langpack_dir, strlen (langpack_dir) + 1, cnt,
++				  language, territory, codeset,
++				  normalized_codeset, modifier, filename, 1);
 +      }
-+      if (domain2) {
-+        struct stat64 s;
-+        int cnt;
-+        if (domain->decided <= 0 || domain->data != NULL)
-+          if (!stat64 (domain2->filename, &s))
-+            dom2time = s.st_mtime;
-+        for (cnt = 0; domain2->successor[cnt] != NULL; cnt++) {
-+          if (domain2->successor[cnt]->decided <= 0 || domain2->successor[cnt]->data != NULL)
-+            if (!stat64 (domain2->successor[cnt]->filename, &s))
-+              if (dom2time < s.st_mtime)
-+                dom2time = s.st_mtime;
-+        }
-+      }
-+
-+      /* If a file is present in both domains, choose the newer files */
-+      if (dom2time >= dom1time)
-+        domain = domain2;
+   retval->successor[entries] = NULL;
  
-       if (domain != NULL)
- 	{
+   return retval;
