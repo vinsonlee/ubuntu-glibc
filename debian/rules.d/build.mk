@@ -16,6 +16,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	rm -f $(DEB_BUILDDIR)/configparms
 	echo "CC = $(call xx,CC)"	>> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CC = $(BUILD_CC)"	>> $(DEB_BUILDDIR)/configparms
+	echo "CXX = $(call xx,CXX)"	>> $(DEB_BUILDDIR)/configparms
 	echo "CFLAGS = $(HOST_CFLAGS)"	>> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CFLAGS = $(BUILD_CFLAGS)" >> $(DEB_BUILDDIR)/configparms
 	echo "BASH := /bin/bash"	>> $(DEB_BUILDDIR)/configparms
@@ -44,10 +45,12 @@ endif
 	fi; \
 	cd $(DEB_BUILDDIR) && \
 		CC="$(call xx,CC)" \
+		CXX="$(call xx,CXX)" \
 		AUTOCONF=false \
 		$(CURDIR)/$(DEB_SRCDIR)/configure \
 		--host=$(call xx,configure_target) \
 		--build=$$configure_build --prefix=/usr --without-cvs \
+		--without-selinux \
 		--enable-add-ons="$(call xx,add-ons)" \
 		$(call xx,with_headers) $(call xx,extra_config_options) 2>&1 | tee -a $(log_build)
 
@@ -67,6 +70,8 @@ $(stamp)check_%: $(stamp)build_%
 	  echo "Cross compiling, skipping tests."; \
 	elif ! $(call kernel_check,$(call xx,MIN_KERNEL_SUPPORTED)); then \
 	  echo "Kernel too old, skipping tests."; \
+	elif [ $(call xx,RUN_TESTSUITE) != "yes" ]; then \
+	  echo "Testsuite disabled for $(curpass), skipping tests."; \
 	else \
 	  echo Testing $(curpass); \
 	  $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) -k check 2>&1 | tee -a $(log_test); \
@@ -77,6 +82,7 @@ $(patsubst %,install_%,$(GLIBC_PASSES)) :: install_% : $(stamp)install_%
 $(stamp)install_%: $(stamp)check_%
 	@echo Installing $(curpass)
 	rm -rf $(CURDIR)/debian/tmp-$(curpass)
+
 	$(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) \
 	  install_root=$(CURDIR)/debian/tmp-$(curpass) install
 
@@ -84,8 +90,29 @@ $(stamp)install_%: $(stamp)check_%
 	  $(MAKE) -f debian/generate-supported.mk IN=$(DEB_SRCDIR)/localedata/SUPPORTED \
 	    OUT=debian/tmp-$(curpass)/usr/share/i18n/SUPPORTED; \
 	  (cd $(DEB_SRCDIR)/manual && texi2html -split_chapter libc.texinfo); \
-	  install --mode=0644 $(DEB_SRCDIR)/manual/dir-add.info \
-	    debian/tmp-$(curpass)/usr/share/info/libc-dir-add.info; \
+	fi
+
+	# /usr/include/nptl and /usr/lib/nptl.  It assumes tmp-libc is already installed.
+	if [ $(curpass) = nptl ]; then \
+	  for file in `find debian/tmp-$(curpass)/usr/include -type f | sed 's/^debian\/tmp-nptl\///'`; do \
+	    if ! [ -f debian/tmp-$(curpass)/$$file ] || \
+	       ! cmp -s debian/tmp-$(curpass)/$$file debian/tmp-libc/$$file; then \
+	      target=`echo $$file | sed 's/^usr\/include\///'`; \
+	      install -d `dirname debian/tmp-libc/usr/include/nptl/$$target`; \
+	      install -m 644 debian/tmp-$(curpass)/usr/include/$$target \
+			     debian/tmp-libc/usr/include/nptl/$$target; \
+	    fi; \
+	  done; \
+	  install -d debian/tmp-libc/usr/lib/nptl; \
+	  for file in libc.a libpthread.a libpthread_nonshared.a librt.a; do \
+	    install -m 644 debian/tmp-$(curpass)/usr/lib/$$file \
+			   debian/tmp-libc/usr/lib/nptl/$$file; \
+	  done; \
+	  for file in libc.so libpthread.so; do \
+	    sed 's/\/lib\//\/lib\/tls\//g' < debian/tmp-$(curpass)/usr/lib/$$file \
+	    > debian/tmp-libc/usr/lib/nptl/$$file; \
+	  done; \
+	  ln -sf /lib/tls/librt.so.1 debian/tmp-libc/usr/lib/nptl/; \
 	fi
 
 	$(call xx,extra_install)

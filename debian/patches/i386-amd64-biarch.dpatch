@@ -1,0 +1,71 @@
+#! /bin/sh -e
+
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: Allow ldconfig to work on i386/x86-64 biarch systems
+# DP: Related bugs: 
+# DP: Dpatch author: Jeff Bailey
+# DP: Patch author: Jeff Bailey
+# DP: Upstream status: Debian-Specific
+# DP: Status Details: 
+# DP: Date: 2005-08-05
+
+PATCHLEVEL=1
+
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p$PATCHLEVEL < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p$PATCHLEVEL < $0;;
+    *)
+	echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+	exit 1
+esac
+exit 0
+
+# append the patch here and adjust the -p? flag in the patch calls.
+--- /dev/null	2005-07-29 18:11:21.000000000 +0000
++++ glibc-2.3.5/sysdeps/unix/sysv/linux/i386/dl-cache.h	2005-08-05 14:15:39.162794976 +0000
+@@ -0,0 +1,41 @@
++/* Support for reading /etc/ld.so.cache files written by Linux ldconfig.
++   Copyright (C) 2003 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, write to the Free
++   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
++   02111-1307 USA.  */
++
++/* This hack allows for i386 systems to be biarch to x86-64 */
++
++#define add_system_dir(dir) \
++  do								\
++    {								\
++      size_t len = strlen (dir);				\
++      char path[len + 3];					\
++      memcpy (path, dir, len + 1);				\
++      if (len >= 6 && ! memcmp (path + len - 6, "/lib64", 6))	\
++	{							\
++	  len -= 2;						\
++	  path[len] = '\0';					\
++	}							\
++      add_dir (path);						\
++      if (len >= 4 && ! memcmp (path + len - 4, "/lib", 4))	\
++	{							\
++	  memcpy (path + len, "64", 3);				\
++	  add_dir (path);					\
++	}							\
++    } while (0)
++
++#include <sysdeps/generic/dl-cache.h>

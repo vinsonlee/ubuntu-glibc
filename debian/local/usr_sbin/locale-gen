@@ -13,13 +13,13 @@ fi
 
 KEEP=
 if [ "$1" = '--keep-existing' ]; then
-	KEEP=1
+       KEEP=1
 fi
 
 if [ -z "$KEEP" ]; then
-	# Remove all old locale dir and locale-archive before generating new
-	# locale data.
-	rm -rf /usr/lib/locale/* || true
+       # Remove all old locale dir and locale-archive before generating new
+       # locale data.
+       rm -rf /usr/lib/locale/* || true
 fi
 
 umask 022
@@ -41,6 +41,7 @@ while read locale charset; do \
 	    'exit 1 unless setlocale(LC_ALL, $ARGV[0])' "$locale"; then
 		continue
 	fi
+
 	echo -n "  `echo $locale | sed 's/\([^.\@]*\).*/\1/'`"; \
 	echo -n ".$charset"; \
 	echo -n `echo $locale | sed 's/\([^\@]*\)\(\@.*\)*/\2/'`; \

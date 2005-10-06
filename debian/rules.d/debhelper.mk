@@ -167,6 +167,7 @@ $(stamp)debhelper:
 	  sed -e "s#TMPDIR#debian/tmp-libc#" -i $$z; \
 	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#" -i $$z; \
 	  sed -e "s#LIBC#$(libc)#" -i $$z; \
+	  sed -e "s#CURRENT_VER#$(DEB_VERSION)#" -i $$z; \
 	  case $$z in \
 	    *.install) sed -e "s/^#.*//" -i $$z ;; \
 	  esac; \
@@ -194,8 +195,12 @@ $(stamp)debhelper:
 	    cp debian/debhelper.in/libc-otherbuild.install $$z; \
 	    cp debian/debhelper.in/libc-otherbuild.preinst debian/$(libc)-$$x.preinst ; \
 	    cp debian/debhelper.in/libc-otherbuild.postinst debian/$(libc)-$$x.postinst ; \
-	    sed -e "s#OPT#$$x#" -i debian/$(libc)-$$x.preinst; \
-	    sed -e "s#OPT#$$x#" -i debian/$(libc)-$$x.postinst; \
+	    cp debian/debhelper.in/libc-otherbuild.postrm debian/$(libc)-$$x.postrm ; \
+	    sed -e "s#OPT#$(libc)-$$x#" -i debian/$(libc)-$$x.preinst; \
+	    sed -e "s#OPT#$(libc)-$$x#" -i debian/$(libc)-$$x.postinst; \
+	    sed -e "s#OPT#$(libc)-$$x#" -i debian/$(libc)-$$x.postrm; \
+	    sed -e "s#CURRENT_VER#$(DEB_VERSION)#" -i debian/$(libc)-$$x.postinst; \
+	    sed -e "s#CURRENT_VER#$(DEB_VERSION)#" -i debian/$(libc)-$$x.postrm; \
 	  fi; \
 	  sed -e "s#TMPDIR#debian/tmp-$$x#" -i $$z; \
 	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#" -i $$z; \
@@ -223,12 +228,14 @@ $(stamp)debhelper:
 	perl -i -pe 'BEGIN {undef $$/; open(IN, "debian/tmp-libc/usr/share/i18n/SUPPORTED"); $$j=<IN>;} s/__SUPPORTED_LOCALES__/$$j/g;' debian/locales.config
 
 	# Generate common substvars files.
-	echo "locale:Depends=$(shell perl debian/debver2localesdep.pl $(DEB_VERSION))" > tmp.substvars
+	echo "locale:Depends=$(shell perl debian/debver2localesdep.pl $(LOCALES_DEP_VER))" > tmp.substvars
 
 	for pkg in $(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGULAR_PACKAGES) $(DEB_UDEB_PACKAGES); do \
 	  cp tmp.substvars debian/$$pkg.substvars; \
 	done
 	rm -f tmp.substvars
+
+	$(call extra_debhelper)
 
 	touch $(stamp)debhelper
 

@@ -11,6 +11,27 @@ if [ "$1" = remove ]; then
     fi
 fi
 
+if [ "$1" = upgrade ]; then
+    case $(dpkg --print-installation-architecture) in
+	i386|sparc)
+	    if dpkg --compare-versions "$2" lt 2.3.4-3; then
+		hwcappkgs=remove
+	    fi
+	    ;;
+    esac
+    if [ "$hwcappkgs" = remove ]; then
+	# Make sure the downgraded package does not support
+	# ld.so.hwcappkgs mechanism on i686 and sparc.
+	rm -f /etc/ld.so.hwcappkgs
+	echo "downgrade-to-old-glibc" >> /etc/ld.so.nohwcap
+
+	echo You are trying to downgrade to glibc 2.3.4-2 or earlier.
+	echo Such version does not support /etc/ld.so.hwcappkgs
+	echo mechanism on i386 and sparc.  Hwcap libraries are
+	echo disabled until glibc 2.3.4-3 and later is installed.
+    fi
+fi
+
 if [ "$1" = deconfigure ]; then
     :; # blah, do something useful with ldso
 fi
