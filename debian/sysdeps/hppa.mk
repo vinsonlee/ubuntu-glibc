@@ -7,6 +7,7 @@
 # export TIMEOUTFACTOR=10
 
 RUN_TESTSUITE = no
+NJOBS = 1
 
 define libc6-dev_extra_pkg_install
 mkdir -p debian/$(curpass)/usr
