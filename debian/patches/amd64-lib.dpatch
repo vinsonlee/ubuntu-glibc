@@ -24,41 +24,23 @@ exit 0
 # append the patch here and adjust the -p? flag in the patch calls.
 --- glibc-2.3.2/sysdeps/unix/sysv/linux/configure~	2004-06-05 14:03:22.118247000 +0200
 +++ glibc-2.3.2/sysdeps/unix/sysv/linux/configure	2004-06-05 11:43:35.667961319 +0200
-@@ -226,7 +226,7 @@
+@@ -224,7 +224,7 @@
  /usr | /usr/)
    # 64-bit libraries on bi-arch platforms go in /lib64 instead of /lib
    case $machine in
--  sparc/sparc64 | sparc/sparc64b | sparc/sparc64v | x86_64 | powerpc/powerpc64 | s390/s390-64 | \
-+  sparc/sparc64 | sparc/sparc64b | sparc/sparc64v | powerpc/powerpc64 | s390/s390-64 | \
+-  sparc/sparc64 | x86_64 | powerpc/powerpc64 | s390/s390-64 | \
++  sparc/sparc64 | powerpc/powerpc64 | s390/s390-64 | \
    mips/mips64/n64/* )
      libc_cv_slibdir="/lib64"
      if test "$libdir" = '${exec_prefix}/lib'; then
-@@ -235,7 +235,7 @@
-       libc_cv_localedir='${exec_prefix}/lib/locale'
-     fi
-     ;;
--  mips/mips64/n32/* )
-+  mips/mips64/n32/* | i[3456]86* )
-     libc_cv_slibdir="/lib32"
-     if test "$libdir" = '${exec_prefix}/lib'; then
-       libdir='${exec_prefix}/lib32';
 --- glibc-2.3.2/sysdeps/unix/sysv/linux/configure.in~	2004-07-05 09:52:28.000000000 +0200
 +++ glibc-2.3.2/sysdeps/unix/sysv/linux/configure.in	2004-07-05 12:18:07.995664571 +0200
-@@ -161,7 +161,7 @@
+@@ -157,7 +157,7 @@
  /usr | /usr/)
    # 64-bit libraries on bi-arch platforms go in /lib64 instead of /lib
    case $machine in
--  sparc/sparc64 | sparc/sparc64b | sparc/sparc64v | x86_64 | powerpc/powerpc64 | s390/s390-64 | \
-+  sparc/sparc64 | sparc/sparc64b | sparc/sparc64v | powerpc/powerpc64 | s390/s390-64 | \
+-  sparc/sparc64 | x86_64 | powerpc/powerpc64 | s390/s390-64 | \
++  sparc/sparc64 | powerpc/powerpc64 | s390/s390-64 | \
    mips/mips64/n64/* )
      libc_cv_slibdir="/lib64"
      if test "$libdir" = '${exec_prefix}/lib'; then
-@@ -170,7 +170,7 @@
-       libc_cv_localedir='${exec_prefix}/lib/locale'
-     fi
-     ;;
--  mips/mips64/n32/* )
-+  mips/mips64/n32/* | i[3456]86* )
-     libc_cv_slibdir="/lib32"
-     if test "$libdir" = '${exec_prefix}/lib'; then
-       libdir='${exec_prefix}/lib32';

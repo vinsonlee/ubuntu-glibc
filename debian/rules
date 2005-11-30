@@ -37,7 +37,7 @@ include debian/shlibver
 shlib_dep = $(libc) (>= $(shlib_dep_ver))
 
 # The version of the C library that locales needs for its format.
-include debian/locales-depver
+include debian/locales-shlibver
 
 # Beyond here you shouldn't need to customise anything:
 
@@ -45,7 +45,7 @@ SHELL                 ?= =/bin/sh -e
 DEB_HOST_ARCH         ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 DEB_HOST_GNU_CPU      ?= $(shell dpkg-architecture -qDEB_HOST_GNU_CPU)
 DEB_HOST_GNU_TYPE     ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-DEB_HOST_ARCH_OS      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+DEB_HOST_GNU_SYSTEM   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_SYSTEM)
 DEB_BUILD_ARCH        ?= $(shell dpkg-architecture -qDEB_BUILD_ARCH)
 DEB_BUILD_GNU_CPU     ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_CPU)
 DEB_BUILD_GNU_TYPE    ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
@@ -53,6 +53,17 @@ DEB_BUILD_GNU_SYSTEM  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_SYSTEM)
 
 DEB_HOST_GNU_CPU_ALT  ?=
 DEB_HOST_GNU_TYPE_ALT ?=
+
+# Older versions of dpkg-architecture called it 'linux', newer ones call
+# it 'linux-gnu'
+
+ifeq ($(DEB_HOST_GNU_SYSTEM),linux)
+DEB_HOST_GNU_SYSTEM := linux-gnu
+endif
+
+ifeq ($(DEB_BUILD_GNU_SYSTEM),linux)
+DEB_BUILD_GNU_SYSTEM := linux-gnu
+endif
 
 DEB_SOURCE_PACKAGE := $(strip $(shell egrep '^Source: ' debian/control | cut -f 2 -d ':'))
 
@@ -85,7 +96,7 @@ sbindir=$(prefix)/sbin
 libexecdir=$(prefix)/lib
 
 BUILD_CC = gcc-3.4
-BUILD_CXX = g++-4.0
+BUILD_CXX = g++-3.4
 
 RUN_TESTSUITE = yes
 
@@ -128,7 +139,6 @@ curpass = $(filter-out %_,$(subst _,_ ,$@))
 DEB_ARCH_REGULAR_PACKAGES = $(libc) $(libc)-dev $(libc)-dbg $(libc)-prof $(libc)-pic
 DEB_INDEP_REGULAR_PACKAGES = glibc-doc 
 DEB_UDEB_PACKAGES = $(libc)-udeb libnss-dns-udeb libnss-files-udeb zoneinfo-udeb
-DEB_INIT_PARAMS_nscd = -- defaults 09 91
 
 # Generic kernel version check
 define kernel_check
@@ -137,12 +147,9 @@ define kernel_check
 fi)
 endef
 
-# Include libidn for both NPTL and LinuxThreads targets.
-standard-add-ons = libidn,
-
 # Pull in all the per-arch magic!
 
--include debian/sysdeps/$(DEB_HOST_ARCH_OS).mk
+-include debian/sysdeps/$(DEB_HOST_GNU_SYSTEM).mk
 -include debian/sysdeps/$(DEB_HOST_ARCH).mk
 
 include debian/sysdeps/depflags.mk

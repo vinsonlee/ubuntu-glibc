@@ -2,9 +2,6 @@
 set -e
 export LC_ALL=C
 
-type=$1
-preversion=$2
-
 package_name()
 {
     echo LIBC
@@ -171,7 +168,7 @@ for suffix in -dbg -dev -pic -prof; do
     fi
 done
 
-if [ "$type" = "configure" ]
+if [ "$1" = "configure" ]
 then
     # Handle upgrades for libdb.so.3. We do this before calling ldconfig,
     # since it will create a symlink for us. Just move everything over. We
@@ -196,12 +193,12 @@ then
 	# it's first time to install ld.so.hwcappkgs aware packages.  We record
 	# all current hwcap package status.
 	if [ ! -f /etc/ld.so.hwcappkgs ]; then
-	    case $(dpkg --print-architecture) in
+	    case $(dpkg --print-installation-architecture) in
 		i386)
 		    hwcappkgs="libc6 libc6-i686"
 		    ;;
 		sparc)
-		    hwcappkgs="libc6 libc6-sparcv9 libc6-sparcv9b libc6-sparcv9v libc6-sparc64b libc6-sparc64v"
+		    hwcappkgs="libc6 libc6-sparcv9 libc6-sparcv9b"
 		    ;;
 	    esac
 	    if [ -n "$hwcappkgs" ]; then
@@ -222,7 +219,6 @@ then
 	if [ -f /etc/ld.so.hwcappkgs ]; then
 	    curver=CURRENT_VER
 	    rm -f /etc/ld.so.hwcappkgs.tmp
-	    oldset="$@"
 	    while read LINE; do
 		case $LINE in
 		    \#*|"") continue
@@ -244,7 +240,6 @@ then
 		fi
 		echo "$pkg $ver" >> /etc/ld.so.hwcappkgs.tmp
 	    done < /etc/ld.so.hwcappkgs
-	    set -- $oldset
 	    if [ "$isrecorded" != yes ]; then
 		echo "$package $curver" >> /etc/ld.so.hwcappkgs.tmp
 	    fi
@@ -259,11 +254,11 @@ then
 	fi
     fi
 
-    if [ ! -z $preversion ]; then
+    if [ ! -z $2 ]; then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions $preversion lt 2.3.5-1; then
+	if dpkg --compare-versions $2 lt 2.3.5-1; then
 	    echo -n "Checking for services that may need to be restarted..."
 
 	    check="nis smail sendmail exim ssh netbase"
@@ -273,7 +268,7 @@ then
 	    check="$check courier-authdaemon mysql-server spamassassin"
 	    check="$check apache apache-ssl apache-perl apache2-common"
 	    check="$check proftpd proftpd-ldap proftpd-mysql proftpd-pgsql"
-	    check="$check dovecot-common cucipop rsync samba saslauthd"
+	    check="$check dovecot-common cucipop rsync samba"
 	    # Only get the ones that are installed, and configured
 	    check=$(dpkg -s $check 2> /dev/null | egrep '^Package:|^Status:' | awk '{if ($1 ~ /^Package:/) { package=$2 } else if ($0 ~ /^Status: .* installed$/) { print package }}')
 	    # apache2 ships its init script in apache2-common, but the
@@ -290,11 +285,10 @@ then
 	    # intentional to not replace lprng.
 	    check=$(echo $check | sed 's/lpr /lpd /g')
 	    check=$(echo $check | sed 's/lpr-ppd /lpd-ppd /g')
-	    # We have to list inetd and atd explicitly, because the packages
-	    # have different names to their init scripts
-	    check="$check inetd atd"
+	    # We have to list inetd explicitly, because the package is a
+	    # different name from it's init script
+	    check="$check inetd"
 	    rl=$(runlevel | awk '{print $2}')
-	    oldset="$@"
 	    for service in $check; do
 		if [ -f /usr/share/file-rc/rc -o -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
 		    idl=$(filerc $rl $service)
@@ -305,30 +299,27 @@ then
 		    services="$service $services"
 		fi
 	    done
-	    set -- $oldset
 	    echo "done."
 	    if [ -n "$services" ]; then
 		echo
-		echo "Name Service Switch update in the C Library: post-installation question."
-		echo
-		echo "Running services and programs that are using NSS need to be restarted,"
-		echo "otherwise they might not be able to do lookup or authentication any more"
-		echo "(for services such as ssh, this can affect your ability to login)."
+		echo "Name Service Switch has changed in the C Library: post-installation question."
+		echo "Running programs may not be able to do NSS lookups until they are"
+		echo "restarted (for services such as ssh, this can affect your ability to"
+		echo "login)."
 		echo "Note: restarting sshd/telnetd should not affect any existing connections."
 		echo
-		echo "The services detected are: "
-		echo "        $services"
+		echo "The services detected are: $services"
 		echo
-		echo "If other services have begun to fail mysteriously after this upgrade, it is"
-		echo "probably necessary to restart them too.  We recommend you to reboot your"
-		echo "machine after the upgrade to avoid the NSS related trouble."
+		echo "If other services begin to fail mysteriously after this upgrade,"
+		echo "it may be necessary to restart them too.  We strongly recommend"
+		echo "you to reboot your machine to avoid the NSS related trouble."
 		echo
 		frontend=`echo "$DEBIAN_FRONTEND" | tr '[:upper:]' '[:lower:]'`
 		if [ "$frontend" = noninteractive ]; then
 		    echo "Non-interactive mode, restarting services"
 		    answer=yes
 		else
-		    echo -n "Do you wish to restart services? [Y/n] "
+		    echo -n "Do you wish to Restart Services? [Y/n] "
 		    read answer
 		    case $answer in
 			Y*|y*) answer=yes ;;
@@ -340,7 +331,6 @@ then
 		if [ "$answer" = yes ] && [ "$services" != "" ]; then
 		    echo "Restarting services possibly affected by the upgrade:"
 		    failed=""
-		    oldset="$@"
 		    for service in $services; do
 			if [ -f /usr/share/file-rc/rc -o -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
 			    idl=$(filerc $rl $service)
@@ -358,7 +348,6 @@ then
 			    failed="$service $failed"
 			fi
 		    done
-		    set -- $oldset
 		    echo
 		    if [ -n "$failed" ]; then
 			# Ruh roh, George
@@ -378,22 +367,54 @@ then
 		    echo
 		fi
 	    fi
-	fi # end upgrading and $preversion lt 2.3.5-1
+	fi # end upgrading and $2 lt 2.1.95-1
     fi # Upgrading
-
-    # In Ubuntu, timezone work is handled inside the locales package.
-
-    # Don't run the init script in ubuntu.  Boot-time is not the place to
-    # print such messages as it is usually unattended, and besides this
-    # message will be entirely hidden under usplash.
-    update-rc.d -f glibc.sh remove >/dev/null 2>&1
+    if [ -f /etc/timezone.save ]; then
+	mv -fb /etc/timezone.save /etc/timezone
+    fi
+    if [ -f /etc/timezone ]; then
+	timezone=$(cat /etc/timezone)
+    else
+	timezone=Factory
+    fi
+    if [ "$timezone" = Factory ]; then
+	if [ -L /etc/localtime ]; then
+	    localtime_link=$(realpath /etc/localtime)
+	    if [ -f "$localtime_link" ]; then
+		link_not_dangling=true
+	    fi
+	    if [ "$link_not_dangling" = true ]; then
+		timezone=$(echo $localtime_link | sed 's%^/usr/share/zoneinfo/%%')
+	    fi
+	fi
+    fi
+    if [ -f /usr/share/zoneinfo/$timezone ] && [ "$timezone" != Factory ]
+    then
+#	zic -l $timezone
+	rm -f /etc/localtime && \
+	ln -sf /usr/share/zoneinfo/$timezone /etc/localtime
+	zone_banner
+    # Handle problem caused by lame old tzconfig.
+    elif [ "$timezone" = "US/Pacific-New" ]
+    then
+	echo "US/Pacific" > /etc/timezone
+#	zic -l US/Pacific
+	rm -f /etc/localtime && \
+	ln -sf /usr/share/zoneinfo/US/Pacific /etc/localtime
+	zone_banner
+    else
+	set_timezone
+    fi
+    if [ "$(date +%Z)" = "/etc/localtime" ]; then
+	set_timezone
+    fi
 #    # DO NOT FOLLOW THIS EXAMPLE IN OTHER PACKAGES
-#     updatercd glibc.sh start 01 S .
-#     if [ -x /usr/sbin/invoke-rc.d ]; then
-#	invoke-rc.d glibc.sh start
-#     else
-#	/etc/init.d/glibc.sh 2>/dev/null || true
-#     fi
+#    updatercd mountkernfs start 35 S .
+#    if [ -x /usr/sbin/invoke-rc.d ]; then
+#	invoke-rc.d mountkernfs start
+#    else
+#	/etc/init.d/mountkernfs 2>/dev/null || true
+#    fi
 fi
 
 if [ "`uname -s`" = Linux ]; then

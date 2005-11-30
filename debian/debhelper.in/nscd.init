@@ -33,7 +33,6 @@ case "$1" in
 		fi
 	done
         echo -n "Starting Name Service Cache Daemon: nscd"
-	install -o root -g root -m 755 -d /var/run/nscd
 	start-stop-daemon --start --quiet --exec /usr/sbin/nscd -- $secure
 	RETVAL=$?
 	echo "."
@@ -57,19 +56,8 @@ case "$1" in
     restart)
 	$0 force-reload
 	;;
-    status)
-	echo -n "Status of $(basename $0) service: "
-	if pidof /usr/sbin/nscd > /dev/null ; then
-	    echo "running."
-	    RETVAL=0
-	else
-	    echo "not running."
-	    RETVAL=3
-	fi
-	;;
     *)
-	echo "Usage: /etc/init.d/nscd {start|stop|reload|force-reload|restart|status}"
-	RETVAL=1
+	echo "Usage: /etc/init.d/nscd {start|stop|reload|force-reload|restart}"
 	;;
 esac
 exit $RETVAL

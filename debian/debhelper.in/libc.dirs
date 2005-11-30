@@ -1,3 +1,1 @@
-sys
-etc/init.d
-usr/share/zoneinfo
+/sys

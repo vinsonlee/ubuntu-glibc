@@ -1,6 +1,6 @@
 Package: libc1
 Architecture: freebsd-i386
-Section: libs
+Section: base
 Priority: required
 Provides: ${locale:Depends}
 Description: GNU C Library: Shared libraries and Timezone data

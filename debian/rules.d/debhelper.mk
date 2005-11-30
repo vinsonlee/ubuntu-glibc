@@ -24,7 +24,7 @@ $(stamp)binaryinst_zoneinfo-udeb:: $(stamp)debhelper
 	chmod 644 debian/zoneinfo-udeb/usr/share/zoneinfo/list.tab
 
 # Some per-package extra files to install.
-define $(libc)_extra_debhelper_pkg_install
+define $(libc)_extra_pkg_install
 	install --mode=0644 $(DEB_SRCDIR)/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/changelog
 	install --mode=0644 $(DEB_SRCDIR)/linuxthreads/README debian/$(curpass)/usr/share/doc/$(curpass)/README.linuxthreads
 	install --mode=0644 $(DEB_SRCDIR)/linuxthreads/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/ChangeLog.linuxthreads
@@ -33,21 +33,17 @@ define $(libc)_extra_debhelper_pkg_install
 	  install --mode=0644 $(DEB_SRCDIR)/nptl/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/ChangeLog.nptl; \
 	  ;; \
 	esac
-	sed -e "/KERNEL_VERSION_CHECK/r debian/script.in/kernelcheck.sh" \
-		debian/local/etc_init.d/glibc.sh | \
-		sed -e "s/EXIT_CHECK/sleep 5/" > debian/glibc.sh.generated
-	install --mode=0755 debian/glibc.sh.generated debian/$(curpass)/etc/init.d/glibc.sh
 	# dh_installmanpages thinks that .so is a language.
 	install --mode=0644 debian/local/manpages/ld.so.8 debian/$(curpass)/usr/share/man/man8/ld.so.8
 
 	install --mode=0644 debian/FAQ debian/$(curpass)/usr/share/doc/$(curpass)/README.Debian
 endef
 
-define locales_extra_debhelper_pkg_install
+define locales_extra_pkg_install
 	install --mode=0644 $(DEB_SRCDIR)/localedata/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/changelog
 endef
 
-define glibc-doc_extra_debhelper_pkg_install
+define glibc-doc_extra_pkg_install
 	install --mode=0644 $(DEB_SRCDIR)/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/changelog
 	install --mode=0644 $(DEB_SRCDIR)/linuxthreads/FAQ.html debian/$(curpass)/usr/share/doc/$(curpass)/FAQ.linuxthreads.html
 endef
@@ -58,8 +54,8 @@ $(patsubst %,binaryinst_%,$(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGULAR_PACKA
 
 # Make sure the debug packages are built last, since other packages may add
 # files to them.
-debug-packages = $(filter %-dbg,$(DEB_ARCH_REGULAR_PACKAGES))
-non-debug-packages = $(filter-out %-dbg,$(DEB_ARCH_REGULAR_PACKAGES))
+debug-packages = $(filter %-dbg,$(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGULAR_PACKAGES))
+non-debug-packages = $(filter-out %-dbg,$(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGULAR_PACKAGES))
 $(patsubst %,$(stamp)binaryinst_%,$(debug-packages)):: $(patsubst %,$(stamp)binaryinst_%,$(non-debug-packages))
 
 $(patsubst %,$(stamp)binaryinst_%,$(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGULAR_PACKAGES)):: $(stamp)debhelper
@@ -71,13 +67,10 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGUL
 	dh_installinfo -p$(curpass)
 	dh_installdebconf -p$(curpass)
 	dh_installchangelogs -p$(curpass)
-	dh_installinit -p$(curpass) $(DEB_INIT_PARAMS_$(curpass))
+	dh_installinit -p$(curpass)
 	dh_installdocs -p$(curpass) 
 	dh_link -p$(curpass)
 
-	# extra_debhelper_pkg_install is used for debhelper.mk only.
-	# when you want to install extra packages, use extra_pkg_install.
-	$(call xx,extra_debhelper_pkg_install)
 	$(call xx,extra_pkg_install)
 
 ifeq ($(filter nostrip,$(DEB_BUILD_OPTIONS)),)
@@ -119,15 +112,8 @@ endif
 	dh_compress -p$(curpass)
 	dh_fixperms -p$(curpass) -Xpt_chown
 	# Use this instead of -X to dh_fixperms so that we can use
-	# an unescaped regular expression.  ld.so must be executable;
-	# libc.so and NPTL's libpthread.so print useful version
-	# information when executed.
-	# FIXME: LinuxThread's libpthread.so doesn't.  It would be good
-	# to either fix that, or use a more robust method than searching
-	# for /tls/ in the path to identify NPTL.
-	find debian/$(curpass) -type f \( -regex '.*lib.*/ld.*so.*' \
-		-o -regex '.*lib.*/tls/.*libpthread.*so.*' \
-		-o -regex '.*lib.*/libc[.-].*so.*' \) \
+	# an unescaped regular expression.
+	find debian/$(curpass) -type f -regex '.*lib.*/ld.*so.*' \
 		-exec chmod a+x '{}' ';'
 	dh_makeshlibs -p$(curpass) -V "$(call xx,shlib_dep)"
 
@@ -148,9 +134,7 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_UDEB_PACKAGES)):: $(stamp)debhelper
 	dh_strip -p$(curpass)
 	dh_compress -p$(curpass)
 	dh_fixperms -p$(curpass)
-	find debian/$(curpass) -type f \( -regex '.*lib.*/ld.*so.*' \
-		-o -regex '.*lib.*/tls/.*libpthread.*so.*' \
-		-o -regex '.*lib.*/libc[.-].*so.*' \) \
+	find debian/$(curpass) -type f -regex '.*lib.*/ld.*so.*' \
 		-exec chmod a+x '{}' ';'
 	# dh_makeshlibs -p$(curpass) -V "$(call xx,shlib_dep)"
 	dh_installdeb -p$(curpass)
@@ -184,12 +168,12 @@ $(stamp)debhelper:
 	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#" -i $$z; \
 	  sed -e "s#LIBC#$(libc)#" -i $$z; \
 	  sed -e "s#CURRENT_VER#$(DEB_VERSION)#" -i $$z; \
-	  sed -e "/KERNEL_VERSION_CHECK/r debian/script.in/kernelcheck.sh" -i $$z; \
-	  sed -e "s#EXIT_CHECK##" -i $$z; \
+	  case $$z in \
+	    *.install) sed -e "s/^#.*//" -i $$z ;; \
+	  esac; \
 	done
 
 	# Hack: special-case passes whose destdir is 64 (i.e. /lib64)
-	# or 32 (i.e. /lib32)
 	# to use a different install template, which includes more
 	# libraries.  Also generate a -dev.  Non-64 libraries get scripts
 	# to temporarily disable hwcap.  This needs some cleaning up.
@@ -198,7 +182,7 @@ $(stamp)debhelper:
 	  destdir=$$1; \
 	  shift; \
 	  z=debian/$(libc)-$$x.install; \
-	  if [ $$destdir = 64 ] || [ $$destdir = 32 ]; then \
+	  if test $$destdir = 64; then \
 	    cp debian/debhelper.in/libc-alt.install $$z; \
 	    zd=debian/$(libc)-dev-$$x.install; \
 	    cp debian/debhelper.in/libc-alt-dev.install $$zd; \
@@ -206,6 +190,7 @@ $(stamp)debhelper:
 	    sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#" -i $$zd; \
 	    sed -e "s#LIBC#$(libc)#" -i $$z; \
 	    sed -e "s#DESTLIBDIR#$$destdir#" -i $$zd; \
+	    sed -e "s/^#.*//" -i $$zd; \
 	  else \
 	    cp debian/debhelper.in/libc-otherbuild.install $$z; \
 	    cp debian/debhelper.in/libc-otherbuild.preinst debian/$(libc)-$$x.preinst ; \
@@ -220,6 +205,7 @@ $(stamp)debhelper:
 	  sed -e "s#TMPDIR#debian/tmp-$$x#" -i $$z; \
 	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#" -i $$z; \
 	  sed -e "s#DESTLIBDIR#$$destdir#" -i $$z; \
+	  sed -e "s/^#.*//" -i $$z; \
 	done
 
 	# We use libc-otherbuild for this, since it's just a special case of
@@ -233,6 +219,9 @@ $(stamp)debhelper:
 	  sed -e "s#TMPDIR#debian/tmp-$$x#" -i $$z; \
 	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#" -i $$z; \
 	  sed -e "s#DESTLIBDIR#/tls#" -i $$z; \
+	  case $$z in \
+	    *.install) sed -e "s/^#.*//" -i $$z ;; \
+	  esac; \
 	done
 
 	# Substitute __SUPPORTED_LOCALES__.
@@ -245,6 +234,8 @@ $(stamp)debhelper:
 	  cp tmp.substvars debian/$$pkg.substvars; \
 	done
 	rm -f tmp.substvars
+
+	$(call extra_debhelper)
 
 	touch $(stamp)debhelper
 
@@ -267,6 +258,5 @@ debhelper-clean:
 	rm -f debian/*.dirs
 	rm -f debian/*.docs
 	rm -f debian/*.doc-base
-	rm -f debian/*.generated
 
 	rm -f $(stamp)binaryinst*

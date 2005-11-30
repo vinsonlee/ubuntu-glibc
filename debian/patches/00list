@@ -1,64 +1,83 @@
+locale-de_CH
+locale-ru_RU
+locale-es_AR
+locale-eo_EO
+locale-no_NO
+#locales-supported	# g: untilsarge
+glibc-i686-timing
+glibc-sparc-timing
+makeconfig
+ldconfig
+ldd
+fhs-linux-paths
+glibc22-nss-upgrade
+glibc22-m68k-compat
+glibc22-m68k-fpic
+sparc64-fixups
+glibc22-ttyname-devfs
+powerpc-sysconf
+arm-no-hwcap
+librt-mips
+#glibc23-ctype-compat	# g: untilsarge
+glibc23-hppa-Rminkernel
+#glibc23-function-compat	# g: untilsarge
+#glibc23-errno	# g: untilsarge
+glibc23-asserth-decls
+#alpha-pic	# g: suspended
+glibc23-cmov
+libgcc-compat-all
+libgcc-compat-other
+#hurd-enable-ldconfig	# g: later
+#30_glibc232-base	# g: suspended
+sparcv8-target
+50_glibc232-arm-dwarf2-buildfix
+50_glibc232-m68k-dwarf2-buildfix
+#arm-output-format	# g: suspended
+arm-ioperm
+#glibc-make-check-perms	# g: suspended
+glibc-2.3.2-ldconfig-tls
+glibc23-mips-msq
+ldso-disable-hwcap
+glibc23-version-sanity
+glibc23-sse-oldkernel
+#glibc23-errno-hack	# g: untilsarge
+90_glibc233_tcsetaddr
+#mips-asm-unistd	# g: suspended
+localedef-fix-trampoline
+#translation-fr - translation maintainer currently reject this patch 2004-04-21
 #amd64-lib - DO NOT DELETE.  This is applied selectively for amd64
-## Going to try to put some order to these patches.
-## Trying this:
-## {local|branch|cvs|submitted}-{ARCH|all}-{"Description}"
-## Branch means commited in the upstream branch.
-## CVS means committed in the upstream trunk.
-## Submitted means we're hopeful that it will go in.
-## Local means that it's not going upstream.
-## The goal is to get all patches to "Branch".  Patches should be split by
-## arch so that it's easy to send just the relevant bits to various
-## arch maintainers if needed.
-## Branch:
-## CVS:
-cvs-all-tlscrash
-cvs-all-strxfrm
-cvs-sparc-datastart
-cvs-mash-rlimit-rtprio
-cvs-all-regcomp
-## Submitted:
-submitted-hppa-drop-utimes
-submitted-hppa-configure
-submitted-hppa-linuxthreads
-submitted-hppa-sysdeps
-submitted-hppa-iitlbp
-submitted-hppa-fenv-align
-submitted-hppa-fpu
-submitted-nis-netgrp
-## Local:
-local-i386-i686biarch
-local-sparc-v9biarch
-local-all-makeconfig
-local-all-ldconfig
-local-all-ldd
-local-all-linuxfhs
-local-all-nssupgrade
-#local-sparc-sparc64biarch
-local-all-ttyname-devfs
-local-powerpc-sysconf
-local-all-asserth-decls
-local-i386-cmov-hwcap
-local-i386-libgcc-compat
-local-sparc-libgcc-compat
-local-ia64-libgcc-compat
-local-all-ldconfig-tls
-local-all-disable-hwcap
-local-all-versioncheck
-local-all-tcsetaddr-lsb
-#local-all-localedef-fix-trampoline
-local-i386-linuxthreads-sizefix
-local-all-altlocaledir
-local-all-multiarch
-local-i386-x86_64biarch
-local-all-stringh
-local-all-linuxtypesh
-local-mash-newbinutils
-#local-all-belocs-locale-update
-#local-all-belocs-test
-local-all-dynamic-resolvconf
-local-sparc-niagara
-local-sparc-clone
-local-sparc-atomics
-eh-frame-terminator
-local-all-getcwd
-locale-C
+locale-eu_FR
+#locale-sr_CS - sr_YU is needed to be disabled after sarge.
+glibc232-m68k-reloc
+#glibc232-globfree-clear	# g: suspended
+hppa-drop-utimes
+glibc234-alpha-xstat
+#glibc234-hppa-linesep
+#glibc234-hppa-full-nptl-2004-12-20
+#50_glibc232-hppa-full-nptl-2003-10-22	# g: lock initializer part is not applied, cheated by glibc234-hppa-remove-mallocdef.dpatch.
+#glibc234-hppa-remove-mallocdef
+linuxthreads-sizefix
+glibc232-tls-crashfix
+glibc23-mips-lazy-eval
+glibc-235-hppa-configure
+glibc-235-hppa-lt
+glibc-235-hppa-sysdeps
+ubuntu-altlocaledir
+ubuntu-multiarch
+ubuntu-9743-tr_TR
+glibc-235-ia64-binutils
+glibc-235-ppc-gcc34
+glibc-235-sparc-datastart
+i386-amd64-biarch
+ast_ES
+ubuntu-12864
+ubuntu-10245
+fr_FR
+locale-sr_CS
+ku_TR
+ubuntu-18157
+ubuntu-new-binutils
+hppa-iitlbp
+hppa-fenv-align
+belocs-locale-update
+belocs-test
