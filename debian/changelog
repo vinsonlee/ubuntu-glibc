@@ -1,3 +1,93 @@
+glibc (2.3.5-1ubuntu17) dapper; urgency=low
+
+  "Democracy is the process by which people choose the man who'll
+   get the blame."
+   - Bertrand Russell 
+
+  * Jeff Bailey <jbailey@ubuntu.com>
+
+    * Fix FTBFS on sparc64
+      - debian/sysdeps/sparc.mk: Add --without-tls --without-__thread 
+        for sparc64.
+
+    * Use 8-byte aligned buffers for doubleword transfer on HPPA
+      - debian/patches/hppa-fenv-align.dpatch: New file.
+
+    * Implement glibc part of https://wiki.ubuntu.com//LocalesThatDontSuck
+
+    * Disable locales package
+      - debian/control.in/main: Remove mention of locales package.
+      - debian/rules (DEB_INDEP_REGULAR_PACKAGES): Don't define locales
+      - debian/control: Regenerate.
+
+    * Update locales binaries from Belocs locales packages.
+      - debian/patches/belocs-locale-update.dpatch: New file.
+      - debian/patches/belocs-test.dpatch: New file.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Wed, 30 Nov 2005 10:41:50 -0500
+
+glibc (2.3.5-1ubuntu16) dapper; urgency=low
+
+  "A life without adventure is likely to be unsatisfying, but a life in 
+   which adventure is allowed to take whatever form it will is sure to 
+   be short."
+   - Bertrand Russell
+
+  * Jeff Bailey <jbailey@ubuntu.com>
+
+    * Fix symbol problems on sparc32/sparc64.
+      - debian/patches/ubuntu-new-binutils.dpatch: Same patch as needed
+        for powerpc.
+
+    * Fix stricted iitlbp handling on hppa:
+      - debian/patches/hppa-iitlbp.dpatch: New file.
+      - debian/patches/00list: Update.
+
+    * Don't do parallel on hppa, it gets sad.
+      - debian/sysdeps/hppa.mk: Force NJOBS to be 1.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Thu, 24 Nov 2005 16:47:32 -0500
+
+glibc (2.3.5-1ubuntu15) dapper; urgency=low
+
+  * Jeff Bailey <jbailey@ubuntu.com>
+
+    * Fix symbol problems on ia64.
+      - debian/patches/ubuntu-new-binutils.dpatch: Backport HJ Lu's
+        patch from CVS head for libm symbols.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Wed, 23 Nov 2005 09:19:22 -0500
+
+glibc (2.3.5-1ubuntu14) dapper; urgency=low
+
+  * Jeff Bailey <jbailey@ubuntu.com>
+
+    * Restore accidentally dropped amd64 patch.
+      - debian/patches/ubuntu-new-binutils.dpatch: Drop versioned
+        sem_trywait for amd64.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Tue, 22 Nov 2005 13:24:30 +0000
+
+glibc (2.3.5-1ubuntu13) dapper; urgency=low
+
+  The "Where has all my time gone?" release.
+
+  * Jeff Bailey <jbailey@ubuntu.com
+
+    * sys/kd.h shouldn't remove the ability to use kernel headers.
+      - debian/patches/ubuntu-18157.dpatch
+      - debian/patches/00list: Update
+      Thanks to Daniel Stone for this patch!
+
+    * New binutils requires patch to deal with emitted symbols
+      - debian/patches/ubuntu-new-binutils.dpatch
+      - debian/patches/00list: Update
+
+    * Do not depend on libdb1-compat
+      - debian/sysdeps/depflags.pl: Do not depend on libdb1-compat.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Wed, 16 Nov 2005 21:39:17 -0500
+
 glibc (2.3.5-1ubuntu12) breezy; urgency=low
 
   * Jeff Bailey <jbailey@ubuntu.com>
