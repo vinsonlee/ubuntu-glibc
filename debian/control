@@ -19,24 +19,6 @@ Description: GNU C Library: Documentation
  well as man pages for libpthread functions. Also included is the complete
  GNU C Library ChangeLog.
 
-Package: locales
-Architecture: all
-Section: base
-Priority: standard
-Provides: i18ndata
-Depends: ${locale:Depends}, debconf (>= 0.2.26)
-Conflicts: localebin, wg15-locale, i18ndata, locale-ja, locale-ko, locale-vi, locale-zh
-Replaces: localebin, wg15-locale, libc6-bin, i18ndata, glibc2, locale-ja, locale-ko, locale-vi, locale-zh
-Description: GNU C Library: National Language (locale) data [support]
- Machine-readable data files, shared objects and programs used by the
- C library for localization (l10n) and internationalization (i18n) support.
- .
- This package contains the libc.mo i18n files, plus tools to generate
- locale definitions from source files (included in this package). It allows
- you to customize which definitions actually get generated. This is a
- savings over how this package used to be, where all locales were generated
- by default. This created a package that unpacked to an excess of 30 megs.
-
 Package: nscd
 Architecture: alpha amd64 arm i386 m68k mips mipsel powerpc sparc ia64 hppa s390 sh3 sh4 sh3eb sh4eb freebsd-i386
 Section: admin
