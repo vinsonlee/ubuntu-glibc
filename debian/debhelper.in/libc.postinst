@@ -2,6 +2,9 @@
 set -e
 export LC_ALL=C
 
+type=$1
+preversion=$2
+
 package_name()
 {
     echo LIBC
@@ -168,7 +171,7 @@ for suffix in -dbg -dev -pic -prof; do
     fi
 done
 
-if [ "$1" = "configure" ]
+if [ "$type" = "configure" ]
 then
     # Handle upgrades for libdb.so.3. We do this before calling ldconfig,
     # since it will create a symlink for us. Just move everything over. We
@@ -193,7 +196,7 @@ then
 	# it's first time to install ld.so.hwcappkgs aware packages.  We record
 	# all current hwcap package status.
 	if [ ! -f /etc/ld.so.hwcappkgs ]; then
-	    case $(dpkg --print-installation-architecture) in
+	    case $(dpkg --print-architecture) in
 		i386)
 		    hwcappkgs="libc6 libc6-i686"
 		    ;;
@@ -254,11 +257,11 @@ then
 	fi
     fi
 
-    if [ ! -z $2 ]; then
+    if [ ! -z $preversion ]; then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions $2 lt 2.3.5-1; then
+	if dpkg --compare-versions $preversion lt 2.3.5-1; then
 	    echo -n "Checking for services that may need to be restarted..."
 
 	    check="nis smail sendmail exim ssh netbase"
@@ -268,7 +271,7 @@ then
 	    check="$check courier-authdaemon mysql-server spamassassin"
 	    check="$check apache apache-ssl apache-perl apache2-common"
 	    check="$check proftpd proftpd-ldap proftpd-mysql proftpd-pgsql"
-	    check="$check dovecot-common cucipop rsync samba"
+	    check="$check dovecot-common cucipop rsync samba saslauthd"
 	    # Only get the ones that are installed, and configured
 	    check=$(dpkg -s $check 2> /dev/null | egrep '^Package:|^Status:' | awk '{if ($1 ~ /^Package:/) { package=$2 } else if ($0 ~ /^Status: .* installed$/) { print package }}')
 	    # apache2 ships its init script in apache2-common, but the
@@ -285,9 +288,9 @@ then
 	    # intentional to not replace lprng.
 	    check=$(echo $check | sed 's/lpr /lpd /g')
 	    check=$(echo $check | sed 's/lpr-ppd /lpd-ppd /g')
-	    # We have to list inetd explicitly, because the package is a
-	    # different name from it's init script
-	    check="$check inetd"
+	    # We have to list inetd and atd explicitly, because the packages
+	    # have different names to their init scripts
+	    check="$check inetd atd"
 	    rl=$(runlevel | awk '{print $2}')
 	    for service in $check; do
 		if [ -f /usr/share/file-rc/rc -o -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
@@ -302,24 +305,26 @@ then
 	    echo "done."
 	    if [ -n "$services" ]; then
 		echo
-		echo "Name Service Switch has changed in the C Library: post-installation question."
-		echo "Running programs may not be able to do NSS lookups until they are"
-		echo "restarted (for services such as ssh, this can affect your ability to"
-		echo "login)."
+		echo "Name Service Switch update in the C Library: post-installation question."
+		echo
+		echo "Running services and programs that are using NSS need to be restarted,"
+		echo "otherwise they might not be able to do lookup or authentication any more"
+		echo "(for services such as ssh, this can affect your ability to login)."
 		echo "Note: restarting sshd/telnetd should not affect any existing connections."
 		echo
-		echo "The services detected are: $services"
+		echo "The services detected are: "
+		echo "        $services"
 		echo
-		echo "If other services begin to fail mysteriously after this upgrade,"
-		echo "it may be necessary to restart them too.  We strongly recommend"
-		echo "you to reboot your machine to avoid the NSS related trouble."
+		echo "If other services have begun to fail mysteriously after this upgrade, it is"
+		echo "probably necessary to restart them too.  We recommend you to reboot your"
+		echo "machine after the upgrade to avoid the NSS related trouble."
 		echo
 		frontend=`echo "$DEBIAN_FRONTEND" | tr '[:upper:]' '[:lower:]'`
 		if [ "$frontend" = noninteractive ]; then
 		    echo "Non-interactive mode, restarting services"
 		    answer=yes
 		else
-		    echo -n "Do you wish to Restart Services? [Y/n] "
+		    echo -n "Do you wish to restart services? [Y/n] "
 		    read answer
 		    case $answer in
 			Y*|y*) answer=yes ;;
@@ -367,7 +372,7 @@ then
 		    echo
 		fi
 	    fi
-	fi # end upgrading and $2 lt 2.1.95-1
+	fi # end upgrading and $preversion lt 2.3.5-1
     fi # Upgrading
     if [ -f /etc/timezone.save ]; then
 	mv -fb /etc/timezone.save /etc/timezone
@@ -409,12 +414,12 @@ then
 	set_timezone
     fi
 #    # DO NOT FOLLOW THIS EXAMPLE IN OTHER PACKAGES
-#    updatercd mountkernfs start 35 S .
-#    if [ -x /usr/sbin/invoke-rc.d ]; then
-#	invoke-rc.d mountkernfs start
-#    else
-#	/etc/init.d/mountkernfs 2>/dev/null || true
-#    fi
+     updatercd glibc.sh start 01 S .
+     if [ -x /usr/sbin/invoke-rc.d ]; then
+	invoke-rc.d glibc.sh start
+     else
+	/etc/init.d/glibc.sh 2>/dev/null || true
+     fi
 fi
 
 if [ "`uname -s`" = Linux ]; then

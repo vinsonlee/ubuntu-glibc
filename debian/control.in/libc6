@@ -1,6 +1,6 @@
 Package: libc6
-Architecture: amd64 arm i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
-Section: base
+Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Section: libs
 Priority: required
 Provides: ${locale:Depends}
 Description: GNU C Library: Shared libraries and Timezone data
@@ -10,7 +10,7 @@ Description: GNU C Library: Shared libraries and Timezone data
  Timezone data is also included.
 
 Package: libc6-dev
-Architecture: amd64 arm i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libdevel
 Priority: standard
 Depends: libc6 (= ${Source-Version})
@@ -20,7 +20,7 @@ Description: GNU C Library: Development Libraries and Header Files
  and link programs which use the standard C library.
 
 Package: libc6-dbg
-Architecture: amd64 arm i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libdevel
 Priority: extra
 Provides: libc-dbg
@@ -34,7 +34,7 @@ Description: GNU C Library: Libraries with debugging symbols
  Most people will not need this package.
 
 Package: libc6-prof
-Architecture: amd64 arm i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libdevel
 Priority: extra
 Depends: libc6 (= ${Source-Version})
@@ -43,7 +43,7 @@ Description: GNU C Library: Profiling Libraries
  with gprof.
 
 Package: libc6-pic
-Architecture: amd64 arm i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libdevel
 Priority: optional
 Conflicts: libc-pic
@@ -58,7 +58,7 @@ Description: GNU C Library: PIC archive library
 
 Package: libc6-udeb
 XC-Package-Type: udeb
-Architecture: amd64 arm i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: debian-installer
 Priority: extra
 Provides: libc6, libc-udeb, ${locale:Depends}
