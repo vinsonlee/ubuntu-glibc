@@ -1,0 +1,45 @@
+#! /bin/sh -e
+
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: Fix _LINUX_TYPES_H protection in sys/kd.h.
+# DP: Related bugs: Ubuntu#18157
+# DP: Dpatch author: Daniel Stone
+# DP: Patch author: Daniel Stone
+# DP: Upstream status: Not submitted
+# DP: Status Details:
+# DP: Date: 2005-09-01
+
+PATCHLEVEL=1
+
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p$PATCHLEVEL < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p$PATCHLEVEL < $0;;
+    *)
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+esac
+exit 0
+
+# append the patch here and adjust the -p? flag in the patch calls.
+
+--- glibc-2.3.5/sysdeps/unix/sysv/linux/sys/kd.h.orig	2005-11-07 11:35:09.000000000 +1100
++++ glibc-2.3.5/sysdeps/unix/sysv/linux/sys/kd.h	2005-11-07 11:37:16.000000000 +1100
+@@ -22,8 +22,14 @@
+ /* Make sure the <linux/types.h> header is not loaded.  */
+ #ifndef _LINUX_TYPES_H
+ # define _LINUX_TYPES_H	1
++# define __undef_LINUX_TYPES_H 1
+ #endif
+ 
+ #include <linux/kd.h>
+ 
++#ifdef __undef_LINUX_TYPES_H
++# undef _LINUX_TYPES_H
++# undef __undef_LINUX_TYPES_H
++#endif
++
+ #endif	/* sys/kd.h */

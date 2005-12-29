@@ -1,0 +1,48 @@
+#! /bin/sh -e
+
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: @DESCRIPTION@
+# DP: Related bugs: 
+# DP: Dpatch author: 
+# DP: Patch author: 
+# DP: Upstream status: [In CVS | Debian-Specific | Pending | Not submitted ]
+# DP: Status Details: 
+# DP: Date: @DATE@
+
+PATCHLEVEL=1
+
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p$PATCHLEVEL < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p$PATCHLEVEL < $0;;
+    *)
+	echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+	exit 1
+esac
+exit 0
+
+# append the patch here and adjust the -p? flag in the patch calls.
+diff -ru glibc-2.3.5.old/sysdeps/hppa/configure glibc-2.3.5/sysdeps/hppa/configure
+--- glibc-2.3.5.old/sysdeps/hppa/configure	2005-04-06 20:12:00.000000000 -0600
++++ glibc-2.3.5/sysdeps/hppa/configure	2005-05-16 13:47:53.718362881 -0600
+@@ -1,6 +1,5 @@
+ # This file is generated from configure.in by Autoconf.  DO NOT EDIT!
+ 
+-hppa*linux*)
+ echo "$as_me:$LINENO: checking for assembler line separator" >&5
+ echo $ECHO_N "checking for assembler line separator... $ECHO_C" >&6
+ if test "${libc_cv_asm_line_sep+set}" = set; then
+diff -ru glibc-2.3.5.old/sysdeps/hppa/configure.in glibc-2.3.5/sysdeps/hppa/configure.in
+--- glibc-2.3.5.old/sysdeps/hppa/configure.in	2004-10-25 19:35:53.000000000 -0600
++++ glibc-2.3.5/sysdeps/hppa/configure.in	2005-05-16 13:47:45.192416212 -0600
+@@ -2,7 +2,6 @@
+ 
+ dnl The standard hppa assembler uses `;' to start comments and `!'
+ dnl as a line separator.
+-hppa*linux*)
+ AC_CACHE_CHECK(for assembler line separator,
+ 	       libc_cv_asm_line_sep, [dnl
+ cat > conftest.s <<EOF
