@@ -1,5 +1,5 @@
-GLIBC_PASSES += nptl i686 amd64
-DEB_ARCH_REGULAR_PACKAGES += libc6-i686 libc6-amd64 libc6-dev-amd64
+GLIBC_PASSES += nptl i686
+DEB_ARCH_REGULAR_PACKAGES += libc6-i686
 
 # NPTL requires at least i486 assembly.  We don't need to take
 # special measures for i386 systems, since Debian kernel images now
@@ -21,18 +21,25 @@ i686_extra_config_options = $(extra_config_options) --disable-profile --with-tls
 
 libc_extra_config_options = $(extra_config_options) --with-tls --without-__thread
 
-amd64_configure_target=x86_64-linux
-amd64_CC = $(BUILD_CC) -m64 -march=x86-64 -mtune=x86-64
-amd64_extra_cflags = -O3
-amd64_extra_config_options = $(extra_config_options) --disable-profile --includedir=/usr/include/x86_64-linux-gnu
-amd64_add-ons = nptl $(add-ons)
+# build 64-bit (amd64) alternative library
+GLIBC_PASSES += amd64
+DEB_ARCH_REGULAR_PACKAGES += libc6-amd64 libc6-dev-amd64
 libc6-amd64_shlib_dep = libc6-amd64 (>= $(shlib_dep_ver))
+
+amd64_configure_target = x86_64-linux
+amd64_CC = $(BUILD_CC) -m64 -march=x86-64 -mtune=x86-64
+amd64_add-ons = nptl $(add-ons)
+amd64_extra_cflags = -O3
+amd64_extra_config_options = $(extra_config_options) --disable-profile \
+	--includedir=/usr/include/x86_64-linux-gnu
 amd64_LIBDIR = 64
+amd64_MIN_KERNEL_SUPPORTED = 2.6.0
 
 define amd64_extra_install
 cp debian/tmp-amd64/usr/bin/ldd debian/tmp-libc/usr/bin
 endef
 
-define extra_debhelper
-echo debian/tmp-amd64/usr/include/x86_64-linux-gnu usr/include >>debian/libc6-dev-amd64.install
+define libc6-dev-amd64_extra_pkg_install
+dh_install -plibc6-dev-amd64 debian/tmp-amd64/usr/include/x86_64-linux-gnu \
+	usr/include
 endef
