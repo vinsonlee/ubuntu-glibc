@@ -23,7 +23,7 @@ are building all of the optimized libraries for the IA32 family, allow
 
 For Linux, you will need at least the kernel headers for the specific
 kernel version required for your machine's architecture. These are
-specified in the `debian/sysdeps/linux-gnu.mk' file, and can be overridden
+specified in the `debian/sysdeps/linux.mk' file, and can be overridden
 by exporting the environment variable LINUX_SOURCE set to the path to
 the desired kernel.
 

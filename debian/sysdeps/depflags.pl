@@ -28,9 +28,6 @@ if ($DEB_HOST_GNU_SYSTEM eq "gnu") {
 }
 if ($DEB_HOST_GNU_SYSTEM eq "linux-gnu") {
     push @{$libc_c{'Suggests'}}, 'locales';
-    #db1 compat libraries from libc 2.0/2.1, we need to depend on them
-    #until after sarge is released
-    #push @{$libc_c{'Depends'}}, "libdb1-compat";
     push @{$libc_dev_c{'Recommends'}}, 'c-compiler';
     push @{$libc_dev_c{'Replaces'}}, ('man-db (<= 2.3.10-41)', 'gettext (<= 0.10.26-1)',
 		'ppp (<= 2.2.0f-24)', 'libgdbmg1-dev (<= 1.7.3-24)');
@@ -54,7 +51,7 @@ push @{$libc_dev_c{'Conflicts'}}, 'libstdc++2.10-dev (<< 1:2.95.2-15)';
 # 2.2.2+CVS requires a newer gcc. For non-i386, we just worry about the
 # weak-sym patch, since on i386 we need an even newer one because of the
 # pic-kludge that breaks libc_nonshared.a inclusion.
-if ($DEB_HOST_GNU_TYPE =~ m/^i386-linux-gnu$/) {
+if ($DEB_HOST_GNU_TYPE =~ m/^i486-linux-gnu$/) {
     push @{$libc_dev_c{'Conflicts'}}, 'gcc-2.95 (<< 1:2.95.3-9)';
 } else {
     push @{$libc_dev_c{'Conflicts'}}, 'gcc-2.95 (<< 1:2.95.3-8)';
@@ -75,12 +72,12 @@ push @{$libc_c{'Conflicts'}}, ('timezone', 'timezones', 'gconv-modules',
 	'libtricks', "${libc}-doc");
 
 # conflicts from libc5 days
-if ($DEB_HOST_GNU_TYPE =~ m/^(i386|m68k)-linux-gnu$/) {
+if ($DEB_HOST_GNU_TYPE =~ m/^(i486|m68k)-linux-gnu$/) {
     push @{$libc_c{'Conflicts'}}, ('libc5 (<< 5.4.33-7)', 'libpthread0 (<< 0.7-10)');
-} elsif ($DEB_HOST_GNU_TYPE eq 'sparc-linux-gnu$') {
+} elsif ($DEB_HOST_GNU_TYPE eq 'sparc-linux-gnu') {
     push @{$libc_c{'Conflicts'}}, ('libc5 (<< 5.3.12-2)', 'libpthread0 (<< 0.7-10)');
 }
-if ($DEB_HOST_GNU_TYPE =~ m/^(alpha|i386|m68k|sparc)-linux-gnu$/) {
+if ($DEB_HOST_GNU_TYPE =~ m/^(alpha|i486|m68k|sparc)-linux-gnu$/) {
     push @{$libc_dev_c{'Conflicts'}}, ('libpthread0-dev', 'libdl1-dev',
 	'libdb1-dev', 'libgdbm1-dev');
     # Add this here too, old package
@@ -89,18 +86,18 @@ if ($DEB_HOST_GNU_TYPE =~ m/^(alpha|i386|m68k|sparc)-linux-gnu$/) {
 }
 
 # Old, Pre glibc 2.1
-if ($DEB_HOST_GNU_TYPE =~ m/^(alpha|i386|m68k|sparc|powerpc|arm)-linux-gnu$/) {
+if ($DEB_HOST_GNU_TYPE =~ m/^(alpha|i486|m68k|sparc|powerpc|arm)-linux-gnu$/) {
     push @{$libc_dev_c{'Conflicts'}}, ("${libc}-dev (<< 2.0.110-1)",
 	'locales (<< 2.1.3-5)');
 }
 
 # XXX: Not sure why this conflict is here, maybe broken c++?
-if ($DEB_HOST_GNU_TYPE =~ m/^(i386|m68k|alpha)-linux-gnu$/) {
+if ($DEB_HOST_GNU_TYPE =~ m/^(i486|m68k|alpha)-linux-gnu$/) {
     push @{$libc_c{'Conflicts'}}, ('apt (<< 0.3.0)', 'libglib1.2 (<< 1.2.1-2)');
 }
 
 # Some old c++ libs
-if ($DEB_HOST_GNU_TYPE =~ m/^(alpha|i386)-linux-gnu$/) {
+if ($DEB_HOST_GNU_TYPE =~ m/^(alpha|i486)-linux-gnu$/) {
     push @{$libc_dev_c{'Conflicts'}}, 'libstdc++2.9-dev';
 } elsif ($DEB_HOST_GNU_TYPE eq "powerpc-linux-gnu") {
     push @{$libc_dev_c{'Conflicts'}}, ('libstdc++2.9 (<< 2.91.58-2.1)',
@@ -140,7 +137,13 @@ if ($DEB_HOST_GNU_TYPE eq "hppa-linux-gnu") {
 push @{$libc_dev_c{'Replaces'}}, 'kerberos4kth-dev (<< 1.2.2-10)';
 
 # Replace libc-dev (<< 2.3.2.ds1-14) for fixing #239170.
-push @{$libc_c{'Replaces'}}, "${libc}-dev (<< 2.3.2.ds1-14)";
+# Replace libc-dev (<< 2.3.5-2) for fixing #280030.
+push @{$libc_dev_c{'Replaces'}}, "${libc}-prof (<< 2.3.5-2)";
+
+# Conflict old initrd-tools (<< 0.1.79) and e2fsprogs (<< 1.35-7)
+# that cannot work with new ldd.
+push @{$libc_c{'Conflicts'}}, 'initrd-tools (<< 0.1.79)';
+push @{$libc_c{'Conflicts'}}, 'e2fsprogs (<< 1.35-7)';
 
 # Make sure we only have one version of libc-dev installed
 push @{$libc_dev_c{'Provides'}}, 'libc-dev';
@@ -148,6 +151,10 @@ push @{$libc_dev_c{'Conflicts'}}, 'libc-dev';
 if ($libc ne "libc6") {
     push @{$libc_dev_c{'Provides'}}, 'libc6-dev';
 }
+
+# Conflict with broken libterm-readline-gnu-perl to avoid #326856.
+push @{$libc_c{'Conflicts'}}, 'libterm-readline-gnu-perl (<< 1.15-2)';
+
 if ($type eq "libc") {
     %pkg = %libc_c;
 } elsif ($type eq "libc_dev") {

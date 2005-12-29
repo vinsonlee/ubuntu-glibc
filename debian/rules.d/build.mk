@@ -3,6 +3,15 @@
 # This little bit of magic makes it possible:
 xx=$(if $($(curpass)_$(1)),$($(curpass)_$(1)),$($(1)))
 
+# We want to log output to a logfile but we also need to preserve the
+# return code of the command being run.
+# This little bit of magic makes it possible:
+# $(call logme, [-a] <log file>, <cmd>)
+define logme
+(exec 3>&1; exit `( ( ( $(2) ) 2>&1 3>&-; echo $$? >&4) | tee $(1) >&3) 4>&1`)
+endef
+
+
 $(patsubst %,mkbuilddir_%,$(GLIBC_PASSES)) :: mkbuilddir_% : $(stamp)mkbuilddir_%
 $(stamp)mkbuilddir_%: $(stamp)patch-stamp $(LINUX_HEADER_DIR)
 	@echo Making builddir for $(curpass)
@@ -43,23 +52,24 @@ endif
 	    echo "No.  Forcing cross-compile by setting build to $$configure_build."; \
 	  fi; \
 	fi; \
-	cd $(DEB_BUILDDIR) && \
+	$(call logme, -a $(log_build), \
+		cd $(DEB_BUILDDIR) && \
 		CC="$(call xx,CC)" \
 		CXX="$(call xx,CXX)" \
 		AUTOCONF=false \
 		$(CURDIR)/$(DEB_SRCDIR)/configure \
 		--host=$(call xx,configure_target) \
 		--build=$$configure_build --prefix=/usr --without-cvs \
+		--enable-add-ons=$(standard-add-ons)"$(call xx,add-ons)" \
 		--without-selinux \
-		--enable-add-ons="$(call xx,add-ons)" \
-		$(call xx,with_headers) $(call xx,extra_config_options) 2>&1 | tee -a $(log_build)
+		$(call xx,with_headers) $(call xx,extra_config_options))
 
 	touch $@
 
 $(patsubst %,build_%,$(GLIBC_PASSES)) :: build_% : $(stamp)build_%
 $(stamp)build_%: $(stamp)configure_%
 	@echo Building $(curpass)
-	$(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) 2>&1 | tee -a $(log_build)
+	$(call logme, -a $(log_build), $(MAKE) -j$(NJOBS) -C $(DEB_BUILDDIR))
 	touch $@
 
 $(patsubst %,check_%,$(GLIBC_PASSES)) :: check_% : $(stamp)check_%
@@ -74,7 +84,7 @@ $(stamp)check_%: $(stamp)build_%
 	  echo "Testsuite disabled for $(curpass), skipping tests."; \
 	else \
 	  echo Testing $(curpass); \
-	  $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) -k check 2>&1 | tee -a $(log_test); \
+	  $(MAKE) -C $(DEB_BUILDDIR) -j$(NJOBS) -k check 2>&1 | tee -a $(log_test); \
 	fi
 	touch $@
 
@@ -82,8 +92,7 @@ $(patsubst %,install_%,$(GLIBC_PASSES)) :: install_% : $(stamp)install_%
 $(stamp)install_%: $(stamp)check_%
 	@echo Installing $(curpass)
 	rm -rf $(CURDIR)/debian/tmp-$(curpass)
-
-	$(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) \
+	$(MAKE) -C $(DEB_BUILDDIR) -j$(NJOBS) \
 	  install_root=$(CURDIR)/debian/tmp-$(curpass) install
 
 	if [ $(curpass) = libc ]; then \
@@ -93,6 +102,8 @@ $(stamp)install_%: $(stamp)check_%
 	fi
 
 	# /usr/include/nptl and /usr/lib/nptl.  It assumes tmp-libc is already installed.
+	# This is here to keep debhelper happy in v5 mode.
+	install -d debian/tmp-libc/usr/lib/nptl; \
 	if [ $(curpass) = nptl ]; then \
 	  for file in `find debian/tmp-$(curpass)/usr/include -type f | sed 's/^debian\/tmp-nptl\///'`; do \
 	    if ! [ -f debian/tmp-$(curpass)/$$file ] || \
@@ -103,7 +114,6 @@ $(stamp)install_%: $(stamp)check_%
 			     debian/tmp-libc/usr/include/nptl/$$target; \
 	    fi; \
 	  done; \
-	  install -d debian/tmp-libc/usr/lib/nptl; \
 	  for file in libc.a libpthread.a libpthread_nonshared.a librt.a; do \
 	    install -m 644 debian/tmp-$(curpass)/usr/lib/$$file \
 			   debian/tmp-libc/usr/lib/nptl/$$file; \
