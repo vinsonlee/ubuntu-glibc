@@ -1,3 +1,24 @@
+glibc (2.3.6-0ubuntu3) dapper; urgency=low
+
+  * Drop the init script as it does nothing useful except hide a message
+    beneath usplash.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Tue, 10 Jan 2006 09:07:55 +0000
+
+glibc (2.3.6-0ubuntu2) dapper; urgency=low
+
+  * Jeff Bailey <jbailey@ubuntu.com>
+
+    * Add amd64/i386 biarch.
+      - debian/sysdeps/amd64.mk: Add i386 NPTL pass.
+      - debian/control.in/i386: New file.
+      - debian/rules.d/control.mk: Use it.
+      - debian/control: Update.
+      - debian/rules.d/debhelper.mk: Use the same logic where
+        destdir is 32 as when destdir is 64.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Tue,  3 Jan 2006 12:23:34 +0000
+
 glibc (2.3.6-0ubuntu1) dapper; urgency=low
 
   "The point of philosophy is to start with something so simple as

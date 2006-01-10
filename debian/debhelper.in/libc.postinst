@@ -413,13 +413,17 @@ then
     if [ "$(date +%Z)" = "/etc/localtime" ]; then
 	set_timezone
     fi
+    # Don't run the init script in ubuntu.  Boot-time is not the place to
+    # print such messages as it is usually unattended, and besides this
+    # message will be entirely hidden under usplash.
+    update-rc.d -f glibc.sh remove >/dev/null 2>&1
 #    # DO NOT FOLLOW THIS EXAMPLE IN OTHER PACKAGES
-     updatercd glibc.sh start 01 S .
-     if [ -x /usr/sbin/invoke-rc.d ]; then
-	invoke-rc.d glibc.sh start
-     else
-	/etc/init.d/glibc.sh 2>/dev/null || true
-     fi
+#     updatercd glibc.sh start 01 S .
+#     if [ -x /usr/sbin/invoke-rc.d ]; then
+#	invoke-rc.d glibc.sh start
+#     else
+#	/etc/init.d/glibc.sh 2>/dev/null || true
+#     fi
 fi
 
 if [ "`uname -s`" = Linux ]; then
