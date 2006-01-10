@@ -189,6 +189,7 @@ $(stamp)debhelper:
 	done
 
 	# Hack: special-case passes whose destdir is 64 (i.e. /lib64)
+	# or 32 (i.e. /lib32)
 	# to use a different install template, which includes more
 	# libraries.  Also generate a -dev.  Non-64 libraries get scripts
 	# to temporarily disable hwcap.  This needs some cleaning up.
@@ -197,7 +198,7 @@ $(stamp)debhelper:
 	  destdir=$$1; \
 	  shift; \
 	  z=debian/$(libc)-$$x.install; \
-	  if test $$destdir = 64; then \
+	  if [ $$destdir = 64 ] || [ $$destdir = 32 ]; then \
 	    cp debian/debhelper.in/libc-alt.install $$z; \
 	    zd=debian/$(libc)-dev-$$x.install; \
 	    cp debian/debhelper.in/libc-alt-dev.install $$zd; \
