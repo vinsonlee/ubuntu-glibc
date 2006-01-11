@@ -1,3 +1,17 @@
+glibc (2.3.6-0ubuntu4) dapper; urgency=low
+
+  * Fix up amd64 biarch bootstrap/buildability/installability:
+    - debian/control.in/main: add libc6-dev-i386 [amd64] to build-deps
+    - debian/control.in/i386: s/libc6-i686/libc6-i386/
+    - debian/control.in/i386: s/lib64gcc1/lib32gcc1/
+    - debian/control: regenerate to pull in the above changes
+    - sysdeps/amd64.mk: link /lib/ld-linux.so.2 to /lib32/ld-linux.so.2
+    - patches/amd64-lib: on amd64, i[3456]86* is a lib32 target, not lib
+  * New patch local-all-dynamic-resolvconf.dpatch: allow long-running
+    processes to re-read a dynamically changed resolv.conf on the fly.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 11 Jan 2006 18:55:05 +1100
+
 glibc (2.3.6-0ubuntu3) dapper; urgency=low
 
   * Drop the init script as it does nothing useful except hide a message
