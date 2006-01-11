@@ -50,3 +50,4 @@ local-all-linuxtypesh
 local-mash-newbinutils
 local-all-belocs-locale-update
 local-all-belocs-test
+local-all-dynamic-resolvconf
