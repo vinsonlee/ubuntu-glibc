@@ -27,6 +27,11 @@ i386_MIN_KERNEL_SUPPORTED = 2.6.0
 i386_extra_config_options = $(extra_config_options) --disable-profile --with-tls --with-__thread --includedir=/usr/include/i386-linux-gnu
 libc6-i386_shlib_dep = libc6-i386 (>= $(shlib_dep_ver))
 
+define libc6-i386_extra_pkg_install
+mkdir -p debian/libc6-i386/lib
+ln -s /lib32/ld-linux.so.2 debian/libc6-i386/lib/ld-linux.so.2
+endef
+
 define extra_debhelper
 echo debian/tmp-i386/usr/include/i386-linux-gnu usr/include >>debian/libc6-dev-i386.install
 endef
