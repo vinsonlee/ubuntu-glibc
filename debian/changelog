@@ -1,3 +1,11 @@
+glibc (2.3.6-0ubuntu5) dapper; urgency=low
+
+  * Fix segfaults caused by collation issues (Malone#28640)
+    - debian/patches/cvs-all-strxfrm.dpatch: New file.
+    - debian/patfches/00list: Use it.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Mon, 30 Jan 2006 13:38:59 -0500
+
 glibc (2.3.6-0ubuntu4) dapper; urgency=low
 
   * Fix up amd64 biarch bootstrap/buildability/installability:
