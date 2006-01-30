@@ -1,0 +1,58 @@
+#! /bin/sh -e
+
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: Integer overflow in strxfrm
+# DP: Related bugs: Malone#28640
+# DP: Dpatch author: Jeff Bailey
+# DP: Patch author: Ulrich Drepper
+# DP: Upstream status: In CVS
+# DP: Status Details: 
+# DP: Date: 2006-01-30
+
+PATCHLEVEL=0
+
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p$PATCHLEVEL < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p$PATCHLEVEL < $0;;
+    *)
+	echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+	exit 1
+esac
+exit 0
+
+# append the patch here and adjust the -p? flag in the patch calls.
+
+--- string/strxfrm_l.c	2004-03-14 15:52:47.000000000 -0500
++++ string/strxfrm_l.c	2005-10-15 16:49:18.000000000 -0400
+@@ -1,4 +1,4 @@
+-/* Copyright (C) 1995,96,97,2002, 2004 Free Software Foundation, Inc.
++/* Copyright (C) 1995,96,97,2002, 2004, 2005 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+    Written by Ulrich Drepper <drepper@gnu.org>, 1995.
+ 
+@@ -210,8 +210,9 @@
+ 		      /* Handle the pushed elements now.  */
+ 		      size_t backw;
+ 
+-		      for (backw = idxcnt - 1; backw >= backw_stop; --backw)
++		      for (backw = idxcnt; backw > backw_stop; )
+ 			{
++			  --backw;
+ 			  len = weights[idxarr[backw]++];
+ 
+ 			  if (needed + len < n)
+@@ -293,8 +294,9 @@
+ 		     /* Handle the pushed elements now.  */
+ 		      size_t backw;
+ 
+-		      for (backw = idxcnt - 1; backw >= backw_stop; --backw)
++		      for (backw = idxcnt; backw > backw_stop; )
+ 			{
++			  --backw;
+ 			  len = weights[idxarr[backw]++];
+ 			  if (len != 0)
+ 			    {
