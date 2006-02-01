@@ -2,6 +2,7 @@ Package: libc6
 Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libs
 Priority: required
+Recommends: locales
 Provides: ${locale:Depends}
 Description: GNU C Library: Shared libraries and Timezone data
  Contains the standard libraries that are used by nearly all programs on
