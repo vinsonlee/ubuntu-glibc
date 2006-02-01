@@ -21,6 +21,7 @@ submitted-hppa-linuxthreads
 submitted-hppa-sysdeps
 submitted-hppa-iitlbp
 submitted-hppa-fenv-align
+submitted-hppa-fpu
 ## Local:
 local-i386-i686biarch
 local-sparc-v9biarch
@@ -41,7 +42,7 @@ local-all-ldconfig-tls
 local-all-disable-hwcap
 local-all-versioncheck
 local-all-tcsetaddr-lsb
-local-all-localedef-fix-trampoline
+#local-all-localedef-fix-trampoline
 local-i386-linuxthreads-sizefix
 local-all-altlocaledir
 local-all-multiarch
@@ -49,6 +50,6 @@ local-i386-x86_64biarch
 local-all-stringh
 local-all-linuxtypesh
 local-mash-newbinutils
-local-all-belocs-locale-update
-local-all-belocs-test
+#local-all-belocs-locale-update
+#local-all-belocs-test
 local-all-dynamic-resolvconf
