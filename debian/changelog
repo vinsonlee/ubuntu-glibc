@@ -1,3 +1,24 @@
+glibc (2.3.6-0ubuntu6) dapper; urgency=low
+
+  * Drop timezones from main libc package.
+    - debian/debhelper.in/libc.install: Drop /usr/share/zoneinfo
+      drop usr/bin/locale
+    - debian/debhelper.in/libc.manpages: Drop locale.1 and localedef.1
+    - debian/debhelper/in/libc.dirs: Add /usr/share/zoneinfo
+    - debian/control.in/libc: Recommends: locales
+
+  * Add HPPA fpu patch.
+    - debian/patches/submitted-hppa-fpu.dpatch: New file.
+    - debian/patches/00list: Use it.
+
+  * Move localedef to locales.  No need to hack glibc anymore for locales.
+    - debian/debhelper.in/libc.install: Drop usr/sbin/localedef.
+    - debian/patches/00list: Drop local-all-localedef-fix-trampoline.
+      Drop local-all-belocs-locale-update.
+      Drop local-all-belocs-test.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Wed,  1 Feb 2006 17:19:08 +0000
+
 glibc (2.3.6-0ubuntu5) dapper; urgency=low
 
   * Fix segfaults caused by collation issues (Malone#28640)
