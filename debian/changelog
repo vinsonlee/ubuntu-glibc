@@ -1,3 +1,28 @@
+glibc (2.3.6-0ubuntu7) dapper; urgency=low
+
+  * Don't do timezone work on install.
+    - debian/debhelper.in/libc.postinst: Remove timezone magic.
+    - debian/control.in/libc: Move locales recommends to ...
+    - debian/sysdeps/depflags.pl: ... here, and make it a depends.
+    - debian/control: Regenerate.
+
+  * Add Sparc Niagara support.
+    - debian/control.in/opt: Add new packages for sparc64b, sparc64v,
+      and sparcv9b.
+    - debian/debhelper.in/libc.postinst: Handle HWCAP disabling for
+      new optimised packages.
+    - debian/patches/local-sparc-niagara.dpatch: New file.
+    - debian/patches/amd64-libs.dpatch: Shuffle so that it still applies.
+    - debian/patches/00list: Use it.
+    - debian/control: Regenerate.
+    Thanks to Dave Miller <davem@davemloft.net> for these patches!
+
+  * Support RLIMIT_RTPRIO.
+    - debian/patches/cvs-mash-rlimit-rtprio.dpatch: New file.
+    - debian/patches/00list: Use it. 
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Wed,  1 Mar 2006 19:27:27 +0000
+
 glibc (2.3.6-0ubuntu6) dapper; urgency=low
 
   * Drop timezones from main libc package.
