@@ -145,6 +145,10 @@ push @{$libc_dev_c{'Replaces'}}, "${libc}-prof (<< 2.3.5-2)";
 push @{$libc_c{'Conflicts'}}, 'initrd-tools (<< 0.1.79)';
 push @{$libc_c{'Conflicts'}}, 'e2fsprogs (<< 1.35-7)';
 
+# Ubuntu hack until Dapper releases: Hard depend on locales to make sure
+# that timezones pieces get pulled in for upgrades
+push @{$libc_c{'Depends'}}, 'locales (>= 2.3.11)';
+
 # Make sure we only have one version of libc-dev installed
 push @{$libc_dev_c{'Provides'}}, 'libc-dev';
 push @{$libc_dev_c{'Conflicts'}}, 'libc-dev';

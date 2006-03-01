@@ -14,6 +14,7 @@
 cvs-all-tlscrash
 cvs-all-strxfrm
 cvs-sparc-datastart
+cvs-mash-rlimit-rtprio
 ## Submitted:
 submitted-hppa-drop-utimes
 submitted-hppa-configure
@@ -53,3 +54,4 @@ local-mash-newbinutils
 #local-all-belocs-locale-update
 #local-all-belocs-test
 local-all-dynamic-resolvconf
+local-sparc-niagara
