@@ -19,7 +19,7 @@ sparc64b_extra_cflags = -g2 -O3
 sparc64b_extra_config_options = $(extra_config_options) --disable-profile --without-tls --without-__thread
 sparc64b_add-ons = linuxthreads $(add-ons)
 libc6-sparc64b_shlib_dep = libc6-sparc64b (>= $(shlib_dep_ver))
-sparc64b_LIBDIR = 64/v9b
+sparc64b_LIBDIR = 64/ultra3
  
 sparc64v_MIN_KERNEL_SUPPORTED = 2.6.0
 sparc64v_configure_build=sparc64-linux
