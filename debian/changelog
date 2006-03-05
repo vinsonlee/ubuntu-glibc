@@ -1,3 +1,10 @@
+glibc (2.3.6-0ubuntu8) dapper; urgency=low
+
+  * Fix install path for libc6-sparc64b:
+    - Update debian/sparc.mk
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Sun, 05 Mar 2006 12:25:17 +0100
+
 glibc (2.3.6-0ubuntu7) dapper; urgency=low
 
   * Don't do timezone work on install.
