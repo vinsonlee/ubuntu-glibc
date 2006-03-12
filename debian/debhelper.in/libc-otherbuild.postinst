@@ -18,6 +18,7 @@ then
 
     if [ -f /etc/ld.so.hwcappkgs ]; then
 	rm -f /etc/ld.so.hwcappkgs.tmp
+	oldset="$@"
 	while read LINE; do
 	    case $LINE in
 		\#*|"") continue
@@ -37,6 +38,7 @@ then
 	    fi
 	    echo "$pkg $ver" >> /etc/ld.so.hwcappkgs.tmp
 	done < /etc/ld.so.hwcappkgs
+	set -- $oldset
 	if [ "$isrecorded" != yes ]; then
 	    echo "$opt $curver" >> /etc/ld.so.hwcappkgs.tmp
 	fi
