@@ -31,7 +31,7 @@ local-all-ldconfig
 local-all-ldd
 local-all-linuxfhs
 local-all-nssupgrade
-local-sparc-sparc64biarch
+#local-sparc-sparc64biarch
 local-all-ttyname-devfs
 local-powerpc-sysconf
 local-all-asserth-decls
