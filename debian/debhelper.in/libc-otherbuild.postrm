@@ -21,6 +21,7 @@ if [ "$1" = "remove" ]; then
 	mv /etc/ld.so.hwcappkgs.tmp /etc/ld.so.hwcappkgs
 
 	# Check other hwcap packges are consistent.
+	oldset="$@"
 	while read LINE; do
 	    case $LINE in
 		\#*|"") continue
@@ -36,6 +37,7 @@ if [ "$1" = "remove" ]; then
 		fi
 	    fi
 	done < /etc/ld.so.hwcappkgs
+	set -- $oldset
     else
 	# libc6 did not create ld.so.hwcappkgs correctly or ld.so.hwcappkgs
 	# was unexpectedly removed.  Don't remove ld.so.nohwcap.

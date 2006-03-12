@@ -222,6 +222,7 @@ then
 	if [ -f /etc/ld.so.hwcappkgs ]; then
 	    curver=CURRENT_VER
 	    rm -f /etc/ld.so.hwcappkgs.tmp
+	    oldset="$@"
 	    while read LINE; do
 		case $LINE in
 		    \#*|"") continue
@@ -243,6 +244,7 @@ then
 		fi
 		echo "$pkg $ver" >> /etc/ld.so.hwcappkgs.tmp
 	    done < /etc/ld.so.hwcappkgs
+	    set -- $oldset
 	    if [ "$isrecorded" != yes ]; then
 		echo "$package $curver" >> /etc/ld.so.hwcappkgs.tmp
 	    fi
@@ -292,6 +294,7 @@ then
 	    # have different names to their init scripts
 	    check="$check inetd atd"
 	    rl=$(runlevel | awk '{print $2}')
+	    oldset="$@"
 	    for service in $check; do
 		if [ -f /usr/share/file-rc/rc -o -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
 		    idl=$(filerc $rl $service)
@@ -302,6 +305,7 @@ then
 		    services="$service $services"
 		fi
 	    done
+	    set -- $oldset
 	    echo "done."
 	    if [ -n "$services" ]; then
 		echo
@@ -336,6 +340,7 @@ then
 		if [ "$answer" = yes ] && [ "$services" != "" ]; then
 		    echo "Restarting services possibly affected by the upgrade:"
 		    failed=""
+		    oldset="$@"
 		    for service in $services; do
 			if [ -f /usr/share/file-rc/rc -o -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
 			    idl=$(filerc $rl $service)
@@ -353,6 +358,7 @@ then
 			    failed="$service $failed"
 			fi
 		    done
+		    set -- $oldset
 		    echo
 		    if [ -n "$failed" ]; then
 			# Ruh roh, George
