@@ -1,3 +1,26 @@
+glibc (2.3.6-0ubuntu9) dapper; urgency=low
+
+  * Fix maintainer scripts to properly restore "$@" when using
+    "set --":
+    - Update debian/debhelper.in/libc-otherbuild.{postinst,postrm}
+    - Update debian/debhelper.in/libc.postinst
+
+    The wrong usage of "set --" resulted in "$@" from maintainer scripts
+    invocation to be mangled. In some cases, like installing
+    libc6-sparcv9v (or -otherbuild), the result was missing calls to
+    chuncks of code that rely on configure/remove/etc. actions requested
+    by dpkg.
+
+  * Stop applying local-sparc-sparc64biarch.dpatch:
+    - Update debian/patches/00list.
+
+    The patch was uncoditionally forcing an extra search path appending "64"
+    to whatever directory was scanned. While this was good a long time ago,
+    the same is achieved since 2003 by add_system_dir in
+    sysdeps/unix/sysv/linux/sparc/dl-cache.h in a more clean and less noisy way.
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Sun, 12 Mar 2006 11:37:59 +0100
+
 glibc (2.3.6-0ubuntu8) dapper; urgency=low
 
   * Fix install path for libc6-sparc64b:
