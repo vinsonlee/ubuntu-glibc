@@ -1,3 +1,10 @@
+glibc (2.3.2.ds1-13ubuntu2.3) warty-updates; urgency=low
+
+  * debian/patches/tzdata2006b-update: New file.
+  * debian/patches/00list: Use it.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Fri, 17 Mar 2006 00:56:35 +0000
+
 glibc (2.3.2.ds1-13ubuntu2.2) warty-security; urgency=low
 
   * Fix FTBFS.  Add amd64 to debian/control.in/libc6 where it should
