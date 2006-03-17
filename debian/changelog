@@ -1,3 +1,10 @@
+glibc (2.3.5-1ubuntu12.5.10.1) breezy-updates; urgency=low
+
+  * debian/patches/tzdata2006b-update.dpatch: New file.
+  * debian/patches/00list: Use it.
+
+ -- Jeff Bailey <jbailey@ronne.ubuntu.com>  Fri, 17 Mar 2006 03:26:00 +0000
+
 glibc (2.3.5-1ubuntu12) breezy; urgency=low
 
   * Jeff Bailey <jbailey@ubuntu.com>
