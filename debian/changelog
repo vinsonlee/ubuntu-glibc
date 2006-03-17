@@ -1,3 +1,10 @@
+glibc (2.3.2.ds1-20ubuntu15) hoary-updates; urgency=low
+
+  * debian/patches/tzdata2006b-update.dpatch: New file.
+  * debian/patches/00list: Use it.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Fri, 17 Mar 2006 03:19:28 +0000
+
 glibc (2.3.2.ds1-20ubuntu14) hoary-updates; urgency=low
 
   * debian/patches/ubuntu-11730.dpatch: New patch for amd64 threading
