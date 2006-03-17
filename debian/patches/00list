@@ -55,3 +55,4 @@ local-mash-newbinutils
 #local-all-belocs-test
 local-all-dynamic-resolvconf
 local-sparc-niagara
+eh-frame-terminator

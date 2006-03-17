@@ -1,3 +1,12 @@
+glibc (2.3.6-0ubuntu10) dapper; urgency=low
+
+  * Add debian/patches/eh-frame-terminator.diff (from Debian glibc-2.3.5-8):
+    Merge .eh_frame terminator fix, by Richard Sandiford (Closes: #334112).
+
+    Welcome back gij/gcj on hppa. Thanks John David Anglin.
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 17 Mar 2006 23:28:15 +0100
+
 glibc (2.3.6-0ubuntu9) dapper; urgency=low
 
   * Fix maintainer scripts to properly restore "$@" when using
