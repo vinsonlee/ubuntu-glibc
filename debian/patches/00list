@@ -97,3 +97,4 @@ s390-backtrace
 glibc232-misc-syslog
 catchsegv-insecure-temp
 glibcbug-insecure-temp
+tzdata2006b-update
