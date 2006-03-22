@@ -1,3 +1,13 @@
+glibc (2.3.6-0ubuntu11) dapper; urgency=low
+
+  * Fix clone() on sparc32 and sparc64. The fix has been upstream for about a
+    year:
+    - Add debian/patches/local-sparc-clone.dpatch.
+    - Update debian/patches/00list.
+    (Thanks David S. Miller for the patch)
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Wed, 22 Mar 2006 07:14:03 +0100
+
 glibc (2.3.6-0ubuntu10) dapper; urgency=low
 
   * Add debian/patches/eh-frame-terminator.diff (from Debian glibc-2.3.5-8):
