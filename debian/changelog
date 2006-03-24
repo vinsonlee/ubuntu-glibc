@@ -1,3 +1,12 @@
+glibc (2.3.6-0ubuntu12) dapper; urgency=low
+
+  * Fix missing memory clobber in Sparc atomics:
+    - Add debian/patches/local-sparc-atomics.dpatch.
+    - Update debian/patches/00list.
+    (Thanks David S. Miller for the patch)
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Fri, 24 Mar 2006 11:18:51 +0100
+
 glibc (2.3.6-0ubuntu11) dapper; urgency=low
 
   * Fix clone() on sparc32 and sparc64. The fix has been upstream for about a
