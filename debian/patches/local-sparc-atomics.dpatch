@@ -1,0 +1,82 @@
+#! /bin/sh -e
+ 
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: Fix missing memory clobber in Sparc atomics.
+# DP: Author: David S. Miller <davem@davemloft.net>
+# DP: Upstream status: This patch will be pushed upstream.
+# DP: Status Details:
+# DP: Date: 2006-03-23
+ 
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p1 < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p1 < $0;;
+    *)
+        echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+        exit 1
+esac
+exit 0
+ 
+--- glibc-2.3.6/sysdeps/sparc/sparc32/bits/atomic.h.~1~	2004-02-20 12:31:39.000000000 -0800
++++ glibc-2.3.6/sysdeps/sparc/sparc32/bits/atomic.h	2006-03-23 17:45:06.000000000 -0800
+@@ -44,7 +44,7 @@ volatile unsigned char __sparc32_atomic_
+ 	__asm ("ldstub %1, %0"					      \
+ 	       : "=r" (__old_lock),				      \
+ 		 "=m" (__sparc32_atomic_locks[__idx])		      \
+-	       : "m" (__sparc32_atomic_locks[__idx]));		      \
++	       : "m" (__sparc32_atomic_locks[__idx]) : "memory");     \
+       while (__old_lock);					      \
+     }								      \
+   while (0)
+--- glibc-2.3.6/sysdeps/sparc/sparc32/sparcv9/bits/atomic.h.~1~	2003-05-09 22:29:30.000000000 -0700
++++ glibc-2.3.6/sysdeps/sparc/sparc32/sparcv9/bits/atomic.h	2006-03-23 17:45:46.000000000 -0800
+@@ -59,7 +59,7 @@ typedef uintmax_t uatomic_max_t;
+   __asm __volatile ("cas [%4], %2, %0"					      \
+ 		    : "=r" (__acev_tmp), "=m" (*__acev_mem)		      \
+ 		    : "r" (oldval), "m" (*__acev_mem), "r" (__acev_mem),      \
+-		      "0" (newval));					      \
++		      "0" (newval) : "memory");				      \
+   __acev_tmp; })
+ 
+ /* This can be implemented if needed.  */
+@@ -74,7 +74,7 @@ typedef uintmax_t uatomic_max_t;
+      if (sizeof (*(mem)) == 4)						      \
+        __asm ("swap %0, %1"						      \
+ 	      : "=m" (*__memp), "=r" (__oldval)				      \
+-	      : "m" (*__memp), "1" (__value));				      \
++	      : "m" (*__memp), "1" (__value) : "memory");		      \
+      else								      \
+        abort ();							      \
+      __oldval; })
+--- glibc-2.3.6/sysdeps/sparc/sparc64/bits/atomic.h.~1~	2003-05-09 22:29:30.000000000 -0700
++++ glibc-2.3.6/sysdeps/sparc/sparc64/bits/atomic.h	2006-03-23 17:46:29.000000000 -0800
+@@ -59,7 +59,7 @@ typedef uintmax_t uatomic_max_t;
+   __asm __volatile ("cas [%4], %2, %0"					      \
+ 		    : "=r" (__acev_tmp), "=m" (*__acev_mem)		      \
+ 		    : "r" (oldval), "m" (*__acev_mem), "r" (__acev_mem),      \
+-		      "0" (newval));					      \
++		      "0" (newval) : "memory");				      \
+   __acev_tmp; })
+ 
+ #define __arch_compare_and_exchange_val_64_acq(mem, newval, oldval) \
+@@ -69,7 +69,7 @@ typedef uintmax_t uatomic_max_t;
+   __asm __volatile ("casx [%4], %2, %0"					      \
+ 		    : "=r" (__acev_tmp), "=m" (*__acev_mem)		      \
+ 		    : "r" ((long) (oldval)), "m" (*__acev_mem),		      \
+-		      "r" (__acev_mem), "0" ((long) (newval)));		      \
++		      "r" (__acev_mem), "0" ((long) (newval)) : "memory");    \
+   __acev_tmp; })
+ 
+ #define atomic_exchange_acq(mem, newvalue) \
+@@ -80,7 +80,7 @@ typedef uintmax_t uatomic_max_t;
+      if (sizeof (*(mem)) == 4)						      \
+        __asm ("swap %0, %1"						      \
+ 	      : "=m" (*__memp), "=r" (__oldval)				      \
+-	      : "m" (*__memp), "1" (__value));				      \
++	      : "m" (*__memp), "1" (__value) : "memory");		      \
+      else								      \
+        {								      \
+ 	 __val = *__memp;						      \
