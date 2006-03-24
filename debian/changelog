@@ -1,3 +1,11 @@
+glibc (2.3.6-0ubuntu13) dapper; urgency=low
+
+  * Fix getcwd on machines where PATH_MAX != PAGE_SIZE.
+    - Add debian/patches/local-all-getcwd.dpatch.
+    - Update debian/patches/00list.
+
+ -- LaMont Jones <lamont@ubuntu.com>  Fri, 24 Mar 2006 10:18:29 -0700
+
 glibc (2.3.6-0ubuntu12) dapper; urgency=low
 
   * Fix missing memory clobber in Sparc atomics:
