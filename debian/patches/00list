@@ -56,4 +56,5 @@ local-mash-newbinutils
 local-all-dynamic-resolvconf
 local-sparc-niagara
 local-sparc-clone
+local-sparc-atomics
 eh-frame-terminator
