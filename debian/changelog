@@ -1,3 +1,10 @@
+glibc (2.3.6-0ubuntu14) dapper; urgency=low
+
+  * libc6-i386 (amd64). Fix path of gconv-modules and install gconv-modules.
+    Ubuntu #34324, #34427.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sat, 25 Mar 2006 01:17:08 +0100
+
 glibc (2.3.6-0ubuntu13) dapper; urgency=low
 
   * Fix getcwd on machines where PATH_MAX != PAGE_SIZE.
