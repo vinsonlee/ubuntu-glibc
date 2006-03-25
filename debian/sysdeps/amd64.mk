@@ -21,6 +21,7 @@ i386_add-ons = nptl $(add-ons)
 i386_configure_target=i686-linux
 i386_configure_build=i686-linux
 i386_CC = $(BUILD_CC) -m32
+i386_MAKEFLAGS = MAKEFLAGS="gconvdir=/usr/lib32/gconv"
 i386_extra_cflags = -march=i686 -mtune=i686 -g2 -O3
 i386_LIBDIR = 32
 i386_MIN_KERNEL_SUPPORTED = 2.6.0
@@ -33,6 +34,7 @@ ln -s /lib32/ld-linux.so.2 debian/libc6-i386/lib/ld-linux.so.2
 endef
 
 define extra_debhelper
+echo debian/tmp-i386/usr/lib32/gconv/gconv-modules usr/lib32/gconv >>debian/libc6-i386.install
 echo debian/tmp-i386/usr/include/i386-linux-gnu usr/include >>debian/libc6-dev-i386.install
 endef
 

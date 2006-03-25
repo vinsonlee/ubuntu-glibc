@@ -69,7 +69,7 @@ endif
 $(patsubst %,build_%,$(GLIBC_PASSES)) :: build_% : $(stamp)build_%
 $(stamp)build_%: $(stamp)configure_%
 	@echo Building $(curpass)
-	$(call logme, -a $(log_build), $(MAKE) -j$(NJOBS) -C $(DEB_BUILDDIR))
+	$(call logme, -a $(log_build), $(MAKE) -j$(NJOBS) $(call xx,MAKEFLAGS) -C $(DEB_BUILDDIR))
 	touch $@
 
 $(patsubst %,check_%,$(GLIBC_PASSES)) :: check_% : $(stamp)check_%
@@ -84,7 +84,7 @@ $(stamp)check_%: $(stamp)build_%
 	  echo "Testsuite disabled for $(curpass), skipping tests."; \
 	else \
 	  echo Testing $(curpass); \
-	  $(MAKE) -C $(DEB_BUILDDIR) -j$(NJOBS) -k check 2>&1 | tee -a $(log_test); \
+	  $(MAKE) -C $(DEB_BUILDDIR) -j$(NJOBS) $(call xx,MAKEFLAGS) -k check 2>&1 | tee -a $(log_test); \
 	fi
 	touch $@
 
