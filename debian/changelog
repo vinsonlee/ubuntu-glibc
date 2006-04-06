@@ -1,3 +1,12 @@
+glibc (2.3.6-0ubuntu16) dapper; urgency=low
+
+  * Fix regcomp to not trash lock structure.  Closes: Malone#38420
+    - add debian/patches/cvs-all-regcomp.dpatch
+    - update debian/patches/00list
+    (Thanks to Randolph Chung for finding the patch.)
+
+ -- LaMont Jones <lamont@ubuntu.com>  Thu,  6 Apr 2006 10:27:13 -0600
+
 glibc (2.3.6-0ubuntu15) dapper; urgency=low
 
   * debian/debhelper.in/libc-alt.install: Add gconv-modules, the addition
