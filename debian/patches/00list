@@ -15,6 +15,7 @@ cvs-all-tlscrash
 cvs-all-strxfrm
 cvs-sparc-datastart
 cvs-mash-rlimit-rtprio
+cvs-all-regcomp
 ## Submitted:
 submitted-hppa-drop-utimes
 submitted-hppa-configure
