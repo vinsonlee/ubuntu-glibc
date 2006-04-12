@@ -33,6 +33,7 @@ case "$1" in
 		fi
 	done
         echo -n "Starting Name Service Cache Daemon: nscd"
+	install -o root -g root -m 755 -d /var/run/nscd
 	start-stop-daemon --start --quiet --exec /usr/sbin/nscd -- $secure
 	RETVAL=$?
 	echo "."
