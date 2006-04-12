@@ -1,3 +1,19 @@
+glibc (2.3.6-0ubuntu17) dapper; urgency=low
+
+  * debian/debhelper.in/nscd.dirs: Sync with Debian, adding /var/db/nscd
+    and /var/run/nscd to the nscd package (closes: launchpad.net/3365)
+  * debian/debhelper.in/nscd.init: Create /var/run/nscd on boot, for tmpfs
+  * debian/patches/locale-C.dpatch: Grab changes from Debian to define
+    first_weekday as Sunday with the C locale (closes: launchpad.net/36988)
+  * debian/local/usr_sbin/tzconfig: Make tzconfig's yes/no questions case
+    insensitive, so "N" is the same as "n" (closes: launchpad.net/30559)
+  * debian/rules.d/debhelper.mk: Make params to dh_installinit configurable
+  * debian/rules: Make nscd's dh_installinit call use "-- defaults 09 91"
+  * debhelper.in/nscd.postinst: Move nscd's rc?.d symlinks from S20/K20
+    to S09/K91, so we start early enough (closes: launchpad.net/30141)
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 12 Apr 2006 17:29:28 +1000
+
 glibc (2.3.6-0ubuntu16) dapper; urgency=low
 
   * Fix regcomp to not trash lock structure.  Closes: Malone#38420
