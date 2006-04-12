@@ -60,3 +60,4 @@ local-sparc-clone
 local-sparc-atomics
 eh-frame-terminator
 local-all-getcwd
+locale-C

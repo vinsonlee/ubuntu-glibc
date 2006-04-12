@@ -128,6 +128,7 @@ curpass = $(filter-out %_,$(subst _,_ ,$@))
 DEB_ARCH_REGULAR_PACKAGES = $(libc) $(libc)-dev $(libc)-dbg $(libc)-prof $(libc)-pic
 DEB_INDEP_REGULAR_PACKAGES = glibc-doc 
 DEB_UDEB_PACKAGES = $(libc)-udeb libnss-dns-udeb libnss-files-udeb zoneinfo-udeb
+DEB_INIT_PARAMS_nscd = -- defaults 09 91
 
 # Generic kernel version check
 define kernel_check

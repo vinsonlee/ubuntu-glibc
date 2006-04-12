@@ -8,6 +8,19 @@ if [ -L "/usr/doc/nscd" ]; then
     rm -f "/usr/doc/nscd"
 fi
 
+# Move our old init script links to the new location:
+for i in 2 3 4 5; do
+    if [ -L /etc/rc"$i".d/S20nscd ]; then
+        mv /etc/rc"$i".d/S20nscd /etc/rc"$i".d/S09nscd
+    fi
+done
+
+for i in 0 1 6; do
+    if [ -L /etc/rc"$i".d/K20nscd ]; then
+        mv /etc/rc"$i".d/K20nscd /etc/rc"$i".d/K91nscd
+    fi
+done
+
 #DEBHELPER#
 
 exit 0
