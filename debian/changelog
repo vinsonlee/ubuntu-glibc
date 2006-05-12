@@ -1,3 +1,11 @@
+glibc (2.3.6-0ubuntu18) dapper; urgency=low
+
+  * debian/patches/cvs-mash-rlimit-rtprio.dpatch: Mangle the patch to
+    correctly patch {mips,sparc}/bits/resource.h instead of creating
+    an unused {mips,sparc}/resource.h, so RLIMIT_NICE works on sparc.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Fri, 12 May 2006 20:26:30 +1000
+
 glibc (2.3.6-0ubuntu17) dapper; urgency=low
 
   * debian/debhelper.in/nscd.dirs: Sync with Debian, adding /var/db/nscd
