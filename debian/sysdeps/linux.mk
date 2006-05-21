@@ -1,18 +1,30 @@
 GLIBC_OVERLAYS ?= $(shell ls glibc-linuxthreads* glibc-ports* glibc-libidn*)
-MIN_KERNEL_SUPPORTED := 2.6.0
+MIN_KERNEL_SUPPORTED := 2.2.0
 libc = libc6
 
-# In Ubuntu, we only do NPTL.
+# Support multiple makes at once based on number of processors
+# Common wisdom says parallel make can be up to 2n+1.
+# Should we do that to get faster builds?
+NJOBS:=$(shell getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
+ifeq ($(NJOBS),-1)
+ NJOBS:=1
+endif
+
+ifeq ($(NJOBS),0)
+ NJOBS=1
+endif
+
+# We can override its value by SETNJOBS environment variable.
+ifdef SETNJOBS
+ NJOBS:=$(SETNJOBS)
+endif
+
+# Linuxthreads Config
 threads = yes
-libc_add-ons = nptl $(add-ons)
-libc_extra_config_options = $(extra_config_options) --disable-sanity-checks
+libc_add-ons = linuxthreads $(add-ons)
 
 ifndef LINUX_SOURCE
-  ifeq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
-    LINUX_HEADERS := /usr/include
-  else
-    LINUX_HEADERS := /usr/$(DEB_HOST_GNU_TYPE)/include
-  endif
+  LINUX_HEADERS := /usr/include
 else
   LINUX_HEADERS := $(LINUX_SOURCE)/include
 endif
@@ -22,13 +34,12 @@ with_headers = --with-headers=$(shell pwd)/debian/include --enable-kernel=$(call
 
 # NPTL Config
 nptl_add-ons = nptl $(add-ons)
-nptl_extra_config_options = $(extra_config_options) --disable-profile
-nptl_extra_cflags = -g1 -O3
-nptl_rtlddir = /lib
-nptl_slibdir = /lib/tls
+nptl_extra_config_options = $(extra_config_options) --with-tls --with-__thread --disable-profile
+nptl_extra_cflags = -g2 -O3
 nptl_MIN_KERNEL_SUPPORTED = 2.6.0
+nptl_LIBDIR = /tls
 
-KERNEL_HEADER_DIR = $(stamp)mkincludedir
+LINUX_HEADER_DIR = $(stamp)mkincludedir
 $(stamp)mkincludedir:
 	rm -rf debian/include
 	mkdir debian/include

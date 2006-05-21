@@ -16,6 +16,13 @@ $(stamp)binaryinst_$(libc)-pic:: $(stamp)debhelper
 	install --mode=0644 build-tree/$(DEB_HOST_ARCH)-libc/resolv/libresolv_pic.a debian/$(libc)-pic/usr/lib/.
 	install --mode=0644 build-tree/$(DEB_HOST_ARCH)-libc/libresolv.map debian/$(libc)-pic/usr/lib/libresolv_pic.map
 
+$(stamp)binaryinst_zoneinfo-udeb:: $(stamp)debhelper
+	dh_testroot
+	dh_installdirs -p$(curpass)
+	# The udeb only needs to know the list of timezones, not their contents.
+	find debian/tmp-libc/usr/share/zoneinfo -name posix -prune -o -name right -prune -o -name \*.tab -o -type f -printf '%P\n' | sort > debian/zoneinfo-udeb/usr/share/zoneinfo/list.tab
+	chmod 644 debian/zoneinfo-udeb/usr/share/zoneinfo/list.tab
+
 # Some per-package extra files to install.
 define $(libc)_extra_debhelper_pkg_install
 	install --mode=0644 $(DEB_SRCDIR)/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/changelog
@@ -28,7 +35,7 @@ define $(libc)_extra_debhelper_pkg_install
 	esac
 	sed -e "/KERNEL_VERSION_CHECK/r debian/script.in/kernelcheck.sh" \
 		debian/local/etc_init.d/glibc.sh | \
-		sed -e "s/EXIT_CHECK/sleep 5/" -e "s/DEB_HOST_ARCH/$(DEB_HOST_ARCH)/" > debian/glibc.sh.generated
+		sed -e "s/EXIT_CHECK/sleep 5/" > debian/glibc.sh.generated
 	install --mode=0755 debian/glibc.sh.generated debian/$(curpass)/etc/init.d/glibc.sh
 	# dh_installmanpages thinks that .so is a language.
 	install --mode=0644 debian/local/manpages/ld.so.8 debian/$(curpass)/usr/share/man/man8/ld.so.8
@@ -38,7 +45,6 @@ endef
 
 define locales_extra_debhelper_pkg_install
 	install --mode=0644 $(DEB_SRCDIR)/localedata/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/changelog
-	install --mode=0644 debian/locales.NEWS.Debian debian/$(curpass)/usr/share/doc/locales/NEWS.Debian
 endef
 
 define glibc-doc_extra_debhelper_pkg_install
@@ -65,7 +71,7 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGUL
 	dh_installinfo -p$(curpass)
 	dh_installdebconf -p$(curpass)
 	dh_installchangelogs -p$(curpass)
-	dh_installinit -p$(curpass)
+	dh_installinit -p$(curpass) $(DEB_INIT_PARAMS_$(curpass))
 	dh_installdocs -p$(curpass) 
 	dh_link -p$(curpass)
 
@@ -140,10 +146,6 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_UDEB_PACKAGES)):: $(stamp)debhelper
 	dh_installdirs -p$(curpass)
 	dh_install -p$(curpass)
 	dh_strip -p$(curpass)
-	
-	# when you want to install extra packages, use extra_pkg_install.
-	$(call xx,extra_pkg_install)
-
 	dh_compress -p$(curpass)
 	dh_fixperms -p$(curpass)
 	find debian/$(curpass) -type f \( -regex '.*lib.*/ld.*so.*' \
@@ -167,8 +169,8 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_UDEB_PACKAGES)):: $(stamp)debhelper
 # say "include this in the main library" by setting a variable.
 # But after 10 hours of staring at this thing, I can't figure it out.
 
-OPT_PASSES = $(filter-out libc nptl, $(GLIBC_PASSES))
-OPT_DIRS = $(foreach pass,$(OPT_PASSES),$($(pass)_slibdir) $($(pass)_libdir))
+OPT_PASSES = $(filter-out libc nptl,$(GLIBC_PASSES))
+OPT_DESTDIRS = $(foreach pass,$(OPT_PASSES),$($(pass)_LIBDIR))
 NPTL = $(filter nptl,$(GLIBC_PASSES))
 
 debhelper: $(stamp)debhelper
@@ -184,56 +186,40 @@ $(stamp)debhelper:
 	  sed -e "s#CURRENT_VER#$(DEB_VERSION)#" -i $$z; \
 	  sed -e "/KERNEL_VERSION_CHECK/r debian/script.in/kernelcheck.sh" -i $$z; \
 	  sed -e "s#EXIT_CHECK##" -i $$z; \
-	  sed -e "s#DEB_HOST_ARCH#$(DEB_HOST_ARCH)#" -i $$z; \
-	  case $$z in \
-	    *.install) sed -e "s/^#.*//" -i $$z ;; \
-	    debian/$(libc).preinst) l=`grep ^RTLDLIST= debian/tmp-libc/usr/bin/ldd | sed -e 's/^RTLDLIST=//'`; sed -e "s#RTLDLIST#$$l#" -i $$z ;; \
-	  esac; \
 	done
 
-	# Hack: special-case passes whose destdir is a biarch directory
+	# Hack: special-case passes whose destdir is 64 (i.e. /lib64)
+	# or 32 (i.e. /lib32)
 	# to use a different install template, which includes more
-	# libraries.  Also generate a -dev.  Other libraries get scripts
+	# libraries.  Also generate a -dev.  Non-64 libraries get scripts
 	# to temporarily disable hwcap.  This needs some cleaning up.
-	set -- $(OPT_DIRS); \
+	set -- $(OPT_DESTDIRS); \
 	for x in $(OPT_PASSES); do \
-	  slibdir=$$1; \
+	  destdir=$$1; \
 	  shift; \
 	  z=debian/$(libc)-$$x.install; \
-	  case $$slibdir in \
-	  /lib32 | /lib64 | /emul/ia32-linux/lib) \
-	    libdir=$$1; \
-	    shift; \
+	  if [ $$destdir = 64 ] || [ $$destdir = 32 ]; then \
 	    cp debian/debhelper.in/libc-alt.install $$z; \
 	    zd=debian/$(libc)-dev-$$x.install; \
 	    cp debian/debhelper.in/libc-alt-dev.install $$zd; \
-	    sed -e "s#TMPDIR#debian/tmp-$$x#g" -i $$zd; \
-	    sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#g" -i $$zd; \
+	    sed -e "s#TMPDIR#debian/tmp-$$x#" -i $$zd; \
+	    sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#" -i $$zd; \
 	    sed -e "s#LIBC#$(libc)#" -i $$z; \
-	    sed -e "s#LIBDIR#$$libdir#g" -i $$zd; \
-	    sed -e "s/^#.*//g" -i $$zd; \
-	    zi=debian/$(libc)-dev-$$x.postinst; \
-	    cp debian/debhelper.in/libc-alt-dev.postinst $$zi; \
-	    ;; \
-	  *) \
+	    sed -e "s#DESTLIBDIR#$$destdir#" -i $$zd; \
+	  else \
 	    cp debian/debhelper.in/libc-otherbuild.install $$z; \
 	    cp debian/debhelper.in/libc-otherbuild.preinst debian/$(libc)-$$x.preinst ; \
 	    cp debian/debhelper.in/libc-otherbuild.postinst debian/$(libc)-$$x.postinst ; \
 	    cp debian/debhelper.in/libc-otherbuild.postrm debian/$(libc)-$$x.postrm ; \
-	    sed -e "s#OPT#$(libc)-$$x#g" -i debian/$(libc)-$$x.preinst; \
-	    sed -e "s#OPT#$(libc)-$$x#g" -i debian/$(libc)-$$x.postinst; \
-	    sed -e "s#OPT#$(libc)-$$x#g" -i debian/$(libc)-$$x.postrm; \
-	    sed -e "s#CURRENT_VER#$(DEB_VERSION)#g" -i debian/$(libc)-$$x.postinst; \
-	    sed -e "s#CURRENT_VER#$(DEB_VERSION)#g" -i debian/$(libc)-$$x.postrm; \
-	    ;; \
-	  esac; \
-	  sed -e "s#TMPDIR#debian/tmp-$$x#g" -i $$z; \
-	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#g" -i $$z; \
-	  sed -e "s#SLIBDIR#$$slibdir#g" -i $$z; \
-	  sed -e "s#LIBDIR#$$libdir#g" -i $$z; \
-	  sed -e "s#FLAVOR#$$x#g" -i $$z; \
-	  sed -e "s#LIBC#$(libc)#g" -i $$z; \
-	  sed -e "s/^#.*//" -i $$z; \
+	    sed -e "s#OPT#$(libc)-$$x#" -i debian/$(libc)-$$x.preinst; \
+	    sed -e "s#OPT#$(libc)-$$x#" -i debian/$(libc)-$$x.postinst; \
+	    sed -e "s#OPT#$(libc)-$$x#" -i debian/$(libc)-$$x.postrm; \
+	    sed -e "s#CURRENT_VER#$(DEB_VERSION)#" -i debian/$(libc)-$$x.postinst; \
+	    sed -e "s#CURRENT_VER#$(DEB_VERSION)#" -i debian/$(libc)-$$x.postrm; \
+	  fi; \
+	  sed -e "s#TMPDIR#debian/tmp-$$x#" -i $$z; \
+	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#" -i $$z; \
+	  sed -e "s#DESTLIBDIR#$$destdir#" -i $$z; \
 	done
 
 	# We use libc-otherbuild for this, since it's just a special case of
@@ -244,14 +230,9 @@ $(stamp)debhelper:
 	for x in $(NPTL); do \
 	  z=debian/$(libc).install; \
 	  cat debian/debhelper.in/libc-otherbuild.install >>$$z; \
-	  sed -e "s#TMPDIR#debian/tmp-$$x#g" -i $$z; \
-	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#g" -i $$z; \
-	  sed -e "s#LIBC-FLAVOR#$(libc)#g" -i $$z; \
-	  sed -e "s#FLAVOR#nptl#g" -i $$z; \
-	  sed -e "s#SLIBDIR#/lib/tls#g" -i $$z; \
-	  case $$z in \
-	    *.install) sed -e "s/^#.*//g" -i $$z ;; \
-	  esac; \
+	  sed -e "s#TMPDIR#debian/tmp-$$x#" -i $$z; \
+	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#" -i $$z; \
+	  sed -e "s#DESTLIBDIR#/tls#" -i $$z; \
 	done
 
 	# Substitute __SUPPORTED_LOCALES__.
@@ -259,7 +240,6 @@ $(stamp)debhelper:
 
 	# Generate common substvars files.
 	echo "locale:Depends=$(shell perl debian/debver2localesdep.pl $(LOCALES_DEP_VER))" > tmp.substvars
-	echo "locale-compat:Depends=$(shell perl debian/debver2localesdep.pl $(LOCALES_COMPAT_VER))" >> tmp.substvars
 
 	for pkg in $(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGULAR_PACKAGES) $(DEB_UDEB_PACKAGES); do \
 	  cp tmp.substvars debian/$$pkg.substvars; \

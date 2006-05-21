@@ -1,921 +1,302 @@
-glibc (2.4-1ubuntu12) edgy; urgency=low
+glibc (2.3.6-0ubuntu20) dapper; urgency=low
 
-  * Backport from Debian (Aurelien Jarno):
-    - debian/debhelper.in/nscd: create /var/run/nscd if it does not already
-      exist (closes: #370122, Malone #59914).
-    - Ship librt in the libc udeb (closes: #381881, Malone #63234).
+  * debian/patches/submitted-nis-netgrp.dpatch: New file, snagged from
+    Debian glibc packages, which drops a bogus assert that prevents NIS
+    users from using bash as a login shell (closes: launchpad.net/25206)
 
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 10 Oct 2006 12:30:41 +0100
+ -- Adam Conrad <adconrad@ubuntu.com>  Mon, 22 May 2006 00:53:40 +1000
 
-glibc (2.4-1ubuntu11) edgy; urgency=low
+glibc (2.3.6-0ubuntu19) dapper; urgency=low
 
-  * debian/debhelper.in/libc.postinst: List all sparc hwcap libc6-opt
-    packages.
+  * Reupload to rebuild on sparc, which was previously miscompiled.
 
-  * debian/sysdeps/sparc.mk: fix libc6-sparc64{b,v} target.
-  (Closes Ubuntu: #62597)
+ -- Adam Conrad <adconrad@ubuntu.com>  Fri, 19 May 2006 15:43:07 +1000
 
-  * debian/debhelper.in/libc.postinst: quote $preversion and bump the check to
-    2.4-1ubuntu11.
-  (Closes Ubuntu: #62596)
+glibc (2.3.6-0ubuntu18) dapper; urgency=low
 
- -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Fri, 22 Sep 2006 08:37:27 +0200
+  * debian/patches/cvs-mash-rlimit-rtprio.dpatch: Mangle the patch to
+    correctly patch {mips,sparc}/bits/resource.h instead of creating
+    an unused {mips,sparc}/resource.h, so RLIMIT_NICE works on sparc.
 
-glibc (2.4-1ubuntu10) edgy; urgency=low
-  
-  * sysdeps/sparc.mk: Make sure to be consistent with slibdir across all the
-    different optimizations otherwise a strange chain reaction will leave
-    almost all optmized debs empty.
+ -- Adam Conrad <adconrad@ubuntu.com>  Fri, 12 May 2006 20:26:30 +1000
 
- -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Thu, 14 Sep 2006 18:03:15 +0200
+glibc (2.3.6-0ubuntu17) dapper; urgency=low
 
-glibc (2.4-1ubuntu9) edgy; urgency=low
+  * debian/debhelper.in/nscd.dirs: Sync with Debian, adding /var/db/nscd
+    and /var/run/nscd to the nscd package (closes: launchpad.net/3365)
+  * debian/debhelper.in/nscd.init: Create /var/run/nscd on boot, for tmpfs
+  * debian/patches/locale-C.dpatch: Grab changes from Debian to define
+    first_weekday as Sunday with the C locale (closes: launchpad.net/36988)
+  * debian/local/usr_sbin/tzconfig: Make tzconfig's yes/no questions case
+    insensitive, so "N" is the same as "n" (closes: launchpad.net/30559)
+  * debian/rules.d/debhelper.mk: Make params to dh_installinit configurable
+  * debian/rules: Make nscd's dh_installinit call use "-- defaults 09 91"
+  * debhelper.in/nscd.postinst: Move nscd's rc?.d symlinks from S20/K20
+    to S09/K91, so we start early enough (closes: launchpad.net/30141)
 
-  * debhelper.in/libc-alt-dev.postinst: Fix quoting of $preversion in our
-    call to dpkg --compare-versions, so new installs don't whine verbosely.
-  * {control.in/main,sysdeps/depflags.pl}: Swap out the linux-kernel-headers
-    dependency in favour of the new linux-libc-dev (Malone: #35186)
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 12 Apr 2006 17:29:28 +1000
 
- -- Adam Conrad <adconrad@ubuntu.com>  Thu, 17 Aug 2006 14:37:08 +1000
+glibc (2.3.6-0ubuntu16) dapper; urgency=low
 
-glibc (2.4-1ubuntu8) edgy; urgency=low
+  * Fix regcomp to not trash lock structure.  Closes: Malone#38420
+    - add debian/patches/cvs-all-regcomp.dpatch
+    - update debian/patches/00list
+    (Thanks to Randolph Chung for finding the patch.)
 
-  * No-change upload to get built with fixed pkg-create-dbgsym. 
-    Closes: LP#55880.
+ -- LaMont Jones <lamont@ubuntu.com>  Thu,  6 Apr 2006 10:27:13 -0600
 
- -- Martin Pitt <martin.pitt@ubuntu.com>  Thu, 10 Aug 2006 20:30:38 +0200
+glibc (2.3.6-0ubuntu15) dapper; urgency=low
 
-glibc (2.4-1ubuntu7) edgy; urgency=low
+  * debian/debhelper.in/libc-alt.install: Add gconv-modules, the addition
+    in debian/sysdeps/amd64.mk is overwritten.
 
-  [ Jeff Bailey ]
-  * debian/rules: Force -fno-stack-protector to disable automatic
-    enablement from Ubuntu's glibc.  Glibc itself will
-    enable it as necessary.
+ -- Matthias Klose <doko@ubuntu.com>  Sat, 25 Mar 2006 07:38:45 +0000
 
-  * debian/patches/powerpc/procfs-kernelheaders.diff: New file.
-  * debian/patches/series: use it.
+glibc (2.3.6-0ubuntu14) dapper; urgency=low
 
-  * debian/rules.d/build.mk: Use "" instead of '' for creating
-    the conffile.  (Malone: #54086)
+  * libc6-i386 (amd64). Fix path of gconv-modules and install gconv-modules.
+    Ubuntu #34324, #34427.
 
-  * debian/sysdeps/i386.mk: Place xen libraries in tls/i686/cmov/nosegneg.
-  Create /etc/ld.so.conf.d/xen.conf to enable hwcap searching.
-  Don't use direct segment referecing in i386 package.  This lets Xen
-  work right from install.
-  * debian/control.in/opt: Remove conflict between libc6-xen and libc6-i686.
-  * debian/control: Regenerate.
+ -- Matthias Klose <doko@ubuntu.com>  Sat, 25 Mar 2006 01:17:08 +0100
 
-  * debian/sysdeps/powerpc.mk: Put include files in
-    /usr/include/powerpc64-linux-gnu.
-  * debian/debhelper.in/libc-alt-dev.postinst: Symlink from old location to
-    new.
-  * debian/rules.d/debhelper.mk: Generate libc-###-dev.postinst from
-    lib-alt-dev.postinst
+glibc (2.3.6-0ubuntu13) dapper; urgency=low
 
-  [ Colin Watson ]
+  * Fix getcwd on machines where PATH_MAX != PAGE_SIZE.
+    - Add debian/patches/local-all-getcwd.dpatch.
+    - Update debian/patches/00list.
 
-  * debian/debhelper.in/libnss-dns-udeb.install,
-    debian/debhelper.in/libnss-files-udeb.install: Fix installation of files
-    into libnss-*-udeb.
+ -- LaMont Jones <lamont@ubuntu.com>  Fri, 24 Mar 2006 10:18:29 -0700
 
-  * debian/debhelper.in/libc.postinst, debian/debhelper.in/libc.prerm: Run
-    iconvconfig at configure time to create
-    /usr/lib/gconv/gconv-modules.cache; remove this cache in the prerm
-    (closes: Malone #51884).
+glibc (2.3.6-0ubuntu12) dapper; urgency=low
 
- -- Jeff Bailey <jbailey@ubuntu.com>  Wed,  9 Aug 2006 05:26:59 +0000
+  * Fix missing memory clobber in Sparc atomics:
+    - Add debian/patches/local-sparc-atomics.dpatch.
+    - Update debian/patches/00list.
+    (Thanks David S. Miller for the patch)
 
-glibc (2.4-1ubuntu6) edgy; urgency=low
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Fri, 24 Mar 2006 11:18:51 +0100
 
-  * debian/patches/series: Filter out belocs-locales-bin merge.
+glibc (2.3.6-0ubuntu11) dapper; urgency=low
 
-  * debian/patches/ubuntu/local-altlocaledir.diff: Update to working
-    version.
+  * Fix clone() on sparc32 and sparc64. The fix has been upstream for about a
+    year:
+    - Add debian/patches/local-sparc-clone.dpatch.
+    - Update debian/patches/00list.
+    (Thanks David S. Miller for the patch)
 
-  * debian/sysdeps/depflags.pl: Add tzdata as Recommends.
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Wed, 22 Mar 2006 07:14:03 +0100
 
- -- Jeff Bailey <jbailey@ubuntu.com>  Fri, 23 Jun 2006 11:20:26 -0400
+glibc (2.3.6-0ubuntu10) dapper; urgency=low
 
-glibc (2.4-1ubuntu5) edgy; urgency=low
+  * Add debian/patches/eh-frame-terminator.diff (from Debian glibc-2.3.5-8):
+    Merge .eh_frame terminator fix, by Richard Sandiford (Closes: #334112).
 
-  * debian/control.in/main: Depend on gcc-4.1, drop build-dep on 
-    gcj-4.1.  Restore (>= 1.0) version dependancy on po-debconf.
+    Welcome back gij/gcj on hppa. Thanks John David Anglin.
 
- -- Jeff Bailey <jbailey@ubuntu.com>  Tue, 20 Jun 2006 04:58:13 -0400
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 17 Mar 2006 23:28:15 +0100
 
-glibc (2.4-1ubuntu4) edgy; urgency=low
-
-  * debian/sysdeps/amd64.mk: Revert merge of /emul/i486-linux-gnu paths,
-    we're sticking to /usr/lib32 for now.
-
- -- Jeff Bailey <jbailey@ubuntu.com>  Thu,  8 Jun 2006 17:56:37 -0400
-
-glibc (2.4-1ubuntu3) edgy; urgency=low
-
-  * debian/sysdeps/depflags.pl: add a Replaces on amd64 against base-files
-    (<< 3.1.9ubuntu8) to cope with us now shipping /usr/lib64 and /lib64.
-
- -- Adam Conrad <adconrad@ubuntu.com>  Thu,  8 Jun 2006 19:48:34 +1000
-
-glibc (2.4-1ubuntu2) edgy; urgency=low
-
-  * No-change rebuild against the new edgy chroots without gcc-opt.
-
- -- Adam Conrad <adconrad@ubuntu.com>  Thu,  8 Jun 2006 17:51:46 +1000
-
-glibc (2.4-1ubuntu1) edgy; urgency=low
-
-  [ Jeff Bailey ]
-  * Add missing build-dep of texi2html
-    - debian/control.in/main: Build-dep on texi2html and texinfo.
-
- -- Jeff Bailey <jbailey@ubuntu.com>  Wed,  7 Jun 2006 22:48:17 -0400
-
-glibc (2.4-1ubuntu0) edgy; urgency=low
-
-  [ Jeff Bailey ]
-  * Merge in Debian changes, new upstream version.
-
-  * Require gcc-4.1
-    - debian/control.in: Depend on gcj-4.1 to bring in gcc.
-
-  * Drop LinuxThreads on all arches, require 2.6 on all architectures.
-    - debian/sysdeps/linux.mk: Use linuxthreads instead of nptl.
-      Set minimum kernel version to 2.6.
-    - debian/control.in/i386.mk: Drop nptl pass.
-    - debian/control.in/sparc.mk: Use nptl for sparc64, sparc64v9b, sparc64v9v
-    - debian/script.in/kernelcheck.sh: Add global check for 2.6.0
-
-  * Reenable the glibc manual.
-    - debian/patches/series: Comment out all/local-remove-manual.diff
-    - debian/rules.d/build.mk: Build the glibc docs.
-
-  * Lower po-debconf requirement to make merging easier.
-    - debian/control.in/main: Drop (>= 1.0) version dependancy on po-debconf.
-
-  * Drop locales-all package.
-    - debian/rules: Drop locales-all.
-
-  * Drop tzdata dependancy.
-    - debian/control.in/libc: Remove tzdata dependancy.  We will
-      import the tzdata package later.
-
-  * Do biarch pathing for ppc64
-    - debian/sysdeps/powerpc.mk: Install headers for ppc64 to
-      /usr/include/ppc64-linux-gnu, and include them in the
-      libc6-dev-ppc64 package.
-
-  * Use GCC niagara optimisation
-    - debian/sysdeps/sparc.mk: Use -mcpu=niagara instead of ultrasparc3.
-
- -- Jeff Bailey <jbailey@ubuntu.com>  Fri,  2 Jun 2006 07:39:53 -0400
-
-glibc (2.4-1) UNRELEASED; urgency=low
-
-  [ Clint Adams ]
-  * New upstream version 2.4.
-    - Remove all/cvs-manual-memory.diff (merged upstream).
-    - Remove all/cvs-manual-string.diff (merged upstream).
-    - Remove any/cvs-divdi3-moddi3.diff (merged upstream).
-    - Remove any/cvs-errlist.diff (merged upstream).
-    - Remove any/cvs-siginfo_h.diff (merged upstream).
-    - Remove any/cvs-regcomp_c.diff (merged upstream).
-    - Remove any/cvs-tst-setcontext_c.diff (merged upstream).
-    - Remove any/local-dash.diff (merged upstream).
-    - Remove any/local-gcc4-elf.diff (merged upstream).
-    - Remove powerpc/cvs-executable-got.diff (merged upstream).
-    - Remove sparc/cvs-datastart.diff (merged upstream).
-    - Remove sparc/cvs-gcc4-inline.diff (merged upstream).
-    - Remove sparc/local-gcc4-mv8.diff (merged upstream).
-    - Remove sparc/submitted-socket-weakalias.diff (merged upstream).
-    - Remove everything to do with nscd_nischeck.
-    - Update any/local-linuxthreads-sizefix.diff.
-    - Update hppa/submitted-lt.diff.
-    - debian/shlibver: Bump up to 2.4-1.
-    - Add any/local-bashisms.diff: fix invalid test operator (==)
-      in run-iconv-test.sh
-    - debian/rules.d/build.mk: don't try to build html documentation.
-    - debian/sysdeps/hppa.mk: use ports and linuxthreads add-ons
-    - debian/sysdeps/ia64.mk: build with linuxthreads instead of NPTL
-    - debian/sysdeps/m68k.mk: use ports and linuxthreads add-ons 
-    - debian/sysdeps/mips.mk: use ports and linuxthreads add-ons
-    - debian/sysdeps/mipsel.mk: use ports and linuxthreads add-ons
-    - debian/sysdeps/i386.mk: disable sanity checks on linuxthreads build
-    - debian/sysdeps/powerpc.mk: build with linuxthreads instead of NPTL
-    - debian/sysdeps/arm.mk: use ports and linuxthreads add-ons
-    - Build with gcc 4.1 on all architectures.
-    - debian/patches/sparc/local-linuxthreads.diff: fill in missing
-      preprocessor macros.
-    - debian/debhelper.in/nscd.init: partially sync nscd initscript
-      with upstream.
-
-  [ Denis Barbier ]
-    - Remove locale/complex-collate.diff (merged upstream).
-    - Remove locale/cvs-{iso4217,iso639}.diff, locale/cvs-localedata.diff
-    - Remove from any/local-forward-backward-collation.diff a chunk merged
-      upstream.
-    - debian/rules.d/tarball.mk: glibc-<foo>-2.4.tar.bz2 add-on unpacks
-      into either <foo> or glibc-<foo>-2.4, in which case it is renamed
-      into <foo>.
-    - Remove the GNU Libc Reference manual from glibc-doc because it is
-      not DFSG-free.  (Closes: #181494)
-      The whole glibc-2.4/manual directory is removed from glibc-2.4.tar.bz2.
-    - debian/control: Drop Build-Depends: texinfo, texi2html.
-    - debian/control: Drop references to the antique libc-doc package.
-
-  [ Michael Banck ]
-  * debian/sysdeps/hurd.mk: Only use libidn for add-ons.
-
-  [ Aurelien Jarno ]
-  * Update all/submitted-new-brf-encoding.diff.
-  * Remove alpha/cvs-gcc4-profile.diff (not needed anymore).
-  * Update alpha/submitted-xstat.diff.
-  * Update arm/cvs-gcc4-inline.diff.
-  * Remove arm/cvs-float-byteorder.diff (merged upstream).
-  * Remove arm/cvs-socket-weakalias.diff (merged upstream).
-  * Update arm/local-ioperm.diff to reflect the new port add-on.
-  * Update arm/local-no-hwcap.diff to reflect the new port add-on.
-  * Remove any/cvs-argp_h.diff (merged upstream).
-  * Remove any/cvs-ctan.diff (merged upstream).
-  * Remove any/cvs-futimes.diff (merged upstream).
-  * Remove any/cvs-nfs_h.diff (merged upstream).
-  * Remove any/cvs-path_log.diff (merged upstream).
-  * Remove any/cvs-resource_h.diff (merged upstream).
-  * Remove any/cvs-tls-crashfix.diff (merged upstream).
-  * Remove any/local-kernel-features.diff (merged upstream).
-  * Update any/local-ldso-disable-hwcap.diff.
-  * Update any/local-linuxthreads-sizefix.diff.
-  * Update any/local-rtld.diff.
-  * Update any/local-version-sanity.diff.
-  * Remove any/submitted-eh-frame-terminator.diff (merged upstream).
-  * Update any/submitted-nis-netgrp.diff.
-  * Remove i386/local-i486_ldt_support.diff (merged upstream).
-  * Remove hppa/cvs-linesep.diff (merged upstream).
-  * Update hppa/cvs-no-ldbl-128.diff to reflect the new port add-on.
-  * Update hppa/cvs-pie-relocs.diff to reflect the new port add-on.
-  * Update hppa/local-gcc-4-profile.diff to reflect the new port add-on.
-  * Update hppa/local-inlining.diff to reflect the new port add-on.
-  * Update hppa/submitted-drop-utimes.diff.
-  * Update hppa/submitted-fenv-align.diff to reflect the new port add-on.
-  * Update hppa/submitted-fpu.diff to reflect the new port add-on.
-  * Update hppa/submitted-iitlbp.diff to reflect the new port add-on.
-  * Update hppa/submitted-sysdeps.diff.
-  * Remove hurd-i386/cvs-ioctl-pfinet.diff (merged upstream).
-  * Remove hurd-i386/cvs-getresuid-dyslexia.diff (merged upstream).
-  * Remove hurd-i386/cvs-posix-opts.diff (merged upstream).
-  * Update hurd-i386/submitted-sysvshm.diff.
-  * Remove kfreebsd/local-nscd_no_mremap.diff (not necessary anymore).
-  * Update kfreebsd/local-scripts.diff.
-  * Add kfreebsd/local-ftw.diff.
-  * Add kfreebsd/local-sysdeps-2.4.diff.
-  * Remove m32r/cvs-elf-m32r_rel32.diff (merged upstream).
-  * Update m68k/local-compat.diff.
-  * Update m68k/local-mathinline_h.diff to reflect the new port add-on, but
-    keep it disabled.
-  * Update m68k/local-fpic.diff.
-  * Update m68k/local-reloc.diff to reflect the new port add-on.
-  * Update m68k/submitted-gcc34-seccomment.diff.
-  * Remove mips/cvs-gcc4-inline.diff (merged upstream).
-  * Remove mips/cvs-gcc4-sysdeps.diff (merged upstream).
-  * Update mips/local-librt.diff to reflect the new port add-on.
-  * Update mips/submitted-msq.diff to reflect the new port add-on.
-  * Remove powerpc/cvs-gcc41-initfini.diff (merged upstream).
-  * debian/sysdeps/sparc.mk: do an NPTL pass.
-  * Update any/local-libgcc-compat-{all,others}.diff and split them into
-    any/local-libgcc-compat-{main,ports}.diff.
-  * Add sparc/local-fork.diff (use fork.c instead of fork.S).
-  * Add sparc/local-sysdep.diff (pull in __syscall_error routine when 
-    building with linuxthreads).
-  * Add any/local-__thread.diff (make glibc buildable without __thread support)
-    from Michael Bank.  (Closes: #361064)
-  * debian/debhelper.in/libc.postinst: add /etc/ld.so.conf.d/ support.
-  * Drop any/local-ldconfig-multiarch.diff, use /etc/ld.so.conf.d/ to 
-    configure multiarch libraries.
-  * debian/sysdeps/alpha.mk: do an NPTL pass.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 28 May 2006 03:28:14 +0200
-
-glibc (2.3.6-13) unstable; urgency=low
-
-  * debian/patches/alpha/local-gcc4.1.diff: fix a small typo. sigh.
-  * debian/control.in/main: build-depends on libc6-dev-s390x on s390.
-  * Remove any/local-libgcc-static.diff.  (Closes: #369636, #369641)
-
- -- Aurelien Jarno <aurel32@debian.org>  Wed, 31 May 2006 07:20:14 +0200
-
-glibc (2.3.6-12) unstable; urgency=low
-
-  * Don't do a udeb pass, it is still too buggy.  (Closes: #369492)
-  * debian/control.in/main: build-depends on libc6-dev-sparc64 on sparc.
-  * Add patches/alpha/local-gcc4.1.diff (fix build with gcc-4.1) from
-    Falk Hueffner.
-  * patches/kfreebsd/local-sysdeps.diff: update to revision 1571 (from
-    glibc-bsd).
-
- -- Aurelien Jarno <aurel32@debian.org>  Tue, 30 May 2006 22:35:35 +0200
-
-glibc (2.3.6-11) unstable; urgency=low
-
-  [ Aurelien Jarno ]
-  * debian/rules/build.mk: don't remove ld.so from udeb packages.
-  * debian/rules: move udeb_add-ons to debian/sysdeps/{kfreebsd,linux}.mk.
-  * M32R support:  (Closes: #366962)
-    - debian/rules.d/control.mk: add m32r.
-    - Add debian/sysdeps/m32r.mk.
-    - Add debian/patches/any/cvs-futimes.diff (use fnctl64 if fnctl is no
-      available).
-    - Add debian/patch/any/local-kernel-features.diff (fix the include path
-      for kernel-features.h) so that it could be used from other files.
-    - Add debian/patches/any/local-libgcc-static.diff (link with libgcc_s).
-    - Add debian/patches/m32r/local-ports-m32r.diff (m32r support).
-    - Add debian/patches/m32r/cvs-elf-m32r_rel32.diff (Add R_M32R_REL32 to
-      elf/elf.h).
-  * debian/local/manpages/localedef.1: fix a typo.  (Closes: #310477)
-  * debian/local/manpages/iconv.1: fix the indentation (Closes: #316148)
-  * debian/local/manpages/iconv.1, debian/local/manpages/localedef.1: change
-    sarge into etch.
-  * debian/sysdeps/kfreebsd.mk: build the udeb package with -Os on
-    kfreebsd-i386 and kfreebsd-amd64.
-  * debian/sysdeps/*.mk: build the udeb with -Os, except on m68k and s390.
-  * debian/sysdeps/hppa.mk: build the udeb with gcc 4.1.
-    mipsel, powerpc and sparc.
-  * debian/sysdeps/arm.mk: set udeb_MIN_KERNEL_SUPPORTED to 2.4.1, as the
-    arm build daemons are still running a 2.4 kernel.
-  * debian/sysdeps/sparc.mk: set udeb_MIN_KERNEL_SUPPORTED to 2.4.1, as d-i
-    still needs a 2.4 kernel.
-  * patches/kfreebsd/local-sysdeps.diff: update to revision 1577 (from
-    glibc-bsd).
-  * Add debian/patches/powerpc/cvs-gcc41-initfini.diff (fix build with gcc 4.1
-    on powerpc) from upstream CVS.
-  * debian/sysdeps/i386.mk: add a symlink (/usr)/lib/i386-linux-gnu ->
-    (/usr)/lib/i486-linux-gnu.
-  * Remove patches/i386/local-sse-oldkernel.diff (we don't support 2.2 kernels
-    anymore).
-  * Merge debian/local/etc_init.d/nscd and debian/debhelper.in/nscd.init.
-    (Closes: #368587)
-  * Remove debian/local/etc_init.d/nscd.
-
-  [ Denis Barbier ]
-  * Add patches/all/submitted-new-brf-encoding.diff: Add new BRF encoding
-    (ASCII Braille), submitted upstream by Samuel Thibault.
-  * Add patches/localedata/locale-zh_TW.diff: Remove <U897F><U5143> from
-    dates.  Thanks Dan Jacobson (Closes: #352600)
-
-  [ Clint Adams ]
-  * debian/debhelper.in/libc.preinst: use POSIX syntax for kill.
-  * debian/control.in/main: bump to Standards-Version 3.7.2.
-
- -- Aurelien Jarno <aurel32@debian.org>  Tue, 30 May 2006 02:28:33 +0200
-
-glibc (2.3.6-10) unstable; urgency=low
-
-  [ Aurelien Jarno ]
-  * debian/debhelper.in/libc.preinst: use the original path if readlink -f
-    fails to canonicalize the path.  (Closes: #368116)
-  * Add patches/arm/local-softfloat.diff (support for arm softfloat), and
-    enable on arm-softfloat only, as it breaks other architectures.  (Closes:
-    #358772)
-  * debian/rules.d/control.mk: Add arm-softfloat to the architectures list.
-  * Do a separate pass for the udeb package, so that it could use different
-    build options.
-  * Set the minimum kernel to 2.6.1 for the udeb package, except for i386,
-    m68k, mips, mipsel, powerpc and s390.
-  * Enable the locales-all package.  (Closes: #308020)
-  * debian/sysdeps/i386.mk: build the glibc with --without-__thread again on
-    i386 (Closes: #368022, #368326).
-  * debhelper.in/libc.preinst, debhelper.in/libc-otherbuild.postinst,
-    debhelper.in/libc.postinst, debhelper.in/libc-otherbuild.preinst: use
-    /bin/sh instead of /bin/bash.  (Closes: #267594)
-  * patches/kfreebsd/local-sysdeps.diff: update to revision 1571 (from
-    glibc-bsd).
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 21 May 2006 22:36:27 +0200
-
-glibc (2.3.6-9) unstable; urgency=low
-
-  * Don't run make install with -j, as it is not SMP safe.
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 18 May 2006 17:54:39 +0000
-
-glibc (2.3.6-8) unstable; urgency=low
-
-  [ Aurelien Jarno ]
-  * Disable m68k/local-mathinline_h.diff, it breaks the build of the glibc on
-    m68k.
-  * Add all/local-pt_BR.diff (fix a small typo in the Brazilian Portuguese
-    translation) by Guilherme de S. Pastore.  (Closes: #319422)
-  * Add hurd-i386/local-mlock.diff (fix mlock on Hurd/Mach), by Samuel
-    Thibault.  (Closes: #349204)
-  * sysdeps/i386.mk: build glibc with --with-__thread on i386.
-  * debian/local/manpages: s/woody/etch/g.  (Closes: #364198)
-  * sysdeps/depflags.pl: bumped the versioned conflicts with initrd-tools
-    to 0.1.84.1, as older version use LD_ASSUME_KERNEL=2.4.  (Closes: #365647)
-  * Follow symlinks while checking for other copy of the C library.
-    (Closes: #365838)
-  * Invalidate nscd cache when calling /etc/init.d/nscd restart.
-    (Closes: #365676, #365677)
-  * /usr/sbin/tzconfig: set umask to 022.  (Closes: #367145)
-  * debian/main/control.in: make locales Replaces: lliurex-belocs-locales-data.
-    (Closes: #365651)
-  * Move the NJOBS part to debian/sysdeps/(system) to debian/rules.
-  * debian/debhelper.in/libc-otherbuild.postinst: fixed parsing of
-    /etc/ld.so.hwcappkgs.  (Closes: #364666)
-
-  [ Denis Barbier ]
-  * Fix location of locales/NEWS.Debian.  Thanks Matthijs Mohlmann.
-    (Closes: #362763)
-  * locales.postinst: Do not abort if the current locale is not generated.
-  * locales.config: Fix shell scripting when "All locales" is selected along
-    with other choices,  Thanks Olivier Trichet.  (Closes: #364251)
-  * update-locale: When checking for invalid locale settings, do not mess up
-    with current environment settings.
-  * Remove sem_*.3 manual pages from glibc-doc, these manual pages are updated
-    and maintained in the manpages-dev package.  (Closes: #365547)
-
-  [ Michael Banck ]
-  * Add hurd-i386/cvs-posix-opts.diff (Define many missing options, most
-    notably _POSIX_THREAD_SAFE_FUNCTIONS) by Roland McGrath (patch from
-    HEAD).
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 18 May 2006 15:34:08 +0000
-
-glibc (2.3.6-7) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * Urgency set to medium because this version fixes and RC bug in testing.
-  * Optimized libraries should actually be cross-compiled as we don't know the
-    CPU that will be used.
-  * Allow the glibc to be cross-compiled for Linux and kFreeBSD.  (Closes:
-    #358771)
-  * Bumped the minimum kernel to 2.4.1 instead of 2.4.0 as there are some
-    important new features in this version. Thanks to Petr Salinger for
-    noticing me.
-  * Add m68k/local-mathinline_h.diff (fix bits/mathinline.h), by Roger Leigh.
-    (Closes: #340871)
-  * Add beginning and end timestamps to both the build logs and the
-    testsuite logs.  (Closes: #155690)
-  * debian/sysdeps/sparc.mk: build sparcv9b optimized libraries with
-    -mtune=ultrasparc3.
-  * debian/sysdeps/kfreebsd/local-sysdeps.diff: update from the latest SVN.
-  * debian/patches/series: Fix the patchlevel for local-i486_ldt_support.diff
-    (Closes: #226716)
-  * Fix a typo in the previous changelog entry (s/not/now/).  (Closes: #362460)
-
-  [ Denis Barbier ]
-  * Remove ldd calls from libc.preinst.
-  * Do no more transfer variables from /etc/environment to /etc/default/locale
-    in locales.postinst, but instead add /usr/share/doc/locales/NEWS.Debian
-    to explain that /etc/environment needs to be cleaned up.
-    (Closes: #361048)
-  * Create a new locales-all package with all supported locales precompiled,
-    but keep it disabled for now.
-    Both locales and locales-all packages provide a virtual generated-locales
-    package.  Packages which currently depends on locales should instead
-    depend on 'locales | generated-locales'.
-  * Add a new ca_ES@valencia locale, requested by Robert Millan (Closes: #361972)
-
- -- Aurelien Jarno <aurel32@debian.org>  Fri, 14 Apr 2006 13:48:30 +0200
-
-glibc (2.3.6-6) unstable; urgency=low
-
-  [ Aurelien Jarno ]
-  * Remove the timezone database from the libc6 package. It is now provided
-    by a separate package called tzdata.
-  * Put each test log file in the corresponding package instead of putting all
-    of them in libc6.
-  * Remove sparc/local-sparc64-fixups.diff as /lib64 and /usr/lib64 are now a
-    default search path on 32/64-bit architectures.
-  * Switch minimum kernel to at least 2.4.0 on all arches but m68k, and change
-    kernelcheck.sh accordingly. Affected architectures:
-    - alpha: from 2.2.0 to 2.4.0
-    - arm: from 2.2.0 to 2.4.0 (but 2.4.0 was checked at installed time)
-    - i386: from 2.2.0 to 2.4.0
-    - powerpc: from 2.2.0 to 2.4.0
-    - s390: from 2.2.10 to 2.4.0
-    - sparc: from 2.2.0 to 2.4.0
-    (Closes: #174270, #220992)
-  * Add i386/local-i486_ldt_support.diff (add ldt support and thus TLS support
-    on i486 machines). Thanks to Petr Salinger for the hint.  (Closes: #226716)
-  * Bump shlib to (>= 2.3.6-6) on i386.
-  * debian/debhelper.in/libc-alt.install: Add gconv-modules to the bi-arch
-    packages.  (Closes: #361642)
-  * /etc/ld.so.nohwcap is now supported on non-Linux architectures. Drop the
-    "Linux" check from libc-otherbuild.preinst.
-  * Build a libc6-xen flavour on i386.
-  * Fix a typo in the description of the libc6-sparcv9 and libc6-sparcv9b
-    packages.
-  * local/usr_sbin/tzconfig:
-    - Put a copy of the current timezone into /etc/localtime instead of a
-      symlink.  (Closes: #346342)
-    - Handle the case where /etc/localtime does not exists.  (Closes:
-      #360383).
-  * local/manpages/tzconfig.8: Update the manpage accordingly.
-  * script.in/kernelcheck.sh: Also take in account 64-bit mips(el) kernels.
-  * Add GNU/kFreeBSD patches, using conditional patching until they get
-    accepted upstream.
-  * Correctly replace DEB_HOST_ARCH by its value in libc6.preinst. Thanks to
-    Denis for noticing me.
-
-  [ Denis Barbier ]
-  * debian/debhelper.in/locales.config: /etc/locale.gen was not generated at
-    initial installation.  (Closes: #357523)
-  * update-locale: Fix buggy sanity check between LANGUAGE and LANG.
-    (Closes: #361091)
-  * update-locale: Drop the --remove flag, it is useless.
-  * update-locale: Fix the --locale-file flag.
-  * Add new Galician debconf translation, by Jacobo Tarrio.  (Closes: #361101)
-  * Use new features of po-debconf 1.0 to remove unneeded strings from PO
-    files.
-  * Fix day, abmon and mon fields for wo_SN locale.  (Closes: #361338)
-
-  [ Michael Banck ]
-  * Add hurd-machrules-make.diff (fixes build problems with make-3.81 for
-    Mach interface generation rules) by Roland McGrath (patch from HEAD).
-  * Add hurd-sysvshm.diff (implements SysV shared memory for GNU/Hurd)
-    by Marcus Brinkmann.
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 10 Apr 2006 20:19:55 +0200
-
-glibc (2.3.6-5) unstable; urgency=low
-
-  [ Denis Barbier ]
-  * Add am_pm formatting information to en_NZ.  (Closes: #356328)
-  * Add interlingua locale.  (Closes: #224756)
-  * Move locale variables from /etc/environment into a dedicated
-    /etc/default/locale file.  (Closes: #214898, #349503)
-  * Add a new /usr/sbin/update-locale program to handle this new file.
-
-  [ Aurelien Jarno ]
-  * Fix ldconfig multiarch patch for reiserfs filesystems.
-  * Make ldconfig look into /lib32 and /usr/lib32 on amd64. Add /lib32 ->
-    /emul/ia32-linux/lib and /usr/lib32 -> /emul/ia32-linux/usr/lib links.
-  * Remove glibc235-gcc4-ppc-procfs.diff from debian/patches/series.
-    (Closes: #360126)
-  * Add siginfo_h.diff (fixes a typo in ILL_ILLOPN definition), backported
-    from upstream.  (Closes: #358041)
-  * Replace getcwd_ia64.diff by getcwd_c.diff (fix getcwd on platforms where
-    PAGE_SIZE >> PATH_MAX), backported from upstream.  (Closes: #355109)
-  * debian/control: drop alternative build-depends on ia32-libs-dev as this
-    package does not exist anymore.
-
- -- Denis Barbier <barbier@debian.org>  Tue,  4 Apr 2006 18:07:21 +0200
-
-glibc (2.3.6-4) unstable; urgency=low
-
-  [ Aurelien Jarno ]
-  * Set configure_build to the same value as configure_host for sparc
-    optimized libraries (as on i386). This way they will be tested.
-  * If the CPU has biarch support, run tests for cross-compiled libraries.
-  * Remove ld.so from optimized libraries as it is not used.
-  * Add regcomp_c.diff (Call __libc_lock_init after init_dfa) from upstream
-    (Ulrich Drepper). This make possible to run the testsuite again on hppa.
-  * Enable the testsuite on hppa.
-  * Add tst-setcontext_c.diff (fix the arguments passed to setcontext during
-    test) from upstream.
-  * Create a link /usr/lib32 -> /emul/ia32-linux/usr/lib on amd64.
-  * Add argp_h.diff fixes (Remove __NTH for __argp_usage inline function)
-    by Ulrich Drepper (patch from HEAD).  (Closes: #355264)
-  * Add getcwd_ia64.diff (Remove the assertion so that the behaviour is the
-    same on all platforms, including ia64). This is a temporary fix to bug
-    #355109, until the upstream takes a decision.
-  * debian/sysdeps/kfreebsd-amd64.mk: 
-    - s/libc6/libc0.1/g
-    - Change rtlddir from /lib64 to /lib
-
-  [ Denis Barbier ]
-  * locales.config: If $DEBCONF_IS_A_REGISTRY is set to a non-empty value,
-    the content of /etc/locale.gen does not override debconf values.
-  * Add strfmon.diff: the negative sign is not printed by strfmon when
-    current locale defines sign_posn == 4 (as in de_CH) and format
-    argument contains the ! modifier.
-  * Fix forward-backward-collation.diff: the change in strcoll_l.c has to
-    be applied at several places.  (Closes: #357390)
-  * Update timezone data files to tzdata2006b (no data change, only comments).
-  * Fix resource_h.diff: there was a typo for mips:
-    s/_RLIMIT_RTPRIO/__RLIMIT_RTPRIO/  (Closes: #357419)
-
- -- Denis Barbier <barbier@debian.org>  Sat, 18 Mar 2006 10:26:45 +0100
-
-glibc (2.3.6-3) unstable; urgency=low
-
-  [ Aurelien Jarno]
-  * Use a shell function instead of ifneq when testing a variable depending on
-    $(curpass), otherwise it is only evaluated at the first pass.
-  * Add support for the ppc64 architecture.  (Closes: #301438).
-  * Use the new slibdir, libdir, rtlddir variables to build the various
-    flavours of the libc. Put them directly in the final directory, and
-    remove the corresponding tweaks done after the make install phase.
-  * Install the 32-bit libraries in /emul/ia32-linux(/usr)/lib on amd64.
-  * Only create the multiarch directories and the symlinks in /lib/ldconfig
-    for the main pass. Otherwise alternate libraries would conflict with the
-    main one when using multiarch.
-  * Fix the build-dependencies for kfreebsd-amd64.
-  * Add sysdeps/kfreebsd-amd64.mk and add kfreebsd-amd64 to
-    rules.d/control.mk.
-  * Make libc6-i386-dev conflicts with all versions of ia32-libs-dev. As it
-    won't be built anymore on amd64, this will automatically remove it during
-    the upgrade.
-
-  [ Clint Adams ]
-  * Get rid of -o as a binary operator to [ in tzconfig and postinst.
-
-  [ Denis Barbier ]
-  * Update localedata/locales/ro_RO.  Thanks Eddy Petrişor.  (Closes: #347173)
-  * Bump LOCALES_DEP_VER to 2.3.6-2.  All locales can be compiled with
-    localedef from 2.3.6-2 and 2.3.6-3.  (Closes: #352620)
-  * Updated Italian debconf translation, by Luca Monducci.
-
- -- Aurelien Jarno <aurel32@debian.org>  Wed,  1 Mar 2006 17:11:36 +0100
-
-glibc (2.3.6-2) unstable; urgency=low
-
-   [ Denis Barbier ]
-   * Modify debver2localesdep.pl, locales-depver and control files to provide
-     a smooth upgrade in unstable when locales require changes in localedef.
-     This is the first part for solving #352620, the proper dependency for
-     locales will be set by the next upload.
-   * debian/control: Clean up. Remove versioned dependencies on gettext,
-     debianutils, tar, texinfo; these versions were already in oldstable.
-     Drop references to localebin, wg15-locale, i18ndata, locale-ja, locale-ko,
-     locale-vi, locale-zh, libc6-doc, glibcdoc and libc6 (<< 2.1-4).
-   * debian/control: Split Build-Depends on several lines for readability
-     purpose.
-   * Add RON to locale/iso-4217.def and bump LOCALES_COMPAT_VER to 2.3.6-2.
-   * Fix thousand separator for de_CH, and let other Swiss locales copy
-     de_CH for LC_NUMERIC and LC_MONETARY sections.  (Closes: #345481)
-   * Apply a patch from Fedora to define AM/PM strings in cy_GB and en_GB
-     locales.  (Closes: #240901)
-   * Fix the week definition for the C locale.
-   * Check first_weekday fields against current CLDR snapshot.  Modified
-     locales are *_GB (=2), ar_SY (=5), ms_MY (=2), id_ID (=2).  Add
-     this field to more locales.
-   * locale-gen: Replace 'test ... -a ...' by two tests.
-   * Add an "All locales" option to the locales/locales_to_be_generated
-     template.  When it is selected, /etc/locale.gen is a symlink to
-     /usr/share/i18n/SUPPORTED.  (Closes: #321580, #323013)
-   * Updated debconf translations:  (Closes: #353611)
-    - Brazilian Portuguese, by André Luís Lopes  (Closes: #352416)
-    - Czech, by Miroslav Kure
-    - Danish, by Morten Brix Pedersen
-    - Dutch, by Bart Cornelis
-    - French, by Denis Barbier
-    - German, by Helge Kreutzmann
-    - Polish, by Emilian Nowak
-    - Portuguese, by Simão Pedro Cardoso
-    - Spanish, by Carlos Valdivia Yagüe
-    - Swedish, by Daniel Nylander
-    - Ukrainian, by Eugeniy Meshcheryakov
-
-  [ Clint Adams ]
-  * Add hurd-getresuid-dyslexia.diff (fixes incorrect ordering of
-    arguments) with patch from Samuel Thibault.  (Closes: #352500)
-  * Add hppa-no-ldbl-128.diff (stops implying that PA needs
-    128-bit long double support in glibc) from Aurelien Jarno.
-    (Closes: #344836).
-  * debian/local/manpages/locale.1: remove double quotes from
-    synopsis.  (Closes: #352597)
-
-  [ Aurelien Jarno ]
-  * Move dependency on lib64gcc1 from libc6-amd64 to libc6-dev-amd64 to
-    avoid a dependency loop.  (Closes: #352263)
-  * Use sed and test in /etc/init.d/glibc.sh to compare kernel versions.
-    Put the Debian architecture name in the script at build time instead
-    of using 'dpkg --print-architecture'. Thanks to Florent Bayle for
-    the idea.  (Closes: #325802, #328088, #339482)
-  * Fix example code showing how to use hooks for malloc.  (Closes:
-    bug#333565).
-  * Add hurd-ioctl-decode-argument.diff (fixes decoding of ioctl
-    arguments) from Samuel Thibault.  (Closes: #320273)
-  * Fix the prototype of sbrk() in the manual.  (Closes: #281863)
-  * Fix the strcasestr() examples in the manual.  (Closes: #289853)
-  * Install libc_nonshared.a in /usr/lib/nptl, and fix the location
-    of the static libraries of the NPTL ld scripts. (Closes: #347762)
-  * Update debian/ files for GNU/kFreeBSD.  (Closes: #351638)
-  * Regenerate debian/control, generate debian/control.in/libc0.1.
-  * Lintian cleans:
-    - Remove build-dependencies on tar and debianutils, they are
-      build-essential packages
-    - Fix FSF postal address
-    - Use policy compliant links in libc6-dev-amd64
-    - Use an absolute symlink for /lib64 on amd64
-  * Add myself to Uploaders.
-  * Switch to gcc-4.0 on powerpc.
-  * Remove old hack for gcc-3.4 on amd64.
-  * Build with the compiler defined as default for glibc (ie currently
-    gcc-4.0) instead of gcc on amd64.
-  * Decrease priorities of 64-bit main and -dev packages to standard
-    and optional for all architectures. It better matches override,
-    though it will still have to be changed.
-  * Fix glibc235-hppa-lt.diff (restore ret0 across calls to CDISABLE)
-    from Randolph Chung.  (Closes: #326581)
-  * Switch to gcc-4.0 on hppa.
-  * Add support for extra_pkg_install hooks for udeb packages.
-  * Build back with -g1 on amd64, it was removed to permit the build with
-    gcc-3.4.
-  * Remove --with-tls and --with-__thread in sysdeps/* as they are the
-    default option since version 2.3.5.
-  * Multiarch support:
-    - Add ld-multiarch.diff (add (/usr)/lib/$(config-machine)-$(config-os))
-      to the search path of the dynamic linker) from Tollef Fog Heen.
-      (Closes: #295855)
-    - Add ldconfig-multiarch.diff (add directories pointed from /lib/ldconfig
-      to the search path).
-    - Create (/usr)/lib/$(config-machine)-$(config-os) and add symlinks to
-      these directories in /lib/ldconfig/
-    - Add rtld.diff (add a new configuration variable rtlddir to change the
-      dynamic linker in the ELF binaries) partly from Andreas Jochen. This is
-      necessary to be able to install a glibc in the multiarch dir while still
-      conforming to the various ABIs which specify a linker in /lib or /lib64.
-  * Remove the patch to install the libc into /lib instead of /lib64 on
-    amd64. Use the new libdir, slibdir and rtlddir options in configparm to
-    install the glibc in (/usr)/lib, and to use the dynamic linker path
-    specified by the ABI for path for libc objects.  (Closes: #325226)
-  * Add -u option to the ldd manpage.  (Closes: #354074)
-  * Merged a patch from Michael Bank to use gcc-4.0 on Hurd.
-  * Add resource_h.diff (RLIMIT_NICE and RLIMIT_RTPRIO support) from MAIN.
-    (Closes: #352636)
-  * Add hppa-inlining.diff (Increase the maximal overall growth of the
-    compilation unit caused by inlining for dl-reloc.c on hppa).
-  * Build a 32-bit libc on amd64, using the new multiarch directories.
-    (Closes: #274367)
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 23 Feb 2006 17:47:58 +0100
-
-glibc (2.3.6-1) unstable; urgency=low
-
-  [ Denis Barbier ]
-  * debian/debhelper.in/libc.postinst: Restart webmin on upgrade.
-    (Closes: #345641)
-  * debian/debhelper.in/libc.postinst: Restart dropbear on upgrade.
-    (Closes: #351036)
-  * Fix yesexpr/noexpr in tl_PH locale.  Reported by eric pareja.
-    (Closes: #295810)
-  * Fix langinfo(_NL_TIME_FIRST_WEEKDAY) for C locale.  Reported by
-    Graham Wilson (Closes: #327025)
-  * Add first_weekday fields to most locales.
-    (Closes: #343885, #347323, #347686, #348518, #351375)
-  * Apply various fixes to French locales.  (Closes: #248377)
-  * Fix d_t_fmt and date_fmt in fo_FO. Reported by Jacob Sparre Andersen.
-  * New sa_IN locale file, provided by Vidya Ayer and Christian Perrier.
-    (Closes: #331377)
-  * Add several locales to SUPPORTED:
-    - ru_RU.CP1251, requested by Michael Bravo.  (Closes: #225516)
-    - uz_UZ.UTF-8 (its ISO-8859-1 counterpart had no UTF-8 variant)
-    - da_DK.ISO-8859-15, en_GB.ISO-8859-15, en_US.ISO-8859-15, no_NO.UTF-8,
-      no_NO and sv_SE.ISO-8859-15 are found in fedora-branch CVS branch.
-  * Apply several improvements to hy_AM found in upstream Bugzilla.
-  * Fix LC_MONETARY section of en_DK and provide en_DK.ISO-8859-15.
-    (Closes: #323159)
-  * Improve localedef(1) manual page, by Lars Wirzenius (Closes: #309846)
-  * Fix LC_MONETARY section of pl_PL. Reported by Michał Politowski.
-    (Closes: #227214)
-  * New wo_SN locale file, provided by Samba Ndao Diop and Christian
-    Perrier.  (Closes: #279697)
-  * Add new ca_AD, ca_FR and ca_IT locale files, sent upstream by Robert
-    Millan.
-  * New csb_PL locale file, sent upstream by Andrzej Krzysztofowicz.
-  * Rewrite collation rules of several locales to include iso14651_t1.
-    This eases maintenance and saves about 1MB for installed size.
-  * Sort SUPPORTED to list UTF-8 locales first.  This change partly
-    solves #312927.
-  * Modify localedata/locales/no_NO to copy definitions from nb_NO.
-  * Fix lang_* fields in gez_ER, gez_ET, tr_TR and wal_ET.
-  * Fix unknown symbols in collation rules of several locales: da_DK,
-    fa_IR, is_IS, lo_LA, lv_LV, nb_NO and sr_CS.
-  * Apply updates for st_ZA, xh_ZA and zu_ZA sent upstream by Dwayne Bailey.
-  * Add new nr_ZA locale, sent upstream by Dwayne Bailey.
-  * Rewrite collation rules for dz_BT, in collaboration with Pema Geyleg.
-  * Revert upstream change of postal_fmt in te_IN because localedef
-    complains.  (Closes: #348804)
-  * New debconf translations:
-    - Italian, by Luca Monducci  (Closes: #329428)
-    - Swedish, by Daniel Nylander  (Closes: #334864)
-  * Slightly reword locales.templates to be DTSG-compliant, thanks Thomas
-    Huriaux.
-  * Updated debconf translations:  (Closes: #350103)
-    - Brazilian Portuguese, by André Luís Lopes  (Closes: #352416)
-    - Czech, by Miroslav Kure
-    - Danish, by Morten Brix Pedersen
-    - Dutch, by Bart Cornelis
-    - French, by Denis Barbier
-    - German, by Helge Kreutzmann
-    - Polish, by Emilian Nowak
-    - Turkish, by Erçin EKER
-    - Ukrainian, by Eugeniy Meshcheryakov
-    - Vietnamese, by Clytie Siddall
-  * Update timezone data files to tzdata2006a.  (Closes: #345479, #347315, #351049)
-  * Drop Build-Depends-Indep: po4a from control file, translated manual pages
-    are currently not built.
-
-  [ Clint Adams ]
-  * Move to upstream version 2.3.6.
-    - Redo debian/patches/localedata/cvs-localedata.diff
-    - Remove glibc235-gcc4-cvs.diff
-    - Remove glibc235-gcc4-jis0208.diff
-    - Remove glibc235-binutils216-ia64.diff
-    - Remove glibc235-gcc4-ia64-profile.diff
-    - Remove glibc235-gcc4-ppc-procfs.diff
-    - Remove glibc235-execvp-fix.diff
-    - Delete CSD (Serbian Dinar) hunk from locale-iso4217.diff
-    - Redo glibc235-dl-execstack.diff
-    - Remove glibc235-alpha-divqu.diff
-    - Remove amd64-semtrywait-weakalias.diff
-    - Remove strfry-segv.diff
-    - Remove ia64-binutils-libm.diff
-    - Remove glibc235-leapsecond.diff
-    - Delete several hunks from glibc235-gcc4-sparc-inline.diff
-    - Remove hurd-libpthread-indirect-loading.diff
-    - Remove glibc235-gcc4-hurd.diff
-    - Delete several hunks from glibc235-gcc4-arm-inline.diff
-    - Remove glibc235-gcc4-s390-inline.diff
-  * Add hppa-pie-relocs.diff, thanks to Aurelien Jarno.  This
-    fixes nscd on hppa.  (Closes: #350501)
-
-  [ Daniel Jacobowitz ]
-  * Remove mips-bits-syscall.diff, merged.
-
-  [ GOTO Masanori ]
-  * Update po/ja.po.
-
- -- Clint Adams <schizo@debian.org>  Thu,  9 Feb 2006 21:45:45 -0500
-
-glibc (2.3.5-13) unstable; urgency=low
-
-  [ Clint Adams ]
-  * Acknowledge NMU.  (Closes: #342545)
-
-  [ Denis Barbier ]
-  * debian/rules.d/control.mk: Make sure that debian/control is regenerated.
-    (Closes: #351704)
-
- -- Denis Barbier <barbier@debian.org>  Mon,  6 Feb 2006 22:22:23 +0100
-
-glibc (2.3.5-12.1) unstable; urgency=low
-
-  * NMU
-  * glibc235-hppa-fpu.diff: New, fixes hppa FPU issues.  Closes: #342545
-
- -- LaMont Jones <lamont@bld-4.mmjgroup.com>  Wed,  1 Feb 2006 09:47:57 -0700
-
-glibc (2.3.5-12) unstable; urgency=low
-
-  * debian/patches/glibc235-nis-netgrp.diff: New file to fix assertion
-    failures with NIS.  (Closes: #322011)
-  * Switch to quilt to handle Debian patches.
-    - debian/control.in/main: add Build-Depends: quilt.
-    - Replace debian/rules.d/dpatch.mk by debian/rules.d/quilt.mk.
-    - Rename debian/patches/*.dpatch into debian/patches/*.diff.
-    - Move localedata patches into debian/patches/localedata/
-  * debian/patches/localedata/cvs-localedata.diff: Update to latest CVS.
-    Among other changes:
-    - locales/mn_MN: Fix date_fmt.  (Closes: #328831)
-    - locales/de_DE: Add transliterations for quoting characters.
-      (Closes: #235759)
-    - locales/ss_ZA locales/tn_ZA locales/ve_ZA locales/nso_ZA
-      locales/ts_ZA: New files.  (Closes: #254417)
-    - locales/km_KH: New file.  (Closes: #334762)
-    - locales/mg_MG: New file.  (Closes: #271549)
-    - locales/sr_CS: New file.  (Closes: #254993)
-  * debian/patches/locale-iso4217.diff: Update to latest CVS.
-    This includes changes from glibc235-localedata-sr_CS.diff, which
-    is no more needed.
-  * debian/patches/locale-iso639.diff: New file.
-  * debian/patches/locale-ku_TR.diff: New file, to provide a Kurdish
-    locale needed by d-i.  This locale comes from upstream CVS, and has
-    been updated to the latest patch sent to BZ870.
-  * debian/patches/localedata/locale-eo_EO.diff: Apply minor updates to
-    this locale file.  Add eo and eo.UTF-8 to SUPPORTED.  (Closes: #233308)
-  * Import collation fixes and enhancements for localedef from
-    belocs-locales-bin.
-  * debian/patches/forward-backward-collation.diff: New file.  Due to the
-    fixes in localedef, some bugs in code which was previously never run
-    did show up.  (Closes: #310635)
-  * debian/patches/locale/locale-print-LANGUAGE.diff: New file, so that
-    locale displays the LANGUAGE environment variable when called without
-    argument.
-  * Add myself to Uploaders.
-
- -- Denis Barbier <barbier@debian.org>  Sun, 15 Jan 2006 00:54:16 +0100
-
-glibc (2.3.5-11) unstable; urgency=low
-
-  [ Phil Blundell ]
-  * Apply patch from Colin Watson to add "--keep-existing" option to
-    locale-gen.  (Closes: #298913)
-  * Also restart exim4 on upgrade.  (Closes: #326554)
-  * debian/debhelper.in/libc.preinst: Clarify wording of message about
-    detection of services needing to be stopped before upgrade.
-
-  [ GOTO Masanori ]
-  * debian/po/pt.po: New file, add Portuguese translation.
-    Patched by Rui Branco <ruipb@debianpt.org>.  (Closes: #339110)
-
-  [ Clint Adams ]
-  * Patch from Lars Wirzenius to not rely on bash-like echo
-    behavior.  (Closes: #207391).
-  * Add allowance for the 2005 leap second.  (Closes: #345310)
-
- -- Clint Adams <schizo@debian.org>  Sun,  1 Jan 2006 11:29:08 -0500
+glibc (2.3.6-0ubuntu9) dapper; urgency=low
+
+  * Fix maintainer scripts to properly restore "$@" when using
+    "set --":
+    - Update debian/debhelper.in/libc-otherbuild.{postinst,postrm}
+    - Update debian/debhelper.in/libc.postinst
+
+    The wrong usage of "set --" resulted in "$@" from maintainer scripts
+    invocation to be mangled. In some cases, like installing
+    libc6-sparcv9v (or -otherbuild), the result was missing calls to
+    chuncks of code that rely on configure/remove/etc. actions requested
+    by dpkg.
+
+  * Stop applying local-sparc-sparc64biarch.dpatch:
+    - Update debian/patches/00list.
+
+    The patch was uncoditionally forcing an extra search path appending "64"
+    to whatever directory was scanned. While this was good a long time ago,
+    the same is achieved since 2003 by add_system_dir in
+    sysdeps/unix/sysv/linux/sparc/dl-cache.h in a more clean and less noisy way.
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Sun, 12 Mar 2006 11:37:59 +0100
+
+glibc (2.3.6-0ubuntu8) dapper; urgency=low
+
+  * Fix install path for libc6-sparc64b:
+    - Update debian/sparc.mk
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Sun, 05 Mar 2006 12:25:17 +0100
+
+glibc (2.3.6-0ubuntu7) dapper; urgency=low
+
+  * Don't do timezone work on install.
+    - debian/debhelper.in/libc.postinst: Remove timezone magic.
+    - debian/control.in/libc: Move locales recommends to ...
+    - debian/sysdeps/depflags.pl: ... here, and make it a depends.
+    - debian/control: Regenerate.
+
+  * Add Sparc Niagara support.
+    - debian/control.in/opt: Add new packages for sparc64b, sparc64v,
+      and sparcv9b.
+    - debian/debhelper.in/libc.postinst: Handle HWCAP disabling for
+      new optimised packages.
+    - debian/patches/local-sparc-niagara.dpatch: New file.
+    - debian/patches/amd64-libs.dpatch: Shuffle so that it still applies.
+    - debian/patches/00list: Use it.
+    - debian/control: Regenerate.
+    Thanks to Dave Miller <davem@davemloft.net> for these patches!
+
+  * Support RLIMIT_RTPRIO.
+    - debian/patches/cvs-mash-rlimit-rtprio.dpatch: New file.
+    - debian/patches/00list: Use it. 
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Wed,  1 Mar 2006 19:27:27 +0000
+
+glibc (2.3.6-0ubuntu6) dapper; urgency=low
+
+  * Drop timezones from main libc package.
+    - debian/debhelper.in/libc.install: Drop /usr/share/zoneinfo
+      drop usr/bin/locale
+    - debian/debhelper.in/libc.manpages: Drop locale.1 and localedef.1
+    - debian/debhelper/in/libc.dirs: Add /usr/share/zoneinfo
+    - debian/control.in/libc: Recommends: locales
+
+  * Add HPPA fpu patch.
+    - debian/patches/submitted-hppa-fpu.dpatch: New file.
+    - debian/patches/00list: Use it.
+
+  * Move localedef to locales.  No need to hack glibc anymore for locales.
+    - debian/debhelper.in/libc.install: Drop usr/sbin/localedef.
+    - debian/patches/00list: Drop local-all-localedef-fix-trampoline.
+      Drop local-all-belocs-locale-update.
+      Drop local-all-belocs-test.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Wed,  1 Feb 2006 17:19:08 +0000
+
+glibc (2.3.6-0ubuntu5) dapper; urgency=low
+
+  * Fix segfaults caused by collation issues (Malone#28640)
+    - debian/patches/cvs-all-strxfrm.dpatch: New file.
+    - debian/patfches/00list: Use it.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Mon, 30 Jan 2006 13:38:59 -0500
+
+glibc (2.3.6-0ubuntu4) dapper; urgency=low
+
+  * Fix up amd64 biarch bootstrap/buildability/installability:
+    - debian/control.in/main: add libc6-dev-i386 [amd64] to build-deps
+    - debian/control.in/i386: s/libc6-i686/libc6-i386/
+    - debian/control.in/i386: s/lib64gcc1/lib32gcc1/
+    - debian/control: regenerate to pull in the above changes
+    - sysdeps/amd64.mk: link /lib/ld-linux.so.2 to /lib32/ld-linux.so.2
+    - patches/amd64-lib: on amd64, i[3456]86* is a lib32 target, not lib
+  * New patch local-all-dynamic-resolvconf.dpatch: allow long-running
+    processes to re-read a dynamically changed resolv.conf on the fly.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 11 Jan 2006 18:55:05 +1100
+
+glibc (2.3.6-0ubuntu3) dapper; urgency=low
+
+  * Drop the init script as it does nothing useful except hide a message
+    beneath usplash.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Tue, 10 Jan 2006 09:07:55 +0000
+
+glibc (2.3.6-0ubuntu2) dapper; urgency=low
+
+  * Jeff Bailey <jbailey@ubuntu.com>
+
+    * Add amd64/i386 biarch.
+      - debian/sysdeps/amd64.mk: Add i386 NPTL pass.
+      - debian/control.in/i386: New file.
+      - debian/rules.d/control.mk: Use it.
+      - debian/control: Update.
+      - debian/rules.d/debhelper.mk: Use the same logic where
+        destdir is 32 as when destdir is 64.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Tue,  3 Jan 2006 12:23:34 +0000
+
+glibc (2.3.6-0ubuntu1) dapper; urgency=low
+
+  "The point of philosophy is to start with something so simple as
+   not to seem worth stating, and to end with something so paradoxical
+   that no one will believe it."
+   - Bertrand Russell
+
+  * Jeff Bailey <jbailey@ubuntu.com>
+
+    * Update to 2.3.6.
+
+    * Use debhelper v5 semantics.
+      - debian/compat: Set to 5.
+      - debian/control.in/main: Use debhelper >= 5.0.0
+      - debian/rules.d/build.mk: Do not filter comments from .install files.
+      - debian/debhelper.in/libc-dev.install: Install all *.a files,
+        don't bother listing them all.
+      - debian/libc-alt-dev.install: Ditto.
+      - debian/control: Renerate.
+
+    * Use g++-4.0 for ABI checks.
+      - debian/rules: Set g++-4.0
+      - debian/control.in/main: Build-dep on g++-4.0, not g++-3.4
+      - debian/control: Regenerate
+
+    * Massive patch review and renaming.
+      - The point of this exercise is to make it clear which
+        hacks are going upstream, and which ones are not.
+        The patches directory had become a crazy pile of 85 patches
+        only 55 or so were actually being applied.  This has been
+        reduced to 35 with selective pruning, combining, splitting.
+
+        debian/rules/00list describes the naming scheme, which is now
+        consistant and regular.
+
+    * Merge packaging changes from Debian 2.3.5-10
+      - debian/rules: Call it locales-depver instead of locales-shlibver.
+      Use DEB_HOST_ARCH_OS instead of DEB_HOST_GNU_SYSTEM FIXME
+      Include libidn for all targets.
+      - debian/shlibver: Bump to 2.3.5-1
+      - debian/control.in/amd64: Change section to libs and priority to
+        standard.  Capitalise AMD64.  Change priority of libc6-dev-amd64
+        optional.
+      - debian/control.in/libc: Change section to libs
+      - debian/debhelper.in/glibc-doc.install: Look for the files in
+        manual/libc/, not manual/.
+      - debian/debhelper.in/libc-dev.install: Install sprof.
+      - debian/debhelper.in/libc-dev.manpages: Install sprof.1
+      - debian/debhelper.in/libc-pic.dirs: Remove leading /
+      - debian/debhelper.in/libc-prof.install: Don't install sprof.
+      - debian/debhelper.in/libc-prof.manpages: Delete
+      - debian/debhelper.in/libc.dirs: Remove leading /, add etc/init.d
+      - debian/debhelper.in/libc.docs: Add CONFORMANCE and NAMESPACE
+      - debian/debhelper.in/libc.postinst: Use symbolic names rather
+        than $1 and $2.
+        Use dpkg --print-architecture, not --print-installation-architecture
+        Restart saslauthd and atd when upgrading from older versions.
+        Pretty up the text for NSS restarts.
+        Run /etc/init.d/glibc.sh at startup.
+      - debian/debhelper.in/nscd.init: Support "status" argument.
+      - debian/local/etc_default/tmpfs: Delete
+      - debian/local/etc_init.d/devpts.sh: Delete
+      - debian/local/etc_init.d/mountkernfs: Delete
+      - debian/local/etc_init.d/nscd: Add dependancy based init magic.
+      - debian/local/etc_init.d/glibc.sh: New file.
+      - debian/local/manpages: Update.  They've been localised now.
+      - debian/po: Update.
+      - debian/sysdeps/depflags.pl: Update with various conflicts.
+      - debian/sysdeps/hppa.mk: Cosmetic changes.
+      - debian/sysdeps/i386.mk: Set MIN_KERNEL_VERSION to 2.6.0 for
+        amd64 biarch package.
+      - debian/sysdeps/linux.mk: Don't try to add nptl as an add-on.
+        Allow overriding concurency with SETNJOBS.
+      - debian/sysdeps/powerpc.mk: Set MIN_KERNEL_SUPPORTED to 2.6.0 for
+        ppc64.
+      - debian/rules.d/build.mk: Add logme logic, use it so that
+        builds fail when configure is run or the build dies.
+      - debian/rules.d/debhelper.mk: Use kernelcheck.sh, install
+        debian/glibc.sh.generated as /etc/init.d/glibc.sh.
+        Do a more robust TLS check in the presence of LinuxThreads.
+      - debian/scripts.in/kernelcheck.sh: New file.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Thu, 29 Dec 2005 23:56:51 +0000
 
 glibc (2.3.5-10) unstable; urgency=low
 
@@ -1035,7 +416,7 @@ glibc (2.3.5-7) unstable; urgency=low
 glibc (2.3.5-6) unstable; urgency=low
 
   * GOTO Masanori <gotom@debian.org>
-  
+
     * debian/script.in/kernelcheck.sh: Use sed instead of bash extension.
       (Closes: #325373, #325471, #325504, #325511)
 
@@ -1045,7 +426,7 @@ glibc (2.3.5-5) unstable; urgency=low
 
   * GOTO Masanori <gotom@debian.org>
 
-    * debian/debhelper.in/debhelper.mk: Don't expand debug-packages with 
+    * debian/debhelper.in/debhelper.mk: Don't expand debug-packages with
       DEB_INDEP_REGULAR_PACKAGES.  It causes binary-indep is unexpectedly
       included.  (Closes: #233390, #233391, #233392)
 
@@ -1060,7 +441,7 @@ glibc (2.3.5-5) unstable; urgency=low
     * debian/local/usr_sbin/locale-gen: Don't break locale-gen when locale-def
       warns errors.
 
-    * debian/patches/glibc235-localedata-sr_CS.dpatch: New file, to fix 
+    * debian/patches/glibc235-localedata-sr_CS.dpatch: New file, to fix
       sr_CS localedef breakage.  (Closes: #321580, #322655)
     * debian/patches/glibc235-localedata-locales.dpatch: New file, to fix
       mn_MN and sid_ET localedef breakage.  (Closes: #321634)
@@ -1144,7 +525,7 @@ glibc (2.3.5-4) unstable; urgency=low
       It causes unconditional locking problem, because it was already replaced
       by Carlos' new patches.  Reported by LaMont Jones <lamont@debian.org>.
 
-    * Add Depends: lib64gcc1 and provide lib64c-dev for 64bit -dev packages.  
+    * Add Depends: lib64gcc1 and provide lib64c-dev for 64bit -dev packages.
       Suggested by Matthias Klose <doko@cs.tu-berlin.de>.  (Closes: #323552)
       - debian/control.in/sparc64: Likewise.
       - debian/control.in/ppc64: Likewise.
@@ -1231,7 +612,8 @@ glibc (2.3.5-3) unstable; urgency=low
     * debian/local/manpages/locale.gen.5: Fix typo, charsets -> charmaps.
       (Closes: #312297, #318982)
 
-    * debian/debhelper.in/libc.preinst: Remove dpkg --assert-support-predepends
+    * debian/debhelper.in/libc.preinst: Remove dpkg
+      --assert-support-predepends
       check like base-passwrd, suggested by Bastian Blank <waldi@debian.org>.
       (Closes: #316217)
 
@@ -1368,7 +750,7 @@ glibc (2.3.5-3) unstable; urgency=low
         (Closes: #282091, #292154)
       - Fix for setfacl to handle many files in ntfw64.  (Closes: #288710)
       - Support large dev_t.  (Closes: #289945, #299139)
-      - Use the correct ifndef __GNUC_PREREQ.  (Closes: #315345)  
+      - Use the correct ifndef __GNUC_PREREQ.  (Closes: #315345)
 
       - Fix the indended first line of ldd output.  (Closes: #209145, #276223)
       - Fix misleading error message of ldd when kernel version is old.
@@ -1426,11 +808,11 @@ glibc (2.3.5-2) experimental; urgency=low
         definitions for all architectures.
       - debian/patches/glibc235-gcc4-jis0208.dpatch: Fix compilation breakage
         for all architectures.
-      - debian/patches/glibc235-gcc4-wcstol_l.dpatch: Fix wcstol_l.c 
+      - debian/patches/glibc235-gcc4-wcstol_l.dpatch: Fix wcstol_l.c
         compilation breakage for all 64bit architectures.
       - debian/patches/glibc235-binutils216-ia64.dpatch: Fix _init/_fini was
         not defined within procedure with binutils 2.16 for ia64.
-      - debian/patches/glibc235-gcc4-ia64-profile.dpatch: Fix compilation 
+      - debian/patches/glibc235-gcc4-ia64-profile.dpatch: Fix compilation
         breakage by removing strong_alias for ia64.
       - debian/patches/glibc235-gcc4-ppc-procfs.dpatch: Fix ppc32 compilation
         breakage by removing __uint128_t use.  (Closes: #304963)
@@ -1444,7 +826,7 @@ glibc (2.3.5-2) experimental; urgency=low
         breakage by changing static inline to auto inline for dl-machine.h.
       - debian/patches/glibc235-gcc4-mips-sysdeps.dpatch: Fix mips compilation
         breakage by changing large syscall arguments handling.
-  
+
     * Move /etc/locale.alias to /usr/share/locale/locale.alias.
       Don't install locale.alias.5.  (Closes: #144670, #185991, #298784)
       - debian/local/usr_sbin/locale-gen: Use /usr/share/locale/locale.alias
@@ -1453,7 +835,7 @@ glibc (2.3.5-2) experimental; urgency=low
         locale.alias.5.
       - debian/local/manpages/locale.gen.5: Likewise.
       - debian/debhelper.in/locales.links: Remove file, don't link to /etc.
-      - debian/debhelper.in/locales.install: Install locale.alias under 
+      - debian/debhelper.in/locales.install: Install locale.alias under
         /usr/share/locale, not /etc/.
       - debian/debhelper.in/locales.manpages: Don't install locale.alias.5
 
@@ -1492,7 +874,7 @@ glibc (2.3.5-2) experimental; urgency=low
       - debian/rules.d/control.mk: Add ppc64.
       - debian/sysdeps/powerpc.mk: Added to support ppc64 target.
 
-    * debian/sysdeps/hppa.mk: Add /usr/hppa64-linux-gnu/include symlinks for
+   * debian/sysdeps/hppa.mk: Add /usr/hppa64-linux-gnu/include symlinks for
       dpkg-architecture changes.  Reported by Matthias Klose
       <doko@cs.tu-berlin.de>.  (Closes: #313404)
 
@@ -2118,16 +1500,6 @@ glibc (2.3.4-1) experimental; urgency=low
         from Michael Banck <mbanck@debian.org>.
 
  -- GOTO Masanori <gotom@debian.org>  Fri, 18 Mar 2005 09:41:49 +0900
-
-glibc (2.3.2.ds1-22) unstable; urgency=medium
-
-  * Daniel Jacobowitz <dan@debian.org>
-
-    - debian/patches/rtld-vdso-assertion.dpatch: Fix an assertion failure
-      running /lib/libc.so.6.
-    - debian/rules.d/debhelper.mk: Mark runnable libraries +x again.
-
- -- Daniel Jacobowitz <dan@debian.org>  Tue, 10 May 2005 15:11:53 -0400
 
 glibc (2.3.2.ds1-21) unstable; urgency=low
 

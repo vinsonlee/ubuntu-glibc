@@ -1,0 +1,305 @@
+#! /bin/sh -e
+
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: Add RLIMIT_RTPRIO and RLIMIT_NLIMITS to glibc.
+# DP: Related bugs: 
+# DP: Dpatch author: 
+# DP: Patch author:  Jakub and Ulrich
+# DP: Upstream status: In CVS
+# DP: Status Details: 
+# DP: Date: 2006-03-01
+
+PATCHLEVEL=1
+
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p$PATCHLEVEL < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p$PATCHLEVEL < $0;;
+    *)
+	echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+	exit 1
+esac
+exit 0
+
+2005-06-21  Ulrich Drepper  <drepper@redhat.com>
+
+        * resource/Makefile (tests): Add tst-getrlimit.
+        * resource/tst-getrlimit.c: New file.
+
+        * sysdeps/unix/sysv/linux/bits/resource.h (RLIMIT_RTPRIO): Fix typo.
+        * sysdeps/unix/sysv/linux/alpha/bits/resource.h: Likewise.
+        * sysdeps/unix/sysv/linux/sparc/bits/resource.h: Likewise.
+
+
+2005-06-20  Jakub Jelinek  <jakub@redhat.com>
+
+        * sysdeps/unix/sysv/linux/bits/resource.h (RLIMIT_NICE,
+        RLIMIT_RTPRIO): Add.
+        (RLIMIT_NLIMITS): Adjust.
+        * sysdeps/unix/sysv/linux/alpha/bits/resource.h (RLIMIT_NICE,
+        RLIMIT_RTPRIO): Add.
+        (RLIMIT_NLIMITS): Adjust.
+        * sysdeps/unix/sysv/linux/mips/bits/resource.h (RLIMIT_NICE,
+        RLIMIT_RTPRIO): Add.
+        (RLIMIT_NLIMITS): Adjust.
+        * sysdeps/unix/sysv/linux/sparc/bits/resource.h (RLIMIT_NICE,
+        RLIMIT_RTPRIO): Add.
+        (RLIMIT_NLIMITS): Adjust.
+
+
+# append the patch here and adjust the -p? flag in the patch calls.
+diff -urN glibc-2.3.6.old/resource/Makefile glibc-2.3.6/resource/Makefile
+--- glibc-2.3.6.old/resource/Makefile	2001-07-06 00:55:39.000000000 -0400
++++ glibc-2.3.6/resource/Makefile	2006-03-01 19:50:40.000000000 -0500
+@@ -1,4 +1,4 @@
+-# Copyright (C) 1991, 1992, 1994, 1995, 1997 Free Software Foundation, Inc.
++# Copyright (C) 1991,1992,1994,1995,1997,2005 Free Software Foundation, Inc.
+ # This file is part of the GNU C Library.
+ 
+ # The GNU C Library is free software; you can redistribute it and/or
+@@ -24,4 +24,6 @@
+ routines := getrlimit setrlimit getrlimit64 setrlimit64 getrusage ulimit      \
+ 	    vlimit vtimes getpriority setpriority nice
+ 
++tests = tst-getrlimit
++
+ include ../Rules
+diff -urN glibc-2.3.6.old/resource/tst-getrlimit.c glibc-2.3.6/resource/tst-getrlimit.c
+--- glibc-2.3.6.old/resource/tst-getrlimit.c	1969-12-31 19:00:00.000000000 -0500
++++ glibc-2.3.6/resource/tst-getrlimit.c	2006-03-01 19:49:15.000000000 -0500
+@@ -0,0 +1,112 @@
++#include <errno.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <sys/resource.h>
++
++
++static struct
++{
++  const char *name;
++  int resource;
++  bool required;
++} tests[] =
++  {
++    /* The following 7 limits are part of POSIX and must exist.  */
++    { "RLIMIT_CORE", RLIMIT_CORE, true },
++    { "RLIMIT_CPU", RLIMIT_CPU, true },
++    { "RLIMIT_DATA", RLIMIT_DATA, true },
++    { "RLIMIT_FSIZE", RLIMIT_FSIZE, true },
++    { "RLIMIT_NOFILE", RLIMIT_NOFILE, true },
++    { "RLIMIT_STACK", RLIMIT_STACK, true },
++    { "RLIMIT_AS", RLIMIT_AS, true },
++    /* The following are traditional Unix limits which are also
++       expected (by us).  */
++    { "RLIMIT_RSS", RLIMIT_RSS, true },
++    { "RLIMIT_NPROC", RLIMIT_NPROC, true },
++    /* The following are extensions.  */
++#ifdef RLIMIT_MEMLOCK
++    { "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK, false },
++#endif
++#ifdef RLIMIT_LOCKS
++    { "RLIMIT_LOCKS", RLIMIT_LOCKS, false },
++#endif
++#ifdef RLIMIT_SIGPENDING
++    { "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING, false },
++#endif
++#ifdef RLIMIT_MSGQUEUE
++    { "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE, false },
++#endif
++#ifdef RLIMIT_NICE
++    { "RLIMIT_NICE", RLIMIT_NICE, false },
++#endif
++#ifdef RLIMIT_RTPRIO
++    { "RLIMIT_RTPRIO", RLIMIT_RTPRIO, false },
++#endif
++  };
++#define ntests (sizeof (tests) / sizeof (tests[0]))
++
++
++static int
++do_test (void)
++{
++  int status = 0;
++
++  for (int i = 0; i < ntests; ++i)
++    {
++      bool this_ok = true;
++
++      struct rlimit r;
++      int res = getrlimit (tests[i].resource, &r);
++      if (res == -1)
++	{
++	  if (errno == EINVAL)
++	    {
++	      if (tests[i].required)
++		{
++		  printf ("limit %s expectedly not available for getrlimit\n",
++			  tests[i].name);
++		  status = 1;
++		  this_ok = false;
++		}
++	    }
++	  else
++	    {
++	      printf ("getrlimit for %s returned unexpected error: %m\n",
++		      tests[i].name);
++	      status = 1;
++	      this_ok = false;
++	    }
++	}
++
++      struct rlimit64 r64;
++      res = getrlimit64 (tests[i].resource, &r64);
++      if (res == -1)
++	{
++	  if (errno == EINVAL)
++	    {
++	      if (tests[i].required)
++		{
++		  printf ("limit %s expectedly not available for getrlimit64"
++			  "\n", tests[i].name);
++		  status = 1;
++		  this_ok = false;
++		}
++	    }
++	  else
++	    {
++	      printf ("getrlimit64 for %s returned unexpected error: %m\n",
++		      tests[i].name);
++	      status = 1;
++	      this_ok = false;
++	    }
++	}
++
++      if (this_ok)
++	printf ("limit %s OK\n", tests[i].name);
++    }
++
++  return status;
++}
++
++#define TEST_FUNCTION do_test ()
++#include "../test-skeleton.c"
+diff -urN glibc-2.3.6.old/sysdeps/unix/sysv/linux/alpha/bits/resource.h glibc-2.3.6/sysdeps/unix/sysv/linux/alpha/bits/resource.h
+--- glibc-2.3.6.old/sysdeps/unix/sysv/linux/alpha/bits/resource.h	2004-08-16 04:51:46.000000000 -0400
++++ glibc-2.3.6/sysdeps/unix/sysv/linux/alpha/bits/resource.h	2006-03-01 19:52:11.000000000 -0500
+@@ -1,5 +1,5 @@
+ /* Bit values & structures for resource limits.  Alpha/Linux version.
+-   Copyright (C) 1994, 1996, 1997, 1998, 1999, 2000, 2004
++   Copyright (C) 1994, 1996, 1997, 1998, 1999, 2000, 2004, 2005
+    Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+@@ -89,7 +89,18 @@
+   __RLIMIT_MSGQUEUE = 12,
+ #define RLIMIT_MSGQUEUE __RLIMIT_MSGQUEUE
+ 
+-  __RLIMIT_NLIMITS = 13,
++  /* Maximum nice priority allowed to raise to.
++     Nice levels 19 .. -20 correspond to 0 .. 39
++     values of this resource limit.  */
++  __RLIMIT_NICE = 13,
++#define RLIMIT_NICE __RLIMIT_NICE
++
++  /* Maximum realtime priority allowed for non-priviledged
++     processes.  */
++  __RLIMIT_RTPRIO = 14,
++#define RLIMIT_RTPRIO __RLIMIT_RTPRIO
++
++  __RLIMIT_NLIMITS = 15,
+   __RLIM_NLIMITS = __RLIMIT_NLIMITS
+ #define RLIMIT_NLIMITS __RLIMIT_NLIMITS
+ #define RLIM_NLIMITS __RLIM_NLIMITS
+diff -urN glibc-2.3.6.old/sysdeps/unix/sysv/linux/bits/resource.h glibc-2.3.6/sysdeps/unix/sysv/linux/bits/resource.h
+--- glibc-2.3.6.old/sysdeps/unix/sysv/linux/bits/resource.h	2004-08-16 04:51:45.000000000 -0400
++++ glibc-2.3.6/sysdeps/unix/sysv/linux/bits/resource.h	2006-03-01 19:51:52.000000000 -0500
+@@ -1,5 +1,5 @@
+ /* Bit values & structures for resource limits.  Linux version.
+-   Copyright (C) 1994, 1996, 1997, 1998, 1999, 2000, 2004
++   Copyright (C) 1994, 1996, 1997, 1998, 1999, 2000, 2004, 2005
+    Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+@@ -89,7 +89,18 @@
+   __RLIMIT_MSGQUEUE = 12,
+ #define RLIMIT_MSGQUEUE __RLIMIT_MSGQUEUE
+ 
+-  __RLIMIT_NLIMITS = 13,
++  /* Maximum nice priority allowed to raise to.
++     Nice levels 19 .. -20 correspond to 0 .. 39
++     values of this resource limit.  */
++  __RLIMIT_NICE = 13,
++#define RLIMIT_NICE __RLIMIT_NICE
++
++  /* Maximum realtime priority allowed for non-priviledged
++     processes.  */
++  __RLIMIT_RTPRIO = 14,
++#define RLIMIT_RTPRIO __RLIMIT_RTPRIO
++
++  __RLIMIT_NLIMITS = 15,
+   __RLIM_NLIMITS = __RLIMIT_NLIMITS
+ #define RLIMIT_NLIMITS __RLIMIT_NLIMITS
+ #define RLIM_NLIMITS __RLIM_NLIMITS
+diff -urN glibc-2.3.6.old/sysdeps/unix/sysv/linux/mips/bits/resource.h glibc-2.3.6/sysdeps/unix/sysv/linux/mips/resource.h
+--- glibc-2.3.6.old/sysdeps/unix/sysv/linux/mips/bits/resource.h	1969-12-31 19:00:00.000000000 -0500
++++ glibc-2.3.6/sysdeps/unix/sysv/linux/mips/bits/resource.h	2006-03-01 19:52:35.000000000 -0500
+@@ -1,5 +1,5 @@
+ /* Bit values & structures for resource limits.  Linux/MIPS version.
+-   Copyright (C) 1994, 1996, 1997, 1998, 1999, 2000, 2004
++   Copyright (C) 1994, 1996, 1997, 1998, 1999, 2000, 2004, 2005
+    Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+@@ -89,7 +89,18 @@
+   __RLIMIT_MSGQUEUE = 12,
+ #define RLIMIT_MSGQUEUE __RLIMIT_MSGQUEUE
+ 
+-  __RLIMIT_NLIMITS = 13,
++  /* Maximum nice priority allowed to raise to.
++     Nice levels 19 .. -20 correspond to 0 .. 39
++     values of this resource limit.  */
++  __RLIMIT_NICE = 13,
++#define RLIMIT_NICE __RLIMIT_NICE
++
++  /* Maximum realtime priority allowed for non-priviledged
++     processes.  */
++  __RLIMIT_RTPRIO = 14,
++#define RLIMIT_RTPRIO _RLIMIT_RTPRIO
++
++  __RLIMIT_NLIMITS = 15,
+   __RLIM_NLIMITS = __RLIMIT_NLIMITS
+ #define RLIMIT_NLIMITS __RLIMIT_NLIMITS
+ #define RLIM_NLIMITS __RLIM_NLIMITS
+diff -urN glibc-2.3.6.old/sysdeps/unix/sysv/linux/sparc/bits/resource.h glibc-2.3.6/sysdeps/unix/sysv/linux/sparc/resource.h
+--- glibc-2.3.6.old/sysdeps/unix/sysv/linux/sparc/bits/resource.h	1969-12-31 19:00:00.000000000 -0500
++++ glibc-2.3.6/sysdeps/unix/sysv/linux/sparc/bits/resource.h	2006-03-01 19:53:39.000000000 -0500
+@@ -1,5 +1,5 @@
+ /* Bit values & structures for resource limits.  Linux/SPARC version.
+-   Copyright (C) 1994, 1996, 1997, 1998, 1999, 2000, 2004
++   Copyright (C) 1994, 1996, 1997, 1998, 1999, 2000, 2004, 2005
+    Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+@@ -89,7 +89,18 @@
+   __RLIMIT_MSGQUEUE = 12,
+ #define RLIMIT_MSGQUEUE __RLIMIT_MSGQUEUE
+ 
+-  __RLIMIT_NLIMITS = 13,
++  /* Maximum nice priority allowed to raise to.
++     Nice levels 19 .. -20 correspond to 0 .. 39
++     values of this resource limit.  */
++  __RLIMIT_NICE = 13,
++#define RLIMIT_NICE __RLIMIT_NICE
++
++  /* Maximum realtime priority allowed for non-priviledged
++     processes.  */
++  __RLIMIT_RTPRIO = 14,
++#define RLIMIT_RTPRIO __RLIMIT_RTPRIO
++
++  __RLIMIT_NLIMITS = 15,
+   __RLIM_NLIMITS = __RLIMIT_NLIMITS
+ #define RLIMIT_NLIMITS __RLIMIT_NLIMITS
+ #define RLIM_NLIMITS __RLIM_NLIMITS

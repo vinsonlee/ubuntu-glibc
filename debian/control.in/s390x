@@ -1,7 +1,8 @@
+
 Package: libc6-s390x
 Architecture: s390
-Section: libs
-Priority: standard
+Section: base
+Priority: required
 Depends: libc6 (= ${Source-Version})
 Description: GNU C Library: 64bit Shared libraries for IBM zSeries
  This package includes shared versions of the standard C library and the
@@ -11,9 +12,8 @@ Description: GNU C Library: 64bit Shared libraries for IBM zSeries
 Package: libc6-dev-s390x
 Architecture: s390
 Section: libdevel
-Priority: optional
-Provides: lib64c-dev
-Depends: libc6-s390x (= ${Source-Version}), libc6-dev (= ${Source-Version}), lib64gcc1
+Priority: standard
+Depends: libc6-s390x (= ${Source-Version}), libc6-dev (= ${Source-Version})
 Description: GNU C Library: 64bit Development Libraries for IBM zSeries
  Contains the symlinks and object files needed to compile and link programs
  which use the standard C library. This is the 64bit version of the

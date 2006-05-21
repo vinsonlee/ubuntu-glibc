@@ -9,18 +9,17 @@ if [ -n "$POSIXLY_CORRECT" ]; then
 fi
 
 
-[ -f $LOCALEGEN ] || exit 0;
-[ -s $LOCALEGEN ] || exit 0;
+[ -f $LOCALEGEN -a -s $LOCALEGEN ] || exit 0;
 
 KEEP=
 if [ "$1" = '--keep-existing' ]; then
-	KEEP=1
+       KEEP=1
 fi
 
 if [ -z "$KEEP" ]; then
-	# Remove all old locale dir and locale-archive before generating new
-	# locale data.
-	rm -rf /usr/lib/locale/* || true
+       # Remove all old locale dir and locale-archive before generating new
+       # locale data.
+       rm -rf /usr/lib/locale/* || true
 fi
 
 umask 022
@@ -34,7 +33,7 @@ is_entry_ok() {
   fi
 }
 
-echo "Generating locales (this might take a while)..."
+echo "Generating locales..."
 while read locale charset; do \
 	case $locale in \#*) continue;; "") continue;; esac; \
 	is_entry_ok || continue
@@ -42,13 +41,14 @@ while read locale charset; do \
 	    'exit 1 unless setlocale(LC_ALL, $ARGV[0])' "$locale"; then
 		continue
 	fi
+
 	echo -n "  `echo $locale | sed 's/\([^.\@]*\).*/\1/'`"; \
 	echo -n ".$charset"; \
 	echo -n `echo $locale | sed 's/\([^\@]*\)\(\@.*\)*/\2/'`; \
 	echo -n '...'; \
         if [ -f $LOCALES/$locale ]; then input=$locale; else \
         input=`echo $locale | sed 's/\([^.]*\)[^@]*\(.*\)/\1\2/'`; fi; \
-	localedef -i $input -c -f $charset -A /usr/share/locale/locale.alias $locale || :; \
+	localedef -i $input -c -f $charset -A /etc/locale.alias $locale; \
 	echo ' done'; \
 done < $LOCALEGEN
 echo "Generation complete."

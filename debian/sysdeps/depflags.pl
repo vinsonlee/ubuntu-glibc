@@ -31,14 +31,7 @@ if ($DEB_HOST_GNU_SYSTEM eq "linux-gnu") {
     push @{$libc_dev_c{'Recommends'}}, 'c-compiler';
     push @{$libc_dev_c{'Replaces'}}, ('man-db (<= 2.3.10-41)', 'gettext (<= 0.10.26-1)',
 		'ppp (<= 2.2.0f-24)', 'libgdbmg1-dev (<= 1.7.3-24)');
-    push @{$libc_dev_c{'Depends'}}, 'linux-libc-dev';
-}
-if ($DEB_HOST_GNU_SYSTEM eq "kfreebsd-gnu") {
-    push @{$libc_c{'Suggests'}}, 'locales';
-    push @{$libc_c{'Replaces'}}, 'libc0.1-dev (<< 2.3.2.ds1-14)';
-    push @{$libc_dev_c{'Recommends'}}, 'c-compiler';
-    push @{$libc_dev_c{'Replaces'}}, 'kfreebsd-kernel-headers (<< 0.11)';
-    push @{$libc_dev_c{'Depends'}}, 'kfreebsd-kernel-headers (>= 0.11)';
+    push @{$libc_dev_c{'Depends'}}, 'linux-kernel-headers (>= 2.6.11.2-0)';
 }
 
 # ${glibc}-doc is suggested by $libc_c and $libc_dev_c.
@@ -48,10 +41,6 @@ push @{$libc_dev_c{'Suggests'}}, "manpages-dev";
 
 # nss-db is now seperate
 push @{$libc_c{'Recommends'}}, 'libnss-db';
-
-# tzdata is now separate
-# In Ubuntu, it's a recommends.
-push @{$libc_c{'Recommends'}}, 'tzdata';
 
 # Old strace doesn't work with current libc6
 push @{$libc_c{'Conflicts'}}, 'strace (<< 4.0-0)';
@@ -151,22 +140,14 @@ push @{$libc_dev_c{'Replaces'}}, 'kerberos4kth-dev (<< 1.2.2-10)';
 # Replace libc-dev (<< 2.3.5-2) for fixing #280030.
 push @{$libc_dev_c{'Replaces'}}, "${libc}-prof (<< 2.3.5-2)";
 
-# Conflict e2fsprogs (<< 1.35-7) that cannot work with new ldd.
+# Conflict old initrd-tools (<< 0.1.79) and e2fsprogs (<< 1.35-7)
+# that cannot work with new ldd.
+push @{$libc_c{'Conflicts'}}, 'initrd-tools (<< 0.1.79)';
 push @{$libc_c{'Conflicts'}}, 'e2fsprogs (<< 1.35-7)';
 
-# Conflict old initrd-tools (<< 0.1.84.1) that cannot work with
-# new libc.
-push @{$libc_c{'Conflicts'}}, 'initrd-tools (<< 0.1.84.1)';
-
 # Ubuntu hack until Dapper releases: Hard depend on locales to make sure
-# # that timezones pieces get pulled in for upgrades
+# that timezones pieces get pulled in for upgrades
 push @{$libc_c{'Depends'}}, 'locales (>= 2.3.11)';
-
-# Ubuntu hack to cope with the fact that we shipped /lib64 and /usr/lib64
-# in base-files for a while, and now they're in libc6, same as Debian
-if ($DEB_HOST_GNU_TYPE eq "x86_64-linux-gnu") {
-    push @{$libc_c{'Replaces'}}, 'base-files (<< 3.1.9ubuntu8)';
-}
 
 # Make sure we only have one version of libc-dev installed
 push @{$libc_dev_c{'Provides'}}, 'libc-dev';

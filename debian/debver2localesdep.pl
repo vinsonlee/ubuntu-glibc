@@ -1,18 +1,15 @@
 #!/usr/bin/perl
 
-for my $i (0..$#ARGV) {
-    $_ = $ARGV[$i];
-    /(.*)-(.*)/m;
+$_ = shift;
 
-    $debver = $1;
-    $devrev = $2;
+/(.*)-(.*)/m;
 
-    @revs = split('\.', $devrev);
+$debver = $1;
+$devrev = $2;
 
-    $devrev = $revs[0];
-    $devrev = "$devrev.$revs[1]" if defined($revs[1]) and $revs[1] ne "0";
+@revs = split('\.', $devrev);
 
-    print ", " if $i > 0;
-    print "glibc-$debver-$devrev";
-}
-print "\n";
+$devrev = $revs[0];
+$devrev = "$devrev.$revs[1]" if defined($revs[1]) and $revs[1] ne "0";
+
+print "glibc-$debver-$devrev\n";

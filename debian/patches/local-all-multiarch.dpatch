@@ -1,0 +1,48 @@
+#!/bin/sh -e
+
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: Multiarch support
+# DP: Author: Tollef Fog Heen <tfheen@debian.org>
+# DP: Upstream status: Not submitted
+# DP: Date: 2005-01-20
+
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p1 < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p1 < $0;;
+    *)
+	echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+	exit 1
+esac
+exit 0
+
+# append the patch here and adjust the -p? flag in the patch calls.
+--- glibc-2.3.2/Makeconfig	2004-05-10 19:32:23.000000000 +0200
++++ glibc-2.3.2/Makeconfig	2004-05-10 19:30:33.000000000 +0200
+@@ -178,6 +178,12 @@
+ endif
+ inst_slibdir = $(install_root)$(slibdir)
+ 
++# Extra places to look for libraries
++ifndef extra_libdir
++extra_libdir := $(exec_prefix)/lib/$(shell gcc -dumpmachine):/lib/$(shell gcc -dumpmachine)
++endif
++
++
+ # Prefix to put on files installed in $(libdir).  For libraries `libNAME.a',
+ # the prefix is spliced between `lib' and the name, so the linker switch
+ # `-l$(libprefix)NAME' finds the library; for other files the prefix is
+@@ -482,6 +488,10 @@
+ default-rpath = $(libdir)
+ endif
+ 
++ifdef extra_libdir
++default-rpath += :$(extra_libdir)
++endif
++
+ ifndef link-extra-libs
+ ifeq (yes,$(build-shared))
+ ifneq ($(common-objpfx),$(objpfx))

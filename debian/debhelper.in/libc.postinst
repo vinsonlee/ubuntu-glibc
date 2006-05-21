@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 export LC_ALL=C
 
@@ -8,6 +8,29 @@ preversion=$2
 package_name()
 {
     echo LIBC
+}
+
+zone_banner() {
+    TZBase=$(LC_ALL=C TZ=UTC0 date)
+    UTdate=$(TZ=UTC0 date -d "$TZBase")
+    TZdate=$(TZ="$timezone" date -d "$TZBase")
+    extra_info="
+Local time is now:      $TZdate.
+Universal Time is now:  $UTdate."
+    echo "Current default timezone: '$timezone'.$extra_info"
+    echo "Run 'tzconfig' if you wish to change it."
+}
+
+set_timezone() {
+    frontend=`echo "$DEBIAN_FRONTEND" | tr '[:upper:]' '[:lower:]'`
+    if [ "$frontend" = noninteractive ]; then
+        echo "Non-interactive mode, setting timezone to UTC.  Run tzconfig to change."
+        echo "UTC" >/etc/timezone
+        ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+    else
+        echo "Running 'tzconfig' to set this system's timezone."
+        /usr/sbin/tzconfig
+    fi
 }
 
 # Borrowed from sysvinit's postinst.
@@ -59,6 +82,25 @@ updatercd() {
 		done
 		shift
 	done
+}
+
+realpath()
+{
+    fname=${1%/} # strips trailing '/'
+    while [ -L "$fname" ]; do
+	oldfname="$fname"
+	fname="$(command ls -l $fname)"
+	fname="${fname#*\> }"
+	if [ "$fname" = . ] ; then
+	    fname="$(dirname $oldfname)"
+	elif echo $fname | grep -vq '^/' - ; then
+	    fname="$(dirname $oldfname)/$fname"
+	fi
+    done
+    pushd $(dirname $fname) > /dev/null
+    fname=$(pwd -P)/$(basename $fname)
+    popd > /dev/null
+    echo $fname
 }
 
 # element() is a helper function for file-rc:
@@ -138,23 +180,11 @@ then
     # something weird happened and the new libdb2 is unpacked before we
     # get here.
     if [ -e /lib/libdb.so.3.old ]; then
-	if [ -L /lib/libdb.so.3 ] || [ ! -e /lib/libdb.so.3 ]; then
+	if [ -L /lib/libdb.so.3 -o ! -e /lib/libdb.so.3 ]; then
 	    rm -f /lib/libdb.so.3
 	    cat /lib/libdb.so.3.old > /lib/libdb.so.3
 	fi
 	rm -f /lib/libdb.so.3.old
-    fi
-
-    # Add support for /etc/ld.so.conf.d
-    if dpkg --compare-versions "$preversion" lt 2.4-1ubuntu11; then
-	if [ -e /etc/ld.so.conf ]; then
-	    [ -z "$(tail -n 1 /etc/ld.so.conf)" ] || echo >> /etc/ld.so.conf
-	else
-	    touch /etc/ld.so.conf
-	fi
-	if ! grep -q '^include /etc/ld.so.conf.d/.*\.conf$' /etc/ld.so.conf ; then
-	    echo 'include /etc/ld.so.conf.d/*.conf' >> /etc/ld.so.conf
-	fi
     fi
 
     # Handle upgrades when libc-opt package has been installed.
@@ -171,7 +201,7 @@ then
 		    hwcappkgs="libc6 libc6-i686"
 		    ;;
 		sparc)
-		    hwcappkgs="libc6 libc6-sparcv9b libc6-sparcv9v libc6-sparc64b libc6-sparc64v"
+		    hwcappkgs="libc6 libc6-sparcv9 libc6-sparcv9b libc6-sparcv9v libc6-sparc64b libc6-sparc64v"
 		    ;;
 	    esac
 	    if [ -n "$hwcappkgs" ]; then
@@ -192,6 +222,7 @@ then
 	if [ -f /etc/ld.so.hwcappkgs ]; then
 	    curver=CURRENT_VER
 	    rm -f /etc/ld.so.hwcappkgs.tmp
+	    oldset="$@"
 	    while read LINE; do
 		case $LINE in
 		    \#*|"") continue
@@ -213,6 +244,7 @@ then
 		fi
 		echo "$pkg $ver" >> /etc/ld.so.hwcappkgs.tmp
 	    done < /etc/ld.so.hwcappkgs
+	    set -- $oldset
 	    if [ "$isrecorded" != yes ]; then
 		echo "$package $curver" >> /etc/ld.so.hwcappkgs.tmp
 	    fi
@@ -227,14 +259,14 @@ then
 	fi
     fi
 
-    if [ ! -z "$preversion" ]; then
+    if [ ! -z $preversion ]; then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions "$preversion" lt 2.3.5-1; then
+	if dpkg --compare-versions $preversion lt 2.3.5-1; then
 	    echo -n "Checking for services that may need to be restarted..."
 
-	    check="nis smail sendmail exim exim4-base ssh netbase"
+	    check="nis smail sendmail exim ssh netbase"
 	    check="$check ssh-nonfree postfix-tls wu-ftpd boa cron postfix"
 	    check="$check wu-ftpd-academ vsftpd slapd openldapd wwwoffle"
 	    check="$check cupsys lprng lpr lpr-ppd autofs snmpd ssh-krb5"
@@ -242,15 +274,11 @@ then
 	    check="$check apache apache-ssl apache-perl apache2-common"
 	    check="$check proftpd proftpd-ldap proftpd-mysql proftpd-pgsql"
 	    check="$check dovecot-common cucipop rsync samba saslauthd"
-	    check="$check webmin dropbear"
 	    # Only get the ones that are installed, and configured
 	    check=$(dpkg -s $check 2> /dev/null | egrep '^Package:|^Status:' | awk '{if ($1 ~ /^Package:/) { package=$2 } else if ($0 ~ /^Status: .* installed$/) { print package }}')
 	    # apache2 ships its init script in apache2-common, but the
 	    # script is apache2
 	    check=$(echo $check | sed 's/apache2-common/apache2/g')
-	    # exim4 ships its init script in exim4-base, but the script
-	    # is exim4
-	    check=$(echo $check | sed 's/exim4-base/exim4/g')
 	    # The name of proftpd-{ldap,mysql,pgsql} init script is
 	    # same as "proftpd".
 	    check=$(echo $check | sed 's/proftpd-.*/proftpd/g')
@@ -266,8 +294,9 @@ then
 	    # have different names to their init scripts
 	    check="$check inetd atd"
 	    rl=$(runlevel | awk '{print $2}')
+	    oldset="$@"
 	    for service in $check; do
-		if [ -f /usr/share/file-rc/rc ] || [ -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
+		if [ -f /usr/share/file-rc/rc -o -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
 		    idl=$(filerc $rl $service)
 		else
 		    idl=$(ls /etc/rc${rl}.d/S??${service} 2> /dev/null | head -1)
@@ -276,6 +305,7 @@ then
 		    services="$service $services"
 		fi
 	    done
+	    set -- $oldset
 	    echo "done."
 	    if [ -n "$services" ]; then
 		echo
@@ -310,8 +340,9 @@ then
 		if [ "$answer" = yes ] && [ "$services" != "" ]; then
 		    echo "Restarting services possibly affected by the upgrade:"
 		    failed=""
+		    oldset="$@"
 		    for service in $services; do
-			if [ -f /usr/share/file-rc/rc ] || [ -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
+			if [ -f /usr/share/file-rc/rc -o -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
 			    idl=$(filerc $rl $service)
 			else
 			    idl=$(ls /etc/rc${rl}.d/S??${service} 2> /dev/null | head -1)
@@ -327,6 +358,7 @@ then
 			    failed="$service $failed"
 			fi
 		    done
+		    set -- $oldset
 		    echo
 		    if [ -n "$failed" ]; then
 			# Ruh roh, George
@@ -349,9 +381,12 @@ then
 	fi # end upgrading and $preversion lt 2.3.5-1
     fi # Upgrading
 
-     # Ubuntu change.  Do not do kernel version detection at startup.
-     update-rc.d -f glibc.sh remove >/dev/null 2>&1
+    # In Ubuntu, timezone work is handled inside the locales package.
 
+    # Don't run the init script in ubuntu.  Boot-time is not the place to
+    # print such messages as it is usually unattended, and besides this
+    # message will be entirely hidden under usplash.
+    update-rc.d -f glibc.sh remove >/dev/null 2>&1
 #    # DO NOT FOLLOW THIS EXAMPLE IN OTHER PACKAGES
 #     updatercd glibc.sh start 01 S .
 #     if [ -x /usr/sbin/invoke-rc.d ]; then
@@ -359,9 +394,6 @@ then
 #     else
 #	/etc/init.d/glibc.sh 2>/dev/null || true
 #     fi
-
-     # Create/update iconv module cache
-     iconvconfig
 fi
 
 if [ "`uname -s`" = Linux ]; then

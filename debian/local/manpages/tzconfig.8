@@ -78,12 +78,10 @@ for more details on this topic.
 .SH Internals
 The work done by
 .B tzconfig
-is actually pretty simple. It just copies the correct timezone installed in
-.I /usr/share/zoneinfo/
-to
+is actually pretty simple. It just updates the link
 .I /etc/localtime
-and puts the name of the timezone into
-.IR /etc/timezone .
+to point to the correct timezone installed in
+.IR /usr/share/zoneinfo/ .
 
 There is nothing wrong with doing this manually. However, using
 .B tzconfig

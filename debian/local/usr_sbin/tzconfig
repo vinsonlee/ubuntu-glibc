@@ -44,22 +44,25 @@ Universal Time is now:  $UTdate."
 
 TIMEZONES=$(tempfile -p time) || TIMEZONES=/etc/timezone.$$
 
-if [ -f /etc/timezone ] || [ -f /etc/localtime ] ; then
-        current_timezone="Unknown"
-	if [ -L /etc/localtime ] ; then
-		current_timezone=$(readlink /etc/localtime | sed 's%^/usr/share/zoneinfo/%%')
-	elif [ -f /etc/timezone ] && [ -f /etc/localtime ]; then
-		current_timezone=$(cat /etc/timezone)
-	fi
-	
-	echo "Your current time zone is set to $current_timezone"
+if [ -f /etc/timezone ]; then
+	echo "Your current time zone is set to `cat /etc/timezone`"
 	echo -n "Do you want to change that? [n]: "
 	read ans
-	if [ "x$ans" = "x" ] || [ "$ans" = "n" ] || [ "$ans" = "no" ]; then
+	if [ "x$ans" = "x" -o "$ans" = "n" -o "$ans" = "N" -o "$ans" = "no" ]; then
+		echo "Your time zone will not be changed"
+		exit 0
+	fi
+elif [ -L /etc/localtime ]; then
+	oldtimezone=$(readlink /etc/localtime | sed 's%^/usr/share/zoneinfo/%%')
+	echo "Your current time zone is set to $oldtimezone"
+	echo -n "Do you want to change that? [n]: "
+	read ans
+	if [ "x$ans" = "x" -o "$ans" = "n" -o "$ans" = "N" -o "$ans" = "no" ]; then
 		echo "Your time zone will not be changed"
 		exit 0
 	fi
 fi
+
 
 ( cd /usr/share/zoneinfo ; find . -type f | sed -e 's/^.\///' | sort > $TIMEZONES )
 valid=no
@@ -115,7 +118,7 @@ while [ $valid = no ]; do
 	echo -n "Name: [$zone] " ; read zone
 done
 
-umask 022
 echo $timezone > /etc/timezone 
-rm -f /etc/localtime && cp -f /usr/share/zoneinfo/$timezone /etc/localtime
+#zic -l $timezone 
+rm -f /etc/localtime && ln -sf /usr/share/zoneinfo/$timezone /etc/localtime
 trap 'rm -f $TIMEZONES' 0 1 2 3 13 15

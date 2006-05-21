@@ -1,63 +1,30 @@
 Source: @glibc@
 Section: libs
 Priority: required
-Build-Depends: gettext, make (>= 3.80-1), dpkg-dev (>= 1.13.5), bzip2, texinfo (>= 4.0), file,
- linux-libc-dev (>= 2.6.11.2-0) [!hurd-i386 !kfreebsd-i386 !kfreebsd-amd64],
- mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386], texi2html,
- kfreebsd-kernel-headers [kfreebsd-i386 kfreebsd-amd64],
- gcc-4.1, binutils (>= 2.16.1cvs20051109-1),
- autoconf, sed (>= 4.0.5-4), gawk, debhelper (>= 4.1.76),
- libc6-dev-amd64 [i386], libc6-dev-ppc64 [powerpc], libc6-dev-i386 [amd64], libc6-dev-powerpc [ppc64], libc6-dev-sparc64 [sparc], libc6-dev-s390x [s390],
- quilt
-Build-Depends-Indep: perl, po-debconf (>= 1.0)
+Build-Depends: gettext (>= 0.10.37-1), make (>= 3.80-1), dpkg-dev (>= 1.4.1.5), debianutils (>= 1.13.1), tar (>= 1.13.11), bzip2, texinfo (>= 4.0), linux-kernel-headers (>= 2.6.11.2-0) [!hurd-i386], mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386], texi2html, file, gcc-3.4 [!ia64 !powerpc], gcc-3.4 (>= 3.4.3-6ubuntu1) [ia64], gcc-3.4 (>= 3.4.4-0ubuntu4) [powerpc], g++-4.0, autoconf, binutils (>= 2.16.1-0), sed (>= 4.0.5-4), gawk, debhelper (>= 5.0.0), libc6-dev-ppc64 [powerpc], libc6-dev-amd64 [i386], libc6-dev-i386 [amd64]
+Build-Depends-Indep: perl, po-debconf
 Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
-Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, Philip Blundell <pb@nexus.co.uk>, Jeff Bailey <jbailey@raspberryginger.com>, Daniel Jacobowitz <dan@debian.org>, Clint Adams <schizo@debian.org>, Denis Barbier <barbier@debian.org>, Aurelien Jarno <aurel32@debian.org>
-Standards-Version: 3.7.2
+Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, Philip Blundell <pb@nexus.co.uk>, Jeff Bailey <jbailey@raspberryginger.com>, Daniel Jacobowitz <dan@debian.org>
+Standards-Version: 3.6.1.0
 
 Package: @glibc@-doc
 Architecture: all
 Section: doc
 Priority: optional
-Suggests: @glibc@-doc-reference
+Conflicts: libc-doc, libc6-doc, glibcdoc
+Replaces: libc-doc, libc6-doc, glibcdoc
+Provides: libc-doc
 Description: GNU C Library: Documentation
- Contains man pages for libpthread functions and the complete GNU C Library
- ChangeLog.  The GNU C Library Reference manual has been moved into
- @glibc@-doc-reference for licensing reasons.
-
-Package: locales
-Architecture: all
-Section: libs
-Priority: standard
-Depends: ${locale:Depends}, debconf | debconf-2.0
-Conflicts: base-config
-Replaces: base-config, lliurex-belocs-locales-data
-Description: GNU C Library: National Language (locale) data [support]
- Machine-readable data files, shared objects and programs used by the
- C library for localization (l10n) and internationalization (i18n) support.
- .
- This package contains the libc.mo i18n files, plus tools to generate
- locale definitions from source files (included in this package). It allows
- you to customize which definitions actually get generated. This is a
- savings over how this package used to be, where all locales were generated
- by default. This created a package that unpacked to an excess of 30 megs.
-
-Package: locales-all
-Architecture: any
-Section: libs
-Priority: extra
-Depends: ${locale:Depends}
-Provides: locales
-Description: GNU C Library: Precompiled locale data
- This package contains the precompiled locale data for all supported locales.
- A better alternative is to install the locales package and only select
- desired locales, but it can be useful on a low-memory machine because some
- locale files take a lot of memory to be compiled.
+ Contains The GNU C Library Reference manual in info and html format as
+ well as man pages for libpthread functions. Also included is the complete
+ GNU C Library ChangeLog.
 
 Package: nscd
 Architecture: @threads_archs@
 Section: admin
 Priority: optional
 Depends: @libc@ (>= ${Source-Version})
+Replaces: @libc@ (<< 2.1-4)
 Description: GNU C Library: Name Service Cache Daemon
  A daemon which handles passwd, group and host lookups
  for running programs and caches the results for the next
