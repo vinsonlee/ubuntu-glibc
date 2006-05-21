@@ -24,6 +24,7 @@ submitted-hppa-sysdeps
 submitted-hppa-iitlbp
 submitted-hppa-fenv-align
 submitted-hppa-fpu
+submitted-nis-netgrp
 ## Local:
 local-i386-i686biarch
 local-sparc-v9biarch
