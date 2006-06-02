@@ -1,30 +1,63 @@
 Source: glibc
 Section: libs
 Priority: required
-Build-Depends: gettext (>= 0.10.37-1), make (>= 3.80-1), dpkg-dev (>= 1.4.1.5), debianutils (>= 1.13.1), tar (>= 1.13.11), bzip2, texinfo (>= 4.0), linux-kernel-headers (>= 2.6.11.2-0) [!hurd-i386], mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386], texi2html, file, gcc-3.4 [!ia64 !powerpc], gcc-3.4 (>= 3.4.3-6ubuntu1) [ia64], gcc-3.4 (>= 3.4.4-0ubuntu4) [powerpc], g++-4.0, autoconf, binutils (>= 2.16.1-0), sed (>= 4.0.5-4), gawk, debhelper (>= 5.0.0), libc6-dev-ppc64 [powerpc], libc6-dev-amd64 [i386], libc6-dev-i386 [amd64]
+Build-Depends: gettext, make (>= 3.80-1), dpkg-dev (>= 1.13.5), bzip2, file,
+ linux-kernel-headers (>= 2.6.11.2-0) [!hurd-i386 !kfreebsd-i386 !kfreebsd-amd64],
+ mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386],
+ kfreebsd-kernel-headers [kfreebsd-i386 kfreebsd-amd64],
+ gcj-4.1, binutils (>= 2.16.1cvs20051109-1),
+ autoconf, sed (>= 4.0.5-4), gawk, debhelper (>= 4.1.76),
+ libc6-dev-amd64 [i386], libc6-dev-ppc64 [powerpc], libc6-dev-i386 [amd64], libc6-dev-powerpc [ppc64], libc6-dev-sparc64 [sparc], libc6-dev-s390x [s390],
+ quilt
 Build-Depends-Indep: perl, po-debconf
 Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
-Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, Philip Blundell <pb@nexus.co.uk>, Jeff Bailey <jbailey@raspberryginger.com>, Daniel Jacobowitz <dan@debian.org>
-Standards-Version: 3.6.1.0
+Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, Philip Blundell <pb@nexus.co.uk>, Jeff Bailey <jbailey@raspberryginger.com>, Daniel Jacobowitz <dan@debian.org>, Clint Adams <schizo@debian.org>, Denis Barbier <barbier@debian.org>, Aurelien Jarno <aurel32@debian.org>
+Standards-Version: 3.7.2
 
 Package: glibc-doc
 Architecture: all
 Section: doc
 Priority: optional
-Conflicts: libc-doc, libc6-doc, glibcdoc
-Replaces: libc-doc, libc6-doc, glibcdoc
-Provides: libc-doc
+Suggests: glibc-doc-reference
 Description: GNU C Library: Documentation
- Contains The GNU C Library Reference manual in info and html format as
- well as man pages for libpthread functions. Also included is the complete
- GNU C Library ChangeLog.
+ Contains man pages for libpthread functions and the complete GNU C Library
+ ChangeLog.  The GNU C Library Reference manual has been moved into
+ glibc-doc-reference for licensing reasons.
+
+Package: locales
+Architecture: all
+Section: libs
+Priority: standard
+Depends: ${locale:Depends}, debconf | debconf-2.0
+Conflicts: base-config
+Replaces: base-config, lliurex-belocs-locales-data
+Description: GNU C Library: National Language (locale) data [support]
+ Machine-readable data files, shared objects and programs used by the
+ C library for localization (l10n) and internationalization (i18n) support.
+ .
+ This package contains the libc.mo i18n files, plus tools to generate
+ locale definitions from source files (included in this package). It allows
+ you to customize which definitions actually get generated. This is a
+ savings over how this package used to be, where all locales were generated
+ by default. This created a package that unpacked to an excess of 30 megs.
+
+Package: locales-all
+Architecture: any
+Section: libs
+Priority: extra
+Depends: ${locale:Depends}
+Provides: locales
+Description: GNU C Library: Precompiled locale data
+ This package contains the precompiled locale data for all supported locales.
+ A better alternative is to install the locales package and only select
+ desired locales, but it can be useful on a low-memory machine because some
+ locale files take a lot of memory to be compiled.
 
 Package: nscd
-Architecture: alpha amd64 arm armeb i386 m68k mips mipsel powerpc sparc ia64 hppa s390 sh3 sh4 sh3eb sh4eb freebsd-i386
+Architecture: alpha amd64 arm arm-softfloat armeb i386 m32r m68k mips mipsel powerpc ppc64 sparc ia64 hppa s390 sh3 sh4 sh3eb sh4eb kfreebsd-i386 kfreebsd-amd64 
 Section: admin
 Priority: optional
 Depends: libc6 (>= ${Source-Version})
-Replaces: libc6 (<< 2.1-4)
 Description: GNU C Library: Name Service Cache Daemon
  A daemon which handles passwd, group and host lookups
  for running programs and caches the results for the next
@@ -32,18 +65,17 @@ Description: GNU C Library: Name Service Cache Daemon
  slow Services like LDAP, NIS or NIS+
 
 Package: libc6
-Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm arm-softfloat armeb i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libs
 Priority: required
-Provides: ${locale:Depends}
-Description: GNU C Library: Shared libraries and Timezone data
+Provides: ${locale-compat:Depends}
+Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
  and the standard math library, as well as many others.
- Timezone data is also included.
 
 Package: libc6-dev
-Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm arm-softfloat armeb i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libdevel
 Priority: standard
 Depends: libc6 (= ${Source-Version})
@@ -53,7 +85,7 @@ Description: GNU C Library: Development Libraries and Header Files
  and link programs which use the standard C library.
 
 Package: libc6-dbg
-Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm arm-softfloat armeb i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libdevel
 Priority: extra
 Provides: libc-dbg
@@ -67,7 +99,7 @@ Description: GNU C Library: Libraries with debugging symbols
  Most people will not need this package.
 
 Package: libc6-prof
-Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm arm-softfloat armeb i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libdevel
 Priority: extra
 Depends: libc6 (= ${Source-Version})
@@ -76,7 +108,7 @@ Description: GNU C Library: Profiling Libraries
  with gprof.
 
 Package: libc6-pic
-Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm arm-softfloat armeb i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libdevel
 Priority: optional
 Conflicts: libc-pic
@@ -91,11 +123,10 @@ Description: GNU C Library: PIC archive library
 
 Package: libc6-udeb
 XC-Package-Type: udeb
-Architecture: amd64 arm armeb i386 m68k mips mipsel powerpc sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm arm-softfloat armeb i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: debian-installer
 Priority: extra
-Provides: libc6, libc-udeb, ${locale:Depends}
-Depends: libnss-dns-udeb, libnss-files-udeb
+Provides: libc6, libc-udeb, ${locale-compat:Depends}
 Description: GNU C Library: Shared libraries - udeb
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
@@ -108,12 +139,11 @@ Package: libc6.1
 Architecture: alpha ia64
 Section: libs
 Priority: required
-Provides: ${locale:Depends}
-Description: GNU C Library: Shared libraries and Timezone data
+Provides: ${locale-compat:Depends}
+Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
  and the standard math library, as well as many others.
- Timezone data is also included.
 
 Package: libc6.1-dev
 Architecture: alpha ia64
@@ -167,8 +197,7 @@ XC-Package-Type: udeb
 Architecture: alpha ia64
 Section: debian-installer
 Priority: extra
-Provides: libc6.1, libc-udeb, ${locale:Depends}
-Depends: libnss-dns-udeb, libnss-files-udeb
+Provides: libc6.1, libc-udeb, ${locale-compat:Depends}
 Description: GNU C Library: Shared libraries - udeb
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
@@ -181,12 +210,11 @@ Package: libc0.3
 Architecture: hurd-i386
 Section: libs
 Priority: required
-Provides: ${locale:Depends}
-Description: GNU C Library: Shared libraries and Timezone data
+Provides: ${locale-compat:Depends}
+Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
  and the standard math library, as well as many others.
- Timezone data is also included.
 
 Package: libc0.3-dev
 Architecture: hurd-i386
@@ -240,8 +268,7 @@ XC-Package-Type: udeb
 Architecture: hurd-i386
 Section: debian-installer
 Priority: extra
-Provides: libc0.3, libc-udeb, ${locale:Depends}
-Depends: libnss-dns-udeb, libnss-files-udeb
+Provides: libc0.3, libc-udeb, ${locale-compat:Depends}
 Description: GNU C Library: Shared libraries - udeb
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
@@ -250,33 +277,32 @@ Description: GNU C Library: Shared libraries - udeb
  This package contains a minimal set of libraries needed for the Debian
  installer.  Do not install it on a normal system.
 
-Package: libc1
-Architecture: freebsd-i386
+Package: libc0.1
+Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libs
 Priority: required
-Provides: ${locale:Depends}
-Description: GNU C Library: Shared libraries and Timezone data
+Provides: ${locale-compat:Depends}
+Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
  and the standard math library, as well as many others.
- Timezone data is also included.
 
-Package: libc1-dev
-Architecture: freebsd-i386
+Package: libc0.1-dev
+Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libdevel
 Priority: standard
-Depends: libc1 (= ${Source-Version})
+Depends: libc0.1 (= ${Source-Version})
 Recommends: gcc | c-compiler
 Description: GNU C Library: Development Libraries and Header Files
  Contains the symlinks, headers, and object files needed to compile
  and link programs which use the standard C library.
 
-Package: libc1-dbg
-Architecture: freebsd-i386
+Package: libc0.1-dbg
+Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libdevel
 Priority: extra
 Provides: libc-dbg
-Depends: libc1 (= ${Source-Version})
+Depends: libc0.1 (= ${Source-Version})
 Description: GNU C Library: Libraries with debugging symbols
  Contains unstripped shared libraries.
  This package is provided primarily to provide a backtrace with
@@ -285,22 +311,22 @@ Description: GNU C Library: Libraries with debugging symbols
  used by placing that directory in LD_LIBRARY_PATH.
  Most people will not need this package.
 
-Package: libc1-prof
-Architecture: freebsd-i386
+Package: libc0.1-prof
+Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libdevel
 Priority: extra
-Depends: libc1 (= ${Source-Version})
+Depends: libc0.1 (= ${Source-Version})
 Description: GNU C Library: Profiling Libraries
  Static libraries compiled with profiling info (-pg) suitable for use
  with gprof.
 
-Package: libc1-pic
-Architecture: freebsd-i386
+Package: libc0.1-pic
+Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libdevel
 Priority: optional
 Conflicts: libc-pic
 Provides: libc-pic, glibc-pic
-Depends: libc1 (= ${Source-Version})
+Depends: libc0.1 (= ${Source-Version})
 Description: GNU C Library: PIC archive library
  Contains an archive library (ar file) composed of individual shared objects.
  This is used for creating a library which is a smaller subset of the
@@ -308,13 +334,12 @@ Description: GNU C Library: PIC archive library
  boot floppies. If you are not making your own set of Debian boot floppies
  using the `boot-floppies' package, you probably don't need this package.
 
-Package: libc1-udeb
+Package: libc0.1-udeb
 XC-Package-Type: udeb
-Architecture: freebsd-i386
+Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: debian-installer
 Priority: extra
-Provides: libc1, libc-udeb, ${locale:Depends}
-Depends: libnss-dns-udeb, libnss-files-udeb
+Provides: libc0.1, libc-udeb, ${locale-compat:Depends}
 Description: GNU C Library: Shared libraries - udeb
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
@@ -323,11 +348,35 @@ Description: GNU C Library: Shared libraries - udeb
  This package contains a minimal set of libraries needed for the Debian
  installer.  Do not install it on a normal system.
 
+Package: libc6-i386
+Architecture: amd64
+Section: libs
+Priority: standard
+Depends: libc6 (= ${Source-Version})
+Replaces: libc6-dev-i386
+Conflicts: ia32-libs (<= 1.5)
+Description: GNU C Library: 32bit shared libraries for AMD64
+ This package includes shared versions of the standard C
+ library and the standard math library, as well as many others.
+ This is the 32bit version of the library, meant for AMD64 systems.
+
+Package: libc6-dev-i386
+Architecture: amd64
+Section: libdevel
+Priority: optional
+Conflicts: ia32-libs-dev
+Provides: lib32c-dev
+Depends: libc6-i386 (= ${Source-Version}), libc6-dev (= ${Source-Version}), lib32gcc1
+Description: GNU C Library: 32bit development libraries for AMD64
+ Contains the symlinks and object files needed to compile and link programs
+ which use the standard C library. This is the 32bit version of the
+ library, meant for AMD64 systems.
+
 Package: libc6-sparc64
 Architecture: sparc
-Section: base
-Priority: required
-Depends: libc6 (= ${Source-Version}), lib64gcc1
+Section: libs
+Priority: standard
+Depends: libc6 (= ${Source-Version})
 Conflicts: gcc-3.0 (<< 1:3.0.4ds3-11), libgcc1 (<< 1:3.0.4ds3-11), fakeroot (<< 0.4.5-2.7)
 Description: GNU C Library: 64bit Shared libraries for UltraSPARC
  This package includes shared versions of the standard C library and the
@@ -337,18 +386,18 @@ Description: GNU C Library: 64bit Shared libraries for UltraSPARC
 Package: libc6-dev-sparc64
 Architecture: sparc
 Section: libdevel
-Priority: standard
-Depends: libc6-sparc64 (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Priority: optional
+Provides: lib64c-dev
+Depends: libc6-sparc64 (= ${Source-Version}), libc6-dev (= ${Source-Version}), lib64gcc1
 Description: GNU C Library: 64bit Development Libraries for UltraSPARC
  Contains the symlinks and object files needed to compile and link programs
  which use the standard C library. This is the 64bit version of the
  library, meant for UltraSPARC systems.
 
-
 Package: libc6-s390x
 Architecture: s390
-Section: base
-Priority: required
+Section: libs
+Priority: standard
 Depends: libc6 (= ${Source-Version})
 Description: GNU C Library: 64bit Shared libraries for IBM zSeries
  This package includes shared versions of the standard C library and the
@@ -358,8 +407,9 @@ Description: GNU C Library: 64bit Shared libraries for IBM zSeries
 Package: libc6-dev-s390x
 Architecture: s390
 Section: libdevel
-Priority: standard
-Depends: libc6-s390x (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Priority: optional
+Provides: lib64c-dev
+Depends: libc6-s390x (= ${Source-Version}), libc6-dev (= ${Source-Version}), lib64gcc1
 Description: GNU C Library: 64bit Development Libraries for IBM zSeries
  Contains the symlinks and object files needed to compile and link programs
  which use the standard C library. This is the 64bit version of the
@@ -369,7 +419,7 @@ Package: libc6-amd64
 Architecture: i386
 Section: libs
 Priority: standard
-Depends: libc6 (= ${Source-Version}), lib64gcc1
+Depends: libc6 (= ${Source-Version})
 Conflicts: amd64-libs (<= 1.2)
 Description: GNU C Library: 64bit Shared libraries for AMD64
  This package includes shared versions of the standard C library and the
@@ -380,7 +430,7 @@ Package: libc6-dev-amd64
 Architecture: i386
 Section: libdevel
 Priority: optional
-Depends: libc6-amd64 (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Depends: libc6-amd64 (= ${Source-Version}), libc6-dev (= ${Source-Version}), lib64gcc1
 Replaces: amd64-libs-dev (<= 1.2)
 Provides: lib64c-dev
 Description: GNU C Library: 64bit Development Libraries for AMD64
@@ -388,47 +438,47 @@ Description: GNU C Library: 64bit Development Libraries for AMD64
  which use the standard C library. This is the 64bit version of the
  library, meant for AMD64 systems.
 
+Package: libc6-powerpc
+Architecture: ppc64
+Section: libs
+Priority: standard
+Depends: libc6 (= ${Source-Version})
+Description: GNU C Library: 32bit powerpc shared libraries for ppc64
+ This package includes shared versions of the standard C
+ library and the standard math library, as well as many others.
+ This is the 32bit version of the library, meant for ppc64 systems.
+
+Package: libc6-dev-powerpc
+Architecture: ppc64
+Section: libdevel
+Priority: optional
+Provides: lib32c-dev
+Depends: libc6-powerpc (= ${Source-Version}), libc6-dev (= ${Source-Version}), lib32gcc1
+Description: GNU C Library: 32bit powerpc development libraries for ppc64
+ Contains the symlinks and object files needed to compile and link programs
+ which use the standard C library. This is the 32bit version of the
+ library, meant for ppc64 systems.
+
 Package: libc6-ppc64
 Architecture: powerpc
-Section: base
-Priority: required
-Depends: libc6 (= ${Source-Version}), lib64gcc1
-Description: GNU C Library: 64bit Shared libraries for PowerPC
+Section: libs
+Priority: standard
+Depends: libc6 (= ${Source-Version})
+Description: GNU C Library: 64bit Shared libraries for PowerPC64
  This package includes shared versions of the standard C library and the
  standard math library, as well as many others. This is the 64bit version
- of the library, meant for PowerPC systems.
+ of the library, meant for PowerPC64 systems.
 
 Package: libc6-dev-ppc64
 Architecture: powerpc
 Section: libdevel
-Priority: standard
-Depends: libc6-ppc64 (= ${Source-Version}), libc6-dev (= ${Source-Version})
-Description: GNU C Library: 64bit Development Libraries for PowerPC
+Priority: optional
+Provides: lib64c-dev
+Depends: libc6-ppc64 (= ${Source-Version}), libc6-dev (= ${Source-Version}), lib64gcc1
+Description: GNU C Library: 64bit Development Libraries for PowerPC64
  Contains the symlinks and object files needed to compile and link programs
  which use the standard C library. This is the 64bit version of the
- library, meant for PowerPC systems.
-
-Package: libc6-i386
-Architecture: amd64
-Section: base
-Priority: required
-Replaces: ia32-libs (<= 1.4ubuntu4)
-Depends: libc6 (= ${Source-Version}), lib32gcc1
-Description: GNU C Library: 32bit Shared libraries for amd64
- This package includes shared versions of the standard C library and the
- standard math library, as well as many others. This is the 32bit version
- of the library, meant for amd64 systems.
-
-Package: libc6-dev-i386
-Architecture: amd64
-Section: libdevel
-Priority: standard
-Replaces: ia32-libs-dev (<= 1.4ubuntu4)
-Depends: libc6-i386 (= ${Source-Version}), libc6-dev (= ${Source-Version})
-Description: GNU C Library: 32bit Development Libraries for amd64
- Contains the symlinks and object files needed to compile and link programs
- which use the standard C library. This is the 32bit version of the
- library, meant for amd64 systems.
+ library, meant for PowerPC64 systems.
 
 Package: libc6-sparcv9b
 Architecture: sparc
@@ -440,10 +490,9 @@ Description: GNU C Library: Shared libraries [v9b optimized]
  the system. This package includes shared versions of the standard C
  library and the standard math library, as well as many others.
  .
- This set of libraries is optimized for UltraSPARC-III and derivative
- processors. It only needs to be installed on machines using
- UltraSPARC-III and derivatives. If you install this on a machine without
- such chips, it won't even be used.
+ This set of libraries is optimized for the UltraSPARC v9b ABI. It only
+ needs to be installed on UltraSPARC machines. If you install this on a
+ non-UltraSPARC, it won't even be used.
  .
  WARNING: Some commercial programs do not work well with these libraries.
  Most notably, IBM's JDK. If you experience problems with such
@@ -530,6 +579,40 @@ Description: GNU C Library: Shared libraries [i686 optimized]
  Most notably, IBM's JDK. If you experience problems with such
  applications, you will need to remove this package.
 
+Package: libc6-xen
+Architecture: i386
+Conflicts: libc6-i686
+Section: libs
+Priority: extra
+Pre-Depends: libc6 (= ${Source-Version})
+Description: GNU C Library: Shared libraries [Xen version]
+ Contains the standard libraries that are used by nearly all programs on
+ the system. This package includes shared versions of the standard C
+ library and the standard math library, as well as many others.
+ .
+ This set of libraries are optimized for the Xen hypervisor, and will be
+ selected instead when running under Xen.
+
+Package: libc0.1-i686
+Architecture: kfreebsd-i386
+Section: libs
+Priority: extra
+Pre-Depends: libc6 (= ${Source-Version})
+Description: GNU C Library: Shared libraries [i686 optimized]
+ Contains the standard libraries that are used by nearly all programs on
+ the system. This package includes shared versions of the standard C
+ library and the standard math library, as well as many others.
+ .
+ This set of libraries is optimized for i686 machines, and will only be
+ used on an i686 class CPU (check the output of `uname -m').  This includes 
+ Pentium Pro, Pentium II/III/IV, Celeron CPU's and similar class CPU's
+ (including clones such as AMD Athlon/Opteron, VIA C3 Nehemiah, but not VIA 
+ C3 Ezla).  
+  .
+ WARNING: Some third-party binaries may not work well with these libraries.
+ Most notably, IBM's JDK. If you experience problems with such
+ applications, you will need to remove this package.
+
 Package: libnss-dns-udeb
 XC-Package-Type: udeb
 Architecture: any
@@ -555,13 +638,4 @@ Description: GNU C Library: NSS helper for files - udeb
  .
  This package contains the files NSS helper needed for the Debian installer.
  Do not install it on a normal system.
-
-Package: zoneinfo-udeb
-XC-Package-Type: udeb
-Architecture: all
-Section: debian-installer
-Priority: extra
-Description: GNU C Library: Time zone information tables - udeb
- Contains time zone information tables for use in the installer. Do not
- install this package on a normal system.
 

@@ -1,0 +1,426 @@
+# DP: Description: Align TLS_PRE_TCB_SIZE between linuxthreads and nptl.
+#                  The patch is based on fedora-20031105.
+# DP: Related bugs: #292673
+# DP: Dpatch author: GOTO Masanori <gotom@debian.org>
+# DP: Patch author: Jakub Jelinek <jakub@redhat.com>
+# DP: Upstream status: Debian-Specific
+# DP: Status Details: Currently IA-64 part is applied.
+# DP: Date: 2005-04-09, 2005-04-16 updated by gotom
+
+2003-09-02  Jakub Jelinek  <jakub@redhat.com>
+
+	* sysdeps/sparc/tls.h (TLS_TCB_SIZE): If in ld.so and NPTL struct
+	pthread is bigger than struct _pthread_descr_struct, use NPTL struct
+	pthread size.
+
+2003-07-22  Jakub Jelinek  <jakub@redhat.com>
+
+	* sysdeps/alpha/tls.h (TLS_INIT_TCB_SIZE, TLS_TCB_SIZE): Change to 0.
+	(TLS_INIT_TCB_ALIGN, TLS_TCB_ALIGN): Alignment of struct
+	_pthread_descr_struct.
+	(TLS_PRE_TCB_SIZE): Add sizeof (tcbhead_t) and pad to align.
+	If in ld.so and NPTL struct pthread is bigger than struct
+	_pthread_descr_struct, use NPTL struct pthread size.
+	(TLS_TCB_OFFSET): Define.
+	(INSTALL_DTV, INSTALL_NEW_DTV, GET_DTV, TLS_INIT_TP, THREAD_DTV,
+	THREAD_SELF, INIT_THREAD_SELF): Changed to match NPTL tls.h
+	definitions.
+	* sysdeps/i386/tls.h (TLS_TCB_SIZE): If in ld.so and NPTL struct
+	pthread is bigger than struct _pthread_descr_struct, use NPTL struct
+	pthread size.
+	* sysdeps/ia64/tls.h (TLS_PRE_TCB_SIZE): Likewise.
+	* sysdeps/powerpc/tls.h (TLS_PRE_TCB_SIZE): Likewise.
+	* sysdeps/s390/tls.h (TLS_TCB_SIZE): Likewise.
+	* sysdeps/sh/tls.h (TLS_PRE_TCB_SIZE): Likewise.
+	* sysdeps/x86_64/tls.h (TLS_TCB_SIZE): Likewise.
+	* sysdeps/pthread/Makefile (gen-as-const-headers): Add
+	nptl-struct-pthread.sym if nptl tree is present.
+	(before-compile): Add $(common-objpfx)nptl-struct-pthread.h
+	if nptl tree is not present.
+	(common-generated): Add nptl-struct-pthread.h.
+	($(common-objpfx)nptl-struct-pthread.h): New rule.
+	* sysdeps/pthread/nptl-struct-pthread.sym: New file.
+
+2003-07-22  Jakub Jelinek  <jakub@redhat.com>
+
+	* descr.h: Don't include lowlevellock.h, pthreaddef.h and dl-sysdep.h
+	if __need_struct_pthread_size, instead define lll_lock_t.
+
+
+Index: glibc-2.4/linuxthreads/Makefile
+===================================================================
+--- glibc-2.4.orig/linuxthreads/Makefile	2006-02-28 02:13:34.000000000 -0500
++++ glibc-2.4/linuxthreads/Makefile	2006-03-11 01:00:38.000000000 -0500
+@@ -242,15 +242,18 @@
+   $(filter-out $(tests-static) $(tests-reverse) unload, \
+     $(tests) $(test-srcs))): $(objpfx)libpthread.so \
+ 			     $(objpfx)libpthread_nonshared.a
+-# $(objpfx)../libc.so is used instead of $(common-objpfx)libc.so,
++# $(objpfx)linklibc.so is used instead of $(common-objpfx)libc.so,
+ # since otherwise libpthread.so comes before libc.so when linking.
+ $(addprefix $(objpfx), $(tests-reverse)): \
+-  $(objpfx)../libc.so $(objpfx)libpthread.so \
++  $(objpfx)linklibc.so $(objpfx)libpthread.so \
+   $(objpfx)libpthread_nonshared.a
+ $(objpfx)../libc.so: $(common-objpfx)libc.so ;
+ $(addprefix $(objpfx),$(librt-tests)): $(common-objpfx)rt/librt.so
+ $(objpfx)unload: $(common-objpfx)dlfcn/libdl.so
+ $(objpfx)unload.out: $(objpfx)libpthread.so $(objpfx)libpthread_nonshared.a
++$(objpfx)linklibc.so: $(common-objpfx)libc.so
++	ln -s ../libc.so $@
++generated += libclink.so
+ else
+ $(addprefix $(objpfx),$(tests) $(test-srcs)): $(objpfx)libpthread.a
+ $(addprefix $(objpfx),$(librt-tests)): $(common-objpfx)rt/librt.a
+Index: glibc-2.4/linuxthreads/sysdeps/alpha/tls.h
+===================================================================
+--- glibc-2.4.orig/linuxthreads/sysdeps/alpha/tls.h	2005-01-09 15:01:12.000000000 -0500
++++ glibc-2.4/linuxthreads/sysdeps/alpha/tls.h	2006-03-11 01:00:38.000000000 -0500
+@@ -58,54 +58,76 @@
+ #  include <sysdep.h>
+ 
+ /* This is the size of the initial TCB.  */
+-#  define TLS_INIT_TCB_SIZE	sizeof (tcbhead_t)
++#  define TLS_INIT_TCB_SIZE	0
+ 
+ /* Alignment requirements for the initial TCB.  */
+-#  define TLS_INIT_TCB_ALIGN	__alignof__ (tcbhead_t)
++#  define TLS_INIT_TCB_ALIGN	__alignof__ (struct _pthread_descr_struct)
+ 
+ /* This is the size of the TCB.  */
+-#  define TLS_TCB_SIZE		sizeof (tcbhead_t)
++#  define TLS_TCB_SIZE		0
+ 
+ /* Alignment requirements for the TCB.  */
+-#  define TLS_TCB_ALIGN		__alignof__ (tcbhead_t)
++#  define TLS_TCB_ALIGN		__alignof__ (struct _pthread_descr_struct)
+ 
+ /* This is the size we need before TCB.  */
+-#  define TLS_PRE_TCB_SIZE	sizeof (struct _pthread_descr_struct)
++#  ifndef IS_IN_rtld
++#   define TLS_PRE_TCB_SIZE \
++  (sizeof (struct _pthread_descr_struct)				\
++   + ((sizeof (tcbhead_t) + TLS_TCB_ALIGN - 1) & ~(TLS_TCB_ALIGN - 1)))
++#  else
++#   include <nptl-struct-pthread.h>
++#   define TLS_PRE_TCB_SIZE \
++  ((sizeof (struct _pthread_descr_struct) > NPTL_STRUCT_PTHREAD_SIZE	\
++    ? sizeof (struct _pthread_descr_struct) : NPTL_STRUCT_PTHREAD_SIZE)	\
++   + ((sizeof (tcbhead_t) + TLS_TCB_ALIGN - 1) & ~(TLS_TCB_ALIGN - 1)))
++#  endif
+ 
+ /* The DTV is allocated at the TP; the TCB is placed elsewhere.  */
+ #  define TLS_DTV_AT_TP 1
+ 
++/* The following assumes that TP (R2 or R13) points to the end of the
++   TCB + 0x7000 (per the ABI).  This implies that TCB address is
++   TP - 0x7000.  As we define TLS_DTV_AT_TP we can
++   assume that the pthread struct is allocated immediately ahead of the
++   TCB.  This implies that the pthread_descr address is
++   TP - (TLS_PRE_TCB_SIZE + 0x7000).  */
++/* ??? PPC uses offset 0x7000; seems like a good idea for alpha too,
++   but binutils not yet changed to match.  */
++#  define TLS_TCB_OFFSET 0
++
+ /* Install the dtv pointer.  The pointer passed is to the element with
+    index -1 which contain the length.  */
+ #  define INSTALL_DTV(TCBP, DTVP) \
+-  (((tcbhead_t *) (TCBP))->dtv = (DTVP) + 1)
++  (((tcbhead_t *) (TCBP))[-1].dtv = (DTVP) + 1)
+ 
+ /* Install new dtv for current thread.  */
+ #  define INSTALL_NEW_DTV(DTV) \
+-  (((tcbhead_t *)__builtin_thread_pointer ())->dtv = (DTV))
++  (THREAD_DTV() = (DTV))
+ 
+ /* Return dtv of given thread descriptor.  */
+ #  define GET_DTV(TCBP) \
+-  (((tcbhead_t *) (TCBP))->dtv)
++  (((tcbhead_t *) (TCBP))[-1].dtv)
+ 
+ /* Code to initially initialize the thread pointer.  This might need
+    special attention since 'errno' is not yet available and if the
+    operation can cause a failure 'errno' must not be touched.  */
+ # define TLS_INIT_TP(TCBP, SECONDCALL) \
+-  (__builtin_set_thread_pointer (TCBP), 0)
++  (__builtin_set_thread_pointer ((void *) (TCBP) + TLS_TCB_OFFSET), NULL)
+ 
+ /* Return the address of the dtv for the current thread.  */
+ #  define THREAD_DTV() \
+-  (((tcbhead_t *)__builtin_thread_pointer ())->dtv)
++  (((tcbhead_t *) (__builtin_thread_pointer () - TLS_TCB_OFFSET))[-1].dtv)
+ 
+ /* Return the thread descriptor for the current thread.  */
+ #  undef THREAD_SELF
+ #  define THREAD_SELF \
+-  ((pthread_descr)__builtin_thread_pointer () - 1)
++  ((pthread_descr) (__builtin_thread_pointer () \
++		    - TLS_TCB_OFFSET - TLS_PRE_TCB_SIZE))
+ 
+ #  undef INIT_THREAD_SELF
+ #  define INIT_THREAD_SELF(DESCR, NR) \
+-  __builtin_set_thread_pointer ((struct _pthread_descr_struct *)(DESCR) + 1)
++  __builtin_set_thread_pointer ((char *)(DESCR) \
++				+ TLS_TCB_OFFSET + TLS_PRE_TCB_SIZE)
+ 
+ /* Get the thread descriptor definition.  */
+ #  include <linuxthreads/descr.h>
+Index: glibc-2.4/linuxthreads/sysdeps/i386/tls.h
+===================================================================
+--- glibc-2.4.orig/linuxthreads/sysdeps/i386/tls.h	2005-01-09 15:01:13.000000000 -0500
++++ glibc-2.4/linuxthreads/sysdeps/i386/tls.h	2006-03-11 01:00:38.000000000 -0500
+@@ -86,7 +86,14 @@
+ #  define TLS_INIT_TCB_ALIGN __alignof__ (tcbhead_t)
+ 
+ /* This is the size of the TCB.  */
+-#  define TLS_TCB_SIZE sizeof (struct _pthread_descr_struct)
++#  ifndef IS_IN_rtld
++#   define TLS_TCB_SIZE sizeof (struct _pthread_descr_struct)
++#  else
++#   include <nptl-struct-pthread.h>
++#   define TLS_TCB_SIZE \
++  (sizeof (struct _pthread_descr_struct) > NPTL_STRUCT_PTHREAD_SIZE	\
++   ? sizeof (struct _pthread_descr_struct) : NPTL_STRUCT_PTHREAD_SIZE)
++#  endif
+ 
+ /* Alignment requirements for the TCB.  */
+ #  define TLS_TCB_ALIGN __alignof__ (struct _pthread_descr_struct)
+Index: glibc-2.4/linuxthreads/sysdeps/ia64/tls.h
+===================================================================
+--- glibc-2.4.orig/linuxthreads/sysdeps/ia64/tls.h	2005-01-09 15:01:13.000000000 -0500
++++ glibc-2.4/linuxthreads/sysdeps/ia64/tls.h	2006-03-11 01:00:38.000000000 -0500
+@@ -69,13 +69,22 @@
+    If there is not any room for uintptr_t stack_guard and
+    uintptr_t pointer_guard in struct pthread's final padding,
+    we need to put struct pthread 16 byte slower.  */
+-# define TLS_PRE_TCB_SIZE \
++# define TLS_PRE_TCB_SIZE_LT \
+   (sizeof (struct pthread)						\
+    + (PTHREAD_STRUCT_END_PADDING < 2 * sizeof (uintptr_t)		\
+       ? ((2 * sizeof (uintptr_t) + __alignof__ (struct pthread) - 1)	\
+ 	 & ~(__alignof__ (struct pthread) - 1))				\
+       : 0))
+ 
++#  ifndef IS_IN_rtld
++#   define TLS_TCB_SIZE TLS_PRE_TCB_SIZE_LT
++#  else
++#   include <nptl-struct-pthread.h>
++#   define TLS_TCB_SIZE \
++   (TLS_PRE_TCB_SIZE_LT > NPTL_STRUCT_PTHREAD_SIZE    \
++    ? TLS_PRE_TCB_SIZE_LT : NPTL_STRUCT_PTHREAD_SIZE)
++#  endif
++
+ /* Alignment requirements for the TCB.  */
+ #  define TLS_TCB_ALIGN __alignof__ (struct _pthread_descr_struct)
+ 
+Index: glibc-2.4/linuxthreads/sysdeps/powerpc/tls.h
+===================================================================
+--- glibc-2.4.orig/linuxthreads/sysdeps/powerpc/tls.h	2005-01-09 15:01:14.000000000 -0500
++++ glibc-2.4/linuxthreads/sysdeps/powerpc/tls.h	2006-03-11 01:00:38.000000000 -0500
+@@ -69,11 +69,19 @@
+ #  define TLS_TCB_ALIGN		__alignof__ (struct _pthread_descr_struct)
+ 
+ /* This is the size we need before TCB.  */
+-#  define TLS_PRE_TCB_SIZE \
++#  ifndef IS_IN_rtld
++#   define TLS_PRE_TCB_SIZE \
+   (sizeof (struct _pthread_descr_struct)				      \
+    + ((sizeof (tcbhead_t) + TLS_TCB_ALIGN - 1) & ~(TLS_TCB_ALIGN - 1)))
++#  else
++#   include <nptl-struct-pthread.h>
++#   define TLS_PRE_TCB_SIZE \
++  ((sizeof (struct _pthread_descr_struct) > NPTL_STRUCT_PTHREAD_SIZE	      \
++    ? sizeof (struct _pthread_descr_struct) : NPTL_STRUCT_PTHREAD_SIZE)	      \
++   + ((sizeof (tcbhead_t) + TLS_TCB_ALIGN - 1) & ~(TLS_TCB_ALIGN - 1)))
++#  endif
+ 
+-/* The following assumes that TP (R2 or R13) is points to the end of the
++/* The following assumes that TP (R2 or R13) points to the end of the
+    TCB + 0x7000 (per the ABI).  This implies that TCB address is
+    TP - 0x7000.  As we define TLS_DTV_AT_TP we can
+    assume that the pthread_descr is allocated immediately ahead of the
+Index: glibc-2.4/linuxthreads/sysdeps/pthread/Makefile
+===================================================================
+--- glibc-2.4.orig/linuxthreads/sysdeps/pthread/Makefile	2003-08-13 20:14:22.000000000 -0400
++++ glibc-2.4/linuxthreads/sysdeps/pthread/Makefile	2006-03-11 01:00:38.000000000 -0500
+@@ -12,3 +12,15 @@
+ ifeq ($(subdir),posix)
+ CFLAGS-confstr.c += -DLIBPTHREAD_VERSION="\"$(shell sed 's/\(.*\) by .*/\1/' ../linuxthreads/Banner)\""
+ endif
++
++ifeq ($(subdir),csu)
++# Find out the size of NPTL struct pthread
++ifneq (,$(wildcard $(..)nptl/descr.h))
++gen-as-const-headers += nptl-struct-pthread.sym
++else
++before-compile += $(common-objpfx)nptl-struct-pthread.h
++common-generated += nptl-struct-pthread.h
++$(common-objpfx)nptl-struct-pthread.h:
++	@echo '#define NPTL_STRUCT_PTHREAD_SIZE 0' > $@
++endif
++endif
+Index: glibc-2.4/linuxthreads/sysdeps/pthread/nptl-struct-pthread.sym
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ glibc-2.4/linuxthreads/sysdeps/pthread/nptl-struct-pthread.sym	2006-03-11 01:00:38.000000000 -0500
+@@ -0,0 +1,13 @@
++#ifdef HAVE_TLS_SUPPORT
++# ifndef HAVE_FORCED_UNWIND
++#  define HAVE_FORCED_UNWIND 1
++# endif
++# define __need_struct_pthread_size
++# include <nptl/descr.h>
++#endif
++
++--
++
++#ifdef HAVE_TLS_SUPPORT
++NPTL_STRUCT_PTHREAD_SIZE	sizeof (struct pthread)
++#endif
+Index: glibc-2.4/linuxthreads/sysdeps/s390/tls.h
+===================================================================
+--- glibc-2.4.orig/linuxthreads/sysdeps/s390/tls.h	2005-01-09 15:01:14.000000000 -0500
++++ glibc-2.4/linuxthreads/sysdeps/s390/tls.h	2006-03-11 01:00:38.000000000 -0500
+@@ -77,7 +77,14 @@
+ #  define TLS_INIT_TCB_ALIGN __alignof__ (tcbhead_t)
+ 
+ /* This is the size of the TCB.  */
+-#  define TLS_TCB_SIZE sizeof (struct _pthread_descr_struct)
++#  ifndef IS_IN_rtld
++#   define TLS_TCB_SIZE sizeof (struct _pthread_descr_struct)
++#  else
++#   include <nptl-struct-pthread.h>
++#   define TLS_TCB_SIZE \
++  (sizeof (struct _pthread_descr_struct) > NPTL_STRUCT_PTHREAD_SIZE	\
++   ? sizeof (struct _pthread_descr_struct) : NPTL_STRUCT_PTHREAD_SIZE)
++#  endif
+ 
+ /* Alignment requirements for the TCB.  */
+ #  define TLS_TCB_ALIGN __alignof__ (struct _pthread_descr_struct)
+Index: glibc-2.4/linuxthreads/sysdeps/sh/tls.h
+===================================================================
+--- glibc-2.4.orig/linuxthreads/sysdeps/sh/tls.h	2005-11-11 19:49:59.000000000 -0500
++++ glibc-2.4/linuxthreads/sysdeps/sh/tls.h	2006-03-11 01:00:38.000000000 -0500
+@@ -76,7 +76,14 @@
+ #  define TLS_TCB_SIZE sizeof (tcbhead_t)
+ 
+ /* This is the size we need before TCB.  */
+-#  define TLS_PRE_TCB_SIZE sizeof (struct _pthread_descr_struct)
++#  ifndef IS_IN_rtld
++#   define TLS_PRE_TCB_SIZE sizeof (struct _pthread_descr_struct)
++#  else
++#   include <nptl-struct-pthread.h>
++#   define TLS_PRE_TCB_SIZE \
++  (sizeof (struct _pthread_descr_struct) > NPTL_STRUCT_PTHREAD_SIZE	\
++   ? sizeof (struct _pthread_descr_struct) : NPTL_STRUCT_PTHREAD_SIZE)
++#  endif
+ 
+ /* Alignment requirements for the TCB.  */
+ #  define TLS_TCB_ALIGN __alignof__ (struct _pthread_descr_struct)
+Index: glibc-2.4/linuxthreads/sysdeps/sparc/tls.h
+===================================================================
+--- glibc-2.4.orig/linuxthreads/sysdeps/sparc/tls.h	2005-01-09 15:01:15.000000000 -0500
++++ glibc-2.4/linuxthreads/sysdeps/sparc/tls.h	2006-03-11 01:00:38.000000000 -0500
+@@ -69,7 +69,14 @@
+ #  define TLS_INIT_TCB_ALIGN __alignof__ (tcbhead_t)
+ 
+ /* This is the size of the TCB.  */
+-#  define TLS_TCB_SIZE sizeof (struct _pthread_descr_struct)
++#  ifndef IS_IN_rtld
++#   define TLS_TCB_SIZE sizeof (struct _pthread_descr_struct)
++#  else
++#   include <nptl-struct-pthread.h>
++#   define TLS_TCB_SIZE \
++  (sizeof (struct _pthread_descr_struct) > NPTL_STRUCT_PTHREAD_SIZE	\
++   ? sizeof (struct _pthread_descr_struct) : NPTL_STRUCT_PTHREAD_SIZE)
++#  endif
+ 
+ /* Alignment requirements for the TCB.  */
+ #  define TLS_TCB_ALIGN __alignof__ (struct _pthread_descr_struct)
+Index: glibc-2.4/linuxthreads/sysdeps/x86_64/tls.h
+===================================================================
+--- glibc-2.4.orig/linuxthreads/sysdeps/x86_64/tls.h	2005-01-09 15:01:15.000000000 -0500
++++ glibc-2.4/linuxthreads/sysdeps/x86_64/tls.h	2006-03-11 01:00:38.000000000 -0500
+@@ -71,7 +71,14 @@
+ #  define TLS_INIT_TCB_ALIGN __alignof__ (tcbhead_t)
+ 
+ /* This is the size of the TCB.  */
+-#  define TLS_TCB_SIZE sizeof (struct _pthread_descr_struct)
++#  ifndef IS_IN_rtld
++#   define TLS_TCB_SIZE sizeof (struct _pthread_descr_struct)
++#  else
++#   include <nptl-struct-pthread.h>
++#   define TLS_TCB_SIZE \
++  (sizeof (struct _pthread_descr_struct) > NPTL_STRUCT_PTHREAD_SIZE	\
++   ? sizeof (struct _pthread_descr_struct) : NPTL_STRUCT_PTHREAD_SIZE)
++#  endif
+ 
+ /* Alignment requirements for the TCB.  */
+ #  define TLS_TCB_ALIGN __alignof__ (struct _pthread_descr_struct)
+Index: glibc-2.4/nptl/Makefile
+===================================================================
+--- glibc-2.4.orig/nptl/Makefile	2006-02-28 04:36:05.000000000 -0500
++++ glibc-2.4/nptl/Makefile	2006-03-11 01:00:38.000000000 -0500
+@@ -519,15 +519,19 @@
+     $(tests) $(xtests) $(test-srcs))): $(objpfx)libpthread.so \
+ 				       $(objpfx)libpthread_nonshared.a
+ $(objpfx)tst-unload: $(common-objpfx)dlfcn/libdl.so
+-# $(objpfx)../libc.so is used instead of $(common-objpfx)libc.so,
++# $(objpfx)linklibc.so is used instead of $(common-objpfx)libc.so,
+ # since otherwise libpthread.so comes before libc.so when linking.
+ $(addprefix $(objpfx), $(tests-reverse)): \
+-  $(objpfx)../libc.so $(objpfx)libpthread.so \
++  $(objpfx)linklibc.so $(objpfx)libpthread.so \
+   $(objpfx)libpthread_nonshared.a
+ $(objpfx)../libc.so: $(common-objpfx)libc.so ;
+ $(addprefix $(objpfx),$(tests-static) $(xtests-static)): $(objpfx)libpthread.a
+ 
+ $(objpfx)tst-atfork2.out: $(objpfx)tst-atfork2mod.so
++
++$(objpfx)linklibc.so: $(common-objpfx)libc.so
++	ln -s ../libc.so $@
++generated += libclink.so
+ else
+ $(addprefix $(objpfx),$(tests) $(test-srcs)): $(objpfx)libpthread.a
+ endif
+Index: glibc-2.4/nptl/descr.h
+===================================================================
+--- glibc-2.4.orig/nptl/descr.h	2006-02-24 02:28:57.000000000 -0500
++++ glibc-2.4/nptl/descr.h	2006-03-11 01:00:38.000000000 -0500
+@@ -27,9 +27,13 @@
+ #include <sys/types.h>
+ #include <hp-timing.h>
+ #include <list.h>
++#ifdef __need_struct_pthread_size
++#define lll_lock_t int
++#else
+ #include <lowlevellock.h>
+ #include <pthreaddef.h>
+ #include <dl-sysdep.h>
++#endif
+ #include "../nptl_db/thread_db.h"
+ #include <tls.h>
+ #ifdef HAVE_FORCED_UNWIND
+Index: glibc-2.4/linuxthreads/sysdeps/pthread/bits/pthreadtypes.h
+===================================================================
+--- glibc-2.4.orig/linuxthreads/sysdeps/pthread/bits/pthreadtypes.h	2006-03-11 01:05:57.000000000 -0500
++++ glibc-2.4/linuxthreads/sysdeps/pthread/bits/pthreadtypes.h	2006-03-11 01:10:02.000000000 -0500
+@@ -149,4 +149,18 @@
+ /* Thread identifiers */
+ typedef unsigned long int pthread_t;
+ 
++#if __WORDSIZE == 64
++#define __PTHREAD_MUTEX_HAVE_PREV      1
++typedef struct __pthread_internal_list
++{
++  struct __pthread_internal_list *__prev;
++  struct __pthread_internal_list *__next;
++} __pthread_list_t;
++#else
++typedef struct __pthread_internal_slist
++{
++  struct __pthread_internal_slist *__next;
++} __pthread_slist_t;
++#endif
++
+ #endif	/* bits/pthreadtypes.h */

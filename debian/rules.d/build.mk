@@ -13,7 +13,7 @@ endef
 
 
 $(patsubst %,mkbuilddir_%,$(GLIBC_PASSES)) :: mkbuilddir_% : $(stamp)mkbuilddir_%
-$(stamp)mkbuilddir_%: $(stamp)patch-stamp $(LINUX_HEADER_DIR)
+$(stamp)mkbuilddir_%: $(stamp)patch-stamp $(KERNEL_HEADER_DIR)
 	@echo Making builddir for $(curpass)
 	test -d $(DEB_BUILDDIR) || mkdir $(DEB_BUILDDIR)
 	touch $@
@@ -36,9 +36,15 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	echo "LIBGD = no"		>> $(DEB_BUILDDIR)/configparms
 	echo "sysconfdir = /etc"	>> $(DEB_BUILDDIR)/configparms
 	echo "rootsbindir = /sbin"	>> $(DEB_BUILDDIR)/configparms
-ifneq ($(call xx,slibdir),)
-	echo "slibdir = $(call xx,slibdir)" >> $(DEB_BUILDDIR)/configparms
-endif
+	libdir="$(call xx,libdir)" ; if test -n "$$libdir" ; then \
+		echo "libdir = $$libdir" >> $(DEB_BUILDDIR)/configparms ; \
+	fi
+	slibdir="$(call xx,slibdir)" ; if test -n "$$slibdir" ; then \
+		echo "slibdir = $$slibdir" >> $(DEB_BUILDDIR)/configparms ; \
+	fi
+	rtlddir="$(call xx,rtlddir)" ; if test -n "$$rtlddir" ; then \
+		echo "rtlddir = $$rtlddir" >> $(DEB_BUILDDIR)/configparms ; \
+	fi
 
 	# Prevent autoconf from running unexpectedly by setting it to false.
 	# Also explicitly pass CC down - this is needed to get -m64 on
@@ -52,31 +58,34 @@ endif
 	    echo "No.  Forcing cross-compile by setting build to $$configure_build."; \
 	  fi; \
 	fi; \
+	$(call logme, -a $(log_build), echo -n "Build started: " ; date --rfc-2822 ; echo "---------------") ; \
 	$(call logme, -a $(log_build), \
 		cd $(DEB_BUILDDIR) && \
 		CC="$(call xx,CC)" \
 		CXX="$(call xx,CXX)" \
 		AUTOCONF=false \
+		MAKEINFO=: \
 		$(CURDIR)/$(DEB_SRCDIR)/configure \
 		--host=$(call xx,configure_target) \
 		--build=$$configure_build --prefix=/usr --without-cvs \
 		--enable-add-ons=$(standard-add-ons)"$(call xx,add-ons)" \
 		--without-selinux \
 		$(call xx,with_headers) $(call xx,extra_config_options))
-
 	touch $@
 
 $(patsubst %,build_%,$(GLIBC_PASSES)) :: build_% : $(stamp)build_%
 $(stamp)build_%: $(stamp)configure_%
 	@echo Building $(curpass)
-	$(call logme, -a $(log_build), $(MAKE) -j$(NJOBS) $(call xx,MAKEFLAGS) -C $(DEB_BUILDDIR))
+	$(call logme, -a $(log_build), $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS))
+	$(call logme, -a $(log_build), echo "---------------" ; echo -n "Build ended: " ; date --rfc-2822)
 	touch $@
 
 $(patsubst %,check_%,$(GLIBC_PASSES)) :: check_% : $(stamp)check_%
 $(stamp)check_%: $(stamp)build_%
 	if [ -n "$(findstring nocheck,$(DEB_BUILD_OPTIONS))" ]; then \
 	  echo "DEB_BUILD_OPTIONS contains nocheck, skipping tests."; \
-	elif [ $(call xx,configure_build) != $(call xx,configure_target) ]; then \
+	elif [ $(call xx,configure_build) != $(call xx,configure_target) ] && \
+	     ! $(DEB_BUILDDIR)/libc.so >/dev/null 2>&1 ; then \
 	  echo "Cross compiling, skipping tests."; \
 	elif ! $(call kernel_check,$(call xx,MIN_KERNEL_SUPPORTED)); then \
 	  echo "Kernel too old, skipping tests."; \
@@ -84,7 +93,13 @@ $(stamp)check_%: $(stamp)build_%
 	  echo "Testsuite disabled for $(curpass), skipping tests."; \
 	else \
 	  echo Testing $(curpass); \
-	  $(MAKE) -C $(DEB_BUILDDIR) -j$(NJOBS) $(call xx,MAKEFLAGS) -k check 2>&1 | tee -a $(log_test); \
+	  echo -n "Testsuite started: " | tee -a $(log_test); \
+	  date --rfc-2822 | tee -a $(log_test); \
+	  echo "--------------" | tee -a $(log_test); \
+	  $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) -k check 2>&1 | tee -a $(log_test); \
+	  echo "--------------" | tee -a $(log_test); \
+	  echo -n "Testsuite ended: " | tee -a $(log_test); \
+	  date --rfc-2822 | tee -a $(log_test); \
 	fi
 	touch $@
 
@@ -92,18 +107,27 @@ $(patsubst %,install_%,$(GLIBC_PASSES)) :: install_% : $(stamp)install_%
 $(stamp)install_%: $(stamp)check_%
 	@echo Installing $(curpass)
 	rm -rf $(CURDIR)/debian/tmp-$(curpass)
-	$(MAKE) -C $(DEB_BUILDDIR) -j$(NJOBS) \
+	$(MAKE) -C $(DEB_BUILDDIR) \
 	  install_root=$(CURDIR)/debian/tmp-$(curpass) install
 
 	if [ $(curpass) = libc ]; then \
 	  $(MAKE) -f debian/generate-supported.mk IN=$(DEB_SRCDIR)/localedata/SUPPORTED \
 	    OUT=debian/tmp-$(curpass)/usr/share/i18n/SUPPORTED; \
-	  (cd $(DEB_SRCDIR)/manual && texi2html -split_chapter libc.texinfo); \
+	  $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) \
+	    objdir=$(DEB_BUILDDIR) install_root=$(CURDIR)/debian/tmp-$(curpass) \
+	    localedata/install-locales; \
+	  rm -rf $(CURDIR)/debian/locales-all/usr/lib; \
+	  install -d $(CURDIR)/debian/locales-all/usr/lib; \
+	  mv $(CURDIR)/debian/tmp-libc/usr/lib/locale $(CURDIR)/debian/locales-all/usr/lib/locales-all; \
+          (cd $(DEB_SRCDIR)/manual && texi2html -split_chapter libc.texinfo); \
 	fi
 
+	# Remove ld.so from optimized libraries
+	if [ $(curpass) != libc ] && [ $(call xx,configure_build) = $(call xx,configure_target) ]; then \
+		rm -f debian/tmp-$(curpass)/$(call xx,slibdir)/ld*.so* ; \
+	fi
+	
 	# /usr/include/nptl and /usr/lib/nptl.  It assumes tmp-libc is already installed.
-	# This is here to keep debhelper happy in v5 mode.
-	install -d debian/tmp-libc/usr/lib/nptl; \
 	if [ $(curpass) = nptl ]; then \
 	  for file in `find debian/tmp-$(curpass)/usr/include -type f | sed 's/^debian\/tmp-nptl\///'`; do \
 	    if ! [ -f debian/tmp-$(curpass)/$$file ] || \
@@ -114,16 +138,30 @@ $(stamp)install_%: $(stamp)check_%
 			     debian/tmp-libc/usr/include/nptl/$$target; \
 	    fi; \
 	  done; \
-	  for file in libc.a libpthread.a libpthread_nonshared.a librt.a; do \
+	  install -d debian/tmp-libc/usr/lib/nptl; \
+	  for file in libc.a libc_nonshared.a libpthread.a libpthread_nonshared.a librt.a ; do \
 	    install -m 644 debian/tmp-$(curpass)/usr/lib/$$file \
 			   debian/tmp-libc/usr/lib/nptl/$$file; \
 	  done; \
 	  for file in libc.so libpthread.so; do \
-	    sed 's/\/lib\//\/lib\/tls\//g' < debian/tmp-$(curpass)/usr/lib/$$file \
-	    > debian/tmp-libc/usr/lib/nptl/$$file; \
+	    sed 's/\/usr\/lib\//\/usr\/lib\/nptl\//g' < debian/tmp-$(curpass)/usr/lib/$$file \
+	      > debian/tmp-libc/usr/lib/nptl/$$file; \
 	  done; \
 	  ln -sf /lib/tls/librt.so.1 debian/tmp-libc/usr/lib/nptl/; \
 	fi
 
+	# Create the multidir directories, and the configuration file in /etc/ld.so.conf.d
+	if [ $(curpass) = libc ]; then \
+	  mkdir -p debian/tmp-$(curpass)/etc/ld.so.conf.d; \
+	  machine=`sed '/^ *config-machine *=/!d;s/.*= *//g' $(DEB_BUILDDIR)/config.make`; \
+	  os=`sed '/^ *config-os *=/!d;s/.*= *//g' $(DEB_BUILDDIR)/config.make`; \
+	  triplet='$$machine-$$os'; \
+	  mkdir -p debian/tmp-$(curpass)/lib/$$triplet debian/tmp-$(curpass)/usr/lib/$$triplet; \
+	  conffile="debian/tmp-$(curpass)/etc/ld.so.conf.d/$$triplet"; \
+	  echo "# Multiarch support" > $$conffile; \
+	  echo /lib/$$machine-$$os >> $$conffile; \
+	  echo /usr/lib/$$machine-$$os >> $$conffile; \
+	fi
+	 
 	$(call xx,extra_install)
 	touch $@
