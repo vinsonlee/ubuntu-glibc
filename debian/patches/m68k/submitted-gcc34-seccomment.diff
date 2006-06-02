@@ -1,0 +1,29 @@
+# DP: Description: Make glibc-2.3.5 compile with gcc-3.4/4.0 + binutils 2.16
+#		   on m68k fixed by adding #APP.
+# DP: Related bugs: 
+# DP: Dpatch author: GOTO Masanori <gotom@debian.org>
+# DP: Patch author: Andreas Schwab <schwab@suse.de>
+# DP: Upstream status: Pending
+# DP: Status Details: 
+# DP: Date: 2005-08-03
+
+From: Andreas Schwab <schwab@suse.de>
+
+--- include/libc-symbols.h	2006-02-24 04:27:11.000000000 +0100
++++ include/libc-symbols.h	2006-06-01 12:29:12.000000000 +0200
+@@ -232,12 +232,12 @@
+ #  define __make_section_unallocated(section_string)
+ # endif
+ 
+-/* Tacking on "\n\t#" to the section name makes gcc put it's bogus
++/* Tacking on "\nAPP\t#" to the section name makes gcc put it's bogus
+    section attributes on what looks like a comment to the assembler.  */
+ # ifdef HAVE_SECTION_QUOTES
+-#  define __sec_comment "\"\n\t#\""
++#  define __sec_comment "\"\n#APP\t#\""
+ # else
+-#  define __sec_comment "\n\t#"
++#  define __sec_comment "\n#APP\t#"
+ # endif
+ # define link_warning(symbol, msg) \
+   __make_section_unallocated (".gnu.warning." #symbol) \
