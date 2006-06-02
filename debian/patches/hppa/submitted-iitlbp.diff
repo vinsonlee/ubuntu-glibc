@@ -1,0 +1,52 @@
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: Update iitlbp instructions to satisfy stricter binutils.
+# DP: Dpatch author: Daniel Jacobowitz <dan@debian.org>
+# DP: Patch author: Daniel Jacobowitz <dan@debian.org>
+# DP: Upstream status: Not submitted
+# DP: Date: 2005-10-14
+
+Index: ports/sysdeps/hppa/abort-instr.h
+===================================================================
+RCS file: /big/fsf/rsync/gports-cvs/ports/sysdeps/hppa/abort-instr.h,v
+retrieving revision 1.1
+diff -u -p -r1.1 abort-instr.h
+--- ports/sysdeps/hppa/abort-instr.h	23 Sep 2002 03:30:34 -0000	1.1
++++ ports/sysdeps/hppa/abort-instr.h	14 Oct 2005 14:25:52 -0000
+@@ -3,4 +3,4 @@
+    We go with iitlbp because it has a history of being used to crash
+    programs.  */
+ 
+-#define ABORT_INSTRUCTION asm ("iitlbp %r0,(%r0)")
++#define ABORT_INSTRUCTION asm ("iitlbp %r0,(%sr0,%r0)")
+Index: ports/sysdeps/hppa/dl-machine.h
+===================================================================
+RCS file: /big/fsf/rsync/gports-cvs/ports/sysdeps/hppa/dl-machine.h,v
+retrieving revision 1.21
+diff -u -p -r1.21 dl-machine.h
+--- ports/sysdeps/hppa/dl-machine.h	19 Nov 2004 00:01:25 -0000	1.21
++++ ports/sysdeps/hppa/dl-machine.h	14 Oct 2005 14:57:02 -0000
+@@ -367,7 +367,7 @@ asm (									\
+ "	ldw,ma	8(%r26),%r19\n"						\
+ 									\
+ 	/* Uh oh!  We didn't find one.  Abort. */			\
+-"	iitlbp	%r0,(%r0)\n"						\
++"	iitlbp	%r0,(%sr0,%r0)\n"					\
+ 									\
+ "2:	ldw	-4(%r26),%r19\n"	/* Found it, load value. */	\
+ "	add	%r19,%r20,%r19\n"	/* And add the load offset. */	\
+Index: ports/sysdeps/unix/sysv/linux/hppa/clone.S
+===================================================================
+RCS file: /big/fsf/rsync/gports-cvs/ports/sysdeps/unix/sysv/linux/hppa/clone.S,v
+retrieving revision 1.4
+diff -u -p -r1.4 clone.S
+--- ports/sysdeps/unix/sysv/linux/hppa/clone.S	18 Dec 2003 06:05:03 -0000	1.4
++++ ports/sysdeps/unix/sysv/linux/hppa/clone.S	14 Oct 2005 14:40:59 -0000
+@@ -92,7 +92,7 @@ thread_start:
+ 	copy	%ret0,%arg0
+ 
+ 	/* Die horribly.  */
+-	iitlbp	%r0,(%r0)
++	iitlbp	%r0,(%sr0,%r0)
+ 
+ PSEUDO_END(__clone)
+ 
