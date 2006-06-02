@@ -1,0 +1,20 @@
+# DP: Description: Change default charset for 'russian' locale alias
+# DP: Related bugs: #62586
+# DP: Dpatch author: Ben Collins
+# DP: Patch author: Alistair McKinstry
+# DP: Upstream status: Submitted
+# DP: Status Details: http://sources.redhat.com/bugzilla/show_bug.cgi?id=120
+# DP: Date: 2002-03-10
+
+diff -urN glibc-2.2.5.orig/intl/locale.alias glibc-2.2.5/intl/locale.alias
+--- glibc-2.2.5.orig/intl/locale.alias	Sun Jul 22 16:24:50 2001
++++ glibc-2.2.5/intl/locale.alias	Sun Mar 10 23:00:09 2002
+@@ -65,7 +65,7 @@
+ polish          pl_PL.ISO-8859-2
+ portuguese      pt_PT.ISO-8859-1
+ romanian        ro_RO.ISO-8859-2
+-russian         ru_RU.ISO-8859-5
++russian         ru_RU.KOI8-R
+ slovak          sk_SK.ISO-8859-2
+ slovene         sl_SI.ISO-8859-2
+ slovenian       sl_SI.ISO-8859-2

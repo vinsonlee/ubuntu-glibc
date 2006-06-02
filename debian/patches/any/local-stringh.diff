@@ -1,0 +1,20 @@
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: Surround expression in () to keep expansion happy
+# DP: Related bugs: Ubuntu 12864
+# DP: Dpatch author: Jeff Bailey
+# DP: Patch author: Matthias Klose
+# DP: Upstream status: Not submitted
+# DP: Status Details: 
+# DP: Date: 2005-09-01
+
+--- string/bits/string2.h	2005-09-01 20:55:50.000000000 -0400
++++ string/bits/string2.h	2005-09-01 20:56:09.000000000 -0400
+@@ -107,7 +107,7 @@ __STRING2_COPY_TYPE (8);
+ 		     : memset (s, c, n))))
+ 
+ #   define __memset_1(s, c) ({ void *__s = (s);				      \
+-			    *((__uint8_t *) __s) = (__uint8_t) c; __s; })
++			    *((__uint8_t *) __s) = (__uint8_t) (c); __s; })
+ 
+ #   define __memset_gc(s, c, n) \
+   ({ void *__s = (s);							      \
