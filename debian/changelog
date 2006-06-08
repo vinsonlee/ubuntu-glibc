@@ -1,3 +1,9 @@
+glibc (2.4-1ubuntu2) edgy; urgency=low
+
+  * No-change rebuild against the new edgy chroots without gcc-opt.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Thu,  8 Jun 2006 17:51:46 +1000
+
 glibc (2.4-1ubuntu1) edgy; urgency=low
 
   [ Jeff Bailey ]
