@@ -1,10 +1,18 @@
+glibc (2.4-1ubuntu1) edgy; urgency=low
+
+  [ Jeff Bailey ]
+  * Add missing build-dep of texi2html
+    - debian/control.in/main: Build-dep on texi2html and texinfo.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Wed,  7 Jun 2006 22:48:17 -0400
+
 glibc (2.4-1ubuntu0) edgy; urgency=low
 
   [ Jeff Bailey ]
   * Merge in Debian changes, new upstream version.
 
   * Require gcc-4.1
-    - debian/control: Depend on gcj-4.1 to bring in gcc.
+    - debian/control.in: Depend on gcj-4.1 to bring in gcc.
 
   * Drop LinuxThreads on all arches, require 2.6 on all architectures.
     - debian/sysdeps/linux.mk: Use linuxthreads instead of nptl.
