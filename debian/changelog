@@ -1,3 +1,10 @@
+glibc (2.4-1ubuntu4) edgy; urgency=low
+
+  * debian/sysdeps/amd64.mk: Revert merge of /emul/i486-linux-gnu paths,
+    we're sticking to /usr/lib32 for now.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Thu,  8 Jun 2006 17:56:37 -0400
+
 glibc (2.4-1ubuntu3) edgy; urgency=low
 
   * debian/sysdeps/depflags.pl: add a Replaces on amd64 against base-files
