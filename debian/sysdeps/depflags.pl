@@ -158,6 +158,12 @@ push @{$libc_c{'Conflicts'}}, 'initrd-tools (<< 0.1.84.1)';
 # # that timezones pieces get pulled in for upgrades
 push @{$libc_c{'Depends'}}, 'locales (>= 2.3.11)';
 
+# Ubuntu hack to cope with the fact that we shipped /lib64 and /usr/lib64
+# in base-files for a while, and now they're in libc6, same as Debian
+if ($DEB_HOST_GNU_TYPE eq "x86_64-linux-gnu") {
+    push @{$libc_c{'Replaces'}}, 'base-files (<< 3.1.9ubuntu8)';
+}
+
 # Make sure we only have one version of libc-dev installed
 push @{$libc_dev_c{'Provides'}}, 'libc-dev';
 push @{$libc_dev_c{'Conflicts'}}, 'libc-dev';
