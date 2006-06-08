@@ -1,3 +1,10 @@
+glibc (2.4-1ubuntu3) edgy; urgency=low
+
+  * debian/sysdeps/depflags.pl: add a Replaces on amd64 against base-files
+    (<< 3.1.9ubuntu8) to cope with us now shipping /usr/lib64 and /lib64.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Thu,  8 Jun 2006 19:48:34 +1000
+
 glibc (2.4-1ubuntu2) edgy; urgency=low
 
   * No-change rebuild against the new edgy chroots without gcc-opt.
