@@ -1,3 +1,10 @@
+glibc (2.4-1ubuntu5) edgy; urgency=low
+
+  * debian/control.in/main: Depend on gcc-4.1, drop build-dep on 
+    gcj-4.1.  Restore (>= 1.0) version dependancy on po-debconf.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Tue, 20 Jun 2006 04:58:13 -0400
+
 glibc (2.4-1ubuntu4) edgy; urgency=low
 
   * debian/sysdeps/amd64.mk: Revert merge of /emul/i486-linux-gnu paths,
