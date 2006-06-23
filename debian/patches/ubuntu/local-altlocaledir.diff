@@ -1,17 +1,35 @@
+# All lines beginning with `# DP:' are a description of the patch.
 # DP: Description: support alternative gettext tree in
 # DP: /usr/share/locale-langpack
-# DP: Patch author: Jeff Bailey <jeff.bailey@canonical.com>
+# DP: Dpatch author: Martin Pitt <martin.pitt@canonical.com>
+# DP: Patch author: Martin Pitt <martin.pitt@canonical.com>
 # DP: Upstream status: Ubuntu-Specific
-# DP: Date: 2006-06-06 11:46:57 EDT
+# DP: Date: 2004-12-06 20:44:10 CET
 
---- glibc-2.4/locale/findlocale.c.old	2006-06-06 11:42:29.000000000 -0400
-+++ glibc-2.4/locale/findlocale.c	2006-06-06 11:43:22.000000000 -0400
-@@ -56,7 +56,7 @@ struct locale_data *const _nl_C[] attrib
-    which are somehow addressed.  */
- struct loaded_l10nfile *_nl_locale_file_list[__LC_LAST];
+--- glibc-2.3.5.orig/intl/l10nflist.c
++++ glibc-2.3.5/intl/l10nflist.c
+@@ -267,7 +267,7 @@ _nl_make_l10nflist (l10nfile_list, dirli
  
--const char _nl_default_locale_path[] attribute_hidden = LOCALEDIR;
-+const char _nl_default_locale_path[] attribute_hidden = LOCALEDIR ":/usr/share/locale-langpack";
+   retval = (struct loaded_l10nfile *)
+     malloc (sizeof (*retval) + (__argz_count (dirlist, dirlist_len)
+-				* (1 << pop (mask))
++				* 2 * (1 << pop (mask))
+ 				* sizeof (struct loaded_l10nfile *)));
+   if (retval == NULL)
+     return NULL;
+@@ -310,6 +310,15 @@ _nl_make_l10nflist (l10nfile_list, dirli
+ 				  language, territory, codeset,
+ 				  normalized_codeset, modifier, filename, 1);
+       }
++  const char* langpack_dir = "/usr/share/locale-langpack";
++  for (cnt = mask; cnt >= 0; --cnt)
++    if ((cnt & ~mask) == 0)
++      {
++	  retval->successor[entries++]
++	    = _nl_make_l10nflist (l10nfile_list, langpack_dir, strlen (langpack_dir) + 1, cnt,
++				  language, territory, codeset,
++				  normalized_codeset, modifier, filename, 1);
++      }
+   retval->successor[entries] = NULL;
  
- 
- struct locale_data *
+   return retval;
