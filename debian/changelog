@@ -1,3 +1,14 @@
+glibc (2.4-1ubuntu6) edgy; urgency=low
+
+  * debian/patches/series: Filter out belocs-locales-bin merge.
+
+  * debian/patches/ubuntu/local-altlocaledir.diff: Update to working
+    version.
+
+  * debian/sysdeps/depflags.pl: Add tzdata as Recommends.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Fri, 23 Jun 2006 11:20:26 -0400
+
 glibc (2.4-1ubuntu5) edgy; urgency=low
 
   * debian/control.in/main: Depend on gcc-4.1, drop build-dep on 
