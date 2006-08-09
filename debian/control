@@ -581,7 +581,6 @@ Description: GNU C Library: Shared libraries [i686 optimized]
 
 Package: libc6-xen
 Architecture: i386
-Conflicts: libc6-i686
 Section: libs
 Priority: extra
 Pre-Depends: libc6 (= ${Source-Version})

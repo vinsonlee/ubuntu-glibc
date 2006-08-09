@@ -1,4 +1,7 @@
+# We use -mno-tls-direct-seg-refs to not wrap-around segments, as it
+# greatly reduce the speed when running under the Xen hypervisor.
 # libc_extra_config_options = $(extra_config_options) --without-__thread --disable-sanity-checks
+libc_extra_cflags = -mno-tls-direct-seg-refs
 
 define libc6_extra_pkg_install
 mkdir -p debian/$(curpass)/usr/lib
@@ -36,9 +39,14 @@ xen_add-ons = nptl $(add-ons)
 xen_configure_target=i686-linux
 xen_extra_cflags = -march=i686 -mtune=i686 -g1 -O3 -mno-tls-direct-seg-refs
 xen_rtlddir = /lib
-xen_slibdir = /lib/tls/i686/cmov
+xen_slibdir = /lib/tls/i686/cmov/nosegneg
 xen_MIN_KERNEL_SUPPORTED = 2.6.0
 xen_extra_config_options = $(extra_config_options) --disable-profile
+
+define xen_extra_install
+mkdir -p debian/libc6-xen/etc/ld.so.conf.d/
+echo hwcap 0 nosegneg >debian/libc6-xen/etc/ld.so.conf.d/xen.conf
+endef
 
 # build 64-bit (amd64) alternative library
 GLIBC_PASSES += amd64
