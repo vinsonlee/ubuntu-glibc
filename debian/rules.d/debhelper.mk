@@ -212,6 +212,8 @@ $(stamp)debhelper:
 	    sed -e "s#LIBC#$(libc)#" -i $$z; \
 	    sed -e "s#LIBDIR#$$libdir#g" -i $$zd; \
 	    sed -e "s/^#.*//g" -i $$zd; \
+	    zi=debian/$(libc)-dev-$$x.postinst; \
+	    cp debian/debhelper.in/libc-alt-dev.postinst $$zi; \
 	    ;; \
 	  *) \
 	    cp debian/debhelper.in/libc-otherbuild.install $$z; \
