@@ -359,6 +359,9 @@ then
 #     else
 #	/etc/init.d/glibc.sh 2>/dev/null || true
 #     fi
+
+     # Create/update iconv module cache
+     iconvconfig
 fi
 
 if [ "`uname -s`" = Linux ]; then
