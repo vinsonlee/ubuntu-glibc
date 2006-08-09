@@ -1,3 +1,43 @@
+glibc (2.4-1ubuntu7) edgy; urgency=low
+
+  [ Jeff Bailey ]
+  * debian/rules: Force -fno-stack-protector to disable automatic
+    enablement from Ubuntu's glibc.  Glibc itself will
+    enable it as necessary.
+
+  * debian/patches/powerpc/procfs-kernelheaders.diff: New file.
+  * debian/patches/series: use it.
+
+  * debian/rules.d/build.mk: Use "" instead of '' for creating
+    the conffile.  (Malone: #54086)
+
+  * debian/sysdeps/i386.mk: Place xen libraries in tls/i686/cmov/nosegneg.
+  Create /etc/ld.so.conf.d/xen.conf to enable hwcap searching.
+  Don't use direct segment referecing in i386 package.  This lets Xen
+  work right from install.
+  * debian/control.in/opt: Remove conflict between libc6-xen and libc6-i686.
+  * debian/control: Regenerate.
+
+  * debian/sysdeps/powerpc.mk: Put include files in
+    /usr/include/powerpc64-linux-gnu.
+  * debian/debhelper.in/libc-alt-dev.postinst: Symlink from old location to
+    new.
+  * debian/rules.d/debhelper.mk: Generate libc-###-dev.postinst from
+    lib-alt-dev.postinst
+
+  [ Colin Watson ]
+
+  * debian/debhelper.in/libnss-dns-udeb.install,
+    debian/debhelper.in/libnss-files-udeb.install: Fix installation of files
+    into libnss-*-udeb.
+
+  * debian/debhelper.in/libc.postinst, debian/debhelper.in/libc.prerm: Run
+    iconvconfig at configure time to create
+    /usr/lib/gconv/gconv-modules.cache; remove this cache in the prerm
+    (closes: Malone #51884).
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Wed,  9 Aug 2006 05:26:59 +0000
+
 glibc (2.4-1ubuntu6) edgy; urgency=low
 
   * debian/patches/series: Filter out belocs-locales-bin merge.
