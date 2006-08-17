@@ -7,7 +7,7 @@ type=$1
 preversion=$2
 
 if [ `dpkg --print-installation-architecture` = "powerpc" ]; then
-    if dpkg --compare-versions $preversion lt 2.4-1ubuntu7; then
+    if dpkg --compare-versions "$preversion" lt 2.4-1ubuntu7; then
         if [ ! -L /usr/include/ppc64-linux-gnu ]; then
             rm -rf /usr/include/ppc64-linux-gnu
             ln -s /usr/include/powerpc64-linux-gnu /usr/include/ppc64-linux-gnu
