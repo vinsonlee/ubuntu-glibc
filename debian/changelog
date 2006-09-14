@@ -1,3 +1,11 @@
+glibc (2.4-1ubuntu10) edgy; urgency=low
+  
+  * sysdeps/sparc.mk: Make sure to be consistent with slibdir across all the
+    different optimizations otherwise a strange chain reaction will leave
+    almost all optmized debs empty.
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Thu, 14 Sep 2006 18:03:15 +0200
+
 glibc (2.4-1ubuntu9) edgy; urgency=low
 
   * debhelper.in/libc-alt-dev.postinst: Fix quoting of $preversion in our
