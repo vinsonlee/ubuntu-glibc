@@ -25,7 +25,8 @@ sparc64b_extra_cflags = -g2 -O3
 sparc64b_extra_config_options = $(extra_config_options) --disable-profile
 sparc64b_add-ons = nptl $(add-ons)
 libc6-sparc64b_shlib_dep = libc6-sparc64b (>= $(shlib_dep_ver))
-sparc64b_LIBDIR = 64/ultra3
+sparc64b_rtldir = /lib64
+sparc64b_libdir = /lib64/ultra3
 
 GLIBC_PASSES += sparc64v
 DEB_ARCH_REGULAR_PACKAGES += libc6-sparc64v
@@ -37,7 +38,8 @@ sparc64v_extra_cflags = -g2 -O3
 sparc64v_extra_config_options = $(extra_config_options) --disable-profile
 sparc64v_add-ons = nptl $(add-ons)
 libc6-sparc64v_shlib_dep = libc6-sparc64v (>= $(shlib_dep_ver))
-sparc64v_LIBDIR = 64/v9v
+sparc64v_rtlddir = /lib64
+sparc64v_libdir = /lib64/v9v
 
 # build a sparcv9 optimized library
 #GLIBC_PASSES += sparcv9
@@ -70,7 +72,8 @@ sparcv9v_configure_target=sparcv9v-linux
 sparcv9v_extra_cflags = -O3 -mtune=niagara
 sparcv9v_extra_config_options = $(extra_config_options) --disable-profile --with-tls --with-__thread
 sparcv9v_add-ons = nptl $(add-ons)
-sparcv9v_LIBDIR = /v9v
+sparcv9v_rtlddir = /lib
+sparcv9v_slibdir = /lib/v9v
 
 define libc6-dev-sparc64_extra_pkg_install
 mkdir -p debian/libc6-dev-sparc64/usr/include
