@@ -1,3 +1,17 @@
+glibc (2.4-1ubuntu11) edgy; urgency=low
+
+  * debian/debhelper.in/libc.postinst: List all sparc hwcap libc6-opt
+    packages.
+
+  * debian/sysdeps/sparc.mk: fix libc6-sparc64{b,v} target.
+  (Closes Ubuntu: #62597)
+
+  * debian/debhelper.in/libc.postinst: quote $preversion and bump the check to
+    2.4-1ubuntu11.
+  (Closes Ubuntu: #62596)
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Fri, 22 Sep 2006 08:37:27 +0200
+
 glibc (2.4-1ubuntu10) edgy; urgency=low
   
   * sysdeps/sparc.mk: Make sure to be consistent with slibdir across all the
