@@ -146,7 +146,7 @@ then
     fi
 
     # Add support for /etc/ld.so.conf.d
-    if dpkg --compare-versions $preversion lt 2.3.999.2-4; then
+    if dpkg --compare-versions "$preversion" lt 2.4-1ubuntu11; then
 	if [ -e /etc/ld.so.conf ]; then
 	    [ -z "$(tail -n 1 /etc/ld.so.conf)" ] || echo >> /etc/ld.so.conf
 	else
@@ -171,7 +171,7 @@ then
 		    hwcappkgs="libc6 libc6-i686"
 		    ;;
 		sparc)
-		    hwcappkgs="libc6 libc6-sparcv9 libc6-sparcv9b"
+		    hwcappkgs="libc6 libc6-sparcv9b libc6-sparcv9v libc6-sparc64b libc6-sparc64v"
 		    ;;
 	    esac
 	    if [ -n "$hwcappkgs" ]; then
@@ -227,11 +227,11 @@ then
 	fi
     fi
 
-    if [ ! -z $preversion ]; then
+    if [ ! -z "$preversion" ]; then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions $preversion lt 2.3.5-1; then
+	if dpkg --compare-versions "$preversion" lt 2.3.5-1; then
 	    echo -n "Checking for services that may need to be restarted..."
 
 	    check="nis smail sendmail exim exim4-base ssh netbase"
