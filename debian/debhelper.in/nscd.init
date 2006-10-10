@@ -18,6 +18,7 @@ PIDFILE="/var/run/nscd/nscd.pid"
 # Sanity checks.
 [ -f /etc/nscd.conf ] || exit 0
 [ -x "$DAEMON" ] || exit 0
+[ -d /var/run/nscd ] || mkdir -p /var/run/nscd
 
 start()
 {
