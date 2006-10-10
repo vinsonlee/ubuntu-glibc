@@ -99,7 +99,6 @@ sbindir=$(prefix)/sbin
 libexecdir=$(prefix)/lib
 
 BUILD_CC = gcc-4.1 -fno-stack-protector
-BUILD_CXX = g++-4.1 -fno-stack-protector
 
 RUN_TESTSUITE = yes
 
@@ -112,9 +111,9 @@ endif
 #
 # Set CXX for cross-compiling
 ifneq ($(DEB_HOST_ARCH),$(DEB_BUILD_ARCH))
-CXX	= $(DEB_HOST_GNU_TYPE)-g++
+CXX     = $(DEB_HOST_GNU_TYPE)-g++
 else
-CXX	= $(BUILD_CXX)
+CXX     = $(BUILD_CXX)
 endif
 
 BUILD_CFLAGS = -O2 -g
@@ -171,8 +170,6 @@ endif
 include debian/rules.d/*.mk
 
 clean:: debhelper-clean
-	#  Do not accidentally upload into unstable
-	dpkg-parsechangelog  | grep "^Distribution:" | grep -q -v unstable
 	rm -rf $(patsubst %,debian/tmp-%,$(GLIBC_PASSES))
 	rm -rf $(build-tree)
 	rm -rf $(stamp)

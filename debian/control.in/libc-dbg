@@ -11,4 +11,3 @@ Description: GNU C Library: Libraries with debugging symbols
  This package improves the accuracy of backtraces which pass through
  the standard C libraries.  A version of the libraries with complete
  symbolic debug information is also included.
-

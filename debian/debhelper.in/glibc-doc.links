@@ -14,4 +14,3 @@ usr/share/man/man3/pthread_mutex_init.3.gz usr/share/man/man3/pthread_mutex_dest
 usr/share/man/man3/pthread_mutexattr_init.3.gz usr/share/man/man3/pthread_mutexattr_destroy.3.gz
 usr/share/man/man3/pthread_mutexattr_init.3.gz usr/share/man/man3/pthread_mutexattr_settype.3.gz
 usr/share/man/man3/pthread_mutexattr_init.3.gz usr/share/man/man3/pthread_mutexattr_gettype.3.gz
-usr/share/doc/glibc-doc/html/libc.html usr/share/doc/glibc-doc/html/index.html

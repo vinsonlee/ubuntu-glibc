@@ -4,7 +4,7 @@ libc = libc0.1
 
 # Linuxthreads Config
 threads = yes
-libc_add-ons = ports linuxthreads $(add-ons)
+libc_add-ons = linuxthreads $(add-ons)
 libc_extra_config_options = $(extra_config_options) --disable-compatible-utmp
 
 ifndef KFREEBSD_SOURCE
@@ -28,7 +28,6 @@ $(stamp)mkincludedir:
 	ln -s $(KFREEBSD_HEADERS)/net debian/include
 	ln -s $(KFREEBSD_HEADERS)/netatalk debian/include
 	ln -s $(KFREEBSD_HEADERS)/netipx debian/include
-	ln -s $(KFREEBSD_HEADERS)/nfs debian/include
 	ln -s $(KFREEBSD_HEADERS)/osreldate.h debian/include
 	ln -s $(KFREEBSD_HEADERS)/sys debian/include
 	ln -s $(KFREEBSD_HEADERS)/vm debian/include

@@ -1,32 +1,28 @@
 Source: @glibc@
 Section: libs
 Priority: required
-Build-Depends: gettext, make (>= 3.80-1), dpkg-dev (>= 1.13.5), bzip2, texinfo (>= 4.0), texi2html, file,
- linux-libc-dev (>= 2.6.19-1.1) [!hurd-i386 !kfreebsd-i386 !kfreebsd-amd64],
- mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386],
+Build-Depends: gettext, make (>= 3.80-1), dpkg-dev (>= 1.13.5), bzip2, texinfo (>= 4.0), file,
+ linux-libc-dev (>= 2.6.11.2-0) [!hurd-i386 !kfreebsd-i386 !kfreebsd-amd64],
+ mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386], texi2html,
  kfreebsd-kernel-headers [kfreebsd-i386 kfreebsd-amd64],
  gcc-4.1, binutils (>= 2.16.1cvs20051109-1),
- autoconf, sed (>= 4.0.5-4), gawk, debhelper (>= 5.0),
- libc6-dev-amd64 [i386], libc6-dev-ppc64 [powerpc], libc6-dev-i386 [amd64], libc6-dev-powerpc [ppc64], libc6-dev-sparc64 [sparc], libc6-dev-s390x [s390], 
- quilt, lib64stdc++6 [powerpc sparc]
+ autoconf, sed (>= 4.0.5-4), gawk, debhelper (>= 4.1.76),
+ libc6-dev-amd64 [i386], libc6-dev-ppc64 [powerpc], libc6-dev-i386 [amd64], libc6-dev-powerpc [ppc64], libc6-dev-sparc64 [sparc], libc6-dev-s390x [s390],
+ quilt
 Build-Depends-Indep: perl, po-debconf (>= 1.0)
-Build-Conflicts: gcc-4.1 (= 4.1.1-14)
-Maintainer: Ubuntu Core developers <ubuntu-devel-discuss@lists.ubuntu.com>
-XSBC-Original-Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
-Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, Philip Blundell <pb@nexus.co.uk>, Jeff Bailey <jbailey@raspberryginger.com>, Daniel Jacobowitz <dan@debian.org>, Clint Adams <schizo@debian.org>, Aurelien Jarno <aurel32@debian.org>
+Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
+Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, Philip Blundell <pb@nexus.co.uk>, Jeff Bailey <jbailey@raspberryginger.com>, Daniel Jacobowitz <dan@debian.org>, Clint Adams <schizo@debian.org>, Denis Barbier <barbier@debian.org>, Aurelien Jarno <aurel32@debian.org>
 Standards-Version: 3.7.2
 
 Package: @glibc@-doc
 Architecture: all
 Section: doc
 Priority: optional
-Provides: @glibc@-doc-reference
-Conflicts: @glibc@-doc-reference
-Replaces: @glibc@-doc-reference
+Suggests: @glibc@-doc-reference
 Description: GNU C Library: Documentation
- Contains The GNU C Library Reference manual in info and html format
- as well as the man pages for libpthread functions and the complete
- GNU C Library ChangeLog.
+ Contains man pages for libpthread functions and the complete GNU C Library
+ ChangeLog.  The GNU C Library Reference manual has been moved into
+ @glibc@-doc-reference for licensing reasons.
 
 Package: locales
 Architecture: all

@@ -3,10 +3,9 @@ MIN_KERNEL_SUPPORTED := 2.6.0
 libc = libc6
 
 # In Ubuntu, we only do NPTL.
-# Linuxthreads Config
 threads = yes
 libc_add-ons = nptl $(add-ons)
-libc_extra_config_options = $(extra_config_options)
+libc_extra_config_options = $(extra_config_options) --disable-sanity-checks
 
 ifndef LINUX_SOURCE
   ifeq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
