@@ -53,6 +53,7 @@ amd64/local-biarch.diff -p1
 #hppa/submitted-lt.diff -p1
 hppa/submitted-nptl-carlos.diff -p0
 hppa/local-inlining.diff -p0
+hppa/submitted-ustat.diff -p0
 
 #hurd-i386/cvs-getsid.diff -p1
 #hurd-i386/local-enable-ldconfig.diff -p1
