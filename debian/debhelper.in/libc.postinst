@@ -168,7 +168,10 @@ then
 	if [ ! -f /etc/ld.so.hwcappkgs ]; then
 	    case $(dpkg --print-architecture) in
 		i386)
-		    hwcappkgs="libc6 libc6-i686"
+		    hwcappkgs="libc6 libc6-i686 libc6-xen"
+		    ;;
+		kfreebsd-i386)
+		    hwcappkgs="libc0.1 libc0.1-i686" 
 		    ;;
 		sparc)
 		    hwcappkgs="libc6 libc6-sparcv9b libc6-sparcv9v libc6-sparc64b libc6-sparc64v"
@@ -231,7 +234,7 @@ then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions "$preversion" lt 2.3.5-1; then
+	if dpkg --compare-versions "$preversion" lt 2.5-0ubuntu1; then
 	    echo -n "Checking for services that may need to be restarted..."
 
 	    check="nis smail sendmail exim exim4-base ssh netbase"
@@ -346,11 +349,11 @@ then
 		    echo
 		fi
 	    fi
-	fi # end upgrading and $preversion lt 2.3.5-1
+	fi # end upgrading and $preversion lt 2.5-0ubuntu1
     fi # Upgrading
 
-     # Ubuntu change.  Do not do kernel version detection at startup.
-     update-rc.d -f glibc.sh remove >/dev/null 2>&1
+    # Ubuntu change.  Do not do kernel version detection at startup.
+    update-rc.d -f glibc.sh remove >/dev/null 2>&1
 
 #    # DO NOT FOLLOW THIS EXAMPLE IN OTHER PACKAGES
 #     updatercd glibc.sh start 01 S .
@@ -360,8 +363,9 @@ then
 #	/etc/init.d/glibc.sh 2>/dev/null || true
 #     fi
 
-     # Create/update iconv module cache
-     iconvconfig
+    # Generate cache file /usr/lib/gconv/gconv-modules.cache
+    iconvconfig || true
+
 fi
 
 if [ "`uname -s`" = Linux ]; then

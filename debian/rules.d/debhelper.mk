@@ -116,12 +116,9 @@ endif
 	# an unescaped regular expression.  ld.so must be executable;
 	# libc.so and NPTL's libpthread.so print useful version
 	# information when executed.
-	# FIXME: LinuxThread's libpthread.so doesn't.  It would be good
-	# to either fix that, or use a more robust method than searching
-	# for /tls/ in the path to identify NPTL.
-	find debian/$(curpass) -type f \( -regex '.*lib.*/ld.*so.*' \
-		-o -regex '.*lib.*/tls/.*libpthread.*so.*' \
-		-o -regex '.*lib.*/libc[.-].*so.*' \) \
+	find debian/$(curpass) -type f \( -regex '.*lib[0-9]*/ld.*so' \
+		-o -regex '.*lib[0-9]*/libpthread-.*so' \
+		-o -regex '.*lib[0-9]*/libc-.*so' \) \
 		-exec chmod a+x '{}' ';'
 	dh_makeshlibs -p$(curpass) -V "$(call xx,shlib_dep)"
 
@@ -134,7 +131,7 @@ endif
 	touch $@
 
 $(patsubst %,binaryinst_%,$(DEB_UDEB_PACKAGES)) :: binaryinst_% : $(stamp)binaryinst_%
-$(patsubst %,$(stamp)binaryinst_%,$(DEB_UDEB_PACKAGES)):: $(stamp)debhelper
+$(patsubst %,$(stamp)binaryinst_%,$(DEB_UDEB_PACKAGES)): $(stamp)debhelper
 	@echo Running debhelper for $(curpass)
 	dh_testroot
 	dh_installdirs -p$(curpass)
@@ -146,9 +143,9 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_UDEB_PACKAGES)):: $(stamp)debhelper
 
 	dh_compress -p$(curpass)
 	dh_fixperms -p$(curpass)
-	find debian/$(curpass) -type f \( -regex '.*lib.*/ld.*so.*' \
-		-o -regex '.*lib.*/tls/.*libpthread.*so.*' \
-		-o -regex '.*lib.*/libc[.-].*so.*' \) \
+	find debian/$(curpass) -type f \( -regex '.*lib[0-9]*/ld.*so.*' \
+		-o -regex '.*lib[0-9]*/.*libpthread.*so.*' \
+		-o -regex '.*lib[0-9]*/libc[.-].*so.*' \) \
 		-exec chmod a+x '{}' ';'
 	# dh_makeshlibs -p$(curpass) -V "$(call xx,shlib_dep)"
 	dh_installdeb -p$(curpass)
@@ -186,8 +183,21 @@ $(stamp)debhelper:
 	  sed -e "s#EXIT_CHECK##" -i $$z; \
 	  sed -e "s#DEB_HOST_ARCH#$(DEB_HOST_ARCH)#" -i $$z; \
 	  case $$z in \
-	    *.install) sed -e "s/^#.*//" -i $$z ;; \
-	    debian/$(libc).preinst) l=`grep ^RTLDLIST= debian/tmp-libc/usr/bin/ldd | sed -e 's/^RTLDLIST=//'`; sed -e "s#RTLDLIST#$$l#" -i $$z ;; \
+	    *.install) \
+	      sed -e "s/^#.*//" -i $$z ; \
+	      if [ $(DEB_HOST_ARCH) != $(DEB_BUILD_ARCH) ]; then \
+	        sed -i "/^.*librpcsvc.a.*/d" $$z ; \
+	      fi ; \
+	      ;; \
+	    debian/$(libc).preinst) \
+	      rtld=`LANG=C LC_ALL=C readelf -l debian/tmp-libc/usr/bin/iconv | grep "interpreter" | sed -e 's/.*interpreter: \(.*\)]/\1/g'`; \
+	      c_so=`ls debian/tmp-libc/lib/ | grep "libc\.so\."` ; \
+	      m_so=`ls debian/tmp-libc/lib/ | grep "libm\.so\."` ; \
+	      pthread_so=`ls debian/tmp-libc/lib/ | grep "libpthread\.so\."` ; \
+	      rt_so=`ls debian/tmp-libc/lib/ | grep "librt\.so\."` ; \
+	      dl_so=`ls debian/tmp-libc/lib/ | grep "libdl\.so\."` ; \
+	      sed -e "s#RTLD#$$rtld#" -e "s#C_SO#$$c_so#" -e "s#M_SO#$$m_so#" -e "s#PTHREAD_SO#$$pthread_so#" -e "s#RT_SO#$$rt_so#" -e "s#DL_SO#$$dl_so#" -i $$z ; \
+	      ;; \
 	  esac; \
 	done
 

@@ -16,6 +16,7 @@ DAEMON="/usr/sbin/nscd"
 PIDFILE="/var/run/nscd/nscd.pid"
 
 # Sanity checks.
+umask 022
 [ -f /etc/nscd.conf ] || exit 0
 [ -x "$DAEMON" ] || exit 0
 [ -d /var/run/nscd ] || mkdir -p /var/run/nscd
@@ -86,7 +87,7 @@ stop)
 restart|force-reload|reload)
 	echo -n "Restarting $DESC: $NAME"
 	stop
-	$DAEMON --invalidate
+	$DAEMON --invalidate passwd --invalidate group
 	case "$?" in
 	0|1)
 		start
