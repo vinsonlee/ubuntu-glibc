@@ -1,3 +1,11 @@
+glibc (2.5-0ubuntu2) feisty; urgency=low
+
+  [ Jeff Bailey ]
+  * debian/patches/submitted-ustat.diff: New file.
+  * debian/patches/series: Update.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Wed,  1 Nov 2006 14:53:41 -0500
+
 glibc (2.5-0ubuntu1) feisty; urgency=low
 
   [ Jeff Bailey ]
