@@ -1,17 +1,18 @@
 Source: glibc
 Section: libs
 Priority: required
-Build-Depends: gettext, make (>= 3.80-1), dpkg-dev (>= 1.13.5), bzip2, texinfo (>= 4.0), file,
- linux-libc-dev (>= 2.6.11.2-0) [!hurd-i386 !kfreebsd-i386 !kfreebsd-amd64],
- mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386], texi2html,
+Build-Depends: gettext, make (>= 3.80-1), dpkg-dev (>= 1.13.5), bzip2, texinfo (>= 4.0), texi2html, file,
+ linux-libc-dev (>= 2.6.19-1.1) [!hurd-i386 !kfreebsd-i386 !kfreebsd-amd64],
+ mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386],
  kfreebsd-kernel-headers [kfreebsd-i386 kfreebsd-amd64],
  gcc-4.1, binutils (>= 2.16.1cvs20051109-1),
- autoconf, sed (>= 4.0.5-4), gawk, debhelper (>= 4.1.76),
- libc6-dev-amd64 [i386], libc6-dev-ppc64 [powerpc], libc6-dev-i386 [amd64], libc6-dev-powerpc [ppc64], libc6-dev-sparc64 [sparc], libc6-dev-s390x [s390],
- quilt
+ autoconf, sed (>= 4.0.5-4), gawk, debhelper (>= 5.0),
+ libc6-dev-amd64 [i386], libc6-dev-ppc64 [powerpc], libc6-dev-i386 [amd64], libc6-dev-powerpc [ppc64], libc6-dev-sparc64 [sparc], libc6-dev-s390x [s390], 
+ quilt, lib64stdc++6 [powerpc sparc]
 Build-Depends-Indep: perl, po-debconf (>= 1.0)
+Build-Conflicts: gcc-4.1 (= 4.1.1-14)
 Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
-Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, Philip Blundell <pb@nexus.co.uk>, Jeff Bailey <jbailey@raspberryginger.com>, Daniel Jacobowitz <dan@debian.org>, Clint Adams <schizo@debian.org>, Denis Barbier <barbier@debian.org>, Aurelien Jarno <aurel32@debian.org>
+Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, Philip Blundell <pb@nexus.co.uk>, Jeff Bailey <jbailey@raspberryginger.com>, Daniel Jacobowitz <dan@debian.org>, Clint Adams <schizo@debian.org>, Aurelien Jarno <aurel32@debian.org>
 Standards-Version: 3.7.2
 
 Package: glibc-doc
@@ -69,6 +70,7 @@ Architecture: amd64 arm arm-softfloat armeb i386 m32r m68k mips mipsel powerpc p
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
+Depends: tzdata
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
@@ -140,6 +142,7 @@ Architecture: alpha ia64
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
+Depends: tzdata
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
@@ -211,6 +214,7 @@ Architecture: hurd-i386
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
+Depends: tzdata
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
@@ -282,6 +286,7 @@ Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
+Depends: tzdata
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
@@ -351,7 +356,7 @@ Description: GNU C Library: Shared libraries - udeb
 Package: libc6-i386
 Architecture: amd64
 Section: libs
-Priority: standard
+Priority: optional
 Depends: libc6 (= ${Source-Version})
 Replaces: libc6-dev-i386
 Conflicts: ia32-libs (<= 1.5)
@@ -375,7 +380,7 @@ Description: GNU C Library: 32bit development libraries for AMD64
 Package: libc6-sparc64
 Architecture: sparc
 Section: libs
-Priority: standard
+Priority: optional
 Depends: libc6 (= ${Source-Version})
 Conflicts: gcc-3.0 (<< 1:3.0.4ds3-11), libgcc1 (<< 1:3.0.4ds3-11), fakeroot (<< 0.4.5-2.7)
 Description: GNU C Library: 64bit Shared libraries for UltraSPARC
@@ -397,7 +402,7 @@ Description: GNU C Library: 64bit Development Libraries for UltraSPARC
 Package: libc6-s390x
 Architecture: s390
 Section: libs
-Priority: standard
+Priority: optional
 Depends: libc6 (= ${Source-Version})
 Description: GNU C Library: 64bit Shared libraries for IBM zSeries
  This package includes shared versions of the standard C library and the
@@ -441,7 +446,7 @@ Description: GNU C Library: 64bit Development Libraries for AMD64
 Package: libc6-powerpc
 Architecture: ppc64
 Section: libs
-Priority: standard
+Priority: optional
 Depends: libc6 (= ${Source-Version})
 Description: GNU C Library: 32bit powerpc shared libraries for ppc64
  This package includes shared versions of the standard C
@@ -462,7 +467,7 @@ Description: GNU C Library: 32bit powerpc development libraries for ppc64
 Package: libc6-ppc64
 Architecture: powerpc
 Section: libs
-Priority: standard
+Priority: optional
 Depends: libc6 (= ${Source-Version})
 Description: GNU C Library: 64bit Shared libraries for PowerPC64
  This package includes shared versions of the standard C library and the
