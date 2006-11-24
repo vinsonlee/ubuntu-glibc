@@ -1,3 +1,15 @@
+glibc (2.5-0ubuntu3) feisty; urgency=low
+
+  * debian/rules.d/build.mk: Do not define MAKEINFO to :, this prevented
+    generation of the info documentation, which we are happy to distribute.
+  * debian/control.in:
+    * main:
+      * glibc-doc Provides/Replaces/Conflicts glibc-doc-reference instead of
+        Suggests.  Fix description. 
+  * debian/control: Regenerate.
+
+ -- Scott James Remnant <scott@ubuntu.com>  Fri, 24 Nov 2006 14:05:17 +0000
+
 glibc (2.5-0ubuntu2) feisty; urgency=low
 
   [ Jeff Bailey ]

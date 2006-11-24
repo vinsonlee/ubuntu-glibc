@@ -19,11 +19,13 @@ Package: @glibc@-doc
 Architecture: all
 Section: doc
 Priority: optional
-Suggests: @glibc@-doc-reference
+Provides: @glibc@-doc-reference
+Conflicts: @glibc@-doc-reference
+Replaces: @glibc@-doc-reference
 Description: GNU C Library: Documentation
- Contains man pages for libpthread functions and the complete GNU C Library
- ChangeLog.  The GNU C Library Reference manual has been moved into
- @glibc@-doc-reference for licensing reasons.
+ Contains The GNU C Library Reference manual in info and html format
+ as well as the man pages for libpthread functions and the complete
+ GNU C Library ChangeLog.
 
 Package: locales
 Architecture: all
