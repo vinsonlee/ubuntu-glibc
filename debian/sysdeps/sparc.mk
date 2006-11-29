@@ -1,17 +1,3 @@
-# dynamically disable the test suite when building on v9v
-# capable machines.
-# v9v (Niagara) cannot execute v9b or 64b code and it will
-# hang the build.
-# On the other side it seems that v9b machines don't hang
-# so let's them run the testsuite.
-
-RUN_TESTSUITE = $(shell \
-		if LD_SHOW_AUXV=1 /lib/libc.so.6 --version | grep AT_HWCAP | grep -q "v9v"; then \
-			echo "no"; \
-		else \
-			echo "yes"; \
-		fi)
-
 # build 64-bit (sparc64) alternative library
 GLIBC_PASSES += sparc64
 DEB_ARCH_REGULAR_PACKAGES += libc6-sparc64 libc6-dev-sparc64
