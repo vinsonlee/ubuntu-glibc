@@ -234,7 +234,7 @@ then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions "$preversion" lt 2.5-0ubuntu1; then
+	if dpkg --compare-versions "$preversion" lt 2.3.5-1; then
 	    echo -n "Checking for services that may need to be restarted..."
 
 	    check="nis smail sendmail exim exim4-base ssh netbase"
@@ -349,7 +349,7 @@ then
 		    echo
 		fi
 	    fi
-	fi # end upgrading and $preversion lt 2.5-0ubuntu1
+	fi # end upgrading and $preversion lt 2.3.5-1
     fi # Upgrading
 
     # Ubuntu change.  Do not do kernel version detection at startup.
