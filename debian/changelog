@@ -1,3 +1,9 @@
+glibc (2.5-0ubuntu6) feisty; urgency=low
+
+  * Rebuild using gcc 4.1.1-21ubuntu3.
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Thu, 21 Dec 2006 08:52:45 -0800
+
 glibc (2.5-0ubuntu5) feisty; urgency=low
 
   * Rebuild using gcc 4.1.1-21ubuntu2.
