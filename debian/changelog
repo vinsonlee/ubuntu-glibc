@@ -1,3 +1,17 @@
+glibc (2.5-0ubuntu7) feisty; urgency=low
+
+  [ Colin Watson ]
+
+  * debian/debhelper.in/glibc-doc.links: Restore
+    /usr/share/doc/glibc-doc/html/index.html symlink.
+
+  [ Fabio M. Di Nitto ]
+
+  * debian/patches/sparc/local-pthread-shlib.diff: New file.
+  * debian/patches/series: Update.
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Thu, 04 Jan 2007 17:36:19 +0100
+
 glibc (2.5-0ubuntu6) feisty; urgency=low
 
   * Rebuild using gcc 4.1.1-21ubuntu3.
