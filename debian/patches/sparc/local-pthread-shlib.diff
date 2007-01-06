@@ -1,0 +1,39 @@
+[ Jeff, when people try to link 64-bit pthread applications on
+  sparc on Niagara or UltraSPARC-III boxes, they get link errors
+  because glibc doesn't set the symbol versions correctly in
+  libpthread.so in these cases... ]
+
+The bug here is an error in the regular expressions used
+in linuxthreads/shlib-versions and nptl/shlib-versions
+
+They both use "sparc64-.*-linux.*" but it should be using
+"sparc64.*-.*-linux.*"
+
+The other shlib-versions files in the glibc tree get this
+right.
+
+Here is a patch against the current dapper glibc tree.
+
+- davem
+
+diff -Naurd glibc-2.5.orig/linuxthreads/shlib-versions glibc-2.5/linuxthreads/shlib-versions
+--- glibc-2.5.orig/linuxthreads/shlib-versions	2002-09-05 12:14:32.000000000 +0200
++++ glibc-2.5/linuxthreads/shlib-versions	2007-01-04 08:41:09.000000000 +0100
+@@ -1,6 +1,6 @@
+ # Xavier Leroy's Linux clone based thread library.
+ mips.*-.*-linux.*	libpthread=0		GLIBC_2.0 GLIBC_2.2
+-sparc64-.*-linux.*	libpthread=0		GLIBC_2.2
++sparc64.*-.*-linux.*	libpthread=0		GLIBC_2.2
+ sh.*-.*-linux.*		libpthread=0		GLIBC_2.2
+ ia64.*-.*-linux.*	libpthread=0		GLIBC_2.2
+ hppa.*-.*-linux.*	libpthread=0		GLIBC_2.2
+diff -Naurd glibc-2.5.orig/nptl/shlib-versions glibc-2.5/nptl/shlib-versions
+--- glibc-2.5.orig/nptl/shlib-versions	2004-07-05 19:03:27.000000000 +0200
++++ glibc-2.5/nptl/shlib-versions	2007-01-04 08:40:52.000000000 +0100
+@@ -1,5 +1,5 @@
+ mips.*-.*-linux.*	libpthread=0		GLIBC_2.0 GLIBC_2.2
+-sparc64-.*-linux.*	libpthread=0		GLIBC_2.2
++sparc64.*-.*-linux.*	libpthread=0		GLIBC_2.2
+ sh.*-.*-linux.*		libpthread=0		GLIBC_2.2
+ ia64.*-.*-linux.*	libpthread=0		GLIBC_2.2
+ hppa.*-.*-linux.*	libpthread=0		GLIBC_2.2
