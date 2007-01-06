@@ -95,6 +95,7 @@ sparc/local-linuxthreads.diff
 sparc/local-sparcv8-target.diff -p0
 sparc/local-sysdep.diff -p0
 sparc/submitted-timing.diff -p1
+sparc/local-pthread-shlib.diff -p1
 
 #all/local-remove-manual.diff - In Ubuntu, we ship GFDL manuals
 all/local-ru_RU.diff -p1
