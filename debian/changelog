@@ -1,3 +1,12 @@
+glibc (2.5-0ubuntu9) feisty; urgency=low
+
+  * debian/debhelper.in/libc.preinst: turn libc6 duplication
+    check from an error to a warning and point to the bug when
+    printing the warning.
+  (Closes Ubuntu: #81125)
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Sat, 06 Jan 2007 07:06:22 +0100
+
 glibc (2.5-0ubuntu8) feisty;  urgency=low
 
   * no change upload to rebuild with proper binutils/gcc-4.1

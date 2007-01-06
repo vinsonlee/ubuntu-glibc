@@ -162,7 +162,8 @@ then
     echo "A copy of glibc was found in an unexpected directory."
     echo "It is not safe to upgrade the C library in this situation;"
     echo "please remove that copy of the C library and try again."
-    exit 1
+    echo "Please check: https://launchpad.net/bugs/81125"
+#    exit 1
   fi
 
   if test -n "$LD_LIBRARY_PATH"; then
@@ -172,7 +173,8 @@ then
       echo "Another copy of the C library was found via LD_LIBRARY_PATH."
       echo "It is not safe to upgrade the C library in this situation;"
       echo "please remove the directory from LD_LIBRARY_PATH and try again."
-      exit 1
+      echo "Please check: https://launchpad.net/bugs/81125"
+#      exit 1
     fi
   fi
   if test -e /etc/ld.so.conf; then
@@ -182,7 +184,8 @@ then
       echo "Another copy of the C library was found via /etc/ld.so.conf."
       echo "It is not safe to upgrade the C library in this situation;"
       echo "please remove the directory from /etc/ld.so.conf and try again."
-      exit 1
+      echo "Please check: https://launchpad.net/bugs/81125"
+#      exit 1
     fi
   fi
 fi
