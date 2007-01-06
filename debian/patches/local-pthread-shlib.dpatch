@@ -1,0 +1,52 @@
+#! /bin/sh -e
+
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: The bug here is an error in the regular expressions used
+# DP: Description: in linuxthreads/shlib-versions and nptl/shlib-versions
+# DP: Description: They both use "sparc64-.*-linux.*" but it should be using
+# DP: Description: "sparc64.*-.*-linux.*"
+# DP: Description: The other shlib-versions files in the glibc tree get this
+# DP: Description: right.
+# DP: Related bugs: https://launchpad.net/ubuntu/+source/glibc/+bug/78161
+# DP: Dpatch author: Fabio M. Di Nitto <fabbione@ubuntu.com>
+# DP: Patch author: David S. Miller <davem@davemloft.net>
+# DP: Upstream status: Not submitted
+# DP: Status Details: 
+# DP: Date: Sat Jan  6 07:33:15 CET 2007
+
+PATCHLEVEL=0
+
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p$PATCHLEVEL < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p$PATCHLEVEL < $0;;
+    *)
+	echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+	exit 1
+esac
+exit 0
+
+# append the patch here and adjust the -p? flag in the patch calls.
+
+--- ./nptl/shlib-versions.~1~	2006-12-28 22:07:05.000000000 -0800
++++ ./nptl/shlib-versions	2006-12-28 22:07:44.000000000 -0800
+@@ -1,5 +1,5 @@
+ mips.*-.*-linux.*	libpthread=0		GLIBC_2.0 GLIBC_2.2
+-sparc64-.*-linux.*	libpthread=0		GLIBC_2.2
++sparc64.*-.*-linux.*	libpthread=0		GLIBC_2.2
+ sh.*-.*-linux.*		libpthread=0		GLIBC_2.2
+ ia64.*-.*-linux.*	libpthread=0		GLIBC_2.2
+ hppa.*-.*-linux.*	libpthread=0		GLIBC_2.2
+--- ./linuxthreads/shlib-versions.~1~	2006-12-28 22:07:05.000000000 -0800
++++ ./linuxthreads/shlib-versions	2006-12-28 22:07:33.000000000 -0800
+@@ -1,6 +1,6 @@
+ # Xavier Leroy's Linux clone based thread library.
+ mips.*-.*-linux.*	libpthread=0		GLIBC_2.0 GLIBC_2.2
+-sparc64-.*-linux.*	libpthread=0		GLIBC_2.2
++sparc64.*-.*-linux.*	libpthread=0		GLIBC_2.2
+ sh.*-.*-linux.*		libpthread=0		GLIBC_2.2
+ ia64.*-.*-linux.*	libpthread=0		GLIBC_2.2
+ hppa.*-.*-linux.*	libpthread=0		GLIBC_2.2

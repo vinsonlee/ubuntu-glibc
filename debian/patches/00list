@@ -62,3 +62,4 @@ local-sparc-atomics
 eh-frame-terminator
 local-all-getcwd
 locale-C
+local-pthread-shlib
