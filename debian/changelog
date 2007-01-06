@@ -1,3 +1,11 @@
+glibc (2.3.6-0ubuntu20.1) dapper-proposed; urgency=low
+  
+  * debian/patches/local-pthread-shlib.dpatch; New file, fix linking against
+    optimized libpthread in 64bit mode.
+  (Closes: #78161)
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Sat, 06 Jan 2007 07:36:00 +0100
+
 glibc (2.3.6-0ubuntu20) dapper; urgency=low
 
   * debian/patches/submitted-nis-netgrp.dpatch: New file, snagged from
