@@ -16,7 +16,6 @@ cvs-all-strxfrm
 cvs-sparc-datastart
 cvs-mash-rlimit-rtprio
 cvs-all-regcomp
-ubuntu-89801
 ## Submitted:
 submitted-hppa-drop-utimes
 submitted-hppa-configure
