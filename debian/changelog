@@ -1,12 +1,3 @@
-glibc (2.4-1ubuntu12.3) edgy-updates; urgency=low
-
-  * Turn libc6 duplication check from an error to a warning and
-    point to the bug when printing the warning.
-  * Stop warning if hitting libpthread.so.20.
-  (Closes Ubuntu: #81125):
-
- -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Wed, 24 Jan 2007 14:03:36 +0100
-
 glibc (2.4-1ubuntu12.2) edgy-updates; urgency=low
   
   * Propagate to edgy-updates from edgy-proposed.
