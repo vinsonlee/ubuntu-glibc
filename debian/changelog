@@ -1,3 +1,19 @@
+glibc (2.4-1ubuntu12.2) edgy-updates; urgency=low
+  
+  * Propagate to edgy-updates from edgy-proposed.
+
+  Change tested and verified by David S. Miller, Simon Law, Fabio M. Di Nitto.
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Thu, 18 Jan 2007 12:04:20 +0100
+
+glibc (2.4-1ubuntu12.1) edgy-proposed; urgency=low
+  
+  * debian/patches/local-pthread-shlib.dpatch; New file, fix linking against
+    optimized libpthread in 64bit mode.
+  (Closes: #78161)
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Sat, 06 Jan 2007 07:36:00 +0100
+
 glibc (2.4-1ubuntu12) edgy; urgency=low
 
   * Backport from Debian (Aurelien Jarno):
