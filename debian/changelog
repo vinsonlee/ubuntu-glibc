@@ -1,3 +1,11 @@
+glibc (2.3.6-0ubuntu20.4) dapper-updates; urgency=low
+
+  * No change upload to propagate 20.3 to dapper-updates.
+
+  Fix tested by Fabio M. Di Nitto and Simon Law.
+
+ -- Fabio M. Di Nitto <fabbione@ubuntu.com>  Fri, 02 Feb 2007 15:37:22 +0100
+
 glibc (2.3.6-0ubuntu20.3) dapper-proposed; urgency=low
   
   * Turn libc6 duplication check from an error to a warning and
