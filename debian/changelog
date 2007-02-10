@@ -1,3 +1,16 @@
+glibc (2.5-0ubuntu10) feisty; urgency=low
+
+  [ Colin Watson ]
+  * debian/debhelper.in/libc.postinst: Correct grammar of NSS reboot warning
+    (LP: #70567).
+
+  [ Jeff Bailey ]
+  * debian/patches/hppa/submitted-nptl-carlos2.diff: New patch to add
+    STACK_GROWS_UP case to NPTL.
+  * debian/patches/series: Use it.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Sat, 10 Feb 2007 12:03:41 -0500
+
 glibc (2.5-0ubuntu9) feisty; urgency=low
 
   * debian/debhelper.in/libc.preinst: turn libc6 duplication
