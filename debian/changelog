@@ -1,3 +1,11 @@
+glibc (2.5-0ubuntu11) feisty; urgency=low
+
+  * debian/patches/hppa/cvs-missing-cfi_procend.diff: New file to work around
+    FTBFS uncovered by January CVS binutils.
+  * debian/patches/series: Use it.
+
+ -- Jeff Bailey <jbailey@ubuntu.com>  Sun, 11 Feb 2007 08:51:24 -0700
+
 glibc (2.5-0ubuntu10) feisty; urgency=low
 
   [ Colin Watson ]
