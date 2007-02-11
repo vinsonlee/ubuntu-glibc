@@ -1,0 +1,15 @@
+
+Add missing cfi_procend.
+
+Signed-off-by: Guy Martin <gmsoft@tuxicoman.be>
+
+diff -uNr glibc-2.5.orig/ports/sysdeps/hppa/dl-trampoline.S glibc-2.5/ports/sysdeps/hppa/dl-trampoline.S
+--- glibc-2.5.orig/ports/sysdeps/hppa/dl-trampoline.S	2006-09-07 16:34:43.000000000 +0000
++++ glibc-2.5/ports/sysdeps/hppa/dl-trampoline.S	2007-01-30 15:15:58.000000000 +0000
+@@ -284,5 +284,6 @@
+ 	bv,n	0(%r2)
+         .EXIT
+         .PROCEND
++	cfi_endproc
+ 	.size   _dl_runtime_profile, . - _dl_runtime_profile
+ 
