@@ -1,3 +1,18 @@
+glibc (2.5-0ubuntu12) feisty; urgency=low
+
+  * debian/patches/any/branch-pr3429.diff: Fix a race condition in
+    _dl_open with r_debug.r_state consistency check. Ubuntu #72639.
+  * debian/debhelper.in/nscd.init: Invalidate the hosts database as
+    well. Ubuntu #72647.
+  * debian/local/manpages/nscd.conf.5: Fix formatting. Ubuntu #55331.
+  * Fix typo in libc6-i686 package description. Ubuntu #81153.
+  * debian/patches/any/local-iconv-fix-trampoline.diff: Import from
+    Debian; new patch (fix iconvconfig segfault when run under exec-shield,
+    PaX or similar) from hlfs. Ubuntu #63353.
+  * Set Ubuntu maintainer address.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 21 Mar 2007 08:16:00 +0100
+
 glibc (2.5-0ubuntu11) feisty; urgency=low
 
   * debian/patches/hppa/cvs-missing-cfi_procend.diff: New file to work around
