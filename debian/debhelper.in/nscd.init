@@ -87,7 +87,7 @@ stop)
 restart|force-reload|reload)
 	echo -n "Restarting $DESC: $NAME"
 	stop
-	$DAEMON --invalidate passwd --invalidate group
+	$DAEMON --invalidate passwd --invalidate group --invalidate hosts
 	case "$?" in
 	0|1)
 		start
