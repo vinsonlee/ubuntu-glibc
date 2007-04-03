@@ -1,3 +1,10 @@
+glibc (2.5-0ubuntu13) feisty; urgency=low
+
+  * debian/patches/any/local-ipv6-sanity.diff: Only do AAAA lookups if we
+    have an interface with better than link-local addresses available.
+
+ -- Tollef Fog Heen <tfheen@ubuntu.com>  Tue,  3 Apr 2007 14:11:26 +0200
+
 glibc (2.5-0ubuntu12) feisty; urgency=low
 
   * debian/patches/any/branch-pr3429.diff: Fix a race condition in
