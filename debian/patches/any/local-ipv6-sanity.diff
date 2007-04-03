@@ -18,7 +18,7 @@
  		    {
  		      gethosts (AF_INET6, struct in6_addr);
  		      no_inet6_data = no_data;
-@@ -2006,8 +2007,8 @@
+@@ -2006,7 +2007,7 @@
    if (hints->ai_family == AF_UNSPEC || hints->ai_family == AF_INET
        || hints->ai_family == AF_INET6)
      {
