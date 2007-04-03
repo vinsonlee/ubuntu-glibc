@@ -1,3 +1,9 @@
+glibc (2.5-0ubuntu14) feisty; urgency=low
+
+  * Twiddle the diff a little so it actually applies.
+
+ -- Tollef Fog Heen <tfheen@ubuntu.com>  Tue,  3 Apr 2007 21:34:51 +0200
+
 glibc (2.5-0ubuntu13) feisty; urgency=low
 
   * debian/patches/any/local-ipv6-sanity.diff: Only do AAAA lookups if we
