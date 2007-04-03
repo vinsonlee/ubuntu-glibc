@@ -60,12 +60,8 @@ EOF
             mv -f $LG.tmp $LG
         fi
     fi
-    # Update requested locales if locales-all is not installed
-    if [ -f /usr/lib/locales-all/supported.tar.gz ] ; then
-        echo "locales-all installed, skipping locales generation"
-    else
-        /usr/sbin/locale-gen
-    fi
+    # Update requested locales.
+    /usr/sbin/locale-gen
 
     # Set default LANG environment variable
     if [ -e $EE ]; then

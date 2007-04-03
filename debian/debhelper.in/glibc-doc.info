@@ -1,1 +1,1 @@
-DEB_SRCDIR/manual/*.info*
+debian/tmp-libc/usr/share/info/libc.info*

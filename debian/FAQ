@@ -9,7 +9,7 @@ users are not affected by these problems, we configure libc to use the
 headers from a kernel that is known to work with libc and the programs
 that depend on stable kernel headers.
 
-[Note: /usr/include/linux is now in the linux-libc-dev package.]
+[Note: /usr/include/linux is now in the linux-kernel-headers package.]
 
 Q2: What if I want to compile a program that needs a feature from a
 later kernel than is used by libc?
@@ -86,6 +86,13 @@ instead of including <errno.h>.  Errno in recent glibc versions is a macro,
 which calls the function __errno_location; when glibc is built with
 thread-local storage enabled, there is no extern int variable named errno. 
 In addition, "extern int errno" is not thread-safe.
+
+The application should continue to run for now, but when the warning message
+is printed use of the NPTL threading library, and other new kernel-2.6
+features, it's worth trying to set environment variable LD_ASSUME_KERNEL=2.4.1
+(switch to LinuxThreads instead of NPTL).
+
+Please file a bug if the workaround doesn't work.
 
 NOTE: Currently this error message is suppressed, for the benefit of some
 truly buggy programs which redirect stderr into something important, like a

@@ -24,8 +24,9 @@ exit 0
 
 
 # append the patch here and adjust the -p? flag in the patch calls.
---- glibc-2.6.orig/localedata/locales/de_CH
-+++ glibc-2.6/localedata/locales/de_CH
+diff -urN glibc-2.2.5.orig/localedata/locales/de_CH glibc-2.2.5/localedata/locales/de_CH
+--- glibc-2.2.5.orig/localedata/locales/de_CH	Thu Dec 20 10:51:20 2001
++++ glibc-2.2.5/localedata/locales/de_CH	Sun Mar 10 23:00:09 2002
 @@ -114,7 +114,7 @@
          "<U004E><U006F><U0076><U0065><U006D><U0062><U0065><U0072>";/
          "<U0044><U0065><U007A><U0065><U006D><U0062><U0065><U0072>"
@@ -35,3 +36,4 @@ exit 0
  t_fmt   "<U0025><U0054>"
  am_pm   "";""
  t_fmt_ampm ""
+

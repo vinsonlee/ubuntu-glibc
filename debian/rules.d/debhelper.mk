@@ -19,9 +19,13 @@ $(stamp)binaryinst_$(libc)-pic:: $(stamp)debhelper
 # Some per-package extra files to install.
 define $(libc)_extra_debhelper_pkg_install
 	install --mode=0644 $(DEB_SRCDIR)/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/changelog
-#	install --mode=0644 $(DEB_SRCDIR)/linuxthreads/README debian/$(curpass)/usr/share/doc/$(curpass)/README.linuxthreads
-#	install --mode=0644 $(DEB_SRCDIR)/linuxthreads/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/ChangeLog.linuxthreads
-	install --mode=0644 $(DEB_SRCDIR)/nptl/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/ChangeLog.nptl
+	install --mode=0644 $(DEB_SRCDIR)/linuxthreads/README debian/$(curpass)/usr/share/doc/$(curpass)/README.linuxthreads
+	install --mode=0644 $(DEB_SRCDIR)/linuxthreads/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/ChangeLog.linuxthreads
+	case " $(GLIBC_PASSES) " in \
+	*" nptl "*) \
+	  install --mode=0644 $(DEB_SRCDIR)/nptl/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/ChangeLog.nptl; \
+	  ;; \
+	esac
 	sed -e "/KERNEL_VERSION_CHECK/r debian/script.in/kernelcheck.sh" \
 		debian/local/etc_init.d/glibc.sh | \
 		sed -e "s/EXIT_CHECK/sleep 5/" -e "s/DEB_HOST_ARCH/$(DEB_HOST_ARCH)/" > debian/glibc.sh.generated
@@ -30,6 +34,16 @@ define $(libc)_extra_debhelper_pkg_install
 	install --mode=0644 debian/local/manpages/ld.so.8 debian/$(curpass)/usr/share/man/man8/ld.so.8
 
 	install --mode=0644 debian/FAQ debian/$(curpass)/usr/share/doc/$(curpass)/README.Debian
+endef
+
+define locales_extra_debhelper_pkg_install
+	install --mode=0644 $(DEB_SRCDIR)/localedata/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/changelog
+	install --mode=0644 debian/locales.NEWS.Debian debian/$(curpass)/usr/share/doc/locales/NEWS.Debian
+endef
+
+define glibc-doc_extra_debhelper_pkg_install
+	install --mode=0644 $(DEB_SRCDIR)/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/changelog
+	install --mode=0644 $(DEB_SRCDIR)/linuxthreads/FAQ.html debian/$(curpass)/usr/share/doc/$(curpass)/FAQ.linuxthreads.html
 endef
 
 # Should each of these have per-package options?
@@ -54,17 +68,6 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGUL
 	dh_installinit -p$(curpass)
 	dh_installdocs -p$(curpass) 
 	dh_link -p$(curpass)
-	set -e; if test -d debian/bug/$(curpass); then                   \
-	    dh_installdirs -p$(curpass) usr/share/bug;                   \
-	    dh_install -p$(curpass) debian/bug/$(curpass) usr/share/bug; \
-	fi
-
-	set -ex; case $(curpass) in libc6|libc6.1) \
-		mv debian/$(curpass)/sbin/ldconfig \
-			debian/$(curpass)/sbin/ldconfig.real; \
-		install -m755 -o0 -g0 debian/local/ldconfig_wrap \
-			debian/$(curpass)/sbin/ldconfig; \
-		;; esac
 
 	# extra_debhelper_pkg_install is used for debhelper.mk only.
 	# when you want to install extra packages, use extra_pkg_install.
@@ -117,29 +120,10 @@ endif
 		-o -regex '.*lib[0-9]*/libpthread-.*so' \
 		-o -regex '.*lib[0-9]*/libc-.*so' \) \
 		-exec chmod a+x '{}' ';'
-	dh_makeshlibs -X/usr/lib/debug -p$(curpass) -V "$(call xx,shlib_dep)"
-
-	if [ -f debian/$(curpass).lintian ] ; then \
-		install -d -m 755 -o root -g root debian/$(curpass)/usr/share/lintian/overrides/ ; \
-		install -m 644 -o root -g root debian/$(curpass).lintian \
-			debian/$(curpass)/usr/share/lintian/overrides/$(curpass) ; \
-	fi
-
-	if [ -f debian/$(curpass).triggers ] ; then \
-		install -m 644 -o root -g root debian/$(curpass).triggers \
-			debian/$(curpass)/DEBIAN/triggers ; \
-	fi
-
-	if [ -f debian/$(curpass).linda ] ; then \
-		install -d -m 755 -o root -g root debian/$(curpass)/usr/share/linda/overrides/ ; \
-		install -m 644 -o root -g root debian/$(curpass).linda \
-			debian/$(curpass)/usr/share/linda/overrides/$(curpass) ; \
-	fi
+	dh_makeshlibs -p$(curpass) -V "$(call xx,shlib_dep)"
 
 	dh_installdeb -p$(curpass)
-	if [ $(curpass) = nscd ] ; then \
-		dh_shlibdeps -p$(curpass) ; \
-	fi
+	# dh_shlibdeps -p$(curpass)
 	dh_gencontrol -p$(curpass) -- $($(curpass)_control_flags)
 	dh_md5sums -p$(curpass)
 	dh_builddeb -p$(curpass)
@@ -163,7 +147,7 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_UDEB_PACKAGES)): $(stamp)debhelper
 		-o -regex '.*lib[0-9]*/.*libpthread.*so.*' \
 		-o -regex '.*lib[0-9]*/libc[.-].*so.*' \) \
 		-exec chmod a+x '{}' ';'
-	# dh_makeshlibs -X/usr/lib/debug -p$(curpass) -V "$(call xx,shlib_dep)"
+	# dh_makeshlibs -p$(curpass) -V "$(call xx,shlib_dep)"
 	dh_installdeb -p$(curpass)
 	# dh_shlibdeps -p$(curpass)
 	dh_gencontrol -p$(curpass)
@@ -171,22 +155,31 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_UDEB_PACKAGES)): $(stamp)debhelper
 
 	touch $@
 
-OPT_PASSES = $(filter-out libc, $(GLIBC_PASSES))
+#Ugly kludge:
+# I'm running out of time to get this sorted out properly.  Basically
+# the problem is that nptl is like an optimised library, but not quite.
+# So we'll filter it out of the passes list and deal with it specifically.
+#
+# Ideally, there should be some way of having an optimisation pass and
+# say "include this in the main library" by setting a variable.
+# But after 10 hours of staring at this thing, I can't figure it out.
+
+OPT_PASSES = $(filter-out libc nptl, $(GLIBC_PASSES))
 OPT_DIRS = $(foreach pass,$(OPT_PASSES),$($(pass)_slibdir) $($(pass)_libdir))
 NPTL = $(filter nptl,$(GLIBC_PASSES))
 
 debhelper: $(stamp)debhelper
 $(stamp)debhelper:
 
-	for x in `find debian/debhelper.in -maxdepth 1 -type f`; do \
+	for x in `find debian/debhelper.in -type f -maxdepth 1`; do \
 	  y=debian/`basename $$x`; \
 	  z=`echo $$y | sed -e 's#/libc#/$(libc)#'`; \
 	  cp $$x $$z; \
+	  sed -e "s#TMPDIR#debian/tmp-libc#" -i $$z; \
 	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#" -i $$z; \
-	  sed -e "/KERNEL_VERSION_CHECK/r debian/script.in/kernelcheck.sh" -i $$z; \
-	  sed -e "/NOHWCAP/r debian/script.in/nohwcap.sh" -i $$z; \
 	  sed -e "s#LIBC#$(libc)#" -i $$z; \
 	  sed -e "s#CURRENT_VER#$(DEB_VERSION)#" -i $$z; \
+	  sed -e "/KERNEL_VERSION_CHECK/r debian/script.in/kernelcheck.sh" -i $$z; \
 	  sed -e "s#EXIT_CHECK##" -i $$z; \
 	  sed -e "s#DEB_HOST_ARCH#$(DEB_HOST_ARCH)#" -i $$z; \
 	  case $$z in \
@@ -216,24 +209,41 @@ $(stamp)debhelper:
 	for x in $(OPT_PASSES); do \
 	  slibdir=$$1; \
 	  shift; \
+	  z=debian/$(libc)-$$x.install; \
 	  case $$slibdir in \
 	  /lib32 | /lib64 | /emul/ia32-linux/lib) \
-	    suffix="alt"; \
 	    libdir=$$1; \
 	    shift; \
+	    cp debian/debhelper.in/libc-alt.install $$z; \
+	    zd=debian/$(libc)-dev-$$x.install; \
+	    cp debian/debhelper.in/libc-alt-dev.install $$zd; \
+	    sed -e "s#TMPDIR#debian/tmp-$$x#g" -i $$zd; \
+	    sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#g" -i $$zd; \
+	    sed -e "s#LIBC#$(libc)#" -i $$z; \
+	    sed -e "s#LIBDIR#$$libdir#g" -i $$zd; \
+	    sed -e "s/^#.*//g" -i $$zd; \
+	    zi=debian/$(libc)-dev-$$x.postinst; \
+	    cp debian/debhelper.in/libc-alt-dev.postinst $$zi; \
 	    ;; \
 	  *) \
-	    suffix="otherbuild"; \
+	    cp debian/debhelper.in/libc-otherbuild.install $$z; \
+	    cp debian/debhelper.in/libc-otherbuild.preinst debian/$(libc)-$$x.preinst ; \
+	    cp debian/debhelper.in/libc-otherbuild.postinst debian/$(libc)-$$x.postinst ; \
+	    cp debian/debhelper.in/libc-otherbuild.postrm debian/$(libc)-$$x.postrm ; \
+	    sed -e "s#OPT#$(libc)-$$x#g" -i debian/$(libc)-$$x.preinst; \
+	    sed -e "s#OPT#$(libc)-$$x#g" -i debian/$(libc)-$$x.postinst; \
+	    sed -e "s#OPT#$(libc)-$$x#g" -i debian/$(libc)-$$x.postrm; \
+	    sed -e "s#CURRENT_VER#$(DEB_VERSION)#g" -i debian/$(libc)-$$x.postinst; \
+	    sed -e "s#CURRENT_VER#$(DEB_VERSION)#g" -i debian/$(libc)-$$x.postrm; \
 	    ;; \
 	  esac; \
-	  for y in debian/$(libc)*-$$suffix.* ; do \
-	    z=`echo $$y | sed -e "s/$$suffix/$$x/"` ; \
-	    cp $$y $$z ; \
-	    sed -e "s#TMPDIR#debian/tmp-$$x#g" -i $$z; \
-	    sed -e "s#SLIBDIR#$$slibdir#g" -i $$z; \
-	    sed -e "s#LIBDIR#$$libdir#g" -i $$z; \
-	    sed -e "s#FLAVOR#$$x#g" -i $$z; \
-	  done ; \
+	  sed -e "s#TMPDIR#debian/tmp-$$x#g" -i $$z; \
+	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#g" -i $$z; \
+	  sed -e "s#SLIBDIR#$$slibdir#g" -i $$z; \
+	  sed -e "s#LIBDIR#$$libdir#g" -i $$z; \
+	  sed -e "s#FLAVOR#$$x#g" -i $$z; \
+	  sed -e "s#LIBC#$(libc)#g" -i $$z; \
+	  sed -e "s/^#.*//" -i $$z; \
 	done
 
 	# We use libc-otherbuild for this, since it's just a special case of
@@ -288,8 +298,5 @@ debhelper-clean:
 	rm -f debian/*.docs
 	rm -f debian/*.doc-base
 	rm -f debian/*.generated
-	rm -f debian/*.lintian
-	rm -f debian/*.linda
-	rm -f debian/*.NEWS
 
 	rm -f $(stamp)binaryinst*

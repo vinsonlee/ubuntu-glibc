@@ -1,13 +1,13 @@
 # Turkish translation of locales.
 # This file is distributed under the same license as the locales package.
-# Erçin EKER <erc.caldera@gmx.net>, 2004,2007.
+# Erçin EKER <erc.caldera@gmx.net>, 2004.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: locales\n"
 "Report-Msgid-Bugs-To: debian-glibc@lists.debian.org\n"
-"POT-Creation-Date: 2007-04-09 00:10+0200\n"
-"PO-Revision-Date: 2007-04-09 11:02+0300\n"
+"POT-Creation-Date: 2006-06-26 21:47+0200\n"
+"PO-Revision-Date: 2006-01-27 13:12+0200\n"
 "Last-Translator: Erçin EKER <ercin.eker@linux.org.tr>\n"
 "Language-Team: Türkçe <debian-l10n-turkish@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +19,7 @@ msgstr ""
 #. Choices
 #: ../debhelper.in/locales.templates:1001
 msgid "All locales"
-msgstr "Tüm yereller"
+msgstr ""
 
 #. Type: multiselect
 #. Description
@@ -29,10 +29,10 @@ msgstr "Oluşturulacak yereller: "
 
 #. Type: multiselect
 #. Description
-#: ../debhelper.in/locales.templates:1002
+#: ../debhelper.in/locales.templates:1003
 msgid ""
-"Locales are a framework to switch between multiple languages and allow users "
-"to use their language, country, characters, collation order, etc."
+"Locale is a framework to switch between multiple languages for users who can "
+"select to use their language, country, characters, collation order, etc."
 msgstr ""
 "Yerel (locale), kullanıcıların kullanmak istediği dil, ülke, karakter, "
 "sıralama şekli gibi dile özgü ayarlar arasında kolayca geçiş yapmasını "
@@ -40,15 +40,23 @@ msgstr ""
 
 #. Type: multiselect
 #. Description
-#: ../debhelper.in/locales.templates:1002
+#: ../debhelper.in/locales.templates:1004
 msgid ""
-"Please choose which locales to generate. UTF-8 locales should be chosen by "
-"default, particularly for new installations. Other character sets may be "
-"useful for backwards compatibility with older systems and software."
+"Choose which locales to generate.  The selection will be saved to `/etc/"
+"locale.gen', which you can also edit manually (you need to run `locale-gen' "
+"afterwards)."
 msgstr ""
-"Lütfen hangi yerellerin oluşturulacağını seçin. Yeni kurulum için UTF-8 "
-"yereller öntanımlı olarak seçilecektir. Diğer karakter setleri daha eski "
-"sistemler ve yazılımlar ile uyumluluk için yararlı olabilir."
+"Oluşturulacak yerelleri seçiniz.  Yapılan seçim '/etc/locale.gen' dosyası "
+"içinde saklanacaktır. Daha sonra bu dosyayı elle değiştirebilirsiniz (bunu "
+"yaptıktan sonra `locale-gen' komutunu çalıştırmanız gerekecektir)."
+
+#. Type: multiselect
+#. Description
+#: ../debhelper.in/locales.templates:1005
+msgid ""
+"When `All locales' is selected, /etc/locale.gen will be set as a symlink to /"
+"usr/share/i18n/SUPPORTED."
+msgstr ""
 
 #. Type: select
 #. Choices
@@ -64,34 +72,28 @@ msgstr "Sistem için öntanımlı yerel:"
 
 #. Type: select
 #. Description
-#: ../debhelper.in/locales.templates:2002
+#: ../debhelper.in/locales.templates:2003
 msgid ""
 "Many packages in Debian use locales to display text in the correct language "
-"for the user. You can choose a default locale for the system from the "
-"generated locales."
+"for users. You can change the default locale if you're not a native English "
+"speaker. These choices are based on which locales you have chosen to "
+"generate."
 msgstr ""
 "Çoğu Debian paketi mesajları göstermekte kullanacağı dili belirlemek için "
-"yerelleri kullanır. Oluşturulmak üzere seçtikleriniz arasından sistem için "
-"öntanımlı bir yerel seçebilirsiniz."
+"yerelleri kullanır. Ana diliniz İngilizce değil ise öntanımlı yereli "
+"değiştirebilirsiniz. Bütün bu seçimler, oluşturulmak üzere seçtiğiniz "
+"yerellere göre belirlenir."
 
 #. Type: select
 #. Description
-#: ../debhelper.in/locales.templates:2002
+#: ../debhelper.in/locales.templates:2004
 msgid ""
-"This will select the default language for the entire system. If this system "
-"is a multi-user system where not all users are able to speak the default "
-"language, they will experience difficulties."
+"Note: This will select the language for your whole system. If you're running "
+"a multi-user system where not all of your users speak the language of your "
+"choice, then they will run into difficulties and you might want not to set a "
+"default locale."
 msgstr ""
-"Bu ayar, sisteminizin bütününde kullanılacak dili belirleyecektir. Eğer "
+"Not: Bu ayar, sisteminizin bütününde kullanılacak dili seçecektir. Eğer "
 "farklı dilleri konuşan kullanıcıların da bulunduğu çok kullanıcılı bir "
 "sistem çalıştırıyorsanız, bu kullanıcılar bazı zorluklarla karşılaşabilir. "
-
-
-#~ msgid ""
-#~ "Choose which locales to generate.  The selection will be saved to `/etc/"
-#~ "locale.gen', which you can also edit manually (you need to run `locale-"
-#~ "gen' afterwards)."
-#~ msgstr ""
-#~ "Oluşturulacak yerelleri seçiniz.  Yapılan seçim '/etc/locale.gen' dosyası "
-#~ "içinde saklanacaktır. Daha sonra bu dosyayı elle değiştirebilirsiniz "
-#~ "(bunu yaptıktan sonra `locale-gen' komutunu çalıştırmanız gerekecektir)."
+"Bu nedenle öntanımlı bir yerel belirlememeyi isteyebilirsiniz."

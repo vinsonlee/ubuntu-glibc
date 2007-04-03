@@ -3,38 +3,18 @@ GLIBC_PASSES += ppc64
 DEB_ARCH_REGULAR_PACKAGES += libc6-ppc64 libc6-dev-ppc64
 ppc64_add-ons = nptl $(add-ons)
 ppc64_configure_target = powerpc64-linux
-ppc64_CC = $(CC) -fno-stack-protector -m64
-ppc64_CXX = $(CXX) -fno-stack-protector -m64
+ppc64_CC = $(CC) -m64
+ppc64_CXX = $(CXX) -m64
 libc6-ppc64_shlib_dep = libc6-ppc64 (>= $(shlib_dep_ver))
-ppc64_extra_cflags = -O3 -g
-ppc64_extra_config_options := $(extra_config_options) --disable-profile
+ppc64_extra_cflags = -O3 -g1
 ppc64_slibdir = /lib64
 ppc64_libdir = /usr/lib64
-ppc64_includedir = /usr/include/powerpc64-linux-gnu
+ppc64_extra_config_options := $(extra_config_options) --disable-profile \
+	--includedir=/usr/include/powerpc64-linux-gnu
 
 define libc6-dev-ppc64_extra_pkg_install
 mkdir -p debian/libc6-dev-ppc64/usr/include/powerpc64-linux-gnu
 cp -af debian/tmp-ppc64/usr/include/powerpc64-linux-gnu/* \
 	debian/libc6-dev-ppc64/usr/include/powerpc64-linux-gnu
-mkdir -p debian/libc6-dev-ppc64/usr/include/gnu
-cp -af debian/tmp-ppc64/usr/include/powerpc64-linux-gnu/gnu/stubs-64.h \
-	debian/libc6-dev-ppc64/usr/include/gnu/
 endef
 
-define libc6-dev_extra_pkg_install
-mkdir -p debian/libc6-dev/usr/include/powerpc64-linux-gnu/gnu
-cp -af debian/libc6-dev/usr/include/gnu/stubs-32.h \
-	debian/libc6-dev/usr/include/powerpc64-linux-gnu/gnu/
-#mkdir -p debian/libc6-dev/usr/ppu
-#ln -sf ../include debian/libc6-dev/usr/ppu/include
-endef
-
-#define libc6_extra_pkg_install
-#mkdir -p debian/libc6/usr/ppu
-#ln -sf ../lib debian/libc6/usr/ppu/lib
-#endef
-
-#define libc6-ppc64_extra_pkg_install
-#mkdir -p debian/libc6-ppc64/usr/ppu
-#ln -sf ../lib64 debian/libc6-ppc64/usr/ppu/lib64
-#endef

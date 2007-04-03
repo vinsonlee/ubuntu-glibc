@@ -1,8 +1,0 @@
---- misc/mktemp.c.orig
-+++ misc/mktemp.c
-@@ -33,4 +33,4 @@
-   return template;
- }
- 
--link_warning (mktemp, "the use of `mktemp' is dangerous, better use `mkstemp'")
-+link_warning (mktemp, "the use of `mktemp' is dangerous, better use `mkstemp' or `mkdtemp'")

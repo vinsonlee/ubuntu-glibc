@@ -100,6 +100,7 @@ then
     # This will keep us from using hwcap libs (optimized) during an
     # upgrade.
     touch /etc/ld.so.nohwcap
+    echo glibc >> /etc/ld.so.nohwcap
 fi
 
 # Sanity check.
@@ -113,7 +114,7 @@ fi
 check_dirs () {
   for dir in $*; do
     # Follow symlinks
-    dirlink=$(readlink -e $dir)
+    dirlink=$(readlink -f $dir)
     [ -n "$dirlink" ] && dir=$dirlink 
     
     # Handle /lib in LD_LIBRARY_PATH.
@@ -187,28 +188,9 @@ then
 #      exit 1
     fi
   fi
-  for i in ld-2.3.2.so libc-2.3.2.so ld-2.3.6.so libc-2.3.6.so ; do
-    if [ -e /lib/tls/$i ] && ! dpkg-query -L LIBC 2>/dev/null | grep -q /lib/tls/$i ; then
-      echo
-      echo "A non-dpkg owned copy of the C library was found in /lib/tls."
-      echo "It is not safe to upgrade the C library in this situation;"
-      echo "please remove that copy of the C library and try again."
-      exit 1
-    fi
-  done
-  if [ -n "$LD_ASSUME_KERNEL" ] ; then
-    if dpkg --compare-versions "$LD_ASSUME_KERNEL" le "2.6.1"; then
-      echo
-      echo "POSIX threads library NPTL requires kernel version 2.6.1"
-      echo "or later.  It appears that LD_ASSUME_KERNEL is set to $LD_ASSUME_KERNEL."
-      echo "It is not safe to upgrade the C library in this situation;"
-      echo "Please unset this environment variable and try again."
-      exit 1
-    fi
-  fi
 fi
 
-if [ "$1" != abort-upgrade ]
+if [ "$1" != abort-upgrade ] && [ "`uname -s`" = Linux ]
 then
     # glibc kernel version check: KERNEL_VERSION_CHECK
 fi

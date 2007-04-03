@@ -7,9 +7,9 @@
 	* Makeconfig: use rtlddir instead of slibdir
 	* elf/Makefile: likewise
 
---- Makeconfig.orig
-+++ Makeconfig
-@@ -201,6 +201,11 @@
+--- glibc-2.3.6/Makeconfig	2005-08-30 17:48:26.000000000 +0000
++++ glibc-2.3.6/Makeconfig	2005-08-30 18:38:37.000000000 +0000
+@@ -187,6 +187,11 @@
  endif
  inst_slibdir = $(install_root)$(slibdir)
  
@@ -21,7 +21,7 @@
  # Prefix to put on files installed in $(libdir).  For libraries `libNAME.a',
  # the prefix is spliced between `lib' and the name, so the linker switch
  # `-l$(libprefix)NAME' finds the library; for other files the prefix is
-@@ -464,7 +469,7 @@
+@@ -438,7 +443,7 @@
  endif
  ifndef config-LDFLAGS
  ifeq (yesyes,$(build-shared)$(elf))
@@ -30,10 +30,10 @@
  endif
  endif
  ifndef link-libc
---- elf/Makefile.orig
-+++ elf/Makefile
-@@ -314,7 +314,7 @@
- 	objdump -T $@ | grep 'D. \*UND\*' | cmp -s /dev/null -
+--- glibc-2.3.6/elf/Makefile	2005-08-30 17:48:26.000000000 +0000
++++ glibc-2.3.6/elf/Makefile	2005-08-30 18:38:37.000000000 +0000
+@@ -296,7 +296,7 @@
+ 	rm -f $@.lds
  
  # interp.c exists just to get this string into the libraries.
 -CFLAGS-interp.c = -D'RUNTIME_LINKER="$(slibdir)/$(rtld-installed-name)"' \

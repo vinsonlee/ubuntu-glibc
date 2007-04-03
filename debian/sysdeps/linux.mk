@@ -1,9 +1,9 @@
 GLIBC_OVERLAYS ?= $(shell ls glibc-linuxthreads* glibc-ports* glibc-libidn*)
-MIN_KERNEL_SUPPORTED := 2.6.8
+MIN_KERNEL_SUPPORTED := 2.6.0
 libc = libc6
 
 # In Ubuntu, we only do NPTL.
-# NPTL Config
+# Linuxthreads Config
 threads = yes
 libc_add-ons = nptl $(add-ons)
 libc_extra_config_options = $(extra_config_options)

@@ -3,16 +3,12 @@
 # -*- Makefile -*-, you silly Emacs!
 # vim: set ft=make:
 
-DEBQUILTRC = debian/quiltrc
-QUILTOPT   = --quiltrc $(DEBQUILTRC)
-QUILT     = quilt $(QUILTOPT)
-
 patch: $(stamp)patch-stamp
 $(stamp)patch-stamp: $(stamp)unpack quilt
 	@cd $(DEB_SRCDIR); \
-	if $(QUILT) next >/dev/null 2>&1; then \
+	if quilt next >/dev/null 2>&1; then \
 	  echo -n "Applying patches..."; \
-	  if $(QUILT) push -a -v > ${stamp}patch-log 2>&1; then \
+	  if quilt push -a -v > ${stamp}patch-log 2>&1; then \
 	    echo "successful."; \
 	    mv ${stamp}patch-log $@; \
 	  else \
@@ -46,8 +42,8 @@ quilt:
 unpatch: quilt
 	@echo -n "Unapplying patches..."
 	@cd $(DEB_SRCDIR); \
-	if $(QUILT) top >/dev/null 2>&1; then \
-	  if $(QUILT) pop -a -v > $(stamp)unpatch-log 2>&1; then \
+	if quilt top >/dev/null 2>&1; then \
+	  if quilt pop -a -v > $(stamp)unpatch-log 2>&1; then \
 	    echo "successful."; \
 	  else \
 	    echo "failed! (check $(stamp)unpatch-log for details)"; \

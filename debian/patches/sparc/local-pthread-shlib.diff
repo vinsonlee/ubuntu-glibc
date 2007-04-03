@@ -27,3 +27,13 @@ diff -Naurd glibc-2.5.orig/linuxthreads/shlib-versions glibc-2.5/linuxthreads/sh
  sh.*-.*-linux.*		libpthread=0		GLIBC_2.2
  ia64.*-.*-linux.*	libpthread=0		GLIBC_2.2
  hppa.*-.*-linux.*	libpthread=0		GLIBC_2.2
+diff -Naurd glibc-2.5.orig/nptl/shlib-versions glibc-2.5/nptl/shlib-versions
+--- glibc-2.5.orig/nptl/shlib-versions	2004-07-05 19:03:27.000000000 +0200
++++ glibc-2.5/nptl/shlib-versions	2007-01-04 08:40:52.000000000 +0100
+@@ -1,5 +1,5 @@
+ mips.*-.*-linux.*	libpthread=0		GLIBC_2.0 GLIBC_2.2
+-sparc64-.*-linux.*	libpthread=0		GLIBC_2.2
++sparc64.*-.*-linux.*	libpthread=0		GLIBC_2.2
+ sh.*-.*-linux.*		libpthread=0		GLIBC_2.2
+ ia64.*-.*-linux.*	libpthread=0		GLIBC_2.2
+ hppa.*-.*-linux.*	libpthread=0		GLIBC_2.2

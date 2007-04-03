@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" != abort-upgrade ]; then
+  opt=OPT
+  touch /etc/ld.so.nohwcap
+  echo $opt >> /etc/ld.so.nohwcap
+fi
+
+#DEBHELPER#
+
+exit 0

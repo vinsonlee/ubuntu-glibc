@@ -1,13 +1,4 @@
 #!/bin/sh
-### BEGIN INIT INFO
-# Provides:          nscd
-# Required-Start:    $local_fs
-# Required-Stop:     $local_fs
-# Default-Start:     2 3 4 5
-# Default-Stop:      0 1 6
-# Short-Description: Starts the Name Service Cache Daemon
-### END INIT INFO
-
 #
 # nscd:		Starts the Name Service Cache Daemon
 #
@@ -17,6 +8,7 @@
 #		slow Services like NIS or NIS+
 
 # Sanity checks.
+
 
 NAME="nscd"
 DESC="Name Service Cache Daemon"
@@ -29,34 +21,37 @@ umask 022
 [ -x "$DAEMON" ] || exit 0
 [ -d /var/run/nscd ] || mkdir -p /var/run/nscd
 
-start_nscd()
+start()
 {
 	# Return
 	#   0 if daemon has been started
 	#   1 if daemon was already running
 	#   2 if daemon could not be started
-	start-stop-daemon --start --quiet --pidfile "$PIDFILE" --exec "$DAEMON" || return 2
+	SECURE=""
+	#for TABLE in passwd group
+	#do
+	#	if egrep '^'$TABLE':.*nisplus' /etc/nsswitch.conf >/dev/null
+	#	then
+	#		/usr/sbin/nscd_nischeck "$TABLE" || SECURE="$SECURE -S $TABLE,yes"
+	#	fi
+	#done
+	start-stop-daemon --start --quiet --pidfile "$PIDFILE" --exec "$DAEMON" --test > /dev/null || return 1
+	start-stop-daemon --start --quiet --pidfile "$PIDFILE" --exec "$DAEMON" -- \
+		$SECURE || return 2
 }
 
-stop_nscd()
+stop()
 {
 	# Return
 	#   0 if daemon has been stopped
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
-
-	# we try to stop using nscd --shutdown, that fails also if nscd is not present.
-	# in that case, fallback to "good old methods"
-	RETVAL=0
-	if ! $DAEMON --shutdown; then
-		start-stop-daemon --stop --quiet --pidfile "$PIDFILE" --name "$NAME" --test > /dev/null
-		RETVAL="$?"
-		[ "$?" -ne 0  -a  "$?" -ne 1 ] && return 2
-	fi
-
+	start-stop-daemon --stop --quiet --retry=TERM/5/HUP/30/KILL/5 --pidfile "$PIDFILE" --name "$NAME"
+	RETVAL="$?"
+	[ "$RETVAL" = 2 ] && return 2
 	# Wait for children to finish too
 	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec "$DAEMON" > /dev/null
-	[ "$?" -ne 0  -a  "$?" -ne 1 ] && return 2
+	[ "$?" = 2 ] && return 2
 	rm -f "$PIDFILE"
 	return "$RETVAL"
 }
@@ -73,7 +68,7 @@ status()
 case "$1" in
 start)
 	echo -n "Starting $DESC: $NAME"
-	start_nscd
+	start
 	case "$?" in
 		0) echo "." ; exit 0 ;;
 		1) echo " (already running)." ; exit 0 ;;
@@ -82,7 +77,7 @@ start)
 	;;
 stop)
 	echo -n "Stopping $DESC: $NAME"
-	stop_nscd
+	stop
 	case "$?" in
 		0) echo "." ; exit 0 ;;
 		1) echo " (not running)." ; exit 0 ;;
@@ -91,11 +86,11 @@ stop)
 	;;
 restart|force-reload|reload)
 	echo -n "Restarting $DESC: $NAME"
-	stop_nscd
+	stop
 	$DAEMON --invalidate passwd --invalidate group --invalidate hosts
 	case "$?" in
 	0|1)
-		start_nscd
+		start
 		case "$?" in
 			0) echo "." ; exit 0 ;;
 			1) echo " (failed -- old process is still running)." ; exit 1 ;;

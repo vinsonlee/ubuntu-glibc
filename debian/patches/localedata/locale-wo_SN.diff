@@ -1,3 +1,5 @@
+Index: localedata/locales/wo_SN
+===================================================================
 --- /dev/null
 +++ localedata/locales/wo_SN
 @@ -0,0 +1,180 @@
@@ -181,9 +183,11 @@
 +country_num 450
 +END LC_ADDRESS
 +
+Index: localedata/SUPPORTED
+===================================================================
 --- localedata/SUPPORTED.orig
 +++ localedata/SUPPORTED
-@@ -377,6 +377,7 @@
+@@ -354,6 +354,7 @@
  wa_BE/ISO-8859-1 \
  wa_BE@euro/ISO-8859-15 \
  wa_BE.UTF-8/UTF-8 \

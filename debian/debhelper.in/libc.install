@@ -6,7 +6,7 @@ debian/tmp-libc/usr/bin/getent usr/bin
 debian/tmp-libc/usr/bin/getconf usr/bin
 debian/tmp-libc/usr/bin/catchsegv usr/bin
 debian/tmp-libc/usr/bin/tzselect usr/bin
-debian/tmp-libc/usr/bin/ldd usr/bin
+debian/tmp-libc/usr/bin/ldd* usr/bin
 debian/tmp-libc/usr/sbin/zdump usr/bin
 debian/tmp-libc/usr/sbin/rpcinfo usr/bin
 
@@ -17,11 +17,11 @@ debian/tmp-libc/sbin/ldconfig sbin
 
 debian/tmp-libc/usr/lib/pt_chown usr/lib
 
-debian/tmp-libc/lib/*-*-gnu*/ lib
-debian/tmp-libc/usr/lib/*-*-gnu*/ usr/lib
+debian/local/usr_sbin/tzconfig usr/sbin
+
+debian/tmp-libc/lib/*-*-gnu/ lib
+debian/tmp-libc/usr/lib/*-*-gnu/ usr/lib
 
 debian/tmp-libc/etc/ld.so.conf.d /etc
-build-tree/glibc-2.*/posix/gai.conf /etc
-debian/local/etc/bindresvport.blacklist /etc
 
 log-test-*-libc usr/share/doc/LIBC

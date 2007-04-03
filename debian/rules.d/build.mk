@@ -23,23 +23,19 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 
 	@echo Configuring $(curpass)
 	rm -f $(DEB_BUILDDIR)/configparms
-	echo "CC = $(call xx,CC)"		>> $(DEB_BUILDDIR)/configparms
-	echo "CXX = $(call xx,CXX)"		>> $(DEB_BUILDDIR)/configparms
-	echo "BUILD_CC = $(BUILD_CC)"		>> $(DEB_BUILDDIR)/configparms
-	echo "CFLAGS = $(HOST_CFLAGS)"		>> $(DEB_BUILDDIR)/configparms
-	echo "BUILD_CFLAGS = $(BUILD_CFLAGS)" 	>> $(DEB_BUILDDIR)/configparms
-	echo "BASH := /bin/bash"		>> $(DEB_BUILDDIR)/configparms
-	echo "KSH := /bin/bash"			>> $(DEB_BUILDDIR)/configparms
-	echo "LIBGD = no"			>> $(DEB_BUILDDIR)/configparms
-	echo "bindir = $(bindir)"		>> $(DEB_BUILDDIR)/configparms
-	echo "datadir = $(datadir)"		>> $(DEB_BUILDDIR)/configparms
-	echo "sysconfdir = $(sysconfdir)" 	>> $(DEB_BUILDDIR)/configparms
-	echo "libexecdir = $(libexecdir)" 	>> $(DEB_BUILDDIR)/configparms
-	echo "rootsbindir = $(rootsbindir)" 	>> $(DEB_BUILDDIR)/configparms
-	echo "includedir = $(call xx,includedir)" >> $(DEB_BUILDDIR)/configparms
-	echo "docdir = $(docdir)"		>> $(DEB_BUILDDIR)/configparms
-	echo "mandir = $(mandir)"		>> $(DEB_BUILDDIR)/configparms
-	echo "sbindir = $(sbindir)"		>> $(DEB_BUILDDIR)/configparms
+	echo "CC = $(call xx,CC)"	>> $(DEB_BUILDDIR)/configparms
+	echo "BUILD_CC = $(BUILD_CC)"	>> $(DEB_BUILDDIR)/configparms
+	echo "CXX = $(call xx,CXX)"	>> $(DEB_BUILDDIR)/configparms
+	echo "CFLAGS = $(HOST_CFLAGS)"	>> $(DEB_BUILDDIR)/configparms
+	echo "BUILD_CFLAGS = $(BUILD_CFLAGS)" >> $(DEB_BUILDDIR)/configparms
+	echo "BASH := /bin/bash"	>> $(DEB_BUILDDIR)/configparms
+	echo "KSH := /bin/bash"		>> $(DEB_BUILDDIR)/configparms
+	echo "mandir = $(mandir)"	>> $(DEB_BUILDDIR)/configparms
+	echo "infodir = $(infodir)"	>> $(DEB_BUILDDIR)/configparms
+	echo "libexecdir = $(libexecdir)" >> $(DEB_BUILDDIR)/configparms
+	echo "LIBGD = no"		>> $(DEB_BUILDDIR)/configparms
+	echo "sysconfdir = /etc"	>> $(DEB_BUILDDIR)/configparms
+	echo "rootsbindir = /sbin"	>> $(DEB_BUILDDIR)/configparms
 	libdir="$(call xx,libdir)" ; if test -n "$$libdir" ; then \
 		echo "libdir = $$libdir" >> $(DEB_BUILDDIR)/configparms ; \
 	fi
@@ -72,7 +68,6 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		--host=$(call xx,configure_target) \
 		--build=$$configure_build --prefix=/usr --without-cvs \
 		--enable-add-ons=$(standard-add-ons)"$(call xx,add-ons)" \
-		--enable-profile \
 		--without-selinux \
 		$(call xx,with_headers) $(call xx,extra_config_options))
 	touch $@
@@ -96,9 +91,6 @@ $(stamp)check_%: $(stamp)build_%
 	elif ! $(call kernel_check,$(call xx,MIN_KERNEL_SUPPORTED)); then \
 	  echo "Kernel too old, skipping tests."; \
 	  echo "Kernel too old, tests have been skipped." > $(log_test) ; \
-	elif grep -q "cpu model.*SiByte SB1" /proc/cpuinfo ; then \
-	  echo "MIPS SB1 platform detected, skipping tests."; \
-	  echo "MIPS SB1 platform detected, skipping tests." > $(log_test) ; \
 	elif [ $(call xx,RUN_TESTSUITE) != "yes" ]; then \
 	  echo "Testsuite disabled for $(curpass), skipping tests."; \
 	  echo "Tests have been disabled." > $(log_test) ; \
@@ -134,7 +126,7 @@ $(stamp)install_%: $(stamp)check_%
 	fi
 
 	# Remove ld.so from optimized libraries
-	if echo $(call xx,slibdir) | grep -q "/lib/.\+" ; then \
+	if [ $(curpass) != libc ] && [ $(call xx,configure_build) = $(call xx,configure_target) ]; then \
 		rm -f debian/tmp-$(curpass)/$(call xx,slibdir)/ld*.so* ; \
 	fi
 
@@ -173,13 +165,6 @@ $(stamp)install_%: $(stamp)check_%
 	  echo /lib/$$triplet >> $$conffile; \
 	  echo /usr/lib/$$triplet >> $$conffile; \
 	fi
-	
-	# Create a default configuration file that adds /usr/local/lib to the search path
-	if [ $(curpass) = libc ]; then \
-	  mkdir -p debian/tmp-$(curpass)/etc/ld.so.conf.d; \
-	  echo "# libc default configuration" > debian/tmp-$(curpass)/etc/ld.so.conf.d/libc.conf ; \
-	  echo /usr/local/lib >> debian/tmp-$(curpass)/etc/ld.so.conf.d/libc.conf ; \
- 	fi
-
+	 
 	$(call xx,extra_install)
 	touch $@

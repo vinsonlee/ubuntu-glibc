@@ -17,10 +17,9 @@ define kernel_check
 true
 endef
 
-libc_extra_config_options := $(extra_config_options)
+# TLS is broken currently and results in Mach panicing.
+# ld.so is broken currently if z_relro is used.
+libc_extra_config_options := $(extra_config_options) --without-tls libc_cv_z_relro=no
 
 # Only use libidn as add-on.
 standard-add-ons = libidn
-
-# disabled because the testsuite is known to provoke build abortions.
-RUN_TESTSUITE = no

@@ -12,8 +12,8 @@ Description: GNU C Library: Shared libraries
 Package: libc0.1-dev
 Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libdevel
-Priority: optional
-Depends: libc0.1 (= ${binary:Version})
+Priority: standard
+Depends: libc0.1 (= ${Source-Version})
 Recommends: gcc | c-compiler
 Description: GNU C Library: Development Libraries and Header Files
  Contains the symlinks, headers, and object files needed to compile
@@ -24,11 +24,11 @@ Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libdevel
 Priority: extra
 Provides: libc-dbg
-Depends: libc0.1 (= ${binary:Version})
+Depends: libc0.1 (= ${Source-Version})
 Description: GNU C Library: Libraries with debugging symbols
  Contains unstripped shared libraries.
  This package is provided primarily to provide a backtrace with
- names in a debugger, which makes it somewhat easier to interpret core
+ names in a debugger, this makes it somewhat easier to interpret core
  dumps. The libraries are installed in /usr/lib/debug and can be
  used by placing that directory in LD_LIBRARY_PATH.
  Most people will not need this package.
@@ -37,7 +37,7 @@ Package: libc0.1-prof
 Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libdevel
 Priority: extra
-Depends: libc0.1 (= ${binary:Version})
+Depends: libc0.1 (= ${Source-Version})
 Description: GNU C Library: Profiling Libraries
  Static libraries compiled with profiling info (-pg) suitable for use
  with gprof.
@@ -48,7 +48,7 @@ Section: libdevel
 Priority: optional
 Conflicts: libc-pic
 Provides: libc-pic, glibc-pic
-Depends: libc0.1 (= ${binary:Version})
+Depends: libc0.1 (= ${Source-Version})
 Description: GNU C Library: PIC archive library
  Contains an archive library (ar file) composed of individual shared objects.
  This is used for creating a library which is a smaller subset of the
