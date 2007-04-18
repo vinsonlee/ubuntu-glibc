@@ -4,11 +4,11 @@ Keep sr_CS for backward compatibility, and add a new sr_RS
 locale which copies definitions from sr_CS.  In the future,
 sr_CS will be renamed into sr_RS.
 
-Index: glibc-2.3.6/localedata/SUPPORTED
+Index: localedata/SUPPORTED
 ===================================================================
---- glibc-2.3.6.orig/localedata/SUPPORTED
-+++ glibc-2.3.6/localedata/SUPPORTED
-@@ -334,6 +334,7 @@
+--- localedata/SUPPORTED.orig
++++ localedata/SUPPORTED
+@@ -336,6 +336,7 @@
  sr_CS.UTF-8/UTF-8 \
  sr_CS/ISO-8859-5 \
  sr_ME/UTF-8 \
@@ -16,10 +16,10 @@ Index: glibc-2.3.6/localedata/SUPPORTED
  ss_ZA/UTF-8 \
  st_ZA.UTF-8/UTF-8 \
  st_ZA/ISO-8859-1 \
-Index: glibc-2.3.6/localedata/locales/sr_RS
+Index: localedata/locales/sr_RS
 ===================================================================
 --- /dev/null
-+++ glibc-2.3.6/localedata/locales/sr_RS
++++ localedata/locales/sr_RS
 @@ -0,0 +1,95 @@
 +comment_char %
 +escape_char  /

@@ -1,11 +1,8 @@
 Index: elf/elf.h
 ===================================================================
-RCS file: /cvs/glibc/libc/elf/elf.h,v
-retrieving revision 1.155
-diff -u -p -r1.155 elf.h
---- elf/elf.h	10 Jul 2006 21:54:02 -0000	1.155
-+++ elf/elf.h	14 Jul 2006 15:27:24 -0000
-@@ -1708,6 +1708,8 @@ typedef Elf32_Addr Elf32_Conflict;
+--- elf/elf.h.orig
++++ elf/elf.h
+@@ -1708,6 +1708,8 @@
  #define R_PARISC_LTOFF_FPTR14R	62	/* LT-rel. fct ptr, right 14 bits. */
  #define R_PARISC_FPTR64		64	/* 64 bits function address.  */
  #define R_PARISC_PLABEL32	65	/* 32 bits function address.  */
@@ -14,7 +11,7 @@ diff -u -p -r1.155 elf.h
  #define R_PARISC_PCREL64	72	/* 64 bits PC-rel. address.  */
  #define R_PARISC_PCREL22F	74	/* 22 bits PC-rel. address.  */
  #define R_PARISC_PCREL14WR	75	/* PC-rel. address, right 14 bits.  */
-@@ -1768,6 +1770,29 @@ typedef Elf32_Addr Elf32_Conflict;
+@@ -1768,6 +1770,29 @@
  #define R_PARISC_LTOFF_TP16F	229	/* 16 bits LT-TP-rel. address.  */
  #define R_PARISC_LTOFF_TP16WF	230	/* 16 bits LT-TP-rel. address.  */
  #define R_PARISC_LTOFF_TP16DF	231	/* 16 bits LT-TP-rel. address.  */
@@ -46,12 +43,9 @@ diff -u -p -r1.155 elf.h
  /* Legal values for p_type field of Elf32_Phdr/Elf64_Phdr.  */
 Index: elf/rtld.c
 ===================================================================
-RCS file: /cvs/glibc/libc/elf/rtld.c,v
-retrieving revision 1.362
-diff -u -p -r1.362 rtld.c
---- elf/rtld.c	8 Apr 2006 19:50:51 -0000	1.362
-+++ elf/rtld.c	14 Jul 2006 15:27:24 -0000
-@@ -380,14 +380,14 @@ _dl_start (void *arg)
+--- elf/rtld.c.orig
++++ elf/rtld.c
+@@ -379,14 +379,14 @@
       know it is available.  We do not have to clear the memory if we
       do not have to use the temporary bootstrap_map.  Global variables
       are initialized to zero by default.  */
@@ -69,5 +63,5 @@ diff -u -p -r1.362 rtld.c
 +       cnt < ((char *)&(bootstrap_map) + sizeof (bootstrap_map));
 +       *cnt++ = '\0');
  # endif
- #endif
- 
+ # if USE___THREAD
+   bootstrap_map.l_tls_modid = 0;
