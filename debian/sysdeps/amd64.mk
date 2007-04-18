@@ -23,7 +23,7 @@ i386_configure_target = i686-linux
 i386_CC = $(BUILD_CC) -m32
 i386_CXX = $(BUILD_CXX) -m32
 i386_MAKEFLAGS = MAKEFLAGS="gconvdir=/usr/lib32/gconv"
-i386_extra_cflags = -march=i686 -mtune=i686 -g -O3
+i386_extra_cflags = -march=i686 -mtune=generic -g -O3
 i386_extra_config_options = $(extra_config_options) --includedir=/usr/include/i486-linux-gnu --disable-profile
 #i386_rtlddir = /lib
 i386_slibdir = /lib32
