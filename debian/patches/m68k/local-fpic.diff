@@ -1,10 +1,12 @@
 # DP: Make sure libc_nonshared.a is compiled with -fPIC on m68k
 
---- ports/sysdeps/m68k/Makefile	2006-06-01 11:20:48.000000000 +0200
-+++ ports/sysdeps/m68k/Makefile	2006-06-01 11:37:21.000000000 +0200
-@@ -44,3 +44,7 @@
- shared-only-routines += libgcc-compat
- endif
+Index: ports/sysdeps/m68k/Makefile
+===================================================================
+--- ports/sysdeps/m68k/Makefile.orig
++++ ports/sysdeps/m68k/Makefile
+@@ -36,3 +36,7 @@
+ ifeq ($(subdir),elf)
+ CFLAGS-rtld.c += -Wno-uninitialized -Wno-unused
  endif
 +
 +# Build objects in libc_nonshared.a with -fPIC (instead of -fpic) to avoid

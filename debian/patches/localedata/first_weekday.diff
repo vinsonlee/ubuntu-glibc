@@ -841,19 +841,6 @@ Index: localedata/locales/es_EC
  END LC_TIME
  
  LC_PAPER
-Index: localedata/locales/es_ES
-===================================================================
---- localedata/locales/es_ES.orig
-+++ localedata/locales/es_ES
-@@ -139,6 +139,8 @@
- date_fmt	"<U0025><U0061><U0020><U0025><U0062><U0020><U0025><U0065>/
- <U0020><U0025><U0048><U003A><U0025><U004D><U003A><U0025><U0053><U0020>/
- <U0025><U005A><U0020><U0025><U0059>"
-+%  FIXME: found in CLDR
-+first_weekday 2
- END LC_TIME
- 
- LC_PAPER
 Index: localedata/locales/es_GT
 ===================================================================
 --- localedata/locales/es_GT.orig
