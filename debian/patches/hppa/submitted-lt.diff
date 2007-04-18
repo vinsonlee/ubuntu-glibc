@@ -7,8 +7,10 @@
 # DP: Status Details: 
 # DP: Date: 2005-07-17
 
---- libc-orig/linuxthreads/descr.h	2005-02-16 10:14:12.000000000 -0500
-+++ libc/linuxthreads/descr.h	2005-02-16 10:11:09.000000000 -0500
+Index: linuxthreads/descr.h
+===================================================================
+--- linuxthreads/descr.h.orig
++++ linuxthreads/descr.h
 @@ -71,7 +71,7 @@
  /* Atomic counter made possible by compare_and_swap */
  struct pthread_atomic {
@@ -18,8 +20,10 @@
  };
  
  
---- libc-orig/linuxthreads/oldsemaphore.c	2004-04-25 23:01:18.000000000 -0400
-+++ libc/linuxthreads/oldsemaphore.c	2004-04-25 22:51:35.000000000 -0400
+Index: linuxthreads/oldsemaphore.c
+===================================================================
+--- linuxthreads/oldsemaphore.c.orig
++++ linuxthreads/oldsemaphore.c
 @@ -31,7 +31,7 @@
  
  typedef struct {
@@ -29,8 +33,10 @@
  } old_sem_t;
  
  extern int __old_sem_init (old_sem_t *__sem, int __pshared, unsigned int __value);
---- libc-orig/linuxthreads/pt-machine.c	2002-08-26 18:39:45.000000000 -0400
-+++ libc/linuxthreads/pt-machine.c	2003-12-08 21:24:59.000000000 -0500
+Index: linuxthreads/pt-machine.c
+===================================================================
+--- linuxthreads/pt-machine.c.orig
++++ linuxthreads/pt-machine.c
 @@ -19,7 +19,9 @@
  
  #define PT_EI
@@ -42,9 +48,11 @@
  extern int __compare_and_swap (long int *p, long int oldval, long int newval);
  
  #include <pt-machine.h>
---- libc-orig/linuxthreads/pthread.c	2005-01-28 14:39:43.000000000 -0500
-+++ libc/linuxthreads/pthread.c	2005-01-28 14:15:29.000000000 -0500
-@@ -301,7 +301,7 @@
+Index: linuxthreads/pthread.c
+===================================================================
+--- linuxthreads/pthread.c.orig
++++ linuxthreads/pthread.c
+@@ -309,7 +309,7 @@
    pthread_descr self;
  
    /* First of all init __pthread_handles[0] and [1] if needed.  */
@@ -53,7 +61,7 @@
    __pthread_handles[0].h_lock = __LOCK_INITIALIZER;
    __pthread_handles[1].h_lock = __LOCK_INITIALIZER;
  # endif
-@@ -371,7 +371,7 @@
+@@ -379,7 +379,7 @@
  # endif
    /* self->p_start_args need not be initialized, it's all zero.  */
    self->p_userstack = 1;
@@ -62,7 +70,7 @@
    self->p_resume_count = (struct pthread_atomic) __ATOMIC_INITIALIZER;
  # endif
    self->p_alloca_cutoff = __MAX_ALLOCA_CUTOFF;
-@@ -385,7 +385,7 @@
+@@ -393,7 +393,7 @@
  #else  /* USE_TLS */
  
    /* First of all init __pthread_handles[0] and [1].  */
@@ -71,17 +79,21 @@
    __pthread_handles[0].h_lock = __LOCK_INITIALIZER;
    __pthread_handles[1].h_lock = __LOCK_INITIALIZER;
  # endif
-@@ -688,7 +688,7 @@
+@@ -696,8 +696,8 @@
  # endif
    mgr->p_start_args = (struct pthread_start_args) PTHREAD_START_ARGS_INITIALIZER(__pthread_manager);
    mgr->p_nr = 1;
 -# if __LT_SPINLOCK_INIT != 0
+-  self->p_resume_count = (struct pthread_atomic) __ATOMIC_INITIALIZER;
 +# ifdef __LT_INITIALIZER_NOT_ZERO
-   self->p_resume_count = (struct pthread_atomic) __ATOMIC_INITIALIZER;
++  mgr->p_resume_count = (struct pthread_atomic) __ATOMIC_INITIALIZER;
  # endif
    mgr->p_alloca_cutoff = PTHREAD_STACK_MIN / 4;
---- libc-orig/linuxthreads/spinlock.c	2004-01-30 14:13:45.000000000 -0500
-+++ libc/linuxthreads/spinlock.c	2004-01-30 10:47:31.000000000 -0500
+ #else
+Index: linuxthreads/spinlock.c
+===================================================================
+--- linuxthreads/spinlock.c.orig
++++ linuxthreads/spinlock.c
 @@ -24,9 +24,9 @@
  #include "spinlock.h"
  #include "restart.h"
@@ -153,7 +165,7 @@
  	/* Remove abandoned node. */
  #if defined TEST_FOR_COMPARE_AND_SWAP
  	if (!__pthread_has_cas)
-@@ -662,7 +662,7 @@
+@@ -674,7 +674,7 @@
  #if !defined HAS_COMPARE_AND_SWAP || defined TEST_FOR_COMPARE_AND_SWAP
  
  int __pthread_compare_and_swap(long * ptr, long oldval, long newval,
@@ -162,7 +174,7 @@
  {
    int res;
  
-@@ -699,7 +699,7 @@
+@@ -711,7 +711,7 @@
     - When nanosleep() returns, we try again, doing MAX_SPIN_COUNT
       sched_yield(), then sleeping again if needed. */
  
@@ -171,8 +183,10 @@
  {
    int cnt = 0;
    struct timespec tm;
---- libc-orig/linuxthreads/spinlock.h	2003-07-31 15:16:04.000000000 -0400
-+++ libc/linuxthreads/spinlock.h	2003-12-08 21:24:59.000000000 -0500
+Index: linuxthreads/spinlock.h
+===================================================================
+--- linuxthreads/spinlock.h.orig
++++ linuxthreads/spinlock.h
 @@ -33,14 +33,28 @@
  #endif
  #endif
@@ -235,8 +249,10 @@
  {
    return __pthread_compare_and_swap(ptr, oldval, newval, spinlock);
  }
---- libc-orig/linuxthreads/sysdeps/pthread/bits/initspin.h	2002-08-26 18:39:44.000000000 -0400
-+++ libc/linuxthreads/sysdeps/pthread/bits/initspin.h	2004-02-23 09:36:18.000000000 -0500
+Index: linuxthreads/sysdeps/pthread/bits/initspin.h
+===================================================================
+--- linuxthreads/sysdeps/pthread/bits/initspin.h.orig
++++ linuxthreads/sysdeps/pthread/bits/initspin.h
 @@ -23,6 +23,7 @@
  #define __LT_SPINLOCK_INIT 0
  
@@ -246,8 +262,10 @@
 +#define __LOCK_ALT_INITIALIZER { 0, __LT_SPINLOCK_INIT }
  #define __ALT_LOCK_INITIALIZER { 0, __LT_SPINLOCK_INIT }
  #define __ATOMIC_INITIALIZER { 0, __LT_SPINLOCK_INIT }
---- libc-orig/linuxthreads/sysdeps/pthread/bits/libc-lock.h	2003-09-23 00:33:20.000000000 -0400
-+++ libc/linuxthreads/sysdeps/pthread/bits/libc-lock.h	2003-12-08 21:25:00.000000000 -0500
+Index: linuxthreads/sysdeps/pthread/bits/libc-lock.h
+===================================================================
+--- linuxthreads/sysdeps/pthread/bits/libc-lock.h.orig
++++ linuxthreads/sysdeps/pthread/bits/libc-lock.h
 @@ -71,12 +71,12 @@
     initialized locks must be set to one due to the lack of normal
     atomic operations.) */
@@ -264,8 +282,10 @@
  #endif
  
  #define __libc_rwlock_define_initialized(CLASS,NAME) \
---- libc-orig/linuxthreads/sysdeps/pthread/bits/pthreadtypes.h	2004-09-17 12:24:47.000000000 -0400
-+++ libc/linuxthreads/sysdeps/pthread/bits/pthreadtypes.h	2004-09-17 12:24:19.000000000 -0400
+Index: linuxthreads/sysdeps/pthread/bits/pthreadtypes.h
+===================================================================
+--- linuxthreads/sysdeps/pthread/bits/pthreadtypes.h.orig
++++ linuxthreads/sysdeps/pthread/bits/pthreadtypes.h
 @@ -22,12 +22,14 @@
  #define __need_schedparam
  #include <bits/sched.h>
@@ -284,8 +304,10 @@
  };
  
  #ifndef _PTHREAD_DESCR_DEFINED
---- libc-orig/linuxthreads/sysdeps/pthread/pthread.h	2004-09-21 17:55:20.000000000 -0400
-+++ libc/linuxthreads/sysdeps/pthread/pthread.h	2004-09-21 17:55:03.000000000 -0400
+Index: linuxthreads/sysdeps/pthread/pthread.h
+===================================================================
+--- linuxthreads/sysdeps/pthread/pthread.h.orig
++++ linuxthreads/sysdeps/pthread/pthread.h
 @@ -31,26 +31,26 @@
  /* Initializers.  */
  

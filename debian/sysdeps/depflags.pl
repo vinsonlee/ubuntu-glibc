@@ -168,6 +168,9 @@ if ($DEB_HOST_GNU_TYPE eq "x86_64-linux-gnu") {
     push @{$libc_c{'Replaces'}}, 'base-files (<< 3.1.9ubuntu8)';
 }
 
+## Depends on a binutils version that supports DT_GNU_HASH
+#push @{$libc_dev_c{'Depends'}}, 'binutils (>= 2.17.50)';
+
 # Make sure we only have one version of libc-dev installed
 push @{$libc_dev_c{'Provides'}}, 'libc-dev';
 push @{$libc_dev_c{'Conflicts'}}, 'libc-dev';
@@ -177,6 +180,9 @@ if ($libc ne "libc6") {
 
 # Conflict with broken libterm-readline-gnu-perl to avoid #326856.
 push @{$libc_c{'Conflicts'}}, 'libterm-readline-gnu-perl (<< 1.15-2)';
+
+# Conflict with older versions of tzdata that need tzconfig.
+push @{$libc_c{'Conflicts'}}, 'tzdata (<< 2007e-2)';
 
 if ($type eq "libc") {
     %pkg = %libc_c;
