@@ -1,3 +1,153 @@
+glibc (2.5-5ubuntu1) gutsy; urgency=low
+
+  * Merge Debian changes (2.5-2 - 2.5-5).
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 02 May 2007 09:04:02 +0200
+
+glibc (2.5-5) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * Rename patches/all/submitted-iconv-E13B.diff into
+    patches/all/cvs-iconv-E13B.diff as the patch has been accepted
+    upstream.
+  * debian/debhelper.in/libc.NEWS: new file to warn user to upgrade
+    to a 2.6.1 or later kernel before upgrading the glibc.
+  * debian/script.in/kernelcheck.sh: improve the kernel error message.
+  * New Tamil debconf translation, by Tirumurti Vasudevan.  Closes:
+    #420755.
+  * script.in/nohwcap.sh: use sed instead of awk.  Closes: #420799.
+  * Update Catalan debconf translation, by Jordà Polo.  Closes: #420835.
+  * Add support for n32 and 64 ABIs on mips and mipsel, but keep it
+    disabled for now:
+    - control.in/main: add libc6-dev-mipsn32, libc6-dev-mips64 to the
+      build-dependencies.
+    - control.in/mips64: add libc6-mips64 and libc6-dev-mips64 packages.
+    - control.in/mipsn32: add libc6-mipsn32 and libc6-dev-mipsn32 packages.
+    - rules.d/control.mk: use control.in/mips64 and control.in/mipsn32.
+    - sysdeps/mips.mk: add two new passes for n32 and 64 ABIs.
+    - sysdeps/mipsel.mk: likewise.
+  * debian/control.in/main: drop build-depends on libssp32 and libssp64,
+    build-depends on gcc-4.1 (>= 4.1.2-5) instead. Drop build-conflicts
+    on gcc-4.1 (= 4.1.1-14). Closes: #413370.
+  * debian/sysdeps/hppa.mk: switch back to gcc-4.1.
+  * debian/debhelper.in/libc.preinst: add a check for silly users having
+    LD_ASSUME_KERNEL=2.4.1 in their /etc/profile, ~/.bashrc or shell
+    init script.
+  * debian/control.in/main: build depends on binutils (>= 2.17cvs20070426-1).
+    Closes: #405738.
+  * debian/shlibver: bump shlib to 2.5-5 for the transition to
+    hash-style=gnu.
+  * debian/control.in/main: build depends on gcc-4.1-multilib on bi-arch
+    architectures.
+  * control.in/amd64, control.in/i386, control.in/kfreebsd-i386,
+    control.in/mipsn32, control.in/mips64, control.in/powerpc,
+    control.in/ppc64,  control.in/s390x, control.in/sparc64: drop the
+    depends on lib32gcc1/lib64gcc1. Recommends gcc-multilib.
+  * debhelper.in/libc.postint: remove the version check when creating
+    ld.so.conf.  Closes: #420726.
+
+  [ Michael Banck ]
+  * patches/hurd-i386/local-dl-dynamic-weak.diff: new patch (turn
+    _dl_dynamic_weak on by default for hurd-i386).
+
+  [ Pierre Habouzit ]
+  * nscd.init:
+     + use nscd --shutdown rather than start-stop-daemon to stop nscd more
+       gracefuly. Closes: #338507.
+     + also invalidate hosts on reload.
+     + drop oldies (nscd_nischeck things, does not exists anymore).
+  * patches/any/cvs-scanf_hexfloat.diff: fix a bug when parsing a float in
+    hexadicimal form with no exponent. Closes: #166403.
+  * disable hosts caching in nscd by default as it breaks gethostby* calls
+    (does not respect DNS TTLs, see #335476):
+     + document it in nscd.NEWS.Debian.
+     + patches/any/local-disable-nscd-host-caching.diff: update nscd.conf.
+
+  [ Clint Adams ]
+  * Switch from linux-kernel-headers to linux-libc-dev | linux-kernel-headers.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 30 Apr 2007 21:55:09 +0200
+
+glibc (2.5-4) unstable; urgency=low
+
+  * debian/rules.d/build.mk: fix the testsuite workaround on the MIPS SB1
+    platform.
+  * debian/locales-all.README.Debian: Remove again, it is useless now.
+    (Closes: #378191)
+  * debhelper.in/libc.preinst: use dpkg-query instead of looking into
+    /var/lib/dpkg/info. Thanks to Guillem Jover for the hint.
+  * patches/mips/cvs-ldsodefs_h.diff: new patch (correct multiple
+    inclusion guard in sysdeps/mips/ldsodefs.h) from CVS.
+  * patches/any/cvs-printf_fp-c.diff: update patch from CVS (fix exponent
+    -4 special case handling when wcp == wstartp + 1).  Closes: #419225.
+  * patches/any/cvs-bits_in_h-ipv6.diff: new patch from CVS (defines
+    IPV6_V6ONLY in bits/in.h).  Closes: #420188.
+  * debhelper.in/libc.preinst: check the library files instead of links
+    while checking for a non-dpkg owned libc6 in /lib/tls. Links are
+    recreated by ldconfig.
+  * patches/any/cvs-realpath.diff: new patch (fix wrong comment about
+    realpath() in /usr/include/stdlib) from CVS.  Closes: #239427.
+  * debian/local/manpages/iconv.1: mention that -t is optional.  Closes:
+    #354292.
+  * debian/local/manpages/iconv.1: mention that multiple fils could be
+    specified on the command line.  Closes: #340911.
+  * debian/patches/any/submitted-strfry.diff: new patch (fix strfry()
+    distribution) by Steinar H. Gunderson.  Closes: #341903.
+  * patches/all/submitted-iconv-E13B.diff: new patch to fix wrong E13B
+    charset alias. patches/any/submitted-iconv-colon.diff: new patch to
+    allow colons in charset names.  Closes: #91935.
+  * New Hungarian debconf translation, by Attila Szervác.  Closes: #420420.
+  * debian/patches/any/local-ldd.diff: update to discard the error message
+    that appears if one of the dynamic loader is not supported by the
+    kernel.  Closes: #263494.
+  * debian/patches/arm/cvs-check_pf.c: new patch (fix assertion in
+    check_pf.c) from CVS.  Closes: #420552.
+  * debian/debhelper.in/glibc-doc.links: add missing manpages links for
+    functions documented with others.  Closes: #413989.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 23 Apr 2007 11:41:18 +0200
+
+glibc (2.5-3) unstable; urgency=low
+
+  [ Pierre Habouzit ]
+  * patches/any/submitted-unistd_XOPEN_VERSION.diff: set _XOPEN_VERSION to 600
+    when __USE_XOPEN2K is set. Closes: #203412.
+  * patches/any/cvs-glob-c.diff: fixes glob wrt \/ escapes (among other
+    fixes). Closes: #234880.
+
+  [ Aurelien Jarno ]
+  * Update Italian debconf translation, by Luca Monducci.  Closes: #419399.
+  * Put back ld.so into optimized packages, it can be useful in some cases.
+  * Update French debconf translation, by Christian Perrier.  Closes: #419445.
+  * Switch from gzip to lzma for compressing the locales in the locales-all
+    package. The unpacked size is decreased by 10 and the packed size by 4 for
+    no measurable difference on the unpacking time.
+  * patches/any/submitted-gethostbyname_r.diff: new patch to fix unaligned
+    memory access in gethostbyname_r.diff().  Closes: #419459.
+  * Rewrite from scratch /etc/ld.so.nohwcap handling.  Closes: #419036
+    - script.in/nohwcap.sh: new snipplet to check dpkg and handle
+      /etc/ld.so.nohwcap
+    - rules.d/debhelper.mk: replace NOHWCAP with nohwcap.sh in debhelper
+      scripts
+    - debhelper.in/libc.preinst: only touch /etc/ld.so.nohwcap
+    - debhelper.in/libc.postinst: replace the old code with NOHWCAP,
+      add code to remove /etc/ld.so.hwcappkgs file on upgrade
+    - debhelper.in/libc-otherbuild.postrm: replace the old code with NOHWCAP
+    - debhelper.in/libc-otherbuild.postinst: ditto
+    - debhelper.in/libc-otherbuild.preinst: remove
+  * debhelper.in/libc.install: remove /usr/bin/lddlibc4 from the libc6
+    package.
+  * debhelper.in/libc.preinst: check for a non-dpkg owned libc6 in /lib/tls.
+    Closes: #419189.
+  * Update Dutch debconf translation, by Bart Cornelis.  Closes: #419729.
+  * debhelper.in/libc.postinst: fix the chroot detection, code taken from
+    udev scripts.
+  * debian/rules.d/build.mk: disable testsuite on the MIPS SB1 platform.
+  * patches/localedata/first_weekday.diff: Add first_workday for *_NO
+    and *_DK. Closes: #379100.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 19 Apr 2007 07:55:58 +0200
+
 glibc (2.5-2ubuntu1) gutsy; urgency=low
 
   * Merge Debian changes (2.5-0exp6 - 2.5-2).
