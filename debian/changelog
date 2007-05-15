@@ -1,3 +1,55 @@
+glibc (2.5-7ubuntu1) gutsy; urgency=low
+
+  * Merge Debian changes (2.5-5 - 2.5-7).
+
+ -- Matthias Klose <doko@ubuntu.com>  Tue, 15 May 2007 17:31:45 +0200
+
+glibc (2.5-7) unstable; urgency=low
+
+  * debian/sysdeps/i386.mk: switch from --includir= to amd64_includedir.
+  * debian/local/etc_init.d/glibc.sh: fix the broken comment.  Closes: 
+    #422587.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 07 May 2007 11:45:41 +0200
+
+glibc (2.5-6) unstable; urgency=low
+
+  * patches/any/cvs-vfprintf-stack-smashing.diff: new patch from
+    upstream (fix enormous alloca triggered with %-X.Ys like formats
+    specifier, with Y big, and in multi-byte locales). Closes: #380195,
+    #421555.
+  * patches/hppa/cvs-hppa-update.diff: update from CVS to fix
+    bits/pthreadtypes.h on hppa.
+  * patches/any/local-disable-nscd-host-caching.diff: the comment lines
+    should have the '#' on the first column.  Closes: #421882.
+  * Remove patches/any/local-Rminkernel.diff (not needed anymore).
+  * debian/patches/hppa/submitted-ustat.diff: new patch from Jeff Bailey
+    to makes glibc build with exported kernel headers.
+  * debian/patches/hppa/submitted-nptl-carlos2.diff: new patch to add
+    STACK_GROWS_UP case to NPTL.
+  * debian/patches/hppa/local-r19use.diff: new patch from Carlos O'Donell
+    (specify r19 as input to asms that save/restore).
+  * debian/patches/alpha/cvs-cfi.diff: new patch from CVS (fix
+    cfi instructions in sysdep-cancel.h).  Closes: #422067.
+  * debian/sysdeps/kfreebsd-i386.mk: tune for i686.
+  * debian/sysdeps/i386.mk: drop i386-linux-gnu compat symlinks, all the
+    toolchain is now using i486-linux-gnu.
+  * Merge from multiarch tree:
+    - debian/rules: define localedir, sysconfdir and rootsbindir.
+    - debian/rules.d/build.mk: use $(localedir), $(sysconfdir) and
+      $(rootsbindir) instead of hardcoded values. Make includedir
+      flavour specific.
+    - debian/sysdeps/amd64.mk: define i386_includedir.
+    - debian/sysdeps/powerpc.mk: define ppc64_includedir.
+    - debian/sysdeps/ppc64.mk: define powerpc_includedir.
+    - debian/sysdeps/s390.mk: define s390x_includedir.
+    - debian/sysdeps/kfreebsd-amd64.mk: define i386_includedir.
+    - debian/sysdeps/sparc.mk: define sparc64_includedir.
+  * debian/control.in/main: build-depends on gcc-4.1.2 (>= 4.1.2-6) on
+    hppa.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 07 May 2007 03:27:10 +0200
+
 glibc (2.5-5ubuntu1) gutsy; urgency=low
 
   * Merge Debian changes (2.5-2 - 2.5-5).
