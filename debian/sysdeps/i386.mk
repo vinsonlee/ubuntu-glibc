@@ -3,12 +3,6 @@
 # libc_extra_config_options = $(extra_config_options) --without-__thread --disable-sanity-checks
 libc_extra_cflags = -mno-tls-direct-seg-refs
 
-define libc6_extra_pkg_install
-mkdir -p debian/$(curpass)/usr/lib
-ln -sf /lib/i486-linux-gnu debian/$(curpass)/lib/i386-linux-gnu
-ln -sf /usr/lib/i486-linux-gnu debian/$(curpass)/usr/lib/i386-linux-gnu
-endef
-
 # NPTL requires at least i486 assembly.  We don't need to take
 # special measures for i386 systems, since Debian kernel images now
 # emulate the missing instructions on the i386.
@@ -60,8 +54,8 @@ amd64_configure_target = x86_64-linux
 amd64_CC = $(CC) -m64 -D__x86_64__
 amd64_CXX = $(CXX) -m64 -D__x86_64__
 amd64_extra_cflags = -O3 -g
-amd64_extra_config_options = $(extra_config_options) --disable-profile \
-	--includedir=/usr/include/x86_64-linux-gnu
+amd64_extra_config_options = $(extra_config_options) --disable-profile
+amd64_includedir = /usr/include/x86_64-linux-gnu
 amd64_slibdir = /lib64
 amd64_libdir = /usr/lib64
 

@@ -38,6 +38,7 @@ locale/fix-C-first_weekday.diff -p0
 #localedata/local-all-no-archive.diff -p0
 
 #alpha/submitted-pic.diff -p0	# g: suspended
+#alpha/cvs-cfi.diff -p1
 #alpha/cvs-sigsuspend.diff -p1
 #alpha/local-gcc4.1.diff -p0
 #alpha/submitted-xstat.diff -p0
@@ -50,12 +51,12 @@ amd64/local-biarch.diff -p1
 #arm/local-no-hwcap.diff -p0
 
 hppa/cvs-hppa-update.diff -p0
-hppa/local-Rminkernel.diff -p0
 hppa/submitted-lt.diff -p0
 hppa/submitted-nptl-carlos.diff -p0
-hppa/local-inlining.diff -p0
-hppa/submitted-ustat.diff -p0
 hppa/submitted-nptl-carlos2.diff -p0
+hppa/submitted-ustat.diff -p0
+hppa/local-inlining.diff -p0
+hppa/local-r19use.diff -p0
 
 #hurd-i386/cvs-futimes.diff -p1
 #hurd-i386/cvs-getsid.diff -p0
@@ -110,6 +111,7 @@ any/cvs-bits_in_h-ipv6.diff -p1
 any/cvs-itoa-c.diff -p1
 any/cvs-lt-update.diff -p0
 any/cvs-realpath.diff -p1
+any/cvs-vfprintf-stack-smashing.diff 
 any/cvs-zdump-64-bit.diff -p1
 any/local-notls.diff -p0
 any/local-asserth-decls.diff -p0
