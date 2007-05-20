@@ -1,3 +1,33 @@
+glibc (2.5-8ubuntu1) gutsy; urgency=low
+
+  * Merge Debian changes (2.5-7 - 2.5-8).
+  * Fix installation location of sparc64 headers.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sun, 20 May 2007 15:01:08 +0200
+
+glibc (2.5-8) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * debian/sysdeps/depflags.pl: Add a conflicts on binutils
+    (<< 2.17cvs20070426-1) for libc-dev.  Closes: #422625.
+
+  [ Clint Adams ]
+  * debian/sysdeps/depflags.pl: Clean out relationships for packages
+    that do not exist in sarge or later.
+  * debian/debhelper.in/libc.install: do not hardcode the glibc
+    version number in the path to gai.conf.
+  * debian/control.in/main, debian/sysdeps/depflags.pl:
+    use linux-libc-dev to build on all linux architectures.
+    (retain Depends alternative on linux-kernel-headers)
+
+  [ Aurelien Jarno ]
+  * debian/local/etc_init.d/glibc.sh: fix a typo.  Closes: #423870.
+  * debian/patches/hppa/submitted-atomic_h.diff: new patch to fix the
+    atomic CAS function on hppa.  Closes: #424057.
+  * debian/control.in/main: unify the gcc-4.1 depends to (>= 4.1.2-6).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 20 May 2007 03:43:09 +0200
+
 glibc (2.5-7ubuntu1) gutsy; urgency=low
 
   * Merge Debian changes (2.5-5 - 2.5-7).

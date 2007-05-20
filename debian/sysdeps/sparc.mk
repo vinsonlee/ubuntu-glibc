@@ -17,7 +17,7 @@ mkdir -p debian/libc6-dev-sparc64/usr/include/gnu
 cp -af debian/tmp-sparc64/usr/include/sparc64-linux-gnu/gnu/stubs-64.h \
         debian/libc6-dev-sparc64/usr/include/gnu
 mkdir -p debian/libc6-dev-sparc64/usr/include/sparc64-linux-gnu
-cp -af debian/tmp-sparc64/usr/include/* \
+cp -af debian/tmp-sparc64/usr/include/sparc64-linux-gnu/* \
         debian/libc6-dev-sparc64/usr/include/sparc64-linux-gnu/
 endef
 
