@@ -1,3 +1,49 @@
+glibc (2.5-10ubuntu1) gutsy; urgency=low
+
+  * Merge Debian changes (2.5-9 - 2.5-10).
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon,  4 Jun 2007 23:31:10 +0200
+
+glibc (2.5-10) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * kfreebsd/local-sysdeps.diff: update to revision 1942 (from glibc-bsd).
+    Thanks to Petr Salinger.
+  * arm/cvs-procinfo-eabi.diff: patch from CVS to not include asm/procinfo.h.
+  * any/submitted-strtok.diff: new patch to fix a typo in strings/strtok.c.
+    Closes: #426118.
+  * debian/sysdeps/depflags.pl: depends on libgcc1/libgcc2/libgcc4.
+  * any/cvs-nscd-short-replies.diff: new patch from CVS to fix crash on
+    short replies.
+  * sysdeps/depflags.mk, sysdeps/depflags.pl: use DEB_HOST_ARCH_OS and
+    DEB_HOST_ARCH instead of DEB_HOST_GNU_SYSTEM and DEB_HOST_GNU_TYPE.
+  * debian/sysdeps/arm.mk, debian/script.in/kernelcheck.sh: bump minimum
+    kernel requirement to 2.6.12 on arm to get __ARM_NR_set_tls syscall.
+    Closes: #421037.
+  * debian/sysdeps/armel.mk: bump minimum kernel requirement to 2.6.14
+    on armel.
+  * patches/series: disable any/local-ldconfig-timestamps.diff as this
+    patch does not take into account sub-directories.
+
+  [ Clint Adams ]
+  * debian/local/manpages/ld.so.8: quote accepted values for LD_DEBUG.
+    closes: #426101.
+  * New Malayalam debconf translation, by Sajeev പിആര്‍.
+    closes: #426203.
+  * Update Vietnamese debconf translation, by Clytie Siddall.
+    closes: #426824.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 03 Jun 2007 19:01:50 +0200
+
+glibc (2.5-9) unstable; urgency=low
+
+  * debian/patches/arm/local-ioperm.diff: Remove the check
+    involving LINUX_VERSION_CODE.
+  * debian/patches/hppa/submitted-atomic_h.diff: update to loop again 
+    when the kernel returns -EDEADLOCK.  Workaround: #425567.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 22 May 2007 17:03:23 +0200
+
 glibc (2.5-8ubuntu1) gutsy; urgency=low
 
   * Merge Debian changes (2.5-7 - 2.5-8).
