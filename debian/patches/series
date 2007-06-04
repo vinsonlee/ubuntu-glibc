@@ -47,6 +47,7 @@ amd64/local-biarch.diff -p1
 
 #arm/cvs-check_pf.c -p0
 #arm/cvs-gcc4-inline.diff -p0
+#arm/cvs-procinfo-eabi.diff -p0
 #arm/local-ioperm.diff -p0
 #arm/local-no-hwcap.diff -p0
 
@@ -111,6 +112,7 @@ any/cvs-ftw-c.diff -p1
 any/cvs-bits_in_h-ipv6.diff -p1
 any/cvs-itoa-c.diff -p1
 any/cvs-lt-update.diff -p0
+any/cvs-nscd-short-replies.diff -p1
 any/cvs-realpath.diff -p1
 any/cvs-vfprintf-stack-smashing.diff 
 any/cvs-zdump-64-bit.diff -p1
@@ -129,7 +131,7 @@ any/local-ldd.diff -p0
 any/local-ldso-disable-hwcap.diff -p0
 any/local-ldconfig.diff -p0
 any/local-ldconfig-fsync.diff -p1
-any/local-ldconfig-timestamps.diff -p0
+#any/local-ldconfig-timestamps.diff -p0
 any/local-libgcc-compat-main.diff -p0
 #any/local-libgcc-compat-ports.diff -p0
 any/local-linuxthreads-semaphore_h.diff -p1
@@ -152,6 +154,7 @@ any/submitted-date-and-unknown-tz.diff -p0
 any/submitted-gethostbyname_r.diff -p0
 any/submitted-iconv-colon.diff -p0
 any/submitted-strfry.diff -p0
+any/submitted-strtok.diff -p0
 any/submitted-unistd_XOPEN_VERSION.diff
 any/cvs-glob-c.diff
 any/cvs-scanf_hexfloat.diff
