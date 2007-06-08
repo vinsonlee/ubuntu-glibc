@@ -16,5 +16,13 @@ define libc6-dev-ppc64_extra_pkg_install
 mkdir -p debian/libc6-dev-ppc64/usr/include/powerpc64-linux-gnu
 cp -af debian/tmp-ppc64/usr/include/powerpc64-linux-gnu/* \
 	debian/libc6-dev-ppc64/usr/include/powerpc64-linux-gnu
+mkdir -p debian/libc6-dev-ppc64/usr/include/gnu
+cp -af debian/tmp-ppc64/usr/include/powerpc64-linux-gnu/gnu/stubs-64.h \
+	debian/libc6-dev-ppc64/usr/include/gnu/
+endef
+define libc6-dev_extra_pkg_install
+mkdir -p debian/libc6-dev/usr/include/powerpc64-linux-gnu/gnu
+cp -af debian/libc6-dev/usr/include/gnu/stubs-32.h \
+	debian/libc6-dev/usr/include/powerpc64-linux-gnu/gnu/
 endef
 
