@@ -1,3 +1,9 @@
+glibc (2.5-10ubuntu2) gutsy; urgency=low
+
+  * libc6-dev-ppc64: Install gnu-stubs-64.h in /usr/include/gnu.
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 08 Jun 2007 12:01:55 +0000
+
 glibc (2.5-10ubuntu1) gutsy; urgency=low
 
   * Merge Debian changes (2.5-9 - 2.5-10).
