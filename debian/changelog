@@ -1,3 +1,24 @@
+glibc (2.5-11ubuntu1) gutsy; urgency=low
+
+  * Merge Debian changes (2.5-10 - 2.5-11).
+  * Add ppu symlinks on powerpc.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 13 Jun 2007 17:20:14 +0200
+
+glibc (2.5-11) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * patches/hppa/submitted-pie.diff: new patch to fix PIE on hppa. Patch by
+    Sébastien Bernard and John David Anglin.  Closes: #427990.
+  * debian/debhelper.in/libc.preinst: use -e instead of -f to canonicalize
+    links.  Closes: #427416.
+
+  [ Pierre Habouzit ]
+  * pass -X/usr/lib/debug to dh_makeshlibs so that libc6-dbg gets no useless
+    shlibs.  Closes: #427637.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 11 Jun 2007 15:06:21 +0200
+
 glibc (2.5-10ubuntu2) gutsy; urgency=low
 
   * libc6-dev-ppc64: Install gnu-stubs-64.h in /usr/include/gnu.
