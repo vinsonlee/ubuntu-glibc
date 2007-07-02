@@ -1,0 +1,13 @@
+http://sourceware.org/bugzilla/show_bug.cgi?id=4557
+
+--- localedata/locales/as_IN.orig	2007-05-26 23:31:17.000000000 +0200
++++ localedata/locales/as_IN	2007-05-26 23:31:27.000000000 +0200
+@@ -596,7 +596,7 @@
+ <U09CC> <X689A>;<X0005>;<X0005>;IGNORE
+ <U09CD> <X689C>;<X0005>;<X0005>;IGNORE
+ <U09D7> <X689E>;<X0005>;<X0005>;IGNORE
+-<UNASSIGNED-09CE> "<XE2E9><X6B20>";<X0005>;"<X0005><X00C0>";IGNORE
++<U09CE> "<XE2E9><X6B20>";<X0005>;"<X0005><X00C0>";IGNORE
+ UNDEFINED IGNORE;IGNORE;IGNORE;%...
+ 
+ order_end
