@@ -1,3 +1,38 @@
+glibc (2.6-2ubuntu1) gutsy; urgency=low
+
+  * Merge Debian changes 2.6-1 -> 2.6-2.
+
+ -- Matthias Klose <doko@ubuntu.com>  Tue, 10 Jul 2007 14:18:22 +0200
+
+glibc (2.6-2) unstable; urgency=low
+
+  [ Clint Adams ]
+  * Add any/cvs-nis-nss-default.diff: preserve errno.
+  * Add any/cvs-vfscanf.diff: add additional test for EOF
+    in loop to look for conversion specifier to avoid testing of
+    wrong errno value.
+
+  [ Aurelien Jarno ]
+  * Add any/cvs-ld-integer-overflow.diff: fix an integer
+    overflow in ld.so.  Closes: bug#431858.
+  * hppa/submitted-multiple-threads.diff: new patch to fix an FTBFS on
+    hppa.  Closes: bug#428509, bug#429487.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 10 Jul 2007 09:17:49 +0200
+
+glibc (2.6-1ubuntu1) gutsy; urgency=low
+
+  [Jeff Bailey]
+  * debian/sysdeps/hppa.mk: Use gcc-4.2
+  * debian/control.in/main: Build-dep on gcc-4.2 [hppa]
+  * debian/control: Regenerate
+
+  [Matthias Klose]
+  * Merge Debian changes 2.6-0exp3 -> 2.6-1.
+  * debian/sysdeps/lpia: New.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon,  9 Jul 2007 12:20:28 +0200
+
 glibc (2.6-0ubuntu1) gutsy; urgency=low
 
   * New upstream release.
@@ -52,6 +87,7 @@ glibc (2.6-0exp3) experimental; urgency=low
    - Remove any/cvs-glob-c.diff (obsolete).
    - Remove any/cvs-scanf_hexfloat.diff (obsolete).
    - Remove alpha/submitted-sigsuspend.diff (merged upstream).
+   - Remove arm/cvs-procinfo-eabi.diff (obsolete).
   * debian/sysdeps/depflags.pl: Clean out relationships for packages
     that do not exist in sarge or later.
   * debian/debhelper.in/libc.install: do not hardcode the glibc
@@ -83,6 +119,11 @@ glibc (2.6-0exp3) experimental; urgency=low
     on arm.
   * patches/localedata/submitted-as_IN.diff: new patch to fix a not anymore
     unassigned unicode code.
+  * locales-depver: tighten locales dependencies.
+  * debian/sysdeps/linux.mk, debian/script.in/kernelcheck.sh: bump minimum
+    kernel requirement to 2.6.8.
+  * debian/rules, debian/rules.d/build.mk, debian/sysdeps/*.mk: also defines
+    CXX as g++ is used in the testsuite.
 
   [ Petr Salinger]
   * kfreebsd/local-sysdeps.diff: update to revision 1949 (from glibc-bsd).
@@ -98,9 +139,23 @@ glibc (2.6-0exp3) experimental; urgency=low
   * nscd.init: ksh is confused if you call functions start or stop.
     Closes: 428884.
   * patches/locale/preprocessor-collate.diff: update it to work (with
-    restrictions) with depth >= 2 copies.
+    restrictions) with depth >= 2 copies. The patch is scurvy and make locale
+    parsing completely non reentrant.
+  * debian/control: ${Source-Version} -> ${binary:Version}.
+  * debian/debhelper.in/nscd.lintian: yes, /var/db for lintian is ok.
+  * patches/any/submitted-fileops-and-signals.diff: fixes libio file
+    operations in presence of recoverable errors.
+    Closes: 429021.
+  * patches/localedata/fix-am_ET.diff: fix am_ET using our preprocessor
+    extensions.
 
- -- Pierre Habouzit <madcoder@debian.org>  Sun, 17 Jun 2007 17:18:49 +0100
+  [ Samuel Thibault ]
+  * Remove patches/hurd-i386/cvs-getsid.diff (merged upstream).
+  * patches/hurd-i386/submitted-ioctl-unsigned-size_t.diff: new patch to fix
+    some packages that use unsigned or size_t in ioctls.
+    Closes: 431365.
+
+ -- Clint Adams <schizo@debian.org>  Sat, 07 Jul 2007 09:43:02 -0400
 
 glibc (2.5-11ubuntu1) gutsy; urgency=low
 

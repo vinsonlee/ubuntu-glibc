@@ -1244,7 +1244,7 @@ Index: localedata/locales/hy_AM
 ===================================================================
 --- localedata/locales/hy_AM.orig
 +++ localedata/locales/hy_AM
-@@ -317,6 +317,8 @@
+@@ -147,6 +147,8 @@
  t_fmt       "<U0025><U0072>"
  am_pm       "";""
  t_fmt_ampm  ""

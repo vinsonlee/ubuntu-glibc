@@ -3,8 +3,10 @@
 	* sysdeps/unix/sysv/linux/arm/nptl/sysdep-cancel.h
 	(RTLD_SINGLE_THREAD_P): Define.
 
---- ports/sysdeps/unix/sysv/linux/arm/nptl/sysdep-cancel.h	2007-05-25 01:40:22.000000000 +0200
-+++ ports/sysdeps/unix/sysv/linux/arm/nptl/sysdep-cancel.h	2007-05-25 01:41:02.000000000 +0200
+Index: ports/sysdeps/unix/sysv/linux/arm/nptl/sysdep-cancel.h
+===================================================================
+--- ports/sysdeps/unix/sysv/linux/arm/nptl/sysdep-cancel.h.orig
++++ ports/sysdeps/unix/sysv/linux/arm/nptl/sysdep-cancel.h
 @@ -126,3 +126,9 @@
  # define NO_CANCELLATION 1
  
