@@ -39,20 +39,17 @@ Index: locale/programs/ld-collate.c
  /* Sparse table of struct element_t *.  */
  #define TABLE wchead_table
  #define ELEMENT struct element_t *
-@@ -212,6 +230,12 @@
+@@ -212,6 +230,9 @@
    /* This value is used when handling ellipsis.  */
    struct element_t ellipsis_weight;
  
-+  /* Known keywords.  */
-+  struct toggle_list_t *defined_keywords;
-+
 +  /* This is a stack of .  */
 +  struct toggle_list_t *flow_control;
 +
    /* Known collating elements.  */
    hash_table elem_table;
  
-@@ -1455,6 +1479,56 @@
+@@ -1455,6 +1476,56 @@
  }
  
  
@@ -109,15 +106,16 @@ Index: locale/programs/ld-collate.c
  static void
  collate_startup (struct linereader *ldfile, struct localedef_t *locale,
  		 struct localedef_t *copy_locale, int ignore_content)
-@@ -2613,6 +2687,7 @@
- 	      int ignore_content)
- {
-   struct repertoire_t *repertoire = NULL;
-+  struct toggle_list_t *defined_keywords = NULL;
-   struct locale_collate_t *collate;
-   struct token *now;
-   struct token *arg = NULL;
-@@ -2644,6 +2719,82 @@
+@@ -2630,6 +2701,8 @@
+   */
+   int state = 0;
+ 
++  static struct toggle_list_t *defined_keywords = NULL;
++
+   /* Get the repertoire we have to use.  */
+   if (repertoire_name != NULL)
+     repertoire = repertoire_read (repertoire_name);
+@@ -2644,6 +2717,82 @@
      }
    while (nowtok == tok_eol);
  
@@ -200,7 +198,7 @@ Index: locale/programs/ld-collate.c
    if (nowtok == tok_copy)
      {
        state = 2;
-@@ -3796,6 +3947,125 @@
+@@ -3796,6 +3945,125 @@
  			  repertoire, result, nowtok);
  	  break;
  
@@ -218,7 +216,7 @@ Index: locale/programs/ld-collate.c
 +	    goto err_label;
 +	  else
 +	    {
-+	      struct toggle_list_t *runp = collate->defined_keywords;
++	      struct toggle_list_t *runp = defined_keywords;
 +	      struct toggle_list_t *flow = (struct toggle_list_t *) xcalloc (1, sizeof (*runp));
 +	      flow->name = "ifdef";
 +	      flow->file = ldfile->fname;
@@ -259,7 +257,7 @@ Index: locale/programs/ld-collate.c
 +	    goto err_label;
 +	  else
 +	    {
-+	      struct toggle_list_t *runp = collate->defined_keywords;
++	      struct toggle_list_t *runp = defined_keywords;
 +	      struct toggle_list_t *flow = (struct toggle_list_t *) xcalloc (1, sizeof (*runp));
 +	      flow->name = "ifndef";
 +	      flow->file = ldfile->fname;
@@ -326,7 +324,7 @@ Index: locale/programs/ld-collate.c
  	case tok_end:
  	  /* Next we assume `LC_COLLATE'.  */
  	  if (!ignore_content)
-@@ -3825,6 +4095,13 @@
+@@ -3825,6 +4093,13 @@
  	      else if (state == 5)
  		WITH_CUR_LOCALE (error (0, 0, _("\
  %s: missing `reorder-sections-end' keyword"), "LC_COLLATE"));
