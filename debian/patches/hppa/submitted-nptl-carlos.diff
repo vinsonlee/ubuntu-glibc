@@ -1,11 +1,8 @@
 Index: elf/elf.h
 ===================================================================
-RCS file: /cvs/glibc/libc/elf/elf.h,v
-retrieving revision 1.156
-diff -u -p -r1.156 elf.h
---- elf/elf.h	8 Jan 2007 13:09:54 -0000	1.156
-+++ elf/elf.h	5 Feb 2007 23:25:06 -0000
-@@ -1709,6 +1709,8 @@ typedef Elf32_Addr Elf32_Conflict;
+--- elf/elf.h.orig
++++ elf/elf.h
+@@ -1710,6 +1710,8 @@
  #define R_PARISC_LTOFF_FPTR14R	62	/* LT-rel. fct ptr, right 14 bits. */
  #define R_PARISC_FPTR64		64	/* 64 bits function address.  */
  #define R_PARISC_PLABEL32	65	/* 32 bits function address.  */
@@ -14,7 +11,7 @@ diff -u -p -r1.156 elf.h
  #define R_PARISC_PCREL64	72	/* 64 bits PC-rel. address.  */
  #define R_PARISC_PCREL22F	74	/* 22 bits PC-rel. address.  */
  #define R_PARISC_PCREL14WR	75	/* PC-rel. address, right 14 bits.  */
-@@ -1769,6 +1771,29 @@ typedef Elf32_Addr Elf32_Conflict;
+@@ -1770,6 +1772,29 @@
  #define R_PARISC_LTOFF_TP16F	229	/* 16 bits LT-TP-rel. address.  */
  #define R_PARISC_LTOFF_TP16WF	230	/* 16 bits LT-TP-rel. address.  */
  #define R_PARISC_LTOFF_TP16DF	231	/* 16 bits LT-TP-rel. address.  */
@@ -46,12 +43,9 @@ diff -u -p -r1.156 elf.h
  /* Legal values for p_type field of Elf32_Phdr/Elf64_Phdr.  */
 Index: elf/rtld.c
 ===================================================================
-RCS file: /cvs/glibc/libc/elf/rtld.c,v
-retrieving revision 1.369
-diff -u -p -r1.369 rtld.c
---- elf/rtld.c	28 Oct 2006 06:44:04 -0000	1.369
-+++ elf/rtld.c	5 Feb 2007 23:25:07 -0000
-@@ -378,14 +378,14 @@ _dl_start (void *arg)
+--- elf/rtld.c.orig
++++ elf/rtld.c
+@@ -379,14 +379,14 @@
       know it is available.  We do not have to clear the memory if we
       do not have to use the temporary bootstrap_map.  Global variables
       are initialized to zero by default.  */
@@ -71,15 +65,11 @@ diff -u -p -r1.369 rtld.c
  # endif
  # if USE___THREAD
    bootstrap_map.l_tls_modid = 0;
-
 Index: nptl/Makefile
 ===================================================================
-RCS file: /cvs/glibc/libc/nptl/Makefile,v
-retrieving revision 1.188
-diff -u -p -r1.188 Makefile
---- nptl/Makefile	8 Sep 2006 10:40:49 -0000	1.188
-+++ nptl/Makefile	6 May 2007 19:08:39 -0000
-@@ -263,9 +263,9 @@ xtests = tst-setuid1 tst-setuid1-static 
+--- nptl/Makefile.orig
++++ nptl/Makefile
+@@ -263,9 +263,9 @@
  # Files which must not be linked with libpthread.
  tests-nolibpthread = tst-unload
  
@@ -92,7 +82,7 @@ diff -u -p -r1.188 Makefile
  
  distribute = eintr.c tst-cleanup4aux.c
  
-@@ -424,6 +424,35 @@ CFLAGS-tst-cleanupx3.c += -fexceptions
+@@ -424,6 +424,35 @@
  CFLAGS-tst-cleanupx4.c += -fexceptions
  CFLAGS-tst-oncex3.c += -fexceptions
  CFLAGS-tst-oncex4.c += -fexceptions
@@ -130,12 +120,9 @@ diff -u -p -r1.188 Makefile
  CFLAGS-tst-initializers1.c = -W -Wall -Werror
 Index: nptl/pthread_barrier_wait.c
 ===================================================================
-RCS file: /cvs/glibc/libc/nptl/pthread_barrier_wait.c,v
-retrieving revision 1.1
-diff -u -p -r1.1 pthread_barrier_wait.c
---- nptl/pthread_barrier_wait.c	28 Oct 2006 05:06:42 -0000	1.1
-+++ nptl/pthread_barrier_wait.c	6 May 2007 19:08:39 -0000
-@@ -62,7 +62,7 @@ pthread_barrier_wait (barrier)
+--- nptl/pthread_barrier_wait.c.orig
++++ nptl/pthread_barrier_wait.c
+@@ -62,7 +62,7 @@
        /* Wait for the event counter of the barrier to change.  */
        do
  	lll_futex_wait (&ibarrier->curr_event, event);
@@ -146,12 +133,9 @@ diff -u -p -r1.1 pthread_barrier_wait.c
    /* Make sure the init_count is stored locally or in a register.  */
 Index: nptl/sysdeps/pthread/Makefile
 ===================================================================
-RCS file: /cvs/glibc/libc/nptl/sysdeps/pthread/Makefile,v
-retrieving revision 1.8
-diff -u -p -r1.8 Makefile
---- nptl/sysdeps/pthread/Makefile	28 Feb 2006 07:09:41 -0000	1.8
-+++ nptl/sysdeps/pthread/Makefile	6 May 2007 19:08:39 -0000
-@@ -41,7 +41,9 @@ endif
+--- nptl/sysdeps/pthread/Makefile.orig
++++ nptl/sysdeps/pthread/Makefile
+@@ -41,7 +41,9 @@
  
  ifeq ($(have-forced-unwind),yes)
  tests += tst-mqueue8x
@@ -163,11 +147,8 @@ diff -u -p -r1.8 Makefile
  
 Index: include/atomic.h
 ===================================================================
-RCS file: /cvs/glibc/libc/include/atomic.h,v
-retrieving revision 1.21
-diff -u -p -r1.21 atomic.h
---- include/atomic.h	21 Dec 2006 21:44:00 -0000	1.21
-+++ include/atomic.h	5 Feb 2007 23:25:07 -0000
+--- include/atomic.h.orig
++++ include/atomic.h
 @@ -174,7 +174,7 @@
       __typeof (*(mem)) __atg5_value = (newvalue);			      \
  									      \
@@ -287,12 +268,9 @@ diff -u -p -r1.21 atomic.h
  						   __atg19_old | __atg19_mask,\
 Index: stdio-common/Makefile
 ===================================================================
-RCS file: /cvs/glibc/libc/stdio-common/Makefile,v
-retrieving revision 1.99
-diff -u -p -r1.99 Makefile
---- stdio-common/Makefile	22 Jan 2007 16:17:13 -0000	1.99
-+++ stdio-common/Makefile	5 Feb 2007 23:25:09 -0000
-@@ -76,7 +76,7 @@ $(objpfx)tst-printf.out: $(objpfx)tst-pr
+--- stdio-common/Makefile.orig
++++ stdio-common/Makefile
+@@ -76,7 +76,7 @@
  	$(SHELL) -e tst-printf.sh $(common-objpfx) '$(run-program-prefix)'
  endif
  
@@ -303,12 +281,9 @@ diff -u -p -r1.99 Makefile
  CFLAGS-scanf4.c = -Wno-format
 Index: sunrpc/clnt_udp.c
 ===================================================================
-RCS file: /cvs/glibc/libc/sunrpc/clnt_udp.c,v
-retrieving revision 1.33
-diff -u -p -r1.33 clnt_udp.c
---- sunrpc/clnt_udp.c	20 Dec 2005 22:38:40 -0000	1.33
-+++ sunrpc/clnt_udp.c	5 Feb 2007 23:25:09 -0000
-@@ -419,7 +419,7 @@ send_again:
+--- sunrpc/clnt_udp.c.orig
++++ sunrpc/clnt_udp.c
+@@ -419,7 +419,7 @@
        while (inlen < 0 && errno == EINTR);
        if (inlen < 0)
  	{
