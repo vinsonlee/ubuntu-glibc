@@ -1,5 +1,7 @@
---- time/tst-mktime2.c	2007-05-25 15:12:14.000000000 +0200
-+++ time/tst-mktime2.c	2007-05-25 15:12:14.000000000 +0200
+Index: time/tst-mktime2.c
+===================================================================
+--- time/tst-mktime2.c.orig
++++ time/tst-mktime2.c
 @@ -2,6 +2,7 @@
  #include <time.h>
  #include <stdlib.h>

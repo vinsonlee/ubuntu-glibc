@@ -37,7 +37,7 @@ Index: elf/Makefile
 --- elf/Makefile.orig
 +++ elf/Makefile
 @@ -314,7 +314,7 @@
- 	nm -u $@ | cmp -s /dev/null -
+ 	objdump -T $@ | grep 'D. \*UND\*' | cmp -s /dev/null -
  
  # interp.c exists just to get this string into the libraries.
 -CFLAGS-interp.c = -D'RUNTIME_LINKER="$(slibdir)/$(rtld-installed-name)"' \

@@ -1,5 +1,7 @@
---- linuxthreads/sysdeps/unix/sysv/linux/fatal-prepare.h	2007-05-05 22:37:06.310788953 +0200
-+++ linuxthreads/sysdeps/unix/sysv/linux/fatal-prepare.h	2007-05-23 23:24:40.000000000 +0200
+Index: linuxthreads/sysdeps/unix/sysv/linux/fatal-prepare.h
+===================================================================
+--- /dev/null
++++ linuxthreads/sysdeps/unix/sysv/linux/fatal-prepare.h
 @@ -0,0 +1,39 @@
 +/* Copyright (C) 2003, 2007 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
