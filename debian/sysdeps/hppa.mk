@@ -19,3 +19,7 @@ mkdir -p debian/$(curpass)/usr/hppa64-linux-gnu
 ln -sf /usr/include debian/$(curpass)/usr/hppa64-linux-gnu/include
 endef
 
+CC := gcc-4.2
+BUILD_CC := $(CC)
+CXX := g++-4.2
+BUILD_CXX := $(CXX)

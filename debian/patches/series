@@ -34,6 +34,7 @@ locale/fix-C-first_weekday.diff -p0
 #localedata/submitted-as_IN.diff -p0
 
 # alpha/submitted-pic.diff -p0	#  g: suspended
+#localedata/fix-am_ET.diff
 #alpha/local-gcc4.1.diff -p0
 #alpha/submitted-xstat.diff -p0
 
@@ -46,13 +47,13 @@ amd64/local-biarch.diff
 
 hppa/submitted-atomic_h.diff -p0
 hppa/submitted-lt.diff -p0
+hppa/submitted-multiple-threads.diff -p0
 hppa/submitted-nptl-carlos.diff -p0
-hppa/submitted-pie.diff -p1
+hppa/submitted-pie.diff
 hppa/submitted-ustat.diff -p0
 hppa/local-inlining.diff -p0
 hppa/local-linuxthreads.diff -p0
 
-#hurd-i386/cvs-getsid.diff -p0
 #hurd-i386/local-dl-dynamic-weak.diff
 #hurd-i386/local-enable-ldconfig.diff -p0
 #hurd-i386/local-mlock.diff
@@ -64,6 +65,7 @@ hppa/local-linuxthreads.diff -p0
 #hurd-i386/submitted-stat.diff -p0
 #hurd-i386/submitted-sysvshm.diff
 #hurd-i386/submitted-trivial.diff -p0
+#hurd-i386/submitted-ioctl-unsigned-size_t.diff -p0
 
 i386/local-biarch.diff
 i386/local-cmov.diff -p0
@@ -92,7 +94,11 @@ sparc/local-pthread-shlib.diff -p1
 #all/local-ru_RU.diff 
 #all/local-pt_BR.diff 
 
-any/cvs-malloc.diff -p1
+any/cvs-ld-integer-overflow.diff -p1
+any/cvs-malloc.diff
+any/cvs-nscd-short-replies.diff 
+any/cvs-nis-nss-default.diff
+any/cvs-vfscanf.diff
 any/local-notls.diff -p0
 any/local-asserth-decls.diff -p0
 # any/local-base.diff -p0	#  g: suspended
@@ -136,6 +142,7 @@ any/submitted-strfry.diff -p0
 any/submitted-strtok.diff -p0
 any/local-disable-nscd-host-caching.diff
 any/local-2.6.19-linux-libc-dev.diff -p0
+any/submitted-fileops-and-signals.diff
 
 # Ubuntu-specific patches.  These are things that we don't expect to wind up
 # in Debian.
