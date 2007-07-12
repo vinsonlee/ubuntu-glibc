@@ -1,3 +1,11 @@
+glibc (2.6-2ubuntu2) gutsy; urgency=low
+
+  * debian/rules.d/control.mk: Add lpia to threads_archs and to libc6 list
+  * debian/sysdeps/lpia.mk: Add gcc-4.2 usage, but comment it out for now,
+    while we bootstrap with gcc-4.1 (because we're FTBFS with gcc-4.2)
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Thu, 12 Jul 2007 13:36:23 +0100
+
 glibc (2.6-2ubuntu1) gutsy; urgency=low
 
   * Merge Debian changes 2.6-1 -> 2.6-2.

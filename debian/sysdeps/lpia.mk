@@ -10,3 +10,8 @@ libc_extra_cflags = -mno-tls-direct-seg-refs
 #nptl_configure_target=i686-linux
 #nptl_configure_build=i686-linux
 #nptl_extra_cflags = -march=i686 -mtune=i586 -g -O3
+
+#CC := gcc-4.2 -fno-stack-protector
+#BUILD_CC := $(CC)
+#CXX := g++-4.2 -fno-stack-protector
+#BUILD_CXX := $(CXX)
