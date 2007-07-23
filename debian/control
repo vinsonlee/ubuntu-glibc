@@ -8,8 +8,8 @@ Build-Depends: gettext, make (>= 3.80-1), dpkg-dev (>= 1.13.5), bzip2, file, qui
  mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386],
  kfreebsd-kernel-headers [kfreebsd-i386 kfreebsd-amd64],
  binutils (>= 2.17cvs20070426-1),
- gcc-4.0 [hurd-i386], gcc-4.1 (>= 4.1.2-6) [!hurd-i386], gcc-4.1-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc], gcc-4.2 [hppa], g++-4.2 [hppa],
- libc6-dev-amd64 [i386], libc6-dev-ppc64 [powerpc], libc6-dev-i386 [amd64], libc6-dev-powerpc [ppc64], libc6-dev-sparc64 [sparc], libc6-dev-s390x [s390], libc0.1-dev-i386 [kfreebsd-amd64], 
+ gcc-4.1 (>= 4.1.2-6) [alpha hurd-i386],
+ gcc-4.2 (>= 4.2.1) [!alpha !hurd-i386], gcc-4.2-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc],
 Build-Depends-Indep: perl, po-debconf (>= 1.0)
 Maintainer: Ubuntu Core developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
@@ -59,7 +59,7 @@ Description: GNU C Library: Precompiled locale data
  locale files take a lot of memory to be compiled.
 
 Package: nscd
-Architecture: alpha amd64 arm armeb armel i386 m32r m68k mips mipsel powerpc ppc64 sparc ia64 hppa s390 sh3 sh4 sh3eb sh4eb kfreebsd-i386 kfreebsd-amd64 
+Architecture: alpha amd64 arm armeb armel i386 lpia m32r m68k mips mipsel powerpc ppc64 sparc ia64 hppa s390 sh3 sh4 sh3eb sh4eb kfreebsd-i386 kfreebsd-amd64 
 Section: admin
 Priority: optional
 Depends: ${shlibs:Depends}
@@ -70,7 +70,7 @@ Description: GNU C Library: Name Service Cache Daemon
  slow Services like LDAP, NIS or NIS+
 
 Package: libc6
-Architecture: amd64 arm armeb armel i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm armeb armel i386 lpia m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
@@ -81,21 +81,21 @@ Description: GNU C Library: Shared libraries
  and the standard math library, as well as many others.
 
 Package: libc6-dev
-Architecture: amd64 arm armeb armel i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm armeb armel i386 lpia m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libdevel
 Priority: optional
-Depends: libc6 (= ${Source-Version})
+Depends: libc6 (= ${binary:Version})
 Recommends: gcc | c-compiler
 Description: GNU C Library: Development Libraries and Header Files
  Contains the symlinks, headers, and object files needed to compile
  and link programs which use the standard C library.
 
 Package: libc6-dbg
-Architecture: amd64 arm armeb armel i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm armeb armel i386 lpia m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libdevel
 Priority: extra
 Provides: libc-dbg
-Depends: libc6 (= ${Source-Version})
+Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: Libraries with debugging symbols
  Contains unstripped shared libraries.
  This package is provided primarily to provide a backtrace with
@@ -105,21 +105,21 @@ Description: GNU C Library: Libraries with debugging symbols
  Most people will not need this package.
 
 Package: libc6-prof
-Architecture: amd64 arm armeb armel i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm armeb armel i386 lpia m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libdevel
 Priority: extra
-Depends: libc6 (= ${Source-Version})
+Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: Profiling Libraries
  Static libraries compiled with profiling info (-pg) suitable for use
  with gprof.
 
 Package: libc6-pic
-Architecture: amd64 arm armeb armel i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm armeb armel i386 lpia m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: libdevel
 Priority: optional
 Conflicts: libc-pic
 Provides: libc-pic, glibc-pic
-Depends: libc6 (= ${Source-Version})
+Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: PIC archive library
  Contains an archive library (ar file) composed of individual shared objects.
  This is used for creating a library which is a smaller subset of the
@@ -129,7 +129,7 @@ Description: GNU C Library: PIC archive library
 
 Package: libc6-udeb
 XC-Package-Type: udeb
-Architecture: amd64 arm armeb armel i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
+Architecture: amd64 arm armeb armel i386 lpia m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
 Section: debian-installer
 Priority: extra
 Provides: libc6, libc-udeb, ${locale-compat:Depends}
@@ -156,7 +156,7 @@ Package: libc6.1-dev
 Architecture: alpha ia64
 Section: libdevel
 Priority: optional
-Depends: libc6.1 (= ${Source-Version})
+Depends: libc6.1 (= ${binary:Version})
 Recommends: gcc | c-compiler
 Description: GNU C Library: Development Libraries and Header Files
  Contains the symlinks, headers, and object files needed to compile
@@ -167,7 +167,7 @@ Architecture: alpha ia64
 Section: libdevel
 Priority: extra
 Provides: libc-dbg
-Depends: libc6.1 (= ${Source-Version})
+Depends: libc6.1 (= ${binary:Version})
 Description: GNU C Library: Libraries with debugging symbols
  Contains unstripped shared libraries.
  This package is provided primarily to provide a backtrace with
@@ -180,7 +180,7 @@ Package: libc6.1-prof
 Architecture: alpha ia64
 Section: libdevel
 Priority: extra
-Depends: libc6.1 (= ${Source-Version})
+Depends: libc6.1 (= ${binary:Version})
 Description: GNU C Library: Profiling Libraries
  Static libraries compiled with profiling info (-pg) suitable for use
  with gprof.
@@ -191,7 +191,7 @@ Section: libdevel
 Priority: optional
 Conflicts: libc-pic
 Provides: libc-pic, glibc-pic
-Depends: libc6.1 (= ${Source-Version})
+Depends: libc6.1 (= ${binary:Version})
 Description: GNU C Library: PIC archive library
  Contains an archive library (ar file) composed of individual shared objects.
  This is used for creating a library which is a smaller subset of the
@@ -228,7 +228,7 @@ Package: libc0.3-dev
 Architecture: hurd-i386
 Section: libdevel
 Priority: optional
-Depends: libc0.3 (= ${Source-Version})
+Depends: libc0.3 (= ${binary:Version})
 Recommends: gcc | c-compiler
 Description: GNU C Library: Development Libraries and Header Files
  Contains the symlinks, headers, and object files needed to compile
@@ -239,7 +239,7 @@ Architecture: hurd-i386
 Section: libdevel
 Priority: extra
 Provides: libc-dbg
-Depends: libc0.3 (= ${Source-Version})
+Depends: libc0.3 (= ${binary:Version})
 Description: GNU C Library: Libraries with debugging symbols
  Contains unstripped shared libraries.
  This package is provided primarily to provide a backtrace with
@@ -252,7 +252,7 @@ Package: libc0.3-prof
 Architecture: hurd-i386
 Section: libdevel
 Priority: extra
-Depends: libc0.3 (= ${Source-Version})
+Depends: libc0.3 (= ${binary:Version})
 Description: GNU C Library: Profiling Libraries
  Static libraries compiled with profiling info (-pg) suitable for use
  with gprof.
@@ -263,7 +263,7 @@ Section: libdevel
 Priority: optional
 Conflicts: libc-pic
 Provides: libc-pic, glibc-pic
-Depends: libc0.3 (= ${Source-Version})
+Depends: libc0.3 (= ${binary:Version})
 Description: GNU C Library: PIC archive library
  Contains an archive library (ar file) composed of individual shared objects.
  This is used for creating a library which is a smaller subset of the
@@ -300,7 +300,7 @@ Package: libc0.1-dev
 Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libdevel
 Priority: optional
-Depends: libc0.1 (= ${Source-Version})
+Depends: libc0.1 (= ${binary:Version})
 Recommends: gcc | c-compiler
 Description: GNU C Library: Development Libraries and Header Files
  Contains the symlinks, headers, and object files needed to compile
@@ -311,7 +311,7 @@ Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libdevel
 Priority: extra
 Provides: libc-dbg
-Depends: libc0.1 (= ${Source-Version})
+Depends: libc0.1 (= ${binary:Version})
 Description: GNU C Library: Libraries with debugging symbols
  Contains unstripped shared libraries.
  This package is provided primarily to provide a backtrace with
@@ -324,7 +324,7 @@ Package: libc0.1-prof
 Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libdevel
 Priority: extra
-Depends: libc0.1 (= ${Source-Version})
+Depends: libc0.1 (= ${binary:Version})
 Description: GNU C Library: Profiling Libraries
  Static libraries compiled with profiling info (-pg) suitable for use
  with gprof.
@@ -335,7 +335,7 @@ Section: libdevel
 Priority: optional
 Conflicts: libc-pic
 Provides: libc-pic, glibc-pic
-Depends: libc0.1 (= ${Source-Version})
+Depends: libc0.1 (= ${binary:Version})
 Description: GNU C Library: PIC archive library
  Contains an archive library (ar file) composed of individual shared objects.
  This is used for creating a library which is a smaller subset of the
@@ -361,7 +361,7 @@ Package: libc6-i386
 Architecture: amd64
 Section: libs
 Priority: optional
-Depends: libc6 (= ${Source-Version})
+Depends: libc6 (= ${binary:Version})
 Replaces: libc6-dev-i386
 Conflicts: ia32-libs (<= 1.5)
 Description: GNU C Library: 32bit shared libraries for AMD64
@@ -375,7 +375,7 @@ Section: libdevel
 Priority: optional
 Conflicts: ia32-libs-dev (<< 1.18)
 Provides: lib32c-dev
-Depends: libc6-i386 (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Depends: libc6-i386 (= ${binary:Version}), libc6-dev (= ${binary:Version})
 Recommends: gcc-multilib
 Description: GNU C Library: 32bit development libraries for AMD64
  Contains the symlinks and object files needed to compile and link programs
@@ -386,7 +386,7 @@ Package: libc6-sparc64
 Architecture: sparc
 Section: libs
 Priority: optional
-Depends: libc6 (= ${Source-Version})
+Depends: libc6 (= ${binary:Version})
 Conflicts: gcc-3.0 (<< 1:3.0.4ds3-11), libgcc1 (<< 1:3.0.4ds3-11), fakeroot (<< 0.4.5-2.7)
 Description: GNU C Library: 64bit Shared libraries for UltraSPARC
  This package includes shared versions of the standard C library and the
@@ -398,7 +398,7 @@ Architecture: sparc
 Section: libdevel
 Priority: optional
 Provides: lib64c-dev
-Depends: libc6-sparc64 (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Depends: libc6-sparc64 (= ${binary:Version}), libc6-dev (= ${binary:Version})
 Recommends: gcc-multilib
 Description: GNU C Library: 64bit Development Libraries for UltraSPARC
  Contains the symlinks and object files needed to compile and link programs
@@ -409,7 +409,7 @@ Package: libc6-s390x
 Architecture: s390
 Section: libs
 Priority: optional
-Depends: libc6 (= ${Source-Version})
+Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: 64bit Shared libraries for IBM zSeries
  This package includes shared versions of the standard C library and the
  standard math library, as well as many others. This is the 64bit version
@@ -420,7 +420,7 @@ Architecture: s390
 Section: libdevel
 Priority: optional
 Provides: lib64c-dev
-Depends: libc6-s390x (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Depends: libc6-s390x (= ${binary:Version}), libc6-dev (= ${binary:Version})
 Recommends: gcc-multilib
 Description: GNU C Library: 64bit Development Libraries for IBM zSeries
  Contains the symlinks and object files needed to compile and link programs
@@ -431,7 +431,7 @@ Package: libc6-amd64
 Architecture: i386
 Section: libs
 Priority: standard
-Depends: libc6 (= ${Source-Version})
+Depends: libc6 (= ${binary:Version})
 Conflicts: amd64-libs (<= 1.2)
 Description: GNU C Library: 64bit Shared libraries for AMD64
  This package includes shared versions of the standard C library and the
@@ -442,7 +442,7 @@ Package: libc6-dev-amd64
 Architecture: i386
 Section: libdevel
 Priority: optional
-Depends: libc6-amd64 (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Depends: libc6-amd64 (= ${binary:Version}), libc6-dev (= ${binary:Version})
 Recommends: gcc-multilib
 Replaces: amd64-libs-dev (<= 1.2)
 Provides: lib64c-dev
@@ -455,7 +455,7 @@ Package: libc6-powerpc
 Architecture: ppc64
 Section: libs
 Priority: optional
-Depends: libc6 (= ${Source-Version})
+Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: 32bit powerpc shared libraries for ppc64
  This package includes shared versions of the standard C
  library and the standard math library, as well as many others.
@@ -466,7 +466,7 @@ Architecture: ppc64
 Section: libdevel
 Priority: optional
 Provides: lib32c-dev
-Depends: libc6-powerpc (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Depends: libc6-powerpc (= ${binary:Version}), libc6-dev (= ${binary:Version})
 Recommends: gcc-multilib
 Description: GNU C Library: 32bit powerpc development libraries for ppc64
  Contains the symlinks and object files needed to compile and link programs
@@ -477,7 +477,7 @@ Package: libc6-ppc64
 Architecture: powerpc
 Section: libs
 Priority: optional
-Depends: libc6 (= ${Source-Version})
+Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: 64bit Shared libraries for PowerPC64
  This package includes shared versions of the standard C library and the
  standard math library, as well as many others. This is the 64bit version
@@ -488,7 +488,7 @@ Architecture: powerpc
 Section: libdevel
 Priority: optional
 Provides: lib64c-dev
-Depends: libc6-ppc64 (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Depends: libc6-ppc64 (= ${binary:Version}), libc6-dev (= ${binary:Version})
 Recommends: gcc-multilib
 Description: GNU C Library: 64bit Development Libraries for PowerPC64
  Contains the symlinks and object files needed to compile and link programs
@@ -499,7 +499,7 @@ Package: libc6-mipsn32
 Architecture: mips mipsel
 Section: base
 Priority: optional
-Depends: libc6 (= ${Source-Version})
+Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: n32 Shared libraries for MIPS64
  This package includes shared versions of the standard C library and the
  standard math library, as well as many others. This is the n32 version
@@ -510,7 +510,7 @@ Architecture: mips mipsel
 Section: libdevel
 Priority: optional
 Provides: libn32c-dev
-Depends: libc6-mipsn32 (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Depends: libc6-mipsn32 (= ${binary:Version}), libc6-dev (= ${binary:Version})
 Recommends: gcc-multilib
 Description: GNU C Library: n32 Development Libraries for MIPS64
  Contains the symlinks and object files needed to compile and link programs
@@ -521,7 +521,7 @@ Package: libc6-mips64
 Architecture: mips mipsel
 Section: base
 Priority: optional
-Depends: libc6 (= ${Source-Version})
+Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: 64bit Shared libraries for MIPS64
  This package includes shared versions of the standard C library and the
  standard math library, as well as many others. This is the 64bit version
@@ -532,7 +532,7 @@ Architecture: mips mipsel
 Section: libdevel
 Priority: optional
 Provides: lib64c-dev
-Depends: libc6-mips64 (= ${Source-Version}), libc6-dev (= ${Source-Version})
+Depends: libc6-mips64 (= ${binary:Version}), libc6-dev (= ${binary:Version})
 Recommends: gcc-multilib
 Description: GNU C Library: 64bit Development Libraries for MIPS64
  Contains the symlinks and object files needed to compile and link programs
@@ -543,7 +543,7 @@ Package: libc0.1-i386
 Architecture: kfreebsd-amd64
 Section: libs
 Priority: optional
-Depends: libc0.1 (= ${Source-Version})
+Depends: libc0.1 (= ${binary:Version})
 Description: GNU C Library: 32bit shared libraries for AMD64
  This package includes shared versions of the standard C
  library and the standard math library, as well as many others.
@@ -554,7 +554,7 @@ Architecture: kfreebsd-amd64
 Section: libdevel
 Priority: optional
 Provides: lib32c-dev
-Depends: libc0.1-i386 (= ${Source-Version}), libc0.1-dev (= ${Source-Version})
+Depends: libc0.1-i386 (= ${binary:Version}), libc0.1-dev (= ${binary:Version})
 Recommends: gcc-multilib
 Description: GNU C Library: 32bit development libraries for AMD64
  Contains the symlinks and object files needed to compile and link programs
@@ -565,7 +565,7 @@ Package: libc6-sparcv9b
 Architecture: sparc
 Section: libs
 Priority: extra
-Pre-Depends: libc6 (= ${Source-Version})
+Pre-Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: Shared libraries [v9b optimized]
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C
@@ -642,7 +642,7 @@ Package: libc6-i686
 Architecture: i386
 Section: libs
 Priority: extra
-Pre-Depends: libc6 (= ${Source-Version})
+Pre-Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: Shared libraries [i686 optimized]
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C
@@ -664,7 +664,7 @@ Package: libc6-xen
 Architecture: i386
 Section: libs
 Priority: extra
-Pre-Depends: libc6 (= ${Source-Version})
+Pre-Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: Shared libraries [Xen version]
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C
@@ -677,7 +677,7 @@ Package: libc0.1-i686
 Architecture: kfreebsd-i386
 Section: libs
 Priority: extra
-Pre-Depends: libc0.1 (= ${Source-Version})
+Pre-Depends: libc0.1 (= ${binary:Version})
 Description: GNU C Library: Shared libraries [i686 optimized]
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C
