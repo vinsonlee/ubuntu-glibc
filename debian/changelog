@@ -1,3 +1,66 @@
+glibc (2.6-3ubuntu1) gutsy; urgency=low
+
+  * Merge with Debian.
+  * debian/sysdeps/lpia.mk: Build using -march=i686 -mtune=i586 -g -O3.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 23 Jul 2007 15:02:03 +0200
+
+glibc (2.6-3) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * script.in/kernelcheck.sh: s/kernel_compare_version/linux_compare_versions/
+    for arm.
+  * script.in/kernelcheck.sh: the minimum kernel version is now 2.6.8 and not
+    2.6.1.  Closes: bug#432721.
+  * hppa/submitted-threaddb.diff: new patch from Randolph Chung to fix
+    debugging interface for NPTL on hppa.
+  * Drop SPARC V8 support:
+    - control.in/opt: drop libc6-sparcv9.
+    - sysdeps/sparc.mk: drop libc6-sparcv9.
+    - script.in/kernelcheck.sh: add check for SPARC V8 or earlier CPU.
+    - patches/series: disable sparc/submitted-timing.diff.
+    - patches/sparc/local-sparcv8-target.diff: rename to
+      local-sparcv9-target.diff and default to v9.
+  * Build with gcc-4.2 except on alpha (untested).
+  * patches/any/cvs-ld_library_path.diff: new patch from CVS to fix segfaults
+    with empty LD_LIBRARY_PATH variable.
+  * rules.d/build.mk: create /etc/ld.so.conf.d/libc.conf to add
+    /usr/local/lib as a default search path.  Closes: #395177.
+  * Honor parallel= option in DEB_BUILD_OPTIONS.  Closes: #413744.
+
+  [ Pierre Habouzit ]
+  * rules.d/debhelper.mk: add some magic to copy debian/bug/$pkg/ files into
+    /usr/share/bug/.
+  * add libc6-i386/presubj to document /usr/lib32 issues not being a
+    libc6-i386 problem.
+  * add locales/presubj about locales depends that are correct, and tell bug
+    reporters how to look for their package being built or not.
+  * add patches/any/local-missing-linux_types.h.diff to add missing
+    #include <linux/types.h> due to migration to linux-libc-dev.
+    Closes: #433962.
+
+  [ Samuel Thibault ]
+  * hurd-i386/local-tls-support.diff: new patch to support TLS.
+  * debian/sysdeps/hurd.mk (libc_extra_config_options): Removed
+    --without-__thread, --without-tls and libc_cv_z_relro=no.
+  * hurd-i386/local-atomic-no-multiple_threads.diff: new patch, hurd-i386
+    doesn't need the multiple_threads field.
+  * hurd-i386/local-gscope.diff: new patch, backport of the CVS global scope.
+  * hurd-i386/local-no-strerror_l.diff: new patch to disable non-implemented
+    strerror_l().
+  * hurd-i386/submitted-lock-intern.diff: new patch to fix a header inclusion.
+  * sysdeps/depflags.pl: make libc0.3 depend on TLS-enabled hurd packages.
+  * hurd-i386/local-sigsuspend-nocancel.diff: renamed into
+    submitted-sigsuspend-nocancel.diff.
+  * hurd-i386/submitted-ECANCELED.diff: new patch to fix ECANCELED value.
+    Closes: #396135.
+  * hurd-i386/local-gcc-4.1-init-first.diff: New patch by Thomas
+    Schwinge to fix building with gcc-4.1.
+  * sysdeps/hurd.mk (CC, BUILD_CC): Change to gcc-4.1.
+  * control: Depend on gcc-4.1 on hurd-i386.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 23 Jul 2007 08:01:26 +0200
+
 glibc (2.6-2ubuntu2) gutsy; urgency=low
 
   * debian/rules.d/control.mk: Add lpia to threads_archs and to libc6 list

@@ -45,17 +45,6 @@ sparc64v_extra_config_options = $(extra_config_options) --disable-profile
 libc6-sparc64v_shlib_dep = libc6-sparc64v (>= $(shlib_dep_ver))
 sparc64v_slibdir = /lib64/v9v
 
-# build a sparcv9 optimized library
-#GLIBC_PASSES += sparcv9
-#DEB_ARCH_REGULAR_PACKAGES += libc6-sparcv9
-sparcv9_add-ons = nptl $(add-ons)
-sparcv9_configure_target=sparcv9-linux
-sparcv9_configure_build=sparcv9-linux
-sparcv9_extra_cflags = -g -O3
-sparcv9_extra_config_options = $(extra_config_options) --disable-profile
-sparcv9_rtlddir = /lib
-sparcv9_slibdir = /lib/v9
-
 # build a sparcv9b optimized library
 GLIBC_PASSES += sparcv9b
 DEB_ARCH_REGULAR_PACKAGES += libc6-sparcv9b

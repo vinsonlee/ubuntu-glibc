@@ -73,7 +73,7 @@ exit_check () {
         # arm boxes require __ARM_NR_set_tls in the kernel to function properly.
         if [ "$realarch" = arm ]
         then
-            if kernel_compare_versions "$kernel_ver" lt 2.6.12
+            if linux_compare_versions "$kernel_ver" lt 2.6.12
             then
                 echo WARNING: This version of glibc requires that you be running
                 echo kernel version 2.6.12 or later.  Earlier kernels contained
@@ -105,7 +105,7 @@ exit_check () {
             if linux_compare_versions "$kernel_ver" lt 2.6.8
             then
                 echo WARNING: POSIX threads library NPTL requires kernel version
-                echo 2.6.1 or later.  If you use a kernel 2.4, please upgrade it
+                echo 2.6.8 or later.  If you use a kernel 2.4, please upgrade it
                 echo before installing glibc.
                 kernel26_help
                 exit_check
@@ -123,6 +123,29 @@ exit_check () {
                 echo of glibc is installed.
                 kernel26_help
                 exit_check
+            fi
+        fi
+
+        # From glibc 2.6-3 SPARC V8 support is dropped.
+        if [ "$realarch" = sparc ]
+        then
+            # The process could be run using linux32, check for /proc.
+            if [ -f /proc/cpuinfo ]
+            then
+               case "$(sed '/^type/!d;s/^type.*: //g' /proc/cpuinfo)" in
+                   sun4u)
+                      # UltraSPARC CPU
+                      ;;
+                   sun4v)
+                      # Niagara CPU
+                      ;;
+                   *)
+                      echo "WARNING: This machine has a SPARC V8 or earlier class processor."
+                      echo "Debian lenny and later does not support such old hardware"
+                      echo "any longer."
+                      exit_check
+                      ;;
+               esac
             fi
         fi
     elif [ $system = "GNU/kFreeBSD" ] ; then
