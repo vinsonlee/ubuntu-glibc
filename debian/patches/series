@@ -50,6 +50,7 @@ hppa/submitted-lt.diff -p0
 hppa/submitted-multiple-threads.diff -p0
 hppa/submitted-nptl-carlos.diff -p0
 hppa/submitted-pie.diff
+hppa/submitted-threaddb.diff -p0
 hppa/submitted-ustat.diff -p0
 hppa/local-inlining.diff -p0
 hppa/local-linuxthreads.diff -p0
@@ -58,14 +59,17 @@ hppa/local-linuxthreads.diff -p0
 #hurd-i386/local-enable-ldconfig.diff -p0
 #hurd-i386/local-mlock.diff
 #hurd-i386/local-msg-nosignal.diff -p0
-#hurd-i386/local-sigsuspend-nocancel.diff -p0
 #hurd-i386/local-tls.diff
+#hurd-i386/local-tls-support.diff -p0
+#hurd-i386/submitted-sigsuspend-nocancel.diff -p0
 #hurd-i386/submitted-ioctl-decode-argument.diff -p0
 #hurd-i386/submitted-libc_once.diff -p0
 #hurd-i386/submitted-stat.diff -p0
 #hurd-i386/submitted-sysvshm.diff
 #hurd-i386/submitted-trivial.diff -p0
 #hurd-i386/submitted-ioctl-unsigned-size_t.diff -p0
+#hurd-i386/submitted-lock-intern.diff
+#hurd-i386/submitted-ECANCELED.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff -p0
@@ -84,7 +88,7 @@ i386/submitted-i686-timing.diff -p0
 powerpc/local-sysconf.diff
 
 sparc/local-fork.diff -p0
-sparc/local-sparcv8-target.diff -p0
+sparc/local-sparcv9-target.diff -p0
 sparc/local-undefined-registers.diff -p0
 sparc/submitted-timing.diff 
 sparc/local-pthread-shlib.diff -p1
@@ -95,6 +99,7 @@ sparc/local-pthread-shlib.diff -p1
 #all/local-pt_BR.diff 
 
 any/cvs-ld-integer-overflow.diff -p1
+any/cvs-ld_library_path.diff -p1
 any/cvs-malloc.diff
 any/cvs-nscd-short-replies.diff 
 any/cvs-nis-nss-default.diff
@@ -143,6 +148,7 @@ any/submitted-strtok.diff -p0
 any/local-disable-nscd-host-caching.diff
 any/local-2.6.19-linux-libc-dev.diff -p0
 any/submitted-fileops-and-signals.diff
+any/local-missing-linux_types.h.diff
 
 # Ubuntu-specific patches.  These are things that we don't expect to wind up
 # in Debian.

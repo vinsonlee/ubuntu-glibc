@@ -17,14 +17,12 @@ define kernel_check
 true
 endef
 
-# TLS is broken currently and results in Mach panicing.
-# ld.so is broken currently if z_relro is used.
-libc_extra_config_options := $(extra_config_options) --without-__thread --without-tls libc_cv_z_relro=no
+libc_extra_config_options := $(extra_config_options)
 
-# Build with gcc-4.1 is not yet supported.
-CC = gcc-4.0
-CXX = g++-4.0
-BUILD_CC = gcc-4.0
+# Build with gcc-4.2 is not yet tested
+CC = gcc-4.1
+CXX = g++-4.1
+BUILD_CC = gcc-4.1
 
 # Only use libidn as add-on.
 standard-add-ons = libidn
