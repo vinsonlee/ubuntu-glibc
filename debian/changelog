@@ -1,3 +1,19 @@
+glibc (2.6-3ubuntu2) gutsy; urgency=low
+
+  * Build the 64bit powerpc library with gcc-4.1.
+  * Update to the glibc-2_6-branch 20070725.
+    - patches/any/cvs-libc-glibc-2_6-branch.diff: New.
+    - patches/any/cvs-ports-glibc-2_6-branch.diff: New.
+    - patches/any/cvs-ld-integer-overflow.diff: Remove.
+    - patches/any/cvs-malloc.diff: Remove.
+    - patches/any/cvs-nis-nss-default.diff: Remove.
+    - patches/any/cvs-nscd-short-replies.diff: Remove.
+    - patches/any/cvs-vfscanf.diff: Remove.
+  * Build-depend on g++-4.1-multilib/g++-4.2-multilib.
+  * debian/sysdeps/hppa.mk: Don't explicitely use gcc-4.2.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 25 Jul 2007 15:34:26 +0200
+
 glibc (2.6-3ubuntu1) gutsy; urgency=low
 
   * Merge with Debian.
