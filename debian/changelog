@@ -1,3 +1,10 @@
+glibc (2.6-3ubuntu3) gutsy; urgency=low
+
+  * patches/sparc/submitted-gscope_flag.diff: New patch to fix build
+    on sparc (Aurelian Jarno).
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 26 Jul 2007 00:56:49 +0200
+
 glibc (2.6-3ubuntu2) gutsy; urgency=low
 
   * Build the 64bit powerpc library with gcc-4.1.
