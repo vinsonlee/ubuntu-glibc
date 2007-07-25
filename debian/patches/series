@@ -38,7 +38,7 @@ locale/fix-C-first_weekday.diff -p0
 #alpha/local-gcc4.1.diff -p0
 #alpha/submitted-xstat.diff -p0
 
-amd64/local-biarch.diff
+amd64/local-biarch.diff 
 
 #arm/cvs-gcc4-inline.diff -p0
 #arm/local-ioperm.diff -p0
@@ -49,7 +49,7 @@ hppa/submitted-atomic_h.diff -p0
 hppa/submitted-lt.diff -p0
 hppa/submitted-multiple-threads.diff -p0
 hppa/submitted-nptl-carlos.diff -p0
-hppa/submitted-pie.diff
+hppa/submitted-pie.diff 
 hppa/submitted-threaddb.diff -p0
 hppa/submitted-ustat.diff -p0
 hppa/local-inlining.diff -p0
@@ -71,7 +71,7 @@ hppa/local-linuxthreads.diff -p0
 #hurd-i386/submitted-lock-intern.diff
 #hurd-i386/submitted-ECANCELED.diff
 
-i386/local-biarch.diff
+i386/local-biarch.diff 
 i386/local-cmov.diff -p0
 i386/submitted-i686-timing.diff -p0
 
@@ -85,7 +85,7 @@ i386/submitted-i686-timing.diff -p0
 
 #mips/local-lazy-eval.diff -p0
 
-powerpc/local-sysconf.diff
+powerpc/local-sysconf.diff 
 
 sparc/local-fork.diff -p0
 sparc/local-sparcv9-target.diff -p0
@@ -98,12 +98,9 @@ sparc/local-pthread-shlib.diff -p1
 #all/local-ru_RU.diff 
 #all/local-pt_BR.diff 
 
-any/cvs-ld-integer-overflow.diff -p1
+any/cvs-libc-glibc-2_6-branch.diff
+any/cvs-ports-glibc-2_6-branch.diff
 any/cvs-ld_library_path.diff -p1
-any/cvs-malloc.diff
-any/cvs-nscd-short-replies.diff 
-any/cvs-nis-nss-default.diff
-any/cvs-vfscanf.diff
 any/local-notls.diff -p0
 any/local-asserth-decls.diff -p0
 # any/local-base.diff -p0	#  g: suspended
@@ -130,11 +127,11 @@ any/local-linuxthreads-tst-sighandler.diff
 any/local-localedef-fix-trampoline.diff -p0
 any/local-makeconfig.diff -p0
 any/local-mktemp.diff -p0
-any/local-no-pagesize.diff
+any/local-no-pagesize.diff 
 any/local-nss-upgrade.diff -p0
 any/local-rtld.diff -p0
 #any/local-sysctl.diff -p0
-any/local-stubs_h.diff
+any/local-stubs_h.diff 
 any/local-tcsetaddr.diff -p0
 any/local-tst-mktime2.diff -p0
 any/local-version-sanity.diff -p0
