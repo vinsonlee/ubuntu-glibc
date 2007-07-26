@@ -1,7 +1,53 @@
+glibc (2.6-4ubuntu1) gutsy; urgency=low
+
+  * Merge with Debian; remaining changes:
+    - Upstream tarball including GFDL'd documentation.
+    - Don't apply patches for architectures not found in Ubuntu.
+    - Build optimized sparc packages.
+    - Support lpia.
+    - Minor differences to be cleaned up.
+  * glibc-doc: Install the documentation in info format. Closes: LP: #60607.
+
+  * Merge changes from Debian:
+    * mips/cvs-gscope_flag.diff: new patch to fix build on mips/mipsel.
+    * arm/cvs-gscope_flag.diff: new patch to fix build on arm/armel.
+    * any/cvs-initfini.diff: new patch from upstream to fix crti.o on 
+      ppc64.  Closes: #434626.
+    * debian/sysdeps/powerpc.mk: build libc6-ppc64 with gcc-4.2.
+    * debian/control: Remove build-depend on gcc-4.1 on powerpc.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 26 Jul 2007 16:22:15 +0200
+
+glibc (2.6-4) unstable; urgency=low
+
+  [ Samuel Thibault ]
+  * sysdeps/hurd.mk (CC, BUILD_CC): Remove.
+  * control: Build-depend on gcc-4.2 on hurd-i386.
+
+  [ Pierre Habouzit ]
+  * any/cvs-glibc-2_6-branch.diff: upstream branch pull, includes:
+    + any/cvs-ld-integer-overflow.diff
+    + any/cvs-malloc.diff
+    + any/cvs-nis-nss-default.diff
+    + any/cvs-nscd-short-replies.diff
+    + any/cvs-vfscanf.diff
+
+  [ Aurelien Jarno ]
+  * debian/sysdeps/powerpc.mk: build libc6-ppc64 with gcc-4.1 as gcc-4.2
+    produces broken binaries.
+  * debian/control: Build-depend on gcc-4.1 on powerpc
+  * debian/control: Build-depend on g++-4.1/g++-4.2 and
+    g++-4.1-multilib/g++-4.2-multilib.
+  * debian/*.NEWS: move to debian/debhelper.in/*.NEWS.
+  * rules.d/debhelper.mk: remove debian/*.NEWS on clean.
+  * sparc/submitted-gscope_flag.diff: new patch to fix build on sparc.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 26 Jul 2007 08:57:48 +0200
+
 glibc (2.6-3ubuntu3) gutsy; urgency=low
 
   * patches/sparc/submitted-gscope_flag.diff: New patch to fix build
-    on sparc (Aurelian Jarno).
+    on sparc (Aurelien Jarno).
 
  -- Matthias Klose <doko@ubuntu.com>  Thu, 26 Jul 2007 00:56:49 +0200
 
