@@ -1,3 +1,16 @@
+glibc (2.6-4ubuntu2) gutsy; urgency=low
+
+  * Fix gij memory hog on amd64, thanks to Aurelien Jarno:
+    amd64,i386/local-clone.diff: new patch to fix gij running out of 
+    memory. I would like to thank Red H^W^WFedora for not sending back
+    their patches and let me spend a dozen of fun hours to debug this 
+    problem. This patch, like hundred other ones, is in the upstream 
+    repository, but only in the fedora branch. It has been written 8 
+    months ago.  Closes: #434484.
+  * sparc/submitted-gscope_flag.diff: update from upstream.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 26 Jul 2007 23:28:49 +0200
+
 glibc (2.6-4ubuntu1) gutsy; urgency=low
 
   * Merge with Debian; remaining changes:
