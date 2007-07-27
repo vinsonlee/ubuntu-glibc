@@ -1,3 +1,10 @@
+glibc (2.6-4ubuntu3) gutsy; urgency=low
+
+  * patches/lpia/local-i686-redefine.diff: Redefine __i686, which gets
+    clobbered to "1" by the compiler, causing the assembler to have a fit
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Sat, 28 Jul 2007 05:30:06 +1000
+
 glibc (2.6-4ubuntu2) gutsy; urgency=low
 
   * Fix gij memory hog on amd64, thanks to Aurelien Jarno:
