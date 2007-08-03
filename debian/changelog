@@ -1,3 +1,13 @@
+glibc (2.6.1~pre-0ubuntu1) gutsy; urgency=low
+
+  * New upstream version 2.6.1, glibc-ports is still version 2.6.
+  * Remove patches applied upstream.
+  * Merge from the Debian repository.
+  * debian/wrapper/objcopy: Remove -R .debug_aranges, fixing broken
+    debug symbols.
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 03 Aug 2007 12:22:19 +0200
+
 glibc (2.6-5ubuntu1) gutsy; urgency=low
 
   * Merge with Debian.
