@@ -1,3 +1,13 @@
+glibc (2.6.1-0ubuntu1) gutsy; urgency=low
+
+  * New upstream version 2.6.1, including glibc-ports-2.6.1.
+    - Remove applied patches: patches/any/cvs-ports-glibc-2_6-branch.diff,
+      patches/arm/cvs-gscope_flag.diff, patches/mips/cvs-gscope_flag.diff,
+      patches/hppa/submitted-gscope_flag.diff.
+  * debian/wrapper/objcopy: Revert the workaround.
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 06 Aug 2007 22:38:54 +0200
+
 glibc (2.6.1~pre-0ubuntu1) gutsy; urgency=low
 
   * New upstream version 2.6.1, glibc-ports is still version 2.6.
@@ -33,11 +43,11 @@ glibc (2.6-5) unstable; urgency=low
     to linuxthreads.
   * hppa/local-linuxthreads-gscope.diff: new patch to fix build on hppa
     with linuxthreads.  Closes: #434799.
-  * cvs-printf_fp.c.diff: new patch to  print the wrong number of digits
+  * cvs-printf_fp.c.diff: new patch to print the correct number of digits
     with %#g.
-  * amd64/local-linuxthreads-gscope.diff: new patch to fix build on *i386
+  * amd64/local-linuxthreads-gscope.diff: new patch to fix build on *amd64
     with linuxthreads.
-  * i386/local-linuxthreads-gscope.diff: new patch to fix build on *amd64
+  * i386/local-linuxthreads-gscope.diff: new patch to fix build on *i386
     with linuxthreads.
   * kfreebsd/local-sysdeps.diff: update to revision 1989 (from glibc-bsd).
   * any/submitted-longdouble.diff: patch from Carlos O'Donell to fix long
