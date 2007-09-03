@@ -1,3 +1,9 @@
+glibc (2.6.1-1ubuntu2) gutsy; urgency=low
+
+  * Use dpkg-trigger to avoid multiple calls to ldconfig.
+
+ -- Ian Jackson <iwj@ubuntu.com>  Mon, 03 Sep 2007 14:48:39 +0100
+
 glibc (2.6.1-1ubuntu1) gutsy; urgency=low
 
   * Merge with Debian (outstanding changes for the final 2.6.1-1 package).
