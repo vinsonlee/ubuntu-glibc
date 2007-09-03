@@ -12,4 +12,4 @@ then
 	fi	
 fi
 
-#DEBHELPER#
+exec /sbin/ldconfig.real "$@"
