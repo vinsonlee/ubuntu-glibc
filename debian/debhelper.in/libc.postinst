@@ -5,6 +5,15 @@ export LC_ALL=C
 type=$1
 preversion=$2
 
+if [ "x$type" = xtriggered ]
+then
+	LDCONFIG_NOTRIGGER=y
+	export LDCONFIG_NOTRIGGER
+	echo ldconfig deferred processing now taking place
+	ldconfig
+	exit 0
+fi
+
 package_name()
 {
     echo LIBC
