@@ -1,3 +1,9 @@
+glibc (2.6.1-1ubuntu5) gutsy; urgency=low
+
+  * Do not install the ppu symlinks in the powerpc packages.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 19 Sep 2007 00:27:46 +0200
+
 glibc (2.6.1-1ubuntu4) gutsy; urgency=low
 
   * sysdeps/amd64.mk: uses x86_64 headers also for the i486 flavour now
