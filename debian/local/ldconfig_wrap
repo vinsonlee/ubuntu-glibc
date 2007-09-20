@@ -7,7 +7,9 @@ if  test $# = 0							\
  && dpkg --compare-versions "$DPKG_RUNNING_VERSION" ge '1.14.5ubuntu10~~'
 then
 	if dpkg-trigger --no-await ldconfig; then
-		echo "ldconfig: wrapper deferring update (trigger activated)"
+		if test x"$LDCONFIG_TRIGGER_DEBUG" != x; then
+			echo "ldconfig: wrapper deferring update (trigger activated)"
+		fi
 		exit 0
 	fi	
 fi
