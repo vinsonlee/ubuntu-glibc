@@ -57,6 +57,7 @@ hppa/submitted-ustat.diff -p0
 hppa/local-inlining.diff -p0
 hppa/local-linuxthreads.diff -p0
 hppa/local-linuxthreads-gscope.diff -p0
+hppa/local-private-futex-lamont.diff -p0
 
 #hurd-i386/local-dl-dynamic-weak.diff
 #hurd-i386/local-enable-ldconfig.diff -p0

@@ -1,3 +1,9 @@
+glibc (2.6.1-1ubuntu8) gutsy; urgency=low
+
+  * hppa/local-private-futex-lamont.diff: fix hppa FTBFS.
+
+ -- LaMont Jones <lamont@ubuntu.com>  Thu, 27 Sep 2007 18:51:24 +0000
+
 glibc (2.6.1-1ubuntu7) gutsy; urgency=low
 
   * any/submitted-rfc3484-sortv4.diff: new patch to allow bypassing RFC3484
