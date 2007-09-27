@@ -1,3 +1,20 @@
+glibc (2.6.1-1ubuntu8) gutsy; urgency=low
+
+  * hppa/local-private-futex-lamont.diff: fix hppa FTBFS.
+
+ -- LaMont Jones <lamont@ubuntu.com>  Thu, 27 Sep 2007 18:51:24 +0000
+
+glibc (2.6.1-1ubuntu7) gutsy; urgency=low
+
+  * any/submitted-rfc3484-sortv4.diff: new patch to allow bypassing RFC3484
+    rule 9 for IPv4 adresses.  Closes: bug#438179.
+    [ by Aurelien Jarno; imported from glibc 2.6.1-2 into Ubuntu by iwj ]
+  * any/submitted-rfc3484-sortv4.diff: disable RFC3484 s6 rule 9 by
+    default as requested by Ubuntu sysadmins and in anticipation of
+    that change in Debian (which looks likely).
+
+ -- Ian Jackson <iwj@ubuntu.com>  Thu, 20 Sep 2007 14:49:50 +0100
+
 glibc (2.6.1-1ubuntu6) gutsy; urgency=low
 
   * Do not print "ldconfig: wrapper deferring update (trigger activated)"
