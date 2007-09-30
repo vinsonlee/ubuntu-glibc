@@ -1,3 +1,9 @@
+glibc (2.6.1-1ubuntu9) gutsy; urgency=low
+
+  * Rebuild using g++-4.2 (>= 4.2.1-5ubuntu4).
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 01 Oct 2007 00:04:19 +0200
+
 glibc (2.6.1-1ubuntu8) gutsy; urgency=low
 
   * hppa/local-private-futex-lamont.diff: fix hppa FTBFS.
