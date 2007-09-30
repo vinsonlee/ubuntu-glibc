@@ -1,3 +1,4 @@
+libc_extra_cflags = -O3 -g
 libc_slibdir = /lib
 libc_libdir = /usr/lib
 libc_rtlddir = /lib64
@@ -16,7 +17,7 @@ powerpc_add-ons = nptl $(add-ons)
 powerpc_configure_target = powerpc-linux
 powerpc_CC = $(CC) -m32
 powerpc_CXX = $(CXX) -m32
-powerpc_extra_cflags = -O3 
+powerpc_extra_cflags = -O3 -g
 powerpc_includedir = /usr/include/powerpc-linux-gnu
 powerpc_extra_config_options := $(extra_config_options) --disable-profile
 powerpc_rtlddir = /lib
@@ -27,7 +28,7 @@ define libc6-dev-powerpc_extra_pkg_install
 mkdir -p debian/libc6-dev-powerpc/usr/include/gnu
 cp -af debian/tmp-powerpc/usr/include/powerpc-linux-gnu/gnu/stubs-32.h \
         debian/libc6-dev-powerpc/usr/include/gnu
-mkdir -p debian/libc6-dev-powerpc/usr/include/powerpc-linux-gnu
+ln -sf . debian/libc6-dev-powerpc/usr/include/powerpc-linux-gnu
 endef
 
 # create a symlink for the 32 bit dynamic linker in /lib

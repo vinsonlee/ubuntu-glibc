@@ -19,7 +19,7 @@ $type = $ARGV[0];
 
 # OS specific stuff
 if ($DEB_HOST_ARCH_OS eq "hurd") {
-    push @{$libc_dev_c{'Depends'}}, ('gnumach-dev', 'hurd-dev', 'libpthread-stubs0-dev');
+    push @{$libc_dev_c{'Depends'}}, ('gnumach-dev', 'hurd-dev');
     push @{$libc_dev_c{'Replaces'}}, 'glibc2-dev';
     push @{$libc_dev_c{'Conflicts'}}, 'glibc2-dev';
     push @{$libc_c{'Replaces'}}, 'glibc2';
@@ -61,7 +61,6 @@ push @{$libc_dev_c{'Conflicts'}}, 'libstdc++2.10-dev (<< 1:2.95.2-15)';
 # pic-kludge that breaks libc_nonshared.a inclusion.
 if ($DEB_HOST_ARCH =~ m/^i386$/) {
     push @{$libc_dev_c{'Conflicts'}}, 'gcc-2.95 (<< 1:2.95.3-9)';
-    push @{$libc_c{'Suggests'}}, 'libc6-i686';
 } else {
     push @{$libc_dev_c{'Conflicts'}}, 'gcc-2.95 (<< 1:2.95.3-8)';
 }
@@ -86,7 +85,7 @@ if ($libc ne "libc6") {
 push @{$libc_c{'Conflicts'}}, 'libterm-readline-gnu-perl (<< 1.15-2)';
 
 # Conflict with older versions of tzdata that need tzconfig.
-push @{$libc_c{'Conflicts'}}, 'tzdata (<< 2007k-1)';
+push @{$libc_c{'Conflicts'}}, 'tzdata (<< 2007e-2)';
 
 # Depends on libgcc1/libgcc2/libgcc4
 if ($DEB_HOST_ARCH =~ m/^hppa$/) {

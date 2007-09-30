@@ -1,5 +1,5 @@
-libc_add_ons = nptl $(add-ons)
-libc_extra_cflags = -O3
+libc_add-ons = nptl $(add-ons)
+libc_extra_cflags = -O3 -g
 libc_slibdir = /lib
 libc_libdir = /usr/lib
 libc_rtlddir = /lib64
@@ -23,9 +23,10 @@ i386_configure_target = i686-linux
 i386_CC = $(BUILD_CC) -m32
 i386_CXX = $(BUILD_CXX) -m32
 i386_MAKEFLAGS = MAKEFLAGS="gconvdir=/usr/lib32/gconv"
-i386_extra_cflags = -march=i686 -mtune=generic -O3
+i386_extra_cflags = -march=i686 -mtune=generic -g -O3
 i386_extra_config_options = $(extra_config_options) --disable-profile
 i386_includedir = /usr/include/i486-linux-gnu
+#i386_rtlddir = /lib
 i386_slibdir = /lib32
 i386_libdir = /usr/lib32
 

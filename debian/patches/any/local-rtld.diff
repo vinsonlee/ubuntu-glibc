@@ -7,10 +7,8 @@
 	* Makeconfig: use rtlddir instead of slibdir
 	* elf/Makefile: likewise
 
-Index: Makeconfig
-===================================================================
---- Makeconfig.orig	2007-10-23 08:50:33.000000000 -0400
-+++ Makeconfig	2007-10-23 08:50:37.000000000 -0400
+--- Makeconfig.orig
++++ Makeconfig
 @@ -201,6 +201,11 @@
  endif
  inst_slibdir = $(install_root)$(slibdir)
@@ -32,12 +30,10 @@ Index: Makeconfig
  endif
  endif
  ifndef link-libc
-Index: elf/Makefile
-===================================================================
---- elf/Makefile.orig	2007-10-23 08:49:46.000000000 -0400
-+++ elf/Makefile	2007-10-23 08:50:37.000000000 -0400
-@@ -315,7 +315,7 @@
- 	  | awk '($$7 ~ /^UND(|EF)$$/ && $$1 != "0:" && $$4 != "REGISTER") { print; p=1 } END { exit p != 0 }'
+--- elf/Makefile.orig
++++ elf/Makefile
+@@ -314,7 +314,7 @@
+ 	objdump -T $@ | grep 'D. \*UND\*' | cmp -s /dev/null -
  
  # interp.c exists just to get this string into the libraries.
 -CFLAGS-interp.c = -D'RUNTIME_LINKER="$(slibdir)/$(rtld-installed-name)"' \

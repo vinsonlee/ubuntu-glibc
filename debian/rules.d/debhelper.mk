@@ -19,6 +19,8 @@ $(stamp)binaryinst_$(libc)-pic:: $(stamp)debhelper
 # Some per-package extra files to install.
 define $(libc)_extra_debhelper_pkg_install
 	install --mode=0644 $(DEB_SRCDIR)/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/changelog
+#	install --mode=0644 $(DEB_SRCDIR)/linuxthreads/README debian/$(curpass)/usr/share/doc/$(curpass)/README.linuxthreads
+#	install --mode=0644 $(DEB_SRCDIR)/linuxthreads/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/ChangeLog.linuxthreads
 	install --mode=0644 $(DEB_SRCDIR)/nptl/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/ChangeLog.nptl
 	sed -e "/KERNEL_VERSION_CHECK/r debian/script.in/kernelcheck.sh" \
 		debian/local/etc_init.d/glibc.sh | \
@@ -111,9 +113,9 @@ endif
 	# an unescaped regular expression.  ld.so must be executable;
 	# libc.so and NPTL's libpthread.so print useful version
 	# information when executed.
-	find debian/$(curpass) -type f \( -regex '.*/ld.*so' \
-		-o -regex '.*/libpthread-.*so' \
-		-o -regex '.*/libc-.*so' \) \
+	find debian/$(curpass) -type f \( -regex '.*lib[0-9]*/ld.*so' \
+		-o -regex '.*lib[0-9]*/libpthread-.*so' \
+		-o -regex '.*lib[0-9]*/libc-.*so' \) \
 		-exec chmod a+x '{}' ';'
 	dh_makeshlibs -X/usr/lib/debug -p$(curpass) -V "$(call xx,shlib_dep)"
 
@@ -139,9 +141,6 @@ endif
 		dh_shlibdeps -p$(curpass) ; \
 	fi
 	dh_gencontrol -p$(curpass) -- $($(curpass)_control_flags)
-	if [ $(curpass) = nscd ] ; then \
-		sed -i -e "s/\(Depends:.*libc[0-9.]\+\)-[a-z0-9]\+/\1/" debian/nscd/DEBIAN/control ; \
-	fi
 	dh_md5sums -p$(curpass)
 	dh_builddeb -p$(curpass)
 
@@ -174,6 +173,7 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_UDEB_PACKAGES)): $(stamp)debhelper
 
 OPT_PASSES = $(filter-out libc, $(GLIBC_PASSES))
 OPT_DIRS = $(foreach pass,$(OPT_PASSES),$($(pass)_slibdir) $($(pass)_libdir))
+NPTL = $(filter nptl,$(GLIBC_PASSES))
 
 debhelper: $(stamp)debhelper
 $(stamp)debhelper:
@@ -184,7 +184,6 @@ $(stamp)debhelper:
 	  cp $$x $$z; \
 	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#" -i $$z; \
 	  sed -e "/KERNEL_VERSION_CHECK/r debian/script.in/kernelcheck.sh" -i $$z; \
-	  sed -e "/NSS_CHECK/r debian/script.in/nsscheck.sh" -i $$z; \
 	  sed -e "/NOHWCAP/r debian/script.in/nohwcap.sh" -i $$z; \
 	  sed -e "s#LIBC#$(libc)#" -i $$z; \
 	  sed -e "s#CURRENT_VER#$(DEB_VERSION)#" -i $$z; \
@@ -237,8 +236,26 @@ $(stamp)debhelper:
 	  done ; \
 	done
 
-	# Substitute __PROVIDED_LOCALES__.
-	perl -i -pe 'BEGIN {undef $$/; open(IN, "debian/tmp-libc/usr/share/i18n/SUPPORTED"); $$j=<IN>;} s/__PROVIDED_LOCALES__/$$j/g;' debian/locales.config debian/locales.postinst
+	# We use libc-otherbuild for this, since it's just a special case of
+	# an optimised library that needs to wind up in /lib/tls
+	# FIXME: We do not cover the case of processor optimised 
+	# nptl libraries, like /lib/i686/tls
+	# We probably don't care for now.
+	for x in $(NPTL); do \
+	  z=debian/$(libc).install; \
+	  cat debian/debhelper.in/libc-otherbuild.install >>$$z; \
+	  sed -e "s#TMPDIR#debian/tmp-$$x#g" -i $$z; \
+	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#g" -i $$z; \
+	  sed -e "s#LIBC-FLAVOR#$(libc)#g" -i $$z; \
+	  sed -e "s#FLAVOR#nptl#g" -i $$z; \
+	  sed -e "s#SLIBDIR#/lib/tls#g" -i $$z; \
+	  case $$z in \
+	    *.install) sed -e "s/^#.*//g" -i $$z ;; \
+	  esac; \
+	done
+
+	# Substitute __SUPPORTED_LOCALES__.
+	perl -i -pe 'BEGIN {undef $$/; open(IN, "debian/tmp-libc/usr/share/i18n/SUPPORTED"); $$j=<IN>;} s/__SUPPORTED_LOCALES__/$$j/g;' debian/locales.config
 
 	# Generate common substvars files.
 	echo "locale:Depends=$(shell perl debian/debver2localesdep.pl $(LOCALES_DEP_VER))" > tmp.substvars
@@ -274,7 +291,5 @@ debhelper-clean:
 	rm -f debian/*.lintian
 	rm -f debian/*.linda
 	rm -f debian/*.NEWS
-	rm -f debian/*.README.Debian
-	rm -f debian/*.triggers
 
 	rm -f $(stamp)binaryinst*

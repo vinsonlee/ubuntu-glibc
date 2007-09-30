@@ -70,15 +70,10 @@ KERNEL_HOST_CPU := $(subst powerpc,ppc,$(DEB_HOST_GNU_CPU))
 
 # Support multiple makes at once based on number of processors
 ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
-NJOBS := -j $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+NJOBS := $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+else
+NJOBS := 1
 endif
-
-# use the package settings, not the settings from the environment
-define unsetenv
-  unexport $(1)
-  $(1) =
-endef
-$(foreach v, CPPFLAGS CFLAGS CXXFLAGS LDFLAGS, $(if $(filter environment,$(origin $(v))),$(eval $(call unsetenv, $(v)))))
 
 # Default setup
 GLIBC_PASSES ?= libc
@@ -100,15 +95,18 @@ BUILD_CXX = g++-4.2 -fno-stack-protector
 
 RUN_TESTSUITE = yes
 
-TIMEOUTFACTOR = 1
-
-# Set CC and CXX for cross-compiling
+# Set CC for cross-compiling
 ifneq ($(DEB_HOST_ARCH),$(DEB_BUILD_ARCH))
 CC     = $(DEB_HOST_GNU_TYPE)-gcc
-CXX    = $(DEB_HOST_GNU_TYPE)-g++
 else
 CC     = $(BUILD_CC)
-CXX    = $(BUILD_CXX)
+endif
+#
+# Set CXX for cross-compiling
+ifneq ($(DEB_HOST_ARCH),$(DEB_BUILD_ARCH))
+CXX	= $(DEB_HOST_GNU_TYPE)-g++
+else
+CXX	= $(BUILD_CXX)
 endif
 
 BUILD_CFLAGS = -O2 -g
@@ -134,7 +132,7 @@ endif
 curpass = $(filter-out %_,$(subst _,_ ,$@))
 
 DEB_ARCH_REGULAR_PACKAGES = $(libc) $(libc)-dev $(libc)-dbg $(libc)-prof $(libc)-pic
-DEB_INDEP_REGULAR_PACKAGES = glibc-doc glibc-source
+DEB_INDEP_REGULAR_PACKAGES = glibc-doc
 DEB_UDEB_PACKAGES = $(libc)-udeb libnss-dns-udeb libnss-files-udeb
 
 # Generic kernel version check
@@ -185,34 +183,7 @@ binary-arch: build testroot debian/control $(build-tree) \
 binary: binary-indep binary-arch
 
 build:	$(patsubst %,$(stamp)build_%,$(GLIBC_PASSES)) \
-	$(patsubst %,$(stamp)check_%,$(GLIBC_PASSES)) \
-	check-test-results
-
-check-test-results:
-ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
-	@echo "SUMMARY OF FAILURES"
-	@while read arch fn expected; do \
-	  [ $$arch = $(DEB_HOST_ARCH) ] || continue; \
-	  if [ -f $$fn ]; then \
-	    current=$$(cat $$fn | grep '^make.*Error' | wc -l); \
-	    echo "$$fn: current: $$current, expected: $$expected"; \
-	    if [ "$$current" -lt "$$expected" ]; then \
-	      progressions="$$progressions $$fn"; \
-	    elif [ "$$current" -gt "$$expected" ]; then \
-	      regressions="$$regressions $$fn"; \
-	    fi; \
-	  else \
-	    notfound="$$notfound $$fn"; \
-	  fi; \
-	done < debian/expected_test_summary; \
-	if [ -n "$$notfound$$regressions" ]; then \
-	  echo ""; \
-	  [ -z "$$notfound" ] || echo >&2 "no reference found: $$notfound"; \
-	  [ -z "$$regressions" ] || echo >&2 "regressions in tests: $$regressions"; \
-	  exit 2; \
-	fi
-	@echo "END SUMMARY OF FAILURES"
-endif
+	$(patsubst %,$(stamp)check_%,$(GLIBC_PASSES))
 
 testroot:
 	dh_testroot

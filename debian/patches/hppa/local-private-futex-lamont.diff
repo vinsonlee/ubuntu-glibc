@@ -1,0 +1,12 @@
+diff -ur glibc-2.6.1.orig/ports/sysdeps/hppa/nptl/tls.h glibc-2.6.1/ports/sysdeps/hppa/nptl/tls.h
+--- ports/sysdeps/hppa/nptl/tls.h	2007-09-27 18:48:44.000000000 +0000
++++ ports/sysdeps/hppa/nptl/tls.h	2007-09-27 18:46:03.000000000 +0000
+@@ -157,7 +157,7 @@
+ 	= atomic_exchange_rel (&THREAD_SELF->header.gscope_flag,	     \
+ 			       THREAD_GSCOPE_FLAG_UNUSED);		     \
+       if (__res == THREAD_GSCOPE_FLAG_WAIT)				     \
+-	lll_private_futex_wake (&THREAD_SELF->header.gscope_flag, 1);	     \
++	lll_futex_wake (&THREAD_SELF->header.gscope_flag, 1);	     \
+     }									     \
+   while (0)
+ #define THREAD_GSCOPE_SET_FLAG() \

@@ -5,15 +5,15 @@ Build-Depends: gettext, make (>= 3.80-1), dpkg-dev (>= 1.13.5), bzip2, file, qui
  texinfo (>= 4.0), texi2html,
  autoconf, sed (>= 4.0.5-4), gawk, debhelper (>= 5.0),
  linux-libc-dev [!hurd-i386 !kfreebsd-i386 !kfreebsd-amd64],
- mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386], libpthread-stubs0-dev [hurd-i386],
+ mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386],
  kfreebsd-kernel-headers [kfreebsd-i386 kfreebsd-amd64],
  binutils (>= 2.17cvs20070426-1),
- g++-4.2 (>= 4.2.2), g++-4.2-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc]
+ g++-4.2 (>= 4.2.1-5ubuntu4), g++-4.2-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc]
 Build-Depends-Indep: perl, po-debconf (>= 1.0)
 Maintainer: Ubuntu Core developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
 Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, Philip Blundell <pb@nexus.co.uk>, Jeff Bailey <jbailey@raspberryginger.com>, Daniel Jacobowitz <dan@debian.org>, Clint Adams <schizo@debian.org>, Aurelien Jarno <aurel32@debian.org>, Pierre Habouzit <madcoder@debian.org>
-Standards-Version: 3.7.3
+Standards-Version: 3.7.2
 
 Package: glibc-doc
 Architecture: all
@@ -27,20 +27,12 @@ Description: GNU C Library: Documentation
  as well as the man pages for libpthread functions and the complete
  GNU C Library ChangeLog.
 
-Package: glibc-source
-Architecture: all
-Section: devel
-Priority: optional
-Description: GNU C Library: sources
- This package contains the sources and patches which are needed to
- build glibc.
-
 Package: locales
 Architecture: all
 Section: libs
 Priority: standard
 Depends: ${locale:Depends}, debconf | debconf-2.0
-Conflicts: base-config, belocs-locales-bin, belocs-locales-data
+Conflicts: base-config
 Replaces: base-config, lliurex-belocs-locales-data
 Description: GNU C Library: National Language (locale) data [support]
  Machine-readable data files, shared objects and programs used by the
@@ -66,7 +58,7 @@ Description: GNU C Library: Precompiled locale data
  locale files take a lot of memory to be compiled.
 
 Package: nscd
-Architecture: any
+Architecture: alpha amd64 arm armeb armel i386 lpia m32r m68k mips mipsel powerpc ppc64 sparc ia64 hppa s390 sh3 sh4 sh3eb sh4eb kfreebsd-i386 kfreebsd-amd64 
 Section: admin
 Priority: optional
 Depends: ${shlibs:Depends}
@@ -81,7 +73,6 @@ Architecture: amd64 arm armeb armel i386 lpia m32r m68k mips mipsel powerpc ppc6
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
-Suggests: debconf | debconf-2.0
 Depends: tzdata
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
@@ -154,7 +145,6 @@ Architecture: alpha ia64
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
-Suggests: debconf | debconf-2.0
 Depends: tzdata
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
@@ -227,7 +217,6 @@ Architecture: hurd-i386
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
-Suggests: debconf | debconf-2.0
 Depends: tzdata
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
@@ -300,7 +289,6 @@ Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
-Suggests: debconf | debconf-2.0
 Depends: tzdata
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
@@ -508,7 +496,7 @@ Description: GNU C Library: 64bit Development Libraries for PowerPC64
 
 Package: libc6-mipsn32
 Architecture: mips mipsel
-Section: libs
+Section: base
 Priority: optional
 Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: n32 Shared libraries for MIPS64
@@ -530,7 +518,7 @@ Description: GNU C Library: n32 Development Libraries for MIPS64
 
 Package: libc6-mips64
 Architecture: mips mipsel
-Section: libs
+Section: base
 Priority: optional
 Depends: libc6 (= ${binary:Version})
 Description: GNU C Library: 64bit Shared libraries for MIPS64
@@ -585,6 +573,10 @@ Description: GNU C Library: Shared libraries [v9b optimized]
  This set of libraries is optimized for the UltraSPARC v9b ABI. It only
  needs to be installed on UltraSPARC machines. If you install this on a
  non-UltraSPARC, it won't even be used.
+ .
+ WARNING: Some commercial programs do not work well with these libraries.
+ Most notably, IBM's JDK. If you experience problems with such
+ applications, you will need to remove this package.
 
 Package: libc6-sparcv9v
 Architecture: sparc
@@ -600,21 +592,10 @@ Description: GNU C Library: Shared libraries [v9v optimized]
  processors. It only needs to be installed on machines using
  SUN4V Niagara and derivatives. If you install this on a machine without
  such chips, it won't even be used.
-
-Package: libc6-sparcv9v2
-Architecture: sparc
-Section: libs
-Priority: extra
-Pre-Depends: libc6 (= ${Source-Version})
-Description: GNU C Library: Shared libraries [v9v2 optimized]
- Contains the standard libraries that are used by nearly all programs on
- the system. This package includes shared versions of the standard C
- library and the standard math library, as well as many others.
  .
- This set of libraries is optimized for SUN4V Niagara 2 and derivative
- processors. It only needs to be installed on machines using
- SUN4V Niagara 2 and derivatives. If you install this on a machine without
- such chips, it won't even be used.
+ WARNING: Some commercial programs do not work well with these libraries.
+ Most notably, IBM's JDK. If you experience problems with such
+ applications, you will need to remove this package.
 
 Package: libc6-sparc64b
 Architecture: sparc
@@ -631,6 +612,10 @@ Description: GNU C Library: 64bit Shared libraries for UltraSPARC [v9b optimized
  processors. It only needs to be installed on machines using
  UltraSPARC-III and derivatives. If you install this on a machine without
  such chips, it won't even be used.
+ .
+ WARNING: Some commercial programs do not work well with these libraries.
+ Most notably, IBM's JDK. If you experience problems with such
+ applications, you will need to remove this package.
 
 Package: libc6-sparc64v
 Architecture: sparc
@@ -647,22 +632,10 @@ Description: GNU C Library: 64bit Shared libraries for UltraSPARC [v9v optimized
  processors. It only needs to be installed on machines using
  SUN4V Niagara and derivatives. If you install this on a machine without
  such chips, it won't even be used.
-
-Package: libc6-sparc64v2
-Architecture: sparc
-Section: base
-Priority: extra
-Depends: libc6 (= ${Source-Version}), lib64gcc1
-Conflicts: gcc-3.0 (<< 1:3.0.4ds3-11), libgcc1 (<< 1:3.0.4ds3-11), fakeroot (<< 0.4.5-2.7)
-Description: GNU C Library: 64bit Shared libraries for UltraSPARC [v9v2 optimized]
- This package includes shared versions of the standard C library and the
- standard math library, as well as many others. This is the 64bit version
- of the library, meant for UltraSPARC systems.
  .
- This set of libraries is optimized for SUN4V Niagara 2 and derivative
- processors. It only needs to be installed on machines using
- SUN4V Niagara 2 and derivatives. If you install this on a machine without
- such chips, it won't even be used.
+ WARNING: Some commercial programs do not work well with these libraries.
+ Most notably, IBM's JDK. If you experience problems with such
+ applications, you will need to remove this package.
 
 Package: libc6-i686
 Architecture: i386
@@ -678,7 +651,13 @@ Description: GNU C Library: Shared libraries [i686 optimized]
  used if you are running a 2.6 kernel on an i686 class CPU (check the 
  output of `uname -m').  This includes Pentium Pro, Pentium II/III/IV, 
  Celeron CPU's and similar class CPU's (including clones such as AMD 
- Athlon/Opteron, VIA C3 Nehemiah, but not VIA C3 Ezra).  
+ Athlon/Opteron, VIA C3 Nehemiah, but not VIA C3 Ezra).
+ .
+ This package includes support for NPTL.
+ .
+ WARNING: Some third-party binaries may not work well with these libraries.
+ Most notably, IBM's JDK. If you experience problems with such
+ applications, you will need to remove this package.
 
 Package: libc6-xen
 Architecture: i386
@@ -708,20 +687,10 @@ Description: GNU C Library: Shared libraries [i686 optimized]
  Pentium Pro, Pentium II/III/IV, Celeron CPU's and similar class CPU's
  (including clones such as AMD Athlon/Opteron, VIA C3 Nehemiah, but not VIA 
  C3 Ezla).  
-
-Package: libc6.1-alphaev67
-Architecture: alpha
-Section: libs
-Priority: extra
-Pre-Depends: libc6.1 (= ${binary:Version})
-Description: GNU C Library: Shared libraries (EV67 optimized)
- Contains the standard libraries that are used by nearly all programs on
- the system. This package includes shared versions of the standard C
- library and the standard math library, as well as many others.
- .
- This set of libraries is optimized for the Alpha EV67. It only
- needs to be installed on Alpha EV67/68 and EV7 machines. If you install
- this on an older machine, it won't even be used.
+  .
+ WARNING: Some third-party binaries may not work well with these libraries.
+ Most notably, IBM's JDK. If you experience problems with such
+ applications, you will need to remove this package.
 
 Package: libnss-dns-udeb
 XC-Package-Type: udeb

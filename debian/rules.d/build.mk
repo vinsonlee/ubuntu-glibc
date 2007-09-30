@@ -26,16 +26,13 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	echo "CC = $(call xx,CC)"		>> $(DEB_BUILDDIR)/configparms
 	echo "CXX = $(call xx,CXX)"		>> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CC = $(BUILD_CC)"		>> $(DEB_BUILDDIR)/configparms
-	echo "BUILD_CXX = $(BUILD_CXX)"		>> $(DEB_BUILDDIR)/configparms
 	echo "CFLAGS = $(HOST_CFLAGS)"		>> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CFLAGS = $(BUILD_CFLAGS)" 	>> $(DEB_BUILDDIR)/configparms
-	echo "LDFLAGS = "		 	>> $(DEB_BUILDDIR)/configparms
 	echo "BASH := /bin/bash"		>> $(DEB_BUILDDIR)/configparms
 	echo "KSH := /bin/bash"			>> $(DEB_BUILDDIR)/configparms
 	echo "LIBGD = no"			>> $(DEB_BUILDDIR)/configparms
 	echo "bindir = $(bindir)"		>> $(DEB_BUILDDIR)/configparms
 	echo "datadir = $(datadir)"		>> $(DEB_BUILDDIR)/configparms
-	echo "localedir = $(localedir)" 	>> $(DEB_BUILDDIR)/configparms
 	echo "sysconfdir = $(sysconfdir)" 	>> $(DEB_BUILDDIR)/configparms
 	echo "libexecdir = $(libexecdir)" 	>> $(DEB_BUILDDIR)/configparms
 	echo "rootsbindir = $(rootsbindir)" 	>> $(DEB_BUILDDIR)/configparms
@@ -70,7 +67,6 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		cd $(DEB_BUILDDIR) && \
 		CC="$(call xx,CC)" \
 		CXX="$(call xx,CXX)" \
-		LDFLAGS="" \
 		AUTOCONF=false \
 		$(CURDIR)/$(DEB_SRCDIR)/configure \
 		--host=$(call xx,configure_target) \
@@ -84,15 +80,8 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 $(patsubst %,build_%,$(GLIBC_PASSES)) :: build_% : $(stamp)build_%
 $(stamp)build_%: $(stamp)configure_%
 	@echo Building $(curpass)
-	$(call logme, -a $(log_build), LDFLAGS="" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS))
+	$(call logme, -a $(log_build), $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS))
 	$(call logme, -a $(log_build), echo "---------------" ; echo -n "Build ended: " ; date --rfc-2822)
-	if [ $(curpass) = libc ]; then \
-	  $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) \
-	    objdir=$(DEB_BUILDDIR) install_root=$(CURDIR)/build-tree/locales-all \
-	    localedata/install-locales; \
-	  sync; \
-	  tar --use-compress-program /usr/bin/lzma --owner root --group root -cf $(CURDIR)/build-tree/locales-all/supported.tar.lzma -C $(CURDIR)/build-tree/locales-all/usr/lib/locale .; \
-	fi
 	touch $@
 
 $(patsubst %,check_%,$(GLIBC_PASSES)) :: check_% : $(stamp)check_%
@@ -110,9 +99,6 @@ $(stamp)check_%: $(stamp)build_%
 	elif grep -q "cpu model.*SiByte SB1" /proc/cpuinfo ; then \
 	  echo "MIPS SB1 platform detected, skipping tests."; \
 	  echo "MIPS SB1 platform detected, skipping tests." > $(log_test) ; \
-	elif uname -m | grep -q "^arm" && uname -r | grep -q "2\.6\.2[1-4]" ; then \
-	  echo "ARM machine running a 2.6.21-24 kernel detected, tests have been skipped."; \
-	  echo "ARM machine running a 2.6.21-24 kernel detected, tests have been skipped." > $(log_test) ; \
 	elif [ $(call xx,RUN_TESTSUITE) != "yes" ]; then \
 	  echo "Testsuite disabled for $(curpass), skipping tests."; \
 	  echo "Tests have been disabled." > $(log_test) ; \
@@ -121,15 +107,11 @@ $(stamp)check_%: $(stamp)build_%
 	  echo -n "Testsuite started: " | tee -a $(log_test); \
 	  date --rfc-2822 | tee -a $(log_test); \
 	  echo "--------------" | tee -a $(log_test); \
-	  TIMEOUTFACTOR="$(TIMEOUTFACTOR)" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) -k check 2>&1 | tee -a $(log_test); \
+	  $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) -k check 2>&1 | tee -a $(log_test); \
 	  echo "--------------" | tee -a $(log_test); \
 	  echo -n "Testsuite ended: " | tee -a $(log_test); \
 	  date --rfc-2822 | tee -a $(log_test); \
 	fi
-	@n=$$(grep '^make.* Error' $(log_test) | wc -l || true); \
-	  echo "TEST SUMMARY $(log_test) ($$n matching lines)"; \
-	  grep '^make.* Error' $(log_test) || true; \
-	  echo "END TEST SUMMARY $(log_test)"
 	touch $@
 
 $(patsubst %,install_%,$(GLIBC_PASSES)) :: install_% : $(stamp)install_%
@@ -139,11 +121,44 @@ $(stamp)install_%: $(stamp)check_%
 	$(MAKE) -C $(DEB_BUILDDIR) \
 	  install_root=$(CURDIR)/debian/tmp-$(curpass) install
 
-	# Generate the list of SUPPORTED locales
 	if [ $(curpass) = libc ]; then \
 	  $(MAKE) -f debian/generate-supported.mk IN=$(DEB_SRCDIR)/localedata/SUPPORTED \
 	    OUT=debian/tmp-$(curpass)/usr/share/i18n/SUPPORTED; \
-	  (cd $(DEB_SRCDIR)/manual && texi2html -split_chapter libc.texinfo); \
+	  $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) \
+	    objdir=$(DEB_BUILDDIR) install_root=$(CURDIR)/debian/tmp-$(curpass) \
+	    localedata/install-locales; \
+	  rm -rf $(CURDIR)/debian/locales-all/usr/lib; \
+	  install -d $(CURDIR)/debian/locales-all/usr/lib; \
+	  mv $(CURDIR)/debian/tmp-libc/usr/lib/locale $(CURDIR)/debian/locales-all/usr/lib/locales-all; \
+	   (cd $(DEB_SRCDIR)/manual && texi2html -split_chapter libc.texinfo); \
+	fi
+
+	# Remove ld.so from optimized libraries
+	if echo $(call xx,slibdir) | grep -q "/lib/.\+" ; then \
+		rm -f debian/tmp-$(curpass)/$(call xx,slibdir)/ld*.so* ; \
+	fi
+
+	# /usr/include/nptl and /usr/lib/nptl.  It assumes tmp-libc is already installed.
+	if [ $(curpass) = nptl ]; then \
+	  for file in `find debian/tmp-$(curpass)/usr/include -type f | sed 's/^debian\/tmp-nptl\///'`; do \
+	    if ! [ -f debian/tmp-$(curpass)/$$file ] || \
+	       ! cmp -s debian/tmp-$(curpass)/$$file debian/tmp-libc/$$file; then \
+	      target=`echo $$file | sed 's/^usr\/include\///'`; \
+	      install -d `dirname debian/tmp-libc/usr/include/nptl/$$target`; \
+	      install -m 644 debian/tmp-$(curpass)/usr/include/$$target \
+			     debian/tmp-libc/usr/include/nptl/$$target; \
+	    fi; \
+	  done; \
+	  install -d debian/tmp-libc/usr/lib/nptl; \
+	  for file in libc.a libc_nonshared.a libpthread.a libpthread_nonshared.a librt.a ; do \
+	    install -m 644 debian/tmp-$(curpass)/usr/lib/$$file \
+			   debian/tmp-libc/usr/lib/nptl/$$file; \
+	  done; \
+	  for file in libc.so libpthread.so; do \
+	    sed 's/\/usr\/lib\//\/usr\/lib\/nptl\//g' < debian/tmp-$(curpass)/usr/lib/$$file \
+	      > debian/tmp-libc/usr/lib/nptl/$$file; \
+	  done; \
+	  ln -sf /lib/tls/librt.so.1 debian/tmp-libc/usr/lib/nptl/; \
 	fi
 
 	# Create the multidir directories, and the configuration file in /etc/ld.so.conf.d
@@ -153,7 +168,7 @@ $(stamp)install_%: $(stamp)check_%
 	  os=`sed '/^ *config-os *=/!d;s/.*= *//g' $(DEB_BUILDDIR)/config.make`; \
 	  triplet="$$machine-$$os"; \
 	  mkdir -p debian/tmp-$(curpass)/lib/$$triplet debian/tmp-$(curpass)/usr/lib/$$triplet; \
-	  conffile="debian/tmp-$(curpass)/etc/ld.so.conf.d/$$triplet.conf"; \
+	  conffile="debian/tmp-$(curpass)/etc/ld.so.conf.d/$$triplet"; \
 	  echo "# Multiarch support" > $$conffile; \
 	  echo /lib/$$triplet >> $$conffile; \
 	  echo /usr/lib/$$triplet >> $$conffile; \
@@ -168,5 +183,3 @@ $(stamp)install_%: $(stamp)check_%
 
 	$(call xx,extra_install)
 	touch $@
-
-.NOTPARALLEL: $(patsubst %,install_%,$(GLIBC_PASSES))

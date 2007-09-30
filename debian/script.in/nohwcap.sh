@@ -7,9 +7,6 @@
     # Before removing a package from this list, make sure it appears
     # in the Conflicts: line of libc.
     case $(dpkg --print-architecture) in
-        alpha)
-            hwcappkgs="libc6-alphaev67"
-            ;;
         i386)
             hwcappkgs="libc6-i686 libc6-xen"
             ;;
@@ -17,7 +14,7 @@
             hwcappkgs="libc0.1-i686"
             ;;
         sparc)
-            hwcappkgs="libc6-sparcv9 libc6-sparcv9b libc6-sparcv9v libc6-sparcv9v2 libc6-sparc64b libc6-sparc64v libc6-sparc64v2"
+            hwcappkgs="libc6-sparcv9 libc6-sparcv9b"
             ;;
     esac
  

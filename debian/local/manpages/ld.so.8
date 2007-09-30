@@ -28,9 +28,9 @@ which contains a compiled list of candidate libraries previously found
 in the augmented library path.
 .IP o
 In the default path
-.BR /lib ,
+.BR /usr/lib ,
 and then
-.BR /usr/lib .
+.BR /lib .
 .SH COMMAND LINE OPTIONS
 .TP
 .B \-\-list
@@ -75,9 +75,6 @@ as if run by ldd, instead of running normally.
 If present, causes the dynamic linker to resolve all symbols at program
 startup instead of when they are first referenced.
 .TP
-.B LD_BIND_NOT 
-Do not update the GOT (global offset table) and PLT (procedure linkage table) after resolving a symbol.
-.TP
 .B LD_AOUT_LIBRARY_PATH
 A colon-separated list of directories in which to search for
 a.out libraries at execution-time.
@@ -117,46 +114,16 @@ about the program if querying information about the program (ie. either
 .B LD_TRACE_LOADED_OBJECTS 
 has been set, or --list or --verify options have been given to the dynamic linker).
 .TP
-.B LD_PROFILE 
-Shared object to be profiled. 
-.TP
-.B
-LD_PROFILE_OUTPUT 
-File where 
-.B LD_PROFILE
-output should be stored, default is standard output. LD_DEBUG_OUTPUT is ignored for setuid/setgid binaries.
-.TP
 .B LD_ASSUME_KERNEL
 Every DSO (Dynamic Shared Object, aka shared library) can tell the dynamic linker in glibc which
 minimum OS ABI version is needed. The information about the minimum OS ABI version is encoded in
 a ELF note section usually named .note.ABI-tag. This is used to determine which library to load
 when multiple version of the same library is installed on the system.
+
 The
 .B LD_ASSUME_KERNEL
 environment variable overrides the kernel version used by the dynamic linker to determine which
 library to load.
-.SH RPATH TOKEN EXPANSION
-The runtime linker provides a number of tokens that can be used in an rpath 
-specification (\fBDT_RPATH\fR or \fBDT_RUNPATH\fR).
-.TP
-.B $ORIGIN
-ld.so understands the string \fB$ORIGIN\fR (or equivalently \fB${ORIGIN}\fR) 
-in an rpath specification to mean the directory containing the application
-executable. Thus, an application located in somedir/app could be compiled
-with gcc -Wl,-rpath,'$ORIGIN/../lib' so that it finds an associated shared
-library in somedir/lib no matter where somedir is located in the directory 
-hierarchy.
-.TP
-.B $PLATFORM
-The string \fB$PLATFORM\fR (or equivalently \fB${PLATFORM}\fR) in an rpath
-specifcation expands to the processor type of the current machine. Please note
-that on some architectures the Linux kernel doesn't provide a platform
-string to the dynamic linker.
-.TP
-.B $LIB
-The string \fB$LIB\fR (or equivalently \fB${LIB}\fR) in an rpath corresponds
-to the system libraries directory, which is /lib for the native architecture
-on FHS compliant GNU/Linux systems.
 .SH FILES
 .PD 0
 .TP 20

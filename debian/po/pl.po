@@ -1,16 +1,15 @@
-#
+# 
 msgid ""
 msgstr ""
 "Project-Id-Version: debconf-glibc-locales-pl\n"
-"Report-Msgid-Bugs-To: glibc@packages.debian.org\n"
-"POT-Creation-Date: 2008-02-26 21:34+0100\n"
-"PO-Revision-Date: 2008-02-28 21:45+0100\n"
+"Report-Msgid-Bugs-To: debian-glibc@lists.debian.org\n"
+"POT-Creation-Date: 2007-02-05 05:41+0100\n"
+"PO-Revision-Date: 2006-02-21 00:39+0100\n"
 "Last-Translator: Emilian Nowak <emil5@go2.pl>\n"
 "Language-Team:  <pl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Gettext Translator 0.9\n"
 
 #. Type: multiselect
 #. Choices
@@ -28,8 +27,8 @@ msgstr "Wybierz ustawienia lokalne, które chcesz wygenerować:"
 #. Description
 #: ../debhelper.in/locales.templates:1002
 msgid ""
-"Locales are a framework to switch between multiple languages and allow users "
-"to use their language, country, characters, collation order, etc."
+"Locale is a framework to switch between multiple languages for users who can "
+"select to use their language, country, characters, collation order, etc."
 msgstr ""
 "Wybierane tutaj ustawienia lokalne stanowią podstawową strukturę dającą "
 "możliwość pracy systemu w specyficznym dla danego kraju środowisku (język, "
@@ -39,14 +38,34 @@ msgstr ""
 #. Description
 #: ../debhelper.in/locales.templates:1002
 msgid ""
-"Please choose which locales to generate. UTF-8 locales should be chosen by "
-"default, particularly for new installations. Other character sets may be "
-"useful for backwards compatibility with older systems and software."
+"Choose which locales to generate.  The selection will be saved to `/etc/"
+"locale.gen', which you can also edit manually (you need to run `locale-gen' "
+"afterwards)."
 msgstr ""
-"Wybierz jakie ustawienia lokalne chcesz wygenerować. Najkorzystniej jest "
-"wybrać UTF-8, zwłaszcza na nowo instalowanych systemach. Pozostałe kodowania "
-"mogą być przydatne, aby utrzymać wsteczną kompatybilność ze starymi "
-"systemami lub programami."
+"Wybierz, który zestaw ustawień lokalnych chcesz wygenerować. Twój wybór "
+"zostanie zapisany do pliku  `/etc/locale.gen', który można później edytować "
+"dowolnym edytorem tekstu (w tym przypadku konieczne będzie późniejsze "
+"uruchomienie 'locale-gen')."
+
+#. Type: multiselect
+#. Description
+#: ../debhelper.in/locales.templates:1002
+msgid ""
+"When `All locales' is selected, /etc/locale.gen will be set as a symlink to /"
+"usr/share/i18n/SUPPORTED."
+msgstr ""
+"Po wybraniu `Wszystkie dostępne', plik /etc/locale.gen będzie dowiązaniem "
+"symbolicznym do/usr/share/i18n/SUPPORTED."
+
+#. Type: multiselect
+#. Description
+#: ../debhelper.in/locales.templates:1002
+msgid ""
+"UTF-8 locales should be chosen by default.  If you are a performing a new "
+"installation, or are unsure which character set to use, UTF-8 is usually the "
+"best choice.  Other character sets are useful for backwards compatibility "
+"with older systems and software."
+msgstr ""
 
 #. Type: select
 #. Choices
@@ -65,140 +84,26 @@ msgstr "Wybierz domyślne ustawienia lokalne, dla swojego systemu:"
 #: ../debhelper.in/locales.templates:2002
 msgid ""
 "Many packages in Debian use locales to display text in the correct language "
-"for the user. You can choose a default locale for the system from the "
-"generated locales."
+"for users. You can change the default locale if you're not a native English "
+"speaker. These choices are based on which locales you have chosen to "
+"generate."
 msgstr ""
 "Wiele programów dostarczanych w pakietach Debiana wykorzystuje ustawienia "
-"lokalne, aby wyświetlać komunikaty we właściwym dla użytkownika języku. "
-"Możesz zmienić domyślne ustawienia lokalne dla całego systemu. Można wybrać "
-"tylko te ustawienia lokalne, które wcześniej zostały wygenerowane."
+"lokalne, aby wyświetlać tekst we właściwym dla użytkownika języku. Możesz "
+"zmienić domyślne ustawienia lokalne jeżeli nie chcesz posługiwać się "
+"językiem angielskim. Można wybrać tylko te ustawienia lokalne, które "
+"wcześniej zostały wygenerowane."
 
 #. Type: select
 #. Description
 #: ../debhelper.in/locales.templates:2002
 msgid ""
-"This will select the default language for the entire system. If this system "
-"is a multi-user system where not all users are able to speak the default "
-"language, they will experience difficulties."
+"Note: This will select the language for your whole system. If you're running "
+"a multi-user system where not all of your users speak the language of your "
+"choice, then they will run into difficulties and you might want not to set a "
+"default locale."
 msgstr ""
 "Zwróć uwagę na to, że wybrany tutaj język ma wpływ na na cały system i "
-"większość działających w nim programów. Jeżeli z tego systemu korzysta wielu "
-"użytkowników posłujących się różnymi językami, to mogą oni mieć problemy ze "
-"zrozumieniem komunikatów systemu."
-
-#. Type: boolean
-#. Description
-#: ../debhelper.in/libc.templates:1001
-msgid "Do you want to upgrade glibc now?"
-msgstr "Czy teraz chcesz zaktualizować glibc ?"
-
-#. Type: boolean
-#. Description
-#: ../debhelper.in/libc.templates:1001
-msgid ""
-"Running services and programs that are using NSS need to be restarted, "
-"otherwise they might not be able to do lookup or authentication any more. "
-"The installation process is able to restart some services (such as ssh or "
-"telnetd), but other programs cannot be restarted automatically. One such "
-"program that needs manual stopping and restart after the glibc upgrade by "
-"yourself is xdm - because automatic restart might disconnect your active X11 "
-"sessions."
-msgstr ""
-"Serwisy i programy wykorzystujące NSS wymagają ponownego uruchomienia aby "
-"operacje związane z autoryzacją działały prawidłowo. Proces instalacji może "
-"zrestartować część serwisów (jak np. ssh lub telnetd), jednak niektóre "
-"usługi będą wymagały ingerencji użytkownika. Przykładem takiego programu "
-"jest xdm, którego restart mógłby spowodować wyłączenie aktywnej sesji X11."
-
-#. Type: boolean
-#. Description
-#: ../debhelper.in/libc.templates:1001
-msgid ""
-"This script detected the following installed services which must be stopped "
-"before the upgrade: ${services}"
-msgstr ""
-"Skrypt wykrył następujące serwisy, które należy ręcznie zrestartować "
-"${services}"
-
-#. Type: boolean
-#. Description
-#: ../debhelper.in/libc.templates:1001
-msgid ""
-"If you want to interrupt the upgrade now and continue later, please answer "
-"No to the question below."
-msgstr ""
-"Jeżeli chcesz przerwać aktualizację i dokończyć ją później wybierz nie."
-
-#. Type: string
-#. Description
-#: ../debhelper.in/libc.templates:2001
-msgid "Services to restart for GNU libc library upgrade:"
-msgstr "Serwisy wymagające restartu po aktualizacji GNU libc."
-
-#. Type: string
-#. Description
-#: ../debhelper.in/libc.templates:2001
-msgid ""
-"Running services and programs that are using NSS need to be restarted, "
-"otherwise they might not be able to do lookup or authentication any more "
-"(for services such as ssh, this can affect your ability to login). Please "
-"review the following space-separated list of init.d scripts for services to "
-"be restarted now, and correct it if needed."
-msgstr ""
-"Uruchomione serwisy i programy wykorzystujące NSS wymagają restartu. W "
-"przeciwnym wypadku nie będą operacje związane z autoryzacją nie będą "
-"działały prawidłowo. Przy usługach takich jak ssh będzie to oznaczało brak "
-"możliwości zalogowania. \n"
-"Zalecamy przejrzenie listy skryptów startowych i ewentualne jej poprawnie."
-
-#. Type: string
-#. Description
-#: ../debhelper.in/libc.templates:2001
-msgid ""
-"Note: restarting sshd/telnetd should not affect any existing connections."
-msgstr ""
-"Uwaga: restart sshd/telnetd nie powinien mieć wpływy na nawiązane już "
-"połączenia."
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:3001
-msgid "Failure restarting some services for GNU libc upgrade"
-msgstr ""
-"Nastąpił błąd podczas restartowania niektórych usług po aktualizacji GNU "
-"libc."
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:3001
-msgid ""
-"The following services could not be restarted for the GNU libc library "
-"upgrade:"
-msgstr "Następujące usługi nie zostały zrestartowane po aktualizacji GNU libc:"
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:3001
-msgid ""
-"You will need to start these manually by running '/etc/init.d/<service> "
-"start'."
-msgstr ""
-"Aby zrestartować ręcznie te usługi należy wywołać '/etc/init.d/<service> "
-"start'."
-
-#~ msgid ""
-#~ "Choose which locales to generate.  The selection will be saved to `/etc/"
-#~ "locale.gen', which you can also edit manually (you need to run `locale-"
-#~ "gen' afterwards)."
-#~ msgstr ""
-#~ "Wybierz, który zestaw ustawień lokalnych chcesz wygenerować. Twój wybór "
-#~ "zostanie zapisany do pliku  `/etc/locale.gen', który można później "
-#~ "edytować dowolnym edytorem tekstu (w tym przypadku konieczne będzie "
-#~ "późniejsze uruchomienie 'locale-gen')."
-
-#~ msgid ""
-#~ "When `All locales' is selected, /etc/locale.gen will be set as a symlink "
-#~ "to /usr/share/i18n/SUPPORTED."
-#~ msgstr ""
-#~ "Po wybraniu `Wszystkie dostępne', plik /etc/locale.gen będzie dowiązaniem "
-#~ "symbolicznym do/usr/share/i18n/SUPPORTED."
+"większość działających w nim programów. Jeżeli z tego systemu korzysta "
+"więcej użytkowników posłujących się różnymi językami najlepiej będzie "
+"pozostawić domyślne (angielskie) ustawiania lokalne."

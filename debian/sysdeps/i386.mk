@@ -3,6 +3,13 @@
 # libc_extra_config_options = $(extra_config_options) --without-__thread --disable-sanity-checks
 libc_extra_cflags = -mno-tls-direct-seg-refs
 
+# NPTL requires at least i486 assembly.  We don't need to take
+# special measures for i386 systems, since Debian kernel images now
+# emulate the missing instructions on the i386.
+nptl_configure_target=i486-linux
+nptl_configure_build=i486-linux
+nptl_extra_cflags = -march=i486 -mtune=i686 -g -O3
+
 # We use -march=i686 and glibc's i686 routines use cmov, so require it.
 # A Debian-local glibc patch adds cmov to the search path.
 # The optimized libraries also use NPTL!
@@ -10,7 +17,7 @@ GLIBC_PASSES += i686
 DEB_ARCH_REGULAR_PACKAGES += libc6-i686
 i686_add-ons = nptl $(add-ons)
 i686_configure_target=i686-linux
-i686_extra_cflags = -march=i686 -mtune=i686 -O3
+i686_extra_cflags = -march=i686 -mtune=i686 -g -O3
 i686_rtlddir = /lib
 i686_slibdir = /lib/tls/i686/cmov
 i686_extra_config_options = $(extra_config_options) --disable-profile
@@ -21,12 +28,12 @@ GLIBC_PASSES += xen
 DEB_ARCH_REGULAR_PACKAGES += libc6-xen
 xen_add-ons = nptl $(add-ons)
 xen_configure_target=i686-linux
-xen_extra_cflags = -march=i686 -mtune=i686 -O3 -mno-tls-direct-seg-refs
+xen_extra_cflags = -march=i686 -mtune=i686 -g -O3 -mno-tls-direct-seg-refs
 xen_rtlddir = /lib
 xen_slibdir = /lib/tls/i686/nosegneg
 xen_extra_config_options = $(extra_config_options) --disable-profile
 
-define xen_extra_pkg_install
+define xen_extra_install
 mkdir -p debian/libc6-xen/etc/ld.so.conf.d
 echo '# This directive teaches ldconfig to search in nosegneg subdirectories' >  debian/libc6-xen/etc/ld.so.conf.d/xen.conf
 echo '# and cache the DSOs there with extra bit 0 set in their hwcap match'   >> debian/libc6-xen/etc/ld.so.conf.d/xen.conf
@@ -46,17 +53,14 @@ amd64_configure_target = x86_64-linux
 # /usr/include/asm wrappers need that symbol.
 amd64_CC = $(CC) -m64 -D__x86_64__
 amd64_CXX = $(CXX) -m64 -D__x86_64__
-amd64_extra_cflags = -O3
+amd64_extra_cflags = -O3 -g
 amd64_extra_config_options = $(extra_config_options) --disable-profile
+amd64_includedir = /usr/include/x86_64-linux-gnu
 amd64_slibdir = /lib64
 amd64_libdir = /usr/lib64
 
 define amd64_extra_install
-cp debian/tmp-amd64/usr/bin/ldd \
-	debian/tmp-libc/usr/bin
-cp -af debian/tmp-amd64/usr/include/* \
-	debian/tmp-libc/usr/include
-rm -f debian/tmp-libc/usr/include/gnu/stubs-64.h
+cp debian/tmp-amd64/usr/bin/ldd debian/tmp-libc/usr/bin
 endef
 
 define libc6-dev_extra_pkg_install
@@ -66,9 +70,7 @@ cp -af debian/tmp-xen/usr/lib/*.a \
 endef
 
 define libc6-dev-amd64_extra_pkg_install
-mkdir -p debian/libc6-dev-amd64/usr/include/gnu
-cp -af debian/tmp-amd64/usr/include/gnu/stubs-64.h \
-	debian/libc6-dev-amd64/usr/include/gnu
-mkdir -p debian/libc6-dev-amd64/usr/include/x86_64-linux-gnu
+mkdir -p debian/libc6-dev-amd64/usr/include
+cp -af debian/tmp-amd64/usr/include/x86_64-linux-gnu \
+	debian/libc6-dev-amd64/usr/include
 endef
-

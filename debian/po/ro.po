@@ -4,13 +4,13 @@
 # This file is distributed under the same license as the glibc package.
 #
 # Stan Ioan-Eugen <stan.ieugen@gmail.com>, 2006.
-# stan ioan-eugen <stan.ieugen@gmail.com>, 2007, 2008.
+# stan ioan-eugen <stan.ieugen@gmail.com>, 2007.
 msgid ""
 msgstr ""
-"Project-Id-Version: \n"
+"Project-Id-Version: po-debconf://kdebase\n"
 "Report-Msgid-Bugs-To: debian-glibc@lists.debian.org\n"
-"POT-Creation-Date: 2007-09-10 10:19+0200\n"
-"PO-Revision-Date: 2008-02-29 23:35+0200\n"
+"POT-Creation-Date: 2007-04-09 00:10+0200\n"
+"PO-Revision-Date: 2007-04-09 08:59+0300\n"
 "Last-Translator: stan ioan-eugen <stan.ieugen@gmail.com>\n"
 "Language-Team: romanian <debian-l10n-romanian@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -48,11 +48,7 @@ msgid ""
 "Please choose which locales to generate. UTF-8 locales should be chosen by "
 "default, particularly for new installations. Other character sets may be "
 "useful for backwards compatibility with older systems and software."
-msgstr ""
-"Alegeţi ce locale se generează. Localele UTF-8 ar trebui alese "
-"implicit, în special pentru instalări noi. Din motive de compatibilitate cu "
-"soft sau sisteme mai vechi, puteţi alege să se genereze şi alte seturi de "
-"caractere."
+msgstr "Trebuie să alegeţi ce locale se generează. Localele UTF-8 ar trebui alese implicit, în special pentru instalări noi. Din motive de compatibilitate cu soft sau sisteme mai vechi, puteţi alege să se genereze şi alte seturi de caractere."
 
 #. Type: select
 #. Choices
@@ -75,8 +71,7 @@ msgid ""
 "generated locales."
 msgstr ""
 "Multe pachete din Debian folosesc locale pentru a afişa text în limba "
-"corectă pentru utilizatori. Puteţi alege o valoarea pentru locale, implicită "
-"pentru sistem, din localele generate."
+"corectă pentru utilizatori. Puteţi alege o valoarea pentru locale, implicită pentru sistem, din localele generate."
 
 #. Type: select
 #. Description
@@ -86,52 +81,7 @@ msgid ""
 "is a multi-user system where not all users are able to speak the default "
 "language, they will experience difficulties."
 msgstr ""
-"Această opţiune va stabili limba pentru tot sistemul. Dacă aveţi un sistem "
-"multi-utilizator unde nu toţi utilizatorii vorbesc limba aleasă, atunci ei "
-"vor întâmpina dificultăţi."
-
-#. Type: string
-#. Description
-#: ../debhelper.in/libc.templates:1001
-msgid "Services to restart for GNU libc library upgrade:"
-msgstr "Servicii ce trebuiesc repornite pentru înnoirea bibliotecii GNU libc:"
-
-#. Type: string
-#. Description
-#: ../debhelper.in/libc.templates:1001
-msgid ""
-"Running services and programs that are using NSS need to be restarted, "
-"otherwise they might not be able to do lookup or authentication any more "
-"(for services such as ssh, this can affect your ability to login). Please "
-"review the following space-separated list of init.d scripts for services to "
-"be restarted now, and correct it if needed."
-msgstr "Serviciile și programele care rulează și folosesc NSS trebuiesc repornite, altfel este posibil să nu mai poată efectua autentificarea sau căutarea numelor (în cazul serviciilor gen ssh, acest lucru poate determina imposibilitatea autentificării). Analizati următoarea listă ce conține, separate prin spațiu, scripturi init.d ale serviciilor ce trebuiesc repornite acum și corectați-o dacă este nevoie."
-
-#. Type: string
-#. Description
-#: ../debhelper.in/libc.templates:1001
-msgid "Note: restarting sshd/telnetd should not affect any existing connections."
-msgstr "Notă: repornirea sshd/telnetd nu ar trebui să afecteze conexiunile existente."
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:2001
-msgid "Failure restarting some services for GNU libc upgrade"
-msgstr "Eșec la pornirea unor servicii pentru înnoirea GNU libc"
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:2001
-msgid ""
-"The following services could not be restarted for the GNU libc library "
-"upgrade:"
-msgstr "Următoarele servicii nu ar trebui repornite pentru înnoirea bibliotecii GNU libc."
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:2001
-msgid ""
-"You will need to start these manually by running '/etc/init.d/<service> "
-"start'."
-msgstr "Va trebui să porniți aceste servicii manual executând comanda '/etc/init.d/<serviciu> start'."
+"Această opţiune va stabili limba pentru tot sistemul. Dacă aveţi un "
+"sistem multi-utilizator unde nu toţi utilizatorii vorbesc limba aleasă, "
+"atunci ei vor întâmpina dificultăţi."
 

@@ -1,13 +1,13 @@
 # Translation of glibc debconf templates to German
-# Copyright (C) Helge Kreutzmann <debian@helgefjell.de>, 2006-2008.
+# Copyright (C) Helge Kreutzmann <debian@helgefjell.de>, 2006, 2007.
 # This file is distributed under the same license as the glibc package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: glibc 2.7-9\n"
-"Report-Msgid-Bugs-To: glibc@packages.debian.org\n"
-"POT-Creation-Date: 2008-02-26 21:34+0100\n"
-"PO-Revision-Date: 2008-02-26 22:41+0100\n"
+"Project-Id-Version: glibc 2.5-0exp6\n"
+"Report-Msgid-Bugs-To: debian-glibc@lists.debian.org\n"
+"POT-Creation-Date: 2007-04-09 00:10+0200\n"
+"PO-Revision-Date: 2007-04-09 19:38+0200\n"
 "Last-Translator: Helge Kreutzmann <debian@helgefjell.de>\n"
 "Language-Team: de <debian-l10n-german@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -35,7 +35,7 @@ msgid ""
 msgstr ""
 "Standorteinstellungen ist ein System, um zwischen verschiedenen Sprachen "
 "umzuschalten. Benutzer können damit ihre Sprache, ihr Land, ihren "
-"Zeichensatz, ihre Sortierreihenfolge und anderes mehr festlegen."
+"Zeichensatz, Ihre Sortierreihenfolge und anderes mehr festlegen."
 
 #. Type: multiselect
 #. Description
@@ -45,7 +45,7 @@ msgid ""
 "default, particularly for new installations. Other character sets may be "
 "useful for backwards compatibility with older systems and software."
 msgstr ""
-"Bitte wählen Sie aus, welche Standorteinstellungen erzeugt werden sollen. "
+"Bitte wählen Sie aus, welche Standorteinstellungen generiert werden sollen. "
 "UTF-8-Standorteinstellungen sollten standardmäßig ausgewählt werden, "
 "insbesondere für neue Installationen. Andere Zeichensätze könnten für "
 "Rückkompatibilität mit älteren Systemen und Software nützlich sein."
@@ -84,115 +84,7 @@ msgid ""
 msgstr ""
 "Bemerkung: Dies wählt die Standardsprache für das gesamte System. Falls dies "
 "ein Mehrbenutzer-System ist und nicht alle Benutzer die Standardsprache "
-"sprechen, dann werden diese Schwierigkeiten haben."
-
-#. Type: boolean
-#. Description
-#: ../debhelper.in/libc.templates:1001
-msgid "Do you want to upgrade glibc now?"
-msgstr "Möchten Sie das Upgrade von Glibc jetzt durchführen?"
-
-#. Type: boolean
-#. Description
-#: ../debhelper.in/libc.templates:1001
-msgid ""
-"Running services and programs that are using NSS need to be restarted, "
-"otherwise they might not be able to do lookup or authentication any more. "
-"The installation process is able to restart some services (such as ssh or "
-"telnetd), but other programs cannot be restarted automatically. One such "
-"program that needs manual stopping and restart after the glibc upgrade by "
-"yourself is xdm - because automatic restart might disconnect your active X11 "
-"sessions."
-msgstr ""
-"Laufende Dienste und Programme, die NSS verwenden, müssen neu gestartet "
-"werden, da sie andernfalls keine Überprüfungen oder Authentisierung mehr "
-"durchführen können. Der Installationsprozess kann einige Dienste neu starten "
-"(wie Ssh oder Telnetd), aber andere Programme können nicht automatisch neu "
-"gestartet werden. Eines dieser Programme, die nach dem Upgrade von Glibc ein "
-"manuelles Stoppen und Neustarten benötigen ist Xdm, da ein automatischer "
-"Neustart Sie von Ihren aktiven X11-Sitzung trennen könnte."
-
-#. Type: boolean
-#. Description
-#: ../debhelper.in/libc.templates:1001
-msgid ""
-"This script detected the following installed services which must be stopped "
-"before the upgrade: ${services}"
-msgstr ""
-"Dieses Skript erkannte die folgenden installierten Dienste, die vor dem "
-"Upgrade gestoppt werden müssen: ${services}"
-
-#. Type: boolean
-#. Description
-#: ../debhelper.in/libc.templates:1001
-msgid ""
-"If you want to interrupt the upgrade now and continue later, please answer "
-"No to the question below."
-msgstr ""
-"Falls Sie das Upgrade jetzt unterbrechen und später Fortfahren möchten, "
-"antworten Sie bitte auf die unten folgende Frage mit Nein."
-
-#. Type: string
-#. Description
-#: ../debhelper.in/libc.templates:2001
-msgid "Services to restart for GNU libc library upgrade:"
-msgstr ""
-"Dienste, die beim GNU Libc-Bibliotheks-Upgrade neu gestartet werden sollen:"
-
-#. Type: string
-#. Description
-#: ../debhelper.in/libc.templates:2001
-msgid ""
-"Running services and programs that are using NSS need to be restarted, "
-"otherwise they might not be able to do lookup or authentication any more "
-"(for services such as ssh, this can affect your ability to login). Please "
-"review the following space-separated list of init.d scripts for services to "
-"be restarted now, and correct it if needed."
-msgstr ""
-"Laufende Dienste und Programme, die NSS verwenden, müssen neu gestartet "
-"werden, da sie andernfalls keine Überprüfungen oder Authentisierung mehr "
-"durchführen können (für Dienste wie ssh kann dies die Möglichkeit der "
-"Anmeldung betreffen). Bitte prüfen Sie, welche der Dienste in der folgenden, "
-"durch Leerzeichen getrennte Liste von init.d-Skripten neu gestartet werden "
-"sollen, und korrigieren Sie diese falls notwendig."
-
-#. Type: string
-#. Description
-#: ../debhelper.in/libc.templates:2001
-msgid ""
-"Note: restarting sshd/telnetd should not affect any existing connections."
-msgstr ""
-"Hinweis: das Neustarten von sshd/telnetd sollte existierende Verbindungen "
-"nicht beeinträchtigen."
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:3001
-msgid "Failure restarting some services for GNU libc upgrade"
-msgstr "Fehler beim Neustarten einiger Dienste für das GNU Libc-Upgrade"
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:3001
-msgid ""
-"The following services could not be restarted for the GNU libc library "
-"upgrade:"
-msgstr ""
-"Die folgenden Dienste konnten für das GNU Libc-Upgrade nicht neu gestartet "
-"werden:"
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:3001
-msgid ""
-"You will need to start these manually by running '/etc/init.d/<service> "
-"start'."
-msgstr ""
-"Sie müssen diese manuell starten, indem Sie »/etc/init.d/<service> start« "
-"ausführen."
-
-#~ msgid "${services}"
-#~ msgstr "${services}"
+"sprechen, dann werden diese in Schwierigkeiten geraten."
 
 #~ msgid ""
 #~ "Choose which locales to generate.  The selection will be saved to `/etc/"

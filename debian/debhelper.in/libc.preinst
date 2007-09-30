@@ -2,76 +2,100 @@
 set -e
 export LC_ALL=C
 
-type=$1
-preversion=$2
-
-if [ "$type" = upgrade ]
+if [ "$1" = upgrade ]
 then
-    # Load debconf module if available
-    if [ -f /usr/share/debconf/confmodule ] ; then
-        . /usr/share/debconf/confmodule
+    if dpkg --compare-versions "$2" le 2.2.2-4 && test -e /lib/libdb.so.3; then
+	# Make upgrades to newer libdb.so.3 easier
+	cat /lib/libdb.so.3 > /lib/libdb.so.3.old
+    fi
+    if dpkg --compare-versions "$2" le 2.1.1-0.1; then
+	if [ -f /var/run/utmpd.pid ]; then
+	    if kill -s TERM `cat /var/run/utmpd.pid` > /dev/null 2>&1
+	    then
+		if [ -f /var/run/utmp ]; then
+		    cp /dev/null /var/run/utmp
+		    if grep '^utmp:' /etc/group; then
+			chown root:utmp /var/run/utmp
+			chmod 664 /var/run/utmp
+		    else
+			chown root:root /var/run/utmp
+			chmod 644 /var/run/utmp
+		    fi
+		fi
+		if [ -f /var/log/wtmp ]; then
+		    savelog /var/log/wtmp
+		    touch /var/log/wtmp
+		    if grep '^utmp:' /etc/group; then
+			chown root:utmp /var/log/wtmp
+			chmod 664 /var/log/wtmp
+		    else
+			chown root:root /var/log/wtmp
+			chmod 644 /var/log/wtmp
+		    fi
+		fi
+		rm -f /etc/init.d/utmpd
+		update-rc.d utmpd remove > /dev/null
+	    fi
+	fi
+	if [ -f /var/run/utmpx ]; then rm -f /var/run/utmpx; fi
+	if [ -f /var/log/wtmpx ]; then rm -f /var/log/wtmpx*; fi
+	if [ -e /var/run/utmpd.ro ]; then rm -f /var/run/utmpd.ro; fi
+	if [ -e /var/run/utmpd.rw ]; then rm -f /var/run/utmpd.rw; fi
     fi
 
-    if [ -n "$preversion" ]; then
-	# NSS authentication trouble guard
-	if dpkg --compare-versions "$preversion" lt 2.6-1; then
+    # NSS authentication trouble guard
+    if dpkg --compare-versions $2 lt 2.3.5-1; then
+	check="xdm kdm gdm postgresql xscreensaver"
+	# Only get the ones that are installed, and configured
+	service=$(dpkg -s $check 2> /dev/null | awk 'BEGIN{RS="\n\n";FS="\n"}{if ( $2 ~ /Status: .* installed$/ ) { print $1 } }' | cut -f 2 -d ' ')
 
-	    check="gdm kdm proftpd postgresql xscreensaver xdm"
-	    # NSS services check: NSS_CHECK
-	    if [ -n "$services" ]; then 
-		if [ -f /usr/share/debconf/confmodule ] ; then
-	            db_version 2.0
-		    db_reset glibc/upgrade
-		    db_subst glibc/upgrade services $services
-		    if [ "$RELEASE_UPGRADE_MODE" = desktop ]; then
-			db_input medium glibc/upgrade || true
-		    else
-			db_input critical glibc/upgrade || true
-		    fi
-		    db_go || true
-		    db_get glibc/upgrade
-		    answer=$RET
-		else
-		    echo "Name Service Switch update in the GNU C Library"
-		    echo
-		    echo "Running services and programs that are using NSS need to be restarted,"
-		    echo "otherwise they might not be able to do lookup or authentication any more."
-		    echo "The installation process is able to restart some services (such as ssh or"
-		    echo "telnetd), but other programs cannot be restarted automatically.  One such"
-		    echo "program that needs manual stopping and restart after the glibc upgrade by"
-		    echo "yourself is xdm - because automatic restart might disconnect your active"
-		    echo "X11 sessions."
-		    echo
-		    echo "This script detected the following installed services which must be"
-		    echo "stopped before the upgrade: $services"
-		    echo
-		    echo "If you want to interrupt the upgrade now and continue later, please"
-		    echo "answer No to the question below."
-		    echo 
-		    frontend=`echo "$DEBIAN_FRONTEND" | tr '[:upper:]' '[:lower:]'`
-		    if [ "$frontend" = noninteractive ]; then
-			echo "Non-interactive mode, upgrade glibc forcibly"
-			answer=true
-		    else
-		        echo -n "Do you want to upgrade glibc now? [Y/n] "
-		        read answer
-		        case $answer in
-			    Y*|y*) answer=true ;;
-			    N*|n*) answer=false ;;
-			    *) answer=true ;;
-			esac
-		    fi
-		    echo
-		fi
+	echo
+	echo "Name Service Switch update in the C Library: pre-installation question."
+	echo
+	echo "Running services and programs that are using NSS need to be restarted,"
+	echo "otherwise they might not be able to do lookup or authentication any more."
+	echo "The installation process is able to restart some services (such as ssh or"
+	echo "telnetd), but other programs cannot be restarted automatically.  One such"
+	echo "program that needs manual stopping and restart after the glibc upgrade by"
+	echo "yourself is xdm - because automatic restart might disconnect your active"
+	echo "X11 sessions."
+	echo
+	echo "Known packages that need to be stopped before the glibc upgrade are:"
+	echo "        $check"
+	echo
 
-		if [ "x$answer" != "xtrue" ]; then
-	            echo "Stopped glibc upgrade.  Please retry the upgrade after you have"
-	            echo "checked or stopped services by hand."
-	            exit 1
-		fi
-	    fi
-	fi # end upgrading and $preversion lt 2.6-1
-    fi # Upgrading
+	if [ -n "$service" ]; then 
+	    echo "This script detected the following installed services which must be"
+	    echo "stopped before the upgrade:"
+	    echo "        $service"
+	else
+	    echo "This script did not detect any installed services which need to be"
+	    echo "stopped."
+	fi
+	echo
+	echo "If you want to interrupt the upgrade now and continue later, please"
+	echo "answer No to the question below."
+	echo 
+	frontend=`echo "$DEBIAN_FRONTEND" | tr '[:upper:]' '[:lower:]'`
+	if [ "$frontend" = noninteractive ]; then
+	    echo "Non-interactive mode, upgrade glibc forcibly"
+	    answer=yes
+	else
+	    echo -n "Do you want to upgrade glibc now? [Y/n] "
+	    read answer
+	    case $answer in
+		Y*|y*) answer=yes ;;
+		N*|n*) answer=no ;;
+		*) answer=yes ;;
+	    esac
+	fi
+	echo
+	if [ "$answer" = no ]; then
+	    echo "Stopped glibc upgrade.  Please retry the upgrade after you have"
+	    echo "checked or stopped services by hand."
+	    exit 1
+	fi
+    fi
 
     # This will keep us from using hwcap libs (optimized) during an
     # upgrade.
@@ -125,7 +149,7 @@ check_dirs () {
   return 1
 }
 
-if [ "$type" != abort-upgrade ]
+if [ "$1" != abort-upgrade ]
 then
   ldbytes=`head -c 20 RTLD | od -c`
   dirs="/lib32 /lib64 /usr/local/lib /usr/local/lib32 /usr/local/lib64"
@@ -138,6 +162,7 @@ then
     echo "It is not safe to upgrade the C library in this situation;"
     echo "please remove that copy of the C library and try again."
     echo "Please check: https://launchpad.net/bugs/81125"
+#    exit 1
   fi
 
   if test -n "$LD_LIBRARY_PATH"; then
@@ -148,6 +173,7 @@ then
       echo "It is not safe to upgrade the C library in this situation;"
       echo "please remove the directory from LD_LIBRARY_PATH and try again."
       echo "Please check: https://launchpad.net/bugs/81125"
+#      exit 1
     fi
   fi
   if test -e /etc/ld.so.conf; then
@@ -158,6 +184,7 @@ then
       echo "It is not safe to upgrade the C library in this situation;"
       echo "please remove the directory from /etc/ld.so.conf and try again."
       echo "Please check: https://launchpad.net/bugs/81125"
+#      exit 1
     fi
   fi
   for i in ld-2.3.2.so libc-2.3.2.so ld-2.3.6.so libc-2.3.6.so ; do
@@ -169,18 +196,6 @@ then
       exit 1
     fi
   done
-  if [ -e /lib/tls/i686/cmov/libc.so.6 ] || [ -e /lib/i686/cmov/libc.so.6 ] ; then
-    status_i686=$(dpkg -s libc6-i686 2>/dev/null | grep ^Status: | sed -e 's/^Status: \(.*\) \(.*\) \(.*\)/\3/g')
-    status_xen=$(dpkg -s libc6-xen 2>/dev/null | grep ^Status: | sed -e 's/^Status: \(.*\) \(.*\) \(.*\)/\3/g')
-    if ([ -z "$status_i686" ] || [ "$status_i686" = "not-installed" ] || [ "$status_i686" = "config-files" ]) && \
-       ([ -z "$status_xen" ] || [ "$status_xen" = "not-installed" ] || [ "$status_xen" = "config-files" ]); then
-      echo
-      echo "A non-dpkg owned copy of the libc6-i686 package was found."
-      echo "It is not safe to upgrade the C library in this situation;"
-      echo "please remove that copy of the C library and try again."
-      exit 1
-    fi
-  fi
   if [ -n "$LD_ASSUME_KERNEL" ] ; then
     if dpkg --compare-versions "$LD_ASSUME_KERNEL" le "2.6.1"; then
       echo
@@ -193,7 +208,7 @@ then
   fi
 fi
 
-if [ "$type" != abort-upgrade ]
+if [ "$1" != abort-upgrade ]
 then
     # glibc kernel version check: KERNEL_VERSION_CHECK
 fi
