@@ -1,3 +1,152 @@
+glibc (2.6.1-6ubuntu1) hardy; urgency=low
+
+  [Fabio M. Di Nitto]
+  * debian/patches/sparc/submitted-v9v2.diff: Add Niagara 2 optimized
+    memcpy support.
+    Code, patch and test done by David S. Miller.
+  * debian/patches/series: update.
+  * debian/sysdeps/sparc.mk: Add v9v2 32 and 64 bit targets.
+  * debian/control.in/opt: Add sparc64v2 and sparcv9v2 packages.
+  * debian/control: update.
+  * debian/script.in/nohwcap.sh:
+    - fix list of sparc optimized libc6.
+    - add v9v2 optimized packages.
+
+  [Matthias Klose]
+  * Merge with Debian; remaining changes:
+    - Upstream tarball including GFDL'd documentation.
+    - Don't apply patches for architectures not found in Ubuntu.
+    - Build optimized sparc packages.
+    - Support lpia.
+    - No support for linuxthreads.
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 19 Oct 2007 15:25:11 +0200
+
+glibc (2.6.1-6) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * Update Spanish debconf translation, by Carlos Valdivia Yagüe.
+
+  [ Clint Adams ]
+  * debian/po/de.po: update from Helge Kreutzmann. closes: #442888.
+  * debian/po/cs.po: update from Miroslav Kure. closes: #442904.
+  * debian/po/it.po: update from Luca Monducci. closes: #443497.
+  * debian/po/ja.po: update from Kenshi Muto. closes: #446577.
+  * Add any/cvs-posix-glob.diff, fixing improper of treatment of \
+    in glob(). closes: #445210
+
+ -- Clint Adams <schizo@debian.org>  Sun, 14 Oct 2007 10:02:35 -0400
+
+glibc (2.6.1-5) unstable; urgency=low
+
+  [ Pierre Habouzit ]
+  * remove any/local-sysmacros.diff: sorry for bug #439859 but it makes gimp
+    (and presumably other software) FTBFS, it's too dispruptive.
+    Closes: #442427.
+
+  [ Clint Adams ]
+  * amd64/local-x86_64_bits_sigcontext.diff: use a copy of the generic header
+    for x86_64.  closes: #442418.
+
+ -- Clint Adams <schizo@debian.org>  Sun, 16 Sep 2007 14:42:17 -0400
+
+glibc (2.6.1-4) unstable; urgency=low
+
+  * Disable any/local-ipv6-lookup.diff as it is causing breakages.
+    Closes: bug#441857.
+  * any/local-sysmacros.diff: use __inline instead of inline for
+    compatibility with ANSI.  Closes: #441959.
+  * patches/localedata/tailor-iso14651_t1.diff: correctly fix fi_FI
+    locale.  Closes: bug#441026.
+  * debian/rules.d/debhelper.mk: fix regex.  Closes: #441824.
+  * Update French debconf translation, by Christian Perrier.  Closes:
+    #442101.
+  * any/submitted-regex-collate.diff: fix regex engine for multibyte
+    characters and C collation.  Closes: #441355.
+  * debian/local/manpages/locale-gen.8: fix manpage.  Closes: #442104.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 13 Sep 2007 17:05:17 +0200
+
+glibc (2.6.1-3) unstable; urgency=low
+
+  * sysdeps/amd64.mk: uses x86_64 headers also for the i486 flavour now
+    that they are compatible.
+  * sysdeps/i386.mk: uses x86_64 headers also for the main flavour.
+  * debian/local/etc_default/locale: remove.  Closes: bug#441360.
+  * sysdeps/*.mk: don't provide include symlink for bi-arch, but only
+    an empty directory.
+  * debian/rules.d/debhelper.mk: modify nscd/DEBIAN/control during build
+    to workaround a dpkg-shlibdeps bug.  Closes: bug#433723.
+  * debian/local/manpages/nscd.conf.5: document the persistent and shared
+    cache options.  Closes: bug#338504.
+  * patches/all/local-alias-UTF-8.diff: encode locales.alias in UTF-8.
+    Closes: bug#404433.
+  * debhelper.in/locales.links, debhelper.in/locales.install: move
+    locales.alias into /etc and provide a symlink in
+    /usr/share/locale/locale.alias.
+  * patches/localedata/tailor-iso14651_t1.diff: fix fi_FI locale.  Closes:
+    bug#441026.
+  * kfreebsd/local-sysdeps.diff: update to revision 1998 (from glibc-bsd).
+  * sysdeps/kfreebsd-amd64.mk: uses x86_64 headers also for the i486 flavour
+    now that they are compatible.
+  * any/local-sysmacros.diff: new patch to declare "major", "minor" and
+    "makedev" as inline function instead of macros.  Closes: #439859.
+  * debhelper.in/libc.postinst, debhelper.in/libc.templates: prompt user
+    with debconf if it is available.  Closes: #440964.
+  * debian/control.in/libc: suggests debconf | debconf-2.0.
+  * Update Brazilian Portuguese debconf translation, by Felipe Augusto van de
+    Wiel.
+  * Update Vietnamese debconf translation, by Clytie Siddall.
+  * Update Basque debconf translation, by Piarres Beobide.
+  * Update Swedish debconf translation, by Daniel Nylander.
+  * Update Slovak debconf translation, by Ivan Masár.
+  * Update Lithuanian debconf translation, by Gintautas Miliauskas.
+  * Update Russian debconf translation, by Sergey Alyoshin.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 11 Sep 2007 04:42:20 +0200
+
+glibc (2.6.1-2) unstable; urgency=low
+
+  [ Samuel Thibault ]
+  * Rename hurd-i386/submitted-lock-intern.diff into
+    hurd-i386/cvs-lock-intern.diff, hurd-i386/submitted-ECANCELED.diff
+    into hurd-i386/cvs-ECANCELED.diff and
+    hurd-i386/submitted-sigsuspend-nocancel.diff into
+    hurd-i386/cvs-sigsuspend-nocancel.diff as the patches have been accepted
+    upstream.
+  * hurd-i386/local-tls-support.diff: update to fix TLS leak in /hurd/exec
+    server.
+  * hurd-i386/cvs-ioctl-delay.diff: new patch to add standard *DLY ioctl macros.
+  * hurd-i386/submitted-IPV6_PKTINFO.diff: new patch to add standard
+    IPV6_PKTINFO macro.
+
+  [ Aurelien Jarno ]
+  * debian/rules.d/build.mk: disable testsuite on ARM machines running a
+    2.6.21 or 2.6.22 kernel.
+  * debian/debhelper.in/locales.{prerm,postinst}: look for supported.tar.lzma
+    instead of supported.tar.gz.
+  * debian/local/etc_default/devpts: remove.
+  * debian/local/etc_default/locale: new file.  Closes: bug#437404.
+  * debhelper.in/locales.install: install it.
+  * debian/local/manpages/locale.1: fix a typo.  Closes: bug#438114.
+  * kfreebsd/local-sysdeps.diff: update to revision 1995 (from glibc-bsd).
+  * any/submitted-rfc3484-sortv4.diff: new patch to allow bypassing RFC3484
+    rule 9 for IPv4 adresses.  Closes: bug#438179
+  * debian/debhelper.in/libc.preinst: change version check for NSS services to
+    (<< 2.6-1).
+  * debian/debhelper.in/libc.preinst: add proftpd to the list of services to
+    restart.  Closes: bug#435640.
+  * Bump shlibdeps version to 2.6.1-1 due to SPARC v9 transition.
+  * New Slovak debconf translation, by Ivan Masár.  Closes: bug#438576.
+  * any/local-ipv6-lookup.diff: new patch to do IPv6 lookups only when an 
+    IPv6 address is configured. Patch by Tollef Fog Heen and Andrew McMillan.
+    Closes: #435646.
+
+  [ Pierre Habouzit ]
+  * Document new libc.conf in ld.so.conf.d that puts /usr/local/lib front.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon,  3 Sep 2007 18:15:37 +0200
+
 glibc (2.6.1-1ubuntu9) gutsy; urgency=low
 
   * Rebuild using g++-4.2 (>= 4.2.1-5ubuntu4).
