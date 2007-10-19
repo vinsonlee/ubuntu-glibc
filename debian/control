@@ -8,7 +8,7 @@ Build-Depends: gettext, make (>= 3.80-1), dpkg-dev (>= 1.13.5), bzip2, file, qui
  mig (>= 1.3-2) [hurd-i386], hurd-dev (>= 20020608-1) [hurd-i386], gnumach-dev [hurd-i386],
  kfreebsd-kernel-headers [kfreebsd-i386 kfreebsd-amd64],
  binutils (>= 2.17cvs20070426-1),
- g++-4.2 (>= 4.2.1-5ubuntu4), g++-4.2-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc]
+ g++-4.2 (>= 4.2.2), g++-4.2-multilib [amd64 i386 kfreebsd-amd64 powerpc ppc64 s390 sparc]
 Build-Depends-Indep: perl, po-debconf (>= 1.0)
 Maintainer: Ubuntu Core developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
@@ -73,6 +73,7 @@ Architecture: amd64 arm armeb armel i386 lpia m32r m68k mips mipsel powerpc ppc6
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
+Suggests: debconf | debconf-2.0
 Depends: tzdata
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
@@ -145,6 +146,7 @@ Architecture: alpha ia64
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
+Suggests: debconf | debconf-2.0
 Depends: tzdata
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
@@ -217,6 +219,7 @@ Architecture: hurd-i386
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
+Suggests: debconf | debconf-2.0
 Depends: tzdata
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
@@ -289,6 +292,7 @@ Architecture: kfreebsd-i386 kfreebsd-amd64
 Section: libs
 Priority: required
 Provides: ${locale-compat:Depends}
+Suggests: debconf | debconf-2.0
 Depends: tzdata
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
@@ -597,6 +601,25 @@ Description: GNU C Library: Shared libraries [v9v optimized]
  Most notably, IBM's JDK. If you experience problems with such
  applications, you will need to remove this package.
 
+Package: libc6-sparcv9v2
+Architecture: sparc
+Section: libs
+Priority: extra
+Pre-Depends: libc6 (= ${Source-Version})
+Description: GNU C Library: Shared libraries [v9v2 optimized]
+ Contains the standard libraries that are used by nearly all programs on
+ the system. This package includes shared versions of the standard C
+ library and the standard math library, as well as many others.
+ .
+ This set of libraries is optimized for SUN4V Niagara 2 and derivative
+ processors. It only needs to be installed on machines using
+ SUN4V Niagara 2 and derivatives. If you install this on a machine without
+ such chips, it won't even be used.
+ .
+ WARNING: Some commercial programs do not work well with these libraries.
+ Most notably, IBM's JDK. If you experience problems with such
+ applications, you will need to remove this package.
+
 Package: libc6-sparc64b
 Architecture: sparc
 Section: base
@@ -631,6 +654,26 @@ Description: GNU C Library: 64bit Shared libraries for UltraSPARC [v9v optimized
  This set of libraries is optimized for SUN4V Niagara and derivative
  processors. It only needs to be installed on machines using
  SUN4V Niagara and derivatives. If you install this on a machine without
+ such chips, it won't even be used.
+ .
+ WARNING: Some commercial programs do not work well with these libraries.
+ Most notably, IBM's JDK. If you experience problems with such
+ applications, you will need to remove this package.
+
+Package: libc6-sparc64v2
+Architecture: sparc
+Section: base
+Priority: extra
+Depends: libc6 (= ${Source-Version}), lib64gcc1
+Conflicts: gcc-3.0 (<< 1:3.0.4ds3-11), libgcc1 (<< 1:3.0.4ds3-11), fakeroot (<< 0.4.5-2.7)
+Description: GNU C Library: 64bit Shared libraries for UltraSPARC [v9v2 optimized]
+ This package includes shared versions of the standard C library and the
+ standard math library, as well as many others. This is the 64bit version
+ of the library, meant for UltraSPARC systems.
+ .
+ This set of libraries is optimized for SUN4V Niagara 2 and derivative
+ processors. It only needs to be installed on machines using
+ SUN4V Niagara 2 and derivatives. If you install this on a machine without
  such chips, it won't even be used.
  .
  WARNING: Some commercial programs do not work well with these libraries.
