@@ -4,13 +4,12 @@
 # Yuri Kozlov <kozlov.y@gmail.com>, 2006.
 # Sergey Alyoshin <alyoshin.s@gmail.com>, 2007.
 #
-
 msgid ""
 msgstr ""
-"Project-Id-Version: glibc_2.5-0exp6_ru\n"
+"Project-Id-Version: glibc_2.6.1-3_ru\n"
 "Report-Msgid-Bugs-To: debian-glibc@lists.debian.org\n"
-"POT-Creation-Date: 2007-04-09 00:10+0200\n"
-"PO-Revision-Date: 2007-04-09 10:02+0300\n"
+"POT-Creation-Date: 2007-09-10 10:19+0200\n"
+"PO-Revision-Date: 2007-09-10 22:02+0300\n"
 "Last-Translator: Sergey Alyoshin <alyoshin.s@gmail.com>\n"
 "Language-Team: Russian <debian-l10n-russian@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -37,9 +36,9 @@ msgid ""
 "Locales are a framework to switch between multiple languages and allow users "
 "to use their language, country, characters, collation order, etc."
 msgstr ""
-"Локаль -- это инфраструктура для поддержки в системе нескольких языков; "
-"она позволяет пользователю настроить язык сообщений, страну, алфавит, "
-"порядок сортировки и т.п."
+"Локаль -- это инфраструктура для поддержки в системе нескольких языков; она "
+"позволяет пользователю настроить язык сообщений, страну, алфавит, порядок "
+"сортировки и т.п."
 
 #. Type: multiselect
 #. Description
@@ -50,8 +49,8 @@ msgid ""
 "useful for backwards compatibility with older systems and software."
 msgstr ""
 "Пожалуйста выберите создаваемые локали. Локаль UTF-8 должна быть выбрана по "
-"умолчанию, особенно при новой инсталляции. Другие кодировки локали могут быть "
-"полезны для обратной совместимости со старыми системами и программами."
+"умолчанию, особенно при новой инсталляции. Другие кодировки локали могут "
+"быть полезны для обратной совместимости со старыми системами и программами."
 
 #. Type: select
 #. Choices
@@ -74,7 +73,8 @@ msgid ""
 "generated locales."
 msgstr ""
 "Многие пакеты в Debian используют локали для отображения сообщений на языке "
-"пользователя. Вы можете выбрать системную локаль по умолчанию из созданных."
+"пользователя. Вы можете выбрать из созданных локалей системную локаль по "
+"умолчанию."
 
 #. Type: select
 #. Description
@@ -85,21 +85,65 @@ msgid ""
 "language, they will experience difficulties."
 msgstr ""
 "Эта настройка устанавливает язык по умолчанию для всей системы. Если это "
-"многопользовательская система, где не все пользователи говорят на "
-"выбранном языке по умолчанию, то у них возникнут трудности."
+"многопользовательская система, где не все пользователи говорят на выбранном "
+"языке по умолчанию, то у них возникнут трудности."
 
-#~ msgid ""
-#~ "Choose which locales to generate.  The selection will be saved to `/etc/"
-#~ "locale.gen', which you can also edit manually (you need to run `locale-"
-#~ "gen' afterwards)."
-#~ msgstr ""
-#~ "Выберите локали, которые нужно сгенерировать. Выбор будет сохранён в "
-#~ "файле `/etc/locale.gen', который вы можете редактировать вручную (после "
-#~ "редактирования нужно запустить `locale-gen')."
+#. Type: string
+#. Description
+#: ../debhelper.in/libc.templates:1001
+msgid "Services to restart for GNU libc library upgrade:"
+msgstr "Для обновления GNU libc должны быть перезапущены следующие сервисы:"
 
-#~ msgid ""
-#~ "When `All locales' is selected, /etc/locale.gen will be set as a symlink "
-#~ "to /usr/share/i18n/SUPPORTED."
-#~ msgstr ""
-#~ "Если выбрано `Все локали', то будет создана символическая ссылка /etc/"
-#~ "locale.gen, указывающая на /usr/share/i18n/SUPPORTED."
+#. Type: string
+#. Description
+#: ../debhelper.in/libc.templates:1001
+msgid ""
+"Running services and programs that are using NSS need to be restarted, "
+"otherwise they might not be able to do lookup or authentication any more "
+"(for services such as ssh, this can affect your ability to login). Please "
+"review the following space-separated list of init.d scripts for services to "
+"be restarted now, and correct it if needed."
+msgstr ""
+"Запущенные сервисы и программы, которые используют NSS, должны быть "
+"перезапущены, иначе они не будут способны выполнять поиск или аутентификацию "
+"(для таких сервисов, как ssh, это может повлиять на возможность входа в "
+"систему). Пожалуйста, просмотрите следующий разделённый пробелами список из "
+"скриптов init.d для сервисов, которые будут сейчас перезапущены и "
+"отредактируйте его при необходимости."
+
+#. Type: string
+#. Description
+#: ../debhelper.in/libc.templates:1001
+msgid ""
+"Note: restarting sshd/telnetd should not affect any existing connections."
+msgstr ""
+"Примечание: перезапуск sshd/telnetd не должен повлиять на какие-либо из "
+"существующих соединений."
+
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:2001
+msgid "Failure restarting some services for GNU libc upgrade"
+msgstr ""
+"Произошёл сбой при перезапуске некоторых сервисов для обновления GNU libc"
+
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:2001
+msgid ""
+"The following services could not be restarted for the GNU libc library "
+"upgrade:"
+msgstr ""
+"Следующие сервисы не могут быть перезапущены для обновления библиотеки GNU "
+"libc:"
+
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:2001
+msgid ""
+"You will need to start these manually by running '/etc/init.d/<service> "
+"start'."
+msgstr ""
+"Вам будет нужно запустить это вручную, для чего следует выполнить '/etc/init."
+"d/<сервис> start'."
+

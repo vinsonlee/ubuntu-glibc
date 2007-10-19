@@ -1,31 +1,26 @@
-# Turkish translation of locales.
-# This file is distributed under the same license as the locales package.
-# Erçin EKER <erc.caldera@gmx.net>, 2004,2007.
-#
 msgid ""
 msgstr ""
-"Project-Id-Version: locales\n"
+"Project-Id-Version: glibc 2.6.1-1\n"
 "Report-Msgid-Bugs-To: debian-glibc@lists.debian.org\n"
 "POT-Creation-Date: 2007-09-10 10:19+0200\n"
-"PO-Revision-Date: 2007-04-09 11:02+0300\n"
-"Last-Translator: Erçin EKER <ercin.eker@linux.org.tr>\n"
-"Language-Team: Türkçe <debian-l10n-turkish@lists.debian.org>\n"
+"PO-Revision-Date: 2007-09-10 11:42+0100\n"
+"Last-Translator: Ivan Masár <helix84@centrum.sk>\n"
+"Language-Team: Slovak <sk-i18n@lists.linux.sk>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms:  nplurals=1; plural=0;\n"
 
 #. Type: multiselect
 #. Choices
 #: ../debhelper.in/locales.templates:1001
 msgid "All locales"
-msgstr "Tüm yereller"
+msgstr "Všetky locales"
 
 #. Type: multiselect
 #. Description
 #: ../debhelper.in/locales.templates:1002
 msgid "Locales to be generated:"
-msgstr "Oluşturulacak yereller: "
+msgstr "Locales, ktoré sa majú vytvoriť:"
 
 #. Type: multiselect
 #. Description
@@ -34,9 +29,8 @@ msgid ""
 "Locales are a framework to switch between multiple languages and allow users "
 "to use their language, country, characters, collation order, etc."
 msgstr ""
-"Yerel (locale), kullanıcıların kullanmak istediği dil, ülke, karakter, "
-"sıralama şekli gibi dile özgü ayarlar arasında kolayca geçiş yapmasını "
-"sağlayan bir yapıdır."
+"Locales sú infraštruktúra na prepínanie medzi viacerými jazykmi a umožňujú "
+"používateľom používať ich jazyk, krajinu, poradie znakov atď."
 
 #. Type: multiselect
 #. Description
@@ -46,21 +40,21 @@ msgid ""
 "default, particularly for new installations. Other character sets may be "
 "useful for backwards compatibility with older systems and software."
 msgstr ""
-"Lütfen hangi yerellerin oluşturulacağını seçin. Yeni kurulum için UTF-8 "
-"yereller öntanımlı olarak seçilecektir. Diğer karakter setleri daha eski "
-"sistemler ve yazılımlar ile uyumluluk için yararlı olabilir."
+"Prosím zvoľte, ktoré locales sa majú vytvoriť. Štandardne by mali byť "
+"zvolené UTF-8 locales, zvlášť na nových inštaláciách. Iné znakové sady môžu "
+"byť užitočné pre spätnú kompatibilitu so staršími systémami a softvérom."
 
 #. Type: select
 #. Choices
 #: ../debhelper.in/locales.templates:2001
 msgid "None"
-msgstr "Hiçbiri"
+msgstr "žiadne"
 
 #. Type: select
 #. Description
 #: ../debhelper.in/locales.templates:2002
 msgid "Default locale for the system environment:"
-msgstr "Sistem için öntanımlı yerel:"
+msgstr "Štandarné locale systémového prostredia:"
 
 #. Type: select
 #. Description
@@ -70,9 +64,9 @@ msgid ""
 "for the user. You can choose a default locale for the system from the "
 "generated locales."
 msgstr ""
-"Çoğu Debian paketi mesajları göstermekte kullanacağı dili belirlemek için "
-"yerelleri kullanır. Oluşturulmak üzere seçtikleriniz arasından sistem için "
-"öntanımlı bir yerel seçebilirsiniz."
+"Mnohé balíky v Debiane používajú locales pre zobrazovanie textu v správnom "
+"jazyku používateľa. Z vytvorených locales môžete zvoliť štandardné locale "
+"systému."
 
 #. Type: select
 #. Description
@@ -82,15 +76,15 @@ msgid ""
 "is a multi-user system where not all users are able to speak the default "
 "language, they will experience difficulties."
 msgstr ""
-"Bu ayar, sisteminizin bütününde kullanılacak dili belirleyecektir. Eğer "
-"farklı dilleri konuşan kullanıcıların da bulunduğu çok kullanıcılı bir "
-"sistem çalıştırıyorsanız, bu kullanıcılar bazı zorluklarla karşılaşabilir. "
+"Týmto vyberiete štandardný jazyk pre celý systém. Ak je toto "
+"viacpoužívateľský systém, kde nie všetci používatelia hovoria štandarným "
+"jazykom, môžu mať ťažkosti."
 
 #. Type: string
 #. Description
 #: ../debhelper.in/libc.templates:1001
 msgid "Services to restart for GNU libc library upgrade:"
-msgstr ""
+msgstr "Služby, ktoré sa majú po aktualizácii knižnice GNU libc reštartovať:"
 
 #. Type: string
 #. Description
@@ -102,6 +96,11 @@ msgid ""
 "review the following space-separated list of init.d scripts for services to "
 "be restarted now, and correct it if needed."
 msgstr ""
+"Bežiace programy a služby, ktoré používajú NSS a majú sa reštartovať, inak "
+"by viac neboli schopné vykonávať vyhľadávanie a autentifikáciu (pri službách "
+"ako ssh toto môže mať vplyv na schopnosť prihlásiť sa). Prosím, skontrolujte "
+"nasledovný zoznam (položky sú oddelené medzerami) init.d skriptov služieb, "
+"ktoré je treba reštartovať a ak je to potrebné, opravte ho."
 
 #. Type: string
 #. Description
@@ -109,12 +108,14 @@ msgstr ""
 msgid ""
 "Note: restarting sshd/telnetd should not affect any existing connections."
 msgstr ""
+"Pozn.: reštartovanie sshd/telnetd by nemalo mať vplyv na už nadviazané "
+"spojenia."
 
 #. Type: error
 #. Description
 #: ../debhelper.in/libc.templates:2001
 msgid "Failure restarting some services for GNU libc upgrade"
-msgstr ""
+msgstr "Nepodarilo sa reštartovať niektoré služby pri aktualizácii GNU libc"
 
 #. Type: error
 #. Description
@@ -123,6 +124,8 @@ msgid ""
 "The following services could not be restarted for the GNU libc library "
 "upgrade:"
 msgstr ""
+"Nasledovné služby sa pri aktualizácii knižnice GNU libc nepodarilo sa "
+"reštartovať:"
 
 #. Type: error
 #. Description
@@ -131,12 +134,6 @@ msgid ""
 "You will need to start these manually by running '/etc/init.d/<service> "
 "start'."
 msgstr ""
+"Budete musieť tieto služby spustiť ručne pomocou „/etc/init.d/<service> "
+"start“."
 
-#~ msgid ""
-#~ "Choose which locales to generate.  The selection will be saved to `/etc/"
-#~ "locale.gen', which you can also edit manually (you need to run `locale-"
-#~ "gen' afterwards)."
-#~ msgstr ""
-#~ "Oluşturulacak yerelleri seçiniz.  Yapılan seçim '/etc/locale.gen' dosyası "
-#~ "içinde saklanacaktır. Daha sonra bu dosyayı elle değiştirebilirsiniz "
-#~ "(bunu yaptıktan sonra `locale-gen' komutunu çalıştırmanız gerekecektir)."

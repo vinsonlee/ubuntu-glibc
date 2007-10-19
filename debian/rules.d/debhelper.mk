@@ -113,9 +113,9 @@ endif
 	# an unescaped regular expression.  ld.so must be executable;
 	# libc.so and NPTL's libpthread.so print useful version
 	# information when executed.
-	find debian/$(curpass) -type f \( -regex '.*lib[0-9]*/ld.*so' \
-		-o -regex '.*lib[0-9]*/libpthread-.*so' \
-		-o -regex '.*lib[0-9]*/libc-.*so' \) \
+	find debian/$(curpass) -type f \( -regex '.*/ld.*so' \
+		-o -regex '.*/libpthread-.*so' \
+		-o -regex '.*/libc-.*so' \) \
 		-exec chmod a+x '{}' ';'
 	dh_makeshlibs -X/usr/lib/debug -p$(curpass) -V "$(call xx,shlib_dep)"
 
@@ -141,6 +141,9 @@ endif
 		dh_shlibdeps -p$(curpass) ; \
 	fi
 	dh_gencontrol -p$(curpass) -- $($(curpass)_control_flags)
+	if [ $(curpass) = nscd ] ; then \
+		sed -i -e "s/\(Depends:.*libc[0-9.]\+\)-[a-z0-9]\+/\1/" debian/nscd/DEBIAN/control ; \
+	fi
 	dh_md5sums -p$(curpass)
 	dh_builddeb -p$(curpass)
 
