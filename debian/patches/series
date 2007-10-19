@@ -40,6 +40,7 @@ locale/fix-C-first_weekday.diff -p0
 
 amd64/local-biarch.diff 
 amd64/local-linuxthreads-gscope.diff -p0
+amd64/local-x86_64_bits_sigcontext.diff
 
 #arm/cvs-gcc4-inline.diff -p0
 #arm/local-ioperm.diff -p0
@@ -65,15 +66,17 @@ hppa/local-private-futex-lamont.diff -p0
 #hurd-i386/local-msg-nosignal.diff -p0
 #hurd-i386/local-tls.diff
 #hurd-i386/local-tls-support.diff -p0
-#hurd-i386/submitted-sigsuspend-nocancel.diff -p0
+#hurd-i386/cvs-sigsuspend-nocancel.diff -p0
 #hurd-i386/submitted-ioctl-decode-argument.diff -p0
 #hurd-i386/submitted-libc_once.diff -p0
 #hurd-i386/submitted-stat.diff -p0
 #hurd-i386/submitted-sysvshm.diff
 #hurd-i386/submitted-trivial.diff -p0
 #hurd-i386/submitted-ioctl-unsigned-size_t.diff -p0
-#hurd-i386/submitted-lock-intern.diff
-#hurd-i386/submitted-ECANCELED.diff
+#hurd-i386/cvs-lock-intern.diff
+#hurd-i386/cvs-ECANCELED.diff
+#hurd-i386/cvs-ioctl-delay.diff -p0
+#hurd-i386/submitted-IPV6_PKTINFO.diff 
 
 i386/local-biarch.diff 
 i386/local-cmov.diff -p0
@@ -100,7 +103,9 @@ sparc/local-undefined-registers.diff -p0
 #sparc/submitted-timing.diff 
 sparc/local-pthread-shlib.diff -p1
 sparc/submitted-v9dirs.diff -p0
+sparc/submitted-v9v2.diff -p0
 
+#all/local-alias-UTF-8.diff
 #all/local-pthread-manpages.diff
 #all/local-remove-manual.diff
 #all/local-ru_RU.diff 
@@ -108,6 +113,7 @@ sparc/submitted-v9dirs.diff -p0
 
 any/cvs-ld_library_path.diff
 any/cvs-initfini.diff -p1
+any/cvs-posix-glob.diff
 any/local-notls.diff -p0
 any/local-asserth-decls.diff -p0
 # any/local-base.diff -p0	#  g: suspended
@@ -119,6 +125,7 @@ any/local-forward-backward-collation.diff
 any/local-gcc4-wcstol_l.diff 
 # any/local-globfree-clear.diff -p1	#  g: suspended
 any/local-iconv-fix-trampoline.diff 
+#any/local-ipv6-lookup.diff -p1
 any/local-ld-multiarch.diff -p0
 any/local-ldd.diff -p0
 any/local-ldso-disable-hwcap.diff -p0
@@ -154,6 +161,7 @@ any/submitted-longdouble.diff -p0
 any/submitted-rfc3484-sortv4.diff -p0
 any/submitted-strfry.diff -p0
 any/submitted-strtok.diff -p0
+any/submitted-regex-collate.diff -p1
 any/local-disable-nscd-host-caching.diff
 any/local-2.6.19-linux-libc-dev.diff -p0
 any/submitted-fileops-and-signals.diff
