@@ -1,3 +1,9 @@
+glibc (2.6.1-6ubuntu2) hardy; urgency=low
+
+  * Reapply any/local-ipv6-sanity.diff, lost when merging 2.6. LP: #156720.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 24 Oct 2007 18:15:43 +0200
+
 glibc (2.6.1-6ubuntu1) hardy; urgency=low
 
   [Fabio M. Di Nitto]
@@ -1188,6 +1194,19 @@ glibc (2.5-0ubuntu12) feisty; urgency=low
   * Set Ubuntu maintainer address.
 
  -- Matthias Klose <doko@ubuntu.com>  Wed, 21 Mar 2007 08:16:00 +0100
+
+glibc (2.5-0ubuntu14) feisty; urgency=low
+
+  * Twiddle the diff a little so it actually applies.
+
+ -- Tollef Fog Heen <tfheen@ubuntu.com>  Tue,  3 Apr 2007 21:34:51 +0200
+
+glibc (2.5-0ubuntu13) feisty; urgency=low
+
+  * debian/patches/any/local-ipv6-sanity.diff: Only do AAAA lookups if we
+    have an interface with better than link-local addresses available.
+
+ -- Tollef Fog Heen <tfheen@ubuntu.com>  Tue,  3 Apr 2007 14:11:26 +0200
 
 glibc (2.5-0ubuntu11) feisty; urgency=low
 
