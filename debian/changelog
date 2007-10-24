@@ -1,3 +1,11 @@
+glibc (2.6.1-1ubuntu10) gutsy-proposed; urgency=low
+
+  * Reapply any/local-ipv6-sanity.diff, lost when merging 2.6. LP: #156720.
+    Only do AAAA lookups if we have an interface with better than link-local
+    addresses available.
+	
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 24 Oct 2007 18:46:56 +0200
+
 glibc (2.6.1-1ubuntu9) gutsy; urgency=low
 
   * Rebuild using g++-4.2 (>= 4.2.1-5ubuntu4).
@@ -1024,6 +1032,19 @@ glibc (2.5-1) unstable; urgency=low
     Closes: #418006.
 
  -- Clint Adams <schizo@debian.org>  Mon, 09 Apr 2007 16:17:20 -0400
+
+glibc (2.5-0ubuntu14) feisty; urgency=low
+
+  * Twiddle the diff a little so it actually applies.
+
+ -- Tollef Fog Heen <tfheen@ubuntu.com>  Tue,  3 Apr 2007 21:34:51 +0200
+
+glibc (2.5-0ubuntu13) feisty; urgency=low
+
+  * debian/patches/any/local-ipv6-sanity.diff: Only do AAAA lookups if we
+    have an interface with better than link-local addresses available.
+
+ -- Tollef Fog Heen <tfheen@ubuntu.com>  Tue,  3 Apr 2007 14:11:26 +0200
 
 glibc (2.5-0ubuntu12) feisty; urgency=low
 
