@@ -3,13 +3,6 @@
 # libc_extra_config_options = $(extra_config_options) --without-__thread --disable-sanity-checks
 libc_extra_cflags = -mno-tls-direct-seg-refs
 
-# NPTL requires at least i486 assembly.  We don't need to take
-# special measures for i386 systems, since Debian kernel images now
-# emulate the missing instructions on the i386.
-nptl_configure_target=i486-linux
-nptl_configure_build=i486-linux
-nptl_extra_cflags = -march=i486 -mtune=i686 -g -O3
-
 # We use -march=i686 and glibc's i686 routines use cmov, so require it.
 # A Debian-local glibc patch adds cmov to the search path.
 # The optimized libraries also use NPTL!
@@ -33,7 +26,7 @@ xen_rtlddir = /lib
 xen_slibdir = /lib/tls/i686/nosegneg
 xen_extra_config_options = $(extra_config_options) --disable-profile
 
-define xen_extra_install
+define xen_extra_pkg_install
 mkdir -p debian/libc6-xen/etc/ld.so.conf.d
 echo '# This directive teaches ldconfig to search in nosegneg subdirectories' >  debian/libc6-xen/etc/ld.so.conf.d/xen.conf
 echo '# and cache the DSOs there with extra bit 0 set in their hwcap match'   >> debian/libc6-xen/etc/ld.so.conf.d/xen.conf

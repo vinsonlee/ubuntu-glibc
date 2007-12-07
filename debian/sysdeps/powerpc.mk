@@ -19,17 +19,3 @@ cp -af debian/tmp-ppc64/usr/include/powerpc64-linux-gnu/gnu/stubs-64.h \
 mkdir -p debian/libc6-dev-ppc64/usr/include/powerpc64-linux-gnu
 endef
 
-#define libc6-dev_extra_pkg_install
-#mkdir -p debian/libc6-dev/usr/ppu
-#ln -sf ../include debian/libc6-dev/usr/ppu/include
-#endef
-
-#define libc6_extra_pkg_install
-#mkdir -p debian/libc6/usr/ppu
-#ln -sf ../lib debian/libc6/usr/ppu/lib
-#endef
-
-#define libc6-ppc64_extra_pkg_install
-#mkdir -p debian/libc6-ppc64/usr/ppu
-#ln -sf ../lib64 debian/libc6-ppc64/usr/ppu/lib64
-#endef
