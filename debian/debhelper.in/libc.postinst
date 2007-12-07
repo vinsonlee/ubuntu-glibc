@@ -311,19 +311,11 @@ then
 	fi # end upgrading and $preversion lt 2.3.5-1
     fi # Upgrading
 
-    # Ubuntu change.  Do not do kernel version detection at startup.
-    update-rc.d -f glibc.sh remove >/dev/null 2>&1
-
-#    # DO NOT FOLLOW THIS EXAMPLE IN OTHER PACKAGES
-#     updatercd glibc.sh start 01 S .
-#     if [ -x /usr/sbin/invoke-rc.d ]; then
-#	invoke-rc.d glibc.sh start
-#     else
-#	/etc/init.d/glibc.sh 2>/dev/null || true
-#     fi
-
     # Generate cache file /usr/lib/gconv/gconv-modules.cache
     iconvconfig || true
+
+    # Ubuntu change.  Do not do kernel version detection at startup.
+    update-rc.d -f glibc.sh remove >/dev/null 2>&1
 
 fi
 

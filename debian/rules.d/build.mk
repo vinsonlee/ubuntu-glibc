@@ -33,6 +33,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	echo "LIBGD = no"			>> $(DEB_BUILDDIR)/configparms
 	echo "bindir = $(bindir)"		>> $(DEB_BUILDDIR)/configparms
 	echo "datadir = $(datadir)"		>> $(DEB_BUILDDIR)/configparms
+	echo "localedir = $(localedir)" 	>> $(DEB_BUILDDIR)/configparms
 	echo "sysconfdir = $(sysconfdir)" 	>> $(DEB_BUILDDIR)/configparms
 	echo "libexecdir = $(libexecdir)" 	>> $(DEB_BUILDDIR)/configparms
 	echo "rootsbindir = $(rootsbindir)" 	>> $(DEB_BUILDDIR)/configparms
@@ -68,6 +69,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		CC="$(call xx,CC)" \
 		CXX="$(call xx,CXX)" \
 		AUTOCONF=false \
+		MAKEINFO=: \
 		$(CURDIR)/$(DEB_SRCDIR)/configure \
 		--host=$(call xx,configure_target) \
 		--build=$$configure_build --prefix=/usr --without-cvs \
@@ -110,7 +112,7 @@ $(stamp)check_%: $(stamp)build_%
 	  echo -n "Testsuite started: " | tee -a $(log_test); \
 	  date --rfc-2822 | tee -a $(log_test); \
 	  echo "--------------" | tee -a $(log_test); \
-	  $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) -k check 2>&1 | tee -a $(log_test); \
+	  TIMEOUTFACTOR="$(TIMEOUTFACTOR)" $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) -k check 2>&1 | tee -a $(log_test); \
 	  echo "--------------" | tee -a $(log_test); \
 	  echo -n "Testsuite ended: " | tee -a $(log_test); \
 	  date --rfc-2822 | tee -a $(log_test); \
@@ -131,37 +133,7 @@ $(stamp)install_%: $(stamp)check_%
 	    objdir=$(DEB_BUILDDIR) install_root=$(CURDIR)/debian/tmp-$(curpass) \
 	    localedata/install-locales; \
 	  rm -rf $(CURDIR)/debian/locales-all/usr/lib; \
-	  install -d $(CURDIR)/debian/locales-all/usr/lib; \
-	  mv $(CURDIR)/debian/tmp-libc/usr/lib/locale $(CURDIR)/debian/locales-all/usr/lib/locales-all; \
-	   (cd $(DEB_SRCDIR)/manual && texi2html -split_chapter libc.texinfo); \
-	fi
-
-	# Remove ld.so from optimized libraries
-	if echo $(call xx,slibdir) | grep -q "/lib/.\+" ; then \
-		rm -f debian/tmp-$(curpass)/$(call xx,slibdir)/ld*.so* ; \
-	fi
-
-	# /usr/include/nptl and /usr/lib/nptl.  It assumes tmp-libc is already installed.
-	if [ $(curpass) = nptl ]; then \
-	  for file in `find debian/tmp-$(curpass)/usr/include -type f | sed 's/^debian\/tmp-nptl\///'`; do \
-	    if ! [ -f debian/tmp-$(curpass)/$$file ] || \
-	       ! cmp -s debian/tmp-$(curpass)/$$file debian/tmp-libc/$$file; then \
-	      target=`echo $$file | sed 's/^usr\/include\///'`; \
-	      install -d `dirname debian/tmp-libc/usr/include/nptl/$$target`; \
-	      install -m 644 debian/tmp-$(curpass)/usr/include/$$target \
-			     debian/tmp-libc/usr/include/nptl/$$target; \
-	    fi; \
-	  done; \
-	  install -d debian/tmp-libc/usr/lib/nptl; \
-	  for file in libc.a libc_nonshared.a libpthread.a libpthread_nonshared.a librt.a ; do \
-	    install -m 644 debian/tmp-$(curpass)/usr/lib/$$file \
-			   debian/tmp-libc/usr/lib/nptl/$$file; \
-	  done; \
-	  for file in libc.so libpthread.so; do \
-	    sed 's/\/usr\/lib\//\/usr\/lib\/nptl\//g' < debian/tmp-$(curpass)/usr/lib/$$file \
-	      > debian/tmp-libc/usr/lib/nptl/$$file; \
-	  done; \
-	  ln -sf /lib/tls/librt.so.1 debian/tmp-libc/usr/lib/nptl/; \
+          (cd $(DEB_SRCDIR)/manual && texi2html -split_chapter libc.texinfo); \
 	fi
 
 	# Create the multidir directories, and the configuration file in /etc/ld.so.conf.d

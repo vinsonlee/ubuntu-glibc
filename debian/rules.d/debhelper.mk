@@ -19,8 +19,6 @@ $(stamp)binaryinst_$(libc)-pic:: $(stamp)debhelper
 # Some per-package extra files to install.
 define $(libc)_extra_debhelper_pkg_install
 	install --mode=0644 $(DEB_SRCDIR)/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/changelog
-#	install --mode=0644 $(DEB_SRCDIR)/linuxthreads/README debian/$(curpass)/usr/share/doc/$(curpass)/README.linuxthreads
-#	install --mode=0644 $(DEB_SRCDIR)/linuxthreads/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/ChangeLog.linuxthreads
 	install --mode=0644 $(DEB_SRCDIR)/nptl/ChangeLog debian/$(curpass)/usr/share/doc/$(curpass)/ChangeLog.nptl
 	sed -e "/KERNEL_VERSION_CHECK/r debian/script.in/kernelcheck.sh" \
 		debian/local/etc_init.d/glibc.sh | \
@@ -176,7 +174,6 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_UDEB_PACKAGES)): $(stamp)debhelper
 
 OPT_PASSES = $(filter-out libc, $(GLIBC_PASSES))
 OPT_DIRS = $(foreach pass,$(OPT_PASSES),$($(pass)_slibdir) $($(pass)_libdir))
-NPTL = $(filter nptl,$(GLIBC_PASSES))
 
 debhelper: $(stamp)debhelper
 $(stamp)debhelper:
@@ -239,26 +236,8 @@ $(stamp)debhelper:
 	  done ; \
 	done
 
-	# We use libc-otherbuild for this, since it's just a special case of
-	# an optimised library that needs to wind up in /lib/tls
-	# FIXME: We do not cover the case of processor optimised 
-	# nptl libraries, like /lib/i686/tls
-	# We probably don't care for now.
-	for x in $(NPTL); do \
-	  z=debian/$(libc).install; \
-	  cat debian/debhelper.in/libc-otherbuild.install >>$$z; \
-	  sed -e "s#TMPDIR#debian/tmp-$$x#g" -i $$z; \
-	  sed -e "s#DEB_SRCDIR#$(DEB_SRCDIR)#g" -i $$z; \
-	  sed -e "s#LIBC-FLAVOR#$(libc)#g" -i $$z; \
-	  sed -e "s#FLAVOR#nptl#g" -i $$z; \
-	  sed -e "s#SLIBDIR#/lib/tls#g" -i $$z; \
-	  case $$z in \
-	    *.install) sed -e "s/^#.*//g" -i $$z ;; \
-	  esac; \
-	done
-
-	# Substitute __SUPPORTED_LOCALES__.
-	perl -i -pe 'BEGIN {undef $$/; open(IN, "debian/tmp-libc/usr/share/i18n/SUPPORTED"); $$j=<IN>;} s/__SUPPORTED_LOCALES__/$$j/g;' debian/locales.config
+	# Substitute __PROVIDED_LOCALES__.
+	perl -i -pe 'BEGIN {undef $$/; open(IN, "debian/tmp-libc/usr/share/i18n/SUPPORTED"); $$j=<IN>;} s/__PROVIDED_LOCALES__/$$j/g;' debian/locales.config debian/locales.postinst
 
 	# Generate common substvars files.
 	echo "locale:Depends=$(shell perl debian/debver2localesdep.pl $(LOCALES_DEP_VER))" > tmp.substvars
@@ -294,5 +273,7 @@ debhelper-clean:
 	rm -f debian/*.lintian
 	rm -f debian/*.linda
 	rm -f debian/*.NEWS
+	rm -f debian/*.README
+	rm -f debian/*.triggers
 
 	rm -f $(stamp)binaryinst*
