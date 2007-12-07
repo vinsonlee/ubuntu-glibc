@@ -5,10 +5,10 @@ sparc64_add-ons = nptl $(add-ons)
 sparc64_configure_target=sparc64-linux
 sparc64_CC = $(BUILD_CC) -m64
 sparc64_CXX = $(BUILD_CXX) -m64
+libc6-sparc64_shlib_dep = libc6-sparc64 (>= $(shlib_dep_ver))
 sparc64_extra_cflags = -g -O3
 sparc64_extra_config_options = $(extra_config_options) --disable-profile
 sparc64_includedir = /usr/include/sparc64-linux-gnu
-libc6-sparc64_shlib_dep = libc6-sparc64 (>= $(shlib_dep_ver))
 sparc64_slibdir = /lib64
 sparc64_libdir = /usr/lib64
 
@@ -74,7 +74,6 @@ sparcv9v_extra_cflags = -O3 -mtune=niagara
 sparcv9v_extra_config_options = $(extra_config_options) --disable-profile --with-tls --with-__thread
 sparcv9v_rtlddir = /lib
 sparcv9v_slibdir = /lib/v9v
-
 
 GLIBC_PASSES += sparcv9v2
 DEB_ARCH_REGULAR_PACKAGES += libc6-sparcv9v2

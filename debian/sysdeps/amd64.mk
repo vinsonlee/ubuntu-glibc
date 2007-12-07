@@ -1,4 +1,4 @@
-libc_add-ons = nptl $(add-ons)
+libc_add_ons = nptl $(add-ons)
 libc_extra_cflags = -O3 -g
 libc_slibdir = /lib
 libc_libdir = /usr/lib
@@ -26,19 +26,18 @@ i386_MAKEFLAGS = MAKEFLAGS="gconvdir=/usr/lib32/gconv"
 i386_extra_cflags = -march=i686 -mtune=generic -g -O3
 i386_extra_config_options = $(extra_config_options) --disable-profile
 i386_includedir = /usr/include/i486-linux-gnu
-#i386_rtlddir = /lib
 i386_slibdir = /lib32
 i386_libdir = /usr/lib32
 
 define libc6-dev-i386_extra_pkg_install
 mkdir -p debian/libc6-dev-i386/usr/include/gnu
 cp -af debian/tmp-i386/usr/include/i486-linux-gnu/gnu/stubs-32.h \
-        debian/libc6-dev-i386/usr/include/gnu
+	debian/libc6-dev-i386/usr/include/gnu
 mkdir -p debian/libc6-dev-i386/usr/include/sys
 cp -af debian/tmp-i386/usr/include/i486-linux-gnu/sys/elf.h \
-        debian/libc6-dev-i386/usr/include/sys
+	debian/libc6-dev-i386/usr/include/sys
 cp -af debian/tmp-i386/usr/include/i486-linux-gnu/sys/vm86.h \
-        debian/libc6-dev-i386/usr/include/sys
+	debian/libc6-dev-i386/usr/include/sys
 mkdir -p debian/libc6-dev-i386/usr/include/i486-linux-gnu
 endef
 
