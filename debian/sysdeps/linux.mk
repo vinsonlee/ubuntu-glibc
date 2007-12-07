@@ -2,7 +2,6 @@ GLIBC_OVERLAYS ?= $(shell ls glibc-linuxthreads* glibc-ports* glibc-libidn*)
 MIN_KERNEL_SUPPORTED := 2.6.8
 libc = libc6
 
-# In Ubuntu, we only do NPTL.
 # NPTL Config
 threads = yes
 libc_add-ons = nptl $(add-ons)
@@ -20,14 +19,6 @@ endif
 
 # Minimum Kernel supported
 with_headers = --with-headers=$(shell pwd)/debian/include --enable-kernel=$(call xx,MIN_KERNEL_SUPPORTED)
-
-# NPTL Config
-nptl_add-ons = nptl $(add-ons)
-nptl_extra_config_options = $(extra_config_options) --disable-profile
-nptl_extra_cflags = -g1 -O3
-nptl_rtlddir = /lib
-nptl_slibdir = /lib/tls
-nptl_MIN_KERNEL_SUPPORTED = 2.6.0
 
 KERNEL_HEADER_DIR = $(stamp)mkincludedir
 $(stamp)mkincludedir:
