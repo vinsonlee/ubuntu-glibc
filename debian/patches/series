@@ -3,7 +3,7 @@ locale/fix-C-first_weekday.diff -p0
 amd64/local-biarch.diff 
 amd64/local-clone.diff -p0
 amd64/local-linuxthreads-gscope.diff -p0
-amd64/local-x86_64_bits_sigcontext.diff
+#amd64/local-x86_64_bits_sigcontext.diff
 
 hppa/submitted-atomic_h.diff -p0
 hppa/submitted-fadvise64_64.diff -p0

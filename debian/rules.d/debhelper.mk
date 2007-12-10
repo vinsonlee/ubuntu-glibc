@@ -273,7 +273,7 @@ debhelper-clean:
 	rm -f debian/*.lintian
 	rm -f debian/*.linda
 	rm -f debian/*.NEWS
-	rm -f debian/*.README
+	rm -f debian/*.README.Debian
 	rm -f debian/*.triggers
 
 	rm -f $(stamp)binaryinst*
