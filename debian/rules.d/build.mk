@@ -26,6 +26,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	echo "CC = $(call xx,CC)"		>> $(DEB_BUILDDIR)/configparms
 	echo "CXX = $(call xx,CXX)"		>> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CC = $(BUILD_CC)"		>> $(DEB_BUILDDIR)/configparms
+	echo "BUILD_CXX = $(BUILD_CXX)"		>> $(DEB_BUILDDIR)/configparms
 	echo "CFLAGS = $(HOST_CFLAGS)"		>> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CFLAGS = $(BUILD_CFLAGS)" 	>> $(DEB_BUILDDIR)/configparms
 	echo "BASH := /bin/bash"		>> $(DEB_BUILDDIR)/configparms
@@ -133,7 +134,7 @@ $(stamp)install_%: $(stamp)check_%
 	    objdir=$(DEB_BUILDDIR) install_root=$(CURDIR)/debian/tmp-$(curpass) \
 	    localedata/install-locales; \
 	  rm -rf $(CURDIR)/debian/locales-all/usr/lib; \
-          (cd $(DEB_SRCDIR)/manual && texi2html -split_chapter libc.texinfo); \
+	  (cd $(DEB_SRCDIR)/manual && texi2html -split_chapter libc.texinfo); \
 	fi
 
 	# Create the multidir directories, and the configuration file in /etc/ld.so.conf.d
