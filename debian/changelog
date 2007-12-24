@@ -1,3 +1,68 @@
+glibc (2.7-5ubuntu1) hardy; urgency=low
+
+  * Resynchronise with Debian. Remaining changes:
+    - Packaging:
+      + External tzdata
+      + Use external locale information
+      + Addition of Niagara and Niagara2 optimised libraries
+      + GFDL Documentation added back in.
+      + Transition from /usr/include/ppc64-linux-gnu to powerpc64-linux-gnu
+      + Use dpkg triggers for ldconfig
+      + Do not die if extra libc libraries or symlinks found
+      + Do not do a test run of nscd when starting
+      + Only apply patches we actually use in Ubuntu
+      + Use /lib and /usr/lib for amd64
+      + amd64 biarch is i686, not i486.
+      + Non-optimised i386 glibc is Xen-friendly.
+      + Support sparcv9v, v9v2, 64b, 64v, 64v2
+      + Add support for lpia.
+    - Patches:
+      + any/local-ipv6-sanity
+      + i386/local-clone
+      + amd64/local-clone
+      + sparc/submitted-v9v2
+      + hppa/hppalll
+  * Debian any/cvs-vfscanf patch fixes LP: #178045. Actually add it to
+    debian/patches/series (forgotten in Debian).
+  * Stop setting MAKEINFO to :, which prevented the info documentation being
+    built. See also 2.5-0ubuntu3.
+  * any/submitted-rfc3484-sortv4: Return to disabling RFC3484 s6 rule 9 by
+    default. As requested by Ubuntu sysadmins, we want this regardless of
+    the Debian technical committee's decision.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 24 Dec 2007 09:55:32 +0000
+
+glibc (2.7-5) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * Moved merged parts of patches/any/submitted-sched_h.diff into
+    patches/any/cvs-sched_h.diff.
+  * patches/any/cvs-ether_line.diff: new patch from upstream to fix
+    ether_line().  Closes: bug#453899.
+  * patches/any/cvs-vfscanf.diff: new patch from upstream to fix
+    crash when %as is used with sscanf().  Closes: bug#453408.
+  * debian/rules: also set CXX when cross-compiling.
+  * patches/any/submitted-malloc_h.diff: removed, replaced by
+    patches/any/cvs-wchar_h.diff.
+  * debian/sysdeps/depflags.pl: conflict against tzdata (<< 2007j-2) as
+    etch now have version 2007j-1etch1.  Closes: bug#455783.
+  * debian/sysdeps/depflags.pl: suggests libc6-i686 on i386 architecture.
+    Closes: bug#455603.
+  * any/submitted-rfc3484-labels.diff: new patch to fix RFC 3484 default
+    label ordering.  Closes: bug#456779.
+  * patches/alpha/local-dl-procinfo.diff: add missing part.  Closes:
+    bug#456260.
+
+  [ Petr Salinger]
+  * kfreebsd/local-sysdeps.diff: update to revision 2082 (from glibc-bsd).
+  * any/cvs-fchmodat.diff: properly declare as stub - needed by GNU/kFreeBSD.
+
+  [ Samuel Thibault]
+  * patches/hurd-i386/submitted-ioctl-unsigned-size_t.diff: update to also
+    handle unsigned char/int/short/long and ssize_t.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 19 Dec 2007 01:22:06 +0100
+
 glibc (2.7-4ubuntu1) hardy; urgency=low
 
   * Merge with Debian; remaining changes (see 2.7-1ubuntu1)
@@ -12,8 +77,6 @@ glibc (2.7-4) unstable; urgency=low
     Closes: bug#453515.
   * debian/debhelper.in/locales.README: rename into locales.README.Debian.
   * debian/debhelper/in/locales.NEWS: fix a typo.  Closes: bug#453613.
-  * debian/patches/any/submitted-rfc3484-sortv4.diff: default to NOT
-    sorting IPv4 addresses.  Closes: bug#438179.
   * Update any/submitted-sched_h.diff: allow compilation of <sched.h> with
     -pedantic.  Closes: bug#453687.
   * Fix a typo in debian/sysdeps/alpha.mk.  Closes: bug#452890.
