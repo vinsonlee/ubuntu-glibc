@@ -82,8 +82,14 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 $(patsubst %,build_%,$(GLIBC_PASSES)) :: build_% : $(stamp)build_%
 $(stamp)build_%: $(stamp)configure_%
 	@echo Building $(curpass)
-	$(call logme, -a $(log_build), $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS))
+	$(call logme, -a $(log_build), $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS))
 	$(call logme, -a $(log_build), echo "---------------" ; echo -n "Build ended: " ; date --rfc-2822)
+	if [ $(curpass) = libc ]; then \
+	  $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) \
+	    objdir=$(DEB_BUILDDIR) install_root=$(CURDIR)/build-tree/locales-all \
+	    localedata/install-locales; \
+	  tar --use-compress-program /usr/bin/lzma --owner root --group root -cf $(CURDIR)/build-tree/locales-all/supported.tar.lzma -C $(CURDIR)/build-tree/locales-all/usr/lib/locale .; \
+	fi
 	touch $@
 
 $(patsubst %,check_%,$(GLIBC_PASSES)) :: check_% : $(stamp)check_%
@@ -101,9 +107,9 @@ $(stamp)check_%: $(stamp)build_%
 	elif grep -q "cpu model.*SiByte SB1" /proc/cpuinfo ; then \
 	  echo "MIPS SB1 platform detected, skipping tests."; \
 	  echo "MIPS SB1 platform detected, skipping tests." > $(log_test) ; \
-	elif uname -m | grep -q "^arm" && uname -r | grep -q "2\.6\.2[1-2]" ; then \
-	  echo "ARM machine running a 2.6.21/22 kernel detected, tests have been skipped."; \
-	  echo "ARM machine running a 2.6.21/22 kernel detected, tests have been skipped." > $(log_test) ; \
+	elif uname -m | grep -q "^arm" && uname -r | grep -q "2\.6\.2[1-4]" ; then \
+	  echo "ARM machine running a 2.6.21-24 kernel detected, tests have been skipped."; \
+	  echo "ARM machine running a 2.6.21-24 kernel detected, tests have been skipped." > $(log_test) ; \
 	elif [ $(call xx,RUN_TESTSUITE) != "yes" ]; then \
 	  echo "Testsuite disabled for $(curpass), skipping tests."; \
 	  echo "Tests have been disabled." > $(log_test) ; \
@@ -112,7 +118,7 @@ $(stamp)check_%: $(stamp)build_%
 	  echo -n "Testsuite started: " | tee -a $(log_test); \
 	  date --rfc-2822 | tee -a $(log_test); \
 	  echo "--------------" | tee -a $(log_test); \
-	  TIMEOUTFACTOR="$(TIMEOUTFACTOR)" $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) -k check 2>&1 | tee -a $(log_test); \
+	  TIMEOUTFACTOR="$(TIMEOUTFACTOR)" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) -k check 2>&1 | tee -a $(log_test); \
 	  echo "--------------" | tee -a $(log_test); \
 	  echo -n "Testsuite ended: " | tee -a $(log_test); \
 	  date --rfc-2822 | tee -a $(log_test); \
@@ -126,13 +132,10 @@ $(stamp)install_%: $(stamp)check_%
 	$(MAKE) -C $(DEB_BUILDDIR) \
 	  install_root=$(CURDIR)/debian/tmp-$(curpass) install
 
+	# Generate the list of SUPPORTED locales
 	if [ $(curpass) = libc ]; then \
 	  $(MAKE) -f debian/generate-supported.mk IN=$(DEB_SRCDIR)/localedata/SUPPORTED \
 	    OUT=debian/tmp-$(curpass)/usr/share/i18n/SUPPORTED; \
-	  $(MAKE) -C $(DEB_BUILDDIR) -j $(NJOBS) \
-	    objdir=$(DEB_BUILDDIR) install_root=$(CURDIR)/debian/tmp-$(curpass) \
-	    localedata/install-locales; \
-	  rm -rf $(CURDIR)/debian/locales-all/usr/lib; \
 	  (cd $(DEB_SRCDIR)/manual && texi2html -split_chapter libc.texinfo); \
 	fi
 
@@ -143,7 +146,7 @@ $(stamp)install_%: $(stamp)check_%
 	  os=`sed '/^ *config-os *=/!d;s/.*= *//g' $(DEB_BUILDDIR)/config.make`; \
 	  triplet="$$machine-$$os"; \
 	  mkdir -p debian/tmp-$(curpass)/lib/$$triplet debian/tmp-$(curpass)/usr/lib/$$triplet; \
-	  conffile="debian/tmp-$(curpass)/etc/ld.so.conf.d/$$triplet"; \
+	  conffile="debian/tmp-$(curpass)/etc/ld.so.conf.d/$$triplet.conf"; \
 	  echo "# Multiarch support" > $$conffile; \
 	  echo /lib/$$triplet >> $$conffile; \
 	  echo /usr/lib/$$triplet >> $$conffile; \
@@ -158,3 +161,5 @@ $(stamp)install_%: $(stamp)check_%
 
 	$(call xx,extra_install)
 	touch $@
+
+.NOTPARALLEL: $(patsubst %,install_%,$(GLIBC_PASSES))
