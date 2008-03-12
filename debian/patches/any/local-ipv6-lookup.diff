@@ -1,8 +1,6 @@
-diff --git a/sysdeps/posix/getaddrinfo.c b/sysdeps/posix/getaddrinfo.c
-index adb3c4f..d12835c 100644
---- a/sysdeps/posix/getaddrinfo.c
-+++ b/sysdeps/posix/getaddrinfo.c
-@@ -263,7 +263,7 @@ extern service_user *__nss_hosts_database attribute_hidden;
+--- sysdeps/posix/getaddrinfo.c~	2008-03-06 16:51:23.793167849 +0100
++++ sysdeps/posix/getaddrinfo.c	2008-03-06 17:06:36.696938795 +0100
+@@ -263,7 +263,7 @@
  static int
  gaih_inet (const char *name, const struct gaih_service *service,
  	   const struct addrinfo *req, struct addrinfo **pai,
@@ -11,7 +9,7 @@ index adb3c4f..d12835c 100644
  {
    const struct gaih_typeproto *tp = gaih_inet_typeproto;
    struct gaih_servtuple *st = (struct gaih_servtuple *) &nullserv;
-@@ -706,7 +706,7 @@ gaih_inet (const char *name, const struct gaih_service *service,
+@@ -706,7 +706,7 @@
  	      if (fct != NULL)
  		{
  		  if (req->ai_family == AF_INET6
@@ -20,7 +18,7 @@ index adb3c4f..d12835c 100644
  		    {
  		      gethosts (AF_INET6, struct in6_addr);
  		      no_inet6_data = no_data;
-@@ -1903,7 +1903,7 @@ getaddrinfo (const char *name, const char *service,
+@@ -1905,7 +1905,7 @@
    if (hints->ai_family == AF_UNSPEC || hints->ai_family == AF_INET
        || hints->ai_family == AF_INET6)
      {
@@ -29,18 +27,15 @@ index adb3c4f..d12835c 100644
        if (last_i != 0)
  	{
  	  freeaddrinfo (p);
-diff --git a/sysdeps/unix/sysv/linux/check_pf.c b/sysdeps/unix/sysv/linux/check_pf.c
---- a/sysdeps/unix/sysv/linux/check_pf.c
-+++ b/sysdeps/unix/sysv/linux/check_pf.c
-@@ -203,7 +203,10 @@
- 		    {
- 		    out_v6:
- 		      if (!IN6_IS_ADDR_LOOPBACK (address ?: local))
--			*seen_ipv6 = true;
-+                        if (ifam->ifa_scope < RT_SCOPE_LINK)
-+                          {
-+			    *seen_ipv6 = true;
-+                          }
+--- sysdeps/unix/sysv/linux/check_pf.c~	2008-03-06 16:51:24.073172073 +0100
++++ sysdeps/unix/sysv/linux/check_pf.c	2008-03-06 17:08:00.978210159 +0100
+@@ -181,7 +181,8 @@
  		    }
- 
- 		  if (ifam->ifa_flags & (IFA_F_DEPRECATED
+ 		  else
+ 		    {
+-		      if (!IN6_IS_ADDR_LOOPBACK (address))
++		      if (!IN6_IS_ADDR_LOOPBACK (address ?: local) &&
++			  ifam->ifa_scope < RT_SCOPE_LINK)
+ 			*seen_ipv6 = true;
+ 		    }
+ 		}
