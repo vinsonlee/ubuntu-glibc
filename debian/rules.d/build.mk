@@ -69,6 +69,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		cd $(DEB_BUILDDIR) && \
 		CC="$(call xx,CC)" \
 		CXX="$(call xx,CXX)" \
+		LDFLAGS="" \
 		AUTOCONF=false \
 		$(CURDIR)/$(DEB_SRCDIR)/configure \
 		--host=$(call xx,configure_target) \
@@ -82,7 +83,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 $(patsubst %,build_%,$(GLIBC_PASSES)) :: build_% : $(stamp)build_%
 $(stamp)build_%: $(stamp)configure_%
 	@echo Building $(curpass)
-	$(call logme, -a $(log_build), $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS))
+	$(call logme, -a $(log_build), LDFLAGS="" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS))
 	$(call logme, -a $(log_build), echo "---------------" ; echo -n "Build ended: " ; date --rfc-2822)
 	if [ $(curpass) = libc ]; then \
 	  $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) \
