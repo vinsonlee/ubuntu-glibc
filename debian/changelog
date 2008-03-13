@@ -1,3 +1,10 @@
+glibc (2.7-9ubuntu2) hardy; urgency=low
+
+  * Clear out LDFLAGS when building; glibc isn't happy building with
+    -Wl,-Bsymbolic-functions. LP: #201673
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 13 Mar 2008 08:34:28 +0000
+
 glibc (2.7-9ubuntu1) hardy; urgency=low
 
   * Merge with Debian (r2869); remaining changes:
