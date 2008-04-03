@@ -126,20 +126,6 @@ checkpkgver () {
 
 if [ "$type" = "configure" ]
 then
-    # Handle upgrades for libdb.so.3. We do this before calling ldconfig,
-    # since it will create a symlink for us. Just move everything over. We
-    # use `cat' because I feel it is simpler and safer. Make sure that
-    # libdb.so.3 is either a symlink, or non-existent, just in case
-    # something weird happened and the new libdb2 is unpacked before we
-    # get here.
-    if [ -e /lib/libdb.so.3.old ]; then
-	if [ -L /lib/libdb.so.3 ] || [ ! -e /lib/libdb.so.3 ]; then
-	    rm -f /lib/libdb.so.3
-	    cat /lib/libdb.so.3.old > /lib/libdb.so.3
-	fi
-	rm -f /lib/libdb.so.3.old
-    fi
-
     # Add support for /etc/ld.so.conf.d
     if [ -e /etc/ld.so.conf ]; then
         [ -z "$(tail -n 1 /etc/ld.so.conf)" ] || echo >> /etc/ld.so.conf
@@ -160,11 +146,11 @@ then
 	. /usr/share/debconf/confmodule
     fi
 
-    if [ ! -z "$preversion" ]; then
+    if [ -n "$preversion" ]; then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions $preversion lt 2.6-1; then
+	if dpkg --compare-versions "$preversion" lt 2.6-1; then
 	    check="apache2-common apache apache-ssl apache-perl autofs at"
 	    check="$check boa cucipop courier-authdaemon cron cupsys exim"
 	    check="$check exim4-base dovecot-common cucipop lprng lpr"
@@ -180,7 +166,11 @@ then
 		    db_version 2.0
 		    db_reset glibc/restart-services
 		    db_set glibc/restart-services "$services"
-		    db_input critical glibc/restart-services || true
+		    if [ "$RELEASE_UPGRADE_MODE" = desktop ]; then
+			db_input medium glibc/restart-services || true
+		    else
+			db_input critical glibc/restart-services || true
+		    fi
 		    db_go || true
 		    db_get glibc/restart-services
 		    if [ "x$RET" != "x" ]
@@ -246,7 +236,11 @@ then
 	        	if [ -f /usr/share/debconf/confmodule ] ; then
 		    	    db_fset glibc/restart-failed seen false
 			    db_subst glibc/restart-failed services "$failed"
-			    db_input critical glibc/restart-failed || true
+			    if [ "$RELEASE_UPGRADE_MODE" = desktop ]; then
+				db_input medium glibc/restart-failed || true
+			    else
+				db_input critical glibc/restart-failed || true
+			    fi
 			    db_go || true
 			else
 			    echo "The following services failed to start: $failed"
@@ -273,7 +267,7 @@ then
 	    else
 		echo "Nothing to restart."
 	    fi
-	fi # end upgrading and $preversion lt 2.3.5-1
+	fi # end upgrading and $preversion lt 2.6-1
     fi # Upgrading
 
     # Generate cache file /usr/lib/gconv/gconv-modules.cache
