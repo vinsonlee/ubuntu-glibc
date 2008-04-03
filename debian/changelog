@@ -1,3 +1,89 @@
+glibc (2.7-10ubuntu1) hardy; urgency=low
+
+  * Merge remaining changes from 2.7-10 (r2869:2892).
+  * If RELEASE_UPGRADE_MODE is set to `desktop', make the glibc/restart-services,
+    glibc/restart-failed and glibc/upgrade questions of medium priority (and
+    restarting the services automatically).  LP: #174002.
+    Works as well around the upgrade errors mentioned in LP #205079 in a KDE
+    environment, when the upgrade is done using the update-manager.
+  * debian/rules: Always use the package settings for *FLAGS, not the settings
+    from the environment.
+  * Fail the build if regressions are found running the testsuite compared to
+    expected results from debian/expected_test_summary. Take initial values
+    from a PPA build predating this upload.
+  * Merge from Debian trunk:
+    - local/manpages/ld.so.8: fix libraries search order.  Closes: #473458.
+    - Update Finish debconf translation, by Esko Arajärvi.  Closes: #473802.
+    - Add any/cvs-strerror_r.diff to make strerror_r actually thread safe.
+      Closes: #456531.
+  * debian/rules.d/build.mk: Call `sync' before building the tarball of
+    supported locales. Our buildds trigger http://lkml.org/lkml/2007/8/1/337
+    on every build.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 03 Apr 2008 21:50:42 +0200
+
+glibc (2.7-10) unstable; urgency=low
+
+  * Update Chinese debconf translation, by LI Daobing.
+  * Update Dutch debconf translation, by Bart Cornelis.  Closes: #468300.
+  * Update Polish debcon translation, by Emilian Nowak.
+  * Update Vietnamese debconf translation, by Clytie Siddall.  Closes: #468453.
+  * Update Basque debconf translation, by Piarres Beobide.  Closes: #468463.
+  * Update Romanian debconf translation, by Stan Ioan-Eugen.  Closes: #468671.
+  * Update Czech debconf translation, by Miroslav Kure.  Closes: #468910.
+  * Update Russian debconf translation, by Sergey Alyoshin.  Closes: #469037.
+  * Update Korean debconf translation, by Sunjae Park.  Closes: #469097.
+  * Update French debconf translation, by Christian Perrier.  Closes: #469249.
+  * patches/localedata/locale-es_CR.diff: chane AM/PM format to "a.m./p.m." 
+    from "A.M/P.M.".
+  * Remove uk_UA from patches/localedata/first_weekday.diff: merged upstream
+    in a different way.  Closes: bug#469439.
+  * patches/any/cvs-rfc3484.diff: update from CVS to allow the definition of
+    IPv4 scopes in /etc/gai.conf.    
+  * patches/all/cvs-gai_conf.diff: update gai.conf from CVS to also mention
+    Teredo tunnels and scopev4 defaults.
+  * sysdeps/mips.mk, sysdeps/mipsel.mk: define TIMEOUTFACTOR.
+  * patches/any/cvs-strtod.diff: new patch from CVS to fix strtod().  Closes:
+    #465769.
+  * Update Italian debconf translation, by Lica Monducci.  Closes: #469985.
+  * control.in/main, sysdeps/*.mk, rules: build with gcc-4.3 by default,
+    except on alpha, arm, hppa, s390 and hurd-i386.
+  * rules, rules.d/build.mk: fix parallel build.
+  * control.in/main: build witch gcc-4.2 on i386 and amd64, as gcc-4.3 does
+    not emit cld instructions in the prologue of the functions anymore. 
+    Closes: #469568.
+  * debian/rules.d/build.mk: disable testsuite on ARM machines running a
+    2.6.21 to 2.6.24 kernel.
+  * Replace any/submitted-gcc-4.3.diff by any/cvs-gcc-4.3.diff.
+  * debhelper.in/libc.preinst, debhelper.in/libc.postinst: remove support for
+    upgrade from Potato, and misc fixes.
+  * control.in/main, rules.d/control.mk: remove @threads_arches@, as all
+    architectures now support threads.
+  * control.in/main, debhelper.in/glibc-source.install: build a glibc-source
+    package.
+  * sysdeps/mips.mk, sysdeps/mipsel.mk, control.in/main: enable n32 and 64
+    flavours.  Closes: #341884.
+  * Update Arabic debconf translation, by Ossama Khayat.  Closes: #471472.
+  * rules.d/build.mk: reset LDFLAGS, as dpkg now defines it to a default 
+    value which breaks the glibc.
+  * patches/mips/local-gcc-ice.diff: decrease optimisations on a few files
+    to workaround gcc ICE on mips/mipsel n32/64.
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/cvs-blocked-exceptions.diff: new patch to dump
+    core when a blocked exception arises.
+  * patches/hurd-i386/cvs-df.diff: new patch to clear DF for signal
+    handlers (Closes: #470021).
+  * patches/hurd-i386/local-gcc-4.1-init-first.diff: update and actually
+    apply.
+  * patches/hurd-i386/submitted-mig-init.diff: new patch to fix uninitialized
+    local variables.
+  * patches/hurd-i386/local-pthread_stubs.diff: new patch to use libpthread
+    stubs from libpthread-stubs.  Add libpthread-stubs0-dev dependency on
+    hurd-i386.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 27 Mar 2008 23:09:00 +0100
+
 glibc (2.7-9ubuntu2) hardy; urgency=low
 
   * Clear out LDFLAGS when building; glibc isn't happy building with

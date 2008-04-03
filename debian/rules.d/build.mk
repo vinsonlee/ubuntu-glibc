@@ -29,6 +29,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	echo "BUILD_CXX = $(BUILD_CXX)"		>> $(DEB_BUILDDIR)/configparms
 	echo "CFLAGS = $(HOST_CFLAGS)"		>> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CFLAGS = $(BUILD_CFLAGS)" 	>> $(DEB_BUILDDIR)/configparms
+	echo "LDFLAGS = "		 	>> $(DEB_BUILDDIR)/configparms
 	echo "BASH := /bin/bash"		>> $(DEB_BUILDDIR)/configparms
 	echo "KSH := /bin/bash"			>> $(DEB_BUILDDIR)/configparms
 	echo "LIBGD = no"			>> $(DEB_BUILDDIR)/configparms
@@ -89,6 +90,7 @@ $(stamp)build_%: $(stamp)configure_%
 	  $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) \
 	    objdir=$(DEB_BUILDDIR) install_root=$(CURDIR)/build-tree/locales-all \
 	    localedata/install-locales; \
+	  sync; \
 	  tar --use-compress-program /usr/bin/lzma --owner root --group root -cf $(CURDIR)/build-tree/locales-all/supported.tar.lzma -C $(CURDIR)/build-tree/locales-all/usr/lib/locale .; \
 	fi
 	touch $@
@@ -124,6 +126,10 @@ $(stamp)check_%: $(stamp)build_%
 	  echo -n "Testsuite ended: " | tee -a $(log_test); \
 	  date --rfc-2822 | tee -a $(log_test); \
 	fi
+	@n=$$(grep '^make.* Error' $(log_test) | wc -l || true); \
+	  echo "TEST SUMMARY $(log_test) ($$n matching lines)"; \
+	  grep '^make.* Error' $(log_test) || true; \
+	  echo "END TEST SUMMARY $(log_test)"
 	touch $@
 
 $(patsubst %,install_%,$(GLIBC_PASSES)) :: install_% : $(stamp)install_%
