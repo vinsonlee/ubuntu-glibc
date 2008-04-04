@@ -73,13 +73,6 @@ ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 NJOBS := -j $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 endif
 
-ifeq ($(DEB_HOST_ARCH),hppa)
-  ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
-    DEB_BUILD_OPTIONS += nocheck
-    export DEB_BUILD_OPTIONS
-  endif
-endif
-
 # use the package settings, not the settings from the environment
 define unsetenv
   unexport $(1)
@@ -102,8 +95,8 @@ docdir=$(prefix)/share/doc
 mandir=$(prefix)/share/man
 sbindir=$(prefix)/sbin
 
-BUILD_CC = gcc-4.3 -fno-stack-protector -U_FORTIFY_SOURCE
-BUILD_CXX = g++-4.3 -fno-stack-protector -U_FORTIFY_SOURCE
+BUILD_CC = gcc-4.2 -fno-stack-protector
+BUILD_CXX = g++-4.2 -fno-stack-protector
 
 RUN_TESTSUITE = yes
 

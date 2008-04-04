@@ -70,6 +70,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		cd $(DEB_BUILDDIR) && \
 		CC="$(call xx,CC)" \
 		CXX="$(call xx,CXX)" \
+		LDFLAGS="" \
 		AUTOCONF=false \
 		$(CURDIR)/$(DEB_SRCDIR)/configure \
 		--host=$(call xx,configure_target) \
@@ -83,7 +84,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 $(patsubst %,build_%,$(GLIBC_PASSES)) :: build_% : $(stamp)build_%
 $(stamp)build_%: $(stamp)configure_%
 	@echo Building $(curpass)
-	$(call logme, -a $(log_build), $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS))
+	$(call logme, -a $(log_build), LDFLAGS="" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS))
 	$(call logme, -a $(log_build), echo "---------------" ; echo -n "Build ended: " ; date --rfc-2822)
 	if [ $(curpass) = libc ]; then \
 	  $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) \
@@ -106,6 +107,9 @@ $(stamp)check_%: $(stamp)build_%
 	elif ! $(call kernel_check,$(call xx,MIN_KERNEL_SUPPORTED)); then \
 	  echo "Kernel too old, skipping tests."; \
 	  echo "Kernel too old, tests have been skipped." > $(log_test) ; \
+	elif grep -q "cpu model.*SiByte SB1" /proc/cpuinfo ; then \
+	  echo "MIPS SB1 platform detected, skipping tests."; \
+	  echo "MIPS SB1 platform detected, skipping tests." > $(log_test) ; \
 	elif uname -m | grep -q "^arm" && uname -r | grep -q "2\.6\.2[1-4]" ; then \
 	  echo "ARM machine running a 2.6.21-24 kernel detected, tests have been skipped."; \
 	  echo "ARM machine running a 2.6.21-24 kernel detected, tests have been skipped." > $(log_test) ; \

@@ -16,6 +16,7 @@ ld-linux-x86-64.so.2 libc6-amd64 #MINVER#
  _dl_make_stack_executable@GLIBC_PRIVATE 2.7
  _dl_mcount@GLIBC_2.2.5 2.2.5
  _dl_rtld_di_serinfo@GLIBC_PRIVATE 2.7
+ _dl_tls_get_addr_soft@GLIBC_PRIVATE 2.7
  _dl_tls_setup@GLIBC_PRIVATE 2.7
  _r_debug@GLIBC_2.2.5 2.2.5
  _rtld_global@GLIBC_PRIVATE 2.7
@@ -28,7 +29,7 @@ libBrokenLocale.so.1 libc6-amd64 #MINVER#
  GLIBC_2.2.5@GLIBC_2.2.5 2.2.5
  __ctype_get_mb_cur_max@GLIBC_2.2.5 2.2.5
 libSegFault.so libc6-amd64 #MINVER#
- __invoke_dynamic_linker__@Base 2.7
+ __invoke_dynamic_linker__@Base 2.7-9ubuntu1
 libanl.so.1 libc6-amd64 #MINVER#
  GLIBC_2.2.5@GLIBC_2.2.5 2.2.5
  gai_cancel@GLIBC_2.2.5 2.2.5
@@ -46,7 +47,6 @@ libc.so.6 libc6-amd64 #MINVER#
  GLIBC_2.5@GLIBC_2.5 2.5
  GLIBC_2.6@GLIBC_2.6 2.6
  GLIBC_2.7@GLIBC_2.7 2.7
- GLIBC_2.8@GLIBC_2.8 2.8~20080505
  GLIBC_PRIVATE@GLIBC_PRIVATE 2.7
  _Exit@GLIBC_2.2.5 2.2.5
  _IO_2_1_stderr_@GLIBC_2.2.5 2.2.5
@@ -186,7 +186,6 @@ libc.so.6 libc6-amd64 #MINVER#
  __argz_next@GLIBC_2.2.5 2.2.5
  __argz_stringify@GLIBC_2.2.5 2.2.5
  __asprintf@GLIBC_2.2.5 2.2.5
- __asprintf_chk@GLIBC_2.8 2.8~20080505
  __assert@GLIBC_2.2.5 2.2.5
  __assert_fail@GLIBC_2.2.5 2.2.5
  __assert_perror_fail@GLIBC_2.2.5 2.2.5
@@ -221,7 +220,6 @@ libc.so.6 libc6-amd64 #MINVER#
  __dcgettext@GLIBC_2.2.5 2.2.5
  __default_morecore@GLIBC_2.2.5 2.2.5
  __dgettext@GLIBC_2.2.5 2.2.5
- __dprintf_chk@GLIBC_2.8 2.8~20080505
  __dup2@GLIBC_2.2.5 2.2.5
  __duplocale@GLIBC_2.2.5 2.2.5
  __endmntent@GLIBC_2.2.5 2.2.5
@@ -386,19 +384,13 @@ libc.so.6 libc6-amd64 #MINVER#
  __nss_configure_lookup@GLIBC_2.2.5 2.2.5
  __nss_database_lookup@GLIBC_2.2.5 2.2.5
  __nss_disable_nscd@GLIBC_PRIVATE 2.7
- __nss_group_lookup2@GLIBC_PRIVATE 2.8~20080505
  __nss_group_lookup@GLIBC_2.2.5 2.2.5
  __nss_hostname_digits_dots@GLIBC_2.2.5 2.2.5
- __nss_hosts_lookup2@GLIBC_PRIVATE 2.8~20080505
  __nss_hosts_lookup@GLIBC_2.2.5 2.2.5
  __nss_lookup_function@GLIBC_PRIVATE 2.7
- __nss_next2@GLIBC_PRIVATE 2.8~20080505
  __nss_next@GLIBC_2.2.5 2.2.5
- __nss_passwd_lookup2@GLIBC_PRIVATE 2.8~20080505
  __nss_passwd_lookup@GLIBC_2.2.5 2.2.5
- __nss_services_lookup2@GLIBC_PRIVATE 2.8~20080505
- __obstack_printf_chk@GLIBC_2.8 2.8~20080505
- __obstack_vprintf_chk@GLIBC_2.8 2.8~20080505
+ __nss_services_lookup@GLIBC_PRIVATE 2.7
  __open64@GLIBC_2.2.5 2.2.5
  __open64_2@GLIBC_2.7 2.7
  __open@GLIBC_2.2.5 2.2.5
@@ -539,8 +531,6 @@ libc.so.6 libc6-amd64 #MINVER#
  __uflow@GLIBC_2.2.5 2.2.5
  __underflow@GLIBC_2.2.5 2.2.5
  __uselocale@GLIBC_2.3 2.3
- __vasprintf_chk@GLIBC_2.8 2.8~20080505
- __vdprintf_chk@GLIBC_2.8 2.8~20080505
  __vdso_clock_gettime@GLIBC_PRIVATE 2.7
  __vfork@GLIBC_2.2.5 2.2.5
  __vfprintf_chk@GLIBC_2.3.4 2.3.4
@@ -1549,7 +1539,6 @@ libc.so.6 libc6-amd64 #MINVER#
  qfcvt_r@GLIBC_2.2.5 2.2.5
  qgcvt@GLIBC_2.2.5 2.2.5
  qsort@GLIBC_2.2.5 2.2.5
- qsort_r@GLIBC_2.8 2.8~20080505
  query_module@GLIBC_2.2.5 2.2.5
  quotactl@GLIBC_2.2.5 2.2.5
  raise@GLIBC_2.2.5 2.2.5
@@ -1904,9 +1893,6 @@ libc.so.6 libc6-amd64 #MINVER#
  time@GLIBC_2.2.5 2.2.5
  timegm@GLIBC_2.2.5 2.2.5
  timelocal@GLIBC_2.2.5 2.2.5
- timerfd_create@GLIBC_2.8 2.8~20080505
- timerfd_gettime@GLIBC_2.8 2.8~20080505
- timerfd_settime@GLIBC_2.8 2.8~20080505
  times@GLIBC_2.2.5 2.2.5
  timezone@GLIBC_2.2.5 2.2.5
  tmpfile64@GLIBC_2.2.5 2.2.5
@@ -2486,15 +2472,15 @@ libm.so.6 libc6-amd64 #MINVER#
  ynf@GLIBC_2.2.5 2.2.5
  ynl@GLIBC_2.2.5 2.2.5
 libmemusage.so libc6-amd64 #MINVER#
- __invoke_dynamic_linker__@Base 2.7
- calloc@Base 2.7
- free@Base 2.7
- malloc@Base 2.7
- mmap64@Base 2.7
- mmap@Base 2.7
- mremap@Base 2.7
- munmap@Base 2.7
- realloc@Base 2.7
+ __invoke_dynamic_linker__@Base 2.7-9ubuntu1
+ calloc@Base 2.7-9ubuntu1
+ free@Base 2.7-9ubuntu1
+ malloc@Base 2.7-9ubuntu1
+ mmap64@Base 2.7-9ubuntu1
+ mmap@Base 2.7-9ubuntu1
+ mremap@Base 2.7-9ubuntu1
+ munmap@Base 2.7-9ubuntu1
+ realloc@Base 2.7-9ubuntu1
 libnsl.so.1 libc6-amd64 #MINVER#
  GLIBC_2.2.5@GLIBC_2.2.5 2.2.5
  GLIBC_PRIVATE@GLIBC_PRIVATE 2.7
@@ -2646,7 +2632,6 @@ libnss_compat.so.2 libc6-amd64 #MINVER#
 libnss_dns.so.2 libc6-amd64 #MINVER#
  GLIBC_PRIVATE@GLIBC_PRIVATE 2.7
  _nss_dns_getcanonname_r@GLIBC_PRIVATE 2.7
- _nss_dns_gethostbyaddr2_r@GLIBC_PRIVATE 2.8~20080505
  _nss_dns_gethostbyaddr_r@GLIBC_PRIVATE 2.7
  _nss_dns_gethostbyname2_r@GLIBC_PRIVATE 2.7
  _nss_dns_gethostbyname3_r@GLIBC_PRIVATE 2.7
@@ -2850,9 +2835,9 @@ libnss_nisplus.so.2 libc6-amd64 #MINVER#
  _nss_nisplus_setservent@GLIBC_PRIVATE 2.7
  _nss_nisplus_setspent@GLIBC_PRIVATE 2.7
 libpcprofile.so libc6-amd64 #MINVER#
- __cyg_profile_func_enter@Base 2.7
- __cyg_profile_func_exit@Base 2.7
- __invoke_dynamic_linker__@Base 2.7
+ __cyg_profile_func_enter@Base 2.7-9ubuntu1
+ __cyg_profile_func_exit@Base 2.7-9ubuntu1
+ __invoke_dynamic_linker__@Base 2.7-9ubuntu1
 libpthread.so.0 libc6-amd64 #MINVER#
  GLIBC_2.2.5@GLIBC_2.2.5 2.2.5
  GLIBC_2.2.6@GLIBC_2.2.6 2.2.6

@@ -1,16 +1,16 @@
-2008-04-03  Aurelien Jarno  <aurelien@aurel32.net>
+2007-05-22  Aurelien Jarno  <aurelien@aurel32.net>
 
 	* sysdeps/unix/sysv/linux/hppa/bits/atomic.h: check for -11 
 	(-EAGAIN) instead of 11. Loop again when the kernel returns
 	error -45 (-EDEADLOCK) to workaround a kernel bug (debugging
 	code enabled).
 
---- ports/sysdeps/unix/sysv/linux/hppa/bits/atomic.h.orig	2008-04-04 20:57:47.000000000 +0200
-+++ ports/sysdeps/unix/sysv/linux/hppa/bits/atomic.h	2008-06-03 16:00:06.519758461 +0200
+--- ports/sysdeps/unix/sysv/linux/hppa/bits/atomic.h.orig
++++ ports/sysdeps/unix/sysv/linux/hppa/bits/atomic.h
 @@ -56,10 +56,14 @@
  #define LWS_CAS "0"
  /* Note r31 is the link register */
- #define LWS_CLOBBER "r1", "r26", "r25", "r24", "r23", "r22", "r21", "r20", "r28", "r31"
+ #define LWS_CLOBBER "r1", "r26", "r25", "r24", "r23", "r22", "r21", "r20", "r28", "r31", "memory"
 -#define ASM_EAGAIN "11" 
  
  #if __ASSUME_LWS_CAS
