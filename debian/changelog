@@ -1,3 +1,11 @@
+glibc (2.7-10ubuntu3) hardy; urgency=low
+
+  * Probably built on the good buildds last time; pessimize expected
+    test results on ia64, i386.
+  * debian/expected_test_summary: Fix typos in expected sparc results.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sat, 05 Apr 2008 00:03:19 +0200
+
 glibc (2.7-10ubuntu2) hardy; urgency=low
 
   * Adjust debian/expected_test_summary:
