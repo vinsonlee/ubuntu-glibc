@@ -1,3 +1,13 @@
+glibc (2.7-10ubuntu2) hardy; urgency=low
+
+  * Adjust debian/expected_test_summary:
+    - Fix typo for i386 xen.
+    - crypt/sha512c fails on i386 (log-test-i486-linux-gnu-libc), but not on
+      the PPA build.
+    - Add current results for ia64, powerpc, sparc. 
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 04 Apr 2008 09:09:37 +0200
+
 glibc (2.7-10ubuntu1) hardy; urgency=low
 
   * Merge remaining changes from 2.7-10 (r2869:2892).
