@@ -1,3 +1,9 @@
+glibc (2.8~20080505-0ubuntu2) intrepid; urgency=low
+
+  * Don't build-depend on g++-multilib on lpia.
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 09 May 2008 20:20:05 +0200
+
 glibc (2.8~20080505-0ubuntu1) intrepid; urgency=low
 
   * New upstream version, built from a prerelease tarball.
