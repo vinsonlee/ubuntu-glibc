@@ -18,7 +18,6 @@ ld-linux.so.2 libc6-i386 #MINVER#
  _dl_make_stack_executable@GLIBC_PRIVATE 2.7
  _dl_mcount@GLIBC_2.1 2.1
  _dl_rtld_di_serinfo@GLIBC_PRIVATE 2.7
- _dl_tls_get_addr_soft@GLIBC_PRIVATE 2.7
  _dl_tls_setup@GLIBC_PRIVATE 2.7
  _r_debug@GLIBC_2.0 2.0
  _rtld_global@GLIBC_PRIVATE 2.7
@@ -31,7 +30,7 @@ libBrokenLocale.so.1 libc6-i386 #MINVER#
  GLIBC_2.0@GLIBC_2.0 2.0
  __ctype_get_mb_cur_max@GLIBC_2.0 2.0
 libSegFault.so libc6-i386 #MINVER#
- __invoke_dynamic_linker__@Base 2.7-9ubuntu1
+ __invoke_dynamic_linker__@Base 2.7
 libanl.so.1 libc6-i386 #MINVER#
  GLIBC_2.2.3@GLIBC_2.2.3 2.2.3
  gai_cancel@GLIBC_2.2.3 2.2.3
@@ -39,7 +38,7 @@ libanl.so.1 libc6-i386 #MINVER#
  gai_suspend@GLIBC_2.2.3 2.2.3
  getaddrinfo_a@GLIBC_2.2.3 2.2.3
 libc.so.6 libc6-i386 #MINVER#
- GCC_3.0@GCC_3.0 2.7-9ubuntu1
+ GCC_3.0@GCC_3.0 2.7
  GLIBC_2.0@GLIBC_2.0 2.0
  GLIBC_2.1.1@GLIBC_2.1.1 2.1.1
  GLIBC_2.1.2@GLIBC_2.1.2 2.1.2
@@ -59,6 +58,7 @@ libc.so.6 libc6-i386 #MINVER#
  GLIBC_2.5@GLIBC_2.5 2.5
  GLIBC_2.6@GLIBC_2.6 2.6
  GLIBC_2.7@GLIBC_2.7 2.7
+ GLIBC_2.8@GLIBC_2.8 2.8~20080505
  GLIBC_PRIVATE@GLIBC_PRIVATE 2.7
  _Exit@GLIBC_2.1.1 2.1.1
  _IO_2_1_stderr_@GLIBC_2.1 2.1
@@ -216,7 +216,7 @@ libc.so.6 libc6-i386 #MINVER#
  _IO_wfile_xsputn@GLIBC_2.2 2.2
  _IO_wmarker_delta@GLIBC_2.2 2.2
  _IO_wsetb@GLIBC_2.2 2.2
- _Unwind_Find_FDE@GCC_3.0 2.7-9ubuntu1
+ _Unwind_Find_FDE@GCC_3.0 2.7
  ___brk_addr@GLIBC_2.0 2.0
  __adjtimex@GLIBC_2.0 2.0
  __after_morecore_hook@GLIBC_2.0 2.0
@@ -224,6 +224,7 @@ libc.so.6 libc6-i386 #MINVER#
  __argz_next@GLIBC_2.0 2.0
  __argz_stringify@GLIBC_2.0 2.0
  __asprintf@GLIBC_2.1 2.1
+ __asprintf_chk@GLIBC_2.8 2.8~20080505
  __assert@GLIBC_2.2 2.2
  __assert_fail@GLIBC_2.0 2.0
  __assert_perror_fail@GLIBC_2.0 2.0
@@ -260,9 +261,10 @@ libc.so.6 libc6-i386 #MINVER#
  __default_morecore@GLIBC_2.0 2.0
  __deregister_frame@GLIBC_2.0 2.0
  __deregister_frame_info@GLIBC_2.0 2.0
- __deregister_frame_info_bases@GCC_3.0 2.7-9ubuntu1
+ __deregister_frame_info_bases@GCC_3.0 2.7
  __dgettext@GLIBC_2.0 2.0
  __divdi3@GLIBC_2.0 2.0
+ __dprintf_chk@GLIBC_2.8 2.8~20080505
  __dup2@GLIBC_2.0 2.0
  __duplocale@GLIBC_2.1 2.1
  __endmntent@GLIBC_2.2 2.2
@@ -451,13 +453,19 @@ libc.so.6 libc6-i386 #MINVER#
  __nss_configure_lookup@GLIBC_2.0 2.0
  __nss_database_lookup@GLIBC_2.0 2.0
  __nss_disable_nscd@GLIBC_PRIVATE 2.7
+ __nss_group_lookup2@GLIBC_PRIVATE 2.8~20080505
  __nss_group_lookup@GLIBC_2.0 2.0
  __nss_hostname_digits_dots@GLIBC_2.2.2 2.2.2
+ __nss_hosts_lookup2@GLIBC_PRIVATE 2.8~20080505
  __nss_hosts_lookup@GLIBC_2.0 2.0
  __nss_lookup_function@GLIBC_PRIVATE 2.7
+ __nss_next2@GLIBC_PRIVATE 2.8~20080505
  __nss_next@GLIBC_2.0 2.0
+ __nss_passwd_lookup2@GLIBC_PRIVATE 2.8~20080505
  __nss_passwd_lookup@GLIBC_2.0 2.0
- __nss_services_lookup@GLIBC_PRIVATE 2.7
+ __nss_services_lookup2@GLIBC_PRIVATE 2.8~20080505
+ __obstack_printf_chk@GLIBC_2.8 2.8~20080505
+ __obstack_vprintf_chk@GLIBC_2.8 2.8~20080505
  __open64@GLIBC_2.2 2.2
  __open64_2@GLIBC_2.7 2.7
  __open@GLIBC_2.0 2.0
@@ -491,9 +499,9 @@ libc.so.6 libc6-i386 #MINVER#
  __register_atfork@GLIBC_2.3.2 2.3.2
  __register_frame@GLIBC_2.0 2.0
  __register_frame_info@GLIBC_2.0 2.0
- __register_frame_info_bases@GCC_3.0 2.7-9ubuntu1
+ __register_frame_info_bases@GCC_3.0 2.7
  __register_frame_info_table@GLIBC_2.0 2.0
- __register_frame_info_table_bases@GCC_3.0 2.7-9ubuntu1
+ __register_frame_info_table_bases@GCC_3.0 2.7
  __register_frame_table@GLIBC_2.0 2.0
  __res_iclose@GLIBC_PRIVATE 2.7
  __res_init@GLIBC_2.2 2.2
@@ -635,6 +643,8 @@ libc.so.6 libc6-i386 #MINVER#
  __umoddi3@GLIBC_2.0 2.0
  __underflow@GLIBC_2.0 2.0
  __uselocale@GLIBC_2.3 2.3
+ __vasprintf_chk@GLIBC_2.8 2.8~20080505
+ __vdprintf_chk@GLIBC_2.8 2.8~20080505
  __vfork@GLIBC_2.1.2 2.1.2
  __vfprintf_chk@GLIBC_2.3.4 2.3.4
  __vfscanf@GLIBC_2.0 2.0
@@ -1693,6 +1703,7 @@ libc.so.6 libc6-i386 #MINVER#
  qfcvt_r@GLIBC_2.0 2.0
  qgcvt@GLIBC_2.0 2.0
  qsort@GLIBC_2.0 2.0
+ qsort_r@GLIBC_2.8 2.8~20080505
  query_module@GLIBC_2.0 2.0
  quotactl@GLIBC_2.0 2.0
  raise@GLIBC_2.0 2.0
@@ -2061,6 +2072,9 @@ libc.so.6 libc6-i386 #MINVER#
  time@GLIBC_2.0 2.0
  timegm@GLIBC_2.0 2.0
  timelocal@GLIBC_2.0 2.0
+ timerfd_create@GLIBC_2.8 2.8~20080505
+ timerfd_gettime@GLIBC_2.8 2.8~20080505
+ timerfd_settime@GLIBC_2.8 2.8~20080505
  times@GLIBC_2.0 2.0
  timezone@GLIBC_2.0 2.0
  tmpfile64@GLIBC_2.1 2.1
@@ -2657,15 +2671,15 @@ libm.so.6 libc6-i386 #MINVER#
  ynf@GLIBC_2.0 2.0
  ynl@GLIBC_2.0 2.0
 libmemusage.so libc6-i386 #MINVER#
- __invoke_dynamic_linker__@Base 2.7-9ubuntu1
- calloc@Base 2.7-9ubuntu1
- free@Base 2.7-9ubuntu1
- malloc@Base 2.7-9ubuntu1
- mmap64@Base 2.7-9ubuntu1
- mmap@Base 2.7-9ubuntu1
- mremap@Base 2.7-9ubuntu1
- munmap@Base 2.7-9ubuntu1
- realloc@Base 2.7-9ubuntu1
+ __invoke_dynamic_linker__@Base 2.7
+ calloc@Base 2.7
+ free@Base 2.7
+ malloc@Base 2.7
+ mmap64@Base 2.7
+ mmap@Base 2.7
+ mremap@Base 2.7
+ munmap@Base 2.7
+ realloc@Base 2.7
 libnsl.so.1 libc6-i386 #MINVER#
  GLIBC_2.0@GLIBC_2.0 2.0
  GLIBC_2.1@GLIBC_2.1 2.1
@@ -2819,6 +2833,7 @@ libnss_compat.so.2 libc6-i386 #MINVER#
 libnss_dns.so.2 libc6-i386 #MINVER#
  GLIBC_PRIVATE@GLIBC_PRIVATE 2.7
  _nss_dns_getcanonname_r@GLIBC_PRIVATE 2.7
+ _nss_dns_gethostbyaddr2_r@GLIBC_PRIVATE 2.8~20080505
  _nss_dns_gethostbyaddr_r@GLIBC_PRIVATE 2.7
  _nss_dns_gethostbyname2_r@GLIBC_PRIVATE 2.7
  _nss_dns_gethostbyname3_r@GLIBC_PRIVATE 2.7
@@ -3022,9 +3037,9 @@ libnss_nisplus.so.2 libc6-i386 #MINVER#
  _nss_nisplus_setservent@GLIBC_PRIVATE 2.7
  _nss_nisplus_setspent@GLIBC_PRIVATE 2.7
 libpcprofile.so libc6-i386 #MINVER#
- __cyg_profile_func_enter@Base 2.7-9ubuntu1
- __cyg_profile_func_exit@Base 2.7-9ubuntu1
- __invoke_dynamic_linker__@Base 2.7-9ubuntu1
+ __cyg_profile_func_enter@Base 2.7
+ __cyg_profile_func_exit@Base 2.7
+ __invoke_dynamic_linker__@Base 2.7
 libpthread.so.0 libc6-i386 #MINVER#
  GLIBC_2.0@GLIBC_2.0 2.0
  GLIBC_2.1.1@GLIBC_2.1.1 2.1.1
