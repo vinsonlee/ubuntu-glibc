@@ -1,3 +1,94 @@
+glibc (2.8~20080505-0ubuntu1) intrepid; urgency=low
+
+  * New upstream version, built from a prerelease tarball.
+    - Remove patches applied upstream: amd64/cvs-vdso_clock_gettime.diff,
+      hppa/cvs-atomic.diff, hppa/hppalll.diff, sparc/submitted-v9v2.diff,
+      all/cvs-gai_conf.diff, any/cvs-epoll_h.diff, any/cvs-ether_line.diff,
+      any/cvs-ethertype.diff, any/cvs-fchmodat.diff, any/cvs-gcc-4.3.diff,
+      any/cvs-iconv-iso2022jp-loop-bug.diff, any/cvs-rfc3484.diff,
+      any/cvs-sched_h.diff, any/cvs-strtod.diff, any/cvs-tzfile.diff,
+      any/cvs-vfscanf.diff, any/cvs-wchar_h.diff,
+      any/cvs-sunrpc_rpc_thread.diff, any/cvs-strerror_r.diff,
+      any/cvs-short-for-fnstsw.diff, any/local-strfry.diff,
+      any/submitted-ieee754_h.diff, any/submitted-link-local_resolver.diff.
+    - Update patches: i386/submitted-i686-timing.diff.
+  * debian/*.symbols*:
+    - Add new symbols.
+    - Remove GLIBC_PRIVATE symbols not found anymore in 2.8:
+      _dl_tls_get_addr_soft@GLIBC_PRIVATE, __nss_services_lookup@GLIBC_PRIVATE.
+  * debhelper.in/libc.install: Relax file location for snapshot builds.
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 09 May 2008 14:22:01 +0200
+
+glibc (2.7-11ubuntu1) intrepid; urgency=low
+
+  * Merge with Debian (r2892:2919).
+    - Packaging:
+      + External tzdata
+      + Use external locale information
+      + Addition of Niagara and Niagara2 optimised libraries
+      + GFDL Documentation added back in, build glibc-doc from this source.
+      + Transition from /usr/include/ppc64-linux-gnu to powerpc64-linux-gnu
+      + Use dpkg triggers for ldconfig
+      + Do not die if extra libc libraries or symlinks found
+      + Do not do a test run of nscd when starting
+      + Only apply patches we actually use in Ubuntu
+      + Use /lib and /usr/lib for amd64
+      + amd64 biarch is i686, not i486.
+      + Non-optimised i386 glibc is Xen-friendly.
+      + Support sparcv9v, v9v2, 64b, 64v, 64v2
+      + Add support for lpia.
+      + Call `sync' before building the tarball of supported locales.
+      + Downgrade priority of debconf questions for RELEASE_UPGRADE_MODE=desktop.
+      + Use the package settings for *FLAGS, not the settings from the env.
+      + Fail the build when regressions are detected in the testsuite.
+      + Build with GCC-4.3 on amd64 and i386.
+    - Patches:
+      + sparc/submitted-v9v2
+      + hppa/hppalll
+      + Applied any/local-ipv6-lookup.
+      + Not applied any/local-sysctl.
+  * any/cvs-short-for-fnstsw.diff: Backport from the trunk, fix build failure
+    with binutils from trunk.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 08 May 2008 12:06:01 +0200
+
+glibc (2.7-11) UNRELEASED; urgency=low
+
+  [ Aurelien Jarno ]
+  * Reenable testsuite on MIPS SB1 platforms.
+  * mips/cvs-memory-barriers.diff: new patch from CVS to fix test_and_set.
+  * mips/cvs-fcsr.diff: new patch from CVS to fix floating point control
+    register accesses.
+  * local/manpages/ld.so.8: fix libraries search order.  Closes: #473458.
+  * Update Finish debconf translation, by Esko Arajärvi.  Closes: #473802.
+  * Replace patches/mips/submitted-mipsn32.diff by the version merged
+    upstream.
+  * patches/hppa/cvs-atomic.diff: new patch from upstream to fix atomic
+    locks witch gcc-4.3.
+  * patches/any/cvs-rfc3484.diff: update tests from CVS.  Closes: #474226.
+  * patches/localedata/locale-shs_CA.diff: add Secwepemctsín from CVS.
+  * debhelper.in/libc-prof.README.Debian: new file to explain how to use
+    libc-prof.  Closes: #442858.
+  * patches/any/cvs-ethertype.diff: new patch to add new ETHERTYPE_*
+    definitions.  Closes: #474171.
+  * sysdeps/depflags.pl: conflicts with tzdata-etch.
+  * kfreebsd/local-sysdeps.diff: update to revision 2163 (from glibc-bsd).
+  * patches/s390/submitted-nexttowardf.diff: fix IEEE exceptions raising in
+    nexttowardf() on s390 with gcc-4.3.
+  * sysdeps/arm.mk, sysdeps/s390.mk, control.in/main: use gcc-4.3 on arm
+    and s390.
+
+  [ Pierre Habouzit ]
+  * Add any/cvs-strerror_r.diff to make strerror_r actually thread safe.
+    Closes: #456531.
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/cvs-termios.diff: new patch to revamp ioctls/termios
+  bits.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 05 May 2008 22:24:48 +0200
+
 glibc (2.7-10ubuntu3) hardy; urgency=low
 
   * Probably built on the good buildds last time; pessimize expected
@@ -44,7 +135,7 @@ glibc (2.7-10) unstable; urgency=low
 
   * Update Chinese debconf translation, by LI Daobing.
   * Update Dutch debconf translation, by Bart Cornelis.  Closes: #468300.
-  * Update Polish debcon translation, by Emilian Nowak.
+  * Update Polish debconf translation, by Emilian Nowak.
   * Update Vietnamese debconf translation, by Clytie Siddall.  Closes: #468453.
   * Update Basque debconf translation, by Piarres Beobide.  Closes: #468463.
   * Update Romanian debconf translation, by Stan Ioan-Eugen.  Closes: #468671.
@@ -63,7 +154,7 @@ glibc (2.7-10) unstable; urgency=low
   * sysdeps/mips.mk, sysdeps/mipsel.mk: define TIMEOUTFACTOR.
   * patches/any/cvs-strtod.diff: new patch from CVS to fix strtod().  Closes:
     #465769.
-  * Update Italian debconf translation, by Lica Monducci.  Closes: #469985.
+  * Update Italian debconf translation, by Luca Monducci.  Closes: #469985.
   * control.in/main, sysdeps/*.mk, rules: build with gcc-4.3 by default,
     except on alpha, arm, hppa, s390 and hurd-i386.
   * rules, rules.d/build.mk: fix parallel build.

@@ -95,8 +95,8 @@ docdir=$(prefix)/share/doc
 mandir=$(prefix)/share/man
 sbindir=$(prefix)/sbin
 
-BUILD_CC = gcc-4.2 -fno-stack-protector
-BUILD_CXX = g++-4.2 -fno-stack-protector
+BUILD_CC = gcc-4.3 -fno-stack-protector -U_FORTIFY_SOURCE
+BUILD_CXX = g++-4.3 -fno-stack-protector -U_FORTIFY_SOURCE
 
 RUN_TESTSUITE = yes
 
