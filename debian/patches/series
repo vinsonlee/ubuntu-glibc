@@ -7,6 +7,7 @@ amd64/local-linuxthreads-gscope.diff -p0
 
 hppa/submitted-atomic_h.diff -p0
 hppa/submitted-fadvise64_64.diff -p0
+hppa/submitted-fesetenv.diff -p0
 hppa/submitted-lt.diff -p0
 hppa/submitted-nptl-carlos.diff -p0
 hppa/submitted-pie.diff 
@@ -76,6 +77,7 @@ any/submitted-sched_h.diff -p0
 any/local-disable-nscd-host-caching.diff
 #any/submitted-fileops-and-signals.diff
 any/local-missing-linux_types.h.diff
+any/submitted-user_h.diff -p1
 
 # Ubuntu-specific patches.  These are things that we don't expect to wind up
 # in Debian.
