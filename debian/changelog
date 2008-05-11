@@ -1,3 +1,24 @@
+glibc (2.8~20080505-0ubuntu3) intrepid; urgency=low
+
+  * Merge from Debian:
+    - patches/any/local-no-pagesize.diff: don't include asm/page.h from 
+      sys/user.h on alpha.  Closes: #480295.
+    - patches/any/submitted-user_h.diff: don't include linux/user.h from 
+      sys/user.h.  Closes: #480093.
+    - patches/hppa/submitted-fesetenv.diff: fix fesetenv() on hppa with 
+      gcc-4.3.
+    - sysdeps/arm.mk, sysdeps/hppa.mk, sysdeps/s390.mk, control.in/main: use
+      gcc-4.3 on arm, hppa and s390.
+    - debian/shlibs-add-udebs: new script from Frans Pop to correctly compute
+      the udev dependencies.  Closes: #474293.
+    - rules.d/debhelper.mk: remove linda overrides installation.
+    - debhelper.in/*lintian: update.
+    - control.in/main: relax a few dependencies.
+    - rules.d/debhelper.mk: avoid creating empty directories when building
+      libc6-dbg.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sun, 11 May 2008 13:09:59 +0200
+
 glibc (2.8~20080505-0ubuntu2) intrepid; urgency=low
 
   * Don't build-depend on g++-multilib on lpia.
