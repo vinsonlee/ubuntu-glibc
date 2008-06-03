@@ -29,6 +29,8 @@ sparc/local-fork.diff -p0
 sparc/local-sparcv9-target.diff -p0
 sparc/submitted-timing.diff 
 
+any/cvs-iconv-braces.diff
+any/cvs-regex_anchor.diff
 any/local-notls.diff -p0
 any/local-asserth-decls.diff -p0
 any/local-bashisms.diff -p0
