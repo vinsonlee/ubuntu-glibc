@@ -57,11 +57,16 @@ diff -u -p -r1.7 -r1.8
  #ifdef __USE_BSD
  
  # ifdef MDMBUF
-@@ -93,11 +137,43 @@ struct termios
+@@ -91,13 +135,47 @@ struct termios
+   /* Output modes.  */
+   tcflag_t c_oflag;
  #define	OPOST	(1 << 0)	/* Perform output processing.  */
- #ifdef	__USE_BSD
+-#ifdef	__USE_BSD
++#if defined __USE_BSD || defined __USE_XOPEN
  # define ONLCR	(1 << 1)	/* Map NL to CR-NL on output.  */
 -# define OXTABS	(1 << 2)	/* Expand tabs to spaces.  */
++#endif
++#ifdef	__USE_BSD
 +# define OXTABS	TAB3		/* Expand tabs to spaces.  */
  # define ONOEOT	(1 << 3)	/* Discard EOT (^D) on output.  */
  #endif
@@ -103,7 +108,7 @@ diff -u -p -r1.7 -r1.8
  #endif
  
    /* Control modes.  */
-@@ -117,10 +193,12 @@ struct termios
+@@ -117,10 +195,12 @@ struct termios
  #define	HUPCL	(1 << 14)	/* Hang up on last close.  */
  #define	CLOCAL	(1 << 15)	/* Ignore modem status lines.  */
  #ifdef	__USE_BSD
@@ -120,7 +125,7 @@ diff -u -p -r1.7 -r1.8
  #endif
  
    /* Local modes.  */
-@@ -210,13 +288,17 @@ struct termios
+@@ -210,13 +290,17 @@ struct termios
  #define	B2400	2400		/* 2400 baud.  */
  #define	B4800	4800		/* 4800 baud.  */
  #define	B9600	9600		/* 9600 baud.  */
