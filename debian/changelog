@@ -1,3 +1,10 @@
+glibc (2.8~20080505-0ubuntu5) intrepid; urgency=low
+
+  * Do not run the testsuite on hppa ("threading on hppa is kinda goofy,
+    so the thread-stressing testsuite breaks").
+
+ -- Matthias Klose <doko@ubuntu.com>  Tue, 10 Jun 2008 14:37:08 +0200
+
 glibc (2.8~20080505-0ubuntu4) intrepid; urgency=low 	
 
   [ Michael Vogt ]
