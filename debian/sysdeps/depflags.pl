@@ -97,6 +97,11 @@ if ($DEB_HOST_ARCH =~ m/^hppa$/) {
     push @{$libc_c{'Depends'}}, 'libgcc1';
 }
 
+# mvo: this is needed to work arounda a upgrade issue from 
+#      hardy to intrepid (see launchpad #234345)
+push @{$libc_c{'Depends'}}, 'findutils (>= 4.4.0-2ubuntu2)';
+
+
 if ($type eq "libc") {
     %pkg = %libc_c;
 } elsif ($type eq "libc_dev") {
