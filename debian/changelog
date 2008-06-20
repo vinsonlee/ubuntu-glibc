@@ -1,3 +1,18 @@
+glibc (2.8~20080505-0ubuntu6) intrepid; urgency=low
+
+  [ Matthias Klose ]
+  * Add debian/patches/any/regexp_h___REPB_PREFIX.diff patch (LP: #234056):
+    fix xview FTBFS error (Devid Filoni). LP: #234056.
+  
+  [ Michael Vogt ]
+  * sysdeps/depflags.pl:
+    - really add "findutils (>= 4.4.0-2ubuntu2)" to the libc6 depends,
+      this needs to be done in sysdeps/depflags.pl the regular 
+      depend lines in debian/control.in/libc are just ignored
+      (LP: #234345)
+
+ -- Michael Vogt <michael.vogt@ubuntu.com>  Fri, 20 Jun 2008 17:28:24 +0200
+
 glibc (2.8~20080505-0ubuntu5) intrepid; urgency=low
 
   * Do not run the testsuite on hppa ("threading on hppa is kinda goofy,
