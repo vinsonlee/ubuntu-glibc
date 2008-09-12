@@ -1,3 +1,19 @@
+glibc (2.7-10ubuntu4) hardy-proposed; urgency=low
+
+  * glibc fixes for hardy. LP: #269299.
+  * Fix vscanf define in strict C99 or POSIX mode. LP: #234893.
+  * Merge changes from glibc-2.7-11, -12 and -13:
+    - Cherry-pick upstream fixes with respect to locale rwlocks, merge them into
+      patches/any/cvs-strerror_r.diff. Closes: #489906.
+    - patches/any/cvs-getaddrinfo.diff: new patch from CVS to correctly
+      initialize internal resolver structures in getaddrinfo().  Closes:
+      #489586.
+    - patches/any/cvs-iconv-braces.diff: new patch from upstream to fix various
+      iconv bugs.
+    - local/manpages/nscd.conf.5: update nscd.conf manpage.  Closes: #482505.
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 12 Sep 2008 09:17:19 +0200
+
 glibc (2.7-10ubuntu3) hardy; urgency=low
 
   * Probably built on the good buildds last time; pessimize expected
