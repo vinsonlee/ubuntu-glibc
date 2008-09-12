@@ -1,0 +1,11 @@
+--- glibc-2.7/libio/stdio.h.orig	2007-09-18 17:58:29.000000000 +0000
++++ glibc-2.7/libio/stdio.h	2008-09-09 00:24:06.000000000 +0000
+@@ -492,7 +492,7 @@
+ 			     __const char *__restrict __format,
+ 			     _G_va_list __arg) __THROW;
+ #   define vfscanf __isoc99_vfscanf
+-#   define vscanf __isoc99_vsscanf
++#   define vscanf __isoc99_vscanf
+ #   define vsscanf __isoc99_vsscanf
+ #  endif
+ # endif
