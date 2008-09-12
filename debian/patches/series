@@ -104,4 +104,3 @@ any/local-missing-linux_types.h.diff
 # Ubuntu-specific patches.  These are things that we don't expect to wind up
 # in Debian.
 ubuntu/local-altlocaledir.diff -p1
-ubuntu/stack-guard-quick-randomization.diff 

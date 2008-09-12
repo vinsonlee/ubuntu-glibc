@@ -1,11 +1,3 @@
-glibc (2.7-10ubuntu5) hardy-proposed; urgency=low
-
-  * stack-guard-quick-randomization.diff: use stack guard randomimzation
-    patch from Intrepid (along with Jaunty tests patch) to stop using static
-    sentinel (LP: #275493).
-
- -- Kees Cook <kees@ubuntu.com>  Wed, 29 Jul 2009 23:45:51 -0700
-
 glibc (2.7-10ubuntu4) hardy-proposed; urgency=low
 
   * glibc fixes for hardy. LP: #269299.
