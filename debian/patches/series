@@ -46,6 +46,9 @@ any/cvs-vfscanf.diff -p0
 any/cvs-wchar_h.diff -p0
 any/cvs-sunrpc_rpc_thread.diff
 any/cvs-strerror_r.diff 
+any/cvs-c99-vscanf.diff
+any/cvs-getaddrinfo.diff
+any/cvs-iconv-braces.diff
 any/local-notls.diff -p0
 any/local-asserth-decls.diff -p0
 any/local-bashisms.diff -p0
