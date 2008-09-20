@@ -1,0 +1,71 @@
+#! /bin/sh
+set -e 
+
+LG="/etc/locale.gen"
+EE="/etc/default/locale"
+
+# List of locales provided by the current version
+PROVIDED_LOCALES="__PROVIDED_LOCALES__"
+
+# List of locales provided by the user
+if [ -f /usr/local/share/i18n/SUPPORTED ] ; then
+    USER_LOCALES="$(sed -e 's/#.*//g' /usr/local/share/i18n/SUPPORTED)"
+fi
+
+# List of supported locales
+SUPPORTED_LOCALES=$(echo "$PROVIDED_LOCALES$USER_LOCALES" | sed -e 's/^ *//g' -e 's/ *$//g' | sort -u | tr '\n' ',' | sed -e 's/, */, /g' -e 's/, *$//g')
+
+
+if [ "$1" = configure ]; then
+
+    . /usr/share/debconf/confmodule
+    db_version 2.0
+
+    db_get locales/locales_to_be_generated && SELECTED_LOCALES=$RET
+    db_get locales/default_environment_locale && DEFAULT_ENVIRONMENT="$RET"
+
+    if [ "$SELECTED_LOCALES" = "All locales" ]; then
+        [ -e $LG ] && rm -f $LG
+        ln -s /usr/share/i18n/SUPPORTED $LG
+    else
+        cat > $LG << EOF
+# This file lists locales that you wish to have built. You can find a list
+# of valid supported locales at /usr/share/i18n/SUPPORTED, and you can add
+# user defined locales to /usr/locale/share/i18n/SUPPORTED. If you change
+# this file, you need to rerun locale-gen.
+#
+
+EOF
+        IFS=","
+        for LOCALE in $SUPPORTED_LOCALES ; do
+	    LOCALE=${LOCALE## }
+            if echo "$SELECTED_LOCALES" | grep -q "\b$LOCALE\b" ; then
+                echo "$LOCALE" >> $LG
+            else
+                echo "# $LOCALE" >> $LG
+            fi
+        done
+        IFS=" "
+    fi
+    # Update requested locales if locales-all is not installed
+    if [ -f /usr/lib/locales-all/supported.tar.lzma ] ; then
+        echo "locales-all installed, skipping locales generation"
+    else
+        /usr/sbin/locale-gen
+    fi
+
+    if ! [ -e $EE ] || [ -n "$DEBCONF_RECONFIGURE" ] ; then
+        # Set default LANG environment variable
+        if [ -e $EE ]; then
+            # Remove previous definitions
+            /usr/sbin/update-locale --no-checks LANG
+        fi
+        if [ -n "$DEFAULT_ENVIRONMENT" ] && [ "$DEFAULT_ENVIRONMENT" != "None" ]; then
+            /usr/sbin/update-locale "LANG=$DEFAULT_ENVIRONMENT"
+        fi
+    fi
+fi
+
+#DEBHELPER#
+
+exit 0

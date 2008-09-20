@@ -1,0 +1,199 @@
+#!/bin/sh
+set -e
+export LC_ALL=C
+
+type=$1
+preversion=$2
+
+if [ "$type" = upgrade ]
+then
+    # Load debconf module if available
+    if [ -f /usr/share/debconf/confmodule ] ; then
+        . /usr/share/debconf/confmodule
+    fi
+
+    if [ -n "$preversion" ]; then
+	# NSS authentication trouble guard
+	if dpkg --compare-versions "$preversion" lt 2.6-1; then
+
+	    check="gdm kdm proftpd postgresql xscreensaver xdm"
+	    # NSS services check: NSS_CHECK
+	    if [ -n "$services" ]; then 
+		if [ -f /usr/share/debconf/confmodule ] ; then
+	            db_version 2.0
+		    db_reset glibc/upgrade
+		    db_subst glibc/upgrade services $services
+		    db_input critical glibc/upgrade || true
+		    db_go || true
+		    db_get glibc/upgrade
+		    answer=$RET
+		else
+		    echo "Name Service Switch update in the GNU C Library"
+		    echo
+		    echo "Running services and programs that are using NSS need to be restarted,"
+		    echo "otherwise they might not be able to do lookup or authentication any more."
+		    echo "The installation process is able to restart some services (such as ssh or"
+		    echo "telnetd), but other programs cannot be restarted automatically.  One such"
+		    echo "program that needs manual stopping and restart after the glibc upgrade by"
+		    echo "yourself is xdm - because automatic restart might disconnect your active"
+		    echo "X11 sessions."
+		    echo
+		    echo "This script detected the following installed services which must be"
+		    echo "stopped before the upgrade: $services"
+		    echo
+		    echo "If you want to interrupt the upgrade now and continue later, please"
+		    echo "answer No to the question below."
+		    echo 
+		    frontend=`echo "$DEBIAN_FRONTEND" | tr '[:upper:]' '[:lower:]'`
+		    if [ "$frontend" = noninteractive ]; then
+			echo "Non-interactive mode, upgrade glibc forcibly"
+			answer=true
+		    else
+		        echo -n "Do you want to upgrade glibc now? [Y/n] "
+		        read answer
+		        case $answer in
+			    Y*|y*) answer=true ;;
+			    N*|n*) answer=false ;;
+			    *) answer=true ;;
+			esac
+		    fi
+		    echo
+		fi
+
+		if [ "x$answer" != "xtrue" ]; then
+	            echo "Stopped glibc upgrade.  Please retry the upgrade after you have"
+	            echo "checked or stopped services by hand."
+	            exit 1
+		fi
+	    fi
+	fi # end upgrading and $preversion lt 2.6-1
+    fi # Upgrading
+
+    # This will keep us from using hwcap libs (optimized) during an
+    # upgrade.
+    touch /etc/ld.so.nohwcap
+fi
+
+# Sanity check.
+# If there are versions of glibc outside of the normal installation
+# location (/lib, /lib64, etc.) then things may break very badly
+# as soon as ld.so is replaced by a new version.  This check is not
+# foolproof, but it's pretty accurate.  This script ignores libraries
+# with different sonames, and libraries incompatible with the 
+# to-be-installed ld.so.
+
+check_dirs () {
+  for dir in $*; do
+    # Follow symlinks
+    dirlink=$(readlink -e $dir)
+    [ -n "$dirlink" ] && dir=$dirlink 
+    
+    # Handle /lib in LD_LIBRARY_PATH.
+    if expr $dir : "/lib.*" > /dev/null; then
+      continue
+    fi
+    # Skip ia32-libs package on ia64, and similar libraries
+    # (not sure why these get added to /etc/ld.so.conf)
+    if expr $dir : "/emul/.*" > /dev/null; then
+      continue
+    fi
+    if test -d $dir; then
+      output=$(ls $dir | egrep '^(C_SO|M_SO|PTHREAD_SO|RT_SO|DL_SO)$' 2>/dev/null)
+
+      if test -n "$output"; then
+	# See if the found libraries are compatible with the system ld.so;
+	# if they aren't, they'll be ignored.  Check e_ident, e_type (which
+	# will just be ET_DYN), and e_machine.  If a match is found, there
+	# is a risk of breakage.
+	for lib in $output
+	do
+	  if test -f "$dir/$lib"; then
+	    libbytes=`head -c 20 $dir/$lib | od -c`
+	    if test "$ldbytes" = "$libbytes"; then
+	      echo "Matching libraries: $dir/$lib"
+	      return 0
+	    fi
+	  fi
+	done
+      fi
+    fi
+  done
+  return 1
+}
+
+if [ "$type" != abort-upgrade ]
+then
+  ldbytes=`head -c 20 RTLD | od -c`
+  dirs="/lib32 /lib64 /usr/local/lib /usr/local/lib32 /usr/local/lib64"
+  if ! test -L /usr; then
+    dirs="$dirs /usr/lib /usr/lib32 /usr/lib64"
+  fi
+  if check_dirs $dirs; then
+    echo
+    echo "A copy of glibc was found in an unexpected directory."
+    echo "It is not safe to upgrade the C library in this situation;"
+    echo "please remove that copy of the C library and try again."
+    exit 1
+  fi
+
+  if test -n "$LD_LIBRARY_PATH"; then
+    dirs=$(echo $LD_LIBRARY_PATH | sed 's/:/ /')
+    if check_dirs $dirs; then
+      echo
+      echo "Another copy of the C library was found via LD_LIBRARY_PATH."
+      echo "It is not safe to upgrade the C library in this situation;"
+      echo "please remove the directory from LD_LIBRARY_PATH and try again."
+      exit 1
+    fi
+  fi
+  if test -e /etc/ld.so.conf; then
+    dirs=$(echo $(cat /etc/ld.so.conf))
+    if check_dirs $dirs; then
+      echo
+      echo "Another copy of the C library was found via /etc/ld.so.conf."
+      echo "It is not safe to upgrade the C library in this situation;"
+      echo "please remove the directory from /etc/ld.so.conf and try again."
+      exit 1
+    fi
+  fi
+  for i in ld-2.3.2.so libc-2.3.2.so ld-2.3.6.so libc-2.3.6.so ; do
+    if [ -e /lib/tls/$i ] && ! dpkg-query -L LIBC 2>/dev/null | grep -q /lib/tls/$i ; then
+      echo
+      echo "A non-dpkg owned copy of the C library was found in /lib/tls."
+      echo "It is not safe to upgrade the C library in this situation;"
+      echo "please remove that copy of the C library and try again."
+      exit 1
+    fi
+  done
+  if [ -e /lib/tls/i686/cmov/libc.so.6 ] || [ -e /lib/i686/cmov/libc.so.6 ] ; then
+    status_i686=$(dpkg -s libc6-i686 2>/dev/null | grep ^Status: | sed -e 's/^Status: \(.*\) \(.*\) \(.*\)/\3/g')
+    status_xen=$(dpkg -s libc6-xen 2>/dev/null | grep ^Status: | sed -e 's/^Status: \(.*\) \(.*\) \(.*\)/\3/g')
+    if ([ -z "$status_i686" ] || [ "$status_i686" = "not-installed" ] || [ "$status_i686" = "config-files" ]) && \
+       ([ -z "$status_xen" ] || [ "$status_xen" = "not-installed" ] || [ "$status_xen" = "config-files" ]); then
+      echo
+      echo "A non-dpkg owned copy of the libc6-i686 package was found."
+      echo "It is not safe to upgrade the C library in this situation;"
+      echo "please remove that copy of the C library and try again."
+      exit 1
+    fi
+  fi
+  if [ -n "$LD_ASSUME_KERNEL" ] ; then
+    if dpkg --compare-versions "$LD_ASSUME_KERNEL" le "2.6.1"; then
+      echo
+      echo "POSIX threads library NPTL requires kernel version 2.6.1"
+      echo "or later.  It appears that LD_ASSUME_KERNEL is set to $LD_ASSUME_KERNEL."
+      echo "It is not safe to upgrade the C library in this situation;"
+      echo "Please unset this environment variable and try again."
+      exit 1
+    fi
+  fi
+fi
+
+if [ "$type" != abort-upgrade ]
+then
+    # glibc kernel version check: KERNEL_VERSION_CHECK
+fi
+
+#DEBHELPER#
+
+exit 0

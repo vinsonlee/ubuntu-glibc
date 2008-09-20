@@ -1,0 +1,2 @@
+var/cache/nscd
+var/run/nscd
