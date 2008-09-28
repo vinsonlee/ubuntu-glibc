@@ -1,3 +1,11 @@
+glibc (2.8~20080505-0ubuntu7) intrepid; urgency=low
+
+  * Add debian/patches/ubuntu/stack-guard-quick-randomization.diff: do
+    light-weight randomization of the stack guard value instead of using
+    a static sentinel (LP: #275493).
+
+ -- Kees Cook <kees@ubuntu.com>  Sun, 28 Sep 2008 09:30:01 -0700
+
 glibc (2.8~20080505-0ubuntu6) intrepid; urgency=low
 
   [ Matthias Klose ]
