@@ -1,0 +1,17 @@
+# format: <arch> <logfile> <number of lines matching '^make.*Error'>
+amd64	log-test-i686-linux-i386		4
+amd64	log-test-x86_64-linux-gnu-libc		15
+ia64	log-test-ia64-linux-gnu-libc		17
+i386	log-test-i486-linux-gnu-libc		21
+i386	log-test-i686-linux-i686		4
+i386	log-test-i686-linux-xen			4
+lpia	log-test-i686-linux-gnulp-libc		15
+powerpc	log-test-powerpc-linux-gnu-libc		17
+powerpc	log-test-powerpc64-linux-ppc64		4
+sparc	log-test-sparc-linux-gnu-libc		17
+sparc	log-test-sparc64-linux-sparc64		6
+sparc	log-test-sparc64b-linux-sparc64b	7
+sparc	log-test-sparc64v2-linux-sparc64v2	0
+sparc	log-test-sparcv9b-linux-sparcv9b	17
+sparc	log-test-sparcv9v-linux-sparcv9v	0
+sparc	log-test-sparcv9v2-linux-sparcv9v2	0

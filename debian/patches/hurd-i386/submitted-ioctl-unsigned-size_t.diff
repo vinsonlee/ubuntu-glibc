@@ -1,10 +1,11 @@
----
- sysdeps/mach/hurd/bits/ioctls.h |   14 +++++++++++++-
- 1 file changed, 13 insertions(+), 1 deletion(-)
-
---- a/sysdeps/mach/hurd/bits/ioctls.h
-+++ b/sysdeps/mach/hurd/bits/ioctls.h
-@@ -149,9 +149,17 @@
+Index: sysdeps/mach/hurd/bits/ioctls.h
+===================================================================
+RCS file: /cvs/glibc/libc/sysdeps/mach/hurd/bits/ioctls.h,v
+retrieving revision 1.10
+diff -u -p -r1.10 ioctls.h
+--- sysdeps/mach/hurd/bits/ioctls.h	7 Sep 2007 20:38:57 -0000	1.10
++++ sysdeps/mach/hurd/bits/ioctls.h	16 Dec 2007 02:49:36 -0000
+@@ -109,9 +109,17 @@
  #define	_IOT_SIMPLE(type)	_IOT (_IOTS (type), 1, 0, 0, 0, 0)
  
  /* Basic C types.  */
@@ -23,7 +24,7 @@
  
  
  /* Standard flavors of ioctls.
-@@ -174,6 +182,10 @@
+@@ -133,6 +141,10 @@
  #define _IOC_ENCODE_TYPE_1(typespec)	_IOC_ENCODE_TYPE_2(typespec)
  #define _IOC_ENCODE_TYPE_2(typespec)	_IOT_##typespec
  

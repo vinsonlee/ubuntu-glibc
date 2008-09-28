@@ -18,13 +18,8 @@
 	with sjlj exception, suggested by Philip Blundell.
 
 
----
- sysdeps/m68k/framestate.c |    2 ++
- sysdeps/m68k/unwind-pe.c  |    6 ++++++
- 2 files changed, 8 insertions(+)
-
 --- /dev/null
-+++ b/sysdeps/m68k/unwind-pe.c
++++ sysdeps/m68k/unwind-pe.c
 @@ -0,0 +1,6 @@
 +#include <stdlib.h>
 +#include <unwind.h>
@@ -33,7 +28,7 @@
 +#define NO_BASE_OF_ENCODED_VALUE
 +#include "unwind-pe.h"
 --- /dev/null
-+++ b/sysdeps/m68k/framestate.c
++++ sysdeps/m68k/framestate.c
 @@ -0,0 +1,2 @@
 +
 +

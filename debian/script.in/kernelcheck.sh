@@ -16,8 +16,8 @@ kernel26_help() {
     echo ""
     echo "The installation of a 2.6 kernel _could_ ask you to install a new libc"
     echo "first, this is NOT a bug, and should *NOT* be reported. In that case,"
-    echo "please add lenny sources to your /etc/apt/sources.list and run:"
-    echo "  apt-get install -t lenny linux-image-2.6"
+    echo "please add etch sources to your /etc/apt/sources.list and run:"
+    echo "  apt-get install -t etch linux-image-2.6"
     echo "Then reboot into this new kernel, and proceed with your upgrade"
 }
 
@@ -49,14 +49,11 @@ exit_check () {
         realarch=`uname -m`
         kernel_ver=`uname -r`
 
-        # convert "armv4l" and similar to just "arm", "mips64" and similar
-        # to just "mips", "ppc64" and similar to just "powerpc", and
-        # "sparc64" and similar to just "sparc"
+        # convert "armv4l" and similar to just "arm", and "mips64" and similar
+        # to just "mips"
         case $realarch in
           arm*) realarch="arm";;
           mips*) realarch="mips";;
-          powerpc*|ppc*) realarch="powerpc";;
-          sparc*) realarch="sparc";;
         esac
 
 
@@ -73,14 +70,57 @@ exit_check () {
             exit_check
         fi
 
-        # The GNU libc requires a >= 2.6.15 kernel
+        # arm boxes require __ARM_NR_set_tls in the kernel to function properly.
+        if [ "$realarch" = arm ]
+        then
+            if linux_compare_versions "$kernel_ver" lt 2.6.12
+            then
+                echo WARNING: This version of glibc requires that you be running
+                echo kernel version 2.6.12 or later.  Earlier kernels contained
+                echo bugs that may render the system unusable if a modern version
+                echo of glibc is installed.
+                kernel26_help
+                exit_check
+            fi	
+        fi
+
+        # Alpha and HPPA boxes require latest fixes in the kernel to function properly.
+        if [ "$realarch" = parisc -o "$realarch" = alpha ]
+        then
+            if linux_compare_versions "$kernel_ver" lt 2.6.9
+            then
+                echo WARNING: This version of glibc requires that you be running
+                echo kernel version 2.6.9 or later.  Earlier kernels contained
+                echo bugs that may render the system unusable if a modern version
+                echo of glibc is installed.
+                kernel26_help
+                exit_check
+            fi
+        fi
+
+        # sh4 boxes require kernel version 2.6.11 minimum
+        if [ "$realarch" = sh4 ]
+        then
+            if linux_compare_versions "$kernel_ver" lt 2.6.11
+            then
+                echo WARNING: This version of glibc requires that you be running
+                echo kernel version 2.6.11 or later.  Earlier kernels contained
+                echo bugs that may render the system unusable if a modern version
+                echo of glibc is installed.
+                kernel26_help
+                exit_check
+            fi	
+        fi
+
+        # The GNU libc requires 2.6 kernel (except on m68k) because we drop to
+        # support linuxthreads
         if [ "$realarch" != m68k ]
         then
-            if linux_compare_versions "$kernel_ver" lt 2.6.15
+            if linux_compare_versions "$kernel_ver" lt 2.6.8
             then
-                echo WARNING: this version of the GNU libc requires kernel version
-                echo 2.6.15 or later.  Please upgrade your kernel before installing
-                echo glibc.
+                echo WARNING: POSIX threads library NPTL requires kernel version
+                echo 2.6.8 or later.  If you use a kernel 2.4, please upgrade it
+                echo before installing glibc.
                 kernel26_help
                 exit_check
             fi

@@ -1,9 +1,5 @@
----
- sysdeps/unix/sysv/linux/check_pf.c |    2 ++
- 1 file changed, 2 insertions(+)
-
---- a/sysdeps/unix/sysv/linux/check_pf.c
-+++ b/sysdeps/unix/sysv/linux/check_pf.c
+--- sysdeps/unix/sysv/linux/check_pf.c	2007-10-16 14:05:26.798517293 +0000
++++ sysdeps/unix/sysv/linux/check_pf.c	2007-10-16 14:06:11.811066397 +0000
 @@ -25,6 +25,8 @@
  #include <string.h>
  #include <time.h>

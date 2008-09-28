@@ -1,9 +1,5 @@
----
- linuxthreads/sysdeps/unix/sysv/linux/fatal-prepare.h |   39 +++++++++++++++++++
- 1 file changed, 39 insertions(+)
-
 --- /dev/null
-+++ b/linuxthreads/sysdeps/unix/sysv/linux/fatal-prepare.h
++++ linuxthreads/sysdeps/unix/sysv/linux/fatal-prepare.h
 @@ -0,0 +1,39 @@
 +/* Copyright (C) 2003, 2007 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.

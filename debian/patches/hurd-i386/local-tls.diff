@@ -1,11 +1,7 @@
-For now errno is still a threadvar variable.
-
----
- include/errno.h |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
---- a/include/errno.h
-+++ b/include/errno.h
+Index: glibc-2.7/include/errno.h
+===================================================================
+--- glibc-2.7.orig/include/errno.h	2007-10-23 08:46:15.000000000 -0400
++++ glibc-2.7/include/errno.h	2007-10-23 08:49:36.000000000 -0400
 @@ -21,7 +21,7 @@
  
  #  include <tls.h>
@@ -15,3 +11,17 @@ For now errno is still a threadvar variable.
  #   undef  errno
  #   ifndef NOT_IN_libc
  #    define errno __libc_errno
+Index: glibc-2.7/sysdeps/mach/i386/sysdep.h
+===================================================================
+--- glibc-2.7.orig/sysdeps/mach/i386/sysdep.h	2007-10-23 08:46:15.000000000 -0400
++++ glibc-2.7/sysdeps/mach/i386/sysdep.h	2007-10-23 08:49:36.000000000 -0400
+@@ -22,6 +22,9 @@
+ #include <dl-sysdep.h>
+ #include <tls.h>
+ 
++#include <dl-sysdep.h>
++#include <tls.h>
++
+ #define LOSE asm volatile ("hlt")
+ 
+ #define SNARF_ARGS(entry_sp, argc, argv, envp)				      \

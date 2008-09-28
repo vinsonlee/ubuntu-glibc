@@ -1,9 +1,0 @@
----
- bits/pthreadtypes.h |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
---- a/bits/pthreadtypes.h
-+++ b/bits/pthreadtypes.h
-@@ -1 +1 @@
--/* No thread support.  */
-+#include <pthread/pthreadtypes.h>

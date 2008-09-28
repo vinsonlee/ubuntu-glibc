@@ -1,9 +1,5 @@
----
- ports/sysdeps/hppa/linuxthreads/tls.h |   23 +++++++++++++++++++++++
- 1 file changed, 23 insertions(+)
-
---- a/ports/sysdeps/hppa/linuxthreads/tls.h
-+++ b/ports/sysdeps/hppa/linuxthreads/tls.h
+--- ports/sysdeps/hppa/linuxthreads/tls.h	2006-04-18 23:35:34.000000000 -0600
++++ ports/sysdeps/hppa/linuxthreads/tls.h	2007-07-28 15:55:51.000000000 -0600
 @@ -100,6 +100,29 @@
  #define THREAD_SETMEM_NC(descr, member, value) \
    ((void) sizeof (descr), THREAD_SELF->member = (value))
@@ -29,7 +25,7 @@
 +    }									     \
 +  while (0)
 +#define THREAD_GSCOPE_WAIT() \
-+  do { /* GL(dl_wait_lookup_done) () */ } while (0)
++  GL(dl_wait_lookup_done) ()
 +
  /* Install the dtv pointer.  The pointer passed is to the element with
     index -1 which contain the length.  */

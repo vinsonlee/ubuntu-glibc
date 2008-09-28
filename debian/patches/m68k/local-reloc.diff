@@ -6,13 +6,9 @@
 # DP: Status Details: Actual fix is to modify m68k binutils.
 # DP: Date: 2004-08-09
 
----
- ports/sysdeps/m68k/dl-machine.h |    2 ++
- 1 file changed, 2 insertions(+)
-
---- a/ports/sysdeps/m68k/dl-machine.h
-+++ b/ports/sysdeps/m68k/dl-machine.h
-@@ -286,6 +286,8 @@
+--- ports/sysdeps/m68k/dl-machine.h.orig
++++ ports/sysdeps/m68k/dl-machine.h
+@@ -284,6 +284,8 @@
    Elf32_Addr *const reloc_addr = (void *) (l_addr + reloc->r_offset);
    if (ELF32_R_TYPE (reloc->r_info) == R_68K_JMP_SLOT)
      *reloc_addr += l_addr;

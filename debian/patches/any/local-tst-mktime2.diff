@@ -1,9 +1,5 @@
----
- time/tst-mktime2.c |    1 +
- 1 file changed, 1 insertion(+)
-
---- a/time/tst-mktime2.c
-+++ b/time/tst-mktime2.c
+--- time/tst-mktime2.c.orig
++++ time/tst-mktime2.c
 @@ -2,6 +2,7 @@
  #include <time.h>
  #include <stdlib.h>

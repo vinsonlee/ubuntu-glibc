@@ -11,12 +11,8 @@
 # DP: Status Details: Plan to submit
 # DP: Date: 2003-01-01
 
----
- assert/assert.h |    3 +++
- 1 file changed, 3 insertions(+)
-
---- a/assert/assert.h
-+++ b/assert/assert.h
+--- assert/assert.h.orig
++++ assert/assert.h
 @@ -63,6 +63,8 @@
  
  #else /* Not NDEBUG.  */

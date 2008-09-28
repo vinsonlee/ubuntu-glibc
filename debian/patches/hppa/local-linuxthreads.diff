@@ -1,10 +1,5 @@
----
- ports/sysdeps/unix/sysv/linux/hppa/linuxthreads/lowlevellock.h  |  298 ++++++++++
- ports/sysdeps/unix/sysv/linux/hppa/linuxthreads/sysdep-cancel.h |    7 
- 2 files changed, 305 insertions(+)
-
 --- /dev/null
-+++ b/ports/sysdeps/unix/sysv/linux/hppa/linuxthreads/lowlevellock.h
++++ ports/sysdeps/unix/sysv/linux/hppa/linuxthreads/lowlevellock.h
 @@ -0,0 +1,298 @@
 +/* Copyright (C) 2003, 2004, 2005 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -304,8 +299,8 @@
 +  __lll_cond_broadcast (cond)
 +
 +#endif	/* lowlevellock.h */
---- a/ports/sysdeps/unix/sysv/linux/hppa/linuxthreads/sysdep-cancel.h
-+++ b/ports/sysdeps/unix/sysv/linux/hppa/linuxthreads/sysdep-cancel.h
+--- ports/sysdeps/unix/sysv/linux/hppa/linuxthreads/sysdep-cancel.h.orig
++++ ports/sysdeps/unix/sysv/linux/hppa/linuxthreads/sysdep-cancel.h
 @@ -240,3 +240,10 @@
  
  #endif

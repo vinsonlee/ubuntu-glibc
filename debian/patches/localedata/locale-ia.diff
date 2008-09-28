@@ -4,13 +4,8 @@ Ulrich Drepper claimed that he will not accept artificial
 languages (like interlingua and esperanto), this locale
 will thus not be submitted upstream.
 
----
- localedata/SUPPORTED  |    1 
- localedata/locales/ia |  139 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 140 insertions(+)
-
 --- /dev/null
-+++ b/localedata/locales/ia
++++ localedata/locales/ia
 @@ -0,0 +1,139 @@
 +comment_char %
 +escape_char  /
@@ -151,9 +146,9 @@ will thus not be submitted upstream.
 +<U004E><U0025><U0025><U007A><U0020><U0025><U0054><U0025>/
 +<U004E><U0025><U0063><U0025><U004E>"
 +END LC_ADDRESS
---- a/localedata/SUPPORTED
-+++ b/localedata/SUPPORTED
-@@ -241,6 +241,7 @@
+--- localedata/SUPPORTED.orig
++++ localedata/SUPPORTED
+@@ -238,6 +238,7 @@
  hu_HU/ISO-8859-2 \
  hy_AM/UTF-8 \
  hy_AM.ARMSCII-8/ARMSCII-8 \

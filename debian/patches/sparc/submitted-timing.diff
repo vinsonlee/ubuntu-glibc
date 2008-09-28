@@ -9,12 +9,10 @@
 
 	* sysdeps/sparc/hp-timing.h: New file.
 
----
- sysdeps/sparc/sparc32/hp-timing.h |   34 ++++++++++++++++++++++++++++++++++
- 1 file changed, 34 insertions(+)
-
+Index: glibc-2.6/sysdeps/sparc/sparc32/hp-timing.h
+===================================================================
 --- /dev/null
-+++ b/sysdeps/sparc/sparc32/hp-timing.h
++++ glibc-2.6/sysdeps/sparc/sparc32/hp-timing.h
 @@ -0,0 +1,34 @@
 +/* High precision, low overhead timing functions.  i386 version.
 +   Copyright (C) 2003 Free Software Foundation, Inc.
