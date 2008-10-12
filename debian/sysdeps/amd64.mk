@@ -1,60 +1,43 @@
-# configuration options for all flavours
-extra_config_options = --enable-multi-arch
-MIN_KERNEL_SUPPORTED := 2.6.32
-
-# main library
-libc_mvec = yes
+libc_slibdir = /lib
+libc_libdir = /usr/lib
 libc_rtlddir = /lib64
 
+# /lib64 and /usr/lib64 are provided by glibc instead base-files: #259302.
+define libc6_extra_pkg_install
+ln -sf /lib debian/$(curpass)/lib64
+ln -sf lib debian/$(curpass)/usr/lib64
+endef
+
 # build 32-bit (i386) alternative library
-GLIBC_MULTILIB_PASSES += i386
-DEB_ARCH_MULTILIB_PACKAGES += libc6-i386 libc6-dev-i386
+GLIBC_PASSES += i386
+DEB_ARCH_REGULAR_PACKAGES += libc6-i386 libc6-dev-i386
 libc6-i386_shlib_dep = libc6-i386 (>= $(shlib_dep_ver))
-i386_configure_target = i686-linux-gnu
-i386_CC = $(CC) -m32 -march=pentium4 -mtune=generic
-i386_CXX = $(CXX) -m32 -march=pentium4 -mtune=generic
-i386_slibdir = /lib32
-i386_libdir = /usr/lib32
+i386_add-ons = nptl $(add-ons)
+i386_configure_target = i486-linux
+i386_CC = $(CC) -m32
+i386_extra_cflags = -march=pentium4 -O3
+i386_extra_config_options = $(extra_config_options)
+i386_includedir = /usr/include/i486-linux-gnu
+i386_rtlddir = /lib
+i386_slibdir = /emul/ia32-linux/lib
+i386_libdir = /emul/ia32-linux/usr/lib
 
 define libc6-dev-i386_extra_pkg_install
-
-mkdir -p debian/libc6-dev-i386/usr/include
-ln -sf x86_64-linux-gnu/bits debian/libc6-dev-i386/usr/include/
-ln -sf x86_64-linux-gnu/gnu debian/libc6-dev-i386/usr/include/
-ln -sf x86_64-linux-gnu/fpu_control.h debian/libc6-dev-i386/usr/include/
-
-mkdir -p debian/libc6-dev-i386/usr/include/x86_64-linux-gnu/gnu
-cp -a debian/tmp-i386/usr/include/gnu/stubs-32.h \
-        debian/libc6-dev-i386/usr/include/x86_64-linux-gnu/gnu
-
+mkdir -p debian/libc6-dev-i386/usr/include/gnu
+cp -af debian/tmp-i386/usr/include/i486-linux-gnu/gnu/stubs-32.h \
+	debian/libc6-dev-i386/usr/include/gnu
 mkdir -p debian/libc6-dev-i386/usr/include/sys
-for i in `ls debian/tmp-libc/usr/include/x86_64-linux-gnu/sys` ; do \
-	ln -sf ../x86_64-linux-gnu/sys/$$i debian/libc6-dev-i386/usr/include/sys/$$i ; \
-done
-
+cp -af debian/tmp-i386/usr/include/i486-linux-gnu/sys/elf.h \
+	debian/libc6-dev-i386/usr/include/sys
+cp -af debian/tmp-i386/usr/include/i486-linux-gnu/sys/vm86.h \
+	debian/libc6-dev-i386/usr/include/sys
+mkdir -p debian/libc6-dev-i386/usr/include/i486-linux-gnu
 endef
 
 define libc6-i386_extra_pkg_install
 mkdir -p debian/libc6-i386/lib
-ln -sf /lib32/ld-linux.so.2 debian/libc6-i386/lib
+ln -sf /emul/ia32-linux/lib/ld-linux.so.2 debian/libc6-i386/lib
+ln -sf /emul/ia32-linux/lib debian/libc6-i386/lib32
+ln -sf /emul/ia32-linux/usr/lib debian/libc6-i386/usr/lib32
 endef
 
-# build x32 ABI alternative library
-GLIBC_MULTILIB_PASSES += x32
-DEB_ARCH_MULTILIB_PACKAGES += libc6-x32 libc6-dev-x32
-libc6-x32_shlib_dep = libc6-x32 (>= $(shlib_dep_ver))
-x32_configure_target = x86_64-linux-gnux32
-x32_CC = $(CC) -mx32
-x32_CXX = $(CXX) -mx32
-x32_mvec = yes
-x32_rtlddir = /libx32
-x32_slibdir = /libx32
-x32_libdir = /usr/libx32
-
-define libc6-dev-x32_extra_pkg_install
-
-mkdir -p debian/libc6-dev-x32/usr/include/x86_64-linux-gnu/gnu
-cp -a debian/tmp-x32/usr/include/gnu/stubs-x32.h \
-	debian/libc6-dev-x32/usr/include/x86_64-linux-gnu/gnu/
-
-endef

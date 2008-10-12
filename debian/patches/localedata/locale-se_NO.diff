@@ -5,12 +5,8 @@
 # DP: Upstream status: Not submitted yet
 # DP: Date: 2006-06-02
 
----
- localedata/locales/se_NO |    5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
-
---- a/localedata/locales/se_NO
-+++ b/localedata/locales/se_NO
+--- localedata/locales/se_NO.orig
++++ localedata/locales/se_NO
 @@ -137,7 +137,7 @@
  <U01EF> <ezhcaron>;<CAR>;<MIN>;IGNORE % ezh caron
  
@@ -26,7 +22,7 @@
  
 -reorder-after <U0053>
 +reorder-after <U0073>
- <U00DF> <ssharp>;"<LIG><LIG>";"<MIN><MIN>";IGNORE % ÃŸ
+ <U00DF> <ssharp>;"<LIG><LIG>";"<MIN><MIN>";IGNORE % ß
  <U0161> <scaron>;<CAR>;<MIN>;IGNORE % 288 <s<>
 +reorder-after <U0053>
  <U0160> <scaron>;<CAR>;<CAP>;IGNORE % 405 <S<>

@@ -6,7 +6,7 @@
     # Get the list of optimized packages for a given architecture
     # Before removing a package from this list, make sure it appears
     # in the Conflicts: line of libc.
-    case ${DPKG_MAINTSCRIPT_ARCH} in
+    case $(dpkg --print-architecture) in
         alpha)
             hwcappkgs="libc6-alphaev67"
             ;;
@@ -16,6 +16,9 @@
         kfreebsd-i386)
             hwcappkgs="libc0.1-i686"
             ;;
+        sparc)
+            hwcappkgs="libc6-sparcv9 libc6-sparcv9b"
+            ;;
     esac
  
     # We check the version between the current installed libc and
@@ -24,7 +27,7 @@
     all_upgraded=yes
     if [ -n "$hwcappkgs" ]; then
         for pkg in $hwcappkgs ; do
-            ver=$(dpkg-query -l $pkg 2>/dev/null | sed -e '/^[a-z][a-z]\s/!d;/^.[nc]/d;' -e "s/^..\s\+$pkg[0-9a-z:]*\s\+//;s/\s.*//g")
+            ver=$(dpkg -l $pkg 2>/dev/null | sed -e '/^i/!d;' -e "s/^i.\s\+$pkg\s\+//;s/\s.*//g")
             if [ -n "$ver" ] && [ "$ver" != "CURRENT_VER" ]; then
                 all_upgraded=no
             fi

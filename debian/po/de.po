@@ -1,16 +1,15 @@
 # Translation of glibc debconf templates to German
-# Copyright (C) Helge Kreutzmann <debian@helgefjell.de>, 2006-2009, 2011, 2016.
+# Copyright (C) Helge Kreutzmann <debian@helgefjell.de>, 2006-2008.
 # This file is distributed under the same license as the glibc package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: glibc 2.21-9\n"
+"Project-Id-Version: glibc 2.7-9\n"
 "Report-Msgid-Bugs-To: glibc@packages.debian.org\n"
-"POT-Creation-Date: 2015-12-07 14:56+0100\n"
-"PO-Revision-Date: 2016-02-21 19:48+0100\n"
+"POT-Creation-Date: 2008-02-26 21:34+0100\n"
+"PO-Revision-Date: 2008-02-26 22:41+0100\n"
 "Last-Translator: Helge Kreutzmann <debian@helgefjell.de>\n"
 "Language-Team: de <debian-l10n-german@lists.debian.org>\n"
-"Language: German\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -19,13 +18,13 @@ msgstr ""
 #. Choices
 #: ../debhelper.in/locales.templates:1001
 msgid "All locales"
-msgstr "Alle Locales"
+msgstr "Alle Standorteinstellungen"
 
 #. Type: multiselect
 #. Description
 #: ../debhelper.in/locales.templates:1002
 msgid "Locales to be generated:"
-msgstr "Zu generierende Locales (»Standorteinstellungen«):"
+msgstr "Zu generierende Standorteinstellungen (»locales«):"
 
 #. Type: multiselect
 #. Description
@@ -34,7 +33,7 @@ msgid ""
 "Locales are a framework to switch between multiple languages and allow users "
 "to use their language, country, characters, collation order, etc."
 msgstr ""
-"Locales ist ein System, um zwischen verschiedenen Sprachen "
+"Standorteinstellungen ist ein System, um zwischen verschiedenen Sprachen "
 "umzuschalten. Benutzer können damit ihre Sprache, ihr Land, ihren "
 "Zeichensatz, ihre Sortierreihenfolge und anderes mehr festlegen."
 
@@ -46,8 +45,8 @@ msgid ""
 "default, particularly for new installations. Other character sets may be "
 "useful for backwards compatibility with older systems and software."
 msgstr ""
-"Bitte wählen Sie aus, welche Locales erzeugt werden sollen. "
-"UTF-8-Locales sollten standardmäßig ausgewählt werden, "
+"Bitte wählen Sie aus, welche Standorteinstellungen erzeugt werden sollen. "
+"UTF-8-Standorteinstellungen sollten standardmäßig ausgewählt werden, "
 "insbesondere für neue Installationen. Andere Zeichensätze könnten für "
 "Rückkompatibilität mit älteren Systemen und Software nützlich sein."
 
@@ -61,7 +60,7 @@ msgstr "Keine"
 #. Description
 #: ../debhelper.in/locales.templates:2002
 msgid "Default locale for the system environment:"
-msgstr "Standard-Standorteinstellung für die Systemumgebung:"
+msgstr "Standard-Standorteinstellung für die Systemumgebung?"
 
 #. Type: select
 #. Description
@@ -71,9 +70,9 @@ msgid ""
 "for the user. You can choose a default locale for the system from the "
 "generated locales."
 msgstr ""
-"Viele Debian-Pakete benutzen Locales, um Text in der für die "
+"Viele Debian-Pakete benutzen Standorteinstellungen, um Text in der für die "
 "Benutzer korrekten Sprache anzuzeigen. Sie können aus den generierten "
-"Locales einen Standard für Ihr System auswählen."
+"Standorteinstellungen einen Standard für Ihr System auswählen."
 
 #. Type: select
 #. Description
@@ -110,7 +109,7 @@ msgstr ""
 "durchführen können. Der Installationsprozess kann einige Dienste neu starten "
 "(wie Ssh oder Telnetd), aber andere Programme können nicht automatisch neu "
 "gestartet werden. Eines dieser Programme, die nach dem Upgrade von Glibc ein "
-"manuelles Stoppen und Neustarten benötigen, ist Xdm, da ein automatischer "
+"manuelles Stoppen und Neustarten benötigen ist Xdm, da ein automatischer "
 "Neustart Sie von Ihren aktiven X11-Sitzung trennen könnte."
 
 #. Type: boolean
@@ -155,7 +154,7 @@ msgstr ""
 "durchführen können (für Dienste wie ssh kann dies die Möglichkeit der "
 "Anmeldung betreffen). Bitte prüfen Sie, welche der Dienste in der folgenden, "
 "durch Leerzeichen getrennte Liste von init.d-Skripten neu gestartet werden "
-"sollen, und korrigieren Sie diese, falls notwendig."
+"sollen, und korrigieren Sie diese falls notwendig."
 
 #. Type: string
 #. Description
@@ -192,88 +191,22 @@ msgstr ""
 "Sie müssen diese manuell starten, indem Sie »/etc/init.d/<service> start« "
 "ausführen."
 
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:4001
-msgid "xscreensaver and xlockmore must be restarted before upgrading"
-msgstr "Xscreensaver und Xlockmore müssen vor dem Upgrade neu gestartet werden"
+#~ msgid "${services}"
+#~ msgstr "${services}"
 
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:4001
-msgid ""
-"One or more running instances of xscreensaver or xlockmore have been "
-"detected on this system. Because of incompatible library changes, the "
-"upgrade of the GNU libc library will leave you unable to authenticate to "
-"these programs. You should arrange for these programs to be restarted or "
-"stopped before continuing this upgrade, to avoid locking your users out of "
-"their current sessions."
-msgstr ""
-"Eine oder mehrere laufende Instanzen von Xscreensaver oder Xlockmore sind "
-"auf diesem System entdeckt worden. Aufgrund inkompatibler Änderungen in "
-"Bibliotheken wird das GNU Libc-Upgrade Sie außerstande setzen, sich "
-"gegenüber diesen Programmen zu authentifizieren. Sie sollten dafür sorgen, "
-"dass diese Programme neu gestartet oder beendet werden, bevor Sie dieses "
-"Upgrade fortsetzen, damit Ihre Benutzer nicht aus ihren laufenden Sitzungen "
-"ausgesperrt werden."
+#~ msgid ""
+#~ "Choose which locales to generate.  The selection will be saved to `/etc/"
+#~ "locale.gen', which you can also edit manually (you need to run `locale-"
+#~ "gen' afterwards)."
+#~ msgstr ""
+#~ "Sie können hier Standorteinstellungen auswählen, die jetzt generiert "
+#~ "werden sollen. Diese Einstellung wird in »/etc/locale-gen« gespeichert. "
+#~ "Sie können diese Datei auch manuell ändern. Starten Sie nach der Änderung "
+#~ "»locale-gen«."
 
-#. Type: boolean
-#. Description
-#: ../debhelper.in/libc.templates:5001
-msgid "Restart services during package upgrades without asking?"
-msgstr "Dienste bei Paket-Upgrades ohne Rückfrage neu starten?"
-
-#. Type: boolean
-#. Description
-#: ../debhelper.in/libc.templates:5001
-msgid ""
-"There are services installed on your system which need to be restarted when "
-"certain libraries, such as libpam, libc, and libssl, are upgraded. Since "
-"these restarts may cause interruptions of service for the system, you will "
-"normally be prompted on each upgrade for the list of services you wish to "
-"restart.  You can choose this option to avoid being prompted; instead, all "
-"necessary restarts will be done for you automatically so you can avoid being "
-"asked questions on each library upgrade."
-msgstr ""
-"Auf Ihrem System sind Dienste installiert, die beim Upgrade bestimmter "
-"Bibliotheken, wie Libpam, Libc und Libssl, neu gestartet werden müssen. Da "
-"diese Neustarts zu Unterbrechungen der Dienste für dieses System führen "
-"können, werden Sie normalerweise bei jedem Upgrade über die Liste der neu zu "
-"startenden Dienste befragt. Sie können diese Option wählen, um diese Abfrage "
-"zu vermeiden; stattdessen werden alle notwendigen Dienste-Neustarts für Sie "
-"automatisch vorgenommen und die Beantwortung dieser Fragen bei jedem Upgrade "
-"von Bibliotheken vermieden."
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:6001
-msgid "Kernel must be upgraded"
-msgstr "Kernel muss aktualisiert werden."
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:6001
-msgid ""
-"This version of the GNU libc requires kernel version ${kernel_ver} or "
-"later.  Please upgrade your kernel before installing glibc."
-msgstr ""
-"Diese Version der GNU-Libc benötigt Kernel Version ${kernel_ver} oder neuer. "
-"Bitte führen Sie vor der Installation der Glibc ein Upgrade durch."
-
-#. Type: note
-#. Description
-#: ../debhelper.in/libc.templates:7001
-msgid "Kernel version not supported"
-msgstr "Kernelversion wird nicht unterstützt"
-
-#. Type: note
-#. Description
-#: ../debhelper.in/libc.templates:7001
-msgid ""
-"This version of the GNU libc requires kernel version ${kernel_ver} or "
-"later.  Older versions might work but are not officially supported.  Please "
-"consider upgrading your kernel."
-msgstr ""
-"Diese Version der GNU-Libc benötigt Kernel Version ${kernel_ver} oder neuer. "
-"Ältere Versionen können funktionieren, werden aber nicht offiziell "
-"unterstützt. Bitte prüfen Sie ein Upgrade Ihres Kernels."
+#~ msgid ""
+#~ "When `All locales' is selected, /etc/locale.gen will be set as a symlink "
+#~ "to /usr/share/i18n/SUPPORTED."
+#~ msgstr ""
+#~ "Wenn »Alle Standorteinstellungen« gewählt ist, wird /etc/locale.gen als "
+#~ "Symlink auf /usr/share/i18n/SUPPORTED eingerichtet."

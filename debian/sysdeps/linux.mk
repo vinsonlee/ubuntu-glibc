@@ -1,18 +1,11 @@
-# When changing this, make sure to update debian/debhelper.in/libc.preinst!
-MIN_KERNEL_SUPPORTED := 3.2
+GLIBC_OVERLAYS ?= $(shell ls glibc-linuxthreads* glibc-ports* glibc-libidn*)
+MIN_KERNEL_SUPPORTED := 2.6.8
 libc = libc6
-
-# Do not build pt_chown on this platform
-pt_chown = no
-# Expect pldd on this platform
-pldd = yes
 
 # NPTL Config
 threads = yes
-
-ifeq ($(filter stage1 stage2,$(DEB_BUILD_PROFILES)),)
-  libc_extra_config_options = --with-selinux $(extra_config_options)
-endif
+libc_add-ons = nptl $(add-ons)
+libc_extra_config_options = $(extra_config_options)
 
 ifndef LINUX_SOURCE
   ifeq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
@@ -31,18 +24,12 @@ KERNEL_HEADER_DIR = $(stamp)mkincludedir
 $(stamp)mkincludedir:
 	rm -rf debian/include
 	mkdir debian/include
-
-	# Kernel and library headers
-	for h in arch asm asm-generic libaudit.h linux selinux sys/capability.h ; do \
-	    mkdir -p debian/include/$$(dirname $$h) ; \
-	    if [ -e "$(LINUX_HEADERS)/$$h" ]; then \
-	        ln -s $(LINUX_HEADERS)/$$h debian/include/$$h ; \
-	    elif [ -e "/usr/include/$(DEB_HOST_MULTIARCH)/$$h" ]; then \
-	        ln -s /usr/include/$(DEB_HOST_MULTIARCH)/$$h debian/include/$$h ; \
-	    elif [ -e "/usr/include/$$h" ]; then \
-	        ln -s /usr/include/$$h debian/include/$$h ; \
-	    fi ; \
-	done
+	ln -s $(LINUX_HEADERS)/linux debian/include
+	# Link all asm directories.  We can't just link asm and asm-generic
+	# because of explicit references to <asm-sparc/*> and
+	# <asm-sparc64/*>.
+	find $(LINUX_HEADERS) -maxdepth 1 -xtype d -name asm\* \
+	  -exec ln -s '{}' debian/include ';'
 
 	# To make configure happy if libc6-dev is not installed.
 	touch debian/include/assert.h
@@ -56,8 +43,8 @@ export CPPFLAGS = -isystem $(shell pwd)/debian/include
 # into an integer so it can be easily compared and then does so.
 CURRENT_KERNEL_VERSION=$(shell uname -r)
 define kernel_check
-(minimum=$$((`echo $(1) | sed 's/^\([0-9]*\.[0-9]*\)\([^.0-9]\|$$\)/\1.0\2/; s/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\1 \* 10000 + \2 \* 100 + \3/'`)); \
-current=$$((`echo $(CURRENT_KERNEL_VERSION) | sed 's/^\([0-9]*\.[0-9]*\)\([^.0-9]\|$$\)/\1.0\2/; s/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\1 \* 10000 + \2 \* 100 + \3/'`)); \
+(minimum=$$((`echo $(1) | sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\1 \* 65536 + \2 \* 256 + \3/'`)); \
+current=$$((`echo $(CURRENT_KERNEL_VERSION) | sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\1 \* 65536 + \2 \* 256 + \3/'`)); \
 if [ $$current -lt $$minimum ]; then \
   false; \
 fi)

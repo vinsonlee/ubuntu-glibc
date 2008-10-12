@@ -6,13 +6,9 @@
 # DP: Status Details: http://sources.redhat.com/bugzilla/show_bug.cgi?id=120
 # DP: Date: 2002-03-10
 
----
- intl/locale.alias |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
---- a/intl/locale.alias
-+++ b/intl/locale.alias
-@@ -63,7 +63,7 @@
+--- glibc-2.6.orig/intl/locale.alias
++++ glibc-2.6/intl/locale.alias
+@@ -65,7 +65,7 @@
  polish          pl_PL.ISO-8859-2
  portuguese      pt_PT.ISO-8859-1
  romanian        ro_RO.ISO-8859-2
