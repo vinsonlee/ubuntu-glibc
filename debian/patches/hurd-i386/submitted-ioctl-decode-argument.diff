@@ -6,8 +6,13 @@
 
         * ioctls.h (_IOIW): New macro for immediate-write ioctls.
 
---- sysdeps/mach/hurd/ioctl.c.orig
-+++ sysdeps/mach/hurd/ioctl.c
+---
+ sysdeps/mach/hurd/bits/ioctls.h |    1 +
+ sysdeps/mach/hurd/ioctl.c       |   16 ++++++++++------
+ 2 files changed, 11 insertions(+), 6 deletions(-)
+
+--- a/sysdeps/mach/hurd/ioctl.c
++++ b/sysdeps/mach/hurd/ioctl.c
 @@ -89,7 +89,7 @@
    void *p;
  #endif
@@ -46,8 +51,8 @@
  
    {
      /* Check for a registered handler for REQUEST.  */
---- sysdeps/mach/hurd/bits/ioctls.h.orig
-+++ sysdeps/mach/hurd/bits/ioctls.h
+--- a/sysdeps/mach/hurd/bits/ioctls.h
++++ b/sysdeps/mach/hurd/bits/ioctls.h
 @@ -118,6 +118,7 @@
     _IOT_foobar is defined either in this file,
     or where struct foobar is defined.  */

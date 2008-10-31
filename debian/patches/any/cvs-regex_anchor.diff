@@ -14,6 +14,11 @@
 RCS file: /cvs/glibc/libc/posix/regcomp.c,v
 retrieving revision 1.117
 retrieving revision 1.118
+---
+ posix/regcomp.c        |   48 ++++++++++++++++++++++--------------------------
+ posix/regex_internal.c |    6 +-----
+ 2 files changed, 23 insertions(+), 31 deletions(-)
+
 --- a/posix/regcomp.c
 +++ b/posix/regcomp.c
 @@ -1038,7 +1038,9 @@

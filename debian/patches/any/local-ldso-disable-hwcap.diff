@@ -7,9 +7,14 @@
 # DP:                 only need it because we support in-place upgrades.
 # DP: Date: 2003-10-28, (Updated 2005-01-02 gotom, 2007-05-20 aurel32)
 
---- elf/dl-sysdep.c.orig
-+++ elf/dl-sysdep.c
-@@ -408,6 +408,20 @@
+---
+ elf/dl-cache.c  |    6 ++++++
+ elf/dl-sysdep.c |   21 +++++++++++++++++++--
+ 2 files changed, 25 insertions(+), 2 deletions(-)
+
+--- a/elf/dl-sysdep.c
++++ b/elf/dl-sysdep.c
+@@ -409,6 +409,20 @@
    /* For TLS enabled builds always add 'tls'.  */
    ++cnt;
  
@@ -30,7 +35,7 @@
    /* Create temporary data structure to generate result table.  */
    temp = (struct r_strlenpair *) alloca (cnt * sizeof (*temp));
    m = 0;
-@@ -482,8 +496,11 @@
+@@ -483,8 +497,11 @@
    *sz = 1 << cnt;
    result = (struct r_strlenpair *) malloc (*sz * sizeof (*result) + total);
    if (result == NULL)
@@ -44,8 +49,8 @@
  
    if (cnt == 1)
      {
---- elf/dl-cache.c.orig
-+++ elf/dl-cache.c
+--- a/elf/dl-cache.c
++++ b/elf/dl-cache.c
 @@ -244,6 +244,7 @@
    if (cache_new != (void *) -1)
      {

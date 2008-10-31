@@ -8,11 +8,13 @@ This request has not been submitted upstream yet.
 # DP: Upstream status: not submitted
 # DP: Date: 2006-01-08
 
-Index: glibc-2.7/locale/programs/ld-collate.c
-===================================================================
---- glibc-2.7.orig/locale/programs/ld-collate.c	2007-10-23 22:23:27.000000000 -0400
-+++ glibc-2.7/locale/programs/ld-collate.c	2007-10-23 22:23:28.000000000 -0400
-@@ -3642,8 +3642,20 @@
+---
+ locale/programs/ld-collate.c |   12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+--- a/locale/programs/ld-collate.c
++++ b/locale/programs/ld-collate.c
+@@ -3646,8 +3646,20 @@
  	    }
  	  else if (arg != NULL)
  	    {
@@ -26,9 +28,9 @@ Index: glibc-2.7/locale/programs/ld-collate.c
 +		  && find_entry (&collate->elem_table, symstr, symlen, &ptr) != 0
 +	          && find_entry (&collate->sym_table, symstr, symlen, &ptr) != 0)
 +		{
-+		  lr_error (ldfile, _("%s: symbol `%.*s' not known"),
-+			    "LC_COLLATE", (int) symlen, symstr);
-+		  lr_ignore_rest (ldfile, 0);
++		  if (verbose)
++		    lr_error (ldfile, _("%s: symbol `%.*s' not known"),
++			      "LC_COLLATE", (int) symlen, symstr);
 +		}
  	    }
  	  else

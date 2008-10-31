@@ -24,8 +24,15 @@
 	* elf/Makefile: Add dl-altinit to routines, shared-only-routines.
 	* elf/dl-altinit.c: New file.
 
---- sysdeps/generic/ldsodefs.h.orig
-+++ sysdeps/generic/ldsodefs.h
+---
+ elf/Makefile               |    6 +++++-
+ elf/dl-altinit.c           |   43 +++++++++++++++++++++++++++++++++++++++++++
+ sysdeps/generic/ldsodefs.h |    4 ++--
+ sysdeps/i386/hp-timing.h   |   34 ++++++++++++++++++++++++++++++++++
+ 4 files changed, 84 insertions(+), 3 deletions(-)
+
+--- a/sysdeps/generic/ldsodefs.h
++++ b/sysdeps/generic/ldsodefs.h
 @@ -406,7 +406,7 @@
    /* The object to be initialized first.  */
    EXTERN struct link_map *_dl_initfirst;
@@ -45,7 +52,7 @@
    EXTERN hp_timing_t _dl_hp_timing_overhead;
  #endif
 --- /dev/null
-+++ sysdeps/i386/hp-timing.h
++++ b/sysdeps/i386/hp-timing.h
 @@ -0,0 +1,34 @@
 +/* High precision, low overhead timing functions.  i386 version.
 +   Copyright (C) 2003 Free Software Foundation, Inc.
@@ -82,7 +89,7 @@
 +
 +#endif	/* hp-timing.h */
 --- /dev/null
-+++ elf/dl-altinit.c
++++ b/elf/dl-altinit.c
 @@ -0,0 +1,43 @@
 +/* Extra initializers for shared libc.
 +   Copyright (C) 2003 Free Software Foundation, Inc.
@@ -127,8 +134,8 @@
 +{
 +  dlinit_hptiming ();
 +}
---- elf/Makefile.orig
-+++ elf/Makefile
+--- a/elf/Makefile
++++ b/elf/Makefile
 @@ -23,7 +23,7 @@
  headers		= elf.h bits/elfclass.h link.h bits/link.h
  routines	= $(dl-routines) dl-support dl-iteratephdr \

@@ -13,7 +13,7 @@ GLIBC_PASSES += i386
 DEB_ARCH_REGULAR_PACKAGES += libc0.1-i386 libc0.1-dev-i386
 libc0.1-i386_shlib_dep = libc0.1-i386 (>= $(shlib_dep_ver))
 
-i386_configure_target = i486-kfreebsd
+i386_configure_target = i686-kfreebsd
 i386_CC = $(CC) -m32
 i386_CXX = $(CXX) -m32
 i386_add-ons = ports linuxthreads $(add-ons)
@@ -38,6 +38,5 @@ endef
 define libc0.1-i386_extra_pkg_install
 mkdir -p debian/libc0.1-i386/lib
 ln -sf /lib32/ld.so.1 debian/libc0.1-i386/lib
-ln -sf /lib32 debian/libc0.1-i386/lib32
 endef
 
