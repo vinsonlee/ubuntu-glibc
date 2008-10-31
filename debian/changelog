@@ -1,10 +1,173 @@
-glibc (2.8~20080505-0ubuntu7) intrepid; urgency=low
+glibc (2.8+20081027-0ubuntu1) jaunty; urgency=low
 
-  * Add debian/patches/ubuntu/stack-guard-quick-randomization.diff: do
-    light-weight randomization of the stack guard value instead of using
-    a static sentinel (LP: #275493).
+  * Merge with Debian; remaining changes:
+    - Packaging:
+      + External tzdata
+      + Use external locale information
+      + Addition of Niagara and Niagara2 optimised libraries
+      + GFDL Documentation added back in, build glibc-doc from this source.
+      + Transition from /usr/include/ppc64-linux-gnu to powerpc64-linux-gnu
+      + Use dpkg triggers for ldconfig
+      + Do not die if extra libc libraries or symlinks found
+      + Do not do a test run of nscd when starting
+      + Only apply patches we actually use in Ubuntu
+      + Use /lib and /usr/lib for amd64
+      + amd64 biarch is i686, not i486.
+      + Non-optimised i386 glibc is Xen-friendly.
+      + Support sparcv9v, v9v2, 64b, 64v, 64v2
+      + Add support for lpia.
+      + Use <triplet>.conf for files in /etc/ld.so.conf.d.
+    - Patches:
+      + Applied any/local-ipv6-lookup.
+      + Not applied any/local-sysctl.
+  * testsuite-checking: Use Debian's testsuite checking, sort expected and
+    current test results before comparing.
 
- -- Kees Cook <kees@ubuntu.com>  Sun, 28 Sep 2008 09:30:01 -0700
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 31 Oct 2008 19:05:39 +0100
+
+glibc (2.8+20080809-3) experimental; urgency=low
+
+  [ Aurelien Jarno ]
+  * New upstream release.
+    - Fix conversions to ISO-2022-JP.  Closes: #466340.
+    - "Tarballs are a completely outdated concept":
+      + use a flat .orig.tar.gz
+      + rules.d/tarball.mk: remove all, add a get-orig-source target
+      + rules.d/quilt.mk: fix the unpatch target
+    - Update any/cvs-getaddrinfo.diff.
+    - Update any/submitted-i686-timing.diff.
+    - Update hurd-i386/cvs-lock-memory-clobber.diff.
+    - Update kfreebsd/local-sys_queue_h.diff
+    - Update locale/preprocessor-collate-uli-sucks.diff
+    - Update localedata/tailor-iso14651_t1.diff.
+    - Update localedata/locales-fr.diff.
+    - Update localedata/cy_GB-first_weekday.diff.
+    - Update localedata/fr_BE-first_weekday.diff.
+    - Update localedata/fr_CA-first_weekday.diff.
+    - Update localedata/fr_CH-first_weekday.diff.
+    - Update localedata/fr_LU-first_weekday.diff.
+    - Remove alpha/submitted-xstat.diff (outdated).
+    - Remove amd64/cvs-vdso_clock_gettime.diff (merged).
+    - Remove arm/cvs-ioperm.diff (merged). 
+    - Remove arm/cvs-gcc4-inline.diff (merged).
+    - Remove arm/local-args6.diff (merged).
+    - Remove arm/submitted-RTLD_SINGLE_THREAD_P.diff (merged).
+    - Remove hppa/cvs-atomic.diff (merged).
+    - Remove hppa/cvs-lowlevellock.diff (merged).
+    - Remove hurd-i386/cvs-kernel-features.diff (merged).
+    - Remove hurd-i386/cvs-O_CLOEXEC_fix.diff (merged).
+    - Remove hurd-i386/cvs-epfnosupport.diff (merged).
+    - Remove hurd-i386/cvs-df.diff (merged).
+    - Remove hurd-i386/cvs-blocked-exceptions.diff (merged).
+    - Remove i386/cvs-short-for-fnstsw.diff (merged).
+    - Remove mips/cvs-memory-barriers.diff (merged).
+    - Remove mips/cvs-mknod.diff (merged).
+    - Remove mips/cvs-fcsr.diff (merged).
+    - Remove mips/cvs-mipsn32.diff (merged).
+    - Remove sh4/cvs-nptl-private-futexes.diff (merged).
+    - Remove all/cvs-gai_conf.diff (merged).
+    - Remove any/cvs-epoll_h.diff (merged).
+    - Remove any/cvs-ether_line.diff (merged).
+    - Remove any/cvs-ethertype.diff (merged).
+    - Remove any/cvs-fchmodat.diff (merged).
+    - Remove any/cvs-gcc-4.3.diff (merged).
+    - Remove any/cvs-iconv-iso2022jp-loop-bug.diff (merged).
+    - Remove any/cvs-isoc99_vscanf.diff (merged).
+    - Remove any/cvs-rfc3484.diff (merged).
+    - Remove any/cvs-sched_h.diff (merged).
+    - Remove any/cvs-strerror_r.diff (merged).
+    - Remove any/local-strfry.diff (merged).
+    - Remove any/cvs-strtod.diff (merged).
+    - Remove any/cvs-tzfile.diff (merged).
+    - Remove any/cvs-vfscanf.diff (merged).
+    - Remove any/cvs-sunrpc_rpc_thread.diff (merged).
+    - Remove any/cvs-wchar_h.diff (merged).
+    - Remove any/local-dl-execstack.diff (outdated).
+    - Remove any/local-gcc4-wcstol_l.diff (outdated).
+    - Remove any/local-ip6-localhost.diff (fixed differently).
+    - Remove any/local-notls.diff (outdated).
+    - Remove any/submitted-ieee754_h.diff (merged).
+    - Remove any/submitted-link-local_resolver.diff (merged).
+    - Remove localedata/cvs-locale-ig_NG.diff (merged).
+    - Remove localedata/cvs-locale-lo_LA.diff (merged).
+    - Remove localedata/cvs-locale-ug_CN.diff (merged).
+    - Remove localedata/locale-es_CR.diff (merged).
+    - Remove localedata/locale-pt_PT.diff (merged).
+    - Add patches/alpha/submitted-creat64.diff from Gentoo.
+    - Add patches/alpha/submitted-dl-support.diff from Gentoo.
+    - debian/shlibver: bump to 2.8.
+    - debian/locales-depver: bump to 2.8.
+  * Convert all patch to patchlevel -p1.  Closes: #485165.
+  * debian/rules.d/quilt.mk: add a refresh target.
+  * local/manpages/*: fix comments to make lintian happy.
+  * locale/check-unknown-symbols.diff: changes errors to warnings.
+  * debian/control.in/main: update Standards-Version to 3.8.0:
+    - Add debian/README.source.
+  * debian/rules, debian/rules.d/build.mk, debian/testsuite-checking/*:
+    implement regression check, based on a patch from Carlos O'Donell.
+  * testsuite-checking/expected-results-alpha-linux-gnu-libc: new file.
+  * testsuite-checking/expected-results-alphaev67-linux-alphaev67: new file.
+  * testsuite-checking/expected-results-arm-linux-gnueabi-libc: new file.
+  * testsuite-checking/expected-results-hppa-linux-gnu-libc: new file.
+  * testsuite-checking/expected-results-i486-kfreebsd-gnu-libc: new file.
+  * testsuite-checking/expected-results-i486-linux-gnu-libc: new file.
+  * testsuite-checking/expected-results-i686-kfreebsd-i386: new file.
+  * testsuite-checking/expected-results-i686-kfreebsd-i686: new file.
+  * testsuite-checking/expected-results-i686-linux-i386: new file.
+  * testsuite-checking/expected-results-i686-linux-i686: new file.
+  * testsuite-checking/expected-results-i686-linux-xen: new file.
+  * testsuite-checking/expected-results-ia64-linux-gnu-libc: new file.
+  * testsuite-checking/expected-results-mips-linux-gnu-libc: new file
+  * testsuite-checking/expected-results-mips32-linux-mipsn32: new file.
+  * testsuite-checking/expected-results-mips64-linux-mips64: new file.
+  * testsuite-checking/expected-results-mips32el-linux-mipsn32: new file.
+  * testsuite-checking/expected-results-mips64el-linux-mips64: new file.
+  * testsuite-checking/expected-results-mipsel-linux-gnu-libc: new file.
+  * testsuite-checking/expected-results-powerpc-linux-gnu-libc: new file.
+  * testsuite-checking/expected-results-powerpc64-linux-ppc64: new file.
+  * testsuite-checking/expected-results-s390-linux-gnu-libc: new file.
+  * testsuite-checking/expected-results-s390x-linux-s390x: new file.
+  * testsuite-checking/expected-results-sparc64-linux-sparc64: new file.
+  * testsuite-checking/expected-results-sparc-linux-gnu-libc: new file.
+  * testsuite-checking/expected-results-sparcv9b-linux-sparcv9b: new file.
+  * testsuite-checking/expected-results-x86_64-kfreebsd-gnu-libc: new file.
+  * testsuite-checking/expected-results-x86_64-linux-amd64: new file.
+  * testsuite-checking/expected-results-x86_64-linux-gnu-libc: new file.
+  * control.in/main: build-depends on dpkg (>= 1.14.17).
+  * Add symbols files for the various libraries, based on a patch by 
+    Raphaël Hertzog.  Closes: #462444.
+  * localedata/supported.diff: sort locales by alphabetical order.  Closes: 
+    #493231.
+  * debian/rules, debian/rules.d/build.mk, debian/sysdeps.mk/*: use a common 
+    huge TIMEOUTFACTOR for all architectures.
+  * debian/sysdeps/mipsel.mk: use the correct triplet for mipsn32 and mips64
+    builds.
+  * debian/sysdeps/kfreebsd-amd64.mk: remove wrong symlink /lib32/lib32.
+  * debian/sysdeps/amd64.mk,kfreebsd-amd64.mk: enable i686 optimizations.
+  * debhelper.in/locales-all.prerm, debhelper.in/locales.postinst: remove 
+    prepended path.
+  * debian/sysdeps/hppa.mk: use relative symlinks for hppa64 include 
+    directories.
+  * patches/all/submitted-iconv-latin9.diff: add latin9 as an alias to 
+    latin-9 for consistency with other charsets.  Closes: #497449.
+  * rules, rules.d/build.mk, debhelper.in/glibc-doc.manpages: install
+    preprocessed manpages instead of raw ones.
+  * debian/sysdeps/*.mk, script.in/kernelcheck.sh: bump minimal kernel
+    version to 2.6.18.  Closes: #499689.
+  * debian/control.in/main: add Vcs-Svn and Vcs-Browser field.  Closes: 
+    #499769.
+  * debian/sysdeps/depflags.pl: add a conflict on nscd (<< 2.8) to nscd
+    Closes: #498516).
+  * rules, rules.d/build.mk, debhelper.in/glibc-doc.manpages: install the
+    generated manpages.
+  * any/cvs-bug-iconv6_tst-iconv7.diff: new patch from upstream to fix
+    bug-iconv6 and tst-iconv7 when the locales package is not installed.
+
+  [ Petr Salinger ]
+  * add any/local-linuxthreads-ptw.diff. Closes: #494908.
+  * add kfreebsd/local-sysdeps28.diff, glibc 2.8 specific kfreebsd sysdeps.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 25 Oct 2008 21:22:39 +0200
 
 glibc (2.8~20080505-0ubuntu6) intrepid; urgency=low
 
@@ -117,40 +280,138 @@ glibc (2.8~20080505-0ubuntu1) intrepid; urgency=low
 
  -- Matthias Klose <doko@ubuntu.com>  Fri, 09 May 2008 14:22:01 +0200
 
-glibc (2.7-11ubuntu1) intrepid; urgency=low
+glibc (2.7-16) unstable; urgency=low
 
-  * Merge with Debian (r2892:2919).
-    - Packaging:
-      + External tzdata
-      + Use external locale information
-      + Addition of Niagara and Niagara2 optimised libraries
-      + GFDL Documentation added back in, build glibc-doc from this source.
-      + Transition from /usr/include/ppc64-linux-gnu to powerpc64-linux-gnu
-      + Use dpkg triggers for ldconfig
-      + Do not die if extra libc libraries or symlinks found
-      + Do not do a test run of nscd when starting
-      + Only apply patches we actually use in Ubuntu
-      + Use /lib and /usr/lib for amd64
-      + amd64 biarch is i686, not i486.
-      + Non-optimised i386 glibc is Xen-friendly.
-      + Support sparcv9v, v9v2, 64b, 64v, 64v2
-      + Add support for lpia.
-      + Call `sync' before building the tarball of supported locales.
-      + Downgrade priority of debconf questions for RELEASE_UPGRADE_MODE=desktop.
-      + Use the package settings for *FLAGS, not the settings from the env.
-      + Fail the build when regressions are detected in the testsuite.
-      + Build with GCC-4.3 on amd64 and i386.
-    - Patches:
-      + sparc/submitted-v9v2
-      + hppa/hppalll
-      + Applied any/local-ipv6-lookup.
-      + Not applied any/local-sysctl.
-  * any/cvs-short-for-fnstsw.diff: Backport from the trunk, fix build failure
-    with binutils from trunk.
+  * patches/any/submitted-rpcgen-makefile.diff: new patch to fix fancy 
+    Makefile filename when using rpcgen -a.  Closes: bug#503182.
 
- -- Matthias Klose <doko@ubuntu.com>  Thu, 08 May 2008 12:06:01 +0200
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 23 Oct 2008 15:39:04 +0200
 
-glibc (2.7-11) UNRELEASED; urgency=low
+glibc (2.7-15) unstable; urgency=low
+
+  * debhelper.in/locales.config, debhelper.in/locales.postinst: modify
+    /etc/locale.gen instead of regenerating it.  Closes: bug#494468.
+  * any/cvs-nscd-getservbyport.diff: new patch from upstream to fix getservbyport()
+    when nscd is used.  Closes: bug#500055.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 12 Oct 2008 23:04:27 +0200
+
+glibc (2.7-14) unstable; urgency=low
+
+  [ Petr Salinger ]
+  * kfreebsd/local-sysdeps.diff: update to revision 2322 (from glibc-bsd).
+  * extend kfreebsd/local-ftw.diff: do not use *at functions also in glob.c,
+    this patch is applied only on kfreebsd, fixes globtest.out failure.
+  * any/local-linuxthreads-weak.diff: new patch to pass 
+    stdio-common/scanf15.out test on linuxthreads platforms, 
+    although it seems to be rather gcc 4.x bug, see GCC Bugzilla Bug 37266.
+    
+  [ Aurelien Jarno ]
+  * patches/mips/cvs-mknod.diff: new patch from upstream to allow > 255 minors
+    on mips.  Closes: #493751.
+  * patches/sparc/cvs-context.diff: new patch from upstream to add
+    getcontext(), setcontext(), makecontext() on Sparc.  Closes: #295173.
+  * patches/hppa/cvs-context.diff: new patch from upstream to add
+    getcontext(), setcontext(), makecontext() on PARISC.  Closes: #492778.
+  * any/local-ip6-localhost.diff: new patch from upstream BTS, to remove the
+    ::1 -> 127.0.0.1 mapping.
+  * any/cvs-isoc99_vscanf.diff: new patch from upstream to fix vscanf on
+    non-GNU compilers.
+  * Fix nosegneg pseudo hwcap.  Closes: #499366.
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/cvs-lock-memory-clobber.diff: new patch from upstream
+    to fix safety of locks.
+  * patches/hurd-i386/local-pthread_posix-option.diff: new patch to advertise
+    the libpthread from the hurd packages.
+  * patches/hurd-i386/cvs-signal-werror.diff: new patch to fix gdb compilation.
+  * patches/hurd-i386/local-tls-support.diff: fix cthread compilation.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 20 Sep 2008 10:00:36 +0200
+
+glibc (2.7-13) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * Update Brazilian Portuguese debconf translation, by Felipe Augusto van de
+    Wiel.  Closes: #485381.
+  * patches/any/cvs-getaddrinfo.diff: new patch from CVS to correctly 
+    initialize internal resolver structures in getaddrinfo().  Closes:
+    #489586.
+  * Update Romanian debconf translation, by Eddy Petrişor.  Closes: #488734.
+  * any/cvs-tst-regex.diff: new patch from CVS to add a timeout to tst-regex.
+    Closes: #489856.
+  * control.in/main: build depends on gcc-4.3 (>= 4.3.0-7), remove
+    mips/local-gcc-ice.diff.
+  * Update Swedish debconf translation, by Martin Bagge.  Closes: #492191.
+  * Revert the changes to patches/hppa/cvs-atomic.diff, it was not the cause
+    of the "tst-regex problem".
+  * hppa/cvs-lowlevellock.diff: new patch from upstream to fix build of NPTL
+    glibc on hppa.  Closes: #486589.
+
+  [ Petr Salinger]
+  * debian/sysdeps/kfreebsd.mk: also use the bsm/ directory from kernel
+    headers.
+  * kfreebsd/local-sysdeps.diff: update to revision 2265 (from glibc-bsd).
+  * Disable call to "GL(dl_wait_lookup_done)" in linuxthreads builds. Proper 
+    solution still have to be created. Stop crashes in mean time. See #489066.
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/cvs-MSG_NOSIGNAL.diff: New patch to implement
+    MSG_NOSIGNAL.
+  * patches/hurd-i386/local-msg-nosignal.diff: Forcibly set MSG_NOSIGNAL to 0
+    until pfinet gets recompiled.  Only apply on hurd-i386.
+  * Use gcc-4.3 on hurd-i386.
+  * patches/hurd-i386/cvs-open_2.diff: New patch to implement __open_2
+    and __openat_2. Together with kfreebsd update closes: #489357.
+  * patches/hurd-i386/local-pthread_types.diff: New patch to drag pthread
+    types from hurd headers.  Bump the hurd-dev dependency version
+    accordingly.
+  * patches/hurd-i386/cvs-fcntl-types.diff: New patch to include
+    <sys/type.h> from <bits/fcntl.h> like on Linux.  Fixes a lot of FTBFS on
+    hurd.
+  * patches/hurd-i386/local-tls.diff: Resync with upstream.
+  * patches/hurd-i386/local-tls-support.diff: Make tls.h also include
+    <stdint.h> and <bits/libc-lock.h> include <tls.h>, like on Linux.
+  * patches/hurd-i386/submitted-trivial.diff: Remove, thanks to updated tls.h.
+
+  [ Pierre Habouzit ]
+  * Cherry-pick upstream fixes with respect to locale rwlocks, merge them into
+    patches/any/cvs-strerror_r.diff. Closes: #489906.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 29 Jul 2008 03:09:20 +0200
+
+glibc (2.7-12) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * patches/alpha/submitted-procfs_h.diff: don't include elf/asm.h on alpha,
+    as it has been removed from linux-libc-dev.
+  * patch/arm/cvs-ioperm.diff: don't include asm/page.h as it has been removed
+    from linux-libc-dev.  Closes: #480892.
+  * patches/hppa/cvs-atomic.diff: don't remove "memory" asm constraint. Fixes
+    FTBFS on hppa.
+  * Update Swedish debconf translation, by Martin Bagge.  Closes: #482467.
+  * sysdeps/amd64.mk, sysdeps/i386.mk, control.in/main: bump g++-4.3 build-depends
+    to (>= 4.3.0-2) to make sure the cld fix is applied. Use gcc-4.3 on amd64
+    and i386.
+  * patches/any/cvs-iconv-braces.diff: new patch from upstream to fix various
+    iconv bugs.
+  * local/manpages/nscd.conf.5: update nscd.conf manpage.  Closes: #482505.
+
+  [ Clint Adams ]
+  * Add any/cvs-regex_anchor.diff to fix performance anomaly with ^$.
+    closes: #475474.
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/cvs-termios.diff: update patch, fixes compilation of jove.
+  * patches/hurd-i386/local-pthread-unsupported-stubs.diff: new patch to
+    declare the unsupported function stubs, fixes compilation of pike.  Also
+    bump the dependency on hurd-dev to get <gnu/stubs-pthread.h>.
+  * patches/hurd-i386/local-unlockpt-chroot.diff: new patch to fix ptys in
+    chroots.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 02 Jun 2008 19:14:35 +0200
+
+glibc (2.7-11) unstable; urgency=low
 
   [ Aurelien Jarno ]
   * Reenable testsuite on MIPS SB1 platforms.

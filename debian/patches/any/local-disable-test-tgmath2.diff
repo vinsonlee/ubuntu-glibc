@@ -1,5 +1,9 @@
---- math/Makefile.orig
-+++ math/Makefile
+---
+ math/Makefile |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/math/Makefile
++++ b/math/Makefile
 @@ -90,7 +90,7 @@
  # Rules for the test suite.
  tests = test-matherr test-fenv atest-exp atest-sincos atest-exp2 basic-test \

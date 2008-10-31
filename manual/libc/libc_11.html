@@ -1,0 +1,655 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- This file documents the GNU C library.
+
+This is Edition 0.12, last updated 2007-10-27,
+of The GNU C Library Reference Manual, for version 2.8.
+
+Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002,
+2003, 2007, 2008 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software Needs Free Documentation"
+and "GNU Lesser General Public License", the Front-Cover texts being
+"A GNU Manual", and with the Back-Cover Texts as in (a) below.  A
+copy of the license is included in the section entitled "GNU Free
+Documentation License".
+
+(a) The FSF's Back-Cover Text is: "You have the freedom to
+copy and modify this GNU manual.  Buying copies from the FSF
+supports it in developing GNU and promoting software freedom."
+ -->
+<!-- Created on October, 30 2008 by texi2html 1.78 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+
+-->
+<head>
+<title>The GNU C Library: 11. Input/Output Overview</title>
+
+<meta name="description" content="The GNU C Library: 11. Input/Output Overview">
+<meta name="keywords" content="The GNU C Library: 11. Input/Output Overview">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.78">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="I_002fO-Overview"></a>
+<a name="SEC168"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libc_10.html#SEC167" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC169" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc_10.html#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_12.html#SEC177" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h1 class="chapter"> 11. Input/Output Overview </h1>
+
+<p>Most programs need to do either input (reading data) or output (writing
+data), or most frequently both, in order to do anything useful.  The GNU
+C library provides such a large selection of input and output functions
+that the hardest part is often deciding which function is most
+appropriate!
+</p>
+<p>This chapter introduces concepts and terminology relating to input
+and output.  Other chapters relating to the GNU I/O facilities are:
+</p>
+<ul>
+<li>
+<a href="libc_12.html#SEC177">Input/Output on Streams</a>, which covers the high-level functions
+that operate on streams, including formatted input and output.
+
+</li><li>
+<a href="libc_13.html#SEC238">Low-Level Input/Output</a>, which covers the basic I/O and control
+functions on file descriptors.
+
+</li><li>
+<a href="libc_14.html#SEC268">File System Interface</a>, which covers functions for operating on
+directories and for manipulating file attributes such as access modes
+and ownership.
+
+</li><li>
+<a href="libc_15.html#SEC297">Pipes and FIFOs</a>, which includes information on the basic interprocess
+communication facilities.
+
+</li><li>
+<a href="libc_16.html#SEC302">Sockets</a>, which covers a more complicated interprocess communication
+facility with support for networking.
+
+</li><li>
+<a href="libc_17.html#SEC357">Low-Level Terminal Interface</a>, which covers functions for changing
+how input and output to terminals or other serial devices are processed.
+</li></ul>
+
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC169">11.1 Input/Output Concepts</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Some basic information and terminology.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC172">11.2 File Names</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         How to refer to a file.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="I_002fO-Concepts"></a>
+<a name="SEC169"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC168" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC170" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC168" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC168" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_12.html#SEC177" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 11.1 Input/Output Concepts </h2>
+
+<p>Before you can read or write the contents of a file, you must establish
+a connection or communications channel to the file.  This process is
+called <em>opening</em> the file.  You can open a file for reading, writing,
+or both.
+<a name="IDX789"></a>
+</p>
+<p>The connection to an open file is represented either as a stream or as a
+file descriptor.  You pass this as an argument to the functions that do
+the actual read or write operations, to tell them which file to operate
+on.  Certain functions expect streams, and others are designed to
+operate on file descriptors.
+</p>
+<p>When you have finished reading to or writing from the file, you can
+terminate the connection by <em>closing</em> the file.  Once you have
+closed a stream or file descriptor, you cannot do any more input or
+output operations on it.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC170">11.1.1 Streams and File Descriptors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    The GNU Library provides two ways
+			             to access the contents of files.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC171">11.1.2 File Position</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                   The number of bytes from the
+                                     beginning of the file.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Streams-and-File-Descriptors"></a>
+<a name="SEC170"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC169" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC171" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC168" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC169" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_12.html#SEC177" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 11.1.1 Streams and File Descriptors </h3>
+
+<p>When you want to do input or output to a file, you have a choice of two
+basic mechanisms for representing the connection between your program
+and the file: file descriptors and streams.  File descriptors are
+represented as objects of type <code>int</code>, while streams are represented
+as <code>FILE *</code> objects.
+</p>
+<p>File descriptors provide a primitive, low-level interface to input and
+output operations.  Both file descriptors and streams can represent a
+connection to a device (such as a terminal), or a pipe or socket for
+communicating with another process, as well as a normal file.  But, if
+you want to do control operations that are specific to a particular kind
+of device, you must use a file descriptor; there are no facilities to
+use streams in this way.  You must also use file descriptors if your
+program needs to do input or output in special modes, such as
+nonblocking (or polled) input (see section <a href="libc_13.html#SEC260">File Status Flags</a>).
+</p>
+<p>Streams provide a higher-level interface, layered on top of the
+primitive file descriptor facilities.  The stream interface treats all
+kinds of files pretty much alike&mdash;the sole exception being the three
+styles of buffering that you can choose (see section <a href="libc_12.html#SEC224">Stream Buffering</a>).
+</p>
+<p>The main advantage of using the stream interface is that the set of
+functions for performing actual input and output operations (as opposed
+to control operations) on streams is much richer and more powerful than
+the corresponding facilities for file descriptors.  The file descriptor
+interface provides only simple functions for transferring blocks of
+characters, but the stream interface also provides powerful formatted
+input and output functions (<code>printf</code> and <code>scanf</code>) as well as
+functions for character- and line-oriented input and output.
+</p>
+<p>Since streams are implemented in terms of file descriptors, you can
+extract the file descriptor from a stream and perform low-level
+operations directly on the file descriptor.  You can also initially open
+a connection as a file descriptor and then make a stream associated with
+that file descriptor.
+</p>
+<p>In general, you should stick with using streams rather than file
+descriptors, unless there is some specific operation you want to do that
+can only be done on a file descriptor.  If you are a beginning
+programmer and aren't sure what functions to use, we suggest that you
+concentrate on the formatted input functions (see section <a href="libc_12.html#SEC209">Formatted Input</a>)
+and formatted output functions (see section <a href="libc_12.html#SEC191">Formatted Output</a>).
+</p>
+<p>If you are concerned about portability of your programs to systems other
+than GNU, you should also be aware that file descriptors are not as
+portable as streams.  You can expect any system running ISO C to
+support streams, but non-GNU systems may not support file descriptors at
+all, or may only implement a subset of the GNU functions that operate on
+file descriptors.  Most of the file descriptor functions in the GNU
+library are included in the POSIX.1 standard, however.
+</p>
+<hr size="6">
+<a name="File-Position"></a>
+<a name="SEC171"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC170" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC172" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC168" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC169" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_12.html#SEC177" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 11.1.2 File Position </h3>
+
+<p>One of the attributes of an open file is its <em>file position</em> that
+keeps track of where in the file the next character is to be read or
+written.  In the GNU system, and all POSIX.1 systems, the file position
+is simply an integer representing the number of bytes from the beginning
+of the file.
+</p>
+<p>The file position is normally set to the beginning of the file when it
+is opened, and each time a character is read or written, the file
+position is incremented.  In other words, access to the file is normally
+<em>sequential</em>.
+<a name="IDX790"></a>
+<a name="IDX791"></a>
+</p>
+<p>Ordinary files permit read or write operations at any position within
+the file.  Some other kinds of files may also permit this.  Files which
+do permit this are sometimes referred to as <em>random-access</em> files.
+You can change the file position using the <code>fseek</code> function on a
+stream (see section <a href="libc_12.html#SEC222">File Positioning</a>) or the <code>lseek</code> function on a file
+descriptor (see section <a href="libc_13.html#SEC240">Input and Output Primitives</a>).  If you try to change the file
+position on a file that doesn't support random access, you get the
+<code>ESPIPE</code> error.
+<a name="IDX792"></a>
+</p>
+<p>Streams and descriptors that are opened for <em>append access</em> are
+treated specially for output: output to such files is <em>always</em>
+appended sequentially to the <em>end</em> of the file, regardless of the
+file position.  However, the file position is still used to control where in
+the file reading is done.
+<a name="IDX793"></a>
+</p>
+<p>If you think about it, you'll realize that several programs can read a
+given file at the same time.  In order for each program to be able to
+read the file at its own pace, each program must have its own file
+pointer, which is not affected by anything the other programs do.
+</p>
+<p>In fact, each opening of a file creates a separate file position.
+Thus, if you open a file twice even in the same program, you get two
+streams or descriptors with independent file positions.
+</p>
+<p>By contrast, if you open a descriptor and then duplicate it to get
+another descriptor, these two descriptors share the same file position:
+changing the file position of one descriptor will affect the other.
+</p>
+<hr size="6">
+<a name="File-Names"></a>
+<a name="SEC172"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC171" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC173" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC168" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC168" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_12.html#SEC177" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 11.2 File Names </h2>
+
+<p>In order to open a connection to a file, or to perform other operations
+such as deleting a file, you need some way to refer to the file.  Nearly
+all files have names that are strings&mdash;even files which are actually
+devices such as tape drives or terminals.  These strings are called
+<em>file names</em>.  You specify the file name to say which file you want
+to open or operate on.
+</p>
+<p>This section describes the conventions for file names and how the
+operating system works with them.
+<a name="IDX794"></a>
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC173">11.2.1 Directories</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Directories contain entries for files.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC174">11.2.2 File Name Resolution</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        A file name specifies how to look up a file.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC175">11.2.3 File Name Errors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Error conditions relating to file names.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC176">11.2.4 Portability of File Names</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       File name portability and syntax issues.
+</td></tr>
+</table>
+
+
+<hr size="6">
+<a name="Directories"></a>
+<a name="SEC173"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC172" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC174" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC168" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC172" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_12.html#SEC177" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 11.2.1 Directories </h3>
+
+<p>In order to understand the syntax of file names, you need to understand
+how the file system is organized into a hierarchy of directories.
+</p>
+<a name="IDX795"></a>
+<a name="IDX796"></a>
+<a name="IDX797"></a>
+<p>A <em>directory</em> is a file that contains information to associate other
+files with names; these associations are called <em>links</em> or
+<em>directory entries</em>.  Sometimes, people speak of &ldquo;files in a
+directory&rdquo;, but in reality, a directory only contains pointers to
+files, not the files themselves.
+</p>
+<a name="IDX798"></a>
+<p>The name of a file contained in a directory entry is called a <em>file
+name component</em>.  In general, a file name consists of a sequence of one
+or more such components, separated by the slash character (&lsquo;<samp>/</samp>&rsquo;).  A
+file name which is just one component names a file with respect to its
+directory.  A file name with multiple components names a directory, and
+then a file in that directory, and so on.
+</p>
+<p>Some other documents, such as the POSIX standard, use the term
+<em>pathname</em> for what we call a file name, and either <em>filename</em>
+or <em>pathname component</em> for what this manual calls a file name
+component.  We don't use this terminology because a &ldquo;path&rdquo; is
+something completely different (a list of directories to search), and we
+think that &ldquo;pathname&rdquo; used for something else will confuse users.  We
+always use &ldquo;file name&rdquo; and &ldquo;file name component&rdquo; (or sometimes just
+&ldquo;component&rdquo;, where the context is obvious) in GNU documentation.  Some
+macros use the POSIX terminology in their names, such as
+<code>PATH_MAX</code>.  These macros are defined by the POSIX standard, so we
+cannot change their names.
+</p>
+<p>You can find more detailed information about operations on directories
+in <a href="libc_14.html#SEC268">File System Interface</a>.
+</p>
+<hr size="6">
+<a name="File-Name-Resolution"></a>
+<a name="SEC174"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC173" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC175" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC168" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC172" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_12.html#SEC177" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 11.2.2 File Name Resolution </h3>
+
+<p>A file name consists of file name components separated by slash
+(&lsquo;<samp>/</samp>&rsquo;) characters.  On the systems that the GNU C library supports,
+multiple successive &lsquo;<samp>/</samp>&rsquo; characters are equivalent to a single
+&lsquo;<samp>/</samp>&rsquo; character.
+</p>
+<a name="IDX799"></a>
+<p>The process of determining what file a file name refers to is called
+<em>file name resolution</em>.  This is performed by examining the
+components that make up a file name in left-to-right order, and locating
+each successive component in the directory named by the previous
+component.  Of course, each of the files that are referenced as
+directories must actually exist, be directories instead of regular
+files, and have the appropriate permissions to be accessible by the
+process; otherwise the file name resolution fails.
+</p>
+<a name="IDX800"></a>
+<a name="IDX801"></a>
+<p>If a file name begins with a &lsquo;<samp>/</samp>&rsquo;, the first component in the file
+name is located in the <em>root directory</em> of the process (usually all
+processes on the system have the same root directory).  Such a file name
+is called an <em>absolute file name</em>.
+</p>
+<a name="IDX802"></a>
+<p>Otherwise, the first component in the file name is located in the
+current working directory (see section <a href="libc_14.html#SEC269">Working Directory</a>).  This kind of
+file name is called a <em>relative file name</em>.
+</p>
+<a name="IDX803"></a>
+<p>The file name components &lsquo;<tt>.</tt>&rsquo; (&ldquo;dot&rdquo;) and &lsquo;<tt>..</tt>&rsquo; (&ldquo;dot-dot&rdquo;)
+have special meanings.  Every directory has entries for these file name
+components.  The file name component &lsquo;<tt>.</tt>&rsquo; refers to the directory
+itself, while the file name component &lsquo;<tt>..</tt>&rsquo; refers to its
+<em>parent directory</em> (the directory that contains the link for the
+directory in question).  As a special case, &lsquo;<tt>..</tt>&rsquo; in the root
+directory refers to the root directory itself, since it has no parent;
+thus &lsquo;<tt>/..</tt>&rsquo; is the same as &lsquo;<tt>/</tt>&rsquo;.
+</p>
+<p>Here are some examples of file names:
+</p>
+<dl compact="compact">
+<dt> &lsquo;<tt>/a</tt>&rsquo;</dt>
+<dd><p>The file named &lsquo;<tt>a</tt>&rsquo;, in the root directory.
+</p>
+</dd>
+<dt> &lsquo;<tt>/a/b</tt>&rsquo;</dt>
+<dd><p>The file named &lsquo;<tt>b</tt>&rsquo;, in the directory named &lsquo;<tt>a</tt>&rsquo; in the root directory.
+</p>
+</dd>
+<dt> &lsquo;<tt>a</tt>&rsquo;</dt>
+<dd><p>The file named &lsquo;<tt>a</tt>&rsquo;, in the current working directory.
+</p>
+</dd>
+<dt> &lsquo;<tt>/a/./b</tt>&rsquo;</dt>
+<dd><p>This is the same as &lsquo;<tt>/a/b</tt>&rsquo;.
+</p>
+</dd>
+<dt> &lsquo;<tt>./a</tt>&rsquo;</dt>
+<dd><p>The file named &lsquo;<tt>a</tt>&rsquo;, in the current working directory.
+</p>
+</dd>
+<dt> &lsquo;<tt>../a</tt>&rsquo;</dt>
+<dd><p>The file named &lsquo;<tt>a</tt>&rsquo;, in the parent directory of the current working
+directory.
+</p></dd>
+</dl>
+
+<p>A file name that names a directory may optionally end in a &lsquo;<samp>/</samp>&rsquo;.
+You can specify a file name of &lsquo;<tt>/</tt>&rsquo; to refer to the root directory,
+but the empty string is not a meaningful file name.  If you want to
+refer to the current working directory, use a file name of &lsquo;<tt>.</tt>&rsquo; or
+&lsquo;<tt>./</tt>&rsquo;.
+</p>
+<p>Unlike some other operating systems, the GNU system doesn't have any
+built-in support for file types (or extensions) or file versions as part
+of its file name syntax.  Many programs and utilities use conventions
+for file names&mdash;for example, files containing C source code usually
+have names suffixed with &lsquo;<samp>.c</samp>&rsquo;&mdash;but there is nothing in the file
+system itself that enforces this kind of convention.
+</p>
+<hr size="6">
+<a name="File-Name-Errors"></a>
+<a name="SEC175"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC174" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC176" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC168" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC172" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_12.html#SEC177" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 11.2.3 File Name Errors </h3>
+
+
+<p>Functions that accept file name arguments usually detect these
+<code>errno</code> error conditions relating to the file name syntax or
+trouble finding the named file.  These errors are referred to throughout
+this manual as the <em>usual file name errors</em>.
+</p>
+<dl compact="compact">
+<dt> <code>EACCES</code></dt>
+<dd><p>The process does not have search permission for a directory component
+of the file name.
+</p>
+</dd>
+<dt> <code>ENAMETOOLONG</code></dt>
+<dd><p>This error is used when either the total length of a file name is
+greater than <code>PATH_MAX</code>, or when an individual file name component
+has a length greater than <code>NAME_MAX</code>.  See section <a href="libc_31.html#SEC657">Limits on File System Capacity</a>.
+</p>
+<p>In the GNU system, there is no imposed limit on overall file name
+length, but some file systems may place limits on the length of a
+component.
+</p>
+</dd>
+<dt> <code>ENOENT</code></dt>
+<dd><p>This error is reported when a file referenced as a directory component
+in the file name doesn't exist, or when a component is a symbolic link
+whose target file does not exist.  See section <a href="libc_14.html#SEC280">Symbolic Links</a>.
+</p>
+</dd>
+<dt> <code>ENOTDIR</code></dt>
+<dd><p>A file that is referenced as a directory component in the file name
+exists, but it isn't a directory.
+</p>
+</dd>
+<dt> <code>ELOOP</code></dt>
+<dd><p>Too many symbolic links were resolved while trying to look up the file
+name.  The system has an arbitrary limit on the number of symbolic links
+that may be resolved in looking up a single file name, as a primitive
+way to detect loops.  See section <a href="libc_14.html#SEC280">Symbolic Links</a>.
+</p></dd>
+</dl>
+
+
+<hr size="6">
+<a name="File-Name-Portability"></a>
+<a name="SEC176"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC175" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_12.html#SEC177" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC168" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC172" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_12.html#SEC177" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 11.2.4 Portability of File Names </h3>
+
+<p>The rules for the syntax of file names discussed in <a href="#SEC172">File Names</a>,
+are the rules normally used by the GNU system and by other POSIX
+systems.  However, other operating systems may use other conventions.
+</p>
+<p>There are two reasons why it can be important for you to be aware of
+file name portability issues:
+</p>
+<ul>
+<li>
+If your program makes assumptions about file name syntax, or contains
+embedded literal file name strings, it is more difficult to get it to
+run under other operating systems that use different syntax conventions.
+
+</li><li>
+Even if you are not concerned about running your program on machines
+that run other operating systems, it may still be possible to access
+files that use different naming conventions.  For example, you may be
+able to access file systems on another computer running a different
+operating system over a network, or read and write disks in formats used
+by other operating systems.
+</li></ul>
+
+<p>The ISO C standard says very little about file name syntax, only that
+file names are strings.  In addition to varying restrictions on the
+length of file names and what characters can validly appear in a file
+name, different operating systems use different conventions and syntax
+for concepts such as structured directories and file types or
+extensions.  Some concepts such as file versions might be supported in
+some operating systems and not by others.
+</p>
+<p>The POSIX.1 standard allows implementations to put additional
+restrictions on file name syntax, concerning what characters are
+permitted in file names and on the length of file name and file name
+component strings.  However, in the GNU system, you do not need to worry
+about these restrictions; any character except the null character is
+permitted in a file name string, and there are no limits on the length
+of file name strings.
+</p><hr size="6">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC168" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_12.html#SEC177" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated by <em>root</em> on <em>October, 30 2008</em> using <a href="http://www.nongnu.org/texi2html/"><em>texi2html 1.78</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

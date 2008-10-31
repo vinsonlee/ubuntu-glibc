@@ -1,7 +1,11 @@
 Patch from the OpenSUSE glibc
 
---- sunrpc/bindrsvprt.c
-+++ sunrpc/bindrsvprt.c
+---
+ sunrpc/bindrsvprt.c |  105 ++++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 97 insertions(+), 8 deletions(-)
+
+--- a/sunrpc/bindrsvprt.c
++++ b/sunrpc/bindrsvprt.c
 @@ -30,28 +30,106 @@
   * Copyright (c) 1987 by Sun Microsystems, Inc.
   */

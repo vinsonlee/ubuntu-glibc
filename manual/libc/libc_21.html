@@ -1,0 +1,3216 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- This file documents the GNU C library.
+
+This is Edition 0.12, last updated 2007-10-27,
+of The GNU C Library Reference Manual, for version 2.8.
+
+Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002,
+2003, 2007, 2008 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software Needs Free Documentation"
+and "GNU Lesser General Public License", the Front-Cover texts being
+"A GNU Manual", and with the Back-Cover Texts as in (a) below.  A
+copy of the license is included in the section entitled "GNU Free
+Documentation License".
+
+(a) The FSF's Back-Cover Text is: "You have the freedom to
+copy and modify this GNU manual.  Buying copies from the FSF
+supports it in developing GNU and promoting software freedom."
+ -->
+<!-- Created on October, 30 2008 by texi2html 1.78 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+
+-->
+<head>
+<title>The GNU C Library: 21. Date and Time</title>
+
+<meta name="description" content="The GNU C Library: 21. Date and Time">
+<meta name="keywords" content="The GNU C Library: 21. Date and Time">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.78">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="Date-and-Time"></a>
+<a name="SEC429"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libc_20.html#SEC428" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC430" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc_20.html#SEC403" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h1 class="chapter"> 21. Date and Time </h1>
+
+<p>This chapter describes functions for manipulating dates and times,
+including functions for determining what time it is and conversion
+between different time representations.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC430">21.1 Time Basics</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Concepts and definitions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC431">21.2 Elapsed Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Data types to represent elapsed times
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC432">21.3 Processor And CPU Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Time a program has spent executing.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC435">21.4 Calendar Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Manipulation of &ldquo;real&rdquo; dates and times.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC447">21.5 Setting an Alarm</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Sending a signal after a specified time.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC448">21.6 Sleeping</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                    Waiting for a period of time.
+</td></tr>
+</table>
+
+
+<hr size="6">
+<a name="Time-Basics"></a>
+<a name="SEC430"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC429" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC431" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 21.1 Time Basics </h2>
+
+<p>Discussing time in a technical manual can be difficult because the word
+&ldquo;time&rdquo; in English refers to lots of different things.  In this manual,
+we use a rigorous terminology to avoid confusion, and the only thing we
+use the simple word &ldquo;time&rdquo; for is to talk about the abstract concept.
+</p>
+<p>A <em>calendar time</em> is a point in the time continuum, for example
+November 4, 1990 at 18:02.5 UTC.  Sometimes this is called &ldquo;absolute
+time&rdquo;.
+<a name="IDX2201"></a>
+</p>
+<p>We don't speak of a &ldquo;date&rdquo;, because that is inherent in a calendar
+time.
+<a name="IDX2202"></a>
+</p>
+<p>An <em>interval</em> is a contiguous part of the time continuum between two
+calendar times, for example the hour between 9:00 and 10:00 on July 4,
+1980.
+<a name="IDX2203"></a>
+</p>
+<p>An <em>elapsed time</em> is the length of an interval, for example, 35
+minutes.  People sometimes sloppily use the word &ldquo;interval&rdquo; to refer
+to the elapsed time of some interval.
+<a name="IDX2204"></a>
+<a name="IDX2205"></a>
+</p>
+<p>An <em>amount of time</em> is a sum of elapsed times, which need not be of
+any specific intervals.  For example, the amount of time it takes to
+read a book might be 9 hours, independently of when and in how many
+sittings it is read.
+</p>
+<p>A <em>period</em> is the elapsed time of an interval between two events,
+especially when they are part of a sequence of regularly repeating
+events.
+<a name="IDX2206"></a>
+</p>
+<p><em>CPU time</em> is like calendar time, except that it is based on the
+subset of the time continuum when a particular process is actively
+using a CPU.  CPU time is, therefore, relative to a process.
+<a name="IDX2207"></a>
+</p>
+<p><em>Processor time</em> is an amount of time that a CPU is in use.  In
+fact, it's a basic system resource, since there's a limit to how much
+can exist in any given interval (that limit is the elapsed time of the
+interval times the number of CPUs in the processor).  People often call
+this CPU time, but we reserve the latter term in this manual for the
+definition above.
+<a name="IDX2208"></a>
+</p>
+<hr size="6">
+<a name="Elapsed-Time"></a>
+<a name="SEC431"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC430" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC432" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 21.2 Elapsed Time </h2>
+
+<p>One way to represent an elapsed time is with a simple arithmetic data
+type, as with the following function to compute the elapsed time between
+two calendar times.  This function is declared in &lsquo;<tt>time.h</tt>&rsquo;.
+</p>
+<dl>
+<dt><u>Function:</u> double <b>difftime</b><i> (time_t <var>time1</var>, time_t <var>time0</var>)</i>
+<a name="IDX2209"></a>
+</dt>
+<dd><p>The <code>difftime</code> function returns the number of seconds of elapsed
+time between calendar time <var>time1</var> and calendar time <var>time0</var>, as
+a value of type <code>double</code>.  The difference ignores leap seconds
+unless leap second support is enabled.
+</p>
+<p>In the GNU system, you can simply subtract <code>time_t</code> values.  But on
+other systems, the <code>time_t</code> data type might use some other encoding
+where subtraction doesn't work directly.
+</p></dd></dl>
+
+<p>The GNU C library provides two data types specifically for representing
+an elapsed time.  They are used by various GNU C library functions, and
+you can use them for your own purposes too.  They're exactly the same
+except that one has a resolution in microseconds, and the other, newer
+one, is in nanoseconds.
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>struct timeval</b>
+<a name="IDX2210"></a>
+</dt>
+<dd><a name="IDX2211"></a>
+<p>The <code>struct timeval</code> structure represents an elapsed time.  It is
+declared in &lsquo;<tt>sys/time.h</tt>&rsquo; and has the following members:
+</p>
+<dl compact="compact">
+<dt> <code>long int tv_sec</code></dt>
+<dd><p>This represents the number of whole seconds of elapsed time.
+</p>
+</dd>
+<dt> <code>long int tv_usec</code></dt>
+<dd><p>This is the rest of the elapsed time (a fraction of a second),
+represented as the number of microseconds.  It is always less than one
+million.
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Data Type:</u> <b>struct timespec</b>
+<a name="IDX2212"></a>
+</dt>
+<dd><a name="IDX2213"></a>
+<p>The <code>struct timespec</code> structure represents an elapsed time.  It is
+declared in &lsquo;<tt>time.h</tt>&rsquo; and has the following members:
+</p>
+<dl compact="compact">
+<dt> <code>long int tv_sec</code></dt>
+<dd><p>This represents the number of whole seconds of elapsed time.
+</p>
+</dd>
+<dt> <code>long int tv_nsec</code></dt>
+<dd><p>This is the rest of the elapsed time (a fraction of a second),
+represented as the number of nanoseconds.  It is always less than one
+billion.
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>It is often necessary to subtract two values of type <code>struct
+timeval</code> or <code>struct timespec</code>.  Here is the best way to do
+this.  It works even on some peculiar operating systems where the
+<code>tv_sec</code> member has an unsigned type.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">/* <span class="roman">Subtract the `struct timeval' values X and Y,</span>
+   <span class="roman">storing the result in RESULT.</span>
+   <span class="roman">Return 1 if the difference is negative, otherwise 0.</span>  */
+
+int
+timeval_subtract (result, x, y)
+     struct timeval *result, *x, *y;
+{
+  /* <span class="roman">Perform the carry for the later subtraction by updating <var>y</var>.</span> */
+  if (x-&gt;tv_usec &lt; y-&gt;tv_usec) {
+    int nsec = (y-&gt;tv_usec - x-&gt;tv_usec) / 1000000 + 1;
+    y-&gt;tv_usec -= 1000000 * nsec;
+    y-&gt;tv_sec += nsec;
+  }
+  if (x-&gt;tv_usec - y-&gt;tv_usec &gt; 1000000) {
+    int nsec = (x-&gt;tv_usec - y-&gt;tv_usec) / 1000000;
+    y-&gt;tv_usec += 1000000 * nsec;
+    y-&gt;tv_sec -= nsec;
+  }
+
+  /* <span class="roman">Compute the time remaining to wait.</span>
+     <span class="roman"><code>tv_usec</code> is certainly positive.</span> */
+  result-&gt;tv_sec = x-&gt;tv_sec - y-&gt;tv_sec;
+  result-&gt;tv_usec = x-&gt;tv_usec - y-&gt;tv_usec;
+
+  /* <span class="roman">Return 1 if result is negative.</span> */
+  return x-&gt;tv_sec &lt; y-&gt;tv_sec;
+}
+</pre></td></tr></table>
+
+<p>Common functions that use <code>struct timeval</code> are <code>gettimeofday</code>
+and <code>settimeofday</code>.
+</p>
+
+<p>There are no GNU C library functions specifically oriented toward
+dealing with elapsed times, but the calendar time, processor time, and
+alarm and sleeping functions have a lot to do with them.
+</p>
+
+<hr size="6">
+<a name="Processor-And-CPU-Time"></a>
+<a name="SEC432"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC431" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC433" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 21.3 Processor And CPU Time </h2>
+
+<p>If you're trying to optimize your program or measure its efficiency,
+it's very useful to know how much processor time it uses.  For that,
+calendar time and elapsed times are useless because a process may spend
+time waiting for I/O or for other processes to use the CPU.  However,
+you can get the information with the functions in this section.
+</p>
+<p>CPU time (see section <a href="#SEC430">Time Basics</a>) is represented by the data type
+<code>clock_t</code>, which is a number of <em>clock ticks</em>.  It gives the
+total amount of time a process has actively used a CPU since some
+arbitrary event.  On the GNU system, that event is the creation of the
+process.  While arbitrary in general, the event is always the same event
+for any particular process, so you can always measure how much time on
+the CPU a particular computation takes by examining the process' CPU
+time before and after the computation.
+<a name="IDX2214"></a>
+<a name="IDX2215"></a>
+<a name="IDX2216"></a>
+</p>
+<p>In the GNU system, <code>clock_t</code> is equivalent to <code>long int</code> and
+<code>CLOCKS_PER_SEC</code> is an integer value.  But in other systems, both
+<code>clock_t</code> and the macro <code>CLOCKS_PER_SEC</code> can be either integer
+or floating-point types.  Casting CPU time values to <code>double</code>, as
+in the example above, makes sure that operations such as arithmetic and
+printing work properly and consistently no matter what the underlying
+representation is.
+</p>
+<p>Note that the clock can wrap around.  On a 32bit system with
+<code>CLOCKS_PER_SEC</code> set to one million this function will return the
+same value approximately every 72 minutes.
+</p>
+<p>For additional functions to examine a process' use of processor time,
+and to control it, see <a href="libc_22.html#SEC449">Resource Usage And Limitation</a>.
+</p>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC433">21.3.1 CPU Time Inquiry</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                    The <code>clock</code> function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC434">21.3.2 Processor Time Inquiry</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              The <code>times</code> function.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="CPU-Time"></a>
+<a name="SEC433"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC432" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC434" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC432" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 21.3.1 CPU Time Inquiry </h3>
+
+<p>To get a process' CPU time, you can use the <code>clock</code> function.  This
+facility is declared in the header file &lsquo;<tt>time.h</tt>&rsquo;.
+<a name="IDX2217"></a>
+</p>
+<p>In typical usage, you call the <code>clock</code> function at the beginning
+and end of the interval you want to time, subtract the values, and then
+divide by <code>CLOCKS_PER_SEC</code> (the number of clock ticks per second)
+to get processor time, like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;time.h&gt;
+
+clock_t start, end;
+double cpu_time_used;
+
+start = clock();
+&hellip; /* <span class="roman">Do the work.</span> */
+end = clock();
+cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+</pre></td></tr></table>
+
+<p>Do not use a single CPU time as an amount of time; it doesn't work that
+way.  Either do a subtraction as shown above or query processor time
+directly.  See section <a href="#SEC434">Processor Time Inquiry</a>.
+</p>
+<p>Different computers and operating systems vary wildly in how they keep
+track of CPU time.  It's common for the internal processor clock
+to have a resolution somewhere between a hundredth and millionth of a
+second.
+</p>
+<dl>
+<dt><u>Macro:</u> int <b>CLOCKS_PER_SEC</b>
+<a name="IDX2218"></a>
+</dt>
+<dd><p>The value of this macro is the number of clock ticks per second measured
+by the <code>clock</code> function.  POSIX requires that this value be one
+million independent of the actual resolution.
+</p></dd></dl>
+
+<dl>
+<dt><u>Macro:</u> int <b>CLK_TCK</b>
+<a name="IDX2219"></a>
+</dt>
+<dd><p>This is an obsolete name for <code>CLOCKS_PER_SEC</code>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Data Type:</u> <b>clock_t</b>
+<a name="IDX2220"></a>
+</dt>
+<dd><p>This is the type of the value returned by the <code>clock</code> function.
+Values of type <code>clock_t</code> are numbers of clock ticks.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> clock_t <b>clock</b><i> (void)</i>
+<a name="IDX2221"></a>
+</dt>
+<dd><p>This function returns the calling process' current CPU time.  If the CPU
+time is not available or cannot be represented, <code>clock</code> returns the
+value <code>(clock_t)(-1)</code>.
+</p></dd></dl>
+
+
+<hr size="6">
+<a name="Processor-Time"></a>
+<a name="SEC434"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC433" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC435" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC432" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 21.3.2 Processor Time Inquiry </h3>
+
+<p>The <code>times</code> function returns information about a process'
+consumption of processor time in a <code>struct tms</code> object, in
+addition to the process' CPU time.  See section <a href="#SEC430">Time Basics</a>.  You should
+include the header file &lsquo;<tt>sys/times.h</tt>&rsquo; to use this facility.
+<a name="IDX2222"></a>
+<a name="IDX2223"></a>
+<a name="IDX2224"></a>
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>struct tms</b>
+<a name="IDX2225"></a>
+</dt>
+<dd><p>The <code>tms</code> structure is used to return information about process
+times.  It contains at least the following members:
+</p>
+<dl compact="compact">
+<dt> <code>clock_t tms_utime</code></dt>
+<dd><p>This is the total processor time the calling process has used in
+executing the instructions of its program.
+</p>
+</dd>
+<dt> <code>clock_t tms_stime</code></dt>
+<dd><p>This is the processor time the system has used on behalf of the calling
+process.
+</p>
+</dd>
+<dt> <code>clock_t tms_cutime</code></dt>
+<dd><p>This is the sum of the <code>tms_utime</code> values and the <code>tms_cutime</code>
+values of all terminated child processes of the calling process, whose
+status has been reported to the parent process by <code>wait</code> or
+<code>waitpid</code>; see <a href="libc_26.html#SEC574">Process Completion</a>.  In other words, it
+represents the total processor time used in executing the instructions
+of all the terminated child processes of the calling process, excluding
+child processes which have not yet been reported by <code>wait</code> or
+<code>waitpid</code>.
+<a name="IDX2226"></a>
+</p>
+</dd>
+<dt> <code>clock_t tms_cstime</code></dt>
+<dd><p>This is similar to <code>tms_cutime</code>, but represents the total processor
+time system has used on behalf of all the terminated child processes
+of the calling process.
+</p></dd>
+</dl>
+
+<p>All of the times are given in numbers of clock ticks.  Unlike CPU time,
+these are the actual amounts of time; not relative to any event.
+See section <a href="libc_26.html#SEC572">Creating a Process</a>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> clock_t <b>times</b><i> (struct tms *<var>buffer</var>)</i>
+<a name="IDX2227"></a>
+</dt>
+<dd><p>The <code>times</code> function stores the processor time information for
+the calling process in <var>buffer</var>.
+</p>
+<p>The return value is the calling process' CPU time (the same value you
+get from <code>clock()</code>.  <code>times</code> returns <code>(clock_t)(-1)</code> to
+indicate failure.
+</p></dd></dl>
+
+<p><strong>Portability Note:</strong> The <code>clock</code> function described in
+<a href="#SEC433">CPU Time Inquiry</a> is specified by the ISO C standard.  The
+<code>times</code> function is a feature of POSIX.1.  In the GNU system, the
+CPU time is defined to be equivalent to the sum of the <code>tms_utime</code>
+and <code>tms_stime</code> fields returned by <code>times</code>.
+</p>
+<hr size="6">
+<a name="Calendar-Time"></a>
+<a name="SEC435"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC434" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC436" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 21.4 Calendar Time </h2>
+
+<p>This section describes facilities for keeping track of calendar time.
+See section <a href="#SEC430">Time Basics</a>.
+</p>
+<p>The GNU C library represents calendar time three ways:
+</p>
+<ul>
+<li>
+<em>Simple time</em> (the <code>time_t</code> data type) is a compact
+representation, typically giving the number of seconds of elapsed time
+since some implementation-specific base time.
+<a name="IDX2228"></a>
+
+</li><li>
+There is also a &quot;high-resolution time&quot; representation.  Like simple
+time, this represents a calendar time as an elapsed time since a base
+time, but instead of measuring in whole seconds, it uses a <code>struct
+timeval</code> data type, which includes fractions of a second.  Use this time
+representation instead of simple time when you need greater precision.
+<a name="IDX2229"></a>
+
+</li><li>
+<em>Local time</em> or <em>broken-down time</em> (the <code>struct tm</code> data
+type) represents a calendar time as a set of components specifying the
+year, month, and so on in the Gregorian calendar, for a specific time
+zone.  This calendar time representation is usually used only to
+communicate with people.
+<a name="IDX2230"></a>
+<a name="IDX2231"></a>
+<a name="IDX2232"></a>
+<a name="IDX2233"></a>
+</li></ul>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC436">21.4.1 Simple Calendar Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Facilities for manipulating calendar time.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC437">21.4.2 High-Resolution Calendar</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    A time representation with greater precision.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC438">21.4.3 Broken-down Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Facilities for manipulating local time.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC439">21.4.4 High Accuracy Clock</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Maintaining a high accuracy system clock.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC440">21.4.5 Formatting Calendar Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Converting times to strings.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC441">21.4.6 Convert textual time and date information back</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Convert textual time and date information back
+                                 into broken-down time values.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC444">21.4.7 Specifying the Time Zone with <code>TZ</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 How users specify the time zone.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC445">21.4.8 Functions and Variables for Time Zones</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Functions to examine or specify the time zone.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC446">21.4.9 Time Functions Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      An example program showing use of some of
+				 the time functions.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Simple-Calendar-Time"></a>
+<a name="SEC436"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC435" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC437" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC435" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 21.4.1 Simple Calendar Time </h3>
+
+<p>This section describes the <code>time_t</code> data type for representing calendar
+time as simple time, and the functions which operate on simple time objects.
+These facilities are declared in the header file &lsquo;<tt>time.h</tt>&rsquo;.
+<a name="IDX2234"></a>
+</p>
+<a name="IDX2235"></a>
+<dl>
+<dt><u>Data Type:</u> <b>time_t</b>
+<a name="IDX2236"></a>
+</dt>
+<dd><p>This is the data type used to represent simple time.  Sometimes, it also
+represents an elapsed time.  When interpreted as a calendar time value,
+it represents the number of seconds elapsed since 00:00:00 on January 1,
+1970, Coordinated Universal Time.  (This calendar time is sometimes
+referred to as the <em>epoch</em>.)  POSIX requires that this count not
+include leap seconds, but on some systems this count includes leap seconds
+if you set <code>TZ</code> to certain values (see section <a href="#SEC444">Specifying the Time Zone with <code>TZ</code></a>).
+</p>
+<p>Note that a simple time has no concept of local time zone.  Calendar
+Time <var>T</var> is the same instant in time regardless of where on the
+globe the computer is.
+</p>
+<p>In the GNU C library, <code>time_t</code> is equivalent to <code>long int</code>.
+In other systems, <code>time_t</code> might be either an integer or
+floating-point type.
+</p></dd></dl>
+
+<p>The function <code>difftime</code> tells you the elapsed time between two
+simple calendar times, which is not always as easy to compute as just
+subtracting.  See section <a href="#SEC431">Elapsed Time</a>.
+</p>
+<dl>
+<dt><u>Function:</u> time_t <b>time</b><i> (time_t *<var>result</var>)</i>
+<a name="IDX2237"></a>
+</dt>
+<dd><p>The <code>time</code> function returns the current calendar time as a value of
+type <code>time_t</code>.  If the argument <var>result</var> is not a null pointer,
+the calendar time value is also stored in <code>*<var>result</var></code>.  If the
+current calendar time is not available, the value
+<code>(time_t)(-1)</code> is returned.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>stime</b><i> (time_t *<var>newtime</var>)</i>
+<a name="IDX2238"></a>
+</dt>
+<dd><p><code>stime</code> sets the system clock, i.e., it tells the system that the
+current calendar time is <var>newtime</var>, where <code>newtime</code> is
+interpreted as described in the above definition of <code>time_t</code>.
+</p>
+<p><code>settimeofday</code> is a newer function which sets the system clock to
+better than one second precision.  <code>settimeofday</code> is generally a
+better choice than <code>stime</code>.  See section <a href="#SEC437">High-Resolution Calendar</a>.
+</p>
+<p>Only the superuser can set the system clock.
+</p>
+<p>If the function succeeds, the return value is zero.  Otherwise, it is
+<code>-1</code> and <code>errno</code> is set accordingly:
+</p>
+<dl compact="compact">
+<dt> <code>EPERM</code></dt>
+<dd><p>The process is not superuser.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+
+<hr size="6">
+<a name="High_002dResolution-Calendar"></a>
+<a name="SEC437"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC436" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC438" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC435" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 21.4.2 High-Resolution Calendar </h3>
+
+<p>The <code>time_t</code> data type used to represent simple times has a
+resolution of only one second.  Some applications need more precision.
+</p>
+<p>So, the GNU C library also contains functions which are capable of
+representing calendar times to a higher resolution than one second.  The
+functions and the associated data types described in this section are
+declared in &lsquo;<tt>sys/time.h</tt>&rsquo;.
+<a name="IDX2239"></a>
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>struct timezone</b>
+<a name="IDX2240"></a>
+</dt>
+<dd><p>The <code>struct timezone</code> structure is used to hold minimal information
+about the local time zone.  It has the following members:
+</p>
+<dl compact="compact">
+<dt> <code>int tz_minuteswest</code></dt>
+<dd><p>This is the number of minutes west of UTC.
+</p>
+</dd>
+<dt> <code>int tz_dsttime</code></dt>
+<dd><p>If nonzero, Daylight Saving Time applies during some part of the year.
+</p></dd>
+</dl>
+
+<p>The <code>struct timezone</code> type is obsolete and should never be used.
+Instead, use the facilities described in <a href="#SEC445">Functions and Variables for Time Zones</a>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>gettimeofday</b><i> (struct timeval *<var>tp</var>, struct timezone *<var>tzp</var>)</i>
+<a name="IDX2241"></a>
+</dt>
+<dd><p>The <code>gettimeofday</code> function returns the current calendar time as
+the elapsed time since the epoch in the <code>struct timeval</code> structure
+indicated by <var>tp</var>.  (see section <a href="#SEC431">Elapsed Time</a> for a description of
+<code>struct timeval</code>).  Information about the time zone is returned in
+the structure pointed at <var>tzp</var>.  If the <var>tzp</var> argument is a null
+pointer, time zone information is ignored.
+</p>
+<p>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error condition is defined for this function:
+</p>
+<dl compact="compact">
+<dt> <code>ENOSYS</code></dt>
+<dd><p>The operating system does not support getting time zone information, and
+<var>tzp</var> is not a null pointer.  The GNU operating system does not
+support using <code>struct timezone</code> to represent time zone
+information; that is an obsolete feature of 4.3 BSD.
+Instead, use the facilities described in <a href="#SEC445">Functions and Variables for Time Zones</a>.
+</p></dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>settimeofday</b><i> (const struct timeval *<var>tp</var>, const struct timezone *<var>tzp</var>)</i>
+<a name="IDX2242"></a>
+</dt>
+<dd><p>The <code>settimeofday</code> function sets the current calendar time in the
+system clock according to the arguments.  As for <code>gettimeofday</code>,
+the calendar time is represented as the elapsed time since the epoch.
+As for <code>gettimeofday</code>, time zone information is ignored if
+<var>tzp</var> is a null pointer.
+</p>
+<p>You must be a privileged user in order to use <code>settimeofday</code>.
+</p>
+<p>Some kernels automatically set the system clock from some source such as
+a hardware clock when they start up.  Others, including Linux, place the
+system clock in an &ldquo;invalid&rdquo; state (in which attempts to read the clock
+fail).  A call of <code>stime</code> removes the system clock from an invalid
+state, and system startup scripts typically run a program that calls
+<code>stime</code>.
+</p>
+<p><code>settimeofday</code> causes a sudden jump forwards or backwards, which
+can cause a variety of problems in a system.  Use <code>adjtime</code> (below)
+to make a smooth transition from one time to another by temporarily
+speeding up or slowing down the clock.
+</p>
+<p>With a Linux kernel, <code>adjtimex</code> does the same thing and can also
+make permanent changes to the speed of the system clock so it doesn't
+need to be corrected as often.
+</p>
+<p>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error conditions are defined for this function:
+</p>
+<dl compact="compact">
+<dt> <code>EPERM</code></dt>
+<dd><p>This process cannot set the clock because it is not privileged.
+</p>
+</dd>
+<dt> <code>ENOSYS</code></dt>
+<dd><p>The operating system does not support setting time zone information, and
+<var>tzp</var> is not a null pointer.
+</p></dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>adjtime</b><i> (const struct timeval *<var>delta</var>, struct timeval *<var>olddelta</var>)</i>
+<a name="IDX2243"></a>
+</dt>
+<dd><p>This function speeds up or slows down the system clock in order to make
+a gradual adjustment.  This ensures that the calendar time reported by
+the system clock is always monotonically increasing, which might not
+happen if you simply set the clock.
+</p>
+<p>The <var>delta</var> argument specifies a relative adjustment to be made to
+the clock time.  If negative, the system clock is slowed down for a
+while until it has lost this much elapsed time.  If positive, the system
+clock is speeded up for a while.
+</p>
+<p>If the <var>olddelta</var> argument is not a null pointer, the <code>adjtime</code>
+function returns information about any previous time adjustment that
+has not yet completed.
+</p>
+<p>This function is typically used to synchronize the clocks of computers
+in a local network.  You must be a privileged user to use it.
+</p>
+<p>With a Linux kernel, you can use the <code>adjtimex</code> function to
+permanently change the clock speed.
+</p>
+<p>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error condition is defined for this function:
+</p>
+<dl compact="compact">
+<dt> <code>EPERM</code></dt>
+<dd><p>You do not have privilege to set the time.
+</p></dd>
+</dl>
+</dd></dl>
+
+<p><strong>Portability Note:</strong>  The <code>gettimeofday</code>, <code>settimeofday</code>,
+and <code>adjtime</code> functions are derived from BSD.
+</p>
+
+<p>Symbols for the following function are declared in &lsquo;<tt>sys/timex.h</tt>&rsquo;.
+</p>
+<dl>
+<dt><u>Function:</u> int <b>adjtimex</b><i> (struct timex *<var>timex</var>)</i>
+<a name="IDX2244"></a>
+</dt>
+<dd><p><code>adjtimex</code> is functionally identical to <code>ntp_adjtime</code>.
+See section <a href="#SEC439">High Accuracy Clock</a>.
+</p>
+<p>This function is present only with a Linux kernel.
+</p>
+</dd></dl>
+
+<hr size="6">
+<a name="Broken_002ddown-Time"></a>
+<a name="SEC438"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC437" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC439" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC435" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 21.4.3 Broken-down Time </h3>
+
+<p>Calendar time is represented by the usual GNU C library functions as an
+elapsed time since a fixed base calendar time.  This is convenient for
+computation, but has no relation to the way people normally think of
+calendar time.  By contrast, <em>broken-down time</em> is a binary
+representation of calendar time separated into year, month, day, and so
+on.  Broken-down time values are not useful for calculations, but they
+are useful for printing human readable time information.
+</p>
+<p>A broken-down time value is always relative to a choice of time
+zone, and it also indicates which time zone that is.
+</p>
+<p>The symbols in this section are declared in the header file &lsquo;<tt>time.h</tt>&rsquo;.
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>struct tm</b>
+<a name="IDX2245"></a>
+</dt>
+<dd><p>This is the data type used to represent a broken-down time.  The structure
+contains at least the following members, which can appear in any order.
+</p>
+<dl compact="compact">
+<dt> <code>int tm_sec</code></dt>
+<dd><p>This is the number of full seconds since the top of the minute (normally
+in the range <code>0</code> through <code>59</code>, but the actual upper limit is
+<code>60</code>, to allow for leap seconds if leap second support is
+available).
+<a name="IDX2246"></a>
+</p>
+</dd>
+<dt> <code>int tm_min</code></dt>
+<dd><p>This is the number of full minutes since the top of the hour (in the
+range <code>0</code> through <code>59</code>).
+</p>
+</dd>
+<dt> <code>int tm_hour</code></dt>
+<dd><p>This is the number of full hours past midnight (in the range <code>0</code> through
+<code>23</code>).
+</p>
+</dd>
+<dt> <code>int tm_mday</code></dt>
+<dd><p>This is the ordinal day of the month (in the range <code>1</code> through <code>31</code>).
+Watch out for this one!  As the only ordinal number in the structure, it is
+inconsistent with the rest of the structure.
+</p>
+</dd>
+<dt> <code>int tm_mon</code></dt>
+<dd><p>This is the number of full calendar months since the beginning of the
+year (in the range <code>0</code> through <code>11</code>).  Watch out for this one!
+People usually use ordinal numbers for month-of-year (where January = 1).
+</p>
+</dd>
+<dt> <code>int tm_year</code></dt>
+<dd><p>This is the number of full calendar years since 1900.
+</p>
+</dd>
+<dt> <code>int tm_wday</code></dt>
+<dd><p>This is the number of full days since Sunday (in the range <code>0</code> through
+<code>6</code>).
+</p>
+</dd>
+<dt> <code>int tm_yday</code></dt>
+<dd><p>This is the number of full days since the beginning of the year (in the
+range <code>0</code> through <code>365</code>).
+</p>
+</dd>
+<dt> <code>int tm_isdst</code></dt>
+<dd><a name="IDX2247"></a>
+<a name="IDX2248"></a>
+<p>This is a flag that indicates whether Daylight Saving Time is (or was, or
+will be) in effect at the time described.  The value is positive if
+Daylight Saving Time is in effect, zero if it is not, and negative if the
+information is not available.
+</p>
+</dd>
+<dt> <code>long int tm_gmtoff</code></dt>
+<dd><p>This field describes the time zone that was used to compute this
+broken-down time value, including any adjustment for daylight saving; it
+is the number of seconds that you must add to UTC to get local time.
+You can also think of this as the number of seconds east of UTC.  For
+example, for U.S. Eastern Standard Time, the value is <code>-5*60*60</code>.
+The <code>tm_gmtoff</code> field is derived from BSD and is a GNU library
+extension; it is not visible in a strict ISO C environment.
+</p>
+</dd>
+<dt> <code>const char *tm_zone</code></dt>
+<dd><p>This field is the name for the time zone that was used to compute this
+broken-down time value.  Like <code>tm_gmtoff</code>, this field is a BSD and
+GNU extension, and is not visible in a strict ISO C environment.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<dl>
+<dt><u>Function:</u> struct tm * <b>localtime</b><i> (const time_t *<var>time</var>)</i>
+<a name="IDX2249"></a>
+</dt>
+<dd><p>The <code>localtime</code> function converts the simple time pointed to by
+<var>time</var> to broken-down time representation, expressed relative to the
+user's specified time zone.
+</p>
+<p>The return value is a pointer to a static broken-down time structure, which
+might be overwritten by subsequent calls to <code>ctime</code>, <code>gmtime</code>,
+or <code>localtime</code>.  (But no other library function overwrites the contents
+of this object.)
+</p>
+<p>The return value is the null pointer if <var>time</var> cannot be represented
+as a broken-down time; typically this is because the year cannot fit into
+an <code>int</code>.
+</p>
+<p>Calling <code>localtime</code> has one other effect: it sets the variable
+<code>tzname</code> with information about the current time zone.  See section <a href="#SEC445">Functions and Variables for Time Zones</a>.
+</p></dd></dl>
+
+<p>Using the <code>localtime</code> function is a big problem in multi-threaded
+programs.  The result is returned in a static buffer and this is used in
+all threads.  POSIX.1c introduced a variant of this function.
+</p>
+<dl>
+<dt><u>Function:</u> struct tm * <b>localtime_r</b><i> (const time_t *<var>time</var>, struct tm *<var>resultp</var>)</i>
+<a name="IDX2250"></a>
+</dt>
+<dd><p>The <code>localtime_r</code> function works just like the <code>localtime</code>
+function.  It takes a pointer to a variable containing a simple time
+and converts it to the broken-down time format.
+</p>
+<p>But the result is not placed in a static buffer.  Instead it is placed
+in the object of type <code>struct tm</code> to which the parameter
+<var>resultp</var> points.
+</p>
+<p>If the conversion is successful the function returns a pointer to the
+object the result was written into, i.e., it returns <var>resultp</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><u>Function:</u> struct tm * <b>gmtime</b><i> (const time_t *<var>time</var>)</i>
+<a name="IDX2251"></a>
+</dt>
+<dd><p>This function is similar to <code>localtime</code>, except that the broken-down
+time is expressed as Coordinated Universal Time (UTC) (formerly called
+Greenwich Mean Time (GMT)) rather than relative to a local time zone.
+</p>
+</dd></dl>
+
+<p>As for the <code>localtime</code> function we have the problem that the result
+is placed in a static variable.  POSIX.1c also provides a replacement for
+<code>gmtime</code>.
+</p>
+<dl>
+<dt><u>Function:</u> struct tm * <b>gmtime_r</b><i> (const time_t *<var>time</var>, struct tm *<var>resultp</var>)</i>
+<a name="IDX2252"></a>
+</dt>
+<dd><p>This function is similar to <code>localtime_r</code>, except that it converts
+just like <code>gmtime</code> the given time as Coordinated Universal Time.
+</p>
+<p>If the conversion is successful the function returns a pointer to the
+object the result was written into, i.e., it returns <var>resultp</var>.
+</p></dd></dl>
+
+
+<dl>
+<dt><u>Function:</u> time_t <b>mktime</b><i> (struct tm *<var>brokentime</var>)</i>
+<a name="IDX2253"></a>
+</dt>
+<dd><p>The <code>mktime</code> function is used to convert a broken-down time structure
+to a simple time representation.  It also &ldquo;normalizes&rdquo; the contents of
+the broken-down time structure, by filling in the day of week and day of
+year based on the other date and time components.
+</p>
+<p>The <code>mktime</code> function ignores the specified contents of the
+<code>tm_wday</code> and <code>tm_yday</code> members of the broken-down time
+structure.  It uses the values of the other components to determine the
+calendar time; it's permissible for these components to have
+unnormalized values outside their normal ranges.  The last thing that
+<code>mktime</code> does is adjust the components of the <var>brokentime</var>
+structure (including the <code>tm_wday</code> and <code>tm_yday</code>).
+</p>
+<p>If the specified broken-down time cannot be represented as a simple time,
+<code>mktime</code> returns a value of <code>(time_t)(-1)</code> and does not modify
+the contents of <var>brokentime</var>.
+</p>
+<p>Calling <code>mktime</code> also sets the variable <code>tzname</code> with
+information about the current time zone.  See section <a href="#SEC445">Functions and Variables for Time Zones</a>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> time_t <b>timelocal</b><i> (struct tm *<var>brokentime</var>)</i>
+<a name="IDX2254"></a>
+</dt>
+<dd><p><code>timelocal</code> is functionally identical to <code>mktime</code>, but more
+mnemonically named.  Note that it is the inverse of the <code>localtime</code>
+function.
+</p>
+<p><strong>Portability note:</strong>  <code>mktime</code> is essentially universally
+available.  <code>timelocal</code> is rather rare.
+</p>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> time_t <b>timegm</b><i> (struct tm *<var>brokentime</var>)</i>
+<a name="IDX2255"></a>
+</dt>
+<dd><p><code>timegm</code> is functionally identical to <code>mktime</code> except it
+always takes the input values to be Coordinated Universal Time (UTC)
+regardless of any local time zone setting.
+</p>
+<p>Note that <code>timegm</code> is the inverse of <code>gmtime</code>.
+</p>
+<p><strong>Portability note:</strong>  <code>mktime</code> is essentially universally
+available.  <code>timegm</code> is rather rare.  For the most portable
+conversion from a UTC broken-down time to a simple time, set
+the <code>TZ</code> environment variable to UTC, call <code>mktime</code>, then set
+<code>TZ</code> back.
+</p>
+</dd></dl>
+
+
+
+<hr size="6">
+<a name="High-Accuracy-Clock"></a>
+<a name="SEC439"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC438" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC440" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC435" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 21.4.4 High Accuracy Clock </h3>
+
+<p>The <code>ntp_gettime</code> and <code>ntp_adjtime</code> functions provide an
+interface to monitor and manipulate the system clock to maintain high
+accuracy time.  For example, you can fine tune the speed of the clock
+or synchronize it with another time source.
+</p>
+<p>A typical use of these functions is by a server implementing the Network
+Time Protocol to synchronize the clocks of multiple systems and high
+precision clocks.
+</p>
+<p>These functions are declared in &lsquo;<tt>sys/timex.h</tt>&rsquo;.
+</p>
+<a name="IDX2256"></a>
+<dl>
+<dt><u>Data Type:</u> <b>struct ntptimeval</b>
+<a name="IDX2257"></a>
+</dt>
+<dd><p>This structure is used for information about the system clock.  It
+contains the following members:
+</p><dl compact="compact">
+<dt> <code>struct timeval time</code></dt>
+<dd><p>This is the current calendar time, expressed as the elapsed time since
+the epoch.  The <code>struct timeval</code> data type is described in
+<a href="#SEC431">Elapsed Time</a>.
+</p>
+</dd>
+<dt> <code>long int maxerror</code></dt>
+<dd><p>This is the maximum error, measured in microseconds.  Unless updated
+via <code>ntp_adjtime</code> periodically, this value will reach some
+platform-specific maximum value.
+</p>
+</dd>
+<dt> <code>long int esterror</code></dt>
+<dd><p>This is the estimated error, measured in microseconds.  This value can
+be set by <code>ntp_adjtime</code> to indicate the estimated offset of the
+system clock from the true calendar time.
+</p></dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>ntp_gettime</b><i> (struct ntptimeval *<var>tptr</var>)</i>
+<a name="IDX2258"></a>
+</dt>
+<dd><p>The <code>ntp_gettime</code> function sets the structure pointed to by
+<var>tptr</var> to current values.  The elements of the structure afterwards
+contain the values the timer implementation in the kernel assumes.  They
+might or might not be correct.  If they are not a <code>ntp_adjtime</code>
+call is necessary.
+</p>
+<p>The return value is <code>0</code> on success and other values on failure.  The
+following <code>errno</code> error conditions are defined for this function:
+</p>
+<dl compact="compact">
+<dt> <code>TIME_ERROR</code></dt>
+<dd><p>The precision clock model is not properly set up at the moment, thus the
+clock must be considered unsynchronized, and the values should be
+treated with care.
+</p></dd>
+</dl>
+</dd></dl>
+
+<a name="IDX2259"></a>
+<dl>
+<dt><u>Data Type:</u> <b>struct timex</b>
+<a name="IDX2260"></a>
+</dt>
+<dd><p>This structure is used to control and monitor the system clock.  It
+contains the following members:
+</p><dl compact="compact">
+<dt> <code>unsigned int modes</code></dt>
+<dd><p>This variable controls whether and which values are set.  Several
+symbolic constants have to be combined with <em>binary or</em> to specify
+the effective mode.  These constants start with <code>MOD_</code>.
+</p>
+</dd>
+<dt> <code>long int offset</code></dt>
+<dd><p>This value indicates the current offset of the system clock from the true
+calendar time.  The value is given in microseconds.  If bit
+<code>MOD_OFFSET</code> is set in <code>modes</code>, the offset (and possibly other
+dependent values) can be set.  The offset's absolute value must not
+exceed <code>MAXPHASE</code>.
+</p>
+
+</dd>
+<dt> <code>long int frequency</code></dt>
+<dd><p>This value indicates the difference in frequency between the true
+calendar time and the system clock.  The value is expressed as scaled
+PPM (parts per million, 0.0001%).  The scaling is <code>1 &lt;&lt;
+SHIFT_USEC</code>.  The value can be set with bit <code>MOD_FREQUENCY</code>, but
+the absolute value must not exceed <code>MAXFREQ</code>.
+</p>
+</dd>
+<dt> <code>long int maxerror</code></dt>
+<dd><p>This is the maximum error, measured in microseconds.  A new value can be
+set using bit <code>MOD_MAXERROR</code>.  Unless updated via
+<code>ntp_adjtime</code> periodically, this value will increase steadily
+and reach some platform-specific maximum value.
+</p>
+</dd>
+<dt> <code>long int esterror</code></dt>
+<dd><p>This is the estimated error, measured in microseconds.  This value can
+be set using bit <code>MOD_ESTERROR</code>.
+</p>
+</dd>
+<dt> <code>int status</code></dt>
+<dd><p>This variable reflects the various states of the clock machinery.  There
+are symbolic constants for the significant bits, starting with
+<code>STA_</code>.  Some of these flags can be updated using the
+<code>MOD_STATUS</code> bit.
+</p>
+</dd>
+<dt> <code>long int constant</code></dt>
+<dd><p>This value represents the bandwidth or stiffness of the PLL (phase
+locked loop) implemented in the kernel.  The value can be changed using
+bit <code>MOD_TIMECONST</code>.
+</p>
+</dd>
+<dt> <code>long int precision</code></dt>
+<dd><p>This value represents the accuracy or the maximum error when reading the
+system clock.  The value is expressed in microseconds.
+</p>
+</dd>
+<dt> <code>long int tolerance</code></dt>
+<dd><p>This value represents the maximum frequency error of the system clock in
+scaled PPM.  This value is used to increase the <code>maxerror</code> every
+second.
+</p>
+</dd>
+<dt> <code>struct timeval time</code></dt>
+<dd><p>The current calendar time.
+</p>
+</dd>
+<dt> <code>long int tick</code></dt>
+<dd><p>The elapsed time between clock ticks in microseconds.  A clock tick is a
+periodic timer interrupt on which the system clock is based.
+</p>
+</dd>
+<dt> <code>long int ppsfreq</code></dt>
+<dd><p>This is the first of a few optional variables that are present only if
+the system clock can use a PPS (pulse per second) signal to discipline
+the system clock.  The value is expressed in scaled PPM and it denotes
+the difference in frequency between the system clock and the PPS signal.
+</p>
+</dd>
+<dt> <code>long int jitter</code></dt>
+<dd><p>This value expresses a median filtered average of the PPS signal's
+dispersion in microseconds.
+</p>
+</dd>
+<dt> <code>int shift</code></dt>
+<dd><p>This value is a binary exponent for the duration of the PPS calibration
+interval, ranging from <code>PPS_SHIFT</code> to <code>PPS_SHIFTMAX</code>.
+</p>
+</dd>
+<dt> <code>long int stabil</code></dt>
+<dd><p>This value represents the median filtered dispersion of the PPS
+frequency in scaled PPM.
+</p>
+</dd>
+<dt> <code>long int jitcnt</code></dt>
+<dd><p>This counter represents the number of pulses where the jitter exceeded
+the allowed maximum <code>MAXTIME</code>.
+</p>
+</dd>
+<dt> <code>long int calcnt</code></dt>
+<dd><p>This counter reflects the number of successful calibration intervals.
+</p>
+</dd>
+<dt> <code>long int errcnt</code></dt>
+<dd><p>This counter represents the number of calibration errors (caused by
+large offsets or jitter).
+</p>
+</dd>
+<dt> <code>long int stbcnt</code></dt>
+<dd><p>This counter denotes the number of of calibrations where the stability
+exceeded the threshold.
+</p></dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>ntp_adjtime</b><i> (struct timex *<var>tptr</var>)</i>
+<a name="IDX2261"></a>
+</dt>
+<dd><p>The <code>ntp_adjtime</code> function sets the structure specified by
+<var>tptr</var> to current values.
+</p>
+<p>In addition, <code>ntp_adjtime</code> updates some settings to match what you
+pass to it in *<var>tptr</var>.  Use the <code>modes</code> element of *<var>tptr</var>
+to select what settings to update.  You can set <code>offset</code>,
+<code>freq</code>, <code>maxerror</code>, <code>esterror</code>, <code>status</code>,
+<code>constant</code>, and <code>tick</code>.
+</p>
+<p><code>modes</code> = zero means set nothing.
+</p>
+<p>Only the superuser can update settings.
+</p>
+
+<p>The return value is <code>0</code> on success and other values on failure.  The
+following <code>errno</code> error conditions are defined for this function:
+</p>
+<dl compact="compact">
+<dt> <code>TIME_ERROR</code></dt>
+<dd><p>The high accuracy clock model is not properly set up at the moment, thus the
+clock must be considered unsynchronized, and the values should be
+treated with care.  Another reason could be that the specified new values
+are not allowed.
+</p>
+</dd>
+<dt> <code>EPERM</code></dt>
+<dd><p>The process specified a settings update, but is not superuser.
+</p>
+</dd>
+</dl>
+
+<p>For more details see RFC1305 (Network Time Protocol, Version 3) and
+related documents.
+</p>
+<p><strong>Portability note:</strong> Early versions of the GNU C library did not
+have this function but did have the synonymous <code>adjtimex</code>.
+</p>
+</dd></dl>
+
+
+<hr size="6">
+<a name="Formatting-Calendar-Time"></a>
+<a name="SEC440"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC439" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC441" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC435" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 21.4.5 Formatting Calendar Time </h3>
+
+<p>The functions described in this section format calendar time values as
+strings.  These functions are declared in the header file &lsquo;<tt>time.h</tt>&rsquo;.
+<a name="IDX2262"></a>
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>asctime</b><i> (const struct tm *<var>brokentime</var>)</i>
+<a name="IDX2263"></a>
+</dt>
+<dd><p>The <code>asctime</code> function converts the broken-down time value that
+<var>brokentime</var> points to into a string in a standard format:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">&quot;Tue May 21 13:46:22 1991\n&quot;
+</pre></td></tr></table>
+
+<p>The abbreviations for the days of week are: &lsquo;<samp>Sun</samp>&rsquo;, &lsquo;<samp>Mon</samp>&rsquo;,
+&lsquo;<samp>Tue</samp>&rsquo;, &lsquo;<samp>Wed</samp>&rsquo;, &lsquo;<samp>Thu</samp>&rsquo;, &lsquo;<samp>Fri</samp>&rsquo;, and &lsquo;<samp>Sat</samp>&rsquo;.
+</p>
+<p>The abbreviations for the months are: &lsquo;<samp>Jan</samp>&rsquo;, &lsquo;<samp>Feb</samp>&rsquo;,
+&lsquo;<samp>Mar</samp>&rsquo;, &lsquo;<samp>Apr</samp>&rsquo;, &lsquo;<samp>May</samp>&rsquo;, &lsquo;<samp>Jun</samp>&rsquo;, &lsquo;<samp>Jul</samp>&rsquo;, &lsquo;<samp>Aug</samp>&rsquo;,
+&lsquo;<samp>Sep</samp>&rsquo;, &lsquo;<samp>Oct</samp>&rsquo;, &lsquo;<samp>Nov</samp>&rsquo;, and &lsquo;<samp>Dec</samp>&rsquo;.
+</p>
+<p>The return value points to a statically allocated string, which might be
+overwritten by subsequent calls to <code>asctime</code> or <code>ctime</code>.
+(But no other library function overwrites the contents of this
+string.)
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>asctime_r</b><i> (const struct tm *<var>brokentime</var>, char *<var>buffer</var>)</i>
+<a name="IDX2264"></a>
+</dt>
+<dd><p>This function is similar to <code>asctime</code> but instead of placing the
+result in a static buffer it writes the string in the buffer pointed to
+by the parameter <var>buffer</var>.  This buffer should have room
+for at least 26 bytes, including the terminating null.
+</p>
+<p>If no error occurred the function returns a pointer to the string the
+result was written into, i.e., it returns <var>buffer</var>.  Otherwise
+return <code>NULL</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><u>Function:</u> char * <b>ctime</b><i> (const time_t *<var>time</var>)</i>
+<a name="IDX2265"></a>
+</dt>
+<dd><p>The <code>ctime</code> function is similar to <code>asctime</code>, except that you
+specify the calendar time argument as a <code>time_t</code> simple time value
+rather than in broken-down local time format.  It is equivalent to
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">asctime (localtime (<var>time</var>))
+</pre></td></tr></table>
+
+<p><code>ctime</code> sets the variable <code>tzname</code>, because <code>localtime</code>
+does so.  See section <a href="#SEC445">Functions and Variables for Time Zones</a>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>ctime_r</b><i> (const time_t *<var>time</var>, char *<var>buffer</var>)</i>
+<a name="IDX2266"></a>
+</dt>
+<dd><p>This function is similar to <code>ctime</code>, but places the result in the
+string pointed to by <var>buffer</var>.  It is equivalent to (written using
+gcc extensions, see <a href="../gcc/Statement-Exprs.html#Statement-Exprs">(gcc)Statement Exprs</a> section `Statement Exprs' in <cite>Porting and Using gcc</cite>):
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">({ struct tm tm; asctime_r (localtime_r (time, &amp;tm), buf); })
+</pre></td></tr></table>
+
+<p>If no error occurred the function returns a pointer to the string the
+result was written into, i.e., it returns <var>buffer</var>.  Otherwise
+return <code>NULL</code>.
+</p></dd></dl>
+
+
+<dl>
+<dt><u>Function:</u> size_t <b>strftime</b><i> (char *<var>s</var>, size_t <var>size</var>, const char *<var>template</var>, const struct tm *<var>brokentime</var>)</i>
+<a name="IDX2267"></a>
+</dt>
+<dd><p>This function is similar to the <code>sprintf</code> function (see section <a href="libc_12.html#SEC209">Formatted Input</a>), but the conversion specifications that can appear in the format
+template <var>template</var> are specialized for printing components of the date
+and time <var>brokentime</var> according to the locale currently specified for
+time conversion (see section <a href="libc_7.html#SEC108">Locales and Internationalization</a>).
+</p>
+<p>Ordinary characters appearing in the <var>template</var> are copied to the
+output string <var>s</var>; this can include multibyte character sequences.
+Conversion specifiers are introduced by a &lsquo;<samp>%</samp>&rsquo; character, followed
+by an optional flag which can be one of the following.  These flags
+are all GNU extensions. The first three affect only the output of
+numbers:
+</p>
+<dl compact="compact">
+<dt> <code>_</code></dt>
+<dd><p>The number is padded with spaces.
+</p>
+</dd>
+<dt> <code>-</code></dt>
+<dd><p>The number is not padded at all.
+</p>
+</dd>
+<dt> <code>0</code></dt>
+<dd><p>The number is padded with zeros even if the format specifies padding
+with spaces.
+</p>
+</dd>
+<dt> <code>^</code></dt>
+<dd><p>The output uses uppercase characters, but only if this is possible
+(see section <a href="libc_4.html#SEC66">Case Conversion</a>).
+</p></dd>
+</dl>
+
+<p>The default action is to pad the number with zeros to keep it a constant
+width.  Numbers that do not have a range indicated below are never
+padded, since there is no natural width for them.
+</p>
+<p>Following the flag an optional specification of the width is possible.
+This is specified in decimal notation.  If the natural size of the
+output is of the field has less than the specified number of characters,
+the result is written right adjusted and space padded to the given
+size.
+</p>
+<p>An optional modifier can follow the optional flag and width
+specification.  The modifiers, which were first standardized by
+POSIX.2-1992 and by ISO C99, are:
+</p>
+<dl compact="compact">
+<dt> <code>E</code></dt>
+<dd><p>Use the locale's alternate representation for date and time.  This
+modifier applies to the <code>%c</code>, <code>%C</code>, <code>%x</code>, <code>%X</code>,
+<code>%y</code> and <code>%Y</code> format specifiers.  In a Japanese locale, for
+example, <code>%Ex</code> might yield a date format based on the Japanese
+Emperors' reigns.
+</p>
+</dd>
+<dt> <code>O</code></dt>
+<dd><p>Use the locale's alternate numeric symbols for numbers.  This modifier
+applies only to numeric format specifiers.
+</p></dd>
+</dl>
+
+<p>If the format supports the modifier but no alternate representation
+is available, it is ignored.
+</p>
+<p>The conversion specifier ends with a format specifier taken from the
+following list.  The whole &lsquo;<samp>%</samp>&rsquo; sequence is replaced in the output
+string as follows:
+</p>
+<dl compact="compact">
+<dt> <code>%a</code></dt>
+<dd><p>The abbreviated weekday name according to the current locale.
+</p>
+</dd>
+<dt> <code>%A</code></dt>
+<dd><p>The full weekday name according to the current locale.
+</p>
+</dd>
+<dt> <code>%b</code></dt>
+<dd><p>The abbreviated month name according to the current locale.
+</p>
+</dd>
+<dt> <code>%B</code></dt>
+<dd><p>The full month name according to the current locale.
+</p>
+<p>Using <code>%B</code> together with <code>%d</code> produces grammatically
+incorrect results for some locales.
+</p>
+</dd>
+<dt> <code>%c</code></dt>
+<dd><p>The preferred calendar time representation for the current locale.
+</p>
+</dd>
+<dt> <code>%C</code></dt>
+<dd><p>The century of the year.  This is equivalent to the greatest integer not
+greater than the year divided by 100.
+</p>
+<p>This format was first standardized by POSIX.2-1992 and by ISO C99.
+</p>
+</dd>
+<dt> <code>%d</code></dt>
+<dd><p>The day of the month as a decimal number (range <code>01</code> through <code>31</code>).
+</p>
+</dd>
+<dt> <code>%D</code></dt>
+<dd><p>The date using the format <code>%m/%d/%y</code>.
+</p>
+<p>This format was first standardized by POSIX.2-1992 and by ISO C99.
+</p>
+</dd>
+<dt> <code>%e</code></dt>
+<dd><p>The day of the month like with <code>%d</code>, but padded with blank (range
+<code> 1</code> through <code>31</code>).
+</p>
+<p>This format was first standardized by POSIX.2-1992 and by ISO C99.
+</p>
+</dd>
+<dt> <code>%F</code></dt>
+<dd><p>The date using the format <code>%Y-%m-%d</code>.  This is the form specified
+in the ISO 8601 standard and is the preferred form for all uses.
+</p>
+<p>This format was first standardized by ISO C99 and by POSIX.1-2001.
+</p>
+</dd>
+<dt> <code>%g</code></dt>
+<dd><p>The year corresponding to the ISO week number, but without the century
+(range <code>00</code> through <code>99</code>).  This has the same format and value
+as <code>%y</code>, except that if the ISO week number (see <code>%V</code>) belongs
+to the previous or next year, that year is used instead.
+</p>
+<p>This format was first standardized by ISO C99 and by POSIX.1-2001.
+</p>
+</dd>
+<dt> <code>%G</code></dt>
+<dd><p>The year corresponding to the ISO week number.  This has the same format
+and value as <code>%Y</code>, except that if the ISO week number (see
+<code>%V</code>) belongs to the previous or next year, that year is used
+instead.
+</p>
+<p>This format was first standardized by ISO C99 and by POSIX.1-2001
+but was previously available as a GNU extension.
+</p>
+</dd>
+<dt> <code>%h</code></dt>
+<dd><p>The abbreviated month name according to the current locale.  The action
+is the same as for <code>%b</code>.
+</p>
+<p>This format was first standardized by POSIX.2-1992 and by ISO C99.
+</p>
+</dd>
+<dt> <code>%H</code></dt>
+<dd><p>The hour as a decimal number, using a 24-hour clock (range <code>00</code> through
+<code>23</code>).
+</p>
+</dd>
+<dt> <code>%I</code></dt>
+<dd><p>The hour as a decimal number, using a 12-hour clock (range <code>01</code> through
+<code>12</code>).
+</p>
+</dd>
+<dt> <code>%j</code></dt>
+<dd><p>The day of the year as a decimal number (range <code>001</code> through <code>366</code>).
+</p>
+</dd>
+<dt> <code>%k</code></dt>
+<dd><p>The hour as a decimal number, using a 24-hour clock like <code>%H</code>, but
+padded with blank (range <code> 0</code> through <code>23</code>).
+</p>
+<p>This format is a GNU extension.
+</p>
+</dd>
+<dt> <code>%l</code></dt>
+<dd><p>The hour as a decimal number, using a 12-hour clock like <code>%I</code>, but
+padded with blank (range <code> 1</code> through <code>12</code>).
+</p>
+<p>This format is a GNU extension.
+</p>
+</dd>
+<dt> <code>%m</code></dt>
+<dd><p>The month as a decimal number (range <code>01</code> through <code>12</code>).
+</p>
+</dd>
+<dt> <code>%M</code></dt>
+<dd><p>The minute as a decimal number (range <code>00</code> through <code>59</code>).
+</p>
+</dd>
+<dt> <code>%n</code></dt>
+<dd><p>A single &lsquo;<samp>\n</samp>&rsquo; (newline) character.
+</p>
+<p>This format was first standardized by POSIX.2-1992 and by ISO C99.
+</p>
+</dd>
+<dt> <code>%p</code></dt>
+<dd><p>Either &lsquo;<samp>AM</samp>&rsquo; or &lsquo;<samp>PM</samp>&rsquo;, according to the given time value; or the
+corresponding strings for the current locale.  Noon is treated as
+&lsquo;<samp>PM</samp>&rsquo; and midnight as &lsquo;<samp>AM</samp>&rsquo;.  In most locales
+&lsquo;<samp>AM</samp>&rsquo;/&lsquo;<samp>PM</samp>&rsquo; format is not supported, in such cases <code>&quot;%p&quot;</code>
+yields an empty string.
+</p>
+</dd>
+<dt> <code>%P</code></dt>
+<dd><p>Either &lsquo;<samp>am</samp>&rsquo; or &lsquo;<samp>pm</samp>&rsquo;, according to the given time value; or the
+corresponding strings for the current locale, printed in lowercase
+characters.  Noon is treated as &lsquo;<samp>pm</samp>&rsquo; and midnight as &lsquo;<samp>am</samp>&rsquo;.  In
+most locales &lsquo;<samp>AM</samp>&rsquo;/&lsquo;<samp>PM</samp>&rsquo; format is not supported, in such cases
+<code>&quot;%P&quot;</code> yields an empty string.
+</p>
+<p>This format is a GNU extension.
+</p>
+</dd>
+<dt> <code>%r</code></dt>
+<dd><p>The complete calendar time using the AM/PM format of the current locale.
+</p>
+<p>This format was first standardized by POSIX.2-1992 and by ISO C99.
+In the POSIX locale, this format is equivalent to <code>%I:%M:%S %p</code>.
+</p>
+</dd>
+<dt> <code>%R</code></dt>
+<dd><p>The hour and minute in decimal numbers using the format <code>%H:%M</code>.
+</p>
+<p>This format was first standardized by ISO C99 and by POSIX.1-2001
+but was previously available as a GNU extension.
+</p>
+</dd>
+<dt> <code>%s</code></dt>
+<dd><p>The number of seconds since the epoch, i.e., since 1970-01-01 00:00:00 UTC.
+Leap seconds are not counted unless leap second support is available.
+</p>
+<p>This format is a GNU extension.
+</p>
+</dd>
+<dt> <code>%S</code></dt>
+<dd><p>The seconds as a decimal number (range <code>00</code> through <code>60</code>).
+</p>
+</dd>
+<dt> <code>%t</code></dt>
+<dd><p>A single &lsquo;<samp>\t</samp>&rsquo; (tabulator) character.
+</p>
+<p>This format was first standardized by POSIX.2-1992 and by ISO C99.
+</p>
+</dd>
+<dt> <code>%T</code></dt>
+<dd><p>The time of day using decimal numbers using the format <code>%H:%M:%S</code>.
+</p>
+<p>This format was first standardized by POSIX.2-1992 and by ISO C99.
+</p>
+</dd>
+<dt> <code>%u</code></dt>
+<dd><p>The day of the week as a decimal number (range <code>1</code> through
+<code>7</code>), Monday being <code>1</code>.
+</p>
+<p>This format was first standardized by POSIX.2-1992 and by ISO C99.
+</p>
+</dd>
+<dt> <code>%U</code></dt>
+<dd><p>The week number of the current year as a decimal number (range <code>00</code>
+through <code>53</code>), starting with the first Sunday as the first day of
+the first week.  Days preceding the first Sunday in the year are
+considered to be in week <code>00</code>.
+</p>
+</dd>
+<dt> <code>%V</code></dt>
+<dd><p>The ISO 8601:1988 week number as a decimal number (range <code>01</code>
+through <code>53</code>).  ISO weeks start with Monday and end with Sunday.
+Week <code>01</code> of a year is the first week which has the majority of its
+days in that year; this is equivalent to the week containing the year's
+first Thursday, and it is also equivalent to the week containing January
+4.  Week <code>01</code> of a year can contain days from the previous year.
+The week before week <code>01</code> of a year is the last week (<code>52</code> or
+<code>53</code>) of the previous year even if it contains days from the new
+year.
+</p>
+<p>This format was first standardized by POSIX.2-1992 and by ISO C99.
+</p>
+</dd>
+<dt> <code>%w</code></dt>
+<dd><p>The day of the week as a decimal number (range <code>0</code> through
+<code>6</code>), Sunday being <code>0</code>.
+</p>
+</dd>
+<dt> <code>%W</code></dt>
+<dd><p>The week number of the current year as a decimal number (range <code>00</code>
+through <code>53</code>), starting with the first Monday as the first day of
+the first week.  All days preceding the first Monday in the year are
+considered to be in week <code>00</code>.
+</p>
+</dd>
+<dt> <code>%x</code></dt>
+<dd><p>The preferred date representation for the current locale.
+</p>
+</dd>
+<dt> <code>%X</code></dt>
+<dd><p>The preferred time of day representation for the current locale.
+</p>
+</dd>
+<dt> <code>%y</code></dt>
+<dd><p>The year without a century as a decimal number (range <code>00</code> through
+<code>99</code>).  This is equivalent to the year modulo 100.
+</p>
+</dd>
+<dt> <code>%Y</code></dt>
+<dd><p>The year as a decimal number, using the Gregorian calendar.  Years
+before the year <code>1</code> are numbered <code>0</code>, <code>-1</code>, and so on.
+</p>
+</dd>
+<dt> <code>%z</code></dt>
+<dd><p>RFC 822/ISO 8601:1988 style numeric time zone (e.g.,
+<code>-0600</code> or <code>+0100</code>), or nothing if no time zone is
+determinable.
+</p>
+<p>This format was first standardized by ISO C99 and by POSIX.1-2001
+but was previously available as a GNU extension.
+</p>
+<p>In the POSIX locale, a full RFC 822 timestamp is generated by the format
+&lsquo;<samp>&quot;%a, %d %b %Y %H:%M:%S %z&quot;</samp>&rsquo; (or the equivalent
+&lsquo;<samp>&quot;%a, %d %b %Y %T %z&quot;</samp>&rsquo;).
+</p>
+</dd>
+<dt> <code>%Z</code></dt>
+<dd><p>The time zone abbreviation (empty if the time zone can't be determined).
+</p>
+</dd>
+<dt> <code>%%</code></dt>
+<dd><p>A literal &lsquo;<samp>%</samp>&rsquo; character.
+</p></dd>
+</dl>
+
+<p>The <var>size</var> parameter can be used to specify the maximum number of
+characters to be stored in the array <var>s</var>, including the terminating
+null character.  If the formatted time requires more than <var>size</var>
+characters, <code>strftime</code> returns zero and the contents of the array
+<var>s</var> are undefined.  Otherwise the return value indicates the
+number of characters placed in the array <var>s</var>, not including the
+terminating null character.
+</p>
+<p><em>Warning:</em> This convention for the return value which is prescribed
+in ISO C can lead to problems in some situations.  For certain
+format strings and certain locales the output really can be the empty
+string and this cannot be discovered by testing the return value only.
+E.g., in most locales the AM/PM time format is not supported (most of
+the world uses the 24 hour time representation).  In such locales
+<code>&quot;%p&quot;</code> will return the empty string, i.e., the return value is
+zero.  To detect situations like this something similar to the following
+code should be used:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">buf[0] = '\1';
+len = strftime (buf, bufsize, format, tp);
+if (len == 0 &amp;&amp; buf[0] != '\0')
+  {
+    /* Something went wrong in the strftime call.  */
+    &hellip;
+  }
+</pre></td></tr></table>
+
+<p>If <var>s</var> is a null pointer, <code>strftime</code> does not actually write
+anything, but instead returns the number of characters it would have written.
+</p>
+<p>According to POSIX.1 every call to <code>strftime</code> implies a call to
+<code>tzset</code>.  So the contents of the environment variable <code>TZ</code>
+is examined before any output is produced.
+</p>
+<p>For an example of <code>strftime</code>, see <a href="#SEC446">Time Functions Example</a>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> size_t <b>wcsftime</b><i> (wchar_t *<var>s</var>, size_t <var>size</var>, const wchar_t *<var>template</var>, const struct tm *<var>brokentime</var>)</i>
+<a name="IDX2268"></a>
+</dt>
+<dd><p>The <code>wcsftime</code> function is equivalent to the <code>strftime</code>
+function with the difference that it operates on wide character
+strings.  The buffer where the result is stored, pointed to by <var>s</var>,
+must be an array of wide characters.  The parameter <var>size</var> which
+specifies the size of the output buffer gives the number of wide
+character, not the number of bytes.
+</p>
+<p>Also the format string <var>template</var> is a wide character string.  Since
+all characters needed to specify the format string are in the basic
+character set it is portably possible to write format strings in the C
+source code using the <code>L&quot;&hellip;&quot;</code> notation.  The parameter
+<var>brokentime</var> has the same meaning as in the <code>strftime</code> call.
+</p>
+<p>The <code>wcsftime</code> function supports the same flags, modifiers, and
+format specifiers as the <code>strftime</code> function.
+</p>
+<p>The return value of <code>wcsftime</code> is the number of wide characters
+stored in <code>s</code>.  When more characters would have to be written than
+can be placed in the buffer <var>s</var> the return value is zero, with the
+same problems indicated in the <code>strftime</code> documentation.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Parsing-Date-and-Time"></a>
+<a name="SEC441"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC440" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC442" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC435" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 21.4.6 Convert textual time and date information back </h3>
+
+<p>The ISO C standard does not specify any functions which can convert
+the output of the <code>strftime</code> function back into a binary format.
+This led to a variety of more-or-less successful implementations with
+different interfaces over the years.  Then the Unix standard was
+extended by the addition of two functions: <code>strptime</code> and
+<code>getdate</code>.  Both have strange interfaces but at least they are
+widely available.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC442">21.4.6.1 Interpret string according to given format</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="#SEC443">21.4.6.2 A More User-friendly Way to Parse Times and Dates</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    User-friendly function to parse data and
+                                    time strings.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Low_002dLevel-Time-String-Parsing"></a>
+<a name="SEC442"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC441" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC443" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC441" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 21.4.6.1 Interpret string according to given format </h4>
+
+<p>The first function is rather low-level.  It is nevertheless frequently
+used in software since it is better known.  Its interface and
+implementation are heavily influenced by the <code>getdate</code> function,
+which is defined and implemented in terms of calls to <code>strptime</code>.
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>strptime</b><i> (const char *<var>s</var>, const char *<var>fmt</var>, struct tm *<var>tp</var>)</i>
+<a name="IDX2269"></a>
+</dt>
+<dd><p>The <code>strptime</code> function parses the input string <var>s</var> according
+to the format string <var>fmt</var> and stores its results in the
+structure <var>tp</var>.
+</p>
+<p>The input string could be generated by a <code>strftime</code> call or
+obtained any other way.  It does not need to be in a human-recognizable
+format; e.g. a date passed as <code>&quot;02:1999:9&quot;</code> is acceptable, even
+though it is ambiguous without context.  As long as the format string
+<var>fmt</var> matches the input string the function will succeed.
+</p>
+<p>The user has to make sure, though, that the input can be parsed in a
+unambiguous way.  The string <code>&quot;1999112&quot;</code> can be parsed using the
+format <code>&quot;%Y%m%d&quot;</code> as 1999-1-12, 1999-11-2, or even 19991-1-2.  It
+is necessary to add appropriate separators to reliably get results.
+</p>
+<p>The format string consists of the same components as the format string
+of the <code>strftime</code> function.  The only difference is that the flags
+<code>_</code>, <code>-</code>, <code>0</code>, and <code>^</code> are not allowed.
+Several of the distinct formats of <code>strftime</code> do the same work in
+<code>strptime</code> since differences like case of the input do not matter.
+For reasons of symmetry all formats are supported, though.
+</p>
+<p>The modifiers <code>E</code> and <code>O</code> are also allowed everywhere the
+<code>strftime</code> function allows them.
+</p>
+<p>The formats are:
+</p>
+<dl compact="compact">
+<dt> <code>%a</code></dt>
+<dt> <code>%A</code></dt>
+<dd><p>The weekday name according to the current locale, in abbreviated form or
+the full name.
+</p>
+</dd>
+<dt> <code>%b</code></dt>
+<dt> <code>%B</code></dt>
+<dt> <code>%h</code></dt>
+<dd><p>The month name according to the current locale, in abbreviated form or
+the full name.
+</p>
+</dd>
+<dt> <code>%c</code></dt>
+<dd><p>The date and time representation for the current locale.
+</p>
+</dd>
+<dt> <code>%Ec</code></dt>
+<dd><p>Like <code>%c</code> but the locale's alternative date and time format is used.
+</p>
+</dd>
+<dt> <code>%C</code></dt>
+<dd><p>The century of the year.
+</p>
+<p>It makes sense to use this format only if the format string also
+contains the <code>%y</code> format.
+</p>
+</dd>
+<dt> <code>%EC</code></dt>
+<dd><p>The locale's representation of the period.
+</p>
+<p>Unlike <code>%C</code> it sometimes makes sense to use this format since some
+cultures represent years relative to the beginning of eras instead of
+using the Gregorian years.
+</p>
+</dd>
+<dt> <code>%d</code></dt>
+<dt> <code>%e</code></dt>
+<dd><p>The day of the month as a decimal number (range <code>1</code> through <code>31</code>).
+Leading zeroes are permitted but not required.
+</p>
+</dd>
+<dt> <code>%Od</code></dt>
+<dt> <code>%Oe</code></dt>
+<dd><p>Same as <code>%d</code> but using the locale's alternative numeric symbols.
+</p>
+<p>Leading zeroes are permitted but not required.
+</p>
+</dd>
+<dt> <code>%D</code></dt>
+<dd><p>Equivalent to <code>%m/%d/%y</code>.
+</p>
+</dd>
+<dt> <code>%F</code></dt>
+<dd><p>Equivalent to <code>%Y-%m-%d</code>, which is the ISO 8601 date
+format.
+</p>
+<p>This is a GNU extension following an ISO C99 extension to
+<code>strftime</code>.
+</p>
+</dd>
+<dt> <code>%g</code></dt>
+<dd><p>The year corresponding to the ISO week number, but without the century
+(range <code>00</code> through <code>99</code>).
+</p>
+<p><em>Note:</em> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</p>
+<p>This format is a GNU extension following a GNU extension of <code>strftime</code>.
+</p>
+</dd>
+<dt> <code>%G</code></dt>
+<dd><p>The year corresponding to the ISO week number.
+</p>
+<p><em>Note:</em> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</p>
+<p>This format is a GNU extension following a GNU extension of <code>strftime</code>.
+</p>
+</dd>
+<dt> <code>%H</code></dt>
+<dt> <code>%k</code></dt>
+<dd><p>The hour as a decimal number, using a 24-hour clock (range <code>00</code> through
+<code>23</code>).
+</p>
+<p><code>%k</code> is a GNU extension following a GNU extension of <code>strftime</code>.
+</p>
+</dd>
+<dt> <code>%OH</code></dt>
+<dd><p>Same as <code>%H</code> but using the locale's alternative numeric symbols.
+</p>
+</dd>
+<dt> <code>%I</code></dt>
+<dt> <code>%l</code></dt>
+<dd><p>The hour as a decimal number, using a 12-hour clock (range <code>01</code> through
+<code>12</code>).
+</p>
+<p><code>%l</code> is a GNU extension following a GNU extension of <code>strftime</code>.
+</p>
+</dd>
+<dt> <code>%OI</code></dt>
+<dd><p>Same as <code>%I</code> but using the locale's alternative numeric symbols.
+</p>
+</dd>
+<dt> <code>%j</code></dt>
+<dd><p>The day of the year as a decimal number (range <code>1</code> through <code>366</code>).
+</p>
+<p>Leading zeroes are permitted but not required.
+</p>
+</dd>
+<dt> <code>%m</code></dt>
+<dd><p>The month as a decimal number (range <code>1</code> through <code>12</code>).
+</p>
+<p>Leading zeroes are permitted but not required.
+</p>
+</dd>
+<dt> <code>%Om</code></dt>
+<dd><p>Same as <code>%m</code> but using the locale's alternative numeric symbols.
+</p>
+</dd>
+<dt> <code>%M</code></dt>
+<dd><p>The minute as a decimal number (range <code>0</code> through <code>59</code>).
+</p>
+<p>Leading zeroes are permitted but not required.
+</p>
+</dd>
+<dt> <code>%OM</code></dt>
+<dd><p>Same as <code>%M</code> but using the locale's alternative numeric symbols.
+</p>
+</dd>
+<dt> <code>%n</code></dt>
+<dt> <code>%t</code></dt>
+<dd><p>Matches any white space.
+</p>
+</dd>
+<dt> <code>%p</code></dt>
+<dt> <code>%P</code></dt>
+<dd><p>The locale-dependent equivalent to &lsquo;<samp>AM</samp>&rsquo; or &lsquo;<samp>PM</samp>&rsquo;.
+</p>
+<p>This format is not useful unless <code>%I</code> or <code>%l</code> is also used.
+Another complication is that the locale might not define these values at
+all and therefore the conversion fails.
+</p>
+<p><code>%P</code> is a GNU extension following a GNU extension to <code>strftime</code>.
+</p>
+</dd>
+<dt> <code>%r</code></dt>
+<dd><p>The complete time using the AM/PM format of the current locale.
+</p>
+<p>A complication is that the locale might not define this format at all
+and therefore the conversion fails.
+</p>
+</dd>
+<dt> <code>%R</code></dt>
+<dd><p>The hour and minute in decimal numbers using the format <code>%H:%M</code>.
+</p>
+<p><code>%R</code> is a GNU extension following a GNU extension to <code>strftime</code>.
+</p>
+</dd>
+<dt> <code>%s</code></dt>
+<dd><p>The number of seconds since the epoch, i.e., since 1970-01-01 00:00:00 UTC.
+Leap seconds are not counted unless leap second support is available.
+</p>
+<p><code>%s</code> is a GNU extension following a GNU extension to <code>strftime</code>.
+</p>
+</dd>
+<dt> <code>%S</code></dt>
+<dd><p>The seconds as a decimal number (range <code>0</code> through <code>60</code>).
+</p>
+<p>Leading zeroes are permitted but not required.
+</p>
+<p><strong>Note:</strong> The Unix specification says the upper bound on this value
+is <code>61</code>, a result of a decision to allow double leap seconds.  You
+will not see the value <code>61</code> because no minute has more than one
+leap second, but the myth persists.
+</p>
+</dd>
+<dt> <code>%OS</code></dt>
+<dd><p>Same as <code>%S</code> but using the locale's alternative numeric symbols.
+</p>
+</dd>
+<dt> <code>%T</code></dt>
+<dd><p>Equivalent to the use of <code>%H:%M:%S</code> in this place.
+</p>
+</dd>
+<dt> <code>%u</code></dt>
+<dd><p>The day of the week as a decimal number (range <code>1</code> through
+<code>7</code>), Monday being <code>1</code>.
+</p>
+<p>Leading zeroes are permitted but not required.
+</p>
+<p><em>Note:</em> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</p>
+</dd>
+<dt> <code>%U</code></dt>
+<dd><p>The week number of the current year as a decimal number (range <code>0</code>
+through <code>53</code>).
+</p>
+<p>Leading zeroes are permitted but not required.
+</p>
+</dd>
+<dt> <code>%OU</code></dt>
+<dd><p>Same as <code>%U</code> but using the locale's alternative numeric symbols.
+</p>
+</dd>
+<dt> <code>%V</code></dt>
+<dd><p>The ISO 8601:1988 week number as a decimal number (range <code>1</code>
+through <code>53</code>).
+</p>
+<p>Leading zeroes are permitted but not required.
+</p>
+<p><em>Note:</em> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</p>
+</dd>
+<dt> <code>%w</code></dt>
+<dd><p>The day of the week as a decimal number (range <code>0</code> through
+<code>6</code>), Sunday being <code>0</code>.
+</p>
+<p>Leading zeroes are permitted but not required.
+</p>
+<p><em>Note:</em> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</p>
+</dd>
+<dt> <code>%Ow</code></dt>
+<dd><p>Same as <code>%w</code> but using the locale's alternative numeric symbols.
+</p>
+</dd>
+<dt> <code>%W</code></dt>
+<dd><p>The week number of the current year as a decimal number (range <code>0</code>
+through <code>53</code>).
+</p>
+<p>Leading zeroes are permitted but not required.
+</p>
+<p><em>Note:</em> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</p>
+</dd>
+<dt> <code>%OW</code></dt>
+<dd><p>Same as <code>%W</code> but using the locale's alternative numeric symbols.
+</p>
+</dd>
+<dt> <code>%x</code></dt>
+<dd><p>The date using the locale's date format.
+</p>
+</dd>
+<dt> <code>%Ex</code></dt>
+<dd><p>Like <code>%x</code> but the locale's alternative data representation is used.
+</p>
+</dd>
+<dt> <code>%X</code></dt>
+<dd><p>The time using the locale's time format.
+</p>
+</dd>
+<dt> <code>%EX</code></dt>
+<dd><p>Like <code>%X</code> but the locale's alternative time representation is used.
+</p>
+</dd>
+<dt> <code>%y</code></dt>
+<dd><p>The year without a century as a decimal number (range <code>0</code> through
+<code>99</code>).
+</p>
+<p>Leading zeroes are permitted but not required.
+</p>
+<p>Note that it is questionable to use this format without
+the <code>%C</code> format.  The <code>strptime</code> function does regard input
+values in the range <em>68</em> to <em>99</em> as the years <em>1969</em> to
+<em>1999</em> and the values <em>0</em> to <em>68</em> as the years
+<em>2000</em> to <em>2068</em>.  But maybe this heuristic fails for some
+input data.
+</p>
+<p>Therefore it is best to avoid <code>%y</code> completely and use <code>%Y</code>
+instead.
+</p>
+</dd>
+<dt> <code>%Ey</code></dt>
+<dd><p>The offset from <code>%EC</code> in the locale's alternative representation.
+</p>
+</dd>
+<dt> <code>%Oy</code></dt>
+<dd><p>The offset of the year (from <code>%C</code>) using the locale's alternative
+numeric symbols.
+</p>
+</dd>
+<dt> <code>%Y</code></dt>
+<dd><p>The year as a decimal number, using the Gregorian calendar.
+</p>
+</dd>
+<dt> <code>%EY</code></dt>
+<dd><p>The full alternative year representation.
+</p>
+</dd>
+<dt> <code>%z</code></dt>
+<dd><p>The offset from GMT in ISO 8601/RFC822 format.
+</p>
+</dd>
+<dt> <code>%Z</code></dt>
+<dd><p>The timezone name.
+</p>
+<p><em>Note:</em> Currently, this is not fully implemented.  The format is
+recognized, input is consumed but no field in <var>tm</var> is set.
+</p>
+</dd>
+<dt> <code>%%</code></dt>
+<dd><p>A literal &lsquo;<samp>%</samp>&rsquo; character.
+</p></dd>
+</dl>
+
+<p>All other characters in the format string must have a matching character
+in the input string.  Exceptions are white spaces in the input string
+which can match zero or more whitespace characters in the format string.
+</p>
+<p><strong>Portability Note:</strong> The XPG standard advises applications to use
+at least one whitespace character (as specified by <code>isspace</code>) or
+other non-alphanumeric characters between any two conversion
+specifications.  The GNU C Library does not have this limitation but
+other libraries might have trouble parsing formats like
+<code>&quot;%d%m%Y%H%M%S&quot;</code>.
+</p>
+<p>The <code>strptime</code> function processes the input string from right to
+left.  Each of the three possible input elements (white space, literal,
+or format) are handled one after the other.  If the input cannot be
+matched to the format string the function stops.  The remainder of the
+format and input strings are not processed.
+</p>
+<p>The function returns a pointer to the first character it was unable to
+process.  If the input string contains more characters than required by
+the format string the return value points right after the last consumed
+input character.  If the whole input string is consumed the return value
+points to the <code>NULL</code> byte at the end of the string.  If an error
+occurs, i.e., <code>strptime</code> fails to match all of the format string,
+the function returns <code>NULL</code>.
+</p></dd></dl>
+
+<p>The specification of the function in the XPG standard is rather vague,
+leaving out a few important pieces of information.  Most importantly, it
+does not specify what happens to those elements of <var>tm</var> which are
+not directly initialized by the different formats.  The
+implementations on different Unix systems vary here.
+</p>
+<p>The GNU libc implementation does not touch those fields which are not
+directly initialized.  Exceptions are the <code>tm_wday</code> and
+<code>tm_yday</code> elements, which are recomputed if any of the year, month,
+or date elements changed.  This has two implications:
+</p>
+<ul>
+<li>
+Before calling the <code>strptime</code> function for a new input string, you
+should prepare the <var>tm</var> structure you pass.  Normally this will mean
+initializing all values are to zero.  Alternatively, you can set all
+fields to values like <code>INT_MAX</code>, allowing you to determine which
+elements were set by the function call.  Zero does not work here since
+it is a valid value for many of the fields.
+
+<p>Careful initialization is necessary if you want to find out whether a
+certain field in <var>tm</var> was initialized by the function call.
+</p>
+</li><li>
+You can construct a <code>struct tm</code> value with several consecutive
+<code>strptime</code> calls.  A useful application of this is e.g. the parsing
+of two separate strings, one containing date information and the other
+time information.  By parsing one after the other without clearing the
+structure in-between, you can construct a complete broken-down time.
+</li></ul>
+
+<p>The following example shows a function which parses a string which is
+contains the date information in either US style or ISO 8601 form:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">const char *
+parse_date (const char *input, struct tm *tm)
+{
+  const char *cp;
+
+  /* <span class="roman">First clear the result structure.</span>  */
+  memset (tm, '\0', sizeof (*tm));
+
+  /* <span class="roman">Try the ISO format first.</span>  */
+  cp = strptime (input, &quot;%F&quot;, tm);
+  if (cp == NULL)
+    {
+      /* <span class="roman">Does not match.  Try the US form.</span>  */
+      cp = strptime (input, &quot;%D&quot;, tm);
+    }
+
+  return cp;
+}
+</pre></td></tr></table>
+
+<hr size="6">
+<a name="General-Time-String-Parsing"></a>
+<a name="SEC443"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC442" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC444" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC441" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 21.4.6.2 A More User-friendly Way to Parse Times and Dates </h4>
+
+<p>The Unix standard defines another function for parsing date strings.
+The interface is weird, but if the function happens to suit your
+application it is just fine.  It is problematic to use this function
+in multi-threaded programs or libraries, since it returns a pointer to
+a static variable, and uses a global variable and global state (an
+environment variable).
+</p>
+<dl>
+<dt><u>Variable:</u> <b>getdate_err</b>
+<a name="IDX2270"></a>
+</dt>
+<dd><p>This variable of type <code>int</code> contains the error code of the last
+unsuccessful call to <code>getdate</code>.  Defined values are:
+</p>
+<dl compact="compact">
+<dt> <em>1</em></dt>
+<dd><p>The environment variable <code>DATEMSK</code> is not defined or null.
+</p></dd>
+<dt> <em>2</em></dt>
+<dd><p>The template file denoted by the <code>DATEMSK</code> environment variable
+cannot be opened.
+</p></dd>
+<dt> <em>3</em></dt>
+<dd><p>Information about the template file cannot retrieved.
+</p></dd>
+<dt> <em>4</em></dt>
+<dd><p>The template file is not a regular file.
+</p></dd>
+<dt> <em>5</em></dt>
+<dd><p>An I/O error occurred while reading the template file.
+</p></dd>
+<dt> <em>6</em></dt>
+<dd><p>Not enough memory available to execute the function.
+</p></dd>
+<dt> <em>7</em></dt>
+<dd><p>The template file contains no matching template.
+</p></dd>
+<dt> <em>8</em></dt>
+<dd><p>The input date is invalid, but would match a template otherwise.  This
+includes dates like February 31st, and dates which cannot be represented
+in a <code>time_t</code> variable.
+</p></dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> struct tm * <b>getdate</b><i> (const char *<var>string</var>)</i>
+<a name="IDX2271"></a>
+</dt>
+<dd><p>The interface to <code>getdate</code> is the simplest possible for a function
+to parse a string and return the value.  <var>string</var> is the input
+string and the result is returned in a statically-allocated variable.
+</p>
+<p>The details about how the string is processed are hidden from the user.
+In fact, they can be outside the control of the program.  Which formats
+are recognized is controlled by the file named by the environment
+variable <code>DATEMSK</code>.  This file should contain
+lines of valid format strings which could be passed to <code>strptime</code>.
+</p>
+<p>The <code>getdate</code> function reads these format strings one after the
+other and tries to match the input string.  The first line which
+completely matches the input string is used.
+</p>
+<p>Elements not initialized through the format string retain the values
+present at the time of the <code>getdate</code> function call.
+</p>
+<p>The formats recognized by <code>getdate</code> are the same as for
+<code>strptime</code>.  See above for an explanation.  There are only a few
+extensions to the <code>strptime</code> behavior:
+</p>
+<ul>
+<li>
+If the <code>%Z</code> format is given the broken-down time is based on the
+current time of the timezone matched, not of the current timezone of the
+runtime environment.
+
+<p><em>Note</em>: This is not implemented (currently).  The problem is that
+timezone names are not unique.  If a fixed timezone is assumed for a
+given string (say <code>EST</code> meaning US East Coast time), then uses for
+countries other than the USA will fail.  So far we have found no good
+solution to this.
+</p>
+</li><li>
+If only the weekday is specified the selected day depends on the current
+date.  If the current weekday is greater or equal to the <code>tm_wday</code>
+value the current week's day is chosen, otherwise the day next week is chosen.
+
+</li><li>
+A similar heuristic is used when only the month is given and not the
+year.  If the month is greater than or equal to the current month, then
+the current year is used.  Otherwise it wraps to next year.  The first
+day of the month is assumed if one is not explicitly specified.
+
+</li><li>
+The current hour, minute, and second are used if the appropriate value is
+not set through the format.
+
+</li><li>
+If no date is given tomorrow's date is used if the time is
+smaller than the current time.  Otherwise today's date is taken.
+</li></ul>
+
+<p>It should be noted that the format in the template file need not only
+contain format elements.  The following is a list of possible format
+strings (taken from the Unix standard):
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">%m
+%A %B %d, %Y %H:%M:%S
+%A
+%B
+%m/%d/%y %I %p
+%d,%m,%Y %H:%M
+at %A the %dst of %B in %Y
+run job at %I %p,%B %dnd
+%A den %d. %B %Y %H.%M Uhr
+</pre></td></tr></table>
+
+<p>As you can see, the template list can contain very specific strings like
+<code>run job at %I %p,%B %dnd</code>.  Using the above list of templates and
+assuming the current time is Mon Sep 22 12:19:47 EDT 1986 we can obtain the
+following results for the given input.
+</p>
+<table>
+<tr><td><p>        Input </p></td><td><p>     Match </p></td><td><p> Result
+</p></td></tr>
+<tr><td><p>        Mon </p></td><td><p>       %a </p></td><td><p>    Mon Sep 22 12:19:47 EDT 1986
+</p></td></tr>
+<tr><td><p>        Sun </p></td><td><p>       %a </p></td><td><p>    Sun Sep 28 12:19:47 EDT 1986
+</p></td></tr>
+<tr><td><p>        Fri </p></td><td><p>       %a </p></td><td><p>    Fri Sep 26 12:19:47 EDT 1986
+</p></td></tr>
+<tr><td><p>        September </p></td><td><p> %B </p></td><td><p>    Mon Sep 1 12:19:47 EDT 1986
+</p></td></tr>
+<tr><td><p>        January </p></td><td><p>   %B </p></td><td><p>    Thu Jan 1 12:19:47 EST 1987
+</p></td></tr>
+<tr><td><p>        December </p></td><td><p>  %B </p></td><td><p>    Mon Dec 1 12:19:47 EST 1986
+</p></td></tr>
+<tr><td><p>        Sep Mon </p></td><td><p>   %b %a </p></td><td><p> Mon Sep 1 12:19:47 EDT 1986
+</p></td></tr>
+<tr><td><p>        Jan Fri </p></td><td><p>   %b %a </p></td><td><p> Fri Jan 2 12:19:47 EST 1987
+</p></td></tr>
+<tr><td><p>        Dec Mon </p></td><td><p>   %b %a </p></td><td><p> Mon Dec 1 12:19:47 EST 1986
+</p></td></tr>
+<tr><td><p>        Jan Wed 1989 </p></td><td><p>  %b %a %Y </p></td><td><p> Wed Jan 4 12:19:47 EST 1989
+</p></td></tr>
+<tr><td><p>        Fri 9 </p></td><td><p>     %a %H </p></td><td><p> Fri Sep 26 09:00:00 EDT 1986
+</p></td></tr>
+<tr><td><p>        Feb 10:30 </p></td><td><p> %b %H:%S </p></td><td><p> Sun Feb 1 10:00:30 EST 1987
+</p></td></tr>
+<tr><td><p>        10:30 </p></td><td><p>     %H:%M </p></td><td><p> Tue Sep 23 10:30:00 EDT 1986
+</p></td></tr>
+<tr><td><p>        13:30 </p></td><td><p>     %H:%M </p></td><td><p> Mon Sep 22 13:30:00 EDT 1986
+</p></td></tr>
+</table>
+
+<p>The return value of the function is a pointer to a static variable of
+type <code>struct tm</code>, or a null pointer if an error occurred.  The
+result is only valid until the next <code>getdate</code> call, making this
+function unusable in multi-threaded applications.
+</p>
+<p>The <code>errno</code> variable is <em>not</em> changed.  Error conditions are
+stored in the global variable <code>getdate_err</code>.  See the
+description above for a list of the possible error values.
+</p>
+<p><em>Warning:</em> The <code>getdate</code> function should <em>never</em> be
+used in SUID-programs.  The reason is obvious: using the
+<code>DATEMSK</code> environment variable you can get the function to open
+any arbitrary file and chances are high that with some bogus input
+(such as a binary file) the program will crash.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>getdate_r</b><i> (const char *<var>string</var>, struct tm *<var>tp</var>)</i>
+<a name="IDX2272"></a>
+</dt>
+<dd><p>The <code>getdate_r</code> function is the reentrant counterpart of
+<code>getdate</code>.  It does not use the global variable <code>getdate_err</code>
+to signal an error, but instead returns an error code.  The same error
+codes as described in the <code>getdate_err</code> documentation above are
+used, with 0 meaning success.
+</p>
+<p>Moreover, <code>getdate_r</code> stores the broken-down time in the variable
+of type <code>struct tm</code> pointed to by the second argument, rather than
+in a static variable.
+</p>
+<p>This function is not defined in the Unix standard.  Nevertheless it is
+available on some other Unix systems as well.
+</p>
+<p>The warning against using <code>getdate</code> in SUID-programs applies to
+<code>getdate_r</code> as well.
+</p></dd></dl>
+
+<hr size="6">
+<a name="TZ-Variable"></a>
+<a name="SEC444"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC443" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC445" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC435" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 21.4.7 Specifying the Time Zone with <code>TZ</code> </h3>
+
+<p>In POSIX systems, a user can specify the time zone by means of the
+<code>TZ</code> environment variable.  For information about how to set
+environment variables, see <a href="libc_25.html#SEC558">Environment Variables</a>.  The functions
+for accessing the time zone are declared in &lsquo;<tt>time.h</tt>&rsquo;.
+<a name="IDX2273"></a>
+<a name="IDX2274"></a>
+</p>
+<p>You should not normally need to set <code>TZ</code>.  If the system is
+configured properly, the default time zone will be correct.  You might
+set <code>TZ</code> if you are using a computer over a network from a
+different time zone, and would like times reported to you in the time
+zone local to you, rather than what is local to the computer.
+</p>
+<p>In POSIX.1 systems the value of the <code>TZ</code> variable can be in one of
+three formats.  With the GNU C library, the most common format is the
+last one, which can specify a selection from a large database of time
+zone information for many regions of the world.  The first two formats
+are used to describe the time zone information directly, which is both
+more cumbersome and less precise.  But the POSIX.1 standard only
+specifies the details of the first two formats, so it is good to be
+familiar with them in case you come across a POSIX.1 system that doesn't
+support a time zone information database.
+</p>
+<p>The first format is used when there is no Daylight Saving Time (or
+summer time) in the local time zone:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample"><span class="roman"><var>std</var> <var>offset</var></span>
+</pre></td></tr></table>
+
+<p>The <var>std</var> string specifies the name of the time zone.  It must be
+three or more characters long and must not contain a leading colon,
+embedded digits, commas, nor plus and minus signs.  There is no space
+character separating the time zone name from the <var>offset</var>, so these
+restrictions are necessary to parse the specification correctly.
+</p>
+<p>The <var>offset</var> specifies the time value you must add to the local time
+to get a Coordinated Universal Time value.  It has syntax like
+[<code>+</code>|<code>-</code>]<var>hh</var>[<code>:</code><var>mm</var>[<code>:</code><var>ss</var>]].  This
+is positive if the local time zone is west of the Prime Meridian and
+negative if it is east.  The hour must be between <code>0</code> and
+<code>23</code>, and the minute and seconds between <code>0</code> and <code>59</code>.
+</p>
+<p>For example, here is how we would specify Eastern Standard Time, but
+without any Daylight Saving Time alternative:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">EST+5
+</pre></td></tr></table>
+
+<p>The second format is used when there is Daylight Saving Time:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample"><span class="roman"><var>std</var> <var>offset</var> <var>dst</var> [<var>offset</var>]<code>,</code><var>start</var>[<code>/</code><var>time</var>]<code>,</code><var>end</var>[<code>/</code><var>time</var>]</span>
+</pre></td></tr></table>
+
+<p>The initial <var>std</var> and <var>offset</var> specify the standard time zone, as
+described above.  The <var>dst</var> string and <var>offset</var> specify the name
+and offset for the corresponding Daylight Saving Time zone; if the
+<var>offset</var> is omitted, it defaults to one hour ahead of standard time.
+</p>
+<p>The remainder of the specification describes when Daylight Saving Time is
+in effect.  The <var>start</var> field is when Daylight Saving Time goes into
+effect and the <var>end</var> field is when the change is made back to standard
+time.  The following formats are recognized for these fields:
+</p>
+<dl compact="compact">
+<dt> <code>J<var>n</var></code></dt>
+<dd><p>This specifies the Julian day, with <var>n</var> between <code>1</code> and <code>365</code>.
+February 29 is never counted, even in leap years.
+</p>
+</dd>
+<dt> <code><var>n</var></code></dt>
+<dd><p>This specifies the Julian day, with <var>n</var> between <code>0</code> and <code>365</code>.
+February 29 is counted in leap years.
+</p>
+</dd>
+<dt> <code>M<var>m</var>.<var>w</var>.<var>d</var></code></dt>
+<dd><p>This specifies day <var>d</var> of week <var>w</var> of month <var>m</var>.  The day
+<var>d</var> must be between <code>0</code> (Sunday) and <code>6</code>.  The week
+<var>w</var> must be between <code>1</code> and <code>5</code>; week <code>1</code> is the
+first week in which day <var>d</var> occurs, and week <code>5</code> specifies the
+<em>last</em> <var>d</var> day in the month.  The month <var>m</var> should be
+between <code>1</code> and <code>12</code>.
+</p></dd>
+</dl>
+
+<p>The <var>time</var> fields specify when, in the local time currently in
+effect, the change to the other time occurs.  If omitted, the default is
+<code>02:00:00</code>.
+</p>
+<p>For example, here is how you would specify the Eastern time zone in the
+United States, including the appropriate Daylight Saving Time and its dates
+of applicability.  The normal offset from UTC is 5 hours; since this is
+west of the prime meridian, the sign is positive.  Summer time begins on
+the first Sunday in April at 2:00am, and ends on the last Sunday in October
+at 2:00am.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">EST+5EDT,M4.1.0/2,M10.5.0/2
+</pre></td></tr></table>
+
+<p>The schedule of Daylight Saving Time in any particular jurisdiction has
+changed over the years.  To be strictly correct, the conversion of dates
+and times in the past should be based on the schedule that was in effect
+then.  However, this format has no facilities to let you specify how the
+schedule has changed from year to year.  The most you can do is specify
+one particular schedule&mdash;usually the present day schedule&mdash;and this is
+used to convert any date, no matter when.  For precise time zone
+specifications, it is best to use the time zone information database
+(see below).
+</p>
+<p>The third format looks like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">:<var>characters</var>
+</pre></td></tr></table>
+
+<p>Each operating system interprets this format differently; in the GNU C
+library, <var>characters</var> is the name of a file which describes the time
+zone.
+</p>
+<a name="IDX2275"></a>
+<a name="IDX2276"></a>
+<p>If the <code>TZ</code> environment variable does not have a value, the
+operation chooses a time zone by default.  In the GNU C library, the
+default time zone is like the specification &lsquo;<samp>TZ=:/etc/localtime</samp>&rsquo;
+(or &lsquo;<samp>TZ=:/usr/local/etc/localtime</samp>&rsquo;, depending on how GNU C library
+was configured; see section <a href="libc_36.html#SEC694">Installing the GNU C Library</a>).  Other C libraries use their own
+rule for choosing the default time zone, so there is little we can say
+about them.
+</p>
+<a name="IDX2277"></a>
+<a name="IDX2278"></a>
+<a name="IDX2279"></a>
+<p>If <var>characters</var> begins with a slash, it is an absolute file name;
+otherwise the library looks for the file
+&lsquo;<tt>/share/lib/zoneinfo/<var>characters</var></tt>&rsquo;.  The &lsquo;<tt>zoneinfo</tt>&rsquo;
+directory contains data files describing local time zones in many
+different parts of the world.  The names represent major cities, with
+subdirectories for geographical areas; for example,
+&lsquo;<tt>America/New_York</tt>&rsquo;, &lsquo;<tt>Europe/London</tt>&rsquo;, &lsquo;<tt>Asia/Hong_Kong</tt>&rsquo;.
+These data files are installed by the system administrator, who also
+sets &lsquo;<tt>/etc/localtime</tt>&rsquo; to point to the data file for the local time
+zone.  The GNU C library comes with a large database of time zone
+information for most regions of the world, which is maintained by a
+community of volunteers and put in the public domain.
+</p>
+<hr size="6">
+<a name="Time-Zone-Functions"></a>
+<a name="SEC445"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC444" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC446" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC435" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 21.4.8 Functions and Variables for Time Zones </h3>
+
+<dl>
+<dt><u>Variable:</u> char * <b>tzname</b><i> [2]</i>
+<a name="IDX2280"></a>
+</dt>
+<dd><p>The array <code>tzname</code> contains two strings, which are the standard
+names of the pair of time zones (standard and Daylight
+Saving) that the user has selected.  <code>tzname[0]</code> is the name of
+the standard time zone (for example, <code>&quot;EST&quot;</code>), and <code>tzname[1]</code>
+is the name for the time zone when Daylight Saving Time is in use (for
+example, <code>&quot;EDT&quot;</code>).  These correspond to the <var>std</var> and <var>dst</var>
+strings (respectively) from the <code>TZ</code> environment variable.  If
+Daylight Saving Time is never used, <code>tzname[1]</code> is the empty string.
+</p>
+<p>The <code>tzname</code> array is initialized from the <code>TZ</code> environment
+variable whenever <code>tzset</code>, <code>ctime</code>, <code>strftime</code>,
+<code>mktime</code>, or <code>localtime</code> is called.  If multiple abbreviations
+have been used (e.g. <code>&quot;EWT&quot;</code> and <code>&quot;EDT&quot;</code> for U.S. Eastern War
+Time and Eastern Daylight Time), the array contains the most recent
+abbreviation.
+</p>
+<p>The <code>tzname</code> array is required for POSIX.1 compatibility, but in
+GNU programs it is better to use the <code>tm_zone</code> member of the
+broken-down time structure, since <code>tm_zone</code> reports the correct
+abbreviation even when it is not the latest one.
+</p>
+<p>Though the strings are declared as <code>char *</code> the user must refrain
+from modifying these strings.  Modifying the strings will almost certainly
+lead to trouble.
+</p>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> void <b>tzset</b><i> (void)</i>
+<a name="IDX2281"></a>
+</dt>
+<dd><p>The <code>tzset</code> function initializes the <code>tzname</code> variable from
+the value of the <code>TZ</code> environment variable.  It is not usually
+necessary for your program to call this function, because it is called
+automatically when you use the other time conversion functions that
+depend on the time zone.
+</p></dd></dl>
+
+<p>The following variables are defined for compatibility with System V
+Unix.  Like <code>tzname</code>, these variables are set by calling
+<code>tzset</code> or the other time conversion functions.
+</p>
+<dl>
+<dt><u>Variable:</u> long int <b>timezone</b>
+<a name="IDX2282"></a>
+</dt>
+<dd><p>This contains the difference between UTC and the latest local standard
+time, in seconds west of UTC.  For example, in the U.S. Eastern time
+zone, the value is <code>5*60*60</code>.  Unlike the <code>tm_gmtoff</code> member
+of the broken-down time structure, this value is not adjusted for
+daylight saving, and its sign is reversed.  In GNU programs it is better
+to use <code>tm_gmtoff</code>, since it contains the correct offset even when
+it is not the latest one.
+</p></dd></dl>
+
+<dl>
+<dt><u>Variable:</u> int <b>daylight</b>
+<a name="IDX2283"></a>
+</dt>
+<dd><p>This variable has a nonzero value if Daylight Saving Time rules apply.
+A nonzero value does not necessarily mean that Daylight Saving Time is
+now in effect; it means only that Daylight Saving Time is sometimes in
+effect.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Time-Functions-Example"></a>
+<a name="SEC446"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC445" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC447" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC435" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 21.4.9 Time Functions Example </h3>
+
+<p>Here is an example program showing the use of some of the calendar time
+functions.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;time.h&gt;
+#include &lt;stdio.h&gt;
+
+#define SIZE 256
+
+int
+main (void)
+{
+  char buffer[SIZE];
+  time_t curtime;
+  struct tm *loctime;
+
+  /* <span class="roman">Get the current time.</span> */
+  curtime = time (NULL);
+
+  /* <span class="roman">Convert it to local time representation.</span> */
+  loctime = localtime (&amp;curtime);
+
+  /* <span class="roman">Print out the date and time in the standard format.</span> */
+  fputs (asctime (loctime), stdout);
+
+  /* <span class="roman">Print it out in a nice format.</span> */
+  strftime (buffer, SIZE, &quot;Today is %A, %B %d.\n&quot;, loctime);
+  fputs (buffer, stdout);
+  strftime (buffer, SIZE, &quot;The time is %I:%M %p.\n&quot;, loctime);
+  fputs (buffer, stdout);
+
+  return 0;
+}
+</pre></td></tr></table>
+
+<p>It produces output like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Wed Jul 31 13:02:36 1991
+Today is Wednesday, July 31.
+The time is 01:02 PM.
+</pre></td></tr></table>
+
+
+<hr size="6">
+<a name="Setting-an-Alarm"></a>
+<a name="SEC447"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC446" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC448" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 21.5 Setting an Alarm </h2>
+
+<p>The <code>alarm</code> and <code>setitimer</code> functions provide a mechanism for a
+process to interrupt itself in the future.  They do this by setting a
+timer; when the timer expires, the process receives a signal.
+</p>
+<a name="IDX2284"></a>
+<a name="IDX2285"></a>
+<a name="IDX2286"></a>
+<a name="IDX2287"></a>
+<p>Each process has three independent interval timers available:
+</p>
+<ul>
+<li>
+A real-time timer that counts elapsed time.  This timer sends a
+<code>SIGALRM</code> signal to the process when it expires.
+<a name="IDX2288"></a>
+<a name="IDX2289"></a>
+
+</li><li>
+A virtual timer that counts processor time used by the process.  This timer
+sends a <code>SIGVTALRM</code> signal to the process when it expires.
+<a name="IDX2290"></a>
+<a name="IDX2291"></a>
+
+</li><li>
+A profiling timer that counts both processor time used by the process,
+and processor time spent in system calls on behalf of the process.  This
+timer sends a <code>SIGPROF</code> signal to the process when it expires.
+<a name="IDX2292"></a>
+<a name="IDX2293"></a>
+
+<p>This timer is useful for profiling in interpreters.  The interval timer
+mechanism does not have the fine granularity necessary for profiling
+native code.
+</p></li></ul>
+
+<p>You can only have one timer of each kind set at any given time.  If you
+set a timer that has not yet expired, that timer is simply reset to the
+new value.
+</p>
+<p>You should establish a handler for the appropriate alarm signal using
+<code>signal</code> or <code>sigaction</code> before issuing a call to
+<code>setitimer</code> or <code>alarm</code>.  Otherwise, an unusual chain of events
+could cause the timer to expire before your program establishes the
+handler.  In this case it would be terminated, since termination is the
+default action for the alarm signals.  See section <a href="libc_24.html#SEC471">Signal Handling</a>.
+</p>
+<p>To be able to use the alarm function to interrupt a system call which
+might block otherwise indefinitely it is important to <em>not</em> set the
+<code>SA_RESTART</code> flag when registering the signal handler using
+<code>sigaction</code>.  When not using <code>sigaction</code> things get even
+uglier: the <code>signal</code> function has to fixed semantics with respect
+to restarts.  The BSD semantics for this function is to set the flag.
+Therefore, if <code>sigaction</code> for whatever reason cannot be used, it is
+necessary to use <code>sysv_signal</code> and not <code>signal</code>.
+</p>
+<p>The <code>setitimer</code> function is the primary means for setting an alarm.
+This facility is declared in the header file &lsquo;<tt>sys/time.h</tt>&rsquo;.  The
+<code>alarm</code> function, declared in &lsquo;<tt>unistd.h</tt>&rsquo;, provides a somewhat
+simpler interface for setting the real-time timer.
+<a name="IDX2294"></a>
+<a name="IDX2295"></a>
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>struct itimerval</b>
+<a name="IDX2296"></a>
+</dt>
+<dd><p>This structure is used to specify when a timer should expire.  It contains
+the following members:
+</p><dl compact="compact">
+<dt> <code>struct timeval it_interval</code></dt>
+<dd><p>This is the period between successive timer interrupts.  If zero, the
+alarm will only be sent once.
+</p>
+</dd>
+<dt> <code>struct timeval it_value</code></dt>
+<dd><p>This is the period between now and the first timer interrupt.  If zero,
+the alarm is disabled.
+</p></dd>
+</dl>
+
+<p>The <code>struct timeval</code> data type is described in <a href="#SEC431">Elapsed Time</a>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>setitimer</b><i> (int <var>which</var>, struct itimerval *<var>new</var>, struct itimerval *<var>old</var>)</i>
+<a name="IDX2297"></a>
+</dt>
+<dd><p>The <code>setitimer</code> function sets the timer specified by <var>which</var>
+according to <var>new</var>.  The <var>which</var> argument can have a value of
+<code>ITIMER_REAL</code>, <code>ITIMER_VIRTUAL</code>, or <code>ITIMER_PROF</code>.
+</p>
+<p>If <var>old</var> is not a null pointer, <code>setitimer</code> returns information
+about any previous unexpired timer of the same kind in the structure it
+points to.
+</p>
+<p>The return value is <code>0</code> on success and <code>-1</code> on failure.  The
+following <code>errno</code> error conditions are defined for this function:
+</p>
+<dl compact="compact">
+<dt> <code>EINVAL</code></dt>
+<dd><p>The timer period is too large.
+</p></dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>getitimer</b><i> (int <var>which</var>, struct itimerval *<var>old</var>)</i>
+<a name="IDX2298"></a>
+</dt>
+<dd><p>The <code>getitimer</code> function stores information about the timer specified
+by <var>which</var> in the structure pointed at by <var>old</var>.
+</p>
+<p>The return value and error conditions are the same as for <code>setitimer</code>.
+</p></dd></dl>
+
+<dl compact="compact">
+<dt> <code>ITIMER_REAL</code>
+<a name="IDX2299"></a>
+</dt>
+<dd><p>This constant can be used as the <var>which</var> argument to the
+<code>setitimer</code> and <code>getitimer</code> functions to specify the real-time
+timer.
+</p>
+</dd>
+<dt> <code>ITIMER_VIRTUAL</code>
+<a name="IDX2300"></a>
+</dt>
+<dd><p>This constant can be used as the <var>which</var> argument to the
+<code>setitimer</code> and <code>getitimer</code> functions to specify the virtual
+timer.
+</p>
+</dd>
+<dt> <code>ITIMER_PROF</code>
+<a name="IDX2301"></a>
+</dt>
+<dd><p>This constant can be used as the <var>which</var> argument to the
+<code>setitimer</code> and <code>getitimer</code> functions to specify the profiling
+timer.
+</p></dd>
+</dl>
+
+<dl>
+<dt><u>Function:</u> unsigned int <b>alarm</b><i> (unsigned int <var>seconds</var>)</i>
+<a name="IDX2302"></a>
+</dt>
+<dd><p>The <code>alarm</code> function sets the real-time timer to expire in
+<var>seconds</var> seconds.  If you want to cancel any existing alarm, you
+can do this by calling <code>alarm</code> with a <var>seconds</var> argument of
+zero.
+</p>
+<p>The return value indicates how many seconds remain before the previous
+alarm would have been sent.  If there is no previous alarm, <code>alarm</code>
+returns zero.
+</p></dd></dl>
+
+<p>The <code>alarm</code> function could be defined in terms of <code>setitimer</code>
+like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">unsigned int
+alarm (unsigned int seconds)
+{
+  struct itimerval old, new;
+  new.it_interval.tv_usec = 0;
+  new.it_interval.tv_sec = 0;
+  new.it_value.tv_usec = 0;
+  new.it_value.tv_sec = (long int) seconds;
+  if (setitimer (ITIMER_REAL, &amp;new, &amp;old) &lt; 0)
+    return 0;
+  else
+    return old.it_value.tv_sec;
+}
+</pre></td></tr></table>
+
+<p>There is an example showing the use of the <code>alarm</code> function in
+<a href="libc_24.html#SEC493">Signal Handlers that Return</a>.
+</p>
+<p>If you simply want your process to wait for a given number of seconds,
+you should use the <code>sleep</code> function.  See section <a href="#SEC448">Sleeping</a>.
+</p>
+<p>You shouldn't count on the signal arriving precisely when the timer
+expires.  In a multiprocessing environment there is typically some
+amount of delay involved.
+</p>
+<p><strong>Portability Note:</strong> The <code>setitimer</code> and <code>getitimer</code>
+functions are derived from BSD Unix, while the <code>alarm</code> function is
+specified by the POSIX.1 standard.  <code>setitimer</code> is more powerful than
+<code>alarm</code>, but <code>alarm</code> is more widely used.
+</p>
+<hr size="6">
+<a name="Sleeping"></a>
+<a name="SEC448"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC447" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC429" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 21.6 Sleeping </h2>
+
+<p>The function <code>sleep</code> gives a simple way to make the program wait
+for a short interval.  If your program doesn't use signals (except to
+terminate), then you can expect <code>sleep</code> to wait reliably throughout
+the specified interval.  Otherwise, <code>sleep</code> can return sooner if a
+signal arrives; if you want to wait for a given interval regardless of
+signals, use <code>select</code> (see section <a href="libc_13.html#SEC249">Waiting for Input or Output</a>) and don't specify
+any descriptors to wait for.
+</p>
+<dl>
+<dt><u>Function:</u> unsigned int <b>sleep</b><i> (unsigned int <var>seconds</var>)</i>
+<a name="IDX2303"></a>
+</dt>
+<dd><p>The <code>sleep</code> function waits for <var>seconds</var> or until a signal
+is delivered, whichever happens first.
+</p>
+<p>If <code>sleep</code> function returns because the requested interval is over,
+it returns a value of zero.  If it returns because of delivery of a
+signal, its return value is the remaining time in the sleep interval.
+</p>
+<p>The <code>sleep</code> function is declared in &lsquo;<tt>unistd.h</tt>&rsquo;.
+</p></dd></dl>
+
+<p>Resist the temptation to implement a sleep for a fixed amount of time by
+using the return value of <code>sleep</code>, when nonzero, to call
+<code>sleep</code> again.  This will work with a certain amount of accuracy as
+long as signals arrive infrequently.  But each signal can cause the
+eventual wakeup time to be off by an additional second or so.  Suppose a
+few signals happen to arrive in rapid succession by bad luck&mdash;there is
+no limit on how much this could shorten or lengthen the wait.
+</p>
+<p>Instead, compute the calendar time at which the program should stop
+waiting, and keep trying to wait until that calendar time.  This won't
+be off by more than a second.  With just a little more work, you can use
+<code>select</code> and make the waiting period quite accurate.  (Of course,
+heavy system load can cause additional unavoidable delays&mdash;unless the
+machine is dedicated to one application, there is no way you can avoid
+this.)
+</p>
+<p>On some systems, <code>sleep</code> can do strange things if your program uses
+<code>SIGALRM</code> explicitly.  Even if <code>SIGALRM</code> signals are being
+ignored or blocked when <code>sleep</code> is called, <code>sleep</code> might
+return prematurely on delivery of a <code>SIGALRM</code> signal.  If you have
+established a handler for <code>SIGALRM</code> signals and a <code>SIGALRM</code>
+signal is delivered while the process is sleeping, the action taken
+might be just to cause <code>sleep</code> to return instead of invoking your
+handler.  And, if <code>sleep</code> is interrupted by delivery of a signal
+whose handler requests an alarm or alters the handling of <code>SIGALRM</code>,
+this handler and <code>sleep</code> will interfere.
+</p>
+<p>On the GNU system, it is safe to use <code>sleep</code> and <code>SIGALRM</code> in
+the same program, because <code>sleep</code> does not work by means of
+<code>SIGALRM</code>.
+</p>
+<dl>
+<dt><u>Function:</u> int <b>nanosleep</b><i> (const struct timespec *<var>requested_time</var>, struct timespec *<var>remaining</var>)</i>
+<a name="IDX2304"></a>
+</dt>
+<dd><p>If resolution to seconds is not enough the <code>nanosleep</code> function can
+be used.  As the name suggests the sleep interval can be specified in
+nanoseconds.  The actual elapsed time of the sleep interval might be
+longer since the system rounds the elapsed time you request up to the
+next integer multiple of the actual resolution the system can deliver.
+</p>
+<p>*<code>requested_time</code> is the elapsed time of the interval you want to
+sleep.
+</p>
+<p>The function returns as *<code>remaining</code> the elapsed time left in the
+interval for which you requested to sleep.  If the interval completed
+without getting interrupted by a signal, this is zero.
+</p>
+<p><code>struct timespec</code> is described in See section <a href="#SEC431">Elapsed Time</a>.
+</p>
+<p>If the function returns because the interval is over the return value is
+zero.  If the function returns <em>-1</em> the global variable <var>errno</var>
+is set to the following values:
+</p>
+<dl compact="compact">
+<dt> <code>EINTR</code></dt>
+<dd><p>The call was interrupted because a signal was delivered to the thread.
+If the <var>remaining</var> parameter is not the null pointer the structure
+pointed to by <var>remaining</var> is updated to contain the remaining
+elapsed time.
+</p>
+</dd>
+<dt> <code>EINVAL</code></dt>
+<dd><p>The nanosecond value in the <var>requested_time</var> parameter contains an
+illegal value.  Either the value is negative or greater than or equal to
+1000 million.
+</p></dd>
+</dl>
+
+<p>This function is a cancellation point in multi-threaded programs.  This
+is a problem if the thread allocates some resources (like memory, file
+descriptors, semaphores or whatever) at the time <code>nanosleep</code> is
+called.  If the thread gets canceled these resources stay allocated
+until the program ends.  To avoid this calls to <code>nanosleep</code> should
+be protected using cancellation handlers.
+</p>
+<p>The <code>nanosleep</code> function is declared in &lsquo;<tt>time.h</tt>&rsquo;.
+</p></dd></dl>
+<hr size="6">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC429" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_22.html#SEC449" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated by <em>root</em> on <em>October, 30 2008</em> using <a href="http://www.nongnu.org/texi2html/"><em>texi2html 1.78</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

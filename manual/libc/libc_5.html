@@ -1,0 +1,3124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- This file documents the GNU C library.
+
+This is Edition 0.12, last updated 2007-10-27,
+of The GNU C Library Reference Manual, for version 2.8.
+
+Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002,
+2003, 2007, 2008 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software Needs Free Documentation"
+and "GNU Lesser General Public License", the Front-Cover texts being
+"A GNU Manual", and with the Back-Cover Texts as in (a) below.  A
+copy of the license is included in the section entitled "GNU Free
+Documentation License".
+
+(a) The FSF's Back-Cover Text is: "You have the freedom to
+copy and modify this GNU manual.  Buying copies from the FSF
+supports it in developing GNU and promoting software freedom."
+ -->
+<!-- Created on October, 30 2008 by texi2html 1.78 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+
+-->
+<head>
+<title>The GNU C Library: 5. String and Array Utilities</title>
+
+<meta name="description" content="The GNU C Library: 5. String and Array Utilities">
+<meta name="keywords" content="The GNU C Library: 5. String and Array Utilities">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.78">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="String-and-Array-Utilities"></a>
+<a name="SEC70"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libc_4.html#SEC69" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC71" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc_4.html#SEC64" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h1 class="chapter"> 5. String and Array Utilities </h1>
+
+<p>Operations on strings (or arrays of characters) are an important part of
+many programs.  The GNU C library provides an extensive set of string
+utility functions, including functions for copying, concatenating,
+comparing, and searching strings.  Many of these functions can also
+operate on arbitrary regions of storage; for example, the <code>memcpy</code>
+function can be used to copy the contents of any kind of array.
+</p>
+<p>It's fairly common for beginning C programmers to &ldquo;reinvent the wheel&rdquo;
+by duplicating this functionality in their own code, but it pays to
+become familiar with the library functions and to make use of them,
+since this offers benefits in maintenance, efficiency, and portability.
+</p>
+<p>For instance, you could easily compare one string to another in two
+lines of C code, but if you use the built-in <code>strcmp</code> function,
+you're less likely to make a mistake.  And, since these library
+functions are typically highly optimized, your program may run faster
+too.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC71">5.1 Representation of Strings</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Introduction to basic concepts.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC72">5.2 String and Array Conventions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Whether to use a string function or an
+				 arbitrary array function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC73">5.3 String Length</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Determining the length of a string.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC74">5.4 Copying and Concatenation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Functions to copy the contents of strings
+				 and arrays.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC75">5.5 String/Array Comparison</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Functions for byte-wise and character-wise
+				 comparison.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC76">5.6 Collation Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Functions for collating strings.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC77">5.7 Search Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Searching for a specific element or substring.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC79">5.8 Finding Tokens in a String</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Splitting a string into tokens by looking
+				 for delimiters.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC80">5.9 strfry</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                      Function for flash-cooking a string.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC81">5.10 Trivial Encryption</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Obscuring data.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC82">5.11 Encode Binary Data</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Encoding and Decoding of Binary Data.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC83">5.12 Argz and Envz Vectors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Null-separated string vectors.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Representation-of-Strings"></a>
+<a name="SEC71"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC70" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC72" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 5.1 Representation of Strings </h2>
+
+<p>This section is a quick summary of string concepts for beginning C
+programmers.  It describes how character strings are represented in C
+and some common pitfalls.  If you are already familiar with this
+material, you can skip this section.
+</p>
+<a name="IDX378"></a>
+<a name="IDX379"></a>
+<p>A <em>string</em> is an array of <code>char</code> objects.  But string-valued
+variables are usually declared to be pointers of type <code>char *</code>.
+Such variables do not include space for the text of a string; that has
+to be stored somewhere else&mdash;in an array variable, a string constant,
+or dynamically allocated memory (see section <a href="libc_3.html#SEC21">Allocating Storage For Program Data</a>).  It's up to
+you to store the address of the chosen memory space into the pointer
+variable.  Alternatively you can store a <em>null pointer</em> in the
+pointer variable.  The null pointer does not point anywhere, so
+attempting to reference the string it points to gets an error.
+</p>
+<a name="IDX380"></a>
+<p>&ldquo;string&rdquo; normally refers to multibyte character strings as opposed to
+wide character strings.  Wide character strings are arrays of type
+<code>wchar_t</code> and as for multibyte character strings usually pointers
+of type <code>wchar_t *</code> are used.
+</p>
+<a name="IDX381"></a>
+<a name="IDX382"></a>
+<p>By convention, a <em>null character</em>, <code>'\0'</code>, marks the end of a
+multibyte character string and the <em>null wide character</em>,
+<code>L'\0'</code>, marks the end of a wide character string.  For example, in
+testing to see whether the <code>char *</code> variable <var>p</var> points to a
+null character marking the end of a string, you can write
+<code>!*<var>p</var></code> or <code>*<var>p</var> == '\0'</code>.
+</p>
+<p>A null character is quite different conceptually from a null pointer,
+although both are represented by the integer <code>0</code>.
+</p>
+<a name="IDX383"></a>
+<p><em>String literals</em> appear in C program source as strings of
+characters between double-quote characters (&lsquo;<samp>&quot;</samp>&rsquo;) where the initial
+double-quote character is immediately preceded by a capital &lsquo;<samp>L</samp>&rsquo;
+(ell) character (as in <code>L&quot;foo&quot;</code>).  In ISO C, string literals
+can also be formed by <em>string concatenation</em>: <code>&quot;a&quot; &quot;b&quot;</code> is the
+same as <code>&quot;ab&quot;</code>.  For wide character strings one can either use
+<code>L&quot;a&quot; L&quot;b&quot;</code> or <code>L&quot;a&quot; &quot;b&quot;</code>.  Modification of string literals is
+not allowed by the GNU C compiler, because literals are placed in
+read-only storage.
+</p>
+<p>Character arrays that are declared <code>const</code> cannot be modified
+either.  It's generally good style to declare non-modifiable string
+pointers to be of type <code>const char *</code>, since this often allows the
+C compiler to detect accidental modifications as well as providing some
+amount of documentation about what your program intends to do with the
+string.
+</p>
+<p>The amount of memory allocated for the character array may extend past
+the null character that normally marks the end of the string.  In this
+document, the term <em>allocated size</em> is always used to refer to the
+total amount of memory allocated for the string, while the term
+<em>length</em> refers to the number of characters up to (but not
+including) the terminating null character.
+<a name="IDX384"></a>
+<a name="IDX385"></a>
+<a name="IDX386"></a>
+<a name="IDX387"></a>
+<a name="IDX388"></a>
+</p>
+<p>A notorious source of program bugs is trying to put more characters in a
+string than fit in its allocated size.  When writing code that extends
+strings or moves characters into a pre-allocated array, you should be
+very careful to keep track of the length of the text and make explicit
+checks for overflowing the array.  Many of the library functions
+<em>do not</em> do this for you!  Remember also that you need to allocate
+an extra byte to hold the null character that marks the end of the
+string.
+</p>
+<a name="IDX389"></a>
+<a name="IDX390"></a>
+<p>Originally strings were sequences of bytes where each byte represents a
+single character.  This is still true today if the strings are encoded
+using a single-byte character encoding.  Things are different if the
+strings are encoded using a multibyte encoding (for more information on
+encodings see <a href="libc_6.html#SEC87">Introduction to Extended Characters</a>).  There is no difference in
+the programming interface for these two kind of strings; the programmer
+has to be aware of this and interpret the byte sequences accordingly.
+</p>
+<p>But since there is no separate interface taking care of these
+differences the byte-based string functions are sometimes hard to use.
+Since the count parameters of these functions specify bytes a call to
+<code>strncpy</code> could cut a multibyte character in the middle and put an
+incomplete (and therefore unusable) byte sequence in the target buffer.
+</p>
+<a name="IDX391"></a>
+<p>To avoid these problems later versions of the ISO C standard
+introduce a second set of functions which are operating on <em>wide
+characters</em> (see section <a href="libc_6.html#SEC87">Introduction to Extended Characters</a>).  These functions don't have
+the problems the single-byte versions have since every wide character is
+a legal, interpretable value.  This does not mean that cutting wide
+character strings at arbitrary points is without problems.  It normally
+is for alphabet-based languages (except for non-normalized text) but
+languages based on syllables still have the problem that more than one
+wide character is necessary to complete a logical unit.  This is a
+higher level problem which the C library functions are not designed
+to solve.  But it is at least good that no invalid byte sequences can be
+created.  Also, the higher level functions can also much easier operate
+on wide character than on multibyte characters so that a general advise
+is to use wide characters internally whenever text is more than simply
+copied.
+</p>
+<p>The remaining of this chapter will discuss the functions for handling
+wide character strings in parallel with the discussion of the multibyte
+character strings since there is almost always an exact equivalent
+available.
+</p>
+<hr size="6">
+<a name="String_002fArray-Conventions"></a>
+<a name="SEC72"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC71" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC73" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 5.2 String and Array Conventions </h2>
+
+<p>This chapter describes both functions that work on arbitrary arrays or
+blocks of memory, and functions that are specific to null-terminated
+arrays of characters and wide characters.
+</p>
+<p>Functions that operate on arbitrary blocks of memory have names
+beginning with &lsquo;<samp>mem</samp>&rsquo; and &lsquo;<samp>wmem</samp>&rsquo; (such as <code>memcpy</code> and
+<code>wmemcpy</code>) and invariably take an argument which specifies the size
+(in bytes and wide characters respectively) of the block of memory to
+operate on.  The array arguments and return values for these functions
+have type <code>void *</code> or <code>wchar_t</code>.  As a matter of style, the
+elements of the arrays used with the &lsquo;<samp>mem</samp>&rsquo; functions are referred
+to as &ldquo;bytes&rdquo;.  You can pass any kind of pointer to these functions,
+and the <code>sizeof</code> operator is useful in computing the value for the
+size argument.  Parameters to the &lsquo;<samp>wmem</samp>&rsquo; functions must be of type
+<code>wchar_t *</code>.  These functions are not really usable with anything
+but arrays of this type.
+</p>
+<p>In contrast, functions that operate specifically on strings and wide
+character strings have names beginning with &lsquo;<samp>str</samp>&rsquo; and &lsquo;<samp>wcs</samp>&rsquo;
+respectively (such as <code>strcpy</code> and <code>wcscpy</code>) and look for a
+null character to terminate the string instead of requiring an explicit
+size argument to be passed.  (Some of these functions accept a specified
+maximum length, but they also check for premature termination with a
+null character.)  The array arguments and return values for these
+functions have type <code>char *</code> and <code>wchar_t *</code> respectively, and
+the array elements are referred to as &ldquo;characters&rdquo; and &ldquo;wide
+characters&rdquo;.
+</p>
+<p>In many cases, there are both &lsquo;<samp>mem</samp>&rsquo; and &lsquo;<samp>str</samp>&rsquo;/&lsquo;<samp>wcs</samp>&rsquo;
+versions of a function.  The one that is more appropriate to use depends
+on the exact situation.  When your program is manipulating arbitrary
+arrays or blocks of storage, then you should always use the &lsquo;<samp>mem</samp>&rsquo;
+functions.  On the other hand, when you are manipulating null-terminated
+strings it is usually more convenient to use the &lsquo;<samp>str</samp>&rsquo;/&lsquo;<samp>wcs</samp>&rsquo;
+functions, unless you already know the length of the string in advance.
+The &lsquo;<samp>wmem</samp>&rsquo; functions should be used for wide character arrays with
+known size.
+</p>
+<a name="IDX392"></a>
+<a name="IDX393"></a>
+<p>Some of the memory and string functions take single characters as
+arguments.  Since a value of type <code>char</code> is automatically promoted
+into an value of type <code>int</code> when used as a parameter, the functions
+are declared with <code>int</code> as the type of the parameter in question.
+In case of the wide character function the situation is similarly: the
+parameter type for a single wide character is <code>wint_t</code> and not
+<code>wchar_t</code>.  This would for many implementations not be necessary
+since the <code>wchar_t</code> is large enough to not be automatically
+promoted, but since the ISO C standard does not require such a
+choice of types the <code>wint_t</code> type is used.
+</p>
+<hr size="6">
+<a name="String-Length"></a>
+<a name="SEC73"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC72" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC74" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 5.3 String Length </h2>
+
+<p>You can get the length of a string using the <code>strlen</code> function.
+This function is declared in the header file &lsquo;<tt>string.h</tt>&rsquo;.
+<a name="IDX394"></a>
+</p>
+<dl>
+<dt><u>Function:</u> size_t <b>strlen</b><i> (const char *<var>s</var>)</i>
+<a name="IDX395"></a>
+</dt>
+<dd><p>The <code>strlen</code> function returns the length of the null-terminated
+string <var>s</var> in bytes.  (In other words, it returns the offset of the
+terminating null character within the array.)
+</p>
+<p>For example,
+</p><table><tr><td>&nbsp;</td><td><pre class="smallexample">strlen (&quot;hello, world&quot;)
+    &rArr; 12
+</pre></td></tr></table>
+
+<p>When applied to a character array, the <code>strlen</code> function returns
+the length of the string stored there, not its allocated size.  You can
+get the allocated size of the character array that holds a string using
+the <code>sizeof</code> operator:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">char string[32] = &quot;hello, world&quot;;
+sizeof (string)
+    &rArr; 32
+strlen (string)
+    &rArr; 12
+</pre></td></tr></table>
+
+<p>But beware, this will not work unless <var>string</var> is the character
+array itself, not a pointer to it.  For example:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">char string[32] = &quot;hello, world&quot;;
+char *ptr = string;
+sizeof (string)
+    &rArr; 32
+sizeof (ptr)
+    &rArr; 4  /* <span class="roman">(on a machine with 4 byte pointers)</span> */
+</pre></td></tr></table>
+
+<p>This is an easy mistake to make when you are working with functions that
+take string arguments; those arguments are always pointers, not arrays.
+</p>
+<p>It must also be noted that for multibyte encoded strings the return
+value does not have to correspond to the number of characters in the
+string.  To get this value the string can be converted to wide
+characters and <code>wcslen</code> can be used or something like the following
+code can be used:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">/* <span class="roman">The input is in <code>string</code>.</span>
+   <span class="roman">The length is expected in <code>n</code>.</span>  */
+{
+  mbstate_t t;
+  char *scopy = string;
+  /* In initial state.  */
+  memset (&amp;t, '\0', sizeof (t));
+  /* Determine number of characters.  */
+  n = mbsrtowcs (NULL, &amp;scopy, strlen (scopy), &amp;t);
+}
+</pre></td></tr></table>
+
+<p>This is cumbersome to do so if the number of characters (as opposed to
+bytes) is needed often it is better to work with wide characters.
+</p></dd></dl>
+
+<p>The wide character equivalent is declared in &lsquo;<tt>wchar.h</tt>&rsquo;.
+</p>
+<dl>
+<dt><u>Function:</u> size_t <b>wcslen</b><i> (const wchar_t *<var>ws</var>)</i>
+<a name="IDX396"></a>
+</dt>
+<dd><p>The <code>wcslen</code> function is the wide character equivalent to
+<code>strlen</code>.  The return value is the number of wide characters in the
+wide character string pointed to by <var>ws</var> (this is also the offset of
+the terminating null wide character of <var>ws</var>).
+</p>
+<p>Since there are no multi wide character sequences making up one
+character the return value is not only the offset in the array, it is
+also the number of wide characters.
+</p>
+<p>This function was introduced in Amendment 1 to ISO C90.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> size_t <b>strnlen</b><i> (const char *<var>s</var>, size_t <var>maxlen</var>)</i>
+<a name="IDX397"></a>
+</dt>
+<dd><p>The <code>strnlen</code> function returns the length of the string <var>s</var> in
+bytes if this length is smaller than <var>maxlen</var> bytes.  Otherwise it
+returns <var>maxlen</var>.  Therefore this function is equivalent to
+<code>(strlen (<var>s</var>) &lt; n ? strlen (<var>s</var>) : <var>maxlen</var>)</code> but it
+is more efficient and works even if the string <var>s</var> is not
+null-terminated.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">char string[32] = &quot;hello, world&quot;;
+strnlen (string, 32)
+    &rArr; 12
+strnlen (string, 5)
+    &rArr; 5
+</pre></td></tr></table>
+
+<p>This function is a GNU extension and is declared in &lsquo;<tt>string.h</tt>&rsquo;.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> size_t <b>wcsnlen</b><i> (const wchar_t *<var>ws</var>, size_t <var>maxlen</var>)</i>
+<a name="IDX398"></a>
+</dt>
+<dd><p><code>wcsnlen</code> is the wide character equivalent to <code>strnlen</code>.  The
+<var>maxlen</var> parameter specifies the maximum number of wide characters.
+</p>
+<p>This function is a GNU extension and is declared in &lsquo;<tt>wchar.h</tt>&rsquo;.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Copying-and-Concatenation"></a>
+<a name="SEC74"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC73" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC75" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 5.4 Copying and Concatenation </h2>
+
+<p>You can use the functions described in this section to copy the contents
+of strings and arrays, or to append the contents of one string to
+another.  The &lsquo;<samp>str</samp>&rsquo; and &lsquo;<samp>mem</samp>&rsquo; functions are declared in the
+header file &lsquo;<tt>string.h</tt>&rsquo; while the &lsquo;<samp>wstr</samp>&rsquo; and &lsquo;<samp>wmem</samp>&rsquo;
+functions are declared in the file &lsquo;<tt>wchar.h</tt>&rsquo;.
+<a name="IDX399"></a>
+<a name="IDX400"></a>
+<a name="IDX401"></a>
+<a name="IDX402"></a>
+<a name="IDX403"></a>
+<a name="IDX404"></a>
+<a name="IDX405"></a>
+</p>
+<p>A helpful way to remember the ordering of the arguments to the functions
+in this section is that it corresponds to an assignment expression, with
+the destination array specified to the left of the source array.  All
+of these functions return the address of the destination array.
+</p>
+<p>Most of these functions do not work properly if the source and
+destination arrays overlap.  For example, if the beginning of the
+destination array overlaps the end of the source array, the original
+contents of that part of the source array may get overwritten before it
+is copied.  Even worse, in the case of the string functions, the null
+character marking the end of the string may be lost, and the copy
+function might get stuck in a loop trashing all the memory allocated to
+your program.
+</p>
+<p>All functions that have problems copying between overlapping arrays are
+explicitly identified in this manual.  In addition to functions in this
+section, there are a few others like <code>sprintf</code> (see section <a href="libc_12.html#SEC198">Formatted Output Functions</a>) and <code>scanf</code> (see section <a href="libc_12.html#SEC217">Formatted Input Functions</a>).
+</p>
+<dl>
+<dt><u>Function:</u> void * <b>memcpy</b><i> (void *restrict <var>to</var>, const void *restrict <var>from</var>, size_t <var>size</var>)</i>
+<a name="IDX406"></a>
+</dt>
+<dd><p>The <code>memcpy</code> function copies <var>size</var> bytes from the object
+beginning at <var>from</var> into the object beginning at <var>to</var>.  The
+behavior of this function is undefined if the two arrays <var>to</var> and
+<var>from</var> overlap; use <code>memmove</code> instead if overlapping is possible.
+</p>
+<p>The value returned by <code>memcpy</code> is the value of <var>to</var>.
+</p>
+<p>Here is an example of how you might use <code>memcpy</code> to copy the
+contents of an array:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">struct foo *oldarray, *newarray;
+int arraysize;
+&hellip;
+memcpy (new, old, arraysize * sizeof (struct foo));
+</pre></td></tr></table>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wmemcpy</b><i> (wchar_t *restrict <var>wto</var>, const wchar_t *restrict <var>wfrom</var>, size_t <var>size</var>)</i>
+<a name="IDX407"></a>
+</dt>
+<dd><p>The <code>wmemcpy</code> function copies <var>size</var> wide characters from the object
+beginning at <var>wfrom</var> into the object beginning at <var>wto</var>.  The
+behavior of this function is undefined if the two arrays <var>wto</var> and
+<var>wfrom</var> overlap; use <code>wmemmove</code> instead if overlapping is possible.
+</p>
+<p>The following is a possible implementation of <code>wmemcpy</code> but there
+are more optimizations possible.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">wchar_t *
+wmemcpy (wchar_t *restrict wto, const wchar_t *restrict wfrom,
+         size_t size)
+{
+  return (wchar_t *) memcpy (wto, wfrom, size * sizeof (wchar_t));
+}
+</pre></td></tr></table>
+
+<p>The value returned by <code>wmemcpy</code> is the value of <var>wto</var>.
+</p>
+<p>This function was introduced in Amendment 1 to ISO C90.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void * <b>mempcpy</b><i> (void *restrict <var>to</var>, const void *restrict <var>from</var>, size_t <var>size</var>)</i>
+<a name="IDX408"></a>
+</dt>
+<dd><p>The <code>mempcpy</code> function is nearly identical to the <code>memcpy</code>
+function.  It copies <var>size</var> bytes from the object beginning at
+<code>from</code> into the object pointed to by <var>to</var>.  But instead of
+returning the value of <var>to</var> it returns a pointer to the byte
+following the last written byte in the object beginning at <var>to</var>.
+I.e., the value is <code>((void *) ((char *) <var>to</var> + <var>size</var>))</code>.
+</p>
+<p>This function is useful in situations where a number of objects shall be
+copied to consecutive memory positions.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">void *
+combine (void *o1, size_t s1, void *o2, size_t s2)
+{
+  void *result = malloc (s1 + s2);
+  if (result != NULL)
+    mempcpy (mempcpy (result, o1, s1), o2, s2);
+  return result;
+}
+</pre></td></tr></table>
+
+<p>This function is a GNU extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wmempcpy</b><i> (wchar_t *restrict <var>wto</var>, const wchar_t *restrict <var>wfrom</var>, size_t <var>size</var>)</i>
+<a name="IDX409"></a>
+</dt>
+<dd><p>The <code>wmempcpy</code> function is nearly identical to the <code>wmemcpy</code>
+function.  It copies <var>size</var> wide characters from the object
+beginning at <code>wfrom</code> into the object pointed to by <var>wto</var>.  But
+instead of returning the value of <var>wto</var> it returns a pointer to the
+wide character following the last written wide character in the object
+beginning at <var>wto</var>.  I.e., the value is <code><var>wto</var> + <var>size</var></code>.
+</p>
+<p>This function is useful in situations where a number of objects shall be
+copied to consecutive memory positions.
+</p>
+<p>The following is a possible implementation of <code>wmemcpy</code> but there
+are more optimizations possible.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">wchar_t *
+wmempcpy (wchar_t *restrict wto, const wchar_t *restrict wfrom,
+          size_t size)
+{
+  return (wchar_t *) mempcpy (wto, wfrom, size * sizeof (wchar_t));
+}
+</pre></td></tr></table>
+
+<p>This function is a GNU extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void * <b>memmove</b><i> (void *<var>to</var>, const void *<var>from</var>, size_t <var>size</var>)</i>
+<a name="IDX410"></a>
+</dt>
+<dd><p><code>memmove</code> copies the <var>size</var> bytes at <var>from</var> into the
+<var>size</var> bytes at <var>to</var>, even if those two blocks of space
+overlap.  In the case of overlap, <code>memmove</code> is careful to copy the
+original values of the bytes in the block at <var>from</var>, including those
+bytes which also belong to the block at <var>to</var>.
+</p>
+<p>The value returned by <code>memmove</code> is the value of <var>to</var>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wmemmove</b><i> (wchar *<var>wto</var>, const wchar_t *<var>wfrom</var>, size_t <var>size</var>)</i>
+<a name="IDX411"></a>
+</dt>
+<dd><p><code>wmemmove</code> copies the <var>size</var> wide characters at <var>wfrom</var>
+into the <var>size</var> wide characters at <var>wto</var>, even if those two
+blocks of space overlap.  In the case of overlap, <code>memmove</code> is
+careful to copy the original values of the wide characters in the block
+at <var>wfrom</var>, including those wide characters which also belong to the
+block at <var>wto</var>.
+</p>
+<p>The following is a possible implementation of <code>wmemcpy</code> but there
+are more optimizations possible.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">wchar_t *
+wmempcpy (wchar_t *restrict wto, const wchar_t *restrict wfrom,
+          size_t size)
+{
+  return (wchar_t *) mempcpy (wto, wfrom, size * sizeof (wchar_t));
+}
+</pre></td></tr></table>
+
+<p>The value returned by <code>wmemmove</code> is the value of <var>wto</var>.
+</p>
+<p>This function is a GNU extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void * <b>memccpy</b><i> (void *restrict <var>to</var>, const void *restrict <var>from</var>, int <var>c</var>, size_t <var>size</var>)</i>
+<a name="IDX412"></a>
+</dt>
+<dd><p>This function copies no more than <var>size</var> bytes from <var>from</var> to
+<var>to</var>, stopping if a byte matching <var>c</var> is found.  The return
+value is a pointer into <var>to</var> one byte past where <var>c</var> was copied,
+or a null pointer if no byte matching <var>c</var> appeared in the first
+<var>size</var> bytes of <var>from</var>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void * <b>memset</b><i> (void *<var>block</var>, int <var>c</var>, size_t <var>size</var>)</i>
+<a name="IDX413"></a>
+</dt>
+<dd><p>This function copies the value of <var>c</var> (converted to an
+<code>unsigned char</code>) into each of the first <var>size</var> bytes of the
+object beginning at <var>block</var>.  It returns the value of <var>block</var>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wmemset</b><i> (wchar_t *<var>block</var>, wchar_t <var>wc</var>, size_t <var>size</var>)</i>
+<a name="IDX414"></a>
+</dt>
+<dd><p>This function copies the value of <var>wc</var> into each of the first
+<var>size</var> wide characters of the object beginning at <var>block</var>.  It
+returns the value of <var>block</var>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>strcpy</b><i> (char *restrict <var>to</var>, const char *restrict <var>from</var>)</i>
+<a name="IDX415"></a>
+</dt>
+<dd><p>This copies characters from the string <var>from</var> (up to and including
+the terminating null character) into the string <var>to</var>.  Like
+<code>memcpy</code>, this function has undefined results if the strings
+overlap.  The return value is the value of <var>to</var>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcscpy</b><i> (wchar_t *restrict <var>wto</var>, const wchar_t *restrict <var>wfrom</var>)</i>
+<a name="IDX416"></a>
+</dt>
+<dd><p>This copies wide characters from the string <var>wfrom</var> (up to and
+including the terminating null wide character) into the string
+<var>wto</var>.  Like <code>wmemcpy</code>, this function has undefined results if
+the strings overlap.  The return value is the value of <var>wto</var>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>strncpy</b><i> (char *restrict <var>to</var>, const char *restrict <var>from</var>, size_t <var>size</var>)</i>
+<a name="IDX417"></a>
+</dt>
+<dd><p>This function is similar to <code>strcpy</code> but always copies exactly
+<var>size</var> characters into <var>to</var>.
+</p>
+<p>If the length of <var>from</var> is more than <var>size</var>, then <code>strncpy</code>
+copies just the first <var>size</var> characters.  Note that in this case
+there is no null terminator written into <var>to</var>.
+</p>
+<p>If the length of <var>from</var> is less than <var>size</var>, then <code>strncpy</code>
+copies all of <var>from</var>, followed by enough null characters to add up
+to <var>size</var> characters in all.  This behavior is rarely useful, but it
+is specified by the ISO C standard.
+</p>
+<p>The behavior of <code>strncpy</code> is undefined if the strings overlap.
+</p>
+<p>Using <code>strncpy</code> as opposed to <code>strcpy</code> is a way to avoid bugs
+relating to writing past the end of the allocated space for <var>to</var>.
+However, it can also make your program much slower in one common case:
+copying a string which is probably small into a potentially large buffer.
+In this case, <var>size</var> may be large, and when it is, <code>strncpy</code> will
+waste a considerable amount of time copying null characters.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcsncpy</b><i> (wchar_t *restrict <var>wto</var>, const wchar_t *restrict <var>wfrom</var>, size_t <var>size</var>)</i>
+<a name="IDX418"></a>
+</dt>
+<dd><p>This function is similar to <code>wcscpy</code> but always copies exactly
+<var>size</var> wide characters into <var>wto</var>.
+</p>
+<p>If the length of <var>wfrom</var> is more than <var>size</var>, then
+<code>wcsncpy</code> copies just the first <var>size</var> wide characters.  Note
+that in this case there is no null terminator written into <var>wto</var>.
+</p>
+<p>If the length of <var>wfrom</var> is less than <var>size</var>, then
+<code>wcsncpy</code> copies all of <var>wfrom</var>, followed by enough null wide
+characters to add up to <var>size</var> wide characters in all.  This
+behavior is rarely useful, but it is specified by the ISO C
+standard.
+</p>
+<p>The behavior of <code>wcsncpy</code> is undefined if the strings overlap.
+</p>
+<p>Using <code>wcsncpy</code> as opposed to <code>wcscpy</code> is a way to avoid bugs
+relating to writing past the end of the allocated space for <var>wto</var>.
+However, it can also make your program much slower in one common case:
+copying a string which is probably small into a potentially large buffer.
+In this case, <var>size</var> may be large, and when it is, <code>wcsncpy</code> will
+waste a considerable amount of time copying null wide characters.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>strdup</b><i> (const char *<var>s</var>)</i>
+<a name="IDX419"></a>
+</dt>
+<dd><p>This function copies the null-terminated string <var>s</var> into a newly
+allocated string.  The string is allocated using <code>malloc</code>; see
+<a href="libc_3.html#SEC24">Unconstrained Allocation</a>.  If <code>malloc</code> cannot allocate space
+for the new string, <code>strdup</code> returns a null pointer.  Otherwise it
+returns a pointer to the new string.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcsdup</b><i> (const wchar_t *<var>ws</var>)</i>
+<a name="IDX420"></a>
+</dt>
+<dd><p>This function copies the null-terminated wide character string <var>ws</var>
+into a newly allocated string.  The string is allocated using
+<code>malloc</code>; see <a href="libc_3.html#SEC24">Unconstrained Allocation</a>.  If <code>malloc</code>
+cannot allocate space for the new string, <code>wcsdup</code> returns a null
+pointer.  Otherwise it returns a pointer to the new wide character
+string.
+</p>
+<p>This function is a GNU extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>strndup</b><i> (const char *<var>s</var>, size_t <var>size</var>)</i>
+<a name="IDX421"></a>
+</dt>
+<dd><p>This function is similar to <code>strdup</code> but always copies at most
+<var>size</var> characters into the newly allocated string.
+</p>
+<p>If the length of <var>s</var> is more than <var>size</var>, then <code>strndup</code>
+copies just the first <var>size</var> characters and adds a closing null
+terminator.  Otherwise all characters are copied and the string is
+terminated.
+</p>
+<p>This function is different to <code>strncpy</code> in that it always
+terminates the destination string.
+</p>
+<p><code>strndup</code> is a GNU extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>stpcpy</b><i> (char *restrict <var>to</var>, const char *restrict <var>from</var>)</i>
+<a name="IDX422"></a>
+</dt>
+<dd><p>This function is like <code>strcpy</code>, except that it returns a pointer to
+the end of the string <var>to</var> (that is, the address of the terminating
+null character <code>to + strlen (from)</code>) rather than the beginning.
+</p>
+<p>For example, this program uses <code>stpcpy</code> to concatenate &lsquo;<samp>foo</samp>&rsquo;
+and &lsquo;<samp>bar</samp>&rsquo; to produce &lsquo;<samp>foobar</samp>&rsquo;, which it then prints.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;string.h&gt;
+#include &lt;stdio.h&gt;
+
+int
+main (void)
+{
+  char buffer[10];
+  char *to = buffer;
+  to = stpcpy (to, &quot;foo&quot;);
+  to = stpcpy (to, &quot;bar&quot;);
+  puts (buffer);
+  return 0;
+}
+</pre></td></tr></table>
+
+<p>This function is not part of the ISO or POSIX standards, and is not
+customary on Unix systems, but we did not invent it either.  Perhaps it
+comes from MS-DOG.
+</p>
+<p>Its behavior is undefined if the strings overlap.  The function is
+declared in &lsquo;<tt>string.h</tt>&rsquo;.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcpcpy</b><i> (wchar_t *restrict <var>wto</var>, const wchar_t *restrict <var>wfrom</var>)</i>
+<a name="IDX423"></a>
+</dt>
+<dd><p>This function is like <code>wcscpy</code>, except that it returns a pointer to
+the end of the string <var>wto</var> (that is, the address of the terminating
+null character <code>wto + strlen (wfrom)</code>) rather than the beginning.
+</p>
+<p>This function is not part of ISO or POSIX but was found useful while
+developing the GNU C Library itself.
+</p>
+<p>The behavior of <code>wcpcpy</code> is undefined if the strings overlap.
+</p>
+<p><code>wcpcpy</code> is a GNU extension and is declared in &lsquo;<tt>wchar.h</tt>&rsquo;.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>stpncpy</b><i> (char *restrict <var>to</var>, const char *restrict <var>from</var>, size_t <var>size</var>)</i>
+<a name="IDX424"></a>
+</dt>
+<dd><p>This function is similar to <code>stpcpy</code> but copies always exactly
+<var>size</var> characters into <var>to</var>.
+</p>
+<p>If the length of <var>from</var> is more then <var>size</var>, then <code>stpncpy</code>
+copies just the first <var>size</var> characters and returns a pointer to the
+character directly following the one which was copied last.  Note that in
+this case there is no null terminator written into <var>to</var>.
+</p>
+<p>If the length of <var>from</var> is less than <var>size</var>, then <code>stpncpy</code>
+copies all of <var>from</var>, followed by enough null characters to add up
+to <var>size</var> characters in all.  This behavior is rarely useful, but it
+is implemented to be useful in contexts where this behavior of the
+<code>strncpy</code> is used.  <code>stpncpy</code> returns a pointer to the
+<em>first</em> written null character.
+</p>
+<p>This function is not part of ISO or POSIX but was found useful while
+developing the GNU C Library itself.
+</p>
+<p>Its behavior is undefined if the strings overlap.  The function is
+declared in &lsquo;<tt>string.h</tt>&rsquo;.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcpncpy</b><i> (wchar_t *restrict <var>wto</var>, const wchar_t *restrict <var>wfrom</var>, size_t <var>size</var>)</i>
+<a name="IDX425"></a>
+</dt>
+<dd><p>This function is similar to <code>wcpcpy</code> but copies always exactly
+<var>wsize</var> characters into <var>wto</var>.
+</p>
+<p>If the length of <var>wfrom</var> is more then <var>size</var>, then
+<code>wcpncpy</code> copies just the first <var>size</var> wide characters and
+returns a pointer to the wide character directly following the last
+non-null wide character which was copied last.  Note that in this case
+there is no null terminator written into <var>wto</var>.
+</p>
+<p>If the length of <var>wfrom</var> is less than <var>size</var>, then <code>wcpncpy</code>
+copies all of <var>wfrom</var>, followed by enough null characters to add up
+to <var>size</var> characters in all.  This behavior is rarely useful, but it
+is implemented to be useful in contexts where this behavior of the
+<code>wcsncpy</code> is used.  <code>wcpncpy</code> returns a pointer to the
+<em>first</em> written null character.
+</p>
+<p>This function is not part of ISO or POSIX but was found useful while
+developing the GNU C Library itself.
+</p>
+<p>Its behavior is undefined if the strings overlap.
+</p>
+<p><code>wcpncpy</code> is a GNU extension and is declared in &lsquo;<tt>wchar.h</tt>&rsquo;.
+</p></dd></dl>
+
+<dl>
+<dt><u>Macro:</u> char * <b>strdupa</b><i> (const char *<var>s</var>)</i>
+<a name="IDX426"></a>
+</dt>
+<dd><p>This macro is similar to <code>strdup</code> but allocates the new string
+using <code>alloca</code> instead of <code>malloc</code> (see section <a href="libc_3.html#SEC54">Automatic Storage with Variable Size</a>).  This means of course the returned string has the same
+limitations as any block of memory allocated using <code>alloca</code>.
+</p>
+<p>For obvious reasons <code>strdupa</code> is implemented only as a macro;
+you cannot get the address of this function.  Despite this limitation
+it is a useful function.  The following code shows a situation where
+using <code>malloc</code> would be a lot more expensive.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;paths.h&gt;
+#include &lt;string.h&gt;
+#include &lt;stdio.h&gt;
+
+const char path[] = _PATH_STDPATH;
+
+int
+main (void)
+{
+  char *wr_path = strdupa (path);
+  char *cp = strtok (wr_path, &quot;:&quot;);
+
+  while (cp != NULL)
+    {
+      puts (cp);
+      cp = strtok (NULL, &quot;:&quot;);
+    }
+  return 0;
+}
+</pre></td></tr></table>
+
+<p>Please note that calling <code>strtok</code> using <var>path</var> directly is
+invalid.  It is also not allowed to call <code>strdupa</code> in the argument
+list of <code>strtok</code> since <code>strdupa</code> uses <code>alloca</code>
+(see section <a href="libc_3.html#SEC54">Automatic Storage with Variable Size</a>) can interfere with the parameter
+passing.
+</p>
+<p>This function is only available if GNU CC is used.
+</p></dd></dl>
+
+<dl>
+<dt><u>Macro:</u> char * <b>strndupa</b><i> (const char *<var>s</var>, size_t <var>size</var>)</i>
+<a name="IDX427"></a>
+</dt>
+<dd><p>This function is similar to <code>strndup</code> but like <code>strdupa</code> it
+allocates the new string using <code>alloca</code>
+see section <a href="libc_3.html#SEC54">Automatic Storage with Variable Size</a>.  The same advantages and limitations
+of <code>strdupa</code> are valid for <code>strndupa</code>, too.
+</p>
+<p>This function is implemented only as a macro, just like <code>strdupa</code>.
+Just as <code>strdupa</code> this macro also must not be used inside the
+parameter list in a function call.
+</p>
+<p><code>strndupa</code> is only available if GNU CC is used.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>strcat</b><i> (char *restrict <var>to</var>, const char *restrict <var>from</var>)</i>
+<a name="IDX428"></a>
+</dt>
+<dd><p>The <code>strcat</code> function is similar to <code>strcpy</code>, except that the
+characters from <var>from</var> are concatenated or appended to the end of
+<var>to</var>, instead of overwriting it.  That is, the first character from
+<var>from</var> overwrites the null character marking the end of <var>to</var>.
+</p>
+<p>An equivalent definition for <code>strcat</code> would be:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">char *
+strcat (char *restrict to, const char *restrict from)
+{
+  strcpy (to + strlen (to), from);
+  return to;
+}
+</pre></td></tr></table>
+
+<p>This function has undefined results if the strings overlap.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcscat</b><i> (wchar_t *restrict <var>wto</var>, const wchar_t *restrict <var>wfrom</var>)</i>
+<a name="IDX429"></a>
+</dt>
+<dd><p>The <code>wcscat</code> function is similar to <code>wcscpy</code>, except that the
+characters from <var>wfrom</var> are concatenated or appended to the end of
+<var>wto</var>, instead of overwriting it.  That is, the first character from
+<var>wfrom</var> overwrites the null character marking the end of <var>wto</var>.
+</p>
+<p>An equivalent definition for <code>wcscat</code> would be:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">wchar_t *
+wcscat (wchar_t *wto, const wchar_t *wfrom)
+{
+  wcscpy (wto + wcslen (wto), wfrom);
+  return wto;
+}
+</pre></td></tr></table>
+
+<p>This function has undefined results if the strings overlap.
+</p></dd></dl>
+
+<p>Programmers using the <code>strcat</code> or <code>wcscat</code> function (or the
+following <code>strncat</code> or <code>wcsncar</code> functions for that matter)
+can easily be recognized as lazy and reckless.  In almost all situations
+the lengths of the participating strings are known (it better should be
+since how can one otherwise ensure the allocated size of the buffer is
+sufficient?)  Or at least, one could know them if one keeps track of the
+results of the various function calls.  But then it is very inefficient
+to use <code>strcat</code>/<code>wcscat</code>.  A lot of time is wasted finding the
+end of the destination string so that the actual copying can start.
+This is a common example:
+</p>
+<a name="IDX430"></a>
+<a name="IDX431"></a>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">/* <span class="roman">This function concatenates arbitrarily many strings.  The last</span>
+   <span class="roman">parameter must be <code>NULL</code>.</span>  */
+char *
+concat (const char *str, &hellip;)
+{
+  va_list ap, ap2;
+  size_t total = 1;
+  const char *s;
+  char *result;
+
+  va_start (ap, str);
+  /* <span class="roman">Actually <code>va_copy</code>, but this is the name more gcc versions</span>
+     <span class="roman">understand.</span>  */
+  __va_copy (ap2, ap);
+
+  /* <span class="roman">Determine how much space we need.</span>  */
+  for (s = str; s != NULL; s = va_arg (ap, const char *))
+    total += strlen (s);
+
+  va_end (ap);
+
+  result = (char *) malloc (total);
+  if (result != NULL)
+    {
+      result[0] = '\0';
+
+      /* <span class="roman">Copy the strings.</span>  */
+      for (s = str; s != NULL; s = va_arg (ap2, const char *))
+        strcat (result, s);
+    }
+
+  va_end (ap2);
+
+  return result;
+}
+</pre></td></tr></table>
+
+<p>This looks quite simple, especially the second loop where the strings
+are actually copied.  But these innocent lines hide a major performance
+penalty.  Just imagine that ten strings of 100 bytes each have to be
+concatenated.  For the second string we search the already stored 100
+bytes for the end of the string so that we can append the next string.
+For all strings in total the comparisons necessary to find the end of
+the intermediate results sums up to 5500!  If we combine the copying
+with the search for the allocation we can write this function more
+efficient:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">char *
+concat (const char *str, &hellip;)
+{
+  va_list ap;
+  size_t allocated = 100;
+  char *result = (char *) malloc (allocated);
+
+  if (result != NULL)
+    {
+      char *newp;
+      char *wp;
+
+      va_start (ap, str);
+
+      wp = result;
+      for (s = str; s != NULL; s = va_arg (ap, const char *))
+        {
+          size_t len = strlen (s);
+
+          /* <span class="roman">Resize the allocated memory if necessary.</span>  */
+          if (wp + len + 1 &gt; result + allocated)
+            {
+              allocated = (allocated + len) * 2;
+              newp = (char *) realloc (result, allocated);
+              if (newp == NULL)
+                {
+                  free (result);
+                  return NULL;
+                }
+              wp = newp + (wp - result);
+              result = newp;
+            }
+
+          wp = mempcpy (wp, s, len);
+        }
+
+      /* <span class="roman">Terminate the result string.</span>  */
+      *wp++ = '\0';
+
+      /* <span class="roman">Resize memory to the optimal size.</span>  */
+      newp = realloc (result, wp - result);
+      if (newp != NULL)
+        result = newp;
+
+      va_end (ap);
+    }
+
+  return result;
+}
+</pre></td></tr></table>
+
+<p>With a bit more knowledge about the input strings one could fine-tune
+the memory allocation.  The difference we are pointing to here is that
+we don't use <code>strcat</code> anymore.  We always keep track of the length
+of the current intermediate result so we can safe us the search for the
+end of the string and use <code>mempcpy</code>.  Please note that we also
+don't use <code>stpcpy</code> which might seem more natural since we handle
+with strings.  But this is not necessary since we already know the
+length of the string and therefore can use the faster memory copying
+function.  The example would work for wide characters the same way.
+</p>
+<p>Whenever a programmer feels the need to use <code>strcat</code> she or he
+should think twice and look through the program whether the code cannot
+be rewritten to take advantage of already calculated results.  Again: it
+is almost always unnecessary to use <code>strcat</code>.
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>strncat</b><i> (char *restrict <var>to</var>, const char *restrict <var>from</var>, size_t <var>size</var>)</i>
+<a name="IDX432"></a>
+</dt>
+<dd><p>This function is like <code>strcat</code> except that not more than <var>size</var>
+characters from <var>from</var> are appended to the end of <var>to</var>.  A
+single null character is also always appended to <var>to</var>, so the total
+allocated size of <var>to</var> must be at least <code><var>size</var> + 1</code> bytes
+longer than its initial length.
+</p>
+<p>The <code>strncat</code> function could be implemented like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">char *
+strncat (char *to, const char *from, size_t size)
+{
+  to[strlen (to) + size] = '\0';
+  strncpy (to + strlen (to), from, size);
+  return to;
+}
+</pre></td></tr></table>
+
+<p>The behavior of <code>strncat</code> is undefined if the strings overlap.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcsncat</b><i> (wchar_t *restrict <var>wto</var>, const wchar_t *restrict <var>wfrom</var>, size_t <var>size</var>)</i>
+<a name="IDX433"></a>
+</dt>
+<dd><p>This function is like <code>wcscat</code> except that not more than <var>size</var>
+characters from <var>from</var> are appended to the end of <var>to</var>.  A
+single null character is also always appended to <var>to</var>, so the total
+allocated size of <var>to</var> must be at least <code><var>size</var> + 1</code> bytes
+longer than its initial length.
+</p>
+<p>The <code>wcsncat</code> function could be implemented like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">wchar_t *
+wcsncat (wchar_t *restrict wto, const wchar_t *restrict wfrom,
+         size_t size)
+{
+  wto[wcslen (to) + size] = L'\0';
+  wcsncpy (wto + wcslen (wto), wfrom, size);
+  return wto;
+}
+</pre></td></tr></table>
+
+<p>The behavior of <code>wcsncat</code> is undefined if the strings overlap.
+</p></dd></dl>
+
+<p>Here is an example showing the use of <code>strncpy</code> and <code>strncat</code>
+(the wide character version is equivalent).  Notice how, in the call to
+<code>strncat</code>, the <var>size</var> parameter is computed to avoid
+overflowing the character array <code>buffer</code>.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;string.h&gt;
+#include &lt;stdio.h&gt;
+
+#define SIZE 10
+
+static char buffer[SIZE];
+
+main ()
+{
+  strncpy (buffer, &quot;hello&quot;, SIZE);
+  puts (buffer);
+  strncat (buffer, &quot;, world&quot;, SIZE - strlen (buffer) - 1);
+  puts (buffer);
+}
+</pre></td></tr></table>
+
+<p>The output produced by this program looks like:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">hello
+hello, wo
+</pre></td></tr></table>
+
+<dl>
+<dt><u>Function:</u> void <b>bcopy</b><i> (const void *<var>from</var>, void *<var>to</var>, size_t <var>size</var>)</i>
+<a name="IDX434"></a>
+</dt>
+<dd><p>This is a partially obsolete alternative for <code>memmove</code>, derived from
+BSD.  Note that it is not quite equivalent to <code>memmove</code>, because the
+arguments are not in the same order and there is no return value.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void <b>bzero</b><i> (void *<var>block</var>, size_t <var>size</var>)</i>
+<a name="IDX435"></a>
+</dt>
+<dd><p>This is a partially obsolete alternative for <code>memset</code>, derived from
+BSD.  Note that it is not as general as <code>memset</code>, because the only
+value it can store is zero.
+</p></dd></dl>
+
+<hr size="6">
+<a name="String_002fArray-Comparison"></a>
+<a name="SEC75"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC74" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC76" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 5.5 String/Array Comparison </h2>
+
+<p>You can use the functions in this section to perform comparisons on the
+contents of strings and arrays.  As well as checking for equality, these
+functions can also be used as the ordering functions for sorting
+operations.  See section <a href="libc_9.html#SEC141">Searching and Sorting</a>, for an example of this.
+</p>
+<p>Unlike most comparison operations in C, the string comparison functions
+return a nonzero value if the strings are <em>not</em> equivalent rather
+than if they are.  The sign of the value indicates the relative ordering
+of the first characters in the strings that are not equivalent:  a
+negative value indicates that the first string is &ldquo;less&rdquo; than the
+second, while a positive value indicates that the first string is
+&ldquo;greater&rdquo;.
+</p>
+<p>The most common use of these functions is to check only for equality.
+This is canonically done with an expression like &lsquo;<samp>! strcmp (s1, s2)</samp>&rsquo;.
+</p>
+<p>All of these functions are declared in the header file &lsquo;<tt>string.h</tt>&rsquo;.
+<a name="IDX436"></a>
+</p>
+<dl>
+<dt><u>Function:</u> int <b>memcmp</b><i> (const void *<var>a1</var>, const void *<var>a2</var>, size_t <var>size</var>)</i>
+<a name="IDX437"></a>
+</dt>
+<dd><p>The function <code>memcmp</code> compares the <var>size</var> bytes of memory
+beginning at <var>a1</var> against the <var>size</var> bytes of memory beginning
+at <var>a2</var>.  The value returned has the same sign as the difference
+between the first differing pair of bytes (interpreted as <code>unsigned
+char</code> objects, then promoted to <code>int</code>).
+</p>
+<p>If the contents of the two blocks are equal, <code>memcmp</code> returns
+<code>0</code>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>wmemcmp</b><i> (const wchar_t *<var>a1</var>, const wchar_t *<var>a2</var>, size_t <var>size</var>)</i>
+<a name="IDX438"></a>
+</dt>
+<dd><p>The function <code>wmemcmp</code> compares the <var>size</var> wide characters
+beginning at <var>a1</var> against the <var>size</var> wide characters beginning
+at <var>a2</var>.  The value returned is smaller than or larger than zero
+depending on whether the first differing wide character is <var>a1</var> is
+smaller or larger than the corresponding character in <var>a2</var>.
+</p>
+<p>If the contents of the two blocks are equal, <code>wmemcmp</code> returns
+<code>0</code>.
+</p></dd></dl>
+
+<p>On arbitrary arrays, the <code>memcmp</code> function is mostly useful for
+testing equality.  It usually isn't meaningful to do byte-wise ordering
+comparisons on arrays of things other than bytes.  For example, a
+byte-wise comparison on the bytes that make up floating-point numbers
+isn't likely to tell you anything about the relationship between the
+values of the floating-point numbers.
+</p>
+<p><code>wmemcmp</code> is really only useful to compare arrays of type
+<code>wchar_t</code> since the function looks at <code>sizeof (wchar_t)</code> bytes
+at a time and this number of bytes is system dependent.
+</p>
+<p>You should also be careful about using <code>memcmp</code> to compare objects
+that can contain &ldquo;holes&rdquo;, such as the padding inserted into structure
+objects to enforce alignment requirements, extra space at the end of
+unions, and extra characters at the ends of strings whose length is less
+than their allocated size.  The contents of these &ldquo;holes&rdquo; are
+indeterminate and may cause strange behavior when performing byte-wise
+comparisons.  For more predictable results, perform an explicit
+component-wise comparison.
+</p>
+<p>For example, given a structure type definition like:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">struct foo
+  {
+    unsigned char tag;
+    union
+      {
+        double f;
+        long i;
+        char *p;
+      } value;
+  };
+</pre></td></tr></table>
+
+<p>you are better off writing a specialized comparison function to compare
+<code>struct foo</code> objects instead of comparing them with <code>memcmp</code>.
+</p>
+<dl>
+<dt><u>Function:</u> int <b>strcmp</b><i> (const char *<var>s1</var>, const char *<var>s2</var>)</i>
+<a name="IDX439"></a>
+</dt>
+<dd><p>The <code>strcmp</code> function compares the string <var>s1</var> against
+<var>s2</var>, returning a value that has the same sign as the difference
+between the first differing pair of characters (interpreted as
+<code>unsigned char</code> objects, then promoted to <code>int</code>).
+</p>
+<p>If the two strings are equal, <code>strcmp</code> returns <code>0</code>.
+</p>
+<p>A consequence of the ordering used by <code>strcmp</code> is that if <var>s1</var>
+is an initial substring of <var>s2</var>, then <var>s1</var> is considered to be
+&ldquo;less than&rdquo; <var>s2</var>.
+</p>
+<p><code>strcmp</code> does not take sorting conventions of the language the
+strings are written in into account.  To get that one has to use
+<code>strcoll</code>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>wcscmp</b><i> (const wchar_t *<var>ws1</var>, const wchar_t *<var>ws2</var>)</i>
+<a name="IDX440"></a>
+</dt>
+<dd><p>The <code>wcscmp</code> function compares the wide character string <var>ws1</var>
+against <var>ws2</var>.  The value returned is smaller than or larger than zero
+depending on whether the first differing wide character is <var>ws1</var> is
+smaller or larger than the corresponding character in <var>ws2</var>.
+</p>
+<p>If the two strings are equal, <code>wcscmp</code> returns <code>0</code>.
+</p>
+<p>A consequence of the ordering used by <code>wcscmp</code> is that if <var>ws1</var>
+is an initial substring of <var>ws2</var>, then <var>ws1</var> is considered to be
+&ldquo;less than&rdquo; <var>ws2</var>.
+</p>
+<p><code>wcscmp</code> does not take sorting conventions of the language the
+strings are written in into account.  To get that one has to use
+<code>wcscoll</code>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>strcasecmp</b><i> (const char *<var>s1</var>, const char *<var>s2</var>)</i>
+<a name="IDX441"></a>
+</dt>
+<dd><p>This function is like <code>strcmp</code>, except that differences in case are
+ignored.  How uppercase and lowercase characters are related is
+determined by the currently selected locale.  In the standard <code>&quot;C&quot;</code>
+locale the characters &Auml; and &auml; do not match but in a locale which
+regards these characters as parts of the alphabet they do match.
+</p>
+<p><code>strcasecmp</code> is derived from BSD.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>wcscasecmp</b><i> (const wchar_t *<var>ws1</var>, const wchar_T *<var>ws2</var>)</i>
+<a name="IDX442"></a>
+</dt>
+<dd><p>This function is like <code>wcscmp</code>, except that differences in case are
+ignored.  How uppercase and lowercase characters are related is
+determined by the currently selected locale.  In the standard <code>&quot;C&quot;</code>
+locale the characters &Auml; and &auml; do not match but in a locale which
+regards these characters as parts of the alphabet they do match.
+</p>
+<p><code>wcscasecmp</code> is a GNU extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>strncmp</b><i> (const char *<var>s1</var>, const char *<var>s2</var>, size_t <var>size</var>)</i>
+<a name="IDX443"></a>
+</dt>
+<dd><p>This function is the similar to <code>strcmp</code>, except that no more than
+<var>size</var> characters are compared.  In other words, if the two
+strings are the same in their first <var>size</var> characters, the
+return value is zero.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>wcsncmp</b><i> (const wchar_t *<var>ws1</var>, const wchar_t *<var>ws2</var>, size_t <var>size</var>)</i>
+<a name="IDX444"></a>
+</dt>
+<dd><p>This function is the similar to <code>wcscmp</code>, except that no more than
+<var>size</var> wide characters are compared.  In other words, if the two
+strings are the same in their first <var>size</var> wide characters, the
+return value is zero.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>strncasecmp</b><i> (const char *<var>s1</var>, const char *<var>s2</var>, size_t <var>n</var>)</i>
+<a name="IDX445"></a>
+</dt>
+<dd><p>This function is like <code>strncmp</code>, except that differences in case
+are ignored.  Like <code>strcasecmp</code>, it is locale dependent how
+uppercase and lowercase characters are related.
+</p>
+<p><code>strncasecmp</code> is a GNU extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>wcsncasecmp</b><i> (const wchar_t *<var>ws1</var>, const wchar_t *<var>s2</var>, size_t <var>n</var>)</i>
+<a name="IDX446"></a>
+</dt>
+<dd><p>This function is like <code>wcsncmp</code>, except that differences in case
+are ignored.  Like <code>wcscasecmp</code>, it is locale dependent how
+uppercase and lowercase characters are related.
+</p>
+<p><code>wcsncasecmp</code> is a GNU extension.
+</p></dd></dl>
+
+<p>Here are some examples showing the use of <code>strcmp</code> and
+<code>strncmp</code> (equivalent examples can be constructed for the wide
+character functions).  These examples assume the use of the ASCII
+character set.  (If some other character set&mdash;say, EBCDIC&mdash;is used
+instead, then the glyphs are associated with different numeric codes,
+and the return values and ordering may differ.)
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">strcmp (&quot;hello&quot;, &quot;hello&quot;)
+    &rArr; 0    /* <span class="roman">These two strings are the same.</span> */
+strcmp (&quot;hello&quot;, &quot;Hello&quot;)
+    &rArr; 32   /* <span class="roman">Comparisons are case-sensitive.</span> */
+strcmp (&quot;hello&quot;, &quot;world&quot;)
+    &rArr; -15  /* <span class="roman">The character <code>'h'</code> comes before <code>'w'</code>.</span> */
+strcmp (&quot;hello&quot;, &quot;hello, world&quot;)
+    &rArr; -44  /* <span class="roman">Comparing a null character against a comma.</span> */
+strncmp (&quot;hello&quot;, &quot;hello, world&quot;, 5)
+    &rArr; 0    /* <span class="roman">The initial 5 characters are the same.</span> */
+strncmp (&quot;hello, world&quot;, &quot;hello, stupid world!!!&quot;, 5)
+    &rArr; 0    /* <span class="roman">The initial 5 characters are the same.</span> */
+</pre></td></tr></table>
+
+<dl>
+<dt><u>Function:</u> int <b>strverscmp</b><i> (const char *<var>s1</var>, const char *<var>s2</var>)</i>
+<a name="IDX447"></a>
+</dt>
+<dd><p>The <code>strverscmp</code> function compares the string <var>s1</var> against
+<var>s2</var>, considering them as holding indices/version numbers.  Return
+value follows the same conventions as found in the <code>strverscmp</code>
+function.  In fact, if <var>s1</var> and <var>s2</var> contain no digits,
+<code>strverscmp</code> behaves like <code>strcmp</code>.
+</p>
+<p>Basically, we compare strings normally (character by character), until
+we find a digit in each string - then we enter a special comparison
+mode, where each sequence of digits is taken as a whole.  If we reach the
+end of these two parts without noticing a difference, we return to the
+standard comparison mode.  There are two types of numeric parts:
+&quot;integral&quot; and &quot;fractional&quot; (those  begin with a '0'). The types
+of the numeric parts affect the way we sort them:
+</p>
+<ul>
+<li>
+integral/integral: we compare values as you would expect.
+
+</li><li>
+fractional/integral: the fractional part is less than the integral one.
+Again, no surprise.
+
+</li><li>
+fractional/fractional: the things become a bit more complex.
+If the common prefix contains only leading zeroes, the longest part is less
+than the other one; else the comparison behaves normally.
+</li></ul>
+
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">strverscmp (&quot;no digit&quot;, &quot;no digit&quot;)
+    &rArr; 0    /* <span class="roman">same behavior as strcmp.</span> */
+strverscmp (&quot;item#99&quot;, &quot;item#100&quot;)
+    &rArr; &lt;0   /* <span class="roman">same prefix, but 99 &lt; 100.</span> */
+strverscmp (&quot;alpha1&quot;, &quot;alpha001&quot;)
+    &rArr; &gt;0   /* <span class="roman">fractional part inferior to integral one.</span> */
+strverscmp (&quot;part1_f012&quot;, &quot;part1_f01&quot;)
+    &rArr; &gt;0   /* <span class="roman">two fractional parts.</span> */
+strverscmp (&quot;foo.009&quot;, &quot;foo.0&quot;)
+    &rArr; &lt;0   /* <span class="roman">idem, but with leading zeroes only.</span> */
+</pre></td></tr></table>
+
+<p>This function is especially useful when dealing with filename sorting,
+because filenames frequently hold indices/version numbers.
+</p>
+<p><code>strverscmp</code> is a GNU extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>bcmp</b><i> (const void *<var>a1</var>, const void *<var>a2</var>, size_t <var>size</var>)</i>
+<a name="IDX448"></a>
+</dt>
+<dd><p>This is an obsolete alias for <code>memcmp</code>, derived from BSD.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Collation-Functions"></a>
+<a name="SEC76"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC75" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC77" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 5.6 Collation Functions </h2>
+
+
+<p>In some locales, the conventions for lexicographic ordering differ from
+the strict numeric ordering of character codes.  For example, in Spanish
+most glyphs with diacritical marks such as accents are not considered
+distinct letters for the purposes of collation.  On the other hand, the
+two-character sequence &lsquo;<samp>ll</samp>&rsquo; is treated as a single letter that is
+collated immediately after &lsquo;<samp>l</samp>&rsquo;.
+</p>
+<p>You can use the functions <code>strcoll</code> and <code>strxfrm</code> (declared in
+the headers file &lsquo;<tt>string.h</tt>&rsquo;) and <code>wcscoll</code> and <code>wcsxfrm</code>
+(declared in the headers file &lsquo;<tt>wchar</tt>&rsquo;) to compare strings using a
+collation ordering appropriate for the current locale.  The locale used
+by these functions in particular can be specified by setting the locale
+for the <code>LC_COLLATE</code> category; see <a href="libc_7.html#SEC108">Locales and Internationalization</a>.
+<a name="IDX449"></a>
+<a name="IDX450"></a>
+</p>
+<p>In the standard C locale, the collation sequence for <code>strcoll</code> is
+the same as that for <code>strcmp</code>.  Similarly, <code>wcscoll</code> and
+<code>wcscmp</code> are the same in this situation.
+</p>
+<p>Effectively, the way these functions work is by applying a mapping to
+transform the characters in a string to a byte sequence that represents
+the string's position in the collating sequence of the current locale.
+Comparing two such byte sequences in a simple fashion is equivalent to
+comparing the strings with the locale's collating sequence.
+</p>
+<p>The functions <code>strcoll</code> and <code>wcscoll</code> perform this translation
+implicitly, in order to do one comparison.  By contrast, <code>strxfrm</code>
+and <code>wcsxfrm</code> perform the mapping explicitly.  If you are making
+multiple comparisons using the same string or set of strings, it is
+likely to be more efficient to use <code>strxfrm</code> or <code>wcsxfrm</code> to
+transform all the strings just once, and subsequently compare the
+transformed strings with <code>strcmp</code> or <code>wcscmp</code>.
+</p>
+<dl>
+<dt><u>Function:</u> int <b>strcoll</b><i> (const char *<var>s1</var>, const char *<var>s2</var>)</i>
+<a name="IDX451"></a>
+</dt>
+<dd><p>The <code>strcoll</code> function is similar to <code>strcmp</code> but uses the
+collating sequence of the current locale for collation (the
+<code>LC_COLLATE</code> locale).
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>wcscoll</b><i> (const wchar_t *<var>ws1</var>, const wchar_t *<var>ws2</var>)</i>
+<a name="IDX452"></a>
+</dt>
+<dd><p>The <code>wcscoll</code> function is similar to <code>wcscmp</code> but uses the
+collating sequence of the current locale for collation (the
+<code>LC_COLLATE</code> locale).
+</p></dd></dl>
+
+<p>Here is an example of sorting an array of strings, using <code>strcoll</code>
+to compare them.  The actual sort algorithm is not written here; it
+comes from <code>qsort</code> (see section <a href="libc_9.html#SEC144">Array Sort Function</a>).  The job of the
+code shown here is to say how to compare the strings while sorting them.
+(Later on in this section, we will show a way to do this more
+efficiently using <code>strxfrm</code>.)
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">/* <span class="roman">This is the comparison function used with <code>qsort</code>.</span> */
+
+int
+compare_elements (char **p1, char **p2)
+{
+  return strcoll (*p1, *p2);
+}
+
+/* <span class="roman">This is the entry point---the function to sort</span>
+   <span class="roman">strings using the locale's collating sequence.</span> */
+
+void
+sort_strings (char **array, int nstrings)
+{
+  /* <span class="roman">Sort <code>temp_array</code> by comparing the strings.</span> */
+  qsort (array, nstrings,
+         sizeof (char *), compare_elements);
+}
+</pre></td></tr></table>
+
+<a name="IDX453"></a>
+<dl>
+<dt><u>Function:</u> size_t <b>strxfrm</b><i> (char *restrict <var>to</var>, const char *restrict <var>from</var>, size_t <var>size</var>)</i>
+<a name="IDX454"></a>
+</dt>
+<dd><p>The function <code>strxfrm</code> transforms the string <var>from</var> using the
+collation transformation determined by the locale currently selected for
+collation, and stores the transformed string in the array <var>to</var>.  Up
+to <var>size</var> characters (including a terminating null character) are
+stored.
+</p>
+<p>The behavior is undefined if the strings <var>to</var> and <var>from</var>
+overlap; see <a href="#SEC74">Copying and Concatenation</a>.
+</p>
+<p>The return value is the length of the entire transformed string.  This
+value is not affected by the value of <var>size</var>, but if it is greater
+or equal than <var>size</var>, it means that the transformed string did not
+entirely fit in the array <var>to</var>.  In this case, only as much of the
+string as actually fits was stored.  To get the whole transformed
+string, call <code>strxfrm</code> again with a bigger output array.
+</p>
+<p>The transformed string may be longer than the original string, and it
+may also be shorter.
+</p>
+<p>If <var>size</var> is zero, no characters are stored in <var>to</var>.  In this
+case, <code>strxfrm</code> simply returns the number of characters that would
+be the length of the transformed string.  This is useful for determining
+what size the allocated array should be.  It does not matter what
+<var>to</var> is if <var>size</var> is zero; <var>to</var> may even be a null pointer.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> size_t <b>wcsxfrm</b><i> (wchar_t *restrict <var>wto</var>, const wchar_t *<var>wfrom</var>, size_t <var>size</var>)</i>
+<a name="IDX455"></a>
+</dt>
+<dd><p>The function <code>wcsxfrm</code> transforms wide character string <var>wfrom</var>
+using the collation transformation determined by the locale currently
+selected for collation, and stores the transformed string in the array
+<var>wto</var>.  Up to <var>size</var> wide characters (including a terminating null
+character) are stored.
+</p>
+<p>The behavior is undefined if the strings <var>wto</var> and <var>wfrom</var>
+overlap; see <a href="#SEC74">Copying and Concatenation</a>.
+</p>
+<p>The return value is the length of the entire transformed wide character
+string.  This value is not affected by the value of <var>size</var>, but if
+it is greater or equal than <var>size</var>, it means that the transformed
+wide character string did not entirely fit in the array <var>wto</var>.  In
+this case, only as much of the wide character string as actually fits
+was stored.  To get the whole transformed wide character string, call
+<code>wcsxfrm</code> again with a bigger output array.
+</p>
+<p>The transformed wide character string may be longer than the original
+wide character string, and it may also be shorter.
+</p>
+<p>If <var>size</var> is zero, no characters are stored in <var>to</var>.  In this
+case, <code>wcsxfrm</code> simply returns the number of wide characters that
+would be the length of the transformed wide character string.  This is
+useful for determining what size the allocated array should be (remember
+to multiply with <code>sizeof (wchar_t)</code>).  It does not matter what
+<var>wto</var> is if <var>size</var> is zero; <var>wto</var> may even be a null pointer.
+</p></dd></dl>
+
+<p>Here is an example of how you can use <code>strxfrm</code> when
+you plan to do many comparisons.  It does the same thing as the previous
+example, but much faster, because it has to transform each string only
+once, no matter how many times it is compared with other strings.  Even
+the time needed to allocate and free storage is much less than the time
+we save, when there are many strings.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">struct sorter { char *input; char *transformed; };
+
+/* <span class="roman">This is the comparison function used with <code>qsort</code></span>
+   <span class="roman">to sort an array of <code>struct sorter</code>.</span> */
+
+int
+compare_elements (struct sorter *p1, struct sorter *p2)
+{
+  return strcmp (p1-&gt;transformed, p2-&gt;transformed);
+}
+
+/* <span class="roman">This is the entry point---the function to sort</span>
+   <span class="roman">strings using the locale's collating sequence.</span> */
+
+void
+sort_strings_fast (char **array, int nstrings)
+{
+  struct sorter temp_array[nstrings];
+  int i;
+
+  /* <span class="roman">Set up <code>temp_array</code>.  Each element contains</span>
+     <span class="roman">one input string and its transformed string.</span> */
+  for (i = 0; i &lt; nstrings; i++)
+    {
+      size_t length = strlen (array[i]) * 2;
+      char *transformed;
+      size_t transformed_length;
+
+      temp_array[i].input = array[i];
+
+      /* <span class="roman">First try a buffer perhaps big enough.</span>  */
+      transformed = (char *) xmalloc (length);
+
+      /* <span class="roman">Transform <code>array[i]</code>.</span>  */
+      transformed_length = strxfrm (transformed, array[i], length);
+
+      /* <span class="roman">If the buffer was not large enough, resize it</span>
+         <span class="roman">and try again.</span>  */
+      if (transformed_length &gt;= length)
+        {
+          /* <span class="roman">Allocate the needed space. +1 for terminating</span>
+             <span class="roman"><code>NUL</code> character.</span>  */
+          transformed = (char *) xrealloc (transformed,
+                                           transformed_length + 1);
+
+          /* <span class="roman">The return value is not interesting because we know</span>
+             <span class="roman">how long the transformed string is.</span>  */
+          (void) strxfrm (transformed, array[i],
+                          transformed_length + 1);
+        }
+
+      temp_array[i].transformed = transformed;
+    }
+
+  /* <span class="roman">Sort <code>temp_array</code> by comparing transformed strings.</span> */
+  qsort (temp_array, sizeof (struct sorter),
+         nstrings, compare_elements);
+
+  /* <span class="roman">Put the elements back in the permanent array</span>
+     <span class="roman">in their sorted order.</span> */
+  for (i = 0; i &lt; nstrings; i++)
+    array[i] = temp_array[i].input;
+
+  /* <span class="roman">Free the strings we allocated.</span> */
+  for (i = 0; i &lt; nstrings; i++)
+    free (temp_array[i].transformed);
+}
+</pre></td></tr></table>
+
+<p>The interesting part of this code for the wide character version would
+look like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">void
+sort_strings_fast (wchar_t **array, int nstrings)
+{
+  &hellip;
+      /* <span class="roman">Transform <code>array[i]</code>.</span>  */
+      transformed_length = wcsxfrm (transformed, array[i], length);
+
+      /* <span class="roman">If the buffer was not large enough, resize it</span>
+         <span class="roman">and try again.</span>  */
+      if (transformed_length &gt;= length)
+        {
+          /* <span class="roman">Allocate the needed space. +1 for terminating</span>
+             <span class="roman"><code>NUL</code> character.</span>  */
+          transformed = (wchar_t *) xrealloc (transformed,
+                                              (transformed_length + 1)
+                                              * sizeof (wchar_t));
+
+          /* <span class="roman">The return value is not interesting because we know</span>
+             <span class="roman">how long the transformed string is.</span>  */
+          (void) wcsxfrm (transformed, array[i],
+                          transformed_length + 1);
+        }
+  &hellip;
+</pre></td></tr></table>
+
+<p>Note the additional multiplication with <code>sizeof (wchar_t)</code> in the
+<code>realloc</code> call.
+</p>
+<p><strong>Compatibility Note:</strong> The string collation functions are a new
+feature of ISO C90.  Older C dialects have no equivalent feature.
+The wide character versions were introduced in Amendment 1 to ISO
+C90.
+</p>
+<hr size="6">
+<a name="Search-Functions"></a>
+<a name="SEC77"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC76" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC78" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 5.7 Search Functions </h2>
+
+<p>This section describes library functions which perform various kinds
+of searching operations on strings and arrays.  These functions are
+declared in the header file &lsquo;<tt>string.h</tt>&rsquo;.
+<a name="IDX456"></a>
+<a name="IDX457"></a>
+<a name="IDX458"></a>
+</p>
+<dl>
+<dt><u>Function:</u> void * <b>memchr</b><i> (const void *<var>block</var>, int <var>c</var>, size_t <var>size</var>)</i>
+<a name="IDX459"></a>
+</dt>
+<dd><p>This function finds the first occurrence of the byte <var>c</var> (converted
+to an <code>unsigned char</code>) in the initial <var>size</var> bytes of the
+object beginning at <var>block</var>.  The return value is a pointer to the
+located byte, or a null pointer if no match was found.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wmemchr</b><i> (const wchar_t *<var>block</var>, wchar_t <var>wc</var>, size_t <var>size</var>)</i>
+<a name="IDX460"></a>
+</dt>
+<dd><p>This function finds the first occurrence of the wide character <var>wc</var>
+in the initial <var>size</var> wide characters of the object beginning at
+<var>block</var>.  The return value is a pointer to the located wide
+character, or a null pointer if no match was found.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void * <b>rawmemchr</b><i> (const void *<var>block</var>, int <var>c</var>)</i>
+<a name="IDX461"></a>
+</dt>
+<dd><p>Often the <code>memchr</code> function is used with the knowledge that the
+byte <var>c</var> is available in the memory block specified by the
+parameters.  But this means that the <var>size</var> parameter is not really
+needed and that the tests performed with it at runtime (to check whether
+the end of the block is reached) are not needed.
+</p>
+<p>The <code>rawmemchr</code> function exists for just this situation which is
+surprisingly frequent.  The interface is similar to <code>memchr</code> except
+that the <var>size</var> parameter is missing.  The function will look beyond
+the end of the block pointed to by <var>block</var> in case the programmer
+made an error in assuming that the byte <var>c</var> is present in the block.
+In this case the result is unspecified.  Otherwise the return value is a
+pointer to the located byte.
+</p>
+<p>This function is of special interest when looking for the end of a
+string.  Since all strings are terminated by a null byte a call like
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">   rawmemchr (str, '\0')
+</pre></td></tr></table>
+
+<p>will never go beyond the end of the string.
+</p>
+<p>This function is a GNU extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void * <b>memrchr</b><i> (const void *<var>block</var>, int <var>c</var>, size_t <var>size</var>)</i>
+<a name="IDX462"></a>
+</dt>
+<dd><p>The function <code>memrchr</code> is like <code>memchr</code>, except that it searches
+backwards from the end of the block defined by <var>block</var> and <var>size</var>
+(instead of forwards from the front).
+</p>
+<p>This function is a GNU extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>strchr</b><i> (const char *<var>string</var>, int <var>c</var>)</i>
+<a name="IDX463"></a>
+</dt>
+<dd><p>The <code>strchr</code> function finds the first occurrence of the character
+<var>c</var> (converted to a <code>char</code>) in the null-terminated string
+beginning at <var>string</var>.  The return value is a pointer to the located
+character, or a null pointer if no match was found.
+</p>
+<p>For example,
+</p><table><tr><td>&nbsp;</td><td><pre class="smallexample">strchr (&quot;hello, world&quot;, 'l')
+    &rArr; &quot;llo, world&quot;
+strchr (&quot;hello, world&quot;, '?')
+    &rArr; NULL
+</pre></td></tr></table>
+
+<p>The terminating null character is considered to be part of the string,
+so you can use this function get a pointer to the end of a string by
+specifying a null character as the value of the <var>c</var> argument.  It
+would be better (but less portable) to use <code>strchrnul</code> in this
+case, though.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcschr</b><i> (const wchar_t *<var>wstring</var>, int <var>wc</var>)</i>
+<a name="IDX464"></a>
+</dt>
+<dd><p>The <code>wcschr</code> function finds the first occurrence of the wide
+character <var>wc</var> in the null-terminated wide character string
+beginning at <var>wstring</var>.  The return value is a pointer to the
+located wide character, or a null pointer if no match was found.
+</p>
+<p>The terminating null character is considered to be part of the wide
+character string, so you can use this function get a pointer to the end
+of a wide character string by specifying a null wude character as the
+value of the <var>wc</var> argument.  It would be better (but less portable)
+to use <code>wcschrnul</code> in this case, though.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>strchrnul</b><i> (const char *<var>string</var>, int <var>c</var>)</i>
+<a name="IDX465"></a>
+</dt>
+<dd><p><code>strchrnul</code> is the same as <code>strchr</code> except that if it does
+not find the character, it returns a pointer to string's terminating
+null character rather than a null pointer.
+</p>
+<p>This function is a GNU extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcschrnul</b><i> (const wchar_t *<var>wstring</var>, wchar_t <var>wc</var>)</i>
+<a name="IDX466"></a>
+</dt>
+<dd><p><code>wcschrnul</code> is the same as <code>wcschr</code> except that if it does not
+find the wide character, it returns a pointer to wide character string's
+terminating null wide character rather than a null pointer.
+</p>
+<p>This function is a GNU extension.
+</p></dd></dl>
+
+<p>One useful, but unusual, use of the <code>strchr</code>
+function is when one wants to have a pointer pointing to the NUL byte
+terminating a string.  This is often written in this way:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">  s += strlen (s);
+</pre></td></tr></table>
+
+<p>This is almost optimal but the addition operation duplicated a bit of
+the work already done in the <code>strlen</code> function.  A better solution
+is this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">  s = strchr (s, '\0');
+</pre></td></tr></table>
+
+<p>There is no restriction on the second parameter of <code>strchr</code> so it
+could very well also be the NUL character.  Those readers thinking very
+hard about this might now point out that the <code>strchr</code> function is
+more expensive than the <code>strlen</code> function since we have two abort
+criteria.  This is right.  But in the GNU C library the implementation of
+<code>strchr</code> is optimized in a special way so that <code>strchr</code>
+actually is faster.
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>strrchr</b><i> (const char *<var>string</var>, int <var>c</var>)</i>
+<a name="IDX467"></a>
+</dt>
+<dd><p>The function <code>strrchr</code> is like <code>strchr</code>, except that it searches
+backwards from the end of the string <var>string</var> (instead of forwards
+from the front).
+</p>
+<p>For example,
+</p><table><tr><td>&nbsp;</td><td><pre class="smallexample">strrchr (&quot;hello, world&quot;, 'l')
+    &rArr; &quot;ld&quot;
+</pre></td></tr></table>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcsrchr</b><i> (const wchar_t *<var>wstring</var>, wchar_t <var>c</var>)</i>
+<a name="IDX468"></a>
+</dt>
+<dd><p>The function <code>wcsrchr</code> is like <code>wcschr</code>, except that it searches
+backwards from the end of the string <var>wstring</var> (instead of forwards
+from the front).
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>strstr</b><i> (const char *<var>haystack</var>, const char *<var>needle</var>)</i>
+<a name="IDX469"></a>
+</dt>
+<dd><p>This is like <code>strchr</code>, except that it searches <var>haystack</var> for a
+substring <var>needle</var> rather than just a single character.  It
+returns a pointer into the string <var>haystack</var> that is the first
+character of the substring, or a null pointer if no match was found.  If
+<var>needle</var> is an empty string, the function returns <var>haystack</var>.
+</p>
+<p>For example,
+</p><table><tr><td>&nbsp;</td><td><pre class="smallexample">strstr (&quot;hello, world&quot;, &quot;l&quot;)
+    &rArr; &quot;llo, world&quot;
+strstr (&quot;hello, world&quot;, &quot;wo&quot;)
+    &rArr; &quot;world&quot;
+</pre></td></tr></table>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcsstr</b><i> (const wchar_t *<var>haystack</var>, const wchar_t *<var>needle</var>)</i>
+<a name="IDX470"></a>
+</dt>
+<dd><p>This is like <code>wcschr</code>, except that it searches <var>haystack</var> for a
+substring <var>needle</var> rather than just a single wide character.  It
+returns a pointer into the string <var>haystack</var> that is the first wide
+character of the substring, or a null pointer if no match was found.  If
+<var>needle</var> is an empty string, the function returns <var>haystack</var>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcswcs</b><i> (const wchar_t *<var>haystack</var>, const wchar_t *<var>needle</var>)</i>
+<a name="IDX471"></a>
+</dt>
+<dd><p><code>wcswcs</code> is an deprecated alias for <code>wcsstr</code>.  This is the
+name originally used in the X/Open Portability Guide before the
+Amendment 1 to ISO C90 was published.
+</p></dd></dl>
+
+
+<dl>
+<dt><u>Function:</u> char * <b>strcasestr</b><i> (const char *<var>haystack</var>, const char *<var>needle</var>)</i>
+<a name="IDX472"></a>
+</dt>
+<dd><p>This is like <code>strstr</code>, except that it ignores case in searching for
+the substring.   Like <code>strcasecmp</code>, it is locale dependent how
+uppercase and lowercase characters are related.
+</p>
+
+<p>For example,
+</p><table><tr><td>&nbsp;</td><td><pre class="smallexample">strcasestr (&quot;hello, world&quot;, &quot;L&quot;)
+    &rArr; &quot;llo, world&quot;
+strcasestr (&quot;hello, World&quot;, &quot;wo&quot;)
+    &rArr; &quot;World&quot;
+</pre></td></tr></table>
+</dd></dl>
+
+
+<dl>
+<dt><u>Function:</u> void * <b>memmem</b><i> (const void *<var>haystack</var>, size_t <var>haystack-len</var>,<br>const void *<var>needle</var>, size_t <var>needle-len</var>)</i>
+<a name="IDX473"></a>
+</dt>
+<dd><p>This is like <code>strstr</code>, but <var>needle</var> and <var>haystack</var> are byte
+arrays rather than null-terminated strings.  <var>needle-len</var> is the
+length of <var>needle</var> and <var>haystack-len</var> is the length of
+<var>haystack</var>.
+</p>
+<p>This function is a GNU extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> size_t <b>strspn</b><i> (const char *<var>string</var>, const char *<var>skipset</var>)</i>
+<a name="IDX474"></a>
+</dt>
+<dd><p>The <code>strspn</code> (&ldquo;string span&rdquo;) function returns the length of the
+initial substring of <var>string</var> that consists entirely of characters that
+are members of the set specified by the string <var>skipset</var>.  The order
+of the characters in <var>skipset</var> is not important.
+</p>
+<p>For example,
+</p><table><tr><td>&nbsp;</td><td><pre class="smallexample">strspn (&quot;hello, world&quot;, &quot;abcdefghijklmnopqrstuvwxyz&quot;)
+    &rArr; 5
+</pre></td></tr></table>
+
+<p>Note that &ldquo;character&rdquo; is here used in the sense of byte.  In a string
+using a multibyte character encoding (abstract) character consisting of
+more than one byte are not treated as an entity.  Each byte is treated
+separately.  The function is not locale-dependent.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> size_t <b>wcsspn</b><i> (const wchar_t *<var>wstring</var>, const wchar_t *<var>skipset</var>)</i>
+<a name="IDX475"></a>
+</dt>
+<dd><p>The <code>wcsspn</code> (&ldquo;wide character string span&rdquo;) function returns the
+length of the initial substring of <var>wstring</var> that consists entirely
+of wide characters that are members of the set specified by the string
+<var>skipset</var>.  The order of the wide characters in <var>skipset</var> is not
+important.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> size_t <b>strcspn</b><i> (const char *<var>string</var>, const char *<var>stopset</var>)</i>
+<a name="IDX476"></a>
+</dt>
+<dd><p>The <code>strcspn</code> (&ldquo;string complement span&rdquo;) function returns the length
+of the initial substring of <var>string</var> that consists entirely of characters
+that are <em>not</em> members of the set specified by the string <var>stopset</var>.
+(In other words, it returns the offset of the first character in <var>string</var>
+that is a member of the set <var>stopset</var>.)
+</p>
+<p>For example,
+</p><table><tr><td>&nbsp;</td><td><pre class="smallexample">strcspn (&quot;hello, world&quot;, &quot; \t\n,.;!?&quot;)
+    &rArr; 5
+</pre></td></tr></table>
+
+<p>Note that &ldquo;character&rdquo; is here used in the sense of byte.  In a string
+using a multibyte character encoding (abstract) character consisting of
+more than one byte are not treated as an entity.  Each byte is treated
+separately.  The function is not locale-dependent.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> size_t <b>wcscspn</b><i> (const wchar_t *<var>wstring</var>, const wchar_t *<var>stopset</var>)</i>
+<a name="IDX477"></a>
+</dt>
+<dd><p>The <code>wcscspn</code> (&ldquo;wide character string complement span&rdquo;) function
+returns the length of the initial substring of <var>wstring</var> that
+consists entirely of wide characters that are <em>not</em> members of the
+set specified by the string <var>stopset</var>.  (In other words, it returns
+the offset of the first character in <var>string</var> that is a member of
+the set <var>stopset</var>.)
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>strpbrk</b><i> (const char *<var>string</var>, const char *<var>stopset</var>)</i>
+<a name="IDX478"></a>
+</dt>
+<dd><p>The <code>strpbrk</code> (&ldquo;string pointer break&rdquo;) function is related to
+<code>strcspn</code>, except that it returns a pointer to the first character
+in <var>string</var> that is a member of the set <var>stopset</var> instead of the
+length of the initial substring.  It returns a null pointer if no such
+character from <var>stopset</var> is found.
+</p>
+<p>For example,
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">strpbrk (&quot;hello, world&quot;, &quot; \t\n,.;!?&quot;)
+    &rArr; &quot;, world&quot;
+</pre></td></tr></table>
+
+<p>Note that &ldquo;character&rdquo; is here used in the sense of byte.  In a string
+using a multibyte character encoding (abstract) character consisting of
+more than one byte are not treated as an entity.  Each byte is treated
+separately.  The function is not locale-dependent.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcspbrk</b><i> (const wchar_t *<var>wstring</var>, const wchar_t *<var>stopset</var>)</i>
+<a name="IDX479"></a>
+</dt>
+<dd><p>The <code>wcspbrk</code> (&ldquo;wide character string pointer break&rdquo;) function is
+related to <code>wcscspn</code>, except that it returns a pointer to the first
+wide character in <var>wstring</var> that is a member of the set
+<var>stopset</var> instead of the length of the initial substring.  It
+returns a null pointer if no such character from <var>stopset</var> is found.
+</p></dd></dl>
+
+
+<hr size="6">
+<a name="SEC78"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC77" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC79" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC77" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 5.7.1 Compatibility String Search Functions </h3>
+
+<dl>
+<dt><u>Function:</u> char * <b>index</b><i> (const char *<var>string</var>, int <var>c</var>)</i>
+<a name="IDX480"></a>
+</dt>
+<dd><p><code>index</code> is another name for <code>strchr</code>; they are exactly the same.
+New code should always use <code>strchr</code> since this name is defined in
+ISO C while <code>index</code> is a BSD invention which never was available
+on System V derived systems.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>rindex</b><i> (const char *<var>string</var>, int <var>c</var>)</i>
+<a name="IDX481"></a>
+</dt>
+<dd><p><code>rindex</code> is another name for <code>strrchr</code>; they are exactly the same.
+New code should always use <code>strrchr</code> since this name is defined in
+ISO C while <code>rindex</code> is a BSD invention which never was available
+on System V derived systems.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Finding-Tokens-in-a-String"></a>
+<a name="SEC79"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC78" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC80" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 5.8 Finding Tokens in a String </h2>
+
+<p>It's fairly common for programs to have a need to do some simple kinds
+of lexical analysis and parsing, such as splitting a command string up
+into tokens.  You can do this with the <code>strtok</code> function, declared
+in the header file &lsquo;<tt>string.h</tt>&rsquo;.
+<a name="IDX482"></a>
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>strtok</b><i> (char *restrict <var>newstring</var>, const char *restrict <var>delimiters</var>)</i>
+<a name="IDX483"></a>
+</dt>
+<dd><p>A string can be split into tokens by making a series of calls to the
+function <code>strtok</code>.
+</p>
+<p>The string to be split up is passed as the <var>newstring</var> argument on
+the first call only.  The <code>strtok</code> function uses this to set up
+some internal state information.  Subsequent calls to get additional
+tokens from the same string are indicated by passing a null pointer as
+the <var>newstring</var> argument.  Calling <code>strtok</code> with another
+non-null <var>newstring</var> argument reinitializes the state information.
+It is guaranteed that no other library function ever calls <code>strtok</code>
+behind your back (which would mess up this internal state information).
+</p>
+<p>The <var>delimiters</var> argument is a string that specifies a set of delimiters
+that may surround the token being extracted.  All the initial characters
+that are members of this set are discarded.  The first character that is
+<em>not</em> a member of this set of delimiters marks the beginning of the
+next token.  The end of the token is found by looking for the next
+character that is a member of the delimiter set.  This character in the
+original string <var>newstring</var> is overwritten by a null character, and the
+pointer to the beginning of the token in <var>newstring</var> is returned.
+</p>
+<p>On the next call to <code>strtok</code>, the searching begins at the next
+character beyond the one that marked the end of the previous token.
+Note that the set of delimiters <var>delimiters</var> do not have to be the
+same on every call in a series of calls to <code>strtok</code>.
+</p>
+<p>If the end of the string <var>newstring</var> is reached, or if the remainder of
+string consists only of delimiter characters, <code>strtok</code> returns
+a null pointer.
+</p>
+<p>Note that &ldquo;character&rdquo; is here used in the sense of byte.  In a string
+using a multibyte character encoding (abstract) character consisting of
+more than one byte are not treated as an entity.  Each byte is treated
+separately.  The function is not locale-dependent.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wchar_t * <b>wcstok</b><i> (wchar_t *<var>newstring</var>, const char *<var>delimiters</var>)</i>
+<a name="IDX484"></a>
+</dt>
+<dd><p>A string can be split into tokens by making a series of calls to the
+function <code>wcstok</code>.
+</p>
+<p>The string to be split up is passed as the <var>newstring</var> argument on
+the first call only.  The <code>wcstok</code> function uses this to set up
+some internal state information.  Subsequent calls to get additional
+tokens from the same wide character string are indicated by passing a
+null pointer as the <var>newstring</var> argument.  Calling <code>wcstok</code>
+with another non-null <var>newstring</var> argument reinitializes the state
+information.  It is guaranteed that no other library function ever calls
+<code>wcstok</code> behind your back (which would mess up this internal state
+information).
+</p>
+<p>The <var>delimiters</var> argument is a wide character string that specifies
+a set of delimiters that may surround the token being extracted.  All
+the initial wide characters that are members of this set are discarded.
+The first wide character that is <em>not</em> a member of this set of
+delimiters marks the beginning of the next token.  The end of the token
+is found by looking for the next wide character that is a member of the
+delimiter set.  This wide character in the original wide character
+string <var>newstring</var> is overwritten by a null wide character, and the
+pointer to the beginning of the token in <var>newstring</var> is returned.
+</p>
+<p>On the next call to <code>wcstok</code>, the searching begins at the next
+wide character beyond the one that marked the end of the previous token.
+Note that the set of delimiters <var>delimiters</var> do not have to be the
+same on every call in a series of calls to <code>wcstok</code>.
+</p>
+<p>If the end of the wide character string <var>newstring</var> is reached, or
+if the remainder of string consists only of delimiter wide characters,
+<code>wcstok</code> returns a null pointer.
+</p>
+<p>Note that &ldquo;character&rdquo; is here used in the sense of byte.  In a string
+using a multibyte character encoding (abstract) character consisting of
+more than one byte are not treated as an entity.  Each byte is treated
+separately.  The function is not locale-dependent.
+</p></dd></dl>
+
+<p><strong>Warning:</strong> Since <code>strtok</code> and <code>wcstok</code> alter the string
+they is parsing, you should always copy the string to a temporary buffer
+before parsing it with <code>strtok</code>/<code>wcstok</code> (see section <a href="#SEC74">Copying and Concatenation</a>).  If you allow <code>strtok</code> or <code>wcstok</code> to modify
+a string that came from another part of your program, you are asking for
+trouble; that string might be used for other purposes after
+<code>strtok</code> or <code>wcstok</code> has modified it, and it would not have
+the expected value.
+</p>
+<p>The string that you are operating on might even be a constant.  Then
+when <code>strtok</code> or <code>wcstok</code> tries to modify it, your program
+will get a fatal signal for writing in read-only memory.  See section <a href="libc_24.html#SEC477">Program Error Signals</a>.  Even if the operation of <code>strtok</code> or <code>wcstok</code>
+would not require a modification of the string (e.g., if there is
+exactly one token) the string can (and in the GNU libc case will) be
+modified.
+</p>
+<p>This is a special case of a general principle: if a part of a program
+does not have as its purpose the modification of a certain data
+structure, then it is error-prone to modify the data structure
+temporarily.
+</p>
+<p>The functions <code>strtok</code> and <code>wcstok</code> are not reentrant.
+See section <a href="libc_24.html#SEC498">Signal Handling and Nonreentrant Functions</a>, for a discussion of where and why reentrancy is
+important.
+</p>
+<p>Here is a simple example showing the use of <code>strtok</code>.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;string.h&gt;
+#include &lt;stddef.h&gt;
+
+&hellip;
+
+const char string[] = &quot;words separated by spaces -- and, punctuation!&quot;;
+const char delimiters[] = &quot; .,;:!-&quot;;
+char *token, *cp;
+
+&hellip;
+
+cp = strdupa (string);                /* Make writable copy.  */
+token = strtok (cp, delimiters);      /* token =&gt; &quot;words&quot; */
+token = strtok (NULL, delimiters);    /* token =&gt; &quot;separated&quot; */
+token = strtok (NULL, delimiters);    /* token =&gt; &quot;by&quot; */
+token = strtok (NULL, delimiters);    /* token =&gt; &quot;spaces&quot; */
+token = strtok (NULL, delimiters);    /* token =&gt; &quot;and&quot; */
+token = strtok (NULL, delimiters);    /* token =&gt; &quot;punctuation&quot; */
+token = strtok (NULL, delimiters);    /* token =&gt; NULL */
+</pre></td></tr></table>
+
+<p>The GNU C library contains two more functions for tokenizing a string
+which overcome the limitation of non-reentrancy.  They are only
+available for multibyte character strings.
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>strtok_r</b><i> (char *<var>newstring</var>, const char *<var>delimiters</var>, char **<var>save_ptr</var>)</i>
+<a name="IDX485"></a>
+</dt>
+<dd><p>Just like <code>strtok</code>, this function splits the string into several
+tokens which can be accessed by successive calls to <code>strtok_r</code>.
+The difference is that the information about the next token is stored in
+the space pointed to by the third argument, <var>save_ptr</var>, which is a
+pointer to a string pointer.  Calling <code>strtok_r</code> with a null
+pointer for <var>newstring</var> and leaving <var>save_ptr</var> between the calls
+unchanged does the job without hindering reentrancy.
+</p>
+<p>This function is defined in POSIX.1 and can be found on many systems
+which support multi-threading.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>strsep</b><i> (char **<var>string_ptr</var>, const char *<var>delimiter</var>)</i>
+<a name="IDX486"></a>
+</dt>
+<dd><p>This function has a similar functionality as <code>strtok_r</code> with the
+<var>newstring</var> argument replaced by the <var>save_ptr</var> argument.  The
+initialization of the moving pointer has to be done by the user.
+Successive calls to <code>strsep</code> move the pointer along the tokens
+separated by <var>delimiter</var>, returning the address of the next token
+and updating <var>string_ptr</var> to point to the beginning of the next
+token.
+</p>
+<p>One difference between <code>strsep</code> and <code>strtok_r</code> is that if the
+input string contains more than one character from <var>delimiter</var> in a
+row <code>strsep</code> returns an empty string for each pair of characters
+from <var>delimiter</var>.  This means that a program normally should test
+for <code>strsep</code> returning an empty string before processing it.
+</p>
+<p>This function was introduced in 4.3BSD and therefore is widely available.
+</p></dd></dl>
+
+<p>Here is how the above example looks like when <code>strsep</code> is used.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;string.h&gt;
+#include &lt;stddef.h&gt;
+
+&hellip;
+
+const char string[] = &quot;words separated by spaces -- and, punctuation!&quot;;
+const char delimiters[] = &quot; .,;:!-&quot;;
+char *running;
+char *token;
+
+&hellip;
+
+running = strdupa (string);
+token = strsep (&amp;running, delimiters);    /* token =&gt; &quot;words&quot; */
+token = strsep (&amp;running, delimiters);    /* token =&gt; &quot;separated&quot; */
+token = strsep (&amp;running, delimiters);    /* token =&gt; &quot;by&quot; */
+token = strsep (&amp;running, delimiters);    /* token =&gt; &quot;spaces&quot; */
+token = strsep (&amp;running, delimiters);    /* token =&gt; &quot;&quot; */
+token = strsep (&amp;running, delimiters);    /* token =&gt; &quot;&quot; */
+token = strsep (&amp;running, delimiters);    /* token =&gt; &quot;&quot; */
+token = strsep (&amp;running, delimiters);    /* token =&gt; &quot;and&quot; */
+token = strsep (&amp;running, delimiters);    /* token =&gt; &quot;&quot; */
+token = strsep (&amp;running, delimiters);    /* token =&gt; &quot;punctuation&quot; */
+token = strsep (&amp;running, delimiters);    /* token =&gt; &quot;&quot; */
+token = strsep (&amp;running, delimiters);    /* token =&gt; NULL */
+</pre></td></tr></table>
+
+<dl>
+<dt><u>Function:</u> char * <b>basename</b><i> (const char *<var>filename</var>)</i>
+<a name="IDX487"></a>
+</dt>
+<dd><p>The GNU version of the <code>basename</code> function returns the last
+component of the path in <var>filename</var>.  This function is the preferred
+usage, since it does not modify the argument, <var>filename</var>, and
+respects trailing slashes.  The prototype for <code>basename</code> can be
+found in &lsquo;<tt>string.h</tt>&rsquo;.  Note, this function is overriden by the XPG
+version, if &lsquo;<tt>libgen.h</tt>&rsquo; is included.
+</p>
+<p>Example of using GNU <code>basename</code>:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;string.h&gt;
+
+int
+main (int argc, char *argv[])
+{
+  char *prog = basename (argv[0]);
+
+  if (argc &lt; 2)
+    {
+      fprintf (stderr, &quot;Usage %s &lt;arg&gt;\n&quot;, prog);
+      exit (1);
+    }
+
+  &hellip;
+}
+</pre></td></tr></table>
+
+<p><strong>Portability Note:</strong> This function may produce different results
+on different systems.
+</p>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>basename</b><i> (char *<var>path</var>)</i>
+<a name="IDX488"></a>
+</dt>
+<dd><p>This is the standard XPG defined <code>basename</code>. It is similar in
+spirit to the GNU version, but may modify the <var>path</var> by removing
+trailing '/' characters.  If the <var>path</var> is made up entirely of '/'
+characters, then &quot;/&quot; will be returned.  Also, if <var>path</var> is
+<code>NULL</code> or an empty string, then &quot;.&quot; is returned.  The prototype for
+the XPG version can be found in &lsquo;<tt>libgen.h</tt>&rsquo;.
+</p>
+<p>Example of using XPG <code>basename</code>:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;libgen.h&gt;
+
+int
+main (int argc, char *argv[])
+{
+  char *prog;
+  char *path = strdupa (argv[0]);
+
+  prog = basename (path);
+
+  if (argc &lt; 2)
+    {
+      fprintf (stderr, &quot;Usage %s &lt;arg&gt;\n&quot;, prog);
+      exit (1);
+    }
+
+  &hellip;
+
+}
+</pre></td></tr></table>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>dirname</b><i> (char *<var>path</var>)</i>
+<a name="IDX489"></a>
+</dt>
+<dd><p>The <code>dirname</code> function is the compliment to the XPG version of
+<code>basename</code>.  It returns the parent directory of the file specified
+by <var>path</var>.  If <var>path</var> is <code>NULL</code>, an empty string, or
+contains no '/' characters, then &quot;.&quot; is returned.  The prototype for this
+function can be found in &lsquo;<tt>libgen.h</tt>&rsquo;.
+</p></dd></dl>
+
+<hr size="6">
+<a name="strfry"></a>
+<a name="SEC80"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC79" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC81" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 5.9 strfry </h2>
+
+<p>The function below addresses the perennial programming quandary: &ldquo;How do
+I take good data in string form and painlessly turn it into garbage?&rdquo;
+This is actually a fairly simple task for C programmers who do not use
+the GNU C library string functions, but for programs based on the GNU C
+library, the <code>strfry</code> function is the preferred method for
+destroying string data.
+</p>
+<p>The prototype for this function is in &lsquo;<tt>string.h</tt>&rsquo;.
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>strfry</b><i> (char *<var>string</var>)</i>
+<a name="IDX490"></a>
+</dt>
+<dd><p><code>strfry</code> creates a pseudorandom anagram of a string, replacing the
+input with the anagram in place.  For each position in the string,
+<code>strfry</code> swaps it with a position in the string selected at random
+(from a uniform distribution).  The two positions may be the same.
+</p>
+<p>The return value of <code>strfry</code> is always <var>string</var>.
+</p>
+<p><strong>Portability Note:</strong>  This function is unique to the GNU C library.
+</p>
+</dd></dl>
+
+
+<hr size="6">
+<a name="Trivial-Encryption"></a>
+<a name="SEC81"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC80" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC82" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 5.10 Trivial Encryption </h2>
+
+
+<p>The <code>memfrob</code> function converts an array of data to something
+unrecognizable and back again.  It is not encryption in its usual sense
+since it is easy for someone to convert the encrypted data back to clear
+text.  The transformation is analogous to Usenet's &ldquo;Rot13&rdquo; encryption
+method for obscuring offensive jokes from sensitive eyes and such.
+Unlike Rot13, <code>memfrob</code> works on arbitrary binary data, not just
+text.
+<a name="IDX491"></a>
+</p>
+<p>For true encryption, See section <a href="libc_32.html#SEC664">DES Encryption and Password Handling</a>.
+</p>
+<p>This function is declared in &lsquo;<tt>string.h</tt>&rsquo;.
+<a name="IDX492"></a>
+</p>
+<dl>
+<dt><u>Function:</u> void * <b>memfrob</b><i> (void *<var>mem</var>, size_t <var>length</var>)</i>
+<a name="IDX493"></a>
+</dt>
+<dd><p><code>memfrob</code> transforms (frobnicates) each byte of the data structure
+at <var>mem</var>, which is <var>length</var> bytes long, by bitwise exclusive
+oring it with binary 00101010.  It does the transformation in place and
+its return value is always <var>mem</var>.
+</p>
+<p>Note that <code>memfrob</code> a second time on the same data structure
+returns it to its original state.
+</p>
+<p>This is a good function for hiding information from someone who doesn't
+want to see it or doesn't want to see it very much.  To really prevent
+people from retrieving the information, use stronger encryption such as
+that described in See section <a href="libc_32.html#SEC664">DES Encryption and Password Handling</a>.
+</p>
+<p><strong>Portability Note:</strong>  This function is unique to the GNU C library.
+</p>
+</dd></dl>
+
+<hr size="6">
+<a name="Encode-Binary-Data"></a>
+<a name="SEC82"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC81" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC83" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 5.11 Encode Binary Data </h2>
+
+<p>To store or transfer binary data in environments which only support text
+one has to encode the binary data by mapping the input bytes to
+characters in the range allowed for storing or transfering.  SVID
+systems (and nowadays XPG compliant systems) provide minimal support for
+this task.
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>l64a</b><i> (long int <var>n</var>)</i>
+<a name="IDX494"></a>
+</dt>
+<dd><p>This function encodes a 32-bit input value using characters from the
+basic character set.  It returns a pointer to a 7 character buffer which
+contains an encoded version of <var>n</var>.  To encode a series of bytes the
+user must copy the returned string to a destination buffer.  It returns
+the empty string if <var>n</var> is zero, which is somewhat bizarre but
+mandated by the standard.<br>
+<strong>Warning:</strong> Since a static buffer is used this function should not
+be used in multi-threaded programs.  There is no thread-safe alternative
+to this function in the C library.<br>
+<strong>Compatibility Note:</strong> The XPG standard states that the return
+value of <code>l64a</code> is undefined if <var>n</var> is negative.  In the GNU
+implementation, <code>l64a</code> treats its argument as unsigned, so it will
+return a sensible encoding for any nonzero <var>n</var>; however, portable
+programs should not rely on this.
+</p>
+<p>To encode a large buffer <code>l64a</code> must be called in a loop, once for
+each 32-bit word of the buffer.  For example, one could do something
+like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">char *
+encode (const void *buf, size_t len)
+{
+  /* <span class="roman">We know in advance how long the buffer has to be.</span> */
+  unsigned char *in = (unsigned char *) buf;
+  char *out = malloc (6 + ((len + 3) / 4) * 6 + 1);
+  char *cp = out, *p;
+
+  /* <span class="roman">Encode the length.</span> */
+  /* <span class="roman">Using `htonl' is necessary so that the data can be</span>
+     <span class="roman">decoded even on machines with different byte order.</span>
+     <span class="roman">`l64a' can return a string shorter than 6 bytes, so </span>
+     <span class="roman">we pad it with encoding of 0 (</span>'.'<span class="roman">) at the end by </span>
+     <span class="roman">hand.</span> */
+
+  p = stpcpy (cp, l64a (htonl (len)));
+  cp = mempcpy (p, &quot;......&quot;, 6 - (p - cp));
+
+  while (len &gt; 3)
+    {
+      unsigned long int n = *in++;
+      n = (n &lt;&lt; 8) | *in++;
+      n = (n &lt;&lt; 8) | *in++;
+      n = (n &lt;&lt; 8) | *in++;
+      len -= 4;
+      p = stpcpy (cp, l64a (htonl (n)));
+      cp = mempcpy (p, &quot;......&quot;, 6 - (p - cp));
+    }
+  if (len &gt; 0)
+    {
+      unsigned long int n = *in++;
+      if (--len &gt; 0)
+        {
+          n = (n &lt;&lt; 8) | *in++;
+          if (--len &gt; 0)
+            n = (n &lt;&lt; 8) | *in;
+        }
+      cp = stpcpy (cp, l64a (htonl (n)));
+    }
+  *cp = '\0';
+  return out;
+}
+</pre></td></tr></table>
+
+<p>It is strange that the library does not provide the complete
+functionality needed but so be it.
+</p>
+</dd></dl>
+
+<p>To decode data produced with <code>l64a</code> the following function should be
+used.
+</p>
+<dl>
+<dt><u>Function:</u> long int <b>a64l</b><i> (const char *<var>string</var>)</i>
+<a name="IDX495"></a>
+</dt>
+<dd><p>The parameter <var>string</var> should contain a string which was produced by
+a call to <code>l64a</code>.  The function processes at least 6 characters of
+this string, and decodes the characters it finds according to the table
+below.  It stops decoding when it finds a character not in the table,
+rather like <code>atoi</code>; if you have a buffer which has been broken into
+lines, you must be careful to skip over the end-of-line characters.
+</p>
+<p>The decoded number is returned as a <code>long int</code> value.
+</p></dd></dl>
+
+<p>The <code>l64a</code> and <code>a64l</code> functions use a base 64 encoding, in
+which each character of an encoded string represents six bits of an
+input word.  These symbols are used for the base 64 digits:
+</p>
+<table>
+<tr><td>              </td><td><p> 0 </p></td><td><p> 1 </p></td><td><p> 2 </p></td><td><p> 3 </p></td><td><p> 4 </p></td><td><p> 5 </p></td><td><p> 6 </p></td><td><p> 7
+</p></td></tr>
+<tr><td><p>       0      </p></td><td><p> <code>.</code> </p></td><td><p> <code>/</code> </p></td><td><p> <code>0</code> </p></td><td><p> <code>1</code>
+                   </p></td><td><p> <code>2</code> </p></td><td><p> <code>3</code> </p></td><td><p> <code>4</code> </p></td><td><p> <code>5</code>
+</p></td></tr>
+<tr><td><p>       8      </p></td><td><p> <code>6</code> </p></td><td><p> <code>7</code> </p></td><td><p> <code>8</code> </p></td><td><p> <code>9</code>
+                   </p></td><td><p> <code>A</code> </p></td><td><p> <code>B</code> </p></td><td><p> <code>C</code> </p></td><td><p> <code>D</code>
+</p></td></tr>
+<tr><td><p>       16     </p></td><td><p> <code>E</code> </p></td><td><p> <code>F</code> </p></td><td><p> <code>G</code> </p></td><td><p> <code>H</code>
+                   </p></td><td><p> <code>I</code> </p></td><td><p> <code>J</code> </p></td><td><p> <code>K</code> </p></td><td><p> <code>L</code>
+</p></td></tr>
+<tr><td><p>       24     </p></td><td><p> <code>M</code> </p></td><td><p> <code>N</code> </p></td><td><p> <code>O</code> </p></td><td><p> <code>P</code>
+                   </p></td><td><p> <code>Q</code> </p></td><td><p> <code>R</code> </p></td><td><p> <code>S</code> </p></td><td><p> <code>T</code>
+</p></td></tr>
+<tr><td><p>       32     </p></td><td><p> <code>U</code> </p></td><td><p> <code>V</code> </p></td><td><p> <code>W</code> </p></td><td><p> <code>X</code>
+                   </p></td><td><p> <code>Y</code> </p></td><td><p> <code>Z</code> </p></td><td><p> <code>a</code> </p></td><td><p> <code>b</code>
+</p></td></tr>
+<tr><td><p>       40     </p></td><td><p> <code>c</code> </p></td><td><p> <code>d</code> </p></td><td><p> <code>e</code> </p></td><td><p> <code>f</code>
+                   </p></td><td><p> <code>g</code> </p></td><td><p> <code>h</code> </p></td><td><p> <code>i</code> </p></td><td><p> <code>j</code>
+</p></td></tr>
+<tr><td><p>       48     </p></td><td><p> <code>k</code> </p></td><td><p> <code>l</code> </p></td><td><p> <code>m</code> </p></td><td><p> <code>n</code>
+                   </p></td><td><p> <code>o</code> </p></td><td><p> <code>p</code> </p></td><td><p> <code>q</code> </p></td><td><p> <code>r</code>
+</p></td></tr>
+<tr><td><p>       56     </p></td><td><p> <code>s</code> </p></td><td><p> <code>t</code> </p></td><td><p> <code>u</code> </p></td><td><p> <code>v</code>
+                   </p></td><td><p> <code>w</code> </p></td><td><p> <code>x</code> </p></td><td><p> <code>y</code> </p></td><td><p> <code>z</code>
+</p></td></tr>
+</table>
+
+<p>This encoding scheme is not standard.  There are some other encoding
+methods which are much more widely used (UU encoding, MIME encoding).
+Generally, it is better to use one of these encodings.
+</p>
+<hr size="6">
+<a name="Argz-and-Envz-Vectors"></a>
+<a name="SEC83"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC82" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC84" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 5.12 Argz and Envz Vectors </h2>
+
+<p><em>argz vectors</em> are vectors of strings in a contiguous block of
+memory, each element separated from its neighbors by null-characters
+(<code>'\0'</code>).
+</p>
+<a name="IDX496"></a>
+<a name="IDX497"></a>
+<p><em>Envz vectors</em> are an extension of argz vectors where each element is a
+name-value pair, separated by a <code>'='</code> character (as in a Unix
+environment).
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC84">5.12.1 Argz Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Operations on argz vectors.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC85">5.12.2 Envz Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Additional operations on environment vectors.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Argz-Functions"></a>
+<a name="SEC84"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC83" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC85" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC83" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 5.12.1 Argz Functions </h3>
+
+<p>Each argz vector is represented by a pointer to the first element, of
+type <code>char *</code>, and a size, of type <code>size_t</code>, both of which can
+be initialized to <code>0</code> to represent an empty argz vector.  All argz
+functions accept either a pointer and a size argument, or pointers to
+them, if they will be modified.
+</p>
+<p>The argz functions use <code>malloc</code>/<code>realloc</code> to allocate/grow
+argz vectors, and so any argz vector creating using these functions may
+be freed by using <code>free</code>; conversely, any argz function that may
+grow a string expects that string to have been allocated using
+<code>malloc</code> (those argz functions that only examine their arguments or
+modify them in place will work on any sort of memory).
+See section <a href="libc_3.html#SEC24">Unconstrained Allocation</a>.
+</p>
+<p>All argz functions that do memory allocation have a return type of
+<code>error_t</code>, and return <code>0</code> for success, and <code>ENOMEM</code> if an
+allocation error occurs.
+</p>
+<a name="IDX498"></a>
+<p>These functions are declared in the standard include file &lsquo;<tt>argz.h</tt>&rsquo;.
+</p>
+<dl>
+<dt><u>Function:</u> error_t <b>argz_create</b><i> (char *const <var>argv</var>[], char **<var>argz</var>, size_t *<var>argz_len</var>)</i>
+<a name="IDX499"></a>
+</dt>
+<dd><p>The <code>argz_create</code> function converts the Unix-style argument vector
+<var>argv</var> (a vector of pointers to normal C strings, terminated by
+<code>(char *)0</code>; see section <a href="libc_25.html#SEC526">Program Arguments</a>) into an argz vector with
+the same elements, which is returned in <var>argz</var> and <var>argz_len</var>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> error_t <b>argz_create_sep</b><i> (const char *<var>string</var>, int <var>sep</var>, char **<var>argz</var>, size_t *<var>argz_len</var>)</i>
+<a name="IDX500"></a>
+</dt>
+<dd><p>The <code>argz_create_sep</code> function converts the null-terminated string
+<var>string</var> into an argz vector (returned in <var>argz</var> and
+<var>argz_len</var>) by splitting it into elements at every occurrence of the
+character <var>sep</var>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> size_t <b>argz_count</b><i> (const char *<var>argz</var>, size_t <var>arg_len</var>)</i>
+<a name="IDX501"></a>
+</dt>
+<dd><p>Returns the number of elements in the argz vector <var>argz</var> and
+<var>argz_len</var>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void <b>argz_extract</b><i> (char *<var>argz</var>, size_t <var>argz_len</var>, char **<var>argv</var>)</i>
+<a name="IDX502"></a>
+</dt>
+<dd><p>The <code>argz_extract</code> function converts the argz vector <var>argz</var> and
+<var>argz_len</var> into a Unix-style argument vector stored in <var>argv</var>,
+by putting pointers to every element in <var>argz</var> into successive
+positions in <var>argv</var>, followed by a terminator of <code>0</code>.
+<var>Argv</var> must be pre-allocated with enough space to hold all the
+elements in <var>argz</var> plus the terminating <code>(char *)0</code>
+(<code>(argz_count (<var>argz</var>, <var>argz_len</var>) + 1) * sizeof (char *)</code>
+bytes should be enough).  Note that the string pointers stored into
+<var>argv</var> point into <var>argz</var>&mdash;they are not copies&mdash;and so
+<var>argz</var> must be copied if it will be changed while <var>argv</var> is
+still active.  This function is useful for passing the elements in
+<var>argz</var> to an exec function (see section <a href="libc_26.html#SEC573">Executing a File</a>).
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void <b>argz_stringify</b><i> (char *<var>argz</var>, size_t <var>len</var>, int <var>sep</var>)</i>
+<a name="IDX503"></a>
+</dt>
+<dd><p>The <code>argz_stringify</code> converts <var>argz</var> into a normal string with
+the elements separated by the character <var>sep</var>, by replacing each
+<code>'\0'</code> inside <var>argz</var> (except the last one, which terminates the
+string) with <var>sep</var>.  This is handy for printing <var>argz</var> in a
+readable manner.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> error_t <b>argz_add</b><i> (char **<var>argz</var>, size_t *<var>argz_len</var>, const char *<var>str</var>)</i>
+<a name="IDX504"></a>
+</dt>
+<dd><p>The <code>argz_add</code> function adds the string <var>str</var> to the end of the
+argz vector <code>*<var>argz</var></code>, and updates <code>*<var>argz</var></code> and
+<code>*<var>argz_len</var></code> accordingly.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> error_t <b>argz_add_sep</b><i> (char **<var>argz</var>, size_t *<var>argz_len</var>, const char *<var>str</var>, int <var>delim</var>)</i>
+<a name="IDX505"></a>
+</dt>
+<dd><p>The <code>argz_add_sep</code> function is similar to <code>argz_add</code>, but
+<var>str</var> is split into separate elements in the result at occurrences of
+the character <var>delim</var>.  This is useful, for instance, for
+adding the components of a Unix search path to an argz vector, by using
+a value of <code>':'</code> for <var>delim</var>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> error_t <b>argz_append</b><i> (char **<var>argz</var>, size_t *<var>argz_len</var>, const char *<var>buf</var>, size_t <var>buf_len</var>)</i>
+<a name="IDX506"></a>
+</dt>
+<dd><p>The <code>argz_append</code> function appends <var>buf_len</var> bytes starting at
+<var>buf</var> to the argz vector <code>*<var>argz</var></code>, reallocating
+<code>*<var>argz</var></code> to accommodate it, and adding <var>buf_len</var> to
+<code>*<var>argz_len</var></code>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void <b>argz_delete</b><i> (char **<var>argz</var>, size_t *<var>argz_len</var>, char *<var>entry</var>)</i>
+<a name="IDX507"></a>
+</dt>
+<dd><p>If <var>entry</var> points to the beginning of one of the elements in the
+argz vector <code>*<var>argz</var></code>, the <code>argz_delete</code> function will
+remove this entry and reallocate <code>*<var>argz</var></code>, modifying
+<code>*<var>argz</var></code> and <code>*<var>argz_len</var></code> accordingly.  Note that as
+destructive argz functions usually reallocate their argz argument,
+pointers into argz vectors such as <var>entry</var> will then become invalid.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> error_t <b>argz_insert</b><i> (char **<var>argz</var>, size_t *<var>argz_len</var>, char *<var>before</var>, const char *<var>entry</var>)</i>
+<a name="IDX508"></a>
+</dt>
+<dd><p>The <code>argz_insert</code> function inserts the string <var>entry</var> into the
+argz vector <code>*<var>argz</var></code> at a point just before the existing
+element pointed to by <var>before</var>, reallocating <code>*<var>argz</var></code> and
+updating <code>*<var>argz</var></code> and <code>*<var>argz_len</var></code>.  If <var>before</var>
+is <code>0</code>, <var>entry</var> is added to the end instead (as if by
+<code>argz_add</code>).  Since the first element is in fact the same as
+<code>*<var>argz</var></code>, passing in <code>*<var>argz</var></code> as the value of
+<var>before</var> will result in <var>entry</var> being inserted at the beginning.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>argz_next</b><i> (char *<var>argz</var>, size_t <var>argz_len</var>, const char *<var>entry</var>)</i>
+<a name="IDX509"></a>
+</dt>
+<dd><p>The <code>argz_next</code> function provides a convenient way of iterating
+over the elements in the argz vector <var>argz</var>.  It returns a pointer
+to the next element in <var>argz</var> after the element <var>entry</var>, or
+<code>0</code> if there are no elements following <var>entry</var>.  If <var>entry</var>
+is <code>0</code>, the first element of <var>argz</var> is returned.
+</p>
+<p>This behavior suggests two styles of iteration:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">    char *entry = 0;
+    while ((entry = argz_next (<var>argz</var>, <var>argz_len</var>, entry)))
+      <var>action</var>;
+</pre></td></tr></table>
+
+<p>(the double parentheses are necessary to make some C compilers shut up
+about what they consider a questionable <code>while</code>-test) and:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">    char *entry;
+    for (entry = <var>argz</var>;
+         entry;
+         entry = argz_next (<var>argz</var>, <var>argz_len</var>, entry))
+      <var>action</var>;
+</pre></td></tr></table>
+
+<p>Note that the latter depends on <var>argz</var> having a value of <code>0</code> if
+it is empty (rather than a pointer to an empty block of memory); this
+invariant is maintained for argz vectors created by the functions here.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> error_t <b>argz_replace</b><i> (char **<var>argz</var>, size_t *<var>argz_len</var>, const char *<var>str</var>, const char *<var>with</var>, unsigned *<var>replace_count</var>)</i>
+<a name="IDX510"></a>
+</dt>
+<dd><p>Replace any occurrences of the string <var>str</var> in <var>argz</var> with
+<var>with</var>, reallocating <var>argz</var> as necessary.  If
+<var>replace_count</var> is non-zero, <code>*<var>replace_count</var></code> will be
+incremented by number of replacements performed.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Envz-Functions"></a>
+<a name="SEC85"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC84" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC83" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 5.12.2 Envz Functions </h3>
+
+<p>Envz vectors are just argz vectors with additional constraints on the form
+of each element; as such, argz functions can also be used on them, where it
+makes sense.
+</p>
+<p>Each element in an envz vector is a name-value pair, separated by a <code>'='</code>
+character; if multiple <code>'='</code> characters are present in an element, those
+after the first are considered part of the value, and treated like all other
+non-<code>'\0'</code> characters.
+</p>
+<p>If <em>no</em> <code>'='</code> characters are present in an element, that element is
+considered the name of a &ldquo;null&rdquo; entry, as distinct from an entry with an
+empty value: <code>envz_get</code> will return <code>0</code> if given the name of null
+entry, whereas an entry with an empty value would result in a value of
+<code>&quot;&quot;</code>; <code>envz_entry</code> will still find such entries, however.  Null
+entries can be removed with <code>envz_strip</code> function.
+</p>
+<p>As with argz functions, envz functions that may allocate memory (and thus
+fail) have a return type of <code>error_t</code>, and return either <code>0</code> or
+<code>ENOMEM</code>.
+</p>
+<a name="IDX511"></a>
+<p>These functions are declared in the standard include file &lsquo;<tt>envz.h</tt>&rsquo;.
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>envz_entry</b><i> (const char *<var>envz</var>, size_t <var>envz_len</var>, const char *<var>name</var>)</i>
+<a name="IDX512"></a>
+</dt>
+<dd><p>The <code>envz_entry</code> function finds the entry in <var>envz</var> with the name
+<var>name</var>, and returns a pointer to the whole entry&mdash;that is, the argz
+element which begins with <var>name</var> followed by a <code>'='</code> character.  If
+there is no entry with that name, <code>0</code> is returned.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>envz_get</b><i> (const char *<var>envz</var>, size_t <var>envz_len</var>, const char *<var>name</var>)</i>
+<a name="IDX513"></a>
+</dt>
+<dd><p>The <code>envz_get</code> function finds the entry in <var>envz</var> with the name
+<var>name</var> (like <code>envz_entry</code>), and returns a pointer to the value
+portion of that entry (following the <code>'='</code>).  If there is no entry with
+that name (or only a null entry), <code>0</code> is returned.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> error_t <b>envz_add</b><i> (char **<var>envz</var>, size_t *<var>envz_len</var>, const char *<var>name</var>, const char *<var>value</var>)</i>
+<a name="IDX514"></a>
+</dt>
+<dd><p>The <code>envz_add</code> function adds an entry to <code>*<var>envz</var></code>
+(updating <code>*<var>envz</var></code> and <code>*<var>envz_len</var></code>) with the name
+<var>name</var>, and value <var>value</var>.  If an entry with the same name
+already exists in <var>envz</var>, it is removed first.  If <var>value</var> is
+<code>0</code>, then the new entry will the special null type of entry
+(mentioned above).
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> error_t <b>envz_merge</b><i> (char **<var>envz</var>, size_t *<var>envz_len</var>, const char *<var>envz2</var>, size_t <var>envz2_len</var>, int <var>override</var>)</i>
+<a name="IDX515"></a>
+</dt>
+<dd><p>The <code>envz_merge</code> function adds each entry in <var>envz2</var> to <var>envz</var>,
+as if with <code>envz_add</code>, updating <code>*<var>envz</var></code> and
+<code>*<var>envz_len</var></code>.  If <var>override</var> is true, then values in <var>envz2</var>
+will supersede those with the same name in <var>envz</var>, otherwise not.
+</p>
+<p>Null entries are treated just like other entries in this respect, so a null
+entry in <var>envz</var> can prevent an entry of the same name in <var>envz2</var> from
+being added to <var>envz</var>, if <var>override</var> is false.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void <b>envz_strip</b><i> (char **<var>envz</var>, size_t *<var>envz_len</var>)</i>
+<a name="IDX516"></a>
+</dt>
+<dd><p>The <code>envz_strip</code> function removes any null entries from <var>envz</var>,
+updating <code>*<var>envz</var></code> and <code>*<var>envz_len</var></code>.
+</p></dd></dl>
+<hr size="6">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC70" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_6.html#SEC86" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated by <em>root</em> on <em>October, 30 2008</em> using <a href="http://www.nongnu.org/texi2html/"><em>texi2html 1.78</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>
