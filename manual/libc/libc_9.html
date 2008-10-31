@@ -1,0 +1,880 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- This file documents the GNU C library.
+
+This is Edition 0.12, last updated 2007-10-27,
+of The GNU C Library Reference Manual, for version 2.8.
+
+Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002,
+2003, 2007, 2008 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software Needs Free Documentation"
+and "GNU Lesser General Public License", the Front-Cover texts being
+"A GNU Manual", and with the Back-Cover Texts as in (a) below.  A
+copy of the license is included in the section entitled "GNU Free
+Documentation License".
+
+(a) The FSF's Back-Cover Text is: "You have the freedom to
+copy and modify this GNU manual.  Buying copies from the FSF
+supports it in developing GNU and promoting software freedom."
+ -->
+<!-- Created on October, 30 2008 by texi2html 1.78 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+
+-->
+<head>
+<title>The GNU C Library: 9. Searching and Sorting</title>
+
+<meta name="description" content="The GNU C Library: 9. Searching and Sorting">
+<meta name="keywords" content="The GNU C Library: 9. Searching and Sorting">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.78">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="Searching-and-Sorting"></a>
+<a name="SEC141"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libc_8.html#SEC140" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC142" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc_8.html#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_10.html#SEC148" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h1 class="chapter"> 9. Searching and Sorting </h1>
+
+<p>This chapter describes functions for searching and sorting arrays of
+arbitrary objects.  You pass the appropriate comparison function to be
+applied as an argument, along with the size of the objects in the array
+and the total number of elements.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC142">9.1 Defining the Comparison Function</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Defining how to compare two objects.
+				 Since the sort and search facilities
+                                 are general, you have to specify the
+                                 ordering.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC143">9.2 Array Search Function</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       The <code>bsearch</code> function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC144">9.3 Array Sort Function</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         The <code>qsort</code> function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC145">9.4 Searching and Sorting Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         An example program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC146">9.5 The <code>hsearch</code> function.</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="#SEC147">9.6 The <code>tsearch</code> function.</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+</table>
+
+<hr size="6">
+<a name="Comparison-Functions"></a>
+<a name="SEC142"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC141" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC143" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC141" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC141" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_10.html#SEC148" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 9.1 Defining the Comparison Function </h2>
+
+<p>In order to use the sorted array library functions, you have to describe
+how to compare the elements of the array.
+</p>
+<p>To do this, you supply a comparison function to compare two elements of
+the array.  The library will call this function, passing as arguments
+pointers to two array elements to be compared.  Your comparison function
+should return a value the way <code>strcmp</code> (see section <a href="libc_5.html#SEC75">String/Array Comparison</a>) does: negative if the first argument is &ldquo;less&rdquo; than the
+second, zero if they are &ldquo;equal&rdquo;, and positive if the first argument
+is &ldquo;greater&rdquo;.
+</p>
+<p>Here is an example of a comparison function which works with an array of
+numbers of type <code>double</code>:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">int
+compare_doubles (const void *a, const void *b)
+{
+  const double *da = (const double *) a;
+  const double *db = (const double *) b;
+
+  return (*da &gt; *db) - (*da &lt; *db);
+}
+</pre></td></tr></table>
+
+<p>The header file &lsquo;<tt>stdlib.h</tt>&rsquo; defines a name for the data type of
+comparison functions.  This type is a GNU extension.
+</p>
+<a name="IDX721"></a>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">int comparison_fn_t (const void *, const void *);
+</pre></td></tr></table>
+
+<hr size="6">
+<a name="Array-Search-Function"></a>
+<a name="SEC143"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC142" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC144" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC141" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC141" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_10.html#SEC148" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 9.2 Array Search Function </h2>
+
+<p>Generally searching for a specific element in an array means that
+potentially all elements must be checked.  The GNU C library contains
+functions to perform linear search.  The prototypes for the following
+two functions can be found in &lsquo;<tt>search.h</tt>&rsquo;.
+</p>
+<dl>
+<dt><u>Function:</u> void * <b>lfind</b><i> (const void *<var>key</var>, void *<var>base</var>, size_t *<var>nmemb</var>, size_t <var>size</var>, comparison_fn_t <var>compar</var>)</i>
+<a name="IDX722"></a>
+</dt>
+<dd><p>The <code>lfind</code> function searches in the array with <code>*<var>nmemb</var></code>
+elements of <var>size</var> bytes pointed to by <var>base</var> for an element
+which matches the one pointed to by <var>key</var>.  The function pointed to
+by <var>compar</var> is used decide whether two elements match.
+</p>
+<p>The return value is a pointer to the matching element in the array
+starting at <var>base</var> if it is found.  If no matching element is
+available <code>NULL</code> is returned.
+</p>
+<p>The mean runtime of this function is <code>*<var>nmemb</var></code>/2.  This
+function should only be used if elements often get added to or deleted from
+the array in which case it might not be useful to sort the array before
+searching.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void * <b>lsearch</b><i> (const void *<var>key</var>, void *<var>base</var>, size_t *<var>nmemb</var>, size_t <var>size</var>, comparison_fn_t <var>compar</var>)</i>
+<a name="IDX723"></a>
+</dt>
+<dd><p>The <code>lsearch</code> function is similar to the <code>lfind</code> function.  It
+searches the given array for an element and returns it if found.  The
+difference is that if no matching element is found the <code>lsearch</code>
+function adds the object pointed to by <var>key</var> (with a size of
+<var>size</var> bytes) at the end of the array and it increments the value of
+<code>*<var>nmemb</var></code> to reflect this addition.
+</p>
+<p>This means for the caller that if it is not sure that the array contains
+the element one is searching for the memory allocated for the array
+starting at <var>base</var> must have room for at least <var>size</var> more
+bytes.  If one is sure the element is in the array it is better to use
+<code>lfind</code> so having more room in the array is always necessary when
+calling <code>lsearch</code>.
+</p></dd></dl>
+
+<p>To search a sorted array for an element matching the key, use the
+<code>bsearch</code> function.  The prototype for this function is in
+the header file &lsquo;<tt>stdlib.h</tt>&rsquo;.
+<a name="IDX724"></a>
+</p>
+<dl>
+<dt><u>Function:</u> void * <b>bsearch</b><i> (const void *<var>key</var>, const void *<var>array</var>, size_t <var>count</var>, size_t <var>size</var>, comparison_fn_t <var>compare</var>)</i>
+<a name="IDX725"></a>
+</dt>
+<dd><p>The <code>bsearch</code> function searches the sorted array <var>array</var> for an object
+that is equivalent to <var>key</var>.  The array contains <var>count</var> elements,
+each of which is of size <var>size</var> bytes.
+</p>
+<p>The <var>compare</var> function is used to perform the comparison.  This
+function is called with two pointer arguments and should return an
+integer less than, equal to, or greater than zero corresponding to
+whether its first argument is considered less than, equal to, or greater
+than its second argument.  The elements of the <var>array</var> must already
+be sorted in ascending order according to this comparison function.
+</p>
+<p>The return value is a pointer to the matching array element, or a null
+pointer if no match is found.  If the array contains more than one element
+that matches, the one that is returned is unspecified.
+</p>
+<p>This function derives its name from the fact that it is implemented
+using the binary search algorithm.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Array-Sort-Function"></a>
+<a name="SEC144"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC143" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC145" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC141" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC141" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_10.html#SEC148" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 9.3 Array Sort Function </h2>
+
+<p>To sort an array using an arbitrary comparison function, use the
+<code>qsort</code> function.  The prototype for this function is in
+&lsquo;<tt>stdlib.h</tt>&rsquo;.
+<a name="IDX726"></a>
+</p>
+<dl>
+<dt><u>Function:</u> void <b>qsort</b><i> (void *<var>array</var>, size_t <var>count</var>, size_t <var>size</var>, comparison_fn_t <var>compare</var>)</i>
+<a name="IDX727"></a>
+</dt>
+<dd><p>The <var>qsort</var> function sorts the array <var>array</var>.  The array contains
+<var>count</var> elements, each of which is of size <var>size</var>.
+</p>
+<p>The <var>compare</var> function is used to perform the comparison on the
+array elements.  This function is called with two pointer arguments and
+should return an integer less than, equal to, or greater than zero
+corresponding to whether its first argument is considered less than,
+equal to, or greater than its second argument.
+</p>
+<a name="IDX728"></a>
+<p><strong>Warning:</strong> If two objects compare as equal, their order after
+sorting is unpredictable.  That is to say, the sorting is not stable.
+This can make a difference when the comparison considers only part of
+the elements.  Two elements with the same sort key may differ in other
+respects.
+</p>
+<p>If you want the effect of a stable sort, you can get this result by
+writing the comparison function so that, lacking other reason
+distinguish between two elements, it compares them by their addresses.
+Note that doing this may make the sorting algorithm less efficient, so
+do it only if necessary.
+</p>
+<p>Here is a simple example of sorting an array of doubles in numerical
+order, using the comparison function defined above (see section <a href="#SEC142">Defining the Comparison Function</a>):
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">{
+  double *array;
+  int size;
+  &hellip;
+  qsort (array, size, sizeof (double), compare_doubles);
+}
+</pre></td></tr></table>
+
+<p>The <code>qsort</code> function derives its name from the fact that it was
+originally implemented using the &ldquo;quick sort&rdquo; algorithm.
+</p>
+<p>The implementation of <code>qsort</code> in this library might not be an
+in-place sort and might thereby use an extra amount of memory to store
+the array.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Search_002fSort-Example"></a>
+<a name="SEC145"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC144" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC146" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC141" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC141" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_10.html#SEC148" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 9.4 Searching and Sorting Example </h2>
+
+<p>Here is an example showing the use of <code>qsort</code> and <code>bsearch</code>
+with an array of structures.  The objects in the array are sorted
+by comparing their <code>name</code> fields with the <code>strcmp</code> function.
+Then, we can look up individual objects based on their names.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+/* <span class="roman">Define an array of critters to sort.</span> */
+
+struct critter
+  {
+    const char *name;
+    const char *species;
+  };
+
+struct critter muppets[] =
+  {
+    {&quot;Kermit&quot;, &quot;frog&quot;},
+    {&quot;Piggy&quot;, &quot;pig&quot;},
+    {&quot;Gonzo&quot;, &quot;whatever&quot;},
+    {&quot;Fozzie&quot;, &quot;bear&quot;},
+    {&quot;Sam&quot;, &quot;eagle&quot;},
+    {&quot;Robin&quot;, &quot;frog&quot;},
+    {&quot;Animal&quot;, &quot;animal&quot;},
+    {&quot;Camilla&quot;, &quot;chicken&quot;},
+    {&quot;Sweetums&quot;, &quot;monster&quot;},
+    {&quot;Dr. Strangepork&quot;, &quot;pig&quot;},
+    {&quot;Link Hogthrob&quot;, &quot;pig&quot;},
+    {&quot;Zoot&quot;, &quot;human&quot;},
+    {&quot;Dr. Bunsen Honeydew&quot;, &quot;human&quot;},
+    {&quot;Beaker&quot;, &quot;human&quot;},
+    {&quot;Swedish Chef&quot;, &quot;human&quot;}
+  };
+
+int count = sizeof (muppets) / sizeof (struct critter);
+
+
+
+/* <span class="roman">This is the comparison function used for sorting and searching.</span> */
+
+int 
+critter_cmp (const struct critter *c1, const struct critter *c2)
+{
+  return strcmp (c1-&gt;name, c2-&gt;name);
+}
+
+
+/* <span class="roman">Print information about a critter.</span> */
+
+void 
+print_critter (const struct critter *c)
+{
+  printf (&quot;%s, the %s\n&quot;, c-&gt;name, c-&gt;species);
+}
+
+
+/* <span class="roman">Do the lookup into the sorted array.</span> */
+
+void 
+find_critter (const char *name)
+{
+  struct critter target, *result;
+  target.name = name;
+  result = bsearch (&amp;target, muppets, count, sizeof (struct critter),
+                    critter_cmp);
+  if (result)
+    print_critter (result);
+  else
+    printf (&quot;Couldn't find %s.\n&quot;, name);
+}
+
+/* <span class="roman">Main program.</span> */
+
+int
+main (void)
+{
+  int i;
+
+  for (i = 0; i &lt; count; i++)
+    print_critter (&amp;muppets[i]);
+  printf (&quot;\n&quot;);
+
+  qsort (muppets, count, sizeof (struct critter), critter_cmp);
+
+  for (i = 0; i &lt; count; i++)
+    print_critter (&amp;muppets[i]);
+  printf (&quot;\n&quot;);
+
+  find_critter (&quot;Kermit&quot;);
+  find_critter (&quot;Gonzo&quot;);
+  find_critter (&quot;Janice&quot;);
+
+  return 0;
+}
+</pre></td></tr></table>
+
+<a name="IDX729"></a>
+<p>The output from this program looks like:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Kermit, the frog
+Piggy, the pig
+Gonzo, the whatever
+Fozzie, the bear
+Sam, the eagle
+Robin, the frog
+Animal, the animal
+Camilla, the chicken
+Sweetums, the monster
+Dr. Strangepork, the pig
+Link Hogthrob, the pig
+Zoot, the human
+Dr. Bunsen Honeydew, the human
+Beaker, the human
+Swedish Chef, the human
+
+Animal, the animal
+Beaker, the human
+Camilla, the chicken
+Dr. Bunsen Honeydew, the human
+Dr. Strangepork, the pig
+Fozzie, the bear
+Gonzo, the whatever
+Kermit, the frog
+Link Hogthrob, the pig
+Piggy, the pig
+Robin, the frog
+Sam, the eagle
+Swedish Chef, the human
+Sweetums, the monster
+Zoot, the human
+
+Kermit, the frog
+Gonzo, the whatever
+Couldn't find Janice.
+</pre></td></tr></table>
+
+
+<hr size="6">
+<a name="Hash-Search-Function"></a>
+<a name="SEC146"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC145" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC147" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC141" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC141" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_10.html#SEC148" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 9.5 The <code>hsearch</code> function. </h2>
+
+<p>The functions mentioned so far in this chapter are for searching in a sorted
+or unsorted array.  There are other methods to organize information
+which later should be searched.  The costs of insert, delete and search
+differ.  One possible implementation is using hashing tables.
+The following functions are declared in the header file &lsquo;<tt>search.h</tt>&rsquo;.
+</p>
+<dl>
+<dt><u>Function:</u> int <b>hcreate</b><i> (size_t <var>nel</var>)</i>
+<a name="IDX730"></a>
+</dt>
+<dd><p>The <code>hcreate</code> function creates a hashing table which can contain at
+least <var>nel</var> elements.  There is no possibility to grow this table so
+it is necessary to choose the value for <var>nel</var> wisely.  The method
+used to implement this function might make it necessary to make the
+number of elements in the hashing table larger than the expected maximal
+number of elements.  Hashing tables usually work inefficiently if they are
+filled 80% or more.  The constant access time guaranteed by hashing can
+only be achieved if few collisions exist.  See Knuth's &ldquo;The Art of
+Computer Programming, Part 3: Searching and Sorting&rdquo; for more
+information.
+</p>
+<p>The weakest aspect of this function is that there can be at most one
+hashing table used through the whole program.  The table is allocated
+in local memory out of control of the programmer.  As an extension the
+GNU C library provides an additional set of functions with an reentrant
+interface which provide a similar interface but which allow to keep
+arbitrarily many hashing tables.
+</p>
+<p>It is possible to use more than one hashing table in the program run if
+the former table is first destroyed by a call to <code>hdestroy</code>.
+</p>
+<p>The function returns a non-zero value if successful.  If it return zero
+something went wrong.  This could either mean there is already a hashing
+table in use or the program runs out of memory.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void <b>hdestroy</b><i> (void)</i>
+<a name="IDX731"></a>
+</dt>
+<dd><p>The <code>hdestroy</code> function can be used to free all the resources
+allocated in a previous call of <code>hcreate</code>.  After a call to this
+function it is again possible to call <code>hcreate</code> and allocate a new
+table with possibly different size.
+</p>
+<p>It is important to remember that the elements contained in the hashing
+table at the time <code>hdestroy</code> is called are <em>not</em> freed by this
+function.  It is the responsibility of the program code to free those
+strings (if necessary at all).  Freeing all the element memory is not
+possible without extra, separately kept information since there is no
+function to iterate through all available elements in the hashing table.
+If it is really necessary to free a table and all elements the
+programmer has to keep a list of all table elements and before calling
+<code>hdestroy</code> s/he has to free all element's data using this list.
+This is a very unpleasant mechanism and it also shows that this kind of
+hashing tables is mainly meant for tables which are created once and
+used until the end of the program run.
+</p></dd></dl>
+
+<p>Entries of the hashing table and keys for the search are defined using
+this type:
+</p>
+<dl>
+<dt><u>Data type:</u> <b>struct ENTRY</b>
+<a name="IDX732"></a>
+</dt>
+<dd><p>Both elements of this structure are pointers to zero-terminated strings.
+This is a limiting restriction of the functionality of the
+<code>hsearch</code> functions.  They can only be used for data sets which use
+the NUL character always and solely to terminate the records.  It is not
+possible to handle general binary data.
+</p>
+<dl compact="compact">
+<dt> <code>char *key</code></dt>
+<dd><p>Pointer to a zero-terminated string of characters describing the key for
+the search or the element in the hashing table.
+</p></dd>
+<dt> <code>char *data</code></dt>
+<dd><p>Pointer to a zero-terminated string of characters describing the data.
+If the functions will be called only for searching an existing entry
+this element might stay undefined since it is not used.
+</p></dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> ENTRY * <b>hsearch</b><i> (ENTRY <var>item</var>, ACTION <var>action</var>)</i>
+<a name="IDX733"></a>
+</dt>
+<dd><p>To search in a hashing table created using <code>hcreate</code> the
+<code>hsearch</code> function must be used.  This function can perform simple
+search for an element (if <var>action</var> has the <code>FIND</code>) or it can
+alternatively insert the key element into the hashing table.  Entries
+are never replaced.
+</p>
+<p>The key is denoted by a pointer to an object of type <code>ENTRY</code>.  For
+locating the corresponding position in the hashing table only the
+<code>key</code> element of the structure is used.
+</p>
+<p>If an entry with matching key is found the <var>action</var> parameter is
+irrelevant.  The found entry is returned.  If no matching entry is found
+and the <var>action</var> parameter has the value <code>FIND</code> the function
+returns a <code>NULL</code> pointer.  If no entry is found and the
+<var>action</var> parameter has the value <code>ENTER</code> a new entry is added
+to the hashing table which is initialized with the parameter <var>item</var>.
+A pointer to the newly added entry is returned.
+</p></dd></dl>
+
+<p>As mentioned before the hashing table used by the functions described so
+far is global and there can be at any time at most one hashing table in
+the program.  A solution is to use the following functions which are a
+GNU extension.  All have in common that they operate on a hashing table
+which is described by the content of an object of the type <code>struct
+hsearch_data</code>.  This type should be treated as opaque, none of its
+members should be changed directly.
+</p>
+<dl>
+<dt><u>Function:</u> int <b>hcreate_r</b><i> (size_t <var>nel</var>, struct hsearch_data *<var>htab</var>)</i>
+<a name="IDX734"></a>
+</dt>
+<dd><p>The <code>hcreate_r</code> function initializes the object pointed to by
+<var>htab</var> to contain a hashing table with at least <var>nel</var> elements.
+So this function is equivalent to the <code>hcreate</code> function except
+that the initialized data structure is controlled by the user.
+</p>
+<p>This allows having more than one hashing table at one time.  The memory
+necessary for the <code>struct hsearch_data</code> object can be allocated
+dynamically.  It must be initialized with zero before calling this
+function.
+</p>
+<p>The return value is non-zero if the operation was successful.  If the
+return value is zero, something went wrong, which probably means the
+programs ran out of memory.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void <b>hdestroy_r</b><i> (struct hsearch_data *<var>htab</var>)</i>
+<a name="IDX735"></a>
+</dt>
+<dd><p>The <code>hdestroy_r</code> function frees all resources allocated by the
+<code>hcreate_r</code> function for this very same object <var>htab</var>.  As for
+<code>hdestroy</code> it is the programs responsibility to free the strings
+for the elements of the table.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>hsearch_r</b><i> (ENTRY <var>item</var>, ACTION <var>action</var>, ENTRY **<var>retval</var>, struct hsearch_data *<var>htab</var>)</i>
+<a name="IDX736"></a>
+</dt>
+<dd><p>The <code>hsearch_r</code> function is equivalent to <code>hsearch</code>.  The
+meaning of the first two arguments is identical.  But instead of
+operating on a single global hashing table the function works on the
+table described by the object pointed to by <var>htab</var> (which is
+initialized by a call to <code>hcreate_r</code>).
+</p>
+<p>Another difference to <code>hcreate</code> is that the pointer to the found
+entry in the table is not the return value of the functions.  It is
+returned by storing it in a pointer variables pointed to by the
+<var>retval</var> parameter.  The return value of the function is an integer
+value indicating success if it is non-zero and failure if it is zero.
+In the latter case the global variable <var>errno</var> signals the reason for
+the failure.
+</p>
+<dl compact="compact">
+<dt> <code>ENOMEM</code></dt>
+<dd><p>The table is filled and <code>hsearch_r</code> was called with an so far
+unknown key and <var>action</var> set to <code>ENTER</code>.
+</p></dd>
+<dt> <code>ESRCH</code></dt>
+<dd><p>The <var>action</var> parameter is <code>FIND</code> and no corresponding element
+is found in the table.
+</p></dd>
+</dl>
+</dd></dl>
+
+
+<hr size="6">
+<a name="Tree-Search-Function"></a>
+<a name="SEC147"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC146" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_10.html#SEC148" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC141" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC141" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_10.html#SEC148" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 9.6 The <code>tsearch</code> function. </h2>
+
+<p>Another common form to organize data for efficient search is to use
+trees.  The <code>tsearch</code> function family provides a nice interface to
+functions to organize possibly large amounts of data by providing a mean
+access time proportional to the logarithm of the number of elements.
+The GNU C library implementation even guarantees that this bound is
+never exceeded even for input data which cause problems for simple
+binary tree implementations.
+</p>
+<p>The functions described in the chapter are all described in the System
+V and X/Open specifications and are therefore quite portable.
+</p>
+<p>In contrast to the <code>hsearch</code> functions the <code>tsearch</code> functions
+can be used with arbitrary data and not only zero-terminated strings.
+</p>
+<p>The <code>tsearch</code> functions have the advantage that no function to
+initialize data structures is necessary.  A simple pointer of type
+<code>void *</code> initialized to <code>NULL</code> is a valid tree and can be
+extended or searched.  The prototypes for these functions can be found
+in the header file &lsquo;<tt>search.h</tt>&rsquo;.
+</p>
+<dl>
+<dt><u>Function:</u> void * <b>tsearch</b><i> (const void *<var>key</var>, void **<var>rootp</var>, comparison_fn_t <var>compar</var>)</i>
+<a name="IDX737"></a>
+</dt>
+<dd><p>The <code>tsearch</code> function searches in the tree pointed to by
+<code>*<var>rootp</var></code> for an element matching <var>key</var>.  The function
+pointed to by <var>compar</var> is used to determine whether two elements
+match.  See section <a href="#SEC142">Defining the Comparison Function</a>, for a specification of the functions
+which can be used for the <var>compar</var> parameter.
+</p>
+<p>If the tree does not contain a matching entry the <var>key</var> value will
+be added to the tree.  <code>tsearch</code> does not make a copy of the object
+pointed to by <var>key</var> (how could it since the size is unknown).
+Instead it adds a reference to this object which means the object must
+be available as long as the tree data structure is used.
+</p>
+<p>The tree is represented by a pointer to a pointer since it is sometimes
+necessary to change the root node of the tree.  So it must not be
+assumed that the variable pointed to by <var>rootp</var> has the same value
+after the call.  This also shows that it is not safe to call the
+<code>tsearch</code> function more than once at the same time using the same
+tree.  It is no problem to run it more than once at a time on different
+trees.
+</p>
+<p>The return value is a pointer to the matching element in the tree.  If a
+new element was created the pointer points to the new data (which is in
+fact <var>key</var>).  If an entry had to be created and the program ran out
+of space <code>NULL</code> is returned.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void * <b>tfind</b><i> (const void *<var>key</var>, void *const *<var>rootp</var>, comparison_fn_t <var>compar</var>)</i>
+<a name="IDX738"></a>
+</dt>
+<dd><p>The <code>tfind</code> function is similar to the <code>tsearch</code> function.  It
+locates an element matching the one pointed to by <var>key</var> and returns
+a pointer to this element.  But if no matching element is available no
+new element is entered (note that the <var>rootp</var> parameter points to a
+constant pointer).  Instead the function returns <code>NULL</code>.
+</p></dd></dl>
+
+<p>Another advantage of the <code>tsearch</code> function in contrast to the
+<code>hsearch</code> functions is that there is an easy way to remove
+elements.
+</p>
+<dl>
+<dt><u>Function:</u> void * <b>tdelete</b><i> (const void *<var>key</var>, void **<var>rootp</var>, comparison_fn_t <var>compar</var>)</i>
+<a name="IDX739"></a>
+</dt>
+<dd><p>To remove a specific element matching <var>key</var> from the tree
+<code>tdelete</code> can be used.  It locates the matching element using the
+same method as <code>tfind</code>.  The corresponding element is then removed
+and a pointer to the parent of the deleted node is returned by the
+function.  If there is no matching entry in the tree nothing can be
+deleted and the function returns <code>NULL</code>.  If the root of the tree
+is deleted <code>tdelete</code> returns some unspecified value not equal to
+<code>NULL</code>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void <b>tdestroy</b><i> (void *<var>vroot</var>, __free_fn_t <var>freefct</var>)</i>
+<a name="IDX740"></a>
+</dt>
+<dd><p>If the complete search tree has to be removed one can use
+<code>tdestroy</code>.  It frees all resources allocated by the <code>tsearch</code>
+function to generate the tree pointed to by <var>vroot</var>.
+</p>
+<p>For the data in each tree node the function <var>freefct</var> is called.
+The pointer to the data is passed as the argument to the function.  If
+no such work is necessary <var>freefct</var> must point to a function doing
+nothing.  It is called in any case.
+</p>
+<p>This function is a GNU extension and not covered by the System V or
+X/Open specifications.
+</p></dd></dl>
+
+<p>In addition to the function to create and destroy the tree data
+structure, there is another function which allows you to apply a
+function to all elements of the tree.  The function must have this type:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">void __action_fn_t (const void *nodep, VISIT value, int level);
+</pre></td></tr></table>
+
+<p>The <var>nodep</var> is the data value of the current node (once given as the
+<var>key</var> argument to <code>tsearch</code>).  <var>level</var> is a numeric value
+which corresponds to the depth of the current node in the tree.  The
+root node has the depth <em>0</em> and its children have a depth of
+<em>1</em> and so on.  The <code>VISIT</code> type is an enumeration type.
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>VISIT</b>
+<a name="IDX741"></a>
+</dt>
+<dd><p>The <code>VISIT</code> value indicates the status of the current node in the
+tree and how the function is called.  The status of a node is either
+`leaf' or `internal node'.  For each leaf node the function is called
+exactly once, for each internal node it is called three times: before
+the first child is processed, after the first child is processed and
+after both children are processed.  This makes it possible to handle all
+three methods of tree traversal (or even a combination of them).
+</p>
+<dl compact="compact">
+<dt> <code>preorder</code></dt>
+<dd><p>The current node is an internal node and the function is called before
+the first child was processed.
+</p></dd>
+<dt> <code>postorder</code></dt>
+<dd><p>The current node is an internal node and the function is called after
+the first child was processed.
+</p></dd>
+<dt> <code>endorder</code></dt>
+<dd><p>The current node is an internal node and the function is called after
+the second child was processed.
+</p></dd>
+<dt> <code>leaf</code></dt>
+<dd><p>The current node is a leaf.
+</p></dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> void <b>twalk</b><i> (const void *<var>root</var>, __action_fn_t <var>action</var>)</i>
+<a name="IDX742"></a>
+</dt>
+<dd><p>For each node in the tree with a node pointed to by <var>root</var>, the
+<code>twalk</code> function calls the function provided by the parameter
+<var>action</var>.  For leaf nodes the function is called exactly once with
+<var>value</var> set to <code>leaf</code>.  For internal nodes the function is
+called three times, setting the <var>value</var> parameter or <var>action</var> to
+the appropriate value.  The <var>level</var> argument for the <var>action</var>
+function is computed while descending the tree with increasing the value
+by one for the descend to a child, starting with the value <em>0</em> for
+the root node.
+</p>
+<p>Since the functions used for the <var>action</var> parameter to <code>twalk</code>
+must not modify the tree data, it is safe to run <code>twalk</code> in more
+than one thread at the same time, working on the same tree.  It is also
+safe to call <code>tfind</code> in parallel.  Functions which modify the tree
+must not be used, otherwise the behavior is undefined.
+</p></dd></dl>
+<hr size="6">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC141" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_10.html#SEC148" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated by <em>root</em> on <em>October, 30 2008</em> using <a href="http://www.nongnu.org/texi2html/"><em>texi2html 1.78</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

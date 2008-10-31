@@ -16,7 +16,7 @@ i686_slibdir = /lib/tls/i686/cmov
 i686_extra_config_options = $(extra_config_options) --disable-profile
 
 # We use -mno-tls-direct-seg-refs to not wrap-around segments, as it
-# greatly increase the speed when running under the Xen hypervisor.
+# greatly increase the speed when running under the 32bit Xen hypervisor.
 GLIBC_PASSES += xen
 DEB_ARCH_REGULAR_PACKAGES += libc6-xen
 xen_add-ons = nptl $(add-ons)
@@ -29,11 +29,11 @@ xen_extra_config_options = $(extra_config_options) --disable-profile
 define xen_extra_pkg_install
 mkdir -p debian/libc6-xen/etc/ld.so.conf.d
 echo '# This directive teaches ldconfig to search in nosegneg subdirectories' >  debian/libc6-xen/etc/ld.so.conf.d/xen.conf
-echo '# and cache the DSOs there with extra bit 0 set in their hwcap match'   >> debian/libc6-xen/etc/ld.so.conf.d/xen.conf
+echo '# and cache the DSOs there with extra bit 1 set in their hwcap match'   >> debian/libc6-xen/etc/ld.so.conf.d/xen.conf
 echo '# fields. In Xen guest kernels, the vDSO tells the dynamic linker to'   >> debian/libc6-xen/etc/ld.so.conf.d/xen.conf
 echo '# search in nosegneg subdirectories and to match this extra hwcap bit'  >> debian/libc6-xen/etc/ld.so.conf.d/xen.conf
 echo '# in the ld.so.cache file.'                                             >> debian/libc6-xen/etc/ld.so.conf.d/xen.conf
-echo 'hwcap 0 nosegneg'                                                       >> debian/libc6-xen/etc/ld.so.conf.d/xen.conf
+echo 'hwcap 1 nosegneg'                                                       >> debian/libc6-xen/etc/ld.so.conf.d/xen.conf
 endef
 
 # build 64-bit (amd64) alternative library

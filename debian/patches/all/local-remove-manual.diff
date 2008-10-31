@@ -3,8 +3,14 @@ But some files have a dependency on manual/errno.texi; the easiest
 solution is to drop those dependencies and make sure that MAKEINFO=:
 so that no target depends on manual/*.texi files.
 
+---
+ manual/Makefile            |  254 +++++++++++++++++++++++++++++++++++++++++++++
+ sysdeps/gnu/Makefile       |    2 
+ sysdeps/mach/hurd/Makefile |    2 
+ 3 files changed, 256 insertions(+), 2 deletions(-)
+
 --- /dev/null
-+++ glibc-2.6/manual/Makefile
++++ b/manual/Makefile
 @@ -0,0 +1,254 @@
 +# Copyright (C) 1992-1999,2000,2001,2002,2003,2004,2006
 +#	Free Software Foundation, Inc.
@@ -260,8 +266,8 @@ so that no target depends on manual/*.texi files.
 +sources =
 +objects =
 +headers =
---- glibc-2.6.orig/sysdeps/gnu/Makefile
-+++ glibc-2.6/sysdeps/gnu/Makefile
+--- a/sysdeps/gnu/Makefile
++++ b/sysdeps/gnu/Makefile
 @@ -20,7 +20,7 @@
  # Generate the list of strings for errno codes from the section of the
  # manual which documents the codes.
@@ -271,8 +277,8 @@ so that no target depends on manual/*.texi files.
  			    $(..)manual/errno.texi
  	$(AWK) -f $^ > $@-tmp
  # Make it unwritable so noone will edit it by mistake.
---- glibc-2.6.orig/sysdeps/mach/hurd/Makefile
-+++ glibc-2.6/sysdeps/mach/hurd/Makefile
+--- a/sysdeps/mach/hurd/Makefile
++++ b/sysdeps/mach/hurd/Makefile
 @@ -87,7 +87,7 @@
  	    -e 's, \.\./, $(..),g' > $@t
  	mv -f $@t $@

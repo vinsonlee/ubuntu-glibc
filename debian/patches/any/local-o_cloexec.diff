@@ -1,5 +1,9 @@
---- sysdeps/unix/opendir.c	2007-08-04 19:21:10.000000000 +0200
-+++ sysdeps/unix/opendir.c	2007-10-25 21:22:11.000000000 +0200
+---
+ sysdeps/unix/opendir.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/sysdeps/unix/opendir.c
++++ b/sysdeps/unix/opendir.c
 @@ -146,6 +146,7 @@
  #ifdef __ASSUME_O_CLOEXEC
  # define check_have_o_cloexec(fd) 1

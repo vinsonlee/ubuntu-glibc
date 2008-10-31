@@ -1,0 +1,2004 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- This file documents the GNU C library.
+
+This is Edition 0.12, last updated 2007-10-27,
+of The GNU C Library Reference Manual, for version 2.8.
+
+Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002,
+2003, 2007, 2008 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software Needs Free Documentation"
+and "GNU Lesser General Public License", the Front-Cover texts being
+"A GNU Manual", and with the Back-Cover Texts as in (a) below.  A
+copy of the license is included in the section entitled "GNU Free
+Documentation License".
+
+(a) The FSF's Back-Cover Text is: "You have the freedom to
+copy and modify this GNU manual.  Buying copies from the FSF
+supports it in developing GNU and promoting software freedom."
+ -->
+<!-- Created on October, 30 2008 by texi2html 1.78 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+
+-->
+<head>
+<title>The GNU C Library: 10. Pattern Matching</title>
+
+<meta name="description" content="The GNU C Library: 10. Pattern Matching">
+<meta name="keywords" content="The GNU C Library: 10. Pattern Matching">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.78">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="Pattern-Matching"></a>
+<a name="SEC148"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libc_9.html#SEC147" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC149" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h1 class="chapter"> 10. Pattern Matching </h1>
+
+<p>The GNU C Library provides pattern matching facilities for two kinds of
+patterns: regular expressions and file-name wildcards.  The library also
+provides a facility for expanding variable and command references and
+parsing text into words in the way the shell does.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC149">10.1 Wildcard Matching</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Matching a wildcard pattern against a single string.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC150">10.2 Globbing</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Finding the files that match a wildcard pattern.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC154">10.3 Regular Expression Matching</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Matching regular expressions against strings.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC161">10.4 Shell-Style Word Expansion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Expanding shell variables, nested commands,
+			    arithmetic, and wildcards.
+			    This is what the shell does with shell commands.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Wildcard-Matching"></a>
+<a name="SEC149"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC148" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC150" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 10.1 Wildcard Matching </h2>
+
+<p>This section describes how to match a wildcard pattern against a
+particular string.  The result is a yes or no answer: does the
+string fit the pattern or not.  The symbols described here are all
+declared in &lsquo;<tt>fnmatch.h</tt>&rsquo;.
+</p>
+<dl>
+<dt><u>Function:</u> int <b>fnmatch</b><i> (const char *<var>pattern</var>, const char *<var>string</var>, int <var>flags</var>)</i>
+<a name="IDX743"></a>
+</dt>
+<dd><p>This function tests whether the string <var>string</var> matches the pattern
+<var>pattern</var>.  It returns <code>0</code> if they do match; otherwise, it
+returns the nonzero value <code>FNM_NOMATCH</code>.  The arguments
+<var>pattern</var> and <var>string</var> are both strings.
+</p>
+<p>The argument <var>flags</var> is a combination of flag bits that alter the
+details of matching.  See below for a list of the defined flags.
+</p>
+<p>In the GNU C Library, <code>fnmatch</code> cannot experience an &ldquo;error&rdquo;&mdash;it
+always returns an answer for whether the match succeeds.  However, other
+implementations of <code>fnmatch</code> might sometimes report &ldquo;errors&rdquo;.
+They would do so by returning nonzero values that are not equal to
+<code>FNM_NOMATCH</code>.
+</p></dd></dl>
+
+<p>These are the available flags for the <var>flags</var> argument:
+</p>
+<dl compact="compact">
+<dt> <code>FNM_FILE_NAME</code></dt>
+<dd><p>Treat the &lsquo;<samp>/</samp>&rsquo; character specially, for matching file names.  If
+this flag is set, wildcard constructs in <var>pattern</var> cannot match
+&lsquo;<samp>/</samp>&rsquo; in <var>string</var>.  Thus, the only way to match &lsquo;<samp>/</samp>&rsquo; is with
+an explicit &lsquo;<samp>/</samp>&rsquo; in <var>pattern</var>.
+</p>
+</dd>
+<dt> <code>FNM_PATHNAME</code></dt>
+<dd><p>This is an alias for <code>FNM_FILE_NAME</code>; it comes from POSIX.2.  We
+don't recommend this name because we don't use the term &ldquo;pathname&rdquo; for
+file names.
+</p>
+</dd>
+<dt> <code>FNM_PERIOD</code></dt>
+<dd><p>Treat the &lsquo;<samp>.</samp>&rsquo; character specially if it appears at the beginning of
+<var>string</var>.  If this flag is set, wildcard constructs in <var>pattern</var>
+cannot match &lsquo;<samp>.</samp>&rsquo; as the first character of <var>string</var>.
+</p>
+<p>If you set both <code>FNM_PERIOD</code> and <code>FNM_FILE_NAME</code>, then the
+special treatment applies to &lsquo;<samp>.</samp>&rsquo; following &lsquo;<samp>/</samp>&rsquo; as well as to
+&lsquo;<samp>.</samp>&rsquo; at the beginning of <var>string</var>.  (The shell uses the
+<code>FNM_PERIOD</code> and <code>FNM_FILE_NAME</code> flags together for matching
+file names.)
+</p>
+</dd>
+<dt> <code>FNM_NOESCAPE</code></dt>
+<dd><p>Don't treat the &lsquo;<samp>\</samp>&rsquo; character specially in patterns.  Normally,
+&lsquo;<samp>\</samp>&rsquo; quotes the following character, turning off its special meaning
+(if any) so that it matches only itself.  When quoting is enabled, the
+pattern &lsquo;<samp>\?</samp>&rsquo; matches only the string &lsquo;<samp>?</samp>&rsquo;, because the question
+mark in the pattern acts like an ordinary character.
+</p>
+<p>If you use <code>FNM_NOESCAPE</code>, then &lsquo;<samp>\</samp>&rsquo; is an ordinary character.
+</p>
+</dd>
+<dt> <code>FNM_LEADING_DIR</code></dt>
+<dd><p>Ignore a trailing sequence of characters starting with a &lsquo;<samp>/</samp>&rsquo; in
+<var>string</var>; that is to say, test whether <var>string</var> starts with a
+directory name that <var>pattern</var> matches.
+</p>
+<p>If this flag is set, either &lsquo;<samp>foo*</samp>&rsquo; or &lsquo;<samp>foobar</samp>&rsquo; as a pattern
+would match the string &lsquo;<samp>foobar/frobozz</samp>&rsquo;.
+</p>
+</dd>
+<dt> <code>FNM_CASEFOLD</code></dt>
+<dd><p>Ignore case in comparing <var>string</var> to <var>pattern</var>.
+</p>
+</dd>
+<dt> <code>FNM_EXTMATCH</code></dt>
+<dd><a name="IDX744"></a>
+<a name="IDX745"></a>
+<p>Recognize beside the normal patterns also the extended patterns
+introduced in &lsquo;<tt>ksh</tt>&rsquo;.  The patterns are written in the form
+explained in the following table where <var>pattern-list</var> is a <code>|</code>
+separated list of patterns.
+</p>
+<dl compact="compact">
+<dt> <code>?(<var>pattern-list</var>)</code></dt>
+<dd><p>The pattern matches if zero or one occurrences of any of the patterns
+in the <var>pattern-list</var> allow matching the input string.
+</p>
+</dd>
+<dt> <code>*(<var>pattern-list</var>)</code></dt>
+<dd><p>The pattern matches if zero or more occurrences of any of the patterns
+in the <var>pattern-list</var> allow matching the input string.
+</p>
+</dd>
+<dt> <code>+(<var>pattern-list</var>)</code></dt>
+<dd><p>The pattern matches if one or more occurrences of any of the patterns
+in the <var>pattern-list</var> allow matching the input string.
+</p>
+</dd>
+<dt> <code>@(<var>pattern-list</var>)</code></dt>
+<dd><p>The pattern matches if exactly one occurrence of any of the patterns in
+the <var>pattern-list</var> allows matching the input string.
+</p>
+</dd>
+<dt> <code>!(<var>pattern-list</var>)</code></dt>
+<dd><p>The pattern matches if the input string cannot be matched with any of
+the patterns in the <var>pattern-list</var>.
+</p></dd>
+</dl>
+</dd>
+</dl>
+
+<hr size="6">
+<a name="Globbing"></a>
+<a name="SEC150"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC149" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC151" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 10.2 Globbing </h2>
+
+<p>The archetypal use of wildcards is for matching against the files in a
+directory, and making a list of all the matches.  This is called
+<em>globbing</em>.
+</p>
+<p>You could do this using <code>fnmatch</code>, by reading the directory entries
+one by one and testing each one with <code>fnmatch</code>.  But that would be
+slow (and complex, since you would have to handle subdirectories by
+hand).
+</p>
+<p>The library provides a function <code>glob</code> to make this particular use
+of wildcards convenient.  <code>glob</code> and the other symbols in this
+section are declared in &lsquo;<tt>glob.h</tt>&rsquo;.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC151">10.2.1 Calling <code>glob</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Basic use of <code>glob</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC152">10.2.2 Flags for Globbing</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Flags that enable various options in <code>glob</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC153">10.2.3 More Flags for Globbing</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  GNU specific extensions to <code>glob</code>.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Calling-Glob"></a>
+<a name="SEC151"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC150" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC152" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC150" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.2.1 Calling <code>glob</code> </h3>
+
+<p>The result of globbing is a vector of file names (strings).  To return
+this vector, <code>glob</code> uses a special data type, <code>glob_t</code>, which
+is a structure.  You pass <code>glob</code> the address of the structure, and
+it fills in the structure's fields to tell you about the results.
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>glob_t</b>
+<a name="IDX746"></a>
+</dt>
+<dd><p>This data type holds a pointer to a word vector.  More precisely, it
+records both the address of the word vector and its size.  The GNU
+implementation contains some more fields which are non-standard
+extensions.
+</p>
+<dl compact="compact">
+<dt> <code>gl_pathc</code></dt>
+<dd><p>The number of elements in the vector, excluding the initial null entries
+if the GLOB_DOOFFS flag is used (see gl_offs below).
+</p>
+</dd>
+<dt> <code>gl_pathv</code></dt>
+<dd><p>The address of the vector.  This field has type <code>char **</code>.
+</p>
+</dd>
+<dt> <code>gl_offs</code></dt>
+<dd><p>The offset of the first real element of the vector, from its nominal
+address in the <code>gl_pathv</code> field.  Unlike the other fields, this
+is always an input to <code>glob</code>, rather than an output from it.
+</p>
+<p>If you use a nonzero offset, then that many elements at the beginning of
+the vector are left empty.  (The <code>glob</code> function fills them with
+null pointers.)
+</p>
+<p>The <code>gl_offs</code> field is meaningful only if you use the
+<code>GLOB_DOOFFS</code> flag.  Otherwise, the offset is always zero
+regardless of what is in this field, and the first real element comes at
+the beginning of the vector.
+</p>
+</dd>
+<dt> <code>gl_closedir</code></dt>
+<dd><p>The address of an alternative implementation of the <code>closedir</code>
+function.  It is used if the <code>GLOB_ALTDIRFUNC</code> bit is set in
+the flag parameter.  The type of this field is
+<code>void (*) (void *)</code>.
+</p>
+<p>This is a GNU extension.
+</p>
+</dd>
+<dt> <code>gl_readdir</code></dt>
+<dd><p>The address of an alternative implementation of the <code>readdir</code>
+function used to read the contents of a directory.  It is used if the
+<code>GLOB_ALTDIRFUNC</code> bit is set in the flag parameter.  The type of
+this field is <code>struct dirent *(*) (void *)</code>.
+</p>
+<p>This is a GNU extension.
+</p>
+</dd>
+<dt> <code>gl_opendir</code></dt>
+<dd><p>The address of an alternative implementation of the <code>opendir</code>
+function.  It is used if the <code>GLOB_ALTDIRFUNC</code> bit is set in
+the flag parameter.  The type of this field is
+<code>void *(*) (const char *)</code>.
+</p>
+<p>This is a GNU extension.
+</p>
+</dd>
+<dt> <code>gl_stat</code></dt>
+<dd><p>The address of an alternative implementation of the <code>stat</code> function
+to get information about an object in the filesystem.  It is used if the
+<code>GLOB_ALTDIRFUNC</code> bit is set in the flag parameter.  The type of
+this field is <code>int (*) (const char *, struct stat *)</code>.
+</p>
+<p>This is a GNU extension.
+</p>
+</dd>
+<dt> <code>gl_lstat</code></dt>
+<dd><p>The address of an alternative implementation of the <code>lstat</code>
+function to get information about an object in the filesystems, not
+following symbolic links.  It is used if the <code>GLOB_ALTDIRFUNC</code> bit
+is set in the flag parameter.  The type of this field is <code>int
+(*) (const char *, struct stat *)</code>.
+</p>
+<p>This is a GNU extension.
+</p></dd>
+</dl>
+</dd></dl>
+
+<p>For use in the <code>glob64</code> function &lsquo;<tt>glob.h</tt>&rsquo; contains another
+definition for a very similar type.  <code>glob64_t</code> differs from
+<code>glob_t</code> only in the types of the members <code>gl_readdir</code>,
+<code>gl_stat</code>, and <code>gl_lstat</code>.
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>glob64_t</b>
+<a name="IDX747"></a>
+</dt>
+<dd><p>This data type holds a pointer to a word vector.  More precisely, it
+records both the address of the word vector and its size.  The GNU
+implementation contains some more fields which are non-standard
+extensions.
+</p>
+<dl compact="compact">
+<dt> <code>gl_pathc</code></dt>
+<dd><p>The number of elements in the vector, excluding the initial null entries
+if the GLOB_DOOFFS flag is used (see gl_offs below).
+</p>
+</dd>
+<dt> <code>gl_pathv</code></dt>
+<dd><p>The address of the vector.  This field has type <code>char **</code>.
+</p>
+</dd>
+<dt> <code>gl_offs</code></dt>
+<dd><p>The offset of the first real element of the vector, from its nominal
+address in the <code>gl_pathv</code> field.  Unlike the other fields, this
+is always an input to <code>glob</code>, rather than an output from it.
+</p>
+<p>If you use a nonzero offset, then that many elements at the beginning of
+the vector are left empty.  (The <code>glob</code> function fills them with
+null pointers.)
+</p>
+<p>The <code>gl_offs</code> field is meaningful only if you use the
+<code>GLOB_DOOFFS</code> flag.  Otherwise, the offset is always zero
+regardless of what is in this field, and the first real element comes at
+the beginning of the vector.
+</p>
+</dd>
+<dt> <code>gl_closedir</code></dt>
+<dd><p>The address of an alternative implementation of the <code>closedir</code>
+function.  It is used if the <code>GLOB_ALTDIRFUNC</code> bit is set in
+the flag parameter.  The type of this field is
+<code>void (*) (void *)</code>.
+</p>
+<p>This is a GNU extension.
+</p>
+</dd>
+<dt> <code>gl_readdir</code></dt>
+<dd><p>The address of an alternative implementation of the <code>readdir64</code>
+function used to read the contents of a directory.  It is used if the
+<code>GLOB_ALTDIRFUNC</code> bit is set in the flag parameter.  The type of
+this field is <code>struct dirent64 *(*) (void *)</code>.
+</p>
+<p>This is a GNU extension.
+</p>
+</dd>
+<dt> <code>gl_opendir</code></dt>
+<dd><p>The address of an alternative implementation of the <code>opendir</code>
+function.  It is used if the <code>GLOB_ALTDIRFUNC</code> bit is set in
+the flag parameter.  The type of this field is
+<code>void *(*) (const char *)</code>.
+</p>
+<p>This is a GNU extension.
+</p>
+</dd>
+<dt> <code>gl_stat</code></dt>
+<dd><p>The address of an alternative implementation of the <code>stat64</code> function
+to get information about an object in the filesystem.  It is used if the
+<code>GLOB_ALTDIRFUNC</code> bit is set in the flag parameter.  The type of
+this field is <code>int (*) (const char *, struct stat64 *)</code>.
+</p>
+<p>This is a GNU extension.
+</p>
+</dd>
+<dt> <code>gl_lstat</code></dt>
+<dd><p>The address of an alternative implementation of the <code>lstat64</code>
+function to get information about an object in the filesystems, not
+following symbolic links.  It is used if the <code>GLOB_ALTDIRFUNC</code> bit
+is set in the flag parameter.  The type of this field is <code>int
+(*) (const char *, struct stat64 *)</code>.
+</p>
+<p>This is a GNU extension.
+</p></dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>glob</b><i> (const char *<var>pattern</var>, int <var>flags</var>, int (*<var>errfunc</var>) (const char *<var>filename</var>, int <var>error-code</var>), glob_t *<var>vector-ptr</var>)</i>
+<a name="IDX748"></a>
+</dt>
+<dd><p>The function <code>glob</code> does globbing using the pattern <var>pattern</var>
+in the current directory.  It puts the result in a newly allocated
+vector, and stores the size and address of this vector into
+<code>*<var>vector-ptr</var></code>.  The argument <var>flags</var> is a combination of
+bit flags; see <a href="#SEC152">Flags for Globbing</a>, for details of the flags.
+</p>
+<p>The result of globbing is a sequence of file names.  The function
+<code>glob</code> allocates a string for each resulting word, then
+allocates a vector of type <code>char **</code> to store the addresses of
+these strings.  The last element of the vector is a null pointer.
+This vector is called the <em>word vector</em>.
+</p>
+<p>To return this vector, <code>glob</code> stores both its address and its
+length (number of elements, not counting the terminating null pointer)
+into <code>*<var>vector-ptr</var></code>.
+</p>
+<p>Normally, <code>glob</code> sorts the file names alphabetically before
+returning them.  You can turn this off with the flag <code>GLOB_NOSORT</code>
+if you want to get the information as fast as possible.  Usually it's
+a good idea to let <code>glob</code> sort them&mdash;if you process the files in
+alphabetical order, the users will have a feel for the rate of progress
+that your application is making.
+</p>
+<p>If <code>glob</code> succeeds, it returns 0.  Otherwise, it returns one
+of these error codes:
+</p>
+<dl compact="compact">
+<dt> <code>GLOB_ABORTED</code>
+<a name="IDX749"></a>
+</dt>
+<dd><p>There was an error opening a directory, and you used the flag
+<code>GLOB_ERR</code> or your specified <var>errfunc</var> returned a nonzero
+value.
+for an explanation of the <code>GLOB_ERR</code> flag and <var>errfunc</var>.
+</p>
+</dd>
+<dt> <code>GLOB_NOMATCH</code>
+<a name="IDX750"></a>
+</dt>
+<dd><p>The pattern didn't match any existing files.  If you use the
+<code>GLOB_NOCHECK</code> flag, then you never get this error code, because
+that flag tells <code>glob</code> to <em>pretend</em> that the pattern matched
+at least one file.
+</p>
+</dd>
+<dt> <code>GLOB_NOSPACE</code>
+<a name="IDX751"></a>
+</dt>
+<dd><p>It was impossible to allocate memory to hold the result.
+</p></dd>
+</dl>
+
+<p>In the event of an error, <code>glob</code> stores information in
+<code>*<var>vector-ptr</var></code> about all the matches it has found so far.
+</p>
+<p>It is important to notice that the <code>glob</code> function will not fail if
+it encounters directories or files which cannot be handled without the
+LFS interfaces.  The implementation of <code>glob</code> is supposed to use
+these functions internally.  This at least is the assumptions made by
+the Unix standard.  The GNU extension of allowing the user to provide
+own directory handling and <code>stat</code> functions complicates things a
+bit.  If these callback functions are used and a large file or directory
+is encountered <code>glob</code> <em>can</em> fail.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>glob64</b><i> (const char *<var>pattern</var>, int <var>flags</var>, int (*<var>errfunc</var>) (const char *<var>filename</var>, int <var>error-code</var>), glob64_t *<var>vector-ptr</var>)</i>
+<a name="IDX752"></a>
+</dt>
+<dd><p>The <code>glob64</code> function was added as part of the Large File Summit
+extensions but is not part of the original LFS proposal.  The reason for
+this is simple: it is not necessary.  The necessity for a <code>glob64</code>
+function is added by the extensions of the GNU <code>glob</code>
+implementation which allows the user to provide own directory handling
+and <code>stat</code> functions.  The <code>readdir</code> and <code>stat</code> functions
+do depend on the choice of <code>_FILE_OFFSET_BITS</code> since the definition
+of the types <code>struct dirent</code> and <code>struct stat</code> will change
+depending on the choice.
+</p>
+<p>Beside this difference the <code>glob64</code> works just like <code>glob</code> in
+all aspects.
+</p>
+<p>This function is a GNU extension.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Flags-for-Globbing"></a>
+<a name="SEC152"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC151" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC153" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC150" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.2.2 Flags for Globbing </h3>
+
+<p>This section describes the flags that you can specify in the
+<var>flags</var> argument to <code>glob</code>.  Choose the flags you want,
+and combine them with the C bitwise OR operator <code>|</code>.
+</p>
+<dl compact="compact">
+<dt> <code>GLOB_APPEND</code>
+<a name="IDX753"></a>
+</dt>
+<dd><p>Append the words from this expansion to the vector of words produced by
+previous calls to <code>glob</code>.  This way you can effectively expand
+several words as if they were concatenated with spaces between them.
+</p>
+<p>In order for appending to work, you must not modify the contents of the
+word vector structure between calls to <code>glob</code>.  And, if you set
+<code>GLOB_DOOFFS</code> in the first call to <code>glob</code>, you must also
+set it when you append to the results.
+</p>
+<p>Note that the pointer stored in <code>gl_pathv</code> may no longer be valid
+after you call <code>glob</code> the second time, because <code>glob</code> might
+have relocated the vector.  So always fetch <code>gl_pathv</code> from the
+<code>glob_t</code> structure after each <code>glob</code> call; <strong>never</strong> save
+the pointer across calls.
+</p>
+</dd>
+<dt> <code>GLOB_DOOFFS</code>
+<a name="IDX754"></a>
+</dt>
+<dd><p>Leave blank slots at the beginning of the vector of words.
+The <code>gl_offs</code> field says how many slots to leave.
+The blank slots contain null pointers.
+</p>
+</dd>
+<dt> <code>GLOB_ERR</code>
+<a name="IDX755"></a>
+</dt>
+<dd><p>Give up right away and report an error if there is any difficulty
+reading the directories that must be read in order to expand <var>pattern</var>
+fully.  Such difficulties might include a directory in which you don't
+have the requisite access.  Normally, <code>glob</code> tries its best to keep
+on going despite any errors, reading whatever directories it can.
+</p>
+<p>You can exercise even more control than this by specifying an
+error-handler function <var>errfunc</var> when you call <code>glob</code>.  If
+<var>errfunc</var> is not a null pointer, then <code>glob</code> doesn't give up
+right away when it can't read a directory; instead, it calls
+<var>errfunc</var> with two arguments, like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">(*<var>errfunc</var>) (<var>filename</var>, <var>error-code</var>)
+</pre></td></tr></table>
+
+<p>The argument <var>filename</var> is the name of the directory that
+<code>glob</code> couldn't open or couldn't read, and <var>error-code</var> is the
+<code>errno</code> value that was reported to <code>glob</code>.
+</p>
+<p>If the error handler function returns nonzero, then <code>glob</code> gives up
+right away.  Otherwise, it continues.
+</p>
+</dd>
+<dt> <code>GLOB_MARK</code>
+<a name="IDX756"></a>
+</dt>
+<dd><p>If the pattern matches the name of a directory, append &lsquo;<samp>/</samp>&rsquo; to the
+directory's name when returning it.
+</p>
+</dd>
+<dt> <code>GLOB_NOCHECK</code>
+<a name="IDX757"></a>
+</dt>
+<dd><p>If the pattern doesn't match any file names, return the pattern itself
+as if it were a file name that had been matched.  (Normally, when the
+pattern doesn't match anything, <code>glob</code> returns that there were no
+matches.)
+</p>
+</dd>
+<dt> <code>GLOB_NOSORT</code>
+<a name="IDX758"></a>
+</dt>
+<dd><p>Don't sort the file names; return them in no particular order.
+(In practice, the order will depend on the order of the entries in
+the directory.)  The only reason <em>not</em> to sort is to save time.
+</p>
+</dd>
+<dt> <code>GLOB_NOESCAPE</code>
+<a name="IDX759"></a>
+</dt>
+<dd><p>Don't treat the &lsquo;<samp>\</samp>&rsquo; character specially in patterns.  Normally,
+&lsquo;<samp>\</samp>&rsquo; quotes the following character, turning off its special meaning
+(if any) so that it matches only itself.  When quoting is enabled, the
+pattern &lsquo;<samp>\?</samp>&rsquo; matches only the string &lsquo;<samp>?</samp>&rsquo;, because the question
+mark in the pattern acts like an ordinary character.
+</p>
+<p>If you use <code>GLOB_NOESCAPE</code>, then &lsquo;<samp>\</samp>&rsquo; is an ordinary character.
+</p>
+<p><code>glob</code> does its work by calling the function <code>fnmatch</code>
+repeatedly.  It handles the flag <code>GLOB_NOESCAPE</code> by turning on the
+<code>FNM_NOESCAPE</code> flag in calls to <code>fnmatch</code>.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="More-Flags-for-Globbing"></a>
+<a name="SEC153"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC152" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC154" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC150" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.2.3 More Flags for Globbing </h3>
+
+<p>Beside the flags described in the last section, the GNU implementation of
+<code>glob</code> allows a few more flags which are also defined in the
+&lsquo;<tt>glob.h</tt>&rsquo; file.  Some of the extensions implement functionality
+which is available in modern shell implementations.
+</p>
+<dl compact="compact">
+<dt> <code>GLOB_PERIOD</code>
+<a name="IDX760"></a>
+</dt>
+<dd><p>The <code>.</code> character (period) is treated special.  It cannot be
+matched by wildcards.  See section <a href="#SEC149">Wildcard Matching</a>, <code>FNM_PERIOD</code>.
+</p>
+</dd>
+<dt> <code>GLOB_MAGCHAR</code>
+<a name="IDX761"></a>
+</dt>
+<dd><p>The <code>GLOB_MAGCHAR</code> value is not to be given to <code>glob</code> in the
+<var>flags</var> parameter.  Instead, <code>glob</code> sets this bit in the
+<var>gl_flags</var> element of the <var>glob_t</var> structure provided as the
+result if the pattern used for matching contains any wildcard character.
+</p>
+</dd>
+<dt> <code>GLOB_ALTDIRFUNC</code>
+<a name="IDX762"></a>
+</dt>
+<dd><p>Instead of the using the using the normal functions for accessing the
+filesystem the <code>glob</code> implementation uses the user-supplied
+functions specified in the structure pointed to by <var>pglob</var>
+parameter.  For more information about the functions refer to the
+sections about directory handling see <a href="libc_14.html#SEC270">Accessing Directories</a>, and
+<a href="libc_14.html#SEC286">Reading the Attributes of a File</a>.
+</p>
+</dd>
+<dt> <code>GLOB_BRACE</code>
+<a name="IDX763"></a>
+</dt>
+<dd><p>If this flag is given the handling of braces in the pattern is changed.
+It is now required that braces appear correctly grouped.  I.e., for each
+opening brace there must be a closing one.  Braces can be used
+recursively.  So it is possible to define one brace expression in
+another one.  It is important to note that the range of each brace
+expression is completely contained in the outer brace expression (if
+there is one).
+</p>
+<p>The string between the matching braces is separated into single
+expressions by splitting at <code>,</code> (comma) characters.  The commas
+themselves are discarded.  Please note what we said above about recursive
+brace expressions.  The commas used to separate the subexpressions must
+be at the same level.  Commas in brace subexpressions are not matched.
+They are used during expansion of the brace expression of the deeper
+level.  The example below shows this
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">glob (&quot;{foo/{,bar,biz},baz}&quot;, GLOB_BRACE, NULL, &amp;result)
+</pre></td></tr></table>
+
+<p>is equivalent to the sequence
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">glob (&quot;foo/&quot;, GLOB_BRACE, NULL, &amp;result)
+glob (&quot;foo/bar&quot;, GLOB_BRACE|GLOB_APPEND, NULL, &amp;result)
+glob (&quot;foo/biz&quot;, GLOB_BRACE|GLOB_APPEND, NULL, &amp;result)
+glob (&quot;baz&quot;, GLOB_BRACE|GLOB_APPEND, NULL, &amp;result)
+</pre></td></tr></table>
+
+<p>if we leave aside error handling.
+</p>
+</dd>
+<dt> <code>GLOB_NOMAGIC</code>
+<a name="IDX764"></a>
+</dt>
+<dd><p>If the pattern contains no wildcard constructs (it is a literal file name),
+return it as the sole &ldquo;matching&rdquo; word, even if no file exists by that name.
+</p>
+</dd>
+<dt> <code>GLOB_TILDE</code>
+<a name="IDX765"></a>
+</dt>
+<dd><p>If this flag is used the character <code>~</code> (tilde) is handled special
+if it appears at the beginning of the pattern.  Instead of being taken
+verbatim it is used to represent the home directory of a known user.
+</p>
+<p>If <code>~</code> is the only character in pattern or it is followed by a
+<code>/</code> (slash), the home directory of the process owner is
+substituted.  Using <code>getlogin</code> and <code>getpwnam</code> the information
+is read from the system databases.  As an example take user <code>bart</code>
+with his home directory at &lsquo;<tt>/home/bart</tt>&rsquo;.  For him a call like
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">glob (&quot;~/bin/*&quot;, GLOB_TILDE, NULL, &amp;result)
+</pre></td></tr></table>
+
+<p>would return the contents of the directory &lsquo;<tt>/home/bart/bin</tt>&rsquo;.
+Instead of referring to the own home directory it is also possible to
+name the home directory of other users.  To do so one has to append the
+user name after the tilde character.  So the contents of user
+<code>homer</code>'s &lsquo;<tt>bin</tt>&rsquo; directory can be retrieved by
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">glob (&quot;~homer/bin/*&quot;, GLOB_TILDE, NULL, &amp;result)
+</pre></td></tr></table>
+
+<p>If the user name is not valid or the home directory cannot be determined
+for some reason the pattern is left untouched and itself used as the
+result.  I.e., if in the last example <code>home</code> is not available the
+tilde expansion yields to <code>&quot;~homer/bin/*&quot;</code> and <code>glob</code> is not
+looking for a directory named <code>~homer</code>.
+</p>
+<p>This functionality is equivalent to what is available in C-shells if the
+<code>nonomatch</code> flag is set.
+</p>
+</dd>
+<dt> <code>GLOB_TILDE_CHECK</code>
+<a name="IDX766"></a>
+</dt>
+<dd><p>If this flag is used <code>glob</code> behaves like as if <code>GLOB_TILDE</code> is
+given.  The only difference is that if the user name is not available or
+the home directory cannot be determined for other reasons this leads to
+an error.  <code>glob</code> will return <code>GLOB_NOMATCH</code> instead of using
+the pattern itself as the name.
+</p>
+<p>This functionality is equivalent to what is available in C-shells if
+<code>nonomatch</code> flag is not set.
+</p>
+</dd>
+<dt> <code>GLOB_ONLYDIR</code>
+<a name="IDX767"></a>
+</dt>
+<dd><p>If this flag is used the globbing function takes this as a
+<strong>hint</strong> that the caller is only interested in directories
+matching the pattern.  If the information about the type of the file
+is easily available non-directories will be rejected but no extra
+work will be done to determine the information for each file.  I.e.,
+the caller must still be able to filter directories out.
+</p>
+<p>This functionality is only available with the GNU <code>glob</code>
+implementation.  It is mainly used internally to increase the
+performance but might be useful for a user as well and therefore is
+documented here.
+</p></dd>
+</dl>
+
+<p>Calling <code>glob</code> will in most cases allocate resources which are used
+to represent the result of the function call.  If the same object of
+type <code>glob_t</code> is used in multiple call to <code>glob</code> the resources
+are freed or reused so that no leaks appear.  But this does not include
+the time when all <code>glob</code> calls are done.
+</p>
+<dl>
+<dt><u>Function:</u> void <b>globfree</b><i> (glob_t *<var>pglob</var>)</i>
+<a name="IDX768"></a>
+</dt>
+<dd><p>The <code>globfree</code> function frees all resources allocated by previous
+calls to <code>glob</code> associated with the object pointed to by
+<var>pglob</var>.  This function should be called whenever the currently used
+<code>glob_t</code> typed object isn't used anymore.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> void <b>globfree64</b><i> (glob64_t *<var>pglob</var>)</i>
+<a name="IDX769"></a>
+</dt>
+<dd><p>This function is equivalent to <code>globfree</code> but it frees records of
+type <code>glob64_t</code> which were allocated by <code>glob64</code>.
+</p></dd></dl>
+
+
+<hr size="6">
+<a name="Regular-Expressions"></a>
+<a name="SEC154"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC153" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC155" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 10.3 Regular Expression Matching </h2>
+
+<p>The GNU C library supports two interfaces for matching regular
+expressions.  One is the standard POSIX.2 interface, and the other is
+what the GNU system has had for many years.
+</p>
+<p>Both interfaces are declared in the header file &lsquo;<tt>regex.h</tt>&rsquo;.
+If you define <code>_POSIX_C_SOURCE</code>, then only the POSIX.2
+functions, structures, and constants are declared.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC155">10.3.1 POSIX Regular Expression Compilation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Using <code>regcomp</code> to prepare to match.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC156">10.3.2 Flags for POSIX Regular Expressions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Syntax variations for <code>regcomp</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC157">10.3.3 Matching a Compiled POSIX Regular Expression</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Using <code>regexec</code> to match the compiled
+				   pattern that you get from <code>regcomp</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC158">10.3.4 Match Results with Subexpressions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Finding which parts of the string were matched.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC159">10.3.5 Complications in Subexpression Matching</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"> Find points of which parts were matched.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC160">10.3.6 POSIX Regexp Matching Cleanup</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Freeing storage; reporting errors.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="POSIX-Regexp-Compilation"></a>
+<a name="SEC155"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC154" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC156" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC154" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.3.1 POSIX Regular Expression Compilation </h3>
+
+<p>Before you can actually match a regular expression, you must
+<em>compile</em> it.  This is not true compilation&mdash;it produces a special
+data structure, not machine instructions.  But it is like ordinary
+compilation in that its purpose is to enable you to &ldquo;execute&rdquo; the
+pattern fast.  (See section <a href="#SEC157">Matching a Compiled POSIX Regular Expression</a>, for how to use the
+compiled regular expression for matching.)
+</p>
+<p>There is a special data type for compiled regular expressions:
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>regex_t</b>
+<a name="IDX770"></a>
+</dt>
+<dd><p>This type of object holds a compiled regular expression.
+It is actually a structure.  It has just one field that your programs
+should look at:
+</p>
+<dl compact="compact">
+<dt> <code>re_nsub</code></dt>
+<dd><p>This field holds the number of parenthetical subexpressions in the
+regular expression that was compiled.
+</p></dd>
+</dl>
+
+<p>There are several other fields, but we don't describe them here, because
+only the functions in the library should use them.
+</p></dd></dl>
+
+<p>After you create a <code>regex_t</code> object, you can compile a regular
+expression into it by calling <code>regcomp</code>.
+</p>
+<dl>
+<dt><u>Function:</u> int <b>regcomp</b><i> (regex_t *restrict <var>compiled</var>, const char *restrict <var>pattern</var>, int <var>cflags</var>)</i>
+<a name="IDX771"></a>
+</dt>
+<dd><p>The function <code>regcomp</code> &ldquo;compiles&rdquo; a regular expression into a
+data structure that you can use with <code>regexec</code> to match against a
+string.  The compiled regular expression format is designed for
+efficient matching.  <code>regcomp</code> stores it into <code>*<var>compiled</var></code>.
+</p>
+<p>It's up to you to allocate an object of type <code>regex_t</code> and pass its
+address to <code>regcomp</code>.
+</p>
+<p>The argument <var>cflags</var> lets you specify various options that control
+the syntax and semantics of regular expressions.  See section <a href="#SEC156">Flags for POSIX Regular Expressions</a>.
+</p>
+<p>If you use the flag <code>REG_NOSUB</code>, then <code>regcomp</code> omits from
+the compiled regular expression the information necessary to record
+how subexpressions actually match.  In this case, you might as well
+pass <code>0</code> for the <var>matchptr</var> and <var>nmatch</var> arguments when
+you call <code>regexec</code>.
+</p>
+<p>If you don't use <code>REG_NOSUB</code>, then the compiled regular expression
+does have the capacity to record how subexpressions match.  Also,
+<code>regcomp</code> tells you how many subexpressions <var>pattern</var> has, by
+storing the number in <code><var>compiled</var>-&gt;re_nsub</code>.  You can use that
+value to decide how long an array to allocate to hold information about
+subexpression matches.
+</p>
+<p><code>regcomp</code> returns <code>0</code> if it succeeds in compiling the regular
+expression; otherwise, it returns a nonzero error code (see the table
+below).  You can use <code>regerror</code> to produce an error message string
+describing the reason for a nonzero value; see <a href="#SEC160">POSIX Regexp Matching Cleanup</a>.
+</p>
+</dd></dl>
+
+<p>Here are the possible nonzero values that <code>regcomp</code> can return:
+</p>
+<dl compact="compact">
+<dt> <code>REG_BADBR</code></dt>
+<dd><p>There was an invalid &lsquo;<samp>\{&hellip;\}</samp>&rsquo; construct in the regular
+expression.  A valid &lsquo;<samp>\{&hellip;\}</samp>&rsquo; construct must contain either
+a single number, or two numbers in increasing order separated by a
+comma.
+</p>
+</dd>
+<dt> <code>REG_BADPAT</code></dt>
+<dd><p>There was a syntax error in the regular expression.
+</p>
+</dd>
+<dt> <code>REG_BADRPT</code></dt>
+<dd><p>A repetition operator such as &lsquo;<samp>?</samp>&rsquo; or &lsquo;<samp>*</samp>&rsquo; appeared in a bad
+position (with no preceding subexpression to act on).
+</p>
+</dd>
+<dt> <code>REG_ECOLLATE</code></dt>
+<dd><p>The regular expression referred to an invalid collating element (one not
+defined in the current locale for string collation).  See section <a href="libc_7.html#SEC111">Categories of Activities that Locales Affect</a>.
+</p>
+</dd>
+<dt> <code>REG_ECTYPE</code></dt>
+<dd><p>The regular expression referred to an invalid character class name.
+</p>
+</dd>
+<dt> <code>REG_EESCAPE</code></dt>
+<dd><p>The regular expression ended with &lsquo;<samp>\</samp>&rsquo;.
+</p>
+</dd>
+<dt> <code>REG_ESUBREG</code></dt>
+<dd><p>There was an invalid number in the &lsquo;<samp>\<var>digit</var></samp>&rsquo; construct.
+</p>
+</dd>
+<dt> <code>REG_EBRACK</code></dt>
+<dd><p>There were unbalanced square brackets in the regular expression.
+</p>
+</dd>
+<dt> <code>REG_EPAREN</code></dt>
+<dd><p>An extended regular expression had unbalanced parentheses,
+or a basic regular expression had unbalanced &lsquo;<samp>\(</samp>&rsquo; and &lsquo;<samp>\)</samp>&rsquo;.
+</p>
+</dd>
+<dt> <code>REG_EBRACE</code></dt>
+<dd><p>The regular expression had unbalanced &lsquo;<samp>\{</samp>&rsquo; and &lsquo;<samp>\}</samp>&rsquo;.
+</p>
+</dd>
+<dt> <code>REG_ERANGE</code></dt>
+<dd><p>One of the endpoints in a range expression was invalid.
+</p>
+</dd>
+<dt> <code>REG_ESPACE</code></dt>
+<dd><p><code>regcomp</code> ran out of memory.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Flags-for-POSIX-Regexps"></a>
+<a name="SEC156"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC155" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC157" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC154" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.3.2 Flags for POSIX Regular Expressions </h3>
+
+<p>These are the bit flags that you can use in the <var>cflags</var> operand when
+compiling a regular expression with <code>regcomp</code>.
+</p>
+<dl compact="compact">
+<dt> <code>REG_EXTENDED</code></dt>
+<dd><p>Treat the pattern as an extended regular expression, rather than as a
+basic regular expression.
+</p>
+</dd>
+<dt> <code>REG_ICASE</code></dt>
+<dd><p>Ignore case when matching letters.
+</p>
+</dd>
+<dt> <code>REG_NOSUB</code></dt>
+<dd><p>Don't bother storing the contents of the <var>matches-ptr</var> array.
+</p>
+</dd>
+<dt> <code>REG_NEWLINE</code></dt>
+<dd><p>Treat a newline in <var>string</var> as dividing <var>string</var> into multiple
+lines, so that &lsquo;<samp>$</samp>&rsquo; can match before the newline and &lsquo;<samp>^</samp>&rsquo; can
+match after.  Also, don't permit &lsquo;<samp>.</samp>&rsquo; to match a newline, and don't
+permit &lsquo;<samp>[^&hellip;]</samp>&rsquo; to match a newline.
+</p>
+<p>Otherwise, newline acts like any other ordinary character.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Matching-POSIX-Regexps"></a>
+<a name="SEC157"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC156" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC158" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC154" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.3.3 Matching a Compiled POSIX Regular Expression </h3>
+
+<p>Once you have compiled a regular expression, as described in <a href="#SEC155">POSIX Regular Expression Compilation</a>, you can match it against strings using
+<code>regexec</code>.  A match anywhere inside the string counts as success,
+unless the regular expression contains anchor characters (&lsquo;<samp>^</samp>&rsquo; or
+&lsquo;<samp>$</samp>&rsquo;).
+</p>
+<dl>
+<dt><u>Function:</u> int <b>regexec</b><i> (const regex_t *restrict <var>compiled</var>, const char *restrict <var>string</var>, size_t <var>nmatch</var>, regmatch_t <var>matchptr</var>[restrict], int <var>eflags</var>)</i>
+<a name="IDX772"></a>
+</dt>
+<dd><p>This function tries to match the compiled regular expression
+<code>*<var>compiled</var></code> against <var>string</var>.
+</p>
+<p><code>regexec</code> returns <code>0</code> if the regular expression matches;
+otherwise, it returns a nonzero value.  See the table below for
+what nonzero values mean.  You can use <code>regerror</code> to produce an
+error message string describing the reason for a nonzero value;
+see <a href="#SEC160">POSIX Regexp Matching Cleanup</a>.
+</p>
+<p>The argument <var>eflags</var> is a word of bit flags that enable various
+options.
+</p>
+<p>If you want to get information about what part of <var>string</var> actually
+matched the regular expression or its subexpressions, use the arguments
+<var>matchptr</var> and <var>nmatch</var>.  Otherwise, pass <code>0</code> for
+<var>nmatch</var>, and <code>NULL</code> for <var>matchptr</var>.  See section <a href="#SEC158">Match Results with Subexpressions</a>.
+</p></dd></dl>
+
+<p>You must match the regular expression with the same set of current
+locales that were in effect when you compiled the regular expression.
+</p>
+<p>The function <code>regexec</code> accepts the following flags in the
+<var>eflags</var> argument:
+</p>
+<dl compact="compact">
+<dt> <code>REG_NOTBOL</code></dt>
+<dd><p>Do not regard the beginning of the specified string as the beginning of
+a line; more generally, don't make any assumptions about what text might
+precede it.
+</p>
+</dd>
+<dt> <code>REG_NOTEOL</code></dt>
+<dd><p>Do not regard the end of the specified string as the end of a line; more
+generally, don't make any assumptions about what text might follow it.
+</p></dd>
+</dl>
+
+<p>Here are the possible nonzero values that <code>regexec</code> can return:
+</p>
+<dl compact="compact">
+<dt> <code>REG_NOMATCH</code></dt>
+<dd><p>The pattern didn't match the string.  This isn't really an error.
+</p>
+</dd>
+<dt> <code>REG_ESPACE</code></dt>
+<dd><p><code>regexec</code> ran out of memory.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Regexp-Subexpressions"></a>
+<a name="SEC158"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC157" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC159" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC154" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.3.4 Match Results with Subexpressions </h3>
+
+<p>When <code>regexec</code> matches parenthetical subexpressions of
+<var>pattern</var>, it records which parts of <var>string</var> they match.  It
+returns that information by storing the offsets into an array whose
+elements are structures of type <code>regmatch_t</code>.  The first element of
+the array (index <code>0</code>) records the part of the string that matched
+the entire regular expression.  Each other element of the array records
+the beginning and end of the part that matched a single parenthetical
+subexpression.
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>regmatch_t</b>
+<a name="IDX773"></a>
+</dt>
+<dd><p>This is the data type of the <var>matcharray</var> array that you pass to
+<code>regexec</code>.  It contains two structure fields, as follows:
+</p>
+<dl compact="compact">
+<dt> <code>rm_so</code></dt>
+<dd><p>The offset in <var>string</var> of the beginning of a substring.  Add this
+value to <var>string</var> to get the address of that part.
+</p>
+</dd>
+<dt> <code>rm_eo</code></dt>
+<dd><p>The offset in <var>string</var> of the end of the substring.
+</p></dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Data Type:</u> <b>regoff_t</b>
+<a name="IDX774"></a>
+</dt>
+<dd><p><code>regoff_t</code> is an alias for another signed integer type.
+The fields of <code>regmatch_t</code> have type <code>regoff_t</code>.
+</p></dd></dl>
+
+<p>The <code>regmatch_t</code> elements correspond to subexpressions
+positionally; the first element (index <code>1</code>) records where the first
+subexpression matched, the second element records the second
+subexpression, and so on.  The order of the subexpressions is the order
+in which they begin.
+</p>
+<p>When you call <code>regexec</code>, you specify how long the <var>matchptr</var>
+array is, with the <var>nmatch</var> argument.  This tells <code>regexec</code> how
+many elements to store.  If the actual regular expression has more than
+<var>nmatch</var> subexpressions, then you won't get offset information about
+the rest of them.  But this doesn't alter whether the pattern matches a
+particular string or not.
+</p>
+<p>If you don't want <code>regexec</code> to return any information about where
+the subexpressions matched, you can either supply <code>0</code> for
+<var>nmatch</var>, or use the flag <code>REG_NOSUB</code> when you compile the
+pattern with <code>regcomp</code>.
+</p>
+<hr size="6">
+<a name="Subexpression-Complications"></a>
+<a name="SEC159"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC158" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC160" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC154" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.3.5 Complications in Subexpression Matching </h3>
+
+<p>Sometimes a subexpression matches a substring of no characters.  This
+happens when &lsquo;<samp>f\(o*\)</samp>&rsquo; matches the string &lsquo;<samp>fum</samp>&rsquo;.  (It really
+matches just the &lsquo;<samp>f</samp>&rsquo;.)  In this case, both of the offsets identify
+the point in the string where the null substring was found.  In this
+example, the offsets are both <code>1</code>.
+</p>
+<p>Sometimes the entire regular expression can match without using some of
+its subexpressions at all&mdash;for example, when &lsquo;<samp>ba\(na\)*</samp>&rsquo; matches the
+string &lsquo;<samp>ba</samp>&rsquo;, the parenthetical subexpression is not used.  When
+this happens, <code>regexec</code> stores <code>-1</code> in both fields of the
+element for that subexpression.
+</p>
+<p>Sometimes matching the entire regular expression can match a particular
+subexpression more than once&mdash;for example, when &lsquo;<samp>ba\(na\)*</samp>&rsquo;
+matches the string &lsquo;<samp>bananana</samp>&rsquo;, the parenthetical subexpression
+matches three times.  When this happens, <code>regexec</code> usually stores
+the offsets of the last part of the string that matched the
+subexpression.  In the case of &lsquo;<samp>bananana</samp>&rsquo;, these offsets are
+<code>6</code> and <code>8</code>.
+</p>
+<p>But the last match is not always the one that is chosen.  It's more
+accurate to say that the last <em>opportunity</em> to match is the one
+that takes precedence.  What this means is that when one subexpression
+appears within another, then the results reported for the inner
+subexpression reflect whatever happened on the last match of the outer
+subexpression.  For an example, consider &lsquo;<samp>\(ba\(na\)*s \)*</samp>&rsquo; matching
+the string &lsquo;<samp>bananas bas </samp>&rsquo;.  The last time the inner expression
+actually matches is near the end of the first word.  But it is
+<em>considered</em> again in the second word, and fails to match there.
+<code>regexec</code> reports nonuse of the &ldquo;na&rdquo; subexpression.
+</p>
+<p>Another place where this rule applies is when the regular expression
+</p><table><tr><td>&nbsp;</td><td><pre class="smallexample">\(ba\(na\)*s \|nefer\(ti\)* \)*
+</pre></td></tr></table>
+<p>matches &lsquo;<samp>bananas nefertiti</samp>&rsquo;.  The &ldquo;na&rdquo; subexpression does match
+in the first word, but it doesn't match in the second word because the
+other alternative is used there.  Once again, the second repetition of
+the outer subexpression overrides the first, and within that second
+repetition, the &ldquo;na&rdquo; subexpression is not used.  So <code>regexec</code>
+reports nonuse of the &ldquo;na&rdquo; subexpression.
+</p>
+<hr size="6">
+<a name="Regexp-Cleanup"></a>
+<a name="SEC160"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC159" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC161" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC154" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.3.6 POSIX Regexp Matching Cleanup </h3>
+
+<p>When you are finished using a compiled regular expression, you can
+free the storage it uses by calling <code>regfree</code>.
+</p>
+<dl>
+<dt><u>Function:</u> void <b>regfree</b><i> (regex_t *<var>compiled</var>)</i>
+<a name="IDX775"></a>
+</dt>
+<dd><p>Calling <code>regfree</code> frees all the storage that <code>*<var>compiled</var></code>
+points to.  This includes various internal fields of the <code>regex_t</code>
+structure that aren't documented in this manual.
+</p>
+<p><code>regfree</code> does not free the object <code>*<var>compiled</var></code> itself.
+</p></dd></dl>
+
+<p>You should always free the space in a <code>regex_t</code> structure with
+<code>regfree</code> before using the structure to compile another regular
+expression.
+</p>
+<p>When <code>regcomp</code> or <code>regexec</code> reports an error, you can use
+the function <code>regerror</code> to turn it into an error message string.
+</p>
+<dl>
+<dt><u>Function:</u> size_t <b>regerror</b><i> (int <var>errcode</var>, const regex_t *restrict <var>compiled</var>, char *restrict <var>buffer</var>, size_t <var>length</var>)</i>
+<a name="IDX776"></a>
+</dt>
+<dd><p>This function produces an error message string for the error code
+<var>errcode</var>, and stores the string in <var>length</var> bytes of memory
+starting at <var>buffer</var>.  For the <var>compiled</var> argument, supply the
+same compiled regular expression structure that <code>regcomp</code> or
+<code>regexec</code> was working with when it got the error.  Alternatively,
+you can supply <code>NULL</code> for <var>compiled</var>; you will still get a
+meaningful error message, but it might not be as detailed.
+</p>
+<p>If the error message can't fit in <var>length</var> bytes (including a
+terminating null character), then <code>regerror</code> truncates it.
+The string that <code>regerror</code> stores is always null-terminated
+even if it has been truncated.
+</p>
+<p>The return value of <code>regerror</code> is the minimum length needed to
+store the entire error message.  If this is less than <var>length</var>, then
+the error message was not truncated, and you can use it.  Otherwise, you
+should call <code>regerror</code> again with a larger buffer.
+</p>
+<p>Here is a function which uses <code>regerror</code>, but always dynamically
+allocates a buffer for the error message:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">char *get_regerror (int errcode, regex_t *compiled)
+{
+  size_t length = regerror (errcode, compiled, NULL, 0);
+  char *buffer = xmalloc (length);
+  (void) regerror (errcode, compiled, buffer, length);
+  return buffer;
+}
+</pre></td></tr></table>
+</dd></dl>
+
+<hr size="6">
+<a name="Word-Expansion"></a>
+<a name="SEC161"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC160" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC162" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 10.4 Shell-Style Word Expansion </h2>
+
+<p><em>Word expansion</em> means the process of splitting a string into
+<em>words</em> and substituting for variables, commands, and wildcards
+just as the shell does.
+</p>
+<p>For example, when you write &lsquo;<samp>ls -l foo.c</samp>&rsquo;, this string is split
+into three separate words&mdash;&lsquo;<samp>ls</samp>&rsquo;, &lsquo;<samp>-l</samp>&rsquo; and &lsquo;<samp>foo.c</samp>&rsquo;.
+This is the most basic function of word expansion.
+</p>
+<p>When you write &lsquo;<samp>ls *.c</samp>&rsquo;, this can become many words, because
+the word &lsquo;<samp>*.c</samp>&rsquo; can be replaced with any number of file names.
+This is called <em>wildcard expansion</em>, and it is also a part of
+word expansion.
+</p>
+<p>When you use &lsquo;<samp>echo $PATH</samp>&rsquo; to print your path, you are taking
+advantage of <em>variable substitution</em>, which is also part of word
+expansion.
+</p>
+<p>Ordinary programs can perform word expansion just like the shell by
+calling the library function <code>wordexp</code>.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC162">10.4.1 The Stages of Word Expansion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            What word expansion does to a string.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC163">10.4.2 Calling <code>wordexp</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             How to call <code>wordexp</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC164">10.4.3 Flags for Word Expansion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Options you can enable in <code>wordexp</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC165">10.4.4 <code>wordexp</code> Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             A sample program that does word expansion.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC166">10.4.5 Details of Tilde Expansion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Details of how tilde expansion works.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC167">10.4.6 Details of Variable Substitution</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Different types of variable substitution.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Expansion-Stages"></a>
+<a name="SEC162"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC161" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC163" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC161" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.4.1 The Stages of Word Expansion </h3>
+
+<p>When word expansion is applied to a sequence of words, it performs the
+following transformations in the order shown here:
+</p>
+<ol>
+<li>
+<a name="IDX777"></a>
+<em>Tilde expansion</em>: Replacement of &lsquo;<samp>~foo</samp>&rsquo; with the name of
+the home directory of &lsquo;<samp>foo</samp>&rsquo;.
+
+</li><li>
+Next, three different transformations are applied in the same step,
+from left to right:
+
+<ul>
+<li>
+<a name="IDX778"></a>
+<a name="IDX779"></a>
+<em>Variable substitution</em>: Environment variables are substituted for
+references such as &lsquo;<samp>$foo</samp>&rsquo;.
+
+</li><li>
+<a name="IDX780"></a>
+<em>Command substitution</em>: Constructs such as &lsquo;<samp>`cat foo`</samp>&rsquo; and
+the equivalent &lsquo;<samp>$(cat foo)</samp>&rsquo; are replaced with the output from
+the inner command.
+
+</li><li>
+<a name="IDX781"></a>
+<em>Arithmetic expansion</em>: Constructs such as &lsquo;<samp>$(($x-1))</samp>&rsquo; are
+replaced with the result of the arithmetic computation.
+</li></ul>
+
+</li><li>
+<a name="IDX782"></a>
+<em>Field splitting</em>: subdivision of the text into <em>words</em>.
+
+</li><li>
+<a name="IDX783"></a>
+<em>Wildcard expansion</em>: The replacement of a construct such as &lsquo;<samp>*.c</samp>&rsquo;
+with a list of &lsquo;<samp>.c</samp>&rsquo; file names.  Wildcard expansion applies to an
+entire word at a time, and replaces that word with 0 or more file names
+that are themselves words.
+
+</li><li>
+<a name="IDX784"></a>
+<a name="IDX785"></a>
+<em>Quote removal</em>: The deletion of string-quotes, now that they have
+done their job by inhibiting the above transformations when appropriate.
+</li></ol>
+
+<p>For the details of these transformations, and how to write the constructs
+that use them, see <cite>The BASH Manual</cite> (to appear).
+</p>
+<hr size="6">
+<a name="Calling-Wordexp"></a>
+<a name="SEC163"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC162" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC164" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC161" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.4.2 Calling <code>wordexp</code> </h3>
+
+<p>All the functions, constants and data types for word expansion are
+declared in the header file &lsquo;<tt>wordexp.h</tt>&rsquo;.
+</p>
+<p>Word expansion produces a vector of words (strings).  To return this
+vector, <code>wordexp</code> uses a special data type, <code>wordexp_t</code>, which
+is a structure.  You pass <code>wordexp</code> the address of the structure,
+and it fills in the structure's fields to tell you about the results.
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>wordexp_t</b>
+<a name="IDX786"></a>
+</dt>
+<dd><p>This data type holds a pointer to a word vector.  More precisely, it
+records both the address of the word vector and its size.
+</p>
+<dl compact="compact">
+<dt> <code>we_wordc</code></dt>
+<dd><p>The number of elements in the vector.
+</p>
+</dd>
+<dt> <code>we_wordv</code></dt>
+<dd><p>The address of the vector.  This field has type <code>char **</code>.
+</p>
+</dd>
+<dt> <code>we_offs</code></dt>
+<dd><p>The offset of the first real element of the vector, from its nominal
+address in the <code>we_wordv</code> field.  Unlike the other fields, this
+is always an input to <code>wordexp</code>, rather than an output from it.
+</p>
+<p>If you use a nonzero offset, then that many elements at the beginning of
+the vector are left empty.  (The <code>wordexp</code> function fills them with
+null pointers.)
+</p>
+<p>The <code>we_offs</code> field is meaningful only if you use the
+<code>WRDE_DOOFFS</code> flag.  Otherwise, the offset is always zero
+regardless of what is in this field, and the first real element comes at
+the beginning of the vector.
+</p></dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>wordexp</b><i> (const char *<var>words</var>, wordexp_t *<var>word-vector-ptr</var>, int <var>flags</var>)</i>
+<a name="IDX787"></a>
+</dt>
+<dd><p>Perform word expansion on the string <var>words</var>, putting the result in
+a newly allocated vector, and store the size and address of this vector
+into <code>*<var>word-vector-ptr</var></code>.  The argument <var>flags</var> is a
+combination of bit flags; see <a href="#SEC164">Flags for Word Expansion</a>, for details of
+the flags.
+</p>
+<p>You shouldn't use any of the characters &lsquo;<samp>|&amp;;&lt;&gt;</samp>&rsquo; in the string
+<var>words</var> unless they are quoted; likewise for newline.  If you use
+these characters unquoted, you will get the <code>WRDE_BADCHAR</code> error
+code.  Don't use parentheses or braces unless they are quoted or part of
+a word expansion construct.  If you use quotation characters &lsquo;<samp>'&quot;`</samp>&rsquo;,
+they should come in pairs that balance.
+</p>
+<p>The results of word expansion are a sequence of words.  The function
+<code>wordexp</code> allocates a string for each resulting word, then
+allocates a vector of type <code>char **</code> to store the addresses of
+these strings.  The last element of the vector is a null pointer.
+This vector is called the <em>word vector</em>.
+</p>
+<p>To return this vector, <code>wordexp</code> stores both its address and its
+length (number of elements, not counting the terminating null pointer)
+into <code>*<var>word-vector-ptr</var></code>.
+</p>
+<p>If <code>wordexp</code> succeeds, it returns 0.  Otherwise, it returns one
+of these error codes:
+</p>
+<dl compact="compact">
+<dt> <code>WRDE_BADCHAR</code></dt>
+<dd><p>The input string <var>words</var> contains an unquoted invalid character such
+as &lsquo;<samp>|</samp>&rsquo;.
+</p>
+</dd>
+<dt> <code>WRDE_BADVAL</code></dt>
+<dd><p>The input string refers to an undefined shell variable, and you used the flag
+<code>WRDE_UNDEF</code> to forbid such references.
+</p>
+</dd>
+<dt> <code>WRDE_CMDSUB</code></dt>
+<dd><p>The input string uses command substitution, and you used the flag
+<code>WRDE_NOCMD</code> to forbid command substitution.
+</p>
+</dd>
+<dt> <code>WRDE_NOSPACE</code></dt>
+<dd><p>It was impossible to allocate memory to hold the result.  In this case,
+<code>wordexp</code> can store part of the results&mdash;as much as it could
+allocate room for.
+</p>
+</dd>
+<dt> <code>WRDE_SYNTAX</code></dt>
+<dd><p>There was a syntax error in the input string.  For example, an unmatched
+quoting character is a syntax error.
+</p></dd>
+</dl>
+</dd></dl>
+
+<dl>
+<dt><u>Function:</u> void <b>wordfree</b><i> (wordexp_t *<var>word-vector-ptr</var>)</i>
+<a name="IDX788"></a>
+</dt>
+<dd><p>Free the storage used for the word-strings and vector that
+<code>*<var>word-vector-ptr</var></code> points to.  This does not free the
+structure <code>*<var>word-vector-ptr</var></code> itself&mdash;only the other
+data it points to.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Flags-for-Wordexp"></a>
+<a name="SEC164"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC163" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC165" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC161" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.4.3 Flags for Word Expansion </h3>
+
+<p>This section describes the flags that you can specify in the
+<var>flags</var> argument to <code>wordexp</code>.  Choose the flags you want,
+and combine them with the C operator <code>|</code>.
+</p>
+<dl compact="compact">
+<dt> <code>WRDE_APPEND</code></dt>
+<dd><p>Append the words from this expansion to the vector of words produced by
+previous calls to <code>wordexp</code>.  This way you can effectively expand
+several words as if they were concatenated with spaces between them.
+</p>
+<p>In order for appending to work, you must not modify the contents of the
+word vector structure between calls to <code>wordexp</code>.  And, if you set
+<code>WRDE_DOOFFS</code> in the first call to <code>wordexp</code>, you must also
+set it when you append to the results.
+</p>
+</dd>
+<dt> <code>WRDE_DOOFFS</code></dt>
+<dd><p>Leave blank slots at the beginning of the vector of words.
+The <code>we_offs</code> field says how many slots to leave.
+The blank slots contain null pointers.
+</p>
+</dd>
+<dt> <code>WRDE_NOCMD</code></dt>
+<dd><p>Don't do command substitution; if the input requests command substitution,
+report an error.
+</p>
+</dd>
+<dt> <code>WRDE_REUSE</code></dt>
+<dd><p>Reuse a word vector made by a previous call to <code>wordexp</code>.
+Instead of allocating a new vector of words, this call to <code>wordexp</code>
+will use the vector that already exists (making it larger if necessary).
+</p>
+<p>Note that the vector may move, so it is not safe to save an old pointer
+and use it again after calling <code>wordexp</code>.  You must fetch
+<code>we_pathv</code> anew after each call.
+</p>
+</dd>
+<dt> <code>WRDE_SHOWERR</code></dt>
+<dd><p>Do show any error messages printed by commands run by command substitution.
+More precisely, allow these commands to inherit the standard error output
+stream of the current process.  By default, <code>wordexp</code> gives these
+commands a standard error stream that discards all output.
+</p>
+</dd>
+<dt> <code>WRDE_UNDEF</code></dt>
+<dd><p>If the input refers to a shell variable that is not defined, report an
+error.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Wordexp-Example"></a>
+<a name="SEC165"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC164" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC166" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC161" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.4.4 <code>wordexp</code> Example </h3>
+
+<p>Here is an example of using <code>wordexp</code> to expand several strings
+and use the results to run a shell command.  It also shows the use of
+<code>WRDE_APPEND</code> to concatenate the expansions and of <code>wordfree</code>
+to free the space allocated by <code>wordexp</code>.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">int
+expand_and_execute (const char *program, const char **options)
+{
+  wordexp_t result;
+  pid_t pid
+  int status, i;
+
+  /* <span class="roman">Expand the string for the program to run.</span>  */
+  switch (wordexp (program, &amp;result, 0))
+    {
+    case 0:			/* <span class="roman">Successful</span>.  */
+      break;
+    case WRDE_NOSPACE:
+      /* <span class="roman">If the error was <code>WRDE_NOSPACE</code>,</span>
+         <span class="roman">then perhaps part of the result was allocated.</span>  */
+      wordfree (&amp;result);
+    default:                    /* <span class="roman">Some other error.</span>  */
+      return -1;
+    }
+
+  /* <span class="roman">Expand the strings specified for the arguments.</span>  */
+  for (i = 0; options[i] != NULL; i++)
+    {
+      if (wordexp (options[i], &amp;result, WRDE_APPEND))
+        {
+          wordfree (&amp;result);
+          return -1;
+        }
+    }
+
+  pid = fork ();
+  if (pid == 0)
+    {
+      /* <span class="roman">This is the child process.  Execute the command.</span> */
+      execv (result.we_wordv[0], result.we_wordv);
+      exit (EXIT_FAILURE);
+    }
+  else if (pid &lt; 0)
+    /* <span class="roman">The fork failed.  Report failure.</span>  */
+    status = -1;
+  else
+    /* <span class="roman">This is the parent process.  Wait for the child to complete.</span>  */
+    if (waitpid (pid, &amp;status, 0) != pid)
+      status = -1;
+
+  wordfree (&amp;result);
+  return status;
+}
+</pre></td></tr></table>
+
+<hr size="6">
+<a name="Tilde-Expansion"></a>
+<a name="SEC166"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC165" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC167" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC161" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.4.5 Details of Tilde Expansion </h3>
+
+<p>It's a standard part of shell syntax that you can use &lsquo;<samp>~</samp>&rsquo; at the
+beginning of a file name to stand for your own home directory.  You
+can use &lsquo;<samp>~<var>user</var></samp>&rsquo; to stand for <var>user</var>'s home directory.
+</p>
+<p><em>Tilde expansion</em> is the process of converting these abbreviations
+to the directory names that they stand for.
+</p>
+<p>Tilde expansion applies to the &lsquo;<samp>~</samp>&rsquo; plus all following characters up
+to whitespace or a slash.  It takes place only at the beginning of a
+word, and only if none of the characters to be transformed is quoted in
+any way.
+</p>
+<p>Plain &lsquo;<samp>~</samp>&rsquo; uses the value of the environment variable <code>HOME</code>
+as the proper home directory name.  &lsquo;<samp>~</samp>&rsquo; followed by a user name
+uses <code>getpwname</code> to look up that user in the user database, and
+uses whatever directory is recorded there.  Thus, &lsquo;<samp>~</samp>&rsquo; followed
+by your own name can give different results from plain &lsquo;<samp>~</samp>&rsquo;, if
+the value of <code>HOME</code> is not really your home directory.
+</p>
+<hr size="6">
+<a name="Variable-Substitution"></a>
+<a name="SEC167"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC166" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC161" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 10.4.6 Details of Variable Substitution </h3>
+
+<p>Part of ordinary shell syntax is the use of &lsquo;<samp>$<var>variable</var></samp>&rsquo; to
+substitute the value of a shell variable into a command.  This is called
+<em>variable substitution</em>, and it is one part of doing word expansion.
+</p>
+<p>There are two basic ways you can write a variable reference for
+substitution:
+</p>
+<dl compact="compact">
+<dt> <code>${<var>variable</var>}</code></dt>
+<dd><p>If you write braces around the variable name, then it is completely
+unambiguous where the variable name ends.  You can concatenate
+additional letters onto the end of the variable value by writing them
+immediately after the close brace.  For example, &lsquo;<samp>${foo}s</samp>&rsquo;
+expands into &lsquo;<samp>tractors</samp>&rsquo;.
+</p>
+</dd>
+<dt> <code>$<var>variable</var></code></dt>
+<dd><p>If you do not put braces around the variable name, then the variable
+name consists of all the alphanumeric characters and underscores that
+follow the &lsquo;<samp>$</samp>&rsquo;.  The next punctuation character ends the variable
+name.  Thus, &lsquo;<samp>$foo-bar</samp>&rsquo; refers to the variable <code>foo</code> and expands
+into &lsquo;<samp>tractor-bar</samp>&rsquo;.
+</p></dd>
+</dl>
+
+<p>When you use braces, you can also use various constructs to modify the
+value that is substituted, or test it in various ways.
+</p>
+<dl compact="compact">
+<dt> <code>${<var>variable</var>:-<var>default</var>}</code></dt>
+<dd><p>Substitute the value of <var>variable</var>, but if that is empty or
+undefined, use <var>default</var> instead.
+</p>
+</dd>
+<dt> <code>${<var>variable</var>:=<var>default</var>}</code></dt>
+<dd><p>Substitute the value of <var>variable</var>, but if that is empty or
+undefined, use <var>default</var> instead and set the variable to
+<var>default</var>.
+</p>
+</dd>
+<dt> <code>${<var>variable</var>:?<var>message</var>}</code></dt>
+<dd><p>If <var>variable</var> is defined and not empty, substitute its value.
+</p>
+<p>Otherwise, print <var>message</var> as an error message on the standard error
+stream, and consider word expansion a failure.
+</p>
+
+</dd>
+<dt> <code>${<var>variable</var>:+<var>replacement</var>}</code></dt>
+<dd><p>Substitute <var>replacement</var>, but only if <var>variable</var> is defined and
+nonempty.  Otherwise, substitute nothing for this construct.
+</p></dd>
+</dl>
+
+<dl compact="compact">
+<dt> <code>${#<var>variable</var>}</code></dt>
+<dd><p>Substitute a numeral which expresses in base ten the number of
+characters in the value of <var>variable</var>.  &lsquo;<samp>${#foo}</samp>&rsquo; stands for
+&lsquo;<samp>7</samp>&rsquo;, because &lsquo;<samp>tractor</samp>&rsquo; is seven characters.
+</p></dd>
+</dl>
+
+<p>These variants of variable substitution let you remove part of the
+variable's value before substituting it.  The <var>prefix</var> and
+<var>suffix</var> are not mere strings; they are wildcard patterns, just
+like the patterns that you use to match multiple file names.  But
+in this context, they match against parts of the variable value
+rather than against file names.
+</p>
+<dl compact="compact">
+<dt> <code>${<var>variable</var>%%<var>suffix</var>}</code></dt>
+<dd><p>Substitute the value of <var>variable</var>, but first discard from that
+variable any portion at the end that matches the pattern <var>suffix</var>.
+</p>
+<p>If there is more than one alternative for how to match against
+<var>suffix</var>, this construct uses the longest possible match.
+</p>
+<p>Thus, &lsquo;<samp>${foo%%r*}</samp>&rsquo; substitutes &lsquo;<samp>t</samp>&rsquo;, because the largest
+match for &lsquo;<samp>r*</samp>&rsquo; at the end of &lsquo;<samp>tractor</samp>&rsquo; is &lsquo;<samp>ractor</samp>&rsquo;.
+</p>
+</dd>
+<dt> <code>${<var>variable</var>%<var>suffix</var>}</code></dt>
+<dd><p>Substitute the value of <var>variable</var>, but first discard from that
+variable any portion at the end that matches the pattern <var>suffix</var>.
+</p>
+<p>If there is more than one alternative for how to match against
+<var>suffix</var>, this construct uses the shortest possible alternative.
+</p>
+<p>Thus, &lsquo;<samp>${foo%r*}</samp>&rsquo; substitutes &lsquo;<samp>tracto</samp>&rsquo;, because the shortest
+match for &lsquo;<samp>r*</samp>&rsquo; at the end of &lsquo;<samp>tractor</samp>&rsquo; is just &lsquo;<samp>r</samp>&rsquo;.
+</p>
+</dd>
+<dt> <code>${<var>variable</var>##<var>prefix</var>}</code></dt>
+<dd><p>Substitute the value of <var>variable</var>, but first discard from that
+variable any portion at the beginning that matches the pattern <var>prefix</var>.
+</p>
+<p>If there is more than one alternative for how to match against
+<var>prefix</var>, this construct uses the longest possible match.
+</p>
+<p>Thus, &lsquo;<samp>${foo##*t}</samp>&rsquo; substitutes &lsquo;<samp>or</samp>&rsquo;, because the largest
+match for &lsquo;<samp>*t</samp>&rsquo; at the beginning of &lsquo;<samp>tractor</samp>&rsquo; is &lsquo;<samp>tract</samp>&rsquo;.
+</p>
+</dd>
+<dt> <code>${<var>variable</var>#<var>prefix</var>}</code></dt>
+<dd><p>Substitute the value of <var>variable</var>, but first discard from that
+variable any portion at the beginning that matches the pattern <var>prefix</var>.
+</p>
+<p>If there is more than one alternative for how to match against
+<var>prefix</var>, this construct uses the shortest possible alternative.
+</p>
+<p>Thus, &lsquo;<samp>${foo#*t}</samp>&rsquo; substitutes &lsquo;<samp>ractor</samp>&rsquo;, because the shortest
+match for &lsquo;<samp>*t</samp>&rsquo; at the beginning of &lsquo;<samp>tractor</samp>&rsquo; is just &lsquo;<samp>t</samp>&rsquo;.
+</p>
+</dd>
+</dl>
+<hr size="6">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC148" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_11.html#SEC168" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated by <em>root</em> on <em>October, 30 2008</em> using <a href="http://www.nongnu.org/texi2html/"><em>texi2html 1.78</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>
