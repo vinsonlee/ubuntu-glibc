@@ -1,0 +1,1976 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- This file documents the GNU C library.
+
+This is Edition 0.12, last updated 2007-10-27,
+of The GNU C Library Reference Manual, for version 2.8.
+
+Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002,
+2003, 2007, 2008 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software Needs Free Documentation"
+and "GNU Lesser General Public License", the Front-Cover texts being
+"A GNU Manual", and with the Back-Cover Texts as in (a) below.  A
+copy of the license is included in the section entitled "GNU Free
+Documentation License".
+
+(a) The FSF's Back-Cover Text is: "You have the freedom to
+copy and modify this GNU manual.  Buying copies from the FSF
+supports it in developing GNU and promoting software freedom."
+ -->
+<!-- Created on October, 30 2008 by texi2html 1.78 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+
+-->
+<head>
+<title>The GNU C Library: Main Menu</title>
+
+<meta name="description" content="The GNU C Library: Main Menu">
+<meta name="keywords" content="The GNU C Library: Main Menu">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.78">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="Top"></a>
+<a name="SEC_Top"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h1 class="settitle">Main Menu</h1>
+<p>This is Edition 0.12, last updated 2007-10-27, of
+<cite>The GNU C Library Reference Manual</cite>, for Version 2.8
+of the GNU C Library.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="libc_1.html#SEC1">1. Introduction</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Purpose of the GNU C Library.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_2.html#SEC15">2. Error Reporting</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              How library functions report errors.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC19">3. Virtual Memory Allocation And Paging</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                       Allocating virtual memory and controlling
+                                   paging.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_4.html#SEC64">4. Character Handling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Character testing and conversion functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC70">5. String and Array Utilities</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Utilities for copying and comparing strings
+                                   and arrays.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC86">6. Character Set Handling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Support for extended character sets.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_7.html#SEC108">7. Locales and Internationalization</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                      The country and language can affect the
+                                   behavior of library functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_8.html#SEC122">8. Message Translation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          How to make the program speak the user's
+                                   language.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_9.html#SEC141">9. Searching and Sorting</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        General searching and sorting functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC148">10. Pattern Matching</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Matching shell &ldquo;globs&rdquo; and regular
+                                   expressions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_11.html#SEC168">11. Input/Output Overview</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Introduction to the I/O facilities.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC177">12. Input/Output on Streams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               High-level, portable I/O facilities.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC238">13. Low-Level Input/Output</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Low-level, less portable I/O.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC268">14. File System Interface</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Functions for manipulating files.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_15.html#SEC297">15. Pipes and FIFOs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              A simple interprocess communication
+                                   mechanism.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC302">16. Sockets</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                      A more complicated IPC mechanism, with
+                                   networking support.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC357">17. Low-Level Terminal Interface</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"> How to change the characteristics of a
+                                   terminal device.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_18.html#SEC382">18. Syslog</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                       System logging and messaging.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_19.html#SEC390">19. Mathematics</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  Math functions, useful constants, random
+                                   numbers.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC403">20. Arithmetic Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                   Low level arithmetic functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC429">21. Date and Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Functions for getting the date and time and
+                                   formatting them nicely.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_22.html#SEC449">22. Resource Usage And Limitation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"> Functions for examining resource usage and
+                                   getting and setting limits.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_23.html#SEC465">23. Non-Local Exits</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Jumping out of nested function calls.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC471">24. Signal Handling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              How to send, block, and handle signals.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC525">25. The Basic Program/System Interface</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Writing the beginning and end of your
+                                   program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_26.html#SEC568">26. Processes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                    How to create processes and run other
+                                   programs.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC578">27. Job Control</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  All about process groups and sessions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_28.html#SEC596">28. System Databases and Name Service Switch</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Accessing system databases.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC608">29. Users and Groups</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             How users are identified and classified.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_30.html#SEC638">30. System Management</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Controlling the system and getting
+                                   information about it.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_31.html#SEC648">31. System Configuration Parameters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Parameters describing operating system
+                                   limits.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_32.html#SEC664">32. DES Encryption and Password Handling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      DES encryption and password handling.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_33.html#SEC669">33. Debugging support</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Functions to help debugging applications.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Appendices
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_34.html#SEC671">A. C Language Facilities in the Library</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            C language features provided by the library.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_35.html#SEC693">B. Summary of Library Facilities</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              A summary showing the syntax, header file,
+                                   and derivation of each library feature.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_36.html#SEC694">C. Installing the GNU C Library</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 How to install the GNU C library.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_37.html#SEC700">D. Library Maintenance</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  How to enhance and port the GNU C Library.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_38.html#SEC705">E. Contributors to the GNU C Library</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Who wrote what parts of the GNU C library.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_39.html#SEC706">F. Free Software Needs Free Documentation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_40.html#SEC707">G. GNU Lesser General Public License</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                      The GNU Lesser General Public License says
+                                  how you can copy and share the GNU C Library.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_41.html#SEC710">H. GNU Free Documentation License</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        This manual is under the GNU Free
+                                  Documentation License.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Indices
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_42.html#SEC712">Concept Index</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Index of concepts and names.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_50.html#SEC713">Type Index</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                   Index of types and type qualifiers.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_52.html#SEC714">Function and Macro Index</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Index of functions and function-like macros.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_61.html#SEC715">Variable and Constant Macro Index</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Index of variables and variable-like macros.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_70.html#SEC716">Program and File Index</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                   Index of programs and files.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+ --- The Detailed Node Listing ---
+
+Introduction
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_1.html#SEC2">1.1 Getting Started</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             What this manual is for and how to use it.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_1.html#SEC3">1.2 Standards and Portability</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Standards and sources upon which the GNU
+                                 C library is based.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_1.html#SEC9">1.3 Using the Library</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Some practical uses for the library.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_1.html#SEC14">1.4 Roadmap to the Manual</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Overview of the remaining chapters in
+                                 this manual.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Standards and Portability
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_1.html#SEC4">1.2.1 ISO C</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                       The international standard for the C
+                                 programming language.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_1.html#SEC5">1.2.2 POSIX (The Portable Operating System Interface)</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                       The ISO/IEC 9945 (aka IEEE 1003) standards
+                                 for operating systems.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_1.html#SEC6">1.2.3 Berkeley Unix</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               BSD and SunOS.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_1.html#SEC7">1.2.4 SVID (The System V Interface Description)</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                        The System V Interface Description.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_1.html#SEC8">1.2.5 XPG (The X/Open Portability Guide)</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                         The X/Open Portability Guide.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Using the Library
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_1.html#SEC10">1.3.1 Header Files</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                How to include the header files in your
+                                 programs.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_1.html#SEC11">1.3.2 Macro Definitions of Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Some functions in the library may really
+                                 be implemented as macros.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_1.html#SEC12">1.3.3 Reserved Names</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              The C standard reserves some names for
+                                 the library, and some for users.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_1.html#SEC13">1.3.4 Feature Test Macros</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         How to control what names are defined.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Error Reporting
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_2.html#SEC16">2.1 Checking for Errors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         How errors are reported by library functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_2.html#SEC17">2.2 Error Codes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Error code macros; all of these expand
+                                 into integer constant values.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_2.html#SEC18">2.3 Error Messages</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Mapping error codes onto error messages.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Memory
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_3.html#SEC20">3.1 Process Memory Concepts</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             An introduction to concepts and terminology.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC21">3.2 Allocating Storage For Program Data</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Allocating storage for your program data
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC60">3.4 Locking Pages</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Preventing page faults
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC59">3.3 Resizing the Data Segment</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   <code>brk</code>, <code>sbrk</code>
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Memory Allocation
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_3.html#SEC22">3.2.1 Memory Allocation in C Programs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     How to get different kinds of allocation in C.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC24">3.2.2 Unconstrained Allocation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    The <code>malloc</code> facility allows fully general
+		 		 dynamic allocation.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC37">3.2.3 Allocation Debugging</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Finding memory leaks and not freed memory.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC42">3.2.4 Obstacks</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                    Obstacks are less general than malloc
+				 but more efficient and convenient.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC54">3.2.5 Automatic Storage with Variable Size</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Allocation of variable-sized blocks
+				 of automatic storage that are freed when the
+				 calling function returns.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Unconstrained Allocation
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_3.html#SEC25">3.2.2.1 Basic Memory Allocation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Simple use of <code>malloc</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC26">3.2.2.2 Examples of <code>malloc</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Examples of <code>malloc</code>.  <code>xmalloc</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC27">3.2.2.3 Freeing Memory Allocated with <code>malloc</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Use <code>free</code> to free a block you
+				 got with <code>malloc</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC28">3.2.2.4 Changing the Size of a Block</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Use <code>realloc</code> to make a block
+				 bigger or smaller.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC29">3.2.2.5 Allocating Cleared Space</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Use <code>calloc</code> to allocate a
+				 block and clear it.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC30">3.2.2.6 Efficiency Considerations for <code>malloc</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Efficiency considerations in use of
+				 these functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC31">3.2.2.7 Allocating Aligned Memory Blocks</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Allocating specially aligned memory.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC32">3.2.2.8 Malloc Tunable Parameters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Use <code>mallopt</code> to adjust allocation
+                                 parameters.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC33">3.2.2.9 Heap Consistency Checking</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Automatic checking for errors.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC34">3.2.2.10 Memory Allocation Hooks</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            You can use these hooks for debugging
+				 programs that use <code>malloc</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC35">3.2.2.11 Statistics for Memory Allocation with <code>malloc</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Getting information about how much
+				 memory your program is using.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC36">3.2.2.12 Summary of <code>malloc</code>-Related Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Summary of <code>malloc</code> and related functions.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Allocation Debugging
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_3.html#SEC38">3.2.3.1 How to install the tracing functionality</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC39">3.2.3.2 Example program excerpts</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Example programs excerpts.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC40">3.2.3.3 Some more or less clever ideas</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC41">3.2.3.4 Interpreting the traces</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      What do all these lines mean?
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Obstacks
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_3.html#SEC43">3.2.4.1 Creating Obstacks</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		How to declare an obstack in your program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC44">3.2.4.2 Preparing for Using Obstacks</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	Preparations needed before you can
+				 use obstacks.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC45">3.2.4.3 Allocation in an Obstack</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Allocating objects in an obstack.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC46">3.2.4.4 Freeing Objects in an Obstack</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Freeing objects in an obstack.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC47">3.2.4.5 Obstack Functions and Macros</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		The obstack functions are both
+				 functions and macros.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC48">3.2.4.6 Growing Objects</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Making an object bigger by stages.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC49">3.2.4.7 Extra Fast Growing Objects</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Extra-high-efficiency (though more
+				 complicated) growing objects.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC50">3.2.4.8 Status of an Obstack</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Inquiries about the status of an obstack.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC51">3.2.4.9 Alignment of Data in Obstacks</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Controlling alignment of objects in obstacks.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC52">3.2.4.10 Obstack Chunks</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              How obstacks obtain and release chunks;
+				 efficiency considerations.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC53">3.2.4.11 Summary of Obstack Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Variable Size Automatic
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_3.html#SEC55">3.2.5.1 <code>alloca</code> Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Example of using <code>alloca</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC56">3.2.5.2 Advantages of <code>alloca</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Reasons to use <code>alloca</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC57">3.2.5.3 Disadvantages of <code>alloca</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Reasons to avoid <code>alloca</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC58">3.2.5.4 GNU C Variable-Size Arrays</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Only in GNU C, here is an alternative
+				 method of allocating dynamically and
+				 freeing automatically.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Locking Pages
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_3.html#SEC61">3.4.1 Why Lock Pages</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Reasons to read this section.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC62">3.4.2 Locked Memory Details</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Everything you need to know locked
+                                    memory
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_3.html#SEC63">3.4.3 Functions To Lock And Unlock Pages</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Here's how to do it.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Character Handling
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_4.html#SEC65">4.1 Classification of Characters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Testing whether characters are
+			                letters, digits, punctuation, etc.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_4.html#SEC66">4.2 Case Conversion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                    Case mapping, and the like.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_4.html#SEC67">4.3 Character class determination for wide characters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_4.html#SEC68">4.4 Notes on using the wide character classes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_4.html#SEC69">4.5 Mapping of wide characters.</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+String and Array Utilities
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_5.html#SEC71">5.1 Representation of Strings</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Introduction to basic concepts.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC72">5.2 String and Array Conventions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Whether to use a string function or an
+				 arbitrary array function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC73">5.3 String Length</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Determining the length of a string.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC74">5.4 Copying and Concatenation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Functions to copy the contents of strings
+				 and arrays.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC75">5.5 String/Array Comparison</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Functions for byte-wise and character-wise
+				 comparison.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC76">5.6 Collation Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Functions for collating strings.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC77">5.7 Search Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Searching for a specific element or substring.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC79">5.8 Finding Tokens in a String</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Splitting a string into tokens by looking
+				 for delimiters.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC80">5.9 strfry</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                      Function for flash-cooking a string.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC81">5.10 Trivial Encryption</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Obscuring data.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC82">5.11 Encode Binary Data</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Encoding and Decoding of Binary Data.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC83">5.12 Argz and Envz Vectors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Null-separated string vectors.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Argz and Envz Vectors
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_5.html#SEC84">5.12.1 Argz Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Operations on argz vectors.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_5.html#SEC85">5.12.2 Envz Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Additional operations on environment vectors.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Character Set Handling
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_6.html#SEC87">6.1 Introduction to Extended Characters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC88">6.2 Overview about Character Handling Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC89">6.3 Restartable Multibyte Conversion Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"> Restartable multibyte conversion
+                                      Functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC95">6.4 Non-reentrant Conversion Function</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC99">6.5 Generic Charset Conversion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Restartable multibyte conversion
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_6.html#SEC90">6.3.1 Selecting the conversion and its properties</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC91">6.3.2 Representing the state of the conversion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC92">6.3.3 Converting Single Characters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC93">6.3.4 Converting Multibyte and Wide Character Strings</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC94">6.3.5 A Complete Multibyte Conversion Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Non-reentrant Conversion
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_6.html#SEC96">6.4.1 Non-reentrant Conversion of Single Characters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC97">6.4.2 Non-reentrant Conversion of Strings</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC98">6.4.3 States in Non-reentrant Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Generic Charset Conversion
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_6.html#SEC100">6.5.1 Generic Character Set Conversion Interface</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC101">6.5.2 A complete <code>iconv</code> example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC102">6.5.3 Some Details about other <code>iconv</code> Implementations</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_6.html#SEC103">6.5.4 The <code>iconv</code> Implementation in the GNU C library</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Locales
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_7.html#SEC109">7.1 What Effects a Locale Has</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Actions affected by the choice of
+                                 locale.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_7.html#SEC110">7.2 Choosing a Locale</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             How the user specifies a locale.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_7.html#SEC111">7.3 Categories of Activities that Locales Affect</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Different purposes for which you can
+                                 select a locale.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_7.html#SEC112">7.4 How Programs Set the Locale</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          How a program specifies the locale
+                                 with library functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_7.html#SEC113">7.5 Standard Locales</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Locale names available on all systems.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_7.html#SEC114">7.6 Accessing Locale Information</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          How to access the information for the locale.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_7.html#SEC120">7.7 A dedicated function to format numbers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_7.html#SEC121">7.8 Yes-or-No Questions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Check a Response against the locale.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Locale Information
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_7.html#SEC115">7.6.1 <code>localeconv</code>: It is portable but &hellip;</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   ISO C's <code>localeconv</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_7.html#SEC119">7.6.2 Pinpoint Access to Locale Data</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      X/Open's <code>nl_langinfo</code>.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+The Lame Way to Locale Data
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_7.html#SEC116">7.6.1.1 Generic Numeric Formatting Parameters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Parameters for formatting numbers and
+                                 currency amounts.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_7.html#SEC117">7.6.1.2 Printing the Currency Symbol</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             How to print the symbol that identifies an
+                                 amount of money (e.g. &lsquo;<samp>$</samp>&rsquo;).
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_7.html#SEC118">7.6.1.3 Printing the Sign of a Monetary Amount</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        How to print the (positive or negative) sign
+                                 for a monetary amount, if one exists.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Message Translation
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_8.html#SEC123">8.1 X/Open Message Catalog Handling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  The <code>catgets</code> family of functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_8.html#SEC131">8.2 The Uniforum approach to Message Translation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         The <code>gettext</code> family of functions.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Message catalogs a la X/Open
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_8.html#SEC124">8.1.1 The <code>catgets</code> function family</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_8.html#SEC125">8.1.2 Format of the message catalog files</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_8.html#SEC126">8.1.3 Generate Message Catalogs files</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         How to generate message catalogs files which
+                                can be used by the functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_8.html#SEC127">8.1.4 How to use the <code>catgets</code> interface</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+The Uniforum approach
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_8.html#SEC132">8.2.1 The <code>gettext</code> family of functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_8.html#SEC140">8.2.2 Programs to handle message catalogs for <code>gettext</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Message catalogs with gettext
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_8.html#SEC133">8.2.1.1 What has to be done to translate a message?</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_8.html#SEC134">8.2.1.2 How to determine which catalog to be used</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_8.html#SEC135">8.2.1.3 Additional functions for more complicated situations</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_8.html#SEC137">8.2.1.4 How to specify the output character set <code>gettext</code> uses</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_8.html#SEC138">8.2.1.5 How to use <code>gettext</code> in GUI programs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_8.html#SEC139">8.2.1.6 User influence on <code>gettext</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     The possibilities of the user to influence
+                                    the way <code>gettext</code> works.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Searching and Sorting
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_9.html#SEC142">9.1 Defining the Comparison Function</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Defining how to compare two objects.
+				 Since the sort and search facilities
+                                 are general, you have to specify the
+                                 ordering.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_9.html#SEC143">9.2 Array Search Function</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       The <code>bsearch</code> function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_9.html#SEC144">9.3 Array Sort Function</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         The <code>qsort</code> function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_9.html#SEC145">9.4 Searching and Sorting Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         An example program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_9.html#SEC146">9.5 The <code>hsearch</code> function.</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_9.html#SEC147">9.6 The <code>tsearch</code> function.</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Pattern Matching
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_10.html#SEC149">10.1 Wildcard Matching</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Matching a wildcard pattern against a single string.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC150">10.2 Globbing</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Finding the files that match a wildcard pattern.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC154">10.3 Regular Expression Matching</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Matching regular expressions against strings.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC161">10.4 Shell-Style Word Expansion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Expanding shell variables, nested commands,
+			    arithmetic, and wildcards.
+			    This is what the shell does with shell commands.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Globbing
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_10.html#SEC151">10.2.1 Calling <code>glob</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Basic use of <code>glob</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC152">10.2.2 Flags for Globbing</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Flags that enable various options in <code>glob</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC153">10.2.3 More Flags for Globbing</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  GNU specific extensions to <code>glob</code>.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Regular Expressions
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_10.html#SEC155">10.3.1 POSIX Regular Expression Compilation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Using <code>regcomp</code> to prepare to match.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC156">10.3.2 Flags for POSIX Regular Expressions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Syntax variations for <code>regcomp</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC157">10.3.3 Matching a Compiled POSIX Regular Expression</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Using <code>regexec</code> to match the compiled
+				   pattern that you get from <code>regcomp</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC158">10.3.4 Match Results with Subexpressions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Finding which parts of the string were matched.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC159">10.3.5 Complications in Subexpression Matching</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"> Find points of which parts were matched.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC160">10.3.6 POSIX Regexp Matching Cleanup</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Freeing storage; reporting errors.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Word Expansion
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_10.html#SEC162">10.4.1 The Stages of Word Expansion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            What word expansion does to a string.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC163">10.4.2 Calling <code>wordexp</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             How to call <code>wordexp</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC164">10.4.3 Flags for Word Expansion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Options you can enable in <code>wordexp</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC165">10.4.4 <code>wordexp</code> Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             A sample program that does word expansion.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC166">10.4.5 Details of Tilde Expansion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Details of how tilde expansion works.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_10.html#SEC167">10.4.6 Details of Variable Substitution</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Different types of variable substitution.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+I/O Overview
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_11.html#SEC169">11.1 Input/Output Concepts</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Some basic information and terminology.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_11.html#SEC172">11.2 File Names</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         How to refer to a file.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+I/O Concepts
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_11.html#SEC170">11.1.1 Streams and File Descriptors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    The GNU Library provides two ways
+			             to access the contents of files.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_11.html#SEC171">11.1.2 File Position</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                   The number of bytes from the
+                                     beginning of the file.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+File Names
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_11.html#SEC173">11.2.1 Directories</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Directories contain entries for files.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_11.html#SEC174">11.2.2 File Name Resolution</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        A file name specifies how to look up a file.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_11.html#SEC175">11.2.3 File Name Errors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Error conditions relating to file names.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_11.html#SEC176">11.2.4 Portability of File Names</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       File name portability and syntax issues.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+I/O on Streams
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_12.html#SEC178">12.1 Streams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                     About the data type representing a stream.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC179">12.2 Standard Streams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Streams to the standard input and output
+                                 devices are created for you.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC180">12.3 Opening Streams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             How to create a stream to talk to a file.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC181">12.4 Closing Streams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Close a stream when you are finished with it.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC182">12.5 Streams and Threads</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Issues with streams in threaded programs.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC183">12.6 Streams in Internationalized Applications</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Streams in internationalized applications.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC184">12.7 Simple Output by Characters or Lines</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Unformatted output by characters and lines.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC185">12.8 Character Input</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Unformatted input by characters and words.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC186">12.9 Line-Oriented Input</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  Reading a line or a record from a stream.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC187">12.10 Unreading</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                   Peeking ahead/pushing back input just read.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC190">12.11 Block Input/Output</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Input and output operations on blocks of data.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC191">12.12 Formatted Output</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            <code>printf</code> and related functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC203">12.13 Customizing <code>printf</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          You can define new conversion specifiers for
+                                 <code>printf</code> and friends.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC209">12.14 Formatted Input</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             <code>scanf</code> and related functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC219">12.15 End-Of-File and Errors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              How you can tell if an I/O error happens.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC220">12.16 Recovering from errors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		What you can do about errors.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC221">12.17 Text and Binary Streams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Some systems distinguish between text files
+                                 and binary files.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC222">12.18 File Positioning</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            About random-access streams.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC223">12.19 Portable File-Position Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Random access on peculiar ISO C systems.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC224">12.20 Stream Buffering</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            How to control buffering of streams.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC228">12.21 Other Kinds of Streams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Streams that do not necessarily correspond
+                                 to an open file.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC234">12.22 Formatted Messages</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Print strictly formatted messages.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Unreading
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_12.html#SEC188">12.10.1 What Unreading Means</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              An explanation of unreading with pictures.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC189">12.10.2 Using <code>ungetc</code> To Do Unreading</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  How to call <code>ungetc</code> to do unreading.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Formatted Output
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_12.html#SEC192">12.12.1 Formatted Output Basics</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Some examples to get you started.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC193">12.12.2 Output Conversion Syntax</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    General syntax of conversion
+                                 specifications.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC194">12.12.3 Table of Output Conversions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"> Summary of output conversions and
+                                 what they do.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC195">12.12.4 Integer Conversions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Details about formatting of integers.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC196">12.12.5 Floating-Point Conversions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Details about formatting of
+                                 floating-point numbers.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC197">12.12.6 Other Output Conversions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Details about formatting of strings,
+                                 characters, pointers, and the like.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC198">12.12.7 Formatted Output Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Descriptions of the actual functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC199">12.12.8 Dynamically Allocating Formatted Output</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Functions that allocate memory for the output.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC200">12.12.9 Variable Arguments Output Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   <code>vprintf</code> and friends.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC201">12.12.10 Parsing a Template String</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   What kinds of args does a given template
+                                 call for?
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC202">12.12.11 Example of Parsing a Template String</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Sample program using <code>parse_printf_format</code>.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Customizing Printf
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_12.html#SEC204">12.13.1 Registering New Conversions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Using <code>register_printf_function</code>
+                                         to register a new output conversion.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC205">12.13.2 Conversion Specifier Options</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        The handler must be able to get
+                                         the options specified in the
+                                         template when it is called.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC206">12.13.3 Defining the Output Handler</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Defining the handler and arginfo
+                                         functions that are passed as arguments
+                                         to <code>register_printf_function</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC207">12.13.4 <code>printf</code> Extension Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            How to define a <code>printf</code>
+                                         handler function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC208">12.13.5 Predefined <code>printf</code> Handlers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Predefined <code>printf</code> handlers.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Formatted Input
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_12.html#SEC210">12.14.1 Formatted Input Basics</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Some basics to get you started.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC211">12.14.2 Input Conversion Syntax</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Syntax of conversion specifications.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC212">12.14.3 Table of Input Conversions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Summary of input conversions and what they do.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC213">12.14.4 Numeric Input Conversions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Details of conversions for reading numbers.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC214">12.14.5 String Input Conversions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Details of conversions for reading strings.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC215">12.14.6 Dynamically Allocating String Conversions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	String conversions that <code>malloc</code> the buffer.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC216">12.14.7 Other Input Conversions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Details of miscellaneous other conversions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC217">12.14.8 Formatted Input Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Descriptions of the actual functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC218">12.14.9 Variable Arguments Input Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    <code>vscanf</code> and friends.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Stream Buffering
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_12.html#SEC225">12.20.1 Buffering Concepts</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Terminology is defined here.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC226">12.20.2 Flushing Buffers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            How to ensure that output buffers are flushed.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC227">12.20.3 Controlling Which Kind of Buffering</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       How to specify what kind of buffering to use.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Other Kinds of Streams
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_12.html#SEC229">12.21.1 String Streams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Streams that get data from or put data in
+                                 a string or memory buffer.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC230">12.21.2 Obstack Streams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Streams that store data in an obstack.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC231">12.21.3 Programming Your Own Custom Streams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Defining your own streams with an arbitrary
+                                 input data source and/or output data sink.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Custom Streams
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_12.html#SEC232">12.21.3.1 Custom Streams and Cookies</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         The <em>cookie</em> records where to fetch or
+                                 store data that is read or written.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC233">12.21.3.2 Custom Stream Hook Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              How you should define the four <em>hook
+                                 functions</em> that a custom stream needs.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Formatted Messages
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_12.html#SEC235">12.22.1 Printing Formatted Messages</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   The <code>fmtmsg</code> function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC236">12.22.2 Adding Severity Classes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Add more severity classes.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_12.html#SEC237">12.22.3 How to use <code>fmtmsg</code> and <code>addseverity</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Low-Level I/O
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_13.html#SEC239">13.1 Opening and Closing Files</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           How to open and close file
+                                         descriptors.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC240">13.2 Input and Output Primitives</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                      Reading and writing data.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC241">13.3 Setting the File Position of a Descriptor</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Setting a descriptor's file
+                                         position.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC242">13.4 Descriptors and Streams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Converting descriptor to stream
+                                         or vice-versa.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC243">13.5 Dangers of Mixing Streams and Descriptors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Precautions needed if you use both
+                                         descriptors and streams.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC247">13.6 Fast Scatter-Gather I/O</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                      Fast I/O to discontinuous buffers.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC248">13.7 Memory-mapped I/O</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                   Using files like memory.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC249">13.8 Waiting for Input or Output</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                     How to check for input or output
+					 on multiple file descriptors.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC250">13.9 Synchronizing I/O operations</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                   Making sure all I/O actions completed.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC251">13.10 Perform I/O Operations in Parallel</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                    Perform I/O in parallel.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC257">13.11 Control Operations on Files</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  Various other operations on file
+					 descriptors.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC258">13.12 Duplicating Descriptors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Fcntl commands for duplicating
+                                         file descriptors.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC259">13.13 File Descriptor Flags</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                    Fcntl commands for manipulating
+                                         flags associated with file
+                                         descriptors.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC260">13.14 File Status Flags</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                   Fcntl commands for manipulating
+                                         flags associated with open files.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC265">13.15 File Locks</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                          Fcntl commands for implementing
+                                         file locking.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC266">13.16 Interrupt-Driven Input</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                     Getting an asynchronous signal when
+                                         input arrives.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC267">13.17 Generic I/O Control operations</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Stream/Descriptor Precautions
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_13.html#SEC244">13.5.1 Linked Channels</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	   Dealing with channels sharing a file position.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC245">13.5.2 Independent Channels</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Dealing with separately opened, unlinked channels.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC246">13.5.3 Cleaning Streams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	   Cleaning a stream makes it safe to use
+                            another channel.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Asynchronous I/O
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_13.html#SEC252">13.10.1 Asynchronous Read and Write Operations</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC253">13.10.2 Getting the Status of AIO Operations</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC254">13.10.3 Getting into a Consistent State</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"> Getting into a consistent state.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC255">13.10.4 Cancellation of AIO Operations</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC256">13.10.5 How to optimize the AIO implementation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+File Status Flags
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_13.html#SEC261">13.14.1 File Access Modes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Whether the descriptor can read or write.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC262">13.14.2 Open-time Flags</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Details of <code>open</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC263">13.14.3 I/O Operating Modes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Special modes to control I/O operations.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_13.html#SEC264">13.14.4 Getting and Setting File Status Flags</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Fetching and changing these flags.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+File System Interface
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_14.html#SEC269">14.1 Working Directory</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           This is used to resolve relative
+				 file names.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC270">14.2 Accessing Directories</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Finding out what files a directory
+				 contains.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC278">14.3 Working with Directory Trees</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"> Apply actions to all files or a selectable
+                                 subset of a directory hierarchy.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC279">14.4 Hard Links</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  Adding alternate names to a file.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC280">14.5 Symbolic Links</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              A file that &ldquo;points to&rdquo; a file name.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC281">14.6 Deleting Files</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              How to delete a file, and what that means.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC282">14.7 Renaming Files</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Changing a file's name.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC283">14.8 Creating Directories</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        A system call just for creating a directory.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC284">14.9 File Attributes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Attributes of individual files.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC295">14.10 Making Special Files</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        How to create special files.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC296">14.11 Temporary Files</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Naming and creating temporary files.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Accessing Directories
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_14.html#SEC271">14.2.1 Format of a Directory Entry</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Format of one directory entry.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC272">14.2.2 Opening a Directory Stream</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         How to open a directory stream.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC273">14.2.3 Reading and Closing a Directory Stream</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   How to read directory entries from the stream.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC274">14.2.4 Simple Program to List a Directory</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     A very simple directory listing program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC275">14.2.5 Random Access in a Directory Stream</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Rereading part of the directory
+                                 already read with the same stream.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC276">14.2.6 Scanning the Content of a Directory</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Get entries for user selected subset of
+                                 contents in given directory.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC277">14.2.7 Simple Program to List a Directory, Mark II</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Revised version of the program.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+File Attributes
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_14.html#SEC285">14.9.1 The meaning of the File Attributes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          The names of the file attributes,
+                                 and what their values mean.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC286">14.9.2 Reading the Attributes of a File</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          How to read the attributes of a file.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC287">14.9.3 Testing the Type of a File</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Distinguishing ordinary files,
+                                 directories, links&hellip;
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC288">14.9.4 File Owner</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  How ownership for new files is determined,
+			         and how to change it.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC289">14.9.5 The Mode Bits for Access Permission</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             How information about a file's access
+                                 mode is stored.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC290">14.9.6 How Your Access to a File is Decided</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           How the system decides who can access a file.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC291">14.9.7 Assigning File Permissions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         How permissions for new files are assigned,
+			         and how to change them.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC292">14.9.8 Testing Permission to Access a File</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         How to find out if your process can
+                                 access a file.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC293">14.9.9 File Times</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  About the time attributes of a file.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_14.html#SEC294">14.9.10 File Size</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">			Manually changing the size of a file.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Pipes and FIFOs
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_15.html#SEC298">15.1 Creating a Pipe</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Making a pipe with the <code>pipe</code> function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_15.html#SEC299">15.2 Pipe to a Subprocess</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Using a pipe to communicate with a
+				 child process.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_15.html#SEC300">15.3 FIFO Special Files</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Making a FIFO special file.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_15.html#SEC301">15.4 Atomicity of Pipe I/O</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		When pipe (or FIFO) I/O is atomic.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Sockets
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_16.html#SEC303">16.1 Socket Concepts</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	Basic concepts you need to know about.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC304">16.2 Communication Styles</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">Stream communication, datagrams and other styles.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC305">16.3 Socket Addresses</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	How socket names (&ldquo;addresses&rdquo;) work.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC309">16.4 Interface Naming</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	Identifying specific network interfaces.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC310">16.5 The Local Namespace</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	Details about the local namespace.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC314">16.6 The Internet Namespace</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	Details about the Internet namespace.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC328">16.7 Other Namespaces</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	Other namespaces not documented fully here.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC329">16.8 Opening and Closing Sockets</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Creating sockets and destroying them.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC333">16.9 Using Sockets with Connections</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Operations on sockets with connection state.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC345">16.10 Datagram Socket Operations</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Operations on datagram sockets.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC350">16.11 The <code>inetd</code> Daemon</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Inetd is a daemon that starts servers on request.
+			   The most convenient way to write a server
+			   is to make it work with Inetd.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC353">16.12 Socket Options</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	Miscellaneous low-level socket options.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC356">16.13 Networks Database</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Accessing the database of network names.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Socket Addresses
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_16.html#SEC306">16.3.1 Address Formats</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		About <code>struct sockaddr</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC307">16.3.2 Setting the Address of a Socket</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Binding an address to a socket.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC308">16.3.3 Reading the Address of a Socket</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Reading the address of a socket.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Local Namespace
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_16.html#SEC311">16.5.1 Local Namespace Concepts</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"> What you need to understand.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC312">16.5.2 Details of Local Namespace</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Address format, symbolic names, etc.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC313">16.5.3 Example of Local-Namespace Sockets</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Example of creating a socket.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Internet Namespace
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_16.html#SEC315">16.6.1 Internet Socket Address Formats</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    How socket addresses are specified in the
+                                 Internet namespace.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC316">16.6.2 Host Addresses</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	        All about host addresses of Internet host.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC326">16.6.6 Protocols Database</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Referring to protocols by name.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC323">16.6.3 Internet Ports</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">			Internet port numbers.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC324">16.6.4 The Services Database</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Ports may have symbolic names.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC325">16.6.5 Byte Order Conversion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		        Different hosts may use different byte
+                                 ordering conventions; you need to
+                                 canonicalize host address and port number.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC327">16.6.7 Internet Socket Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	        Putting it all together.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Host Addresses
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_16.html#SEC317">16.6.2.1 Internet Host Addresses</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	What a host number consists of.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC320">16.6.2.2 Host Address Data Type</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	Data type for a host number.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC321">16.6.2.3 Host Address Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	Functions to operate on them.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC322">16.6.2.4 Host Names</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Translating host names to host numbers.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Open/Close Sockets
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_16.html#SEC330">16.8.1 Creating a Socket</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           How to open a socket.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC331">16.8.2 Closing a Socket</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            How to close a socket.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC332">16.8.3 Socket Pairs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                These are created like pipes.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Connections
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_16.html#SEC334">16.9.1 Making a Connection</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    	     What the client program must do.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC335">16.9.2 Listening for Connections</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		     How a server program waits for requests.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC336">16.9.3 Accepting Connections</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    What the server does when it gets a request.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC337">16.9.4 Who is Connected to Me?</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	     Getting the address of the
+				other side of a connection.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC338">16.9.5 Transferring Data</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        How to send and receive data.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC342">16.9.6 Byte Stream Socket Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	     An example program: a client for communicating
+			      over a byte stream socket in the Internet namespace.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC343">16.9.7 Byte Stream Connection Server Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	     A corresponding server program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC344">16.9.8 Out-of-Band Data</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         This is an advanced feature.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Transferring Data
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_16.html#SEC339">16.9.5.1 Sending Data</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Sending data with <code>send</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC340">16.9.5.2 Receiving Data</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Reading data with <code>recv</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC341">16.9.5.3 Socket Data Options</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Using <code>send</code> and <code>recv</code>.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Datagrams
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_16.html#SEC346">16.10.1 Sending Datagrams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Sending packets on a datagram socket.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC347">16.10.2 Receiving Datagrams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Receiving packets on a datagram socket.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC348">16.10.3 Datagram Socket Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     An example program: packets sent over a
+                           datagram socket in the local namespace.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC349">16.10.4 Example of Reading Datagrams</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	 Another program, that receives those packets.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Inetd
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_16.html#SEC351">16.11.1 <code>inetd</code> Servers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC352">16.11.2 Configuring <code>inetd</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Socket Options
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_16.html#SEC354">16.12.1 Socket Option Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     The basic functions for setting and getting
+                                 socket options.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_16.html#SEC355">16.12.2 Socket-Level Options</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Details of the options at the socket level.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Low-Level Terminal Interface
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_17.html#SEC358">17.1 Identifying Terminals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            How to determine if a file is a terminal
+			         device, and what its name is.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC359">17.2 I/O Queues</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  About flow control and typeahead.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC360">17.3 Two Styles of Input: Canonical or Not</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Two basic styles of input processing.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC361">17.4 Terminal Modes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              How to examine and modify flags controlling
+			         details of terminal I/O: echoing,
+                                 signals, editing.  Posix.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC376">17.5 BSD Terminal Modes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          BSD compatible terminal mode setting
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC377">17.6 Line Control Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Sending break sequences, clearing
+                                 terminal buffers &hellip;
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC378">17.7 Noncanonical Mode Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            How to read single characters without echo.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC379">17.8 Pseudo-Terminals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            How to open a pseudo-terminal.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Terminal Modes
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_17.html#SEC362">17.4.1 Terminal Mode Data Types</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             The data type <code>struct termios</code> and
+                                 related types.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC363">17.4.2 Terminal Mode Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Functions to read and set the terminal
+                                 attributes.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC364">17.4.3 Setting Terminal Modes Properly</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               The right way to set terminal attributes
+                                 reliably.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC365">17.4.4 Input Modes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Flags controlling low-level input handling.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC366">17.4.5 Output Modes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Flags controlling low-level output handling.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC367">17.4.6 Control Modes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Flags controlling serial port behavior.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC368">17.4.7 Local Modes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Flags controlling high-level input handling.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC369">17.4.8 Line Speed</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  How to read and set the terminal line speed.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC370">17.4.9 Special Characters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Characters that have special effects,
+			         and how to change them.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC375">17.4.10 Noncanonical Input</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Controlling how long to wait for input.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Special Characters
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_17.html#SEC371">17.4.9.1 Characters for Input Editing</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Special characters that terminate lines and
+                                  delete text, and other editing functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC372">17.4.9.2 Characters that Cause Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Special characters that send or raise signals
+                                  to or for certain classes of processes.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC373">17.4.9.3 Special Characters for Flow Control</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Special characters that suspend or resume
+                                  suspended output.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC374">17.4.9.4 Other Special Characters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Other special characters for BSD systems:
+				  they can discard output, and print status.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Pseudo-Terminals
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_17.html#SEC380">17.8.1 Allocating Pseudo-Terminals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Allocating a pseudo terminal.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_17.html#SEC381">17.8.2 Opening a Pseudo-Terminal Pair</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  How to open both sides of a
+                            pseudo-terminal in a single operation.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Syslog
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_18.html#SEC383">18.1 Overview of Syslog</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Overview of a system's Syslog facility
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_18.html#SEC384">18.2 Submitting Syslog Messages</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Functions to submit messages to Syslog
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Submitting Syslog Messages
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_18.html#SEC385">18.2.1 openlog</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                      Open connection to Syslog
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_18.html#SEC386">18.2.2 syslog, vsyslog</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Submit message to Syslog
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_18.html#SEC387">18.2.3 closelog</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                     Close connection to Syslog
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_18.html#SEC388">18.2.4 setlogmask</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                   Cause certain messages to be ignored
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_18.html#SEC389">18.2.5 Syslog Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Example of all of the above
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Mathematics
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_19.html#SEC391">19.1 Predefined Mathematical Constants</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Precise numeric values for often-used
+                                 constants.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_19.html#SEC392">19.2 Trigonometric Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Sine, cosine, tangent, and friends.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_19.html#SEC393">19.3 Inverse Trigonometric Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Arcsine, arccosine, etc.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_19.html#SEC394">19.4 Exponentiation and Logarithms</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Also pow and sqrt.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_19.html#SEC395">19.5 Hyperbolic Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        sinh, cosh, tanh, etc.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_19.html#SEC396">19.6 Special Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Bessel, gamma, erf.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_19.html#SEC397">19.7 Known Maximum Errors in Math Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_19.html#SEC398">19.8 Pseudo-Random Numbers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Functions for generating pseudo-random
+				 numbers.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_19.html#SEC402">19.9 Is Fast Code or Small Code preferred?</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Fast code or small code.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Pseudo-Random Numbers
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_19.html#SEC399">19.8.1 ISO C Random Number Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  <code>rand</code> and friends.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_19.html#SEC400">19.8.2 BSD Random Number Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  <code>random</code> and friends.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_19.html#SEC401">19.8.3 SVID Random Number Function</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 <code>drand48</code> and friends.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Arithmetic
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_20.html#SEC404">20.1 Integers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                    Basic integer types and concepts
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC405">20.2 Integer Division</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Integer division with guaranteed rounding.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC406">20.3 Floating Point Numbers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Basic concepts.  IEEE 754.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC407">20.4 Floating-Point Number Classification Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      The five kinds of floating-point number.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC408">20.5 Errors in Floating-Point Calculations</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       When something goes wrong in a calculation.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC413">20.6 Rounding Modes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                    Controlling how results are rounded.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC414">20.7 Floating-Point Control Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Saving and restoring the FPU's state.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC415">20.8 Arithmetic Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Fundamental operations provided by the library.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC423">20.9 Complex Numbers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             The types.  Writing complex constants.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC424">20.10 Projections, Conjugates, and Decomposing of Complex Numbers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Projection, conjugation, decomposition.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC425">20.11 Parsing of Numbers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Converting strings to numbers.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC428">20.12 Old-fashioned System V number-to-string functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  An archaic way to convert numbers to strings.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Floating Point Errors
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_20.html#SEC409">20.5.1 FP Exceptions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               IEEE 754 math exceptions and how to detect them.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC410">20.5.2 Infinity and NaN</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Special values returned by calculations.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC411">20.5.3 Examining the FPU status word</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Checking for exceptions after the fact.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC412">20.5.4 Error Reporting by Mathematical Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        How the math functions report errors.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Arithmetic Functions
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_20.html#SEC416">20.8.1 Absolute Value</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Absolute values of integers and floats.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC417">20.8.2 Normalization Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Extracting exponents and putting them back.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC418">20.8.3 Rounding Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Rounding floats to integers.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC419">20.8.4 Remainder Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Remainders on division, precisely defined.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC420">20.8.5 Setting and modifying single bits of FP values</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Sign bit adjustment.  Adding epsilon.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC421">20.8.6 Floating-Point Comparison Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Comparisons without risk of exceptions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC422">20.8.7 Miscellaneous FP arithmetic functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Max, min, positive difference, multiply-add.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Parsing of Numbers
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_20.html#SEC426">20.11.1 Parsing of Integers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Functions for conversion of integer values.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_20.html#SEC427">20.11.2 Parsing of Floats</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Functions for conversion of floating-point
+				 values.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Date and Time
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_21.html#SEC430">21.1 Time Basics</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Concepts and definitions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC431">21.2 Elapsed Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Data types to represent elapsed times
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC432">21.3 Processor And CPU Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Time a program has spent executing.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC435">21.4 Calendar Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Manipulation of &ldquo;real&rdquo; dates and times.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC447">21.5 Setting an Alarm</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Sending a signal after a specified time.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC448">21.6 Sleeping</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                    Waiting for a period of time.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Processor And CPU Time
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_21.html#SEC433">21.3.1 CPU Time Inquiry</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                    The <code>clock</code> function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC434">21.3.2 Processor Time Inquiry</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              The <code>times</code> function.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Calendar Time
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_21.html#SEC436">21.4.1 Simple Calendar Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Facilities for manipulating calendar time.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC437">21.4.2 High-Resolution Calendar</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    A time representation with greater precision.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC438">21.4.3 Broken-down Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Facilities for manipulating local time.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC439">21.4.4 High Accuracy Clock</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Maintaining a high accuracy system clock.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC440">21.4.5 Formatting Calendar Time</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Converting times to strings.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC441">21.4.6 Convert textual time and date information back</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Convert textual time and date information back
+                                 into broken-down time values.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC444">21.4.7 Specifying the Time Zone with <code>TZ</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 How users specify the time zone.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC445">21.4.8 Functions and Variables for Time Zones</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Functions to examine or specify the time zone.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC446">21.4.9 Time Functions Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      An example program showing use of some of
+				 the time functions.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Parsing Date and Time
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_21.html#SEC442">21.4.6.1 Interpret string according to given format</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_21.html#SEC443">21.4.6.2 A More User-friendly Way to Parse Times and Dates</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    User-friendly function to parse data and
+                                    time strings.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Resource Usage And Limitation
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_22.html#SEC450">22.1 Resource Usage</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Measuring various resources used.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_22.html#SEC451">22.2 Limiting Resource Usage</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Specifying limits on resource usage.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_22.html#SEC452">22.3 Process CPU Priority And Scheduling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">			Reading or setting process run priority.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_22.html#SEC461">22.4 Querying memory available resources</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_22.html#SEC464">22.5 Learn about the processors available</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Priority
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_22.html#SEC453">22.3.1 Absolute Priority</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               The first tier of priority.  Posix
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_22.html#SEC455">22.3.2 Realtime Scheduling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Scheduling among the process nobility
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_22.html#SEC456">22.3.3 Basic Scheduling Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Get/set scheduling policy, priority
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_22.html#SEC457">22.3.4 Traditional Scheduling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Scheduling among the vulgar masses
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_22.html#SEC460">22.3.5 Limiting execution to certain CPUs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Traditional Scheduling
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_22.html#SEC458">22.3.4.1 Introduction To Traditional Scheduling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_22.html#SEC459">22.3.4.2 Functions For Traditional Scheduling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Memory Resources
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_22.html#SEC462">22.4.1 Overview about traditional Unix memory handling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_22.html#SEC463">22.4.2 How to get information about the memory subsystem?</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Non-Local Exits
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_23.html#SEC466">23.1 Introduction to Non-Local Exits</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        When and how to use these facilities.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_23.html#SEC467">23.2 Details of Non-Local Exits</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Functions for non-local exits.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_23.html#SEC468">23.3 Non-Local Exits and Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Portability issues.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_23.html#SEC469">23.4 Complete Context Control</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Complete context control a la System V.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Signal Handling
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_24.html#SEC472">24.1 Basic Concepts of Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Introduction to the signal facilities.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC476">24.2 Standard Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Particular kinds of signals with
+                                 standard names and meanings.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC485">24.3 Specifying Signal Actions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Specifying what happens when a
+                                 particular signal is delivered.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC492">24.4 Defining Signal Handlers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           How to write a signal handler function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC503">24.5 Primitives Interrupted by Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">	Signal handlers affect use of <code>open</code>,
+				 <code>read</code>, <code>write</code> and other functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC504">24.6 Generating Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          How to send a signal to a process.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC509">24.7 Blocking Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Making the system hold signals temporarily.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC517">24.8 Waiting for a Signal</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Suspending your program until a signal
+                                 arrives.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC521">24.9 Using a Separate Signal Stack</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC522">24.10 BSD Signal Handling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Additional functions for backward
+			         compatibility with BSD.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Concepts of Signals
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_24.html#SEC473">24.1.1 Some Kinds of Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Some examples of what can cause a signal.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC474">24.1.2 Concepts of Signal Generation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Concepts of why and how signals occur.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC475">24.1.3 How Signals Are Delivered</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Concepts of what a signal does to the
+                                 process.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Standard Signals
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_24.html#SEC477">24.2.1 Program Error Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Used to report serious program errors.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC478">24.2.2 Termination Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Used to interrupt and/or terminate the
+                                 program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC479">24.2.3 Alarm Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Used to indicate expiration of timers.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC480">24.2.4 Asynchronous I/O Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Used to indicate input is available.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC481">24.2.5 Job Control Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Signals used to support job control.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC482">24.2.6 Operation Error Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Used to report operational system errors.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC483">24.2.7 Miscellaneous Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC484">24.2.8 Signal Messages</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Printing a message describing a signal.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Signal Actions
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_24.html#SEC486">24.3.1 Basic Signal Handling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       The simple <code>signal</code> function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC487">24.3.2 Advanced Signal Handling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    The more powerful <code>sigaction</code> function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC488">24.3.3 Interaction of <code>signal</code> and <code>sigaction</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        How those two functions interact.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC489">24.3.4 <code>sigaction</code> Function Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  An example of using the sigaction function.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC490">24.3.5 Flags for <code>sigaction</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Specifying options for signal handling.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC491">24.3.6 Initial Signal Actions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      How programs inherit signal actions.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Defining Handlers
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_24.html#SEC493">24.4.1 Signal Handlers that Return</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Handlers that return normally, and what
+                                 this means.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC494">24.4.2 Handlers That Terminate the Process</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      How handler functions terminate a program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC495">24.4.3 Nonlocal Control Transfer in Handlers</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Nonlocal transfer of control out of a
+                                 signal handler.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC496">24.4.4 Signals Arriving While a Handler Runs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          What happens when signals arrive while
+                                 the handler is already occupied.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC497">24.4.5 Signals Close Together Merge into One</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		When a second signal arrives before the
+				 first is handled.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC498">24.4.6 Signal Handling and Nonreentrant Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Do not call any functions unless you know they
+                                 are reentrant with respect to signals.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC499">24.4.7 Atomic Data Access and Signal Handling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          A single handler can run in the middle of
+                                 reading or writing a single object.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Atomic Data Access
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_24.html#SEC500">24.4.7.1 Problems with Non-Atomic Access</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		A program illustrating interrupted access.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC501">24.4.7.2 Atomic Types</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Data types that guarantee no interruption.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC502">24.4.7.3 Atomic Usage Patterns</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		Proving that interruption is harmless.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Generating Signals
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_24.html#SEC505">24.6.1 Signaling Yourself</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          A process can send a signal to itself.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC506">24.6.2 Signaling Another Process</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Send a signal to another process.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC507">24.6.3 Permission for using <code>kill</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC508">24.6.4 Using <code>kill</code> for Communication</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Blocking Signals
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_24.html#SEC510">24.7.1 Why Blocking Signals is Useful</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                           The purpose of blocking signals.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC511">24.7.2 Signal Sets</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                         How to specify which signals to
+                                         block.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC512">24.7.3 Process Signal Mask</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Blocking delivery of signals to your
+				         process during normal execution.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC513">24.7.4 Blocking to Test for Delivery of a Signal</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC514">24.7.5 Blocking Signals for a Handler</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Blocking additional signals while a
+				         handler is being run.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC515">24.7.6 Checking for Pending Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC516">24.7.7 Remembering a Signal to Act On Later</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                How you can get almost the same
+                                         effect as blocking a signal, by
+                                         handling it and setting a flag
+                                         to be tested later.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Waiting for a Signal
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_24.html#SEC518">24.8.1 Using <code>pause</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 The simple way, using <code>pause</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC519">24.8.2 Problems with <code>pause</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Why the simple way is often not very good.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC520">24.8.3 Using <code>sigsuspend</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  Reliably waiting for a specific signal.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+BSD Signal Handling
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_24.html#SEC523">24.10.1 BSD Function to Establish a Handler</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_24.html#SEC524">24.10.2 BSD Functions for Blocking Signals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Program Basics
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_25.html#SEC526">25.1 Program Arguments</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Parsing your program's command-line arguments.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC558">25.4 Environment Variables</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Less direct parameters affecting your program
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC561">25.5 System Calls</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Requesting service from the system
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC562">25.6 Program Termination</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Telling the system you're done; return status
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Program Arguments
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_25.html#SEC527">25.1.1 Program Argument Syntax Conventions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             By convention, options start with a hyphen.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC528">25.1.2 Parsing Program Arguments</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Ways to parse program options and arguments.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Parsing Program Arguments
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_25.html#SEC529">25.2 Parsing program options using <code>getopt</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC534">25.3 Parsing Program Options with Argp</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                        Parsing program options using <code>argp_parse</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC556">25.3.12.1 Parsing of Suboptions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  Some programs need more detailed options.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC557">25.3.13 Parsing of Suboptions Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          This shows how it could be done for <code>mount</code>.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Environment Variables
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_25.html#SEC559">25.4.1 Environment Access</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          How to get and set the values of
+				 environment variables.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC560">25.4.2 Standard Environment Variables</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        These environment variables have
+                		 standard interpretations.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Program Termination
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_25.html#SEC563">25.6.1 Normal Termination</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          If a program calls <code>exit</code>, a
+                                 process terminates normally.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC564">25.6.2 Exit Status</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 The <code>exit status</code> provides information
+                                 about why the process terminated.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC565">25.6.3 Cleanups on Exit</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            A process can run its own cleanup
+                                 functions upon normal termination.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC566">25.6.4 Aborting a Program</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          The <code>abort</code> function causes
+                                 abnormal program termination.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_25.html#SEC567">25.6.5 Termination Internals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       What happens when a process terminates.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Processes
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_26.html#SEC569">26.1 Running a Command</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           The easy way to run another program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_26.html#SEC570">26.2 Process Creation Concepts</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   An overview of the hard way to do it.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_26.html#SEC571">26.3 Process Identification</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      How to get the process ID of a process.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_26.html#SEC572">26.4 Creating a Process</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          How to fork a child process.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_26.html#SEC573">26.5 Executing a File</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            How to make a process execute another program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_26.html#SEC574">26.6 Process Completion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          How to tell when a child process has completed.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_26.html#SEC575">26.7 Process Completion Status</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   How to interpret the status value
+                                 returned from a child process.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_26.html#SEC576">26.8 BSD Process Wait Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  	More functions, for backward compatibility.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_26.html#SEC577">26.9 Process Creation Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    A complete example program.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Job Control
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_27.html#SEC579">27.1 Concepts of Job Control</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Jobs can be controlled by a shell.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC580">27.2 Job Control is Optional</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Not all POSIX systems support job control.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC581">27.3 Controlling Terminal of a Process</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        How a process gets its controlling terminal.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC582">27.4 Access to the Controlling Terminal</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      How processes share the controlling terminal.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC583">27.5 Orphaned Process Groups</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Jobs left after the user logs out.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC584">27.6 Implementing a Job Control Shell</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        What a shell must do to implement job control.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC592">27.7 Functions for Job Control</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Functions to control process groups.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Implementing a Shell
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_27.html#SEC585">27.6.1 Data Structures for the Shell</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Introduction to the sample shell.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC586">27.6.2 Initializing the Shell</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      What the shell must do to take
+				 responsibility for job control.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC587">27.6.3 Launching Jobs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Creating jobs to execute commands.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC588">27.6.4 Foreground and Background</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Putting a job in foreground of background.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC589">27.6.5 Stopped and Terminated Jobs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Reporting job status.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC590">27.6.6 Continuing Stopped Jobs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     How to continue a stopped job in
+				 the foreground or background.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC591">27.6.7 The Missing Pieces</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Other parts of the shell.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Functions for Job Control
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_27.html#SEC593">27.7.1 Identifying the Controlling Terminal</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Determining the controlling terminal's name.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC594">27.7.2 Process Group Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Functions for manipulating process groups.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_27.html#SEC595">27.7.3 Functions for Controlling Terminal Access</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Functions for controlling terminal access.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Name Service Switch
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_28.html#SEC597">28.1 NSS Basics</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  What is this NSS good for.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_28.html#SEC598">28.2 The NSS Configuration File</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Configuring NSS.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_28.html#SEC602">28.3 NSS Module Internals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        How does it work internally.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_28.html#SEC605">28.4 Extending NSS</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               What to do to add services or databases.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+NSS Configuration File
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_28.html#SEC599">28.2.1 Services in the NSS configuration File</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Service names in the NSS configuration.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_28.html#SEC600">28.2.2 Actions in the NSS configuration</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  React appropriately to the lookup result.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_28.html#SEC601">28.2.3 Notes on the NSS Configuration File</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Things to take care about while
+                                     configuring NSS.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+NSS Module Internals
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_28.html#SEC603">28.3.1 The Naming Scheme of the NSS Modules</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Construction of the interface function of
+                                the NSS modules.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_28.html#SEC604">28.3.2 The Interface of the Function in NSS Modules</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Programming interface in the NSS module
+                                functions.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Extending NSS
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_28.html#SEC606">28.4.1 Adding another Service to NSS</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  What is to do to add a new service.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_28.html#SEC607">28.4.2 Internals of the NSS Module Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Guidelines for writing new NSS
+                                        service functions.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Users and Groups
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_29.html#SEC609">29.1 User and Group IDs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Each user has a unique numeric ID;
+				 likewise for groups.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC610">29.2 The Persona of a Process</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             The user IDs and group IDs of a process.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC611">29.3 Why Change the Persona of a Process?</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Why a program might need to change
+				 its user and/or group IDs.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC612">29.4 How an Application Can Change Persona</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Changing the user and group IDs.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC613">29.5 Reading the Persona of a Process</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             How to examine the user and group IDs.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_29.html#SEC614">29.6 Setting the User ID</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Functions for setting the user ID.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC615">29.7 Setting the Group IDs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Functions for setting the group IDs.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_29.html#SEC616">29.8 Enabling and Disabling Setuid Access</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Turning setuid access on and off.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC617">29.9 Setuid Program Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      The pertinent parts of one sample program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC618">29.10 Tips for Writing Setuid Programs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             How to avoid granting unlimited access.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_29.html#SEC619">29.11 Identifying Who Logged In</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Getting the name of the user who logged in,
+				 or of the real user ID of the current process.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_29.html#SEC620">29.12 The User Accounting Database</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Keeping information about users and various
+                                 actions in databases.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_29.html#SEC624">29.13 User Database</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Functions and data structures for
+                        	 accessing the user database.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC629">29.14 Group Database</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Functions and data structures for
+                        	 accessing the group database.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC633">29.15 User and Group Database Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Example program showing the use of database
+				 inquiry functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC634">29.16 Netgroup Database</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Functions for accessing the netgroup database.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+User Accounting Database
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_29.html#SEC621">29.12.1 Manipulating the User Accounting Database</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Scanning and modifying the user
+                                 accounting database.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC622">29.12.2 XPG User Accounting Database Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               A standardized way for doing the same thing.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC623">29.12.3 Logging In and Out</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Functions from BSD that modify the user
+                                 accounting database.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+User Database
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_29.html#SEC625">29.13.1 The Data Structure that Describes a User</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         What each user record contains.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC626">29.13.2 Looking Up One User</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 How to look for a particular user.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC627">29.13.3 Scanning the List of All Users</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Scanning the list of all users, one by one.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC628">29.13.4 Writing a User Entry</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        How a program can rewrite a user's record.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Group Database
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_29.html#SEC630">29.14.1 The Data Structure for a Group</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        What each group record contains.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC631">29.14.2 Looking Up One Group</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                How to look for a particular group.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC632">29.14.3 Scanning the List of All Groups</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Scanning the list of all groups.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Netgroup Database
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_29.html#SEC635">29.16.1 Netgroup Data</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  Data in the Netgroup database and where
+                                   it comes from.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC636">29.16.2 Looking up one Netgroup</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                How to look for a particular netgroup.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_29.html#SEC637">29.16.3 Testing for Netgroup Membership</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            How to test for netgroup membership.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+System Management
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_30.html#SEC639">30.1 Host Identification</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Determining the name of the machine.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_30.html#SEC640">30.2 Platform Type Identification</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               Determining operating system and basic
+                                  machine type
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_30.html#SEC641">30.3 Controlling and Querying Mounts</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Controlling/querying mounts
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_30.html#SEC647">30.4 System Parameters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Getting and setting various system parameters
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Filesystem Handling
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_30.html#SEC642">30.3.1 Mount Information</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           What is or could be mounted?
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_30.html#SEC646">30.3.2 Mount, Unmount, Remount</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Controlling what is mounted and how
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Mount Information
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_30.html#SEC643">30.3.1.1 The &lsquo;<tt>fstab</tt>&rsquo; file</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_30.html#SEC644">30.3.1.2 The &lsquo;<tt>mtab</tt>&rsquo; file</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_30.html#SEC645">30.3.1.3 Other (Non-libc) Sources of Mount Information</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Other (non-libc) sources of mount information
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+System Configuration
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_31.html#SEC649">31.1 General Capacity Limits</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Constants and functions that describe
+				various process-related limits that have
+				one uniform value for any given machine.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_31.html#SEC650">31.2 Overall System Options</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Optional POSIX features.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_31.html#SEC651">31.3 Which Version of POSIX is Supported</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Version numbers of POSIX.1 and POSIX.2.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_31.html#SEC652">31.4 Using <code>sysconf</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  Getting specific configuration values
+                                of general limits and system options.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_31.html#SEC656">31.5 Minimum Values for General Capacity Limits</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Minimum values for general limits.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_31.html#SEC657">31.6 Limits on File System Capacity</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Size limitations that pertain to individual files.
+                                These can vary between file systems
+                                or even from file to file.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_31.html#SEC658">31.7 Optional Features in File Support</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Optional features that some files may support.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_31.html#SEC659">31.8 Minimum Values for File System Limits</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Minimum values for file limits.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_31.html#SEC660">31.9 Using <code>pathconf</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                 Getting the limit values for a particular file.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_31.html#SEC661">31.10 Utility Program Capacity Limits</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           Capacity limits of some POSIX.2 utility programs.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_31.html#SEC662">31.11 Minimum Values for Utility Limits</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         Minimum allowable values of those limits.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_31.html#SEC663">31.12 String-Valued Parameters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Getting the default search path.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Sysconf
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_31.html#SEC653">31.4.1 Definition of <code>sysconf</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Detailed specifications of <code>sysconf</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_31.html#SEC654">31.4.2 Constants for <code>sysconf</code> Parameters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     The list of parameters <code>sysconf</code> can read.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_31.html#SEC655">31.4.3 Examples of <code>sysconf</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       How to use <code>sysconf</code> and the parameter
+				 macros properly together.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Cryptographic Functions
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_32.html#SEC665">32.1 Legal Problems</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              This software can get you locked up, or worse.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_32.html#SEC666">32.2 Reading Passwords</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                     Prompting the user for a password.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_32.html#SEC667">32.3 Encrypting Passwords</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                       A one-way function for passwords.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_32.html#SEC668">32.4 DES Encryption</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              Routines for DES encryption.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Debugging Support
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_33.html#SEC670">33.1 Backtraces</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Obtaining and printing a back trace of the
+                               current stack.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Language Features
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_34.html#SEC672">A.1 Explicitly Checking Internal Consistency</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Using <code>assert</code> to abort if
+				 something &ldquo;impossible&rdquo; happens.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC673">A.2 Variadic Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          Defining functions with varying numbers
+                                 of args.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC683">A.3 Null Pointer Constant</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       The macro <code>NULL</code>.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC684">A.4 Important Data Types</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        Data types for object sizes.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC685">A.5 Data Type Measurements</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Parameters of data type representations.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Variadic Functions
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_34.html#SEC674">A.2.1 Why Variadic Functions are Used</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                Reasons for making functions take
+                                 variable arguments.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC675">A.2.2 How Variadic Functions are Defined and Used</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                How to define and call variadic functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC681">A.2.3 Example of a Variadic Function</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            A complete example.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+How Variadic
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_34.html#SEC676">A.2.2.1 Syntax for Variable Arguments</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  How to make a prototype for a function
+			  with variable arguments.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC677">A.2.2.2 Receiving the Argument Values</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Steps you must follow to access the
+			  optional argument values.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC678">A.2.2.3 How Many Arguments Were Supplied</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   How to decide whether there are more arguments.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC679">A.2.2.4 Calling Variadic Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Things you need to know about calling
+			  variable arguments functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC680">A.2.2.5 Argument Access Macros</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Detailed specification of the macros
+        		  for accessing variable arguments.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC682">A.2.3.1 Old-Style Variadic Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">		 The pre-ISO way of defining variadic functions.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Data Type Measurements
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_34.html#SEC686">A.5.1 Computing the Width of an Integer Data Type</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           How many bits does an integer type hold?
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC687">A.5.2 Range of an Integer Type</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           What are the largest and smallest values
+			     that an integer type can hold?
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC688">A.5.3 Floating Type Macros</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    Parameters that measure the floating point types.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC692">A.5.4 Structure Field Offset Measurement</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Getting measurements on structure types.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Floating Type Macros
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_34.html#SEC689">A.5.3.1 Floating Point Representation Concepts</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     Definitions of terminology.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC690">A.5.3.2 Floating Point Parameters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   Details of specific macros.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_34.html#SEC691">A.5.3.3 IEEE Floating Point</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         The measurements for one common
+                                 representation.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Installation
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_36.html#SEC695">C.1 Configuring and compiling GNU Libc</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   How to compile and test GNU libc.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_36.html#SEC696">C.2 Installing the C Library</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        How to install it once you've got it
+ compiled.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_36.html#SEC697">C.3 Recommended Tools for Compilation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       You'll need these first.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_36.html#SEC698">C.4 Specific advice for GNU/Linux systems</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="libc_36.html#SEC699">C.5 Reporting Bugs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">              So they'll get fixed.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Maintenance
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_37.html#SEC701">D.1 Adding New Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         How to add new functions or header files
+                             to the GNU C library.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_37.html#SEC702">D.2 Porting the GNU C Library</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               How to port the GNU C library to
+                             a new machine or operating system.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Porting
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="libc_37.html#SEC703">D.2.1 Layout of the &lsquo;<tt>sysdeps</tt>&rsquo; Directory Hierarchy</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       The layout of the &lsquo;<tt>sysdeps</tt>&rsquo; hierarchy.
+</td></tr>
+<tr><td align="left" valign="top"><a href="libc_37.html#SEC704">D.2.2 Porting the GNU C Library to Unix Systems</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">             Porting the library to an average
+                                   Unix-like system.
+</td></tr>
+</table>
+<hr size="1">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated by <em>root</em> on <em>October, 30 2008</em> using <a href="http://www.nongnu.org/texi2html/"><em>texi2html 1.78</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

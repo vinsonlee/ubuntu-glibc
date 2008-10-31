@@ -1,5 +1,10 @@
---- /dev/null	2007-11-26 21:04:03.380078389 +0100
-+++ localedata/locales/de_LI	2007-11-27 21:18:15.000000000 +0100
+---
+ localedata/SUPPORTED     |    1 
+ localedata/locales/de_LI |   94 +++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 95 insertions(+)
+
+--- /dev/null
++++ b/localedata/locales/de_LI
 @@ -0,0 +1,94 @@
 +comment_char %
 +escape_char  /
@@ -95,13 +100,13 @@
 +country_num 438
 +END LC_ADDRESS
 +
---- localedata/SUPPORTED.orig	2007-11-27 21:20:52.000000000 +0100
-+++ localedata/SUPPORTED	2007-11-27 21:21:17.000000000 +0100
-@@ -96,6 +96,7 @@
+--- a/localedata/SUPPORTED
++++ b/localedata/SUPPORTED
+@@ -97,6 +97,7 @@
  de_DE.UTF-8/UTF-8 \
  de_DE/ISO-8859-1 \
  de_DE@euro/ISO-8859-15 \
 +de_LI.UTF-8/UTF-8 \
  de_LU.UTF-8/UTF-8 \
- de_LU/ISO-8859-1 \
  de_LU@euro/ISO-8859-15 \
+ de_LU/ISO-8859-1 \

@@ -1,5 +1,10 @@
---- iconvdata/run-iconv-test.sh.orig
-+++ iconvdata/run-iconv-test.sh
+---
+ iconvdata/run-iconv-test.sh |    2 +-
+ nptl/tst-tls6.sh            |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/iconvdata/run-iconv-test.sh
++++ b/iconvdata/run-iconv-test.sh
 @@ -130,7 +130,7 @@
      done
    fi
@@ -9,8 +14,8 @@
      echo $ac_n "      suntzu: ASCII -> $to -> ASCII $ac_c"
      $PROG -f ASCII -t $to testdata/suntzus |
      $PROG -f $to -t ASCII > $temp1 ||
---- nptl/tst-tls6.sh.orig
-+++ nptl/tst-tls6.sh
+--- a/nptl/tst-tls6.sh
++++ b/nptl/tst-tls6.sh
 @@ -1,4 +1,4 @@
 -#!/bin/sh
 +#!/bin/bash

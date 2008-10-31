@@ -1,0 +1,390 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- This file documents the GNU C library.
+
+This is Edition 0.12, last updated 2007-10-27,
+of The GNU C Library Reference Manual, for version 2.8.
+
+Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002,
+2003, 2007, 2008 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software Needs Free Documentation"
+and "GNU Lesser General Public License", the Front-Cover texts being
+"A GNU Manual", and with the Back-Cover Texts as in (a) below.  A
+copy of the license is included in the section entitled "GNU Free
+Documentation License".
+
+(a) The FSF's Back-Cover Text is: "You have the freedom to
+copy and modify this GNU manual.  Buying copies from the FSF
+supports it in developing GNU and promoting software freedom."
+ -->
+<!-- Created on October, 30 2008 by texi2html 1.78 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+
+-->
+<head>
+<title>The GNU C Library: Function and Macro Index: T &ndash; W</title>
+
+<meta name="description" content="The GNU C Library: Function and Macro Index: T &ndash; W">
+<meta name="keywords" content="The GNU C Library: Function and Macro Index: T &ndash; W">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.78">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="INDEX14"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libc_58.html#INDEX13" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_60.html#INDEX15" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc_58.html#INDEX13" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_60.html#INDEX15" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h1 class="unnumbered"> Function and Macro Index: T &ndash; W </h1>
+<table><tr><th valign="top">Jump to: &nbsp; </th><td><a href="libc_52.html#SEC714_0" class="summary-letter"><b>*</b></a>
+ &nbsp; 
+<a href="libc_52.html#SEC714_1" class="summary-letter"><b>_</b></a>
+ &nbsp; 
+<br>
+<a href="libc_52.html#SEC714_2" class="summary-letter"><b>A</b></a>
+ &nbsp; 
+<a href="libc_52.html#SEC714_3" class="summary-letter"><b>B</b></a>
+ &nbsp; 
+<a href="libc_53.html#INDEX8_0" class="summary-letter"><b>C</b></a>
+ &nbsp; 
+<a href="libc_54.html#INDEX9_0" class="summary-letter"><b>D</b></a>
+ &nbsp; 
+<a href="libc_54.html#INDEX9_1" class="summary-letter"><b>E</b></a>
+ &nbsp; 
+<a href="libc_54.html#INDEX9_2" class="summary-letter"><b>F</b></a>
+ &nbsp; 
+<a href="libc_55.html#INDEX10_0" class="summary-letter"><b>G</b></a>
+ &nbsp; 
+<a href="libc_56.html#INDEX11_0" class="summary-letter"><b>H</b></a>
+ &nbsp; 
+<a href="libc_56.html#INDEX11_1" class="summary-letter"><b>I</b></a>
+ &nbsp; 
+<a href="libc_56.html#INDEX11_2" class="summary-letter"><b>J</b></a>
+ &nbsp; 
+<a href="libc_56.html#INDEX11_3" class="summary-letter"><b>K</b></a>
+ &nbsp; 
+<a href="libc_56.html#INDEX11_4" class="summary-letter"><b>L</b></a>
+ &nbsp; 
+<a href="libc_57.html#INDEX12_0" class="summary-letter"><b>M</b></a>
+ &nbsp; 
+<a href="libc_57.html#INDEX12_1" class="summary-letter"><b>N</b></a>
+ &nbsp; 
+<a href="libc_57.html#INDEX12_2" class="summary-letter"><b>O</b></a>
+ &nbsp; 
+<a href="libc_58.html#INDEX13_0" class="summary-letter"><b>P</b></a>
+ &nbsp; 
+<a href="libc_58.html#INDEX13_1" class="summary-letter"><b>Q</b></a>
+ &nbsp; 
+<a href="libc_58.html#INDEX13_2" class="summary-letter"><b>R</b></a>
+ &nbsp; 
+<a href="libc_58.html#INDEX13_3" class="summary-letter"><b>S</b></a>
+ &nbsp; 
+<a href="#INDEX14_0" class="summary-letter"><b>T</b></a>
+ &nbsp; 
+<a href="#INDEX14_1" class="summary-letter"><b>U</b></a>
+ &nbsp; 
+<a href="#INDEX14_2" class="summary-letter"><b>V</b></a>
+ &nbsp; 
+<a href="#INDEX14_3" class="summary-letter"><b>W</b></a>
+ &nbsp; 
+<a href="libc_60.html#INDEX15_0" class="summary-letter"><b>Y</b></a>
+ &nbsp; 
+</td></tr></table>
+<table border="0" class="index-fn">
+<tr><td></td><th align="left">Index Entry</th><th align="left"> Section</th></tr>
+<tr><td colspan="3"> <hr></td></tr>
+<tr><th><a name="INDEX14_0">T</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="libc_19.html#IDX1764"><code>tan</code></a></td><td valign="top"><a href="libc_19.html#SEC392">19.2 Trigonometric Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_19.html#IDX1765"><code>tanf</code></a></td><td valign="top"><a href="libc_19.html#SEC392">19.2 Trigonometric Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_19.html#IDX1874"><code>tanh</code></a></td><td valign="top"><a href="libc_19.html#SEC395">19.5 Hyperbolic Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_19.html#IDX1875"><code>tanhf</code></a></td><td valign="top"><a href="libc_19.html#SEC395">19.5 Hyperbolic Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_19.html#IDX1876"><code>tanhl</code></a></td><td valign="top"><a href="libc_19.html#SEC395">19.5 Hyperbolic Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_19.html#IDX1766"><code>tanl</code></a></td><td valign="top"><a href="libc_19.html#SEC392">19.2 Trigonometric Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_17.html#IDX1685"><code>tcdrain</code></a></td><td valign="top"><a href="libc_17.html#SEC377">17.6 Line Control Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_17.html#IDX1694"><code>tcflow</code></a></td><td valign="top"><a href="libc_17.html#SEC377">17.6 Line Control Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_17.html#IDX1688"><code>tcflush</code></a></td><td valign="top"><a href="libc_17.html#SEC377">17.6 Line Control Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_17.html#IDX1548"><code>tcgetattr</code></a></td><td valign="top"><a href="libc_17.html#SEC363">17.4.2 Terminal Mode Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_27.html#IDX2737"><code>tcgetpgrp</code></a></td><td valign="top"><a href="libc_27.html#SEC595">27.7.3 Functions for Controlling Terminal Access</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_27.html#IDX2739"><code>tcgetsid</code></a></td><td valign="top"><a href="libc_27.html#SEC595">27.7.3 Functions for Controlling Terminal Access</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_17.html#IDX1682"><code>tcsendbreak</code></a></td><td valign="top"><a href="libc_17.html#SEC377">17.6 Line Control Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_17.html#IDX1549"><code>tcsetattr</code></a></td><td valign="top"><a href="libc_17.html#SEC363">17.4.2 Terminal Mode Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_27.html#IDX2738"><code>tcsetpgrp</code></a></td><td valign="top"><a href="libc_27.html#SEC595">27.7.3 Functions for Controlling Terminal Access</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_9.html#IDX739"><code>tdelete</code></a></td><td valign="top"><a href="libc_9.html#SEC147">9.6 The <code>tsearch</code> function.</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_9.html#IDX740"><code>tdestroy</code></a></td><td valign="top"><a href="libc_9.html#SEC147">9.6 The <code>tsearch</code> function.</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_24.html#IDX2501"><code>TEMP_FAILURE_RETRY</code></a></td><td valign="top"><a href="libc_24.html#SEC503">24.5 Primitives Interrupted by Signals</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1383"><code>tempnam</code></a></td><td valign="top"><a href="libc_14.html#SEC296">14.11 Temporary Files</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_8.html#IDX713"><code>textdomain</code></a></td><td valign="top"><a href="libc_8.html#SEC134">8.2.1.2 How to determine which catalog to be used</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_9.html#IDX738"><code>tfind</code></a></td><td valign="top"><a href="libc_9.html#SEC147">9.6 The <code>tsearch</code> function.</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_19.html#IDX1923"><code>tgamma</code></a></td><td valign="top"><a href="libc_19.html#SEC396">19.6 Special Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_19.html#IDX1924"><code>tgammaf</code></a></td><td valign="top"><a href="libc_19.html#SEC396">19.6 Special Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_19.html#IDX1925"><code>tgammal</code></a></td><td valign="top"><a href="libc_19.html#SEC396">19.6 Special Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_21.html#IDX2237"><code>time</code></a></td><td valign="top"><a href="libc_21.html#SEC436">21.4.1 Simple Calendar Time</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_21.html#IDX2255"><code>timegm</code></a></td><td valign="top"><a href="libc_21.html#SEC438">21.4.3 Broken-down Time</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_21.html#IDX2254"><code>timelocal</code></a></td><td valign="top"><a href="libc_21.html#SEC438">21.4.3 Broken-down Time</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_21.html#IDX2227"><code>times</code></a></td><td valign="top"><a href="libc_21.html#SEC434">21.3.2 Processor Time Inquiry</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1377"><code>tmpfile</code></a></td><td valign="top"><a href="libc_14.html#SEC296">14.11 Temporary Files</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1378"><code>tmpfile64</code></a></td><td valign="top"><a href="libc_14.html#SEC296">14.11 Temporary Files</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1379"><code>tmpnam</code></a></td><td valign="top"><a href="libc_14.html#SEC296">14.11 Temporary Files</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1380"><code>tmpnam_r</code></a></td><td valign="top"><a href="libc_14.html#SEC296">14.11 Temporary Files</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_4.html#IDX324"><code>toascii</code></a></td><td valign="top"><a href="libc_4.html#SEC66">4.2 Case Conversion</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_4.html#IDX322"><code>tolower</code></a></td><td valign="top"><a href="libc_4.html#SEC66">4.2 Case Conversion</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_4.html#IDX323"><code>toupper</code></a></td><td valign="top"><a href="libc_4.html#SEC66">4.2 Case Conversion</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_4.html#IDX372"><code>towctrans</code></a></td><td valign="top"><a href="libc_4.html#SEC69">4.5 Mapping of wide characters.</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_4.html#IDX374"><code>towlower</code></a></td><td valign="top"><a href="libc_4.html#SEC69">4.5 Mapping of wide characters.</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_4.html#IDX376"><code>towupper</code></a></td><td valign="top"><a href="libc_4.html#SEC69">4.5 Mapping of wide characters.</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2077"><code>trunc</code></a></td><td valign="top"><a href="libc_20.html#SEC418">20.8.3 Rounding Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1370"><code>truncate</code></a></td><td valign="top"><a href="libc_14.html#SEC294">14.9.10 File Size</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1371"><code>truncate64</code></a></td><td valign="top"><a href="libc_14.html#SEC294">14.9.10 File Size</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2078"><code>truncf</code></a></td><td valign="top"><a href="libc_20.html#SEC418">20.8.3 Rounding Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2079"><code>truncl</code></a></td><td valign="top"><a href="libc_20.html#SEC418">20.8.3 Rounding Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_28.html#IDX2765"><code>tryagain</code></a></td><td valign="top"><a href="libc_28.html#SEC600">28.2.2 Actions in the NSS configuration</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_9.html#IDX737"><code>tsearch</code></a></td><td valign="top"><a href="libc_9.html#SEC147">9.6 The <code>tsearch</code> function.</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_17.html#IDX1537"><code>ttyname</code></a></td><td valign="top"><a href="libc_17.html#SEC358">17.1 Identifying Terminals</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_17.html#IDX1538"><code>ttyname_r</code></a></td><td valign="top"><a href="libc_17.html#SEC358">17.1 Identifying Terminals</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_9.html#IDX742"><code>twalk</code></a></td><td valign="top"><a href="libc_9.html#SEC147">9.6 The <code>tsearch</code> function.</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_21.html#IDX2281"><code>tzset</code></a></td><td valign="top"><a href="libc_21.html#SEC445">21.4.8 Functions and Variables for Time Zones</a></td></tr>
+<tr><td colspan="3"> <hr></td></tr>
+<tr><th><a name="INDEX14_1">U</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="libc_22.html#IDX2334"><code>ulimit</code></a></td><td valign="top"><a href="libc_22.html#SEC451">22.2 Limiting Resource Usage</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1351"><code>umask</code></a></td><td valign="top"><a href="libc_14.html#SEC291">14.9.7 Assigning File Permissions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_30.html#IDX2953"><code>umount</code></a></td><td valign="top"><a href="libc_30.html#SEC646">30.3.2 Mount, Unmount, Remount</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_30.html#IDX2952"><code>umount2</code></a></td><td valign="top"><a href="libc_30.html#SEC646">30.3.2 Mount, Unmount, Remount</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_30.html#IDX2917"><code>uname</code></a></td><td valign="top"><a href="libc_30.html#SEC640">30.2 Platform Type Identification</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_28.html#IDX2763"><code>unavail</code></a></td><td valign="top"><a href="libc_28.html#SEC600">28.2.2 Actions in the NSS configuration</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX882"><code>ungetc</code></a></td><td valign="top"><a href="libc_12.html#SEC189">12.10.2 Using <code>ungetc</code> To Do Unreading</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX883"><code>ungetwc</code></a></td><td valign="top"><a href="libc_12.html#SEC189">12.10.2 Using <code>ungetc</code> To Do Unreading</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1274"><code>unlink</code></a></td><td valign="top"><a href="libc_14.html#SEC281">14.6 Deleting Files</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_17.html#IDX1704"><code>unlockpt</code></a></td><td valign="top"><a href="libc_17.html#SEC380">17.8.1 Allocating Pseudo-Terminals</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_25.html#IDX2628"><code>unsetenv</code></a></td><td valign="top"><a href="libc_25.html#SEC559">25.4.1 Environment Access</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_29.html#IDX2834"><code>updwtmp</code></a></td><td valign="top"><a href="libc_29.html#SEC621">29.12.1 Manipulating the User Accounting Database</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1365"><code>utime</code></a></td><td valign="top"><a href="libc_14.html#SEC293">14.9.9 File Times</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1367"><code>utimes</code></a></td><td valign="top"><a href="libc_14.html#SEC293">14.9.9 File Times</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_29.html#IDX2831"><code>utmpname</code></a></td><td valign="top"><a href="libc_29.html#SEC621">29.12.1 Manipulating the User Accounting Database</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_29.html#IDX2852"><code>utmpxname</code></a></td><td valign="top"><a href="libc_29.html#SEC622">29.12.2 XPG User Accounting Database Functions</a></td></tr>
+<tr><td colspan="3"> <hr></td></tr>
+<tr><th><a name="INDEX14_2">V</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="libc_34.html#IDX3167"><code>va_alist</code></a></td><td valign="top"><a href="libc_34.html#SEC682">A.2.3.1 Old-Style Variadic Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_34.html#IDX3164"><code>va_arg</code></a></td><td valign="top"><a href="libc_34.html#SEC680">A.2.2.5 Argument Access Macros</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_34.html#IDX3168"><code>va_dcl</code></a></td><td valign="top"><a href="libc_34.html#SEC682">A.2.3.1 Old-Style Variadic Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_34.html#IDX3165"><code>va_end</code></a></td><td valign="top"><a href="libc_34.html#SEC680">A.2.2.5 Argument Access Macros</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_34.html#IDX3163"><code>va_start</code></a></td><td valign="top"><a href="libc_34.html#SEC680">A.2.2.5 Argument Access Macros</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_34.html#IDX3169"><code>va_start</code></a></td><td valign="top"><a href="libc_34.html#SEC682">A.2.3.1 Old-Style Variadic Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_3.html#IDX232"><code>valloc</code></a></td><td valign="top"><a href="libc_3.html#SEC31">3.2.2.7 Allocating Aligned Memory Blocks</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX917"><code>vasprintf</code></a></td><td valign="top"><a href="libc_12.html#SEC200">12.12.9 Variable Arguments Output Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_2.html#IDX198"><code>verr</code></a></td><td valign="top"><a href="libc_2.html#SEC18">2.3 Error Messages</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_2.html#IDX200"><code>verrx</code></a></td><td valign="top"><a href="libc_2.html#SEC18">2.3 Error Messages</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1241"><code>versionsort</code></a></td><td valign="top"><a href="libc_14.html#SEC276">14.2.6 Scanning the Content of a Directory</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_14.html#IDX1244"><code>versionsort64</code></a></td><td valign="top"><a href="libc_14.html#SEC276">14.2.6 Scanning the Content of a Directory</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_26.html#IDX2681"><code>vfork</code></a></td><td valign="top"><a href="libc_26.html#SEC572">26.4 Creating a Process</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX912"><code>vfprintf</code></a></td><td valign="top"><a href="libc_12.html#SEC200">12.12.9 Variable Arguments Output Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX955"><code>vfscanf</code></a></td><td valign="top"><a href="libc_12.html#SEC218">12.14.9 Variable Arguments Input Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX913"><code>vfwprintf</code></a></td><td valign="top"><a href="libc_12.html#SEC200">12.12.9 Variable Arguments Output Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX956"><code>vfwscanf</code></a></td><td valign="top"><a href="libc_12.html#SEC218">12.14.9 Variable Arguments Input Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_22.html#IDX2336"><code>vlimit</code></a></td><td valign="top"><a href="libc_22.html#SEC451">22.2 Limiting Resource Usage</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX910"><code>vprintf</code></a></td><td valign="top"><a href="libc_12.html#SEC200">12.12.9 Variable Arguments Output Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX953"><code>vscanf</code></a></td><td valign="top"><a href="libc_12.html#SEC218">12.14.9 Variable Arguments Input Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX916"><code>vsnprintf</code></a></td><td valign="top"><a href="libc_12.html#SEC200">12.12.9 Variable Arguments Output Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX914"><code>vsprintf</code></a></td><td valign="top"><a href="libc_12.html#SEC200">12.12.9 Variable Arguments Output Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX957"><code>vsscanf</code></a></td><td valign="top"><a href="libc_12.html#SEC218">12.14.9 Variable Arguments Input Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX915"><code>vswprintf</code></a></td><td valign="top"><a href="libc_12.html#SEC200">12.12.9 Variable Arguments Output Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX958"><code>vswscanf</code></a></td><td valign="top"><a href="libc_12.html#SEC218">12.14.9 Variable Arguments Input Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_18.html#IDX1738"><code>vsyslog</code></a></td><td valign="top"><a href="libc_18.html#SEC386">18.2.2 syslog, vsyslog</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_22.html#IDX2308"><code>vtimes</code></a></td><td valign="top"><a href="libc_22.html#SEC450">22.1 Resource Usage</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_2.html#IDX194"><code>vwarn</code></a></td><td valign="top"><a href="libc_2.html#SEC18">2.3 Error Messages</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_2.html#IDX196"><code>vwarnx</code></a></td><td valign="top"><a href="libc_2.html#SEC18">2.3 Error Messages</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX911"><code>vwprintf</code></a></td><td valign="top"><a href="libc_12.html#SEC200">12.12.9 Variable Arguments Output Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX954"><code>vwscanf</code></a></td><td valign="top"><a href="libc_12.html#SEC218">12.14.9 Variable Arguments Input Functions</a></td></tr>
+<tr><td colspan="3"> <hr></td></tr>
+<tr><th><a name="INDEX14_3">W</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="libc_26.html#IDX2691"><code>wait</code></a></td><td valign="top"><a href="libc_26.html#SEC574">26.6 Process Completion</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_26.html#IDX2703"><code>wait3</code></a></td><td valign="top"><a href="libc_26.html#SEC576">26.8 BSD Process Wait Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_26.html#IDX2692"><code>wait4</code></a></td><td valign="top"><a href="libc_26.html#SEC574">26.6 Process Completion</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_26.html#IDX2690"><code>waitpid</code></a></td><td valign="top"><a href="libc_26.html#SEC574">26.6 Process Completion</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_2.html#IDX193"><code>warn</code></a></td><td valign="top"><a href="libc_2.html#SEC18">2.3 Error Messages</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_2.html#IDX195"><code>warnx</code></a></td><td valign="top"><a href="libc_2.html#SEC18">2.3 Error Messages</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_26.html#IDX2698"><code>WCOREDUMP</code></a></td><td valign="top"><a href="libc_26.html#SEC575">26.7 Process Completion Status</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX423"><code>wcpcpy</code></a></td><td valign="top"><a href="libc_5.html#SEC74">5.4 Copying and Concatenation</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX425"><code>wcpncpy</code></a></td><td valign="top"><a href="libc_5.html#SEC74">5.4 Copying and Concatenation</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_6.html#IDX559"><code>wcrtomb</code></a></td><td valign="top"><a href="libc_6.html#SEC92">6.3.3 Converting Single Characters</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX442"><code>wcscasecmp</code></a></td><td valign="top"><a href="libc_5.html#SEC75">5.5 String/Array Comparison</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX429"><code>wcscat</code></a></td><td valign="top"><a href="libc_5.html#SEC74">5.4 Copying and Concatenation</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX464"><code>wcschr</code></a></td><td valign="top"><a href="libc_5.html#SEC77">5.7 Search Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX466"><code>wcschrnul</code></a></td><td valign="top"><a href="libc_5.html#SEC77">5.7 Search Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX440"><code>wcscmp</code></a></td><td valign="top"><a href="libc_5.html#SEC75">5.5 String/Array Comparison</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX452"><code>wcscoll</code></a></td><td valign="top"><a href="libc_5.html#SEC76">5.6 Collation Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX416"><code>wcscpy</code></a></td><td valign="top"><a href="libc_5.html#SEC74">5.4 Copying and Concatenation</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX477"><code>wcscspn</code></a></td><td valign="top"><a href="libc_5.html#SEC77">5.7 Search Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX420"><code>wcsdup</code></a></td><td valign="top"><a href="libc_5.html#SEC74">5.4 Copying and Concatenation</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_21.html#IDX2268"><code>wcsftime</code></a></td><td valign="top"><a href="libc_21.html#SEC440">21.4.5 Formatting Calendar Time</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX396"><code>wcslen</code></a></td><td valign="top"><a href="libc_5.html#SEC73">5.3 String Length</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX446"><code>wcsncasecmp</code></a></td><td valign="top"><a href="libc_5.html#SEC75">5.5 String/Array Comparison</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX433"><code>wcsncat</code></a></td><td valign="top"><a href="libc_5.html#SEC74">5.4 Copying and Concatenation</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX444"><code>wcsncmp</code></a></td><td valign="top"><a href="libc_5.html#SEC75">5.5 String/Array Comparison</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX418"><code>wcsncpy</code></a></td><td valign="top"><a href="libc_5.html#SEC74">5.4 Copying and Concatenation</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX398"><code>wcsnlen</code></a></td><td valign="top"><a href="libc_5.html#SEC73">5.3 String Length</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_6.html#IDX567"><code>wcsnrtombs</code></a></td><td valign="top"><a href="libc_6.html#SEC93">6.3.4 Converting Multibyte and Wide Character Strings</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX479"><code>wcspbrk</code></a></td><td valign="top"><a href="libc_5.html#SEC77">5.7 Search Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX468"><code>wcsrchr</code></a></td><td valign="top"><a href="libc_5.html#SEC77">5.7 Search Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_6.html#IDX564"><code>wcsrtombs</code></a></td><td valign="top"><a href="libc_6.html#SEC93">6.3.4 Converting Multibyte and Wide Character Strings</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX475"><code>wcsspn</code></a></td><td valign="top"><a href="libc_5.html#SEC77">5.7 Search Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX470"><code>wcsstr</code></a></td><td valign="top"><a href="libc_5.html#SEC77">5.7 Search Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2186"><code>wcstod</code></a></td><td valign="top"><a href="libc_20.html#SEC427">20.11.2 Parsing of Floats</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2187"><code>wcstof</code></a></td><td valign="top"><a href="libc_20.html#SEC427">20.11.2 Parsing of Floats</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2177"><code>wcstoimax</code></a></td><td valign="top"><a href="libc_20.html#SEC426">20.11.1 Parsing of Integers</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX484"><code>wcstok</code></a></td><td valign="top"><a href="libc_5.html#SEC79">5.8 Finding Tokens in a String</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2165"><code>wcstol</code></a></td><td valign="top"><a href="libc_20.html#SEC426">20.11.1 Parsing of Integers</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2188"><code>wcstold</code></a></td><td valign="top"><a href="libc_20.html#SEC427">20.11.2 Parsing of Floats</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2169"><code>wcstoll</code></a></td><td valign="top"><a href="libc_20.html#SEC426">20.11.1 Parsing of Integers</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_6.html#IDX573"><code>wcstombs</code></a></td><td valign="top"><a href="libc_6.html#SEC97">6.4.2 Non-reentrant Conversion of Strings</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2171"><code>wcstoq</code></a></td><td valign="top"><a href="libc_20.html#SEC426">20.11.1 Parsing of Integers</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2167"><code>wcstoul</code></a></td><td valign="top"><a href="libc_20.html#SEC426">20.11.1 Parsing of Integers</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2173"><code>wcstoull</code></a></td><td valign="top"><a href="libc_20.html#SEC426">20.11.1 Parsing of Integers</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2179"><code>wcstoumax</code></a></td><td valign="top"><a href="libc_20.html#SEC426">20.11.1 Parsing of Integers</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_20.html#IDX2175"><code>wcstouq</code></a></td><td valign="top"><a href="libc_20.html#SEC426">20.11.1 Parsing of Integers</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX471"><code>wcswcs</code></a></td><td valign="top"><a href="libc_5.html#SEC77">5.7 Search Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX455"><code>wcsxfrm</code></a></td><td valign="top"><a href="libc_5.html#SEC76">5.6 Collation Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_6.html#IDX552"><code>wctob</code></a></td><td valign="top"><a href="libc_6.html#SEC92">6.3.3 Converting Single Characters</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_6.html#IDX569"><code>wctomb</code></a></td><td valign="top"><a href="libc_6.html#SEC96">6.4.1 Non-reentrant Conversion of Single Characters</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_4.html#IDX370"><code>wctrans</code></a></td><td valign="top"><a href="libc_4.html#SEC69">4.5 Mapping of wide characters.</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_4.html#IDX329"><code>wctype</code></a></td><td valign="top"><a href="libc_4.html#SEC67">4.3 Character class determination for wide characters</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_26.html#IDX2695"><code>WEXITSTATUS</code></a></td><td valign="top"><a href="libc_26.html#SEC575">26.7 Process Completion Status</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_26.html#IDX2694"><code>WIFEXITED</code></a></td><td valign="top"><a href="libc_26.html#SEC575">26.7 Process Completion Status</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_26.html#IDX2696"><code>WIFSIGNALED</code></a></td><td valign="top"><a href="libc_26.html#SEC575">26.7 Process Completion Status</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_26.html#IDX2699"><code>WIFSTOPPED</code></a></td><td valign="top"><a href="libc_26.html#SEC575">26.7 Process Completion Status</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX460"><code>wmemchr</code></a></td><td valign="top"><a href="libc_5.html#SEC77">5.7 Search Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX438"><code>wmemcmp</code></a></td><td valign="top"><a href="libc_5.html#SEC75">5.5 String/Array Comparison</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX407"><code>wmemcpy</code></a></td><td valign="top"><a href="libc_5.html#SEC74">5.4 Copying and Concatenation</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX411"><code>wmemmove</code></a></td><td valign="top"><a href="libc_5.html#SEC74">5.4 Copying and Concatenation</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX409"><code>wmempcpy</code></a></td><td valign="top"><a href="libc_5.html#SEC74">5.4 Copying and Concatenation</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_5.html#IDX414"><code>wmemset</code></a></td><td valign="top"><a href="libc_5.html#SEC74">5.4 Copying and Concatenation</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_10.html#IDX787"><code>wordexp</code></a></td><td valign="top"><a href="libc_10.html#SEC163">10.4.2 Calling <code>wordexp</code></a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_10.html#IDX788"><code>wordfree</code></a></td><td valign="top"><a href="libc_10.html#SEC163">10.4.2 Calling <code>wordexp</code></a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX901"><code>wprintf</code></a></td><td valign="top"><a href="libc_12.html#SEC198">12.12.7 Formatted Output Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_13.html#IDX1062"><code>write</code></a></td><td valign="top"><a href="libc_13.html#SEC240">13.2 Input and Output Primitives</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_13.html#IDX1091"><code>writev</code></a></td><td valign="top"><a href="libc_13.html#SEC247">13.6 Fast Scatter-Gather I/O</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_12.html#IDX948"><code>wscanf</code></a></td><td valign="top"><a href="libc_12.html#SEC217">12.14.8 Formatted Input Functions</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_26.html#IDX2700"><code>WSTOPSIG</code></a></td><td valign="top"><a href="libc_26.html#SEC575">26.7 Process Completion Status</a></td></tr>
+<tr><td></td><td valign="top"><a href="libc_26.html#IDX2697"><code>WTERMSIG</code></a></td><td valign="top"><a href="libc_26.html#SEC575">26.7 Process Completion Status</a></td></tr>
+<tr><td colspan="3"> <hr></td></tr>
+</table>
+<table><tr><th valign="top">Jump to: &nbsp; </th><td><a href="libc_52.html#SEC714_0" class="summary-letter"><b>*</b></a>
+ &nbsp; 
+<a href="libc_52.html#SEC714_1" class="summary-letter"><b>_</b></a>
+ &nbsp; 
+<br>
+<a href="libc_52.html#SEC714_2" class="summary-letter"><b>A</b></a>
+ &nbsp; 
+<a href="libc_52.html#SEC714_3" class="summary-letter"><b>B</b></a>
+ &nbsp; 
+<a href="libc_53.html#INDEX8_0" class="summary-letter"><b>C</b></a>
+ &nbsp; 
+<a href="libc_54.html#INDEX9_0" class="summary-letter"><b>D</b></a>
+ &nbsp; 
+<a href="libc_54.html#INDEX9_1" class="summary-letter"><b>E</b></a>
+ &nbsp; 
+<a href="libc_54.html#INDEX9_2" class="summary-letter"><b>F</b></a>
+ &nbsp; 
+<a href="libc_55.html#INDEX10_0" class="summary-letter"><b>G</b></a>
+ &nbsp; 
+<a href="libc_56.html#INDEX11_0" class="summary-letter"><b>H</b></a>
+ &nbsp; 
+<a href="libc_56.html#INDEX11_1" class="summary-letter"><b>I</b></a>
+ &nbsp; 
+<a href="libc_56.html#INDEX11_2" class="summary-letter"><b>J</b></a>
+ &nbsp; 
+<a href="libc_56.html#INDEX11_3" class="summary-letter"><b>K</b></a>
+ &nbsp; 
+<a href="libc_56.html#INDEX11_4" class="summary-letter"><b>L</b></a>
+ &nbsp; 
+<a href="libc_57.html#INDEX12_0" class="summary-letter"><b>M</b></a>
+ &nbsp; 
+<a href="libc_57.html#INDEX12_1" class="summary-letter"><b>N</b></a>
+ &nbsp; 
+<a href="libc_57.html#INDEX12_2" class="summary-letter"><b>O</b></a>
+ &nbsp; 
+<a href="libc_58.html#INDEX13_0" class="summary-letter"><b>P</b></a>
+ &nbsp; 
+<a href="libc_58.html#INDEX13_1" class="summary-letter"><b>Q</b></a>
+ &nbsp; 
+<a href="libc_58.html#INDEX13_2" class="summary-letter"><b>R</b></a>
+ &nbsp; 
+<a href="libc_58.html#INDEX13_3" class="summary-letter"><b>S</b></a>
+ &nbsp; 
+<a href="#INDEX14_0" class="summary-letter"><b>T</b></a>
+ &nbsp; 
+<a href="#INDEX14_1" class="summary-letter"><b>U</b></a>
+ &nbsp; 
+<a href="#INDEX14_2" class="summary-letter"><b>V</b></a>
+ &nbsp; 
+<a href="#INDEX14_3" class="summary-letter"><b>W</b></a>
+ &nbsp; 
+<a href="libc_60.html#INDEX15_0" class="summary-letter"><b>Y</b></a>
+ &nbsp; 
+</td></tr></table>
+<hr size="6">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libc_58.html#INDEX13" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_60.html#INDEX15" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated by <em>root</em> on <em>October, 30 2008</em> using <a href="http://www.nongnu.org/texi2html/"><em>texi2html 1.78</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

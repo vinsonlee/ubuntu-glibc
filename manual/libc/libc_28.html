@@ -1,0 +1,1024 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- This file documents the GNU C library.
+
+This is Edition 0.12, last updated 2007-10-27,
+of The GNU C Library Reference Manual, for version 2.8.
+
+Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002,
+2003, 2007, 2008 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software Needs Free Documentation"
+and "GNU Lesser General Public License", the Front-Cover texts being
+"A GNU Manual", and with the Back-Cover Texts as in (a) below.  A
+copy of the license is included in the section entitled "GNU Free
+Documentation License".
+
+(a) The FSF's Back-Cover Text is: "You have the freedom to
+copy and modify this GNU manual.  Buying copies from the FSF
+supports it in developing GNU and promoting software freedom."
+ -->
+<!-- Created on October, 30 2008 by texi2html 1.78 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+
+-->
+<head>
+<title>The GNU C Library: 28. System Databases and Name Service Switch</title>
+
+<meta name="description" content="The GNU C Library: 28. System Databases and Name Service Switch">
+<meta name="keywords" content="The GNU C Library: 28. System Databases and Name Service Switch">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.78">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="Name-Service-Switch"></a>
+<a name="SEC596"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libc_27.html#SEC595" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC597" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h1 class="chapter"> 28. System Databases and Name Service Switch </h1>
+
+<p>Various functions in the C Library need to be configured to work
+correctly in the local environment.  Traditionally, this was done by
+using files (e.g., &lsquo;<tt>/etc/passwd</tt>&rsquo;), but other nameservices (like the
+Network Information Service (NIS) and the Domain Name Service (DNS))
+became popular, and were hacked into the C library, usually with a fixed
+search order (see <a href="../jargon/frobnicate.html#frobnicate">(jargon)frobnicate</a> section `frobnicate' in <cite>The Jargon File</cite>).
+</p>
+<p>The GNU C Library contains a cleaner solution of this problem.  It is
+designed after a method used by Sun Microsystems in the C library of
+Solaris 2.  GNU C Library follows their name and calls this
+scheme <em>Name Service Switch</em> (NSS).
+</p>
+<p>Though the interface might be similar to Sun's version there is no
+common code.  We never saw any source code of Sun's implementation and
+so the internal interface is incompatible.  This also manifests in the
+file names we use as we will see later.
+</p>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC597">28.1 NSS Basics</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                  What is this NSS good for.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC598">28.2 The NSS Configuration File</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      Configuring NSS.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC602">28.3 NSS Module Internals</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">        How does it work internally.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC605">28.4 Extending NSS</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">               What to do to add services or databases.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="NSS-Basics"></a>
+<a name="SEC597"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC596" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC598" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 28.1 NSS Basics </h2>
+
+<p>The basic idea is to put the implementation of the different services
+offered to access the databases in separate modules.  This has some
+advantages:
+</p>
+<ol>
+<li>
+Contributors can add new services without adding them to GNU C Library.
+</li><li>
+The modules can be updated separately.
+</li><li>
+The C library image is smaller.
+</li></ol>
+
+<p>To fulfill the first goal above the ABI of the modules will be described
+below.  For getting the implementation of a new service right it is
+important to understand how the functions in the modules get called.
+They are in no way designed to be used by the programmer directly.
+Instead the programmer should only use the documented and standardized
+functions to access the databases.
+</p>
+<p>The databases available in the NSS are
+</p>
+<a name="IDX2740"></a>
+<a name="IDX2741"></a>
+<a name="IDX2742"></a>
+<a name="IDX2743"></a>
+<a name="IDX2744"></a>
+<a name="IDX2745"></a>
+<a name="IDX2746"></a>
+<a name="IDX2747"></a>
+<a name="IDX2748"></a>
+<a name="IDX2749"></a>
+<dl compact="compact">
+<dt> <code>aliases</code>
+<a name="IDX2750"></a>
+</dt>
+<dd><p>Mail aliases
+</p></dd>
+<dt> <code>ethers</code>
+<a name="IDX2751"></a>
+</dt>
+<dd><p>Ethernet numbers,
+</p></dd>
+<dt> <code>group</code>
+<a name="IDX2752"></a>
+</dt>
+<dd><p>Groups of users, see section <a href="libc_29.html#SEC629">Group Database</a>.
+</p></dd>
+<dt> <code>hosts</code>
+<a name="IDX2753"></a>
+</dt>
+<dd><p>Host names and numbers, see section <a href="libc_16.html#SEC322">Host Names</a>.
+</p></dd>
+<dt> <code>netgroup</code>
+<a name="IDX2754"></a>
+</dt>
+<dd><p>Network wide list of host and users, see section <a href="libc_29.html#SEC634">Netgroup Database</a>.
+</p></dd>
+<dt> <code>networks</code>
+<a name="IDX2755"></a>
+</dt>
+<dd><p>Network names and numbers, see section <a href="libc_16.html#SEC356">Networks Database</a>.
+</p></dd>
+<dt> <code>protocols</code>
+<a name="IDX2756"></a>
+</dt>
+<dd><p>Network protocols, see section <a href="libc_16.html#SEC326">Protocols Database</a>.
+</p></dd>
+<dt> <code>passwd</code>
+<a name="IDX2757"></a>
+</dt>
+<dd><p>User passwords, see section <a href="libc_29.html#SEC624">User Database</a>.
+</p></dd>
+<dt> <code>rpc</code>
+<a name="IDX2758"></a>
+</dt>
+<dd><p>Remote procedure call names and numbers,
+</p></dd>
+<dt> <code>services</code>
+<a name="IDX2759"></a>
+</dt>
+<dd><p>Network services, see section <a href="libc_16.html#SEC324">The Services Database</a>.
+</p></dd>
+<dt> <code>shadow</code>
+<a name="IDX2760"></a>
+</dt>
+<dd><p>Shadow user passwords,
+</p></dd>
+</dl>
+
+<p>There will be some more added later (<code>automount</code>, <code>bootparams</code>,
+<code>netmasks</code>, and <code>publickey</code>).
+</p>
+<hr size="6">
+<a name="NSS-Configuration-File"></a>
+<a name="SEC598"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC597" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC599" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 28.2 The NSS Configuration File </h2>
+
+<p>Somehow the NSS code must be told about the wishes of the user.  For
+this reason there is the file &lsquo;<tt>/etc/nsswitch.conf</tt>&rsquo;.  For each
+database this file contain a specification how the lookup process should
+work.  The file could look like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example"># /etc/nsswitch.conf
+#
+# Name Service Switch configuration file.
+#
+
+passwd:     db files nis
+shadow:     files
+group:      db files nis
+
+hosts:      files nisplus nis dns
+networks:   nisplus [NOTFOUND=return] files
+
+ethers:     nisplus [NOTFOUND=return] db files
+protocols:  nisplus [NOTFOUND=return] db files
+rpc:        nisplus [NOTFOUND=return] db files
+services:   nisplus [NOTFOUND=return] db files
+</pre></td></tr></table>
+
+<p>The first column is the database as you can guess from the table above.
+The rest of the line specifies how the lookup process works.  Please
+note that you specify the way it works for each database individually.
+This cannot be done with the old way of a monolithic implementation.
+</p>
+<p>The configuration specification for each database can contain two
+different items:
+</p>
+<ul>
+<li>
+the service specification like <code>files</code>, <code>db</code>, or <code>nis</code>.
+</li><li>
+the reaction on lookup result like <code>[NOTFOUND=return]</code>.
+</li></ul>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC599">28.2.1 Services in the NSS configuration File</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Service names in the NSS configuration.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC600">28.2.2 Actions in the NSS configuration</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  React appropriately to the lookup result.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC601">28.2.3 Notes on the NSS Configuration File</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Things to take care about while
+                                     configuring NSS.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Services-in-the-NSS-configuration"></a>
+<a name="SEC599"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC598" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC600" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC598" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 28.2.1 Services in the NSS configuration File </h3>
+
+<p>The above example file mentions four different services: <code>files</code>,
+<code>db</code>, <code>nis</code>, and <code>nisplus</code>.  This does not mean these
+services are available on all sites and it does also not mean these are
+all the services which will ever be available.
+</p>
+<p>In fact, these names are simply strings which the NSS code uses to find
+the implicitly addressed functions.  The internal interface will be
+described later.  Visible to the user are the modules which implement an
+individual service.
+</p>
+<p>Assume the service <var>name</var> shall be used for a lookup.  The code for
+this service is implemented in a module called &lsquo;<tt>libnss_<var>name</var></tt>&rsquo;.
+On a system supporting shared libraries this is in fact a shared library
+with the name (for example) &lsquo;<tt>libnss_<var>name</var>.so.2</tt>&rsquo;.  The number
+at the end is the currently used version of the interface which will not
+change frequently.  Normally the user should not have to be cognizant of
+these files since they should be placed in a directory where they are
+found automatically.  Only the names of all available services are
+important.
+</p>
+<hr size="6">
+<a name="Actions-in-the-NSS-configuration"></a>
+<a name="SEC600"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC599" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC601" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC598" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 28.2.2 Actions in the NSS configuration </h3>
+
+<p>The second item in the specification gives the user much finer control
+on the lookup process.  Action items are placed between two service
+names and are written within brackets.  The general form is
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="display"><code>[</code> ( <code>!</code>? <var>status</var> <code>=</code> <var>action</var> )+ <code>]</code>
+</pre></td></tr></table>
+
+<p>where
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample"><var>status</var> &rArr; success | notfound | unavail | tryagain
+<var>action</var> &rArr; return | continue
+</pre></td></tr></table>
+
+<p>The case of the keywords is insignificant.  The <var>status</var>
+values are the results of a call to a lookup function of a specific
+service.  They mean
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>success</samp>&rsquo;
+<a name="IDX2761"></a>
+</dt>
+<dd><p>No error occurred and the wanted entry is returned.  The default action
+for this is <code>return</code>.
+</p>
+</dd>
+<dt> &lsquo;<samp>notfound</samp>&rsquo;
+<a name="IDX2762"></a>
+</dt>
+<dd><p>The lookup process works ok but the needed value was not found.  The
+default action is <code>continue</code>.
+</p>
+</dd>
+<dt> &lsquo;<samp>unavail</samp>&rsquo;
+<a name="IDX2763"></a>
+</dt>
+<dd><a name="IDX2764"></a>
+<p>The service is permanently unavailable.  This can either mean the needed
+file is not available, or, for DNS, the server is not available or does
+not allow queries.  The default action is <code>continue</code>.
+</p>
+</dd>
+<dt> &lsquo;<samp>tryagain</samp>&rsquo;
+<a name="IDX2765"></a>
+</dt>
+<dd><p>The service is temporarily unavailable.  This could mean a file is
+locked or a server currently cannot accept more connections.  The
+default action is <code>continue</code>.
+</p></dd>
+</dl>
+
+<p>If we have a line like
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">ethers: nisplus [NOTFOUND=return] db files
+</pre></td></tr></table>
+
+<p>this is equivalent to
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">ethers: nisplus [SUCCESS=return NOTFOUND=return UNAVAIL=continue
+                 TRYAGAIN=continue]
+        db      [SUCCESS=return NOTFOUND=continue UNAVAIL=continue
+                 TRYAGAIN=continue]
+        files
+</pre></td></tr></table>
+
+<p>(except that it would have to be written on one line).  The default
+value for the actions are normally what you want, and only need to be
+changed in exceptional cases.
+</p>
+<p>If the optional <code>!</code> is placed before the <var>status</var> this means
+the following action is used for all statuses but <var>status</var> itself.
+I.e., <code>!</code> is negation as in the C language (and others).
+</p>
+<p>Before we explain the exception which makes this action item necessary
+one more remark: obviously it makes no sense to add another action
+item after the <code>files</code> service.  Since there is no other service
+following the action <em>always</em> is <code>return</code>.
+</p>
+<a name="IDX2766"></a>
+<p>Now, why is this <code>[NOTFOUND=return]</code> action useful?  To understand
+this we should know that the <code>nisplus</code> service is often
+complete; i.e., if an entry is not available in the NIS+ tables it is
+not available anywhere else.  This is what is expressed by this action
+item: it is useless to examine further services since they will not give
+us a result.
+</p>
+<a name="IDX2767"></a>
+<a name="IDX2768"></a>
+<p>The situation would be different if the NIS+ service is not available
+because the machine is booting.  In this case the return value of the
+lookup function is not <code>notfound</code> but instead <code>unavail</code>.  And
+as you can see in the complete form above: in this situation the
+<code>db</code> and <code>files</code> services are used.  Neat, isn't it?  The
+system administrator need not pay special care for the time the system
+is not completely ready to work (while booting or shutdown or
+network problems).
+</p>
+
+<hr size="6">
+<a name="Notes-on-NSS-Configuration-File"></a>
+<a name="SEC601"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC600" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC602" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC598" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 28.2.3 Notes on the NSS Configuration File </h3>
+
+<p>Finally a few more hints.  The NSS implementation is not completely
+helpless if &lsquo;<tt>/etc/nsswitch.conf</tt>&rsquo; does not exist.  For
+all supported databases there is a default value so it should normally
+be possible to get the system running even if the file is corrupted or
+missing.
+</p>
+<a name="IDX2769"></a>
+<p>For the <code>hosts</code> and <code>networks</code> databases the default value is
+<code>dns [!UNAVAIL=return] files</code>.  I.e., the system is prepared for
+the DNS service not to be available but if it is available the answer it
+returns is definitive.
+</p>
+<p>The <code>passwd</code>, <code>group</code>, and <code>shadow</code> databases are
+traditionally handled in a special way.  The appropriate files in the
+&lsquo;<tt>/etc</tt>&rsquo; directory are read but if an entry with a name starting
+with a <code>+</code> character is found NIS is used.  This kind of lookup
+remains possible by using the special lookup service <code>compat</code>
+and the default value for the three databases above is
+<code>compat [NOTFOUND=return] files</code>.
+</p>
+<p>For all other databases the default value is
+<code>nis [NOTFOUND=return] files</code>.  This solution give the best
+chance to be correct since NIS and file based lookup is used.
+</p>
+<a name="IDX2770"></a>
+<p>A second point is that the user should try to optimize the lookup
+process.  The different service have different response times.
+A simple file look up on a local file could be fast, but if the file
+is long and the needed entry is near the end of the file this may take
+quite some time.  In this case it might be better to use the <code>db</code>
+service which allows fast local access to large data sets.
+</p>
+<p>Often the situation is that some global information like NIS must be
+used.  So it is unavoidable to use service entries like <code>nis</code> etc.
+But one should avoid slow services like this if possible.
+</p>
+
+<hr size="6">
+<a name="NSS-Module-Internals"></a>
+<a name="SEC602"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC601" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC603" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 28.3 NSS Module Internals </h2>
+
+<p>Now it is time to describe what the modules look like.  The functions
+contained in a module are identified by their names.  I.e., there is no
+jump table or the like.  How this is done is of no interest here; those
+interested in this topic should read about Dynamic Linking.
+</p>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC603">28.3.1 The Naming Scheme of the NSS Modules</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            Construction of the interface function of
+                                the NSS modules.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC604">28.3.2 The Interface of the Function in NSS Modules</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Programming interface in the NSS module
+                                functions.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="NSS-Module-Names"></a>
+<a name="SEC603"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC602" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC604" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC602" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 28.3.1 The Naming Scheme of the NSS Modules </h3>
+
+<p>The name of each function consist of various parts:
+</p>
+<blockquote><p>       _nss_<var>service</var>_<var>function</var>
+</p></blockquote>
+
+<p><var>service</var> of course corresponds to the name of the module this
+function is found in.<a name="DOCF3" href="libc_fot.html#FOOT3">(3)</a>  The <var>function</var> part is derived
+from the interface function in the C library itself.  If the user calls
+the function <code>gethostbyname</code> and the service used is <code>files</code>
+the function
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">       _nss_files_gethostbyname_r
+</pre></td></tr></table>
+
+<p>in the module
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">       libnss_files.so.2
+</pre></td></tr></table>
+
+<a name="IDX2771"></a>
+<p>is used.  You see, what is explained above in not the whole truth.  In
+fact the NSS modules only contain reentrant versions of the lookup
+functions.  I.e., if the user would call the <code>gethostbyname_r</code>
+function this also would end in the above function.  For all user
+interface functions the C library maps this call to a call to the
+reentrant function.  For reentrant functions this is trivial since the
+interface is (nearly) the same.  For the non-reentrant version The
+library keeps internal buffers which are used to replace the user
+supplied buffer.
+</p>
+<p>I.e., the reentrant functions <em>can</em> have counterparts.  No service
+module is forced to have functions for all databases and all kinds to
+access them.  If a function is not available it is simply treated as if
+the function would return <code>unavail</code>
+(see section <a href="#SEC600">Actions in the NSS configuration</a>).
+</p>
+<p>The file name &lsquo;<tt>libnss_files.so.2</tt>&rsquo; would be on a Solaris 2
+system &lsquo;<tt>nss_files.so.2</tt>&rsquo;.  This is the difference mentioned above.
+Sun's NSS modules are usable as modules which get indirectly loaded
+only.
+</p>
+<p>The NSS modules in the GNU C Library are prepared to be used as normal
+libraries themselves.  This is <em>not</em> true at the moment, though.
+However,  the organization of the name space in the modules does not make it
+impossible like it is for Solaris.  Now you can see why the modules are
+still libraries.<a name="DOCF4" href="libc_fot.html#FOOT4">(4)</a>
+</p>
+
+<hr size="6">
+<a name="NSS-Modules-Interface"></a>
+<a name="SEC604"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC603" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC605" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC602" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 28.3.2 The Interface of the Function in NSS Modules </h3>
+
+<p>Now we know about the functions contained in the modules.  It is now
+time to describe the types.  When we mentioned the reentrant versions of
+the functions above, this means there are some additional arguments
+(compared with the standard, non-reentrant version).  The prototypes for
+the non-reentrant and reentrant versions of our function above are:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">struct hostent *gethostbyname (const char *name)
+
+int gethostbyname_r (const char *name, struct hostent *result_buf,
+                     char *buf, size_t buflen, struct hostent **result,
+                     int *h_errnop)
+</pre></td></tr></table>
+
+<p>The actual prototype of the function in the NSS modules in this case is
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">enum nss_status _nss_files_gethostbyname_r (const char *name,
+                                            struct hostent *result_buf,
+                                            char *buf, size_t buflen,
+                                            int *errnop, int *h_errnop)
+</pre></td></tr></table>
+
+<p>I.e., the interface function is in fact the reentrant function with the
+change of the return value and the omission of the <var>result</var>
+parameter.  While the user-level function returns a pointer to the
+result the reentrant function return an <code>enum nss_status</code> value:
+</p>
+<dl compact="compact">
+<dt> <code>NSS_STATUS_TRYAGAIN</code>
+<a name="IDX2772"></a>
+</dt>
+<dd><p>numeric value <code>-2</code>
+</p>
+</dd>
+<dt> <code>NSS_STATUS_UNAVAIL</code>
+<a name="IDX2773"></a>
+</dt>
+<dd><p>numeric value <code>-1</code>
+</p>
+</dd>
+<dt> <code>NSS_STATUS_NOTFOUND</code>
+<a name="IDX2774"></a>
+</dt>
+<dd><p>numeric value <code>0</code>
+</p>
+</dd>
+<dt> <code>NSS_STATUS_SUCCESS</code>
+<a name="IDX2775"></a>
+</dt>
+<dd><p>numeric value <code>1</code>
+</p></dd>
+</dl>
+
+<p>Now you see where the action items of the &lsquo;<tt>/etc/nsswitch.conf</tt>&rsquo; file
+are used.
+</p>
+<p>If you study the source code you will find there is a fifth value:
+<code>NSS_STATUS_RETURN</code>.  This is an internal use only value, used by a
+few functions in places where none of the above value can be used.  If
+necessary the source code should be examined to learn about the details.
+</p>
+<p>In case the interface function has to return an error it is important
+that the correct error code is stored in <code>*<var>errnop</var></code>.  Some
+return status value have only one associated error code, others have
+more.
+</p>
+<table>
+<tr><td>
+<p><code>NSS_STATUS_TRYAGAIN</code> </p></td><td>
+<p>        <code>EAGAIN</code> </p></td><td><p> One of the functions used ran temporarily out of
+resources or a service is currently not available.
+</p></td></tr>
+<tr><td>
+</td><td>
+<p>        <code>ERANGE</code> </p></td><td><p> The provided buffer is not large enough.
+The function should be called again with a larger buffer.
+</p></td></tr>
+<tr><td>
+<p><code>NSS_STATUS_UNAVAIL</code> </p></td><td>
+<p>        <code>ENOENT</code> </p></td><td><p> A necessary input file cannot be found.
+</p></td></tr>
+<tr><td>
+<p><code>NSS_STATUS_NOTFOUND</code> </p></td><td>
+<p>        <code>ENOENT</code> </p></td><td><p> The requested entry is not available.
+</p></td></tr>
+</table>
+
+<p>These are proposed values.  There can be other error codes and the
+described error codes can have different meaning.  <strong>With one
+exception:</strong> when returning <code>NSS_STATUS_TRYAGAIN</code> the error code
+<code>ERANGE</code> <em>must</em> mean that the user provided buffer is too
+small.  Everything is non-critical.
+</p>
+<p>The above function has something special which is missing for almost all
+the other module functions.  There is an argument <var>h_errnop</var>.  This
+points to a variable which will be filled with the error code in case
+the execution of the function fails for some reason.  The reentrant
+function cannot use the global variable <var>h_errno</var>;
+<code>gethostbyname</code> calls <code>gethostbyname_r</code> with the last argument
+set to <code>&amp;h_errno</code>.
+</p>
+<p>The <code>get<var>XXX</var>by<var>YYY</var></code> functions are the most important
+functions in the NSS modules.  But there are others which implement
+the other ways to access system databases (say for the
+password database, there are <code>setpwent</code>, <code>getpwent</code>, and
+<code>endpwent</code>).  These will be described in more detail later.
+Here we give a general way to determine the
+signature of the module function:
+</p>
+<ul>
+<li>
+the return value is <code>int</code>;
+</li><li>
+the name is as explained in see section <a href="#SEC603">The Naming Scheme of the NSS Modules</a>;
+</li><li>
+the first arguments are identical to the arguments of the non-reentrant
+function;
+</li><li>
+the next three arguments are:
+
+<dl compact="compact">
+<dt> <code>STRUCT_TYPE *result_buf</code></dt>
+<dd><p>pointer to buffer where the result is stored.  <code>STRUCT_TYPE</code> is
+normally a struct which corresponds to the database.
+</p></dd>
+<dt> <code>char *buffer</code></dt>
+<dd><p>pointer to a buffer where the function can store additional data for
+the result etc.
+</p></dd>
+<dt> <code>size_t buflen</code></dt>
+<dd><p>length of the buffer pointed to by <var>buffer</var>.
+</p></dd>
+</dl>
+
+</li><li>
+possibly a last argument <var>h_errnop</var>, for the host name and network
+name lookup functions.
+</li></ul>
+
+<p>This table is correct for all functions but the <code>set&hellip;ent</code>
+and <code>end&hellip;ent</code> functions.
+</p>
+
+<hr size="6">
+<a name="Extending-NSS"></a>
+<a name="SEC605"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC604" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC606" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 28.4 Extending NSS </h2>
+
+<p>One of the advantages of NSS mentioned above is that it can be extended
+quite easily.  There are two ways in which the extension can happen:
+adding another database or adding another service.  The former is
+normally done only by the C library developers.  It is
+here only important to remember that adding another database is
+independent from adding another service because a service need not
+support all databases or lookup functions.
+</p>
+<p>A designer/implementor of a new service is therefore free to choose the
+databases s/he is interested in and leave the rest for later (or
+completely aside).
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC606">28.4.1 Adding another Service to NSS</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  What is to do to add a new service.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC607">28.4.2 Internals of the NSS Module Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  Guidelines for writing new NSS
+                                        service functions.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Adding-another-Service-to-NSS"></a>
+<a name="SEC606"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC605" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC607" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC605" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 28.4.1 Adding another Service to NSS </h3>
+
+<p>The sources for a new service need not (and should not) be part of the
+GNU C Library itself.  The developer retains complete control over the
+sources and its development.  The links between the C library and the
+new service module consists solely of the interface functions.
+</p>
+<p>Each module is designed following a specific interface specification.
+For now the version is 2 (the interface in version 1 was not adequate)
+and this manifests in the version number of the shared library object of
+the NSS modules: they have the extension <code>.2</code>.  If the interface
+changes again in an incompatible way, this number will be increased.
+Modules using the old interface will still be usable.
+</p>
+<p>Developers of a new service will have to make sure that their module is
+created using the correct interface number.  This means the file itself
+must have the correct name and on ELF systems the <em>soname</em> (Shared
+Object Name) must also have this number.  Building a module from a bunch
+of object files on an ELF system using GNU CC could be done like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">gcc -shared -o libnss_NAME.so.2 -Wl,-soname,libnss_NAME.so.2 OBJECTS
+</pre></td></tr></table>
+
+<p><a href="../gcc/Link-Options.html#Link-Options">Options for Linking: (gcc)Link Options</a> section `Link Options' in <cite>GNU CC</cite>, to learn
+more about this command line.
+</p>
+<p>To use the new module the library must be able to find it.  This can be
+achieved by using options for the dynamic linker so that it will search
+the directory where the binary is placed.  For an ELF system this could be
+done by adding the wanted directory to the value of
+<code>LD_LIBRARY_PATH</code>.
+</p>
+<p>But this is not always possible since some programs (those which run
+under IDs which do not belong to the user) ignore this variable.
+Therefore the stable version of the module should be placed into a
+directory which is searched by the dynamic linker.  Normally this should
+be the directory &lsquo;<tt>$prefix/lib</tt>&rsquo;, where &lsquo;<tt>$prefix</tt>&rsquo; corresponds to
+the value given to configure using the <code>--prefix</code> option.  But be
+careful: this should only be done if it is clear the module does not
+cause any harm.  System administrators should be careful.
+</p>
+
+<hr size="6">
+<a name="NSS-Module-Function-Internals"></a>
+<a name="SEC607"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC606" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC596" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC605" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 28.4.2 Internals of the NSS Module Functions </h3>
+
+<p>Until now we only provided the syntactic interface for the functions in
+the NSS module.  In fact there is not much more we can say since the
+implementation obviously is different for each function.  But a few
+general rules must be followed by all functions.
+</p>
+<p>In fact there are four kinds of different functions which may appear in
+the interface.  All derive from the traditional ones for system databases.
+<var>db</var> in the following table is normally an abbreviation for the
+database (e.g., it is <code>pw</code> for the password database).
+</p>
+<dl compact="compact">
+<dt> <code>enum nss_status _nss_<var>database</var>_set<var>db</var>ent (void)</code></dt>
+<dd><p>This function prepares the service for following operations.  For a
+simple file based lookup this means files could be opened, for other
+services this function simply is a noop.
+</p>
+<p>One special case for this function is that it takes an additional
+argument for some <var>database</var>s (i.e., the interface is
+<code>int set<var>db</var>ent (int)</code>).  <a href="libc_16.html#SEC322">Host Names</a>, which describes the
+<code>sethostent</code> function.
+</p>
+<p>The return value should be <var>NSS_STATUS_SUCCESS</var> or according to the
+table above in case of an error (see section <a href="#SEC604">The Interface of the Function in NSS Modules</a>).
+</p>
+</dd>
+<dt> <code>enum nss_status _nss_<var>database</var>_end<var>db</var>ent (void)</code></dt>
+<dd><p>This function simply closes all files which are still open or removes
+buffer caches.  If there are no files or buffers to remove this is again
+a simple noop.
+</p>
+<p>There normally is no return value different to <var>NSS_STATUS_SUCCESS</var>.
+</p>
+</dd>
+<dt> <code>enum nss_status _nss_<var>database</var>_get<var>db</var>ent_r (<var>STRUCTURE</var> *result, char *buffer, size_t buflen, int *errnop)</code></dt>
+<dd><p>Since this function will be called several times in a row to retrieve
+one entry after the other it must keep some kind of state.  But this
+also means the functions are not really reentrant.  They are reentrant
+only in that simultaneous calls to this function will not try to
+write the retrieved data in the same place (as it would be the case for
+the non-reentrant functions); instead, it writes to the structure
+pointed to by the <var>result</var> parameter.  But the calls share a common
+state and in the case of a file access this means they return neighboring
+entries in the file.
+</p>
+<p>The buffer of length <var>buflen</var> pointed to by <var>buffer</var> can be used
+for storing some additional data for the result.  It is <em>not</em>
+guaranteed that the same buffer will be passed for the next call of this
+function.  Therefore one must not misuse this buffer to save some state
+information from one call to another.
+</p>
+<p>Before the function returns the implementation should store the value of
+the local <var>errno</var> variable in the variable pointed to be
+<var>errnop</var>.  This is important to guarantee the module working in
+statically linked programs.
+</p>
+<p>As explained above this function could also have an additional last
+argument.  This depends on the database used; it happens only for
+<code>host</code> and <code>networks</code>.
+</p>
+<p>The function shall return <code>NSS_STATUS_SUCCESS</code> as long as there are
+more entries.  When the last entry was read it should return
+<code>NSS_STATUS_NOTFOUND</code>.  When the buffer given as an argument is too
+small for the data to be returned <code>NSS_STATUS_TRYAGAIN</code> should be
+returned.  When the service was not formerly initialized by a call to
+<code>_nss_<var>DATABASE</var>_set<var>db</var>ent</code> all return value allowed for
+this function can also be returned here.
+</p>
+</dd>
+<dt> <code>enum nss_status _nss_<var>DATABASE</var>_get<var>db</var>by<var>XX</var>_r (<var>PARAMS</var>, <var>STRUCTURE</var> *result, char *buffer, size_t buflen, int *errnop)</code></dt>
+<dd><p>This function shall return the entry from the database which is
+addressed by the <var>PARAMS</var>.  The type and number of these arguments
+vary.  It must be individually determined by looking to the user-level
+interface functions.  All arguments given to the non-reentrant version
+are here described by <var>PARAMS</var>.
+</p>
+<p>The result must be stored in the structure pointed to by <var>result</var>.
+If there is additional data to return (say strings, where the
+<var>result</var> structure only contains pointers) the function must use the
+<var>buffer</var> or length <var>buflen</var>.  There must not be any references
+to non-constant global data.
+</p>
+<p>The implementation of this function should honor the <var>stayopen</var>
+flag set by the <code>set<var>DB</var>ent</code> function whenever this makes sense.
+</p>
+<p>Before the function returns the implementation should store the value of
+the local <var>errno</var> variable in the variable pointed to be
+<var>errnop</var>.  This is important to guarantee the module working in
+statically linked programs.
+</p>
+<p>Again, this function takes an additional last argument for the
+<code>host</code> and <code>networks</code> database.
+</p>
+<p>The return value should as always follow the rules given above
+(see section <a href="#SEC604">The Interface of the Function in NSS Modules</a>).
+</p>
+</dd>
+</dl>
+<hr size="6">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC596" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_29.html#SEC608" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated by <em>root</em> on <em>October, 30 2008</em> using <a href="http://www.nongnu.org/texi2html/"><em>texi2html 1.78</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

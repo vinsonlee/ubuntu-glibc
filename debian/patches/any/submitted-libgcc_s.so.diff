@@ -1,10 +1,9 @@
-Index: sysdeps/generic/framestate.c
-===================================================================
-RCS file: /cvs/glibc/libc/sysdeps/generic/framestate.c,v
-retrieving revision 1.4
-diff -u -p -r1.4 framestate.c
---- sysdeps/generic/framestate.c	21 Feb 2004 09:07:05 -0000	1.4
-+++ sysdeps/generic/framestate.c	28 Jul 2007 21:19:14 -0000
+---
+ sysdeps/generic/framestate.c |    6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+--- a/sysdeps/generic/framestate.c
++++ b/sysdeps/generic/framestate.c
 @@ -25,6 +25,10 @@
  #include <unwind-dw2.c>
  #undef __frame_state_for
@@ -16,7 +15,7 @@ diff -u -p -r1.4 framestate.c
  typedef struct frame_state * (*framesf)(void *pc, struct frame_state *);
  struct frame_state *__frame_state_for (void *pc,
  				       struct frame_state *frame_state);
-@@ -36,7 +40,7 @@ __frame_state_for (void *pc, struct fram
+@@ -36,7 +40,7 @@
  
    if (frame_state_for == NULL)
      {
