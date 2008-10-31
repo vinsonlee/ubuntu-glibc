@@ -1,5 +1,9 @@
---- ports/sysdeps/mips/bits/setjmp.h.orig
-+++ ports/sysdeps/mips/bits/setjmp.h
+---
+ ports/sysdeps/mips/bits/setjmp.h |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/ports/sysdeps/mips/bits/setjmp.h
++++ b/ports/sysdeps/mips/bits/setjmp.h
 @@ -27,7 +27,7 @@
  
  #include <sgidefs.h>

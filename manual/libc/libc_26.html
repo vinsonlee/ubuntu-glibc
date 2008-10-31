@@ -1,0 +1,1102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- This file documents the GNU C library.
+
+This is Edition 0.12, last updated 2007-10-27,
+of The GNU C Library Reference Manual, for version 2.8.
+
+Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002,
+2003, 2007, 2008 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software Needs Free Documentation"
+and "GNU Lesser General Public License", the Front-Cover texts being
+"A GNU Manual", and with the Back-Cover Texts as in (a) below.  A
+copy of the license is included in the section entitled "GNU Free
+Documentation License".
+
+(a) The FSF's Back-Cover Text is: "You have the freedom to
+copy and modify this GNU manual.  Buying copies from the FSF
+supports it in developing GNU and promoting software freedom."
+ -->
+<!-- Created on October, 30 2008 by texi2html 1.78 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+
+-->
+<head>
+<title>The GNU C Library: 26. Processes</title>
+
+<meta name="description" content="The GNU C Library: 26. Processes">
+<meta name="keywords" content="The GNU C Library: 26. Processes">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.78">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="Processes"></a>
+<a name="SEC568"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libc_25.html#SEC567" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC569" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc_25.html#SEC525" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h1 class="chapter"> 26. Processes </h1>
+
+<p><em>Processes</em> are the primitive units for allocation of system
+resources.  Each process has its own address space and (usually) one
+thread of control.  A process executes a program; you can have multiple
+processes executing the same program, but each process has its own copy
+of the program within its own address space and executes it
+independently of the other copies.
+</p>
+<a name="IDX2662"></a>
+<a name="IDX2663"></a>
+<p>Processes are organized hierarchically.  Each process has a <em>parent
+process</em> which explicitly arranged to create it.  The processes created
+by a given parent are called its <em>child processes</em>.  A child
+inherits many of its attributes from the parent process.
+</p>
+<p>This chapter describes how a program can create, terminate, and control
+child processes.  Actually, there are three distinct operations
+involved: creating a new child process, causing the new process to
+execute a program, and coordinating the completion of the child process
+with the original program.
+</p>
+<p>The <code>system</code> function provides a simple, portable mechanism for
+running another program; it does all three steps automatically.  If you
+need more control over the details of how this is done, you can use the
+primitive functions to do each step individually instead.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC569">26.1 Running a Command</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">           The easy way to run another program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC570">26.2 Process Creation Concepts</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   An overview of the hard way to do it.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC571">26.3 Process Identification</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">      How to get the process ID of a process.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC572">26.4 Creating a Process</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          How to fork a child process.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC573">26.5 Executing a File</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">            How to make a process execute another program.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC574">26.6 Process Completion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">          How to tell when a child process has completed.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC575">26.7 Process Completion Status</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">   How to interpret the status value
+                                 returned from a child process.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC576">26.8 BSD Process Wait Functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  	More functions, for backward compatibility.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC577">26.9 Process Creation Example</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">    A complete example program.
+</td></tr>
+</table>
+
+
+<hr size="6">
+<a name="Running-a-Command"></a>
+<a name="SEC569"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC568" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC570" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 26.1 Running a Command </h2>
+
+<p>The easy way to run another program is to use the <code>system</code>
+function.  This function does all the work of running a subprogram, but
+it doesn't give you much control over the details: you have to wait
+until the subprogram terminates before you can do anything else.
+</p>
+<dl>
+<dt><u>Function:</u> int <b>system</b><i> (const char *<var>command</var>)</i>
+<a name="IDX2664"></a>
+</dt>
+<dd><a name="IDX2665"></a>
+<p>This function executes <var>command</var> as a shell command.  In the GNU C
+library, it always uses the default shell <code>sh</code> to run the command.
+In particular, it searches the directories in <code>PATH</code> to find
+programs to execute.  The return value is <code>-1</code> if it wasn't
+possible to create the shell process, and otherwise is the status of the
+shell process.  See section <a href="#SEC574">Process Completion</a>, for details on how this
+status code can be interpreted.
+</p>
+<p>If the <var>command</var> argument is a null pointer, a return value of zero
+indicates that no command processor is available.
+</p>
+<p>This function is a cancellation point in multi-threaded programs.  This
+is a problem if the thread allocates some resources (like memory, file
+descriptors, semaphores or whatever) at the time <code>system</code> is
+called.  If the thread gets canceled these resources stay allocated
+until the program ends.  To avoid this calls to <code>system</code> should be
+protected using cancellation handlers.
+</p>
+<a name="IDX2666"></a>
+<p>The <code>system</code> function is declared in the header file
+&lsquo;<tt>stdlib.h</tt>&rsquo;.
+</p></dd></dl>
+
+<p><strong>Portability Note:</strong> Some C implementations may not have any
+notion of a command processor that can execute other programs.  You can
+determine whether a command processor exists by executing
+<code>system (NULL)</code>; if the return value is nonzero, a command
+processor is available.
+</p>
+<p>The <code>popen</code> and <code>pclose</code> functions (see section <a href="libc_15.html#SEC299">Pipe to a Subprocess</a>) are closely related to the <code>system</code> function.  They
+allow the parent process to communicate with the standard input and
+output channels of the command being executed.
+</p>
+<hr size="6">
+<a name="Process-Creation-Concepts"></a>
+<a name="SEC570"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC569" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC571" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 26.2 Process Creation Concepts </h2>
+
+<p>This section gives an overview of processes and of the steps involved in
+creating a process and making it run another program.
+</p>
+<a name="IDX2667"></a>
+<a name="IDX2668"></a>
+<p>Each process is named by a <em>process ID</em> number.  A unique process ID
+is allocated to each process when it is created.  The <em>lifetime</em> of
+a process ends when its termination is reported to its parent process;
+at that time, all of the process resources, including its process ID,
+are freed.
+</p>
+<a name="IDX2669"></a>
+<a name="IDX2670"></a>
+<a name="IDX2671"></a>
+<a name="IDX2672"></a>
+<p>Processes are created with the <code>fork</code> system call (so the operation
+of creating a new process is sometimes called <em>forking</em> a process).
+The <em>child process</em> created by <code>fork</code> is a copy of the original
+<em>parent process</em>, except that it has its own process ID.
+</p>
+<p>After forking a child process, both the parent and child processes
+continue to execute normally.  If you want your program to wait for a
+child process to finish executing before continuing, you must do this
+explicitly after the fork operation, by calling <code>wait</code> or
+<code>waitpid</code> (see section <a href="#SEC574">Process Completion</a>).  These functions give you
+limited information about why the child terminated&mdash;for example, its
+exit status code.
+</p>
+<p>A newly forked child process continues to execute the same program as
+its parent process, at the point where the <code>fork</code> call returns.
+You can use the return value from <code>fork</code> to tell whether the program
+is running in the parent process or the child.
+</p>
+<a name="IDX2673"></a>
+<p>Having several processes run the same program is only occasionally
+useful.  But the child can execute another program using one of the
+<code>exec</code> functions; see <a href="#SEC573">Executing a File</a>.  The program that the
+process is executing is called its <em>process image</em>.  Starting
+execution of a new program causes the process to forget all about its
+previous process image; when the new program exits, the process exits
+too, instead of returning to the previous process image.
+</p>
+<hr size="6">
+<a name="Process-Identification"></a>
+<a name="SEC571"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC570" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC572" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 26.3 Process Identification </h2>
+
+<p>The <code>pid_t</code> data type represents process IDs.  You can get the
+process ID of a process by calling <code>getpid</code>.  The function
+<code>getppid</code> returns the process ID of the parent of the current
+process (this is also known as the <em>parent process ID</em>).  Your
+program should include the header files &lsquo;<tt>unistd.h</tt>&rsquo; and
+&lsquo;<tt>sys/types.h</tt>&rsquo; to use these functions.
+<a name="IDX2674"></a>
+<a name="IDX2675"></a>
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>pid_t</b>
+<a name="IDX2676"></a>
+</dt>
+<dd><p>The <code>pid_t</code> data type is a signed integer type which is capable
+of representing a process ID.  In the GNU library, this is an <code>int</code>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> pid_t <b>getpid</b><i> (void)</i>
+<a name="IDX2677"></a>
+</dt>
+<dd><p>The <code>getpid</code> function returns the process ID of the current process.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> pid_t <b>getppid</b><i> (void)</i>
+<a name="IDX2678"></a>
+</dt>
+<dd><p>The <code>getppid</code> function returns the process ID of the parent of the
+current process.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Creating-a-Process"></a>
+<a name="SEC572"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC571" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC573" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 26.4 Creating a Process </h2>
+
+<p>The <code>fork</code> function is the primitive for creating a process.
+It is declared in the header file &lsquo;<tt>unistd.h</tt>&rsquo;.
+<a name="IDX2679"></a>
+</p>
+<dl>
+<dt><u>Function:</u> pid_t <b>fork</b><i> (void)</i>
+<a name="IDX2680"></a>
+</dt>
+<dd><p>The <code>fork</code> function creates a new process.
+</p>
+<p>If the operation is successful, there are then both parent and child
+processes and both see <code>fork</code> return, but with different values: it
+returns a value of <code>0</code> in the child process and returns the child's
+process ID in the parent process.
+</p>
+<p>If process creation failed, <code>fork</code> returns a value of <code>-1</code> in
+the parent process.  The following <code>errno</code> error conditions are
+defined for <code>fork</code>:
+</p>
+<dl compact="compact">
+<dt> <code>EAGAIN</code></dt>
+<dd><p>There aren't enough system resources to create another process, or the
+user already has too many processes running.  This means exceeding the
+<code>RLIMIT_NPROC</code> resource limit, which can usually be increased;
+see section <a href="libc_22.html#SEC451">Limiting Resource Usage</a>.
+</p>
+</dd>
+<dt> <code>ENOMEM</code></dt>
+<dd><p>The process requires more space than the system can supply.
+</p></dd>
+</dl>
+</dd></dl>
+
+<p>The specific attributes of the child process that differ from the
+parent process are:
+</p>
+<ul>
+<li>
+The child process has its own unique process ID.
+
+</li><li>
+The parent process ID of the child process is the process ID of its
+parent process.
+
+</li><li>
+The child process gets its own copies of the parent process's open file
+descriptors.  Subsequently changing attributes of the file descriptors
+in the parent process won't affect the file descriptors in the child,
+and vice versa.  See section <a href="libc_13.html#SEC257">Control Operations on Files</a>.  However, the file position
+associated with each descriptor is shared by both processes;
+see section <a href="libc_11.html#SEC171">File Position</a>.
+
+</li><li>
+The elapsed processor times for the child process are set to zero;
+see <a href="libc_21.html#SEC434">Processor Time Inquiry</a>.
+
+</li><li>
+The child doesn't inherit file locks set by the parent process.
+See section <a href="libc_13.html#SEC257">Control Operations on Files</a>.
+
+</li><li>
+The child doesn't inherit alarms set by the parent process.
+See section <a href="libc_21.html#SEC447">Setting an Alarm</a>.
+
+</li><li>
+The set of pending signals (see section <a href="libc_24.html#SEC475">How Signals Are Delivered</a>) for the child
+process is cleared.  (The child process inherits its mask of blocked
+signals and signal actions from the parent process.)
+</li></ul>
+
+
+<dl>
+<dt><u>Function:</u> pid_t <b>vfork</b><i> (void)</i>
+<a name="IDX2681"></a>
+</dt>
+<dd><p>The <code>vfork</code> function is similar to <code>fork</code> but on some systems
+it is more efficient; however, there are restrictions you must follow to
+use it safely.
+</p>
+<p>While <code>fork</code> makes a complete copy of the calling process's address
+space and allows both the parent and child to execute independently,
+<code>vfork</code> does not make this copy.  Instead, the child process
+created with <code>vfork</code> shares its parent's address space until it
+calls <code>_exit</code> or one of the <code>exec</code> functions.  In the
+meantime, the parent process suspends execution.
+</p>
+<p>You must be very careful not to allow the child process created with
+<code>vfork</code> to modify any global data or even local variables shared
+with the parent.  Furthermore, the child process cannot return from (or
+do a long jump out of) the function that called <code>vfork</code>!  This
+would leave the parent process's control information very confused.  If
+in doubt, use <code>fork</code> instead.
+</p>
+<p>Some operating systems don't really implement <code>vfork</code>.  The GNU C
+library permits you to use <code>vfork</code> on all systems, but actually
+executes <code>fork</code> if <code>vfork</code> isn't available.  If you follow
+the proper precautions for using <code>vfork</code>, your program will still
+work even if the system uses <code>fork</code> instead.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Executing-a-File"></a>
+<a name="SEC573"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC572" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC574" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 26.5 Executing a File </h2>
+
+<p>This section describes the <code>exec</code> family of functions, for executing
+a file as a process image.  You can use these functions to make a child
+process execute a new program after it has been forked.
+</p>
+<p>To see the effects of <code>exec</code> from the point of view of the called
+program, see <a href="libc_25.html#SEC525">The Basic Program/System Interface</a>.
+</p>
+<a name="IDX2682"></a>
+<p>The functions in this family differ in how you specify the arguments,
+but otherwise they all do the same thing.  They are declared in the
+header file &lsquo;<tt>unistd.h</tt>&rsquo;.
+</p>
+<dl>
+<dt><u>Function:</u> int <b>execv</b><i> (const char *<var>filename</var>, char *const <var>argv</var><tt>[]</tt>)</i>
+<a name="IDX2683"></a>
+</dt>
+<dd><p>The <code>execv</code> function executes the file named by <var>filename</var> as a
+new process image.
+</p>
+<p>The <var>argv</var> argument is an array of null-terminated strings that is
+used to provide a value for the <code>argv</code> argument to the <code>main</code>
+function of the program to be executed.  The last element of this array
+must be a null pointer.  By convention, the first element of this array
+is the file name of the program sans directory names.  See section <a href="libc_25.html#SEC526">Program Arguments</a>, for full details on how programs can access these arguments.
+</p>
+<p>The environment for the new process image is taken from the
+<code>environ</code> variable of the current process image; see
+<a href="libc_25.html#SEC558">Environment Variables</a>, for information about environments.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>execl</b><i> (const char *<var>filename</var>, const char *<var>arg0</var>, &hellip;)</i>
+<a name="IDX2684"></a>
+</dt>
+<dd><p>This is similar to <code>execv</code>, but the <var>argv</var> strings are
+specified individually instead of as an array.  A null pointer must be
+passed as the last such argument.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>execve</b><i> (const char *<var>filename</var>, char *const <var>argv</var><tt>[]</tt>, char *const <var>env</var><tt>[]</tt>)</i>
+<a name="IDX2685"></a>
+</dt>
+<dd><p>This is similar to <code>execv</code>, but permits you to specify the environment
+for the new program explicitly as the <var>env</var> argument.  This should
+be an array of strings in the same format as for the <code>environ</code>
+variable; see <a href="libc_25.html#SEC559">Environment Access</a>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>execle</b><i> (const char *<var>filename</var>, const char *<var>arg0</var>, char *const <var>env</var><tt>[]</tt>, &hellip;)</i>
+<a name="IDX2686"></a>
+</dt>
+<dd><p>This is similar to <code>execl</code>, but permits you to specify the
+environment for the new program explicitly.  The environment argument is
+passed following the null pointer that marks the last <var>argv</var>
+argument, and should be an array of strings in the same format as for
+the <code>environ</code> variable.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>execvp</b><i> (const char *<var>filename</var>, char *const <var>argv</var><tt>[]</tt>)</i>
+<a name="IDX2687"></a>
+</dt>
+<dd><p>The <code>execvp</code> function is similar to <code>execv</code>, except that it
+searches the directories listed in the <code>PATH</code> environment variable
+(see section <a href="libc_25.html#SEC560">Standard Environment Variables</a>) to find the full file name of a
+file from <var>filename</var> if <var>filename</var> does not contain a slash.
+</p>
+<p>This function is useful for executing system utility programs, because
+it looks for them in the places that the user has chosen.  Shells use it
+to run the commands that users type.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>execlp</b><i> (const char *<var>filename</var>, const char *<var>arg0</var>, &hellip;)</i>
+<a name="IDX2688"></a>
+</dt>
+<dd><p>This function is like <code>execl</code>, except that it performs the same
+file name searching as the <code>execvp</code> function.
+</p></dd></dl>
+
+<p>The size of the argument list and environment list taken together must
+not be greater than <code>ARG_MAX</code> bytes.  See section <a href="libc_31.html#SEC649">General Capacity Limits</a>.  In
+the GNU system, the size (which compares against <code>ARG_MAX</code>)
+includes, for each string, the number of characters in the string, plus
+the size of a <code>char *</code>, plus one, rounded up to a multiple of the
+size of a <code>char *</code>.  Other systems may have somewhat different
+rules for counting.
+</p>
+<p>These functions normally don't return, since execution of a new program
+causes the currently executing program to go away completely.  A value
+of <code>-1</code> is returned in the event of a failure.  In addition to the
+usual file name errors (see section <a href="libc_11.html#SEC175">File Name Errors</a>), the following
+<code>errno</code> error conditions are defined for these functions:
+</p>
+<dl compact="compact">
+<dt> <code>E2BIG</code></dt>
+<dd><p>The combined size of the new program's argument list and environment
+list is larger than <code>ARG_MAX</code> bytes.  The GNU system has no
+specific limit on the argument list size, so this error code cannot
+result, but you may get <code>ENOMEM</code> instead if the arguments are too
+big for available memory.
+</p>
+</dd>
+<dt> <code>ENOEXEC</code></dt>
+<dd><p>The specified file can't be executed because it isn't in the right format.
+</p>
+</dd>
+<dt> <code>ENOMEM</code></dt>
+<dd><p>Executing the specified file requires more storage than is available.
+</p></dd>
+</dl>
+
+<p>If execution of the new file succeeds, it updates the access time field
+of the file as if the file had been read.  See section <a href="libc_14.html#SEC293">File Times</a>, for more
+details about access times of files.
+</p>
+<p>The point at which the file is closed again is not specified, but
+is at some point before the process exits or before another process
+image is executed.
+</p>
+<p>Executing a new process image completely changes the contents of memory,
+copying only the argument and environment strings to new locations.  But
+many other attributes of the process are unchanged:
+</p>
+<ul>
+<li>
+The process ID and the parent process ID.  See section <a href="#SEC570">Process Creation Concepts</a>.
+
+</li><li>
+Session and process group membership.  See section <a href="libc_27.html#SEC579">Concepts of Job Control</a>.
+
+</li><li>
+Real user ID and group ID, and supplementary group IDs.  See section <a href="libc_29.html#SEC610">The Persona of a Process</a>.
+
+</li><li>
+Pending alarms.  See section <a href="libc_21.html#SEC447">Setting an Alarm</a>.
+
+</li><li>
+Current working directory and root directory.  See section <a href="libc_14.html#SEC269">Working Directory</a>.  In the GNU system, the root directory is not copied when
+executing a setuid program; instead the system default root directory
+is used for the new program.
+
+</li><li>
+File mode creation mask.  See section <a href="libc_14.html#SEC291">Assigning File Permissions</a>.
+
+</li><li>
+Process signal mask; see <a href="libc_24.html#SEC512">Process Signal Mask</a>.
+
+</li><li>
+Pending signals; see <a href="libc_24.html#SEC509">Blocking Signals</a>.
+
+</li><li>
+Elapsed processor time associated with the process; see <a href="libc_21.html#SEC434">Processor Time Inquiry</a>.
+</li></ul>
+
+<p>If the set-user-ID and set-group-ID mode bits of the process image file
+are set, this affects the effective user ID and effective group ID
+(respectively) of the process.  These concepts are discussed in detail
+in <a href="libc_29.html#SEC610">The Persona of a Process</a>.
+</p>
+<p>Signals that are set to be ignored in the existing process image are
+also set to be ignored in the new process image.  All other signals are
+set to the default action in the new process image.  For more
+information about signals, see <a href="libc_24.html#SEC471">Signal Handling</a>.
+</p>
+<p>File descriptors open in the existing process image remain open in the
+new process image, unless they have the <code>FD_CLOEXEC</code>
+(close-on-exec) flag set.  The files that remain open inherit all
+attributes of the open file description from the existing process image,
+including file locks.  File descriptors are discussed in <a href="libc_13.html#SEC238">Low-Level Input/Output</a>.
+</p>
+<p>Streams, by contrast, cannot survive through <code>exec</code> functions,
+because they are located in the memory of the process itself.  The new
+process image has no streams except those it creates afresh.  Each of
+the streams in the pre-<code>exec</code> process image has a descriptor inside
+it, and these descriptors do survive through <code>exec</code> (provided that
+they do not have <code>FD_CLOEXEC</code> set).  The new process image can
+reconnect these to new streams using <code>fdopen</code> (see section <a href="libc_13.html#SEC242">Descriptors and Streams</a>).
+</p>
+<hr size="6">
+<a name="Process-Completion"></a>
+<a name="SEC574"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC573" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC575" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 26.6 Process Completion </h2>
+
+<p>The functions described in this section are used to wait for a child
+process to terminate or stop, and determine its status.  These functions
+are declared in the header file &lsquo;<tt>sys/wait.h</tt>&rsquo;.
+<a name="IDX2689"></a>
+</p>
+<dl>
+<dt><u>Function:</u> pid_t <b>waitpid</b><i> (pid_t <var>pid</var>, int *<var>status-ptr</var>, int <var>options</var>)</i>
+<a name="IDX2690"></a>
+</dt>
+<dd><p>The <code>waitpid</code> function is used to request status information from a
+child process whose process ID is <var>pid</var>.  Normally, the calling
+process is suspended until the child process makes status information
+available by terminating.
+</p>
+<p>Other values for the <var>pid</var> argument have special interpretations.  A
+value of <code>-1</code> or <code>WAIT_ANY</code> requests status information for
+any child process; a value of <code>0</code> or <code>WAIT_MYPGRP</code> requests
+information for any child process in the same process group as the
+calling process; and any other negative value - <var>pgid</var>
+requests information for any child process whose process group ID is
+<var>pgid</var>.
+</p>
+<p>If status information for a child process is available immediately, this
+function returns immediately without waiting.  If more than one eligible
+child process has status information available, one of them is chosen
+randomly, and its status is returned immediately.  To get the status
+from the other eligible child processes, you need to call <code>waitpid</code>
+again.
+</p>
+<p>The <var>options</var> argument is a bit mask.  Its value should be the
+bitwise OR (that is, the &lsquo;<samp>|</samp>&rsquo; operator) of zero or more of the
+<code>WNOHANG</code> and <code>WUNTRACED</code> flags.  You can use the
+<code>WNOHANG</code> flag to indicate that the parent process shouldn't wait;
+and the <code>WUNTRACED</code> flag to request status information from stopped
+processes as well as processes that have terminated.
+</p>
+<p>The status information from the child process is stored in the object
+that <var>status-ptr</var> points to, unless <var>status-ptr</var> is a null pointer.
+</p>
+<p>This function is a cancellation point in multi-threaded programs.  This
+is a problem if the thread allocates some resources (like memory, file
+descriptors, semaphores or whatever) at the time <code>waitpid</code> is
+called.  If the thread gets canceled these resources stay allocated
+until the program ends.  To avoid this calls to <code>waitpid</code> should be
+protected using cancellation handlers.
+</p>
+<p>The return value is normally the process ID of the child process whose
+status is reported.  If there are child processes but none of them is
+waiting to be noticed, <code>waitpid</code> will block until one is.  However,
+if the <code>WNOHANG</code> option was specified, <code>waitpid</code> will return
+zero instead of blocking.
+</p>
+<p>If a specific PID to wait for was given to <code>waitpid</code>, it will
+ignore all other children (if any).  Therefore if there are children
+waiting to be noticed but the child whose PID was specified is not one
+of them, <code>waitpid</code> will block or return zero as described above.
+</p>
+<p>A value of <code>-1</code> is returned in case of error.  The following
+<code>errno</code> error conditions are defined for this function:
+</p>
+<dl compact="compact">
+<dt> <code>EINTR</code></dt>
+<dd><p>The function was interrupted by delivery of a signal to the calling
+process.  See section <a href="libc_24.html#SEC503">Primitives Interrupted by Signals</a>.
+</p>
+</dd>
+<dt> <code>ECHILD</code></dt>
+<dd><p>There are no child processes to wait for, or the specified <var>pid</var>
+is not a child of the calling process.
+</p>
+</dd>
+<dt> <code>EINVAL</code></dt>
+<dd><p>An invalid value was provided for the <var>options</var> argument.
+</p></dd>
+</dl>
+</dd></dl>
+
+<p>These symbolic constants are defined as values for the <var>pid</var> argument
+to the <code>waitpid</code> function.
+</p>
+<dl compact="compact">
+<dt> <code>WAIT_ANY</code></dt>
+<dd>
+<p>This constant macro (whose value is <code>-1</code>) specifies that
+<code>waitpid</code> should return status information about any child process.
+</p>
+
+</dd>
+<dt> <code>WAIT_MYPGRP</code></dt>
+<dd><p>This constant (with value <code>0</code>) specifies that <code>waitpid</code> should
+return status information about any child process in the same process
+group as the calling process.
+</p></dd>
+</dl>
+
+<p>These symbolic constants are defined as flags for the <var>options</var>
+argument to the <code>waitpid</code> function.  You can bitwise-OR the flags
+together to obtain a value to use as the argument.
+</p>
+<dl compact="compact">
+<dt> <code>WNOHANG</code></dt>
+<dd>
+<p>This flag specifies that <code>waitpid</code> should return immediately
+instead of waiting, if there is no child process ready to be noticed.
+</p>
+</dd>
+<dt> <code>WUNTRACED</code></dt>
+<dd>
+<p>This flag specifies that <code>waitpid</code> should report the status of any
+child processes that have been stopped as well as those that have
+terminated.
+</p></dd>
+</dl>
+
+<dl>
+<dt><u>Function:</u> pid_t <b>wait</b><i> (int *<var>status-ptr</var>)</i>
+<a name="IDX2691"></a>
+</dt>
+<dd><p>This is a simplified version of <code>waitpid</code>, and is used to wait
+until any one child process terminates.  The call:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">wait (&amp;status)
+</pre></td></tr></table>
+
+<p>is exactly equivalent to:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">waitpid (-1, &amp;status, 0)
+</pre></td></tr></table>
+
+<p>This function is a cancellation point in multi-threaded programs.  This
+is a problem if the thread allocates some resources (like memory, file
+descriptors, semaphores or whatever) at the time <code>wait</code> is
+called.  If the thread gets canceled these resources stay allocated
+until the program ends.  To avoid this calls to <code>wait</code> should be
+protected using cancellation handlers.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> pid_t <b>wait4</b><i> (pid_t <var>pid</var>, int *<var>status-ptr</var>, int <var>options</var>, struct rusage *<var>usage</var>)</i>
+<a name="IDX2692"></a>
+</dt>
+<dd><p>If <var>usage</var> is a null pointer, <code>wait4</code> is equivalent to
+<code>waitpid (<var>pid</var>, <var>status-ptr</var>, <var>options</var>)</code>.
+</p>
+<p>If <var>usage</var> is not null, <code>wait4</code> stores usage figures for the
+child process in <code>*<var>rusage</var></code> (but only if the child has
+terminated, not if it has stopped).  See section <a href="libc_22.html#SEC450">Resource Usage</a>.
+</p>
+<p>This function is a BSD extension.
+</p></dd></dl>
+
+<p>Here's an example of how to use <code>waitpid</code> to get the status from
+all child processes that have terminated, without ever waiting.  This
+function is designed to be a handler for <code>SIGCHLD</code>, the signal that
+indicates that at least one child process has terminated.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">void
+sigchld_handler (int signum)
+{
+  int pid, status, serrno;
+  serrno = errno;
+  while (1)
+    {
+      pid = waitpid (WAIT_ANY, &amp;status, WNOHANG);
+      if (pid &lt; 0)
+        {
+          perror (&quot;waitpid&quot;);
+          break;
+        }
+      if (pid == 0)
+        break;
+      notice_termination (pid, status);
+    }
+  errno = serrno;
+}
+</pre></td></tr></table>
+
+<hr size="6">
+<a name="Process-Completion-Status"></a>
+<a name="SEC575"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC574" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC576" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 26.7 Process Completion Status </h2>
+
+<p>If the exit status value (see section <a href="libc_25.html#SEC562">Program Termination</a>) of the child
+process is zero, then the status value reported by <code>waitpid</code> or
+<code>wait</code> is also zero.  You can test for other kinds of information
+encoded in the returned status value using the following macros.
+These macros are defined in the header file &lsquo;<tt>sys/wait.h</tt>&rsquo;.
+<a name="IDX2693"></a>
+</p>
+<dl>
+<dt><u>Macro:</u> int <b>WIFEXITED</b><i> (int <var>status</var>)</i>
+<a name="IDX2694"></a>
+</dt>
+<dd><p>This macro returns a nonzero value if the child process terminated
+normally with <code>exit</code> or <code>_exit</code>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Macro:</u> int <b>WEXITSTATUS</b><i> (int <var>status</var>)</i>
+<a name="IDX2695"></a>
+</dt>
+<dd><p>If <code>WIFEXITED</code> is true of <var>status</var>, this macro returns the
+low-order 8 bits of the exit status value from the child process.
+See section <a href="libc_25.html#SEC564">Exit Status</a>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Macro:</u> int <b>WIFSIGNALED</b><i> (int <var>status</var>)</i>
+<a name="IDX2696"></a>
+</dt>
+<dd><p>This macro returns a nonzero value if the child process terminated
+because it received a signal that was not handled.
+See section <a href="libc_24.html#SEC471">Signal Handling</a>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Macro:</u> int <b>WTERMSIG</b><i> (int <var>status</var>)</i>
+<a name="IDX2697"></a>
+</dt>
+<dd><p>If <code>WIFSIGNALED</code> is true of <var>status</var>, this macro returns the
+signal number of the signal that terminated the child process.
+</p></dd></dl>
+
+<dl>
+<dt><u>Macro:</u> int <b>WCOREDUMP</b><i> (int <var>status</var>)</i>
+<a name="IDX2698"></a>
+</dt>
+<dd><p>This macro returns a nonzero value if the child process terminated
+and produced a core dump.
+</p></dd></dl>
+
+<dl>
+<dt><u>Macro:</u> int <b>WIFSTOPPED</b><i> (int <var>status</var>)</i>
+<a name="IDX2699"></a>
+</dt>
+<dd><p>This macro returns a nonzero value if the child process is stopped.
+</p></dd></dl>
+
+<dl>
+<dt><u>Macro:</u> int <b>WSTOPSIG</b><i> (int <var>status</var>)</i>
+<a name="IDX2700"></a>
+</dt>
+<dd><p>If <code>WIFSTOPPED</code> is true of <var>status</var>, this macro returns the
+signal number of the signal that caused the child process to stop.
+</p></dd></dl>
+
+
+<hr size="6">
+<a name="BSD-Wait-Functions"></a>
+<a name="SEC576"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC575" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC577" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 26.8 BSD Process Wait Functions </h2>
+
+<p>The GNU library also provides these related facilities for compatibility
+with BSD Unix.  BSD uses the <code>union wait</code> data type to represent
+status values rather than an <code>int</code>.  The two representations are
+actually interchangeable; they describe the same bit patterns.  The GNU
+C Library defines macros such as <code>WEXITSTATUS</code> so that they will
+work on either kind of object, and the <code>wait</code> function is defined
+to accept either type of pointer as its <var>status-ptr</var> argument.
+</p>
+<p>These functions are declared in &lsquo;<tt>sys/wait.h</tt>&rsquo;.
+<a name="IDX2701"></a>
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>union wait</b>
+<a name="IDX2702"></a>
+</dt>
+<dd><p>This data type represents program termination status values.  It has
+the following members:
+</p>
+<dl compact="compact">
+<dt> <code>int w_termsig</code></dt>
+<dd><p>The value of this member is the same as that of the
+<code>WTERMSIG</code> macro.
+</p>
+</dd>
+<dt> <code>int w_coredump</code></dt>
+<dd><p>The value of this member is the same as that of the
+<code>WCOREDUMP</code> macro.
+</p>
+</dd>
+<dt> <code>int w_retcode</code></dt>
+<dd><p>The value of this member is the same as that of the
+<code>WEXITSTATUS</code> macro.
+</p>
+</dd>
+<dt> <code>int w_stopsig</code></dt>
+<dd><p>The value of this member is the same as that of the
+<code>WSTOPSIG</code> macro.
+</p></dd>
+</dl>
+
+<p>Instead of accessing these members directly, you should use the
+equivalent macros.
+</p></dd></dl>
+
+<p>The <code>wait3</code> function is the predecessor to <code>wait4</code>, which is
+more flexible.  <code>wait3</code> is now obsolete.
+</p>
+<dl>
+<dt><u>Function:</u> pid_t <b>wait3</b><i> (union wait *<var>status-ptr</var>, int <var>options</var>, struct rusage *<var>usage</var>)</i>
+<a name="IDX2703"></a>
+</dt>
+<dd><p>If <var>usage</var> is a null pointer, <code>wait3</code> is equivalent to
+<code>waitpid (-1, <var>status-ptr</var>, <var>options</var>)</code>.
+</p>
+<p>If <var>usage</var> is not null, <code>wait3</code> stores usage figures for the
+child process in <code>*<var>rusage</var></code> (but only if the child has
+terminated, not if it has stopped).  See section <a href="libc_22.html#SEC450">Resource Usage</a>.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Process-Creation-Example"></a>
+<a name="SEC577"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC576" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC568" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 26.9 Process Creation Example </h2>
+
+<p>Here is an example program showing how you might write a function
+similar to the built-in <code>system</code>.  It executes its <var>command</var>
+argument using the equivalent of &lsquo;<samp>sh -c <var>command</var></samp>&rsquo;.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;stddef.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/wait.h&gt;
+
+/* <span class="roman">Execute the command using this shell program.</span>  */
+#define SHELL &quot;/bin/sh&quot;
+
+int
+my_system (const char *command)
+{
+  int status;
+  pid_t pid;
+
+  pid = fork ();
+  if (pid == 0)
+    {
+      /* <span class="roman">This is the child process.  Execute the shell command.</span> */
+      execl (SHELL, SHELL, &quot;-c&quot;, command, NULL);
+      _exit (EXIT_FAILURE);
+    }
+  else if (pid &lt; 0)
+    /* <span class="roman">The fork failed.  Report failure.</span>  */
+    status = -1;
+  else
+    /* <span class="roman">This is the parent process.  Wait for the child to complete.</span>  */
+    if (waitpid (pid, &amp;status, 0) != pid)
+      status = -1;
+  return status;
+}
+</pre></td></tr></table>
+
+
+<p>There are a couple of things you should pay attention to in this
+example.
+</p>
+<p>Remember that the first <code>argv</code> argument supplied to the program
+represents the name of the program being executed.  That is why, in the
+call to <code>execl</code>, <code>SHELL</code> is supplied once to name the program
+to execute and a second time to supply a value for <code>argv[0]</code>.
+</p>
+<p>The <code>execl</code> call in the child process doesn't return if it is
+successful.  If it fails, you must do something to make the child
+process terminate.  Just returning a bad status code with <code>return</code>
+would leave two processes running the original program.  Instead, the
+right behavior is for the child process to report failure to its parent
+process.
+</p>
+<p>Call <code>_exit</code> to accomplish this.  The reason for using <code>_exit</code>
+instead of <code>exit</code> is to avoid flushing fully buffered streams such
+as <code>stdout</code>.  The buffers of these streams probably contain data
+that was copied from the parent process by the <code>fork</code>, data that
+will be output eventually by the parent process.  Calling <code>exit</code> in
+the child would output the data twice.  See section <a href="libc_25.html#SEC567">Termination Internals</a>.
+</p><hr size="6">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC568" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_27.html#SEC578" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated by <em>root</em> on <em>October, 30 2008</em> using <a href="http://www.nongnu.org/texi2html/"><em>texi2html 1.78</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

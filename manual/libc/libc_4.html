@@ -1,0 +1,973 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- This file documents the GNU C library.
+
+This is Edition 0.12, last updated 2007-10-27,
+of The GNU C Library Reference Manual, for version 2.8.
+
+Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002,
+2003, 2007, 2008 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software Needs Free Documentation"
+and "GNU Lesser General Public License", the Front-Cover texts being
+"A GNU Manual", and with the Back-Cover Texts as in (a) below.  A
+copy of the license is included in the section entitled "GNU Free
+Documentation License".
+
+(a) The FSF's Back-Cover Text is: "You have the freedom to
+copy and modify this GNU manual.  Buying copies from the FSF
+supports it in developing GNU and promoting software freedom."
+ -->
+<!-- Created on October, 30 2008 by texi2html 1.78 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+
+-->
+<head>
+<title>The GNU C Library: 4. Character Handling</title>
+
+<meta name="description" content="The GNU C Library: 4. Character Handling">
+<meta name="keywords" content="The GNU C Library: 4. Character Handling">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.78">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="Character-Handling"></a>
+<a name="SEC64"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libc_3.html#SEC63" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC65" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc_3.html#SEC19" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_5.html#SEC70" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h1 class="chapter"> 4. Character Handling </h1>
+
+<p>Programs that work with characters and strings often need to classify a
+character&mdash;is it alphabetic, is it a digit, is it whitespace, and so
+on&mdash;and perform case conversion operations on characters.  The
+functions in the header file &lsquo;<tt>ctype.h</tt>&rsquo; are provided for this
+purpose.
+<a name="IDX292"></a>
+</p>
+<p>Since the choice of locale and character set can alter the
+classifications of particular character codes, all of these functions
+are affected by the current locale.  (More precisely, they are affected
+by the locale currently selected for character classification&mdash;the
+<code>LC_CTYPE</code> category; see <a href="libc_7.html#SEC111">Categories of Activities that Locales Affect</a>.)
+</p>
+<p>The ISO C standard specifies two different sets of functions.  The
+one set works on <code>char</code> type characters, the other one on
+<code>wchar_t</code> wide characters (see section <a href="libc_6.html#SEC87">Introduction to Extended Characters</a>).
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC65">4.1 Classification of Characters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">       Testing whether characters are
+			                letters, digits, punctuation, etc.
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+</pre></th></tr><tr><td align="left" valign="top"><a href="#SEC66">4.2 Case Conversion</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">                    Case mapping, and the like.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC67">4.3 Character class determination for wide characters</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="#SEC68">4.4 Notes on using the wide character classes</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="#SEC69">4.5 Mapping of wide characters.</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+</table>
+
+<hr size="6">
+<a name="Classification-of-Characters"></a>
+<a name="SEC65"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC64" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC66" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC64" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC64" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_5.html#SEC70" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 4.1 Classification of Characters </h2>
+
+<p>This section explains the library functions for classifying characters.
+For example, <code>isalpha</code> is the function to test for an alphabetic
+character.  It takes one argument, the character to test, and returns a
+nonzero integer if the character is alphabetic, and zero otherwise.  You
+would use it like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">if (isalpha (c))
+  printf (&quot;The character `%c' is alphabetic.\n&quot;, c);
+</pre></td></tr></table>
+
+<p>Each of the functions in this section tests for membership in a
+particular class of characters; each has a name starting with &lsquo;<samp>is</samp>&rsquo;.
+Each of them takes one argument, which is a character to test, and
+returns an <code>int</code> which is treated as a boolean value.  The
+character argument is passed as an <code>int</code>, and it may be the
+constant value <code>EOF</code> instead of a real character.
+</p>
+<p>The attributes of any given character can vary between locales.
+See section <a href="libc_7.html#SEC108">Locales and Internationalization</a>, for more information on locales.
+</p>
+<p>These functions are declared in the header file &lsquo;<tt>ctype.h</tt>&rsquo;.
+<a name="IDX293"></a>
+</p>
+<a name="IDX294"></a>
+<dl>
+<dt><u>Function:</u> int <b>islower</b><i> (int <var>c</var>)</i>
+<a name="IDX295"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is a lower-case letter.  The letter need not be
+from the Latin alphabet, any alphabet representable is valid.
+</p></dd></dl>
+
+<a name="IDX296"></a>
+<dl>
+<dt><u>Function:</u> int <b>isupper</b><i> (int <var>c</var>)</i>
+<a name="IDX297"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is an upper-case letter.  The letter need not be
+from the Latin alphabet, any alphabet representable is valid.
+</p></dd></dl>
+
+<a name="IDX298"></a>
+<dl>
+<dt><u>Function:</u> int <b>isalpha</b><i> (int <var>c</var>)</i>
+<a name="IDX299"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is an alphabetic character (a letter).  If
+<code>islower</code> or <code>isupper</code> is true of a character, then
+<code>isalpha</code> is also true.
+</p>
+<p>In some locales, there may be additional characters for which
+<code>isalpha</code> is true&mdash;letters which are neither upper case nor lower
+case.  But in the standard <code>&quot;C&quot;</code> locale, there are no such
+additional characters.
+</p></dd></dl>
+
+<a name="IDX300"></a>
+<a name="IDX301"></a>
+<dl>
+<dt><u>Function:</u> int <b>isdigit</b><i> (int <var>c</var>)</i>
+<a name="IDX302"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is a decimal digit (&lsquo;<samp>0</samp>&rsquo; through &lsquo;<samp>9</samp>&rsquo;).
+</p></dd></dl>
+
+<a name="IDX303"></a>
+<dl>
+<dt><u>Function:</u> int <b>isalnum</b><i> (int <var>c</var>)</i>
+<a name="IDX304"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is an alphanumeric character (a letter or
+number); in other words, if either <code>isalpha</code> or <code>isdigit</code> is
+true of a character, then <code>isalnum</code> is also true.
+</p></dd></dl>
+
+<a name="IDX305"></a>
+<dl>
+<dt><u>Function:</u> int <b>isxdigit</b><i> (int <var>c</var>)</i>
+<a name="IDX306"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is a hexadecimal digit.
+Hexadecimal digits include the normal decimal digits &lsquo;<samp>0</samp>&rsquo; through
+&lsquo;<samp>9</samp>&rsquo; and the letters &lsquo;<samp>A</samp>&rsquo; through &lsquo;<samp>F</samp>&rsquo; and
+&lsquo;<samp>a</samp>&rsquo; through &lsquo;<samp>f</samp>&rsquo;.
+</p></dd></dl>
+
+<a name="IDX307"></a>
+<dl>
+<dt><u>Function:</u> int <b>ispunct</b><i> (int <var>c</var>)</i>
+<a name="IDX308"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is a punctuation character.
+This means any printing character that is not alphanumeric or a space
+character.
+</p></dd></dl>
+
+<a name="IDX309"></a>
+<dl>
+<dt><u>Function:</u> int <b>isspace</b><i> (int <var>c</var>)</i>
+<a name="IDX310"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is a <em>whitespace</em> character.  In the standard
+<code>&quot;C&quot;</code> locale, <code>isspace</code> returns true for only the standard
+whitespace characters:
+</p>
+<dl compact="compact">
+<dt> <code>' '</code></dt>
+<dd><p>space
+</p>
+</dd>
+<dt> <code>'\f'</code></dt>
+<dd><p>formfeed
+</p>
+</dd>
+<dt> <code>'\n'</code></dt>
+<dd><p>newline
+</p>
+</dd>
+<dt> <code>'\r'</code></dt>
+<dd><p>carriage return
+</p>
+</dd>
+<dt> <code>'\t'</code></dt>
+<dd><p>horizontal tab
+</p>
+</dd>
+<dt> <code>'\v'</code></dt>
+<dd><p>vertical tab
+</p></dd>
+</dl>
+</dd></dl>
+
+<a name="IDX311"></a>
+<dl>
+<dt><u>Function:</u> int <b>isblank</b><i> (int <var>c</var>)</i>
+<a name="IDX312"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is a blank character; that is, a space or a tab.
+This function was originally a GNU extension, but was added in ISO C99.
+</p></dd></dl>
+
+<a name="IDX313"></a>
+<dl>
+<dt><u>Function:</u> int <b>isgraph</b><i> (int <var>c</var>)</i>
+<a name="IDX314"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is a graphic character; that is, a character
+that has a glyph associated with it.  The whitespace characters are not
+considered graphic.
+</p></dd></dl>
+
+<a name="IDX315"></a>
+<dl>
+<dt><u>Function:</u> int <b>isprint</b><i> (int <var>c</var>)</i>
+<a name="IDX316"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is a printing character.  Printing characters
+include all the graphic characters, plus the space (&lsquo;<samp> </samp>&rsquo;) character.
+</p></dd></dl>
+
+<a name="IDX317"></a>
+<dl>
+<dt><u>Function:</u> int <b>iscntrl</b><i> (int <var>c</var>)</i>
+<a name="IDX318"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is a control character (that is, a character that
+is not a printing character).
+</p></dd></dl>
+
+<a name="IDX319"></a>
+<dl>
+<dt><u>Function:</u> int <b>isascii</b><i> (int <var>c</var>)</i>
+<a name="IDX320"></a>
+</dt>
+<dd><p>Returns true if <var>c</var> is a 7-bit <code>unsigned char</code> value that fits
+into the US/UK ASCII character set.  This function is a BSD extension
+and is also an SVID extension.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Case-Conversion"></a>
+<a name="SEC66"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC65" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC67" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC64" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC64" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_5.html#SEC70" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 4.2 Case Conversion </h2>
+
+<p>This section explains the library functions for performing conversions
+such as case mappings on characters.  For example, <code>toupper</code>
+converts any character to upper case if possible.  If the character
+can't be converted, <code>toupper</code> returns it unchanged.
+</p>
+<p>These functions take one argument of type <code>int</code>, which is the
+character to convert, and return the converted character as an
+<code>int</code>.  If the conversion is not applicable to the argument given,
+the argument is returned unchanged.
+</p>
+<p><strong>Compatibility Note:</strong> In pre-ISO C dialects, instead of
+returning the argument unchanged, these functions may fail when the
+argument is not suitable for the conversion.  Thus for portability, you
+may need to write <code>islower(c) ? toupper(c) : c</code> rather than just
+<code>toupper(c)</code>.
+</p>
+<p>These functions are declared in the header file &lsquo;<tt>ctype.h</tt>&rsquo;.
+<a name="IDX321"></a>
+</p>
+<dl>
+<dt><u>Function:</u> int <b>tolower</b><i> (int <var>c</var>)</i>
+<a name="IDX322"></a>
+</dt>
+<dd><p>If <var>c</var> is an upper-case letter, <code>tolower</code> returns the corresponding
+lower-case letter.  If <var>c</var> is not an upper-case letter,
+<var>c</var> is returned unchanged.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>toupper</b><i> (int <var>c</var>)</i>
+<a name="IDX323"></a>
+</dt>
+<dd><p>If <var>c</var> is a lower-case letter, <code>toupper</code> returns the corresponding
+upper-case letter.  Otherwise <var>c</var> is returned unchanged.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>toascii</b><i> (int <var>c</var>)</i>
+<a name="IDX324"></a>
+</dt>
+<dd><p>This function converts <var>c</var> to a 7-bit <code>unsigned char</code> value
+that fits into the US/UK ASCII character set, by clearing the high-order
+bits.  This function is a BSD extension and is also an SVID extension.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>_tolower</b><i> (int <var>c</var>)</i>
+<a name="IDX325"></a>
+</dt>
+<dd><p>This is identical to <code>tolower</code>, and is provided for compatibility
+with the SVID.  See section <a href="libc_1.html#SEC7">SVID (The System V Interface Description)</a>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> int <b>_toupper</b><i> (int <var>c</var>)</i>
+<a name="IDX326"></a>
+</dt>
+<dd><p>This is identical to <code>toupper</code>, and is provided for compatibility
+with the SVID.
+</p></dd></dl>
+
+
+<hr size="6">
+<a name="Classification-of-Wide-Characters"></a>
+<a name="SEC67"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC66" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC68" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC64" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC64" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_5.html#SEC70" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 4.3 Character class determination for wide characters </h2>
+
+<p>Amendment 1 to ISO C90 defines functions to classify wide
+characters.  Although the original ISO C90 standard already defined
+the type <code>wchar_t</code>, no functions operating on them were defined.
+</p>
+<p>The general design of the classification functions for wide characters
+is more general.  It allows extensions to the set of available
+classifications, beyond those which are always available.  The POSIX
+standard specifies how extensions can be made, and this is already
+implemented in the GNU C library implementation of the <code>localedef</code>
+program.
+</p>
+<p>The character class functions are normally implemented with bitsets,
+with a bitset per character.  For a given character, the appropriate
+bitset is read from a table and a test is performed as to whether a
+certain bit is set.  Which bit is tested for is determined by the
+class.
+</p>
+<p>For the wide character classification functions this is made visible.
+There is a type classification type defined, a function to retrieve this
+value for a given class, and a function to test whether a given
+character is in this class, using the classification value.  On top of
+this the normal character classification functions as used for
+<code>char</code> objects can be defined.
+</p>
+<dl>
+<dt><u>Data type:</u> <b>wctype_t</b>
+<a name="IDX327"></a>
+</dt>
+<dd><p>The <code>wctype_t</code> can hold a value which represents a character class.
+The only defined way to generate such a value is by using the
+<code>wctype</code> function.
+</p>
+<a name="IDX328"></a>
+<p>This type is defined in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wctype_t <b>wctype</b><i> (const char *<var>property</var>)</i>
+<a name="IDX329"></a>
+</dt>
+<dd><p>The <code>wctype</code> returns a value representing a class of wide
+characters which is identified by the string <var>property</var>.  Beside
+some standard properties each locale can define its own ones.  In case
+no property with the given name is known for the current locale
+selected for the <code>LC_CTYPE</code> category, the function returns zero.
+</p>
+<p>The properties known in every locale are:
+</p>
+<table>
+<tr><td>
+<p><code>&quot;alnum&quot;</code> </p></td><td><p> <code>&quot;alpha&quot;</code> </p></td><td><p> <code>&quot;cntrl&quot;</code> </p></td><td><p> <code>&quot;digit&quot;</code>
+</p></td></tr>
+<tr><td>
+<p><code>&quot;graph&quot;</code> </p></td><td><p> <code>&quot;lower&quot;</code> </p></td><td><p> <code>&quot;print&quot;</code> </p></td><td><p> <code>&quot;punct&quot;</code>
+</p></td></tr>
+<tr><td>
+<p><code>&quot;space&quot;</code> </p></td><td><p> <code>&quot;upper&quot;</code> </p></td><td><p> <code>&quot;xdigit&quot;</code>
+</p></td></tr>
+</table>
+
+<a name="IDX330"></a>
+<p>This function is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<p>To test the membership of a character to one of the non-standard classes
+the ISO C standard defines a completely new function.
+</p>
+<dl>
+<dt><u>Function:</u> int <b>iswctype</b><i> (wint_t <var>wc</var>, wctype_t <var>desc</var>)</i>
+<a name="IDX331"></a>
+</dt>
+<dd><p>This function returns a nonzero value if <var>wc</var> is in the character
+class specified by <var>desc</var>.  <var>desc</var> must previously be returned
+by a successful call to <code>wctype</code>.
+</p>
+<a name="IDX332"></a>
+<p>This function is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<p>To make it easier to use the commonly-used classification functions,
+they are defined in the C library.  There is no need to use
+<code>wctype</code> if the property string is one of the known character
+classes.  In some situations it is desirable to construct the property
+strings, and then it is important that <code>wctype</code> can also handle the
+standard classes.
+</p>
+<a name="IDX333"></a>
+<dl>
+<dt><u>Function:</u> int <b>iswalnum</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX334"></a>
+</dt>
+<dd><p>This function returns a nonzero value if <var>wc</var> is an alphanumeric
+character (a letter or number); in other words, if either <code>iswalpha</code>
+or <code>iswdigit</code> is true of a character, then <code>iswalnum</code> is also
+true.
+</p>
+<p>This function can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">iswctype (wc, wctype (&quot;alnum&quot;))
+</pre></td></tr></table>
+
+<a name="IDX335"></a>
+<p>It is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<a name="IDX336"></a>
+<dl>
+<dt><u>Function:</u> int <b>iswalpha</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX337"></a>
+</dt>
+<dd><p>Returns true if <var>wc</var> is an alphabetic character (a letter).  If
+<code>iswlower</code> or <code>iswupper</code> is true of a character, then
+<code>iswalpha</code> is also true.
+</p>
+<p>In some locales, there may be additional characters for which
+<code>iswalpha</code> is true&mdash;letters which are neither upper case nor lower
+case.  But in the standard <code>&quot;C&quot;</code> locale, there are no such
+additional characters.
+</p>
+<p>This function can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">iswctype (wc, wctype (&quot;alpha&quot;))
+</pre></td></tr></table>
+
+<a name="IDX338"></a>
+<p>It is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<a name="IDX339"></a>
+<dl>
+<dt><u>Function:</u> int <b>iswcntrl</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX340"></a>
+</dt>
+<dd><p>Returns true if <var>wc</var> is a control character (that is, a character that
+is not a printing character).
+</p>
+<p>This function can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">iswctype (wc, wctype (&quot;cntrl&quot;))
+</pre></td></tr></table>
+
+<a name="IDX341"></a>
+<p>It is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<a name="IDX342"></a>
+<dl>
+<dt><u>Function:</u> int <b>iswdigit</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX343"></a>
+</dt>
+<dd><p>Returns true if <var>wc</var> is a digit (e.g., &lsquo;<samp>0</samp>&rsquo; through &lsquo;<samp>9</samp>&rsquo;).
+Please note that this function does not only return a nonzero value for
+<em>decimal</em> digits, but for all kinds of digits.  A consequence is
+that code like the following will <strong>not</strong> work unconditionally for
+wide characters:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">n = 0;
+while (iswdigit (*wc))
+  {
+    n *= 10;
+    n += *wc++ - L'0';
+  }
+</pre></td></tr></table>
+
+<p>This function can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">iswctype (wc, wctype (&quot;digit&quot;))
+</pre></td></tr></table>
+
+<a name="IDX344"></a>
+<p>It is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<a name="IDX345"></a>
+<dl>
+<dt><u>Function:</u> int <b>iswgraph</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX346"></a>
+</dt>
+<dd><p>Returns true if <var>wc</var> is a graphic character; that is, a character
+that has a glyph associated with it.  The whitespace characters are not
+considered graphic.
+</p>
+<p>This function can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">iswctype (wc, wctype (&quot;graph&quot;))
+</pre></td></tr></table>
+
+<a name="IDX347"></a>
+<p>It is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<a name="IDX348"></a>
+<dl>
+<dt><u>Function:</u> int <b>iswlower</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX349"></a>
+</dt>
+<dd><p>Returns true if <var>wc</var> is a lower-case letter.  The letter need not be
+from the Latin alphabet, any alphabet representable is valid.
+</p>
+<p>This function can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">iswctype (wc, wctype (&quot;lower&quot;))
+</pre></td></tr></table>
+
+<a name="IDX350"></a>
+<p>It is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<a name="IDX351"></a>
+<dl>
+<dt><u>Function:</u> int <b>iswprint</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX352"></a>
+</dt>
+<dd><p>Returns true if <var>wc</var> is a printing character.  Printing characters
+include all the graphic characters, plus the space (&lsquo;<samp> </samp>&rsquo;) character.
+</p>
+<p>This function can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">iswctype (wc, wctype (&quot;print&quot;))
+</pre></td></tr></table>
+
+<a name="IDX353"></a>
+<p>It is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<a name="IDX354"></a>
+<dl>
+<dt><u>Function:</u> int <b>iswpunct</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX355"></a>
+</dt>
+<dd><p>Returns true if <var>wc</var> is a punctuation character.
+This means any printing character that is not alphanumeric or a space
+character.
+</p>
+<p>This function can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">iswctype (wc, wctype (&quot;punct&quot;))
+</pre></td></tr></table>
+
+<a name="IDX356"></a>
+<p>It is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<a name="IDX357"></a>
+<dl>
+<dt><u>Function:</u> int <b>iswspace</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX358"></a>
+</dt>
+<dd><p>Returns true if <var>wc</var> is a <em>whitespace</em> character.  In the standard
+<code>&quot;C&quot;</code> locale, <code>iswspace</code> returns true for only the standard
+whitespace characters:
+</p>
+<dl compact="compact">
+<dt> <code>L' '</code></dt>
+<dd><p>space
+</p>
+</dd>
+<dt> <code>L'\f'</code></dt>
+<dd><p>formfeed
+</p>
+</dd>
+<dt> <code>L'\n'</code></dt>
+<dd><p>newline
+</p>
+</dd>
+<dt> <code>L'\r'</code></dt>
+<dd><p>carriage return
+</p>
+</dd>
+<dt> <code>L'\t'</code></dt>
+<dd><p>horizontal tab
+</p>
+</dd>
+<dt> <code>L'\v'</code></dt>
+<dd><p>vertical tab
+</p></dd>
+</dl>
+
+<p>This function can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">iswctype (wc, wctype (&quot;space&quot;))
+</pre></td></tr></table>
+
+<a name="IDX359"></a>
+<p>It is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<a name="IDX360"></a>
+<dl>
+<dt><u>Function:</u> int <b>iswupper</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX361"></a>
+</dt>
+<dd><p>Returns true if <var>wc</var> is an upper-case letter.  The letter need not be
+from the Latin alphabet, any alphabet representable is valid.
+</p>
+<p>This function can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">iswctype (wc, wctype (&quot;upper&quot;))
+</pre></td></tr></table>
+
+<a name="IDX362"></a>
+<p>It is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<a name="IDX363"></a>
+<dl>
+<dt><u>Function:</u> int <b>iswxdigit</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX364"></a>
+</dt>
+<dd><p>Returns true if <var>wc</var> is a hexadecimal digit.
+Hexadecimal digits include the normal decimal digits &lsquo;<samp>0</samp>&rsquo; through
+&lsquo;<samp>9</samp>&rsquo; and the letters &lsquo;<samp>A</samp>&rsquo; through &lsquo;<samp>F</samp>&rsquo; and
+&lsquo;<samp>a</samp>&rsquo; through &lsquo;<samp>f</samp>&rsquo;.
+</p>
+<p>This function can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">iswctype (wc, wctype (&quot;xdigit&quot;))
+</pre></td></tr></table>
+
+<a name="IDX365"></a>
+<p>It is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<p>The GNU C library also provides a function which is not defined in the
+ISO C standard but which is available as a version for single byte
+characters as well.
+</p>
+<a name="IDX366"></a>
+<dl>
+<dt><u>Function:</u> int <b>iswblank</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX367"></a>
+</dt>
+<dd><p>Returns true if <var>wc</var> is a blank character; that is, a space or a tab.
+This function was originally a GNU extension, but was added in ISO C99.
+It is declared in &lsquo;<tt>wchar.h</tt>&rsquo;.
+</p></dd></dl>
+
+<hr size="6">
+<a name="Using-Wide-Char-Classes"></a>
+<a name="SEC68"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC67" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC69" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC64" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC64" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_5.html#SEC70" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 4.4 Notes on using the wide character classes </h2>
+
+<p>The first note is probably not astonishing but still occasionally a
+cause of problems.  The <code>isw<var>XXX</var></code> functions can be implemented
+using macros and in fact, the GNU C library does this.  They are still
+available as real functions but when the &lsquo;<tt>wctype.h</tt>&rsquo; header is
+included the macros will be used.  This is the same as the
+<code>char</code> type versions of these functions.
+</p>
+<p>The second note covers something new.  It can be best illustrated by a
+(real-world) example.  The first piece of code is an excerpt from the
+original code.  It is truncated a bit but the intention should be clear.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">int
+is_in_class (int c, const char *class)
+{
+  if (strcmp (class, &quot;alnum&quot;) == 0)
+    return isalnum (c);
+  if (strcmp (class, &quot;alpha&quot;) == 0)
+    return isalpha (c);
+  if (strcmp (class, &quot;cntrl&quot;) == 0)
+    return iscntrl (c);
+  &hellip;
+  return 0;
+}
+</pre></td></tr></table>
+
+<p>Now, with the <code>wctype</code> and <code>iswctype</code> you can avoid the
+<code>if</code> cascades, but rewriting the code as follows is wrong:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">int
+is_in_class (int c, const char *class)
+{
+  wctype_t desc = wctype (class);
+  return desc ? iswctype ((wint_t) c, desc) : 0;
+}
+</pre></td></tr></table>
+
+<p>The problem is that it is not guaranteed that the wide character
+representation of a single-byte character can be found using casting.
+In fact, usually this fails miserably.  The correct solution to this
+problem is to write the code as follows:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">int
+is_in_class (int c, const char *class)
+{
+  wctype_t desc = wctype (class);
+  return desc ? iswctype (btowc (c), desc) : 0;
+}
+</pre></td></tr></table>
+
+<p>See section <a href="libc_6.html#SEC92">Converting Single Characters</a>, for more information on <code>btowc</code>.
+Note that this change probably does not improve the performance
+of the program a lot since the <code>wctype</code> function still has to make
+the string comparisons.  It gets really interesting if the
+<code>is_in_class</code> function is called more than once for the
+same class name.  In this case the variable <var>desc</var> could be computed
+once and reused for all the calls.  Therefore the above form of the
+function is probably not the final one.
+</p>
+
+<hr size="6">
+<a name="Wide-Character-Case-Conversion"></a>
+<a name="SEC69"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC68" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_5.html#SEC70" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC64" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC64" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_5.html#SEC70" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 4.5 Mapping of wide characters. </h2>
+
+<p>The classification functions are also generalized by the ISO C
+standard.  Instead of just allowing the two standard mappings, a
+locale can contain others.  Again, the <code>localedef</code> program
+already supports generating such locale data files.
+</p>
+<dl>
+<dt><u>Data Type:</u> <b>wctrans_t</b>
+<a name="IDX368"></a>
+</dt>
+<dd><p>This data type is defined as a scalar type which can hold a value
+representing the locale-dependent character mapping.  There is no way to
+construct such a value apart from using the return value of the
+<code>wctrans</code> function.
+</p>
+<a name="IDX369"></a>
+<p>This type is defined in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wctrans_t <b>wctrans</b><i> (const char *<var>property</var>)</i>
+<a name="IDX370"></a>
+</dt>
+<dd><p>The <code>wctrans</code> function has to be used to find out whether a named
+mapping is defined in the current locale selected for the
+<code>LC_CTYPE</code> category.  If the returned value is non-zero, you can use
+it afterwards in calls to <code>towctrans</code>.  If the return value is
+zero no such mapping is known in the current locale.
+</p>
+<p>Beside locale-specific mappings there are two mappings which are
+guaranteed to be available in every locale:
+</p>
+<table>
+<tr><td>
+<p><code>&quot;tolower&quot;</code> </p></td><td><p> <code>&quot;toupper&quot;</code>
+</p></td></tr>
+</table>
+
+<a name="IDX371"></a>
+<p>These functions are declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wint_t <b>towctrans</b><i> (wint_t <var>wc</var>, wctrans_t <var>desc</var>)</i>
+<a name="IDX372"></a>
+</dt>
+<dd><p><code>towctrans</code> maps the input character <var>wc</var>
+according to the rules of the mapping for which <var>desc</var> is a
+descriptor, and returns the value it finds.  <var>desc</var> must be
+obtained by a successful call to <code>wctrans</code>.
+</p>
+<a name="IDX373"></a>
+<p>This function is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<p>For the generally available mappings, the ISO C standard defines
+convenient shortcuts so that it is not necessary to call <code>wctrans</code>
+for them.
+</p>
+<dl>
+<dt><u>Function:</u> wint_t <b>towlower</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX374"></a>
+</dt>
+<dd><p>If <var>wc</var> is an upper-case letter, <code>towlower</code> returns the corresponding
+lower-case letter.  If <var>wc</var> is not an upper-case letter,
+<var>wc</var> is returned unchanged.
+</p>
+<p><code>towlower</code> can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">towctrans (wc, wctrans (&quot;tolower&quot;))
+</pre></td></tr></table>
+
+<a name="IDX375"></a>
+<p>This function is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> wint_t <b>towupper</b><i> (wint_t <var>wc</var>)</i>
+<a name="IDX376"></a>
+</dt>
+<dd><p>If <var>wc</var> is a lower-case letter, <code>towupper</code> returns the corresponding
+upper-case letter.  Otherwise <var>wc</var> is returned unchanged.
+</p>
+<p><code>towupper</code> can be implemented using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">towctrans (wc, wctrans (&quot;toupper&quot;))
+</pre></td></tr></table>
+
+<a name="IDX377"></a>
+<p>This function is declared in &lsquo;<tt>wctype.h</tt>&rsquo;.
+</p></dd></dl>
+
+<p>The same warnings given in the last section for the use of the wide
+character classification functions apply here.  It is not possible to
+simply cast a <code>char</code> type value to a <code>wint_t</code> and use it as an
+argument to <code>towctrans</code> calls.
+</p><hr size="6">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC64" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_5.html#SEC70" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated by <em>root</em> on <em>October, 30 2008</em> using <a href="http://www.nongnu.org/texi2html/"><em>texi2html 1.78</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>

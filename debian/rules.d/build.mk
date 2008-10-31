@@ -13,14 +13,13 @@ endef
 
 
 $(patsubst %,mkbuilddir_%,$(GLIBC_PASSES)) :: mkbuilddir_% : $(stamp)mkbuilddir_%
-$(stamp)mkbuilddir_%: $(stamp)patch-stamp $(KERNEL_HEADER_DIR)
+$(stamp)mkbuilddir_%: $(stamp)patch $(KERNEL_HEADER_DIR)
 	@echo Making builddir for $(curpass)
-	test -d $(DEB_BUILDDIR) || mkdir $(DEB_BUILDDIR)
+	test -d $(DEB_BUILDDIR) || mkdir -p $(DEB_BUILDDIR)
 	touch $@
 
 $(patsubst %,configure_%,$(GLIBC_PASSES)) :: configure_% : $(stamp)configure_%
 $(stamp)configure_%: $(stamp)mkbuilddir_%
-
 	@echo Configuring $(curpass)
 	rm -f $(DEB_BUILDDIR)/configparms
 	echo "CC = $(call xx,CC)"		>> $(DEB_BUILDDIR)/configparms
@@ -71,7 +70,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		CC="$(call xx,CC)" \
 		CXX="$(call xx,CXX)" \
 		AUTOCONF=false \
-		$(CURDIR)/$(DEB_SRCDIR)/configure \
+		$(CURDIR)/configure \
 		--host=$(call xx,configure_target) \
 		--build=$$configure_build --prefix=/usr --without-cvs \
 		--enable-add-ons=$(standard-add-ons)"$(call xx,add-ons)" \
@@ -96,31 +95,33 @@ $(stamp)build_%: $(stamp)configure_%
 
 $(patsubst %,check_%,$(GLIBC_PASSES)) :: check_% : $(stamp)check_%
 $(stamp)check_%: $(stamp)build_%
+	@set -e ; \
 	if [ -n "$(findstring nocheck,$(DEB_BUILD_OPTIONS))" ]; then \
-	  echo "DEB_BUILD_OPTIONS contains nocheck, skipping tests."; \
-	  echo "Tests have been disabled via DEB_BUILD_OPTIONS." > $(log_test) ; \
+	  echo "Tests have been disabled via DEB_BUILD_OPTIONS." | tee $(log_results) ; \
 	elif [ $(call xx,configure_build) != $(call xx,configure_target) ] && \
 	     ! $(DEB_BUILDDIR)/elf/ld.so $(DEB_BUILDDIR)/libc.so >/dev/null 2>&1 ; then \
-	  echo "Cross compiling, skipping tests."; \
-	  echo "Flavour cross-compiled, tests have been skipped." > $(log_test) ; \
+	  echo "Flavour cross-compiled, tests have been skipped." | tee $(log_results) ; \
 	elif ! $(call kernel_check,$(call xx,MIN_KERNEL_SUPPORTED)); then \
-	  echo "Kernel too old, skipping tests."; \
-	  echo "Kernel too old, tests have been skipped." > $(log_test) ; \
-	elif uname -m | grep -q "^arm" && uname -r | grep -q "2\.6\.2[1-4]" ; then \
-	  echo "ARM machine running a 2.6.21-24 kernel detected, tests have been skipped."; \
-	  echo "ARM machine running a 2.6.21-24 kernel detected, tests have been skipped." > $(log_test) ; \
+	  echo "Kernel too old, tests have been skipped." | tee $(log_results) ; \
 	elif [ $(call xx,RUN_TESTSUITE) != "yes" ]; then \
 	  echo "Testsuite disabled for $(curpass), skipping tests."; \
-	  echo "Tests have been disabled." > $(log_test) ; \
+	  echo "Tests have been disabled." > $(log_results) ; \
 	else \
 	  echo Testing $(curpass); \
-	  echo -n "Testsuite started: " | tee -a $(log_test); \
-	  date --rfc-2822 | tee -a $(log_test); \
-	  echo "--------------" | tee -a $(log_test); \
-	  TIMEOUTFACTOR="$(TIMEOUTFACTOR)" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) -k check 2>&1 | tee -a $(log_test); \
-	  echo "--------------" | tee -a $(log_test); \
-	  echo -n "Testsuite ended: " | tee -a $(log_test); \
-	  date --rfc-2822 | tee -a $(log_test); \
+	  find $(DEB_BUILDDIR) -name '*.out' -exec rm {} ';' ; \
+	  TIMEOUTFACTOR="50" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) -k check 2>&1 | tee $(log_test); \
+	  chmod +x debian/testsuite-checking/convertlog.sh ; \
+	  debian/testsuite-checking/convertlog.sh $(log_test) | tee $(log_results) ; \
+	  if test -f $(log_expected) ; then \
+	    echo "***************" ; \
+	    chmod +x debian/testsuite-checking/compare.sh ; \
+	    debian/testsuite-checking/compare.sh $(log_expected) $(log_results) ; \
+	    echo "***************" ; \
+	  else \
+	    echo "*** WARNING ***" ; \
+	    echo "Please generate expected testsuite results for this arch!" ; \
+	    echo "*** WARNING ***" ; \
+	  fi ; \
 	fi
 	@n=$$(grep '^make.* Error' $(log_test) | wc -l || true); \
 	  echo "TEST SUMMARY $(log_test) ($$n matching lines)"; \
@@ -137,7 +138,7 @@ $(stamp)install_%: $(stamp)check_%
 
 	# Generate the list of SUPPORTED locales
 	if [ $(curpass) = libc ]; then \
-	  $(MAKE) -f debian/generate-supported.mk IN=$(DEB_SRCDIR)/localedata/SUPPORTED \
+	  $(MAKE) -f debian/generate-supported.mk IN=localedata/SUPPORTED \
 	    OUT=debian/tmp-$(curpass)/usr/share/i18n/SUPPORTED; \
 	  (cd $(DEB_SRCDIR)/manual && texi2html -split_chapter libc.texinfo); \
 	fi
@@ -163,6 +164,16 @@ $(stamp)install_%: $(stamp)check_%
  	fi
 
 	$(call xx,extra_install)
+	touch $@
+
+$(stamp)doc: $(stamp)patch
+	make -C $(CURDIR)/linuxthreads/man
+	touch $@
+
+$(stamp)source: $(stamp)patch
+	tar -c --bzip2 -C .. \
+		-f $(build-tree)/glibc-$(GLIBC_VERSION).tar.bz2 \
+		$(GLIBC_SOURCES)
 	touch $@
 
 .NOTPARALLEL: $(patsubst %,install_%,$(GLIBC_PASSES))

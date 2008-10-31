@@ -1,0 +1,18 @@
+Even if glibc doesn't have an integrated pthread library, it depends on the hurd
+packages which have a pthread library.
+
+---
+ sysdeps/mach/hurd/bits/posix_opt.h |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/sysdeps/mach/hurd/bits/posix_opt.h
++++ b/sysdeps/mach/hurd/bits/posix_opt.h
+@@ -62,7 +62,7 @@
+ 
+ 
+ /* We do not have the POSIX threads interface.  */
+-#define _POSIX_THREADS	-1
++#define _POSIX_THREADS	200112L
+ 
+ /* We have the reentrant functions described in POSIX.  */
+ #define _POSIX_REENTRANT_FUNCTIONS      1

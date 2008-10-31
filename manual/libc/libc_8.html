@@ -1,0 +1,2219 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!-- This file documents the GNU C library.
+
+This is Edition 0.12, last updated 2007-10-27,
+of The GNU C Library Reference Manual, for version 2.8.
+
+Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002,
+2003, 2007, 2008 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software Needs Free Documentation"
+and "GNU Lesser General Public License", the Front-Cover texts being
+"A GNU Manual", and with the Back-Cover Texts as in (a) below.  A
+copy of the license is included in the section entitled "GNU Free
+Documentation License".
+
+(a) The FSF's Back-Cover Text is: "You have the freedom to
+copy and modify this GNU manual.  Buying copies from the FSF
+supports it in developing GNU and promoting software freedom."
+ -->
+<!-- Created on October, 30 2008 by texi2html 1.78 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+
+-->
+<head>
+<title>The GNU C Library: 8. Message Translation</title>
+
+<meta name="description" content="The GNU C Library: 8. Message Translation">
+<meta name="keywords" content="The GNU C Library: 8. Message Translation">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.78">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.roman {font-family:serif; font-weight:normal;}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="Message-Translation"></a>
+<a name="SEC122"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="libc_7.html#SEC121" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC123" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc_7.html#SEC108" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h1 class="chapter"> 8. Message Translation </h1>
+
+<p>The program's interface with the human should be designed in a way to
+ease the human the task.  One of the possibilities is to use messages in
+whatever language the user prefers.
+</p>
+<p>Printing messages in different languages can be implemented in different
+ways.  One could add all the different languages in the source code and
+add among the variants every time a message has to be printed.  This is
+certainly no good solution since extending the set of languages is
+difficult (the code must be changed) and the code itself can become
+really big with dozens of message sets.
+</p>
+<p>A better solution is to keep the message sets for each language are kept
+in separate files which are loaded at runtime depending on the language
+selection of the user.
+</p>
+<p>The GNU C Library provides two different sets of functions to support
+message translation.  The problem is that neither of the interfaces is
+officially defined by the POSIX standard.  The <code>catgets</code> family of
+functions is defined in the X/Open standard but this is derived from
+industry decisions and therefore not necessarily based on reasonable
+decisions.
+</p>
+<p>As mentioned above the message catalog handling provides easy
+extendibility by using external data files which contain the message
+translations.  I.e., these files contain for each of the messages used
+in the program a translation for the appropriate language.  So the tasks
+of the message handling functions are
+</p>
+<ul>
+<li>
+locate the external data file with the appropriate translations.
+</li><li>
+load the data and make it possible to address the messages
+</li><li>
+map a given key to the translated message
+</li></ul>
+
+<p>The two approaches mainly differ in the implementation of this last
+step.  The design decisions made for this influences the whole rest.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC123">8.1 X/Open Message Catalog Handling</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">  The <code>catgets</code> family of functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC131">8.2 The Uniforum approach to Message Translation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         The <code>gettext</code> family of functions.
+</td></tr>
+</table>
+
+
+<hr size="6">
+<a name="Message-catalogs-a-la-X_002fOpen"></a>
+<a name="SEC123"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC122" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC124" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 8.1 X/Open Message Catalog Handling </h2>
+
+<p>The <code>catgets</code> functions are based on the simple scheme:
+</p>
+<blockquote><p>Associate every message to translate in the source code with a unique
+identifier.  To retrieve a message from a catalog file solely the
+identifier is used.
+</p></blockquote>
+
+<p>This means for the author of the program that s/he will have to make
+sure the meaning of the identifier in the program code and in the
+message catalogs are always the same.
+</p>
+<p>Before a message can be translated the catalog file must be located.
+The user of the program must be able to guide the responsible function
+to find whatever catalog the user wants.  This is separated from what
+the programmer had in mind.
+</p>
+<p>All the types, constants and functions for the <code>catgets</code> functions
+are defined/declared in the &lsquo;<tt>nl_types.h</tt>&rsquo; header file.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC124">8.1.1 The <code>catgets</code> function family</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="#SEC125">8.1.2 Format of the message catalog files</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="#SEC126">8.1.3 Generate Message Catalogs files</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">         How to generate message catalogs files which
+                                can be used by the functions.
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC127">8.1.4 How to use the <code>catgets</code> interface</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+</table>
+
+
+<hr size="6">
+<a name="The-catgets-Functions"></a>
+<a name="SEC124"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC123" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC125" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC123" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 8.1.1 The <code>catgets</code> function family </h3>
+
+<dl>
+<dt><u>Function:</u> nl_catd <b>catopen</b><i> (const char *<var>cat_name</var>, int <var>flag</var>)</i>
+<a name="IDX703"></a>
+</dt>
+<dd><p>The <code>catgets</code> function tries to locate the message data file names
+<var>cat_name</var> and loads it when found.  The return value is of an
+opaque type and can be used in calls to the other functions to refer to
+this loaded catalog.
+</p>
+<p>The return value is <code>(nl_catd) -1</code> in case the function failed and
+no catalog was loaded.  The global variable <var>errno</var> contains a code
+for the error causing the failure.  But even if the function call
+succeeded this does not mean that all messages can be translated.
+</p>
+<p>Locating the catalog file must happen in a way which lets the user of
+the program influence the decision.  It is up to the user to decide
+about the language to use and sometimes it is useful to use alternate
+catalog files.  All this can be specified by the user by setting some
+environment variables.
+</p>
+<p>The first problem is to find out where all the message catalogs are
+stored.  Every program could have its own place to keep all the
+different files but usually the catalog files are grouped by languages
+and the catalogs for all programs are kept in the same place.
+</p>
+<a name="IDX704"></a>
+<p>To tell the <code>catopen</code> function where the catalog for the program
+can be found the user can set the environment variable <code>NLSPATH</code> to
+a value which describes her/his choice.  Since this value must be usable
+for different languages and locales it cannot be a simple string.
+Instead it is a format string (similar to <code>printf</code>'s).  An example
+is
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">/usr/share/locale/%L/%N:/usr/share/locale/%L/LC_MESSAGES/%N
+</pre></td></tr></table>
+
+<p>First one can see that more than one directory can be specified (with
+the usual syntax of separating them by colons).  The next things to
+observe are the format string, <code>%L</code> and <code>%N</code> in this case.
+The <code>catopen</code> function knows about several of them and the
+replacement for all of them is of course different.
+</p>
+<dl compact="compact">
+<dt> <code>%N</code></dt>
+<dd><p>This format element is substituted with the name of the catalog file.
+This is the value of the <var>cat_name</var> argument given to
+<code>catgets</code>.
+</p>
+</dd>
+<dt> <code>%L</code></dt>
+<dd><p>This format element is substituted with the name of the currently
+selected locale for translating messages.  How this is determined is
+explained below.
+</p>
+</dd>
+<dt> <code>%l</code></dt>
+<dd><p>(This is the lowercase ell.) This format element is substituted with the
+language element of the locale name.  The string describing the selected
+locale is expected to have the form
+<code><var>lang</var>[_<var>terr</var>[.<var>codeset</var>]]</code> and this format uses the
+first part <var>lang</var>.
+</p>
+</dd>
+<dt> <code>%t</code></dt>
+<dd><p>This format element is substituted by the territory part <var>terr</var> of
+the name of the currently selected locale.  See the explanation of the
+format above.
+</p>
+</dd>
+<dt> <code>%c</code></dt>
+<dd><p>This format element is substituted by the codeset part <var>codeset</var> of
+the name of the currently selected locale.  See the explanation of the
+format above.
+</p>
+</dd>
+<dt> <code>%%</code></dt>
+<dd><p>Since <code>%</code> is used in a meta character there must be a way to
+express the <code>%</code> character in the result itself.  Using <code>%%</code>
+does this just like it works for <code>printf</code>.
+</p></dd>
+</dl>
+
+
+<p>Using <code>NLSPATH</code> allows arbitrary directories to be searched for
+message catalogs while still allowing different languages to be used.
+If the <code>NLSPATH</code> environment variable is not set, the default value
+is
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample"><var>prefix</var>/share/locale/%L/%N:<var>prefix</var>/share/locale/%L/LC_MESSAGES/%N
+</pre></td></tr></table>
+
+<p>where <var>prefix</var> is given to <code>configure</code> while installing the GNU
+C Library (this value is in many cases <code>/usr</code> or the empty string).
+</p>
+<p>The remaining problem is to decide which must be used.  The value
+decides about the substitution of the format elements mentioned above.
+First of all the user can specify a path in the message catalog name
+(i.e., the name contains a slash character).  In this situation the
+<code>NLSPATH</code> environment variable is not used.  The catalog must exist
+as specified in the program, perhaps relative to the current working
+directory.  This situation in not desirable and catalogs names never
+should be written this way.  Beside this, this behavior is not portable
+to all other platforms providing the <code>catgets</code> interface.
+</p>
+<a name="IDX705"></a>
+<a name="IDX706"></a>
+<a name="IDX707"></a>
+<p>Otherwise the values of environment variables from the standard
+environment are examined (see section <a href="libc_25.html#SEC560">Standard Environment Variables</a>).  Which
+variables are examined is decided by the <var>flag</var> parameter of
+<code>catopen</code>.  If the value is <code>NL_CAT_LOCALE</code> (which is defined
+in &lsquo;<tt>nl_types.h</tt>&rsquo;) then the <code>catopen</code> function use the name of
+the locale currently selected for the <code>LC_MESSAGES</code> category.
+</p>
+<p>If <var>flag</var> is zero the <code>LANG</code> environment variable is examined.
+This is a left-over from the early days where the concept of the locales
+had not even reached the level of POSIX locales.
+</p>
+<p>The environment variable and the locale name should have a value of the
+form <code><var>lang</var>[_<var>terr</var>[.<var>codeset</var>]]</code> as explained above.
+If no environment variable is set the <code>&quot;C&quot;</code> locale is used which
+prevents any translation.
+</p>
+<p>The return value of the function is in any case a valid string.  Either
+it is a translation from a message catalog or it is the same as the
+<var>string</var> parameter.  So a piece of code to decide whether a
+translation actually happened must look like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">{
+  char *trans = catgets (desc, set, msg, input_string);
+  if (trans == input_string)
+    {
+      /* Something went wrong.  */
+    }
+}
+</pre></td></tr></table>
+
+<p>When an error occurred the global variable <var>errno</var> is set to
+</p>
+<dl compact="compact">
+<dt> <var>EBADF</var></dt>
+<dd><p>The catalog does not exist.
+</p></dd>
+<dt> <var>ENOMSG</var></dt>
+<dd><p>The set/message tuple does not name an existing element in the
+message catalog.
+</p></dd>
+</dl>
+
+<p>While it sometimes can be useful to test for errors programs normally
+will avoid any test.  If the translation is not available it is no big
+problem if the original, untranslated message is printed.  Either the
+user understands this as well or s/he will look for the reason why the
+messages are not translated.
+</p></dd></dl>
+
+<p>Please note that the currently selected locale does not depend on a call
+to the <code>setlocale</code> function.  It is not necessary that the locale
+data files for this locale exist and calling <code>setlocale</code> succeeds.
+The <code>catopen</code> function directly reads the values of the environment
+variables.
+</p>
+
+<dl>
+<dt><u>Function:</u> char * <b>catgets</b><i> (nl_catd <var>catalog_desc</var>, int <var>set</var>, int <var>message</var>, const char *<var>string</var>)</i>
+<a name="IDX708"></a>
+</dt>
+<dd><p>The function <code>catgets</code> has to be used to access the massage catalog
+previously opened using the <code>catopen</code> function.  The
+<var>catalog_desc</var> parameter must be a value previously returned by
+<code>catopen</code>.
+</p>
+<p>The next two parameters, <var>set</var> and <var>message</var>, reflect the
+internal organization of the message catalog files.  This will be
+explained in detail below.  For now it is interesting to know that a
+catalog can consists of several set and the messages in each thread are
+individually numbered using numbers.  Neither the set number nor the
+message number must be consecutive.  They can be arbitrarily chosen.
+But each message (unless equal to another one) must have its own unique
+pair of set and message number.
+</p>
+<p>Since it is not guaranteed that the message catalog for the language
+selected by the user exists the last parameter <var>string</var> helps to
+handle this case gracefully.  If no matching string can be found
+<var>string</var> is returned.  This means for the programmer that
+</p>
+<ul>
+<li>
+the <var>string</var> parameters should contain reasonable text (this also
+helps to understand the program seems otherwise there would be no hint
+on the string which is expected to be returned.
+</li><li>
+all <var>string</var> arguments should be written in the same language.
+</li></ul>
+</dd></dl>
+
+<p>It is somewhat uncomfortable to write a program using the <code>catgets</code>
+functions if no supporting functionality is available.  Since each
+set/message number tuple must be unique the programmer must keep lists
+of the messages at the same time the code is written.  And the work
+between several people working on the same project must be coordinated.
+We will see some how these problems can be relaxed a bit (see section <a href="#SEC127">How to use the <code>catgets</code> interface</a>).
+</p>
+<dl>
+<dt><u>Function:</u> int <b>catclose</b><i> (nl_catd <var>catalog_desc</var>)</i>
+<a name="IDX709"></a>
+</dt>
+<dd><p>The <code>catclose</code> function can be used to free the resources
+associated with a message catalog which previously was opened by a call
+to <code>catopen</code>.  If the resources can be successfully freed the
+function returns <code>0</code>.  Otherwise it return <code>-1</code> and the
+global variable <var>errno</var> is set.  Errors can occur if the catalog
+descriptor <var>catalog_desc</var> is not valid in which case <var>errno</var> is
+set to <code>EBADF</code>.
+</p></dd></dl>
+
+
+<hr size="6">
+<a name="The-message-catalog-files"></a>
+<a name="SEC125"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC124" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC126" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC123" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 8.1.2 Format of the message catalog files </h3>
+
+<p>The only reasonable way the translate all the messages of a function and
+store the result in a message catalog file which can be read by the
+<code>catopen</code> function is to write all the message text to the
+translator and let her/him translate them all.  I.e., we must have a
+file with entries which associate the set/message tuple with a specific
+translation.  This file format is specified in the X/Open standard and
+is as follows:
+</p>
+<ul>
+<li>
+Lines containing only whitespace characters or empty lines are ignored.
+
+</li><li>
+Lines which contain as the first non-whitespace character a <code>$</code>
+followed by a whitespace character are comment and are also ignored.
+
+</li><li>
+If a line contains as the first non-whitespace characters the sequence
+<code>$set</code> followed by a whitespace character an additional argument
+is required to follow.  This argument can either be:
+
+<ul class="toc">
+<li>-
+a number.  In this case the value of this number determines the set
+to which the following messages are added.
+
+</li><li>-
+an identifier consisting of alphanumeric characters plus the underscore
+character.  In this case the set get automatically a number assigned.
+This value is one added to the largest set number which so far appeared.
+
+<p>How to use the symbolic names is explained in section <a href="#SEC127">How to use the <code>catgets</code> interface</a>.
+</p>
+<p>It is an error if a symbol name appears more than once.  All following
+messages are placed in a set with this number.
+</p></li></ul>
+
+</li><li>
+If a line contains as the first non-whitespace characters the sequence
+<code>$delset</code> followed by a whitespace character an additional argument
+is required to follow.  This argument can either be:
+
+<ul class="toc">
+<li>-
+a number.  In this case the value of this number determines the set
+which will be deleted.
+
+</li><li>-
+an identifier consisting of alphanumeric characters plus the underscore
+character.  This symbolic identifier must match a name for a set which
+previously was defined.  It is an error if the name is unknown.
+</li></ul>
+
+<p>In both cases all messages in the specified set will be removed.  They
+will not appear in the output.  But if this set is later again selected
+with a <code>$set</code> command again messages could be added and these
+messages will appear in the output.
+</p>
+</li><li>
+If a line contains after leading whitespaces the sequence
+<code>$quote</code>, the quoting character used for this input file is
+changed to the first non-whitespace character following the
+<code>$quote</code>.  If no non-whitespace character is present before the
+line ends quoting is disable.
+
+<p>By default no quoting character is used.  In this mode strings are
+terminated with the first unescaped line break.  If there is a
+<code>$quote</code> sequence present newline need not be escaped.  Instead a
+string is terminated with the first unescaped appearance of the quote
+character.
+</p>
+<p>A common usage of this feature would be to set the quote character to
+<code>&quot;</code>.  Then any appearance of the <code>&quot;</code> in the strings must
+be escaped using the backslash (i.e., <code>\&quot;</code> must be written).
+</p>
+</li><li>
+Any other line must start with a number or an alphanumeric identifier
+(with the underscore character included).  The following characters
+(starting after the first whitespace character) will form the string
+which gets associated with the currently selected set and the message
+number represented by the number and identifier respectively.
+
+<p>If the start of the line is a number the message number is obvious.  It
+is an error if the same message number already appeared for this set.
+</p>
+<p>If the leading token was an identifier the message number gets
+automatically assigned.  The value is the current maximum messages
+number for this set plus one.  It is an error if the identifier was
+already used for a message in this set.  It is OK to reuse the
+identifier for a message in another thread.  How to use the symbolic
+identifiers will be explained below (see section <a href="#SEC127">How to use the <code>catgets</code> interface</a>).  There is
+one limitation with the identifier: it must not be <code>Set</code>.  The
+reason will be explained below.
+</p>
+<p>The text of the messages can contain escape characters.  The usual bunch
+of characters known from the ISO C language are recognized
+(<code>\n</code>, <code>\t</code>, <code>\v</code>, <code>\b</code>, <code>\r</code>, <code>\f</code>,
+<code>\\</code>, and <code>\<var>nnn</var></code>, where <var>nnn</var> is the octal coding of
+a character code).
+</p></li></ul>
+
+<p><strong>Important:</strong> The handling of identifiers instead of numbers for
+the set and messages is a GNU extension.  Systems strictly following the
+X/Open specification do not have this feature.  An example for a message
+catalog file is this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">$ This is a leading comment.
+$quote &quot;
+
+$set SetOne
+1 Message with ID 1.
+two &quot;   Message with ID \&quot;two\&quot;, which gets the value 2 assigned&quot;
+
+$set SetTwo
+$ Since the last set got the number 1 assigned this set has number 2.
+4000 &quot;The numbers can be arbitrary, they need not start at one.&quot;
+</pre></td></tr></table>
+
+<p>This small example shows various aspects:
+</p><ul>
+<li>
+Lines 1 and 9 are comments since they start with <code>$</code> followed by
+a whitespace.
+</li><li>
+The quoting character is set to <code>&quot;</code>.  Otherwise the quotes in the
+message definition would have to be left away and in this case the
+message with the identifier <code>two</code> would loose its leading whitespace.
+</li><li>
+Mixing numbered messages with message having symbolic names is no
+problem and the numbering happens automatically.
+</li></ul>
+
+
+<p>While this file format is pretty easy it is not the best possible for
+use in a running program.  The <code>catopen</code> function would have to
+parser the file and handle syntactic errors gracefully.  This is not so
+easy and the whole process is pretty slow.  Therefore the <code>catgets</code>
+functions expect the data in another more compact and ready-to-use file
+format.  There is a special program <code>gencat</code> which is explained in
+detail in the next section.
+</p>
+<p>Files in this other format are not human readable.  To be easy to use by
+programs it is a binary file.  But the format is byte order independent
+so translation files can be shared by systems of arbitrary architecture
+(as long as they use the GNU C Library).
+</p>
+<p>Details about the binary file format are not important to know since
+these files are always created by the <code>gencat</code> program.  The
+sources of the GNU C Library also provide the sources for the
+<code>gencat</code> program and so the interested reader can look through
+these source files to learn about the file format.
+</p>
+
+<hr size="6">
+<a name="The-gencat-program"></a>
+<a name="SEC126"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC125" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC127" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC123" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 8.1.3 Generate Message Catalogs files </h3>
+
+<p>The <code>gencat</code> program is specified in the X/Open standard and the
+GNU implementation follows this specification and so processes
+all correctly formed input files.  Additionally some extension are
+implemented which help to work in a more reasonable way with the
+<code>catgets</code> functions.
+</p>
+<p>The <code>gencat</code> program can be invoked in two ways:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="example">`gencat [<var>Option</var>]&hellip; [<var>Output-File</var> [<var>Input-File</var>]&hellip;]`
+</pre></td></tr></table>
+
+<p>This is the interface defined in the X/Open standard.  If no
+<var>Input-File</var> parameter is given input will be read from standard
+input.  Multiple input files will be read as if they are concatenated.
+If <var>Output-File</var> is also missing, the output will be written to
+standard output.  To provide the interface one is used to from other
+programs a second interface is provided.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">`gencat [<var>Option</var>]&hellip; -o <var>Output-File</var> [<var>Input-File</var>]&hellip;`
+</pre></td></tr></table>
+
+<p>The option &lsquo;<samp>-o</samp>&rsquo; is used to specify the output file and all file
+arguments are used as input files.
+</p>
+<p>Beside this one can use &lsquo;<tt>-</tt>&rsquo; or &lsquo;<tt>/dev/stdin</tt>&rsquo; for
+<var>Input-File</var> to denote the standard input.  Corresponding one can
+use &lsquo;<tt>-</tt>&rsquo; and &lsquo;<tt>/dev/stdout</tt>&rsquo; for <var>Output-File</var> to denote
+standard output.  Using &lsquo;<tt>-</tt>&rsquo; as a file name is allowed in X/Open
+while using the device names is a GNU extension.
+</p>
+<p>The <code>gencat</code> program works by concatenating all input files and
+then <strong>merge</strong> the resulting collection of message sets with a
+possibly existing output file.  This is done by removing all messages
+with set/message number tuples matching any of the generated messages
+from the output file and then adding all the new messages.  To
+regenerate a catalog file while ignoring the old contents therefore
+requires to remove the output file if it exists.  If the output is
+written to standard output no merging takes place.
+</p>
+<p>The following table shows the options understood by the <code>gencat</code>
+program.  The X/Open standard does not specify any option for the
+program so all of these are GNU extensions.
+</p>
+<dl compact="compact">
+<dt> &lsquo;<samp>-V</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--version</samp>&rsquo;</dt>
+<dd><p>Print the version information and exit.
+</p></dd>
+<dt> &lsquo;<samp>-h</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--help</samp>&rsquo;</dt>
+<dd><p>Print a usage message listing all available options, then exit successfully.
+</p></dd>
+<dt> &lsquo;<samp>--new</samp>&rsquo;</dt>
+<dd><p>Do never merge the new messages from the input files with the old content
+of the output files.  The old content of the output file is discarded.
+</p></dd>
+<dt> &lsquo;<samp>-H</samp>&rsquo;</dt>
+<dt> &lsquo;<samp>--header=name</samp>&rsquo;</dt>
+<dd><p>This option is used to emit the symbolic names given to sets and
+messages in the input files for use in the program.  Details about how
+to use this are given in the next section.  The <var>name</var> parameter to
+this option specifies the name of the output file.  It will contain a
+number of C preprocessor <code>#define</code>s to associate a name with a
+number.
+</p>
+<p>Please note that the generated file only contains the symbols from the
+input files.  If the output is merged with the previous content of the
+output file the possibly existing symbols from the file(s) which
+generated the old output files are not in the generated header file.
+</p></dd>
+</dl>
+
+
+<hr size="6">
+<a name="Common-Usage"></a>
+<a name="SEC127"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC126" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC128" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC123" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 8.1.4 How to use the <code>catgets</code> interface </h3>
+
+<p>The <code>catgets</code> functions can be used in two different ways.  By
+following slavishly the X/Open specs and not relying on the extension
+and by using the GNU extensions.  We will take a look at the former
+method first to understand the benefits of extensions.
+</p>
+<hr size="6">
+<a name="SEC128"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC127" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC129" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC127" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 8.1.4.1 Not using symbolic names </h4>
+
+<p>Since the X/Open format of the message catalog files does not allow
+symbol names we have to work with numbers all the time.  When we start
+writing a program we have to replace all appearances of translatable
+strings with something like
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">catgets (catdesc, set, msg, &quot;string&quot;)
+</pre></td></tr></table>
+
+<p><var>catgets</var> is retrieved from a call to <code>catopen</code> which is
+normally done once at the program start.  The <code>&quot;string&quot;</code> is the
+string we want to translate.  The problems start with the set and
+message numbers.
+</p>
+<p>In a bigger program several programmers usually work at the same time on
+the program and so coordinating the number allocation is crucial.
+Though no two different strings must be indexed by the same tuple of
+numbers it is highly desirable to reuse the numbers for equal strings
+with equal translations (please note that there might be strings which
+are equal in one language but have different translations due to
+difference contexts).
+</p>
+<p>The allocation process can be relaxed a bit by different set numbers for
+different parts of the program.  So the number of developers who have to
+coordinate the allocation can be reduced.  But still lists must be keep
+track of the allocation and errors can easily happen.  These errors
+cannot be discovered by the compiler or the <code>catgets</code> functions.
+Only the user of the program might see wrong messages printed.  In the
+worst cases the messages are so irritating that they cannot be
+recognized as wrong.  Think about the translations for <code>&quot;true&quot;</code> and
+<code>&quot;false&quot;</code> being exchanged.  This could result in a disaster.
+</p>
+
+<hr size="6">
+<a name="SEC129"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC128" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC130" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC127" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 8.1.4.2 Using symbolic names </h4>
+
+<p>The problems mentioned in the last section derive from the fact that:
+</p>
+<ol>
+<li>
+the numbers are allocated once and due to the possibly frequent use of
+them it is difficult to change a number later.
+</li><li>
+the numbers do not allow to guess anything about the string and
+therefore collisions can easily happen.
+</li></ol>
+
+<p>By constantly using symbolic names and by providing a method which maps
+the string content to a symbolic name (however this will happen) one can
+prevent both problems above.  The cost of this is that the programmer
+has to write a complete message catalog file while s/he is writing the
+program itself.
+</p>
+<p>This is necessary since the symbolic names must be mapped to numbers
+before the program sources can be compiled.  In the last section it was
+described how to generate a header containing the mapping of the names.
+E.g., for the example message file given in the last section we could
+call the <code>gencat</code> program as follow (assume &lsquo;<tt>ex.msg</tt>&rsquo; contains
+the sources).
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">gencat -H ex.h -o ex.cat ex.msg
+</pre></td></tr></table>
+
+<p>This generates a header file with the following content:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#define SetTwoSet 0x2   /* ex.msg:8 */
+
+#define SetOneSet 0x1   /* ex.msg:4 */
+#define SetOnetwo 0x2   /* ex.msg:6 */
+</pre></td></tr></table>
+
+<p>As can be seen the various symbols given in the source file are mangled
+to generate unique identifiers and these identifiers get numbers
+assigned.  Reading the source file and knowing about the rules will
+allow to predict the content of the header file (it is deterministic)
+but this is not necessary.  The <code>gencat</code> program can take care for
+everything.  All the programmer has to do is to put the generated header
+file in the dependency list of the source files of her/his project and
+to add a rules to regenerate the header of any of the input files
+change.
+</p>
+<p>One word about the symbol mangling.  Every symbol consists of two parts:
+the name of the message set plus the name of the message or the special
+string <code>Set</code>.  So <code>SetOnetwo</code> means this macro can be used to
+access the translation with identifier <code>two</code> in the message set
+<code>SetOne</code>.
+</p>
+<p>The other names denote the names of the message sets.  The special
+string <code>Set</code> is used in the place of the message identifier.
+</p>
+<p>If in the code the second string of the set <code>SetOne</code> is used the C
+code should look like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">catgets (catdesc, SetOneSet, SetOnetwo,
+         &quot;   Message with ID \&quot;two\&quot;, which gets the value 2 assigned&quot;)
+</pre></td></tr></table>
+
+<p>Writing the function this way will allow to change the message number
+and even the set number without requiring any change in the C source
+code.  (The text of the string is normally not the same; this is only
+for this example.)
+</p>
+
+<hr size="6">
+<a name="SEC130"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC129" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC131" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC127" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 8.1.4.3 How does to this allow to develop </h4>
+
+<p>To illustrate the usual way to work with the symbolic version numbers
+here is a little example.  Assume we want to write the very complex and
+famous greeting program.  We start by writing the code as usual:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;stdio.h&gt;
+int
+main (void)
+{
+  printf (&quot;Hello, world!\n&quot;);
+  return 0;
+}
+</pre></td></tr></table>
+
+<p>Now we want to internationalize the message and therefore replace the
+message with whatever the user wants.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#include &lt;nl_types.h&gt;
+#include &lt;stdio.h&gt;
+#include &quot;msgnrs.h&quot;
+int
+main (void)
+{
+  nl_catd catdesc = catopen (&quot;hello.cat&quot;, NL_CAT_LOCALE);
+  printf (catgets (catdesc, SetMainSet, SetMainHello,
+                   &quot;Hello, world!\n&quot;));
+  catclose (catdesc);
+  return 0;
+}
+</pre></td></tr></table>
+
+<p>We see how the catalog object is opened and the returned descriptor used
+in the other function calls.  It is not really necessary to check for
+failure of any of the functions since even in these situations the
+functions will behave reasonable.  They simply will be return a
+translation.
+</p>
+<p>What remains unspecified here are the constants <code>SetMainSet</code> and
+<code>SetMainHello</code>.  These are the symbolic names describing the
+message.  To get the actual definitions which match the information in
+the catalog file we have to create the message catalog source file and
+process it using the <code>gencat</code> program.
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">$ Messages for the famous greeting program.
+$quote &quot;
+
+$set Main
+Hello &quot;Hallo, Welt!\n&quot;
+</pre></td></tr></table>
+
+<p>Now we can start building the program (assume the message catalog source
+file is named &lsquo;<tt>hello.msg</tt>&rsquo; and the program source file &lsquo;<tt>hello.c</tt>&rsquo;):
+</p>
+<table><tr><td>&nbsp;</td><td><table class="cartouche" border="1"><tr><td>
+<pre class="smallexample">% gencat -H msgnrs.h -o hello.cat hello.msg
+% cat msgnrs.h
+#define MainSet 0x1     /* hello.msg:4 */
+#define MainHello 0x1   /* hello.msg:5 */
+% gcc -o hello hello.c -I.
+% cp hello.cat /usr/share/locale/de/LC_MESSAGES
+% echo $LC_ALL
+de
+% ./hello
+Hallo, Welt!
+%
+</pre></td></tr></table>
+</td></tr></table>
+
+<p>The call of the <code>gencat</code> program creates the missing header file
+&lsquo;<tt>msgnrs.h</tt>&rsquo; as well as the message catalog binary.  The former is
+used in the compilation of &lsquo;<tt>hello.c</tt>&rsquo; while the later is placed in a
+directory in which the <code>catopen</code> function will try to locate it.
+Please check the <code>LC_ALL</code> environment variable and the default path
+for <code>catopen</code> presented in the description above.
+</p>
+
+<hr size="6">
+<a name="The-Uniforum-approach"></a>
+<a name="SEC131"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC130" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC132" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 8.2 The Uniforum approach to Message Translation </h2>
+
+<p>Sun Microsystems tried to standardize a different approach to message
+translation in the Uniforum group.  There never was a real standard
+defined but still the interface was used in Sun's operation systems.
+Since this approach fits better in the development process of free
+software it is also used throughout the GNU project and the GNU
+&lsquo;<tt>gettext</tt>&rsquo; package provides support for this outside the GNU C
+Library.
+</p>
+<p>The code of the &lsquo;<tt>libintl</tt>&rsquo; from GNU &lsquo;<tt>gettext</tt>&rsquo; is the same as
+the code in the GNU C Library.  So the documentation in the GNU
+&lsquo;<tt>gettext</tt>&rsquo; manual is also valid for the functionality here.  The
+following text will describe the library functions in detail.  But the
+numerous helper programs are not described in this manual.  Instead
+people should read the GNU &lsquo;<tt>gettext</tt>&rsquo; manual
+(see <a href="../gettext/index.html#Top">(gettext)Top</a> section `GNU gettext utilities' in <cite>Native Language Support Library and Tools</cite>).
+We will only give a short overview.
+</p>
+<p>Though the <code>catgets</code> functions are available by default on more
+systems the <code>gettext</code> interface is at least as portable as the
+former.  The GNU &lsquo;<tt>gettext</tt>&rsquo; package can be used wherever the
+functions are not available.
+</p>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC132">8.2.1 The <code>gettext</code> family of functions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="#SEC140">8.2.2 Programs to handle message catalogs for <code>gettext</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+</table>
+
+
+<hr size="6">
+<a name="Message-catalogs-with-gettext"></a>
+<a name="SEC132"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC131" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC133" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC131" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 8.2.1 The <code>gettext</code> family of functions </h3>
+
+<p>The paradigms underlying the <code>gettext</code> approach to message
+translations is different from that of the <code>catgets</code> functions the
+basic functionally is equivalent.  There are functions of the following
+categories:
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC133">8.2.1.1 What has to be done to translate a message?</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="#SEC134">8.2.1.2 How to determine which catalog to be used</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="#SEC135">8.2.1.3 Additional functions for more complicated situations</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="#SEC137">8.2.1.4 How to specify the output character set <code>gettext</code> uses</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="#SEC138">8.2.1.5 How to use <code>gettext</code> in GUI programs</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top"></td></tr>
+<tr><td align="left" valign="top"><a href="#SEC139">8.2.1.6 User influence on <code>gettext</code></a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">     The possibilities of the user to influence
+                                    the way <code>gettext</code> works.
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Translation-with-gettext"></a>
+<a name="SEC133"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC132" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC134" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC132" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 8.2.1.1 What has to be done to translate a message? </h4>
+
+<p>The <code>gettext</code> functions have a very simple interface.  The most
+basic function just takes the string which shall be translated as the
+argument and it returns the translation.  This is fundamentally
+different from the <code>catgets</code> approach where an extra key is
+necessary and the original string is only used for the error case.
+</p>
+<p>If the string which has to be translated is the only argument this of
+course means the string itself is the key.  I.e., the translation will
+be selected based on the original string.  The message catalogs must
+therefore contain the original strings plus one translation for any such
+string.  The task of the <code>gettext</code> function is it to compare the
+argument string with the available strings in the catalog and return the
+appropriate translation.  Of course this process is optimized so that
+this process is not more expensive than an access using an atomic key
+like in <code>catgets</code>.
+</p>
+<p>The <code>gettext</code> approach has some advantages but also some
+disadvantages.  Please see the GNU &lsquo;<tt>gettext</tt>&rsquo; manual for a detailed
+discussion of the pros and cons.
+</p>
+<p>All the definitions and declarations for <code>gettext</code> can be found in
+the &lsquo;<tt>libintl.h</tt>&rsquo; header file.  On systems where these functions are
+not part of the C library they can be found in a separate library named
+&lsquo;<tt>libintl.a</tt>&rsquo; (or accordingly different for shared libraries).
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>gettext</b><i> (const char *<var>msgid</var>)</i>
+<a name="IDX710"></a>
+</dt>
+<dd><p>The <code>gettext</code> function searches the currently selected message
+catalogs for a string which is equal to <var>msgid</var>.  If there is such a
+string available it is returned.  Otherwise the argument string
+<var>msgid</var> is returned.
+</p>
+<p>Please note that all though the return value is <code>char *</code> the
+returned string must not be changed.  This broken type results from the
+history of the function and does not reflect the way the function should
+be used.
+</p>
+<p>Please note that above we wrote &ldquo;message catalogs&rdquo; (plural).  This is
+a specialty of the GNU implementation of these functions and we will
+say more about this when we talk about the ways message catalogs are
+selected (see section <a href="#SEC134">How to determine which catalog to be used</a>).
+</p>
+<p>The <code>gettext</code> function does not modify the value of the global
+<var>errno</var> variable.  This is necessary to make it possible to write
+something like
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">  printf (gettext (&quot;Operation failed: %m\n&quot;));
+</pre></td></tr></table>
+
+<p>Here the <var>errno</var> value is used in the <code>printf</code> function while
+processing the <code>%m</code> format element and if the <code>gettext</code>
+function would change this value (it is called before <code>printf</code> is
+called) we would get a wrong message.
+</p>
+<p>So there is no easy way to detect a missing message catalog beside
+comparing the argument string with the result.  But it is normally the
+task of the user to react on missing catalogs.  The program cannot guess
+when a message catalog is really necessary since for a user who speaks
+the language the program was developed in does not need any translation.
+</p></dd></dl>
+
+<p>The remaining two functions to access the message catalog add some
+functionality to select a message catalog which is not the default one.
+This is important if parts of the program are developed independently.
+Every part can have its own message catalog and all of them can be used
+at the same time.  The C library itself is an example: internally it
+uses the <code>gettext</code> functions but since it must not depend on a
+currently selected default message catalog it must specify all ambiguous
+information.
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>dgettext</b><i> (const char *<var>domainname</var>, const char *<var>msgid</var>)</i>
+<a name="IDX711"></a>
+</dt>
+<dd><p>The <code>dgettext</code> functions acts just like the <code>gettext</code>
+function.  It only takes an additional first argument <var>domainname</var>
+which guides the selection of the message catalogs which are searched
+for the translation.  If the <var>domainname</var> parameter is the null
+pointer the <code>dgettext</code> function is exactly equivalent to
+<code>gettext</code> since the default value for the domain name is used.
+</p>
+<p>As for <code>gettext</code> the return value type is <code>char *</code> which is an
+anachronism.  The returned string must never be modified.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>dcgettext</b><i> (const char *<var>domainname</var>, const char *<var>msgid</var>, int <var>category</var>)</i>
+<a name="IDX712"></a>
+</dt>
+<dd><p>The <code>dcgettext</code> adds another argument to those which
+<code>dgettext</code> takes.  This argument <var>category</var> specifies the last
+piece of information needed to localize the message catalog.  I.e., the
+domain name and the locale category exactly specify which message
+catalog has to be used (relative to a given directory, see below).
+</p>
+<p>The <code>dgettext</code> function can be expressed in terms of
+<code>dcgettext</code> by using
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">dcgettext (domain, string, LC_MESSAGES)
+</pre></td></tr></table>
+
+<p>instead of
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">dgettext (domain, string)
+</pre></td></tr></table>
+
+<p>This also shows which values are expected for the third parameter.  One
+has to use the available selectors for the categories available in
+&lsquo;<tt>locale.h</tt>&rsquo;.  Normally the available values are <code>LC_CTYPE</code>,
+<code>LC_COLLATE</code>, <code>LC_MESSAGES</code>, <code>LC_MONETARY</code>,
+<code>LC_NUMERIC</code>, and <code>LC_TIME</code>.  Please note that <code>LC_ALL</code>
+must not be used and even though the names might suggest this, there is
+no relation to the environments variables of this name.
+</p>
+<p>The <code>dcgettext</code> function is only implemented for compatibility with
+other systems which have <code>gettext</code> functions.  There is not really
+any situation where it is necessary (or useful) to use a different value
+but <code>LC_MESSAGES</code> in for the <var>category</var> parameter.  We are
+dealing with messages here and any other choice can only be irritating.
+</p>
+<p>As for <code>gettext</code> the return value type is <code>char *</code> which is an
+anachronism.  The returned string must never be modified.
+</p></dd></dl>
+
+<p>When using the three functions above in a program it is a frequent case
+that the <var>msgid</var> argument is a constant string.  So it is worth to
+optimize this case.  Thinking shortly about this one will realize that
+as long as no new message catalog is loaded the translation of a message
+will not change.  This optimization is actually implemented by the
+<code>gettext</code>, <code>dgettext</code> and <code>dcgettext</code> functions.
+</p>
+
+<hr size="6">
+<a name="Locating-gettext-catalog"></a>
+<a name="SEC134"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC133" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC135" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC132" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 8.2.1.2 How to determine which catalog to be used </h4>
+
+<p>The functions to retrieve the translations for a given message have a
+remarkable simple interface.  But to provide the user of the program
+still the opportunity to select exactly the translation s/he wants and
+also to provide the programmer the possibility to influence the way to
+locate the search for catalogs files there is a quite complicated
+underlying mechanism which controls all this.  The code is complicated
+the use is easy.
+</p>
+<p>Basically we have two different tasks to perform which can also be
+performed by the <code>catgets</code> functions:
+</p>
+<ol>
+<li>
+Locate the set of message catalogs.  There are a number of files for
+different languages and which all belong to the package.  Usually they
+are all stored in the filesystem below a certain directory.
+
+<p>There can be arbitrary many packages installed and they can follow
+different guidelines for the placement of their files.
+</p>
+</li><li>
+Relative to the location specified by the package the actual translation
+files must be searched, based on the wishes of the user.  I.e., for each
+language the user selects the program should be able to locate the
+appropriate file.
+</li></ol>
+
+<p>This is the functionality required by the specifications for
+<code>gettext</code> and this is also what the <code>catgets</code> functions are
+able to do.  But there are some problems unresolved:
+</p>
+<ul>
+<li>
+The language to be used can be specified in several different ways.
+There is no generally accepted standard for this and the user always
+expects the program understand what s/he means.  E.g., to select the
+German translation one could write <code>de</code>, <code>german</code>, or
+<code>deutsch</code> and the program should always react the same.
+
+</li><li>
+Sometimes the specification of the user is too detailed.  If s/he, e.g.,
+specifies <code>de_DE.ISO-8859-1</code> which means German, spoken in Germany,
+coded using the ISO 8859-1 character set there is the possibility
+that a message catalog matching this exactly is not available.  But
+there could be a catalog matching <code>de</code> and if the character set
+used on the machine is always ISO 8859-1 there is no reason why this
+later message catalog should not be used.  (We call this <em>message
+inheritance</em>.)
+
+</li><li>
+If a catalog for a wanted language is not available it is not always the
+second best choice to fall back on the language of the developer and
+simply not translate any message.  Instead a user might be better able
+to read the messages in another language and so the user of the program
+should be able to define an precedence order of languages.
+</li></ul>
+
+<p>We can divide the configuration actions in two parts: the one is
+performed by the programmer, the other by the user.  We will start with
+the functions the programmer can use since the user configuration will
+be based on this.
+</p>
+<p>As the functions described in the last sections already mention separate
+sets of messages can be selected by a <em>domain name</em>.  This is a
+simple string which should be unique for each program part with uses a
+separate domain.  It is possible to use in one program arbitrary many
+domains at the same time.  E.g., the GNU C Library itself uses a domain
+named <code>libc</code> while the program using the C Library could use a
+domain named <code>foo</code>.  The important point is that at any time
+exactly one domain is active.  This is controlled with the following
+function.
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>textdomain</b><i> (const char *<var>domainname</var>)</i>
+<a name="IDX713"></a>
+</dt>
+<dd><p>The <code>textdomain</code> function sets the default domain, which is used in
+all future <code>gettext</code> calls, to <var>domainname</var>.  Please note that
+<code>dgettext</code> and <code>dcgettext</code> calls are not influenced if the
+<var>domainname</var> parameter of these functions is not the null pointer.
+</p>
+<p>Before the first call to <code>textdomain</code> the default domain is
+<code>messages</code>.  This is the name specified in the specification of
+the <code>gettext</code> API.  This name is as good as any other name.  No
+program should ever really use a domain with this name since this can
+only lead to problems.
+</p>
+<p>The function returns the value which is from now on taken as the default
+domain.  If the system went out of memory the returned value is
+<code>NULL</code> and the global variable <var>errno</var> is set to <code>ENOMEM</code>.
+Despite the return value type being <code>char *</code> the return string must
+not be changed.  It is allocated internally by the <code>textdomain</code>
+function.
+</p>
+<p>If the <var>domainname</var> parameter is the null pointer no new default
+domain is set.  Instead the currently selected default domain is
+returned.
+</p>
+<p>If the <var>domainname</var> parameter is the empty string the default domain
+is reset to its initial value, the domain with the name <code>messages</code>.
+This possibility is questionable to use since the domain <code>messages</code>
+really never should be used.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>bindtextdomain</b><i> (const char *<var>domainname</var>, const char *<var>dirname</var>)</i>
+<a name="IDX714"></a>
+</dt>
+<dd><p>The <code>bindtextdomain</code> function can be used to specify the directory
+which contains the message catalogs for domain <var>domainname</var> for the
+different languages.  To be correct, this is the directory where the
+hierarchy of directories is expected.  Details are explained below.
+</p>
+<p>For the programmer it is important to note that the translations which
+come with the program have be placed in a directory hierarchy starting
+at, say, &lsquo;<tt>/foo/bar</tt>&rsquo;.  Then the program should make a
+<code>bindtextdomain</code> call to bind the domain for the current program to
+this directory.  So it is made sure the catalogs are found.  A correctly
+running program does not depend on the user setting an environment
+variable.
+</p>
+<p>The <code>bindtextdomain</code> function can be used several times and if the
+<var>domainname</var> argument is different the previously bound domains
+will not be overwritten.
+</p>
+<p>If the program which wish to use <code>bindtextdomain</code> at some point of
+time use the <code>chdir</code> function to change the current working
+directory it is important that the <var>dirname</var> strings ought to be an
+absolute pathname.  Otherwise the addressed directory might vary with
+the time.
+</p>
+<p>If the <var>dirname</var> parameter is the null pointer <code>bindtextdomain</code>
+returns the currently selected directory for the domain with the name
+<var>domainname</var>.
+</p>
+<p>The <code>bindtextdomain</code> function returns a pointer to a string
+containing the name of the selected directory name.  The string is
+allocated internally in the function and must not be changed by the
+user.  If the system went out of core during the execution of
+<code>bindtextdomain</code> the return value is <code>NULL</code> and the global
+variable <var>errno</var> is set accordingly.
+</p></dd></dl>
+
+
+<hr size="6">
+<a name="Advanced-gettext-functions"></a>
+<a name="SEC135"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC134" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC137" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC132" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 8.2.1.3 Additional functions for more complicated situations </h4>
+
+<p>The functions of the <code>gettext</code> family described so far (and all the
+<code>catgets</code> functions as well) have one problem in the real world
+which have been neglected completely in all existing approaches.  What
+is meant here is the handling of plural forms.
+</p>
+<p>Looking through Unix source code before the time anybody thought about
+internationalization (and, sadly, even afterwards) one can often find
+code similar to the following:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">   printf (&quot;%d file%s deleted&quot;, n, n == 1 ? &quot;&quot; : &quot;s&quot;);
+</pre></td></tr></table>
+
+<p>After the first complaints from people internationalizing the code people
+either completely avoided formulations like this or used strings like
+<code>&quot;file(s)&quot;</code>.  Both look unnatural and should be avoided.  First
+tries to solve the problem correctly looked like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">   if (n == 1)
+     printf (&quot;%d file deleted&quot;, n);
+   else
+     printf (&quot;%d files deleted&quot;, n);
+</pre></td></tr></table>
+
+<p>But this does not solve the problem.  It helps languages where the
+plural form of a noun is not simply constructed by adding an `s' but
+that is all.  Once again people fell into the trap of believing the
+rules their language is using are universal.  But the handling of plural
+forms differs widely between the language families.  There are two
+things we can differ between (and even inside language families);
+</p>
+<ul>
+<li>
+The form how plural forms are build differs.  This is a problem with
+language which have many irregularities.  German, for instance, is a
+drastic case.  Though English and German are part of the same language
+family (Germanic), the almost regular forming of plural noun forms
+(appending an `s') is hardly found in German.
+
+</li><li>
+The number of plural forms differ.  This is somewhat surprising for
+those who only have experiences with Romanic and Germanic languages
+since here the number is the same (there are two).
+
+<p>But other language families have only one form or many forms.  More
+information on this in an extra section.
+</p></li></ul>
+
+<p>The consequence of this is that application writers should not try to
+solve the problem in their code.  This would be localization since it is
+only usable for certain, hardcoded language environments.  Instead the
+extended <code>gettext</code> interface should be used.
+</p>
+<p>These extra functions are taking instead of the one key string two
+strings and an numerical argument.  The idea behind this is that using
+the numerical argument and the first string as a key, the implementation
+can select using rules specified by the translator the right plural
+form.  The two string arguments then will be used to provide a return
+value in case no message catalog is found (similar to the normal
+<code>gettext</code> behavior).  In this case the rules for Germanic language
+is used and it is assumed that the first string argument is the singular
+form, the second the plural form.
+</p>
+<p>This has the consequence that programs without language catalogs can
+display the correct strings only if the program itself is written using
+a Germanic language.  This is a limitation but since the GNU C library
+(as well as the GNU <code>gettext</code> package) are written as part of the
+GNU package and the coding standards for the GNU project require program
+being written in English, this solution nevertheless fulfills its
+purpose.
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>ngettext</b><i> (const char *<var>msgid1</var>, const char *<var>msgid2</var>, unsigned long int <var>n</var>)</i>
+<a name="IDX715"></a>
+</dt>
+<dd><p>The <code>ngettext</code> function is similar to the <code>gettext</code> function
+as it finds the message catalogs in the same way.  But it takes two
+extra arguments.  The <var>msgid1</var> parameter must contain the singular
+form of the string to be converted.  It is also used as the key for the
+search in the catalog.  The <var>msgid2</var> parameter is the plural form.
+The parameter <var>n</var> is used to determine the plural form.  If no
+message catalog is found <var>msgid1</var> is returned if <code>n == 1</code>,
+otherwise <code>msgid2</code>.
+</p>
+<p>An example for the us of this function is:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">  printf (ngettext (&quot;%d file removed&quot;, &quot;%d files removed&quot;, n), n);
+</pre></td></tr></table>
+
+<p>Please note that the numeric value <var>n</var> has to be passed to the
+<code>printf</code> function as well.  It is not sufficient to pass it only to
+<code>ngettext</code>.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>dngettext</b><i> (const char *<var>domain</var>, const char *<var>msgid1</var>, const char *<var>msgid2</var>, unsigned long int <var>n</var>)</i>
+<a name="IDX716"></a>
+</dt>
+<dd><p>The <code>dngettext</code> is similar to the <code>dgettext</code> function in the
+way the message catalog is selected.  The difference is that it takes
+two extra parameter to provide the correct plural form.  These two
+parameters are handled in the same way <code>ngettext</code> handles them.
+</p></dd></dl>
+
+<dl>
+<dt><u>Function:</u> char * <b>dcngettext</b><i> (const char *<var>domain</var>, const char *<var>msgid1</var>, const char *<var>msgid2</var>, unsigned long int <var>n</var>, int <var>category</var>)</i>
+<a name="IDX717"></a>
+</dt>
+<dd><p>The <code>dcngettext</code> is similar to the <code>dcgettext</code> function in the
+way the message catalog is selected.  The difference is that it takes
+two extra parameter to provide the correct plural form.  These two
+parameters are handled in the same way <code>ngettext</code> handles them.
+</p></dd></dl>
+
+<a name="SEC136"></a>
+<h4 class="subsubheading"> The problem of plural forms </h4>
+
+<p>A description of the problem can be found at the beginning of the last
+section.  Now there is the question how to solve it.  Without the input
+of linguists (which was not available) it was not possible to determine
+whether there are only a few different forms in which plural forms are
+formed or whether the number can increase with every new supported
+language.
+</p>
+<p>Therefore the solution implemented is to allow the translator to specify
+the rules of how to select the plural form.  Since the formula varies
+with every language this is the only viable solution except for
+hardcoding the information in the code (which still would require the
+possibility of extensions to not prevent the use of new languages).  The
+details are explained in the GNU <code>gettext</code> manual.  Here only a
+bit of information is provided.
+</p>
+<p>The information about the plural form selection has to be stored in the
+header entry (the one with the empty (<code>msgid</code> string).  It looks
+like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Plural-Forms: nplurals=2; plural=n == 1 ? 0 : 1;
+</pre></td></tr></table>
+
+<p>The <code>nplurals</code> value must be a decimal number which specifies how
+many different plural forms exist for this language.  The string
+following <code>plural</code> is an expression which is using the C language
+syntax.  Exceptions are that no negative number are allowed, numbers
+must be decimal, and the only variable allowed is <code>n</code>.  This
+expression will be evaluated whenever one of the functions
+<code>ngettext</code>, <code>dngettext</code>, or <code>dcngettext</code> is called.  The
+numeric value passed to these functions is then substituted for all uses
+of the variable <code>n</code> in the expression.  The resulting value then
+must be greater or equal to zero and smaller than the value given as the
+value of <code>nplurals</code>.
+</p>
+<p>The following rules are known at this point.  The language with families
+are listed.  But this does not necessarily mean the information can be
+generalized for the whole family (as can be easily seen in the table
+below).<a name="DOCF1" href="libc_fot.html#FOOT1">(1)</a>
+</p>
+<dl compact="compact">
+<dt> Only one form:</dt>
+<dd><p>Some languages only require one single form.  There is no distinction
+between the singular and plural form.  An appropriate header entry
+would look like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Plural-Forms: nplurals=1; plural=0;
+</pre></td></tr></table>
+
+<p>Languages with this property include:
+</p>
+<dl compact="compact">
+<dt> Finno-Ugric family</dt>
+<dd><p>Hungarian
+</p></dd>
+<dt> Asian family</dt>
+<dd><p>Japanese, Korean
+</p></dd>
+<dt> Turkic/Altaic family</dt>
+<dd><p>Turkish
+</p></dd>
+</dl>
+
+</dd>
+<dt> Two forms, singular used for one only</dt>
+<dd><p>This is the form used in most existing programs since it is what English
+is using.  A header entry would look like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Plural-Forms: nplurals=2; plural=n != 1;
+</pre></td></tr></table>
+
+<p>(Note: this uses the feature of C expressions that boolean expressions
+have to value zero or one.)
+</p>
+<p>Languages with this property include:
+</p>
+<dl compact="compact">
+<dt> Germanic family</dt>
+<dd><p>Danish, Dutch, English, German, Norwegian, Swedish
+</p></dd>
+<dt> Finno-Ugric family</dt>
+<dd><p>Estonian, Finnish
+</p></dd>
+<dt> Latin/Greek family</dt>
+<dd><p>Greek
+</p></dd>
+<dt> Semitic family</dt>
+<dd><p>Hebrew
+</p></dd>
+<dt> Romance family</dt>
+<dd><p>Italian, Portuguese, Spanish
+</p></dd>
+<dt> Artificial</dt>
+<dd><p>Esperanto
+</p></dd>
+</dl>
+
+</dd>
+<dt> Two forms, singular used for zero and one</dt>
+<dd><p>Exceptional case in the language family.  The header entry would be:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Plural-Forms: nplurals=2; plural=n&gt;1;
+</pre></td></tr></table>
+
+<p>Languages with this property include:
+</p>
+<dl compact="compact">
+<dt> Romanic family</dt>
+<dd><p>French, Brazilian Portuguese
+</p></dd>
+</dl>
+
+</dd>
+<dt> Three forms, special case for zero</dt>
+<dd><p>The header entry would be:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Plural-Forms: nplurals=3; plural=n%10==1 &amp;&amp; n%100!=11 ? 0 : n != 0 ? 1 : 2;
+</pre></td></tr></table>
+
+<p>Languages with this property include:
+</p>
+<dl compact="compact">
+<dt> Baltic family</dt>
+<dd><p>Latvian
+</p></dd>
+</dl>
+
+</dd>
+<dt> Three forms, special cases for one and two</dt>
+<dd><p>The header entry would be:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Plural-Forms: nplurals=3; plural=n==1 ? 0 : n==2 ? 1 : 2;
+</pre></td></tr></table>
+
+<p>Languages with this property include:
+</p>
+<dl compact="compact">
+<dt> Celtic</dt>
+<dd><p>Gaeilge (Irish)
+</p></dd>
+</dl>
+
+</dd>
+<dt> Three forms, special case for numbers ending in 1[2-9]</dt>
+<dd><p>The header entry would look like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Plural-Forms: nplurals=3; \
+    plural=n%10==1 &amp;&amp; n%100!=11 ? 0 : \
+           n%10&gt;=2 &amp;&amp; (n%100&lt;10 || n%100&gt;=20) ? 1 : 2;
+</pre></td></tr></table>
+
+<p>Languages with this property include:
+</p>
+<dl compact="compact">
+<dt> Baltic family</dt>
+<dd><p>Lithuanian
+</p></dd>
+</dl>
+
+</dd>
+<dt> Three forms, special cases for numbers ending in 1 and 2, 3, 4, except those ending in 1[1-4]</dt>
+<dd><p>The header entry would look like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Plural-Forms: nplurals=3; \
+    plural=n%100/10==1 ? 2 : n%10==1 ? 0 : (n+9)%10&gt;3 ? 2 : 1;
+</pre></td></tr></table>
+
+<p>Languages with this property include:
+</p>
+<dl compact="compact">
+<dt> Slavic family</dt>
+<dd><p>Croatian, Czech, Russian, Ukrainian
+</p></dd>
+</dl>
+
+</dd>
+<dt> Three forms, special cases for 1 and 2, 3, 4</dt>
+<dd><p>The header entry would look like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Plural-Forms: nplurals=3; \
+    plural=(n==1) ? 1 : (n&gt;=2 &amp;&amp; n&lt;=4) ? 2 : 0;
+</pre></td></tr></table>
+
+<p>Languages with this property include:
+</p>
+<dl compact="compact">
+<dt> Slavic family</dt>
+<dd><p>Slovak
+</p></dd>
+</dl>
+
+</dd>
+<dt> Three forms, special case for one and some numbers ending in 2, 3, or 4</dt>
+<dd><p>The header entry would look like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Plural-Forms: nplurals=3; \
+    plural=n==1 ? 0 : \
+           n%10&gt;=2 &amp;&amp; n%10&lt;=4 &amp;&amp; (n%100&lt;10 || n%100&gt;=20) ? 1 : 2;
+</pre></td></tr></table>
+
+<p>Languages with this property include:
+</p>
+<dl compact="compact">
+<dt> Slavic family</dt>
+<dd><p>Polish
+</p></dd>
+</dl>
+
+</dd>
+<dt> Four forms, special case for one and all numbers ending in 02, 03, or 04</dt>
+<dd><p>The header entry would look like this:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Plural-Forms: nplurals=4; \
+    plural=n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3;
+</pre></td></tr></table>
+
+<p>Languages with this property include:
+</p>
+<dl compact="compact">
+<dt> Slavic family</dt>
+<dd><p>Slovenian
+</p></dd>
+</dl>
+</dd>
+</dl>
+
+
+<hr size="6">
+<a name="Charset-conversion-in-gettext"></a>
+<a name="SEC137"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC135" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC138" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC132" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 8.2.1.4 How to specify the output character set <code>gettext</code> uses </h4>
+
+<p><code>gettext</code> not only looks up a translation in a message catalog.  It
+also converts the translation on the fly to the desired output character
+set.  This is useful if the user is working in a different character set
+than the translator who created the message catalog, because it avoids
+distributing variants of message catalogs which differ only in the
+character set.
+</p>
+<p>The output character set is, by default, the value of <code>nl_langinfo
+(CODESET)</code>, which depends on the <code>LC_CTYPE</code> part of the current
+locale.  But programs which store strings in a locale independent way
+(e.g. UTF-8) can request that <code>gettext</code> and related functions
+return the translations in that encoding, by use of the
+<code>bind_textdomain_codeset</code> function.
+</p>
+<p>Note that the <var>msgid</var> argument to <code>gettext</code> is not subject to
+character set conversion.  Also, when <code>gettext</code> does not find a
+translation for <var>msgid</var>, it returns <var>msgid</var> unchanged &ndash;
+independently of the current output character set.  It is therefore
+recommended that all <var>msgid</var>s be US-ASCII strings.
+</p>
+<dl>
+<dt><u>Function:</u> char * <b>bind_textdomain_codeset</b><i> (const char *<var>domainname</var>, const char *<var>codeset</var>)</i>
+<a name="IDX718"></a>
+</dt>
+<dd><p>The <code>bind_textdomain_codeset</code> function can be used to specify the
+output character set for message catalogs for domain <var>domainname</var>.
+The <var>codeset</var> argument must be a valid codeset name which can be used
+for the <code>iconv_open</code> function, or a null pointer.
+</p>
+<p>If the <var>codeset</var> parameter is the null pointer,
+<code>bind_textdomain_codeset</code> returns the currently selected codeset
+for the domain with the name <var>domainname</var>. It returns <code>NULL</code> if
+no codeset has yet been selected.
+</p>
+<p>The <code>bind_textdomain_codeset</code> function can be used several times.
+If used multiple times with the same <var>domainname</var> argument, the
+later call overrides the settings made by the earlier one.
+</p>
+<p>The <code>bind_textdomain_codeset</code> function returns a pointer to a
+string containing the name of the selected codeset.  The string is
+allocated internally in the function and must not be changed by the
+user.  If the system went out of core during the execution of
+<code>bind_textdomain_codeset</code>, the return value is <code>NULL</code> and the
+global variable <var>errno</var> is set accordingly.  </p></dd></dl>
+
+
+<hr size="6">
+<a name="GUI-program-problems"></a>
+<a name="SEC138"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC137" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC139" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC132" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 8.2.1.5 How to use <code>gettext</code> in GUI programs </h4>
+
+<p>One place where the <code>gettext</code> functions, if used normally, have big
+problems is within programs with graphical user interfaces (GUIs).  The
+problem is that many of the strings which have to be translated are very
+short.  They have to appear in pull-down menus which restricts the
+length.  But strings which are not containing entire sentences or at
+least large fragments of a sentence may appear in more than one
+situation in the program but might have different translations.  This is
+especially true for the one-word strings which are frequently used in
+GUI programs.
+</p>
+<p>As a consequence many people say that the <code>gettext</code> approach is
+wrong and instead <code>catgets</code> should be used which indeed does not
+have this problem.  But there is a very simple and powerful method to
+handle these kind of problems with the <code>gettext</code> functions.
+</p>
+<p>As as example consider the following fictional situation.  A GUI program
+has a menu bar with the following entries:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">+------------+------------+--------------------------------------+
+| File       | Printer    |                                      |
++------------+------------+--------------------------------------+
+| Open     | | Select   |
+| New      | | Open     |
++----------+ | Connect  |
+             +----------+
+</pre></td></tr></table>
+
+<p>To have the strings <code>File</code>, <code>Printer</code>, <code>Open</code>,
+<code>New</code>, <code>Select</code>, and <code>Connect</code> translated there has to be
+at some point in the code a call to a function of the <code>gettext</code>
+family.  But in two places the string passed into the function would be
+<code>Open</code>.  The translations might not be the same and therefore we
+are in the dilemma described above.
+</p>
+<p>One solution to this problem is to artificially enlengthen the strings
+to make them unambiguous.  But what would the program do if no
+translation is available?  The enlengthened string is not what should be
+printed.  So we should use a little bit modified version of the functions.
+</p>
+<p>To enlengthen the strings a uniform method should be used.  E.g., in the
+example above the strings could be chosen as
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">Menu|File
+Menu|Printer
+Menu|File|Open
+Menu|File|New
+Menu|Printer|Select
+Menu|Printer|Open
+Menu|Printer|Connect
+</pre></td></tr></table>
+
+<p>Now all the strings are different and if now instead of <code>gettext</code>
+the following little wrapper function is used, everything works just
+fine:
+</p>
+<a name="IDX719"></a>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">  char *
+  sgettext (const char *msgid)
+  {
+    char *msgval = gettext (msgid);
+    if (msgval == msgid)
+      msgval = strrchr (msgid, '|') + 1;
+    return msgval;
+  }
+</pre></td></tr></table>
+
+<p>What this little function does is to recognize the case when no
+translation is available.  This can be done very efficiently by a
+pointer comparison since the return value is the input value.  If there
+is no translation we know that the input string is in the format we used
+for the Menu entries and therefore contains a <code>|</code> character.  We
+simply search for the last occurrence of this character and return a
+pointer to the character following it.  That's it!
+</p>
+<p>If one now consistently uses the enlengthened string form and replaces
+the <code>gettext</code> calls with calls to <code>sgettext</code> (this is normally
+limited to very few places in the GUI implementation) then it is
+possible to produce a program which can be internationalized.
+</p>
+<p>With advanced compilers (such as GNU C) one can write the
+<code>sgettext</code> functions as an inline function or as a macro like this:
+</p>
+<a name="IDX720"></a>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">#define sgettext(msgid) \
+  ({ const char *__msgid = (msgid);            \
+     char *__msgstr = gettext (__msgid);       \
+     if (__msgval == __msgid)                  \
+       __msgval = strrchr (__msgid, '|') + 1;  \
+     __msgval; })
+</pre></td></tr></table>
+
+<p>The other <code>gettext</code> functions (<code>dgettext</code>, <code>dcgettext</code>
+and the <code>ngettext</code> equivalents) can and should have corresponding
+functions as well which look almost identical, except for the parameters
+and the call to the underlying function.
+</p>
+<p>Now there is of course the question why such functions do not exist in
+the GNU C library?  There are two parts of the answer to this question.
+</p>
+<ul>
+<li>
+They are easy to write and therefore can be provided by the project they
+are used in.  This is not an answer by itself and must be seen together
+with the second part which is:
+
+</li><li>
+There is no way the C library can contain a version which can work
+everywhere.  The problem is the selection of the character to separate
+the prefix from the actual string in the enlenghtened string.  The
+examples above used <code>|</code> which is a quite good choice because it
+resembles a notation frequently used in this context and it also is a
+character not often used in message strings.
+
+<p>But what if the character is used in message strings.  Or if the chose
+character is not available in the character set on the machine one
+compiles (e.g., <code>|</code> is not required to exist for ISO C; this is
+why the &lsquo;<tt>iso646.h</tt>&rsquo; file exists in ISO C programming environments).
+</p></li></ul>
+
+<p>There is only one more comment to make left.  The wrapper function above
+require that the translations strings are not enlengthened themselves.
+This is only logical.  There is no need to disambiguate the strings
+(since they are never used as keys for a search) and one also saves
+quite some memory and disk space by doing this.
+</p>
+
+<hr size="6">
+<a name="Using-gettextized-software"></a>
+<a name="SEC139"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC138" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC140" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC132" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 8.2.1.6 User influence on <code>gettext</code> </h4>
+
+<p>The last sections described what the programmer can do to
+internationalize the messages of the program.  But it is finally up to
+the user to select the message s/he wants to see.  S/He must understand
+them.
+</p>
+<p>The POSIX locale model uses the environment variables <code>LC_COLLATE</code>,
+<code>LC_CTYPE</code>, <code>LC_MESSAGES</code>, <code>LC_MONETARY</code>, <code>LC_NUMERIC</code>,
+and <code>LC_TIME</code> to select the locale which is to be used.  This way
+the user can influence lots of functions.  As we mentioned above the
+<code>gettext</code> functions also take advantage of this.
+</p>
+<p>To understand how this happens it is necessary to take a look at the
+various components of the filename which gets computed to locate a
+message catalog.  It is composed as follows:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample"><var>dir_name</var>/<var>locale</var>/LC_<var>category</var>/<var>domain_name</var>.mo
+</pre></td></tr></table>
+
+<p>The default value for <var>dir_name</var> is system specific.  It is computed
+from the value given as the prefix while configuring the C library.
+This value normally is &lsquo;<tt>/usr</tt>&rsquo; or &lsquo;<tt>/</tt>&rsquo;.  For the former the
+complete <var>dir_name</var> is:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">/usr/share/locale
+</pre></td></tr></table>
+
+<p>We can use &lsquo;<tt>/usr/share</tt>&rsquo; since the &lsquo;<tt>.mo</tt>&rsquo; files containing the
+message catalogs are system independent, so all systems can use the same
+files.  If the program executed the <code>bindtextdomain</code> function for
+the message domain that is currently handled, the <code>dir_name</code>
+component is exactly the value which was given to the function as
+the second parameter.  I.e., <code>bindtextdomain</code> allows overwriting
+the only system dependent and fixed value to make it possible to
+address files anywhere in the filesystem.
+</p>
+<p>The <var>category</var> is the name of the locale category which was selected
+in the program code.  For <code>gettext</code> and <code>dgettext</code> this is
+always <code>LC_MESSAGES</code>, for <code>dcgettext</code> this is selected by the
+value of the third parameter.  As said above it should be avoided to
+ever use a category other than <code>LC_MESSAGES</code>.
+</p>
+<p>The <var>locale</var> component is computed based on the category used.  Just
+like for the <code>setlocale</code> function here comes the user selection
+into the play.  Some environment variables are examined in a fixed order
+and the first environment variable set determines the return value of
+the lookup process.  In detail, for the category <code>LC_xxx</code> the
+following variables in this order are examined:
+</p>
+<dl compact="compact">
+<dt> <code>LANGUAGE</code></dt>
+<dt> <code>LC_ALL</code></dt>
+<dt> <code>LC_xxx</code></dt>
+<dt> <code>LANG</code></dt>
+</dl>
+
+<p>This looks very familiar.  With the exception of the <code>LANGUAGE</code>
+environment variable this is exactly the lookup order the
+<code>setlocale</code> function uses.  But why introducing the <code>LANGUAGE</code>
+variable?
+</p>
+<p>The reason is that the syntax of the values these variables can have is
+different to what is expected by the <code>setlocale</code> function.  If we
+would set <code>LC_ALL</code> to a value following the extended syntax that
+would mean the <code>setlocale</code> function will never be able to use the
+value of this variable as well.  An additional variable removes this
+problem plus we can select the language independently of the locale
+setting which sometimes is useful.
+</p>
+<p>While for the <code>LC_xxx</code> variables the value should consist of
+exactly one specification of a locale the <code>LANGUAGE</code> variable's
+value can consist of a colon separated list of locale names.  The
+attentive reader will realize that this is the way we manage to
+implement one of our additional demands above: we want to be able to
+specify an ordered list of language.
+</p>
+<p>Back to the constructed filename we have only one component missing.
+The <var>domain_name</var> part is the name which was either registered using
+the <code>textdomain</code> function or which was given to <code>dgettext</code> or
+<code>dcgettext</code> as the first parameter.  Now it becomes obvious that a
+good choice for the domain name in the program code is a string which is
+closely related to the program/package name.  E.g., for the GNU C
+Library the domain name is <code>libc</code>.
+</p>
+<p>A limit piece of example code should show how the programmer is supposed
+to work:
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">{
+  setlocale (LC_ALL, &quot;&quot;);
+  textdomain (&quot;test-package&quot;);
+  bindtextdomain (&quot;test-package&quot;, &quot;/usr/local/share/locale&quot;);
+  puts (gettext (&quot;Hello, world!&quot;));
+}
+</pre></td></tr></table>
+
+<p>At the program start the default domain is <code>messages</code>, and the
+default locale is &quot;C&quot;.  The <code>setlocale</code> call sets the locale
+according to the user's environment variables; remember that correct
+functioning of <code>gettext</code> relies on the correct setting of the
+<code>LC_MESSAGES</code> locale (for looking up the message catalog) and
+of the <code>LC_CTYPE</code> locale (for the character set conversion).
+The <code>textdomain</code> call changes the default domain to
+<code>test-package</code>.  The <code>bindtextdomain</code> call specifies that
+the message catalogs for the domain <code>test-package</code> can be found
+below the directory &lsquo;<tt>/usr/local/share/locale</tt>&rsquo;.
+</p>
+<p>If now the user set in her/his environment the variable <code>LANGUAGE</code>
+to <code>de</code> the <code>gettext</code> function will try to use the
+translations from the file
+</p>
+<table><tr><td>&nbsp;</td><td><pre class="smallexample">/usr/local/share/locale/de/LC_MESSAGES/test-package.mo
+</pre></td></tr></table>
+
+<p>From the above descriptions it should be clear which component of this
+filename is determined by which source.
+</p>
+<p>In the above example we assumed that the <code>LANGUAGE</code> environment
+variable to <code>de</code>.  This might be an appropriate selection but what
+happens if the user wants to use <code>LC_ALL</code> because of the wider
+usability and here the required value is <code>de_DE.ISO-8859-1</code>?  We
+already mentioned above that a situation like this is not infrequent.
+E.g., a person might prefer reading a dialect and if this is not
+available fall back on the standard language.
+</p>
+<p>The <code>gettext</code> functions know about situations like this and can
+handle them gracefully.  The functions recognize the format of the value
+of the environment variable.  It can split the value is different pieces
+and by leaving out the only or the other part it can construct new
+values.  This happens of course in a predictable way.  To understand
+this one must know the format of the environment variable value.  There
+is one more or less standardized form, originally from the X/Open
+specification:
+</p>
+<p><code>language[_territory[.codeset]][@modifier]</code>
+</p>
+<p>Less specific locale names will be stripped of in the order of the
+following list:
+</p>
+<ol>
+<li>
+<code>codeset</code>
+</li><li>
+<code>normalized codeset</code>
+</li><li>
+<code>territory</code>
+</li><li>
+<code>modifier</code>
+</li></ol>
+
+<p>The <code>language</code> field will never be dropped for obvious reasons.
+</p>
+<p>The only new thing is the <code>normalized codeset</code> entry.  This is
+another goodie which is introduced to help reducing the chaos which
+derives from the inability of the people to standardize the names of
+character sets.  Instead of ISO-8859-1 one can often see 8859-1,
+88591, iso8859-1, or iso_8859-1.  The <code>normalized
+codeset</code> value is generated from the user-provided character set name by
+applying the following rules:
+</p>
+<ol>
+<li>
+Remove all characters beside numbers and letters.
+</li><li>
+Fold letters to lowercase.
+</li><li>
+If the same only contains digits prepend the string <code>&quot;iso&quot;</code>.
+</li></ol>
+
+<p>So all of the above name will be normalized to <code>iso88591</code>.  This
+allows the program user much more freely choosing the locale name.
+</p>
+<p>Even this extended functionality still does not help to solve the
+problem that completely different names can be used to denote the same
+locale (e.g., <code>de</code> and <code>german</code>).  To be of help in this
+situation the locale implementation and also the <code>gettext</code>
+functions know about aliases.
+</p>
+<p>The file &lsquo;<tt>/usr/share/locale/locale.alias</tt>&rsquo; (replace &lsquo;<tt>/usr</tt>&rsquo; with
+whatever prefix you used for configuring the C library) contains a
+mapping of alternative names to more regular names.  The system manager
+is free to add new entries to fill her/his own needs.  The selected
+locale from the environment is compared with the entries in the first
+column of this file ignoring the case.  If they match the value of the
+second column is used instead for the further handling.
+</p>
+<p>In the description of the format of the environment variables we already
+mentioned the character set as a factor in the selection of the message
+catalog.  In fact, only catalogs which contain text written using the
+character set of the system/program can be used (directly; there will
+come a solution for this some day).  This means for the user that s/he
+will always have to take care for this.  If in the collection of the
+message catalogs there are files for the same language but coded using
+different character sets the user has to be careful.
+</p>
+
+<hr size="6">
+<a name="Helper-programs-for-gettext"></a>
+<a name="SEC140"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC139" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC131" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 8.2.2 Programs to handle message catalogs for <code>gettext</code> </h3>
+
+<p>The GNU C Library does not contain the source code for the programs to
+handle message catalogs for the <code>gettext</code> functions.  As part of
+the GNU project the GNU gettext package contains everything the
+developer needs.  The functionality provided by the tools in this
+package by far exceeds the abilities of the <code>gencat</code> program
+described above for the <code>catgets</code> functions.
+</p>
+<p>There is a program <code>msgfmt</code> which is the equivalent program to the
+<code>gencat</code> program.  It generates from the human-readable and
+-editable form of the message catalog a binary file which can be used by
+the <code>gettext</code> functions.  But there are several more programs
+available.
+</p>
+<p>The <code>xgettext</code> program can be used to automatically extract the
+translatable messages from a source file.  I.e., the programmer need not
+take care for the translations and the list of messages which have to be
+translated.  S/He will simply wrap the translatable string in calls to
+<code>gettext</code> et.al and the rest will be done by <code>xgettext</code>.  This
+program has a lot of option which help to customize the output or do
+help to understand the input better.
+</p>
+<p>Other programs help to manage development cycle when new messages appear
+in the source files or when a new translation of the messages appear.
+Here it should only be noted that using all the tools in GNU gettext it
+is possible to <em>completely</em> automate the handling of message
+catalog.  Beside marking the translatable string in the source code and
+generating the translations the developers do not have anything to do
+themselves.
+</p><hr size="6">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC122" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="libc_9.html#SEC141" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="libc.html#SEC_Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="libc_toc.html#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td valign="middle" align="left">[<a href="libc_42.html#SEC712" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="libc_abt.html#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  This document was generated by <em>root</em> on <em>October, 30 2008</em> using <a href="http://www.nongnu.org/texi2html/"><em>texi2html 1.78</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>
