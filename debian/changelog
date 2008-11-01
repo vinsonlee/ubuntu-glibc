@@ -1,3 +1,11 @@
+glibc (2.8+20081027-0ubuntu2) jaunty; urgency=low
+
+  * Reapply changes from 2.8~20080505-0ubuntu7.
+  * debian/sysdeps/powerpc.mk, script.in/kernelcheck.sh: Set the
+    minimal kernel version to 2.6.15 for powerpc.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sat, 01 Nov 2008 07:41:22 +0100
+
 glibc (2.8+20081027-0ubuntu1) jaunty; urgency=low
 
   * Merge with Debian; remaining changes:
@@ -168,6 +176,14 @@ glibc (2.8+20080809-3) experimental; urgency=low
   * add kfreebsd/local-sysdeps28.diff, glibc 2.8 specific kfreebsd sysdeps.
 
  -- Aurelien Jarno <aurel32@debian.org>  Sat, 25 Oct 2008 21:22:39 +0200
+
+glibc (2.8~20080505-0ubuntu7) intrepid; urgency=low
+
+  * Add debian/patches/ubuntu/stack-guard-quick-randomization.diff: do
+    light-weight randomization of the stack guard value instead of using
+    a static sentinel (LP: #275493).
+
+ -- Kees Cook <kees@ubuntu.com>  Sun, 28 Sep 2008 09:30:01 -0700
 
 glibc (2.8~20080505-0ubuntu6) intrepid; urgency=low
 
@@ -410,6 +426,39 @@ glibc (2.7-12) unstable; urgency=low
     chroots.
 
  -- Aurelien Jarno <aurel32@debian.org>  Mon, 02 Jun 2008 19:14:35 +0200
+
+glibc (2.7-11ubuntu1) intrepid; urgency=low
+
+  * Merge with Debian (r2892:2919).
+    - Packaging:
+      + External tzdata
+      + Use external locale information
+      + Addition of Niagara and Niagara2 optimised libraries
+      + GFDL Documentation added back in, build glibc-doc from this source.
+      + Transition from /usr/include/ppc64-linux-gnu to powerpc64-linux-gnu
+      + Use dpkg triggers for ldconfig
+      + Do not die if extra libc libraries or symlinks found
+      + Do not do a test run of nscd when starting
+      + Only apply patches we actually use in Ubuntu
+      + Use /lib and /usr/lib for amd64
+      + amd64 biarch is i686, not i486.
+      + Non-optimised i386 glibc is Xen-friendly.
+      + Support sparcv9v, v9v2, 64b, 64v, 64v2
+      + Add support for lpia.
+      + Call `sync' before building the tarball of supported locales.
+      + Downgrade priority of debconf questions for RELEASE_UPGRADE_MODE=desktop.
+      + Use the package settings for *FLAGS, not the settings from the env.
+      + Fail the build when regressions are detected in the testsuite.
+      + Build with GCC-4.3 on amd64 and i386.
+    - Patches:
+      + sparc/submitted-v9v2
+      + hppa/hppalll
+      + Applied any/local-ipv6-lookup.
+      + Not applied any/local-sysctl.
+  * any/cvs-short-for-fnstsw.diff: Backport from the trunk, fix build failure
+    with binutils from trunk.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 08 May 2008 12:06:01 +0200
 
 glibc (2.7-11) unstable; urgency=low
 
