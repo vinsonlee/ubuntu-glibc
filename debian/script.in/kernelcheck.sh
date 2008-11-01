@@ -70,13 +70,25 @@ exit_check () {
             exit_check
         fi
 
-        # The GNU libc requires a >= 2.6.18 kernel (except on m68k)
-        if [ "$realarch" != m68k ]
+        # The GNU libc requires a >= 2.6.18 kernel (except on m68k and powerpc)
+        if [ "$realarch" != m68k ] && [ "$realarch" != powerpc ]
         then
             if linux_compare_versions "$kernel_ver" lt 2.6.18
             then
                 echo WARNING: this version of the GNU libc requires kernel version
                 echo 2.6.18 or later.  Please upgrade your kernel before installing
+                echo glibc.
+                kernel26_help
+                exit_check
+            fi
+        fi
+
+        if [ "$realarch" = powerpc ]
+        then
+            if linux_compare_versions "$kernel_ver" lt 2.6.15
+            then
+                echo WARNING: this version of the GNU libc requires kernel version
+                echo 2.6.15 or later.  Please upgrade your kernel before installing
                 echo glibc.
                 kernel26_help
                 exit_check
