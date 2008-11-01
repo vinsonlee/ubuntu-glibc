@@ -17,6 +17,7 @@ Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, 
 Standards-Version: 3.8.0
 Vcs-Browser: http://svn.debian.org/wsvn/pkg-glibc/glibc-package/
 Vcs-Svn: svn://svn.debian.org/pkg-glibc/glibc-package/
+Vcs-Bzr: http://bazaar.launchpad.net/~ubuntu-toolchain/ubuntu-toolchain/glibc-2.5-package
 
 Package: @glibc@-doc
 Architecture: all
