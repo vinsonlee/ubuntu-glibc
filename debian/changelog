@@ -1,3 +1,19 @@
+glibc (2.8+20081027-0ubuntu3) jaunty; urgency=low
+
+  * debian/sysdeps/ia64.mk, debian/sysdeps/sparc.mk,
+    script.in/kernelcheck.sh: Set the minimal kernel version to 2.6.15 for
+    ia64 and sparc, whose Ubuntu buildds are also still running 2.6.15.
+  * debian/patches/ubuntu/stack-guard-quick-randomization.diff: Add test
+    changes from Fedora patch by Jakub Jelinek:
+    - elf/tst-stackguard1.c (do_test): Don't fail if the poor man's
+      randomization doesn't work well enough.
+  * debian/testsuite-checking/expected-results-powerpc-linux-gnu-libc:
+    Expect failure from test-fenv, since it's been failing at least back to
+    Ubuntu 8.04 and this is probably due to use of an old kernel on the
+    Ubuntu powerpc buildds (LP: #292360).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Sun, 02 Nov 2008 11:28:16 +0000
+
 glibc (2.8+20081027-0ubuntu2) jaunty; urgency=low
 
   * Reapply changes from 2.8~20080505-0ubuntu7.
