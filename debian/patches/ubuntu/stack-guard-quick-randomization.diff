@@ -1,9 +1,15 @@
 Taken from http://cvs.fedora.redhat.com/viewvc//devel/glibc/
 based on Jakub Jelinek's patch to glibc.
-Index: glibc-20080505/sysdeps/unix/sysv/linux/dl-osinfo.h
+---
+ elf/tst-stackguard1.c               |    8 ++++++--
+ nptl/tst-stackguard1.c              |    8 ++++++--
+ sysdeps/unix/sysv/linux/dl-osinfo.h |   29 +++++++++++++++++++++++++++++
+ 3 files changed, 41 insertions(+), 4 deletions(-)
+
+Index: b/sysdeps/unix/sysv/linux/dl-osinfo.h
 ===================================================================
---- glibc-20080505.orig/sysdeps/unix/sysv/linux/dl-osinfo.h	2008-09-27 23:28:48.000000000 -0700
-+++ glibc-20080505/sysdeps/unix/sysv/linux/dl-osinfo.h	2008-09-27 23:28:59.000000000 -0700
+--- a/sysdeps/unix/sysv/linux/dl-osinfo.h
++++ b/sysdeps/unix/sysv/linux/dl-osinfo.h
 @@ -17,10 +17,13 @@
     Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
     02111-1307 USA.  */
@@ -50,3 +56,59 @@ Index: glibc-20080505/sysdeps/unix/sysv/linux/dl-osinfo.h
 +  ret ^= stk;
    return ret;
  }
+Index: b/elf/tst-stackguard1.c
+===================================================================
+--- a/elf/tst-stackguard1.c
++++ b/elf/tst-stackguard1.c
+@@ -160,17 +160,21 @@
+      the 16 runs, something is very wrong.  */
+   int ndifferences = 0;
+   int ndefaults = 0;
++  int npartlyrandomized = 0;
+   for (i = 0; i < N; ++i) 
+     {
+       if (child_stack_chk_guards[i] != child_stack_chk_guards[i+1])
+ 	ndifferences++;
+       else if (child_stack_chk_guards[i] == default_guard)
+ 	ndefaults++;
++      else if (*(char *) &child_stack_chk_guards[i] == 0)
++	npartlyrandomized++;
+     }
+ 
+-  printf ("differences %d defaults %d\n", ndifferences, ndefaults);
++  printf ("differences %d defaults %d partly randomized %d\n",
++	  ndifferences, ndefaults, npartlyrandomized);
+ 
+-  if (ndifferences < N / 2 && ndefaults < N / 2)
++  if ((ndifferences + ndefaults + npartlyrandomized) < 3 * N / 4)
+     {
+       puts ("stack guard canaries are not randomized enough");
+       puts ("nor equal to the default canary value");
+Index: b/nptl/tst-stackguard1.c
+===================================================================
+--- a/nptl/tst-stackguard1.c
++++ b/nptl/tst-stackguard1.c
+@@ -190,17 +190,21 @@
+      the 16 runs, something is very wrong.  */
+   int ndifferences = 0;
+   int ndefaults = 0;
++  int npartlyrandomized = 0;
+   for (i = 0; i < N; ++i) 
+     {
+       if (child_stack_chk_guards[i] != child_stack_chk_guards[i+1])
+ 	ndifferences++;
+       else if (child_stack_chk_guards[i] == default_guard)
+ 	ndefaults++;
++      else if (*(char *) &child_stack_chk_guards[i] == 0)
++	npartlyrandomized++;
+     }
+ 
+-  printf ("differences %d defaults %d\n", ndifferences, ndefaults);
++  printf ("differences %d defaults %d partly randomized %d\n",
++	  ndifferences, ndefaults, npartlyrandomized);
+ 
+-  if (ndifferences < N / 2 && ndefaults < N / 2)
++  if ((ndifferences + ndefaults + npartlyrandomized) < 3 * N / 4)
+     {
+       puts ("stack guard canaries are not randomized enough");
+       puts ("nor equal to the default canary value");
