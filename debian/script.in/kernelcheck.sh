@@ -70,8 +70,10 @@ exit_check () {
             exit_check
         fi
 
-        # The GNU libc requires a >= 2.6.18 kernel (except on m68k and powerpc)
-        if [ "$realarch" != m68k ] && [ "$realarch" != powerpc ]
+        # The GNU libc requires a >= 2.6.18 kernel (except on ia64, m68k,
+        # powerpc, and sparc)
+        if [ "$realarch" != ia64 ] && [ "$realarch" != m68k ] && \
+           [ "$realarch" != powerpc ] && [ "$realarch" != sparc ]
         then
             if linux_compare_versions "$kernel_ver" lt 2.6.18
             then
@@ -83,7 +85,8 @@ exit_check () {
             fi
         fi
 
-        if [ "$realarch" = powerpc ]
+        if [ "$realarch" = ia64 ] || [ "$realarch" = powerpc ] || \
+           [ "$realarch" = sparc ]
         then
             if linux_compare_versions "$kernel_ver" lt 2.6.15
             then
