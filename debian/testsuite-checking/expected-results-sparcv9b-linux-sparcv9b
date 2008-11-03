@@ -18,3 +18,4 @@ tst-cancel7.out, Error 1
 tst-cancelx7.out, Error 1
 tst-cleanup0.out, Error 2
 tst-fmon.out, Error 1
+tst-pselect.out, Error 1
