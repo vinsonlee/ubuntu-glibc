@@ -1,3 +1,9 @@
+glibc (2.8+20081027-0ubuntu5) jaunty; urgency=low
+
+  * debian/script.in/kernelcheck.sh: Treat `uname -m` == sparc64 as sparc.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 03 Nov 2008 12:39:47 +0000
+
 glibc (2.8+20081027-0ubuntu4) jaunty; urgency=low
 
   * debian/testsuite-checking/expected-results-ia64-linux-gnu-libc,
