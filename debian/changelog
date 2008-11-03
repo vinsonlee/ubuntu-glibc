@@ -1,3 +1,16 @@
+glibc (2.8+20081027-0ubuntu4) jaunty; urgency=low
+
+  * debian/testsuite-checking/expected-results-ia64-linux-gnu-libc,
+    debian/testsuite-checking/expected-results-powerpc-linux-gnu-libc,
+    debian/testsuite-checking/expected-results-powerpc64-linux-ppc64,
+    debian/testsuite-checking/expected-results-sparc-linux-gnu-libc,
+    debian/testsuite-checking/expected-results-sparc64-linux-sparc64,
+    debian/testsuite-checking/expected-results-sparcv9b-linux-sparcv9b: Add
+    tst-pselect, since the Ubuntu buildds for these architectures are still
+    running 2.6.15 and pselect is racy there.
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Mon, 03 Nov 2008 11:50:33 +0000
+
 glibc (2.8+20081027-0ubuntu3) jaunty; urgency=low
 
   * debian/sysdeps/ia64.mk, debian/sysdeps/sparc.mk,
