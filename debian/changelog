@@ -1,3 +1,16 @@
+glibc (2.7-16) unstable; urgency=low
+
+  * patches/any/cvs-rpcgen-makefile.diff: new patch from upstream to fix
+    fancy Makefile filename when using rpcgen -a.  Closes: bug#503182.
+  * patches/s390/local-atomic.diff: new patch from Michael Matz to fix 
+    atomic lock on s390.  Closes: bug#468793, bug#479952.
+  * patches/any/cvs-gai-stacksize.diff new patch from upstream to fix
+    getaddrinfo_a segfaults.  Closes: bug#495007.
+  * debhelper.in/locales.config: use previous debconf settings if 
+    /etc/locales does not exists.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 04 Nov 2008 16:31:04 +0100
+
 glibc (2.7-15) unstable; urgency=low
 
   * debhelper.in/locales.config, debhelper.in/locales.postinst: modify

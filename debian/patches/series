@@ -132,6 +132,7 @@ mips/local-setjmp.diff -p0
 
 powerpc/local-sysconf.diff 
 
+s390/local-atomic.diff -p1
 s390/submitted-nexttowardf.diff -p1
 
 sh4/local-fpscr_values.diff -p0
@@ -168,6 +169,8 @@ any/cvs-wchar_h.diff -p0
 any/cvs-regex_anchor.diff
 any/cvs-sunrpc_rpc_thread.diff
 any/cvs-strerror_r.diff 
+any/cvs-rpcgen-makefile.diff
+any/cvs-gai-stacksize.diff
 any/local-notls.diff -p0
 any/local-asserth-decls.diff -p0
 any/local-bashisms.diff -p0
