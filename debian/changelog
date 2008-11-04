@@ -1,3 +1,10 @@
+glibc (2.8+20081027-0ubuntu6) jaunty; urgency=low
+
+  * debian/script.in/kernelcheck.sh: Treat `uname -m` == powerpc* or ppc* as
+    powerpc. (Argh.)
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 04 Nov 2008 01:48:57 +0000
+
 glibc (2.8+20081027-0ubuntu5) jaunty; urgency=low
 
   * debian/script.in/kernelcheck.sh: Treat `uname -m` == sparc64 as sparc.

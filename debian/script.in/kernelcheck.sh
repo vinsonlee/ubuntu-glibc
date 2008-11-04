@@ -50,10 +50,12 @@ exit_check () {
         kernel_ver=`uname -r`
 
         # convert "armv4l" and similar to just "arm", "mips64" and similar
-        # to just "mips", and "sparc64" and similar to just "sparc"
+        # to just "mips", "ppc64" and similar to just "powerpc", and
+        # "sparc64" and similar to just "sparc"
         case $realarch in
           arm*) realarch="arm";;
           mips*) realarch="mips";;
+          powerpc*|ppc*) realarch="powerpc";;
           sparc*) realarch="sparc";;
         esac
 
