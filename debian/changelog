@@ -1,3 +1,14 @@
+glibc (2.8+20081027-0ubuntu7) jaunty; urgency=low
+
+  * debian/sysdeps/ia64.mk, debian/sysdeps/sparc.mk,
+    debian/sysdeps/powerpc.mk, debian/sysdeps/linux.mk, 
+    debian/script.in/kernelcheck.sh: make 2.6.15 the minimum kernel
+    version across all archs, because there are no major differences
+    between 2.6.15 and 2.6.18 for any architectures and this lets us run
+    jaunty chroots on kernels from Ubuntu 6.06 LTS.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 14 Nov 2008 19:22:19 +0000
+
 glibc (2.8+20081027-0ubuntu6) jaunty; urgency=low
 
   * debian/script.in/kernelcheck.sh: Treat `uname -m` == powerpc* or ppc* as
