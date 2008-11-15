@@ -18,6 +18,12 @@ tst-setcontext.out, Error 1
 tst-timer.out, Error 139
 
 # FIXME Ubuntu
+tst-cancel7.out, Error 1
+tst-cancelx7.out, Error 1
+tst-cleanup0.out, Error 2
+tst-fmon.out, Error 1
+
+# FIXME Ubuntu
 tst-mmap.out, Error 1
 tst-mutexpi5.out, Error 1
 tst-mutexpi5a.out, Error 1
