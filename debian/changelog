@@ -1,3 +1,10 @@
+glibc (2.8+20081027-0ubuntu10) jaunty; urgency=low
+
+  * Mark tst-cancel7.out, tst-cancelx7.out, tst-cleanup0.out and tst-fmon.out
+    as failing on armel as well.
+
+ -- Matthias Klose <doko@debian.org>  Sat, 15 Nov 2008 13:56:40 +0100
+
 glibc (2.8+20081027-0ubuntu9) jaunty; urgency=low
 
   * debian/testsuite-checking/compare.sh: Output the contents of the failure
