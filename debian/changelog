@@ -1,3 +1,12 @@
+glibc (2.8+20081027-0ubuntu9) jaunty; urgency=low
+
+  * debian/testsuite-checking/compare.sh: Output the contents of the failure
+    logs to the build log for non-regressions as well.
+    Report progressions as well.
+  * Mark test failures on armel as expected for a first build.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sat, 15 Nov 2008 09:34:14 +0100
+
 glibc (2.8+20081027-0ubuntu8) jaunty; urgency=low
 
   * debian/testsuite-checking/compare.sh: if there are regressions in
