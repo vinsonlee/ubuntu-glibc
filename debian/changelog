@@ -1,3 +1,11 @@
+glibc (2.8+20081027-0ubuntu8) jaunty; urgency=low
+
+  * debian/testsuite-checking/compare.sh: if there are regressions in
+    the test suite, output the contents of the failure logs to the build
+    log. (wanted for debugging current armel build failure)
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 15 Nov 2008 00:44:59 +0000
+
 glibc (2.8+20081027-0ubuntu7) jaunty; urgency=low
 
   * debian/sysdeps/ia64.mk, debian/sysdeps/sparc.mk,
