@@ -1,3 +1,9 @@
+glibc (2.9-0ubuntu2) jaunty; urgency=low
+
+  * Drop the build dependency on gcc-4.2-multilib on sparc for an initial build.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sat, 29 Nov 2008 16:01:59 +0100
+
 glibc (2.9-0ubuntu1) jaunty; urgency=low
 
   * New upstream, release, taken from the glibc-2_9-base tag.
