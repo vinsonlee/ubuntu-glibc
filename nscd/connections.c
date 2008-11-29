@@ -35,6 +35,9 @@
 #ifdef HAVE_EPOLL
 # include <sys/epoll.h>
 #endif
+#ifdef HAVE_INOTIFY
+# include <sys/inotify.h>
+#endif
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -48,6 +51,7 @@
 #include "nscd.h"
 #include "dbg_log.h"
 #include "selinux.h"
+#include <resolv/resolv.h>
 #ifdef HAVE_SENDFILE
 # include <kernel-features.h>
 #endif
@@ -222,8 +226,29 @@ int max_nthreads = 32;
 /* Socket for incoming connections.  */
 static int sock;
 
+#ifdef HAVE_INOTIFY
+/* Inotify descriptor.  */
+static int inotify_fd = -1;
+
+/* Watch descriptor for resolver configuration file.  */
+static int resolv_conf_descr = -1;
+#endif
+
+#ifndef __ASSUME_SOCK_CLOEXEC
+/* Negative if SOCK_CLOEXEC is not supported, positive if it is, zero
+   before be know the result.  */
+static int have_sock_cloexec;
+/* The paccept syscall was introduced at the same time as SOCK_CLOEXEC.  */
+# define have_paccept -1	// XXX For the time being there is no such call
+#endif
+
 /* Number of times clients had to wait.  */
 unsigned long int client_queued;
+
+/* Data structure for recording in-flight memory allocation.  */
+__thread struct mem_in_flight mem_in_flight attribute_tls_model_ie;
+/* Global list of the mem_in_flight variables of all the threads.  */
+struct mem_in_flight *mem_in_flight_list;
 
 
 ssize_t
@@ -497,6 +522,19 @@ nscd_init (void)
   if (nthreads == -1)
     /* No configuration for this value, assume a default.  */
     nthreads = 4;
+
+#ifdef HAVE_INOTIFY
+  /* Use inotify to recognize changed files.  */
+  inotify_fd = inotify_init1 (IN_NONBLOCK);
+# ifndef __ASSUME_IN_NONBLOCK
+  if (inotify_fd == -1 && errno == ENOSYS)
+    {
+      inotify_fd = inotify_init ();
+      if (inotify_fd != -1)
+	fcntl (inotify_fd, F_SETFL, O_RDONLY | O_NONBLOCK);
+    }
+# endif
+#endif
 
   for (size_t cnt = 0; cnt < lastdb; ++cnt)
     if (dbs[cnt].enabled)
@@ -800,25 +838,57 @@ cannot set socket to close on exec: %s; disabling paranoia mode"),
 	    assert (dbs[cnt].ro_fd == -1);
 	  }
 
+	dbs[cnt].inotify_descr = -1;
 	if (dbs[cnt].check_file)
 	  {
-	    /* We need the modification date of the file.  */
-	    struct stat64 st;
-
-	    if (stat64 (dbs[cnt].filename, &st) < 0)
+#ifdef HAVE_INOTIFY
+	    if (inotify_fd < 0
+		|| (dbs[cnt].inotify_descr
+		    = inotify_add_watch (inotify_fd, dbs[cnt].filename,
+					 IN_DELETE_SELF | IN_MODIFY)) < 0)
+	      /* We cannot notice changes in the main thread.  */
+#endif
 	      {
-		/* We cannot stat() the file, disable file checking.  */
-		dbg_log (_("cannot stat() file `%s': %s"),
-			 dbs[cnt].filename, strerror (errno));
-		dbs[cnt].check_file = 0;
+		/* We need the modification date of the file.  */
+		struct stat64 st;
+
+		if (stat64 (dbs[cnt].filename, &st) < 0)
+		  {
+		    /* We cannot stat() the file, disable file checking.  */
+		    dbg_log (_("cannot stat() file `%s': %s"),
+			     dbs[cnt].filename, strerror (errno));
+		    dbs[cnt].check_file = 0;
+		  }
+		else
+		  dbs[cnt].file_mtime = st.st_mtime;
 	      }
-	    else
-	      dbs[cnt].file_mtime = st.st_mtime;
 	  }
+
+#ifdef HAVE_INOTIFY
+	if (cnt == hstdb && inotify_fd >= -1)
+	  /* We also monitor the resolver configuration file.  */
+	  resolv_conf_descr = inotify_add_watch (inotify_fd,
+						 _PATH_RESCONF,
+						 IN_DELETE_SELF | IN_MODIFY);
+#endif
       }
 
   /* Create the socket.  */
-  sock = socket (AF_UNIX, SOCK_STREAM, 0);
+#ifndef __ASSUME_SOCK_CLOEXEC
+  sock = -1;
+  if (have_sock_cloexec >= 0)
+#endif
+    {
+      sock = socket (AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
+#ifndef __ASSUME_SOCK_CLOEXEC
+      if (have_sock_cloexec == 0)
+	have_sock_cloexec = sock != -1 || errno != EINVAL ? 1 : -1;
+#endif
+    }
+#ifndef __ASSUME_SOCK_CLOEXEC
+  if (have_sock_cloexec < 0)
+    sock = socket (AF_UNIX, SOCK_STREAM, 0);
+#endif
   if (sock < 0)
     {
       dbg_log (_("cannot open socket: %s"), strerror (errno));
@@ -834,22 +904,27 @@ cannot set socket to close on exec: %s; disabling paranoia mode"),
       exit (errno == EACCES ? 4 : 1);
     }
 
-  /* We don't want to get stuck on accept.  */
-  int fl = fcntl (sock, F_GETFL);
-  if (fl == -1 || fcntl (sock, F_SETFL, fl | O_NONBLOCK) == -1)
+#ifndef __ASSUME_SOCK_CLOEXEC
+  if (have_sock_cloexec < 0)
     {
-      dbg_log (_("cannot change socket to nonblocking mode: %s"),
-	       strerror (errno));
-      exit (1);
-    }
+      /* We don't want to get stuck on accept.  */
+      int fl = fcntl (sock, F_GETFL);
+      if (fl == -1 || fcntl (sock, F_SETFL, fl | O_NONBLOCK) == -1)
+	{
+	  dbg_log (_("cannot change socket to nonblocking mode: %s"),
+		   strerror (errno));
+	  exit (1);
+	}
 
-  /* The descriptor needs to be closed on exec.  */
-  if (paranoia && fcntl (sock, F_SETFD, FD_CLOEXEC) == -1)
-    {
-      dbg_log (_("cannot set socket to close on exec: %s"),
-	       strerror (errno));
-      exit (1);
+      /* The descriptor needs to be closed on exec.  */
+      if (paranoia && fcntl (sock, F_SETFD, FD_CLOEXEC) == -1)
+	{
+	  dbg_log (_("cannot set socket to close on exec: %s"),
+		   strerror (errno));
+	  exit (1);
+	}
     }
+#endif
 
   /* Set permissions for the socket.  */
   chmod (_PATH_NSCDSOCKET, DEFFILEMODE);
@@ -964,7 +1039,7 @@ send_ro_fd (struct database_dyn *db, char *key, int fd)
 
 /* Handle new request.  */
 static void
-handle_request (int fd, request_header *req, void *key, uid_t uid)
+handle_request (int fd, request_header *req, void *key, uid_t uid, pid_t pid)
 {
   if (__builtin_expect (req->version, NSCD_VERSION) != NSCD_VERSION)
     {
@@ -979,7 +1054,31 @@ cannot handle old request version %d; current version is %d"),
   if (selinux_enabled && nscd_request_avc_has_perm (fd, req->type) != 0)
     {
       if (debug_level > 0)
-	dbg_log (_("request not handled due to missing permission"));
+	{
+#ifdef SO_PEERCRED
+# ifdef PATH_MAX
+	  char buf[PATH_MAX];
+# else
+	  char buf[4096];
+# endif
+
+	  snprintf (buf, sizeof (buf), "/proc/%ld/exe", (long int) pid);
+	  ssize_t n = readlink (buf, buf, sizeof (buf) - 1);
+
+	  if (n <= 0)
+	    dbg_log (_("\
+request from %ld not handled due to missing permission"), (long int) pid);
+	  else
+	    {
+	      buf[n] = '\0';
+	      dbg_log (_("\
+request from '%s' [%ld] not handled due to missing permission"),
+		       buf, (long int) pid);
+	    }
+#else
+	  dbg_log (_("request not handled due to missing permission"));
+#endif
+	}
       return;
     }
 
@@ -1301,11 +1400,14 @@ cannot change to old working directory: %s; disabling paranoia mode"),
     }
 
   /* Synchronize memory.  */
+  int32_t certainly[lastdb];
   for (int cnt = 0; cnt < lastdb; ++cnt)
     if (dbs[cnt].enabled)
       {
 	/* Make sure nobody keeps using the database.  */
 	dbs[cnt].head->timestamp = 0;
+	certainly[cnt] = dbs[cnt].head->nscd_certainly_running;
+	dbs[cnt].head->nscd_certainly_running = 0;
 
 	if (dbs[cnt].persistent)
 	  // XXX async OK?
@@ -1328,6 +1430,15 @@ cannot change to old working directory: %s; disabling paranoia mode"),
     dbg_log (_("cannot change current working directory to \"/\": %s"),
 	     strerror (errno));
   paranoia = 0;
+
+  /* Reenable the databases.  */
+  time_t now = time (NULL);
+  for (int cnt = 0; cnt < lastdb; ++cnt)
+    if (dbs[cnt].enabled)
+      {
+	dbs[cnt].head->timestamp = now;
+	dbs[cnt].head->nscd_certainly_running = certainly[cnt];
+      }
 }
 
 
@@ -1365,42 +1476,75 @@ nscd_run_prune (void *p)
 
   int dont_need_update = setup_thread (&dbs[my_number]);
 
+  time_t now = time (NULL);
+
   /* We are running.  */
-  dbs[my_number].head->timestamp = time (NULL);
+  dbs[my_number].head->timestamp = now;
 
   struct timespec prune_ts;
-  if (clock_gettime (timeout_clock, &prune_ts) == -1)
+  if (__builtin_expect (clock_gettime (timeout_clock, &prune_ts) == -1, 0))
     /* Should never happen.  */
     abort ();
 
   /* Compute the initial timeout time.  Prevent all the timers to go
      off at the same time by adding a db-based value.  */
   prune_ts.tv_sec += CACHE_PRUNE_INTERVAL + my_number;
+  dbs[my_number].wakeup_time = now + CACHE_PRUNE_INTERVAL + my_number;
 
-  pthread_mutex_lock (&dbs[my_number].prune_lock);
+  pthread_mutex_t *prune_lock = &dbs[my_number].prune_lock;
+  pthread_cond_t *prune_cond = &dbs[my_number].prune_cond;
+
+  pthread_mutex_lock (prune_lock);
   while (1)
     {
       /* Wait, but not forever.  */
-      int e = pthread_cond_timedwait (&dbs[my_number].prune_cond,
-				      &dbs[my_number].prune_lock,
-				      &prune_ts);
-      assert (e == 0 || e == ETIMEDOUT);
+      int e = 0;
+      if (! dbs[my_number].clear_cache)
+	e = pthread_cond_timedwait (prune_cond, prune_lock, &prune_ts);
+      assert (__builtin_expect (e == 0 || e == ETIMEDOUT, 1));
 
       time_t next_wait;
-      time_t now = time (NULL);
-      if (e == ETIMEDOUT || now >= dbs[my_number].wakeup_time)
+      now = time (NULL);
+      if (e == ETIMEDOUT || now >= dbs[my_number].wakeup_time
+	  || dbs[my_number].clear_cache)
 	{
-	  next_wait = prune_cache (&dbs[my_number], now, -1);
+	  /* We will determine the new timout values based on the
+	     cache content.  Should there be concurrent additions to
+	     the cache which are not accounted for in the cache
+	     pruning we want to know about it.  Therefore set the
+	     timeout to the maximum.  It will be descreased when adding
+	     new entries to the cache, if necessary.  */
+	  if (sizeof (time_t) == sizeof (long int))
+	    dbs[my_number].wakeup_time = LONG_MAX;
+	  else
+	    dbs[my_number].wakeup_time = INT_MAX;
+
+	  /* Unconditionally reset the flag.  */
+	  time_t prune_now = dbs[my_number].clear_cache ? LONG_MAX : now;
+	  dbs[my_number].clear_cache = 0;
+
+	  pthread_mutex_unlock (prune_lock);
+
+	  next_wait = prune_cache (&dbs[my_number], prune_now, -1);
+
 	  next_wait = MAX (next_wait, CACHE_PRUNE_INTERVAL);
 	  /* If clients cannot determine for sure whether nscd is running
 	     we need to wake up occasionally to update the timestamp.
 	     Wait 90% of the update period.  */
 #define UPDATE_MAPPING_TIMEOUT (MAPPING_TIMEOUT * 9 / 10)
 	  if (__builtin_expect (! dont_need_update, 0))
-	    next_wait = MIN (UPDATE_MAPPING_TIMEOUT, next_wait);
+	    {
+	      next_wait = MIN (UPDATE_MAPPING_TIMEOUT, next_wait);
+	      dbs[my_number].head->timestamp = now;
+	    }
+
+	  pthread_mutex_lock (prune_lock);
 
 	  /* Make it known when we will wake up again.  */
-	  dbs[my_number].wakeup_time = now + next_wait;
+	  if (now + next_wait < dbs[my_number].wakeup_time)
+	    dbs[my_number].wakeup_time = now + next_wait;
+	  else
+	    next_wait = dbs[my_number].wakeup_time - now;
 	}
       else
 	/* The cache was just pruned.  Do not do it again now.  Just
@@ -1425,6 +1569,16 @@ __attribute__ ((__noreturn__))
 nscd_run_worker (void *p)
 {
   char buf[256];
+
+  /* Initialize the memory-in-flight list.  */
+  for (enum in_flight idx = 0; idx < IDX_last; ++idx)
+    mem_in_flight.block[idx].dbidx = -1;
+  /* And queue this threads structure.  */
+  do
+    mem_in_flight.next = mem_in_flight_list;
+  while (atomic_compare_and_exchange_bool_acq (&mem_in_flight_list,
+					       &mem_in_flight,
+					       mem_in_flight.next) != 0);
 
   /* Initial locking.  */
   pthread_mutex_lock (&readylist_lock);
@@ -1455,10 +1609,15 @@ nscd_run_worker (void *p)
       /* We are done with the list.  */
       pthread_mutex_unlock (&readylist_lock);
 
-      /* We do not want to block on a short read or so.  */
-      int fl = fcntl (fd, F_GETFL);
-      if (fl == -1 || fcntl (fd, F_SETFL, fl | O_NONBLOCK) == -1)
-	goto close_and_out;
+#ifndef __ASSUME_SOCK_CLOEXEC
+      if (have_sock_cloexec < 0)
+	{
+	  /* We do not want to block on a short read or so.  */
+	  int fl = fcntl (fd, F_GETFL);
+	  if (fl == -1 || fcntl (fd, F_SETFL, fl | O_NONBLOCK) == -1)
+	    goto close_and_out;
+	}
+#endif
 
       /* Now read the request.  */
       request_header req;
@@ -1491,6 +1650,8 @@ nscd_run_worker (void *p)
 	  if (getsockopt (fd, SOL_SOCKET, SO_PEERCRED, &caller, &optlen) == 0)
 	    pid = caller.pid;
 	}
+#else
+      const pid_t pid = 0;
 #endif
 
       /* It should not be possible to crash the nscd with a silly
@@ -1531,7 +1692,7 @@ handle_request: request received (Version = %d)"), req.version);
 	    }
 
 	  /* Phew, we got all the data, now process it.  */
-	  handle_request (fd, &req, keybuf, uid);
+	  handle_request (fd, &req, keybuf, uid, pid);
 	}
 
     close_and_out:
@@ -1624,6 +1785,16 @@ main_loop_poll (void)
   size_t nused = 1;
   size_t firstfree = 1;
 
+#ifdef HAVE_INOTIFY
+  if (inotify_fd != -1)
+    {
+      conns[1].fd = inotify_fd;
+      conns[1].events = POLLRDNORM;
+      nused = 2;
+      firstfree = 2;
+    }
+#endif
+
   while (1)
     {
       /* Wait for any event.  We wait at most a couple of seconds so
@@ -1646,7 +1817,26 @@ main_loop_poll (void)
 	  if (conns[0].revents != 0)
 	    {
 	      /* We have a new incoming connection.  Accept the connection.  */
-	      int fd = TEMP_FAILURE_RETRY (accept (sock, NULL, NULL));
+	      int fd;
+
+#ifndef __ASSUME_PACCEPT
+	      fd = -1;
+	      if (have_paccept >= 0)
+#endif
+		{
+#if 0
+		  fd = TEMP_FAILURE_RETRY (paccept (sock, NULL, NULL, NULL,
+						    SOCK_NONBLOCK));
+#ifndef __ASSUME_PACCEPT
+		  if (have_paccept == 0)
+		    have_paccept = fd != -1 || errno != ENOSYS ? 1 : -1;
+#endif
+#endif
+		}
+#ifndef __ASSUME_PACCEPT
+	      if (have_paccept < 0)
+		fd = TEMP_FAILURE_RETRY (accept (sock, NULL, NULL));
+#endif
 
 	      /* Use the descriptor if we have not reached the limit.  */
 	      if (fd >= 0)
@@ -1671,7 +1861,80 @@ main_loop_poll (void)
 	      --n;
 	    }
 
-	  for (size_t cnt = 1; cnt < nused && n > 0; ++cnt)
+	  size_t first = 1;
+#ifdef HAVE_INOTIFY
+	  if (inotify_fd != -1 && conns[1].fd == inotify_fd)
+	    {
+	      if (conns[1].revents != 0)
+		{
+		  bool to_clear[lastdb] = { false, };
+		  union
+		  {
+# ifndef PATH_MAX
+#  define PATH_MAX 1024
+# endif
+		    struct inotify_event i;
+		    char buf[sizeof (struct inotify_event) + PATH_MAX];
+		  } inev;
+
+		  while (1)
+		    {
+		      ssize_t nb = TEMP_FAILURE_RETRY (read (inotify_fd, &inev,
+							     sizeof (inev)));
+		      if (nb < (ssize_t) sizeof (struct inotify_event))
+			{
+			  if (__builtin_expect (nb == -1 && errno != EAGAIN,
+						0))
+			    {
+			      /* Something went wrong when reading the inotify
+				 data.  Better disable inotify.  */
+			      dbg_log (_("\
+disabled inotify after read error %d"),
+				       errno);
+			      conns[1].fd = -1;
+			      firstfree = 1;
+			      if (nused == 2)
+				nused = 1;
+			      close (inotify_fd);
+			      inotify_fd = -1;
+			    }
+			  break;
+			}
+
+		      /* Check which of the files changed.  */
+		      for (size_t dbcnt = 0; dbcnt < lastdb; ++dbcnt)
+			if (inev.i.wd == dbs[dbcnt].inotify_descr)
+			  {
+			    to_clear[dbcnt] = true;
+			    goto next;
+			  }
+
+		      if (inev.i.wd == resolv_conf_descr)
+			{
+			  res_init ();
+			  to_clear[hstdb] = true;
+			}
+		    next:;
+		    }
+
+		  /* Actually perform the cache clearing.  */
+		  for (size_t dbcnt = 0; dbcnt < lastdb; ++dbcnt)
+		    if (to_clear[dbcnt])
+		      {
+			pthread_mutex_lock (&dbs[dbcnt].prune_lock);
+			dbs[dbcnt].clear_cache = 1;
+			pthread_mutex_unlock (&dbs[dbcnt].prune_lock);
+			pthread_cond_signal (&dbs[dbcnt].prune_cond);
+		      }
+
+		  --n;
+		}
+
+	      first = 2;
+	    }
+#endif
+
+	  for (size_t cnt = first; cnt < nused && n > 0; ++cnt)
 	    if (conns[cnt].revents != 0)
 	      {
 		fd_ready (conns[cnt].fd);
@@ -1737,6 +2000,18 @@ main_loop_epoll (int efd)
     /* We cannot use epoll.  */
     return;
 
+#ifdef HAVE_INOTIFY
+  if (inotify_fd != -1)
+    {
+      ev.events = EPOLLRDNORM;
+      ev.data.fd = inotify_fd;
+      if (epoll_ctl (efd, EPOLL_CTL_ADD, inotify_fd, &ev) == -1)
+	/* We cannot use epoll.  */
+	return;
+      nused = 2;
+    }
+#endif
+
   while (1)
     {
       struct epoll_event revs[100];
@@ -1773,6 +2048,63 @@ main_loop_epoll (int efd)
 		  }
 	      }
 	  }
+#ifdef HAVE_INOTIFY
+	else if (revs[cnt].data.fd == inotify_fd)
+	  {
+	    bool to_clear[lastdb] = { false, };
+	    union
+	    {
+	      struct inotify_event i;
+	      char buf[sizeof (struct inotify_event) + PATH_MAX];
+	    } inev;
+
+	    while (1)
+	      {
+		ssize_t nb = TEMP_FAILURE_RETRY (read (inotify_fd, &inev,
+				 		 sizeof (inev)));
+		if (nb < (ssize_t) sizeof (struct inotify_event))
+		  {
+		    if (__builtin_expect (nb == -1 && errno != EAGAIN, 0))
+		      {
+			/* Something went wrong when reading the inotify
+			   data.  Better disable inotify.  */
+			dbg_log (_("disabled inotify after read error %d"),
+				 errno);
+			(void) epoll_ctl (efd, EPOLL_CTL_DEL, inotify_fd,
+					  NULL);
+			close (inotify_fd);
+			inotify_fd = -1;
+		      }
+		    break;
+		  }
+
+		/* Check which of the files changed.  */
+		for (size_t dbcnt = 0; dbcnt < lastdb; ++dbcnt)
+		  if (inev.i.wd == dbs[dbcnt].inotify_descr)
+		    {
+		      to_clear[dbcnt] = true;
+		      goto next;
+		    }
+
+		if (inev.i.wd == resolv_conf_descr)
+		  {
+		    res_init ();
+		    to_clear[hstdb] = true;
+		  }
+	      next:;
+	      }
+
+	    /* Actually perform the cache clearing.  */
+	    for (size_t dbcnt = 0; dbcnt < lastdb; ++dbcnt)
+	      if (to_clear[dbcnt])
+		{
+		  pthread_mutex_lock (&dbs[dbcnt].prune_lock);
+		  dbs[dbcnt].clear_cache = 1;
+		  pthread_mutex_unlock (&dbs[dbcnt].prune_lock);
+		  pthread_cond_signal (&dbs[dbcnt].prune_cond);
+		}
+	  }
+#endif
 	else
 	  {
 	    /* Remove the descriptor from the epoll descriptor.  */
@@ -1794,8 +2126,10 @@ main_loop_epoll (int efd)
       /*  Now look for descriptors for accepted connections which have
 	  no reply in too long of a time.  */
       time_t laststart = now - ACCEPT_TIMEOUT;
+      assert (starttime[sock] == 0);
+      assert (inotify_fd == -1 || starttime[inotify_fd] == 0);
       for (int cnt = highest; cnt > STDERR_FILENO; --cnt)
-	if (cnt != sock && starttime[cnt] != 0 && starttime[cnt] < laststart)
+	if (starttime[cnt] != 0 && starttime[cnt] < laststart)
 	  {
 	    /* We are waiting for this one for too long.  Close it.  */
 	    (void) epoll_ctl (efd, EPOLL_CTL_DEL, cnt, NULL);

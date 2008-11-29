@@ -439,6 +439,7 @@ const struct res_sym __p_type_syms[] = {
 	{ns_t_nimloc,	"NIMLOC",	"NIMROD locator (unimplemented)"},
 	{ns_t_srv,	"SRV",		"server selection"},
 	{ns_t_atma,	"ATMA",		"ATM address (unimplemented)"},
+	{ns_t_dname,	"DNAME",	"Non-terminal DNAME (for IPv6)"},
 	{ns_t_tsig,	"TSIG",		"transaction signature"},
 	{ns_t_ixfr,	"IXFR",		"incremental zone transfer"},
 	{ns_t_axfr,	"AXFR",		"zone transfer"},
@@ -1023,6 +1024,7 @@ dn_count_labels(const char *name) {
 		count++;
 	return (count);
 }
+libresolv_hidden_def (__dn_count_labels)
 
 
 /*
@@ -1050,3 +1052,4 @@ p_secstodate (u_long secs) {
 		time->tm_hour, time->tm_min, time->tm_sec);
 	return (output);
 }
+libresolv_hidden_def (__p_secstodate)

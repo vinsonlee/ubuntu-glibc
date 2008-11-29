@@ -15,10 +15,10 @@
 @item atanf  @tab - @tab - @tab - @tab - @tab -
 @item atan  @tab - @tab - @tab - @tab - @tab -
 @item atanl  @tab - @tab - @tab - @tab - @tab -
-@item atanhf  @tab - @tab 1 @tab 1 @tab - @tab 1
+@item atanhf  @tab 1 @tab 1 @tab 1 @tab - @tab 1
 @item atanh  @tab 1 @tab - @tab - @tab - @tab -
 @item atanhl  @tab - @tab - @tab - @tab 1 @tab -
-@item atan2f  @tab - @tab 1 @tab 1 @tab - @tab 3
+@item atan2f  @tab 1 @tab 1 @tab 1 @tab - @tab 3
 @item atan2  @tab - @tab - @tab - @tab - @tab -
 @item atan2l  @tab - @tab - @tab - @tab 1 @tab -
 @item cabsf  @tab 1 @tab - @tab - @tab - @tab -
@@ -48,7 +48,7 @@
 @item cbrtf  @tab - @tab - @tab - @tab - @tab -
 @item cbrt  @tab 1 @tab 1 @tab 1 @tab - @tab 1
 @item cbrtl  @tab - @tab 1 @tab - @tab 1 @tab -
-@item ccosf  @tab 0 + i 1 @tab 1 + i 1 @tab 1 + i 1 @tab 1 + i 1 @tab 1 + i 1
+@item ccosf  @tab 1 + i 1 @tab 1 + i 1 @tab 1 + i 1 @tab 1 + i 1 @tab 1 + i 1
 @item ccos  @tab 1 + i 1 @tab 1 + i 0 @tab 1 + i 0 @tab - @tab 1 + i 0
 @item ccosl  @tab - @tab 1 + i 0 @tab - @tab 1 + i 1 @tab -
 @item ccoshf  @tab 1 + i 1 @tab 1 + i 1 @tab 1 + i 1 @tab 1 + i 1 @tab 1 + i 1
@@ -63,7 +63,7 @@
 @item cimagf  @tab - @tab - @tab - @tab - @tab -
 @item cimag  @tab - @tab - @tab - @tab - @tab -
 @item cimagl  @tab - @tab - @tab - @tab - @tab -
-@item clogf  @tab 0 + i 3 @tab 1 + i 0 @tab 1 + i 0 @tab 1 + i 0 @tab 1 + i 3
+@item clogf  @tab 1 + i 3 @tab 1 + i 0 @tab 1 + i 0 @tab 1 + i 0 @tab 1 + i 3
 @item clog  @tab 0 + i 1 @tab - @tab - @tab - @tab -
 @item clogl  @tab - @tab - @tab - @tab 1 + i 1 @tab -
 @item clog10f  @tab 1 + i 5 @tab 1 + i 1 @tab 1 + i 1 @tab 1 + i 1 @tab 1 + i 5
@@ -82,7 +82,7 @@
 @item cosh  @tab - @tab - @tab - @tab - @tab -
 @item coshl  @tab - @tab - @tab - @tab - @tab -
 @item cpowf  @tab 4 + i 2 @tab 4 + i 2 @tab 4 + i 2 @tab 2 + i 6 @tab 4 + i 2
-@item cpow  @tab 1 + i 1.1031 @tab 2 + i 2 @tab 2 + i 2 @tab 1 + i 2 @tab 2 + i 2
+@item cpow  @tab 2 + i 2 @tab 2 + i 2 @tab 2 + i 2 @tab 1 + i 2 @tab 2 + i 2
 @item cpowl  @tab - @tab 2 + i 2 @tab - @tab 15 + i 2 @tab -
 @item cprojf  @tab - @tab - @tab - @tab - @tab -
 @item cproj  @tab - @tab - @tab - @tab - @tab -
@@ -106,7 +106,7 @@
 @item ctanh  @tab 2 + i 2 @tab 1 + i 0 @tab 1 + i 0 @tab 0 + i 1 @tab 1 + i 0
 @item ctanhl  @tab - @tab 1 + i 0 @tab - @tab 0 + i 1 @tab -
 @item erff  @tab - @tab - @tab - @tab - @tab -
-@item erf  @tab - @tab 1 @tab 1 @tab - @tab 1
+@item erf  @tab 1 @tab 1 @tab 1 @tab - @tab 1
 @item erfl  @tab - @tab 1 @tab - @tab - @tab -
 @item erfcf  @tab 12 @tab - @tab - @tab 1 @tab -
 @item erfc  @tab 24 @tab 1 @tab 1 @tab - @tab 1
@@ -121,7 +121,7 @@
 @item exp2  @tab - @tab - @tab - @tab - @tab -
 @item exp2l  @tab - @tab - @tab - @tab - @tab -
 @item expm1f  @tab 1 @tab 1 @tab 1 @tab - @tab 1
-@item expm1  @tab - @tab 1 @tab 1 @tab - @tab 1
+@item expm1  @tab 1 @tab 1 @tab 1 @tab - @tab 1
 @item expm1l  @tab - @tab 1 @tab - @tab 1 @tab -
 @item fabsf  @tab - @tab - @tab - @tab - @tab -
 @item fabs  @tab - @tab - @tab - @tab - @tab -
@@ -177,7 +177,7 @@
 @item logf  @tab 1 @tab - @tab - @tab 1 @tab -
 @item log  @tab 1 @tab - @tab - @tab - @tab -
 @item logl  @tab - @tab - @tab - @tab 1 @tab -
-@item log10f  @tab 1 @tab 2 @tab 2 @tab 1 @tab 2
+@item log10f  @tab 2 @tab 2 @tab 2 @tab 1 @tab 2
 @item log10  @tab 1 @tab 1 @tab 1 @tab - @tab 1
 @item log10l  @tab - @tab 1 @tab - @tab 2 @tab -
 @item log1pf  @tab 1 @tab 1 @tab 1 @tab - @tab 1

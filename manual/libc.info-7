@@ -1765,7 +1765,7 @@ about processes that are running or "ready to run," which means they are
 ready to execute instructions right now.  When a process blocks to wait
 for something like I/O, its absolute priority is irrelevant.
 
-   *Note_*  The term "runnable" is a synonym for "ready to run."
+   *NB:*  The term "runnable" is a synonym for "ready to run."
 
    When two processes are running or ready to run and both have the same
 absolute priority, it's more interesting.  In that case, who gets the
@@ -1836,7 +1836,7 @@ privileged process constantly monitors the process' CPU usage and raises
 its absolute priority when the process isn't getting its entitled share
 and lowers it when the process is exceeding it.
 
-   *Note_*  The absolute priority is sometimes called the "static
+   *NB:*  The absolute priority is sometimes called the "static
 priority."  We don't use that term in this manual because it misses the
 most important feature of the absolute priority:  its absoluteness.
 

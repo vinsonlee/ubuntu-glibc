@@ -30,8 +30,13 @@
 	.type	__pthread_rwlock_rdlock,@function
 	.align	16
 __pthread_rwlock_rdlock:
+	cfi_startproc
 	pushl	%esi
+	cfi_adjust_cfa_offset(4)
 	pushl	%ebx
+	cfi_adjust_cfa_offset(4)
+	cfi_offset(%esi, -8)
+	cfi_offset(%ebx, -12)
 
 	xorl	%esi, %esi
 	movl	12(%esp), %ebx
@@ -113,16 +118,23 @@ __pthread_rwlock_rdlock:
 
 	movl	%edx, %eax
 	popl	%ebx
+	cfi_adjust_cfa_offset(-4)
+	cfi_restore(%ebx)
 	popl	%esi
+	cfi_adjust_cfa_offset(-4)
+	cfi_restore(%esi)
 	ret
 
+	cfi_adjust_cfa_offset(8)
+	cfi_offset(%esi, -8)
+	cfi_offset(%ebx, -12)
 1:
 #if MUTEX == 0
 	movl	%ebx, %edx
 #else
 	leal	MUTEX(%ebx), %edx
 #endif
-	movl	PSHARED(%ebx), %ecx
+	movzbl	PSHARED(%ebx), %ecx
 	call	__lll_lock_wait
 	jmp	2b
 
@@ -138,7 +150,7 @@ __pthread_rwlock_rdlock:
 #else
 	leal	MUTEX(%ebx), %eax
 #endif
-	movl	PSHARED(%ebx), %ecx
+	movzbl	PSHARED(%ebx), %ecx
 	call	__lll_unlock_wake
 	jmp	7b
 
@@ -158,7 +170,7 @@ __pthread_rwlock_rdlock:
 #else
 	leal	MUTEX(%ebx), %eax
 #endif
-	movl	PSHARED(%ebx), %ecx
+	movzbl	PSHARED(%ebx), %ecx
 	call	__lll_unlock_wake
 	jmp	11b
 
@@ -168,9 +180,10 @@ __pthread_rwlock_rdlock:
 #else
 	leal	MUTEX(%ebx), %edx
 #endif
-	movl	PSHARED(%ebx), %ecx
+	movzbl	PSHARED(%ebx), %ecx
 	call	__lll_lock_wait
 	jmp	13b
+	cfi_endproc
 	.size	__pthread_rwlock_rdlock,.-__pthread_rwlock_rdlock
 
 	.globl	pthread_rwlock_rdlock

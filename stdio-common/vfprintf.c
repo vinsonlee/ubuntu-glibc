@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2002, 2003, 2004, 2005, 2006, 2007
+/* Copyright (C) 1991-2002, 2003, 2004, 2005, 2006, 2007, 2008
    Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
@@ -625,7 +625,7 @@ vfprintf (FILE *s, const CHAR_T *format, va_list ap)
 				       thousands_sep);			      \
 									      \
 	      if (use_outdigits && base == 10)				      \
-		string = _i18n_number_rewrite (string, workend);	      \
+		string = _i18n_number_rewrite (string, workend, workend);     \
 	    }								      \
 	  /* Simplify further test for num != 0.  */			      \
 	  number.word = number.longlong != 0;				      \
@@ -683,7 +683,7 @@ vfprintf (FILE *s, const CHAR_T *format, va_list ap)
 				       thousands_sep);			      \
 									      \
 	      if (use_outdigits && base == 10)				      \
-		string = _i18n_number_rewrite (string, workend);	      \
+		string = _i18n_number_rewrite (string, workend, workend);     \
 	    }								      \
 	}								      \
 									      \
@@ -2080,6 +2080,11 @@ _IO_helper_overflow (_IO_FILE *s, int c)
     {
       _IO_size_t written = _IO_sputn (target, s->_wide_data->_IO_write_base,
 				      used);
+      if (written == 0 || written == WEOF)
+	return WEOF;
+      __wmemmove (s->_wide_data->_IO_write_base,
+		  s->_wide_data->_IO_write_base + written,
+		  used - written);
       s->_wide_data->_IO_write_ptr -= written;
     }
 #else
@@ -2087,6 +2092,10 @@ _IO_helper_overflow (_IO_FILE *s, int c)
   if (used)
     {
       _IO_size_t written = _IO_sputn (target, s->_IO_write_base, used);
+      if (written == 0 || written == EOF)
+	return EOF;
+      memmove (s->_IO_write_base, s->_IO_write_base + written,
+	       used - written);
       s->_IO_write_ptr -= written;
     }
 #endif

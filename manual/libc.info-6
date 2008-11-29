@@ -1741,10 +1741,10 @@ asinhl        -               -               -               1               -
 atanf         -               -               -               -               -
 atan          -               -               -               -               -
 atanl         -               -               -               -               -
-atanhf        -               1               1               -               1
+atanhf        1               1               1               -               1
 atanh         1               -               -               -               -
 atanhl        -               -               -               1               -
-atan2f        -               1               1               -               3
+atan2f        1               1               1               -               3
 atan2         -               -               -               -               -
 atan2l        -               -               -               1               -
 cabsf         1               -               -               -               -
@@ -1774,7 +1774,7 @@ catanhl       -               4 + i 0         -               1 + i 0         -
 cbrtf         -               -               -               -               -
 cbrt          1               1               1               -               1
 cbrtl         -               1               -               1               -
-ccosf         0 + i 1         1 + i 1         1 + i 1         1 + i 1         1 + i 1
+ccosf         1 + i 1         1 + i 1         1 + i 1         1 + i 1         1 + i 1
 ccos          1 + i 1         1 + i 0         1 + i 0         -               1 + i 0
 ccosl         -               1 + i 0         -               1 + i 1         -
 ccoshf        1 + i 1         1 + i 1         1 + i 1         1 + i 1         1 + i 1
@@ -1789,7 +1789,7 @@ cexpl         -               -               -               0 + i 1         -
 cimagf        -               -               -               -               -
 cimag         -               -               -               -               -
 cimagl        -               -               -               -               -
-clogf         0 + i 3         1 + i 0         1 + i 0         1 + i 0         1 + i 3
+clogf         1 + i 3         1 + i 0         1 + i 0         1 + i 0         1 + i 3
 clog          0 + i 1         -               -               -               -
 clogl         -               -               -               1 + i 1         -
 clog10f       1 + i 5         1 + i 1         1 + i 1         1 + i 1         1 + i 5
@@ -1808,7 +1808,7 @@ coshf         -               -               -               -               -
 cosh          -               -               -               -               -
 coshl         -               -               -               -               -
 cpowf         4 + i 2         4 + i 2         4 + i 2         2 + i 6         4 + i 2
-cpow          1 + i 1.1031    2 + i 2         2 + i 2         1 + i 2         2 + i 2
+cpow          2 + i 2         2 + i 2         2 + i 2         1 + i 2         2 + i 2
 cpowl         -               2 + i 2         -               15 + i 2        -
 cprojf        -               -               -               -               -
 cproj         -               -               -               -               -
@@ -1832,7 +1832,7 @@ ctanhf        2 + i 1         2 + i 1         2 + i 1         0 + i 1         2 
 ctanh         2 + i 2         1 + i 0         1 + i 0         0 + i 1         1 + i 0
 ctanhl        -               1 + i 0         -               0 + i 1         -
 erff          -               -               -               -               -
-erf           -               1               1               -               1
+erf           1               1               1               -               1
 erfl          -               1               -               -               -
 erfcf         12              -               -               1               -
 erfc          24              1               1               -               1
@@ -1847,7 +1847,7 @@ exp2f         -               -               -               -               -
 exp2          -               -               -               -               -
 exp2l         -               -               -               -               -
 expm1f        1               1               1               -               1
-expm1         -               1               1               -               1
+expm1         1               1               1               -               1
 expm1l        -               1               -               1               -
 fabsf         -               -               -               -               -
 fabs          -               -               -               -               -
@@ -1903,7 +1903,7 @@ llrintl       -               -               -               -               -
 logf          1               -               -               1               -
 log           1               -               -               -               -
 logl          -               -               -               1               -
-log10f        1               2               2               1               2
+log10f        2               2               2               1               2
 log10         1               1               1               -               1
 log10l        -               1               -               2               -
 log1pf        1               1               1               -               1
@@ -2897,11 +2897,10 @@ with the GNU C library; we support them for BSD compatibility only.
      This function returns the next pseudo-random number in the
      sequence.  The value returned ranges from `0' to `RAND_MAX'.
 
-     *Note_* Temporarily this function was defined to return a
-     `int32_t' value to indicate that the return value always contains
-     32 bits even if `long int' is wider.  The standard demands it
-     differently.  Users must always be aware of the 32-bit limitation,
-     though.
+     *NB:* Temporarily this function was defined to return a `int32_t'
+     value to indicate that the return value always contains 32 bits
+     even if `long int' is wider.  The standard demands it differently.
+     Users must always be aware of the 32-bit limitation, though.
 
  -- Function: void srandom (unsigned int SEED)
      The `srandom' function sets the state of the random number
@@ -3681,7 +3680,7 @@ macros, you do not have to worry about the type of their argument.
      This function returns a nonzero value if X is a "not a number"
      value, and zero otherwise.
 
-     *Note_* The `isnan' macro defined by ISO C99 overrides the BSD
+     *NB:* The `isnan' macro defined by ISO C99 overrides the BSD
      function.  This is normally not a problem, because the two
      routines behave identically.  However, if you really need to get
      the BSD function for some reason, you can write
@@ -4135,7 +4134,7 @@ whether traps will occur for each of the exceptions, by setting bits in
 the "control word".  In C, traps result in the program receiving the
 `SIGFPE' signal; see *note Signal Handling::.
 
-   *Note_* IEEE 754 says that trap handlers are given details of the
+   *NB:* IEEE 754 says that trap handlers are given details of the
 exceptional situation, and can set the result value.  C signals do not
 provide any mechanism to pass this information back and forth.
 Trapping exceptions in C is therefore not very useful.
@@ -4651,7 +4650,7 @@ macros are guaranteed to evaluate their arguments only once.
 machines that don't, the macros can be very slow.  Therefore, you should
 not use these functions when NaN is not a concern.
 
-   *Note_* There are no macros `isequal' or `isunequal'.  They are
+   *NB:* There are no macros `isequal' or `isunequal'.  They are
 unnecessary, because the `==' and `!=' operators do _not_ throw an
 exception if one or both of the operands are NaN.
 
@@ -6852,7 +6851,7 @@ is defined and implemented in terms of calls to `strptime'.
 
           Leading zeroes are permitted but not required.
 
-          *Note_* The Unix specification says the upper bound on this
+          *NB:* The Unix specification says the upper bound on this
           value is `61', a result of a decision to allow double leap
           seconds.  You will not see the value `61' because no minute
           has more than one leap second, but the myth persists.
