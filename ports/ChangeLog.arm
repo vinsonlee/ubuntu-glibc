@@ -1,3 +1,57 @@
+2008-08-19  Joseph Myers  <joseph@codesourcery.com>
+
+	* data/c++-types-arm-linux-gnueabi.data: New.
+	* data/localplt-arm-linux-gnueabi.data: New.
+	* sysdeps/arm/bsd-_setjmp.S: Use HIDDEN_JUMPTARGET to call
+	__sigsetjmp.
+	* sysdeps/arm/bsd-setjmp.S: Likewise.
+	* sysdeps/arm/eabi/aeabi_localeconv.c: Use __localeconv.
+	* sysdeps/arm/eabi/find_exidx.c (__gnu_Unwind_Find_exidx): Use
+	__dl_iterate_phdr.
+	* sysdeps/arm/eabi/setjmp.S: Add hidden_def (__sigsetjmp).
+	* sysdeps/arm/memmove.S: Use HIDDEN_JUMPTARGET to call memcpy from
+	within libc.
+	* sysdeps/arm/setjmp.S: Add hidden_def (__sigsetjmp).
+	* sysdeps/unix/sysv/linux/arm/clone.S: Use HIDDEN_JUMPTARGET to
+	call _exit.
+	* sysdeps/unix/sysv/linux/arm/ioperm.c (init_iosys): Use __sysctl,
+	__readlink and fgets_unlocked.
+	(_ioperm): Use __open and __close.
+
+2008-07-18  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/arm/eabi/fgetexcptflg.c: New.
+	* sysdeps/arm/eabi/fsetexcptflg.c (__fesetexceptflag): Operate on
+	set exception flags, not on mask of enabled exceptions.
+
+2008-07-18  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/arm/eabi/feupdateenv.c: New.
+
+2008-07-18  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/arm/libm-test-ulps: Update.
+
+2008-06-01  Paul Brook  <paul@codesourcery.com>
+	    Zack Weinberg  <zack@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* sysdeps/arm/nptl/pthread_spin_lock.S,
+	sysdeps/arm/nptl/pthread_spin_trylock.S: Delete.
+	* sysdeps/arm/nptl/pthread_spin_lock.c,
+	sysdeps/arm/nptl/pthread_spin_trylock.c: New files using
+	atomic_compare_and_exchange_val_acq to take spinlocks.
+	* sysdeps/unix/sysv/linux/arm/nptl/bits/atomic.h (lll_trylock,
+	lll_cond_trylock): Use atomic_compare_and_exchange_val_acq.
+	(__lll_trylock, __lll_cond_trylock): Delete.
+	* sysdeps/unix/sysv/linux/arm/nptl/bits/atomic.h
+	(atomic_exchange_acq): Delete.
+	(atomic_full_barrier): Define.
+	(__arch_compare_and_exchange_val_32_acq): Use named operands.
+	* sysdeps/unix/sysv/linux/arm/eabi/configure.in: Update
+	arch_minimum_kernel to 2.6.16.
+	* sysdeps/unix/sysv/linux/arm/eabi/configure: Regenerated.
+
 2008-04-21  Daniel Jacobowitz  <dan@codesourcery.com>
 
 	* sysdeps/unix/sysv/linux/arm/check_pf.c: Update from generic

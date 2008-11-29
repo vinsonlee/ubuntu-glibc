@@ -1,3 +1,141 @@
+2008-11-12  Jakub Jelinek  <jakub@redhat.com>
+
+	[BZ #7008]
+	* pthread_condattr_setclock.c (pthread_condattr_setclock): Fix masking
+	of old value.
+	* pthread_cond_init.c (__pthread_cond_init): Fix
+	cond->__data.__nwaiters initialization.
+	* Makefile (tests): Add tst-cond23.
+	* tst-cond23.c: New test.
+
+2008-11-07  Jakub Jelinek  <jakub@redhat.com>
+
+	* sysdeps/pthread/malloc-machine.h (MALLOC): Adjust __libc_tsd_define
+	arguments.
+	(tsd_setspecific, tsd_getspecific): Adjust __libc_tsd_{set,get}
+	arguments.
+
+2008-11-01  Ulrich Drepper  <drepper@redhat.com>
+
+	[BZ #6955]
+	* pthread_mutex_lock.c: Add support for private PI mutexes.
+	* pthread_mutex_timedlock.c: Likewise.
+	* pthread_mutex_trylock.c: Likewise.
+	* pthread_mutex_unlock.c: Likewise.
+	Patch mostly by Ben Jackson <ben@ben.com>.
+
+2008-10-31  Ulrich Drepper  <drepper@redhat.com>
+
+	[BZ #6843]
+	* sysdeps/pthread/gai_misc.h (__gai_create_helper_thread):
+	Increase stack size for helper thread.
+
+2008-10-06  Martin Schwidefsky  <schwidefsky@de.ibm.com>
+
+	* sysdeps/s390/tls.h (THREAD_SET_STACK_GUARD): Add empty inline
+	assembly with a clobber list for access registers a0 and a1.
+
+2008-09-11  Martin Schwidefsky  <schwidefsky@de.ibm.com>
+
+	* sysdeps/unix/sysv/linux/fork.c (__libc_fork): Add memory barrier
+	to force runp->refcntr to be read from memory.
+
+2008-09-08  Richard Guenther  <rguenther@suse.de>
+
+	* sysdeps/unix/sysv/linux/i386/lowlevellock.h (lll_lock,
+	lll_robust_lock, lll_cond_lock, lll_robust_cond_lock,
+	lll_timedlock, lll_robust_timedlock, lll_unlock,
+	lll_robust_unlock): Promote private to int.
+
+2008-08-15  Ulrich Drepper  <drepper@redhat.com>
+
+	* sysdeps/x86_64/pthreaddef.h: Remove ARCH_MAP_FLAGS and
+	ARCH_RETRY_MMAP definitions.
+	* allocatestack.c: Remove definition of ARCH_MAP_FLAGS.
+	Define MAP_STACK when not defined.
+	(allocate_stack): Use MAP_STACK instead of ARCH_MAP_FLAGS.  Remove
+	handling of ARCH_RETRY_MMAP.
+
+2008-07-30  Ulrich Drepper  <drepper@redhat.com>
+
+	* tst-align2.c (f): Print message that f is reached.
+
+2008-04-28  Hiroki Kaminaga  <kaminaga@sm.sony.co.jp>
+
+	[BZ #6740]
+	* sysdeps/powerpc/tcb-offsets.sym (PRIVATE_FUTEX_OFFSET): Guard symbol
+	definition with #ifndef __ASSUME_PRIVATE_FUTEX.
+
+2008-07-25  Ulrich Drepper  <drepper@redhat.com>
+
+	* sysdeps/unix/sysv/linux/mq_notify.c (init_mq_netlink): Use
+	SOCK_CLOEXEC if possible.
+
+2008-05-29  Ulrich Drepper  <drepper@redhat.com>
+
+	* Makefile (tests): Add tst-rwlock2a.
+	* tst-rwlock2.c: Use TYPE macro to decide what rwlock type to use.
+	* tst-rwlock2a.c: New file.
+
+2008-06-12  Ulrich Drepper  <drepper@redhat.com>
+
+	* sysdeps/pthread/pthread.h: Remove inadvertant checkin.
+
+2008-05-17  Samuel Thibault  <samuel.thibault@ens-lyon.org>
+
+	* sysdeps/pthread/pthread.h: Fix typo in comment.
+
+2008-05-28  Ulrich Drepper  <drepper@redhat.com>
+
+	* sysdeps/pthread/createthread.c (do_clone): Pass accurate length
+	of CPU set to the kernel.
+
+2008-05-23  Paul Pluzhnikov  <ppluzhnikov@google.com>
+
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_barrier_wait.S: Add
+	cfi directives.
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_cond_broadcast.S: Likewise.
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_cond_signal.S: Likewise.
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_rwlock_rdlock.S: Likewise.
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_rwlock_unlock.S: Likewise.
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_rwlock_wrlock.S: Likewise.
+	* sysdeps/unix/sysv/linux/i386/i486/sem_post.S: Likewise.
+
+2008-05-22  Paul Pluzhnikov  <ppluzhnikov@google.com>
+
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_rwlock_timedrdlock.S: Add
+	cfi directives.
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_rwlock_timedwrlock.S:
+	Likewise.
+	* sysdeps/unix/sysv/linux/x86_64/pthread_rwlock_timedrdlock.S:
+	Likewise.
+	* sysdeps/unix/sysv/linux/x86_64/pthread_rwlock_timedwrlock.S:
+	Likewise.
+
+2008-05-26  Ulrich Drepper  <drepper@redhat.com>
+
+	* tst-typesizes.c: Explicitly check __SIZEOF_PTHREAD_* constants.
+
+2008-05-20  Jakub Jelinek  <jakub@redhat.com>
+
+	David S. Miller  <davem@davemloft.net>
+
+	* sysdeps/unix/sysv/linux/sparc/sparc64/Makefile: New file.
+
+2008-05-10  Ulrich Drepper  <drepper@redhat.com>
+
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_rwlock_rdlock.S: Access
+	__pshared correctly.
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_rwlock_timedrdlock.S:
+	Likewise.
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_rwlock_timedwrlock.S:
+	Likewise.
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_rwlock_unlock.S:
+	Likewise.
+	* sysdeps/unix/sysv/linux/i386/i486/pthread_rwlock_wrlock.S:
+	Likewise.
+	Reported by Clemens Kolbitsch <clemens.kol@gmx.at>.
+
 2008-04-14  David S. Miller  <davem@davemloft.net>
 
 	* sysdeps/unix/sysv/linux/sparc/sparc32/sem_wait.c
@@ -17,7 +155,7 @@
 
 2008-03-27  Ulrich Drepper  <drepper@redhat.com>
 
-	* sysdeps/unix/sysv/linux/bits/local_lim.h: Undefined ARG_MAX if
+	* sysdeps/unix/sysv/linux/bits/local_lim.h: Undefine ARG_MAX if
 	<linux/limits.h> has defined it.
 	* sysdeps/unix/sysv/linux/alpha/bits/local_lim.h: Likewise.
 	* sysdeps/unix/sysv/linux/ia64/bits/local_lim.h: Likewise.

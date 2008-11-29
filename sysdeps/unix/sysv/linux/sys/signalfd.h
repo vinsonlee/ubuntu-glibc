@@ -45,13 +45,21 @@ struct signalfd_siginfo
   uint8_t __pad[48];
 };
 
+/* Flags for signalfd.  */
+enum
+  {
+    SFD_CLOEXEC = 02000000,
+#define SFD_CLOEXEC SFD_CLOEXEC
+    SFD_NONBLOCK = 04000
+#define SFD_NONBLOCK SFD_NONBLOCK
+  };
 
 __BEGIN_DECLS
 
 /* Request notification for delivery of signals in MASK to be
    performed using descriptor FD.*/
 extern int signalfd (int __fd, const sigset_t *__mask, int __flags)
-  __nonnull ((2)) __THROW;
+  __THROW __nonnull ((2));
 
 __END_DECLS
 

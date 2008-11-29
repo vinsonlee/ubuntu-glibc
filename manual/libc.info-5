@@ -6837,7 +6837,7 @@ The symbols referred to in this section are declared in the file
 
      Results are undefined if the facility code is anything else.
 
-     *note_* `syslog' recognizes one other facility code: that of the
+     *NB:* `syslog' recognizes one other facility code: that of the
      kernel.  But you can't specify that facility code with these
      functions.  If you try, it looks the same to `syslog' as if you are
      requesting the default facility.  But you wouldn't want to anyway,

@@ -1,5 +1,5 @@
 /* Cache memory handling.
-   Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2005, 2006, 2008 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2004.
 
@@ -24,6 +24,7 @@
 #include <inttypes.h>
 #include <libintl.h>
 #include <limits.h>
+#include <obstack.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -79,6 +80,7 @@ static void
 markrange (BITMAP_T *mark, ref_t start, size_t len)
 {
   /* Adjust parameters for block alignment.  */
+  assert ((start & BLOCK_ALIGN_M1) == 0);
   start /= BLOCK_ALIGN;
   len = (len + BLOCK_ALIGN_M1) / BLOCK_ALIGN;
 
@@ -93,7 +95,7 @@ markrange (BITMAP_T *mark, ref_t start, size_t len)
 	  return;
 	}
 
-      mark[elem++] |= 0xff << (start % BITS);
+      mark[elem++] |= ALLBITS << (start % BITS);
       len -= BITS - (start % BITS);
     }
 
@@ -130,14 +132,14 @@ gc (struct database_dyn *db)
   size_t stack_used = sizeof (bool) * db->head->module;
   if (__builtin_expect (stack_used > MAX_STACK_USE, 0))
     stack_used = 0;
-  size_t memory_needed = ((db->head->first_free / BLOCK_ALIGN + BITS - 1)
-			  / BITS) * sizeof (BITMAP_T);
-  if (memory_needed <= MAX_STACK_USE)
+  size_t nmark = (db->head->first_free / BLOCK_ALIGN + BITS - 1) / BITS;
+  size_t memory_needed = nmark * sizeof (BITMAP_T);
+  if (stack_used + memory_needed <= MAX_STACK_USE)
     {
       mark = (BITMAP_T *) alloca (memory_needed);
       mark_use_malloc = false;
       memset (mark, '\0', memory_needed);
-      stack_used = memory_needed;
+      stack_used += memory_needed;
     }
   else
     {
@@ -156,6 +158,7 @@ gc (struct database_dyn *db)
       he = alloca (db->head->nentries * sizeof (struct hashentry *));
       he_data = alloca (db->head->nentries * sizeof (struct hashentry *));
       he_use_malloc = false;
+      stack_used += memory_needed;
     }
   else
     {
@@ -197,6 +200,32 @@ gc (struct database_dyn *db)
     }
   assert (cnt == db->head->nentries);
 
+  /* Go through the list of in-flight memory blocks.  */
+  struct mem_in_flight *mrunp = mem_in_flight_list;
+  while (mrunp != NULL)
+    {
+      /* NB: There can be no race between this test and another thread
+        setting the field to the index we are looking for because
+        this would require the other thread to also have the memlock
+        for the database.
+
+	NB2: we do not have to look at latter blocks (higher indices) if
+	earlier blocks are not in flight.  They are always allocated in
+	sequence.  */
+      for (enum in_flight idx = IDX_result_data;
+	   idx < IDX_last && mrunp->block[idx].dbidx == db - dbs; ++idx)
+	{
+	  assert (mrunp->block[idx].blockoff >= 0);
+	  assert (mrunp->block[idx].blocklen < db->memsize);
+	  assert (mrunp->block[idx].blockoff
+		  + mrunp->block[0].blocklen <= db->memsize);
+	  markrange (mark, mrunp->block[idx].blockoff,
+		     mrunp->block[idx].blocklen);
+	}
+
+      mrunp = mrunp->next;
+    }
+
   /* Sort the entries by the addresses of the referenced data.  All
      the entries pointing to the same DATAHEAD object will have the
      same key.  Stability of the sorting is unimportant.  */
@@ -206,8 +235,13 @@ gc (struct database_dyn *db)
   /* Sort the entries by their address.  */
   qsort (he, cnt, sizeof (struct hashentry *), sort_he);
 
+#define obstack_chunk_alloc xmalloc
+#define obstack_chunk_free free
+  struct obstack ob;
+  obstack_init (&ob);
+
   /* Determine the highest used address.  */
-  size_t high = sizeof (mark);
+  size_t high = nmark;
   while (high > 0 && mark[high - 1] == 0)
     --high;
 
@@ -338,8 +372,14 @@ gc (struct database_dyn *db)
 	 displacement.  */
       ref_t disp = off_alloc - off_free;
 
-      struct moveinfo *new_move
-	= (struct moveinfo *) alloca (sizeof (*new_move));
+      struct moveinfo *new_move;
+      if (stack_used + sizeof (*new_move) <= MAX_STACK_USE)
+	{
+	  new_move = alloca (sizeof (*new_move));
+	  stack_used += sizeof (*new_move);
+	}
+      else
+	new_move = obstack_alloc (&ob, sizeof (*new_move));
       new_move->from = db->data + off_alloc;
       new_move->to = db->data + off_free;
       new_move->size = off_allocend - off_alloc;
@@ -499,11 +539,13 @@ gc (struct database_dyn *db)
     free (he);
   if (mark_use_malloc)
     free (mark);
+
+  obstack_free (&ob, NULL);
 }
 
 
 void *
-mempool_alloc (struct database_dyn *db, size_t len)
+mempool_alloc (struct database_dyn *db, size_t len, enum in_flight idx)
 {
   /* Make sure LEN is a multiple of our maximum alignment so we can
      keep track of used memory is multiples of this alignment value.  */
@@ -564,9 +606,16 @@ mempool_alloc (struct database_dyn *db, size_t len)
     }
   else
     {
+      /* Remember that we have allocated this memory.  */
+      assert (idx >= 0 && idx < IDX_last);
+      mem_in_flight.block[idx].dbidx = db - dbs;
+      mem_in_flight.block[idx].blocklen = len;
+      mem_in_flight.block[idx].blockoff = db->head->first_free;
+
       db->head->first_free += len;
 
       db->last_alloc_failed = false;
+
     }
 
   pthread_mutex_unlock (&db->memlock);

@@ -1,5 +1,5 @@
 /* Cache handling for passwd lookup.
-   Copyright (C) 1998-2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1998-2005, 2006, 2007, 2008 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -120,7 +120,8 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	    written = TEMP_FAILURE_RETRY (send (fd, &notfound, total,
 						MSG_NOSIGNAL));
 
-	  dataset = mempool_alloc (db, sizeof (struct dataset) + req->key_len);
+	  dataset = mempool_alloc (db, sizeof (struct dataset) + req->key_len,
+				   IDX_result_data);
 	  /* If we cannot permanently store the result, so be it.  */
 	  if (dataset != NULL)
 	    {
@@ -152,11 +153,8 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	      /* Now get the lock to safely insert the records.  */
 	      pthread_rwlock_rdlock (&db->lock);
 
-	      if (cache_add (req->type, key_copy, req->key_len,
-			     &dataset->head, true, db, owner) < 0)
-		/* Ensure the data can be recovered.  */
-		dataset->head.usable = false;
-
+	      (void) cache_add (req->type, key_copy, req->key_len,
+				&dataset->head, true, db, owner, he == NULL);
 
 	      pthread_rwlock_unlock (&db->lock);
 
@@ -187,7 +185,8 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
       n = snprintf (buf, buf_len, "%d%c%n%s", pwd->pw_uid, '\0',
 		    &key_offset, (char *) key) + 1;
 
-      written = total = (sizeof (struct dataset) + pw_name_len + pw_passwd_len
+      written = total = (offsetof (struct dataset, strdata)
+			 + pw_name_len + pw_passwd_len
 			 + pw_gecos_len + pw_dir_len + pw_shell_len);
 
       /* If we refill the cache, first assume the reconrd did not
@@ -199,7 +198,8 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 
       if (he == NULL)
 	{
-	  dataset = (struct dataset *) mempool_alloc (db, total + n);
+	  dataset = (struct dataset *) mempool_alloc (db, total + n,
+						      IDX_result_data);
 	  if (dataset == NULL)
 	    ++db->head->addfailed;
 	}
@@ -248,16 +248,28 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
       char *key_copy = cp + key_offset;
       assert (key_copy == (char *) rawmemchr (cp, '\0') + 1);
 
+      assert (cp == dataset->strdata + total - offsetof (struct dataset,
+							 strdata));
+
       /* Now we can determine whether on refill we have to create a new
 	 record or not.  */
       if (he != NULL)
 	{
 	  assert (fd == -1);
 
-	  if (total + n == dh->allocsize
-	      && total - offsetof (struct dataset, resp) == dh->recsize
+#if 0
+	  if (dataset->head.datasize == dh->allocsize
+	      && dataset->head.recsize == dh->recsize
 	      && memcmp (&dataset->resp, dh->data,
 			 dh->allocsize - offsetof (struct dataset, resp)) == 0)
+#else
+	  if (dataset->head.allocsize != dh->allocsize)
+	    goto nnn;
+	  if (dataset->head.recsize != dh->recsize)
+	    goto nnn;
+	  if(memcmp (&dataset->resp, dh->data,
+			 dh->allocsize - offsetof (struct dataset, resp)) == 0)
+#endif
 	    {
 	      /* The data has not changed.  We will just bump the
 		 timeout value.  Note that the new record has been
@@ -267,10 +279,12 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	    }
 	  else
 	    {
+ nnn:;
 	      /* We have to create a new record.  Just allocate
 		 appropriate memory and copy it.  */
 	      struct dataset *newp
-		= (struct dataset *) mempool_alloc (db, total + n);
+		= (struct dataset *) mempool_alloc (db, total + n,
+						    IDX_result_data);
 	      if (newp != NULL)
 		{
 		  /* Adjust pointer into the memory block.  */
@@ -348,13 +362,8 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	  if (req->type == GETPWBYUID)
 	    {
 	      if (cache_add (GETPWBYUID, cp, key_offset, &dataset->head, true,
-			     db, owner) < 0)
-		{
-		  /* Could not allocate memory.  Make sure the data gets
-		     discarded.  */
-		  dataset->head.usable = false;
-		  goto out;
-		}
+			     db, owner, he == NULL) < 0)
+		goto out;
 
 	      first = false;
 	    }
@@ -362,13 +371,8 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	  else if (strcmp (key_copy, dataset->strdata) != 0)
 	    {
 	      if (cache_add (GETPWBYNAME, key_copy, key_len + 1,
-			     &dataset->head, true, db, owner) < 0)
-		{
-		  /* Could not allocate memory.  Make sure the data gets
-		     discarded.  */
-		  dataset->head.usable = false;
-		  goto out;
-		}
+			     &dataset->head, true, db, owner, he == NULL) < 0)
+		goto out;
 
 	      first = false;
 	    }
@@ -377,16 +381,13 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	  if ((req->type == GETPWBYNAME || db->propagate)
 	      && __builtin_expect (cache_add (GETPWBYNAME, dataset->strdata,
 					      pw_name_len, &dataset->head,
-					      first, db, owner) == 0, 1))
+					      first, db, owner, he == NULL)
+				   == 0, 1))
 	    {
 	      if (req->type == GETPWBYNAME && db->propagate)
 		(void) cache_add (GETPWBYUID, cp, key_offset, &dataset->head,
-				  req->type != GETPWBYNAME, db, owner);
+				  false, db, owner, false);
 	    }
-	  else if (first)
-	    /* Could not allocate memory.  Make sure the data gets
-	       discarded.  */
-	    dataset->head.usable = false;
 
 	out:
 	  pthread_rwlock_unlock (&db->lock);
