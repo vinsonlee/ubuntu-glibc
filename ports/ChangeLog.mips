@@ -1,3 +1,83 @@
+2008-10-15  Daniel Jacobowitz  <dan@codesourcery.com>
+
+	* sysdeps/mips/dl-dtprocnum.h (DT_MIPS_NUM): Do not redefine.
+	* sysdeps/mips/dl-machine.h (STO_MIPS_PLT, R_MIPS_COPY,
+	R_MIPS_JUMP_SLOT, DT_MIPS_PLTGOT): Do not redefine.
+
+2008-10-01  Mark Shinwell  <shinwell@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* sysdeps/mips/dl-dtprocnum.h (DT_MIPS_NUM): Redefine.
+	* sysdeps/mips/dl-lookup.c: New.
+	* sysdeps/mips/do-lookup.h: New.
+	* sysdeps/mips/dl-machine.h (ELF_MACHINE_NO_PLT): Remove
+	definition.
+	(STO_MIPS_PLT, R_MIPS_COPY, R_MIPS_JUMP_SLOT, DT_MIPS_PLTGOT): Define
+	if needed.
+	(ELF_MACHINE_JMP_SLOT): Alter definition and update comment.
+	(elf_machine_type_class): Likewise.
+	(ELF_MACHINE_PLT_REL): Define.
+	(elf_machine_fixup_plt): New.
+	(elf_machine_plt_value): New.
+	(elf_machine_reloc): Handle jump slot and copy relocations.
+	(elf_machine_lazy_rel): Point relocation place at PLT if
+	required.
+	(RESOLVE_GOTSYM): Take a relocation type argument.
+	(elf_machine_got_rel): Bind lazy stubs directly to their target if
+	!lazy.  Skip lazy binding for PLT symbols.
+	(elf_machine_runtime_setup): Fill in .got.plt header.
+	* sysdeps/mips/dl-trampoline.c (IFNEWABI): New macro.
+	(ELF_DL_PLT_FRAME_SIZE, ELF_DL_PLT_SAVE_ARG_REGS,
+	ELF_DL_PLT_RESTORE_ARG_REGS): Define.
+	(_dl_runtime_pltresolve): New.
+	* sysdeps/mips/bits/linkmap.h: New file.
+	* sysdeps/mips/tls-macros.h: Load $gp as required.  Merge 32-bit and
+	64-bit versions.
+
+	* sysdeps/unix/sysv/linux/mips/mips32/sysdep.h (SYSCALL_ERROR_LABEL):
+	Delete definition.
+	* sysdeps/unix/sysv/linux/mips/nptl/sysdep-cancel.h (PSEUDO_CPLOAD,
+	PSEUDO_ERRJMP, PSEUDO_SAVEGP, PSEUDO_LOADGP): Define.
+	(PSEUDO): Use them.  Move outside __PIC__.
+	(PSEUDO_JMP): New.
+	(CENABLE, CDISABLE): Use it.
+
+2008-08-19  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/mips/sys/epoll.h: Change epoll_create2
+	to epoll_create1.
+
+2008-08-19  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/mips/bits/socket.h: Define SOCK_CLOEXEC,
+	SOCK_NONBLOCK, PF_ISDN and AF_ISDN.
+	* sysdeps/unix/sysv/linux/mips/sys/epoll.h: New file.
+	* sysdeps/unix/sysv/linux/mips/sys/eventfd.h: New file.
+	* sysdeps/unix/sysv/linux/mips/sys/inotify.h: New file.
+	* sysdeps/unix/sysv/linux/mips/sys/signalfd.h: New file.
+	* sysdeps/unix/sysv/linux/mips/sys/timerfd.h: New file.
+
+2008-08-19  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/mips/fpu_control.h (_FPU_GETCW, _FPU_SETCW): Make asms
+	volatile.
+
+2008-07-18  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/mips/bits/setjmp.h (__jmp_buf): Give name to structure
+	type.
+
+2008-05-21  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/mips/bits/socket.h: Cleanup namespace.
+	(SOCK_DCCP): Define.
+
+2008-05-01  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/mips/bits/resource.h: Define
+	RUSAGE_THREAD and RUSAGE_LWP.
+
 2008-04-21  Daniel Jacobowitz  <dan@codesourcery.com>
 
 	* sysdeps/unix/sysv/linux/mips/bits/shm.h: Fix comment describing

@@ -160,7 +160,10 @@ res_nmkquery(res_state statp,
 		if ((buflen -= QFIXEDSZ) < 0)
 			return (-1);
 	compose:
-		if ((n = dn_comp(dname, cp, buflen, dnptrs, lastdnptr)) < 0)
+		n = ns_name_compress(dname, cp, buflen,
+				     (const u_char **) dnptrs,
+				     (const u_char **) lastdnptr);
+		if (n < 0)
 			return (-1);
 		cp += n;
 		buflen -= n;
@@ -172,7 +175,9 @@ res_nmkquery(res_state statp,
 		/*
 		 * Make an additional record for completion domain.
 		 */
-		n = dn_comp((char *)data, cp, buflen, dnptrs, lastdnptr);
+		n = ns_name_compress((char *)data, cp, buflen,
+				     (const u_char **) dnptrs,
+				     (const u_char **) lastdnptr);
 		if (__builtin_expect (n < 0, 0))
 			return (-1);
 		cp += n;
@@ -238,17 +243,13 @@ __res_nopt(res_state statp,
 
 	*cp++ = 0;	/* "." */
 
-	ns_put16(T_OPT, cp);	/* TYPE */
-	cp += INT16SZ;
-	ns_put16(anslen & 0xffff, cp);	/* CLASS = UDP payload size */
-	cp += INT16SZ;
+	NS_PUT16(T_OPT, cp);	/* TYPE */
+	NS_PUT16(anslen & 0xffff, cp);	/* CLASS = UDP payload size */
 	*cp++ = NOERROR;	/* extended RCODE */
 	*cp++ = 0;		/* EDNS version */
 	/* XXX Once we support DNSSEC we change the flag value here.  */
-	ns_put16(flags, cp);
-	cp += INT16SZ;
-	ns_put16(0, cp);	/* RDLEN */
-	cp += INT16SZ;
+	NS_PUT16(flags, cp);
+	NS_PUT16(0, cp);	/* RDLEN */
 	hp->arcount = htons(ntohs(hp->arcount) + 1);
 
 	return cp - buf;

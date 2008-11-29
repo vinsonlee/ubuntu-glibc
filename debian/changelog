@@ -1,3 +1,23 @@
+glibc (2.9-0ubuntu1) jaunty; urgency=low
+
+  * New upstream, release, taken from the glibc-2_9-base tag.
+    - Remove patches applied upstream: any/cvs-bug-iconv6_tst-iconv7.diff,
+      sparc/cvs-context.diff, any/cvs-getaddrinfo.diff,
+      any/cvs-iconv-braces.diff, any/cvs-nscd-getservbyport.diff,
+      any/cvs-nscd-getservbyport.diff, any/cvs-tst-regex.diff,
+      any/cvs-regex_anchor.diff, hppa/submitted-atomic_h.diff,
+      hppa/submitted-fesetenv.diff, any/submitted-rpcgen-makefile.diff,
+      any/regexp_h___REPB_PREFIX.diff.
+    - Update patches: any/local-bashisms.diff, any/local-ipv6-lookup.diff.
+    - any/submitted-user_h.diff: Remove, replaced with #error stub.
+    - Use barriers and SMP-safe operations on ARM NPTL. LP: #303188.
+  * debian/symbols.wildcards: Update for 2.9.
+  * Add tst-tls6.out to expected test failures on sparc64.
+  * Merge with Debian, r3198.
+  * patches/arm/local-memset.diff: Performance improve on ARM memset.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sat, 29 Nov 2008 15:25:22 +0100
+
 glibc (2.8+20081027-0ubuntu10) jaunty; urgency=low
 
   * Mark tst-cancel7.out, tst-cancelx7.out, tst-cleanup0.out and tst-fmon.out
@@ -252,7 +272,7 @@ glibc (2.8+20080809-3) experimental; urgency=low
   * add any/local-linuxthreads-ptw.diff. Closes: #494908.
   * add kfreebsd/local-sysdeps28.diff, glibc 2.8 specific kfreebsd sysdeps.
 
- -- Aurelien Jarno <aurel32@debian.org>  Sat, 25 Oct 2008 21:22:39 +0200
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 13 Oct 2008 18:28:11 +0200
 
 glibc (2.8~20080505-0ubuntu7) intrepid; urgency=low
 

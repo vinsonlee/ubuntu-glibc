@@ -1,5 +1,5 @@
 /* Declarations of socket constants, types, and functions.
-   Copyright (C) 1991,92,1994-2001,2003,2005,2007
+   Copyright (C) 1991,92,1994-2001,2003,2005,2007,2008
    Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
@@ -28,6 +28,10 @@ __BEGIN_DECLS
 #include <sys/uio.h>
 #define	__need_size_t
 #include <stddef.h>
+#ifdef __USE_GNU
+/* Get the __sigset_t definition.  */
+# include <bits/sigset.h>
+#endif
 
 
 /* This operating system-specific header file defines the SOCK_*, PF_*,

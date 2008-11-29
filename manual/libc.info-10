@@ -4403,7 +4403,7 @@ Type Index
 * struct printf_info:                    Conversion Specifier Options.
                                                               (line  16)
 * struct protoent:                       Protocols Database.  (line  30)
-* struct random_data:                    BSD Random.          (line  69)
+* struct random_data:                    BSD Random.          (line  68)
 * struct rlimit:                         Limits on Resources. (line  79)
 * struct rlimit64:                       Limits on Resources. (line  95)
 * struct rusage:                         Resource Usage.      (line  37)
@@ -5281,8 +5281,8 @@ Function and Macro Index
 * inet_pton:                             Host Address Functions.
                                                               (line  76)
 * initgroups:                            Setting Groups.      (line  81)
-* initstate:                             BSD Random.          (line  33)
-* initstate_r:                           BSD Random.          (line  90)
+* initstate:                             BSD Random.          (line  32)
+* initstate_r:                           BSD Random.          (line  89)
 * innetgr:                               Netgroup Membership. (line  12)
 * int:                                   Random Access Directory.
                                                               (line  20)
@@ -5694,7 +5694,7 @@ Function and Macro Index
 * rand:                                  ISO Random.          (line  20)
 * rand_r:                                ISO Random.          (line  36)
 * random:                                BSD Random.          (line  13)
-* random_r:                              BSD Random.          (line  79)
+* random_r:                              BSD Random.          (line  78)
 * rawmemchr:                             Search Functions.    (line  24)
 * read:                                  I/O Primitives.      (line  16)
 * readdir:                               Reading/Closing Directory.
@@ -5839,8 +5839,8 @@ Function and Macro Index
                                                               (line  11)
 * setsockopt:                            Socket Option Functions.
                                                               (line  35)
-* setstate:                              BSD Random.          (line  44)
-* setstate_r:                            BSD Random.          (line  96)
+* setstate:                              BSD Random.          (line  43)
+* setstate_r:                            BSD Random.          (line  95)
 * settimeofday:                          High-Resolution Calendar.
                                                               (line  51)
 * setuid:                                Setting User ID.     (line  34)
@@ -5910,8 +5910,8 @@ Function and Macro Index
 * srand:                                 ISO Random.          (line  24)
 * srand48:                               SVID Random.         (line  87)
 * srand48_r:                             SVID Random.         (line 255)
-* srandom:                               BSD Random.          (line  23)
-* srandom_r:                             BSD Random.          (line  84)
+* srandom:                               BSD Random.          (line  22)
+* srandom_r:                             BSD Random.          (line  83)
 * sscanf:                                Formatted Input Functions.
                                                               (line  40)
 * ssignal:                               Basic Signal Handling.
