@@ -73,6 +73,8 @@ struct database_dyn
 
   int enabled;
   int check_file;
+  int inotify_descr;
+  int clear_cache;
   int persistent;
   int shared;
   int propagate;
@@ -130,7 +132,7 @@ struct database_dyn
 
 
 /* Global variables.  */
-extern struct database_dyn dbs[lastdb];
+extern struct database_dyn dbs[lastdb] attribute_hidden;
 extern const char *const dbnames[lastdb];
 extern const char *const serv2str[LASTREQ];
 
@@ -181,6 +183,31 @@ extern uid_t old_uid;
 extern gid_t old_gid;
 
 
+/* Memory allocation in flight.  Each thread can have a limited number
+   of allocation in flight.  No need to create dynamic data
+   structures.  We use fixed indices.  */
+enum in_flight
+  {
+    IDX_result_data = 0,
+    /* Keep the IDX_record_data entry last at all times.  */
+    IDX_record_data = 1,
+    IDX_last
+  };
+extern __thread struct mem_in_flight
+{
+  struct
+  {
+    int dbidx;
+    nscd_ssize_t blocklen;
+    nscd_ssize_t blockoff;
+  } block[IDX_last];
+
+  struct mem_in_flight *next;
+} mem_in_flight attribute_tls_model_ie;
+/* Global list of the mem_in_flight variables of all the threads.  */
+extern struct mem_in_flight *mem_in_flight_list;
+
+
 /* Prototypes for global functions.  */
 
 /* nscd.c */
@@ -206,7 +233,8 @@ extern struct datahead *cache_search (request_type, void *key, size_t len,
 				      uid_t owner);
 extern int cache_add (int type, const void *key, size_t len,
 		      struct datahead *packet, bool first,
-		      struct database_dyn *table, uid_t owner);
+		      struct database_dyn *table, uid_t owner,
+		      bool prune_wakeup);
 extern time_t prune_cache (struct database_dyn *table, time_t now, int fd);
 
 /* pwdcache.c */
@@ -271,7 +299,8 @@ extern void readdservbyport (struct database_dyn *db, struct hashentry *he,
 			     struct datahead *dh);
 
 /* mem.c */
-extern void *mempool_alloc (struct database_dyn *db, size_t len);
+extern void *mempool_alloc (struct database_dyn *db, size_t len,
+			    enum in_flight idx);
 extern void gc (struct database_dyn *db);
 
 

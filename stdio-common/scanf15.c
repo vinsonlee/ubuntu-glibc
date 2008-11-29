@@ -50,5 +50,48 @@ main (void)
   else if (d != 5.25 || memcmp (c, " x", 2) != 0)
     FAIL ();
 
+  const char *tmpdir = getenv ("TMPDIR");
+  if (tmpdir == NULL || tmpdir[0] == '\0')
+    tmpdir = "/tmp";
+
+  char fname[strlen (tmpdir) + sizeof "/tst-scanf15.XXXXXX"];
+  sprintf (fname, "%s/tst-scanf15.XXXXXX", tmpdir);
+  if (fname == NULL)
+    FAIL ();
+
+  /* Create a temporary file.   */
+  int fd = mkstemp (fname);
+  if (fd == -1)
+    FAIL ();
+
+  FILE *fp = fdopen (fd, "w+");
+  if (fp == NULL)
+    FAIL ();
+  else
+    {
+      if (fputs (" 1.25s x", fp) == EOF)
+	FAIL ();
+      if (fseek (fp, 0, SEEK_SET) != 0)
+	FAIL ();
+      if (fscanf (fp, "%as%2c", &f, c) != 2)
+	FAIL ();
+      else if (f != 1.25 || memcmp (c, " x", 2) != 0)
+	FAIL ();
+
+      if (freopen (fname, "r", stdin) == NULL)
+	FAIL ();
+      else
+	{
+	  if (scanf ("%as%2c", &f, c) != 2)
+	    FAIL ();
+	  else if (f != 1.25 || memcmp (c, " x", 2) != 0)
+	    FAIL ();
+	}
+
+      fclose (fp);
+    }
+
+  remove (fname);
+
   return result;
 }

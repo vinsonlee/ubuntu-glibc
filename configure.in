@@ -326,7 +326,6 @@ AC_ARG_WITH([cpu],
   esac
 ])
 
-
 # An add-on can set this when it wants to disable the sanity check below.
 libc_config_ok=no
 
@@ -1520,7 +1519,7 @@ EOF
   if AC_TRY_COMMAND([${CC-cc} $CFLAGS $CPPFLAGS
 		     -S -o conftest.s conftest.c 1>&AS_MESSAGE_LOG_FD]) \
      && grep -q .note.GNU-stack conftest.s \
-     && AC_TRY_COMMAND([${CC-cc} $CFLAGS $CPPFLAGS -Wa,--noexecstack
+     && AC_TRY_COMMAND([${CC-cc} $ASFLAGS -Wa,--noexecstack
 		       -c -o conftest.o conftest.s 1>&AS_MESSAGE_LOG_FD])
   then
     libc_cv_as_noexecstack=yes
@@ -1638,7 +1637,7 @@ cat > conftest.c <<EOF
 int foo;
 main () { return 0;}
 EOF
-if AC_TRY_COMMAND([${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS -fstack-protector
+if AC_TRY_COMMAND([${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS -Werror -fstack-protector
 			    -o conftest conftest.c 1>&AS_MESSAGE_LOG_FD])
 then
   libc_cv_ssp=yes
@@ -1973,6 +1972,22 @@ EOF
   fi
 fi
 
+if test -n "$submachine"; then
+  AC_CACHE_CHECK([for compiler option for CPU variant],
+  		 libc_cv_cc_submachine, [dnl
+  libc_cv_cc_submachine=no
+  for opt in "-march=$submachine" "-mcpu=$submachine"; do
+    if AC_TRY_COMMAND([${CC-cc} $opt -xc /dev/null -S -o /dev/null]); then
+      libc_cv_cc_submachine="$opt"
+      break
+    fi
+  done])
+  if test "x$libc_cv_cc_submachine" = xno; then
+    AC_MSG_ERROR([${CC-cc} does not support $submachine])
+  fi
+fi
+AC_SUBST(libc_cv_cc_submachine)
+
 dnl Check whether we have the gd library available.
 AC_MSG_CHECKING(for libgd)
 if test "$with_gd" != "no"; then
@@ -2165,6 +2180,9 @@ AC_SUBST(libc_cv_localedir)
 AC_SUBST(libc_cv_sysconfdir)
 AC_SUBST(libc_cv_rootsbindir)
 AC_SUBST(libc_cv_forced_unwind)
+
+dnl sysdeps/CPU/configure.in checks set this via arch-specific asm tests
+AC_SUBST(libc_cv_cpp_asm_debuginfo)
 
 AC_SUBST(use_ldconfig)
 AC_SUBST(ldd_rewrite_script)

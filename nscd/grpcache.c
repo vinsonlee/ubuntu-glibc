@@ -1,5 +1,5 @@
 /* Cache handling for group lookup.
-   Copyright (C) 1998-2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1998-2005, 2006, 2007, 2008 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -113,7 +113,8 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	  written = TEMP_FAILURE_RETRY (send (fd, &notfound, total,
 					      MSG_NOSIGNAL));
 
-	  dataset = mempool_alloc (db, sizeof (struct dataset) + req->key_len);
+	  dataset = mempool_alloc (db, sizeof (struct dataset) + req->key_len,
+				   IDX_result_data);
 	  /* If we cannot permanently store the result, so be it.  */
 	  if (dataset != NULL)
 	    {
@@ -145,10 +146,8 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	      /* Now get the lock to safely insert the records.  */
 	      pthread_rwlock_rdlock (&db->lock);
 
-	      if (cache_add (req->type, &dataset->strdata, req->key_len,
-			     &dataset->head, true, db, owner) < 0)
-		/* Ensure the data can be recovered.  */
-		dataset->head.usable = false;
+	      (void) cache_add (req->type, &dataset->strdata, req->key_len,
+				&dataset->head, true, db, owner, he == NULL);
 
 	      pthread_rwlock_unlock (&db->lock);
 
@@ -191,7 +190,7 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	  gr_mem_len_total += gr_mem_len[gr_mem_cnt];
 	}
 
-      written = total = (sizeof (struct dataset)
+      written = total = (offsetof (struct dataset, strdata)
 			 + gr_mem_cnt * sizeof (uint32_t)
 			 + gr_name_len + gr_passwd_len + gr_mem_len_total);
 
@@ -204,7 +203,8 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 
       if (he == NULL)
 	{
-	  dataset = (struct dataset *) mempool_alloc (db, total + n);
+	  dataset = (struct dataset *) mempool_alloc (db, total + n,
+						      IDX_result_data);
 	  if (dataset == NULL)
 	    ++db->head->addfailed;
 	}
@@ -252,6 +252,9 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
       char *key_copy = cp + key_offset;
       assert (key_copy == (char *) rawmemchr (cp, '\0') + 1);
 
+      assert (cp == dataset->strdata + total - offsetof (struct dataset,
+							 strdata));
+
       /* Now we can determine whether on refill we have to create a new
 	 record or not.  */
       if (he != NULL)
@@ -274,7 +277,8 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	      /* We have to create a new record.  Just allocate
 		 appropriate memory and copy it.  */
 	      struct dataset *newp
-		= (struct dataset *) mempool_alloc (db, total + n);
+		= (struct dataset *) mempool_alloc (db, total + n,
+						    IDX_result_data);
 	      if (newp != NULL)
 		{
 		  /* Adjust pointers into the memory block.  */
@@ -352,13 +356,8 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	  if (req->type == GETGRBYGID)
 	    {
 	      if (cache_add (GETGRBYGID, cp, key_offset, &dataset->head, true,
-			     db, owner) < 0)
-		{
-		  /* Could not allocate memory.  Make sure the data gets
-		     discarded.  */
-		  dataset->head.usable = false;
-		  goto out;
-		}
+			     db, owner, he == NULL) < 0)
+		goto out;
 
 	      first = false;
 	    }
@@ -366,13 +365,8 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	  else if (strcmp (key_copy, gr_name) != 0)
 	    {
 	      if (cache_add (GETGRBYNAME, key_copy, key_len + 1,
-			     &dataset->head, true, db, owner) < 0)
-		{
-		  /* Could not allocate memory.  Make sure the data gets
-		     discarded.  */
-		  dataset->head.usable = false;
-		  goto out;
-		}
+			     &dataset->head, true, db, owner, he == NULL) < 0)
+		goto out;
 
 	      first = false;
 	    }
@@ -381,17 +375,14 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	  if ((req->type == GETGRBYNAME || db->propagate)
 	      && __builtin_expect (cache_add (GETGRBYNAME, gr_name,
 					      gr_name_len,
-					      &dataset->head, first, db, owner)
+					      &dataset->head, first, db, owner,
+					      he == NULL)
 				   == 0, 1))
 	    {
 	      if (req->type == GETGRBYNAME && db->propagate)
 		(void) cache_add (GETGRBYGID, cp, key_offset, &dataset->head,
-				  req->type != GETGRBYNAME, db, owner);
+				  false, db, owner, false);
 	    }
-	  else if (first)
-	    /* Could not allocate memory.  Make sure the data gets
-	       discarded.  */
-	    dataset->head.usable = false;
 
 	out:
 	  pthread_rwlock_unlock (&db->lock);

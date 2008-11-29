@@ -1,4 +1,4 @@
-/* Copyright (C) 2001,2002,2004,2006 Free Software Foundation, Inc.
+/* Copyright (C) 2001,2002,2004,2006,2007,2008 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ucontext.h>
+#include <unistd.h>
 
 static ucontext_t ctx[3];
 
@@ -149,7 +150,10 @@ main (void)
   if (getcontext (&ctx[1]) != 0)
     {
       if (errno == ENOSYS)
-	exit (0);
+	{
+	  back_in_main = 1;
+	  exit (0);
+	}
 
       printf ("%s: getcontext: %m\n", __FUNCTION__);
       exit (1);

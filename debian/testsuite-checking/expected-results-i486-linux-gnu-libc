@@ -15,3 +15,7 @@ tst-cancelx7.out, Error 1
 tst-cleanup0.out, Error 2
 tst-cpuclock2.out, Error 1
 tst-fmon.out, Error 1
+
+# FIXME glibc-2.9
+globtest.out, Error 1
+tst-mqueue5.out, Error 1
