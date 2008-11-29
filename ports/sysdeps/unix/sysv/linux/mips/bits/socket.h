@@ -1,5 +1,5 @@
 /* System-specific socket constants and types.  Linux/MIPS version.
-   Copyright (C) 1991, 92, 1994-1999, 2000, 2001, 2004, 2005, 2006, 2007
+   Copyright (C) 1991, 92, 1994-1999, 2000, 2001, 2004, 2005, 2006, 2007, 2008
    Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
@@ -26,10 +26,8 @@
 #endif
 
 #define	__need_size_t
-#define __need_NULL
 #include <stddef.h>
 
-#include <limits.h>
 #include <sys/types.h>
 
 /* Type for length arguments in socket calls.  */
@@ -54,10 +52,22 @@ enum __socket_type
   SOCK_SEQPACKET = 5,		/* Sequenced, reliable, connection-based,
 				   datagrams of fixed maximum length.  */
 #define SOCK_SEQPACKET SOCK_SEQPACKET
-  SOCK_PACKET = 10		/* Linux specific way of getting packets
+  SOCK_DCCP = 6,
+#define SOCK_DCCP SOCK_DCCP	/* Datagram Congestion Control Protocol.  */
+  SOCK_PACKET = 10,		/* Linux specific way of getting packets
 				   at the dev level.  For writing rarp and
 				   other similar things on the user level. */
 #define SOCK_PACKET SOCK_PACKET
+
+  /* Flags to be ORed into the type parameter of socket and socketpair and
+     used for the flags parameter of paccept.  */
+
+  SOCK_CLOEXEC = 02000000,	/* Atomically set close-on-exec flag for the
+				   new descriptor(s).  */
+#define SOCK_CLOEXEC SOCK_CLOEXEC
+  SOCK_NONBLOCK = 0200		/* Atomically mark descriptor(s) as
+				   non-blocking.  */
+#define SOCK_NONBLOCK SOCK_NONBLOCK
 };
 
 /* Protocol families.  */
@@ -92,7 +102,8 @@ enum __socket_type
 #define	PF_BLUETOOTH	31	/* Bluetooth sockets.  */
 #define	PF_IUCV		32	/* IUCV sockets.  */
 #define PF_RXRPC	33	/* RxRPC sockets.  */
-#define	PF_MAX		34	/* For now..  */
+#define PF_ISDN		34	/* mISDN sockets.  */
+#define	PF_MAX		35	/* For now..  */
 
 /* Address families.  */
 #define	AF_UNSPEC	PF_UNSPEC
@@ -126,6 +137,7 @@ enum __socket_type
 #define	AF_BLUETOOTH	PF_BLUETOOTH
 #define	AF_IUCV		PF_IUCV
 #define AF_RXRPC	PF_RXRPC
+#define AF_ISDN		PF_ISDN
 #define	AF_MAX		PF_MAX
 
 /* Socket level values.  Others are defined in the appropriate headers.
@@ -156,11 +168,7 @@ struct sockaddr
 
 /* Structure large enough to hold any socket address (with the historical
    exception of AF_UNIX).  We reserve 128 bytes.  */
-#if ULONG_MAX > 0xffffffff
-# define __ss_aligntype	__uint64_t
-#else
-# define __ss_aligntype	__uint32_t
-#endif
+#define __ss_aligntype	unsigned long int
 #define _SS_SIZE	128
 #define _SS_PADSIZE	(_SS_SIZE - (2 * sizeof (__ss_aligntype)))
 
@@ -257,7 +265,7 @@ struct cmsghdr
 #define CMSG_NXTHDR(mhdr, cmsg) __cmsg_nxthdr (mhdr, cmsg)
 #define CMSG_FIRSTHDR(mhdr) \
   ((size_t) (mhdr)->msg_controllen >= sizeof (struct cmsghdr)		      \
-   ? (struct cmsghdr *) (mhdr)->msg_control : (struct cmsghdr *) NULL)
+   ? (struct cmsghdr *) (mhdr)->msg_control : (struct cmsghdr *) 0)
 #define CMSG_ALIGN(len) (((len) + sizeof (size_t) - 1) \
 			 & (size_t) ~(sizeof (size_t) - 1))
 #define CMSG_SPACE(len) (CMSG_ALIGN (len) \
@@ -301,18 +309,74 @@ enum
 #endif
   };
 
+#ifdef __USE_GNU
 /* User visible structure for SCM_CREDENTIALS message */
-
 struct ucred
 {
   pid_t pid;			/* PID of sending process.  */
   uid_t uid;			/* UID of sending process.  */
   gid_t gid;			/* GID of sending process.  */
 };
+#endif
+
+/* Ugly workaround for unclean kernel headers.  */
+#if !defined __USE_MISC && !defined __USE_GNU
+# ifndef FIOGETOWN
+#  define __SYS_SOCKET_H_undef_FIOGETOWN
+# endif
+# ifndef FIOSETOWN
+#  define __SYS_SOCKET_H_undef_FIOSETOWN
+# endif
+# ifndef SIOCATMARK
+#  define __SYS_SOCKET_H_undef_SIOCATMARK
+# endif
+# ifndef SIOCGPGRP
+#  define __SYS_SOCKET_H_undef_SIOCGPGRP
+# endif
+# ifndef SIOCGSTAMP
+#  define __SYS_SOCKET_H_undef_SIOCGSTAMP
+# endif
+# ifndef SIOCGSTAMPNS
+#  define __SYS_SOCKET_H_undef_SIOCGSTAMPNS
+# endif
+# ifndef SIOCSPGRP
+#  define __SYS_SOCKET_H_undef_SIOCSPGRP
+# endif
+#endif
 
 /* Get socket manipulation related informations from kernel headers.  */
 #include <asm/socket.h>
 
+#if !defined __USE_MISC && !defined __USE_GNU
+# ifdef __SYS_SOCKET_H_undef_FIOGETOWN
+#  undef __SYS_SOCKET_H_undef_FIOGETOWN
+#  undef FIOGETOWN
+# endif
+# ifdef __SYS_SOCKET_H_undef_FIOSETOWN
+#  undef __SYS_SOCKET_H_undef_FIOSETOWN
+#  undef FIOSETOWN
+# endif
+# ifdef __SYS_SOCKET_H_undef_SIOCATMARK
+#  undef __SYS_SOCKET_H_undef_SIOCATMARK
+#  undef SIOCATMARK
+# endif
+# ifdef __SYS_SOCKET_H_undef_SIOCGPGRP
+#  undef __SYS_SOCKET_H_undef_SIOCGPGRP
+#  undef SIOCGPGRP
+# endif
+# ifdef __SYS_SOCKET_H_undef_SIOCGSTAMP
+#  undef __SYS_SOCKET_H_undef_SIOCGSTAMP
+#  undef SIOCGSTAMP
+# endif
+# ifdef __SYS_SOCKET_H_undef_SIOCGSTAMPNS
+#  undef __SYS_SOCKET_H_undef_SIOCGSTAMPNS
+#  undef SIOCGSTAMPNS
+# endif
+# ifdef __SYS_SOCKET_H_undef_SIOCSPGRP
+#  undef __SYS_SOCKET_H_undef_SIOCSPGRP
+#  undef SIOCSPGRP
+# endif
+#endif
 
 /* Structure used to manipulate the SO_LINGER option.  */
 struct linger

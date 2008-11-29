@@ -8422,8 +8422,8 @@ replaced with six characters which make the whole string a unique file
 name.  Usually the template string is something like
 `/tmp/PREFIXXXXXXX', and each program uses a unique PREFIX.
 
-   *Note_* Because `mktemp' and `mkstemp' modify the template string,
-you _must not_ pass string constants to them.  String constants are
+   *NB:* Because `mktemp' and `mkstemp' modify the template string, you
+_must not_ pass string constants to them.  String constants are
 normally in read-only storage, so your program would crash when
 `mktemp' or `mkstemp' tried to modify the string.  These functions are
 declared in the header file `stdlib.h'.  

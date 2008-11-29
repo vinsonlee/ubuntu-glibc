@@ -1,7 +1,7 @@
 # This file is generated from configure.in by Autoconf.  DO NOT EDIT!
 
-echo "$as_me:$LINENO: checking for assembler line separator" >&5
-echo $ECHO_N "checking for assembler line separator... $ECHO_C" >&6
+{ echo "$as_me:$LINENO: checking for assembler line separator" >&5
+echo $ECHO_N "checking for assembler line separator... $ECHO_C" >&6; }
 if test "${libc_cv_asm_line_sep+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
@@ -25,8 +25,8 @@ else
 fi
 rm -f conftest*
 fi
-echo "$as_me:$LINENO: result: $libc_cv_asm_line_sep" >&5
-echo "${ECHO_T}$libc_cv_asm_line_sep" >&6
+{ echo "$as_me:$LINENO: result: $libc_cv_asm_line_sep" >&5
+echo "${ECHO_T}$libc_cv_asm_line_sep" >&6; }
 cat >>confdefs.h <<_ACEOF
 #define ASM_LINE_SEP $libc_cv_asm_line_sep
 _ACEOF

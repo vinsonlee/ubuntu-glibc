@@ -1,3 +1,33 @@
+2008-08-07  Helge Deller  <deller@gmx.de>
+
+	* sysdeps/unix/sysv/linux/hppa/ucontext_i.sym: New file.
+	* sysdeps/unix/sysv/linux/hppa/Makefile: New file.
+	* sysdeps/unix/sysv/linux/hppa/getcontext.S: New file.
+	* sysdeps/unix/sysv/linux/hppa/makecontext.c: New file.
+	* sysdeps/unix/sysv/linux/hppa/setcontext.S: New file.
+	* sysdeps/unix/sysv/linux/hppa/swapcontext.c: New file.
+
+2008-06-17  Aurelian Jarno  <aurelien@aurel32.net>
+	    Carlos O'Donell  <carlos@systemhalted.org>
+
+	[BZ #6037]
+	* sysdeps/unix/sysv/linux/hppa/bits/atomic.h: Check for -11 
+	(-EAGAIN) instead of 11. Loop again when the kernel
+	returns -45 (-EDEADLOCK). Add back memory clobber. 
+	Do not initialize lws_ret and lws_errno.
+
+2008-06-17  Guy Martin  <gmsoft@tuxicoman.be>
+
+	[BZ #5957]
+	* sysdeps/unix/sysv/linux/hppa/nptl/lowlevellock.h:
+	Use shared futex in lll_wait_tid().
+
+2008-05-12  Aurelien Jarno  <aurelien@aurel32.net>
+
+	[BZ #6506]
+	* sysdeps/hppa/fpu/fesetenv.c: bufptr is always read, temp is
+	read while writing back status word.
+
 2008-04-21  Daniel Jacobowitz  <dan@codesourcery.com>
 
 	* sysdeps/unix/sysv/linux/hppa/bits/shm.h: Fix comment describing
