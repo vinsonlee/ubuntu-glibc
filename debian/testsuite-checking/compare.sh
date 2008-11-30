@@ -8,8 +8,8 @@ fi;
 
 expected=$(tempfile)
 results=$(tempfile)
-sort $1 > $expected
-sort $2 > $results
+sort $1 | grep -Ev '^ *$|^#' > $expected
+sort $2 | grep -Ev '^ *$|^#' > $results
 
 REGRESSIONS=$(diff -wBI '^#.*' $expected $results | sed -e '/^>/!d;s/^> //g')
 PROGRESSIONS=$(diff -wBI '^#.*' $expected $results | sed -e '/^</!d;s/^< //g')
