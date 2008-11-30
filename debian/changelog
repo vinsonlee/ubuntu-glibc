@@ -1,3 +1,13 @@
+glibc (2.9-0ubuntu3) jaunty; urgency=low
+
+  * Update expected testsuite results for powerpc64. Fixes build failure
+    on powerpc.
+  * Build with gcc-4.3 on sparc again (still fails on the buildd, builds
+    on a T1000).
+  * debian/testsuite-checking/compare.sh: Robustify.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sun, 30 Nov 2008 12:45:05 +0100
+
 glibc (2.9-0ubuntu2) jaunty; urgency=low
 
   * Drop the build dependency on gcc-4.2-multilib on sparc for an initial build.
