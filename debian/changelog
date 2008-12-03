@@ -1,3 +1,10 @@
+glibc (2.9-0ubuntu4) jaunty; urgency=low
+
+  * Mark tst-mqueue5.out as failing on sparcv9b.
+  * Mark tst-cpuclock2.out as failing on sparc.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 03 Dec 2008 01:33:20 +0100
+
 glibc (2.9-0ubuntu3) jaunty; urgency=low
 
   * Update expected testsuite results for powerpc64. Fixes build failure
