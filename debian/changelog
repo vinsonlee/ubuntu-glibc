@@ -1,3 +1,15 @@
+glibc (2.9-0ubuntu6) jaunty; urgency=low
+
+  [ Matthias Klose ]
+  * Merge with Debian, glibc-2.9 branch, r3200.
+
+  [ Kees Cook ]
+  * Add debian/patches/ubuntu/no-sprintf-pre-truncate.diff: do not
+    pre-clear target buffers on sprintf to retain backward compatibility
+    (LP: #305901).
+
+ -- Kees Cook <kees@ubuntu.com>  Thu, 01 Jan 2009 13:28:59 -0800
+
 glibc (2.9-0ubuntu5) jaunty; urgency=low
 
   * Mark tst-pselect.out as failing on armel.
