@@ -1,3 +1,10 @@
+glibc (2.7-17) unstable; urgency=low
+
+  * patches/localedata/sk_SK_euro.diff: new patch to switch Slovakia 
+    currency to Euro.  Closes: bug#510423.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 02 Jan 2009 22:49:53 +0100
+
 glibc (2.7-16) unstable; urgency=low
 
   * patches/any/cvs-rpcgen-makefile.diff: new patch from upstream to fix
