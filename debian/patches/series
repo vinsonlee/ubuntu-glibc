@@ -41,6 +41,8 @@ localedata/locale-ks_IN.diff -p0
 localedata/locale-pt_PT.diff -p1
 localedata/locale-es_CR.diff -p1
 localedata/sk_SK_euro.diff -p1
+localedata/mt_MT_euro.diff -p1
+localedata/el_CY_euro.diff -p1
 
 alpha/local-gcc4.1.diff -p0
 alpha/local-dl-procinfo.diff -p0
