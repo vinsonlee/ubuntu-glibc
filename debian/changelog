@@ -1,3 +1,10 @@
+glibc (2.7-18) unstable; urgency=low
+
+  * patches/localedata/mt_MT_euro.diff, patches/localedata/el_CY_euro.diff:
+    new patches to switch Cyprus and Malta currency to Euro.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 04 Jan 2009 11:28:23 +0100
+
 glibc (2.7-17) unstable; urgency=low
 
   * patches/localedata/sk_SK_euro.diff: new patch to switch Slovakia 
