@@ -7,13 +7,8 @@
 # DP: Upstream status: not submitted
 # DP: Date: 2006-02-16
 
----
- localedata/locales/cy_GB |    7 +++++--
- localedata/locales/en_GB |    4 ++--
- 2 files changed, 7 insertions(+), 4 deletions(-)
-
---- a/localedata/locales/cy_GB
-+++ b/localedata/locales/cy_GB
+--- localedata/locales/cy_GB.orig
++++ localedata/locales/cy_GB
 @@ -248,8 +248,11 @@
  d_t_fmt     "<U0044><U0079><U0064><U0064><U0020><U0025><U0041><U0020><U0025><U0064><U0020><U006d><U0069><U0073><U0020><U0025><U0042><U0020><U0025><U0059><U0020><U0025><U0054><U0020><U0025><U005A>"
  d_fmt       "<U0025><U0064><U002E><U0025><U006D><U002E><U0025><U0079>"
@@ -28,8 +23,8 @@
  END LC_TIME
  
  LC_MESSAGES
---- a/localedata/locales/en_GB
-+++ b/localedata/locales/en_GB
+--- localedata/locales/en_GB.orig
++++ localedata/locales/en_GB
 @@ -116,8 +116,8 @@
  d_t_fmt     "<U0025><U0061><U0020><U0025><U0064><U0020><U0025><U0062><U0020><U0025><U0059><U0020><U0025><U0054><U0020><U0025><U005A>"
  d_fmt       "<U0025><U0064><U002F><U0025><U006D><U002F><U0025><U0079>"

@@ -1,0 +1,22 @@
+2008-10-31  Ulrich Drepper  <drepper@redhat.com>
+
+	[BZ #6974]
+	* sunrpc/rpc_main.c (mkfile_output): Properly handle filename
+	without dot.  Properly terminate the string with a null byte.
+	Based on a patch by Aurelien Jarno <aurelien@aurel32.net>.
+
+--- a/sunrpc/rpc_main.c
++++ b/sunrpc/rpc_main.c
+@@ -995,7 +995,11 @@ mkfile_output (struct commandline *cmd)
+ 	abort ();
+       temp = rindex (cmd->infile, '.');
+       cp = stpcpy (mkfilename, "Makefile.");
+-      strncpy (cp, cmd->infile, (temp - cmd->infile));
++      if (temp != NULL)
++	*((char *) stpncpy (cp, cmd->infile, temp - cmd->infile)) = '\0';
++      else
++	stpcpy (cp, cmd->infile);
++
+     }
+   else
+     mkfilename = (char *) cmd->outfile;

@@ -1,10 +1,8 @@
----
- localedata/locales/iso14651_t1_common |   17 ++++++++++++++---
- 1 file changed, 14 insertions(+), 3 deletions(-)
-
---- a/localedata/locales/iso14651_t1_common
-+++ b/localedata/locales/iso14651_t1_common
-@@ -916,7 +916,11 @@
+Index: glibc-2.7/localedata/locales/iso14651_t1_common
+===================================================================
+--- glibc-2.7.orig/localedata/locales/iso14651_t1_common	2007-10-23 08:51:23.000000000 -0400
++++ glibc-2.7/localedata/locales/iso14651_t1_common	2007-10-23 09:25:31.000000000 -0400
+@@ -466,7 +466,11 @@
  # SYMB. N°
  #
  <RES-1>
@@ -16,7 +14,7 @@
  # forme de base (bas de casse, arabe intrinsèque,
  # hébreu intrinsèque, etc.
  # basic form (lower case, intrinsic Arabic
-@@ -935,14 +939,21 @@
+@@ -485,14 +489,21 @@
  <AME> # medial/m<e'>dian
  # 6
  #

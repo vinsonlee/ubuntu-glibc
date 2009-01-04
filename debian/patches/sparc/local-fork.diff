@@ -4,11 +4,7 @@
 	  used instead.
 
 
----
- sysdeps/unix/sysv/linux/sparc/fork.S |   30 ------------------------------
- 1 file changed, 30 deletions(-)
-
---- a/sysdeps/unix/sysv/linux/sparc/fork.S
+--- sysdeps/unix/sysv/linux/sparc/fork.S
 +++ /dev/null
 @@ -1,30 +0,0 @@
 -/* Copyright (C) 1997, 1999, 2002 Free Software Foundation, Inc.

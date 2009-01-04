@@ -1,9 +1,4 @@
----
- linuxthreads/semaphore.h                 |   87 ------------------------------
- linuxthreads/sysdeps/pthread/semaphore.h |   88 ++++++++++++++++++++++++++++++-
- 2 files changed, 87 insertions(+), 88 deletions(-)
-
---- a/linuxthreads/semaphore.h
+--- glibc-2.6.orig/linuxthreads/semaphore.h
 +++ /dev/null
 @@ -1,87 +0,0 @@
 -/* Linuxthreads - a simple clone()-based implementation of Posix        */
@@ -93,8 +88,8 @@
 -__END_DECLS
 -
 -#endif  /* semaphore.h */
---- a/linuxthreads/sysdeps/pthread/semaphore.h
-+++ b/linuxthreads/sysdeps/pthread/semaphore.h
+--- glibc-2.6.orig/linuxthreads/sysdeps/pthread/semaphore.h
++++ glibc-2.6/linuxthreads/sysdeps/pthread/semaphore.h
 @@ -1 +1,87 @@
 -#include <linuxthreads/semaphore.h>
 +/* Linuxthreads - a simple clone()-based implementation of Posix        */

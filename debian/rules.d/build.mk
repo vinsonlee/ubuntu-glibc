@@ -13,13 +13,14 @@ endef
 
 
 $(patsubst %,mkbuilddir_%,$(GLIBC_PASSES)) :: mkbuilddir_% : $(stamp)mkbuilddir_%
-$(stamp)mkbuilddir_%: $(stamp)patch $(KERNEL_HEADER_DIR)
+$(stamp)mkbuilddir_%: $(stamp)patch-stamp $(KERNEL_HEADER_DIR)
 	@echo Making builddir for $(curpass)
-	test -d $(DEB_BUILDDIR) || mkdir -p $(DEB_BUILDDIR)
+	test -d $(DEB_BUILDDIR) || mkdir $(DEB_BUILDDIR)
 	touch $@
 
 $(patsubst %,configure_%,$(GLIBC_PASSES)) :: configure_% : $(stamp)configure_%
 $(stamp)configure_%: $(stamp)mkbuilddir_%
+
 	@echo Configuring $(curpass)
 	rm -f $(DEB_BUILDDIR)/configparms
 	echo "CC = $(call xx,CC)"		>> $(DEB_BUILDDIR)/configparms
@@ -31,7 +32,6 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	echo "LDFLAGS = "		 	>> $(DEB_BUILDDIR)/configparms
 	echo "BASH := /bin/bash"		>> $(DEB_BUILDDIR)/configparms
 	echo "KSH := /bin/bash"			>> $(DEB_BUILDDIR)/configparms
-	echo "SHELL := /bin/bash"		>> $(DEB_BUILDDIR)/configparms
 	echo "LIBGD = no"			>> $(DEB_BUILDDIR)/configparms
 	echo "bindir = $(bindir)"		>> $(DEB_BUILDDIR)/configparms
 	echo "datadir = $(datadir)"		>> $(DEB_BUILDDIR)/configparms
@@ -72,13 +72,12 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		CXX="$(call xx,CXX)" \
 		AUTOCONF=false \
 		MAKEINFO=: \
-		$(CURDIR)/configure \
+		$(CURDIR)/$(DEB_SRCDIR)/configure \
 		--host=$(call xx,configure_target) \
 		--build=$$configure_build --prefix=/usr --without-cvs \
 		--enable-add-ons=$(standard-add-ons)"$(call xx,add-ons)" \
 		--enable-profile \
 		--without-selinux \
-		--enable-stackguard-randomization \
 		$(call xx,with_headers) $(call xx,extra_config_options))
 	touch $@
 
@@ -97,35 +96,31 @@ $(stamp)build_%: $(stamp)configure_%
 
 $(patsubst %,check_%,$(GLIBC_PASSES)) :: check_% : $(stamp)check_%
 $(stamp)check_%: $(stamp)build_%
-	@set -e ; \
 	if [ -n "$(findstring nocheck,$(DEB_BUILD_OPTIONS))" ]; then \
-	  echo "Tests have been disabled via DEB_BUILD_OPTIONS." | tee $(log_results) ; \
+	  echo "DEB_BUILD_OPTIONS contains nocheck, skipping tests."; \
+	  echo "Tests have been disabled via DEB_BUILD_OPTIONS." > $(log_test) ; \
 	elif [ $(call xx,configure_build) != $(call xx,configure_target) ] && \
 	     ! $(DEB_BUILDDIR)/elf/ld.so $(DEB_BUILDDIR)/libc.so >/dev/null 2>&1 ; then \
-	  echo "Flavour cross-compiled, tests have been skipped." | tee $(log_results) ; \
+	  echo "Cross compiling, skipping tests."; \
+	  echo "Flavour cross-compiled, tests have been skipped." > $(log_test) ; \
 	elif ! $(call kernel_check,$(call xx,MIN_KERNEL_SUPPORTED)); then \
-	  echo "Kernel too old, tests have been skipped." | tee $(log_results) ; \
-	elif hostname | grep -q -E 'ball|mayr|mayer|rem' ; then \
-	  echo "Buggy build daemon detected, tests have been skipped." | tee $(log_results) ; \
+	  echo "Kernel too old, skipping tests."; \
+	  echo "Kernel too old, tests have been skipped." > $(log_test) ; \
+	elif uname -m | grep -q "^arm" && uname -r | grep -q "2\.6\.2[1-4]" ; then \
+	  echo "ARM machine running a 2.6.21-24 kernel detected, tests have been skipped."; \
+	  echo "ARM machine running a 2.6.21-24 kernel detected, tests have been skipped." > $(log_test) ; \
 	elif [ $(call xx,RUN_TESTSUITE) != "yes" ]; then \
 	  echo "Testsuite disabled for $(curpass), skipping tests."; \
-	  echo "Tests have been disabled." > $(log_results) ; \
+	  echo "Tests have been disabled." > $(log_test) ; \
 	else \
 	  echo Testing $(curpass); \
-	  find $(DEB_BUILDDIR) -name '*.out' -exec rm {} ';' ; \
-	  LANG="" TIMEOUTFACTOR="50" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) -k check 2>&1 | tee $(log_test); \
-	  chmod +x debian/testsuite-checking/convertlog.sh ; \
-	  debian/testsuite-checking/convertlog.sh $(log_test) | tee $(log_results) ; \
-	  if test -f $(log_expected) ; then \
-	    echo "***************" ; \
-	    chmod +x debian/testsuite-checking/compare.sh ; \
-	    debian/testsuite-checking/compare.sh $(log_expected) $(log_results) ; \
-	    echo "***************" ; \
-	  else \
-	    echo "*** WARNING ***" ; \
-	    echo "Please generate expected testsuite results for this arch!" ; \
-	    echo "*** WARNING ***" ; \
-	  fi ; \
+	  echo -n "Testsuite started: " | tee -a $(log_test); \
+	  date --rfc-2822 | tee -a $(log_test); \
+	  echo "--------------" | tee -a $(log_test); \
+	  TIMEOUTFACTOR="$(TIMEOUTFACTOR)" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) -k check 2>&1 | tee -a $(log_test); \
+	  echo "--------------" | tee -a $(log_test); \
+	  echo -n "Testsuite ended: " | tee -a $(log_test); \
+	  date --rfc-2822 | tee -a $(log_test); \
 	fi
 	touch $@
 
@@ -138,7 +133,7 @@ $(stamp)install_%: $(stamp)check_%
 
 	# Generate the list of SUPPORTED locales
 	if [ $(curpass) = libc ]; then \
-	  $(MAKE) -f debian/generate-supported.mk IN=localedata/SUPPORTED \
+	  $(MAKE) -f debian/generate-supported.mk IN=$(DEB_SRCDIR)/localedata/SUPPORTED \
 	    OUT=debian/tmp-$(curpass)/usr/share/i18n/SUPPORTED; \
 	fi
 
@@ -163,16 +158,6 @@ $(stamp)install_%: $(stamp)check_%
  	fi
 
 	$(call xx,extra_install)
-	touch $@
-
-$(stamp)doc: $(stamp)patch
-	make -C $(CURDIR)/linuxthreads/man
-	touch $@
-
-$(stamp)source: $(stamp)patch
-	tar -c --lzma -C .. \
-		-f $(build-tree)/glibc-$(GLIBC_VERSION).tar.lzma \
-		$(GLIBC_SOURCES)
 	touch $@
 
 .NOTPARALLEL: $(patsubst %,install_%,$(GLIBC_PASSES))

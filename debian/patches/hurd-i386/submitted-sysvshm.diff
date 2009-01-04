@@ -18,19 +18,8 @@
 	* sysdeps/mach/hurd/shmctl.c: New file.
 	* sysdeps/mach/hurd/shmdt.c: New file.
 
----
- hurd/Makefile              |    3 
- hurd/sysvshm.c             |   96 +++++++++++++++++
- hurd/sysvshm.h             |   47 ++++++++
- sysdeps/mach/hurd/ftok.c   |   43 +++++++
- sysdeps/mach/hurd/shmat.c  |   78 ++++++++++++++
- sysdeps/mach/hurd/shmctl.c |  132 ++++++++++++++++++++++++
- sysdeps/mach/hurd/shmdt.c  |   51 +++++++++
- sysdeps/mach/hurd/shmget.c |  245 +++++++++++++++++++++++++++++++++++++++++++++
- 8 files changed, 694 insertions(+), 1 deletion(-)
-
---- a/hurd/Makefile
-+++ b/hurd/Makefile
+--- glibc-2.6.orig/hurd/Makefile
++++ glibc-2.6/hurd/Makefile
 @@ -60,6 +60,7 @@
  	   vpprintf \
  	   ports-get ports-set hurdports hurdmsg \
@@ -49,7 +38,7 @@
  
  # XXX this is a temporary hack; see hurdmalloc.h
 --- /dev/null
-+++ b/hurd/sysvshm.c
++++ glibc-2.6/hurd/sysvshm.c
 @@ -0,0 +1,96 @@
 +/* Copyright (C) 2005 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -148,7 +137,7 @@
 +  return EINVAL;
 +}
 --- /dev/null
-+++ b/hurd/sysvshm.h
++++ glibc-2.6/hurd/sysvshm.h
 @@ -0,0 +1,47 @@
 +/* Copyright (C) 2005 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -198,7 +187,7 @@
 +   otherwise.  */
 +error_t __sysvshm_remove (void *addr, size_t *size);
 --- /dev/null
-+++ b/sysdeps/mach/hurd/ftok.c
++++ glibc-2.6/sysdeps/mach/hurd/ftok.c
 @@ -0,0 +1,43 @@
 +/* Copyright (C) 1995, 1996, 2000, 2005 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -244,7 +233,7 @@
 +  return key;
 +}
 --- /dev/null
-+++ b/sysdeps/mach/hurd/shmat.c
++++ glibc-2.6/sysdeps/mach/hurd/shmat.c
 @@ -0,0 +1,78 @@
 +/* Copyright (C) 2005 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -325,7 +314,7 @@
 +
 +weak_alias(__shmat, shmat)
 --- /dev/null
-+++ b/sysdeps/mach/hurd/shmctl.c
++++ glibc-2.6/sysdeps/mach/hurd/shmctl.c
 @@ -0,0 +1,132 @@
 +/* Copyright (C) 2005 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -460,7 +449,7 @@
 +
 +weak_alias(__shmctl, shmctl)
 --- /dev/null
-+++ b/sysdeps/mach/hurd/shmdt.c
++++ glibc-2.6/sysdeps/mach/hurd/shmdt.c
 @@ -0,0 +1,51 @@
 +/* Copyright (C) 2005 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -514,7 +503,7 @@
 +
 +weak_alias(__shmdt, shmdt)
 --- /dev/null
-+++ b/sysdeps/mach/hurd/shmget.c
++++ glibc-2.6/sysdeps/mach/hurd/shmget.c
 @@ -0,0 +1,245 @@
 +/* Copyright (C) 2005 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.

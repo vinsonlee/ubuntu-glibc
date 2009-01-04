@@ -1,12 +1,13 @@
 Even if glibc doesn't have an integrated pthread library, it depends on the hurd
 packages which have a pthread library.
 
----
- sysdeps/mach/hurd/bits/posix_opt.h |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
---- a/sysdeps/mach/hurd/bits/posix_opt.h
-+++ b/sysdeps/mach/hurd/bits/posix_opt.h
+Index: sysdeps/mach/hurd/bits/posix_opt.h
+===================================================================
+RCS file: /cvs/glibc/libc/sysdeps/mach/hurd/bits/posix_opt.h,v
+retrieving revision 1.11
+diff -u -p -r1.11 posix_opt.h
+--- sysdeps/mach/hurd/bits/posix_opt.h	6 Mar 2006 02:50:53 -0000	1.11
++++ sysdeps/mach/hurd/bits/posix_opt.h	6 Aug 2008 01:34:15 -0000
 @@ -62,7 +62,7 @@
  
  

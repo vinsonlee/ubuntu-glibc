@@ -1,9 +1,5 @@
----
- linuxthreads/signals.c |    2 ++
- 1 file changed, 2 insertions(+)
-
---- a/linuxthreads/signals.c
-+++ b/linuxthreads/signals.c
+--- linuxthreads/signals.c~	2007-11-15 12:46:17.000000000 +0100
++++ linuxthreads/signals.c	2007-11-15 12:46:17.000000000 +0100
 @@ -99,9 +99,11 @@
        if (act->sa_handler != SIG_IGN && act->sa_handler != SIG_DFL
  	  && sig > 0 && sig < NSIG)

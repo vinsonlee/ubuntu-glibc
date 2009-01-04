@@ -1,9 +1,5 @@
----
- linuxthreads/sysdeps/unix/sysv/linux/rtld-lowlevel.h |  153 +++++++++++++++++++
- 1 file changed, 153 insertions(+)
-
 --- /dev/null
-+++ b/linuxthreads/sysdeps/unix/sysv/linux/rtld-lowlevel.h
++++ linuxthreads/sysdeps/unix/sysv/linux/rtld-lowlevel.h
 @@ -0,0 +1,153 @@
 +/* Defintions for lowlevel handling in ld.so.
 +   Copyright (C) 2006 Free Software Foundation, Inc.

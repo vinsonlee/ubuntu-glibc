@@ -3,12 +3,8 @@
 	* hurd/lookup-retry.c (__hurd_file_name_lookup_retry): Use 
 	  __strtoul_internal instead of strtoul.
 
----
- hurd/lookup-retry.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
---- a/hurd/lookup-retry.c
-+++ b/hurd/lookup-retry.c
+--- hurd/lookup-retry.c.orig
++++ hurd/lookup-retry.c
 @@ -194,7 +194,7 @@
  		  char *end;
  		  int save = errno;

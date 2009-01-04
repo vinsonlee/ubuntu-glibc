@@ -1,12 +1,10 @@
 Slovakia joined the Euro zone.
 
----
- localedata/locales/sk_SK |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
+diff --git a/localedata/locales/sk_SK b/localedata/locales/sk_SK
+index 45d7da8..6a45858 100644
 --- a/localedata/locales/sk_SK
 +++ b/localedata/locales/sk_SK
-@@ -91,8 +91,8 @@
+@@ -91,8 +91,8 @@ END LC_MESSAGES
  
  LC_MONETARY
  

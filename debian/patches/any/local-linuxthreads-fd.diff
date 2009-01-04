@@ -1,9 +1,5 @@
----
- linuxthreads/pthread.c |   23 +++++++++++++++++++++++
- 1 file changed, 23 insertions(+)
-
---- a/linuxthreads/pthread.c
-+++ b/linuxthreads/pthread.c
+--- linuxthreads/pthread.c.orig	2008-01-06 04:37:45.000000000 +0100
++++ linuxthreads/pthread.c	2008-01-06 05:08:35.000000000 +0100
 @@ -662,6 +662,29 @@
      free(__pthread_manager_thread_bos);
      return -1;

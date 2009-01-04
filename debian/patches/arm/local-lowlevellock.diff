@@ -1,9 +1,5 @@
----
- ports/sysdeps/unix/sysv/linux/arm/nptl/lowlevellock.h |    1 +
- 1 file changed, 1 insertion(+)
-
---- a/ports/sysdeps/unix/sysv/linux/arm/nptl/lowlevellock.h
-+++ b/ports/sysdeps/unix/sysv/linux/arm/nptl/lowlevellock.h
+--- ports/sysdeps/unix/sysv/linux/arm/nptl/lowlevellock.h.orig
++++ ports/sysdeps/unix/sysv/linux/arm/nptl/lowlevellock.h
 @@ -25,6 +25,7 @@
  #include <atomic.h>
  #include <sysdep.h>

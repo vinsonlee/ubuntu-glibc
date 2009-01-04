@@ -1,10 +1,6 @@
----
- nscd/nscd.h |    8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
-
---- a/nscd/nscd.h
-+++ b/nscd/nscd.h
-@@ -103,10 +103,10 @@
+--- nscd/nscd.h.orig
++++ nscd/nscd.h
+@@ -91,10 +91,10 @@
  
  
  /* Paths of the file for the persistent storage.  */

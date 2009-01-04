@@ -2,4 +2,4 @@
 # optimized libraries.
 TMPDIR/SLIBDIR/*.so* SLIBDIR
 
-BUILD-TREE/test-results-*-FLAVOR usr/share/doc/LIBC-FLAVOR
+log-test-*-FLAVOR usr/share/doc/LIBC-FLAVOR

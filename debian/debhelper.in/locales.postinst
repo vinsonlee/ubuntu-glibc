@@ -61,16 +61,17 @@ EOF
     if [ -f /usr/lib/locales-all/supported.tar.lzma ] ; then
         echo "locales-all installed, skipping locales generation"
     else
-        locale-gen
+        /usr/sbin/locale-gen
     fi
 
     if ! [ -e $EE ] || [ -n "$DEBCONF_RECONFIGURE" ] ; then
-        # Remove previous definitions
-        update-locale --no-checks LANG
-
         # Set default LANG environment variable
+        if [ -e $EE ]; then
+            # Remove previous definitions
+            /usr/sbin/update-locale --no-checks LANG
+        fi
         if [ -n "$DEFAULT_ENVIRONMENT" ] && [ "$DEFAULT_ENVIRONMENT" != "None" ]; then
-            update-locale "LANG=$DEFAULT_ENVIRONMENT"
+            /usr/sbin/update-locale "LANG=$DEFAULT_ENVIRONMENT"
         fi
     fi
 fi
