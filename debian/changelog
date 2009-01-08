@@ -1,3 +1,11 @@
+glibc (2.8~20080505-0ubuntu8) intrepid-proposed; urgency=low
+
+  * Add debian/patches/ubuntu/no-sprintf-pre-truncate.diff: do not
+    pre-clear target buffers on sprintf to retain backward compatibility
+    (LP: #305901).
+
+ -- Kees Cook <kees@ubuntu.com>  Wed, 07 Jan 2009 20:15:15 -0800
+
 glibc (2.8~20080505-0ubuntu7) intrepid; urgency=low
 
   * Add debian/patches/ubuntu/stack-guard-quick-randomization.diff: do
