@@ -31,7 +31,6 @@ sparc/submitted-timing.diff
 
 any/cvs-iconv-braces.diff
 any/cvs-regex_anchor.diff
-any/cvs-nscd-crash-fix.diff -p0
 any/local-notls.diff -p0
 any/local-asserth-decls.diff -p0
 any/local-bashisms.diff -p0
