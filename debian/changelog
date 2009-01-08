@@ -1,3 +1,72 @@
+glibc (2.9-0ubuntu7) jaunty; urgency=low
+
+  [ Matthias Klose ]
+  * Merge with Debian, glibc-2.9 branch, r3226.
+
+  [ Kees Cook ]
+  * Added debian/patches/any/cvs-bz-9720-resource.diff: upstream
+    fixes for resource.h mis-compile (LP: #302087).
+
+ -- Kees Cook <kees@ubuntu.com>  Thu, 08 Jan 2009 13:27:48 -0800
+
+glibc (2.9-0exp1) UNRELEASED; urgency=low
+
+   [ Aurelien Jarno ]
+   * New upstream release.
+     - This version has been tagged in the CVS, update debian/rules and 
+       debian/rules.d/tarball.mk accordingly.
+    - shs_CA locale is enabled.  Closes: #504663.
+    - fix snprintf with low-memory.  Closes: #481543.
+    - fix mtrace warning message.  Closes: #507488.
+    - Disable m68k/local-mathinline_h.diff.
+    - Update any/local-bashisms.diff.
+    - Update hurd-i386/local-tls-support.diff.
+    - Update localedata/locale-en_DK.diff.
+    - Update localedata/sort-UTF8-first.diff.
+    - Update localedata/supported.diff.
+    - Update localedata/first_weekday.diff.
+    - Remove all/submitted-iconv-latin9.diff (merged).
+    - Remove any/submitted-user_h.diff (merged).
+    - Remove any/cvs-bug-iconv6_tst-iconv7.diff (merged).
+    - Remove any/cvs-getaddrinfo.diff (merged).
+    - Remove any/cvs-iconv-braces.diff (merged).
+    - Remove any/cvs-nscd-getservbyport.diff (merged).
+    - Remove any/cvs-regex_anchor.diff (merged).
+    - Remove any/cvs-tst-regex.diff (merged).
+    - Remove any/submitted-rpcgen-makefile.diff (merged).
+    - Remove hppa/cvs-context.diff (merged).
+    - Remove hppa/submitted-atomic_h.diff (merged).
+    - Remove hppa/submitted-fesetenv.diff (merged).
+    - Remove hurd-i386/cvs-lock-memory-clobber.diff (merged).
+    - Remove hurd-i386/cvs-mig-init.diff (merged).
+    - Remove hurd-i386/cvs-MSG_NOSIGNAL.diff (merged).
+    - Remove hurd-i386/cvs-open_2.diff (merged).
+    - Remove hurd-i386/cvs-signal-werror.diff (merged).
+    - Remove hurd-i386/cvs-termios.diff (merged).
+    - Remove hurd-i386/cvs-fcntl-types.diff (merged).
+    - Remove mips/local-setjmp.diff (merged).
+    - Remove sparc/cvs-context.diff (merged).
+    - Remove localedata/locale-ks_IN.diff (replaced upstream by
+      ks_IN@devanagari).
+    - debian/shlibver: bump to 2.9.
+    - debian/locales-depver: bump to 2.9.
+    - debian/sysdeps/depflags.pl: add a conflict on nscd (<< 2.9) to libc.
+  * debhelper.in/locales.config: convert ks_IN into ks_IN@devanagari.
+  * symbols.wildcards: update for glibc 2.9.
+  * debhelper.in/*.lintian: update for glibc 2.9.
+  * testsuite-checking/compare.sh: don't assume expected and current 
+    testsuite results in same order.  Closes: bug#504031.
+  * testsuite-checking/expected-results-powerpc64-linux-ppc64: update.
+  * debian/local/etc_init.d/glibc.sh: add Description and Short-Description.
+    Closes: bug#510083.
+  * Remove manpage that will be provided by manpages-dev.  Closes: bug#506515,
+    bug#505784.
+  * patches/hppa/submitted-tsd.diff: new patch from Arthur Loiret to fix build
+    on hppa.
+  * debian/copyright: update.  Closes: bug#506881.
+ 
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 07 Jan 2009 17:17:52 +0100
+
 glibc (2.9-0ubuntu6) jaunty; urgency=low
 
   [ Matthias Klose ]
@@ -302,7 +371,7 @@ glibc (2.8+20080809-3) experimental; urgency=low
     version to 2.6.18.  Closes: #499689.
   * debian/control.in/main: add Vcs-Svn and Vcs-Browser field.  Closes: 
     #499769.
-  * debian/sysdeps/depflags.pl: add a conflict on nscd (<< 2.8) to nscd
+  * debian/sysdeps/depflags.pl: add a conflict on nscd (<< 2.8) to libc
     Closes: #498516).
   * rules, rules.d/build.mk, debhelper.in/glibc-doc.manpages: install the
     generated manpages.
@@ -433,6 +502,20 @@ glibc (2.8~20080505-0ubuntu1) intrepid; urgency=low
   * debhelper.in/libc.install: Relax file location for snapshot builds.
 
  -- Matthias Klose <doko@ubuntu.com>  Fri, 09 May 2008 14:22:01 +0200
+
+glibc (2.7-18) unstable; urgency=low
+
+  * patches/localedata/mt_MT_euro.diff, patches/localedata/el_CY_euro.diff:
+    new patches to switch Cyprus and Malta currency to Euro.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 04 Jan 2009 11:28:23 +0100
+
+glibc (2.7-17) unstable; urgency=low
+
+  * patches/localedata/sk_SK_euro.diff: new patch to switch Slovakia 
+    currency to Euro.  Closes: bug#510423.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 02 Jan 2009 22:49:53 +0100
 
 glibc (2.7-16) unstable; urgency=low
 
