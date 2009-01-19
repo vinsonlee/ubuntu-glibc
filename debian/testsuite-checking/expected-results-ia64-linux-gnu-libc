@@ -5,20 +5,7 @@
 #
 annexc.out, Error 1 (ignored)
 check-localplt.out, Error 1
-tst-mutexpi4.out, Error 1
-tst-mutexpi5a.out, Error 1
-tst-mutexpi5.out, Error 1
-tst-mutexpi6.out, Error 1
-tst-mutexpi9.out, Error 1
-tst-oddstacklimit.out, Error 139
-tst-robustpi1.out, Error 1
-tst-robustpi2.out, Error 1
-tst-robustpi3.out, Error 1
-tst-robustpi4.out, Error 1
-tst-robustpi5.out, Error 1
-tst-robustpi6.out, Error 1
-tst-robustpi7.out, Error 1
-tst-robustpi9.out, Error 1
+tst-getcpu.out, Error 1
 tst-timer.out, Error 139
 
 # FIXME Ubuntu
@@ -27,4 +14,3 @@ tst-cancelx7.out, Error 1
 tst-cleanup0.out, Error 2
 tst-fmon.out, Error 1
 tst-getcpu.out, Error 1
-tst-pselect.out, Error 1

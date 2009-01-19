@@ -8,9 +8,7 @@ check-localplt.out, Error 1
 tst-timer.out, Error 139
 
 # FIXME Ubuntu
-tst-cancel17.out, Error 1
 tst-cancel7.out, Error 1
 tst-cancelx7.out, Error 1
 tst-cleanup0.out, Error 2
-tst-cpuclock2.out, Error 1
 tst-fmon.out, Error 1
