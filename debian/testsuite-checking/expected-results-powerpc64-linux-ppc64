@@ -6,6 +6,3 @@
 annexc.out, Error 1 (ignored)
 check-localplt.out, Error 1
 tst-timer.out, Error 139
-
-# FIXME Ubuntu
-tst-pselect.out, Error 1

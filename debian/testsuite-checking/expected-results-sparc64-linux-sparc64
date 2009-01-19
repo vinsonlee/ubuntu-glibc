@@ -8,5 +8,4 @@ check-localplt.out, Error 1
 tst-timer.out, Error 139
 
 # FIXME Ubuntu
-tst-pselect.out, Error 1
 tst-tls6.out, Error 1
