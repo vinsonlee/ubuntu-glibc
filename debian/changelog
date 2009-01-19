@@ -1,3 +1,11 @@
+glibc (2.8~20080505-0ubuntu9) intrepid-proposed; urgency=low
+
+  [Daniel J Blueman]
+  * Add debian/patches/any/cvs-nscd-crash-fix.diff: address nscd
+    daemon crashing in mem.c (LP: #256157).
+
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 19 Jan 2009 09:38:23 +0100
+
 glibc (2.8~20080505-0ubuntu8) intrepid-proposed; urgency=low
 
   * Add debian/patches/ubuntu/no-sprintf-pre-truncate.diff: do not
