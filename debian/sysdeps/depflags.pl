@@ -91,6 +91,11 @@ push @{$libc_c{'Conflicts'}}, 'tzdata (<< 2007k-1), tzdata-etch';
 # Conflict with older versions of nscd
 push @{$libc_c{'Conflicts'}}, 'nscd (<< 2.9)';
 
+# belocs-locales-bin is dead upstream; Ubuntu previously used it, now libc6
+# ships the programs itself again
+push @{$libc_c{'Conflicts'}}, 'belocs-locales-bin';
+push @{$libc_c{'Replaces'}}, 'belocs-locales-bin';
+
 # Depends on libgcc1/libgcc2/libgcc4
 if ($DEB_HOST_ARCH =~ m/^hppa$/) {
     push @{$libc_c{'Depends'}}, 'libgcc4';
