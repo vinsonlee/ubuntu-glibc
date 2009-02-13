@@ -1,3 +1,17 @@
+glibc (2.9-0ubuntu10) jaunty; urgency=low
+
+  * Move locale generation programs back to libc6, belocs-locales-bin
+    is dead upstream, and more and more incapable of building current
+    locale definitions:
+    - debhelper.in/libc.install: Install localedef, locale,
+      update-locale, and validlocale again. (locale-def will be
+      shipped in langpack-locales, since it is closely related to it).
+    - debhelper.in/libc.manpages: Install manpages for above programs.
+    - sysdeps/depflags.pl: Conflicts/Replaces: belocs-locales-bin.
+   * Merged current fixes from Debian's glibc-2.9 branch (r3269).
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Fri, 13 Feb 2009 18:31:04 +0100
+
 glibc (2.9-0ubuntu9) jaunty; urgency=low
 
   * Merge with Debian, glibc-2.9 branch, r3244.
