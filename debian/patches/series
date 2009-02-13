@@ -39,6 +39,7 @@ localedata/sk_SK_euro.diff
 localedata/submitted-bz9725-locale-sv_SE.diff
 localedata/submitted-bz9730-locale-sv_FI.diff
 localedata/first_weekday.diff
+localedata/submitted-bz9835-en_GB-first_day.diff
 
 amd64/local-biarch.diff
 amd64/local-clone.diff
@@ -126,6 +127,7 @@ any/cvs-bz9706-nss_nss-files_files-parse.diff
 any/cvs-bz-9720-resource.diff
 any/local-nss-overflow.diff
 any/submitted-popen.diff
+any/local-linuxthreads-thread_self.diff
 
 # Ubuntu-specific patches.  These are things that we don't expect to wind up
 # in Debian.
