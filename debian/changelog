@@ -1,3 +1,14 @@
+glibc (2.9-0ubuntu11) jaunty; urgency=low
+
+  * Update patch arm/local-no-hwcap to flag HWCAP_ARM_VFP as an important
+    hwcap; this adds /lib/vfp, /usr/lib/vfp etc. to the ldconfig and ld.so
+    search path.
+  * Update patch arm/local-no-hwcap to drop HWCAP_ARM_FAST_MULT from important
+    hwcaps as fastmult is even present on StrongARM according to Wookey;
+    suggested by Riku Voipio.
+
+ -- Loic Minier <lool@dooz.org>  Mon, 16 Feb 2009 13:32:55 +0100
+
 glibc (2.9-0ubuntu10) jaunty; urgency=low
 
   * Move locale generation programs back to libc6, belocs-locales-bin
