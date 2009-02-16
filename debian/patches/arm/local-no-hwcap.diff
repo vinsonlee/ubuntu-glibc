@@ -11,7 +11,7 @@
  };
  
 -#define HWCAP_IMPORTANT		(HWCAP_ARM_HALF | HWCAP_ARM_FAST_MULT)
-+#define HWCAP_IMPORTANT		HWCAP_ARM_FAST_MULT
++#define HWCAP_IMPORTANT		HWCAP_ARM_VFP
  
  static inline int
  __attribute__ ((unused))
