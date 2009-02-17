@@ -2,9 +2,13 @@
 
 	* Makeconfig: add multiarch support
 
---- Makeconfig.orig
-+++ Makeconfig
-@@ -190,6 +190,11 @@
+---
+ Makeconfig |    9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+--- a/Makeconfig
++++ b/Makeconfig
+@@ -191,6 +191,11 @@
  endif
  inst_libdir = $(install_root)$(libdir)
  
@@ -16,7 +20,7 @@
  # Where to install the shared library and dynamic linker.
  ifndef slibdir
  slibdir = $(exec_prefix)/lib
-@@ -500,6 +505,10 @@
+@@ -501,6 +506,10 @@
  default-rpath = $(libdir)
  endif
  
