@@ -1,7 +1,11 @@
---- libc/intl/locale.alias
-+++ libc/intl/locale.alias
-@@ -27,7 +27,7 @@
- # bugs@gnu.org.
+---
+ intl/locale.alias |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/intl/locale.alias
++++ b/intl/locale.alias
+@@ -26,7 +26,7 @@
+ # Locales should always be specified by their full name.
  
  bokmal		nb_NO.ISO-8859-1
 -bokmål		nb_NO.ISO-8859-1
@@ -9,7 +13,7 @@
  catalan		ca_ES.ISO-8859-1
  croatian	hr_HR.ISO-8859-2
  czech		cs_CZ.ISO-8859-2
-@@ -38,7 +38,7 @@
+@@ -37,7 +37,7 @@
  eesti		et_EE.ISO-8859-1
  estonian	et_EE.ISO-8859-1
  finnish         fi_FI.ISO-8859-1
