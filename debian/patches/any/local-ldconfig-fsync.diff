@@ -1,5 +1,9 @@
---- glibc-2.7.orig/elf/cache.c
-+++ glibc-2.7/elf/cache.c
+---
+ elf/cache.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/elf/cache.c
++++ b/elf/cache.c
 @@ -426,6 +426,7 @@
      }
  

@@ -1,5 +1,9 @@
---- misc/mktemp.c.orig
-+++ misc/mktemp.c
+---
+ misc/mktemp.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/misc/mktemp.c
++++ b/misc/mktemp.c
 @@ -33,4 +33,4 @@
    return template;
  }
