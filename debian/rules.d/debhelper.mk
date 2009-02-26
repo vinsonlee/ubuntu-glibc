@@ -82,7 +82,7 @@ ifeq ($(filter nostrip,$(DEB_BUILD_OPTIONS)),)
 
 	if test "$(NOSTRIP_$(curpass))" != 1; then			\
 	  chmod a+x debian/wrapper/objcopy;				\
-	  export PATH=$(shell pwd)/debian/wrapper:$$PATH;		\
+	  export PATH=$(CURDIR)/debian/wrapper:$$PATH;			\
 	  dh_strip -p$(curpass) -Xlibpthread --dbg-package=$(libc)-dbg; \
 	  (cd debian/$(curpass);					\
 	   find . -name libpthread-\*.so -exec				\
@@ -125,7 +125,7 @@ endif
 
 	dh_installdeb -p$(curpass)
 	if [ $(curpass) = nscd ] ; then \
-		dh_shlibdeps -p$(curpass) -- -xglibc-private ; \
+		dh_shlibdeps -p$(curpass) ; \
 	fi
 	dh_gencontrol -p$(curpass) -- $($(curpass)_control_flags)
 	if [ $(curpass) = nscd ] ; then \
