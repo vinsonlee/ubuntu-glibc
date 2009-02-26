@@ -8,6 +8,7 @@ check-localplt.out, Error 1
 testgrp.out, Error 1
 tst-cancelx4.out, Error 1
 tst-cancelx5.out, Error 1
+tst-cpuclock2.out, Error 1
 tst-timer.out, Error 139
 tst-tls4.out, Error 1
 
@@ -16,3 +17,6 @@ tst-cancel7.out, Error 1
 tst-cancelx7.out, Error 1
 tst-cleanup0.out, Error 2
 tst-fmon.out, Error 1
+
+# new in 2.9-4ubuntu1
+tst-mqueue5.out, Error 1

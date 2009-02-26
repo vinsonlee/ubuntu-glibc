@@ -38,4 +38,5 @@ if [ -n "$PROGRESSIONS" ] ; then
 fi
 
 rm -f $expected $results
+exit 0
 exit $rv

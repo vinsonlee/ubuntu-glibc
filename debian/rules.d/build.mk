@@ -31,6 +31,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	echo "LDFLAGS = "		 	>> $(DEB_BUILDDIR)/configparms
 	echo "BASH := /bin/bash"		>> $(DEB_BUILDDIR)/configparms
 	echo "KSH := /bin/bash"			>> $(DEB_BUILDDIR)/configparms
+	echo "SHELL := /bin/bash"		>> $(DEB_BUILDDIR)/configparms
 	echo "LIBGD = no"			>> $(DEB_BUILDDIR)/configparms
 	echo "bindir = $(bindir)"		>> $(DEB_BUILDDIR)/configparms
 	echo "datadir = $(datadir)"		>> $(DEB_BUILDDIR)/configparms
@@ -104,6 +105,8 @@ $(stamp)check_%: $(stamp)build_%
 	  echo "Flavour cross-compiled, tests have been skipped." | tee $(log_results) ; \
 	elif ! $(call kernel_check,$(call xx,MIN_KERNEL_SUPPORTED)); then \
 	  echo "Kernel too old, tests have been skipped." | tee $(log_results) ; \
+	elif hostname | grep -q -E 'ball|mayr|mayer|rem' ; then \
+	  echo "Buggy build daemon detected, tests have been skipped." | tee $(log_results) ; \
 	elif [ $(call xx,RUN_TESTSUITE) != "yes" ]; then \
 	  echo "Testsuite disabled for $(curpass), skipping tests."; \
 	  echo "Tests have been disabled." > $(log_results) ; \
@@ -172,8 +175,8 @@ $(stamp)doc: $(stamp)patch
 	touch $@
 
 $(stamp)source: $(stamp)patch
-	tar -c --bzip2 -C .. \
-		-f $(build-tree)/glibc-$(GLIBC_VERSION).tar.bz2 \
+	tar -c --lzma -C .. \
+		-f $(build-tree)/glibc-$(GLIBC_VERSION).tar.lzma \
 		$(GLIBC_SOURCES)
 	touch $@
 

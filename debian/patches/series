@@ -40,6 +40,7 @@ localedata/submitted-bz9725-locale-sv_SE.diff
 localedata/submitted-bz9730-locale-sv_FI.diff
 localedata/first_weekday.diff
 localedata/submitted-bz9835-en_GB-first_day.diff
+localedata/locale-fr_FR.diff
 
 amd64/local-biarch.diff
 amd64/local-clone.diff
@@ -59,7 +60,7 @@ hppa/submitted-fadvise64_64.diff
 hppa/submitted-lt.diff
 hppa/submitted-nptl-carlos.diff
 hppa/submitted-pie.diff
-hppa/submitted-tsd.diff
+hppa/cvs-tsd.diff
 
 i386/local-biarch.diff
 i386/local-clone.diff
@@ -74,6 +75,9 @@ powerpc/local-sysconf.diff
 sparc/local-fork.diff
 sparc/local-sparcv9-target.diff
 sparc/submitted-timing.diff
+
+all/submitted-readme-version.diff
+all/fedora-nss_dns-gethostbyname4-disable.diff
 
 any/local-asserth-decls.diff
 any/local-bindresvport_blacklist.diff
@@ -128,8 +132,10 @@ any/cvs-bz-9720-resource.diff
 any/local-nss-overflow.diff
 any/submitted-popen.diff
 any/local-linuxthreads-thread_self.diff
-
-all/fedora-nss_dns-gethostbyname4-disable.diff
+any/cvs-pthread_h.diff
+any/local-bashisms.diff
+any/submitted-futex_lock_pi.diff
+any/cvs-bz7058-nss_nss-nis.diff
 
 # Ubuntu-specific patches.  These are things that we don't expect to wind up
 # in Debian.
