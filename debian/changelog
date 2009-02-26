@@ -1,3 +1,146 @@
+glibc (2.9-4ubuntu1) jaunty; urgency=low
+
+  * Test build, explicitely fail after running the tests.
+
+  * Merge with Debian (r3320, trunk); remaining changes:
+    - Packaging:
+      + External tzdata
+      + Addition of Niagara and Niagara2 optimised libraries
+      + GFDL Documentation added back in, build glibc-doc from this source.
+      + Transition from /usr/include/ppc64-linux-gnu to powerpc64-linux-gnu
+      + Use dpkg triggers for ldconfig
+      + Do not die if extra libc libraries or symlinks found
+      + Do not do a test run of nscd when starting
+      + Only apply patches we actually use in Ubuntu
+      + Use /lib and /usr/lib for amd64
+      + amd64 biarch is i686, not i486.
+      + Non-optimised i386 glibc is Xen-friendly.
+      + Support sparcv9v, v9v2, 64b, 64v, 64v2
+      + Add support for lpia.
+      + Use <triplet>.conf for files in /etc/ld.so.conf.d.
+    - Patches:
+      + Applied any/local-ipv6-lookup.
+      + Not applied any/local-sysctl.
+      + Applied debian/patches/all/fedora-nss_dns-gethostbyname4-disable.diff.
+      + Updated arm/local-no-hwcap.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 26 Feb 2009 15:38:06 +0100
+
+glibc (2.9-4) unstable; urgency=low
+
+  * testsuite-checking/expected-results-ia64-linux-gnu-libc: ignore 
+    result of tst-oddstacklimit.out, it is known to fail with old
+    kernels, just like in glibc 2.7.
+  * debian/debhelper.in/libc{-alt,-otherbuild,}.lintian: remove outdated
+    overrides.
+  * debhelper.in/libc.postinst: restart NSS services on upgrades from 
+    versions prior to 2.9-1.
+  * testsuite-checking/expected-results-arm-linux-gnueabi-libc: ignore 
+    result of test-fenv.out and test-fpucw.out, as they were already
+    failing with glibc 2.7.
+  * patches/any/submitted-futex_lock_pi.diff: new patch to correctly
+    define when PI futexes have been introduced in the kernel, on a 
+    per architecture basis.
+  * testsuite-checking/expected-results-{alpha,ia64}-linux-gnu-libc:
+    remove PI futexes failures.
+  * patches/all/submitted-readme-version.diff: fix the upstream version
+    number in upstream README.  Closes: bug#516908.
+  * debian/rules.d/build.mk: disable the testsuite on ball/mayr/mayer/rem
+    build daemons.
+  * debian/rules.d/info.mk: new file to dump useful info in the build log.
+  * debian/rules: always define and export SHELL as "/bin/bash -e".  
+    Closes: bug#517077.
+  * patches/any/cvs-bz7058-nss_nss-nis.diff: new patch to fix crash when
+    doing host lookup with nss-nis.  Closes: bug#517094.
+  * Add debian/libc6-mips{n32,64}.symbols.mips{el,} symbol files.
+  * debian/debhelper.in/glibc-source.install, debian/rules.d/build.mk:
+    switch the format of glibc-source to lzma, sparing 6MB.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 26 Feb 2009 11:37:53 +0100
+
+glibc (2.9-3) unstable; urgency=low
+
+  * debhelper.in/nscd.init: fix the for loop.  Closes: bug#516509.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 21 Feb 2009 11:40:24 +0100
+
+glibc (2.9-2) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * testsuite-checking/*: ignore tst-cpuclock2 test, as it fails on
+    machines using cpufreq.
+  * Rename submitted/cvs-tsd.diff into hppa/cvs-tsd.diff.
+  * patches/any/local-bashisms.diff: fix more bashisms in the testsuite.
+  * rules.d/build.mk: define SHELL as /bin/bash.
+  * patches/any/cvs-pthread_h.diff: patch from upstream to fix warning
+    in pthread.h.
+  * debhelper.in/libc.preinst: restart NSS services on upgrades from 
+    versions prior to 2.9-1.
+  * debhelper.in/*symbols*, rules.d/debhelper.mk: allow linking against
+    private symbols again, but with a strict dependency on the upstream
+    version.
+  * debhelper.in/nscd.init: fix cache flushing on restart/reload.  Closes:
+    bug#516212.
+
+  [ Petr Salinger ]
+  * kfreebsd/local-sysdeps.diff: update to revision 2370 (from glibc-bsd).
+  * drop kfreebsd/local-sysdeps28.diff (merged into local-sysdeps.diff).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 20 Feb 2009 22:25:19 +0100
+
+glibc (2.9-1) unstable; urgency=low
+
+  Removed the changelog entries for earlier merges from the glibc-2.9 branch.
+
+  [ Aurelien Jarno ]
+  * debian/rules.d/build.mk: enable stackguard randomization.  Closes: 
+    bug#511811.
+  * expected-results-i486-linux-gnu-libc, expected-results-i686-linux-i686:
+    Add tests that fail on a Xen machine. Sigh.
+  * any/local-linuxthreads-thread_self.diff: new patch to fix a warning on
+    linuxthreads builds.
+  * rules.d/build.mk: unset LANG to make sure testsuite errors are not
+    localized.
+  * debian/rules: remove *.mo file in the clean target.
+  * sysdeps/alpha.mk, control.in/main: use gcc-4.3 on alpha.
+  * debhelper.in/locales.postinst: make sure /etc/default/locale is always
+    created.  Closes: bug#515099.
+  * debian/wrapper/objcopy: apply special strip to libraries only.  Closes: 
+    bug#513882.
+  * debian/localedata/locale-fr_FR.diff: revert change of week of day and
+    month abbreviations in fr_FR locale.  Closes: bug#509191.
+
+  [ Clint Adams ]
+  * patches/localedata/submitted-bz9835-en_GB-first_day.diff: new patch to
+    fix first_weekday and first_workday for en_GB.  closes: #512343.
+
+  [ Petr Salinger ]
+  * kfreebsd/local-sysdeps.diff: update to revision 2352 (from glibc-bsd).
+  * add kfreebsd/local-linuxthreads29.diff: 
+    update to fix build on kfreebsd architectures.
+
+  [ Samuel Thibault ]
+  * hurd-i386/cvs-resource-prio.diff: new patch to fix detection of PRIO_*
+    values in some packages
+  * hurd-i386/cvs-hurdsig-fix.diff: new patch to fix hurd signal FD locking.
+  * hurd-i386/cvs-report-wait-fix.diff: patch from CVS instead of 
+    hurd-i386/submitted-report-wait.diff.
+  * hurd-i386/submitted-critical-sections.diff: new patch to fix some missing
+    critical sections.
+  * hurd-i386/submitted-dup2-fix.diff: new patch to fix dup2 FD locking.
+  * hurd-i386/local-net-headers.diff: new patch to install net/*.h headers.
+  * hurd-i386/local-tls-dtv-offset.diff: new patch to fix DTV_OFFSET macro.
+  * hurd-i386/local-pthread_posix-option.diff: put back to series.
+  * hurd-i386/local-check_native.diff: new patch to provide a dummy
+    __check_native() function.
+  * hurd-i386/cvs-get_pc_thunk.diff: new patch to fix missing
+    __i686.get_pc_thunk.bx reference.
+  * hurd-i386/submitted-dl-sysdep.diff: new patch to fix static linking.
+  * hurd-i386/submitted-stat.diff: clean up patch.
+  * hurd-i386/submitted-itimer-lock.diff: new patch fixing itimer unlocking.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 17 Feb 2009 22:49:15 +0100
+
 glibc (2.9-0ubuntu12) jaunty; urgency=low
 
   * debian/patches/all/fedora-nss_dns-gethostbyname4-disable.diff: Patch
