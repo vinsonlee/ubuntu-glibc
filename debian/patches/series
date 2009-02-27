@@ -130,6 +130,7 @@ all/local-alias-et_EE.diff
 all/local-pthread-manpages.diff
 all/local-remove-manual.diff
 all/local-ru_RU.diff
+all/submitted-readme-version.diff
 
 any/local-asserth-decls.diff
 any/local-bindresvport_blacklist.diff
@@ -185,3 +186,5 @@ any/submitted-popen.diff
 any/local-linuxthreads-thread_self.diff
 any/cvs-pthread_h.diff
 any/local-bashisms.diff
+any/submitted-futex_robust_pi.diff
+any/cvs-bz7058-nss_nss-nis.diff
