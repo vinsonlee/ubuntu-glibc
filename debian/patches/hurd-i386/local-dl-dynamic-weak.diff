@@ -1,5 +1,10 @@
---- glibc-2.6.orig/elf/dl-support.c
-+++ glibc-2.6/elf/dl-support.c
+---
+ elf/dl-support.c |    6 ++++++
+ elf/rtld.c       |    5 +++++
+ 2 files changed, 11 insertions(+)
+
+--- a/elf/dl-support.c
++++ b/elf/dl-support.c
 @@ -43,7 +43,13 @@
  int _dl_debug_mask;
  int _dl_lazy;
@@ -14,8 +19,8 @@
  
  /* If nonzero print warnings about problematic situations.  */
  int _dl_verbose;
---- glibc-2.6.orig/elf/rtld.c
-+++ glibc-2.6/elf/rtld.c
+--- a/elf/rtld.c
++++ b/elf/rtld.c
 @@ -145,6 +145,11 @@
  #ifdef NEED_DL_SYSINFO
      ._dl_sysinfo = DL_SYSINFO_DEFAULT,

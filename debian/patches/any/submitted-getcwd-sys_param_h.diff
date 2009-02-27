@@ -2,8 +2,12 @@
 
         * sysdeps/unix/sysv/linux/getcwd.c: Include sys/param.h.
 
---- sysdeps/unix/sysv/linux/getcwd.c.orig
-+++ sysdeps/unix/sysv/linux/getcwd.c
+---
+ sysdeps/unix/sysv/linux/getcwd.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/sysdeps/unix/sysv/linux/getcwd.c
++++ b/sysdeps/unix/sysv/linux/getcwd.c
 @@ -24,6 +24,7 @@
  #include <limits.h>
  #include <stdlib.h>
