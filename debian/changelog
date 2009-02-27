@@ -1,3 +1,44 @@
+glibc (2.9-4) unstable; urgency=low
+
+  * testsuite-checking/expected-results-ia64-linux-gnu-libc: ignore 
+    result of tst-oddstacklimit.out, it is known to fail with old
+    kernels, just like in glibc 2.7.
+  * debian/debhelper.in/libc{-alt,-otherbuild,}.lintian: remove outdated
+    overrides.
+  * debhelper.in/libc.postinst: restart NSS services on upgrades from 
+    versions prior to 2.9-1.
+  * testsuite-checking/expected-results-arm-linux-gnueabi-libc: ignore 
+    result of test-fenv.out and test-fpucw.out, as they were already
+    failing with glibc 2.7.
+  * patches/any/submitted-futex_robust_pi.diff: new patch to correctly
+    define when PI futexes and robust mutexes have been introduced
+    in the kernel, on a per architecture basis.
+  * testsuite-checking/expected-results-{alpha,ia64}-linux-gnu-libc:
+    remove PI futexes failures.
+  * patches/all/submitted-readme-version.diff: fix the upstream version
+    number in upstream README.  Closes: bug#516908.
+  * debian/rules.d/build.mk: disable the testsuite on ball/mayr/mayer/rem
+    build daemons.
+  * debian/rules.d/info.mk: new file to dump useful info in the build log.
+  * debian/rules: always define and export SHELL as "/bin/bash -e".  
+    Closes: bug#517077.
+  * patches/any/cvs-bz7058-nss_nss-nis.diff: new patch to fix crash when
+    doing host lookup with nss-nis.  Closes: bug#517094.
+  * Add debian/libc6-mips{n32,64}.symbols.mips{el,} symbol files.
+  * debian/debhelper.in/glibc-source.install, debian/rules.d/build.mk:
+    switch the format of glibc-source to lzma, sparing 6MB.
+  * debian/libc6.1.symbols.{alpha,ia64}: fix symbols.
+  * debian/*symbols*: rename symbols.common into libc6.symbols.common.
+  * rules.d/debhelper.mk: don't strip debugging symbols. Remove 
+    debhelper.in/libc-dbg.{install,lintian} and wrappter/objcopy.
+    control.in/libc: update description of libc-dbg.  Closes: bug#516516.
+  * patches/kfreebsd/local-scripts.diff: correctly define the soname of
+    libthread_db.
+  * libc0.1.symbols.common, libc0.1.symbols.kfreebsd-{amd64,i386], 
+    libc0.1-i386.symbols.kfreebsd-amd64: new files.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 27 Feb 2009 19:01:26 +0100
+
 glibc (2.9-3) unstable; urgency=low
 
   * debhelper.in/nscd.init: fix the for loop.  Closes: bug#516509.
