@@ -1,5 +1,9 @@
---- glibc-2.6.orig/ports/sysdeps/m68k/m680x0/fpu/bits/mathinline.h
-+++ glibc-2.6/ports/sysdeps/m68k/m680x0/fpu/bits/mathinline.h
+---
+ ports/sysdeps/m68k/m680x0/fpu/bits/mathinline.h |   14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+--- a/ports/sysdeps/m68k/m680x0/fpu/bits/mathinline.h
++++ b/ports/sysdeps/m68k/m680x0/fpu/bits/mathinline.h
 @@ -100,7 +100,7 @@
  /* Define a const math function.  */
  #define __m81_defun(rettype, func, args)				      \

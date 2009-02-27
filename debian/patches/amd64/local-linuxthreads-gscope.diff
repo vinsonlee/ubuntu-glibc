@@ -1,5 +1,9 @@
---- linuxthreads/sysdeps/x86_64/tls.h.orig	2007-07-29 15:55:45 +0200
-+++ linuxthreads/sysdeps/x86_64/tls.h	2007-07-29 15:56:31 +0200
+---
+ linuxthreads/sysdeps/x86_64/tls.h |   42 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
+
+--- a/linuxthreads/sysdeps/x86_64/tls.h
++++ b/linuxthreads/sysdeps/x86_64/tls.h
 @@ -49,6 +49,11 @@
    uintptr_t sysinfo;
    uintptr_t stack_guard;
@@ -12,7 +16,7 @@
  } tcbhead_t;
  
  #else /* __ASSEMBLER__ */
-@@ -147,6 +148,43 @@
+@@ -147,6 +152,43 @@
    ((descr)->p_header.data.pointer_guard				      \
     = THREAD_GETMEM (THREAD_SELF, p_header.data.pointer_guard))
  
