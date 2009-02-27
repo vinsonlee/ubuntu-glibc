@@ -1,7 +1,11 @@
 # DP: Add /proc/cpuinfo handling on Linux/PowerPC
 
+---
+ sysdeps/unix/sysv/linux/powerpc/getsysstats.c |   36 ++++++++++++++++++++++++++
+ 1 file changed, 36 insertions(+)
+
 --- /dev/null
-+++ glibc-2.6/sysdeps/unix/sysv/linux/powerpc/getsysstats.c
++++ b/sysdeps/unix/sysv/linux/powerpc/getsysstats.c
 @@ -0,0 +1,36 @@
 +/* Determine various system internal values, Linux/PowerPC version.
 +   Copyright (C) 2001,2002 Free Software Foundation, Inc.

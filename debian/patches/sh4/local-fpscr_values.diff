@@ -1,5 +1,10 @@
---- sysdeps/unix/sysv/linux/sh/Versions	2007-10-16 14:23:47.553278705 +0000
-+++ sysdeps/unix/sysv/linux/sh/Versions	2007-10-16 14:24:32.517804705 +0000
+---
+ sysdeps/unix/sysv/linux/sh/Versions |    1 +
+ sysdeps/unix/sysv/linux/sh/sysdep.S |   11 +++++++++++
+ 2 files changed, 12 insertions(+)
+
+--- a/sysdeps/unix/sysv/linux/sh/Versions
++++ b/sysdeps/unix/sysv/linux/sh/Versions
 @@ -2,6 +2,7 @@
    GLIBC_2.2 {
      # functions used in other libraries
@@ -8,8 +13,8 @@
  
      # a*
      alphasort64;
---- sysdeps/unix/sysv/linux/sh/sysdep.S	2007-10-16 14:23:56.151674031 +0000
-+++ sysdeps/unix/sysv/linux/sh/sysdep.S	2007-10-16 14:26:10.525105917 +0000
+--- a/sysdeps/unix/sysv/linux/sh/sysdep.S
++++ b/sysdeps/unix/sysv/linux/sh/sysdep.S
 @@ -32,3 +32,14 @@
  
  #define __syscall_error __syscall_error_1

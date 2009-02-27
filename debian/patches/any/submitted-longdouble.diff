@@ -1,5 +1,9 @@
---- math/Makefile.orig	2006-02-28 08:05:45.000000000 +0100
-+++ math/Makefile	2007-07-29 17:17:37.000000000 +0200
+---
+ math/Makefile |   20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
+
+--- a/math/Makefile
++++ b/math/Makefile
 @@ -91,13 +91,17 @@
  tests = test-matherr test-fenv atest-exp atest-sincos atest-exp2 basic-test \
  	test-misc test-fpucw tst-definitions test-tgmath test-tgmath-ret \
