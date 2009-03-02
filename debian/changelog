@@ -1,8 +1,6 @@
-glibc (2.9-4ubuntu1) jaunty; urgency=low
+glibc (2.9-4ubuntu2) jaunty; urgency=low
 
-  * Test build, explicitely fail after running the tests.
-
-  * Merge with Debian (r3320, trunk); remaining changes:
+  * Merge with Debian (r3342, trunk); remaining changes:
     - Packaging:
       + External tzdata
       + Addition of Niagara and Niagara2 optimised libraries
@@ -23,8 +21,9 @@ glibc (2.9-4ubuntu1) jaunty; urgency=low
       + Not applied any/local-sysctl.
       + Applied debian/patches/all/fedora-nss_dns-gethostbyname4-disable.diff.
       + Updated arm/local-no-hwcap.
+  * Remove some passing testcases from the expected test results.
 
- -- Matthias Klose <doko@ubuntu.com>  Thu, 26 Feb 2009 15:38:06 +0100
+ -- Matthias Klose <doko@ubuntu.com>  Mon, 02 Mar 2009 08:57:05 +0100
 
 glibc (2.9-4) unstable; urgency=low
 
@@ -38,9 +37,9 @@ glibc (2.9-4) unstable; urgency=low
   * testsuite-checking/expected-results-arm-linux-gnueabi-libc: ignore 
     result of test-fenv.out and test-fpucw.out, as they were already
     failing with glibc 2.7.
-  * patches/any/submitted-futex_lock_pi.diff: new patch to correctly
-    define when PI futexes have been introduced in the kernel, on a 
-    per architecture basis.
+  * patches/any/submitted-futex_robust_pi.diff: new patch to correctly
+    define when PI futexes and robust mutexes have been introduced
+    in the kernel, on a per architecture basis.
   * testsuite-checking/expected-results-{alpha,ia64}-linux-gnu-libc:
     remove PI futexes failures.
   * patches/all/submitted-readme-version.diff: fix the upstream version
@@ -55,8 +54,17 @@ glibc (2.9-4) unstable; urgency=low
   * Add debian/libc6-mips{n32,64}.symbols.mips{el,} symbol files.
   * debian/debhelper.in/glibc-source.install, debian/rules.d/build.mk:
     switch the format of glibc-source to lzma, sparing 6MB.
+  * debian/libc6.1.symbols.{alpha,ia64}: fix symbols.
+  * debian/*symbols*: rename symbols.common into libc6.symbols.common.
+  * rules.d/debhelper.mk: don't strip debugging symbols. Remove 
+    debhelper.in/libc-dbg.{install,lintian} and wrappter/objcopy.
+    control.in/libc: update description of libc-dbg.  Closes: bug#516516.
+  * patches/kfreebsd/local-scripts.diff: correctly define the soname of
+    libthread_db.
+  * libc0.1.symbols.common, libc0.1.symbols.kfreebsd-{amd64,i386], 
+    libc0.1-i386.symbols.kfreebsd-amd64: new files.
 
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 26 Feb 2009 11:37:53 +0100
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 27 Feb 2009 19:01:26 +0100
 
 glibc (2.9-3) unstable; urgency=low
 
