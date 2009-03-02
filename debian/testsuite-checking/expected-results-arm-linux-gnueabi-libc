@@ -15,12 +15,3 @@ test-fpucw.out, Error 132
 test-idouble.out, Error 1
 test-ifloat.out, Error 1
 test-misc.out, Error 1
-
-# FIXME Ubuntu
-tst-cancel7.out, Error 1
-tst-cancelx7.out, Error 1
-tst-cleanup0.out, Error 2
-tst-fmon.out, Error 1
-
-# FIXME glibc-2.9
-tst-pselect.out, Error 1

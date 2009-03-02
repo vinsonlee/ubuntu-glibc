@@ -12,7 +12,3 @@ tst-timer.out, Error 139
 
 # FIXME Ubuntu
 test-fenv.out, Error 1
-tst-cancel7.out, Error 1
-tst-cancelx7.out, Error 1
-tst-cleanup0.out, Error 2
-tst-fmon.out, Error 1
