@@ -41,6 +41,7 @@ localedata/submitted-bz9730-locale-sv_FI.diff
 localedata/first_weekday.diff
 localedata/submitted-bz9835-en_GB-first_day.diff
 localedata/locale-fr_FR.diff
+localedata/submitted-bz9912-locale-ru_UA.diff
 
 amd64/local-biarch.diff
 amd64/local-clone.diff
@@ -134,7 +135,7 @@ any/submitted-popen.diff
 any/local-linuxthreads-thread_self.diff
 any/cvs-pthread_h.diff
 any/local-bashisms.diff
-any/submitted-futex_lock_pi.diff
+any/submitted-futex_robust_pi.diff
 any/cvs-bz7058-nss_nss-nis.diff
 
 # Ubuntu-specific patches.  These are things that we don't expect to wind up
