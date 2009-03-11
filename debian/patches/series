@@ -41,6 +41,7 @@ localedata/submitted-bz9730-locale-sv_FI.diff
 localedata/first_weekday.diff
 localedata/submitted-bz9835-en_GB-first_day.diff
 localedata/locale-fr_FR.diff
+localedata/submitted-bz9912-locale-ru_UA.diff
 
 alpha/local-gcc4.1.diff
 alpha/submitted-creat64.diff
@@ -83,7 +84,7 @@ hurd-i386/submitted-stat.diff
 hurd-i386/submitted-strtoul.diff
 hurd-i386/submitted-sysvshm.diff
 hurd-i386/submitted-ioctl-unsigned-size_t.diff
-hurd-i386/cvs-ECANCELED.diff
+hurd-i386/submitted-ECANCELED.diff
 hurd-i386/submitted-IPV6_PKTINFO.diff
 hurd-i386/submitted-extern_inline.diff
 hurd-i386/cvs-resource-prio.diff
@@ -91,12 +92,14 @@ hurd-i386/cvs-hurdsig-fix.diff
 hurd-i386/cvs-report-wait-fix.diff
 hurd-i386/submitted-critical-sections.diff
 hurd-i386/submitted-dup2-fix.diff
-hurd-i386/local-net-headers.diff
+hurd-i386/cvs-net-headers.diff
 hurd-i386/local-pthread_posix-option.diff
 hurd-i386/local-check_native.diff
 hurd-i386/cvs-get_pc_thunk.diff
 hurd-i386/submitted-dl-sysdep.diff
 hurd-i386/submitted-itimer-lock.diff
+hurd-i386/local-pthread_types.diff
+hurd-i386/cvs-strerror_l.diff
 
 i386/local-biarch.diff
 i386/local-clone.diff

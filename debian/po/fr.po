@@ -18,7 +18,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: glibc@packages.debian.org\n"
-"POT-Creation-Date: 2008-02-26 21:34+0100\n"
+"POT-Creation-Date: 2009-03-08 15:23+0100\n"
 "PO-Revision-Date: 2008-02-27 08:29+0100\n"
 "Last-Translator: Christian Perrier <bubulle@debian.org>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
@@ -109,12 +109,6 @@ msgstr "Faut-il mettre à jour le paquet glibc maintenant ?"
 #. Type: boolean
 #. Description
 #: ../debhelper.in/libc.templates:1001
-#| msgid ""
-#| "Running services and programs that are using NSS need to be restarted, "
-#| "otherwise they might not be able to do lookup or authentication any more "
-#| "(for services such as ssh, this can affect your ability to login). Please "
-#| "review the following space-separated list of init.d scripts for services "
-#| "to be restarted now, and correct it if needed."
 msgid ""
 "Running services and programs that are using NSS need to be restarted, "
 "otherwise they might not be able to do lookup or authentication any more. "
@@ -209,3 +203,27 @@ msgid ""
 msgstr ""
 "Il est nécessaire de les redémarrer vous-même avec la commande « /etc/init.d/"
 "<service> start »."
+
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:4001
+msgid "xscreensaver and xlockmore must be restarted before upgrading"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:4001
+msgid ""
+"One or more running instances of xscreensaver or xlockmore have been "
+"detected on this system. Because of incompatible library changes, the "
+"upgrade of the GNU libc library will leave you unable to authenticate to "
+"these programs. You should arrange for these programs to be restarted or "
+"stopped before continuing this upgrade, to avoid locking your users out of "
+"their current sessions."
+msgstr ""
+"Une ou plusieurs instances de xscreensaver et/ou de xlockmore ont été "
+"détectées sur le système. À cause de la modification de certaines "
+"bibliothèques, la mise à niveau de la bibliothèque C entrainera "
+"l'impossibilité de s'authentifier. Avant de poursuivre la mise à niveau, ces "
+"programmes doivent être redémarrés ou arrêtés pour éviter que des "
+"utilisateurs ne puissent plus accéder à leurs sessions."
