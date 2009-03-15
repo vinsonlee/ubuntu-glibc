@@ -1,3 +1,29 @@
+glibc (2.9-6) unstable; urgency=low
+
+  [ Samuel Thibault ]
+  * debian/patches/hurd-i386/local-tls-support.diff: fix typo in tlsdesc.sym.
+  
+  [ Aurelien Jarno ]
+  * debian/po/de.po: fix German translation.  Closes: bug#519612.
+  * Update French debconf translation, by Christian Perrier.  Closes: #519662.
+  * any/local-disable-gethostbyname4.diff: disable unified lookup for 
+    getaddrinfo(). While unified lookup fix the problem of DNS servers simply 
+    dropping AAAA requests, it breaks lookup with even more broken DNS servers
+    only returning a broken AAAA answer. As it seems the second type of broken
+    DNS concerns more users, let's revert to the old behaviour.  Closes: 
+    #516218.
+  * any/submitted-getaddrinfo-lo.diff: correctly handle the lo interface and
+    associated addresses when checking for native connection.  Closes: 
+    bug#519545.
+  * debian/control.in/libc: change -dbg packages to section debug. 
+  * debian/control.in/main: update Standards-Version to 3.8.1:
+    - debian/local/etc_init.d/glibc.sh: move set -e out from the shebang line.
+    - debian/debhelper.in/nscd.init: exit successfully if the daemon was 
+      already running.
+  * debian/debhelper.in/nscd.dirs: remove /var/run/nscd directory.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 15 Mar 2009 21:22:48 +0100
+
 glibc (2.9-5) unstable; urgency=low
 
   [ Clint Adams ]

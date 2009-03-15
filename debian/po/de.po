@@ -213,6 +213,6 @@ msgstr ""
 "Bibliotheken wird das GNU Libc-Upgrade Sie außerstande setzen, sich gegenüber"
 "diesen Programmen zu authentifizieren. Sie sollten dafür sorgen, dass diese"
 "Programme neu gestartet oder beendet werden, bevor Sie dieses Upgrade "
-"fortsetzen, damit Ihre Benutzer nicht aus ihren laufenden Sitzungen 
-ausgesperrt werden."
+"fortsetzen, damit Ihre Benutzer nicht aus ihren laufenden Sitzungen "
+"ausgesperrt werden."
 
