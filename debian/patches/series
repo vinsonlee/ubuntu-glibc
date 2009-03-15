@@ -191,3 +191,5 @@ any/cvs-pthread_h.diff
 any/local-bashisms.diff
 any/submitted-futex_robust_pi.diff
 any/cvs-bz7058-nss_nss-nis.diff
+any/local-disable-gethostbyname4.diff
+any/submitted-getaddrinfo-lo.diff
