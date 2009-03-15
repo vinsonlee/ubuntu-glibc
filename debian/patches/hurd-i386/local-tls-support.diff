@@ -497,9 +497,9 @@
 +
 +-- Abuse tls.h macros to derive offsets relative to the thread register.
 +
-+DTV_OFFSET			offsetof(struct pthread, header.dtv)
++DTV_OFFSET			offsetof(tcbhead_t, dtv)
 +
-+TLSDESC_ARG			offsetof(tcbhead_t, dtv)
++TLSDESC_ARG			offsetof(struct tlsdesc, arg)
 +
 +TLSDESC_GEN_COUNT		offsetof(struct tlsdesc_dynamic_arg, gen_count)
 +TLSDESC_MODID			offsetof(struct tlsdesc_dynamic_arg, tlsinfo.ti_module)
