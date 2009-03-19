@@ -1,3 +1,23 @@
+glibc (2.9-4ubuntu3) jaunty; urgency=low
+
+  [ Colin Watson ]
+  * Rename Debian's Vcs-* fields in debian/control to XS-Debian-Vcs-* to
+    reduce confusion.
+
+  [ Loic Minier ]
+  * Add vfp pass for armel.
+    - sysdeps/armel.mk: add vfp pass with the same add-ons as the libc pass,
+      with "-mfpu=vfp -mfloat-abi=softfp" appended to CFLAGS, using
+      /lib/vfp as slibdir (could as well be /lib/tls/vfp but the armel port
+      was always NPTL which implies TLS), and configured with
+      --disable-profile like the other optimized passes.
+    - control.in/opt, control: add libc6-vfp package on armel.
+    - script.in/nohwcap.sh: list libc6-vfp in hwcappkgs on armel.
+    - testsuite-checking/expected-results-arm-linux-gnueabi-vfp: copied from
+      testsuite-checking/expected-results-arm-linux-gnueabi-libc.
+
+ -- Loic Minier <lool@dooz.org>  Thu, 19 Mar 2009 21:34:59 +0100
+
 glibc (2.9-4ubuntu2) jaunty; urgency=low
 
   * Merge with Debian (r3342, trunk); remaining changes:
