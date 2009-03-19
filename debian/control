@@ -15,8 +15,8 @@ Maintainer: Ubuntu Core developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
 Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, Philip Blundell <pb@nexus.co.uk>, Jeff Bailey <jbailey@raspberryginger.com>, Daniel Jacobowitz <dan@debian.org>, Clint Adams <schizo@debian.org>, Aurelien Jarno <aurel32@debian.org>, Pierre Habouzit <madcoder@debian.org>
 Standards-Version: 3.8.0
-Vcs-Browser: http://svn.debian.org/wsvn/pkg-glibc/glibc-package/
-Vcs-Svn: svn://svn.debian.org/pkg-glibc/glibc-package/
+XS-Debian-Vcs-Browser: http://svn.debian.org/wsvn/pkg-glibc/glibc-package/
+XS-Debian-Vcs-Svn: svn://svn.debian.org/pkg-glibc/glibc-package/
 Vcs-Bzr: http://bazaar.launchpad.net/~ubuntu-toolchain/ubuntu-toolchain/glibc-2.5-package
 
 Package: glibc-doc
@@ -704,6 +704,19 @@ Description: GNU C Library: Shared libraries [i686 optimized]
  Pentium Pro, Pentium II/III/IV, Celeron CPU's and similar class CPU's
  (including clones such as AMD Athlon/Opteron, VIA C3 Nehemiah, but not VIA 
  C3 Ezla).  
+
+Package: libc6-vfp
+Architecture: armel
+Section: libs
+Priority: extra
+Pre-Depends: libc6 (= ${binary:Version})
+Description: GNU C Library: Shared libraries [VFP version]
+ Contains the standard libraries that are used by nearly all programs on
+ the system. This package includes shared versions of the standard C
+ library and the standard math library, as well as many others.
+ .
+ This set of libraries is optimized to use a VFP coprocessor, and will
+ be selected instead when running under systems which have one.
 
 Package: libc6.1-alphaev67
 Architecture: alpha

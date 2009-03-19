@@ -10,6 +10,9 @@
         alpha)
             hwcappkgs="libc6-alphaev67"
             ;;
+        armel)
+            hwcappkgs="libc6-vfp"
+            ;;
         i386)
             hwcappkgs="libc6-i686 libc6-xen"
             ;;
