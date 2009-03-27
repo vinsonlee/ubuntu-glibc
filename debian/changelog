@@ -1,3 +1,11 @@
+glibc (2.9-4ubuntu4) jaunty; urgency=low
+
+  * Don't declare the fwrite and fwrite_unlocked functions with
+    __attribute__((warn_unused_result)). See
+    https://lists.ubuntu.com/archives/ubuntu-devel/2009-March/027832.html
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 27 Mar 2009 21:17:24 +0100
+
 glibc (2.9-4ubuntu3) jaunty; urgency=low
 
   [ Colin Watson ]
