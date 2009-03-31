@@ -1,3 +1,14 @@
+glibc (2.9-4ubuntu5) jaunty; urgency=low
+
+  * This upload allows NEON hwcap usage; FFE LP: #343602.
+  * New patch, arm/local-hwcap-updates, add support for some recent ARM hwcaps
+    additions.
+  * Update patch arm/local-no-hwcap to also flag HWCAP_ARM_NEON as an
+    important hwcap; this adds /lib/neon, /usr/lib/neon etc. to the ldconfig
+    and ld.so search pathes.
+
+ -- Loic Minier <lool@dooz.org>  Tue, 31 Mar 2009 20:28:41 +0200
+
 glibc (2.9-4ubuntu4) jaunty; urgency=low
 
   * Don't declare the fwrite and fwrite_unlocked functions with
