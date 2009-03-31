@@ -53,6 +53,7 @@ arm/local-lowlevellock.diff
 arm/local-no-hwcap.diff
 arm/submitted-setjmp.diff
 arm/local-memset.diff
+arm/local-hwcap-updates.diff
 
 hppa/local-inlining.diff
 hppa/local-linuxthreads.diff
