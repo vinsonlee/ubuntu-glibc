@@ -1,3 +1,22 @@
+glibc (2.9-7) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * Update German debconf translation, by Helge Kreutzman.  Closes: #519992.
+  * Update testsuite results on alpha, tst-timer.out exits with SIGILL on
+    some machines, it was already the case with glibc 2.7 on the same 
+    machines.
+  * Update testsuite results on hppa, tst-posix_fallocate.out and 
+    tst-makecontext.out are known to fail with a 32-bit kernel.
+  * debian/script.in/nsscheck.sh: fix a typo.  Closes: #520455.
+  * kfreebsd/local-sysdeps.diff: update to revision 2390 (from glibc-bsd).
+  * libc6.1.symbols.alpha: fix package name for private symbols.
+
+  [ Samuel Thibault ]
+  * debian/rules.d/debhelper.mk: let grep libpthread.so fail because on
+    hurd-i386 glibc does not provide it.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 07 Apr 2009 07:58:50 +0200
+
 glibc (2.9-6) unstable; urgency=low
 
   [ Samuel Thibault ]
