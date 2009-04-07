@@ -1,13 +1,13 @@
 # Translation of glibc debconf templates to German
-# Copyright (C) Helge Kreutzmann <debian@helgefjell.de>, 2006-2008.
+# Copyright (C) Helge Kreutzmann <debian@helgefjell.de>, 2006-2009.
 # This file is distributed under the same license as the glibc package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: glibc 2.7-9\n"
+"Project-Id-Version: glibc 2.9-5\n"
 "Report-Msgid-Bugs-To: glibc@packages.debian.org\n"
 "POT-Creation-Date: 2009-03-08 15:23+0100\n"
-"PO-Revision-Date: 2008-02-26 22:41+0100\n"
+"PO-Revision-Date: 2009-03-16 19:04+0100\n"
 "Last-Translator: Helge Kreutzmann <debian@helgefjell.de>\n"
 "Language-Team: de <debian-l10n-german@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -195,7 +195,7 @@ msgstr ""
 #. Description
 #: ../debhelper.in/libc.templates:4001
 msgid "xscreensaver and xlockmore must be restarted before upgrading"
-msgstr ""
+msgstr "Xscreensaver und Xlockmore müssen vor dem Upgrade neu gestartet werden"
 
 #. Type: error
 #. Description
@@ -208,7 +208,7 @@ msgid ""
 "stopped before continuing this upgrade, to avoid locking your users out of "
 "their current sessions."
 msgstr ""
-"Eine oder mehrere laufende Instanzen von xscreensaver oder xlockmore sind "
+"Eine oder mehrere laufende Instanzen von Xscreensaver oder Xlockmore sind "
 "auf diesem System entdeckt worden. Aufgrund inkompatibler Änderungen in "
 "Bibliotheken wird das GNU Libc-Upgrade Sie außerstande setzen, sich gegenüber"
 "diesen Programmen zu authentifizieren. Sie sollten dafür sorgen, dass diese"
