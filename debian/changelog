@@ -1,3 +1,14 @@
+glibc (2.9-4ubuntu6) jaunty; urgency=low
+
+  * sysdeps/depflags.pl: Drop Conflicts: belocs-locales-bin, just keep the
+    Replaces:. Not having "locale" available during some points in the upgrade
+    can break the upgrade entirely. This will stop belocs-locales-bin from
+    being properly removed during upgrade, but we can still add a Conflicts:
+    to it to the next LTS version. All of its useful files get overridden
+    anyway. (LP: #330048)
+
+ -- Martin Pitt <martin.pitt@ubuntu.com>  Wed, 08 Apr 2009 22:53:01 -0700
+
 glibc (2.9-4ubuntu5) jaunty; urgency=low
 
   * This upload allows NEON hwcap usage; FFE LP: #343602.
