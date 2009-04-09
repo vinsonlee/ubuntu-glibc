@@ -24,7 +24,7 @@ Description: GNU C Library: Development Libraries and Header Files
 
 Package: libc6-dbg
 Architecture: amd64 arm armeb armel i386 lpia m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
-Section: debug
+Section: libdevel
 Priority: extra
 Provides: libc-dbg
 Depends: libc6 (= ${binary:Version})

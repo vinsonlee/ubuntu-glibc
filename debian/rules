@@ -76,10 +76,6 @@ ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 NJOBS := -j $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 endif
 
-ifeq ($(DEB_HOST_ARCH),lpia)
-  export DEB_BUILD_OPTIMIZING_SIZE=0
-endif
-
 ifeq ($(DEB_HOST_ARCH),hppa)
   ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
     DEB_BUILD_OPTIONS += nocheck

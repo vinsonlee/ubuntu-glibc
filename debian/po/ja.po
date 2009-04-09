@@ -17,7 +17,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: locales 2.7-9\n"
 "Report-Msgid-Bugs-To: glibc@packages.debian.org\n"
-"POT-Creation-Date: 2009-03-08 15:23+0100\n"
+"POT-Creation-Date: 2008-02-26 21:34+0100\n"
 "PO-Revision-Date: 2008-02-27 09:28+0900\n"
 "Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -112,14 +112,7 @@ msgid ""
 "program that needs manual stopping and restart after the glibc upgrade by "
 "yourself is xdm - because automatic restart might disconnect your active X11 "
 "sessions."
-msgstr ""
-"NSS を利用している実行中のサービスおよびプログラムは、再起動する必要がありま"
-"す。さもないと、ルックアップおよび認証がもう利用できないことになります。イン"
-"ストール手続きではいくつかのサービス (ssh や telnetd など) を再起動することが"
-"できますが、その他のプログラムは自動では再起動されません。手動での停止および "
-"glibc の更新のあとにあなた自身で再起動する必要のあるそのようなプログラムの 1 "
-"つとしては、xdm があります。というのも、自動再起動はあなたのアクティブな X11 "
-"のセッションを閉じてしまうことになるからです。"
+msgstr "NSS を利用している実行中のサービスおよびプログラムは、再起動する必要があります。さもないと、ルックアップおよび認証がもう利用できないことになります。インストール手続きではいくつかのサービス (ssh や telnetd など) を再起動することができますが、その他のプログラムは自動では再起動されません。手動での停止および glibc の更新のあとにあなた自身で再起動する必要のあるそのようなプログラムの 1 つとしては、xdm があります。というのも、自動再起動はあなたのアクティブな X11 のセッションを閉じてしまうことになるからです。"
 
 #. Type: boolean
 #. Description
@@ -127,9 +120,7 @@ msgstr ""
 msgid ""
 "This script detected the following installed services which must be stopped "
 "before the upgrade: ${services}"
-msgstr ""
-"スクリプトは、更新前に停止されなければならない以下のインストールされたサービ"
-"スを検出しました: ${services}"
+msgstr "スクリプトは、更新前に停止されなければならない以下のインストールされたサービスを検出しました: ${services}"
 
 #. Type: boolean
 #. Description
@@ -137,9 +128,7 @@ msgstr ""
 msgid ""
 "If you want to interrupt the upgrade now and continue later, please answer "
 "No to the question below."
-msgstr ""
-"更新を今中止して後日続行したいのであれば、以下の質問で「いいえ」と答えてくだ"
-"さい。"
+msgstr "更新を今中止して後日続行したいのであれば、以下の質問で「いいえ」と答えてください。"
 
 #. Type: string
 #. Description
@@ -194,21 +183,3 @@ msgid ""
 msgstr ""
 "'/etc/init.d/<サービス> start' を実行することで、これらを手動で起動する必要が"
 "あります。"
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:4001
-msgid "xscreensaver and xlockmore must be restarted before upgrading"
-msgstr ""
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:4001
-msgid ""
-"One or more running instances of xscreensaver or xlockmore have been "
-"detected on this system. Because of incompatible library changes, the "
-"upgrade of the GNU libc library will leave you unable to authenticate to "
-"these programs. You should arrange for these programs to be restarted or "
-"stopped before continuing this upgrade, to avoid locking your users out of "
-"their current sessions."
-msgstr ""

@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/sh -e
 #
 ### BEGIN INIT INFO
 # Provides:          glibc
@@ -11,8 +11,6 @@
 #                    the current version of the glibc
 ### END INIT INFO
 #
-
-set -e
 
 # glibc kernel version check: KERNEL_VERSION_CHECK
 

@@ -9,7 +9,6 @@
 	    	    	-e's/\bexim4-base\b/exim4/g' \
 	    	    	-e's/\blpr\b/lpd/g' \
 	    	    	-e's/\blpr-ppd\b/lpd-ppd/g' \
-	    	    	-e's/\bmysql-server\b/mysql/g' \
 	    	    	-e's/\bsasl2-bin\b/saslauthd/g' \
 	    )
 	    echo

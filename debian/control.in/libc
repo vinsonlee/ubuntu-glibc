@@ -24,7 +24,7 @@ Description: GNU C Library: Development Libraries and Header Files
 
 Package: @libc@-dbg
 Architecture: @archs@
-Section: debug
+Section: libdevel
 Priority: extra
 Provides: libc-dbg
 Depends: @libc@ (= ${binary:Version})
