@@ -93,7 +93,6 @@ push @{$libc_c{'Conflicts'}}, 'nscd (<< 2.9)';
 
 # belocs-locales-bin is dead upstream; Ubuntu previously used it, now libc6
 # ships the programs itself again
-push @{$libc_c{'Conflicts'}}, 'belocs-locales-bin';
 push @{$libc_c{'Replaces'}}, 'belocs-locales-bin';
 
 # Depends on libgcc1/libgcc2/libgcc4
