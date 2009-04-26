@@ -1,3 +1,45 @@
+glibc (2.9-8) unstable; urgency=low
+
+  [ Aurelien Jarno ]
+  * Update Swedish debconf translation, by Martin Bagger.  Closes: #522982.
+  * mips/cvs-context.diff: new patch from upstream to add getcontext, 
+    setcontext, makecontext, swapcontext.
+  * any/submitted-mount_h.diff: new patch to add MNT_DETACH and MNT_EXPIRE to
+    sys/mount.h.  Closes: #523952.
+  * arm/submitted-fpu_control_h.diff: new patch to disable macros from 
+    <fpu_control.h> on EABI.  Closes: #525261.
+  * any/cvs-iconv-utf16.diff: new patch from upstream to reject UTF-8-encoded 
+    UTF-16 surrogates in iconv.  Closes: #525299.
+  * any/local-getaddrinfo-interface.diff: ignore addresses with no interface
+    assigned while sorting with rule 7.  Closes: #521439.
+  * any/cvs-broken_dns.diff: new patch from CVS to provide a fallback for 
+    broken DNS server while doing unified IPv4/IPv6 requests. The first lookup
+    will be slow, but subsequent requests will fallback to the previous 
+    behaviour. This can be enabled by default by setting 'single-request' in 
+    /etc/resolv.conf.
+  * debhelper.in/libc.NEWS: add entry explaining the new behaviour and the new
+    option.
+  * any/local-disable-gethostbyname4.diff: disabled this patch to re-enable
+    unified IPv4/IPv6 requests.  Closes: bug#343140, bug#435646.
+  * localedata/cvs-el_CY-el_GR-frac_digits.diff: new patch from CVS to fix 
+    frac_digits and int_frac_digits on el_CY ad el_GR locales.  Closes: 
+    bug#511621.
+  * mips_asm_unistd.h, sysdeps/mipsel.mk, sysdeps/mips.mk: use our own version
+    of unistd.h corresponding to the one of a 2.6.24 kernel to workaround kernel
+    bugs on the build daemons.
+  * any/cvs-binutils_2.20.diff: new patch from upstream to fix build failure
+    with binutils 2.20.
+
+  [ Petr Salinger ]
+  * kfreebsd/local-sysdeps.diff: update to revision 2482 (from glibc-bsd).
+    Closes: #522686. Thanks to Jan Christoph Nordholz.
+
+  [ Samuel Thibault ]
+  * hurd-i386/cvs-rtld.diff: new patch, fixes boot of glibc built with
+    binutils >= 2.19.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 27 Apr 2009 00:44:59 +0200
+
 glibc (2.9-7) unstable; urgency=low
 
   [ Aurelien Jarno ]

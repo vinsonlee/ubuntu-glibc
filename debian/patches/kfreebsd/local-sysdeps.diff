@@ -3870,7 +3870,7 @@
 +#endif /* Use BSD */
 --- /dev/null
 +++ b/ports/sysdeps/unix/bsd/bsd4.4/kfreebsd/bits/msq.h
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,69 @@
 +/* Copyright (C) 1995, 1997, 2000, 2002 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
 +
@@ -3928,8 +3928,6 @@
 +
 +# define msg_cbytes	__msg_cbytes
 +
-+# ifdef _KERNEL
-+
 +/* buffer for msgctl calls IPC_INFO, MSG_INFO */
 +struct msginfo
 +  {
@@ -3940,8 +3938,6 @@
 +    int msgssz;
 +    int msgseg;
 +  };
-+
-+# endif
 +
 +#endif /* __USE_MISC */
 --- /dev/null
@@ -4574,7 +4570,7 @@
 +
 --- /dev/null
 +++ b/ports/sysdeps/unix/bsd/bsd4.4/kfreebsd/bits/shm.h
-@@ -0,0 +1,74 @@
+@@ -0,0 +1,90 @@
 +/* Copyright (C) 1995-1997, 2000, 2002 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
 +
@@ -4610,10 +4606,10 @@
 +#define SHM_RND		020000		/* round attach address to SHMLBA */
 +
 +/* Commands for `shmctl'.  */
-+#if 0 /* FreeBSD does not have these yet.  */
 +#define SHM_LOCK	11		/* lock segment (root only) */
 +#define SHM_UNLOCK	12		/* unlock segment (root only) */
-+#endif
++
++__BEGIN_DECLS
 +
 +/* Segment low boundary address multiple.  */
 +#define SHMLBA		(__getpagesize ())
@@ -4637,18 +4633,34 @@
 +    void *__shm_internal;
 +  };
 +
-+#ifdef _KERNEL
++#ifdef __USE_MISC
 +
-+struct shminfo {
++/* ipcs ctl commands */
++# define SHM_STAT 	13
++# define SHM_INFO 	14
++
++struct shminfo
++  {
 +        int     shmmax,         /* max shared memory segment size (bytes) */
 +                shmmin,         /* min shared memory segment size (bytes) */
 +                shmmni,         /* max number of shared memory identifiers */
 +                shmseg,         /* max shared memory segments per process */
 +                shmall;         /* max amount of shared memory (pages) */
-+};
++  };
 +
-+#endif
++struct shm_info
++  {
++    int used_ids;
++    unsigned long int shm_tot;	/* total allocated shm */
++    unsigned long int shm_rss;	/* total resident shm */
++    unsigned long int shm_swp;	/* total swapped shm */
++    unsigned long int swap_attempts;
++    unsigned long int swap_successes;
++  };
 +
++#endif /* __USE_MISC */
++
++__END_DECLS
 --- /dev/null
 +++ b/ports/sysdeps/unix/bsd/bsd4.4/kfreebsd/bits/sigaction.h
 @@ -0,0 +1,76 @@
@@ -6521,6 +6533,114 @@
 +#ifdef __USE_BSD
 +# define WLINUXCLONE	__WCLONE	/* FreeBSD name for __WCLONE.  */
 +#endif
+--- /dev/null
++++ b/ports/sysdeps/unix/bsd/bsd4.4/kfreebsd/bits/waitstatus.h
+@@ -0,0 +1,105 @@
++/* Definitions of status bits for `wait' et al.
++   Copyright (C) 1992,1994,1996,1997,2000,2004 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, write to the Free
++   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
++   02111-1307 USA.  */
++
++#if !defined _SYS_WAIT_H && !defined _STDLIB_H
++# error "Never include <bits/waitstatus.h> directly; use <sys/wait.h> instead."
++#endif
++
++
++/* If WIFEXITED(STATUS), the low-order 8 bits of the status.  */
++#define	__WEXITSTATUS(status)	(((status) & 0xff00) >> 8)
++
++/* If WIFSIGNALED(STATUS), the terminating signal.  */
++#define	__WTERMSIG(status)	((status) & 0x7f)
++
++/* If WIFSTOPPED(STATUS), the signal that stopped the child.  */
++#define	__WSTOPSIG(status)	__WEXITSTATUS(status)
++
++/* Nonzero if STATUS indicates normal termination.  */
++#define	__WIFEXITED(status)	(__WTERMSIG(status) == 0)
++
++/* Nonzero if STATUS indicates termination by a signal.  */
++#define __WIFSIGNALED(status) \
++  (((signed char) (((status) & 0x7f) + 1) >> 1) > 0)
++
++/* Nonzero if STATUS indicates the child is stopped.  */
++#define	__WIFSTOPPED(status)	(((status) & 0x7f) == 0x7f)
++
++/* Nonzero if STATUS indicates the child continued after a stop.  We only
++   define this if <bits/waitflags.h> provides the WCONTINUED flag bit.  */
++#ifdef WCONTINUED
++# define __WIFCONTINUED(status)	((status) == __W_CONTINUED)
++#endif
++
++/* Nonzero if STATUS indicates the child dumped core.  */
++#define	__WCOREDUMP(status)	((status) & __WCOREFLAG)
++
++/* Macros for constructing status values.  */
++#define	__W_EXITCODE(ret, sig)	((ret) << 8 | (sig))
++#define	__W_STOPCODE(sig)	((sig) << 8 | 0x7f)
++
++/* Linux uses 0xffff, BSD uses SIGCONT */
++#define __W_CONTINUED		0x13
++#define	__WCOREFLAG		0x80
++
++
++#ifdef	__USE_BSD
++
++# include <endian.h>
++
++union wait
++  {
++    int w_status;
++    struct
++      {
++# if	__BYTE_ORDER == __LITTLE_ENDIAN
++	unsigned int __w_termsig:7; /* Terminating signal.  */
++	unsigned int __w_coredump:1; /* Set if dumped core.  */
++	unsigned int __w_retcode:8; /* Return code if exited normally.  */
++	unsigned int:16;
++# endif				/* Little endian.  */
++# if	__BYTE_ORDER == __BIG_ENDIAN
++	unsigned int:16;
++	unsigned int __w_retcode:8;
++	unsigned int __w_coredump:1;
++	unsigned int __w_termsig:7;
++# endif				/* Big endian.  */
++      } __wait_terminated;
++    struct
++      {
++# if	__BYTE_ORDER == __LITTLE_ENDIAN
++	unsigned int __w_stopval:8; /* W_STOPPED if stopped.  */
++	unsigned int __w_stopsig:8; /* Stopping signal.  */
++	unsigned int:16;
++# endif				/* Little endian.  */
++# if	__BYTE_ORDER == __BIG_ENDIAN
++	unsigned int:16;
++	unsigned int __w_stopsig:8; /* Stopping signal.  */
++	unsigned int __w_stopval:8; /* W_STOPPED if stopped.  */
++# endif				/* Big endian.  */
++      } __wait_stopped;
++  };
++
++# define w_termsig	__wait_terminated.__w_termsig
++# define w_coredump	__wait_terminated.__w_coredump
++# define w_retcode	__wait_terminated.__w_retcode
++# define w_stopsig	__wait_stopped.__w_stopsig
++# define w_stopval	__wait_stopped.__w_stopval
++
++#endif	/* Use BSD.  */
 --- /dev/null
 +++ b/ports/sysdeps/unix/bsd/bsd4.4/kfreebsd/brk.c
 @@ -0,0 +1,53 @@
@@ -15521,46 +15641,46 @@
 + */
 +
 +#ifndef _PATHS_H_
-+#define _PATHS_H_
++#define	_PATHS_H_
 +
 +/* Default search path. */
-+#define _PATH_DEFPATH	"/usr/bin:/bin"
++#define	_PATH_DEFPATH	"/usr/bin:/bin"
 +/* All standard utilities path. */
-+#define _PATH_STDPATH	"/usr/bin:/bin:/usr/sbin:/sbin"
++#define	_PATH_STDPATH \
++	"/usr/bin:/bin:/usr/sbin:/sbin"
 +
-+#define _PATH_BSHELL	"/bin/sh"
-+#define _PATH_CONSOLE	"/dev/console"
-+#define _PATH_CSHELL	"/bin/csh"
-+#define _PATH_DEVDB	"/var/run/dev.db"
-+#define _PATH_DEVNULL	"/dev/null"
-+#define _PATH_DRUM	"/dev/drum"
-+#define _PATH_KLOG	"/dev/klog"
-+#define _PATH_KMEM	"/dev/kmem"
-+#define _PATH_LASTLOG	"/var/log/lastlog"
-+/* FIFOs are not permitted in /dev, so we use /var/run/log instead of /dev/log */
-+#define _PATH_MAILDIR	"/var/mail"
-+#define _PATH_MAN	"/usr/share/man"
-+#define _PATH_MEM	"/dev/mem"
-+#define _PATH_MNTTAB	"/etc/fstab"
-+#define _PATH_MOUNTED	"/etc/mtab"
-+#define _PATH_NOLOGIN	"/etc/nologin"
-+#define _PATH_PRESERVE	"/var/preserve"
-+#define _PATH_RWHODIR	"/var/rwho"
-+#define _PATH_SENDMAIL	"/usr/sbin/sendmail"
-+#define _PATH_SHADOW	"/etc/shadow"
-+#define _PATH_SHELLS	"/etc/shells"
-+#define _PATH_TTY	"/dev/tty"
-+#define _PATH_UNIX	"/kernel"
++#define	_PATH_BSHELL	"/bin/sh"
++#define	_PATH_CONSOLE	"/dev/console"
++#define	_PATH_CSHELL	"/bin/csh"
++#define	_PATH_DEVDB	"/var/run/dev.db"
++#define	_PATH_DEVNULL	"/dev/null"
++#define	_PATH_DRUM	"/dev/drum"
++#define	_PATH_KLOG	"/dev/klog"
++#define	_PATH_KMEM	"/dev/kmem"
++#define	_PATH_LASTLOG	"/var/log/lastlog"
++#define	_PATH_MAILDIR	"/var/mail"
++#define	_PATH_MAN	"/usr/share/man"
++#define	_PATH_MEM	"/dev/mem"
++#define	_PATH_MNTTAB	"/etc/fstab"
++#define	_PATH_MOUNTED	"/etc/mtab"
++#define	_PATH_NOLOGIN	"/etc/nologin"
++#define	_PATH_PRESERVE	"/var/lib"
++#define	_PATH_RWHODIR	"/var/spool/rwho"
++#define	_PATH_SENDMAIL	"/usr/sbin/sendmail"
++#define	_PATH_SHADOW	"/etc/shadow"
++#define	_PATH_SHELLS	"/etc/shells"
++#define	_PATH_TTY	"/dev/tty"
++#define	_PATH_UNIX	"/kernel"
 +#define _PATH_UTMP	"/var/run/utmp"
-+#define _PATH_VI	"/usr/bin/vi"
++#define	_PATH_VI	"/usr/bin/vi"
 +#define _PATH_WTMP	"/var/log/wtmp"
 +
 +/* Provide trailing slash, since mostly used for building pathnames. */
-+#define _PATH_DEV	"/dev/"
-+#define _PATH_TMP	"/tmp/"
-+#define _PATH_VARDB	"/var/db/"
-+#define _PATH_VARRUN	"/var/run/"
-+#define _PATH_VARTMP	"/var/tmp/"
++#define	_PATH_DEV	"/dev/"
++#define	_PATH_TMP	"/tmp/"
++#define	_PATH_VARDB	"/var/lib/misc/"
++#define	_PATH_VARRUN	"/var/run/"
++#define	_PATH_VARTMP	"/var/tmp/"
 +
 +#endif /* !_PATHS_H_ */
 --- /dev/null
@@ -18296,7 +18416,7 @@
 +#endif /* _SYS_RFORK_H */
 --- /dev/null
 +++ b/ports/sysdeps/unix/bsd/bsd4.4/kfreebsd/sys/swap.h
-@@ -0,0 +1,34 @@
+@@ -0,0 +1,37 @@
 +/* Calls to enable swapping on specified locations.  FreeBSD version.
 +   Copyright (C) 1996-1997, 2000, 2002 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -18327,6 +18447,9 @@
 +/* Make the block special device PATH available to the system for swapping.
 +   This call is restricted to the super-user.  */
 +extern int swapon (__const char *__path) __THROW;
++
++/* Stop using block special device PATH for swapping.  */
++extern int swapoff (__const char *__path) __THROW;
 +
 +__END_DECLS
 +
