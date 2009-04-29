@@ -14,7 +14,7 @@ Build-Depends-Indep: perl, po-debconf (>= 1.0)
 Maintainer: Ubuntu Core developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
 Uploaders: Ben Collins <bcollins@debian.org>, GOTO Masanori <gotom@debian.org>, Philip Blundell <pb@nexus.co.uk>, Jeff Bailey <jbailey@raspberryginger.com>, Daniel Jacobowitz <dan@debian.org>, Clint Adams <schizo@debian.org>, Aurelien Jarno <aurel32@debian.org>, Pierre Habouzit <madcoder@debian.org>
-Standards-Version: 3.8.0
+Standards-Version: 3.8.1
 XS-Debian-Vcs-Browser: http://svn.debian.org/wsvn/pkg-glibc/glibc-package/
 XS-Debian-Vcs-Svn: svn://svn.debian.org/pkg-glibc/glibc-package/
 Vcs-Bzr: http://bazaar.launchpad.net/~ubuntu-toolchain/ubuntu-toolchain/glibc-2.5-package
@@ -106,7 +106,7 @@ Description: GNU C Library: Development Libraries and Header Files
 
 Package: libc6-dbg
 Architecture: amd64 arm armeb armel i386 lpia m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb
-Section: libdevel
+Section: debug
 Priority: extra
 Provides: libc-dbg
 Depends: libc6 (= ${binary:Version})
@@ -177,7 +177,7 @@ Description: GNU C Library: Development Libraries and Header Files
 
 Package: libc6.1-dbg
 Architecture: alpha ia64
-Section: libdevel
+Section: debug
 Priority: extra
 Provides: libc-dbg
 Depends: libc6.1 (= ${binary:Version})
@@ -248,7 +248,7 @@ Description: GNU C Library: Development Libraries and Header Files
 
 Package: libc0.3-dbg
 Architecture: hurd-i386
-Section: libdevel
+Section: debug
 Priority: extra
 Provides: libc-dbg
 Depends: libc0.3 (= ${binary:Version})
@@ -319,7 +319,7 @@ Description: GNU C Library: Development Libraries and Header Files
 
 Package: libc0.1-dbg
 Architecture: kfreebsd-i386 kfreebsd-amd64
-Section: libdevel
+Section: debug
 Priority: extra
 Provides: libc-dbg
 Depends: libc0.1 (= ${binary:Version})
