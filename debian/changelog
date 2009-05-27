@@ -1,3 +1,11 @@
+glibc (2.9-9ubuntu2) karmic; urgency=low
+
+  * Add debian/patches/ubuntu/retain-fatal-msg.diff: attempt to retain the
+    assert and internal error messages so they can be examined during core
+    dump analysis.
+
+ -- Kees Cook <kees@ubuntu.com>  Wed, 27 May 2009 23:04:16 +0200
+
 glibc (2.9-9ubuntu1) karmic; urgency=low
 
   * Merge with Debian (r3342, trunk); remaining changes:

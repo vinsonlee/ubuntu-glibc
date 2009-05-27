@@ -1,0 +1,185 @@
+Description: Retain the assert and internal error strings via a global
+ export for later core dump analysis.
+Author: Kees Cook <kees@ubuntu.com>
+Upstream: http://sources.redhat.com/bugzilla/show_bug.cgi?id=10217
+
+Index: glibc-2.9/assert/assert.c
+===================================================================
+--- glibc-2.9.orig/assert/assert.c	2009-05-29 02:40:53.000000000 +0200
++++ glibc-2.9/assert/assert.c	2009-05-29 02:43:28.000000000 +0200
+@@ -43,6 +43,8 @@
+ # include FATAL_PREPARE_INCLUDE
+ #endif
+ 
++char * __assert_msg;
++
+ #undef __assert_fail
+ void
+ __assert_fail (const char *assertion, const char *file, unsigned int line,
+@@ -54,19 +56,22 @@
+   FATAL_PREPARE;
+ #endif
+ 
++  if (__assert_msg)
++    {
++      free(__assert_msg);
++      __assert_msg = NULL;
++    }
++
+   if (__asprintf (&buf, _("%s%s%s:%u: %s%sAssertion `%s' failed.\n"),
+ 		  __progname, __progname[0] ? ": " : "",
+ 		  file, line,
+ 		  function ? function : "", function ? ": " : "",
+ 		  assertion) >= 0)
+     {
++      __assert_msg = buf;
+       /* Print the message.  */
+       (void) __fxprintf (NULL, "%s", buf);
+       (void) fflush (stderr);
+-
+-      /* We have to free the buffer since the application might catch the
+-	 SIGABRT.  */
+-      free (buf);
+     }
+   else
+     {
+Index: glibc-2.9/sysdeps/posix/libc_fatal.c
+===================================================================
+--- glibc-2.9.orig/sysdeps/posix/libc_fatal.c	2009-05-29 02:40:53.000000000 +0200
++++ glibc-2.9/sysdeps/posix/libc_fatal.c	2009-05-29 02:43:28.000000000 +0200
+@@ -42,6 +42,7 @@
+   struct str_list *next;
+ };
+ 
++extern char * __assert_msg;
+ 
+ /* Abort with an error message.  */
+ void
+@@ -112,6 +113,8 @@
+     {
+       struct iovec *iov = alloca (nlist * sizeof (struct iovec));
+       ssize_t total = 0;
++      struct str_list *orig_list = list;
++      char *msg;
+ 
+       for (int cnt = nlist - 1; cnt >= 0; --cnt)
+ 	{
+@@ -123,6 +126,22 @@
+ 
+       if (TEMP_FAILURE_RETRY (__writev (fd, iov, nlist)) == total)
+ 	written = true;
++
++      msg = alloca (total + 1);
++      if (msg)
++        {
++          int pos = 0;
++          for (list = orig_list; list; list = list->next)
++            {
++              pos += list->len;
++              for (int c = 0; c < list->len; c++)
++                {
++                  msg[total-pos+c] = list->str[c];
++                }
++            }
++          msg[pos] = '\0';
++          __assert_msg = msg;
++        }
+     }
+ 
+   va_end (ap);
+Index: glibc-2.9/assert/assert-perr.c
+===================================================================
+--- glibc-2.9.orig/assert/assert-perr.c	2009-05-29 02:40:53.000000000 +0200
++++ glibc-2.9/assert/assert-perr.c	2009-05-29 02:43:28.000000000 +0200
+@@ -42,6 +42,8 @@
+ # include FATAL_PREPARE_INCLUDE
+ #endif
+ 
++extern char * __assert_msg;
++
+ void
+ __assert_perror_fail (int errnum,
+ 		      const char *file, unsigned int line,
+@@ -54,19 +56,22 @@
+   FATAL_PREPARE;
+ #endif
+ 
++  if (__assert_msg)
++    {
++      free(__assert_msg);
++      __assert_msg = NULL;
++    }
++
+   if (__asprintf (&buf, _("%s%s%s:%u: %s%sUnexpected error: %s.\n"),
+ 		  __progname, __progname[0] ? ": " : "",
+ 		  file, line,
+ 		  function ? function : "", function ? ": " : "",
+ 		  __strerror_r (errnum, errbuf, sizeof errbuf)) >= 0)
+     {
++      __assert_msg = buf;
+       /* Print the message.  */
+       (void) __fxprintf (NULL, "%s", buf);
+       (void) fflush (stderr);
+-
+-      /* We have to free the buffer since the appplication might catch the
+-	 SIGABRT.  */
+-      free (buf);
+     }
+   else
+     {
+Index: glibc-2.9/assert/Versions
+===================================================================
+--- glibc-2.9.orig/assert/Versions	2009-05-29 02:40:53.000000000 +0200
++++ glibc-2.9/assert/Versions	2009-05-29 12:12:41.000000000 +0200
+@@ -7,4 +7,7 @@
+     # just for standard compliance
+     __assert;
+   }
++  GLIBC_PRIVATE {
++    __assert_msg;
++  }
+ }
+Index: glibc-2.9/sysdeps/unix/sysv/linux/libc_fatal.c
+===================================================================
+--- glibc-2.9.orig/sysdeps/unix/sysv/linux/libc_fatal.c	2009-05-29 02:40:53.000000000 +0200
++++ glibc-2.9/sysdeps/unix/sysv/linux/libc_fatal.c	2009-05-29 02:43:28.000000000 +0200
+@@ -43,6 +43,7 @@
+   struct str_list *next;
+ };
+ 
++extern char * __assert_msg;
+ 
+ /* Abort with an error message.  */
+ void
+@@ -113,6 +114,8 @@
+     {
+       struct iovec *iov = alloca (nlist * sizeof (struct iovec));
+       ssize_t total = 0;
++      struct str_list *orig_list = list;
++      char *msg;
+ 
+       for (int cnt = nlist - 1; cnt >= 0; --cnt)
+ 	{
+@@ -131,6 +134,22 @@
+ 
+       if (cnt == total)
+ 	written = true;
++
++      msg = alloca (total + 1);
++      if (msg)
++        {
++          int pos = 0;
++          for (list = orig_list; list; list = list->next)
++            {
++              pos += list->len;
++              for (int c = 0; c < list->len; c++)
++                {
++                  msg[total-pos+c] = list->str[c];
++                }
++            }
++          msg[pos] = '\0';
++          __assert_msg = msg;
++        }
+     }
+ 
+   va_end (ap);
