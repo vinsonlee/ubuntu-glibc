@@ -1,3 +1,11 @@
+glibc (2.9-4ubuntu6.1) jaunty-proposed; urgency=low
+
+  * patches/ubuntu/submitted-leading-zero-stack-guard.diff: require that
+    the stack guard start with a zero-byte to protect against str*
+    function more completely (LP: #413278).
+
+ -- Kees Cook <kees@ubuntu.com>  Tue, 25 Aug 2009 00:06:51 -0700
+
 glibc (2.9-4ubuntu6) jaunty; urgency=low
 
   * sysdeps/depflags.pl: Drop Conflicts: belocs-locales-bin, just keep the
