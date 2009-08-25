@@ -145,3 +145,4 @@ ubuntu/local-altlocaledir.diff -p1
 ubuntu/stack-guard-quick-randomization.diff
 ubuntu/no-sprintf-pre-truncate.diff
 ubuntu/local-fwrite-no-attr-unused.diff
+ubuntu/submitted-leading-zero-stack-guard.diff
