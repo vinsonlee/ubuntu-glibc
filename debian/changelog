@@ -1,3 +1,10 @@
+glibc (2.7-18lenny1) stable; urgency=low
+
+  * patches/any/cvs-realloc.diff: fix bug in realloc() when enlarging a
+    memory allocation.  Closes: bug#550625.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 18 Oct 2009 16:58:40 +0200
+
 glibc (2.7-18) unstable; urgency=low
 
   * patches/localedata/mt_MT_euro.diff, patches/localedata/el_CY_euro.diff:
