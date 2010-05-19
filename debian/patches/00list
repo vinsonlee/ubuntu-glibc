@@ -16,6 +16,7 @@ cvs-all-strxfrm
 cvs-sparc-datastart
 cvs-mash-rlimit-rtprio
 cvs-all-regcomp
+ubuntu-89801
 ## Submitted:
 submitted-hppa-drop-utimes
 submitted-hppa-configure
@@ -62,3 +63,8 @@ local-sparc-atomics
 eh-frame-terminator
 local-all-getcwd
 locale-C
+local-pthread-shlib
+git-readdir-padding
+git-strfmon-overflow
+git-fix-dtag-cast
+git-mntent-newline-escape
