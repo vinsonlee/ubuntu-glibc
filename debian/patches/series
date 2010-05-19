@@ -105,3 +105,8 @@ any/local-missing-linux_types.h.diff
 # in Debian.
 ubuntu/local-altlocaledir.diff -p1
 ubuntu/stack-guard-quick-randomization.diff 
+
+any/git-readdir-padding.diff
+any/git-strfmon-overflow.diff
+any/git-fix-dtag-cast.diff
+any/git-mntent-newline-escape.diff
