@@ -1,3 +1,20 @@
+glibc (2.9-4ubuntu6.2) jaunty-security; urgency=low
+
+  * SECURITY UPDATE: integer overflow in strfmon() might lead to arbitrary
+    code execution.
+    - debian/patches/any/git-strfmon-overflow.diff: backport from upstream.
+    - CVE-2008-1391
+  * SECURITY UPDATE: newlines not escaped in /etc/mtab.
+    - debian/patches/any/git-mntent-newline-escape.diff: upstream fixes.
+    - CVE-2010-0296
+  * SECURITY UPDATE: arbitrary code execution from ELF headers (LP: #542197).
+    - debian/patches/any/git-fix-dtag-cast.diff: upstream fixes.
+    - CVE-2010-0830
+  * debian/patches/any/git-readdir-padding.diff: fix readdir padding when
+    processing getdents64() in a 32-bit execution environment (LP: #392501).
+
+ -- Kees Cook <kees@ubuntu.com>  Wed, 19 May 2010 16:58:40 -0700
+
 glibc (2.9-4ubuntu6.1) jaunty-proposed; urgency=low
 
   * patches/ubuntu/submitted-leading-zero-stack-guard.diff: require that
