@@ -1,0 +1,34 @@
+#! /bin/sh -e
+
+# All lines beginning with `# DP:' are a description of the patch.
+# DP: Description: escape newlines int mntent fields (CVE-2010-0296).
+# DP: Origin: http://sourceware.org/git/?p=glibc.git;a=commitdiff;h=ab00f4eac8f4932211259ff87be83144f5211540
+
+PATCHLEVEL=1
+
+if [ $# -ne 2 ]; then
+    echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+    exit 1
+fi
+case "$1" in
+    -patch) patch -d "$2" -f --no-backup-if-mismatch -p$PATCHLEVEL < $0;;
+    -unpatch) patch -d "$2" -f --no-backup-if-mismatch -R -p$PATCHLEVEL < $0;;
+    *)
+	echo >&2 "`basename $0`: script expects -patch|-unpatch as argument"
+	exit 1
+esac
+exit 0
+
+Index: eglibc-2.11.1/misc/mntent_r.c
+===================================================================
+--- eglibc-2.11.1.orig/misc/mntent_r.c	2010-05-19 16:53:38.399134517 -0700
++++ eglibc-2.11.1/misc/mntent_r.c	2010-05-19 16:54:02.989138098 -0700
+@@ -194,7 +194,7 @@
+     const char *rp = name;						      \
+ 									      \
+     while (*rp != '\0')							      \
+-      if (*rp == ' ' || *rp == '\t' || *rp == '\\')			      \
++      if (*rp == ' ' || *rp == '\t' || *rp == '\n' || *rp == '\\')	      \
+ 	break;								      \
+       else								      \
+ 	++rp;								      \

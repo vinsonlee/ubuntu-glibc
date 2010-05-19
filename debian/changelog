@@ -1,3 +1,20 @@
+glibc (2.3.6-0ubuntu20.6) dapper-security; urgency=low
+
+  * SECURITY UPDATE: integer overflow in strfmon() might lead to arbitrary
+    code execution.
+    - debian/patches/any/git-strfmon-overflow.dpatch: backport from upstream.
+    - CVE-2008-1391
+  * SECURITY UPDATE: newlines not escaped in /etc/mtab.
+    - debian/patches/any/git-mntent-newline-escape.dpatch: upstream fixes.
+    - CVE-2010-0296
+  * SECURITY UPDATE: arbitrary code execution from ELF headers (LP: #542197).
+    - debian/patches/any/git-fix-dtag-cast.dpatch: upstream fixes.
+    - CVE-2010-0830
+  * debian/patches/any/git-readdir-padding.dpatch: fix readdir padding when
+    processing getdents64() in a 32-bit execution environment (LP: #392501).
+
+ -- Kees Cook <kees@ubuntu.com>  Wed, 19 May 2010 16:59:53 -0700
+
 glibc (2.3.6-0ubuntu20.5) dapper-proposed; urgency=low
 
   * Fix svc_getreqset to work on 64bit hosts. Ubuntu #89801.
