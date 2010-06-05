@@ -51,6 +51,7 @@ alpha/submitted-fpu-round.diff -p0
 alpha/submitted-xstat.diff -p0
 alpha/submitted-PTR_MANGLE.diff
 alpha/submitted-procfs_h.diff -p1
+alpha/submitted-rtld-fPIC.diff -p1
 
 amd64/cvs-vdso_clock_gettime.diff -p1
 amd64/local-biarch.diff 
@@ -232,3 +233,8 @@ any/local-disable-nscd-host-caching.diff
 any/local-missing-linux_types.h.diff
 any/submitted-user_h.diff -p1
 any/cvs-realloc.diff -p1
+any/submitted-nis-shadow.diff -p1
+any/cvs-mntent.diff -p1
+any/cvs-ld-elf.diff -p1
+any/cvs-strfmon.diff -p1
+any/cvs-strfmon_l.diff -p1
