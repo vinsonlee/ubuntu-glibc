@@ -1,3 +1,31 @@
+glibc (2.7-18lenny4) stable-security; urgency=low
+
+  * Add patches/alpha/submitted-rtld-fPIC.diff to fix FTBFS on alpha
+    due to the changes introduced by patches/any/cvs-ld-elf.diff.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 06 Jun 2010 00:54:37 +0200
+
+glibc (2.7-18lenny3) stable-security; urgency=low
+
+  * patches/any/cvs-strfmon.diff: fix integer overflows in the
+    strfmon implementation (CVE-2008-1391, CVE-2009-4880).
+  * patches/any/cvs-strfmon_l.diff: fix integer overflows in the 
+    strfmon_l implementation (CVE-2009-4881).
+  * patches/any/cvs-mntent.diff: fix mntent newline processing error 
+    (CVE-2010-0296).  Closes: bug#583908.
+  * patches/any/cvs-ld-elf.diff: fix integer signedness error in ld.so
+    (CVE-2010-0830).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 04 Jun 2010 20:24:46 +0200
+
+glibc (2.7-18lenny2) stable-security; urgency=low
+
+  * Fix NIS shadow entries leakage to non-priviledge users when nscd is
+    in use.
+    Fixes: CVE-2010-0015.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 12 Jan 2010 09:32:45 +0100
+
 glibc (2.7-18lenny1) stable; urgency=low
 
   * patches/any/cvs-realloc.diff: fix bug in realloc() when enlarging a
