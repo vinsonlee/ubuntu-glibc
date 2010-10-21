@@ -1,3 +1,9 @@
+glibc (2.7-18lenny6) stable-security; urgency=high
+
+  * Fix CVE-2010-3847 with patches from Andreas Schwab and Kees Cook.
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Thu, 21 Oct 2010 20:51:38 +0200
+
 glibc (2.7-18lenny4) stable-security; urgency=low
 
   * Add patches/alpha/submitted-rtld-fPIC.diff to fix FTBFS on alpha
