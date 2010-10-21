@@ -1,3 +1,13 @@
+glibc (2.9-4ubuntu6.3) jaunty-security; urgency=low
+
+  * SECURITY UPDATE: root escalation via LD_AUDIT DST expansion.
+    - debian/patches/any/dst-expansion-fix.diff: upstream fixes.
+    - CVE-2010-3847
+    - debian/patches/any/disable-ld_audit.diff: turn off LD_AUDIT
+      for setuid binaries.
+
+ -- Kees Cook <kees@ubuntu.com>  Thu, 21 Oct 2010 14:31:36 -0700
+
 glibc (2.9-4ubuntu6.2) jaunty-security; urgency=low
 
   * SECURITY UPDATE: integer overflow in strfmon() might lead to arbitrary
