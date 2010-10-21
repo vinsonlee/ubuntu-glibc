@@ -151,3 +151,5 @@ any/git-readdir-padding.diff
 any/git-strfmon-overflow.diff
 any/git-fix-dtag-cast.diff
 any/git-mntent-newline-escape.diff
+any/dst-expansion-fix.diff
+any/disable-ld_audit.diff
