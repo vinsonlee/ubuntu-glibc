@@ -1,0 +1,117 @@
+Description: do not expand DST in setuid binaries (CVE-2010-3847).
+Origin: http://sourceware.org/ml/libc-hacker/2010-10/msg00007.html
+Origin: http://sourceware.org/ml/libc-hacker/2010-10/msg00008.html
+
+Index: glibc-2.9/elf/dl-load.c
+===================================================================
+--- glibc-2.9.orig/elf/dl-load.c	2010-10-21 14:39:59.155768622 -0700
++++ glibc-2.9/elf/dl-load.c	2010-10-21 14:41:23.160751208 -0700
+@@ -177,8 +177,7 @@
+ 
+ 
+ static size_t
+-is_dst (const char *start, const char *name, const char *str,
+-	int is_path, int secure)
++is_dst (const char *start, const char *name, const char *str, int is_path)
+ {
+   size_t len;
+   bool is_curly = false;
+@@ -207,11 +206,6 @@
+ 	   && (!is_path || name[len] != ':'))
+     return 0;
+ 
+-  if (__builtin_expect (secure, 0)
+-      && ((name[len] != '\0' && (!is_path || name[len] != ':'))
+-	  || (name != start + 1 && (!is_path || name[-2] != ':'))))
+-    return 0;
+-
+   return len;
+ }
+ 
+@@ -226,13 +220,12 @@
+     {
+       size_t len;
+ 
+-      /* $ORIGIN is not expanded for SUID/GUID programs (except if it
+-	 is $ORIGIN alone) and it must always appear first in path.  */
++      /* $ORIGIN is not expanded for SUID/GUID programs.  */
+       ++name;
+-      if ((len = is_dst (start, name, "ORIGIN", is_path,
+-			 INTUSE(__libc_enable_secure))) != 0
+-	  || (len = is_dst (start, name, "PLATFORM", is_path, 0)) != 0
+-	  || (len = is_dst (start, name, "LIB", is_path, 0)) != 0)
++      if (((len = is_dst (start, name, "ORIGIN", is_path)) != 0
++	   && !INTUSE(__libc_enable_secure))
++	  || (len = is_dst (start, name, "PLATFORM", is_path)) != 0
++	  || (len = is_dst (start, name, "LIB", is_path)) != 0)
+ 	++cnt;
+ 
+       name = strchr (name + len, '$');
+@@ -264,9 +257,12 @@
+ 	  size_t len;
+ 
+ 	  ++name;
+-	  if ((len = is_dst (start, name, "ORIGIN", is_path,
+-			     INTUSE(__libc_enable_secure))) != 0)
++	  if ((len = is_dst (start, name, "ORIGIN", is_path)) != 0)
+ 	    {
++	      /* Ignore this path element in SUID/SGID programs.  */
++	      if (INTUSE(__libc_enable_secure))
++		repl = (const char *) -1;
++	      else
+ #ifndef SHARED
+ 	      if (l == NULL)
+ 		repl = _dl_get_origin ();
+@@ -274,9 +270,9 @@
+ #endif
+ 		repl = l->l_origin;
+ 	    }
+-	  else if ((len = is_dst (start, name, "PLATFORM", is_path, 0)) != 0)
++	  else if ((len = is_dst (start, name, "PLATFORM", is_path)) != 0)
+ 	    repl = GLRO(dl_platform);
+-	  else if ((len = is_dst (start, name, "LIB", is_path, 0)) != 0)
++	  else if ((len = is_dst (start, name, "LIB", is_path)) != 0)
+ 	    repl = DL_DST_LIB;
+ 
+ 	  if (repl != NULL && repl != (const char *) -1)
+Index: glibc-2.9/elf/dl-open.c
+===================================================================
+--- glibc-2.9.orig/elf/dl-open.c	2010-10-21 14:41:42.641906556 -0700
++++ glibc-2.9/elf/dl-open.c	2010-10-21 14:43:21.107745366 -0700
+@@ -259,36 +259,6 @@
+ 
+   assert (_dl_debug_initialize (0, args->nsid)->r_state == RT_CONSISTENT);
+ 
+-  /* Maybe we have to expand a DST.  */
+-  if (__builtin_expect (dst != NULL, 0))
+-    {
+-      size_t len = strlen (file);
+-      size_t required;
+-      char *new_file;
+-
+-      /* Determine how much space we need.  We have to allocate the
+-	 memory locally.  */
+-      required = DL_DST_REQUIRED (call_map, file, len, _dl_dst_count (dst, 0));
+-
+-      /* Get space for the new file name.  */
+-      new_file = (char *) alloca (required + 1);
+-
+-      /* Generate the new file name.  */
+-      _dl_dst_substitute (call_map, file, new_file, 0);
+-
+-      /* If the substitution failed don't try to load.  */
+-      if (*new_file == '\0')
+-	_dl_signal_error (0, "dlopen", NULL,
+-			  N_("empty dynamic string token substitution"));
+-
+-      /* Now we have a new file name.  */
+-      file = new_file;
+-
+-      /* It does not matter whether call_map is set even if we
+-	 computed it only because of the DST.  Since the path contains
+-	 a slash the value is not used.  See dl-load.c.  */
+-    }
+-
+   /* Load the named object.  */
+   args->map = new = _dl_map_object (call_map, file, 0, lt_loaded, 0,
+ 				    mode | __RTLD_CALLMAP, args->nsid);
