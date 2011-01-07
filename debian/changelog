@@ -1,3 +1,10 @@
+glibc (2.7-18lenny7) stable-security; urgency=high
+
+  * Revert incorrect upstream patch for CVE-2010-3847 and use the correct
+    set of patches.
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Fri, 07 Jan 2011 21:47:02 +0100
+
 glibc (2.7-18lenny6) stable-security; urgency=high
 
   * Fix CVE-2010-3847 with patches from Andreas Schwab and Kees Cook.
