@@ -238,6 +238,6 @@ any/cvs-mntent.diff -p1
 any/cvs-ld-elf.diff -p1
 any/cvs-strfmon.diff -p1
 any/cvs-strfmon_l.diff -p1
-any/cvs-origin-suid.diff -p1
-any/local-audit-pathless.diff -p0
-
+any/cvs-dont-expand-dst-twice.diff -p1
+any/cvs-ignore-origin-privileged.diff -p1
+any/cvs-require-suid-audit.diff -p1
