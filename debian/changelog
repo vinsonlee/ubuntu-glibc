@@ -1,3 +1,13 @@
+glibc (2.7-10ubuntu8) hardy-security; urgency=low
+
+  * SECURITY UPDATE: setuid iconv users could load arbitrary libraries.
+    - debian/patches/any/dst-expansion-fix.diff: refresh with new
+      proposed solution, avoiding iconv issues.
+    - any/cvs-check-setuid-on-audit.diff: upstream fix for CVE-2010-3856,
+      which was already had a work-around in 2.7-10ubuntu7.
+
+ -- Kees Cook <kees@ubuntu.com>  Mon, 10 Jan 2011 21:07:49 -0800
+
 glibc (2.7-10ubuntu7) hardy-security; urgency=low
 
   * SECURITY UPDATE: root escalation via LD_AUDIT DST expansion.
