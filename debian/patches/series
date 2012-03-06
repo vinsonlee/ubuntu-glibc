@@ -113,3 +113,13 @@ any/git-mntent-newline-escape.diff
 any/dst-expansion-fix.diff
 any/disable-ld_audit.diff
 any/cvs-check-setuid-on-audit.diff
+
+any/submitted-nis-shadow.diff
+any/glibc-CVE-2009-5029.patch
+any/glibc-CVE-2011-1071-hardy.patch
+any/glibc-CVE-2011-1089.patch
+any/glibc-CVE-2011-1095.patch
+any/glibc-CVE-2011-1658.patch
+any/glibc-CVE-2011-1659.patch
+any/glibc-CVE-2011-4609.patch
+any/glibc-CVE-2012-0864.patch
