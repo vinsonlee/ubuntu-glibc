@@ -1,3 +1,51 @@
+glibc (2.7-10ubuntu8.1) hardy-security; urgency=low
+
+  * SECURITY UPDATE: timezone header parsing integer overflow (LP: #906961)
+    - debian/patches/any/glibc-CVE-2009-5029.patch: Check values from
+      TZ file header
+    - CVE-2009-5029
+  * SECURITY UPDATE:
+    - debian/patches/any/submitted-nis-shadow.diff remove encrypted
+      passwords from passwd entries, and add them in shadow entries and
+      fix incorrect password overwriting
+    - CVE-2010-0015
+  * SECURITY UPDATE: memory consumption denial of service in fnmatch
+    - debian/patches/any/glibc-CVE-2011-1071.patch: avoid too much
+      stack use in fnmatch.
+    - CVE-2011-1071
+  * SECURITY UPDATE: /etc/mtab corruption denial of service
+    - debian/patches/any/glibc-CVE-2011-1089.patch: Report write
+      error in addmnt even for cached streams
+    - CVE-2011-1089
+  * SECURITY UPDATE: insufficient locale environment sanitization
+    - debian/patches/any/glibc-CVE-2011-1095.patch: escape contents of
+      LANG environment variable.
+    - CVE-2011-1095
+  * SECURITY UPDATE: ld.so insecure handling of privileged programs'
+    RPATHs with $ORIGIN
+    - debian/patches/any/glibc-CVE-2011-1658.patch: improve handling of
+      RPATH and ORIGIN
+    - CVE-2011-1658
+  * SECURITY UPDATE: fnmatch integer overflow
+    - debian/patches/any/glibc-CVE-2011-1659.patch: check size of
+      pattern in wide character representation
+    - CVE-2011-1659
+  * SECURITY UPDATE: signedness bug in memcpy_ssse3
+    - debian/patches/any/glibc-CVE-2011-2702.patch: use unsigned
+      comparison instructions
+    - CVE-2011-2702
+  * SECURITY UPDATE: DoS in RPC implementation (LP: #901716)
+    - debian/patches/any/glibc-CVE-2011-4609.patch: nanosleep when too
+      many open fds is detected
+    - CVE-2011-4609
+  * SECURITY UPDATE: vfprintf nargs overflow leading to FORTIFY
+    check bypass
+    - debian/patches/any/glibc-CVE-2012-0864.patch: check for integer
+      overflow
+    - CVE-2012-0864
+
+ -- Steve Beattie <sbeattie@ubuntu.com>  Tue, 06 Mar 2012 10:06:52 -0800
+
 glibc (2.7-10ubuntu8) hardy-security; urgency=low
 
   * SECURITY UPDATE: setuid iconv users could load arbitrary libraries.
