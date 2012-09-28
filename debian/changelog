@@ -1,3 +1,25 @@
+glibc (2.7-10ubuntu8.2) hardy-security; urgency=low
+
+  * SECURITY UPDATE: buffer overflow in vfprintf handling
+    - debian/patches/any/CVE-2012-3404.patch: Fix allocation when
+      handling positional parameters in printf.
+    - CVE-2012-3404
+  * SECURITY UPDATE: buffer overflow in vfprintf handling
+    - debian/patches/any/CVE-2012-3405.patch: fix extension of array
+    - CVE-2012-3405
+  * SECURITY UPDATE: stack buffer overflow in vfprintf handling
+    (LP: #1031301)
+    - debian/patches/any/CVE-2012-3406.patch: switch to malloc when
+      array grows too large to handle via alloca extension
+    - CVE-2012-3406
+  * SECURITY UPDATE: stdlib strtod integer/buffer overflows
+    - debian/patches/any/CVE-2012-3480.patch: rearrange calculations
+      and modify types to void integer overflows
+    - CVE-2012-3480
+  * debian/expected_test_summary: update expected results to prevent FTBFS
+
+ -- Steve Beattie <sbeattie@ubuntu.com>  Fri, 28 Sep 2012 08:21:34 -0700
+
 glibc (2.7-10ubuntu8.1) hardy-security; urgency=low
 
   * SECURITY UPDATE: timezone header parsing integer overflow (LP: #906961)
