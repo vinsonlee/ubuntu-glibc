@@ -127,3 +127,4 @@ any/CVE-2012-3404.patch
 any/CVE-2012-3405.patch
 any/CVE-2012-3406.patch
 any/CVE-2012-3480.patch
+any/strtod_overflow_bug7066.patch
