@@ -1,3 +1,11 @@
+glibc (2.7-10ubuntu8.3) hardy-security; urgency=low
+
+  * debian/patches/any/strtod_overflow_bug7066.patch: Fix array
+    overflow in floating point parser triggered by applying patch for
+    CVE-2012-3480 (LP: #1090740)
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Sat, 15 Dec 2012 09:39:36 -0500
+
 glibc (2.7-10ubuntu8.2) hardy-security; urgency=low
 
   * SECURITY UPDATE: buffer overflow in vfprintf handling
