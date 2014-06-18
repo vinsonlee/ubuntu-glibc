@@ -1,5 +1,5 @@
 /* Copy SIZE bytes from SRC to DEST.  For SUN4V Niagara-2.
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David S. Miller (davem@davemloft.net)
 
@@ -137,7 +137,7 @@
 	LOAD(ldd, base + 0x28, %x5); \
 	LOAD(ldd, base + 0x30, %x6);
 
-#if IS_IN (libc)
+#if !defined NOT_IN_libc
 
 	.register	%g2,#scratch
 	.register	%g3,#scratch
@@ -211,7 +211,6 @@ ENTRY(__memcpy_niagara2)
 	 */
 	VISEntryHalf
 
-	membar		#Sync
 	alignaddr	%o1, %g0, %g0
 
 	add		%o1, (64 - 1), %o4

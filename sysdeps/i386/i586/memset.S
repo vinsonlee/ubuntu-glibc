@@ -1,6 +1,6 @@
 /* memset/bzero -- set memory area to CH/0
    Highly optimized version for ix86, x>=5.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Torbjorn Granlund, <tege@matematik.su.se>
 
@@ -21,10 +21,13 @@
 #include <sysdep.h>
 #include "asm-syntax.h"
 
+/* BEWARE: `#ifdef memset' means that memset is redefined as `bzero' */
+#define BZERO_P (defined memset)
+
 #define PARMS	4+4	/* space for 1 saved reg */
 #define RTN	PARMS
 #define DEST	RTN
-#ifdef USE_AS_BZERO
+#if BZERO_P
 # define LEN	DEST+4
 #else
 # define CHR	DEST+4
@@ -32,7 +35,7 @@
 #endif
 
         .text
-#if defined SHARED && IS_IN (libc) && !defined USE_AS_BZERO
+#if defined PIC && !defined NOT_IN_libc && !BZERO_P
 ENTRY (__memset_chk)
 	movl	12(%esp), %eax
 	cmpl	%eax, 16(%esp)
@@ -47,7 +50,7 @@ ENTRY (memset)
 	movl	DEST(%esp), %edi
 	cfi_rel_offset (edi, 0)
 	movl	LEN(%esp), %edx
-#ifdef USE_AS_BZERO
+#if BZERO_P
 	xorl	%eax, %eax	/* we fill with 0 */
 #else
 	movb	CHR(%esp), %al
@@ -101,7 +104,7 @@ L(2):	shrl	$2, %ecx	/* convert byte count to longword count */
 	rep
 	stosb
 
-#ifndef USE_AS_BZERO
+#if !BZERO_P
 	/* Load result (only if used as memset).  */
 	movl DEST(%esp), %eax	/* start address of destination is result */
 #endif
@@ -109,13 +112,10 @@ L(2):	shrl	$2, %ecx	/* convert byte count to longword count */
 	cfi_adjust_cfa_offset (-4)
 	cfi_restore (edi)
 
+#if BZERO_P
 	ret
+#else
+	ret
+#endif
 END (memset)
 libc_hidden_builtin_def (memset)
-
-#if defined SHARED && IS_IN (libc) && !defined __memset_chk \
-    && !defined USE_AS_BZERO
-strong_alias (__memset_chk, __memset_zero_constant_len_parameter)
-	.section .gnu.warning.__memset_zero_constant_len_parameter
-	.string "memset used with constant zero length parameter; this could be due to transposed parameters"
-#endif

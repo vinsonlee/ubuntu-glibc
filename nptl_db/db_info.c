@@ -1,7 +1,7 @@
 /* This file is included by pthread_create.c to define in libpthread
    all the magic symbols required by libthread_db.
 
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@
 #include <stdint.h>
 #include "thread_dbP.h"
 #include <tls.h>
-#include <ldsodefs.h>
 
 typedef struct pthread pthread;
 typedef struct pthread_key_struct pthread_key_struct;
@@ -38,9 +37,6 @@ typedef struct
 } dtv;
 
 typedef struct link_map link_map;
-typedef struct rtld_global rtld_global;
-typedef struct dtv_slotinfo_list dtv_slotinfo_list;
-typedef struct dtv_slotinfo dtv_slotinfo;
 
 /* Actually static in nptl/init.c, but we only need it for typeof.  */
 extern bool __nptl_initial_report_events;

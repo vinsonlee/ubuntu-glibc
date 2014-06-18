@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -30,8 +30,10 @@ cleanup (void *arg)
 
 
 int
-pthread_timedjoin_np (pthread_t threadid, void **thread_return,
-		      const struct timespec *abstime)
+pthread_timedjoin_np (threadid, thread_return, abstime)
+     pthread_t threadid;
+     void **thread_return;
+     const struct timespec *abstime;
 {
   struct pthread *self;
   struct pthread *pd = (struct pthread *) threadid;

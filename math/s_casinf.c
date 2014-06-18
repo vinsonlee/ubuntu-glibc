@@ -1,5 +1,5 @@
 /* Return arc sine of complex float value.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -33,7 +33,7 @@ __casinf (__complex__ float x)
 	{
 	  res = x;
 	}
-      else if (isinf (__real__ x) || isinf (__imag__ x))
+      else if (__isinf_nsf (__real__ x) || __isinf_nsf (__imag__ x))
 	{
 	  __real__ res = __nanf ("");
 	  __imag__ res = __copysignf (HUGE_VALF, __imag__ x);

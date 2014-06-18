@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -29,12 +29,12 @@ __log (double x)
     {
       if (x == 0.0)
 	{
-	  __feraiseexcept (FE_DIVBYZERO);
+	  feraiseexcept (FE_DIVBYZERO);
 	  return __kernel_standard (x, x, 16); /* log(0) */
 	}
       else
 	{
-	  __feraiseexcept (FE_INVALID);
+	  feraiseexcept (FE_INVALID);
 	  return __kernel_standard (x, x, 17); /* log(x<0) */
 	}
     }

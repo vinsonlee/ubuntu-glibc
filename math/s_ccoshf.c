@@ -1,5 +1,5 @@
 /* Complex cosine hyperbole function for float.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -30,16 +30,16 @@ __ccoshf (__complex__ float x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (__glibc_likely (rcls >= FP_ZERO))
+  if (__builtin_expect (rcls >= FP_ZERO, 1))
     {
       /* Real part is finite.  */
-      if (__glibc_likely (icls >= FP_ZERO))
+      if (__builtin_expect (icls >= FP_ZERO, 1))
 	{
 	  /* Imaginary part is finite.  */
 	  const int t = (int) ((FLT_MAX_EXP - 1) * M_LN2);
 	  float sinix, cosix;
 
-	  if (__glibc_likely (fabsf (__imag__ x) > FLT_MIN))
+	  if (__builtin_expect (icls != FP_SUBNORMAL, 1))
 	    {
 	      __sincosf (__imag__ x, &sinix, &cosix);
 	    }
@@ -83,7 +83,18 @@ __ccoshf (__complex__ float x)
 	      __imag__ retval = __ieee754_sinhf (__real__ x) * sinix;
 	    }
 
-	  math_check_force_underflow_complex (retval);
+	  if (fabsf (__real__ retval) < FLT_MIN)
+	    {
+	      volatile float force_underflow
+		= __real__ retval * __real__ retval;
+	      (void) force_underflow;
+	    }
+	  if (fabsf (__imag__ retval) < FLT_MIN)
+	    {
+	      volatile float force_underflow
+		= __imag__ retval * __imag__ retval;
+	      (void) force_underflow;
+	    }
 	}
       else
 	{
@@ -94,15 +105,15 @@ __ccoshf (__complex__ float x)
 	    feraiseexcept (FE_INVALID);
 	}
     }
-  else if (__glibc_likely (rcls == FP_INFINITE))
+  else if (__builtin_expect (rcls == FP_INFINITE, 1))
     {
       /* Real part is infinite.  */
-      if (__glibc_likely (icls > FP_ZERO))
+      if (__builtin_expect (icls > FP_ZERO, 1))
 	{
 	  /* Imaginary part is finite.  */
 	  float sinix, cosix;
 
-	  if (__glibc_likely (fabsf (__imag__ x) > FLT_MIN))
+	  if (__builtin_expect (icls != FP_SUBNORMAL, 1))
 	    {
 	      __sincosf (__imag__ x, &sinix, &cosix);
 	    }

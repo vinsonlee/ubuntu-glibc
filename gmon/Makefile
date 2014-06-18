@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2016 Free Software Foundation, Inc.
+# Copyright (C) 1995-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,12 +20,12 @@
 #
 subdir	:= gmon
 
-include ../Makeconfig
-
 headers	:= sys/gmon.h sys/gmon_out.h sys/profil.h
 routines := gmon mcount profil sprofil bb_init_func bb_exit_func prof-freq
 
 elide-routines.os = bb_init_func bb_exit_func
+
+include ../Makeconfig
 
 tests	= tst-sprofil
 ifeq ($(build-profile),yes)
@@ -45,7 +45,7 @@ include ../Rules
 # On systems where `profil' is not a system call, the same
 # problem exists for the internal functions in profil.c.
 
-noprof := mcount $(sysdep_noprof)
+noprof := mcount
 ifeq (,$(filter profil,$(unix-syscalls)))
 noprof += profil sprofil
 endif

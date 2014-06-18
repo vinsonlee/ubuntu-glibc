@@ -1,18 +1,16 @@
-# configuration options for all flavours
-extra_config_options = --enable-multi-arch
-MIN_KERNEL_SUPPORTED := 2.6.32
-
-# main library
-libc_mvec = yes
 libc_rtlddir = /lib64
+extra_config_options = --enable-multi-arch --enable-lock-elision
 
 # build 32-bit (i386) alternative library
-GLIBC_MULTILIB_PASSES += i386
-DEB_ARCH_MULTILIB_PACKAGES += libc6-i386 libc6-dev-i386
+GLIBC_PASSES += i386
+DEB_ARCH_REGULAR_PACKAGES += libc6-i386 libc6-dev-i386
 libc6-i386_shlib_dep = libc6-i386 (>= $(shlib_dep_ver))
+i386_add-ons = nptl $(add-ons)
 i386_configure_target = i686-linux-gnu
-i386_CC = $(CC) -m32 -march=pentium4 -mtune=generic
-i386_CXX = $(CXX) -m32 -march=pentium4 -mtune=generic
+i386_CC = $(CC) -m32
+i386_CXX = $(CXX) -m32
+i386_extra_cflags = -march=pentium4 -mtune=generic
+i386_extra_config_options = $(extra_config_options) --disable-profile
 i386_slibdir = /lib32
 i386_libdir = /usr/lib32
 
@@ -40,13 +38,14 @@ ln -sf /lib32/ld-linux.so.2 debian/libc6-i386/lib
 endef
 
 # build x32 ABI alternative library
-GLIBC_MULTILIB_PASSES += x32
-DEB_ARCH_MULTILIB_PACKAGES += libc6-x32 libc6-dev-x32
+GLIBC_PASSES += x32
+DEB_ARCH_REGULAR_PACKAGES += libc6-x32 libc6-dev-x32
 libc6-x32_shlib_dep = libc6-x32 (>= $(shlib_dep_ver))
+x32_add-ons = nptl $(add-ons)
 x32_configure_target = x86_64-linux-gnux32
 x32_CC = $(CC) -mx32
 x32_CXX = $(CXX) -mx32
-x32_mvec = yes
+x32_extra_config_options = $(extra_config_options) --disable-profile
 x32_rtlddir = /libx32
 x32_slibdir = /libx32
 x32_libdir = /usr/libx32

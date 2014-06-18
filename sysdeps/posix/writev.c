@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ ifree (char **ptrp)
    Operates just like 'write' (see <unistd.h>) except that the data
    are taken from VECTOR instead of a contiguous buffer.  */
 ssize_t
-__writev (int fd, const struct iovec *vector, int count)
+__libc_writev (int fd, const struct iovec *vector, int count)
 {
   /* Find the total number of bytes to be written.  */
   size_t bytes = 0;
@@ -88,4 +88,7 @@ __writev (int fd, const struct iovec *vector, int count)
 
   return bytes_written;
 }
-weak_alias (__writev, writev)
+#ifndef __libc_writev
+strong_alias (__libc_writev, __writev)
+weak_alias (__libc_writev, writev)
+#endif

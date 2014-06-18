@@ -1,5 +1,5 @@
 /* Compute x * y + z as ternary operation.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2010.
 
@@ -68,7 +68,7 @@ __fmal (long double x, long double y, long double z)
       if (u.ieee.exponent + v.ieee.exponent
 	  > 0x7fff + IEEE854_LONG_DOUBLE_BIAS)
 	return x * y;
-      /* If x * y is less than 1/4 of LDBL_TRUE_MIN, neither the
+      /* If x * y is less than 1/4 of LDBL_DENORM_MIN, neither the
 	 result nor whether there is underflow depends on its exact
 	 value, only on its sign.  */
       if (u.ieee.exponent + v.ieee.exponent
@@ -92,8 +92,8 @@ __fmal (long double x, long double y, long double z)
 		     && w.ieee.mantissa1 == 0
 		     && w.ieee.mantissa0 == 0x80000000)))
 	    {
-	      long double force_underflow = x * y;
-	      math_force_eval (force_underflow);
+	      volatile long double force_underflow = x * y;
+	      (void) force_underflow;
 	    }
 	  return v.d * 0x1p-65L;
 	}
@@ -119,7 +119,7 @@ __fmal (long double x, long double y, long double z)
 	     very small, adjust them up to avoid spurious underflows,
 	     rather than down.  */
 	  if (u.ieee.exponent + v.ieee.exponent
-	      <= IEEE854_LONG_DOUBLE_BIAS + 2 * LDBL_MANT_DIG)
+	      <= IEEE854_LONG_DOUBLE_BIAS + LDBL_MANT_DIG)
 	    {
 	      if (u.ieee.exponent > v.ieee.exponent)
 		u.ieee.exponent += 2 * LDBL_MANT_DIG + 2;
@@ -176,11 +176,8 @@ __fmal (long double x, long double y, long double z)
     }
 
   /* Ensure correct sign of exact 0 + 0.  */
-  if (__glibc_unlikely ((x == 0 || y == 0) && z == 0))
-    {
-      x = math_opt_barrier (x);
-      return x * y + z;
-    }
+  if (__builtin_expect ((x == 0 || y == 0) && z == 0, 0))
+    return x * y + z;
 
   fenv_t env;
   feholdexcept (&env);
@@ -204,17 +201,16 @@ __fmal (long double x, long double y, long double z)
   t1 = m1 - t1;
   t2 = z - t2;
   long double a2 = t1 + t2;
-  /* Ensure the arithmetic is not scheduled after feclearexcept call.  */
-  math_force_eval (m2);
-  math_force_eval (a2);
   feclearexcept (FE_INEXACT);
 
-  /* If the result is an exact zero, ensure it has the correct sign.  */
+  /* If the result is an exact zero, ensure it has the correct
+     sign.  */
   if (a1 == 0 && m2 == 0)
     {
       feupdateenv (&env);
-      /* Ensure that round-to-nearest value of z + m1 is not reused.  */
-      z = math_opt_barrier (z);
+      /* Ensure that round-to-nearest value of z + m1 is not
+	 reused.  */
+      asm volatile ("" : "=m" (z) : "m" (z));
       return z + m1;
     }
 
@@ -222,7 +218,7 @@ __fmal (long double x, long double y, long double z)
   /* Perform m2 + a2 addition with round to odd.  */
   u.d = a2 + m2;
 
-  if (__glibc_likely (adjust == 0))
+  if (__builtin_expect (adjust == 0, 1))
     {
       if ((u.ieee.mantissa1 & 1) == 0 && u.ieee.exponent != 0x7fff)
 	u.ieee.mantissa1 |= fetestexcept (FE_INEXACT) != 0;
@@ -230,7 +226,7 @@ __fmal (long double x, long double y, long double z)
       /* Result is a1 + u.d.  */
       return a1 + u.d;
     }
-  else if (__glibc_likely (adjust > 0))
+  else if (__builtin_expect (adjust > 0, 1))
     {
       if ((u.ieee.mantissa1 & 1) == 0 && u.ieee.exponent != 0x7fff)
 	u.ieee.mantissa1 |= fetestexcept (FE_INEXACT) != 0;

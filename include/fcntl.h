@@ -8,7 +8,8 @@ libc_hidden_proto (__open64)
 extern int __libc_open64 (const char *file, int oflag, ...);
 extern int __libc_open (const char *file, int oflag, ...);
 libc_hidden_proto (__libc_open)
-extern int __libc_fcntl (int fd, int cmd, ...) attribute_hidden;
+extern int __libc_creat (const char *file, mode_t mode);
+extern int __libc_fcntl (int fd, int cmd, ...);
 #ifndef NO_CANCELLATION
 extern int __fcntl_nocancel (int fd, int cmd, ...) attribute_hidden;
 libc_hidden_proto (__libc_fcntl)
@@ -30,9 +31,13 @@ extern int __openat_2 (int __fd, const char *__path, int __oflag);
 extern int __openat64_2 (int __fd, const char *__path, int __oflag);
 
 
-#if IS_IN (rtld)
-#  include <dl-fcntl.h>
-#endif
+/* Helper functions for the various *at functions.  For Linux.  */
+extern void __atfct_seterrno (int errval, int fd, const char *buf)
+  attribute_hidden;
+extern void __atfct_seterrno_2 (int errval, int fd1, const char *buf1,
+				int fd2, const char *buf2)
+  attribute_hidden;
+
 
 /* Flag determining whether the *at system calls are available.  */
 extern int __have_atfcts attribute_hidden;

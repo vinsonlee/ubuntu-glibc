@@ -1,5 +1,5 @@
 /* Compute x * y + z as ternary operation.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2010.
 
@@ -21,7 +21,6 @@
 #include <math.h>
 #include <fenv.h>
 #include <ieee754.h>
-#include <math_private.h>
 
 /* This implementation uses rounding to odd to avoid problems with
    double rounding.  See a paper by Boldo and Melquiond:
@@ -30,21 +29,18 @@
 double
 __fma (double x, double y, double z)
 {
-  if (__glibc_unlikely (isinf (z)))
+  if (__builtin_expect (isinf (z), 0))
     {
       /* If z is Inf, but x and y are finite, the result should be
 	 z rather than NaN.  */
-      if (isfinite (x) && isfinite (y))
+      if (finite (x) && finite (y))
 	return (z + x) + y;
       return (x * y) + z;
     }
 
   /* Ensure correct sign of exact 0 + 0.  */
-  if (__glibc_unlikely ((x == 0 || y == 0) && z == 0))
-    {
-      x = math_opt_barrier (x);
-      return x * y + z;
-    }
+  if (__builtin_expect ((x == 0 || y == 0) && z == 0, 0))
+    return x * y + z;
 
   fenv_t env;
   feholdexcept (&env);
@@ -68,17 +64,16 @@ __fma (double x, double y, double z)
   t1 = m1 - t1;
   t2 = z - t2;
   long double a2 = t1 + t2;
-  /* Ensure the arithmetic is not scheduled after feclearexcept call.  */
-  math_force_eval (m2);
-  math_force_eval (a2);
   feclearexcept (FE_INEXACT);
 
-  /* If the result is an exact zero, ensure it has the correct sign.  */
+  /* If the result is an exact zero, ensure it has the correct
+     sign.  */
   if (a1 == 0 && m2 == 0)
     {
       feupdateenv (&env);
-      /* Ensure that round-to-nearest value of z + m1 is not reused.  */
-      z = math_opt_barrier (z);
+      /* Ensure that round-to-nearest value of z + m1 is not
+	 reused.  */
+      asm volatile ("" : "=m" (z) : "m" (z));
       return z + m1;
     }
 

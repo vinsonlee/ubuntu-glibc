@@ -1,2173 +1,3 @@
-glibc (2.24-10) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * hurd-i386/cvs-truncate64.diff: New patch to support 64bit truncate.
-  * hurd-i386/cvs-send-recv-posix.diff: New patch to make send/recv more
-    posix.
-
-  [ Aurelien Jarno ]
-  * debian/patches/git-updates.diff: update from upstream stable branch:
-    - Fix readahead on mips64el.
-    - Improve branch predication in _dl_runtime_resolve_avx512_opt;
-    - Fix symbol redirect for fts_set on 32-bit architectures.
-    - Fix AVX2/AVX512 optimized unaligned memset.
-    - Don't use PLT nor GOT in static archives on amd64.
-    - Drop GLIBC_TUNABLES in setxid processes.
-    - Fix write-after-destroy in lock elision on powerpc/ppc64el.
-  * Drop patches/any/cvs-resolv-internal-qtype.diff, merged upstream.
-  * any/cvs-remove-pid-tid-cache-clone.diff: patch from upstream to remove
-    cached PID/TID in clone.  Closes: #857909.
-  * debian/rules.d/build.mk: do not fail the build in case of testsuite
-    regressions when building a +debXuX version. That way changes in the
-    environment (e.g.: kernel) do not prevent security or stable versions
-    to be built.
-
- -- Aurelien Jarno <aurel32@debian.org>  Wed, 12 Apr 2017 00:13:55 +0200
-
-glibc (2.24-9) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * hurd-i386/tg-libpthread-gsync-mutex.diff: Update patch, fixes trylock
-    error return.
-  * hurd-i386/tg-magic-pid.diff: New patch, add support for /proc/self.
-  * hurd-i386/tg-mlockall.diff: New patch, add support for mlockall.
-    - control: Bump gnumach-dev build-depend accordingly.
-  * hurd-i386/tg-gsync-libc.diff: Fix linking against built libmachuser
-    instead of installed libmachuser.
-  * libc0.3.symbols.hurd-i386: Add vm_wire_all symbols.
-
-  [ Aurelien Jarno ]
-  * debian/sysdeps/{amd64,i386,x32}.mk: disable lock elision (aka Intel TSX)
-    on x86 architectures. This causes programs (wrongly) unlocking an already
-    unlocked mutex to abort. More importantly most of the other distributions
-    decided to disable it, so we don't want to be the only distribution left
-    testing this code path.  Closes: #850182.
-  * debian/rules.d/build.mk: pass --no-recursion before -T in the call to tar
-    to workaround or fix bug#829738. This reduces the size of the glibc-source
-    package by 40%
-  * debian/patches/localedata/supported.diff: rename the kk_KZ locale with the
-    RK1048 charset to kk_KZ.RK1048 to avoid conflicting with the kk_KZ locale
-    with the PT154 charset.  Closes: #847596.
-  * debian/patches/git-updates.diff: update from upstream stable branch:
-    - debian/patches/alpha/submitted-math-fixes.diff: Drop, merged upstream.
-  * patches/any/cvs-resolv-internal-qtype.diff: patch from upstream to fix a
-    NULL pointer dereference in libresolv when receiving a T_UNSPEC internal
-    QTYPE (CVE-2015-5180).  Closes: #796106.
-  * Make the package build reproducibly, thanks to Ximin Luo for the patch.
-    Closes: #783210.
-    - debian/rules: export SOURCE_DATE_EPOCH when not building with
-      dpkg-buildpackage.
-    - debian/rules.d/build.mk: use --clamp-mtime instead of touching the
-      files.
-    - debian/rules.d/debhelper.mk: do not chmod +x the shell script, call
-      it with sh instead.
-  * debian/rules.d/control.mk: Add the sh3 architecture to libc6_archs.
-    Closes: #850565.
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 16 Jan 2017 18:43:37 +0100
-
-glibc (2.24-8) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * hurd-i386/tg-libc_rwlock_recursive.diff: New patch to work around
-    fakeroot-tcp issue, see #845930.
-  * hurd-i386/cvs-hurd_signal.h_c++.diff: New patch to fix building gdb.
-  * hurd-i386/tg-poll_errors_fixes.diff: Fix port leak.
-
- -- Samuel Thibault <sthibault@debian.org>  Sun, 04 Dec 2016 22:49:53 +0100
-
-glibc (2.24-7) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * hurd-i386/tg-hurdsig-SA_SIGINFO.diff: Fix passing address to legacy SIGBUS
-    handlers.
-  * hurd-i386/tg-libpthread-gsync-mutex.diff: New patch to make mutexes use
-    gsync too.
-  * hurd-i386/tg-NOFOLLOW.diff: New patch to fix O_NOFOLLOW errors.
-  * hurd-i386/tg-NOFOLLOW-DIRECTORY.diff: New patch to fix O_NOFOLLOW |
-    O_DIRECTORY errors.
-
-  [ Aurelien Jarno ]
-  * debian/patches/git-updates.diff: update from upstream stable branch.
-  * debian/rules: build with -no-pie -fno-PIE. Closes: #845512, #845521.
-
-  [ Matthias Klose ]
-  * Allow to inject the libc-dev dependency on linux-libc-dev by the build
-    environment.
-
- -- Aurelien Jarno <aurel32@debian.org>  Fri, 25 Nov 2016 23:09:39 +0100
-
-glibc (2.24-6) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * libc0.3.symbols.hurd-i386: Drop removed RPCs.
-  * hurd-i386/cvs-libpthread.diff: Update to latest upstream version.
-    - hurd-i386/cvs-libpthread-static-weak.diff: Drop, merged upstream.
-    - hurd-i386/cvs-pthread-atfork.diff: Drop, merged upstream.
-    - hurd-i386/cvs-setcancelstate.diff: Drop, merged upstream.
-  * hurd-i386/tg-libpthread-gsync-spin.diff: New patch to make spinlocks use
-    gsync too.  Thanks Svante Signell for investigating issues with the first
-    version.
-  * hurd-i386/tg-ONSTACK.diff: New patch to fix SS_ONSTACK support.
-    Closes: #551470.
-  * hurd-i386/tg-extern_inline.diff: Update to upstream.
-    - hurd-i386/tg-sigstate_thread_reference.diff: Refresh.
-    - hurd-i386/tg-gsync-libc.diff: Refresh.
-  * hurd-i386/tg-hurdsig-SA_SIGINFO.diff: Update to upstream.
-  * hurd-i386/tg-EGREGIOUS-fr.diff: New patch to fix grammar in french
-    translation.
-
-  [ Aurelien Jarno ]
-  * debian/patches/git-updates.diff: update from upstream stable branch:
-    - Fix pread/pwrite syscalls on SH4.
-    - Fix build on powerpc/ppc64el with binutils from trunk.  Closes: #843691.
-    - Fix flexible array usage in gconv.h.  Closes: #841304.
-    - Fix linknamespace parallel test failures.  Closes: #844132.
-  * debian/patches/any/submitted-unicode-9.0.0.diff: proposed patch to update
-    Unicode support to version 9.0.0.  Closes: #842466.
-  * debian/patches/localedata/locale-C.diff: update to Unicode 9.0.0.
-  * debian/patches/localedata/submitted-en_AU-date_fmt.diff: improve date_fmt
-    for en_AU locale.  Closes: #841916.
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 21 Nov 2016 19:22:48 +0100
-
-glibc (2.24-5) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/sysdeps/linux.mk: fix cross-compilation by also looking at headers
-    in $(LINUX_HEADERS).
-  * debian/testsuite-xfail-debian.mk: allow nptl/tst-stack4 to fail on HPPA.
-
-  [ Samuel Thibault ]
-  * hurd-i386/cvs-libpthread-static-weak.diff: New patch to fix weak
-    references when linking in libpthread statically.
-  * hurd-i386/cvs-pthread-atfork.diff: New patch to fix unregistering atfork
-    handlers at library unload. Closes: #841068.
-  * debhelper.in/libc-dev.install.hurd-i386: Install libpthread_nonshared.a.
-
- -- Aurelien Jarno <aurel32@debian.org>  Tue, 18 Oct 2016 23:10:46 +0200
-
-glibc (2.24-4) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * hurd-i386/tg-hurdsig-SA_SIGINFO.diff: Fix preemptors and thus
-    hurd_safe_*.
-  * hurd-i386/tg-hurdsig-fixes.diff: Fix uninitialized value.
-  * hurd-i386/submitted-exec_filename.diff: Add missing includes, fix const
-    warning.
-  * hurd-i386/cvs-mallocfork.diff: New patch to fix concurrency between
-    hurd_malloc and fork, triggered by malloc/tst-malloc-fork-deadlock.
-  * hurd-i386/cvs-libpthread.diff: Update to latest upstream version.
-    Closes: #839742.
-  * hurd-i386/libpthread_build.diff: Refresh.
-  * hurd-i386/libpthread_version.diff: Refresh.
-  * hurd-i386/unsubmitted-libc_alloca_cutoff.diff: Refresh.
-  * hurd-i386/cvs-hidden.diff: Drop, merged upstream.
-  * hurd-i386/cvs-libpthread-2.23.diff: Drop, merged upstream.
-  * hurd-i386/cvs-libpthread-api.diff: Drop, merged upstream.
-  * hurd-i386/cvs-libpthread_build.diff: Drop, merged upstream.
-  * hurd-i386/cvs-libpthread_clean2.diff: Drop, merged upstream.
-  * hurd-i386/cvs-pt-kill.diff: Drop, merged upstream.
-  * hurd-i386/libpthread-versions.diff: Drop, merged upstream.
-  * hurd-i386/libpthread_clean.diff: Drop, merged upstream.
-  * hurd-i386/libpthread_sigmask.diff: Drop, merged upstream.
-  * hurd-i386/libpthread_spin-lock.diff: Drop, merged upstream.
-  * hurd-i386/unsubmitted-libpthread-semaphore.h.diff: Drop, merged upstream.
-  * hurd-i386/tg-pthread_deps.diff: New patch, fixes references to libc
-    symbols.
-  * testsuite-xfail-debian.mk: Clear fixed hurd-i386 test.
-  * control: Drop hurd dependency from libc-bin: the reason for the dep has
-    disappeared.
-  * hurd-i386/unsubmitted-libc_alloca_cutoff.diff: Rename to
-    hurd-i386/tg-allocalim.diff.
-  * hurd-i386/unsubmitted-timer_routines.diff: Rename to
-    hurd-i386/tg-timer_routines.diff.
-  * hurd-i386/tg-glibc-2.24-restore-malloc-hook.diff: Restore malloc_hook for
-    now for mach-defpager.
-  * hurd-i386/cvs-setcancelstate.diff: New patch to work around a bug with
-    newer libpthread snapshot.
-
-  [ Adam Conrad ]
-  * debian/rules.d/tarball.mk: Apply --no-renames to make the diff readable.
-  * debian/rules.d/tarball.mk: Avoid filterdiff bugs with git pathspec magic.
-  * debian/patches/git-updates.diff: Update to 2.24 master to test the above.
-
-  [ John David Anglin ]
-  * debian/patches/hppa/cvs-atomic-machine.diff: New patch from upstream to
-    fix nptl/tst-stack4 on hppa.  Closes: #838574.
-
-  [ Aurelien Jarno ]
-  * debian/sysdeps/linux.mk: Install both kernel and library headers symlinks
-    using a single for loop.
-  * debian/sysdeps/linux.mk: Also install a /usr/include/<triplet>/arch
-    symlink if it exists, needed for the tilegx architecture.
-  * debian/control.in/main: add a dependency on lsb-base (>= 3.0-6) for ncsd.
-  * debian/debhelper.in/nscd.init: also invalidate services and netgroup
-    during reload.  Closes: #793649.
-  * debian/control.in/main, debian/rules.d/debhelper.mk: install nscd systemd
-    files. Closes: #767707.
-  * debian/patches/localedata/locale-C.diff: switch back transliterations to
-    combining.  Closes: #840199.
-  * debian/debhelper.in/locales.postinst: improve locales-all detection.
-    Closes: #840901.
-  * debian/patches/i386/local-cpuid-level2.diff: replace by upstream patch
-    cvs-cpuid-level2.diff.
-  * debian/control.in/main: slightly relax the build-dependency on g++-6 to
-    make lintian happy.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 16 Oct 2016 13:06:08 +0200
-
-glibc (2.24-3) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * patches/kfreebsd/local-sysdeps.diff: update to revision 6102 (from
-    glibc-bsd).
-  * debian/control.in/main: Drop "Provides: locales" for locales-all.
-    Closes: #837694.
-  * Mark libc-l10n as Multi-Arch: foreign.
-
-  [ Samuel Thibault ]
-  * hurd-i386/tg-poll_errors_fixes.diff: Fix spurious port destroy on io_select
-    returning an error.
-  * hurd-i386/cvs-libpthread.diff: Update from upstream. Fixes spurious
-    dependencies of libp11, libgnutls30, libbsd0.
-
-  [ John David Anglin ]
-  * patches/hppa/submitted-sysdeps-cancel.diff: new patch to fix syscall
-    cancellation issues.  Closes: #837518.
-  * testsuite-xfail-debian.mk: HPPA updates.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sat, 17 Sep 2016 20:00:44 +0200
-
-glibc (2.24-2) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * hurd-i386/tg-gsync-libc.diff: Fix for glibc 2.24.
-  * testsuite-xfail-debian.mk: Update header conformance results.
-
-  [ Aurelien Jarno ]
-  * debian/rules.d/debhelper.mk: remove the arch-qualifier from the
-    linux-libc-dev depends.  Closes: #836446.
-  * debian/patches/any/submitted-perl-inc.diff: new patch to fix the
-    testsuite with perl (>= 5.22.2-4), which removed '.' from @INC by
-    default.
-  * debian/patches/git-updates.diff: update from upstream stable branch.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sat, 03 Sep 2016 22:36:31 +0200
-
-glibc (2.24-1) unstable; urgency=medium
-
-  [ Adam Conrad ]
-  * debian/rules.d/control.mk: Manually add binutils, linux-libc-dev, and the
-    current GCC to the rebuild test deps, so they land in Testsuite-Triggers.
-
-  [ Aurelien Jarno ]
-  * debian/patches/git-updates.diff: update from upstream stable branch:
-    - debian/patches/any/submitted-argp-attribute.diff: upstreamed.
-    - Fix backtrace hang on armel/armhf, possibly causing a minor
-      denial-of-service vulnerability (CVE-2016-6323).  Closes: #834752.
-  * debian/control.in/libc: drop ${locale-compat:Depends} as it was not used
-    anymore.
-  * debian/control.in/libc, debian/rules.d/debhelper.mk: compute the
-    linux-libc-dev dependency from the one installed at build time.  Closes:
-    #834706.
-  * debian/patches/series: apply hppa/submitted-setcontext.diff.  Closes:
-    #835414.
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/cvs-adjtime-NULL.diff: New patch to fix crash on
-    adjtime(..., NULL).
-
- -- Aurelien Jarno <aurel32@debian.org>  Wed, 31 Aug 2016 17:51:04 +0200
-
-glibc (2.24-0experimental1) experimental; urgency=medium
-
-  [ Samuel Thibault ]
-  * testsuite-xfail-debian.mk: Update with hurd-i386 non-regressions.
-
-  [ Aurelien Jarno ]
-  * debian/patches/git-updates.diff: update from upstream stable branch:
-    - debian/patches/powerpc/submitted-powerpc-ifunc-sel.diff: upstreamed.
-    - debian/patches/sparc/submitted-sparc-fdim.diff: upstreamed.
-  * debian/patches/sparc/cvs-test-strncmp.diff: new patch from upstream to
-    fix wcsmbs/test-wcsncmp on architecture with strong alignment.  Closes:
-    #825865.
-  * debian/patches/testsuite-xfail-debian.mk: remove xfail-test-wcsncmp on
-    sparc.
-  * debian/sysdeps/{sparc,sparc64}.mk: force target to sparcv9-linux-gnu.
-  * debian/patches/sparc/local-sparcv9-target.diff: drop, obsolete.
-  * patches/hppa/local-stack-grows-up.diff: restore one hunk that has not been
-    merged upstream from the 2.23 version.
-  * patches/localedata/locale-C.diff: update to unicode 8.0.0, add missing
-    categories, use the copy directive when possible.
-  * debian/rules.d/build.mk: disable the C++ compiler when tests are disabled,
-    based on a patch from Matthias Klose.  Closes: #834138.
-  * rules.d/build.mk: test for DEB_BUILD_OPTIONS="nocheck" using filter
-    instead of findstring.
-  * patches/kfreebsd/local-sysdeps.diff: update to revision 6101 (from
-    glibc-bsd).
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 15 Aug 2016 16:55:38 +0200
-
-glibc (2.24-0experimental0) experimental; urgency=medium
-
-  * New upstream release: version 2.24.
-  * debian/patches/hurd-i386/submitted-malloc-setstate.diff: only apply on
-    hurd-i386, as it causes regressions on at least x32.
-  * debian/rules.d/tarball.mk: make the orig tarball generation a bit more
-    reproducible.
-  * debian/sysdeps/sparc64.mk: compile all flavours with -mcpu=ultrasparc.
-  * debian/patches/submitted-sparc-fdim.diff: new patch to fix fdimf and
-    fdim function on SPARC.
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 04 Aug 2016 03:13:12 +0200
-
-glibc (2.23.90+20160725.b898b64-1) experimental; urgency=medium
-
-  [ Aurelien Jarno ]
-  * New upstream snapshot from 20160725.
-  * debian/testsuite-xfail-debian.mk: remove HPPA math tests from XFAIL,
-    the problem is fixed from some time already.
-  * debian/patches/powerpc/submitted-powerpc-ifunc-sel.diff: new patch to
-    fix the ifunc tests with GCC 6 on PowerPC.
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 25 Jul 2016 23:38:37 +0200
-
-glibc (2.23.90+20160719.2c3d888-1) experimental; urgency=medium
-
-  [ Samuel Thibault ]
-  * testsuite-xfail-debian.mk: Add missing test failure (no actual
-    regression).
-
-  [ Aurelien Jarno ]
-  * New upstream snapshot from 20160719:
-    - debian/patches/hurd-i386/cvs-tabdly.diff: upstreamed.
-  * debian/control.in/main, debian/rules: build with GCC 6.  Closes: #835946.
-
- -- Aurelien Jarno <aurel32@debian.org>  Tue, 19 Jul 2016 23:34:49 +0200
-
-glibc (2.23.90+20160711.c10f90d-1) experimental; urgency=medium
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/submitted-malloc-setstate.diff: New patch to fix
-    malloc_setstate.
-  * testsuite-xfail-debian.mk: Update hurd-i386 testsuite results, no actual
-    regression.
-
-  [ Aurelien Jarno ]
-  * New upstream snapshot from 20160711:
-    - debian/patches/localedata/locale-de_LI.diff: upstreamed.
-    - debian/patches/hppa/submitted-libm-test-ulps.diff: upstreamed.
-  * debian/testsuite-xfail-debian.mk: allow conform/XPG3/sys/stat.h
-    and conform/XPG4/sys/stat.h to fail on mips and mipsel, similarly
-    to the others sys/stat.h conform tests. Group all theses entries
-    and an explanation.
-  * debian/testsuite-xfail-debian.mk: do not allow math/test-fenv to
-    fail now that we do not have Loongson 2 buildds anymore.
-  * debian/patches/kfreebsd/local-sysdeps.diff, local-fbtl.diff:
-    update to revision 6087 (from glibc-bsd).
-  * debian/testsuite-xfail-debian.mk: allow more failures on kfreebsd-*,
-    mostly due to the fsid_t type, and which are not regressions.
-  * testsuite-xfail-debian.mk: Update x32 testsuite results, no actual
-    regression.
-  * Replace debian/patches/alpha/submitted-trunc.diff by
-    debian/patches/alpha/submitted-math-fixes.diff containing additional
-    math fixes.
-  * debian/rules: better glibc version detection for snapshots.
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 11 Jul 2016 22:45:50 +0200
-
-glibc (2.23.90+20160507.87523e9-1) experimental; urgency=medium
-
-  * New upstream snapshot from 20160705:
-    - Fix locales license.  Closes: #555168.
-    - Fix Spanish locale 1st week definition.  Closes: #826888.
-    - debian/patches/localedata/sort-UTF8-first.diff: rebased.
-    - debian/patches/localedata/locale-eo_EO.diff: upstreamed.
-    - debian/patches/localedata/locale-ku_TR.diff: rebased.
-    - debian/patches/localedata/fo_FO-date_fmt.diff: rebased.
-    - debian/patches/localedata/locales-fr.diff: rebased.
-    - debian/patches/localedata/locale-en_DK.diff: rebased.
-    - debian/patches/localedata/locale-hsb_DE.diff: rebased.
-    - debian/patches/localedata/fr_CH-first_weekday.diff: upstreamed.
-    - debian/patches/localedata/locale-de_LI.diff: rebased.
-    - debian/patches/localedata/submitted-bz9725-locale-sv_SE.diff: rebased.
-    - debian/patches/localedata/first_weekday.diff: upstreamed.
-    - debian/patches/localedata/submitted-en_AU-date_fmt.diff: rebased.
-    - debian/patches/amd64/local-blacklist-for-Intel-TSX.diff
-    - debian/patches/arm/local-arm-futex.diff: rebased.
-    - debian/patches/hppa/local-stack-grows-up.diff: dropped, obsolete.
-    - debian/patches/hurd-i386/local-enable-ldconfig.diff: rebased.
-    - debian/patches/hurd-i386/tg-tls-threadvar.diff: rebased.
-    - debian/patches/hurd-i386/tg-hooks.diff: rebased.
-    - debian/patches/hurd-i386/cvs-openat.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-gai_sigqueue.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-aio_sigqueue.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-open.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-c++-types.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-errnos.d.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-mach-syscalls.mk.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-auxv.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-gprof-tick.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-IPV6_PKTINFO.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-i686-link.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-check-local-headers.diff: rebased.
-    - debian/patches/hurd-i386/tg-gsync-libc.diff: rebased.
-    - debian/patches/i386/local-cpuid-level2.diff: rebased.
-    - debian/patches/sparc/submitted-sparc64-socketcall.diff: rebased.
-    - debian/patches/sparc/cvs-sparc-nearbyint.diff: upstreamed.
-    - debian/patches/any/local-libgcc-compat-ports.diff: rebased.
-    - debian/patches/any/submitted-longdouble.diff: rebased.
-    - debian/patches/any/submitted-string2-strcmp.diff: rebased.
-    - debian/patches/any/local-dynamic-resolvconf.diff: rebased.
-    - debian/patches/any/cvs-tst-malloc-thread-exit.diff: upstreamed.
-    - debian/patches/any/cvs-sys-personality-h.diff: upstreamed.
-  * debian/patches/localedata/{locale-C.diff,locale-de_LI.diff,
-    locale-eu_FR.diff,new-valencian-locale.diff}: change LC_IDENTIFICATION
-    to i18n:2012.
-  * debian/debhelper.in/locales.config: convert iw_IL into he_IL, as the
-    former was deprecated and has been removed.
-
- -- Aurelien Jarno <aurel32@debian.org>  Tue, 05 Jul 2016 20:47:21 +0200
-
-glibc (2.23-5) unstable; urgency=medium
-
-  * patches/hurd-i386/git-recvmsg.diff: New patch, fixes recvmsg on PF_LOCAL
-    sockets with msg_name != NULL.  Closes: #833558.
-  * hurd-i386/libpthread_version.diff: Really fix pthread_setcancelstate
-    aliasing.
-  * libc0.3.symbols.hurd-i386: Update symbols.
-  * hurd-i386/tg-sysvshm.diff: Update from topgit.
-  * hurd-i386/cvs-check-local-headers.diff: Update from git.
-  * hurd-i386/tg-extern_inline.diff: Fix using inlines in libc.
-  * hurd-i386/cvs-libpthread-2.23.diff: Fix calling pthread functions from
-    libc.
-  * hurd-i386/tg-gsync-libc.diff: New patch, use gsync for libc
-    synchronization primitives.
-
- -- Samuel Thibault <sthibault@debian.org>  Tue, 23 Aug 2016 21:16:41 +0200
-
-glibc (2.23-4) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * patches/kfreebsd/local-sysdeps.diff: update to revision 6098 (from
-    glibc-bsd).
-  * debian/debhelper.in/libc.postinst: drop code to handle the /var/mail
-    transition for pre-Potato installations.
-  * debian/debhelper.in/libc.{preinst,postinst}, debian/script.in/nohwcap.sh:
-    Remove fallback to dpkg --print-architecture for pre-multiarch systems.
-  * debian/debhelper.in/libc.{preinst,postinst}: do not run the NSS check
-    code from a chroot as it might not have an init system installed.
-  * debian/testsuite-xfail-debian.mk: allow tst-robust8 to fail on amd64, it
-    is an intermittent failure that might be due to a kernel issue.
-
- -- Aurelien Jarno <aurel32@debian.org>  Wed, 27 Jul 2016 00:39:51 +0200
-
-glibc (2.23-3) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * hurd-i386/libpthread_version.diff: Update with pthread_setcancelstate
-    aliasing.
-
-  [ Aurelien Jarno ]
-  * patches/kfreebsd/local-sysdeps.diff: update to revision 6097 (from
-    glibc-bsd).
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 25 Jul 2016 23:23:29 +0200
-
-glibc (2.23-2) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * Danish debconf translation update from Joe Hansen.  Closes: #830589.
-  * patches/kfreebsd/local-sysdeps.diff: update to revision 6096 (from
-    glibc-bsd).
-
-  [ Samuel Thibault ]
-  * hurd-i386/cvs-libpthread-2.23.diff: Update, adds pthread_setcancelstate
-    alias, fixes rsyslog start.
-  * hurd-i386/cvs-tabdly.diff: New patch.  Closes: #830584.
-  * hurd-i386/local-clock_gettime_MONOTONIC.diff: Complete patch with
-    timer_create, to fix ghc 8 build.
-
- -- Aurelien Jarno <aurel32@debian.org>  Tue, 19 Jul 2016 20:22:37 +0200
-
-glibc (2.23-1) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/patches/git-updates.diff: update from upstream stable branch:
-    - debian/patches/hppa/submitted-start.diff: drop, upstreamed.
-  * debian/patches/localedata/locale-C.diff: update comment about the week
-    entry.  Closes: #829093.
-  * debian/testsuite-xfail-debian.mk: allow malloc/tst-mallocfork2 to fail
-    on hurd-i386, this is not a regression but a new test.
-  * debian/patches/sparc/cvs-sparc-nearbyint.diff: new patch from upstream
-    to fix nearbyint* functions with a sNaN input on SPARC.
-  * debian/testsuite-xfail-debian.mk: allow math/test-double-finite and
-    math/test-float-finite to fail on alpha, as this architecture do not
-    fully support IEEE flags.
-  * debian/patches/alpha/submitted-trunc.diff: new patch to fix trunc and
-    truncf results for big values on alpha.
-  * debian/testsuite-xfail-debian.mk: allow nptl/tst-cancel9 and
-    nptl/tst-cancelx9 to fail on hppa, they are not regressions.
-
-  [ John David Anglin ]
-  * debian/patches/hppa/submitted-libm-test-ulps.diff: new patch to update
-    the math test ULPs on hppa.
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/tg-poll_errors_fixes.diff: Update from tg branch, fixes
-    gettimeofday call from select.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 03 Jul 2016 21:59:34 +0200
-
-glibc (2.23-0experimental4) experimental; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/patches/git-updates.diff: update from upstream stable branch.
-  * debian/rules.d/build.mk: allow a test to fail without having a .out
-    file.
-  * patches/kfreebsd/local-sysdeps.diff: update to revision 6075 (from
-    glibc-bsd).
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 30 Jun 2016 12:25:44 +0200
-
-glibc (2.23-0experimental3) experimental; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/patches/git-updates.diff: update from upstream stable branch:
-    - debian/patches/hurd-i386/tg-hurdsig-fixes-2.diff: refresh.
-    - debian/patches/hurd-i386/cvs-libpthread.so.diff: drop, upstreamed.
-    - debian/patches/mips/submitted-vfork.diff: drop, upstreamed.
-    - debian/patches/sparc/submitted-vfork.diff: drop, upstreamed.
-  * debian/rules.d/build.mk: reduce TIMEOUTFACTOR to 15 from 50. That
-    corresponds to a 5 minutes default, which should be more than enough even
-    on slow architectures.
-  * debian/sysdeps/mips64el.mk: change the ISA back to MIPS3 to fix math FMA
-    tests on some CPUs.
-
- -- Aurelien Jarno <aurel32@debian.org>  Tue, 28 Jun 2016 00:48:51 +0200
-
-glibc (2.23-0experimental2) experimental; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/patches/git-updates.diff: update from upstream stable branch.
-  * patches/kfreebsd/local-fbtl.diff: update to revision 5973 (from
-    glibc-bsd).
-  * debian/rules, debian/rules.d/build.mk: rename localedir into complocaledir
-    following upstream change.
-  * debian/patches/local-allocalim-header.diff: drop, obsolete.
-  * debian/patches/any/local-no-pagesize.diff: drop, obsolete.
-
-  [ Adam Conrad ]
-  * debian/testsuite-xfail-debian.mk: Also allow tst-malloc-thread-fail to
-    fail where we've already done so for test-xfail-tst-malloc-thread-exit.
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 14 Apr 2016 14:20:30 +0200
-
-glibc (2.23-0experimental1) experimental; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/patches/git-updates.diff: update from upstream stable branch.
-  * debian/testsuite-xfail-debian.mk (powerpc) really mark
-    tst-malloc-thread-exit as xfail.
-  * debian/testsuite-xfail-debian.mk (ppc64) mark tst-malloc-thread-exit
-    test as xfail, it is a known issue and not a regression.
-  * patches/kfreebsd/local-fbtl.diff: update to revision 5969 (from
-    glibc-bsd).
-  * debian/patches/kfreebsd/local-tst-malloc-fbtl.diff: drop, obsoleted by
-    hurd-i386/cvs-libpthread.so.diff.
-  * debian/patches/kfreebsd/local-tst-unique.diff: disable tst-unique* on
-    GNU/kFreeBSD, as they are not supported by the FreeBSD ELF OSABI.
-  * debian/patches/alpha/submitted-fts64.diff: new patch to fix the new fts64
-    function on alpha.
-
-  [ Samuel Thibault ]
-  * hurd-i386/cvs-libpthread.diff: More updates to glibc-2.23.
-  * hurd-i386/cvs-openat.diff: Fix __openat prototype.
-  * hurd-i386/cvs-gai_sigqueue.diff: Fix gai_sigqueue prototype.
-  * hurd-i386/cvs-aio_sigqueue.diff: Fix aio_sigqueue prototype.
-  * hurd-i386/cvs-libpthread.diff: Separate 2.23 changes to...
-  * hurd-i386/cvs-libpthread-2.23.diff: ... separate patch.
-  * hurd-i386/cvs-libpthread.so.diff: Fix building malloc tests.
-  * testsuite-xfail-debian.mk: Skip test which just overflows memory.
-  * hurd-i386/cvs-pt-kill.diff: Fix pthread_kill locking.
-  * hurd-i386/cvs-open.diff: Fix __open in ld.so, thus fixing dlopen().
-  * hurd-i386/cvs-c++-types.diff: Add expected c++-types.data.
-  * hurd-i386/local-ihash-use.diff: Note that libpthread uses ihash.h.
-  * testsuite-xfail-debian.mk: Add failing new tests. Disable the problematic
-    test-lfs test.
-  * hurd-i386/local-versions.diff: New patch to fix symbol version.
-
-  [ Adam Conrad ]
-  * debian/patches/any/cvs-tst-malloc-thread-exit.diff: Backport fix from
-    upstream to make tst-malloc-thread-exit use fewer system resources.
-  * debian/debhelper.in/locales.config: Make default_environment_locale
-    get preseeded correctly both with and without /etc/default/locale.
-  * debian/control.in/i386: Remove list of Breaks that predate oldstable.
-  * debian/control.in/*: Drop long obsolete file overlap Breaks/Replaces.
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 24 Mar 2016 00:21:05 +0100
-
-glibc (2.23-0experimental0) experimental; urgency=medium
-
-  [ Aurelien Jarno ]
-  * New upstream release: version 2.23, with git updates up to 2016-03-12:
-    - Fix German translation of "Alarm clock".  Closes: #291293.
-    - Fix strtol in Turkish locales.  Closes: #458611.
-    - Add LFS support for fts functions.  Closes: #534521.
-    - Fix build with GCC 6.  Closes: #811574.
-    - Fix unbounded stack allocation in nan* functions (CVE-2014-9761).
-      Closes: #813187.
-    - debian/patches/localedata/locale-ku_TR.diff: rebased.
-    - debian/patches/localedata/fix-lang.diff: upstreamed.
-    - debian/patches/localedata/first_weekday.diff: rebased.
-    - debian/patches/localedata/locale-nb_NO.diff: upstreamed.
-    - debian/patches/localedata/cvs-bg_BG-t_fmt.diff: upstreamed.
-    - debian/patches/alpha/local-string-functions.diff: rebased.
-    - debian/patches/amd64/local-blacklist-for-Intel-TSX.diff: rebased.
-    - debian/patches/arm/local-ioperm.diff: dropped.
-    - debian/patches/hppa/cvs-allocatestack-stacktop.diff: upstreamed.
-    - debian/patches/hppa/local-pthread_spin_unlock.diff: upstreamed.
-    - debian/patches/hppa/submitted-mathdef.diff: upstreamed.
-    - debian/patches/hppa/cvs-update-mman.h.diff: upstreamed.
-    - debian/patches/hppa/submitted-dladdr.diff: partially upstreamed, rebased.
-    - debian/patches/hurd-i386/local-enable-ldconfig.diff: rebased.
-    - debian/patches/hurd-i386/tg-tls.diff: rebased.
-    - debian/patches/hurd-i386/tg-tls-threadvar.diff: rebased.
-    - debian/patches/hurd-i386/tg-hurdsig-fixes.diff: rebased.
-    - debian/patches/hurd-i386/tg-hurdsig-global-dispositions.diff: rebased.
-    - debian/patches/hurd-i386/cvs-libpthread.diff: updated.
-    - debian/patches/hurd-i386/unsubmitted-gnumach.defs.diff: rebased.
-    - debian/patches/hurd-i386/submitted-fork_port_leak.diff: upstreamed.
-    - debian/patches/hurd-i386/tg-libc_getspecific.diff: rebased.
-    - debian/patches/hurd-i386/cvs-libpthread-libc-lockP.diff: upstreamed.
-    - debian/patches/hurd-i386/tg-mmap32th_bit.diff: upstreamed.
-    - debian/patches/hurd-i386/tg-sysheaders.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-bootstrap.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-cache-mach_host_self.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-csu_crt0.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-s_scalbn.diff: upstreamed.
-    - debian/patches/hurd-i386/local-mach_print.diff: rebased.
-    - debian/patches/hurd-i386/cvs-hidden.diff: rebased.
-    - debian/patches/hurd-i386/cvs-O_DIRECTORY.diff: upstreamed.
-    - debian/patches/hurd-i386/cvs-raise-longjump.diff: upstreamed.
-    - debian/patches/hurd-i386/tg-faccessat.diff: rebased.
-    - debian/patches/i386/local-i386-ulps.diff: dropped.
-    - debian/patches/kfreebsd/local-scripts.diff: rebased.
-    - debian/patches/m68k/submitted-gcc34-seccomment.diff: rebased.
-    - debian/patches/mips/cvs-testsuite-o32-fp.diff: upstreamed.
-    - debian/patches/powerpc/local-powerpc8xx-dcbz.diff: rebased.
-    - debian/patches/sh4/local-fpscr_values.diff: rebased.
-    - debian/patches/any/local-bindresvport_blacklist.diff: rebased.
-    - debian/patches/any/local-libgcc-compat-main.diff: rebased.
-    - debian/patches/any/local-libgcc-compat-abilists.diff: rebased.
-    - debian/patches/any/local-mktemp.diff: upstreamed.
-    - debian/patches/any/cvs-stdio-lock.diff: upstreamed.
-    - debian/patches/any/local-tcsetaddr.diff: rebased.
-    - debian/patches/any/local-tst-mktime2.diff: rebased.
-    - debian/patches/any/submitted-nis-netgrp.diff: upstreamed.
-    - debian/patches/any/submitted-longdouble.diff: rebased.
-    - debian/patches/any/local-dynamic-resolvconf.diff: rebased.
-    - debian/patches/any/local-static-dlopen-search-path.diff: upstreamed.
-    - debian/patches/any/local-math-logb.diff: upstreamed.
-    - debian/patches/any/cvs-gawk-gensub.diff: upstreamed.
-    - debian/patches/any/cvs-grantpt-namespace.diff: upstreamed.
-    - debian/patches/any/cvs-grantpt-pty-owner.diff: upstreamed.
-    - debian/patches/any/cvs-bits-libc-stdio-lock.diff: upstreamed.
-    - debian/patches/any/submitted-hle-checking-mutex.diff: upstreamed.
-    - debian/{control,symbols.wildcards,copyright}: Updated strings for 2.23.
-    - debian/patches/kfreebsd/local-undef-glibc.diff: rebased.
-    - debian/patches/kfreebsd/local-tst-malloc-backtrace.diff: rebased,
-      renamed into local-tst-malloc-fbtl.diff.
-    - debian/patches/hurd-i386/submitted-net.diff: rebased.
-    - debian/patches/hurd-i386/tg-bits_atomic.h_multiple_threads.diff:
-      rebased.
-    - debian/patches/hurd-i386/submitted-handle-eprototype.diff: dropped.
-  * debian/testsuite-xfail-debian.mk (powerpc) mark tst-malloc-thread-fail
-    test as xfail, it is a known issue and not a regression.
-  * debian/testsuite-xfail-debian.mk (mipsel): mark a few math tests are
-    failing, due to a bug in the Loongson 3 FPU.
-  * patches/kfreebsd/local-fbtl.diff: update to revision 5940 (from
-    glibc-bsd).
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 13 Mar 2016 19:22:45 +0100
-
-glibc (2.22-13) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/patches/mips/submitted-vfork.diff: new patch to fix ABI change and
-    testsuite on mips*.
-  * debian/patches/sparc/submitted-vfork.diff: new patch to fix ABI change and
-    testsuite on sparc*.
-  * debian/sysdeps/mipsel.mk, debian/sysdeps/mips64el.mk: bump ISA to MIPS32
-    and MIPS64.
-  * debian/patches/hppa/submitted-start.diff: new patch from John David Anglin
-    to fix crash in executables built with -p and linked against gcrt1.o.
-    Closes: #827876.
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 27 Jun 2016 00:51:43 +0200
-
-glibc (2.22-12) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * Update from upstream stable branch:
-    - fix FTBFS with recent binutils versions on mips* and sparc*.  Closes:
-      #827477.
-  * debian/sysdeps/kfreebsd-i386.mk: fix libc0.1-i686 package name.
-  * debian/rules.d/build.mk: in case of build failure due testsuite
-    issues, display again the failed tests so that they appear at the end of
-    the build log.
-  * debian/local/etc/nsswitch.conf: add gshadow line to default
-    /etc/nsswitch.conf (addresses #699090).
-  * debian/debhelper.in/libc-bin.postinst: update /etc/nsswitch.conf to the
-    current default if it matches a version shipped by base-files or
-    libc-bin. This is based on a patch from Santiago Vila, thanks.  Closes:
-    #827105.
-
-  [ Samuel Thibault ]
-  * hurd-i386/tg-eintr.diff: New patch to fix "Interrupted" issues in ghc.
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 20 Jun 2016 00:01:21 +0200
-
-glibc (2.22-11) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * hurd-i386/tg-poll_errors_fixes.diff: Fix crash when calling poll or select
-    on a fd which had never been allocated.  Closes: #826175.
-  * hurd-i386/tg-faccessat.diff: Finish faccessat implementation. Fixes
-    findutils.  Closes: #823027.
-
-  [ Aurelien Jarno ]
-  * Update from upstream stable branch.
-  * debian/control: re-add libc0.1-i686, libc0.3-i686, libc6-i686 as a
-    dummy package to ease the upgrades.  Closes: #825421, #826290.
-  * debian/sysdeps/i386.mk: add libc6-i686 dummy package.
-  * debian/sysdeps/hurd-i386.mk: add libc0.1-i686 dummy package.
-  * debian/sysdeps/kfreebsd-i386.mk: add libc0.3-i686 dummy package.
-  * debian/debhelper.in/libc.NEWS: drop the new about libc6-i686, libc0.1-i686
-    and libc0.3-i686 packages removal.
-  * debian/script.in/nohwcap.sh: drop sparc optimized packages.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 05 Jun 2016 00:04:04 +0200
-
-glibc (2.22-10) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * Update from upstream stable branch:
-    - Fix a stack overflow in Sun RPC clntudp_call() (CVE-2016-4429).
-  * debian/control.in/main: build-depends on dpkg (>= 1.18.7) instead of
-    dpkg-dev (>= 1.18.7) as the cputable file is in dpkg, not dpkg-dev.
-    Closes: #824127.
-  * debian/debhelper.in/libc.NEWS: add an entry about the dropped libc6-i686,
-    libc0.1-i686 and libc0.3-i686 packages.  Closes: #825421.
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/cvs-i686-link.diff: Fix link of i686 build.
-  * sysdeps/hurd-i386.mk: Disable ifunc, not working yet.
-  * sysdeps/hurd-i386.mk: Fix and re-enable xen build.
-  * control: Re-introduce libc0.3-xen package.
-  * patches/hurd-i386/cvs-check-local-headers.diff: Update exclusion list.
-
-  [ John David Anglin ]
-  * debian/patches/hppa/submitted-setcontext.diff: new patch to fix setcontext
-    return code on hppa.  Closes: #824344.
-  * debian/patches/hppa/submitted-dladdr.diff: update patch to fix
-    debug/backtrace-tst test failure.  Closes: #824362.
-  * debian/testsuite-xfail-debian.mk: update expected testsuite results.
-    Closes: #824363.
-
- -- Aurelien Jarno <aurel32@debian.org>  Tue, 31 May 2016 23:48:20 +0200
-
-glibc (2.22-9) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * hurd-i386/cvs-libpthread.so.diff: Fix building malloc tests.
-  * debian/testsuite-xfail-debian.mk: Update LFS tests.
-
-  [ Aurelien Jarno ]
-  * debian/testsuite-xfail-debian.mk: drop check on i586 flavours.
-  * debian/patches/kfreebsd/local-tst-malloc-backtrace.diff: drop, obsoleted
-    by hurd-i386/cvs-libpthread.so.diff.
-  * debian/patches/arm/unsubmitted-ldconfig-cache-abi.diff: correctly apply
-    patch. Really fix #822489.
-  * control.in/main: Bump Standards-Version to 3.9.8 (no changes).
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 12 May 2016 12:55:01 +0200
-
-glibc (2.22-8) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * hurd-i386/cvs-gprof-tick.diff: Cherry-pick from upstream to fix gprof
-    timing.
-  * hurd-i386/cvs-IPV6_PKTINFO.diff: Cherry-pick from upstream to fix
-    IPV6_*PKT* macros.
-
-  [ Aurelien Jarno ]
-  * Update from upstream stable branch:
-    - Fix a buffer overflow in the glob function (CVE-2016-1234).
-    - Fix a stack overflow in getaddrinfo function (CVE-2016-3706).
-    - Fix nss_hesiod breakage.  Closes: #821358.
-  * patches/kfreebsd/local-sysdeps.diff: update to revision 6051 (from
-    glibc-bsd) to fix FTBFS and provide PT_FOLLOW_FORK in sys/ptrace.h.
-    Closes: #822143, #823387.
-  * patches/arm/unsubmitted-ldconfig-cache-abi.diff: apply fix from Steve
-    McIntyre to fix an armhf ABI detection crash in ldconfig on arm64.
-    Closes: #822489.
-  * debian/control.in/main: upgrade breaks on binutils. This is plainly
-    wrong though, glibc should not be a special case: either we don't
-    support partial upgrades or we do that for all libraries. With that
-    let's hope people will stop reporting bugs, sigh.  Closes: #819165.
-  * Drop libc*-i686 packages as GCC now defaults to i686:
-    - debian/control: drop packages, add provides and build-depends on
-      g++-5 (>= 5.3.1-17) and dpkg-dev (>= 1.18.7).
-    - debian/sysdeps/hurd-i386.mk: stop building libc0.3-i686. Use the
-      default compiler options to build libc0.3-xen.
-    - debian/sysdeps/i386.mk: stop building libc6-i686.
-    - debian/sysdeps/kfreebsd-i386.mk: drop.
-    - debian/patches/i386/submitted-i686-timing.diff: drop.  Closes:
-      #218519.
-
-  [ Adam Conrad ]
-  * debian/control.in/libc: Force i686 variants off the system on upgrade.
-
- -- Aurelien Jarno <aurel32@debian.org>  Wed, 11 May 2016 23:39:05 +0200
-
-glibc (2.22-7) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * hurd-i386/submitted-auxv.diff: Update from upstream commit into
-    cvs-auxv.diff.
-  * hurd-i386/unsubmitted-prof-eintr.diff: Fix recording profiling from
-    ext2fs.
-  * hurd-i386/submitted-anon-mmap-shared.diff: Disable, actually breaks
-    booting hurd-i386.
-  * control: Add myself as uploader.
-
- -- Samuel Thibault <sthibault@debian.org>  Tue, 19 Apr 2016 11:48:08 +0200
-
-glibc (2.22-6) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * hurd-i386/submitted-auxv.diff: New patch, fixes cvs crash.
-  * hurd-i386/submitted-anon-mmap-shared.diff: New patch, fixes inheritence of
-    shared anonymous memory.
-
-  [ Aurelien Jarno ]
-  * Update from upstream stable branch:
-    - Fix stack overflow when getnetbyname is invoked on a very long name
-      (CVE-2016-3075).
-    - Fix HTM on powerpc/ppc64/ppc64el.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sat, 09 Apr 2016 13:35:19 +0200
-
-glibc (2.22-5) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * testsuite-xfail-debian.mk: Disable the problematic test-lfs test on hurd.
-
-  [ Aurelien Jarno ]
-  * Update from upstream stable branch:
-    - Fix assertion failure with unconnectable name server addresses.  Closes:
-      #816669.
-  * Drop libnss-dns-udeb and libnss-files-udeb and merge the files they
-    include in libc6-udeb.
-  * debian/patches/any/cvs-sys-personality-h.diff: new patch to synchronise
-    <sys/personality.h> with kernel headers.  Closes: #697456.
-
- -- Aurelien Jarno <aurel32@debian.org>  Tue, 29 Mar 2016 00:44:21 +0200
-
-glibc (2.22-4) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * Update from upstream stable branch:
-    - Fix a memory leak in the resolver (CVE-2016-5417).  Closes: #818178.
-  * debian/patches/localedata/fr_CA-first_weekday.diff: drop.  Closes:
-    #769051.
-  * debian/rules, debian/rules.d/build.mk: move the C.UTF-8 locale and
-    locales-all generation to a separate target instead of building them
-    in the build_libc target.
-  * debian/control.in/main, debian/rules, debian/rules.d/build.mk: make sure
-    to use the just built localedef when building locales. When
-    cross-compiling use the system localedef with the correct endianness and
-    build-depends on the correct version.
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/tg-sendmsg-SCM_RIGHTS.diff,tg-sendmsg-SCM_CREDS.diff:
-    Update.
-  * patches/hurd-i386/cvs-errnos.d.diff: New patch to fix build dependency
-    loop.
-  * patches/hurd-i386/cvs-mach-syscalls.mk.diff: New patch to fix missing
-    dependency.
-
-  [ Adam Conrad ]
-  * debian/glibc-source.filelist: Refresh list of source files and sort.
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 21 Mar 2016 18:41:37 +0100
-
-glibc (2.22-3) unstable; urgency=medium
-
-  * Update from upstream stable branch:
-    - Fix linking shared objects that use libmvec.so functions.  Closes:
-      #817879.
-  * debian/sysdeps/sh4.mk: build with -fno-delete-null-pointer-checks to
-    workaround a missing SH4 specific __builtin_trap implementation in GCC.
-  * debian/patches/localedata/locale-C.diff: fix LC_TIME week and d_t_fmt
-    fields in C.UTF-8 locale.  Closes: #817895.
-  * debian/sysdeps/powerpcspe.mk: pass --without-fp to the configure script
-    on powerpcspe.  Closes: #817926.
-  * debian/rules.d/control.mk: add nios2 architecture.  Closes: #817944.
-  * debian/patches/any/submitted-dlopen-noload.diff: new patch to fix a crash
-    in dlopen() with RTLD_NOLOAD.  Closes: #817900.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sat, 12 Mar 2016 22:40:15 +0100
-
-glibc (2.22-2) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * Update from upstream stable branch:
-    - Fix pow() precision on CPUs with fma4, and the corresponding testsuite
-      failures.
-    - debian/patches/s390/submitted-socketcall.diff: drop, merged upstream.
-  * debian/libc6{,-mips32,-mipsn32}.symbols.mips64el: add symbols for files for
-    mips64el.
-  * patches/kfreebsd/local-sysdeps.diff: update to revision 5932 (from
-    glibc-bsd):
-    - Fix consistency check for PIC code when built with GCC 5.  Closes:
-      #817207.
-  * debian/rules, debian/rules.d/build.mk, debian/rules.d/debhelper.mk: define
-    the mvec variable per flavour and not per platform.
-  * sysdeps/*mk: enable libmvec only on amd64 and x32 flavours.
-  * debian/debhelper.in/libc-dev-alt.install: install libmvec_nonshared.a also
-    for alternative builds.
-  * debian/debhelper.in/libc-dev{,-alt}.install: install libmvec.a.
-
- -- Aurelien Jarno <aurel32@debian.org>  Wed, 09 Mar 2016 18:42:19 +0100
-
-glibc (2.22-1) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/testsuite-xfail-debian.mk (alpha): mark a few failures which
-    are not a regression compared to 2.21 as xfail.
-  * debian/testsuite-xfail-debian.mk (hurd): mark another failure which
-    is not a regression compared to 2.21 as xfail.
-  * debian/control.in/main: avoid experimental versions, use versions that
-    went through unstable instead.
-
-  [ Samuel Thibault ]
-  * control: Accept hurd-headers-dev and libihash-dev as alternatives to
-    hurd-dev for bootstrapping.
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 07 Mar 2016 12:38:18 +0100
-
-glibc (2.22-0experimental3) experimental; urgency=medium
-
-  [ Aurelien Jarno ]
-  * Update from upstream stable branch:
-    - debian/patches/any/local-CVE-2015-7547.diff: drop, merged upstream.
-  * debian/testsuite-xfail-debian.mk (hurd): correctly detect Hurd. Mark tests
-    failing to build as unsupported. Update for glibc 2.22.
-  * debian/patches/hurd-i386/submitted-hurd-abilist.diff: new patch to get the
-    abilist tests buildable on Hurd.
-  * debian/testsuite-xfail-debian.mk (mips): correctly detect 64-bit mips
-    flavours.
-  * debian/testsuite-xfail-debian.mk (hppa): mark new tests which fail as
-    xfail.
-  * debian/testsuite-xfail-debian.mk (alpha): mark new tests which fail as
-    xfail.
-  * control.in/main: Bump Standards-Version to 3.9.7 (no changes).
-  * debian/patches/sparc/submitted-sparc64-socketcall.diff: new patch to fix
-    bind(), listen() and setsockopt()when built against 4.4+ kernel headers.
-  * Update German debconf translation, by Helge Kreutzman.  Closes: #815697.
-  * Update Japanese debconf translation, by Takuma Yamada.  Closes: #815858.
-
- -- Aurelien Jarno <aurel32@debian.org>  Tue, 01 Mar 2016 18:56:42 +0100
-
-glibc (2.22-0experimental2) experimental; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/patches/m68k/local-fpic.diff: drop, obsolete.
-  * debian/patches/m68k/local-mathinline_h.diff: drop, not applied for a
-    lot of time, obsolete.
-  * debian/patches/sparc/submitted-timing.diff: drop, obsolete, not
-    needed anymore since libc6-sparcv9 has been removed.
-  * debian/patches/any/local-no-malloc-backtrace.diff: drop, the real bug
-    has been fixed upstream.
-  * debian/patches/any/local-no-SOCK_NONBLOCK.diff: drop, both GNU/Hurd
-    and GNU/kFreeBSD now support SOCK_NONBLOCK.
-  * debian/patches/any/local-libgcc-compat-ports.diff: refresh.
-  * debian/patches/any/local-disable-test-tgmath2.diff: drop, 8 years have
-    passed, the build daemons should now have enough resources to build
-    and run this test.
-  * debian/patches/s390/submitted-nexttowardf.diff: drop, fixed upstream
-    another way.
-  * debian/patches/alpha/submitted-rtld-fPIC.diff: drop, fixed upstream
-    another way.
-  * debian/patches/any/unsubmitted-scanf-includes.diff: replace the hack by
-    the upstream fix patches/any/cvs-bits-libc-stdio-lock.diff. This also
-    stop installing <bits/libc-lock.h> and <bits/stdio-lock.h>.  Closes:
-    #404532, #639697.
-  * debian/control, debian/rules.d/control.mk, debian/sysdeps/arm.mk: remove
-    support for the ARM old-ABI architecture, it is not supported upstream
-    anymore.
-  * debian/sysdeps/*.mk: cleanup and homogenize:
-    - define options common to all flavours using the non-flavour specific
-      variable.
-    - reorganize to not mix generic variables with flavour specific variables.
-    - move -march and -mtune options from extra_cflags to CC and CXX as they
-      might slightly change the ABI and the configure script needs to detect
-      that.
-  * debian/testsuite-checking/expected-results-sparc64-linux-gnu-libc: allow
-    new tests to fail, cleanup resolved issues.
-  * Replace debian/patches/i386/submitted-i586-ulps.diff by
-    debian/patches/i386/local-i386-ulps.diff. The actual math precision
-    depends on the CPU manufacturer and on the ability to use SSE2
-    instructions or not. Change the i386 ULPs to the lowest precision
-    produced by AMD and Intel CPU with and without SSE2 until upstream can
-    figure out a better solution.
-  * debian/testsuite-checking/expected-results-powerpc64le-linux-gnu-libc:
-    allow nptl/tst-cancel17 and nptl/tst-cancelx17, this is a know upstream
-    race condition.
-  * debian/testsuite-checking/*, debian/testsuite-xfail-debian.mk,
-    debian/rules.d/build.mk: rework testsuite system by extending upstream.
-  * debian/debhelper.in/libc{,-alt,otherbuild).install: stop shipping
-    testsuite results as it make the package build non-reproducible in case
-    of different kernels and race conditions in the testsuite.
-  * debian/testsuite-xfail-debian.mk: allow stdlib/tst-makecontext to fail
-    on armel and armhf, as it is a new test introduced with glibc 2.22 and
-    not a regression.
-  * debian/patches/git-updates.diff: update to the latest commit of the
-    2.22 branch.
-  * debian/patches/alpha/submitted-abilist.diff: drop, merged upstream.
-  * debian/patches/hppa/cvs-inline-syscall.diff: drop, merged upstream.
-  * debian/patches/hppa/cvs-start.diff: drop, merged upstream.
-  * debian/control.in/main: update VCS fields to the canonical location.
-  * debian/control.in/{libc,libnss-dns-udeb,libnss-files-udeb}: rename
-    XC-Package-Type into Package-Type.
-  * debian/control.in/libc: drop conflicts on prelink (<= 0.0.20090311-1) as
-    we don't support Lenny to Stretch upgrades.
-  * debian/debhelper.in/libc-bin.{postinst,lintian-overrides},
-    debian/rules.d/debhelper.mk, debian/local/sbin/ldconfig: remove ldconfig
-    wrapper as new debhelper versions use the trigger instead of an explicit
-    call to ldconfig.
-  * debian/testsuite-xfail-debian.mk: allow POSIX2008/netdb.h/linknamespace
-    and -XOPEN2K/netdb.h/linknamespace to fail on kfreebsd-* (new tests).
-  * debian/testsuite-xfail-debian.mk: allow tst-setcontext2 to fail on
-    kfreebsd-* (new test also failing on native FreeBSD).
-
-  [ Adam Conrad ]
-  * debian/patches/any/cvs-gawk-gensub.diff: Fix scary output from newer gawk.
-  * debian/debhelper.in/libc-bin.postinst: Call ldconfig during configure as
-    well, or major version upgrades will leave us without due to dep ordering.
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 15 Feb 2016 21:48:56 +0100
-
-glibc (2.22-0experimental1) experimental; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/debhelper.in/libc-dev.install: install libmvec_nonshared.a.
-    Closes: #806910.
-  * debian/control.in/main, debian/rules: build with gcc-5.
-  * patches/kfreebsd/local-sysdeps.diff, patches/kfreebsd/local-fbtl.diff:
-    update to revision 5856 (from glibc-bsd):
-    - Update to glibc 2.22.
-  * debian/patches/kfreebsd/local-tst-malloc-backtrace.diff: new patch to fix
-    tst-malloc-backtrace on GNU/kFreeBSD.
-  * debian/sysdeps/ppc64el.mk: default to POWER8 and use default gcc options.
-  * debian/rules.d/build.mk: explicitly disable mathvec when mvec=no.
-  * debian/testsuite-checking/expected-results-s390x-linux-gnu-libc:
-    allow elf/tst-protected1a and elf/tst-protected1b to fail as they are
-    new tests. Cleanup resolved issues.
-  * debian/testsuite-checking/expected-results-aarch64-linux-gnu-libc:
-    cleanup resolved issues.
-  * debian/rules.d/build.mk: abort if the log file does not contain any
-    testsuite result.
-  * debian/patches/localedata/submitted-locale-bo.diff: drop, now useless.
-  * debian/patches/any/submitted-resolv-ipv6-nameservers.diff: drop, now
-    useless.
-  * debian/testsuite-checking/expected-results-powerpc-linux-gnu-libc,
-    debian/testsuite-checking/expected-results-powerpc64-linux-gnu-ppc64:
-    cleanup resolved issues.
-  * debian/testsuite-checking/expected-results-powerpc-linux-gnu-powerpc,
-    debian/testsuite-checking/expected-results-powerpc64-linux-gnu-libc:
-    new files.
-  * debian/patches/i386/submitted-i586-ulps.diff: new patch to provide
-    i586 ULPs.
-  * debian/patches/git-updates.diff: update to the latest commit of the
-    2.22 branch.
-  * debian/testsuite-checking/expected-results-i?86-linux-gnu-*: cleanup
-    resolved issues.
-  * debian/testsuite-checking/expected-results-x86_64-linux-gnu-*: cleanup
-    resolved issues.
-  * debian/testsuite-checking/expected-results-x86_64-linux-gnux32-*:
-    update and cleanup resolved issues.
-  * debian/testsuite-checking/expected-results-powerpc64le-linux-gnu-libc:
-    update and cleanup resolved issues.
-  * debian/testsuite-checking/expected-results-mips*: update and cleanup
-    resolved issues.
-  * debian/testsuite-checking/expected-results-*kfreebsd-gnu*: update and
-    cleanup resolved issues.
-  * debian/patches/mips/local-r10k.diff: dropped, we don't support systems
-    with a MIPS R10K CPU since the ISA has been switched to MIPS R2.
-  * debian/patches/mips/cvs-testsuite-o32-fp.diff: new patch to fix testsuite
-    build on pre-R2 ISA.
-  * debian/patcheS/any/cvs-grantpt-namespace.diff: new patch to fix the
-    grantpt link namespace when built without pt_chown.
-  * debian/patches/alpha/submitted-abilist.diff: new patch to fix alpha ABI
-    baseline sorting.
-  * debian/patches/alpha/submitted-fegetenv-namespace.diff: new patch to fix
-    the fegetenv link namespace on alpha.
-  * debian/patches/alpha/submitted-termios_h.diff: new patch to fix
-    visibility issues in termios.h on alpha.
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 10 Dec 2015 23:29:06 +0100
-
-glibc (2.22-0experimental0) experimental; urgency=medium
-
-  [ Adam Conrad ]
-  * New upstream release: version 2.22, with git updates up to 2015-11-27:
-    - debian/patches/all/local-alias-UTF-8.diff: Fixed upstream.
-    - debian/patches/any/cvs-ldconfig-aux-cache.diff: Upstreamed.
-    - debian/patches/any/cvs-localplt-new-readelf.diff: Upstreamed.
-    - debian/patches/any/cvs-logbl-accuracy.diff: Upstreamed.
-    - debian/patches/any/cvs-vismain-pie.diff: Upstreamed.
-    - debian/patches/any/local-xfail-stdlib-linkns.diff: Dropped.
-    - debian/patches/any/local-tester-gcc-4.9.diff: Dropped.
-    - debian/patches/arm/cvs-arm-sfi_breg.diff: Upstreamed.
-    - debian/patches/arm/cvs-memcpy-memmove-always-bx.diff: Upstreamed.
-    - debian/patches/hppa/cvs-alloca-werror.diff: Upstreamed.
-    - debian/patches/hppa/cvs-fpu-r2.diff: Upstreamed.
-    - debian/patches/hppa/cvs-fpu2.diff: Upstreamed.
-    - debian/patches/hppa/local-fcntl-osync.diff: Fixed upstream.
-    - debian/patches/hppa/local-setcontext.diff: Fixed upstream.
-    - debian/patches/powerpc/cvs-power7-strncpy.diff: Upstreamed.
-    - debian/patches/powerpc/cvs-ppc-feraiseexcept.diff: Upstreamed.
-    - debian/patches/powerpc/cvs-ppc-pow.diff: Upstreamed.
-    - debian/patches/powerpc/cvs-ppc-sqrt.diff: Upstreamed.
-    - debian/patches/powerpc/cvs-ppc-sqrtf.diff: Upstreamed.
-    - debian/patches/powerpc/cvs-ppc-tabort-le.diff: Upstreamed.
-    - debian/patches/all/local-alias-et_EE.diff: Rebased.
-    - debian/patches/amd64/local-blacklist-for-Intel-TSX.diff: Rebased.
-    - debian/patches/any/local-libgcc-compat-ports.diff: Rebased.
-    - debian/patches/any/local-libpic.diff: Rebased.
-    - debian/patches/any/local-no-pagesize.diff: Rebased.
-    - debian/patches/any/submitted-longdouble.diff: Rebased.
-    - debian/patches/any/submitted-missing-etc-hosts.diff: Rebased.
-    - debian/patches/any/submitted-resolv-ipv6-nameservers.diff: Rebased.
-    - debian/patches/i386/submitted-i686-timing.diff: Rebased.
-    - debian/patches/localedata/local-all-no-archive.diff: Rebased.
-    - debian/patches/localedata/submitted-locale-bo.diff: Rebased.
-    - debian/patches/mips/submitted-rld_map.diff: Rebased.
-  * debian/{control,symbols.wildcards,copyright}: Updated strings for 2.22.
-  * debian/libc6*.symbols: Add libmvec.so.1 to the amd64/x32 symbols files.
-  * debian/*: Conditionally add libmvec to libc-udeb only on amd64 and x32.
-
-  [ Samuel Thibault ]
-  * debian/patches/hurd-i386/tg-tls.diff: Rebased.
-  * debian/patches/hurd-i386/tg-tls-threadvar.diff: Rebased.
-  * debian/patches/hurd-i386/tg-ioctl-base-types.diff: Upstreamed.
-  * debian/patches/hurd-i386/tg-extern_inline.diff: Rebased.
-  * debian/patches/hurd-i386/tg-aio_misc.diff: Upstreamed.
-  * debian/patches/hurd-i386/tg-chflags.diff: Upstreamed.
-  * debian/patches/hurd-i386/tg-select-EINTR.diff: Upstreamed.
-  * debian/patches/hurd-i386/tg-af_local_strlen.diff: Upstreamed.
-  * debian/patches/hurd-i386/tg-nice.diff: Upstreamed.
-  * debian/patches/hurd-i386/tg-nfds-poll.diff: Upstreamed.
-  * debian/patches/hurd-i386/tg-sigstate_locking.diff: Upstreamed.
-  * debian/patches/hurd-i386/tg-mmap_file_prot_none_fix.diff: Upstreamed.
-  * debian/patches/hurd-i386/cvs-unwind-resume.diff: Upstreamed.
-  * debian/patches/hurd-i386/cvs-libc-modules.h.diff: Upstreamed.
-  * debian/patches/hurd-i386/cvs-warnings.diff: Upstreamed.
-  * debian/patches/hurd-i386/cvs-check-local-headers.diff: Upstreamed.
-  * debian/patches/hurd-i386/cvs-mlock.diff: Upstreamed.
-  * debian/patches/hurd-i386/cvs-csu_crt0.diff: New patch, fixes gcrt0.o
-    build.
-  * debian/patches/hurd-i386/cvs-s_scalbn.diff: New patch, fixes s_scalbn.S
-    build.
-  * debian/patches/hurd-i386/tg-tls-threadvar.diff: Update.
-  * patches/hurd-i386/tg-posix_thread.diff: Update, to define
-    _POSIX_THREAD_KEYS_MAX, _POSIX_THREAD_DESTRUCTOR_ITERATIONS and
-    _POSIX_THREAD_THREADS_MAX.
-
-  [ Aurelien Jarno ]
-  * debian/patches/hppa/cvs-atomic.diff: Upstreamed.
-  * debian/patches/hppa/cvs-sysdep-errno.diff: Upstreamed.
-  * debian/patches/hppa/cvs-inline-syscall-rewrite.diff: Upstreamed.
-  * debian/patches/any/cvs-mangle-tls_dtor_list.diff: Rebased.
-  * debian/patches/any/cvs-tls-dtv.diff: Upstreamed.
-  * debian/patches/any/cvs-rfc3542-advanced-api.diff: Upstreamed.
-  * debian/patches/any/cvs-check-localplt.diff: Upstreamed.
-  * debian/patches/any/cvs-ld_pointer_guard.diff: Upstreamed.
-  * debian/patches/any/cvs-mangle-tls_dtor_list.diff: Upstream.
-
- -- Aurelien Jarno <aurel32@debian.org>  Wed, 02 Dec 2015 00:06:13 +0100
-
-glibc (2.21-9) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * Update from upstream stable branch:
-    - Fixes bug18240 failing with a timeout on machines with a lot of swap.
-      Closes: #814958.
-
- -- Aurelien Jarno <aurel32@debian.org>  Wed, 17 Feb 2016 18:45:59 +0100
-
-glibc (2.21-8) unstable; urgency=critical
-
-  * Update from upstream stable branch:
-    - Fix an integer overflow in hcreate() and hcreate_r() (CVE-2015-8778).
-      Closes: #812441.
-  * patches/any/local-CVE-2015-7547.diff: new patch to fix glibc getaddrinfo
-    stack-based buffer overflow (CVE-2015-7547).
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 15 Feb 2016 21:38:15 +0100
-
-glibc (2.21-7) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * patches/localedata/cvs-bg_BG-t_fmt.diff: new patch from upstream to
-    use colon as time separator in the Bulgarian locale.  Closes:
-    #808143.
-  * Update French debconf translation, by Christian Perrier.  Closes:
-    #809636.
-  * Update Brazilian Portuguese debconf translation, by Adriano Rafael
-    Gomes.  Closes: #809741.
-  * patches/hppa/cvs-update-mman.h.diff: new patch from upstream to add huge
-    pages support on hppa.  Closes: #809776.
-  * patches/hppa/submitted-dladdr.diff: new patch from John David Anglin to
-    fix dladdr issues on hppa.  Closes: #810053.
-  * sysdeps/armel.mk, sysdeps/armhf.mk: re-enable IFUNC support now that
-    binutils has been fixed.
-  * debian/control.in/main: update Vcs-* fields to point to the new git
-    repository.
-  * Update Dutch debconf translation, by Frans Spiesschaert.  Closes: #812351.
-  * Update from upstream stable branch:
-    - Fix segmentation fault caused by passing out-of-range data to strftime()
-      (CVE-2015-8776).  Closes: #812445.
-    - Fix multiple unbounded stack allocations in catopen() (CVE-2015-8779).
-      Closes: #812455.
-  * patches/any/submitted-hle-checking-mutex.diff: add proposed patch to fix
-    a wrong assertion in pthread_mutex_unlock() on systems with hardware lock
-    elision.  Closes: #810322.
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/cvs-libpthread-sigstate.diff: New patch to fix spurious
-    signal blocking leading to sigill.  Fixes rsyslog tests.
-  * patches/hurd-i386/cvs-raise-longjump.diff: New patch to fix longjump from
-    signal handler.  Closes: #800900.
-  * patches/hurd-i386/cvs-O_DIRECTORY.diff: New patch to fix O_DIRECTORY lookup
-    on trivial translators.  Closes: #785404.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 24 Jan 2016 00:21:18 +0100
-
-glibc (2.21-6) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * sysdeps/kfreebsd.mk: test if the header directory exists before
-    trying to link directories from there. Fixes FTBFS on GNU/kFreeBSD.
-  * patches/s390/submitted-socketcall.diff: new patch to fix broken
-    socketcall related function on s390x when built against 4.3+ kernel
-    headers.
-
- -- Aurelien Jarno <aurel32@debian.org>  Fri, 25 Dec 2015 03:35:01 +0100
-
-glibc (2.21-5) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * Team upload.
-  * patches/hurd-i386/cvs-libpthread-api.diff: Update patch, add missing throw
-    specifications.
-  * patches/any/local-stdio-lock.diff: Update to git commit, and
-    rename into patches/any/cvs-stdio-lock.diff.
-  * debhelper.in/libc.lintian-overrides: Override error about the embedded
-    libidn.
-
-  [ Aurelien Jarno ]
-  * sysdeps/armel.mk, sysdeps/armhf.mk: pass --disable-multi-arch on armel and
-    armhf as IFUNC support is broken in binutils (see #807974).
-  
- -- Samuel Thibault <sthibault@debian.org>  Tue, 22 Dec 2015 15:23:35 +0100
-
-glibc (2.21-4) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/debhelper.in/libc.{preinst,prerm}: remove code handling the
-    upgrade from squeeze to wheezy, as we don't support squeeze to stretch
-    upgrades. Move tests which might exit with a failure at the beginning.
-  * debian/sysdeps/amd64.mk, debian/sysdeps/i386.mk: downgrade the minimal
-    Linux kernel version to 2.6.32 to support RHEL6 kernels.
-  * debhelper.in/libc.preinst: add a note explainling that pre-3.2 kernel
-    are not officially supported.
-  * debhelper.in/libc.preinst, debhelper.in/libc.templates, po/*: display
-    kernel related notes using debconf if available.
-  * patches/any/cvs-grantpt-pty-owner.diff: new patch from upstream to
-    improve granpt when /dev/pts is not mounted with the correct options.
-    Closes: #806882.
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/cvs-libpthread-api.diff: New patch, cleans libpthread
-    API. Fixes conflicting declarations between pthread.h and sigthread.h.
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 10 Dec 2015 22:34:54 +0100
-
-glibc (2.21-3) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/control.in/opt: drop libc0.3-i686 and libc0.3-xen entries.
-
- -- Aurelien Jarno <aurel32@debian.org>  Fri, 04 Dec 2015 00:22:07 +0100
-
-glibc (2.21-2) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debhelper.in/libc.preinst: drop outdated code about pre-2.6 kernels.
-  * rules.d/debhelper.mk: prefix calls to objcopy and strip with 
-    $(DEB_HOST_GNU_TYPE)-.
-  * testsuite-checking/expected-results-hppa-linux-gnu-libc: update testsuite
-    result, from John David Anglin.  Closes: #806839.
-  * debhelper.in/libc.NEWS: add an entry about the required minimum kernel.
-  * rules.d/debhelper.mk: strip *crt*.o files.
-  * patches/any/cvs-tls-dtv.diff: update with a new patch from upstream
-    changing the IE model for static variables.  Closes: #806971.
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 03 Dec 2015 22:46:21 +0100
-
-glibc (2.21-1) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * testsuite-checking/expected-results-mips64el-linux-gnu-*: allow 
-    nptl/tst-cancel24-static to fail on mips64el.  It's an upstream regression
-    only affecting static binaries currently under investigation.
-  * patches/hppa/submitted-mathdef.diff: update to include the ABI baseline
-    changes.
-  * testsuite-checking/expected-results-*kfreebsd-gnu-*: re-add rt/tst-shm as
-    it seems it can still occasionally fail on the buildds.
-
- -- Aurelien Jarno <aurel32@debian.org>  Tue, 01 Dec 2015 00:17:43 +0100
-
-glibc (2.21-0experimental4) experimental; urgency=medium
-
-  [ Aurelien Jarno ]
-  * testsuite-checking/expected-results-*kfreebsd-gnu-*: re-add tst-getpid1
-    and tst-getpid2 as it seems they can still occasionally fail on the
-    buildds.
-  * testsuite-checking/expected-results-mips64el-linux-gnu-libc: rename into
-    testsuite-checking/expected-results-mips64el-linux-gnuabi64-libc.
-  * testsuite-checking/expected-results-{arm,mips}*: allow nptl/tst-stack4 to
-    fail. It's a new test which fails intermitently on the buildds and a known
-    upstream problem.
-  * patches/hppa/submitted-mathdef.diff: new patch from John David Anglin to
-    define __NO_LONG_DOUBLE_MATH on hppa.  Closes: #805836.
-  * patches/hppa/cvs-inline-syscall-rewrite.diff: new patch backported from
-    upstream as requested by John David Anglin.
-  * patches/hppa/cvs-sysdep-errno.diff: new patch backported from upstream as
-    requested by John David Anglin.
-  * testsuite-checking/expected-results-hppa-linux-gnu-libc: update testsuite
-    result, from John David Anglin.
-  * testsuite-checking/*{arm,mips,hppa}*: allow nptl/tst-cancel24-static to
-    fail on armel, armhf, hppa, mips, mipsel. It's an upstream regression
-    only affecting static binaries currently under investigation.
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/tg-tls-threadvar.diff: Update, to fix recursion while
-    accessing TLS while locking for accessing TLS.
-  * patches/hurd-i386/tg-context_functions.diff: Update, to fix sigprocmask
-    visibility.
-  * patches/hurd-i386/cvs-hidden.diff: New patch, to fix build with hidden
-    support.
-  * sysdeps/hurd-i386.mk: Disable libc0.3-i686 and libc0.3-xen build for now,
-    to get 2.21 out against the binutils version which broke them.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 29 Nov 2015 23:24:08 +0100
-
-glibc (2.21-0experimental3) experimental; urgency=medium
-
-  [ Aurelien Jarno ]
-  * patches/hppa/cvs-allocatestack-stacktop.diff: new patch from upstream
-    to fix a set-but-unused warning in nptl/allocatestack.c, causing a
-    build failure.
-  * patches/hppa/local-stack-grows-up.diff: rebase.
-  * patches/any/cvs-tls-dtv.diff: new patch from upstream to fix DTV race,
-    assert, and DTV_SURPLUS Static TLS limit.  This also reduces the failure
-    rate of nptl/tst-stack4.  Closes: #793641.
-  * Add expected testsuite result for mips64el:
-    - testsuite-checking/expected-results-mips64el-linux-gnu-libc
-    - testsuite-checking/expected-results-mips64el-linux-gnuabin32-mipsn32
-    - testsuite-checking/expected-results-mipsel-linux-gnu-mips32
-  * patches/kfreebsd/local-sysdeps.diff, patches/kfreebsd/local-fbtl.diff:
-    update to revision 5844 (from glibc-bsd):
-    - Update to glibc 2.21.
-    - Define F_DUP2FD_CLOEXEC.  Closes: #712074.
-    - Define SOCK_CLOEXEC and SOCK_NONBLOCK.
-    - Wire-up accept4.  Closes: #722885.
-  * sysdeps/kfreebsd-{amd64,i386}.mk: configure with --disable-werror.
-  * patches/kfreebsd/local-nscd-no-sockcloexec.diff: Drop.
-  * patches/kfreebsd/local-getaddrinfo-freebsd-kernel.diff: improve and remove
-    a warning.
-  * patches/kfreebsd/local-tst-auxv.diff: new patch to disable AT_EXECFN
-    testing in tst-auxv when it is not defined.
-  * patches/any/cvs-rfc3542-advanced-api.diff: new patch from usptream to
-    add missing Advanced API (RFC3542) (1) defines.  Closes: #753909.
-  * debian/rules: don't put debug files from libc0.1-i386 and libc6-mips32
-    into libc0.1-dbg or libc6-dbg.
-  * patches/hppa/cvs-atomic.diff, patches/hppa/cvs-inline-syscall.diff: new
-    patches from upstream to improve atomic and inline syscalls on HPPA
-    (closes: #799478).
-  * rules.d/build.mk: don't run the testsuite with make -k, as a build
-    failure in the testsuite, otherwise build failures cause the regression
-    comparison to be entirely skipped.
-  * testsuite-checking/expected-results-*kfreebsd-gnu-*: update testsuite
-    results.
-  * patches/any/cvs-check-localplt.diff: new patch from upstream to fix
-    check-localplt test with recent binutils version on x86.
-  * patches/hppa/submitted-gmon-start.diff: new patch from upstream to
-    fix __gmon_start__ symbol proliferation on hppa.  Closes: #805730.
-  * Update from upstream stable branch:
-    - patches/any/cvs-make-typo.diff: Merged. 
-    - Fix FTBFS with libselinux 2.4.
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/tg-pagesize.diff: Refresh.
-  * patches/hurd-i386/submitted-handle-eprototype.diff: Refresh.
-  * patches/hurd-i386/tg-posix_thread.diff: Update, to define
-    _POSIX_THREAD_KEYS_MAX, _POSIX_THREAD_DESTRUCTOR_ITERATIONS and
-    _POSIX_THREAD_THREADS_MAX.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 22 Nov 2015 19:37:39 +0100
-
-glibc (2.21-0experimental2) experimental; urgency=medium
-
-  [ Samuel Thibault ]
-  * Symbol versions which contain _DEBIAN_ are unexpected by upstream scripts.
-    Add hurd-i386-only patches/hurd-i386/local-versions-hack.diff to work
-    around the issue.  Also take the opportunity of the upstream version bump
-    to bump the versions to GLIBC_2_21, which will allow one to remove the
-    _DEBIAN_ hacks once packages are rebuilt.
-  * patches/hurd-i386/unsubmitted-libpthread-semaphore.h.diff: Remove
-    libpthread/sysdeps/i386/bits/semaphore.h, now that hurd Implies
-    libpthread/sysdeps/generic. Move libpthread/include/semaphore.h into
-    libpthread/sysdeps/pthread/semaphore.h instead of the latter just
-    including the former, since the latter is what gets installed.
-  * patches/hurd-i386/cvs-cache-mach_host_self.diff: New patch to avoid port
-    count issue on the host port.
-  * patches/hurd-i386/unsubmitted-gnumach.defs.diff: Also build
-    task_notify.defs stubs.  Drop unneeded change.
-  * libc0.3.symbols.hurd-i386: Update.
-  * patches/hurd-i386/local-mach_print.diff: New patch to export mach_print.
-
-  [ Aurelien Jarno ]
-  * rules.d/debhelper.mk: replace GLIBC_VERSION before LIBC.  Closes:
-    #797538.
-  * Drop loongson-2f flavour on mipsel as this machine is not supported
-    anymore (default to R2 ISA).
-  * kfreebsd/local-sysdeps.diff: update to revision 5772 (from glibc-bsd).
-    Closes: #764692, #785796.
-  * testsuite-checking/expected-results-mips*: allow the new tst-audit9
-    fail, like the others tst-auditX.
-  * testsuite-checking/expected-results-mips(el)-linux-gnu-libc: allow
-    conformtest for sys/stat.h to fail for O32 ABI. They were previously
-    under the failing test run-conformtest.out, but it has been lost in
-    the conversion to the new format.
-  * testsuite-checking/expected-results-mips*: sort the files. Remove
-    failures due to old kernel now that all buildds run jessie.
-  * debhelper.in/locales-all.prerm: do not specify a path to check for
-    locale-gen.
-  * libc6.1.symbols.alpha: remove invoke_dynamic_linker from libpcprofile.so.
-    It has disappeared, but it is a private library.
-  * Remove debver2localesdep.pl, it is unused since 2.19-16.
-  * Use $(GLIBC_VERSION) for shlib, instead of defining the version in a
-    separate shlibver file.
-  * Remove completely outdated README, README.source and TODO files.
-  * rules.d/debhelper.mk: use the default compression format for libc6,
-    libc-bin and multiarch-support. Nowadays deboostrap is able to handle
-    the xz format and modern distributions also support it. Anyway almost
-    all packages installed by debootstrap are now using the xz format.
-  * Bump debhelper compatibility to level 9. This brings compressed debug
-    file using the build-id instead of a fixed path. This is much more
-    multiarch friendly.
-  * control.in/*: remove pre-squeeze conflicts.
-  * libc-bin, libc-dev-bin: Recommends the manpages package and add lintian
-    override for missing manpages.
-  * sysdeps/s390x.mk: --enable-lock-elision.
-  * testsuite-checking/expected-results-x86_64-linux-gnux32-*: allow
-    conformtest for headers with tv_nsec to fail for x32. The type
-    non-compliance is intentional. These tests were previously marked as
-    failing under the run-conformtest.out, but they have been lost during
-    the conversion to the new format.
-  * testsuite-checking/compare.sh: re-enable failures in case of regressions.
-  * rules.d/build.mk: don't require flavours to be tested before being
-    installed. They are still tested when calling the build-arch or
-    binary-arch targets, but not anymore when calling the build-indep or
-    binary-indep targets.
-  * patches/hppa/cvs-alloca-werror.diff: new patch from upstream to fix a
-    build failure.
-  * debhelper.in/libc.preinst: fix up error message for too old Linux
-    kernels.  Closes: #800846.
-  * patches/any/cvs-ld_pointer_guard.diff: new patch from upstream to
-    unconditionally disable LD_POINTER_GUARD.  Closes: #798316, #801691.
-  * patches/any/cvs-mangle-tls_dtor_list.diff: new patch from upstream to
-    mangle function pointers in tls_dtor_list.  Closes: #802256.
-  * Update Brazilian Portuguese debconf translation, by Adriano Rafael
-    Gomes.  Closes: #799418.
-
-  [ Steven Chamberlain ]
-  * sysdeps/kfreebsd.mk: find kfreebsd-kernel-headers in multiarch path.
-    Closes: #672774, #798064.
-
-  [ Helmut Grohne ]
-  * Fix some issues with stage 1.  Closes: #797831.
-
-  [ Adam Conrad ]
-  * debian/patches/arm/local-arm-futex.diff: Lie about the minimum kernel
-    support for futex_atomic_cmpxchg_inatomic to restore the  previous state
-    and fix the pulsesink (and others) regression on ARM (closes: #788799)
-
-  [ Henrique de Moraes Holschuh ]
-  * Replace patches/amd64/local-blacklist-on-TSX-Haswell.diff by 
-    local-blacklist-for-Intel-TSX.diff also blacklisting some Broadwell
-    models.  Closes: #800574.
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 19 Oct 2015 00:20:34 +0200
-
-glibc (2.21-0experimental1) experimental; urgency=medium
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/cvs-libpthread.diff: Update from upstream.
-  * patches/hurd-i386/cvs-libpthread-dlopen.diff: Merged.
-  * patches/hurd-i386/cvs-libpthread-libc-lockP2.diff: Merged.
-  * patches/hurd-i386/cvs-bind_umask.diff: Merged.
-  * patches/hurd-i386/cvs-fork_ss_hang.diff: Merged.
-  * patches/hurd-i386/cvs-munmap-0.diff: Merged.
-  * patches/hurd-i386/cvs-static-dlopen.diff: Merged.
-  * patches/hurd-i386/cvs-tcbhead_t.diff: Merged.
-  * patches/hurd-i386/cvs-libpthread_versions.diff: Rebased.
-  * patches/hurd-i386/local-disable-tst-xmmymm.diff: Dropped.
-  * patches/hurd-i386/local-hurdsig-global-dispositions-version.diff: Rebased.
-  * patches/hurd-i386/submitted-exec_filename.diff: Rebased.
-  * patches/hurd-i386/submitted-net.diff: Rebased.
-  * patches/hurd-i386/tg-EIEIO-fr.diff: Rebased.
-  * patches/hurd-i386/tg-af_local_strlen.diff: Rebased.
-  * patches/hurd-i386/tg-chflags.diff: Rebased.
-  * patches/hurd-i386/tg-tls-threadvar.diff: Update.
-  * patches/hurd-i386/tg-tls.diff: Rebased.
-  * patches/hurd-i386/tg-tls_thread_leak.diff: Rebased.
-  * patches/hurd-i386/unsubmitted-NO_HIDDEN.diff: Rebased.
-  * patches/hurd-i386/tg-no-hp-timing.diff: Update.
-  * patches/series: Re-enable all hurd patches.
-  * patches/hurd-i386/libpthread-versions.diff: New patch, updates to new
-    version engine.
-  * patches/hurd-i386/cvs-revert-gnu-gnu-cleanup.diff: New patch, reverts
-    cleanup of the gnu-gnu hack.
-  * patches/hurd-i386/libpthread_pthread_types.diff: New patch, fixes
-    inclusion of pthread_types.h
-  * patches/hurd-i386/unsubmitted-libc_alloca_cutoff.diff: New patch,
-    implements alloca cutoff limit.
-  * patches/hurd-i386/cvs-unwind-resume.diff: New patch, fixes unwind-resume
-    build.
-  * patches/hurd-i386/unsubmitted-libpthread-semaphore.h.diff: New patch,
-    fixes semaphore header inclusion.
-  * patches/hurd-i386/unsubmitted-timer_routines.diff: New patch, fixes
-    timer_routines build.
-  * patches/hurd-i386/cvs-libc-modules.h.diff: New patch, adds missing
-    dependency on libc-modules.h.
-  * patches/hurd-i386/cvs-warnings.diff: New patch, fixes warnings.
-  * patches/hurd-i386/cvs-check-local-headers.diff: New patch, clears spurious
-    local-header warnings.
-  * sysdeps/hurd.mk: Disable -Werror since MIG currently generates warnings.
-  * testsuite-checking/expected-results-{i586-gnu-libc,i686-gnu-
-    {i386,i686,xen}}: update testsuite results
-
-  [ Adam Conrad ]
-  * debian/{rules.d/debhelper.mk,sysdeps/*}: Define per-platform pldd
-    variable to control installation of usr/bin/pldd in libc-bin, and
-    leverage the same trick to decide to install usr/lib/pt_chown too.
-  * debian/patches/kfreebsd/local-no-pldd.diff: Drop, no longer used.
-  * debian/patches/alpha/submitted-PTR_MANGLE.diff: Use IS_IN macros.
-  * debian/patches/powerpc/cvs-ppc-sqrt.diff: Fix sqrt() on powerpc.
-  * debian/patches/powerpc/cvs-ppc-sqrtf.diff: Likewise for sqrtf().
-  * debian/patches/powerpc/cvs-ppc-pow.diff: Likewise for pow().
-  * debian/patches/powerpc/cvs-ppc-feraiseexcept.diff: Fix inline
-    feraiseexcept and feclearexcept macro input conversion on PPC.
-  * debian/patches/any/submitted-longdouble.diff: Refresh for above.
-  * debian/patches/any/local-disable-test-tgmath2.diff: Likewise.
-  * debian/patches/any/cvs-logbl-accuracy.diff: Fix ldbl-128ibm logbl.
-  * debian/patches/powerpc/local-math-logb.diff: Refresh and move to
-    debian/patches/any/local-math-logb.diff, as it's not PPC-specific.
-  * debian/patches/any/cvs-localplt-new-readelf.diff: Preemptively
-    fix localplt test breakage with binutils 2.26 before it lands.
-  * debian/patches/any/cvs-make-typo.diff: Fix typo in elf/Makefile.
-  * debian/patches/powerpc/cvs-power7-strncpy.diff: Optimize strncpy
-    for POWER7 drastically (10-70%) on strings longer than 16 chars.
-  * debian/patches/powerpc/cvs-ppc-tabort-le.diff: Fix TABORT encoding
-    when building on toolchains without HTM support (no-op on gcc-4.9)
-  * debian/patches/arm/cvs-arm-sfi_breg.diff: Fix LDR_GLOBAL macro.
-  * debian/patches/arm/cvs-memcpy-memmove-always-bx.diff: Fix memcpy
-    and memmove for the ARM_ALWAYS_BX class of hardware like ArmadaXP.
-  * debian/{control.in/*,debhelper.in/*,rules.d/*}: Stop hardcoding our
-    upstream version all over the place and use GLIBC_VERSION instead.
-  * debian/debhelper.in/libc.preinst: Unconditionally wipe ld.so.cache
-    on major version upgrades, which is significantly less error-prone.
-
-  [ Aurelien Jarno ]
-  * debian/patches/any/local-libgcc-compat-main.diff: Fix definition of
-    __floatdisf for sparc.
-  * debian/patches/any/local-libgcc-compat-ports.diff: Fix definition of
-    __floatdisf for mips. Remove usage of INTUSE (Closes: #782198).
-  * debian/sysdeps/linux.mk, debhelper.in/libc.preinst: bump minimal Linux
-    kernel version to 3.2 (ie the version in Wheezy).
-  * debian/patches/localedata/locale-C.diff: fix d_fmt time format (Closes:
-    #775179).
-  * Create source tarball in a deterministic manner: adjust file modification
-    time, user, group, permissions, and file order (addresses: #783210).
-  * Update from upstream stable branch:
-    - Fix a buffer overflow in getanswer_r (CVE-2015-1781). Closes: #796105.
-  * sysdeps/linux.mk: don't build pt_chown (CVE-2013-2207). Closes: #717544.
-  * Move translation to a new libc-l10n package from the locales packages.
-    Add a dependency from locales and locales-all to libc-l10n, so that they
-    both provide the same feature. Closes: #788352.
-  * control.in/main: Bump Standards-Version to 3.9.6 (no changes).
-
-  [ Breno Leitao ]
-  * Remove --without-cvs that is not used anymore as a valid configuration.
-    It was removed in commit 92963737c4376bcfd65235d5c325fa7f48302f89
-    (Closes: #781245).
-
-  [ Matthias Klose ]
-  * Fix multilib enabled stage1 cross builds (closes: #766877).
-
- -- Aurelien Jarno <aurel32@debian.org>  Sat, 29 Aug 2015 00:43:02 +0200
-
-glibc (2.21-0experimental0) experimental; urgency=medium
-
-  * New upstream release: version 2.21, with git updates up to 2015-02-10:
-    - debian/patches/git-updates.diff: Updated.
-    - debian/patches/all/submitted-po-fr-fixes.diff: Rebased.
-    - debian/patches/alpha/cvs-__pointer_chk_guard.diff: Merged.
-    - debian/patches/alpha/cvs-unwind-backtrace.diff: Merged.
-    - debian/patches/alpha/local-gcc4.1.diff: Rebased.
-    - debian/patches/alpha/local-lowlevellock.diff: Dropped.
-    - debian/patches/alpha/local-string-functions.diff: Rebased.
-    - debian/patches/alpha/submitted-PTR_MANGLE.diff: Rebased.
-    - debian/patches/alpha/submitted-dl-support.diff: Rebased.
-    - debian/patches/alpha/submitted-lll_futex_timed_wait_bitset.diff: Dropped.
-    - debian/patches/alpha/submitted-rtld-fPIC.diff: Rebased.
-    - debian/patches/amd64/cvs-slow-sse42.diff: Merged.
-    - debian/patches/amd64/local-blacklist-on-TSX-Haswell.diff: Rebased.
-    - debian/patches/amd64/submitted-rwlock-stack-imbalance.diff: Dropped.
-    - debian/patches/any/cvs-check_pf-infinite-loop.diff: Merged.
-    - debian/patches/any/cvs-getnetbyname.diff: Merged.
-    - debian/patches/any/cvs-pie-lt_executable.diff: Merged.
-    - debian/patches/any/cvs-regex-alloca.diff: Merged.
-    - debian/patches/any/cvs-resolv-first-query-failure.diff: Merged.
-    - debian/patches/any/cvs-socketcall-syscall.diff: Merged.
-    - debian/patches/any/cvs-strtod.diff: Merged.
-    - debian/patches/any/cvs-vfprintf.diff: Merged.
-    - debian/patches/any/cvs-wordexp.diff: Merged.
-    - debian/patches/any/cvs-wprintf.diff: Merged.
-    - debian/patches/any/cvs-wscanf.diff: Merged.
-    - debian/patches/any/local-disable-libnss-db.diff: Rebased.
-    - debian/patches/any/local-disable-test-tgmath2.diff: Rebased.
-    - debian/patches/any/local-libgcc-compat-ports.diff: Rebased.
-    - debian/patches/any/local-libpic.diff: Rebased.
-    - debian/patches/any/local-no-SOCK_NONBLOCK.diff: Rebased.
-    - debian/patches/any/local-no-pagesize.diff: Rebased.
-    - debian/patches/any/local-rtlddir-cross.diff: Rebased.
-    - debian/patches/any/local-stdio-lock.diff: Rebased.
-    - debian/patches/any/local-sysctl.diff: Rebased.
-    - debian/patches/any/submitted-argp-attribute.diff: Rebased.
-    - debian/patches/any/submitted-bits-fcntl_h-at.diff: Rebased.
-    - debian/patches/any/submitted-longdouble.diff: Rebased.
-    - debian/patches/any/submitted-nl_langinfo-static.diff: Merged.
-    - debian/patches/any/submitted-ptsname_r-uninitialized-memory.diff: Merged.
-    - debian/patches/any/submitted-resolv-ipv6-nameservers.diff: Rebased.
-    - debian/patches/any/submitted-sysdeps-auxv.diff: Merged.
-    - debian/patches/any/unsubmitted-scanf-includes.diff: Rebased.
-    - debian/patches/any/unsubmitted-tst-ftell-locale.diff: Dropped.
-    - debian/patches/any/unsubmitted-tst-tlsmod-as-needed.diff: Merged.
-    - debian/patches/arm/local-ioperm.diff: Rebased.
-    - debian/patches/arm/local-lowlevellock.diff: Dropped.
-    - debian/patches/arm/local-sigaction.diff: Rebased.
-    - debian/patches/arm/local-vfp-sysdeps.diff: Rebased.
-    - debian/patches/arm/unsubmitted-ldconfig-cache-abi.diff: Rebased.
-    - debian/patches/arm64/cvs-includes-cleanup.diff: Merged.
-    - debian/patches/arm64/submitted-align.diff: Merged.
-    - debian/patches/arm64/submitted-setcontext.diff: Merged.
-    - debian/patches/arm64/submitted-tst-setcontext.diff: Merged.
-    - debian/patches/hppa/cvs-sigrtmin.diff: Merged.
-    - debian/patches/hppa/local-atomic.diff: Dropped.
-    - debian/patches/hppa/local-elf-make-cflags.diff: Rebased.
-    - debian/patches/hppa/local-fcntl-osync.diff: Rebased.
-    - debian/patches/hppa/local-fpu.diff: Rebased.
-    - debian/patches/hppa/local-inlining.diff: Rebased.
-    - debian/patches/hppa/local-lowlevellock.diff: Dropped.
-    - debian/patches/hppa/local-pthread_spin_unlock.diff: Rebased.
-    - debian/patches/hppa/local-setjmp-namespace.diff: Dropped.
-    - debian/patches/hppa/local-shmlba.diff: Rebased.
-    - debian/patches/hppa/local-stack-grows-up.diff: Rebased.
-    - debian/patches/hurd-i386/tg-libpthread_depends.diff: Rebased.
-    - debian/patches/i386/submitted-i686-timing.diff: Rebased.
-    - debian/patches/kfreebsd/local-fbtl-depends.diff: Rebased.
-    - debian/patches/kfreebsd/local-fbtl.diff: Rebased.
-    - debian/patches/kfreebsd/local-scripts.diff: Rebased.
-    - debian/patches/kfreebsd/local-sysdeps.diff: Rebased.
-    - debian/patches/kfreebsd/submitted-waitid.diff: Rebased.
-    - debian/patches/locale/locale-print-LANGUAGE.diff: Rebased.
-    - debian/patches/locale/submitted-XDR-revert.diff: Merged.
-    - debian/patches/localedata/sort-UTF8-first.diff: Rebased.
-    - debian/patches/localedata/supported.diff: Rebased.
-    - debian/patches/m68k/local-fpic.diff: Rebased.
-    - debian/patches/m68k/local-mathinline_h.diff: Rebased.
-    - debian/patches/m68k/local-reloc.diff: Rebased.
-    - debian/patches/mips/local-lowlevellock.diff: Dropped.
-    - debian/patches/mips/local-r10k.diff: Rebased.
-    - debian/patches/mips/submitted-rld_map.diff: Rebased.
-    - debian/patches/powerpc/cvs-ibm-branch.diff: Dropped.
-    - debian/patches/sparc/local-fork.diff: Dropped.
-    - debian/patches/sparc/local-sparcv9-target.diff: Rebased.
-  * Drop some hppa patches that Carlos O'Donell claims are no longer needed:
-    - debian/patches/hppa/local-EAGAIN.diff: Dropped.
-    - debian/patches/hppa/local-fanotify_mark-5i.diff: Dropped.
-    - debian/patches/hppa/submitted-fadvise64_64.diff: Dropped.
-    - debian/patches/hppa/submitted-nptl-carlos.diff: Dropped.
-  * debian/*: Update occurences of 2.19 to 2.21 and update symbols to match.
-  * debian/patches/any/cvs-vismain-pie.diff: Compile vismain with -fPIE
-    and link with -pie to fix testsuite failure with the new binutils.
-  * debian/patches/any/local-libgcc-compat-abilists.diff: Fix the ablists
-    to match the symbols added in local-libgcc-compat* for the testsuite.
-  * debian/patches/sh4/local-fpscr_values.diff: Make the sh abilist match.
-  * debian/{control.in/main,rules}: Switch to gcc-4.9 on all architectures.
-  * debian/patches/any/local-tester-gcc-4.9.diff: Fix gcc-4.9 regression.
-  * debian/patches/any/local-xfail-stdlib-linkns.diff: XFAIL this test due
-    to building with pt_chown, which we should revisit very, very soon.
-  * debian/sysdeps/*: --enable-lock-elision on PPC targets (LP: #1414819)
-  * debian/libc*.symbols*: Remove local __invoke_dynamic_linker__ symbol,
-    which no longer shows up in random support libraries' symbol tables.
-  * debian/sysdeps/*: Neither ports nor nptl are considered add-ons anymore.
-  * debian/{rules.d/build.mk,testsuite-checking/*}: Adjust for upstream's
-    new testsuite, and convert old expected-results-* to match new output.
-  * debian/testsuite-checking/*: Let arm64 fail the tests indicated by the
-    upstream port maintainer as broken, and let i386 fail tst-cleanupx4.
-  * debian/debhelper.in/glibc-doc.install: Install changelogs that exist.
-  * debian/patches/i386/submitted-i686-timing.diff: Fix -Wundef warnings.
-  * debian/patches/arm/unsubmitted-ldso-abi-check.diff: Fix build failures
-    from format mismatches, uninitialised variables, and const conversions.
-  * debian/rules.d/debhelper.mk: Fix bootstrap libdirs (Closes: #715059)
-  * debian/patches/arm/unsubmitted-ldconfig-cache-abi.diff: Same as above.
-  * Other than two hurd-i386 patches required as scaffolding for others,
-    all the hurd-i386 patches are disabled, so this build *will* fail there.
-  * kfreebsd's sysdeps patches almost certainly need updating for 2.21 too.
-  * Failing on testsuite failures is disabled to attempt to get full builds.
-
- -- Adam Conrad <adconrad@0c3.net>  Fri, 06 Mar 2015 13:47:43 -0700
-
-glibc (2.19-22) unstable; urgency=medium
-
-  * patches/hurd-i386/cvs-cache-mach_host_self.diff: Remove, since it introduces
-    a new symbol, which will be easier to handle in 2.21.
-
- -- Samuel Thibault <sthibault@debian.org>  Tue, 22 Sep 2015 01:38:34 +0200
-
-glibc (2.19-21) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/cvs-bootstrap.diff: Fix typos.
-  * libc0.3.symbols.hurd-i386: Remove internal _server_routine symbols, fixes
-    build with newer mig.
-  * patches/hurd-i386/cvs-cache-mach_host_self.diff: New patch to avoid port
-    count issue on the host port.
-  * patches/hurd-i386/tg-sendmsg-SCM_RIGHTS.diff: Update from upstream.
-  * patches/hurd-i386/tg-sendmsg-SCM_CREDS.diff: New patch, adds support for
-    passing credentials over sockets (SCM_CREDS).
-
- -- Samuel Thibault <sthibault@debian.org>  Mon, 21 Sep 2015 19:54:01 +0200
-
-glibc (2.19-20) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/tg-mmap32th_bit.diff: New patch to fix libpciaccess
-    mapping of BARs above 2GiB. Closes: #793543.
-  * rules.d/build.mk: Also install crt0.o in stage1, if any.
-  * sysdeps/hurd-i386.mk: Fix stage1 about xen packages for hurd-i386 too.
-  * patches/hurd-i386/tg-sysheaders.diff: New patch to fix stage1 finding hurd
-    headers.
-  * patches/hurd-i386/cvs-libpthread_clean2.diff: New patch to drop spurious
-    code getting in the way for stage1.
-  * patches/hurd-i386/cvs-libpthread_build.diff: New patch to fix build of
-    generic libpthread code.
-  * patches/hurd-i386/libpthread_build.diff: Fix header inclusion to get
-    pthread headers from libpthread/ instead of system.
-  * sysdeps/hurd.mk: Create symlinks to kernel and hurd headers required for
-    build, so that we can pass --with-headers to configure to make the build
-    really self-hosted.
-  * patches/hurd-i386/local-clock_gettime_MONOTONIC.diff: Update patch to not
-    advertise _POSIX_CLOCK_SELECTION for vlc
-  * patches/hurd-i386/{local,cvs}-bootstrap.diff: New patch to fix crt*.o build
-    in stage1.
-  * rules, rules.d/build.mk: Set MIG to gnu-type alias of mig, to fix
-    cross-build.
-  * control, control.d/main: Bump mig dependency to get the gnu-type alias in
-    non-cross case too.
-
-  [ Aurelien Jarno ]
-  * Update from upstream stable branch:
-    - Fix pthread_mutex_trylock with lock elision.  Closes: #759197,
-      #788999.
-    - Fix gprof entry point on ppc64el.  Closes: #794222.
-    - Fix a buffer overflow in getanswer_r (CVE-2015-1781).  Closes: #796105.
-    - Fix getaddrinfo sometimes returning uninitialized data with nscd.
-      Closes: #798515.
-  * sysdeps.mk/mips*.mk: force the ISA until it gets propagated to all GCC
-    versions.
-  * Update hppa patches.  Closes: #785664:
-    - Replace patches/hppa/local-fpu.diff by upstream patch cvs-fpu-r2.diff.
-    - Add patches/hppa/cvs-fpu2.diff from upstream.
-    - Add patches/hppa/local-fptr-table-size.diff from Carlos O'Donnell.
-    - Add patches/hppa/local-setcontext.diff.
-    - Add patches/hppa/cvs-start.diff from upstream.
-  * patches/any/cvs-pie-lt_executable.diff: new patch from upstream to fix
-    explicit loader invocation with PIE binaries.  Closes: #796899.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 13 Sep 2015 18:39:36 +0200
-
-glibc (2.19-19) unstable; urgency=medium
-
-  * patches/hurd-i386/cvs-mlock.diff: New patch to permit one to use mlock
-    from non-root process.
-
- -- Samuel Thibault <sthibault@debian.org>  Thu, 09 Jul 2015 14:28:56 +0200
-
-glibc (2.19-18) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debhelper.in/locales.templates: allow the C.UTF-8 locale to be
-    selected as the default locale. Closes: #782241.
-
- -- Aurelien Jarno <aurel32@debian.org>  Tue, 14 Apr 2015 19:50:11 +0200
-
-glibc (2.19-17) unstable; urgency=medium
-
-  [ Adam Conrad ]
-  * debian/rules.d/debhelper.mk: Unconditionally create tmp.substvars.
-    Closes: #780431.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sat, 14 Mar 2015 10:17:56 +0100
-
-glibc (2.19-16) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/cvs-libpthread-dlopen.diff: New patch to allow
-    libpthread.so to be dynamically loaded from a dlopened library.
-  * patches/hurd-i386/cvs-libpthread-libc-lockP{,2}.diff: New patch to
-    dynamically call pthread functions from libc.
-
-  [ Aurelien Jarno ]
-  * We have a transition mechanism for the locales, as the Debian archive
-    used to expose arch:all packages on all architectures even when the
-    corresponding arch:any package is not available yet. This has been
-    fixed long time ago, the transition mechanism has not been used
-    correctly for a lot of time and has been broken by the split out of
-    libc-bin. The breakage has been partially fixed by the "Breaks: locales
-    (<< 2.19)" added to libc6. It's now time to add the missing "Depends:
-    libc-bin (>> 2.19)" to locales and remove the transition mechanism.
-    Closes: #583088, #779442
-  * patches/any/cvs-ldconfig-aux-cache.diff: new patch from upstream to
-    ignore corrupted aux-cache instead of segfaulting. Closes: #759530.
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 12 Mar 2015 22:00:40 +0100
-
-glibc (2.19-15) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/patches/any/cvs-wscanf.diff: new patch from upstream to fix a
-    heap buffer overflow in wscanf (CVE-2015-1472, CVE-2015-1473). Closes:
-    #777197.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 08 Feb 2015 15:54:37 +0100
-
-glibc (2.19-14) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/libpthread_spin-lock.diff: New patch to fix spin-lock.h
-    inclusion order.
-  * patches/hurd-i386/tg-WRLCK-upgrade.diff: New patch to fix atomicity of
-    changing between rd locks and wr locks.
-  * patches/hurd-i386/cvs-static-dlopen.diff: New patch to fix dlopen from
-    static binaries, busybox notably.
-  * control.in/main: Bump mig dependency to get _routines@ symbols, bump
-    gnumach-dev dependency to get protected payload symbols.
-  * libc0.3.symbols.hurd-i386: Update symbols.
-  * patches/hurd-i386/submitted-startup-pid2.diff: Remove, replaced by...
-  * patches/hurd-i386/tg-reboot-startup.diff: ... new patch to make reboot
-    lookup startup through /servers/startup instead of guessing its pid and
-    using its message port.
-
-  [ Adam Conrad ]
-  * debian/rules.d/tarball.mk: Fix update-from-upstream manual/* filter rule.
-
-  [ Petr Salinger ]
-  * kfreebsd/local-sysdeps.diff: update to revision 5688 (from glibc-bsd).
-    Do not return EINTR from sigwait. Closes: #763705.
-
-  [ Aurelien Jarno ]
-  * debian/patches/any/cvs-wordexp.diff: new patch from upstream to fix a
-    command execution in wordexp() with WRDE_NOCMD specified (CVS-2014-7817).
-  * debian/patches/any/cvs-getnetbyname.diff: new patch from upstream to fix
-    an infinite loop in getnetbyname (CVE-2014-9402). Closes: #775572.
-  * debian/patches/any/cvs-vfprintf.diff: new patch from ustream to fix a
-    stack overflow in vfprintf (CVE-2012-3406). Closes: #681888.
-  * debian/patches/git-updates.diff: update to the latest commit of the 2.19
-    branch to fix a few buffer overflow, unbounded stack allocation or memory
-    leaks that have not been (yet ?) tagged as security issue. This branch
-    includes a few patches already applied manually:
-    - drop patches/localedata/unsubmitted-tst-setlocale3-ENV.diff (merged
-      upstream).
-    - drop patches/s390/cvs-s390-abi-reversal.diff (merged upstream).
-    - update patches/any/cvs-resolv-first-query-failure.diff
-    - drop patches/any/cvs-resolv-reuse-fd.diff (merged upstream).
-    - drop patches/any/cvs-posix_spawn_file_actions_addopen.diff (merged
-      upstream).
-    - drop patches/any/cvs-setlocale-alloca.diff (merged upstream).
-    - drop patches/any/cvs-CVE-2014-0475.diff (merged upstream).
-    - drop patches/any/cvs-CVE-2014-5119.diff (merged upstream).
-    - drop patches/any/cvs-CVE-2014-6040.diff (merged upstream).
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 01 Feb 2015 00:32:31 +0100
-
-glibc (2.19-13) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * kfreebsd/local-fbtl.diff: update to revision 5677 (from glibc-bsd).
-    Workarounds a kfreebsd 9.0 to 10.1 ABI break. Closes: #740509.
-  * patches/hppa/cvs-sigrtmin.diff: backport patch from upstream to change
-    __SIGRTMIN to match other architectures. Closes: #766605.
-  * patches/amd64/cvs-slow-sse42.diff: backport patch from upstream to fix
-    a performance issue with strcmp and friends functions on some machines.
-  * patches/any/cvs-regex-alloca.diff: new patch from upstream to fix a
-    segmentation fault in regex in case of heap allocation failure. Closes:
-    #767225.
-  * Don't fail to build in case of testsuite regressions, so that changes
-    in the environment (e.g.: kernel) do not prevent security or stable
-    versions to be built. It will be re-enabled after the Jessie release.
-  * debian/control.in/main: build-depends on debhelper (>= 9.20141010) to
-    get Build-Profiles features. This fixes the following lintian warning:
-    restriction-formula-with-debhelper-without-debhelper-version.
-
-  [ Samuel Thibault ]
-  * hurd-i386/cvs-libpthread.diff: Update to Sun Nov 2.
-  * hurd-i386/libpthread_clean.diff: Refresh, most of it merged into
-    cvs-libpthread.diff.
-  * hurd-i386/cvs-libpthread-pthread_condattr_setclock.diff,
-    cvs-libpthread_guardsize.diff, cvs-libpthread_std_thread.diff: Remove,
-    merged into cvs-libpthread.diff.
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 06 Nov 2014 20:28:41 +0100
-
-glibc (2.19-12) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/tg-thread-cancel.diff: Update patch from upstream, fixes
-    a rare deadlock.
-  * patches/hurd-i386/local-libpthread-stacksize.diff: New patch to make
-    libpthread stacks size default to 8MiB like on Linux, to avoid surprises
-    with packages which assume the Linuxish default.
-  * patches/hurd-i386/tg-poll_errors_fixes.diff: Update patch, fixes
-    select returned value in case of errors. Closes: #764840.
-
-  [ Petr Salinger ]
-  * update testsuite-checking/expected-results-*-kfreebsd-gnu-*
-    under 10.x kernels, provided by Steven Chamberlain. Closes: #762404.
-
-  [ Aurelien Jarno ]
-  * Remove mtrace(1) and pldd(1) manpages, provided by the manpages package
-    starting with version 3.74.
-  * debian/control.in/*: update the syntax of the Build-Profiles field and
-    build depends on dpkg-dev (>= 1.17.14) to get the new feature. Closes:
-    #764274.
-  * Remove libc6-prof package as it's broken for years and there are better
-    way to profile code nowadays. Closes: #760450.
-  * patches/amd64/local-blacklist-on-TSX-Haswell.diff: new patch from
-    Henrique de Moraes Holschuh to disable TSX on processors which might get
-    it disable through a microcode update. Closes: #762195.
-  * Install French, German, Polish and Spanish version of validlocale(8)
-    manpage. Add a Replaces: manpages-fr-extra (<= 20141008).
-  * Update French manpages translations, by David Prévot. Closes: #715289.
-  * Update German manpages translations, by Helge Kreutzmann. Closes: #717979.
-  * kfreebsd/local-fbtl.diff: update to revision 5651 (from glibc-bsd).
-    Workarounds a kfreebsd 9.0 to 10.1 ABI break. Closes: #740509.
-  * patches/any/cvs-CVE-2014-6040.diff: new patch from upstream to fix crashes
-    on invalid input in IBM gconv modules (CVE-2014-6040).
-  * patches/any/cvs-check_pf-infinite-loop.diff: new patch from upstream to
-    fix an infinite loop in infinite loop in check_pf.
-  * patches/any/local-static-dlopen-search-path.diff: new patch to re-enable
-    default search path for dlopen() in static libraries. Closes: #754813,
-    #757941.
-
-  [ Helmut Grohne ]
-  * debian/patches/any/local-bootstrap-headers.diff: Update to handle
-    stubs-$abi.h which is required for multilib bootstraps. Closes: #756473
-
- -- Aurelien Jarno <aurel32@debian.org>  Wed, 22 Oct 2014 20:01:11 +0200
-
-glibc (2.19-11) unstable; urgency=medium
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/tg-thread-cancel.diff: Update patch against two other
-    overzealous assertions.
-  * patches/hurd-i386/submitted-bind_umask.diff: Split into cvs-bind_umask.diff
-    and submitted-bind_umask2.diff as requested by upstream.
-  * patches/hurd-i386/cvs-fork_ss_hang.diff: New patch which fixes some dash
-    hangs.
-  * patches/hurd-i386/cvs-libpthread_guardsize.diff: Add another guard size
-    computation fix.  Fixes gcj's boehm-gc.  Closes: #760076.
-
-  [ Aurelien Jarno ]
-  * debian/control.in/main: Build-Depends on dpkg (>= 1.17.11) instead of
-    dpkg-dev (>= 1.17.1).  Closes: #759495.
-  * debian/debhelper.in/libc.{preinst,postinst,postrm}: correctly remove old
-    conffiles /etc/ld.so.conf.d/i486-{kfreebsd-gnu.conf,gnu-gnu.conf,gnu.conf}.
-    Closes: #759568.
-  * Update Italian debconf translation, by Luca Monducci.  Closes: #760092.
-
-  [ Petr Salinger ]
-  * kfreebsd/local-fbtl.diff: update to revision 5520 (from glibc-bsd).
-    Fixes x87 precision mode in newly created pthreads. Closes: #761175.
-
- -- Aurelien Jarno <aurel32@debian.org>  Fri, 12 Sep 2014 23:49:50 +0200
-
-glibc (2.19-10) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/rules: drop the i486 to i586 GNU triplet conversion.
-  * debian/control.in/main: build-depends on dpkg-dev (>= 1.17.1) and
-    gcc-4.8 (>= 4.8.3-8) to make sure to get the new i586 GNU triplet on
-    i386, hurd-i386 and kfreebsd-i386.
-  * Remove iconv(1), iconvconfig(8), localedef(1) and sprof(1) manpages,
-    provided by the manpages packages starting with version 3.71.
-  * patches/any/cvs-CVE-2014-5119.diff: New patch from upstream to remove
-    support for loadable gconv transliteration modules (CVE-2014-5119).
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/cvs-libpthread_guardsize.diff: Fix guard size computation.
-    Fixes the creation of thousands of threads, and thus pulseaudio testsuite.
-    Closes: #758671.
-  * patches/hurd-i386/cvs-libpthread_std_thread.diff: New patch to deal with
-    std::thread using __pthread_key_create to detect presence of libpthread.
-    Fixes build of webkitgtk and most probably other libstdc++-related
-    failures.
-  * patches/hurd-i386/submitted-bind_umask.diff: New patch to fix bind() when
-    umask is 0000, fixes clamav testsuite. Closes: #759218.
-
-  [ Adam Conrad ]
-  * debian/patches/series: Actually apply the submitted arm64 alignment and
-    setcontext patches mentioned in 2.19-0experimental0 (closes: #759042)
-
- -- Aurelien Jarno <aurel32@debian.org>  Wed, 27 Aug 2014 07:13:10 +0200
-
-glibc (2.19-9) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/rules.d/control.mk: don't add libc6{,-dev}-{armel,armhf}
-    packages in debian/control as we don't build them in Debian. New dak
-    code checks for NEW packages directly in debian/control.
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 14 Aug 2014 17:58:27 +0200
-
-glibc (2.19-8) unstable; urgency=medium
-
-  [ Helmut Grohne ]
-  * debian/patches/build stage2 without selinux.  Closes: #742640.
-  * Don't emit dependencies on libgcc when building stage2.  Closes: #755580.
-  * Add a "nobiarch" build profile that inhibits all multilib packages from
-    being built.  Closes: #745380.
-
-  [ Aurelien Jarno ]
-  * debian/patches/arm64/cvs-includes-cleanup.diff: new patch from upstream to
-    clean sys/user.h and sys/procfs.h.  Closes: #755169.
-  * debian/patches/s390/cvs-s390-abi-reversal.diff: new patch backported from
-    upstream to revert the S/390 jmp_buf/ucontext_t ABI change.
-  * Update Turkish debconf translation, by Mert Dirik.  Closes: #757495.
-  * Remove ia64 support.  Closes: #756095.
-  * Update debian/copyright with the libidn/punycode.{c,h} license.  Closes:
-    #754731.
-  * debian/control/libc: drop Recommends on: gcc | c-compiler.  Closes:
-    #747933.
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 14 Aug 2014 15:54:09 +0200
-
-glibc (2.19-7) unstable; urgency=high
-
-  * debian/patches/localedata/unsubmitted-tst-setlocale3-ENV.diff: Apply
-    correct environment for the tst-setlocale3 test to find its locales.
-
- -- Adam Conrad <adconrad@0c3.net>  Sat, 12 Jul 2014 17:29:20 -0600
-
-glibc (2.19-6) unstable; urgency=high
-
-  [ Aurelien Jarno ]
-  * debian/patches/any/cvs-CVE-2014-0475.diff: fix a directory traversal in
-    locale environment handling (CVE-2014-0475).
-  * debian/patches/any/cvs-setlocale-alloca.diff: Additional setlocale
-    hardening.
-  * debian/control.in/main, debian/sysdeps/linux.mk: drop systemtap support.
-    sdt.h has been moved to a different location in the latest upload, and
-    it's not really clear on which architectures systemtap support should
-    be enabled.
-
-  [ Helmut Grohne ]
-  * debian/rules.d/debhelper.mk: fix dh_strip call in stage1.  Closes:
-    #754350.
-
-  [ Petr Salinger ]
-  * kfreebsd/local-sysdeps.diff: update to revision 5490 (from glibc-bsd).
-  * kfreebsd/local-fbtl.diff: likewise.
-  * update testsuite-checking/expected-results-*-kfreebsd-gnu-*
-
- -- Aurelien Jarno <aurel32@debian.org>  Sat, 12 Jul 2014 17:22:50 +0200
-
-glibc (2.19-5) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/sysdeps/mips*.mk: replace EGLIBC_PASSES into GLIBC_PASSES.
-  * debian/patches/alpha/cvs-__pointer_chk_guard.diff: new patch from
-    upstream to fix testsuite failures on alpha.
-  * debian/patches/alpha/local-string-functions.diff: disable strcmp
-    and strncmp as these functions behaves incorrectly when crossing
-    pages. This fixes badsalttest in the testsuite.
-  * debian/debhelper.in/libc.postinst: don't run "telinit u" under systemd
-    Closes: #753725.
-  * debian/testsuite-checking/expected-results-alpha-linux-gnu-libc: ignore
-    floating point failures, as alpha is not fully IEEE compliant.  Closes:
-    #753099.
-  * testsuite-checking/expected-results-*s390*: ignore tst-cancelx17.out
-    failure, it is due to a bug in the test (see BZ #12683).
-
-  [ Helmut Grohne ]
-  * Rename the bootstrap stage to DEB_BUILD_PROFILES=stage1 to conform
-    with https://wiki.debian.org/BuildProfileSpec. (Closes: #752480)
-  * Don't try to install xen headers in i386 bootstrap build, because
-    they are not built.  Closes: #743676.
-
-  [ Adam Conrad ]
-  * debian/patches/alpha/cvs-unwind-backtrace.diff: Backport upstream
-    fix to enable unwind tables when building the backtrace routines.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 06 Jul 2014 21:42:09 +0200
-
-glibc (2.19-4) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * debian/debhelper.in/libc.{preinst,postrm,postinst}: correctly remove
-    old ld.so configuration if more than one libc6 package is installed
-    (multiarch case).  Closes: #752389, #752404.
-
-  [ Samuel Thibault ]
-  * patches/hurd-i386/tg-tls-threadvar.diff: Update to fix gcc-4.9 build.
-
-  [ Adam Conrad ]
-  * debian/control.in/main: glibc-source Conflics/Replaces eglibc-source.
-  * debian/patches/powerpc/local-powerpc8xx-dcbz.diff: Restrict the trap
-    to 32-bit builds, since the Freescale 8xx CPUs aren't 64-bit capable.
-
- -- Aurelien Jarno <aurel32@debian.org>  Mon, 23 Jun 2014 20:10:39 +0200
-
 glibc (2.19-3experimental0) experimental; urgency=medium
 
   [ Aurelien Jarno]
@@ -2222,7 +52,7 @@ eglibc (2.19-2) unstable; urgency=medium
     arm64 after assurance from upstream that this isn't a regression.
 
   [ Aurelien Jarno ]
-  * Add support for mipsn32, mipsn32el, mips64 and mips64el, based on
+  * Add support for mipsn32, mipsn32el, mips64 and mips64el, based on 
     patches from Eleanor Chen, Yunqiang Su and Sphinx Jiang.  Closes:
     #715038.
     - debian/control.in/main: bump build-depends on linux-libc-dev to (>=
@@ -2382,7 +212,7 @@ eglibc (2.19-0experimental0) experimental; urgency=medium
 
   [ Petr Salinger ]
   * kfreebsd/local-nscd-nosendfile-fix.diff: remove, fixed upstream.
-  * kfreebsd/local-no-execfn.diff: new patch,
+  * kfreebsd/local-no-execfn.diff: new patch, 
       to handle systems without AT_EXECFN
   * kfreebsd/local-sysdeps.diff: update to revision 5466 (from glibc-bsd).
   * kfreebsd/local-fbtl.diff: likewise.
@@ -2454,7 +284,7 @@ eglibc (2.18-6) unstable; urgency=medium
   * patches/sparc/submitted-prlimit.diff: new patch to fix missing
     prlimit/prlimit64 prototypes on SPARC.  Closes: #703559.
   * source/lintian-overrides: add override for false positive
-    license-problem-non-free-RFC tag. Remove old override for
+    license-problem-non-free-RFC tag. Remove old override for 
     outdated-autotools-helper-file tag.
   * control.in/main: Bump Standards-Version to 3.9.5 (no changes).
 
@@ -2536,7 +366,7 @@ eglibc (2.18-2) unstable; urgency=medium
 
 eglibc (2.18-1) unstable; urgency=medium
 
-  [ Adam Conrad ]
+  [ Adam Conrad ]
   * debian/patches/hurd-i386/libpthread_version.diff: Remove stderr vomit.
   * debian/patches/arm/cvs-arm__{longjmp,sigsetjmp}-thumb.diff: Pull patch
     from upstream to allow building longjmp and sigsetjmp code with Thumb.
@@ -2566,7 +396,7 @@ eglibc (2.18-1) unstable; urgency=medium
 
 eglibc (2.18-0experimental1) experimental; urgency=low
 
-  [ Adam Conrad ]
+  [ Adam Conrad ]
   * debian/patches/i386/cvs-nonascii-case-strcmp.diff: Pull upstream patch
     to fix LC_CTYPE nonascii-case fallback in i686 strcasecmp/strncasecmp.
   * debian/testsuite-checking/*: Update 686 targets to match the 586 ones.
@@ -2669,7 +499,7 @@ eglibc (2.18-0experimental0) experimental; urgency=low
   * debian/testsuite-checking/*: Allow powerpc to fail test-{double,float}.
   * debian/testsuite-checking/expected-results-aarch64-linux-gnu-libc: New.
   * debian/testsuite-checking/expected-results-arm-linux-gnueabi-armel: New.
-  * debian/testsuite-checking/expected-results-i686-linux-gnu-libc: New.
+  * debian/testsuite-checking/expected-results-i686-linux-gnu-libc: New. 
   * debian/patches/any/local-rtlddir-cross.diff: Revert to the state found
     in 2.17 where ld.so was installed to slibdir and so listed in libc.so.
   * Skeleton in packaging support for the new powerpc64le-linux-gnu:
@@ -2781,7 +611,7 @@ eglibc (2.18-0experimental0) experimental; urgency=low
   * testsuite-checking/expected-results-arm-linux-gnueabihf-libc: cleanup.
   * testsuite-checking/expected-results-arm-linux-gnueabi-libc: cleanup.
   * testsuite-checking/expected-results-*86-linux-gnu*: cleanup.
-  * patches/any/cvs-DL_CALL_DT_INIT_FINI.diff,
+  * patches/any/cvs-DL_CALL_DT_INIT_FINI.diff, 
     patches/hppa/cvs-hppa-DL_CALL_DT_INIT_FINI.diff,
     patches/ia64/cvs-ia64-DL_CALL_DT_INIT_FINI.diff: new patches from upstream
     to fix a segmentation fault in ld.so on hppa and ia64.
@@ -3056,7 +886,7 @@ eglibc (2.17-4) unstable; urgency=low
     any/unsubmitted-cloexec-conditional.diff (not needed anymore).
   * debhelper.in/libc-bin.postinst: remove duplicate trigger message.
     Closes: #707919.
-  * Update Hungarian debconf translation, by Nagy Elemér Károly.
+  * Update Hungarian debconf translation, by Nagy Elemér Károly. 
   * Add powerpcspe/unsubmitted-nearbyint.diff to fix FTBFS on powerpcspe
     (Closes: #708741).
   * Update testsuite-checking/expected-results-powerpc-linux-gnuspe-libc
@@ -3117,7 +947,7 @@ eglibc (2.17-2) unstable; urgency=low
     not get a dependency on debconf.  Closes: #707813.
   * patches/localedata/submitted-locale-bo.diff: New patch to fix bo_IN and
     bo_CN locales, causing localedef to fail and localechooser to FTBFS.
-
+  
   [ Petr Salinger ]
   * patches/kfreebsd/local-linuxthreads-initfini.diff: follow upstream
     changes in startup code
@@ -3203,7 +1033,7 @@ eglibc (2.17-0experimental1) experimental; urgency=low
     tst-cputimer1 test, as it harmlessly comes and goes on all of them.
   * debian/testsuite-checking/expected-*: Adjust ia64 and armel results
     to allow failures expected by the upstream port maintainers of each.
-  * Drop the armhf-specific symbols hack for the new linker, as we're
+  * Drop the armhf-specific symbols hack for the new linker, as we're 
     no longer expecting partial upgrades from the out-of-archive port.
   * debian/{control,control.in/main}: Bump Standards-Version to 3.9.4.
   * Amend eglibc-source.lintian-overrides to add libc-dev-alt.postinst.
@@ -3269,7 +1099,7 @@ eglibc (2.17-0experimental0) experimental; urgency=low
     - patches/any/local-revert-fclose-posix2008.diff: Reverted upstream.
     - patches/any/local-sunrpc-dos.diff: Dropped, different fix upstream.
     - patches/any/cvs-cxxheaders-detection[123].diff: Merged upstream.
-  * debian/patches/powerpc/submitted-UAPI_ASM_POWERPC_ELF.diff: Remove,
+  * debian/patches/powerpc/submitted-UAPI_ASM_POWERPC_ELF.diff: Remove, 
     as this has been fixed in the 3.7 release and 3.8 kernel headers.
   * debian/sysdeps/{amd64,i386}.mk: Fix rtlddir for x32 alternate builds.
   * debian/sysdeps/{armel,armhf}.mk: Merge multilib configs from Ubuntu.
@@ -3333,7 +1163,7 @@ eglibc (2.16-0experimental1) experimental; urgency=low
   [ Aurelien Jarno ]
   * Add patches/m68k/cvs-syscall-arguments.diff to fix cancellable syscall
     with 5 or 6 arguments.  Closes: #693852.
-  * debian/rules: don't force the GCC version for BUILD_CC and BUILD_CXX.
+  * debian/rules: don't force the GCC version for BUILD_CC and BUILD_CXX. 
 
   [ Pino Toscano ]
   * Update testsuite-checking/expected-results-i686-gnu-xen and
@@ -3394,7 +1224,7 @@ eglibc (2.16-0experimental0) experimental; urgency=low
     - Remove patches/alpha/cvs-stat_ver_linux.diff (merged upstream).
     - Remove patches/alpha/cvs-syscall.diff (merged upstream).
     - Remove patches/alpha/cvs-tls_dtv_unallocated.diff (merged upstrea).
-    - Remove obsolete parts of alpha/local-string-functions.diff (merged
+    - Remove obsolete parts of alpha/local-string-functions.diff (merged 
       upstream).
     - Remove patches/alpha/submitted-creat64.diff (obsolete).
     - Remove patches/alpha/submitted-fcntl_h.diff (merged upstream).
@@ -3438,7 +1268,7 @@ eglibc (2.16-0experimental0) experimental; urgency=low
     - Remove patches/hppa/cvs-prlimit64.diff (merged upstream).
     - Update patches/hurd-i386/local-enable-ldconfig.diff.
     - Remove patches/hurd-i386/cvs-mlock.diff (merged upstream).
-    - Update patches/hurd-i386/unsubmitted-tls.diff.
+    - Update patches/hurd-i386/unsubmitted-tls.diff.	
     - Update patches/hurd-i386/tg-tls.diff.
     - Update patches/hurd-i386/unsubmitted-gcc-4.1-init-first.diff.
     - Remove patches/hurd-i386/cvs-posix_opt.h.diff (merged upstream).
@@ -3476,7 +1306,7 @@ eglibc (2.16-0experimental0) experimental; urgency=low
     - Remove patches/hurd-i386/cvs-hurd_socket_server_indexcheck.diff (merged
       upstream).
     - Remove patches/hurd-i386/cvs-hurd-recvfrom.diff (merged upstream).
-    - Remove patches/hurd-i386/cvs-select-inputcheck.diff (merged upstream).
+    - Remove patches/hurd-i386/cvs-select-inputcheck.diff (merged upstream). 
     - Remove patches/hurd-i386/cvs-posix2008.diff (merged upstream).
     - Remove patches/hurd-i386/cvs-mach-nanosleep.diff (merged upstream).
     - Remove patches/hurd-i386/cvs-mmap.diff (merged upstream).
@@ -3533,7 +1363,7 @@ eglibc (2.16-0experimental0) experimental; urgency=low
       it to patches/alpha/any/submitted-rlimit-rttime.diff.
     - Remove patches/any/cvs-regex-oom.diff (merged upstream).
     - Remove patches/any/cvs-getaddrinfo-single-lookup.diff (merged upstream).
-    - Remove patches/any/cvs-unique_sym_table-corruptions.diff (merged
+    - Remove patches/any/cvs-unique_sym_table-corruptions.diff (merged 
       upstream).
     - Remove patches/any/submitted-mqueue-throw.diff (merged upstream).
     - Remove patches/any/cvs-addmntent.diff (merge upstream).
@@ -3574,7 +1404,7 @@ eglibc (2.16-0experimental0) experimental; urgency=low
   * Add patches/ia64/submitted-fpu-ulps.diff to fix FPU tests.
   * Add patches/ia64/submitted-remainder.diff to fix FPU tests.
   * Add patches/powerpc/local-math-logb.diff to workaround a GCC issue.
-  * Add patches/alpha/cvs-tls_dtv_unallocated.diff,
+  * Add patches/alpha/cvs-tls_dtv_unallocated.diff, 
     patches/alpha/cvs-have_tls_thread.diff,
     patches/alpha cvs-preconfigure.diff and
     patches/alpha/cvs-stat_ver_linux.diff to fix FTBFS on alpha.
@@ -3628,7 +1458,7 @@ eglibc (2.16-0experimental0) experimental; urgency=low
     kernel version to 2.6.32.
   * debian/debhelper.in/{libc.docs,libc-dev.docs}: don't install FAQ, replaced
     upstream by http://sourceware.org/glibc/wiki/FAQ.
-  * rules.d/debhelper.mk, debhelper.in/libc-pic.install: install libc6-pic
+  * rules.d/debhelper.mk, debhelper.in/libc-pic.install: install libc6-pic 
     files using debhelper.
   * debian/control.in/*: drop build-depends from libc6 to libc-bin. Add
     ${shlibs:Depends} depends to libc6 and libc-bin.
@@ -3637,7 +1467,7 @@ eglibc (2.16-0experimental0) experimental; urgency=low
     is not compatible with the libnss-db package, and is architecture
     dependent.
   * patches/svn-updates.diff: update from upstream SVN.
-
+  
   [ Daniel Schepler ]
   * Add x32 support (Closes: #667023):
     - debian/control.in/main: Build-Depend on g++-4.7-multilib on amd64,
@@ -3739,7 +1569,7 @@ eglibc (2.16-0experimental0) experimental; urgency=low
   * Update patches/hurd-i386/submitted-AF_LINK.diff.
   * Add patches/hurd-i386/tg-verify.h.diff,
     patches/hurd-i386/tg-pagesize.diff,
-    patches/hurd-i386/tg-fcntl-internal.h.diff,
+    patches/hurd-i386/tg-fcntl-internal.h.diff, 
     patches/hurd-i386/local-disable-sendmmsg.diff,
     patches/hurd-i386/cvs-add-missing-includes.diff,
     and patches/hurd-i386/submitted-libpthread-elf.diff to fix build on Hurd.
@@ -3748,8 +1578,8 @@ eglibc (2.16-0experimental0) experimental; urgency=low
   * Add patches/hurd-i386/cvs-mach-check-local-headers.sh.diff to
     reduce false header errors from the check-local-headers.out test.
   * Add patches/hurd-i386/cvs-llistxattr.diff,
-    patches/hurd-i386/cvs-renameat.diff and
-    patches/hurd-i386/cvs-lremovexattr.diff to implement llistxattr,
+    patches/hurd-i386/cvs-renameat.diff and 
+    patches/hurd-i386/cvs-lremovexattr.diff to implement llistxattr, 
     lremovexattr and renameat.
     Add patches/hurd-i386/cvs-mknodat.diff to fix tst-mknodat.
   * Update testsuite-checking/expected-results-i686-gnu-i386,
@@ -3826,7 +1656,7 @@ eglibc (2.13-37) unstable; urgency=low
   [ Aurelien Jarno ]
   * debhelper.in/locales.postinst: correctly lookup for the locales-all
     package.  Closes: #692777.
-  * patches/kfreebsd/local-getaddrinfo-freebsd-kernel.diff: update to
+  * patches/kfreebsd/local-getaddrinfo-freebsd-kernel.diff: update to 
     fix uninitialised bytes access in getaddrinfo().  Closes: #692433.
   * patches/localedata/locale-C.diff: update to fix strftime('%X') return
     a 24-hour time format.  Closes: #693446.
@@ -3846,7 +1676,7 @@ eglibc (2.13-36) unstable; urgency=low
 
   [ Aurelien Jarno ]
   * patches/any/cvs-strtod-overflow.diff: new patch from upstream to fix
-    an integer/buffer overflow in strtod() (CVE-2012-3480).  Closes:
+    an integer/buffer overflow in strtod() (CVE-2012-3480).  Closes: 
     #684889.
   * patches/kfreebsd/local-getaddrinfo-freebsd-kernel.diff: new patch to
     fix getaddrinfo() when service = 0 on a FreeBSD kernel with DNS
@@ -3869,13 +1699,13 @@ eglibc (2.13-36) unstable; urgency=low
 eglibc (2.13-35) unstable; urgency=low
 
   [ Aurelien Jarno ]
-  * patches/arm/unsubmitted-ldconfig-cache-abi.diff: disable, as it will
+  * patches/arm/unsubmitted-ldconfig-cache-abi.diff: disable, as it will 
     conflict with upstream x32 support.
   * Update Czech debconf translation, by Miroslav Kure.  Closes: #681708.
   * local/manpages/ld.so.8: fix LD_VERBOSE description after manpage
     rework.  Closes: #681688.
   * patches/any/cvs-vfprintf-positional.diff: new patch from upstream to
-    fix a stack corruption in vfprintf with positional parameters
+    fix a stack corruption in vfprintf with positional parameters 
     (CVE-2012-3404). patches/any/cvs-vfprintf-many-format-strings.diff: new
     patch from upstream to fix a FORTIFY_SOURCE format string protection
     bypass (CVE-2012-3405).  Closes: #681473.
@@ -3950,10 +1780,10 @@ eglibc (2.13-33) unstable; urgency=medium
   * fixup any/local-linuxthreads-setclock.diff. Closes: #673711.
 
   [ Aurelien Jarno ]
-  * debian/control.in/main: set glibc-doc as Multiarch: foreign.
+  * debian/control.in/main: set glibc-doc as Multiarch: foreign. 
     Closes: #674645.
   * Update Portuguese debconf translation, by Pedro Ribeiro.  Closes: #674954.
-  * patches/arm/unsubmitted-ldso-abi-check.diff: fix broken armhf specific
+  * patches/arm/unsubmitted-ldso-abi-check.diff: fix broken armhf specific 
     hack.  Closes: #674602.
   * patches/any/cvs-regex.diff: fix access after end of search string in regex
     matcher.  Closes: #672688.
@@ -3963,9 +1793,9 @@ eglibc (2.13-33) unstable; urgency=medium
     decimal_point and thousands_sep.  Closes: #673339.
   * patches/any/local-sunrpc-dos.diff: fix a DoS in RPC implementation
     (CVE-2011-4609).  Closes: #671478.
-  * patches/kfreebsd/local-use-thr-primitives.diff: bump LinuxThreads
+  * patches/kfreebsd/local-use-thr-primitives.diff: bump LinuxThreads 
     version.  Closes: #675606.
-  * Take-over nsswitch.conf installation from base-files.  Closes:
+  * Take-over nsswitch.conf installation from base-files.  Closes: 
     #673271.
   * Set libc*-dev "Multi-Arch: same". Add conflicts betwwen libc*-dev
     packages. Move a.out.h and ieee754.h to the arch qualified path.
@@ -3973,7 +1803,7 @@ eglibc (2.13-33) unstable; urgency=medium
   * Add patches/any/cvs-ld.so-rpath-origin.diff to fix an insecure handling
     of privileged programs' RPATHs with $ORIGIN (CVE-2011-1658).  Closes:
     #672119.
-  * Refresh all patches to loose the "diff --git" headers.  Closes:
+  * Refresh all patches to loose the "diff --git" headers.  Closes: 
     #673933.
 
  -- Aurelien Jarno <aurel32@debian.org>  Sun, 03 Jun 2012 21:38:54 +0200
@@ -3981,7 +1811,7 @@ eglibc (2.13-33) unstable; urgency=medium
 eglibc (2.13-32) unstable; urgency=medium
 
   * Fix kfreebsd symbols files.  Closes: #667687.
-  * local/manpages/ld.so.8: fixes after previous rework.  Closes:
+  * local/manpages/ld.so.8: fixes after previous rework.  Closes: 
     #670883.
   * patches/any/local-ld-multiarch.diff: update to correctly compute
     $ORIGIN with two level slibdir directories.  Closes: #632281.
@@ -4034,24 +1864,24 @@ eglibc (2.13-31) unstable; urgency=low
 
   [ Aurelien Jarno ]
   * patches/localedata/locale-C.diff: add an LC_TIME section.  Closes:
-    #661878.
-  * patches/arm/cvs-make-get-set-swap-context.diff: backport
+    #661878. 
+  * patches/arm/cvs-make-get-set-swap-context.diff: backport 
     make/get/set/swapcontext from upstream.  Closes: #369453, #663150.
-  * patches/arm/unsubmitted-soname-hack.diff: rename into
+  * patches/arm/unsubmitted-soname-hack.diff: rename into 
     patches/arm/local-soname-hack.diff to fix non-policy compliant patch
     name.
   * Don't install getent(1).  Closes: #665303.
   * Add patches/any/cvs-getaddrinfo-AI_V4MAPPED.diff to correctly handle
     AI_V4MAPPED flag in getaddrinfo().  Closes: #663752.
   * Add patches/any/local-linuxthreads-setclock.diff from Robert Millan to
-    add pthread_condattr_setclock() support to linuxthreads.  Closes:
+    add pthread_condattr_setclock() support to linuxthreads.  Closes: 
     #667687.
   * patches/any/local-disable-nscd-host-caching.diff: remove, as the host
     caching issue has been fixed in the meanwhile.  Closes: #669304.
   * patches/any/cvs-FORTIFY_SOURCE-format-strings.diff: new patch from
     upstream to fix FORTIFY_SOURCE format string protection bypass.  Closes:
     #660611.
-  * patches/kfreebsd/local-sys_queue_h.diff: fix STAILQ_FOREACH_SAFE.
+  * patches/kfreebsd/local-sys_queue_h.diff: fix STAILQ_FOREACH_SAFE.  
     Closes: #669960.
   * local/manpages/locale.1: fix warnings from "groff".  Closes: #661041.
   * patches/hppa/*: update hppa patchset from a mix of CVS, submitted and
@@ -4129,7 +1959,7 @@ eglibc (2.13-27) unstable; urgency=low
   [ Aurelien Jarno ]
   * kfreebsd/local-sysdeps.diff: update to revision 4080 (from glibc-bsd).
     Closes: #653380, #660397, #660401.
-  * patches/localedata/first_weekday.diff: change first day of week to
+  * patches/localedata/first_weekday.diff: change first day of week to 
     Sunday for es_AR locale.  Closes: #657064.
   * local/manpages/gai.conf.5: update from latest RedHat version.  Closes:
     #659504.
@@ -4137,15 +1967,15 @@ eglibc (2.13-27) unstable; urgency=low
     file using the latest build as a reference.
   * patches/mips/cvs-dlopen-lazy.diff: new patch from upstream to resolve
     race between dlopen and lazy binding on MIPS.
-  * patches/sparc/cvs-fcntl_h.diff: new patch from upstream to define
+  * patches/sparc/cvs-fcntl_h.diff: new patch from upstream to define 
     O_FSYNC on sparc.  Closes: #577577.
-  * testsuite-checking/expected-results-mipsel-linux-gnu-libc,
+  * testsuite-checking/expected-results-mipsel-linux-gnu-libc, 
     testsuite-checking/expected-results-mips32el-linux-gnu-mipsn32,
-    testsuite-checking/expected-results-mips64el-linux-gnu-mips64: add
+    testsuite-checking/expected-results-mips64el-linux-gnu-mips64: add 
     test-fenv.out to the list of known failures, it fails on loongson 2
     machines due to a CPU bug.
   * Bump to Standards-Version 3.9.3 (no changes).
-  * Don't provide debug files for biarch packages to make libc6-dbg
+  * Don't provide debug files for biarch packages to make libc6-dbg 
     co-installable.
 
  -- Aurelien Jarno <aurel32@debian.org>  Sun, 26 Feb 2012 18:50:40 +0100
@@ -4174,23 +2004,23 @@ eglibc (2.13-25) unstable; urgency=medium
   * Add port 783 (spamd) to /etc/bindresvport.blacklist.  Closes: #629984.
   * patches/any/cvs-vfscanf.diff: new patch from upstream to fix segfault in
     sscanf for large decimal input string.  Closes: #553206.
-  * local/manpages/ld.so.8: add a missing new line.  Closes: #654582.
+  * local/manpages/ld.so.8: add a missing new line.  Closes: #654582. 
   * debhelper.in/libc.NEWS: suggest environment variables as an
     alternative, thanks to Jonathan Nieder for the idea.  Closes: #654835.
   * Update Polish debconf translation, by Michał Kułach.  Closes: #657748.
   * Update Spanish debconf translation, by Omar Campagne.  Closes: #655850.
   * Danish debconf translation update from Joe Hansen.  Closes: #656681.
-  * patches/alpha/submitted-epoll_create1.diff: new patch from Mike
+  * patches/alpha/submitted-epoll_create1.diff: new patch from Mike 
     Frysinger to fix epoll_create1() on alpha.  Closes: #653441.
   * debian/control.in/main: bump build-depends on libc-linux-dev to
-    (>= 3.2.1-1) to get accept4 defined on ia64.
+    (>= 3.2.1-1) to get accept4 defined on ia64. 
     debian/libc6.1.symbols.ia64: force accept4 version to 2.13-25~.
   * debian/control.in/main: use architecture aliases in build-depends.
   * patches/amd64/cvs-avx-osxsave.diff: new patch from upstream to disable
     AVX support if the kernel doesn't support it.
-  * patches/any/cvs-fmtmsg-lock.diff: new patch from upstream to fix a
+  * patches/any/cvs-fmtmsg-lock.diff: new patch from upstream to fix a 
     locking issue in fmtmsg.
-  * patches/any/cvs-reloc-sort.diff: new patch from upstream to fix
+  * patches/any/cvs-reloc-sort.diff: new patch from upstream to fix 
     relocation issues with dlopen().
 
   [ Samuel Thibault ]
@@ -4207,23 +2037,23 @@ eglibc (2.13-25) unstable; urgency=medium
 
 eglibc (2.13-24) unstable; urgency=low
 
-  * patches/m68k/cvs-byteswap.diff: fix m68k optimized version of
+  * patches/m68k/cvs-byteswap.diff: fix m68k optimized version of 
     <bits/byteswap.h>.  Closes: #652356.
   * Add m68k expected tests results.
   * Update Russian debconf translation, by Yuri Kozlov.  Closes: #652428.
   * Update German debconf translation, by Helge Kreutzman.  Closes: #652556.
   * patches/any/cvs-tzfile.diff: fix integer overflow in timezone code
     (CVE-2009-5029).  Closes: #650790.
-  * Don't provide debugging symbols for libc-bin, libc-dev-bin and nscd
+  * Don't provide debugging symbols for libc-bin, libc-dev-bin and nscd 
     packages to avoid conflicts with multiarch.
   * sysdeps/armel.mk, sysdeps/armhf.mk: fix cross compiling.
   * Update Dutch debconf translation, by Jeroen Schot.  Closes: #652632.
   * patches/hurd/tg-struct_stat.diff: fix #ifdef typos.
   * kfreebsd/local-sysdeps.diff: update to revision 3952 (from glibc-bsd).
   * patches/m68k/local-pthread_lock.diff: remove, obsolete.
-  * patches/arm/cvs-ucontext.diff: fix namespace pollution from
+  * patches/arm/cvs-ucontext.diff: fix namespace pollution from 
     <sys/ucontext.h> on arm.  Closes: #652844.
-  * Update French debconf translation, by Christian Perrier.  Closes:
+  * Update French debconf translation, by Christian Perrier.  Closes: 
     #652860.
 
  -- Aurelien Jarno <aurel32@debian.org>  Sat, 24 Dec 2011 18:23:25 +0100
@@ -4302,7 +2132,7 @@ eglibc (2.13-22) unstable; urgency=low
     unsubmitted-ptsname.diff, submitted-strtoul.diff,
     unsubmitted-atomic-no-multiple_threads.diff, unsubmitted-i686.diff,
     submitted-ldsodefs.h.diff, submitted-libc_once.diff}:
-    Update to topgit version, and rename to
+    Update to topgit version, and rename to 
     {tg-tlsdesc.sym.diff, tg-struct_stat.diff, tg-gscope.diff,
     tg-_dl_random.diff, tg-bits_atomic.h_multiple_threads.diff,
     tg-dl-sysdep.c_SHARED.diff, tg-__i686_defined.diff,
@@ -4368,14 +2198,14 @@ eglibc (2.13-21) unstable; urgency=low
     fix issues with dl_close() when resolving locally-defined symbols.
     Closes: #625250.
   * debian/patches/localedata/locale-C.diff: define strict numerical ordering
-    for the whole unicode range.  Define the "blank", "cntrl" and "space" as
+    for the whole unicode range.  Define the "blank", "cntrl" and "space" as 
     defined by POSIX. Closes: #641309.
 
  -- Aurelien Jarno <aurel32@debian.org>  Tue, 13 Sep 2011 23:58:01 +0200
 
 eglibc (2.13-20) unstable; urgency=low
 
-  * debian/debhelper.in/libc.preinst: call /bin/mv with --version so
+  * debian/debhelper.in/libc.preinst: call /bin/mv with --version so 
     that it doesn't return an error.  Closes: #640872.
 
  -- Aurelien Jarno <aurel32@debian.org>  Thu, 08 Sep 2011 10:23:00 +0200
@@ -4386,7 +2216,7 @@ eglibc (2.13-19) unstable; urgency=low
   * Change libc_rtlddir to /lib on s390x.
   * Add debian/patches/submitted-glob_h-ifdef.diff to fix an undefined
     preprocessor symbol in some rare conditions.  Closes: #639213.
-  * debian/sysdeps/sparc64.mk: re-enable multiarch similarly to what
+  * debian/sysdeps/sparc64.mk: re-enable multiarch similarly to what 
     has been done on sparc.
   * debian/control.in/libc: remove Breaks: on perl.  Closes: #640300.
   * debian/patches/localedata/locale-C.diff: Don't include ISO14651
@@ -4424,7 +2254,7 @@ eglibc (2.13-19) unstable; urgency=low
 
 eglibc (2.13-18) unstable; urgency=low
 
-  * On s390x the PI is /lib/ld64.so.1, so we don't need to move
+  * On s390x the PI is /lib/ld64.so.1, so we don't need to move 
     ld64.so.1 from /lib to /lib64.
 
  -- Aurelien Jarno <aurel32@debian.org>  Wed, 24 Aug 2011 10:09:17 +0200
@@ -4436,12 +2266,12 @@ eglibc (2.13-17) unstable; urgency=low
   * Add debian/patches/cvs-dlopen-tls.diff to fix handling of static TLS in
     dlopen'ed objects.  Closes: #637239.
   * Provide locales in locales-all as separated files instead of adding them
-    to locale-archive. Use symlinks between identical files to limit the
+    to locale-archive. Use symlinks between identical files to limit the 
     unpacked size.  Closes: #537743, #636694, #638173.
-  * Compress libc*-dbg and locales-all to using xz.
+  * Compress libc*-dbg and locales-all to using xz. 
   * Add patches/localedata/cvs-rupee.diff from upstream to add support for
     Rupee symbol (U20B9).
-  * Add patches/sparc/cvs-rlimits.diff from upstream to fix issues with
+  * Add patches/sparc/cvs-rlimits.diff from upstream to fix issues with 
     rlimits on sparc.  Closes: #637767.
   * Add patches/amd64/cvs-pthread-stack-alignment.diff from upstream to fix
     stack alignment issues on amd64.
@@ -4449,13 +2279,13 @@ eglibc (2.13-17) unstable; urgency=low
     usage in the INTERNAL_VSYSCALL_NCS macro.
   * Add patches/arm/cvs-clone-cantunwind.diff from upstream to fix unwinding
     issues with openjdk on armhf.
-  * Add patches arm/cvs-align-constant-pool.diff from upstream to fix
+  * Add patches arm/cvs-align-constant-pool.diff from upstream to fix 
     alignement issues on armhf.
   * debian/control.in/libc: add Breaks: lsb-core (<= 3.2-27) to make sure the
     lsb symlink is still valid.
-  * Remove patches/any/cvs-dl-missing-deps.diff, the original problem has
-    been solved through other ways, so it is not needed any more. Fixes
-    symbols resolution with issues with icedove/iceweasel/iceape.  Closes:
+  * Remove patches/any/cvs-dl-missing-deps.diff, the original problem has 
+    been solved through other ways, so it is not needed any more. Fixes 
+    symbols resolution with issues with icedove/iceweasel/iceape.  Closes: 
     #617759.
 
   [ Samuel Thibault ]
@@ -4495,7 +2325,7 @@ eglibc (2.13-15) unstable; urgency=low
   * Add testsuite results for s390x.
   * Install x86-64 version of ldd in libc-bin:i386.  Closes: #636947.
   * Add a Breaks: perl (<< 5.12.4-2) to libc0.1/6/6.1.  Closes: #636686.
-  * Install x86-64 headers on i386 instead of the i386 ones.  Closes:
+  * Install x86-64 headers on i386 instead of the i386 ones.  Closes: 
     #637000.
   * debhelper.in/libc-dev-alt.preinst: test if not a symlink instead of
     testing if a directory. Fixes triarch includes on mips/mipsel.
@@ -4514,7 +2344,7 @@ eglibc (2.13-14) unstable; urgency=low
     the directory to symlink conversion is done correctly.
   * On mips/mipsel, only ship the includes symlinks in libc6-dev-mips64. Add
     a dependency to libc6-dev-mips64 in libc6-dev-mipsn32.
-  * Build with gcc-4.6/g++-4.6 on armhf to get correct atomic operations in
+  * Build with gcc-4.6/g++-4.6 on armhf to get correct atomic operations in 
     thumb-2 mode.
 
   [ Samuel Thibault ]
@@ -4548,8 +2378,8 @@ eglibc (2.13-11) unstable; urgency=low
 
   [ Aurelien Jarno ]
   * control.in/main: fix nscd description.  Closes: #633370.
-  * Update patches/svn-updates to revision 14511 to fix build on
-    powerpcspe. Add corresponding symbols file and expected testsuite
+  * Update patches/svn-updates to revision 14511 to fix build on 
+    powerpcspe. Add corresponding symbols file and expected testsuite 
     results.  Closes: #632863.
   * Add patches/localedata/locale-os_RU.diff from upstream to add Ossetian
     locale.  Closes: #634508.
@@ -4559,13 +2389,13 @@ eglibc (2.13-11) unstable; urgency=low
     - uses upstream RFTSIGZMB for exit signal selection when available.
   * Disable multiarch support on amd64, kfreebsd-amd64, ppc64, sparc64 until
     we fix the /lib64 -> /lib symlink issue. Closes: #632176.
-  * Re-enable patches/any/cvs-resolv-different-nameserver.diff. Add
+  * Re-enable patches/any/cvs-resolv-different-nameserver.diff. Add 
     patches/any/submitted-resolv-assert.diff to fix assertion triggered by the
     previous patch.  Closes: #535504, #602291.
   * Add support for s390x.
-  * Fix debhelper.in/libc.NEWS with the right option to pass to gcc. Closes:
+  * Fix debhelper.in/libc.NEWS with the right option to pass to gcc. Closes: 
     #629819.
-  * Add any/submitted-resolv-init.diff to fix issue with the resolver when
+  * Add any/submitted-resolv-init.diff to fix issue with the resolver when 
     RES_ROTATE is enabled.  Closes: #593571.
 
   [ Jeremie Koenig ]
@@ -4598,7 +2428,7 @@ eglibc (2.13-9) unstable; urgency=low
   [ Aurelien Jarno ]
   * debhelper.in/libc.preinst: replace unbreakable space by normal space.
     Closes: #632453.
-  * Disable patches/any/cvs-resolv-different-nameserver.diff. Closes: #632273,
+  * Disable patches/any/cvs-resolv-different-nameserver.diff. Closes: #632273, 
     #632252. Reopen: #535504, #602291.
   * kfreebsd/local-sysdeps.diff: update to revision 3530 (from glibc-bsd).
     Closes: #632452.
@@ -4620,21 +2450,21 @@ eglibc (2.13-8) unstable; urgency=low
     duplicate getproc() symbol.
 
   [ Aurelien Jarno ]
-  * Add patches/any/cvs-addmntent.diff to correctly report errors status in
+  * Add patches/any/cvs-addmntent.diff to correctly report errors status in 
     addmntent().  Closes: #630699 / CVE-2011-1089.
   * Add patches/any/cvs-resolv-different-nameserver.diff to try a different
     nameserver if the first one returns REFUSED.  Closes: #535504, #602291.
   * Update patches/svn-updates to revision 14337:
-    - Remove any/cvs-glro_dl_debug_mask.diff (merged).
+    - Remove any/cvs-glro_dl_debug_mask.diff (merged). 
     - Remove i386/cvs-memmove-static.diff (merged).
   * debian/control: clean-up Uploaders: .
-  * Add patches/any/cvs-fnmatch.diff to fix an integer overflow in
+  * Add patches/any/cvs-fnmatch.diff to fix an integer overflow in 
     fnmatch() (CVE-2011-1659).  Closes: #626370.
-  * Add an entry to NEWS.Debian about multiarch and passing flags to the
+  * Add an entry to NEWS.Debian about multiarch and passing flags to the 
     compiler on pre-multiarch toolchains.
-  * Replace sparc/submitted-ifunc2.diff by upstream version
+  * Replace sparc/submitted-ifunc2.diff by upstream version 
     any/cvs-ifunc.diff.
-  * Fix patches/hppa/submitted-nptl-carlos.diff to correctly pass
+  * Fix patches/hppa/submitted-nptl-carlos.diff to correctly pass 
     --as-needed and --no-as-needed to the linker.
   * Update breaks on pre-multiarch packages.  Closes: #631907.
   * libc.preinst: improve and simplify search for old libraries, detect
@@ -4652,19 +2482,19 @@ eglibc (2.13-8) unstable; urgency=low
 eglibc (2.13-7) unstable; urgency=low
 
   [ Aurelien Jarno ]
-  * Update paths to the memcpy wrapper in NEWS.Debian.gz.  Closes:
+  * Update paths to the memcpy wrapper in NEWS.Debian.gz.  Closes: 
     #630138.
-  * Fix preinst script wrt 3.0 kernel. Patch by Colin Watson.  Closes:
+  * Fix preinst script wrt 3.0 kernel. Patch by Colin Watson.  Closes: 
     #630077.
-  * debian/sysdeps/linux.mk: correctly check from multiarch asm/ include
+  * debian/sysdeps/linux.mk: correctly check from multiarch asm/ include 
     directory.
   * Add patches/sparc/cvs-ifunc1.diff and patches/sparc/submitted-ifunc2.diff
-    to fix multi-arch support on sparc. Update sysdeps/sparc.mk and
+    to fix multi-arch support on sparc. Update sysdeps/sparc.mk and 
     sysdeps/sparc64.mk to re-enable multi-arch support on sparc and sparc64.
     Closes: #625607.
   * debhelper.in/libc.preinst: improve error message when an old copy of ld.so
     is found.  Closes: #629983.
-  * debhelper.in/libc.preinst: automatically remove leftovers from libc5 to
+  * debhelper.in/libc.preinst: automatically remove leftovers from libc5 to 
     libc6 transition (upgrade from Bo to Hamm).  Closes: #629534.
 
  -- Aurelien Jarno <aurel32@debian.org>  Sun, 12 Jun 2011 20:33:19 +0200
@@ -4674,11 +2504,11 @@ eglibc (2.13-6) unstable; urgency=low
   [ Aurelien Jarno ]
   * kfreebsd/local-sysdeps.diff, update to revision 3406 (from glibc-bsd),
     to fix <sys/mount.h>.  Closes: #629289, #629426.
-  * debian/sysdeps/linux.mk: remove obsolete comment and code about
+  * debian/sysdeps/linux.mk: remove obsolete comment and code about 
     asm-sparc64. Use the multiarch asm directory if present.
   * debian/copyright: update.
   * Update breaks on pre-multiarch packages.
-  * Allow tst-writev to fail due to changes on recent kernels.  Closes:
+  * Allow tst-writev to fail due to changes on recent kernels.  Closes: 
     #629862.
 
   [ Samuel Thibault ]
@@ -4707,7 +2537,7 @@ eglibc (2.13-5) unstable; urgency=low
   * Revert changes to patches/any/local-no-pagesize.diff, instead make
     sure PAGE_SIZE is not used internally.  Closes: #627273.
   * Add Swahili, Fulah and Bemba locales, backport from HEAD.
-  * locale-gen: don't remove /usr/lib/locale/* in locale-gen. Closes:
+  * locale-gen: don't remove /usr/lib/locale/* in locale-gen. Closes: 
     #626575.
   * Add patches/any/cvs-setlocale.diff from upstream fixing reset to
     C locale issue in setlocale().  Closes: #627355.
@@ -4715,7 +2545,7 @@ eglibc (2.13-5) unstable; urgency=low
     in powl() on amd64.
   * Add patches/localedata/locale-sv_FI.diff from upstream to fix date
     format.  Closes: #577988.
-  * Add patches/any/submitted-rlimit-rttime.diff to fix missing
+  * Add patches/any/submitted-rlimit-rttime.diff to fix missing 
     RLIMIT_RTTIME entry in <bits/resource.h>.  Closes: #627619.
   * patches/any/local-ld-multiarch.diff: add the multiarch compat dir
     instead of the multiarch dir.
@@ -4724,18 +2554,18 @@ eglibc (2.13-5) unstable; urgency=low
     to fix brk(), semctl() and if_nameindex() bugs.
   * Add patches/any/local-tst-writev.diff to fix compilation of tst-writev.c.
   * Add breaks on packages which don't support multiarch paths.
-  * Add patches/any/cvs-regex-oom.diff to fix an oom issue triggerable with
+  * Add patches/any/cvs-regex-oom.diff to fix an oom issue triggerable with 
     some regexes.
   * Add patches/any/cvs-getaddrinfo-single-lookup.diff to fix fallback to
     single lookup dns requests.  Closes: #541167.
-  * Add patches/any/cvs-unique_sym_table-corruptions.diff to fix
-    unique_sym_table corruptions when doing STB_GNU_UNIQUE or
+  * Add patches/any/cvs-unique_sym_table-corruptions.diff to fix 
+    unique_sym_table corruptions when doing STB_GNU_UNIQUE or 
     ELF_RTYPE_CLASS_COPY lookups.
-  * Replace patches/any/local-dl-deps.diff by upstream version
+  * Replace patches/any/local-dl-deps.diff by upstream version 
     patches/any/cvs-dl-deps.diff.
-  * Add patches/mips/submitted-dl-platform.diff from Robert Millan to
+  * Add patches/mips/submitted-dl-platform.diff from Robert Millan to 
     add dl-platform support for MIPS.
-  * Add a loongson2f optimized library. Closes: #601419.
+  * Add a loongson2f optimized library. Closes: #601419. 
   * Update local/manpages/ld.so.8 with hardware capabilities documentation.
     Closes: #622385.
   * Update patches/localedata/submitted-bz9725-locale-sv_SE.diff to fix time
@@ -4771,14 +2601,14 @@ eglibc (2.13-5) unstable; urgency=low
 
 eglibc (2.13-4) unstable; urgency=low
 
-  * debian/sysdeps/amd64.mk: don't redefine libc6_extra_pkg_install.
+  * debian/sysdeps/amd64.mk: don't redefine libc6_extra_pkg_install.  
     Closes: #626447, #626449, #626450.
 
  -- Aurelien Jarno <aurel32@debian.org>  Thu, 12 May 2011 07:16:55 +0200
 
 eglibc (2.13-3) unstable; urgency=low
 
-  * patches/any/local-no-pagesize.diff: use __sysconf() instead of
+  * patches/any/local-no-pagesize.diff: use __sysconf() instead of 
     sysconf().
   * patches/any/local-bindresvport_blacklist.diff: use feof_unlocked()
     instead of feof().
@@ -4787,15 +2617,15 @@ eglibc (2.13-3) unstable; urgency=low
   * Add patches/any/cvs-sys-param-ARG_MAX.diff from upstream to fix
     bassackwards tests for ARG_MAX in sys/param.h.  Closes: #583433.
   * Add support for the new armhf triplet (Closes: #625846):
-    - Update patches/any/submitted-autotools.diff to detect the new triplet.
-    - Add patches/arm/submitted-armhf-triplet.diff to support the
+    - Update patches/any/submitted-autotools.diff to detect the new triplet. 
+    - Add patches/arm/submitted-armhf-triplet.diff to support the 
       new triplet.
-  * Add patches/any/submitted-at-pagesize.diff from Fedora to fix
+  * Add patches/any/submitted-at-pagesize.diff from Fedora to fix 
     getpagesize() on static binaries.  Closes: #626379.
-  * sysdeps/sparc.mk, sysdeps/sparc64.mk: disable multiarch support.
+  * sysdeps/sparc.mk, sysdeps/sparc64.mk: disable multiarch support. 
     Workarounds: #625607.
   * debian/local/memcpy-wrapper/*: on amd64, provide and build two wrappers
-    to workaround and debug memcpy() issues. Explain how to use them in
+    to workaround and debug memcpy() issues. Explain how to use them in 
     debian/debhelper.in/libc.NEWS.
 
  -- Aurelien Jarno <aurel32@debian.org>  Wed, 11 May 2011 23:03:15 +0200
@@ -4812,12 +2642,12 @@ eglibc (2.13-1) unstable; urgency=low
 
   [ Aurelien Jarno ]
   * New upstream release:
-    - Fix spurious warning in bswap_16() with -Wconversion.  Closes:
+    - Fix spurious warning in bswap_16() with -Wconversion.  Closes: 
       #561249.
     - Add back support for m68k.  Closes: #446503, #601126.
     - Add support for NTP API 4.  Closes: #558314.
     - Fix memchr() on alpha.  Closes: #521737.
-    - Add optimized string functions via STT_GNU_IFUNC on PowerPC. Closes:
+    - Add optimized string functions via STT_GNU_IFUNC on PowerPC. Closes: 
       #408959.
     - Provide POSIX2008 compliant futimens().  Closes: #563724.
     - Fix auxilary cache file creation.  Closes: 588218.
@@ -4851,7 +2681,7 @@ eglibc (2.13-1) unstable; urgency=low
     - Remove patches/hppa/cvs-nptl-compat.diff (merged upstream).
     - Update patches/hppa/local-stack-grows-up.diff.
     - Remove patches/hppa/cvs-vfork.diff (merged upstream).
-    - Remove patches/hurd-i386/submitted-rtld_lock_recursive.diff (merged
+    - Remove patches/hurd-i386/submitted-rtld_lock_recursive.diff (merged 
       upstream).
     - Remove patches/hurd-i386/cvs-getcwd.diff (merged upstream).
     - Remove patches/hurd-i386/cvs-setsid.diff (merged upstream).
@@ -4862,7 +2692,7 @@ eglibc (2.13-1) unstable; urgency=low
     - Remove patches/hurd-i386/cvs-sched_param.diff (merged upstream).
     - Remove patches/hurd-i386/cvs-sendmsg-leak.diff (merged upstream).
     - Update patches/i386/local-pthread_cond_wait.diff.
-    - Remove patches/m68k/cvs-define-m68k-tls-relocations.patch (merged
+    - Remove patches/m68k/cvs-define-m68k-tls-relocations.patch (merged 
       upstream).
     - Remove patches/m68k/cvs-tls-support.patch (merged upstream).
     - Remove patches/m68k/cvs-versions-def-2-12.patch (merged upstream).
@@ -4904,16 +2734,16 @@ eglibc (2.13-1) unstable; urgency=low
     - Remove patches/any/submitted-futex_robust_pi.diff (obsolete).
     - Update patches/kfreebsd/local-readdir_r.diff.
   * debian/sysdeps/*.mk, debhelper.in/libc.preinst: bump minimal Linux
-    kernel version to 2.6.26, and minimal FreeBSD kernel version to
+    kernel version to 2.6.26, and minimal FreeBSD kernel version to 
     8.0.0.  Closes: #610475.
   * Add /etc/default/nss.
   * Add patches/all/local-nis-shadow.diff to change default value of
-    ADJUNCT_AS_SHADOW to TRUE. This avoid NIS password leakage
+    ADJUNCT_AS_SHADOW to TRUE. This avoid NIS password leakage 
     (CVE-2010-0015), but can be changed to FALSE to accomomdate some
     NIS installations.  Closes: #566297, #566844.
-  * kfreebsd/local-sysdeps.diff, kfreebsd/local-linuxthreads29.diff:
+  * kfreebsd/local-sysdeps.diff, kfreebsd/local-linuxthreads29.diff: 
     update to revision 3286 (from glibc-bsd)  Closes: #602776.
-  * debian/rules: split build-indep and build-arch targets.  Closes:
+  * debian/rules: split build-indep and build-arch targets.  Closes: 
     #611926.
   * sysdeps/sparc.mk, sysdeps/sparc64.mk: build with --enable-multi-arch.
   * sysdeps/powerpc.mk, sysdeps/ppc64.mk: build with --enable-multi-arch.
@@ -4922,15 +2752,15 @@ eglibc (2.13-1) unstable; urgency=low
   * Add patches/localedata/locale-C.diff to create a C locale.
   * Build and install the C locales in libc-bin.  Closes: #609306.
   * Bump to Standards-Version 3.9.1 (no changes).
-  * Add patches/submitted-rwlock-stack-imbalance.diff to fix regression
+  * Add patches/submitted-rwlock-stack-imbalance.diff to fix regression 
     in pthread_rwlock_timedrdlock() and pthread_rwlock_timedwrlock().
-  * Whitelist tst-makecontext3.out test on ia64, as it is new and can't
+  * Whitelist tst-makecontext3.out test on ia64, as it is new and can't 
     succeed on this architecture.
-  * Build depends on binutils (>= 2.21) on sparc and sparc64 to gain
+  * Build depends on binutils (>= 2.21) on sparc and sparc64 to gain 
     STT_GNU_IFUNC support.
-  * Add patches/any/submitted-ldsodefs_rtld_debug.diff to fix
+  * Add patches/any/submitted-ldsodefs_rtld_debug.diff to fix 
     EGLIBC_RTLD_DEBUG support on non NPTL systems.
-  * Add patches/any/local-relro-mprotect.patch to not crash with PaX
+  * Add patches/any/local-relro-mprotect.patch to not crash with PaX 
     kernels.  Closes: #611195.
   * Add patches/any/cvs-dl-missing-deps.diff to output an early error
     when dependencies are missing.  Closes: #612792.
@@ -4940,7 +2770,7 @@ eglibc (2.13-1) unstable; urgency=low
   * Add patches/powerpc/local-libgcc_eh-ld.so.diff to fix bug-atexit3
     test on PowerPC.
   * Add patches/alpha/submitted-fcntl_h.diff, submitted-stackinfo.diff,
-    submitted-libm-hidden.diff, submitted-statfs.diff and
+    submitted-libm-hidden.diff, submitted-statfs.diff and 
     submitted-fxstatat.patch to fix FTBFS on alpha.
   * Add patches/any/local-linuxthreads-deps.diff to fix testsuite issues
     on GNU/kFreeBSD.
@@ -4957,7 +2787,7 @@ eglibc (2.13-1) unstable; urgency=low
     add multiarch support to ldconfig.
   * Add patches/alpha/local-strncmp.diff to remove broken alpha specific
     implementation of strncmp().
-  * Add patches/alpha/submitted-sysconf-cache.diff to fix sysconf()
+  * Add patches/alpha/submitted-sysconf-cache.diff to fix sysconf() 
     LEVEL*CACHE* entries.  Closes: #620203.
   * Add patches/i386/cvs-memmove-static.diff to fix static linking
     with FORTIFY.
@@ -4965,9 +2795,9 @@ eglibc (2.13-1) unstable; urgency=low
   * Add patches/any/cvs-fopen.diff to fix fopen() with 7 bytes string.
   * Add patches/amd64/cvs-memset.diff to fix memset() on amd64 for
     misaligned blocks larger than 144 Bytes.
-  * Add patches/any/local-dl-deps.diff to workaround assert triggered by
+  * Add patches/any/local-dl-deps.diff to workaround assert triggered by 
     some binaries.  Closes: #624515.
-  * Add patches/any/submitted-fwrite-wur.diff to not warn about unused
+  * Add patches/any/submitted-fwrite-wur.diff to not warn about unused 
     result for fwrite().  Closes: #616627.
 
   [ Samuel Thibault ]
@@ -5001,8 +2831,8 @@ eglibc (2.11.2-12) unstable; urgency=medium
 
   [ Aurelien Jarno ]
   * Re-enable build failure in case of testsuite regressions.
-  * Add patches/any/cvs-fnmatch-alloca.patch from upstream to fix a
-    memory corruption in fnmatch() that can lead to code execution.
+  * Add patches/any/cvs-fnmatch-alloca.patch from upstream to fix a 
+    memory corruption in fnmatch() that can lead to code execution.  
     Closes: #615120.
   * Add patches/any/cvs-qsort-race.diff from upstream to fix race in
     qsort_r().  Closes: #614892.
@@ -5028,15 +2858,15 @@ eglibc (2.11.2-12) unstable; urgency=medium
 
 eglibc (2.11.2-11) unstable; urgency=low
 
-  * patches/kfreebsd/local-sysdeps.diff: remove stub marks for at*
-    syscalls as we don't support FreeBSD 7.x kernels anyway.  Closes:
+  * patches/kfreebsd/local-sysdeps.diff: remove stub marks for at* 
+    syscalls as we don't support FreeBSD 7.x kernels anyway.  Closes: 
     #610749.
 
  -- Aurelien Jarno <aurel32@debian.org>  Mon, 31 Jan 2011 21:02:31 +0100
 
 eglibc (2.11.2-10) unstable; urgency=low
 
-  * Add patches/amd64/cvs-avx-tcb-alignment.diff from upstream to fix
+  * Add patches/amd64/cvs-avx-tcb-alignment.diff from upstream to fix 
     alignement issues on CPU supporting the AVX instruction set. Closes:
     #610657.
 
@@ -5044,7 +2874,7 @@ eglibc (2.11.2-10) unstable; urgency=low
 
 eglibc (2.11.2-9) unstable; urgency=low
 
-  * Disable build failure in case of testsuite regressions, will be
+  * Disable build failure in case of testsuite regressions, will be 
     re-enabled after squeeze release.
 
  -- Aurelien Jarno <aurel32@debian.org>  Thu, 20 Jan 2011 12:44:11 +0100
@@ -5404,7 +3234,7 @@ eglibc (2.11.1-1) unstable; urgency=low
 
 eglibc (2.10.2-9) unstable; urgency=low
 
-  [ Aurelien Jarno ]
+  [ Aurelien Jarno ]
   * Add powerpcspe port support. Closes: #579778.
 
   [ Petr Salinger ]
@@ -5932,7 +3762,7 @@ eglibc (2.9-27) unstable; urgency=low
   * nscd.conf.5: add documentation for max-db-size and auto-propagate
     options. Closes: bug#544544.
   * Merge from the multiarch branch:
-    - allow one to specify libdir and slibdir also for the main flavor.
+    - allow to specify libdir and slibdir also for the main flavor.
     - use real dependencies between the build_* and binaryinst_*
       targets.
     - simplify clean target.

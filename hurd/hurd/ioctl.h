@@ -1,5 +1,5 @@
 /* User-registered handlers for specific `ioctl' requests.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -67,11 +67,6 @@ extern int hurd_register_ioctl_handler (int first_request, int last_request,
 #define _HURD_HANDLE_IOCTL(handler, ioctl) \
   _HURD_HANDLE_IOCTLS_1 (handler, ioctl, ioctl, ioctl##_only)
 
-
-/* Install a new CTTYID port, atomically updating the dtable appropriately.
-   This consumes the send right passed in.  */
-
-void _hurd_locked_install_cttyid (mach_port_t cttyid);
 
 /* Lookup the handler for the given ioctl request.  */
 

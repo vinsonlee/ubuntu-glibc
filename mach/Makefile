@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2016 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -17,7 +17,11 @@
 
 subdir := mach
 
+all:
+
+# Some things below (but before including Rules) use configuration variables.
 include ../Makeconfig
+
 
 headers = mach_init.h mach.h mach_error.h mach-shortcuts.h mach/mach_traps.h \
 	  $(interface-headers) mach/mach.h mach/mig_support.h mach/error.h \
@@ -61,7 +65,7 @@ mach-machine = $(patsubst powerpc,ppc,$(base-machine))
 ifndef inhibit_mach_syscalls
 -include $(objpfx)mach-syscalls.mk
 endif
-$(objpfx)mach-syscalls.mk: syscalls.awk Makefile libc-modules.h
+$(objpfx)mach-syscalls.mk: syscalls.awk Makefile
 # Go kludges!!!
 	$(make-target-directory)
 # We must use $(CFLAGS) to get -O flags that affect #if's in header files.

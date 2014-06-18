@@ -1,5 +1,5 @@
 /* Highly optimized version for x86-64.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Based on i686 version contributed by Ulrich Drepper
    <drepper@cygnus.com>, 1999.
@@ -29,6 +29,13 @@
 #endif
 
 #ifdef USE_AS_STRNCMP
+/* The simplified code below is not set up to handle strncmp() so far.
+   Should this become necessary it has to be implemented.  For now
+   just report the problem.  */
+# ifdef NOT_IN_libc
+#  error "strncmp not implemented so far"
+# endif
+
 /* Since the counter, %r11, is unsigned, we branch to strcmp_exitz
    if the new counter > the old one or is 0.  */
 # define UPDATE_STRNCMP_COUNTER				\
@@ -43,9 +50,19 @@
 #elif defined USE_AS_STRCASECMP_L
 # include "locale-defines.h"
 
+/* No support for strcasecmp outside libc so far since it is not needed.  */
+# ifdef NOT_IN_libc
+#  error "strcasecmp_l not implemented so far"
+# endif
+
 # define UPDATE_STRNCMP_COUNTER
 #elif defined USE_AS_STRNCASECMP_L
 # include "locale-defines.h"
+
+/* No support for strncasecmp outside libc so far since it is not needed.  */
+# ifdef NOT_IN_libc
+#  error "strncasecmp_l not implemented so far"
+# endif
 
 # define UPDATE_STRNCMP_COUNTER				\
 	/* calculate left number to compare */		\
@@ -109,44 +126,63 @@ libc_hidden_def (__strncasecmp)
 #endif
 
 ENTRY (STRCMP)
-#ifdef USE_AS_STRCASECMP_L
+#ifdef NOT_IN_libc
+/* Simple version since we can't use SSE registers in ld.so.  */
+L(oop):	movb	(%rdi), %al
+	cmpb	(%rsi), %al
+	jne	L(neq)
+	incq	%rdi
+	incq	%rsi
+	testb	%al, %al
+	jnz	L(oop)
+
+	xorl	%eax, %eax
+	ret
+
+L(neq):	movl	$1, %eax
+	movl	$-1, %ecx
+	cmovbl	%ecx, %eax
+	ret
+END (STRCMP)
+#else	/* NOT_IN_libc */
+# ifdef USE_AS_STRCASECMP_L
 	/* We have to fall back on the C implementation for locales
 	   with encodings not matching ASCII for single bytes.  */
-# if LOCALE_T___LOCALES != 0 || LC_CTYPE != 0
+#  if LOCALE_T___LOCALES != 0 || LC_CTYPE != 0
 	mov	LOCALE_T___LOCALES+LC_CTYPE*LP_SIZE(%rdx), %RAX_LP
-# else
+#  else
 	mov	(%rdx), %RAX_LP
-# endif
+#  endif
 	testl	$1, LOCALE_DATA_VALUES+_NL_CTYPE_NONASCII_CASE*SIZEOF_VALUES(%rax)
 	jne	__strcasecmp_l_nonascii
-#elif defined USE_AS_STRNCASECMP_L
+# elif defined USE_AS_STRNCASECMP_L
 	/* We have to fall back on the C implementation for locales
 	   with encodings not matching ASCII for single bytes.  */
-# if LOCALE_T___LOCALES != 0 || LC_CTYPE != 0
+#  if LOCALE_T___LOCALES != 0 || LC_CTYPE != 0
 	mov	LOCALE_T___LOCALES+LC_CTYPE*LP_SIZE(%rcx), %RAX_LP
-# else
+#  else
 	mov	(%rcx), %RAX_LP
-# endif
+#  endif
 	testl	$1, LOCALE_DATA_VALUES+_NL_CTYPE_NONASCII_CASE*SIZEOF_VALUES(%rax)
 	jne	__strncasecmp_l_nonascii
-#endif
+# endif
 
 /*
  * This implementation uses SSE to compare up to 16 bytes at a time.
  */
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	test	%rdx, %rdx
 	je	LABEL(strcmp_exitz)
 	cmp	$1, %rdx
 	je	LABEL(Byte0)
 	mov	%rdx, %r11
-#endif
+# endif
 	mov	%esi, %ecx
 	mov	%edi, %eax
 /* Use 64bit AND here to avoid long NOP padding.  */
 	and	$0x3f, %rcx		/* rsi alignment in cache line */
 	and	$0x3f, %rax		/* rdi alignment in cache line */
-#if defined USE_AS_STRCASECMP_L || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRCASECMP_L || defined USE_AS_STRNCASECMP_L
 	.section .rodata.cst16,"aM",@progbits,16
 	.align 16
 .Lbelowupper:
@@ -160,12 +196,12 @@ ENTRY (STRCMP)
 	.quad	0x2020202020202020
 	.previous
 	movdqa	.Lbelowupper(%rip), %xmm5
-# define UCLOW_reg %xmm5
+#  define UCLOW_reg %xmm5
 	movdqa	.Ltopupper(%rip), %xmm6
-# define UCHIGH_reg %xmm6
+#  define UCHIGH_reg %xmm6
 	movdqa	.Ltouppermask(%rip), %xmm7
-# define LCQWORD_reg %xmm7
-#endif
+#  define LCQWORD_reg %xmm7
+# endif
 	cmp	$0x30, %ecx
 	ja	LABEL(crosscache)	/* rsi: 16-byte load will cross cache line */
 	cmp	$0x30, %eax
@@ -174,8 +210,8 @@ ENTRY (STRCMP)
 	movlpd	(%rsi), %xmm2
 	movhpd	8(%rdi), %xmm1
 	movhpd	8(%rsi), %xmm2
-#if defined USE_AS_STRCASECMP_L || defined USE_AS_STRNCASECMP_L
-# define TOLOWER(reg1, reg2) \
+# if defined USE_AS_STRCASECMP_L || defined USE_AS_STRNCASECMP_L
+#  define TOLOWER(reg1, reg2) \
 	movdqa	reg1, %xmm8;					\
 	movdqa	UCHIGH_reg, %xmm9;				\
 	movdqa	reg2, %xmm10;					\
@@ -191,9 +227,9 @@ ENTRY (STRCMP)
 	por	%xmm8, reg1;					\
 	por	%xmm10, reg2
 	TOLOWER (%xmm1, %xmm2)
-#else
-# define TOLOWER(reg1, reg2)
-#endif
+# else
+#  define TOLOWER(reg1, reg2)
+# endif
 	pxor	%xmm0, %xmm0		/* clear %xmm0 for null char checks */
 	pcmpeqb	%xmm1, %xmm0		/* Any null chars? */
 	pcmpeqb	%xmm2, %xmm1		/* compare first 16 bytes for equality */
@@ -201,10 +237,10 @@ ENTRY (STRCMP)
 	pmovmskb %xmm1, %edx
 	sub	$0xffff, %edx		/* if first 16 bytes are same, edx == 0xffff */
 	jnz	LABEL(less16bytes)	/* If not, find different value or null char */
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)	/* finish comparision */
-#endif
+# endif
 	add	$16, %rsi		/* prepare to search next 16 bytes */
 	add	$16, %rdi		/* prepare to search next 16 bytes */
 
@@ -246,13 +282,13 @@ LABEL(ashr_0):
 	movdqa	(%rsi), %xmm1
 	pxor	%xmm0, %xmm0			/* clear %xmm0 for null char check */
 	pcmpeqb	%xmm1, %xmm0			/* Any null chars? */
-#if !defined USE_AS_STRCASECMP_L && !defined USE_AS_STRNCASECMP_L
+# if !defined USE_AS_STRCASECMP_L && !defined USE_AS_STRNCASECMP_L
 	pcmpeqb	(%rdi), %xmm1			/* compare 16 bytes for equality */
-#else
+# else
 	movdqa	(%rdi), %xmm2
 	TOLOWER (%xmm1, %xmm2)
 	pcmpeqb	%xmm2, %xmm1			/* compare 16 bytes for equality */
-#endif
+# endif
 	psubb	%xmm0, %xmm1			/* packed sub of comparison results*/
 	pmovmskb %xmm1, %r9d
 	shr	%cl, %edx			/* adjust 0xffff for offset */
@@ -285,10 +321,10 @@ LABEL(loop_ashr_0):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)		/* mismatch or null char seen */
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 	add	$16, %rcx
 	movdqa	(%rsi, %rcx), %xmm1
 	movdqa	(%rdi, %rcx), %xmm2
@@ -300,10 +336,10 @@ LABEL(loop_ashr_0):
 	pmovmskb %xmm1, %edx
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 	add	$16, %rcx
 	jmp	LABEL(loop_ashr_0)
 
@@ -352,13 +388,13 @@ LABEL(gobble_ashr_1):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4		 /* store for next cycle */
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$1, %xmm3
 	pslldq	$15, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$1, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -368,10 +404,10 @@ LABEL(gobble_ashr_1):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
 
@@ -382,13 +418,13 @@ LABEL(gobble_ashr_1):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4		/* store for next cycle */
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$1, %xmm3
 	pslldq	$15, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$1, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -398,10 +434,10 @@ LABEL(gobble_ashr_1):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
 	jmp	LABEL(loop_ashr_1)
@@ -417,10 +453,10 @@ LABEL(nibble_ashr_1):
 	test	$0xfffe, %edx
 	jnz	LABEL(ashr_1_exittail)	/* find null char*/
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$15, %r11
 	jbe	LABEL(ashr_1_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10		/* substract 4K from %r10 */
@@ -482,13 +518,13 @@ LABEL(gobble_ashr_2):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$2, %xmm3
 	pslldq	$14, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$2, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -498,10 +534,10 @@ LABEL(gobble_ashr_2):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -513,13 +549,13 @@ LABEL(gobble_ashr_2):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$2, %xmm3
 	pslldq	$14, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$2, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -529,10 +565,10 @@ LABEL(gobble_ashr_2):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -545,10 +581,10 @@ LABEL(nibble_ashr_2):
 	test	$0xfffc, %edx
 	jnz	LABEL(ashr_2_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$14, %r11
 	jbe	LABEL(ashr_2_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -607,13 +643,13 @@ LABEL(gobble_ashr_3):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$3, %xmm3
 	pslldq	$13, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$3, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -623,10 +659,10 @@ LABEL(gobble_ashr_3):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -638,13 +674,13 @@ LABEL(gobble_ashr_3):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$3, %xmm3
 	pslldq	$13, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$3, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -654,10 +690,10 @@ LABEL(gobble_ashr_3):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -670,10 +706,10 @@ LABEL(nibble_ashr_3):
 	test	$0xfff8, %edx
 	jnz	LABEL(ashr_3_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$13, %r11
 	jbe	LABEL(ashr_3_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -732,13 +768,13 @@ LABEL(gobble_ashr_4):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$4, %xmm3
 	pslldq	$12, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$4, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -748,10 +784,10 @@ LABEL(gobble_ashr_4):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -763,13 +799,13 @@ LABEL(gobble_ashr_4):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$4, %xmm3
 	pslldq	$12, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$4, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -779,10 +815,10 @@ LABEL(gobble_ashr_4):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -795,10 +831,10 @@ LABEL(nibble_ashr_4):
 	test	$0xfff0, %edx
 	jnz	LABEL(ashr_4_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$12, %r11
 	jbe	LABEL(ashr_4_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -857,13 +893,13 @@ LABEL(gobble_ashr_5):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$5, %xmm3
 	pslldq	$11, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$5, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -873,10 +909,10 @@ LABEL(gobble_ashr_5):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -888,13 +924,13 @@ LABEL(gobble_ashr_5):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$5, %xmm3
 	pslldq	$11, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$5, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -904,10 +940,10 @@ LABEL(gobble_ashr_5):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -920,10 +956,10 @@ LABEL(nibble_ashr_5):
 	test	$0xffe0, %edx
 	jnz	LABEL(ashr_5_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$11, %r11
 	jbe	LABEL(ashr_5_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -982,13 +1018,13 @@ LABEL(gobble_ashr_6):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$6, %xmm3
 	pslldq	$10, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$6, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -998,10 +1034,10 @@ LABEL(gobble_ashr_6):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1013,13 +1049,13 @@ LABEL(gobble_ashr_6):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$6, %xmm3
 	pslldq	$10, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$6, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1029,10 +1065,10 @@ LABEL(gobble_ashr_6):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1045,10 +1081,10 @@ LABEL(nibble_ashr_6):
 	test	$0xffc0, %edx
 	jnz	LABEL(ashr_6_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$10, %r11
 	jbe	LABEL(ashr_6_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -1107,13 +1143,13 @@ LABEL(gobble_ashr_7):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$7, %xmm3
 	pslldq	$9, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$7, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1123,10 +1159,10 @@ LABEL(gobble_ashr_7):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1138,13 +1174,13 @@ LABEL(gobble_ashr_7):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$7, %xmm3
 	pslldq	$9, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$7, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1154,10 +1190,10 @@ LABEL(gobble_ashr_7):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1170,10 +1206,10 @@ LABEL(nibble_ashr_7):
 	test	$0xff80, %edx
 	jnz	LABEL(ashr_7_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$9, %r11
 	jbe	LABEL(ashr_7_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -1232,13 +1268,13 @@ LABEL(gobble_ashr_8):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$8, %xmm3
 	pslldq	$8, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$8, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1248,10 +1284,10 @@ LABEL(gobble_ashr_8):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1263,13 +1299,13 @@ LABEL(gobble_ashr_8):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$8, %xmm3
 	pslldq	$8, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$8, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1279,10 +1315,10 @@ LABEL(gobble_ashr_8):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1295,10 +1331,10 @@ LABEL(nibble_ashr_8):
 	test	$0xff00, %edx
 	jnz	LABEL(ashr_8_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$8, %r11
 	jbe	LABEL(ashr_8_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -1357,13 +1393,13 @@ LABEL(gobble_ashr_9):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$9, %xmm3
 	pslldq	$7, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$9, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1373,10 +1409,10 @@ LABEL(gobble_ashr_9):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1388,13 +1424,13 @@ LABEL(gobble_ashr_9):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$9, %xmm3
 	pslldq	$7, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$9, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1404,10 +1440,10 @@ LABEL(gobble_ashr_9):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3		/* store for next cycle */
@@ -1420,10 +1456,10 @@ LABEL(nibble_ashr_9):
 	test	$0xfe00, %edx
 	jnz	LABEL(ashr_9_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$7, %r11
 	jbe	LABEL(ashr_9_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -1482,13 +1518,13 @@ LABEL(gobble_ashr_10):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$10, %xmm3
 	pslldq	$6, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$10, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1498,10 +1534,10 @@ LABEL(gobble_ashr_10):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1513,13 +1549,13 @@ LABEL(gobble_ashr_10):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$10, %xmm3
 	pslldq	$6, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$10, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1529,10 +1565,10 @@ LABEL(gobble_ashr_10):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1545,10 +1581,10 @@ LABEL(nibble_ashr_10):
 	test	$0xfc00, %edx
 	jnz	LABEL(ashr_10_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$6, %r11
 	jbe	LABEL(ashr_10_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -1607,13 +1643,13 @@ LABEL(gobble_ashr_11):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$11, %xmm3
 	pslldq	$5, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$11, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1623,10 +1659,10 @@ LABEL(gobble_ashr_11):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1638,13 +1674,13 @@ LABEL(gobble_ashr_11):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$11, %xmm3
 	pslldq	$5, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$11, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1654,10 +1690,10 @@ LABEL(gobble_ashr_11):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1670,10 +1706,10 @@ LABEL(nibble_ashr_11):
 	test	$0xf800, %edx
 	jnz	LABEL(ashr_11_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$5, %r11
 	jbe	LABEL(ashr_11_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -1732,13 +1768,13 @@ LABEL(gobble_ashr_12):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$12, %xmm3
 	pslldq	$4, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$12, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1748,10 +1784,10 @@ LABEL(gobble_ashr_12):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1763,13 +1799,13 @@ LABEL(gobble_ashr_12):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$12, %xmm3
 	pslldq	$4, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$12, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1779,10 +1815,10 @@ LABEL(gobble_ashr_12):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1795,10 +1831,10 @@ LABEL(nibble_ashr_12):
 	test	$0xf000, %edx
 	jnz	LABEL(ashr_12_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$4, %r11
 	jbe	LABEL(ashr_12_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -1857,13 +1893,13 @@ LABEL(gobble_ashr_13):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$13, %xmm3
 	pslldq	$3, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$13, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1873,10 +1909,10 @@ LABEL(gobble_ashr_13):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1888,13 +1924,13 @@ LABEL(gobble_ashr_13):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$13, %xmm3
 	pslldq	$3, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$13, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1904,10 +1940,10 @@ LABEL(gobble_ashr_13):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -1920,10 +1956,10 @@ LABEL(nibble_ashr_13):
 	test	$0xe000, %edx
 	jnz	LABEL(ashr_13_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$3, %r11
 	jbe	LABEL(ashr_13_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -1982,13 +2018,13 @@ LABEL(gobble_ashr_14):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$14, %xmm3
 	pslldq	$2, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$14, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -1998,10 +2034,10 @@ LABEL(gobble_ashr_14):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -2013,13 +2049,13 @@ LABEL(gobble_ashr_14):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$14, %xmm3
 	pslldq	$2, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$14, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -2029,10 +2065,10 @@ LABEL(gobble_ashr_14):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP | defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP | defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -2045,10 +2081,10 @@ LABEL(nibble_ashr_14):
 	test	$0xc000, %edx
 	jnz	LABEL(ashr_14_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmp	$2, %r11
 	jbe	LABEL(ashr_14_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -2109,13 +2145,13 @@ LABEL(gobble_ashr_15):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$15, %xmm3
 	pslldq	$1, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$15, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -2125,10 +2161,10 @@ LABEL(gobble_ashr_15):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -2140,13 +2176,13 @@ LABEL(gobble_ashr_15):
 	movdqa	(%rdi, %rcx), %xmm2
 	movdqa	%xmm2, %xmm4
 
-#ifndef USE_SSSE3
+# ifndef USE_SSSE3
 	psrldq	$15, %xmm3
 	pslldq	$1, %xmm2
 	por	%xmm3, %xmm2		/* merge into one 16byte value */
-#else
+# else
 	palignr	$15, %xmm3, %xmm2	/* merge into one 16byte value */
-#endif
+# endif
 	TOLOWER (%xmm1, %xmm2)
 
 	pcmpeqb	%xmm1, %xmm0
@@ -2156,10 +2192,10 @@ LABEL(gobble_ashr_15):
 	sub	$0xffff, %edx
 	jnz	LABEL(exit)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	$16, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 
 	add	$16, %rcx
 	movdqa	%xmm4, %xmm3
@@ -2172,10 +2208,10 @@ LABEL(nibble_ashr_15):
 	test	$0x8000, %edx
 	jnz	LABEL(ashr_15_exittail)
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	cmpq	$1, %r11
 	jbe	LABEL(ashr_15_exittail)
-#endif
+# endif
 
 	pxor	%xmm0, %xmm0
 	sub	$0x1000, %r10
@@ -2210,18 +2246,18 @@ LABEL(ret):
 LABEL(less16bytes):
 	bsf	%rdx, %rdx		/* find and store bit index in %rdx */
 
-#if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRNCMP || defined USE_AS_STRNCASECMP_L
 	sub	%rdx, %r11
 	jbe	LABEL(strcmp_exitz)
-#endif
+# endif
 	movzbl	(%rsi, %rdx), %ecx
 	movzbl	(%rdi, %rdx), %eax
 
-#if defined USE_AS_STRCASECMP_L || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRCASECMP_L || defined USE_AS_STRNCASECMP_L
 	leaq	_nl_C_LC_CTYPE_tolower+128*4(%rip), %rdx
 	movl	(%rdx,%rcx,4), %ecx
 	movl	(%rdx,%rax,4), %eax
-#endif
+# endif
 
 	sub	%ecx, %eax
 	ret
@@ -2235,11 +2271,11 @@ LABEL(Byte0):
 	movzx	(%rsi), %ecx
 	movzx	(%rdi), %eax
 
-#if defined USE_AS_STRCASECMP_L || defined USE_AS_STRNCASECMP_L
+# if defined USE_AS_STRCASECMP_L || defined USE_AS_STRNCASECMP_L
 	leaq	_nl_C_LC_CTYPE_tolower+128*4(%rip), %rdx
 	movl	(%rdx,%rcx,4), %ecx
 	movl	(%rdx,%rax,4), %eax
-#endif
+# endif
 
 	sub	%ecx, %eax
 	ret
@@ -2264,4 +2300,5 @@ LABEL(unaligned_table):
 	.int	LABEL(ashr_14) - LABEL(unaligned_table)
 	.int	LABEL(ashr_15) - LABEL(unaligned_table)
 	.int	LABEL(ashr_0) - LABEL(unaligned_table)
+#endif /* NOT_IN_libc */
 libc_hidden_builtin_def (STRCMP)

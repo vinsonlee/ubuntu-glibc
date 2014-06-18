@@ -1,5 +1,5 @@
 /* pselect for Hurd.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,8 +30,13 @@
    SIGMASK for this call.  Returns the number of ready descriptors, or -1 for
    errors.  */
 int
-__pselect (int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-	   const struct timespec *timeout, const sigset_t *sigmask)
+__pselect (nfds, readfds, writefds, exceptfds, timeout, sigmask)
+     int nfds;
+     fd_set *readfds;
+     fd_set *writefds;
+     fd_set *exceptfds;
+     const struct timespec *timeout;
+     const sigset_t *sigmask;
 {
   return _hurd_select (nfds, NULL,
 		       readfds, writefds, exceptfds, timeout, sigmask);

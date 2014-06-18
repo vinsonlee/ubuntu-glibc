@@ -1,8 +1,3 @@
-2.13-33 dates when this was added
-
-TODO: _DEBIAN_ in versions however pose problem. Remove the _DEBIAN_ version
-once packages are rebuilt against 2.21.
-
 2010-08-04  Emilio Pozuelo Monfort  <pochu27@gmail.com>
 	* hurd/hurdexec.c (_hurd_exec): Deprecate it.
 	(_hurd_exec_file_name): New function.
@@ -24,6 +19,7 @@ Pass the file name of executable to the exec server, which it needs to
 execute #!-scripts.  Currently, the exec server tries to guess the name
 from argv[0] but argv[0] only contains the executable name by convention.
 ---
+ Versions.def                |    1 
  hurd/Makefile               |    4 +-
  hurd/Versions               |    4 ++
  hurd/hurd.h                 |   14 ++++++++--
@@ -33,9 +29,19 @@ from argv[0] but argv[0] only contains the executable name by convention.
  sysdeps/mach/hurd/spawni.c  |   59 ++++++++++++++++++++++++++------------------
  8 files changed, 102 insertions(+), 43 deletions(-)
 
+--- a/Versions.def
++++ b/Versions.def
+@@ -45,6 +45,7 @@ libc {
+   GLIBC_PRIVATE
+   GLIBC_2.13_DEBIAN_19
+   GLIBC_2.13_DEBIAN_31
++  GLIBC_2.13_DEBIAN_33
+ }
+ libcrypt {
+   GLIBC_2.0
 --- a/hurd/Versions
 +++ b/hurd/Versions
-@@ -140,6 +140,14 @@ libc {
+@@ -160,6 +160,10 @@ libc {
      _hurd_sigstate_unlock;
      _hurd_sigstate_delete;
    }
@@ -43,17 +49,13 @@ from argv[0] but argv[0] only contains the executable name by convention.
 +    # "quasi-internal" functions
 +    _hurd_exec_file_name;
 +  }
-+  GLIBC_2.21 {
-+    # "quasi-internal" functions
-+    _hurd_exec_file_name;
-+  }
  
+ %if !SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_2)
    HURD_CTHREADS_0.3 {
-     # weak refs to libthreads functions that libc calls iff libthreads in use
 --- a/hurd/Makefile
 +++ b/hurd/Makefile
-@@ -32,8 +32,8 @@ user-interfaces		:= $(addprefix hurd/,\
- 				       auth auth_request auth_reply startup \
+@@ -36,8 +36,8 @@ user-interfaces		:= $(addprefix hurd/,\
+ 				       auth startup \
  				       process process_request \
  				       msg msg_reply msg_request \
 -				       exec exec_startup crash interrupt \
@@ -90,16 +92,8 @@ from argv[0] but argv[0] only contains the executable name by convention.
  /* Inform the proc server we have exited with STATUS, and kill the
 --- a/hurd/hurdexec.c
 +++ b/hurd/hurdexec.c
-@@ -25,16 +25,37 @@
- #include <hurd/fd.h>
- #include <hurd/signal.h>
- #include <hurd/id.h>
-+#include <hurd/fs_experimental.h>
- #include <assert.h>
- #include <argz.h>
+@@ -30,11 +30,29 @@
  
-+#include <shlib-compat.h>
-+
  /* Overlay TASK, executing FILE with arguments ARGV and environment ENVP.
     If TASK == mach_task_self (), some ports are dealloc'd by the exec server.
 -   ARGV and ENVP are terminated by NULL pointers.  */
@@ -123,13 +117,13 @@ from argv[0] but argv[0] only contains the executable name by convention.
 +   FILE if FILE is a script, and will then pass /dev/fd/N to the
 +   interpreter.  */
 +error_t
-+__hurd_exec_file_name (task_t task, file_t file, const char *filename,
++_hurd_exec_file_name (task_t task, file_t file, const char *filename,
 +		      char *const argv[], char *const envp[])
 +{
    error_t err;
    char *args, *env;
    size_t argslen, envlen;
-@@ -216,7 +237,7 @@ _hurd_exec (task_t task, file_t file,
+@@ -217,7 +235,7 @@ _hurd_exec (task_t task, file_t file,
        /* We have euid != svuid or egid != svgid.  POSIX.1 says that exec
  	 sets svuid = euid and svgid = egid.  So we must get a new auth
  	 port and reauthenticate everything with it.  We'll pass the new
@@ -138,7 +132,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
  
        auth_t newauth;
  
-@@ -360,13 +381,27 @@ _hurd_exec (task_t task, file_t file,
+@@ -361,13 +379,27 @@ _hurd_exec (task_t task, file_t file,
        if (__sigismember (&_hurdsig_traced, SIGKILL))
  	flags |= EXEC_SIGTRAP;
  #endif
@@ -173,23 +167,9 @@ from argv[0] but argv[0] only contains the executable name by convention.
      }
  
    /* Release references to the standard ports.  */
-@@ -401,3 +436,13 @@ _hurd_exec (task_t task, file_t file,
-   free (env);
-   return err;
- }
-+versioned_symbol (libc, __hurd_exec_file_name, _hurd_exec_file_name, GLIBC_2_21);
-+#if SHLIB_COMPAT (libc, GLIBC_2_13, GLIBC_2_21)
-+error_t
-+__hurd_exec_file_name_2_13 (task_t task, file_t file, const char *filename,
-+		      char *const argv[], char *const envp[])
-+{
-+  return __hurd_exec_file_name (task, file, filename, argv, envp);
-+}
-+compat_symbol (libc, __hurd_exec_file_name_2_13, _hurd_exec_file_name, GLIBC_2_13_DEBIAN_33);
-+#endif
 --- a/sysdeps/mach/hurd/execve.c
 +++ b/sysdeps/mach/hurd/execve.c
-@@ -31,7 +31,8 @@ __execve (const char *file_name, char *c
+@@ -34,7 +34,8 @@ __execve (file_name, argv, envp)
      return -1;
  
    /* Hopefully this will not return.  */
@@ -215,23 +195,16 @@ from argv[0] but argv[0] only contains the executable name by convention.
    return __hurd_fail (err);
 --- a/sysdeps/mach/hurd/spawni.c
 +++ b/sysdeps/mach/hurd/spawni.c
-@@ -29,6 +29,7 @@
- #include <hurd/id.h>
- #include <hurd/lookup.h>
- #include <hurd/resource.h>
-+#include <hurd/fs_experimental.h>
- #include <assert.h>
- #include <argz.h>
- #include "spawn_int.h"
-@@ -44,6 +45,7 @@ __spawni (pid_t *pid, const char *file,
+@@ -43,7 +43,7 @@ __spawni (pid_t *pid, const char *file,
+ 	  int xflags)
  {
    pid_t new_pid;
-   char *path, *p, *name;
-+  const char *filename;
+-  char *path, *p, *name;
++  char *path, *p, *name, *filename;
    size_t len;
    size_t pathlen;
    short int flags;
-@@ -59,14 +61,14 @@ __spawni (pid_t *pid, const char *file,
+@@ -59,14 +59,14 @@ __spawni (pid_t *pid, const char *file,
       that remains visible after an exec is registration with the proc
       server, and the inheritance of various values and ports.  All those
       inherited values and ports are what get collected up and passed in the
@@ -254,7 +227,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
       except that all errors will be detected here (in the parent process)
       and return proper errno codes rather than the child dying with 127.
  
-@@ -546,7 +548,7 @@ __spawni (pid_t *pid, const char *file,
+@@ -546,7 +546,7 @@ __spawni (pid_t *pid, const char *file,
  
    if ((xflags & SPAWN_XFLAGS_USE_PATH) == 0 || strchr (file, '/') != NULL)
      /* The FILE parameter is actually a path.  */
@@ -263,7 +236,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
    else
      {
        /* We have to search for FILE on the path.  */
-@@ -573,20 +575,18 @@ __spawni (pid_t *pid, const char *file,
+@@ -573,20 +573,18 @@ __spawni (pid_t *pid, const char *file,
        p = path;
        do
  	{
@@ -287,7 +260,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
  	  switch (err)
  	    {
  	    case EACCES:
-@@ -623,14 +623,27 @@ __spawni (pid_t *pid, const char *file,
+@@ -623,14 +621,27 @@ __spawni (pid_t *pid, const char *file,
  
      inline error_t exec (file_t file)
        {

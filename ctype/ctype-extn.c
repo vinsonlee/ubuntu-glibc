@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,7 +23,14 @@
 #define __ctype_toupper \
   ((int32_t *) _NL_CURRENT (LC_CTYPE, _NL_CTYPE_TOUPPER) + 128)
 
-/* Real function versions of the non-ANSI ctype functions.  */
+/* Real function versions of the non-ANSI ctype functions.  isblank is
+   now in ISO C99 but we leave it here.  */
+
+int
+isblank (int c)
+{
+  return __isctype (c, _ISblank);
+}
 
 int
 _tolower (int c)
@@ -49,3 +56,11 @@ isascii (int c)
   return __isascii (c);
 }
 weak_alias (isascii, __isascii_l)
+
+
+int
+__isblank_l (int c, __locale_t l)
+{
+  return __isctype_l (c, _ISblank, l);
+}
+weak_alias (__isblank_l, isblank_l)

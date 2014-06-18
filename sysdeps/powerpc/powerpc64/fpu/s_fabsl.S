@@ -1,6 +1,6 @@
 /* Copy a sign bit between floating-point values.
    IBM extended format long double version.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,8 +26,9 @@ ENTRY(__fabsl)
    with the sign bit of y.  */
 	fmr	fp0,fp1
 	fabs	fp1,fp1
-	fneg	fp3,fp2
-	fsel	fp2,fp0,fp2,fp3
+	fcmpu	cr1,fp0,fp1
+	beqlr	cr1
+	fneg	fp2,fp2
 	blr
 END (__fabsl)
 

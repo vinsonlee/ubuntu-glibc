@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2016 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,18 +20,20 @@
 #
 subdir	:= setjmp
 
-include ../Makeconfig
-
 headers	:= setjmp.h bits/setjmp.h bits/setjmp2.h
 
 routines	:= setjmp sigjmp bsd-setjmp bsd-_setjmp \
 		   longjmp __longjmp jmp-unwind
 
 tests		:= tst-setjmp jmpbug bug269-setjmp tst-setjmp-fp \
-		   tst-sigsetjmp tst-setjmp-static
-tests-static	:= tst-setjmp-static
+		   tst-sigsetjmp
 
 
 include ../Rules
 
-$(objpfx)tst-setjmp-fp: $(libm)
+ifeq ($(build-shared),yes)
+link-libm = $(common-objpfx)math/libm.so
+else
+link-libm = $(common-objpfx)math/libm.a
+endif
+$(objpfx)tst-setjmp-fp: $(link-libm)

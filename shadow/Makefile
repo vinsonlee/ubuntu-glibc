@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2016 Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,14 +20,12 @@
 #
 subdir	:= shadow
 
-include ../Makeconfig
-
 headers		= shadow.h
 routines	= getspent getspnam sgetspent fgetspent putspent \
 		  getspent_r getspnam_r sgetspent_r fgetspent_r \
 		  lckpwdf
 
-tests = tst-shadow tst-putspent
+tests = tst-shadow
 
 CFLAGS-getspent_r.c = -fexceptions
 CFLAGS-getspent.c = -fexceptions

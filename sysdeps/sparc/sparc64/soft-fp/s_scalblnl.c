@@ -1,6 +1,6 @@
 /* Software floating-point emulation.
    scalblnl(x, exp)
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek (jj@ultra.linux.cz).
 
@@ -50,3 +50,5 @@ long double __scalblnl(long double arg, int exp)
 
   return r;
 }
+
+weak_alias (__scalblnl, scalblnl)

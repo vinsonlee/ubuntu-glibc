@@ -48,20 +48,13 @@ __ieee754_fmodl (long double x, long double y)
 			    (hx>=0x7ff0000000000000LL)|| /* y=0,or x not finite */
 			    (hy>0x7ff0000000000000LL),0))	/* or y is NaN */
 	    return (x*y)/(x*y);
-	if (__glibc_unlikely (hx <= hy))
+	if (__builtin_expect (hx <= hy, 0))
 	  {
 	    /* If |x| < |y| return x.  */
 	    if (hx < hy)
 	      return x;
 	    /* At this point the absolute value of the high doubles of
 	       x and y must be equal.  */
-	    if ((lx & 0x7fffffffffffffffLL) == 0
-		&& (ly & 0x7fffffffffffffffLL) == 0)
-	      /* Both low parts are zero.  The result should be an
-		 appropriately signed zero, but the subsequent logic
-		 could treat them as unequal, depending on the signs
-		 of the low parts.  */
-	      return Zero[(uint64_t) sx >> 63];
 	    /* If the low double of y is the same sign as the high
 	       double of y (ie. the low double increases |y|)...  */
 	    if (((ly ^ sy) & 0x8000000000000000LL) == 0
@@ -90,7 +83,7 @@ __ieee754_fmodl (long double x, long double y)
 	ldbl_extract_mantissa(&hx, &lx, &ix, x);
 	ldbl_extract_mantissa(&hy, &ly, &iy, y);
 
-	if (__glibc_unlikely (ix == -IEEE754_DOUBLE_BIAS))
+	if (__builtin_expect (ix == -IEEE754_DOUBLE_BIAS, 0))
 	  {
 	    /* subnormal x, shift x to normal.  */
 	    while ((hx & (1LL << 48)) == 0)
@@ -101,7 +94,7 @@ __ieee754_fmodl (long double x, long double y)
 	      }
 	  }
 
-	if (__glibc_unlikely (iy == -IEEE754_DOUBLE_BIAS))
+	if (__builtin_expect (iy == -IEEE754_DOUBLE_BIAS, 0))
 	  {
 	    /* subnormal y, shift y to normal.  */
 	    while ((hy & (1LL << 48)) == 0)
@@ -137,11 +130,15 @@ __ieee754_fmodl (long double x, long double y)
 	    x = ldbl_insert_mantissa((sx>>63), iy, hx, lx);
 	} else {		/* subnormal output */
 	    n = -1022 - iy;
-	    /* We know 1 <= N <= 52, and that there are no nonzero
-	       bits in places below 2^-1074.  */
-	    lx = (lx >> n) | ((u_int64_t) hx << (64 - n));
-	    hx >>= n;
-	    x = ldbl_insert_mantissa((sx>>63), -1023, hx, lx);
+	    if(n<=48) {
+		lx = (lx>>n)|((u_int64_t)hx<<(64-n));
+		hx >>= n;
+	    } else if (n<=63) {
+		lx = (hx<<(64-n))|(lx>>n); hx = sx;
+	    } else {
+		lx = hx>>(n-64); hx = sx;
+	    }
+	    x = ldbl_insert_mantissa((sx>>63), iy, hx, lx);
 	    x *= one;		/* create necessary signal */
 	}
 	return x;		/* exact output */

@@ -116,7 +116,6 @@ static char rcsid[] = "$NetBSD: s_erf.c,v 1.8 1995/05/10 20:47:05 jtc Exp $";
 #include <float.h>
 #include <math.h>
 #include <math_private.h>
-#include <fix-int-fp-convert-zero.h>
 
 static const double
   tiny = 1e-300,
@@ -129,6 +128,7 @@ static const double
  * Coefficients for approximation to  erf on [0,0.84375]
  */
   efx = 1.28379167095512586316e-01, /* 0x3FC06EBA, 0x8214DB69 */
+  efx8 = 1.02703333676410069053e+00, /* 0x3FF06EBA, 0x8214DB69 */
   pp[] = { 1.28379167095512558561e-01, /* 0x3FC06EBA, 0x8214DB68 */
 	   -3.25042107247001499370e-01, /* 0xBFD4CD7D, 0x691CB913 */
 	   -2.84817495755985104766e-02, /* 0xBF9D2A51, 0xDBD7194F */
@@ -211,12 +211,7 @@ __erf (double x)
       if (ix < 0x3e300000)              /* |x|<2**-28 */
 	{
 	  if (ix < 0x00800000)
-	    {
-	      /* Avoid spurious underflow.  */
-	      double ret = 0.0625 * (16.0 * x + (16.0 * efx) * x);
-	      math_check_force_underflow (ret);
-	      return ret;
-	    }
+	    return 0.125 * (8.0 * x + efx8 * x);  /*avoid underflow */
 	  return x + efx * x;
 	}
       z = x * x;
@@ -309,10 +304,7 @@ __erfc (double x)
   ix = hx & 0x7fffffff;
   if (ix >= 0x7ff00000)                         /* erfc(nan)=nan */
     {                                           /* erfc(+-inf)=0,2 */
-      double ret = (double) (((u_int32_t) hx >> 31) << 1) + one / x;
-      if (FIX_INT_FP_CONVERT_ZERO && ret == 0.0)
-	return 0.0;
-      return ret;
+      return (double) (((u_int32_t) hx >> 31) << 1) + one / x;
     }
 
   if (ix < 0x3feb0000)                  /* |x|<0.84375 */
@@ -402,7 +394,10 @@ __erfc (double x)
 	  __ieee754_exp ((z - x) * (z + x) + R / S);
       if (hx > 0)
 	{
-	  double ret = math_narrow_eval (r / x);
+#if FLT_EVAL_METHOD != 0
+	  volatile
+#endif
+	  double ret = r / x;
 	  if (ret == 0)
 	    __set_errno (ERANGE);
 	  return ret;

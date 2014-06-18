@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,9 @@
 /* Run signals handlers on the stack specified by SS (if not NULL).
    If OSS is not NULL, it is filled in with the old signal stack status.  */
 int
-sigaltstack (const struct sigaltstack *ss, struct sigaltstack *oss)
+sigaltstack (ss, oss)
+     const struct sigaltstack *ss;
+     struct sigaltstack *oss;
 {
   __set_errno (ENOSYS);
   return -1;

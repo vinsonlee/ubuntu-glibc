@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Extended from original form by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -62,7 +62,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <stddef.h>
 
 #include "nsswitch.h"
 #include <arpa/inet.h>
@@ -119,15 +118,18 @@ _nss_dns_getnetbyname_r (const char *name, struct netent *result,
   } net_buffer;
   querybuf *orig_net_buffer;
   int anslen;
+  char *qbuf;
   enum nss_status status;
 
   if (__res_maybe_init (&_res, 0) == -1)
     return NSS_STATUS_UNAVAIL;
 
+  qbuf = strdupa (name);
+
   net_buffer.buf = orig_net_buffer = (querybuf *) alloca (1024);
 
-  anslen = __libc_res_nsearch (&_res, name, C_IN, T_PTR, net_buffer.buf->buf,
-			       1024, &net_buffer.ptr, NULL, NULL, NULL, NULL);
+  anslen = __libc_res_nsearch (&_res, qbuf, C_IN, T_PTR, net_buffer.buf->buf,
+			       1024, &net_buffer.ptr, NULL, NULL, NULL);
   if (anslen < 0)
     {
       /* Nothing found.  */
@@ -203,7 +205,7 @@ _nss_dns_getnetbyaddr_r (uint32_t net, int type, struct netent *result,
   net_buffer.buf = orig_net_buffer = (querybuf *) alloca (1024);
 
   anslen = __libc_res_nquery (&_res, qbuf, C_IN, T_PTR, net_buffer.buf->buf,
-			      1024, &net_buffer.ptr, NULL, NULL, NULL, NULL);
+			      1024, &net_buffer.ptr, NULL, NULL, NULL);
   if (anslen < 0)
     {
       /* Nothing found.  */
@@ -235,6 +237,9 @@ _nss_dns_getnetbyaddr_r (uint32_t net, int type, struct netent *result,
 }
 
 
+#undef offsetof
+#define offsetof(Type, Member) ((size_t) &((Type *) NULL)->Member)
+
 static enum nss_status
 getanswer_r (const querybuf *answer, int anslen, struct netent *result,
 	     char *buffer, size_t buflen, int *errnop, int *h_errnop,
@@ -263,7 +268,7 @@ getanswer_r (const querybuf *answer, int anslen, struct netent *result,
   uintptr_t pad = -(uintptr_t) buffer % __alignof__ (struct net_data);
   buffer += pad;
 
-  if (__glibc_unlikely (buflen < sizeof (*net_data) + pad))
+  if (__builtin_expect (buflen < sizeof (*net_data) + pad, 0))
     {
       /* The buffer is too small.  */
     too_small:
@@ -343,23 +348,10 @@ getanswer_r (const querybuf *answer, int anslen, struct netent *result,
       if (n < 0 || res_dnok (bp) == 0)
 	break;
       cp += n;
-
-      if (end_of_message - cp < 10)
-	{
-	  __set_h_errno (NO_RECOVERY);
-	  return NSS_STATUS_UNAVAIL;
-	}
-
       GETSHORT (type, cp);
       GETSHORT (class, cp);
       cp += INT32SZ;		/* TTL */
-      uint16_t rdatalen;
-      GETSHORT (rdatalen, cp);
-      if (end_of_message - cp < rdatalen)
-	{
-	  __set_h_errno (NO_RECOVERY);
-	  return NSS_STATUS_UNAVAIL;
-	}
+      GETSHORT (n, cp);
 
       if (class == C_IN && type == T_PTR)
 	{
@@ -381,7 +373,7 @@ getanswer_r (const querybuf *answer, int anslen, struct netent *result,
 	      cp += n;
 	      return NSS_STATUS_UNAVAIL;
 	    }
-	  cp += rdatalen;
+	  cp += n;
          if (alias_pointer + 2 < &net_data->aliases[MAX_NR_ALIASES])
            {
              *alias_pointer++ = bp;
@@ -392,9 +384,6 @@ getanswer_r (const querybuf *answer, int anslen, struct netent *result,
              ++have_answer;
            }
 	}
-      else
-	/* Skip over unknown record data.  */
-	cp += rdatalen;
     }
 
   if (have_answer)
@@ -409,8 +398,8 @@ getanswer_r (const querybuf *answer, int anslen, struct netent *result,
 
 	case BYNAME:
 	  {
-	    char **ap;
-	    for (ap = result->n_aliases; *ap != NULL; ++ap)
+	    char **ap = result->n_aliases++;
+	    while (*ap != NULL)
 	      {
 		/* Check each alias name for being of the forms:
 		   4.3.2.1.in-addr.arpa		= net 1.2.3.4

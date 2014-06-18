@@ -1,5 +1,5 @@
 /* memcmp - compare two memory blocks.  32 bit S/390 version.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,38 +27,38 @@
 
        .text
 #ifdef USE_MULTIARCH
-ENTRY(__memcmp_default)
+ENTRY(memcmp_g5)
 #else
 ENTRY(memcmp)
 #endif
 	.machine "g5"
-	basr    %r5,0
+        basr    %r5,0
 .L_G5_16:
-	ltr     %r4,%r4
-	je      .L_G5_4
-	ahi     %r4,-1
-	lr      %r1,%r4
-	srl     %r1,8
-	ltr     %r1,%r1
-	jne     .L_G5_12
-	ex      %r4,.L_G5_17-.L_G5_16(%r5)
+        ltr     %r4,%r4
+        je      .L_G5_4
+        ahi     %r4,-1
+        lr      %r1,%r4
+        srl     %r1,8
+        ltr     %r1,%r1
+        jne     .L_G5_12
+        ex      %r4,.L_G5_17-.L_G5_16(%r5)
 .L_G5_4:
-	ipm     %r2
-	sll     %r2,2
-	sra     %r2,30
-	br      %r14
+        ipm     %r2
+        sll     %r2,2
+        sra     %r2,30
+        br      %r14
 .L_G5_12:
-	clc     0(256,%r3),0(%r2)
-	jne     .L_G5_4
-	la      %r3,256(%r3)
-	la      %r2,256(%r2)
-	brct    %r1,.L_G5_12
-	ex      %r4,.L_G5_17-.L_G5_16(%r5)
-	j       .L_G5_4
+        clc     0(256,%r3),0(%r2)
+        jne     .L_G5_4
+        la      %r3,256(%r3)
+        la      %r2,256(%r2)
+        brct    %r1,.L_G5_12
+        ex      %r4,.L_G5_17-.L_G5_16(%r5)
+        j       .L_G5_4
 .L_G5_17:
-	clc     0(1,%r3),0(%r2)
+        clc     0(1,%r3),0(%r2)
 #ifdef USE_MULTIARCH
-END(__memcmp_default)
+END(memcmp_g5)
 #else
 END(memcmp)
 libc_hidden_builtin_def (memcmp)

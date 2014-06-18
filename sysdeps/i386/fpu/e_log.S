@@ -46,13 +46,7 @@ ENTRY(__ieee754_log)
 	fnstsw			// x-1 : x : log(2)
 	andb	$0x45, %ah
 	jz	2f
-	fxam
-	fnstsw
-	andb	$0x45, %ah
-	cmpb	$0x40, %ah
-	jne	5f
-	fabs			// log(1) is +0 in all rounding modes.
-5:	fstp	%st(1)		// x-1 : log(2)
+	fstp	%st(1)		// x-1 : log(2)
 	fyl2xp1			// log(x)
 	ret
 
@@ -80,13 +74,7 @@ ENTRY(__log_finite)
 	fnstsw			// x-1 : x : log(2)
 	andb	$0x45, %ah
 	jz	2b
-	fxam
-	fnstsw
-	andb	$0x45, %ah
-	cmpb	$0x40, %ah
-	jne	6f
-	fabs			// log(1) is +0 in all rounding modes.
-6:	fstp	%st(1)		// x-1 : log(2)
+	fstp	%st(1)		// x-1 : log(2)
 	fyl2xp1			// log(x)
 	ret
 END(__log_finite)

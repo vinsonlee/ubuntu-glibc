@@ -1,6 +1,6 @@
 /* Test the GNU extensions in glob which allow the user to provide callbacks
    for the filesystem access functions.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2001.
 
@@ -211,7 +211,7 @@ my_readdir (void *gdir)
       return NULL;
     }
 
-  dir->d.d_ino = 1;		/* glob should not skip this entry.  */
+  dir->d.d_ino = dir->idx;
 
 #ifdef _DIRENT_HAVE_D_TYPE
   dir->d.d_type = filesystem[dir->idx].type;
@@ -379,8 +379,8 @@ test_result (const char *fmt, int flags, glob_t *gl, const char *str[])
 }
 
 
-static int
-do_test (void)
+int
+main (void)
 {
   glob_t gl;
   int errval;
@@ -497,6 +497,3 @@ do_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

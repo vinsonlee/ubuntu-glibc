@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@readhat.com>, 20055.
 
@@ -22,7 +22,7 @@
 size_t
 __confstr_chk (int name, char *buf, size_t len, size_t buflen)
 {
-  if (__glibc_unlikely (buflen < len))
+  if (__builtin_expect (buflen < len, 0))
     __chk_fail ();
 
   return confstr (name, buf, len);

@@ -1,5 +1,5 @@
 /* Set current priority ceiling of pthread_mutex_t.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2006.
 
@@ -20,31 +20,28 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <pthreadP.h>
-#include <atomic.h>
 
 
 int
-pthread_mutex_setprioceiling (pthread_mutex_t *mutex, int prioceiling,
-			      int *old_ceiling)
+pthread_mutex_setprioceiling (mutex, prioceiling, old_ceiling)
+     pthread_mutex_t *mutex;
+     int prioceiling;
+     int *old_ceiling;
 {
   /* The low bits of __kind aren't ever changed after pthread_mutex_init,
      so we don't need a lock yet.  */
   if ((mutex->__data.__kind & PTHREAD_MUTEX_PRIO_PROTECT_NP) == 0)
     return EINVAL;
 
-  /* See __init_sched_fifo_prio.  */
-  if (atomic_load_relaxed (&__sched_fifo_min_prio) == -1
-      || atomic_load_relaxed (&__sched_fifo_max_prio) == -1)
+  if (__sched_fifo_min_prio == -1)
     __init_sched_fifo_prio ();
 
-  if (__glibc_unlikely (prioceiling
-			< atomic_load_relaxed (&__sched_fifo_min_prio))
-      || __glibc_unlikely (prioceiling
-			   > atomic_load_relaxed (&__sched_fifo_max_prio))
-      || __glibc_unlikely ((prioceiling
+  if (__builtin_expect (prioceiling < __sched_fifo_min_prio, 0)
+      || __builtin_expect (prioceiling > __sched_fifo_max_prio, 0)
+      || __builtin_expect ((prioceiling
 			    & (PTHREAD_MUTEXATTR_PRIO_CEILING_MASK
 			       >> PTHREAD_MUTEXATTR_PRIO_CEILING_SHIFT))
-			   != prioceiling))
+			   != prioceiling, 0))
     return EINVAL;
 
   /* Check whether we already hold the mutex.  */

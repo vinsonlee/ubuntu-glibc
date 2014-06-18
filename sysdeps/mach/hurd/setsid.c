@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,6 @@
 #include <hurd.h>
 #include <hurd/port.h>
 #include <hurd/fd.h>
-#include <hurd/ioctl.h>
 
 /* Create a new session with the calling process as its leader.
    The process group IDs of the session and the calling process

@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -20,7 +20,9 @@
 #include <sys/stat.h>
 
 key_t
-ftok (const char *pathname, int proj_id)
+ftok (pathname, proj_id)
+     const char *pathname;
+     int proj_id;
 {
   struct stat64 st;
   key_t key;

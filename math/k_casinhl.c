@@ -1,7 +1,7 @@
 /* Return arc hyperbole sine for long double value, with the imaginary
    part of the result possibly adjusted for use in computing other
    functions.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -189,7 +189,11 @@ __kernel_casinhl (__complex__ long double x, int adj)
 	  else
 	    __imag__ res = __ieee754_atan2l (ix, s);
 	}
-      math_check_force_underflow_nonneg (__real__ res);
+      if (__real__ res < LDBL_MIN)
+	{
+	  volatile long double force_underflow = __real__ res * __real__ res;
+	  (void) force_underflow;
+	}
     }
   else
     {

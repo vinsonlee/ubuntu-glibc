@@ -1,5 +1,5 @@
 /* `long long int' divison with remainder.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,9 @@
 
 /* Return the `lldiv_t' representation of NUMER over DENOM.  */
 lldiv_t
-lldiv (long long int numer, long long int denom)
+lldiv (numer, denom)
+     long long int numer;
+     long long int denom;
 {
   lldiv_t result;
 

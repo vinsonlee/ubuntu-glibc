@@ -1,6 +1,6 @@
 /* mpn_mul_n -- Multiply two natural numbers of length n.
 
-Copyright (C) 1991-2016 Free Software Foundation, Inc.
+Copyright (C) 1991-2014 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -49,7 +49,15 @@ along with the GNU MP Library; see the file COPYING.LIB.  If not, see
    algorithm below.  */
 
 void
+#if __STDC__
 impn_mul_n_basecase (mp_ptr prodp, mp_srcptr up, mp_srcptr vp, mp_size_t size)
+#else
+impn_mul_n_basecase (prodp, up, vp, size)
+     mp_ptr prodp;
+     mp_srcptr up;
+     mp_srcptr vp;
+     mp_size_t size;
+#endif
 {
   mp_size_t i;
   mp_limb_t cy_limb;
@@ -92,8 +100,17 @@ impn_mul_n_basecase (mp_ptr prodp, mp_srcptr up, mp_srcptr vp, mp_size_t size)
 }
 
 void
+#if __STDC__
 impn_mul_n (mp_ptr prodp,
 	     mp_srcptr up, mp_srcptr vp, mp_size_t size, mp_ptr tspace)
+#else
+impn_mul_n (prodp, up, vp, size, tspace)
+     mp_ptr prodp;
+     mp_srcptr up;
+     mp_srcptr vp;
+     mp_size_t size;
+     mp_ptr tspace;
+#endif
 {
   if ((size & 1) != 0)
     {
@@ -202,7 +219,14 @@ impn_mul_n (mp_ptr prodp,
 }
 
 void
+#if __STDC__
 impn_sqr_n_basecase (mp_ptr prodp, mp_srcptr up, mp_size_t size)
+#else
+impn_sqr_n_basecase (prodp, up, size)
+     mp_ptr prodp;
+     mp_srcptr up;
+     mp_size_t size;
+#endif
 {
   mp_size_t i;
   mp_limb_t cy_limb;
@@ -245,8 +269,16 @@ impn_sqr_n_basecase (mp_ptr prodp, mp_srcptr up, mp_size_t size)
 }
 
 void
+#if __STDC__
 impn_sqr_n (mp_ptr prodp,
 	     mp_srcptr up, mp_size_t size, mp_ptr tspace)
+#else
+impn_sqr_n (prodp, up, size, tspace)
+     mp_ptr prodp;
+     mp_srcptr up;
+     mp_size_t size;
+     mp_ptr tspace;
+#endif
 {
   if ((size & 1) != 0)
     {
@@ -326,7 +358,15 @@ impn_sqr_n (mp_ptr prodp,
 
 /* This should be made into an inline function in gmp.h.  */
 void
+#if __STDC__
 mpn_mul_n (mp_ptr prodp, mp_srcptr up, mp_srcptr vp, mp_size_t size)
+#else
+mpn_mul_n (prodp, up, vp, size)
+     mp_ptr prodp;
+     mp_srcptr up;
+     mp_srcptr vp;
+     mp_size_t size;
+#endif
 {
   TMP_DECL (marker);
   TMP_MARK (marker);

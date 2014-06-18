@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,8 @@
 
 /* Determine wheter socket is at a out-of-band mark.  */
 int
-sockatmark (int fd)
+sockatmark (fd)
+     int fd;
 {
   __set_errno (ENOSYS);
   return -1;

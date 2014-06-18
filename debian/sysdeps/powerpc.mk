@@ -1,13 +1,14 @@
-# configuration options for all flavours
-extra_config_options = --enable-multi-arch --enable-lock-elision
+extra_config_options = --enable-multi-arch
 
 # build 64-bit (ppc64) alternative library
-GLIBC_MULTILIB_PASSES += ppc64
-DEB_ARCH_MULTILIB_PACKAGES += libc6-ppc64 libc6-dev-ppc64
+GLIBC_PASSES += ppc64
+DEB_ARCH_REGULAR_PACKAGES += libc6-ppc64 libc6-dev-ppc64
+ppc64_add-ons = nptl $(add-ons)
 ppc64_configure_target = powerpc64-linux-gnu
 ppc64_CC = $(CC) -m64
 ppc64_CXX = $(CXX) -m64
 libc6-ppc64_shlib_dep = libc6-ppc64 (>= $(shlib_dep_ver))
+ppc64_extra_config_options := $(extra_config_options) --disable-profile
 ppc64_rtlddir = /lib64
 ppc64_slibdir = /lib64
 ppc64_libdir = /usr/lib64

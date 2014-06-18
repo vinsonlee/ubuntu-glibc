@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2004.
 
@@ -62,7 +62,7 @@ _nss_dns_getcanonname_r (const char *name, char *buffer, size_t buflen,
     {
       int r = __libc_res_nquery (&_res, name, ns_c_in, qtypes[i],
 				 buf, sizeof (buf), &ansp.ptr, NULL, NULL,
-				 NULL, NULL);
+				 NULL);
       if (r > 0)
 	{
 	  /* We need to decode the response.  Just one question record.
@@ -103,11 +103,6 @@ _nss_dns_getcanonname_r (const char *name, char *buffer, size_t buflen,
 
 	      ptr += s;
 
-	      /* Check that there are enough bytes for the RR
-		 metadata.  */
-	      if (endptr - ptr < 10)
-		goto unavail;
-
 	      /* Check whether type and class match.  */
 	      uint_fast16_t type;
 	      NS_GET16 (type, ptr);
@@ -142,24 +137,12 @@ _nss_dns_getcanonname_r (const char *name, char *buffer, size_t buflen,
 	      if (__ns_get16 (ptr) != ns_c_in)
 		goto unavail;
 
-	      /* Also skip over class and TTL.  */
+	      /* Also skip over the TTL.  */
 	      ptr += sizeof (uint16_t) + sizeof (uint32_t);
 
-	      /* Skip over RDATA length and RDATA itself.  */
-	      uint16_t rdatalen = __ns_get16 (ptr);
-	      ptr += sizeof (uint16_t);
-	      /* Not enough room for RDATA.  */
-	      if (endptr - ptr < rdatalen)
-		goto unavail;
-	      ptr += rdatalen;
+	      /* Skip over the data length and data.  */
+	      ptr += sizeof (uint16_t) + __ns_get16 (ptr);
 	    }
-	}
-
-      /* Restore original buffer before retry.  */
-      if (ansp.ptr != buf)
-	{
-	  free (ansp.ptr);
-	  ansp.ptr = buf;
 	}
     }
 

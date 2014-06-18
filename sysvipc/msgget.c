@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -23,7 +23,9 @@
    parameter describes how to proceed with clashing of key values.  */
 
 int
-msgget (key_t key, int msgflg)
+msgget (key, msgflg)
+     key_t key;
+     int msgflg;
 {
   __set_errno (ENOSYS);
   return -1;

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -22,7 +22,9 @@
 
 
 int
-__pthread_setspecific (pthread_key_t key, const void *value)
+__pthread_setspecific (key, value)
+     pthread_key_t key;
+     const void *value;
 {
   struct pthread *self;
   unsigned int idx1st;
@@ -34,7 +36,7 @@ __pthread_setspecific (pthread_key_t key, const void *value)
 
   /* Special case access to the first 2nd-level block.  This is the
      usual case.  */
-  if (__glibc_likely (key < PTHREAD_KEY_2NDLEVEL_SIZE))
+  if (__builtin_expect (key < PTHREAD_KEY_2NDLEVEL_SIZE, 1))
     {
       /* Verify the key is sane.  */
       if (KEY_UNUSED ((seq = __pthread_keys[key].seq)))

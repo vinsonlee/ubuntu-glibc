@@ -59,7 +59,7 @@ __get_socket (struct sockaddr_in *saddr)
   laddr.sin_addr.s_addr = htonl (INADDR_ANY);
 
   int cc = __bind (so, (struct sockaddr *) &laddr, namelen);
-  if (__glibc_unlikely (cc < 0))
+  if (__builtin_expect (cc < 0, 0))
     {
     fail:
       __close (so);
@@ -67,7 +67,7 @@ __get_socket (struct sockaddr_in *saddr)
     }
 
   cc = __connect (so, (struct sockaddr *) saddr, namelen);
-  if (__glibc_unlikely (cc < 0))
+  if (__builtin_expect (cc < 0, 0))
     goto fail;
 
   return so;
@@ -82,9 +82,14 @@ __get_socket (struct sockaddr_in *saddr)
  */
 u_short
 internal_function
-__libc_rpc_getport (struct sockaddr_in *address, u_long program,
-		    u_long version, u_int protocol, time_t timeout_sec,
-		    time_t tottimeout_sec)
+__libc_rpc_getport (address, program, version, protocol, timeout_sec,
+		    tottimeout_sec)
+     struct sockaddr_in *address;
+     u_long program;
+     u_long version;
+     u_int protocol;
+     time_t timeout_sec;
+     time_t tottimeout_sec;
 {
   const struct timeval timeout = {timeout_sec, 0};
   const struct timeval tottimeout = {tottimeout_sec, 0};
@@ -147,8 +152,11 @@ libc_hidden_nolink_sunrpc (__libc_rpc_getport, GLIBC_PRIVATE)
  * Returns 0 if no map exists.
  */
 u_short
-pmap_getport (struct sockaddr_in *address, u_long program, u_long version,
-	      u_int protocol)
+pmap_getport (address, program, version, protocol)
+     struct sockaddr_in *address;
+     u_long program;
+     u_long version;
+     u_int protocol;
 {
   return __libc_rpc_getport (address, program, version, protocol, 5, 60);
 }

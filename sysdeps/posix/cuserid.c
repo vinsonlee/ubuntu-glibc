@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@
    If S is not NULL, it points to a buffer of at least L_cuserid bytes
    into which the name is copied; otherwise, a static buffer is used.  */
 char *
-cuserid (char *s)
+cuserid (s)
+     char *s;
 {
   static char name[L_cuserid];
   char buf[NSS_BUFLEN_PASSWD];

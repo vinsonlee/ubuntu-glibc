@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -22,7 +22,9 @@
 
 
 int
-__pthread_attr_setdetachstate (pthread_attr_t *attr, int detachstate)
+__pthread_attr_setdetachstate (attr, detachstate)
+     pthread_attr_t *attr;
+     int detachstate;
 {
   struct pthread_attr *iattr;
 

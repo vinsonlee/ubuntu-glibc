@@ -1,5 +1,5 @@
 /* truncf function.  PowerPC32 version.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 
 	.section	".text"
 ENTRY (__truncf)
+	mffs	fp11		/* Save current FPU rounding mode.  */
 #ifdef SHARED
 	mflr	r11
 	cfi_register(lr,r11)
@@ -47,18 +48,15 @@ ENTRY (__truncf)
 	fabs	fp0,fp1
 	fsubs	fp12,fp13,fp13	/* generate 0.0  */
 	fcmpu	cr7,fp0,fp13	/* if (fabs(x) > TWO23)  */
-	mffs	fp11		/* Save current FPU rounding mode and
-				   "inexact" state.  */
 	fcmpu	cr6,fp1,fp12	/* if (x > 0.0)  */
-	bnl-	cr7,.L10
+	bnllr-	cr7
 	mtfsfi	7,1		/* Set rounding toward 0 mode.  */
 	ble-	cr6,.L4
 	fadds	fp1,fp1,fp13	/* x+= TWO23;  */
 	fsubs	fp1,fp1,fp13	/* x-= TWO23;  */
 	fabs	fp1,fp1		/* if (x == 0.0)  */
 				/* x = 0.0; */
-	mtfsf	0xff,fp11	/* Restore previous rounding mode and
-				   "inexact" state.  */
+	mtfsf	0x01,fp11	/* restore previous rounding mode.  */
 	blr
 .L4:
 	bge-	cr6,.L9		/* if (x < 0.0)  */
@@ -67,14 +65,7 @@ ENTRY (__truncf)
 	fnabs	fp1,fp1		/* if (x == 0.0)  */
 				/* x = -0.0; */
 .L9:
-	mtfsf	0xff,fp11	/* Restore previous rounding mode and
-				   "inexact" state.  */
-	blr
-.L10:
-	/* Ensure sNaN input is converted to qNaN.  */
-	fcmpu	cr7,fp1,fp1
-	beqlr	cr7
-	fadds	fp1,fp1,fp1
+	mtfsf	0x01,fp11	/* restore previous rounding mode.  */
 	blr
 	END (__truncf)
 

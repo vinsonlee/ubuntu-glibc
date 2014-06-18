@@ -1,5 +1,5 @@
 /* Check if effective user id can access file
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -117,7 +117,9 @@ int group_member ();
    filesystem, text busy, etc. */
 
 int
-euidaccess (const char *path, int mode)
+euidaccess (path, mode)
+     const char *path;
+     int mode;
 {
   struct stat64 stats;
   int granted;
@@ -194,7 +196,9 @@ weak_alias (__euidaccess, eaccess)
 char *program_name;
 
 int
-main (int argc, char **argv)
+main (argc, argv)
+     int argc;
+     char **argv;
 {
   char *file;
   int mode;

@@ -1,5 +1,5 @@
 /* FMA version of fma.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -19,9 +19,11 @@
 
 #include <config.h>
 
+#ifdef HAVE_AVX_SUPPORT
 double
 __fma_fma (double x, double y, double z)
 {
   asm ("vfmadd213sd %3, %2, %0" : "=x" (x) : "0" (x), "x" (y), "xm" (z));
   return x;
 }
+#endif

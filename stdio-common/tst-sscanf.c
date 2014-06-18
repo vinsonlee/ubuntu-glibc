@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2000.
 
@@ -124,8 +124,8 @@ struct test2
   { L("0x.e+0"), L("%g%c"), 2, '+' },
 };
 
-static int
-do_test (void)
+int
+main (void)
 {
   double d[6];
   long l[6];
@@ -186,8 +186,7 @@ do_test (void)
 
   for (i = 0; i < sizeof (int_tests) / sizeof (int_tests[0]); ++i)
     {
-      long dummy;
-      int ret;
+      int dummy, ret;
 
       if ((ret = SSCANF (int_tests[i].str, int_tests[i].fmt,
 			 &dummy)) != int_tests[i].retval)
@@ -233,41 +232,5 @@ do_test (void)
 	}
     }
 
-  /* BZ #16618
-     The test will segfault during SSCANF if the buffer overflow
-     is not fixed.  The size of `s` is such that it forces the use
-     of malloc internally and this triggers the incorrect computation.
-     Thus the value for SIZE is arbitrariy high enough that malloc
-     is used.  */
-  {
-#define SIZE 131072
-    CHAR *s = malloc ((SIZE + 1) * sizeof (*s));
-    if (s == NULL)
-      abort ();
-    for (size_t i = 0; i < SIZE; i++)
-      s[i] = L('0');
-    s[SIZE] = L('\0');
-    int i = 42;
-    /* Scan multi-digit zero into `i`.  */
-    if (SSCANF (s, L("%d"), &i) != 1)
-      {
-	printf ("FAIL: bug16618: SSCANF did not read one input item.\n");
-	result = 1;
-      }
-    if (i != 0)
-      {
-	printf ("FAIL: bug16618: Value of `i` was not zero as expected.\n");
-	result = 1;
-      }
-    free (s);
-    if (result != 1)
-      printf ("PASS: bug16618: Did not crash.\n");
-#undef SIZE
-  }
-
-
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

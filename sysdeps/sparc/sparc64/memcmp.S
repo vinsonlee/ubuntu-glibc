@@ -1,6 +1,6 @@
 /* Compare two memory blocks for differences in the first COUNT bytes.
    For SPARC v9.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jan Vondrak <jvon4518@ss1000.ms.mff.cuni.cz> and
                   Jakub Jelinek <jj@ultra.linux.cz>.
@@ -51,7 +51,7 @@ ENTRY(memcmp)
 2:	mov		%g1, %o3			/* IEU0		Group		*/
 	subcc		%o2, 8, %o2			/* IEU1				*/
 
-	bcs,pn		%XCC, 5f			/* CTI				*/
+	bl,pn		%XCC, 5f			/* CTI				*/
 	 ldxa		[%o0] ASI_PNF, %g1		/* Load		Group		*/
 	mov		%g2, %o4			/* IEU0				*/
 	ldxa		[%o0 + %o1] ASI_PNF, %g2	/* Load		Group		*/
@@ -125,7 +125,7 @@ ENTRY(memcmp)
 
 	ldxa		[%o0] ASI_PNF, %g5		/* Load				*/
 	subcc		%o2, 8, %o2			/* IEU1		Group		*/
-	bcs,pn		%XCC, 6b			/* CTI				*/
+	bl,pn		%XCC, 6b			/* CTI				*/
 	 or		%o4, %o5, %o4			/* IEU0				*/
 
 	cmp		%o3, %o4			/* IEU1		Group		*/

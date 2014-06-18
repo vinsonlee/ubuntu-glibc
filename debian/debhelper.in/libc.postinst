@@ -5,6 +5,15 @@ export LC_ALL=C
 type=$1
 preversion=$2
 
+package_name()
+{
+    if dpkg --assert-multi-arch 2>/dev/null; then
+        echo LIBC:${DPKG_MAINTSCRIPT_ARCH}
+    else
+        echo LIBC
+    fi
+}
+
 # element() is a helper function for file-rc:
 element() {
     local element list IFS
@@ -64,16 +73,18 @@ then
     # We don't use a registry anymore, remove the old file
     rm -f /etc/ld.so.hwcappkgs
  
-    # /etc/ld.so.nohwcap code:
-    __NOHWCAP__
+    # /etc/ld.so.nohwcap code: NOHWCAP
 
     # Load debconf module if available
     if [ -f /usr/share/debconf/confmodule ] ; then
 	. /usr/share/debconf/confmodule
     fi
 
-    if [ -n "$preversion" ] && [ -x "$(which ischroot)" ] && ! ischroot; then
-	if dpkg --compare-versions "$preversion" lt GLIBC_VERSION; then
+    if [ -n "$preversion" ]; then
+	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
+	    ln -sf spool/mail /var/mail
+	fi
+	if dpkg --compare-versions "$preversion" lt 2.19; then
 	    check="apache2.2-common apache apache-ssl apache-perl autofs at"
 	    check="$check boa cucipop courier-authdaemon cron cups exim"
 	    check="$check exim4-base dovecot-common cucipop incron lprng lpr"
@@ -82,8 +93,7 @@ then
 	    check="$check sasl2-bin slapd smail sendmail snmpd ssh"
 	    check="$check spamassassin vsftpd wu-ftpd wu-ftpd-academ wwwoffle"
 	    check="$check webmin dropbear gdm"
-	    # NSS services check: 
-	    __NSS_CHECK__
+	    # NSS services check: NSS_CHECK
 	    if [ -n "$services" ]; then
 
 	        if [ -f /usr/share/debconf/confmodule ] ; then
@@ -185,7 +195,7 @@ then
 			    echo
 			    echo "You will need to start these manually by running \`/etc/init.d/<service> start'"
 			    echo "If the service still fails to start, you may need to file a bug on"
-			    echo "${DPKG_MAINTSCRIPT_PACKAGE}:${DPKG_MAINTSCRIPT_ARCH} or the service involved."
+			    echo "$(package_name) or the service involved."
 			    frontend=`echo "$DEBIAN_FRONTEND" | tr '[:upper:]' '[:lower:]'`
 			    if [ "$frontend" != noninteractive ]; then
 			    	echo
@@ -205,26 +215,23 @@ then
 	    else
 		echo "Nothing to restart."
 	    fi
-	fi # end upgrading and $preversion lt GLIBC_VERSION
+	fi # end upgrading and $preversion lt 2.19
     fi # Upgrading
 
-    # Restart init.  Currently handles chroots, systemd and upstart, and
-    # assumes anything else is going to not fail at behaving like
-    # sysvinit:
+    # Restart init.  Currently handles chroots and upstart, and assumes
+    # anything else is going to not fail at behaving like sysvinit:
     TELINIT=yes
     if ischroot 2>/dev/null; then
         # Don't bother trying to re-exec init from a chroot:
         TELINIT=no
-    elif [ -d /run/systemd/system ]; then
-        # Skip if systemd is the active PID 1, since systemd doesn't
-        # need a reexec for a clean shutdown
-        TELINIT=no
-    elif [ -x "`which initctl`" ]; then
-        UPSTART=$(initctl version 2>/dev/null | awk '/upstart/ {print $3}' | tr -d ')')
-        if dpkg --compare-versions "$UPSTART" lt-nl 1.6.1; then
-            # This is an old upstart that can't re-exec statefully:
-            TELINIT=no
-            touch /var/run/init.upgraded
+    else
+        if [ -x "`which initctl`" ]; then
+            UPSTART=$(initctl version 2>/dev/null | awk '/upstart/ {print $3}' | tr -d ')')
+            if dpkg --compare-versions "$UPSTART" lt-nl 1.6.1; then
+                # This is an old upstart that can't re-exec statefully:
+                TELINIT=no
+                touch /var/run/init.upgraded
+            fi
         fi
     fi
     if [ "$TELINIT" = "yes" ]; then
@@ -236,14 +243,14 @@ fi
 # configuration file, in order to keep a stable path. Remove the old file.
 case ${DPKG_MAINTSCRIPT_ARCH:-$(dpkg --print-architecture)} in
     hurd-i386)
-        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-gnu.conf 2.19-11~ libc0.3:hurd-i386 -- "$@"
-        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-gnu-gnu.conf 2.19-11~ libc0.3:hurd-i386 -- "$@"
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-gnu.conf 2.19-3~ libc6 -- "$@"
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-gnu-gnu.conf 2.19-3~ libc6 -- "$@"
         ;;
     i386)
-        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-linux-gnu.conf 2.19-4~ libc6:i386 -- "$@"
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-linux-gnu.conf 2.19-3~ libc6 -- "$@"
         ;;
     kfreebsd-i386)
-        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-kfreebsd-gnu.conf 2.19-11~ libc0.1:kfreebsd-i386 -- "$@"
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-kfreebsd-gnu.conf 2.19-3~ libc6 -- "$@"
         ;;
 esac
 

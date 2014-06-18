@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2014 Free Software Foundation, Inc.
    Contributed by Andreas Krebbel <Andreas.Krebbel@de.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -16,7 +16,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <utmp.h>
@@ -24,12 +24,8 @@
 #include "utmp-compat.h"
 #include "utmp-private.h"
 
-#if defined SHARED
-# undef weak_alias
-# define weak_alias(n,a)
-#endif
+#undef weak_alias
+#define weak_alias(n,a)
 #include "login/getutid_r.c"
 
-#if defined SHARED
 default_symbol_version (__getutid_r, getutid_r, UTMP_COMPAT_BASE);
-#endif

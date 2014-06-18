@@ -1,5 +1,5 @@
 /* setjmp for SH4.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ ENTRY (__sigsetjmp)
 	mov.l	r9, @-r4
 	mov.l	r8, @-r4
 
-#if IS_IN (rtld)
+#if defined NOT_IN_libc && defined IS_IN_rtld
 	/* In ld.so we never save the signal mask.  */
 	rts
 	 mov	#0, r0
