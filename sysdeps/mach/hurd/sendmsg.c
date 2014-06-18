@@ -1,4 +1,4 @@
-/* Copyright (C) 2001,2002,2004 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; see the file COPYING.LIB.  If not,
-   write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   License along with the GNU C Library; see the file COPYING.LIB.  If
+   not, see <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <string.h>
@@ -109,14 +108,22 @@ __libc_sendmsg (int fd, const struct msghdr *message, int flags)
 	     and talk to it with the ifsock protocol.  */
 	  file_t file = __file_name_lookup (addr->sun_path, 0, 0);
 	  if (file == MACH_PORT_NULL)
-	    return -1;
+	    {
+	      if (dealloc)
+		__vm_deallocate (__mach_task_self (), data.addr, len);
+	      return -1;
+	    }
 	  err = __ifsock_getsockaddr (file, &aport);
 	  __mach_port_deallocate (__mach_task_self (), file);
 	  if (err == MIG_BAD_ID || err == EOPNOTSUPP)
 	    /* The file did not grok the ifsock protocol.  */
 	    err = ENOTSOCK;
 	  if (err)
-	    return __hurd_fail (err);
+	    {
+	      if (dealloc)
+		__vm_deallocate (__mach_task_self (), data.addr, len);
+	      return __hurd_fail (err);
+	    }
 	}
       else
 	err = EIEIO;

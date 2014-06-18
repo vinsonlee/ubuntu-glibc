@@ -1,40 +1,34 @@
-/* @(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC */
-/*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-#if !defined(lint) && defined(SCCSIDS)
-static char sccsid[] = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
-#endif
-
 /*
  * clnt_udp.c, Implements a UDP/IP based, client side RPC.
  *
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdio.h>
@@ -48,12 +42,11 @@ static char sccsid[] = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 #include <sys/ioctl.h>
 #include <netdb.h>
 #include <errno.h>
+#include <stdint.h>
 #include <rpc/pmap_clnt.h>
 #include <net/if.h>
 #include <ifaddrs.h>
-#ifdef USE_IN_LIBIO
-# include <wchar.h>
-#endif
+#include <wchar.h>
 #include <fcntl.h>
 
 #ifdef IP_RECVERR
@@ -63,7 +56,6 @@ static char sccsid[] = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 
 #include <kernel-features.h>
 
-extern bool_t xdr_opaque_auth (XDR *, struct opaque_auth *);
 extern u_long _create_xid (void);
 
 /*
@@ -171,16 +163,14 @@ __libc_clntudp_bufcreate (struct sockaddr_in *raddr, u_long program,
   call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
   call_msg.rm_call.cb_prog = program;
   call_msg.rm_call.cb_vers = version;
-  INTUSE(xdrmem_create) (&(cu->cu_outxdrs), cu->cu_outbuf, sendsz, XDR_ENCODE);
-  if (!INTUSE(xdr_callhdr) (&(cu->cu_outxdrs), &call_msg))
+  xdrmem_create (&(cu->cu_outxdrs), cu->cu_outbuf, sendsz, XDR_ENCODE);
+  if (!xdr_callhdr (&(cu->cu_outxdrs), &call_msg))
     {
       goto fooy;
     }
   cu->cu_xdrpos = XDR_GETPOS (&(cu->cu_outxdrs));
   if (*sockp < 0)
     {
-      int dontblock = 1;
-
 #ifdef SOCK_NONBLOCK
 # ifndef __ASSUME_SOCK_CLOEXEC
       if (__have_sock_cloexec >= 0)
@@ -219,8 +209,11 @@ __libc_clntudp_bufcreate (struct sockaddr_in *raddr, u_long program,
 # ifdef SOCK_CLOEXEC
       if (__have_sock_cloexec < 0)
 # endif
-	/* the sockets rpc controls are non-blocking */
-	(void) __ioctl (*sockp, FIONBIO, (char *) &dontblock);
+	{
+	  /* the sockets rpc controls are non-blocking */
+	  int dontblock = 1;
+	  (void) __ioctl (*sockp, FIONBIO, (char *) &dontblock);
+	}
 #endif
 #ifdef IP_RECVERR
       {
@@ -235,7 +228,7 @@ __libc_clntudp_bufcreate (struct sockaddr_in *raddr, u_long program,
       cu->cu_closeit = FALSE;
     }
   cu->cu_sock = *sockp;
-  cl->cl_auth = INTUSE(authnone_create) ();
+  cl->cl_auth = authnone_create ();
   return cl;
 fooy:
   if (cu)
@@ -244,17 +237,21 @@ fooy:
     mem_free ((caddr_t) cl, sizeof (CLIENT));
   return (CLIENT *) NULL;
 }
-INTDEF (__libc_clntudp_bufcreate)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (__libc_clntudp_bufcreate)
+#else
+libc_hidden_nolink_sunrpc (__libc_clntudp_bufcreate, GLIBC_PRIVATE)
+#endif
 
 CLIENT *
 clntudp_bufcreate (struct sockaddr_in *raddr, u_long program, u_long version,
 		   struct timeval wait, int *sockp, u_int sendsz,
 		   u_int recvsz)
 {
-  return INTUSE(__libc_clntudp_bufcreate) (raddr, program, version, wait,
-					   sockp, sendsz, recvsz, 0);
+  return __libc_clntudp_bufcreate (raddr, program, version, wait,
+				   sockp, sendsz, recvsz, 0);
 }
-INTDEF (clntudp_bufcreate)
+libc_hidden_nolink_sunrpc (clntudp_bufcreate, GLIBC_2_0)
 
 CLIENT *
 clntudp_create (raddr, program, version, wait, sockp)
@@ -264,10 +261,14 @@ clntudp_create (raddr, program, version, wait, sockp)
      struct timeval wait;
      int *sockp;
 {
-  return INTUSE(__libc_clntudp_bufcreate) (raddr, program, version, wait,
-					   sockp, UDPMSGSIZE, UDPMSGSIZE, 0);
+  return __libc_clntudp_bufcreate (raddr, program, version, wait,
+				   sockp, UDPMSGSIZE, UDPMSGSIZE, 0);
 }
-INTDEF (clntudp_create)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (clntudp_create)
+#else
+libc_hidden_nolink_sunrpc (clntudp_create, GLIBC_2_0)
+#endif
 
 static int
 is_network_up (int sock)
@@ -471,10 +472,9 @@ send_again:
 	continue;
 
       /* see if reply transaction id matches sent id.
-        Don't do this if we only wait for a replay */
+	Don't do this if we only wait for a replay */
       if (xargs != NULL
-	  && (*((u_int32_t *) (cu->cu_inbuf))
-	      != *((u_int32_t *) (cu->cu_outbuf))))
+	  && memcmp (cu->cu_inbuf, cu->cu_outbuf, sizeof (u_int32_t)) != 0)
 	continue;
       /* we now assume we have the proper reply */
       break;
@@ -483,8 +483,8 @@ send_again:
   /*
    * now decode and validate the response
    */
-  INTUSE(xdrmem_create) (&reply_xdrs, cu->cu_inbuf, (u_int) inlen, XDR_DECODE);
-  ok = INTUSE(xdr_replymsg) (&reply_xdrs, &reply_msg);
+  xdrmem_create (&reply_xdrs, cu->cu_inbuf, (u_int) inlen, XDR_DECODE);
+  ok = xdr_replymsg (&reply_xdrs, &reply_msg);
   /* XDR_DESTROY(&reply_xdrs);  save a few cycles on noop destroy */
   if (ok)
     {
@@ -500,8 +500,7 @@ send_again:
 	  if (reply_msg.acpted_rply.ar_verf.oa_base != NULL)
 	    {
 	      xdrs->x_op = XDR_FREE;
-	      (void) INTUSE(xdr_opaque_auth) (xdrs,
-					      &(reply_msg.acpted_rply.ar_verf));
+	      (void) xdr_opaque_auth (xdrs, &(reply_msg.acpted_rply.ar_verf));
 	    }
 	}			/* end successful completion */
       else
@@ -549,6 +548,8 @@ static bool_t
 clntudp_control (CLIENT *cl, int request, char *info)
 {
   struct cu_data *cu = (struct cu_data *) cl->cl_private;
+  u_long ul;
+  u_int32_t ui32;
 
   switch (request)
     {
@@ -582,39 +583,48 @@ clntudp_control (CLIENT *cl, int request, char *info)
        * first element in the call structure *.
        * This will get the xid of the PREVIOUS call
        */
-      *(u_long *)info = ntohl(*(u_long *)cu->cu_outbuf);
+      memcpy (&ui32, cu->cu_outbuf, sizeof (ui32));
+      ul = ntohl (ui32);
+      memcpy (info, &ul, sizeof (ul));
       break;
     case CLSET_XID:
       /* This will set the xid of the NEXT call */
-      *(u_long *)cu->cu_outbuf =  htonl(*(u_long *)info - 1);
+      memcpy (&ul, info, sizeof (ul));
+      ui32 = htonl (ul - 1);
+      memcpy (cu->cu_outbuf, &ui32, sizeof (ui32));
       /* decrement by 1 as clntudp_call() increments once */
+      break;
     case CLGET_VERS:
       /*
        * This RELIES on the information that, in the call body,
        * the version number field is the fifth field from the
-       * begining of the RPC header. MUST be changed if the
+       * beginning of the RPC header. MUST be changed if the
        * call_struct is changed
        */
-      *(u_long *)info = ntohl(*(u_long *)(cu->cu_outbuf +
-					  4 * BYTES_PER_XDR_UNIT));
+      memcpy (&ui32, cu->cu_outbuf + 4 * BYTES_PER_XDR_UNIT, sizeof (ui32));
+      ul = ntohl (ui32);
+      memcpy (info, &ul, sizeof (ul));
       break;
     case CLSET_VERS:
-      *(u_long *)(cu->cu_outbuf + 4 * BYTES_PER_XDR_UNIT)
-	= htonl(*(u_long *)info);
+      memcpy (&ul, info, sizeof (ul));
+      ui32 = htonl (ul);
+      memcpy (cu->cu_outbuf + 4 * BYTES_PER_XDR_UNIT, &ui32, sizeof (ui32));
       break;
     case CLGET_PROG:
       /*
        * This RELIES on the information that, in the call body,
        * the program number field is the  field from the
-       * begining of the RPC header. MUST be changed if the
+       * beginning of the RPC header. MUST be changed if the
        * call_struct is changed
        */
-      *(u_long *)info = ntohl(*(u_long *)(cu->cu_outbuf +
-					  3 * BYTES_PER_XDR_UNIT));
+      memcpy (&ui32, cu->cu_outbuf + 3 * BYTES_PER_XDR_UNIT, sizeof (ui32));
+      ul = ntohl (ui32);
+      memcpy (info, &ul, sizeof (ul));
       break;
     case CLSET_PROG:
-      *(u_long *)(cu->cu_outbuf + 3 * BYTES_PER_XDR_UNIT)
-	= htonl(*(u_long *)info);
+      memcpy (&ul, info, sizeof (ul));
+      ui32 = htonl (ul);
+      memcpy (cu->cu_outbuf + 3 * BYTES_PER_XDR_UNIT, &ui32, sizeof (ui32));
       break;
     /* The following are only possible with TI-RPC */
     case CLGET_SVC_ADDR:

@@ -1,5 +1,5 @@
 /* Test and measure strncmp functions.
-   Copyright (C) 1999, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Jakub Jelinek <jakub@redhat.com>, 1999.
 
@@ -14,11 +14,11 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #define TEST_MAIN
+#define TEST_NAME "strncmp"
 #include "test-string.h"
 
 typedef int (*proto_t) (const char *, const char *, size_t);
@@ -51,8 +51,8 @@ stupid_strncmp (const char *s1, const char *s2, size_t n)
   return ret;
 }
 
-static void
-do_one_test (impl_t *impl, const char *s1, const char *s2, size_t n,
+static int
+check_result (impl_t *impl, const char *s1, const char *s2, size_t n,
 	     int exp_result)
 {
   int result = CALL (impl, s1, s2, n);
@@ -63,26 +63,18 @@ do_one_test (impl_t *impl, const char *s1, const char *s2, size_t n,
       error (0, 0, "Wrong result in function %s %d %d", impl->name,
 	     result, exp_result);
       ret = 1;
-      return;
+      return -1;
     }
 
-  if (HP_TIMING_AVAIL)
-    {
-      hp_timing_t start __attribute ((unused));
-      hp_timing_t stop __attribute ((unused));
-      hp_timing_t best_time = ~ (hp_timing_t) 0;
-      size_t i;
+  return 0;
+}
 
-      for (i = 0; i < 32; ++i)
-	{
-	  HP_TIMING_NOW (start);
-	  CALL (impl, s1, s2, n);
-	  HP_TIMING_NOW (stop);
-	  HP_TIMING_BEST (best_time, start, stop);
-	}
-
-      printf ("\t%zd", (size_t) best_time);
-    }
+static void
+do_one_test (impl_t *impl, const char *s1, const char *s2, size_t n,
+	     int exp_result)
+{
+  if (check_result (impl, s1, s2, n, exp_result) < 0)
+    return;
 }
 
 static void
@@ -96,15 +88,10 @@ do_test_limit (size_t align1, size_t align2, size_t len, size_t n, int max_char,
     {
       s1 = (char*)(buf1 + page_size);
       s2 = (char*)(buf2 + page_size);
-      if (HP_TIMING_AVAIL)
-	printf ("Length %4zd/%4zd:", len, n);
-	
+
       FOR_EACH_IMPL (impl, 0)
 	do_one_test (impl, s1, s2, n, 0);
 
-      if (HP_TIMING_AVAIL)
-	putchar ('\n');
-	
       return;
     }
 
@@ -114,13 +101,13 @@ do_test_limit (size_t align1, size_t align2, size_t len, size_t n, int max_char,
 
   s1 = (char*)(buf1 + page_size - n);
   s2 = (char*)(buf2 + page_size - n);
-  
+
   if (align1 < align_n)
     s1 -= (align_n - align1);
-    
+
   if (align2 < align_n)
     s2 -= (align_n - align2);
-    
+
   for (i = 0; i < n; i++)
     s1[i] = s2[i] = 1 + 23 * i % max_char;
 
@@ -134,14 +121,8 @@ do_test_limit (size_t align1, size_t align2, size_t len, size_t n, int max_char,
 	s1[len] = 64;
     }
 
-  if (HP_TIMING_AVAIL)
-    printf ("Length %4zd/%4zd, alignment %2zd/%2zd:", len, n, align1, align2);
-
   FOR_EACH_IMPL (impl, 0)
     do_one_test (impl, s1, s2, n, exp_result);
-
-  if (HP_TIMING_AVAIL)
-    putchar ('\n');
 }
 
 static void
@@ -179,14 +160,29 @@ do_test (size_t align1, size_t align2, size_t len, size_t n, int max_char,
   if (len >= n)
     s2[n - 1] -= exp_result;
 
-  if (HP_TIMING_AVAIL)
-    printf ("Length %4zd/%4zd, alignment %2zd/%2zd:", len, n, align1, align2);
-
   FOR_EACH_IMPL (impl, 0)
     do_one_test (impl, (char*)s1, (char*)s2, n, exp_result);
+}
 
-  if (HP_TIMING_AVAIL)
-    putchar ('\n');
+static void
+do_page_test (size_t offset1, size_t offset2, char *s2)
+{
+  char *s1;
+  int exp_result;
+
+  if (offset1 >= page_size || offset2 >= page_size)
+    return;
+
+  s1 = (char *) (buf1 + offset1);
+  s2 += offset2;
+
+  exp_result= *s1;
+
+  FOR_EACH_IMPL (impl, 0)
+    {
+      check_result (impl, s1, s2, page_size, -exp_result);
+      check_result (impl, s2, s1, page_size, exp_result);
+    }
 }
 
 static void
@@ -283,12 +279,53 @@ do_random_tests (void)
     }
 }
 
+static void
+check1 (void)
+{
+  char *s1 = (char *)(buf1 + 0xb2c);
+  char *s2 = (char *)(buf1 + 0xfd8);
+  size_t i;
+  int exp_result;
+
+  strcpy(s1, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrs");
+  strcpy(s2, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijkLMNOPQRSTUV");
+
+  for (i = 0; i < 80; i++)
+    {
+      exp_result = simple_strncmp (s1, s2, i);
+      FOR_EACH_IMPL (impl, 0)
+	 check_result (impl, s1, s2, i, exp_result);
+    }
+}
+
+static void
+check2 (void)
+{
+  size_t i;
+  char *s1, *s2;
+
+  s1 = (char *) buf1;
+  for (i = 0; i < page_size - 1; i++)
+    s1[i] = 23;
+  s1[i] = 0;
+
+  s2 = strdup (s1);
+
+  for (i = 0; i < 64; ++i)
+    do_page_test (3990 + i, 2635, s2);
+
+  free (s2);
+}
+
 int
 test_main (void)
 {
   size_t i;
 
   test_init ();
+
+  check1 ();
+  check2 ();
 
   printf ("%23s", "");
   FOR_EACH_IMPL (impl, 0)
@@ -330,7 +367,7 @@ test_main (void)
       do_test (2 * i, i, 8 << i, 16 << i, 255, 0);
       do_test (2 * i, i, 8 << i, 16 << i, 255, 1);
     }
-    
+
   do_test_limit (0, 0, 0, 0, 127, 0);
   do_test_limit (4, 0, 21, 20, 127, 0);
   do_test_limit (0, 4, 21, 20, 127, 0);

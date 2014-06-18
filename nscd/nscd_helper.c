@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -13,17 +13,18 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/mman.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
@@ -276,9 +277,9 @@ __nscd_unmap (struct mapped_database *mapped)
 
 /* Try to get a file descriptor for the shared meory segment
    containing the database.  */
-static struct mapped_database *
-get_mapping (request_type type, const char *key,
-	     struct mapped_database **mappedp)
+struct mapped_database *
+__nscd_get_mapping (request_type type, const char *key,
+		    struct mapped_database **mappedp)
 {
   struct mapped_database *result = NO_MAPPING;
 #ifdef SCM_RIGHTS
@@ -318,7 +319,7 @@ get_mapping (request_type type, const char *key,
 
   /* This access is well-aligned since BUF is correctly aligned for an
      int and CMSG_DATA preserves this alignment.  */
-  *(int *) CMSG_DATA (cmsg) = -1;
+  memset (CMSG_DATA (cmsg), '\xff', sizeof (int));
 
   msg.msg_controllen = cmsg->cmsg_len;
 
@@ -335,7 +336,8 @@ get_mapping (request_type type, const char *key,
 			    != CMSG_LEN (sizeof (int))), 0))
     goto out_close2;
 
-  mapfd = *(int *) CMSG_DATA (cmsg);
+  int *ip = (void *) CMSG_DATA (cmsg);
+  mapfd = *ip;
 
   if (__builtin_expect (n != keylen && n != keylen + sizeof (mapsize), 0))
     goto out_close;
@@ -418,7 +420,6 @@ get_mapping (request_type type, const char *key,
   return result;
 }
 
-
 struct mapped_database *
 __nscd_get_map_ref (request_type type, const char *name,
 		    volatile struct locked_map_ptr *mapptr, int *gc_cyclep)
@@ -427,16 +428,8 @@ __nscd_get_map_ref (request_type type, const char *name,
   if (cur == NO_MAPPING)
     return cur;
 
-  int cnt = 0;
-  while (__builtin_expect (atomic_compare_and_exchange_val_acq (&mapptr->lock,
-								1, 0) != 0, 0))
-    {
-      // XXX Best number of rounds?
-      if (__builtin_expect (++cnt > 5, 0))
-	return NO_MAPPING;
-
-      atomic_delay ();
-    }
+  if (!__nscd_acquire_maplock (mapptr))
+    return NO_MAPPING;
 
   cur = mapptr->mapped;
 
@@ -447,8 +440,8 @@ __nscd_get_map_ref (request_type type, const char *name,
 	  || (cur->head->nscd_certainly_running == 0
 	      && cur->head->timestamp + MAPPING_TIMEOUT < time (NULL))
 	  || cur->head->data_size > cur->datasize)
-	cur = get_mapping (type, name,
-			   (struct mapped_database **) &mapptr->mapped);
+	cur = __nscd_get_mapping (type, name,
+				  (struct mapped_database **) &mapptr->mapped);
 
       if (__builtin_expect (cur != NO_MAPPING, 1))
 	{
@@ -466,23 +459,36 @@ __nscd_get_map_ref (request_type type, const char *name,
 }
 
 
+/* Using sizeof (hashentry) is not always correct to determine the size of
+   the data structure as found in the nscd cache.  The program could be
+   a 64-bit process and nscd could be a 32-bit process.  In this case
+   sizeof (hashentry) would overestimate the size.  The following is
+   the minimum size of such an entry, good enough for our tests here.  */
+#define MINIMUM_HASHENTRY_SIZE \
+  (offsetof (struct hashentry, dellist) + sizeof (int32_t))
+
+
 /* Don't return const struct datahead *, as eventhough the record
    is normally constant, it can change arbitrarily during nscd
    garbage collection.  */
 struct datahead *
 __nscd_cache_search (request_type type, const char *key, size_t keylen,
-		     const struct mapped_database *mapped)
+		     const struct mapped_database *mapped, size_t datalen)
 {
   unsigned long int hash = __nis_hash (key, keylen) % mapped->head->module;
   size_t datasize = mapped->datasize;
 
   ref_t trail = mapped->head->array[hash];
+  trail = atomic_forced_read (trail);
   ref_t work = trail;
+  size_t loop_cnt = datasize / (MINIMUM_HASHENTRY_SIZE
+				+ offsetof (struct datahead, data) / 2);
   int tick = 0;
 
-  while (work != ENDREF && work + sizeof (struct hashentry) <= datasize)
+  while (work != ENDREF && work + MINIMUM_HASHENTRY_SIZE <= datasize)
     {
       struct hashentry *here = (struct hashentry *) (mapped->data + work);
+      ref_t here_key, here_packet;
 
 #ifndef _STRING_ARCH_unaligned
       /* Although during garbage collection when moving struct hashentry
@@ -497,13 +503,14 @@ __nscd_cache_search (request_type type, const char *key, size_t keylen,
 
       if (type == here->type
 	  && keylen == here->len
-	  && here->key + keylen <= datasize
-	  && memcmp (key, mapped->data + here->key, keylen) == 0
-	  && here->packet + sizeof (struct datahead) <= datasize)
+	  && (here_key = atomic_forced_read (here->key)) + keylen <= datasize
+	  && memcmp (key, mapped->data + here_key, keylen) == 0
+	  && ((here_packet = atomic_forced_read (here->packet))
+	      + sizeof (struct datahead) <= datasize))
 	{
 	  /* We found the entry.  Increment the appropriate counter.  */
 	  struct datahead *dh
-	    = (struct datahead *) (mapped->data + here->packet);
+	    = (struct datahead *) (mapped->data + here_packet);
 
 #ifndef _STRING_ARCH_unaligned
 	  if ((uintptr_t) dh & (__alignof__ (*dh) - 1))
@@ -512,14 +519,17 @@ __nscd_cache_search (request_type type, const char *key, size_t keylen,
 
 	  /* See whether we must ignore the entry or whether something
 	     is wrong because garbage collection is in progress.  */
-	  if (dh->usable && here->packet + dh->allocsize <= datasize)
+	  if (dh->usable
+	      && here_packet + dh->allocsize <= datasize
+	      && (here_packet + offsetof (struct datahead, data) + datalen
+		  <= datasize))
 	    return dh;
 	}
 
-      work = here->next;
+      work = atomic_forced_read (here->next);
       /* Prevent endless loops.  This should never happen but perhaps
 	 the database got corrupted, accidentally or deliberately.  */
-      if (work == trail)
+      if (work == trail || loop_cnt-- == 0)
 	break;
       if (tick)
 	{
@@ -531,7 +541,11 @@ __nscd_cache_search (request_type type, const char *key, size_t keylen,
 	  if ((uintptr_t) trailelem & (__alignof__ (*trailelem) - 1))
 	    return NULL;
 #endif
-	  trail = trailelem->next;
+
+	  if (trail + MINIMUM_HASHENTRY_SIZE > datasize)
+	    return NULL;
+
+	  trail = atomic_forced_read (trailelem->next);
 	}
       tick = 1 - tick;
     }

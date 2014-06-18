@@ -1,5 +1,4 @@
-/* Copyright (C) 1997, 1998, 2001, 2003, 2007 
-   Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <stdarg.h>
 #include <sysdep.h>
@@ -39,8 +37,8 @@ __syscall_error (int err_no)
    INTERNAL_SYSCALL, and all the generated pure assembly syscall wrappers.
    How often the function is used is unknown. */
 
-long int 
-syscall (long int __sysno, ...) 
+long int
+syscall (long int __sysno, ...)
 {
   /* FIXME: Keep this matching INLINE_SYSCALL for hppa */
   va_list args;
@@ -56,7 +54,7 @@ syscall (long int __sysno, ...)
   arg4 = va_arg (args, long int);
   arg5 = va_arg (args, long int);
   va_end (args);
-  
+
   {
     register unsigned long int __res asm("r28");
     PIC_REG_DEF

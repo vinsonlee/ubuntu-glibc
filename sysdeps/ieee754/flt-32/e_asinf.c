@@ -14,11 +14,11 @@
  */
 
 /*
-  Modifications for single precision expansion are 
+  Modifications for single precision expansion are
   Copyright (C) 2001 Stephen L. Moshier <moshier@na-net.ornl.gov>
-  and are incorporated herein by permission of the author.  The author 
+  and are incorporated herein by permission of the author.  The author
   reserves the right to distribute this material elsewhere under different
-  copying permissions.  These modifications are distributed here under 
+  copying permissions.  These modifications are distributed here under
   the following terms:
 
     This library is free software; you can redistribute it and/or
@@ -32,21 +32,17 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
 static char rcsid[] = "$NetBSD: e_asinf.c,v 1.5 1995/05/12 04:57:25 jtc Exp $";
 #endif
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
 static const float
-#else
-static float
-#endif
 one =  1.0000000000e+00, /* 0x3F800000 */
 huge =  1.000e+30,
 
@@ -63,12 +59,7 @@ p2 = 4.547037598e-2f,
 p3 = 2.417951451e-2f,
 p4 = 4.216630880e-2f;
 
-#ifdef __STDC__
-	float __ieee754_asinf(float x)
-#else
-	float __ieee754_asinf(x)
-	float x;
-#endif
+float __ieee754_asinf(float x)
 {
 	float t,w,p,q,c,r,s;
 	int32_t hx,ix;
@@ -93,7 +84,7 @@ p4 = 4.216630880e-2f;
 	t = w*0.5f;
 	p = t * (p0 + t * (p1 + t * (p2 + t * (p3 + t * p4))));
 	s = __ieee754_sqrtf(t);
-	if(ix>=0x3F79999A) { 	/* if |x| > 0.975 */
+	if(ix>=0x3F79999A) {	/* if |x| > 0.975 */
 	    t = pio2_hi-(2.0f*(s+s*p)-pio2_lo);
 	} else {
 	    int32_t iw;
@@ -108,3 +99,4 @@ p4 = 4.216630880e-2f;
 	}
 	if(hx>0) return t; else return -t;
 }
+strong_alias (__ieee754_asinf, __asinf_finite)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2003, 2006 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1996.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <nss.h>
 /* The following is an ugly trick to avoid a prototype declaration for
@@ -241,7 +240,7 @@ _nss_nis_getnetbyaddr_r (uint32_t addr, int type, struct netent *net,
   if (__builtin_expect (yp_get_default_domain (&domain), 0))
     return NSS_STATUS_UNAVAIL;
 
-  struct in_addr in = inet_makeaddr (addr, 0);
+  struct in_addr in = { .s_addr = htonl (addr) };
   char *buf = inet_ntoa (in);
   size_t blen = strlen (buf);
 

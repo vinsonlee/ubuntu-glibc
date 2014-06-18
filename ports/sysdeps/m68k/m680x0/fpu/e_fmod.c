@@ -1,4 +1,4 @@
-/* Copyright (C) 1996, 1997, 1999 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,19 +12,19 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
-#include "math_private.h"
+#include <math_private.h>
 #include "mathimpl.h"
 
 #ifndef FUNC
-#define FUNC __ieee754_fmod
+# define FUNC __ieee754_fmod
+# define FUNC_FINITE __fmod_finite
 #endif
 #ifndef float_type
-#define float_type double
+# define float_type double
 #endif
 
 float_type
@@ -34,3 +34,6 @@ FUNC (x, y)
 {
   return __m81_u(FUNC)(x, y);
 }
+#ifdef FUNC_FINITE
+strong_alias (FUNC, FUNC_FINITE)
+#endif

@@ -11,9 +11,9 @@
 
 /* Modifications for 128-bit long double are
    Copyright (C) 2001 Stephen L. Moshier <moshier@na-net.ornl.gov>
-   and are incorporated herein by permission of the author.  The author 
+   and are incorporated herein by permission of the author.  The author
    reserves the right to distribute this material elsewhere under different
-   copying permissions.  These modifications are distributed here under 
+   copying permissions.  These modifications are distributed here under
    the following terms:
 
     This library is free software; you can redistribute it and/or
@@ -27,8 +27,8 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
 /*
  * __ieee754_jn(n, x), __ieee754_yn(n, x)
@@ -56,29 +56,19 @@
  *
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <errno.h>
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
 static const long double
-#else
-static long double
-#endif
   invsqrtpi = 5.6418958354775628694807945156077258584405E-1L,
   two = 2.0e0L,
   one = 1.0e0L,
   zero = 0.0L;
 
 
-#ifdef __STDC__
 long double
 __ieee754_jnl (int n, long double x)
-#else
-long double
-__ieee754_jnl (n, x)
-     int n;
-     long double x;
-#endif
 {
   u_int32_t se;
   int32_t i, ix, sgn;
@@ -285,7 +275,16 @@ __ieee754_jnl (n, x)
 		    }
 		}
 	    }
-	  b = (t * __ieee754_j0l (x) / b);
+	  /* j0() and j1() suffer enormous loss of precision at and
+	   * near zero; however, we know that their zero points never
+	   * coincide, so just choose the one further away from zero.
+	   */
+	  z = __ieee754_j0l (x);
+	  w = __ieee754_j1l (x);
+	  if (fabsl (z) >= fabsl (w))
+	    b = (t * z / b);
+	  else
+	    b = (t * w / a);
 	}
     }
   if (sgn == 1)
@@ -293,16 +292,10 @@ __ieee754_jnl (n, x)
   else
     return b;
 }
+strong_alias (__ieee754_jnl, __jnl_finite)
 
-#ifdef __STDC__
 long double
 __ieee754_ynl (int n, long double x)
-#else
-long double
-__ieee754_ynl (n, x)
-     int n;
-     long double x;
-#endif
 {
   u_int32_t se;
   int32_t i, ix;
@@ -323,7 +316,7 @@ __ieee754_ynl (n, x)
   if (x <= 0.0L)
     {
       if (x == 0.0L)
-	return -HUGE_VALL + x;
+	return ((n < 0 && (n & 1) != 0) ? 1.0L : -1.0L) / 0.0L;
       if (se & 0x80000000)
 	return zero / (zero * x);
     }
@@ -393,8 +386,12 @@ __ieee754_ynl (n, x)
 	  a = temp;
 	}
     }
+  /* If B is +-Inf, set up errno accordingly.  */
+  if (! __finitel (b))
+    __set_errno (ERANGE);
   if (sign > 0)
     return b;
   else
     return -b;
 }
+strong_alias (__ieee754_ynl, __ynl_finite)

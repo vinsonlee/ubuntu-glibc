@@ -1,5 +1,5 @@
 /* User file parser in nss_files module.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <pwd.h>
 
@@ -30,14 +29,14 @@ struct pwent_data {};
 #include "files-parse.c"
 #include GENERIC
 
-DB_LOOKUP (pwnam, 1 + strlen (name), (".%s", name),
+DB_LOOKUP (pwnam, '.', 0, ("%s", name),
 	   {
 	     if (name[0] != '+' && name[0] != '-'
 		 && ! strcmp (name, result->pw_name))
 	       break;
 	   }, const char *name)
 
-DB_LOOKUP (pwuid, 20, ("=%lu", (unsigned long int) uid),
+DB_LOOKUP (pwuid, '=', 20, ("%lu", (unsigned long int) uid),
 	   {
 	     if (result->pw_uid == uid && result->pw_name[0] != '+'
 		 && result->pw_name[0] != '-')

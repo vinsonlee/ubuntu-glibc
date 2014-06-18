@@ -27,6 +27,7 @@ libc {
     pthread_cond_broadcast; pthread_cond_timedwait;
   }
   GLIBC_PRIVATE {
+    __libc_alloca_cutoff;
     # Internal libc interface to libpthread
     __libc_dl_error_tsd;
   }
@@ -240,9 +241,25 @@ libpthread {
     pthread_mutex_getprioceiling; pthread_mutex_setprioceiling;
   };
 
+  GLIBC_2.11 {
+    pthread_sigqueue;
+  };
+
+  GLIBC_2.12 {
+    pthread_mutex_consistent; pthread_mutexattr_getrobust;
+    pthread_mutexattr_setrobust;
+
+    pthread_setname_np; pthread_getname_np;
+  };
+
+  GLIBC_2.18 {
+    pthread_getattr_default_np;
+    pthread_setattr_default_np;
+  }
+
   GLIBC_PRIVATE {
     __pthread_initialize_minimal;
     __pthread_clock_gettime; __pthread_clock_settime;
-    __pthread_unwind;
+    __pthread_unwind; __pthread_get_minstack;
   }
 }

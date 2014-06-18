@@ -1,5 +1,5 @@
 /* Define POSIX options for GNU/Hurd.
-   Copyright (C) 1998,2000,2001,2002,2006 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _UNISTD_H
 #error "Never include this file directly; use <unistd.h> instead."
@@ -31,23 +30,26 @@
 /* Processes have a saved set-user-ID and a saved set-group-ID.  */
 #define	_POSIX_SAVED_IDS	1
 
+/* Priority scheduling is not supported.  */
+#undef	_POSIX_PRIORITY_SCHEDULING
+
 /* Synchronizing file data is supported, but msync is missing.  */
 #undef _POSIX_SYNCHRONIZED_IO
 
 /* The fsync function is present.  */
-#define	_POSIX_FSYNC	200112L
+#define	_POSIX_FSYNC	200809L
 
 /* Mapping of files to memory is supported.  */
-#define	_POSIX_MAPPED_FILES	200112L
+#define	_POSIX_MAPPED_FILES	200809L
 
 /* Locking of all memory could be supported in future.  */
 #define	_POSIX_MEMLOCK	0
 
 /* Locking of ranges of memory is supported.  */
-#define	_POSIX_MEMLOCK_RANGE	200112L
+#define	_POSIX_MEMLOCK_RANGE	200809L
 
 /* Setting of memory protections is supported.  */
-#define	_POSIX_MEMORY_PROTECTION	200112L
+#define	_POSIX_MEMORY_PROTECTION	200809L
 
 /* Elements of the `c_cc' member of `struct termios' structure
    can be disabled by using the value _POSIX_VDISABLE.  */
@@ -60,18 +62,32 @@
 #undef _POSIX_NO_TRUNC		/* Overlong file names get error?  */
 #undef _POSIX_SYNC_IO		/* File supports O_SYNC et al?  */
 
+/* X/Open realtime support is not supported.  */
+#undef _XOPEN_REALTIME
+
+/* X/Open thread realtime support is not supported.  */
+#undef _XOPEN_REALTIME_THREADS
+
+/* XPG4.2 shared memory is not supported.  */
+#undef	_XOPEN_SHM
 
 /* We do not have the POSIX threads interface.  */
 #define _POSIX_THREADS	-1
 
 /* We have the reentrant functions described in POSIX.  */
 #define _POSIX_REENTRANT_FUNCTIONS      1
-#define _POSIX_THREAD_SAFE_FUNCTIONS	200112L
+#define _POSIX_THREAD_SAFE_FUNCTIONS	200809L
 
 /* These are all things that won't be supported when _POSIX_THREADS is not.  */
 #define _POSIX_THREAD_PRIORITY_SCHEDULING	-1
 #define _POSIX_THREAD_ATTR_STACKSIZE		-1
 #define _POSIX_THREAD_ATTR_STACKADDR		-1
+#define _POSIX_THREAD_PRIO_INHERIT		-1
+#define _POSIX_THREAD_PRIO_PROTECT		-1
+#ifdef __USE_XOPEN2K8
+# define _POSIX_THREAD_ROBUST_PRIO_INHERIT	-1
+# define _POSIX_THREAD_ROBUST_PRIO_PROTECT	-1
+#endif
 #define _POSIX_SEMAPHORES			-1
 
 /* Real-time signals are not yet supported.  */
@@ -79,8 +95,11 @@
 
 /* Asynchronous I/O might supported with the existing ABI.  */
 #define _POSIX_ASYNCHRONOUS_IO	0
+#undef _POSIX_ASYNC_IO
 /* Alternative name for Unix98.  */
 #define _LFS_ASYNCHRONOUS_IO	_POSIX_ASYNCHRONOUS_IO
+/* Support for prioritization is not available.  */
+#undef _POSIX_PRIORITIZED_IO
 
 /* The LFS support in asynchronous I/O is also available.  */
 #define _LFS64_ASYNCHRONOUS_IO	_POSIX_ASYNCHRONOUS_IO
@@ -111,8 +130,11 @@
 /* We cannot support the Timeouts option without _POSIX_THREADS.  */
 #define _POSIX_TIMEOUTS	-1
 
+/* We do not support spinlocks.  */
+#define _POSIX_SPIN_LOCKS	-1
+
 /* The `spawn' function family is supported.  */
-#define _POSIX_SPAWN	200112L
+#define _POSIX_SPAWN	200809L
 
 /* We do not have POSIX timers, but could in future without ABI change.  */
 #define _POSIX_TIMERS	0
@@ -130,19 +152,19 @@
 #define _POSIX_MONOTONIC_CLOCK	0
 
 /* The clock selection interfaces are available.  */
-#define _POSIX_CLOCK_SELECTION	200112L
+#define _POSIX_CLOCK_SELECTION	200809L
 
 /* Advisory information interfaces could be available in future.  */
 #define _POSIX_ADVISORY_INFO	0
 
 /* IPv6 support is available.  */
-#define _POSIX_IPV6	200112L
+#define _POSIX_IPV6	200809L
 
 /* Raw socket support is available.  */
-#define _POSIX_RAW_SOCKETS	200112L
+#define _POSIX_RAW_SOCKETS	200809L
 
 /* We have at least one terminal.  */
-#define _POSIX2_CHAR_TERM	200112L
+#define _POSIX2_CHAR_TERM	200809L
 
 /* Neither process nor thread sporadic server interfaces is available.  */
 #define _POSIX_SPORADIC_SERVER	-1
@@ -156,10 +178,5 @@
 
 /* Typed memory objects are not available.  */
 #define _POSIX_TYPED_MEMORY_OBJECTS	-1
-
-/* No support for priority inheritance or protection so far.  */
-#define _POSIX_THREAD_PRIO_INHERIT	-1
-#define _POSIX_THREAD_PRIO_PROTECT	-1
-
 
 #endif /* bits/posix_opt.h */

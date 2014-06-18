@@ -9,31 +9,24 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: $")
-
-#ifdef __ELF__
 	.section .rodata
-#else
-	.text
-#endif
 
 	.align ALIGNARG(4)
-	ASM_TYPE_DIRECTIVE(zero_nan,@object)
+	.type zero_nan,@object
 zero_nan:
 	.double 0.0
 nan:	.byte 0, 0, 0, 0, 0, 0, 0xff, 0x7f
-minus_zero:
 	.byte 0, 0, 0, 0, 0, 0, 0, 0x80
 	.byte 0, 0, 0, 0, 0, 0, 0xff, 0x7f
 	ASM_SIZE_DIRECTIVE(zero_nan)
 
 
 #ifdef PIC
-#define MO(op) op##@GOTOFF(%ecx)
-#define MOX(op,x,f) op##@GOTOFF(%ecx,x,f)
+# define MO(op) op##@GOTOFF(%ecx)
+# define MOX(op,x,f) op##@GOTOFF(%ecx,x,f)
 #else
-#define MO(op) op
-#define MOX(op,x,f) op(,x,f)
+# define MO(op) op
+# define MOX(op,x,f) op(,x,f)
 #endif
 
 	.text
@@ -102,3 +95,4 @@ ENTRY(__ieee754_scalbl)
 	fdiv	%st
 	ret
 END(__ieee754_scalbl)
+strong_alias (__ieee754_scalbl, __scalbl_finite)

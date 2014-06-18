@@ -1,5 +1,4 @@
-/* Copyright (C) 1995,1996,1997,1998,1999,2002,2003,2006
-	Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -38,34 +36,44 @@ __mpn_extract_long_double (mp_ptr res_ptr, mp_size_t size,
   union ibm_extended_long_double u;
   unsigned long long hi, lo;
   int ediff;
-  u.d = value;
 
-  *is_neg = u.ieee.negative;
-  *expt = (int) u.ieee.exponent - IBM_EXTENDED_LONG_DOUBLE_BIAS;
+  u.ld = value;
 
-  lo = ((long long) u.ieee.mantissa2 << 32) | u.ieee.mantissa3;
-  hi = ((long long) u.ieee.mantissa0 << 32) | u.ieee.mantissa1;
-  /* If the lower double is not a denomal or zero then set the hidden
+  *is_neg = u.d[0].ieee.negative;
+  *expt = (int) u.d[0].ieee.exponent - IEEE754_DOUBLE_BIAS;
+
+  lo = ((long long) u.d[1].ieee.mantissa0 << 32) | u.d[1].ieee.mantissa1;
+  hi = ((long long) u.d[0].ieee.mantissa0 << 32) | u.d[0].ieee.mantissa1;
+
+  /* If the lower double is not a denormal or zero then set the hidden
      53rd bit.  */
-  if (u.ieee.exponent2 > 0)
-    {
-      lo |= 1LL << 52;
+  if (u.d[1].ieee.exponent != 0)
+    lo |= 1ULL << 52;
+  else
+    lo = lo << 1;
 
-      /* The lower double is normalized separately from the upper.  We may
-	 need to adjust the lower manitissa to reflect this.  */
-      ediff = u.ieee.exponent - u.ieee.exponent2;
-      if (ediff > 53)
-	lo = lo >> (ediff-53);
+  /* The lower double is normalized separately from the upper.  We may
+     need to adjust the lower manitissa to reflect this.  */
+  ediff = u.d[0].ieee.exponent - u.d[1].ieee.exponent - 53;
+  if (ediff > 0)
+    {
+      if (ediff < 64)
+	lo = lo >> ediff;
+      else
+	lo = 0;
     }
+  else if (ediff < 0)
+    lo = lo << -ediff;
+
   /* The high double may be rounded and the low double reflects the
      difference between the long double and the rounded high double
      value.  This is indicated by a differnce between the signs of the
      high and low doubles.  */
-  if ((u.ieee.negative != u.ieee.negative2)
-      && ((u.ieee.exponent2 != 0) && (lo != 0L)))
+  if (u.d[0].ieee.negative != u.d[1].ieee.negative
+      && lo != 0)
     {
       lo = (1ULL << 53) - lo;
-      if (hi == 0LL)
+      if (hi == 0)
 	{
 	  /* we have a borrow from the hidden bit, so shift left 1.  */
 	  hi = 0x0ffffffffffffeLL | (lo >> 51);
@@ -94,7 +102,7 @@ __mpn_extract_long_double (mp_ptr res_ptr, mp_size_t size,
 #define NUM_LEADING_ZEROS (BITS_PER_MP_LIMB \
 			   - (LDBL_MANT_DIG - ((N - 1) * BITS_PER_MP_LIMB)))
 
-  if (u.ieee.exponent == 0)
+  if (u.d[0].ieee.exponent == 0)
     {
       /* A biased exponent of zero is a special case.
 	 Either it is a zero or it is a denormal number.  */
@@ -105,7 +113,10 @@ __mpn_extract_long_double (mp_ptr res_ptr, mp_size_t size,
       else
 	{
 	  /* It is a denormal number, meaning it has no implicit leading
-  	     one bit, and its exponent is in fact the format minimum.  */
+	     one bit, and its exponent is in fact the format minimum.  We
+	     use DBL_MIN_EXP instead of LDBL_MIN_EXP below because the
+	     latter describes the properties of both parts together, but
+	     the exponent is computed from the high part only.  */
 	  int cnt;
 
 #if N == 2
@@ -116,7 +127,7 @@ __mpn_extract_long_double (mp_ptr res_ptr, mp_size_t size,
 	      res_ptr[N - 1] = res_ptr[N - 1] << cnt
 			       | (res_ptr[0] >> (BITS_PER_MP_LIMB - cnt));
 	      res_ptr[0] <<= cnt;
-	      *expt = LDBL_MIN_EXP - 1 - cnt;
+	      *expt = DBL_MIN_EXP - 1 - cnt;
 	    }
 	  else
 	    {
@@ -131,7 +142,7 @@ __mpn_extract_long_double (mp_ptr res_ptr, mp_size_t size,
 		  res_ptr[N - 1] = res_ptr[0] >> (NUM_LEADING_ZEROS - cnt);
 		  res_ptr[0] <<= BITS_PER_MP_LIMB - (NUM_LEADING_ZEROS - cnt);
 		}
-	      *expt = LDBL_MIN_EXP - 1
+	      *expt = DBL_MIN_EXP - 1
 		- (BITS_PER_MP_LIMB - NUM_LEADING_ZEROS) - cnt;
 	    }
 #else
@@ -162,7 +173,7 @@ __mpn_extract_long_double (mp_ptr res_ptr, mp_size_t size,
 
 	  for (; k >= 0; k--)
 	    res_ptr[k] = 0;
-	  *expt = LDBL_MIN_EXP - 1 - l * BITS_PER_MP_LIMB - cnt;
+	  *expt = DBL_MIN_EXP - 1 - l * BITS_PER_MP_LIMB - cnt;
 #endif
 	}
     }

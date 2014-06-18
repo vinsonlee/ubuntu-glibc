@@ -1,5 +1,5 @@
 /* pthread_getattr_np test.
-   Copyright (C) 2003, 2004 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2003.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <error.h>
@@ -40,10 +39,10 @@ tf (void *arg)
       ap = &a2;
       err = pthread_attr_init (ap);
       if (err)
-        {
-          error (0, err, "pthread_attr_init failed");
-          return tf;
-        }
+	{
+	  error (0, err, "pthread_attr_init failed");
+	  return tf;
+	}
     }
   else
     ap = (pthread_attr_t *) arg;
@@ -353,7 +352,7 @@ do_test (void)
 	  result = 1;
 	}
       else if (ret != NULL)
-        result = 1;
+	result = 1;
     }
 
   err = pthread_attr_init (&a);
@@ -379,7 +378,7 @@ do_test (void)
 	  result = 1;
 	}
       else if (ret != NULL)
-        result = 1;
+	result = 1;
     }
 
   err = pthread_attr_setguardsize (&a, 16 * sysconf (_SC_PAGESIZE));
@@ -405,7 +404,7 @@ do_test (void)
 	  result = 1;
 	}
       else if (ret != NULL)
-        result = 1;
+	result = 1;
     }
 
   err = pthread_attr_destroy (&a);

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,17 +13,19 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "pthreadP.h"
+#include <stap-probe.h>
 
 
 int
 __pthread_rwlock_destroy (rwlock)
      pthread_rwlock_t *rwlock;
 {
+  LIBC_PROBE (rwlock_destroy, 1, rwlock);
+
   /* Nothing to be done.  For now.  */
   return 0;
 }

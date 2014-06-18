@@ -1,7 +1,7 @@
 /* mc68020 __mpn_mul_1 -- Multiply a limb vector with a limb and store
    the result in a second limb vector.
 
-Copyright (C) 1992, 1994, 1996, 1998 Free Software Foundation, Inc.
+Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -16,9 +16,7 @@ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library; see the file COPYING.LIB.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-MA 02111-1307, USA. */
+along with the GNU MP Library.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /*
   INPUT PARAMETERS
@@ -41,11 +39,10 @@ ENTRY(__mpn_mul_1)
 
 /* Save used registers on the stack.  */
 	moveml	R(d2)-R(d4),MEM_PREDEC(sp)
-#if 0
-	movel	R(d2),MEM_PREDEC(sp)
-	movel	R(d3),MEM_PREDEC(sp)
-	movel	R(d4),MEM_PREDEC(sp)
-#endif
+	cfi_adjust_cfa_offset (3*4)
+	cfi_rel_offset (R(d2), 0)
+	cfi_rel_offset (R(d3), 4)
+	cfi_rel_offset (R(d4), 8)
 
 /* Copy the arguments to registers.  Better use movem?  */
 	movel	MEM_DISP(sp,16),R(res_ptr)
@@ -78,10 +75,9 @@ L(L1:)	movel	MEM_POSTINC(s1_ptr),R(d3)
 
 /* Restore used registers from stack frame.  */
 	moveml	MEM_POSTINC(sp),R(d2)-R(d4)
-#if 0
-	movel	MEM_POSTINC(sp),R(d4)
-	movel	MEM_POSTINC(sp),R(d3)
-	movel	MEM_POSTINC(sp),R(d2)
-#endif
+	cfi_adjust_cfa_offset (-3*4)
+	cfi_restore (R(d2))
+	cfi_restore (R(d3))
+	cfi_restore (R(d4))
 	rts
 END(__mpn_mul_1)

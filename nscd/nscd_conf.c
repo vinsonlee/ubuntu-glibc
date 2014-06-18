@@ -1,4 +1,4 @@
-/* Copyright (c) 1998, 2000, 2003-2007, 2008 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1998.
 
@@ -13,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include <ctype.h>
 #include <errno.h>
@@ -43,7 +42,8 @@ const char *const dbnames[lastdb] =
   [pwddb] = "passwd",
   [grpdb] = "group",
   [hstdb] = "hosts",
-  [servdb] = "services"
+  [servdb] = "services",
+  [netgrdb] = "netgroup"
 };
 
 
@@ -189,17 +189,17 @@ nscd_parse_file (const char *fname, struct database_dyn dbs[lastdb])
 	  max_nthreads = MAX (atol (arg1), lastdb);
 	}
       else if (strcmp (entry, "server-user") == 0)
-        {
-          if (!arg1)
-            error (0, 0, _("Must specify user name for server-user option"));
-          else
-            server_user = xstrdup (arg1);
-        }
+	{
+	  if (!arg1)
+	    error (0, 0, _("Must specify user name for server-user option"));
+	  else
+	    server_user = xstrdup (arg1);
+	}
       else if (strcmp (entry, "stat-user") == 0)
-        {
-          if (arg1 == NULL)
-            error (0, 0, _("Must specify user name for stat-user option"));
-          else
+	{
+	  if (arg1 == NULL)
+	    error (0, 0, _("Must specify user name for stat-user option"));
+	  else
 	    {
 	      stat_user = xstrdup (arg1);
 
@@ -207,7 +207,7 @@ nscd_parse_file (const char *fname, struct database_dyn dbs[lastdb])
 	      if (pw != NULL)
 		stat_uid = pw->pw_uid;
 	    }
-        }
+	}
       else if (strcmp (entry, "persistent") == 0)
 	{
 	  int idx = find_db (arg1);
@@ -236,13 +236,11 @@ nscd_parse_file (const char *fname, struct database_dyn dbs[lastdb])
 	    reload_count = UINT_MAX;
 	  else
 	    {
-	      unsigned int count = strtoul (arg1, NULL, 0);
+	      unsigned long int count = strtoul (arg1, NULL, 0);
 	      if (count > UINT8_MAX - 1)
 		reload_count = UINT_MAX;
-	      else if (count >= 0)
-	    reload_count = count;
 	      else
-		error (0, 0, _("invalid value for 'reload-count': %u"), count);
+		reload_count = count;
 	    }
 	}
       else if (strcmp (entry, "paranoia") == 0)
@@ -257,7 +255,7 @@ nscd_parse_file (const char *fname, struct database_dyn dbs[lastdb])
 	  if (arg1 != NULL)
 	    restart_interval = atol (arg1);
 	  else
-            error (0, 0, _("Must specify value for restart-interval option"));
+	    error (0, 0, _("Must specify value for restart-interval option"));
 	}
       else if (strcmp (entry, "auto-propagate") == 0)
 	{

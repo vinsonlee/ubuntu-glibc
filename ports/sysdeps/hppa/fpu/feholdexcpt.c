@@ -1,5 +1,5 @@
 /* Store current floating-point environment and clear exceptions.
-   Copyright (C) 2000 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David Huggins-Daines <dhd@debian.org>, 2000
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
 #include <string.h>
@@ -41,9 +40,9 @@ feholdexcept (fenv_t *envp)
   /* Now clear all flags  */
   clear.env.__status_word &= ~(FE_ALL_EXCEPT << 27);
 
-  /* Load the new environment. Note: fr0 must load last to enable T-bit 
+  /* Load the new environment. Note: fr0 must load last to enable T-bit
      Thus we start bufptr at the end and work backwards */
-  bufptr = (unsigned int)(clear.buf) + sizeof(unsigned int)*4;
+  bufptr = (unsigned long long *)((unsigned int)(clear.buf) + sizeof(unsigned int)*4);
   __asm__ (
 	   "fldd,mb -8(%0),%%fr0\n"
 	   : : "r" (bufptr), "m" (clear) : "%r0");

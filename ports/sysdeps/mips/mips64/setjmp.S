@@ -1,5 +1,4 @@
-/* Copyright (C) 1996, 1997, 2000, 2002, 2003, 2004
-	Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sgidefs.h>
 #include <sysdep.h>
@@ -31,16 +29,16 @@ ENTRY (__sigsetjmp)
 #ifdef __PIC__
 	SETUP_GP
 #endif
-	SETUP_GP64 (v0, C_SYMBOL_NAME (__sigsetjmp))
+	SETUP_GP64_REG (v0, C_SYMBOL_NAME (__sigsetjmp))
 	move a2, sp
 	move a3, fp
 	PTR_LA t9, __sigsetjmp_aux
 #if _MIPS_SIM == _ABIO32
 	nop
-#endif	
-	RESTORE_GP64
+#endif
+	RESTORE_GP64_REG
 #if _MIPS_SIM != _ABIO32
 	move a4, gp
 #endif
 	jr t9
-	.end __sigsetjmp
+END (__sigsetjmp)

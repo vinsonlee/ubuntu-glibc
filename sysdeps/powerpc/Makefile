@@ -1,11 +1,3 @@
-# We always want to use the new mnemonic syntax even if we are on a RS6000
-# machine.
-+cflags += -mnew-mnemonics
-
-ifeq ($(subdir),gmon)
-sysdep_routines += ppc-mcount
-endif
-
 ifeq ($(subdir),string)
 CFLAGS-memcmp.c += -Wno-uninitialized
 endif
@@ -25,6 +17,17 @@ endif
 endif
 
 ifeq ($(subdir),csu)
-# get offset to rtld_global._dl_hwcap
+# get offset to rtld_global._dl_hwcap and rtld_global._dl_hwcap2
 gen-as-const-headers += rtld-global-offsets.sym
+# get offset to __locale_struct.__ctype_tolower
+gen-as-const-headers += locale-defines.sym
+endif
+
+ifeq ($(subdir),misc)
+sysdep_headers += sys/platform/ppc.h
+tests += test-gettimebase
+endif
+
+ifneq (,$(filter %le,$(config-machine)))
+abilist-pattern = %-le.abilist
 endif

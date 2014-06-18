@@ -1,5 +1,5 @@
 /* Optimized memcpy implementation for PowerPC32 on POWER6.
-   Copyright (C) 2003, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,21 +13,18 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-   02110-1301 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
-#include <bp-sym.h>
-#include <bp-asm.h>
 
 /* __ptr_t [r3] memcpy (__ptr_t dst [r3], __ptr_t src [r4], size_t len [r5]);
    Returns 'dst'.
 
-   Memcpy handles short copies (< 32-bytes) using a binary move blocks 
-   (no loops) of lwz/stw.  The tail (remaining 1-3) bytes is handled 
-   with the appropriate combination of byte and halfword load/stores. 
-   There is minimal effort to optimize the alignment of short moves.  
+   Memcpy handles short copies (< 32-bytes) using a binary move blocks
+   (no loops) of lwz/stw.  The tail (remaining 1-3) bytes is handled
+   with the appropriate combination of byte and halfword load/stores.
+   There is minimal effort to optimize the alignment of short moves.
 
    Longer moves (>= 32-bytes) justify the effort to get at least the
    destination word (4-byte) aligned.  Further optimization is
@@ -35,7 +32,7 @@
    Each case has an optimized unrolled loop.   */
 
 	.machine power6
-EALIGN (BP_SYM (memcpy), 5, 0)
+EALIGN (memcpy, 5, 0)
 	CALL_MCOUNT
 
     stwu   1,-32(1)
@@ -80,11 +77,11 @@ EALIGN (BP_SYM (memcpy), 5, 0)
     bne-   cr6,L(wdu)   /* If source is not word aligned. .L6 */
     clrlwi 11,31,30  /* calculate the number of tail bytes */
     b      L(word_aligned)
-  /* Copy words from source to destination, assuming the destination is 
+  /* Copy words from source to destination, assuming the destination is
      aligned on a word boundary.
 
      At this point we know there are at least 29 bytes left (32-3) to copy.
-     The next step is to determine if the source is also word aligned. 
+     The next step is to determine if the source is also word aligned.
      If not branch to the unaligned move code at .L6. which uses
      a load, shift, store strategy.
 
@@ -100,9 +97,9 @@ EALIGN (BP_SYM (memcpy), 5, 0)
 
   /* Move words where destination and source are word aligned.
      Use an unrolled loop to copy 4 words (16-bytes) per iteration.
-     If the the copy is not an exact multiple of 16 bytes, 1-3 
+     If the copy is not an exact multiple of 16 bytes, 1-3
      words are copied as needed to set up the main loop.  After
-     the main loop exits there may be a tail of 1-3 bytes. These bytes are 
+     the main loop exits there may be a tail of 1-3 bytes. These bytes are
      copied a halfword/byte at a time as needed to preserve alignment.  */
 L(word_aligned):
     mtcrf 0x01,9
@@ -121,7 +118,7 @@ L(word_aligned):
     addi  10,3,8
     bf    31,4f
     lwz   0,8(12)
-    stw   0,8(3)    
+    stw   0,8(3)
     blt   cr1,3f
     addi  11,12,12
     addi  10,3,12
@@ -135,7 +132,7 @@ L(word_aligned):
     addi  11,12,4
     stw   6,0(3)
     addi  10,3,4
-    
+
     .align  4
 4:
     lwz   6,0(11)
@@ -149,14 +146,14 @@ L(word_aligned):
     addi  11,11,16
     addi  10,10,16
     bdnz  4b
-3:  
+3:
     clrrwi 0,31,2
     mtcrf 0x01,31
     beq   cr6,0f
 .L9:
     add   3,3,0
     add   12,12,0
-    
+
 /*  At this point we have a tail of 0-3 bytes and we know that the
     destination is word aligned.  */
 2:  bf    30,1f
@@ -175,7 +172,7 @@ L(word_aligned):
     addi 1,1,32
     blr
 
-/* Copy up to 31 bytes.  This divided into two cases 0-8 bytes and 9-31 
+/* Copy up to 31 bytes.  This divided into two cases 0-8 bytes and 9-31
    bytes.  Each case is handled without loops, using binary (1,2,4,8)
    tests.
 
@@ -208,7 +205,7 @@ L(word_unaligned_short):
     andi. 0,8,3
     beq   cr6,L(wus_8)	/* Handle moves of 8 bytes.  */
 /* At least 9 bytes left.  Get the source word aligned.  */
-    cmpldi	cr1,5,16
+    cmplwi	cr1,5,16
     mr    12,4
     ble   cr6,L(wus_4)  /* Handle moves of 0-8 bytes.  */
     mr    11,3
@@ -220,17 +217,30 @@ L(word_unaligned_short):
     subf  10,0,5
     add   12,4,0
     blt   cr6,5f
-    srdi  7,6,16
+    srwi  7,6,16
     bgt	  cr6,3f
+#ifdef __LITTLE_ENDIAN__
+    sth   7,0(3)
+#else
     sth   6,0(3)
+#endif
     b     7f
     .align  4
 3:
+#ifdef __LITTLE_ENDIAN__
+    rotlwi 6,6,24
+    stb   6,0(3)
+    sth   7,1(3)
+#else
     stb   7,0(3)
     sth   6,1(3)
+#endif
     b     7f
     .align  4
 5:
+#ifdef __LITTLE_ENDIAN__
+    rotlwi 6,6,8
+#endif
     stb   6,0(3)
 7:
     cmplwi	cr1,10,16
@@ -241,7 +251,7 @@ L(wus_tail):
 /* At least 6 bytes left and the source is word aligned.  This allows
    some speculative loads up front.  */
 /* We need to special case the fall-through because the biggest delays
-   are due to address computation not being ready in time for the 
+   are due to address computation not being ready in time for the
    AGEN.  */
     lwz   6,0(12)
     lwz   7,4(12)
@@ -272,7 +282,7 @@ L(wus_tail16): /* Move 16 bytes.  */
     addi  1,1,32
     blr
     .align  4
-L(wus_tail16p8):  /* less then 8 bytes left.  */
+L(wus_tail16p8):  /* less than 8 bytes left.  */
     beq   cr1,L(wus_tailX) /* exactly 16 bytes, early exit.  */
     cmplwi	cr1,10,20
     bf    29,L(wus_tail16p2)
@@ -286,7 +296,7 @@ L(wus_tail16p8):  /* less then 8 bytes left.  */
     addi  1,1,32
     blr
     .align  4
-L(wus_tail16p4):  /* less then 4 bytes left.  */
+L(wus_tail16p4):  /* less than 4 bytes left.  */
     addi  12,12,24
     addi  11,11,24
     bgt   cr0,L(wus_tail2)
@@ -294,7 +304,7 @@ L(wus_tail16p4):  /* less then 4 bytes left.  */
     addi  1,1,32
     blr
     .align  4
-L(wus_tail16p2):  /* 16 bytes moved, less then 4 bytes left.  */
+L(wus_tail16p2):  /* 16 bytes moved, less than 4 bytes left.  */
     addi  12,12,16
     addi  11,11,16
     b     L(wus_tail2)
@@ -318,7 +328,7 @@ L(wus_tail8):  /* Move 8 bytes.  */
     addi  1,1,32
     blr
     .align  4
-L(wus_tail8p4):  /* less then 4 bytes left.  */
+L(wus_tail8p4):  /* less than 4 bytes left.  */
     addi  12,12,8
     addi  11,11,8
     bgt   cr1,L(wus_tail2)
@@ -329,14 +339,14 @@ L(wus_tail8p4):  /* less then 4 bytes left.  */
     .align  4
 L(wus_tail4):  /* Move 4 bytes.  */
 /*  r6 already loaded speculatively.  If we are here we know there is
-    more then 4 bytes left.  So there is no need to test.  */
+    more than 4 bytes left.  So there is no need to test.  */
     addi  12,12,4
     stw   6,0(11)
     addi  11,11,4
 L(wus_tail2):  /* Move 2-3 bytes.  */
     bf    30,L(wus_tail1)
     lhz   6,0(12)
-    sth   6,0(11) 
+    sth   6,0(11)
     bf    31,L(wus_tailX)
     lbz   7,2(12)
     stb   7,2(11)
@@ -368,7 +378,7 @@ L(wus_4):
     stw   6,0(3)
     bf    30,L(wus_5)
     lhz   7,4(4)
-    sth   7,4(3) 
+    sth   7,4(3)
     bf    31,L(wus_0)
     lbz   8,6(4)
     stb   8,6(3)
@@ -386,7 +396,7 @@ L(wus_5):
 L(wus_2):  /* Move 2-3 bytes.  */
     bf    30,L(wus_1)
     lhz   6,0(4)
-    sth   6,0(3) 
+    sth   6,0(3)
     bf    31,L(wus_0)
     lbz   7,2(4)
     stb   7,2(3)
@@ -410,39 +420,39 @@ L(wdu):
 
   /* Copy words where the destination is aligned but the source is
      not.  For power4, power5 and power6 machines there is penalty for
-     unaligned loads (src) that cross 32-byte, cacheline, or page 
+     unaligned loads (src) that cross 32-byte, cacheline, or page
      boundaries. So we want to use simple (unaligned) loads where
-     posible but avoid them where we know the load would span a 32-byte
-     boundary. 
+     possible but avoid them where we know the load would span a 32-byte
+     boundary.
 
      At this point we know we have at least 29 (32-3) bytes to copy
-     the src is unaligned. and we may cross at least one 32-byte 
-     boundary. Also we have the following regester values:
+     the src is unaligned. and we may cross at least one 32-byte
+     boundary. Also we have the following register values:
      r3 == adjusted dst, word aligned
      r4 == unadjusted src
      r5 == unadjusted len
      r9 == adjusted Word length
      r10 == src alignment (1-3)
-     r12 == adjuested src, not aligned
+     r12 == adjusted src, not aligned
      r31 == adjusted len
 
-     First we need to copy word upto but not crossing the next 32-byte
-     boundary. Then perform aligned loads just before and just after 
-     the boundary and use shifts and or to gernerate the next aligned
-     word for dst. If more then 32 bytes remain we copy (unaligned src)
-     the next 7 words and repeat the loop until less then 32-bytes
-     remaim.
+     First we need to copy word up to but not crossing the next 32-byte
+     boundary. Then perform aligned loads just before and just after
+     the boundary and use shifts and or to generate the next aligned
+     word for dst. If more than 32 bytes remain we copy (unaligned src)
+     the next 7 words and repeat the loop until less than 32-bytes
+     remain.
 
-     Then if more then 4 bytes remain we again use aligned loads,
+     Then if more than 4 bytes remain we again use aligned loads,
      shifts and or to generate the next dst word. We then process the
      remaining words using unaligned loads as needed. Finally we check
-     if there more then 0 bytes (1-3) bytes remainting and use
+     if there are more than 0 bytes (1-3) bytes remaining and use
      halfword and or byte load/stores to complete the copy.
 */
     mr      4,12      /* restore unaligned adjusted src ptr */
     clrlwi  0,12,27   /* Find dist from previous 32-byte boundary.  */
     slwi    10,10,3   /* calculate number of bits to shift 1st word left */
-    cmplwi  cr5,0,16   
+    cmplwi  cr5,0,16
     subfic  8,0,32   /* Number of bytes to next 32-byte boundary.  */
 
     mtcrf   0x01,8
@@ -513,7 +523,7 @@ L(wdu_h32_4):
     addi  3,3,4
     .align  4
 L(wdu_h32_0):
-/*  set up for 32-byte boundry crossing word move and possibly 32-byte
+/*  set up for 32-byte boundary crossing word move and possibly 32-byte
     move loop.  */
     clrrwi  12,4,2
     cmplwi  cr5,31,32
@@ -532,7 +542,7 @@ L(wdu_32):
     lwz     6,0(12)
     cmplwi  cr6,31,4
     srwi    8,31,5    /* calculate the 32 byte loop count */
-    slw     0,6,10 
+    slw     0,6,10
     clrlwi  31,31,27   /* The remaining bytes, < 32.  */
     blt     cr5,L(wdu_32tail)
     mtctr   8
@@ -543,7 +553,7 @@ L(wdu_loop32):
     lwz   8,4(12)
     addi  12,12,32
     lwz   7,4(4)
-    srw   8,8,9 
+    srw   8,8,9
     or    0,0,8
     stw   0,0(3)
     stw   7,4(3)
@@ -562,7 +572,7 @@ L(wdu_loop32):
     stw   6,24(3)
     stw   7,28(3)
     addi  3,3,32
-    slw   0,8,10 
+    slw   0,8,10
     bdnz+ L(wdu_loop32)
 
 L(wdu_32tail):
@@ -571,7 +581,7 @@ L(wdu_32tail):
     blt     cr6,L(wdu_4tail)
     /* calculate and store the final word */
     lwz   8,4(12)
-    srw   8,8,9 
+    srw   8,8,9
     or    6,0,8
     b     L(wdu_32tailx)
 #endif
@@ -580,7 +590,11 @@ L(wdu1_32):
     lwz     6,-1(4)
     cmplwi  cr6,31,4
     srwi    8,31,5    /* calculate the 32 byte loop count */
+#ifdef __LITTLE_ENDIAN__
+    srwi    6,6,8
+#else
     slwi    6,6,8
+#endif
     clrlwi  31,31,27   /* The remaining bytes, < 32.  */
     blt     cr5,L(wdu1_32tail)
     mtctr   8
@@ -588,8 +602,12 @@ L(wdu1_32):
 
     lwz   8,3(4)
     lwz   7,4(4)
+#ifdef __LITTLE_ENDIAN__
+    rldimi 6,8,24,32
+#else
 /*  Equivalent to: srwi   8,8,32-8;  or    6,6,8 */
     rlwimi 6,8,8,(32-8),31
+#endif
     b      L(wdu1_loop32x)
     .align  4
 L(wdu1_loop32):
@@ -598,8 +616,12 @@ L(wdu1_loop32):
     lwz   7,4(4)
     stw   10,-8(3)
     stw   11,-4(3)
+#ifdef __LITTLE_ENDIAN__
+    rldimi 6,8,24,32
+#else
 /*  Equivalent to  srwi   8,8,32-8; or    6,6,8 */
     rlwimi 6,8,8,(32-8),31
+#endif
 L(wdu1_loop32x):
     lwz   10,8(4)
     lwz   11,12(4)
@@ -616,7 +638,11 @@ L(wdu1_loop32x):
     stw   6,16(3)
     stw   7,20(3)
     addi  3,3,32
+#ifdef __LITTLE_ENDIAN__
+    srwi  6,8,8
+#else
     slwi  6,8,8
+#endif
     bdnz+ L(wdu1_loop32)
     stw   10,-8(3)
     stw   11,-4(3)
@@ -627,8 +653,12 @@ L(wdu1_32tail):
     blt     cr6,L(wdu_4tail)
     /* calculate and store the final word */
     lwz   8,3(4)
-/*  Equivalent to: srwi   8,8,32-9;  or    6,6,8  */
+#ifdef __LITTLE_ENDIAN__
+    rldimi 6,8,24,32
+#else
+/*  Equivalent to: srwi   8,8,32-8;  or    6,6,8  */
     rlwimi 6,8,8,(32-8),31
+#endif
     b     L(wdu_32tailx)
 
 L(wdu2_32):
@@ -636,7 +666,11 @@ L(wdu2_32):
     lwz     6,-2(4)
     cmplwi  cr6,31,4
     srwi    8,31,5    /* calculate the 32 byte loop count */
+#ifdef __LITTLE_ENDIAN__
+    srwi    6,6,16
+#else
     slwi    6,6,16
+#endif
     clrlwi  31,31,27   /* The remaining bytes, < 32.  */
     blt     cr5,L(wdu2_32tail)
     mtctr   8
@@ -644,8 +678,11 @@ L(wdu2_32):
 
     lwz   8,2(4)
     lwz   7,4(4)
-/*  Equivalent to: srwi   8,8,32-8;  or    6,6,8 */
+#ifdef __LITTLE_ENDIAN__
+    rldimi 6,8,16,32
+#else
     rlwimi 6,8,16,(32-16),31
+#endif
     b      L(wdu2_loop32x)
     .align  4
 L(wdu2_loop32):
@@ -654,8 +691,11 @@ L(wdu2_loop32):
     lwz   7,4(4)
     stw   10,-8(3)
     stw   11,-4(3)
-/*  Equivalent to  srwi   8,8,32-8; or    6,6,8 */
+#ifdef __LITTLE_ENDIAN__
+    rldimi 6,8,16,32
+#else
     rlwimi 6,8,16,(32-16),31
+#endif
 L(wdu2_loop32x):
     lwz   10,8(4)
     lwz   11,12(4)
@@ -673,7 +713,11 @@ L(wdu2_loop32x):
     stw   6,16(3)
     stw   7,20(3)
     addi  3,3,32
+#ifdef __LITTLE_ENDIAN__
+    srwi  6,8,16
+#else
     slwi  6,8,16
+#endif
     bdnz+ L(wdu2_loop32)
     stw   10,-8(3)
     stw   11,-4(3)
@@ -684,8 +728,11 @@ L(wdu2_32tail):
     blt     cr6,L(wdu_4tail)
     /* calculate and store the final word */
     lwz   8,2(4)
-/*  Equivalent to: srwi   8,8,32-9;  or    6,6,8  */
+#ifdef __LITTLE_ENDIAN__
+    rldimi 6,8,16,32
+#else
     rlwimi 6,8,16,(32-16),31
+#endif
     b     L(wdu_32tailx)
 
 L(wdu3_32):
@@ -693,7 +740,11 @@ L(wdu3_32):
     lwz     6,-3(4)
     cmplwi  cr6,31,4
     srwi    8,31,5    /* calculate the 32 byte loop count */
+#ifdef __LITTLE_ENDIAN__
+    srwi    6,6,24
+#else
     slwi    6,6,24
+#endif
     clrlwi  31,31,27   /* The remaining bytes, < 32.  */
     blt     cr5,L(wdu3_32tail)
     mtctr   8
@@ -701,8 +752,11 @@ L(wdu3_32):
 
     lwz   8,1(4)
     lwz   7,4(4)
-/*  Equivalent to: srwi   8,8,32-8;  or    6,6,8 */
+#ifdef __LITTLE_ENDIAN__
+    rldimi 6,8,8,32
+#else
     rlwimi 6,8,24,(32-24),31
+#endif
     b      L(wdu3_loop32x)
     .align  4
 L(wdu3_loop32):
@@ -711,8 +765,11 @@ L(wdu3_loop32):
     lwz   7,4(4)
     stw   10,-8(3)
     stw   11,-4(3)
-/*  Equivalent to  srwi   8,8,32-8; or    6,6,8 */
+#ifdef __LITTLE_ENDIAN__
+    rldimi 6,8,8,32
+#else
     rlwimi 6,8,24,(32-24),31
+#endif
 L(wdu3_loop32x):
     lwz   10,8(4)
     lwz   11,12(4)
@@ -729,7 +786,11 @@ L(wdu3_loop32x):
     stw   6,16(3)
     stw   7,20(3)
     addi  3,3,32
+#ifdef __LITTLE_ENDIAN__
+    srwi  6,8,24
+#else
     slwi  6,8,24
+#endif
     bdnz+ L(wdu3_loop32)
     stw   10,-8(3)
     stw   11,-4(3)
@@ -740,8 +801,11 @@ L(wdu3_32tail):
     blt     cr6,L(wdu_4tail)
     /* calculate and store the final word */
     lwz   8,1(4)
-/*  Equivalent to: srwi   8,8,32-9;  or    6,6,8  */
+#ifdef __LITTLE_ENDIAN__
+    rldimi 6,8,8,32
+#else
     rlwimi 6,8,24,(32-24),31
+#endif
     b     L(wdu_32tailx)
     .align  4
 L(wdu_32tailx):
@@ -816,7 +880,7 @@ L(wdu_4tail):
     beq   cr6,L(wdus_0)	/* If the tail is 0 bytes we are done!  */
     bf    30,L(wdus_3)
     lhz   7,0(4)
-    sth   7,0(3) 
+    sth   7,0(3)
     bf    31,L(wdus_0)
     lbz   8,2(4)
     stb   8,2(3)
@@ -838,6 +902,6 @@ L(wdus_0):
     lwz  31,24(1)
     addi 1,1,32
     blr
-END (BP_SYM (memcpy))
+END (memcpy)
 
 libc_hidden_builtin_def (memcpy)

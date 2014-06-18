@@ -1,5 +1,5 @@
 /* Suspend until termination of a requests.
-   Copyright (C) 1997-2000,2002,2003,2005,2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 
 /* We use an UGLY hack to prevent gcc from finding us cheating.  The
@@ -92,6 +91,18 @@ cleanup (void *arg)
   pthread_mutex_unlock (&__aio_requests_mutex);
 }
 
+#ifdef DONT_NEED_AIO_MISC_COND
+static int
+__attribute__ ((noinline))
+do_aio_misc_wait(int *cntr, const struct timespec *timeout)
+{
+	int result = 0;
+
+	AIO_MISC_WAIT(result, *cntr, timeout, 1);
+
+	return result;
+}
+#endif
 
 int
 aio_suspend (list, nent, timeout)
@@ -169,7 +180,7 @@ aio_suspend (list, nent, timeout)
       pthread_cleanup_push (cleanup, &clparam);
 
 #ifdef DONT_NEED_AIO_MISC_COND
-      AIO_MISC_WAIT (result, cntr, timeout, 1);
+      result = do_aio_misc_wait(&cntr, timeout);
 #else
       if (timeout == NULL)
 	result = pthread_cond_wait (&cond, &__aio_requests_mutex);

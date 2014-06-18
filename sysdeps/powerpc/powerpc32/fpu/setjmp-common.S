@@ -1,5 +1,5 @@
 /* setjmp for PowerPC.
-   Copyright (C) 1995-2000, 2003-2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,23 +13,20 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 1 Franklin Street, Fifth Floor, Boston MA
-   02110-1301 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
+#include <stap-probe.h>
 #define _ASM
 #ifdef __NO_VMX__
 # include <novmxsetjmp.h>
 #else
 # include <jmpbuf-offsets.h>
 #endif
-#include <bp-sym.h>
-#include <bp-asm.h>
 
 	.machine	"altivec"
-ENTRY (BP_SYM (__sigsetjmp))
-	CHECK_BOUNDS_BOTH_WIDE_LIT (r3, r8, r9, JB_SIZE)
+ENTRY (__sigsetjmp_symbol)
 
 #ifdef PTR_MANGLE
 	mr   r5,r1
@@ -39,6 +36,9 @@ ENTRY (BP_SYM (__sigsetjmp))
 	stw  r1,(JB_GPR1*4)(3)
 #endif
 	mflr r0
+	/* setjmp probe expects longjmp first argument (4@3), second argument
+	   (-4@4), and target address (4@0), respectively.  */
+	LIBC_PROBE (setjmp, 3, 4@3, -4@4, 4@0)
 	stw  r14,((JB_GPRS+0)*4)(3)
 	stfd fp14,((JB_FPRS+0*2)*4)(3)
 #ifdef PTR_MANGLE
@@ -85,27 +85,27 @@ ENTRY (BP_SYM (__sigsetjmp))
 # ifdef PIC
 	mflr    r6
 	cfi_register(lr,r6)
-#  ifdef HAVE_ASM_PPC_REL16
-	bcl	20,31,1f
-1:	mflr	r5
-	addis	r5,r5,_GLOBAL_OFFSET_TABLE_-1b@ha
-	addi	r5,r5,_GLOBAL_OFFSET_TABLE_-1b@l
-#  else
-	bl      _GLOBAL_OFFSET_TABLE_@local-4
-	mflr    r5
-#  endif
+	SETUP_GOT_ACCESS(r5,got_label)
+	addis	r5,r5,_GLOBAL_OFFSET_TABLE_-got_label@ha
+	addi	r5,r5,_GLOBAL_OFFSET_TABLE_-got_label@l
 	mtlr	r6
 	cfi_same_value (lr)
 #  ifdef SHARED
+#   ifdef IS_IN_rtld
+	/* Inside ld.so we use the local alias to avoid runtime GOT
+	   relocations.  */
+	lwz     r5,_rtld_local_ro@got(r5)
+#   else
 	lwz     r5,_rtld_global_ro@got(r5)
-	lwz     r5,RTLD_GLOBAL_RO_DL_HWCAP_OFFSET(r5)
+#   endif
+	lwz     r5,RTLD_GLOBAL_RO_DL_HWCAP_OFFSET+LOWORD(r5)
 #  else
 	lwz     r5,_dl_hwcap@got(r5)
-	lwz     r5,0(r5)
+	lwz     r5,LOWORD(r5)
 #  endif
 # else
-	lis	r6,_dl_hwcap@ha
-	lwz     r5,_dl_hwcap@l(r6)
+	lis	r6,(_dl_hwcap+LOWORD)@ha
+	lwz     r5,(_dl_hwcap+LOWORD)@l(r6)
 # endif
 	andis.	r5,r5,(PPC_FEATURE_HAS_ALTIVEC >> 16)
 	beq	L(no_vmx)
@@ -115,44 +115,43 @@ ENTRY (BP_SYM (__sigsetjmp))
 	stw	r0,((JB_VRSAVE)*4)(3)
 	addi	r6,r5,16
 	beq+	L(aligned_save_vmx)
+
 	lvsr	v0,0,r5
-	vspltisb v1,-1         /* set v1 to all 1's */
-	vspltisb v2,0          /* set v2 to all 0's */
-	vperm   v3,v2,v1,v0   /* v3 contains shift mask with num all 1 bytes on left = misalignment  */
+	lvsl	v1,0,r5
+	addi	r6,r5,-16
 
+# define save_misaligned_vmx(savevr,prevvr,shiftvr,tmpvr,savegpr,addgpr) \
+	addi	addgpr,addgpr,32;					 \
+	vperm	tmpvr,prevvr,savevr,shiftvr;				 \
+	stvx	tmpvr,0,savegpr
 
-	/* Special case for v20 we need to preserve what is in save area below v20 before obliterating it */
-	lvx     v5,0,r5
-	vperm   v20,v20,v20,v0
-	vsel    v5,v5,v20,v3
-	vsel    v20,v20,v2,v3
-	stvx    v5,0,r5
+	/*
+	 * We have to be careful not to corrupt the data below v20 and
+	 * above v31. To keep things simple we just rotate both ends in
+	 * the opposite direction to our main permute so we can use
+	 * the common macro.
+	 */
 
-#define save_2vmx_partial(savevr,prev_savevr,hivr,shiftvr,maskvr,savegpr,addgpr) \
-	addi    addgpr,addgpr,32; \
-	vperm   savevr,savevr,savevr,shiftvr; \
-	vsel    hivr,prev_savevr,savevr,maskvr; \
-	stvx    hivr,0,savegpr;
+	/* load and rotate data below v20 */
+	lvx	v2,0,r5
+	vperm	v2,v2,v2,v1
+	save_misaligned_vmx(v20,v2,v0,v3,r5,r6)
+	save_misaligned_vmx(v21,v20,v0,v3,r6,r5)
+	save_misaligned_vmx(v22,v21,v0,v3,r5,r6)
+	save_misaligned_vmx(v23,v22,v0,v3,r6,r5)
+	save_misaligned_vmx(v24,v23,v0,v3,r5,r6)
+	save_misaligned_vmx(v25,v24,v0,v3,r6,r5)
+	save_misaligned_vmx(v26,v25,v0,v3,r5,r6)
+	save_misaligned_vmx(v27,v26,v0,v3,r6,r5)
+	save_misaligned_vmx(v28,v27,v0,v3,r5,r6)
+	save_misaligned_vmx(v29,v28,v0,v3,r6,r5)
+	save_misaligned_vmx(v30,v29,v0,v3,r5,r6)
+	save_misaligned_vmx(v31,v30,v0,v3,r6,r5)
+	/* load and rotate data above v31 */
+	lvx	v2,0,r6
+	vperm	v2,v2,v2,v1
+	save_misaligned_vmx(v2,v31,v0,v3,r5,r6)
 
-	save_2vmx_partial(v21,v20,v5,v0,v3,r6,r5)
-	save_2vmx_partial(v22,v21,v5,v0,v3,r5,r6)
-	save_2vmx_partial(v23,v22,v5,v0,v3,r6,r5)
-	save_2vmx_partial(v24,v23,v5,v0,v3,r5,r6)
-	save_2vmx_partial(v25,v24,v5,v0,v3,r6,r5)
-	save_2vmx_partial(v26,v25,v5,v0,v3,r5,r6)
-	save_2vmx_partial(v27,v26,v5,v0,v3,r6,r5)
-	save_2vmx_partial(v28,v27,v5,v0,v3,r5,r6)
-	save_2vmx_partial(v29,v28,v5,v0,v3,r6,r5)
-	save_2vmx_partial(v30,v29,v5,v0,v3,r5,r6)
-
-	/* Special case for r31 we need to preserve what is in save area above v31 before obliterating it */
-	addi    r5,r5,32
-	vperm   v31,v31,v31,v0
-	lvx     v4,0,r5
-	vsel    v5,v30,v31,v3
-	stvx    v5,0,r6
-	vsel    v4,v31,v4,v3
-	stvx    v4,0,r5
 	b	L(no_vmx)
 
 L(aligned_save_vmx):
@@ -180,5 +179,5 @@ L(aligned_save_vmx):
 	stvx	31,0,r6
 L(no_vmx):
 #endif
-	b BP_SYM (__sigjmp_save@local)
-END (BP_SYM (__sigsetjmp))
+	b __sigjmp_save_symbol@local
+END (__sigsetjmp_symbol)

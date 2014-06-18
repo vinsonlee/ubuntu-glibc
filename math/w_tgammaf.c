@@ -13,41 +13,32 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: w_gammaf.c,v 1.4 1995/11/20 22:06:48 jtc Exp $";
-#endif
-
+#include <errno.h>
 #include <math.h>
-#include "math_private.h"
+#include <math_private.h>
 
-#ifdef __STDC__
-	float __tgammaf(float x)
-#else
-	float __tgammaf(x)
-	float x;
-#endif
+float
+__tgammaf(float x)
 {
-        float y;
 	int local_signgam;
-	y = __ieee754_gammaf_r(x,&local_signgam);
-	if (local_signgam < 0) y = -y;
-#ifdef _IEEE_LIBM
-	return y;
-#else
-	if(_LIB_VERSION == _IEEE_) return y;
+	float y = __ieee754_gammaf_r(x,&local_signgam);
 
-	if(!__finitef(y)&&__finitef(x)) {
+	if(__glibc_unlikely (!__finitef (y) || y == 0)
+	   && (__finitef (x) || __isinff (x) < 0)
+	   && _LIB_VERSION != _IEEE_) {
 	  if (x == (float)0.0)
 	    /* tgammaf pole */
-	    return (float)__kernel_standard((double)x,(double)x,150);
-	  else if(__floorf(x)==x&&x<(float)0.0)
+	    return __kernel_standard_f(x, x, 150);
+	  else if(__floorf(x)==x&&x<0.0f)
 	    /* tgammaf domain */
-	    return (float)__kernel_standard((double)x,(double)x,141);
+	    return __kernel_standard_f(x, x, 141);
+	  else if (y == 0)
+	    /* tgammaf underflow */
+	    __set_errno (ERANGE);
 	  else
 	    /* tgammaf overflow */
-	    return (float)__kernel_standard((double)x,(double)x,140);
+	    return __kernel_standard_f(x, x, 140);
 	}
-	return y;
-#endif
+	return local_signgam < 0 ? - y : y;
 }
 weak_alias (__tgammaf, tgammaf)

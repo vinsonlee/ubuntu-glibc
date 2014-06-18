@@ -1,6 +1,5 @@
 /* Convert between the kernel's `struct stat' format, and libc's.
-   Copyright (C) 1991,1995-1997,2000,2002,2003,2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <sys/stat.h>
@@ -33,7 +31,7 @@ struct kernel_stat;
 #include <string.h>
 
 
-#if !defined __ASSUME_STAT64_SYSCALL || defined XSTAT_IS_XSTAT64
+#ifdef XSTAT_IS_XSTAT64
 int
 __xstat_conv (int vers, struct kernel_stat *kbuf, void *ubuf)
 {
@@ -80,19 +78,19 @@ __xstat_conv (int vers, struct kernel_stat *kbuf, void *ubuf)
 	buf->st_ctime = kbuf->st_ctime;
 #endif
 #ifdef _HAVE_STAT___UNUSED1
-	buf->__unused1 = 0;
+	buf->__glibc_reserved1 = 0;
 #endif
 #ifdef _HAVE_STAT___UNUSED2
-	buf->__unused2 = 0;
+	buf->__glibc_reserved2 = 0;
 #endif
 #ifdef _HAVE_STAT___UNUSED3
-	buf->__unused3 = 0;
+	buf->__glibc_reserved3 = 0;
 #endif
 #ifdef _HAVE_STAT___UNUSED4
-	buf->__unused4 = 0;
+	buf->__glibc_reserved4 = 0;
 #endif
 #ifdef _HAVE_STAT___UNUSED5
-	buf->__unused5 = 0;
+	buf->__glibc_reserved5 = 0;
 #endif
       }
       break;
@@ -151,19 +149,19 @@ __xstat64_conv (int vers, struct kernel_stat *kbuf, void *ubuf)
 	buf->st_ctime = kbuf->st_ctime;
 #endif
 #ifdef _HAVE_STAT64___UNUSED1
-	buf->__unused1 = 0;
+	buf->__glibc_reserved1 = 0;
 #endif
 #ifdef _HAVE_STAT64___UNUSED2
-	buf->__unused2 = 0;
+	buf->__glibc_reserved2 = 0;
 #endif
 #ifdef _HAVE_STAT64___UNUSED3
-	buf->__unused3 = 0;
+	buf->__glibc_reserved3 = 0;
 #endif
 #ifdef _HAVE_STAT64___UNUSED4
-	buf->__unused4 = 0;
+	buf->__glibc_reserved4 = 0;
 #endif
 #ifdef _HAVE_STAT64___UNUSED5
-	buf->__unused5 = 0;
+	buf->__glibc_reserved5 = 0;
 #endif
       }
       break;
@@ -256,19 +254,19 @@ __xstat32_conv (int vers, struct stat64 *kbuf, struct stat *buf)
 #endif
 
 #ifdef _HAVE_STAT___UNUSED1
-	buf->__unused1 = 0;
+	buf->__glibc_reserved1 = 0;
 #endif
 #ifdef _HAVE_STAT___UNUSED2
-	buf->__unused2 = 0;
+	buf->__glibc_reserved2 = 0;
 #endif
 #ifdef _HAVE_STAT___UNUSED3
-	buf->__unused3 = 0;
+	buf->__glibc_reserved3 = 0;
 #endif
 #ifdef _HAVE_STAT___UNUSED4
-	buf->__unused4 = 0;
+	buf->__glibc_reserved4 = 0;
 #endif
 #ifdef _HAVE_STAT___UNUSED5
-	buf->__unused5 = 0;
+	buf->__glibc_reserved5 = 0;
 #endif
       }
       break;

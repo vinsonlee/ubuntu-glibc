@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001 Free Software Foundation
+ * Copyright (C) 2001-2014 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,7 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 /**********************************************************************/
 /* MODULE_NAME: doasin.c                                              */
@@ -31,14 +30,20 @@
 
 #include "endian.h"
 #include "mydefs.h"
-#include "dla.h"
-#include "math_private.h"
+#include <dla.h>
+#include <math_private.h>
+
+#ifndef SECTION
+# define SECTION
+#endif
 
 /********************************************************************/
 /* Compute arcsin(x,dx,v) of double-length number (x+dx) the result */
 /* stored in v where v= v[0]+v[1] =arcsin(x+dx)                     */
 /********************************************************************/
-void __doasin(double x, double dx, double v[]) {
+void
+SECTION
+__doasin(double x, double dx, double v[]) {
 
 #include "doasin.h"
 
@@ -52,7 +57,10 @@ void __doasin(double x, double dx, double v[]) {
     d11 = 0.79470250400727425881446981833568758E-02;
 
   double xx,p,pp,u,uu,r,s;
-  double hx,tx,hy,ty,tp,tq,tc,tcc;
+  double tc,tcc;
+#ifndef DLA_FMS
+  double hx,tx,hy,ty,tp,tq;
+#endif
 
 
 /* Taylor series for arcsin for Double-Length numbers         */

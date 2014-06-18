@@ -1,5 +1,5 @@
 /* Close a shared object opened by `_dl_open'.
-   Copyright (C) 1996-2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <dlfcn.h>
@@ -32,6 +31,7 @@
 #include <sys/mman.h>
 #include <sysdep-cancel.h>
 #include <tls.h>
+#include <stap-probe.h>
 
 
 /* Type of the constructor functions.  */
@@ -183,6 +183,8 @@ _dl_close_worker (struct link_map *map)
       /* Mark all dependencies as used.  */
       if (l->l_initfini != NULL)
 	{
+	  /* We are always the zeroth entry, and since we don't include
+	     ourselves in the dependency analysis start at 1.  */
 	  struct link_map **lp = &l->l_initfini[1];
 	  while (*lp != NULL)
 	    {
@@ -193,6 +195,10 @@ _dl_close_worker (struct link_map *map)
 		  if (!used[(*lp)->l_idx])
 		    {
 		      used[(*lp)->l_idx] = 1;
+		      /* If we marked a new object as used, and we've
+			 already processed it, then we need to go back
+			 and process again from that point forward to
+			 ensure we keep all of its dependencies also.  */
 		      if ((*lp)->l_idx - 1 < done_index)
 			done_index = (*lp)->l_idx - 1;
 		    }
@@ -222,7 +228,7 @@ _dl_close_worker (struct link_map *map)
     }
 
   /* Sort the entries.  */
-  _dl_sort_fini (ns->_ns_loaded, maps, nloaded, used, nsid);
+  _dl_sort_fini (maps, nloaded, used, nsid);
 
   /* Call all termination functions at once.  */
 #ifdef SHARED
@@ -268,13 +274,12 @@ _dl_close_worker (struct link_map *map)
 
 	      /* Next try the old-style destructor.  */
 	      if (imap->l_info[DT_FINI] != NULL)
-		(*(void (*) (void)) DL_DT_FINI_ADDRESS
-		 (imap, ((void *) imap->l_addr
-			 + imap->l_info[DT_FINI]->d_un.d_ptr))) ();
+		DL_CALL_DT_FINI (imap, ((void *) imap->l_addr
+			 + imap->l_info[DT_FINI]->d_un.d_ptr));
 	    }
 
 #ifdef SHARED
-	  /* Auditing checkpoint: we have a new object.  */
+	  /* Auditing checkpoint: we remove an object.  */
 	  if (__builtin_expect (do_audit, 0))
 	    {
 	      struct audit_ifaces *afct = GLRO(dl_audit);
@@ -421,6 +426,13 @@ _dl_close_worker (struct link_map *map)
 
 	      imap->l_scope_max = new_size;
 	    }
+	  else if (new_list != NULL)
+	    {
+	      /* We didn't change the scope array, so reset the search
+		 list.  */
+	      imap->l_searchlist.r_list = NULL;
+	      imap->l_searchlist.r_nlist = 0;
+	    }
 
 	  /* The loader is gone, so mark the object as not having one.
 	     Note: l_idx != IDX_STILL_USED -> object will be removed.  */
@@ -462,6 +474,7 @@ _dl_close_worker (struct link_map *map)
   struct r_debug *r = _dl_debug_initialize (0, nsid);
   r->r_state = RT_DELETE;
   _dl_debug_state ();
+  LIBC_PROBE (unmap_start, 2, nsid, r);
 
   if (unload_global)
     {
@@ -478,7 +491,7 @@ _dl_close_worker (struct link_map *map)
 	/* Speed up removing most recently added objects.  */
 	j = cnt;
       else
- 	for (i = 0; i < cnt; i++)
+	for (i = 0; i < cnt; i++)
 	  if (ns_msl->r_list[i]->l_removed == 0)
 	    {
 	      if (i != j)
@@ -506,6 +519,9 @@ _dl_close_worker (struct link_map *map)
   size_t tls_free_start;
   size_t tls_free_end;
   tls_free_start = tls_free_end = NO_TLS_OFFSET;
+
+  /* We modify the list of loaded objects.  */
+  __rtld_lock_lock_recursive (GL(dl_load_write_lock));
 
   /* Check each element of the search list to see if all references to
      it are gone.  */
@@ -579,21 +595,37 @@ _dl_close_worker (struct link_map *map)
 			}
 		    }
 #elif TLS_DTV_AT_TP
-		  if ((size_t) imap->l_tls_offset == tls_free_end)
+		  if (tls_free_start == NO_TLS_OFFSET)
+		    {
+		      tls_free_start = imap->l_tls_firstbyte_offset;
+		      tls_free_end = (imap->l_tls_offset
+				      + imap->l_tls_blocksize);
+		    }
+		  else if (imap->l_tls_firstbyte_offset == tls_free_end)
 		    /* Extend the contiguous chunk being reclaimed.  */
-		    tls_free_end -= imap->l_tls_blocksize;
+		    tls_free_end = imap->l_tls_offset + imap->l_tls_blocksize;
 		  else if (imap->l_tls_offset + imap->l_tls_blocksize
 			   == tls_free_start)
 		    /* Extend the chunk backwards.  */
-		    tls_free_start = imap->l_tls_offset;
-		  else
+		    tls_free_start = imap->l_tls_firstbyte_offset;
+		  /* This isn't contiguous with the last chunk freed.
+		     One of them will be leaked unless we can free
+		     one block right away.  */
+		  else if (imap->l_tls_offset + imap->l_tls_blocksize
+			   == GL(dl_tls_static_used))
+		    GL(dl_tls_static_used) = imap->l_tls_firstbyte_offset;
+		  else if (tls_free_end == GL(dl_tls_static_used))
 		    {
-		      /* This isn't contiguous with the last chunk freed.
-			 One of them will be leaked.  */
-		      if (tls_free_end == GL(dl_tls_static_used))
-			GL(dl_tls_static_used) = tls_free_start;
-		      tls_free_start = imap->l_tls_offset;
-		      tls_free_end = tls_free_start + imap->l_tls_blocksize;
+		      GL(dl_tls_static_used) = tls_free_start;
+		      tls_free_start = imap->l_tls_firstbyte_offset;
+		      tls_free_end = imap->l_tls_offset + imap->l_tls_blocksize;
+		    }
+		  else if (tls_free_end < imap->l_tls_firstbyte_offset)
+		    {
+		      /* We pick the later block.  It has a chance to
+			 be freed.  */
+		      tls_free_start = imap->l_tls_firstbyte_offset;
+		      tls_free_end = imap->l_tls_offset + imap->l_tls_blocksize;
 		    }
 #else
 # error "Either TLS_TCB_AT_TP or TLS_DTV_AT_TP must be defined"
@@ -611,10 +643,12 @@ _dl_close_worker (struct link_map *map)
 	    imap->l_prev->l_next = imap->l_next;
 	  else
 	    {
-#ifdef SHARED
 	      assert (nsid != LM_ID_BASE);
-#endif
 	      ns->_ns_loaded = imap->l_next;
+
+	      /* Update the pointer to the head of the list
+		 we leave for debuggers to examine.  */
+	      r->r_map = (void *) ns->_ns_loaded;
 	    }
 
 	  --ns->_ns_nloaded;
@@ -665,11 +699,13 @@ _dl_close_worker (struct link_map *map)
 	}
     }
 
+  __rtld_lock_unlock_recursive (GL(dl_load_write_lock));
+
   /* If we removed any object which uses TLS bump the generation counter.  */
   if (any_tls)
     {
       if (__builtin_expect (++GL(dl_tls_generation) == 0, 0))
-	_dl_fatal_printf ("TLS generation counter wrapped!  Please report as described in <http://www.gnu.org/software/libc/bugs.html>.\n");
+	_dl_fatal_printf ("TLS generation counter wrapped!  Please report as described in "REPORT_BUGS_TO".\n");
 
       if (tls_free_end == GL(dl_tls_static_used))
 	GL(dl_tls_static_used) = tls_free_start;
@@ -695,9 +731,16 @@ _dl_close_worker (struct link_map *map)
     }
 #endif
 
+  if (__builtin_expect (ns->_ns_loaded == NULL, 0)
+      && nsid == GL(dl_nns) - 1)
+    do
+      --GL(dl_nns);
+    while (GL(dl_ns)[GL(dl_nns) - 1]._ns_loaded == NULL);
+
   /* Notify the debugger those objects are finalized and gone.  */
   r->r_state = RT_CONSISTENT;
   _dl_debug_state ();
+  LIBC_PROBE (unmap_complete, 2, nsid, r);
 
   /* Recheck if we need to retry, release the lock.  */
  out:
@@ -730,78 +773,4 @@ _dl_close (void *_map)
   _dl_close_worker (map);
 
   __rtld_lock_unlock_recursive (GL(dl_load_lock));
-}
-
-
-static bool __libc_freeres_fn_section
-free_slotinfo (struct dtv_slotinfo_list **elemp)
-{
-  size_t cnt;
-
-  if (*elemp == NULL)
-    /* Nothing here, all is removed (or there never was anything).  */
-    return true;
-
-  if (!free_slotinfo (&(*elemp)->next))
-    /* We cannot free the entry.  */
-    return false;
-
-  /* That cleared our next pointer for us.  */
-
-  for (cnt = 0; cnt < (*elemp)->len; ++cnt)
-    if ((*elemp)->slotinfo[cnt].map != NULL)
-      /* Still used.  */
-      return false;
-
-  /* We can remove the list element.  */
-  free (*elemp);
-  *elemp = NULL;
-
-  return true;
-}
-
-
-libc_freeres_fn (free_mem)
-{
-  for (Lmid_t nsid = 0; nsid < DL_NNS; ++nsid)
-    if (__builtin_expect (GL(dl_ns)[nsid]._ns_global_scope_alloc, 0) != 0
-	&& (GL(dl_ns)[nsid]._ns_main_searchlist->r_nlist
-	    // XXX Check whether we need NS-specific initial_searchlist
-	    == GLRO(dl_initial_searchlist).r_nlist))
-      {
-	/* All object dynamically loaded by the program are unloaded.  Free
-	   the memory allocated for the global scope variable.  */
-	struct link_map **old = GL(dl_ns)[nsid]._ns_main_searchlist->r_list;
-
-	/* Put the old map in.  */
-	GL(dl_ns)[nsid]._ns_main_searchlist->r_list
-	  // XXX Check whether we need NS-specific initial_searchlist
-	  = GLRO(dl_initial_searchlist).r_list;
-	/* Signal that the original map is used.  */
-	GL(dl_ns)[nsid]._ns_global_scope_alloc = 0;
-
-	/* Now free the old map.  */
-	free (old);
-      }
-
-  if (USE___THREAD || GL(dl_tls_dtv_slotinfo_list) != NULL)
-    {
-      /* Free the memory allocated for the dtv slotinfo array.  We can do
-	 this only if all modules which used this memory are unloaded.  */
-#ifdef SHARED
-      if (GL(dl_initial_dtv) == NULL)
-	/* There was no initial TLS setup, it was set up later when
-	   it used the normal malloc.  */
-	free_slotinfo (&GL(dl_tls_dtv_slotinfo_list));
-      else
-#endif
-	/* The first element of the list does not have to be deallocated.
-	   It was allocated in the dynamic linker (i.e., with a different
-	   malloc), and in the static library it's in .bss space.  */
-	free_slotinfo (&GL(dl_tls_dtv_slotinfo_list)->next);
-    }
-
-  void *scope_free_list = GL(dl_scope_free_list);
-  GL(dl_scope_free_list) = NULL;
-  free (scope_free_list);
 }

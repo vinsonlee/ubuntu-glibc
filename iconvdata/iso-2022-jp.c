@@ -1,5 +1,5 @@
 /* Conversion module for ISO-2022-JP and ISO-2022-JP-2.
-   Copyright (C) 1998, 1999, 2000-2002 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <dlfcn.h>
@@ -272,7 +271,7 @@ gconv_end (struct __gconv_step *data)
     if (__builtin_expect (ch, 0) == ESC)				      \
       {									      \
 	/* We now must be prepared to read two to three more		      \
-	   chracters.  If we have a match in the first character but	      \
+	   characters.  If we have a match in the first character but	      \
 	   then the input buffer ends we terminate with an error since	      \
 	   we must not risk missing an escape sequence just because it	      \
 	   is not entirely in the current input buffer.  */		      \
@@ -664,7 +663,7 @@ static const cvlist_t conversion_lists[4] =
 									      \
 			*outptr++ = ESC;				      \
 			*outptr++ = 'N';				      \
-			*outptr++ = res;				      \
+			*outptr++ = res & 0x7f;				      \
 			written = 3;					      \
 		      }							      \
 		  }							      \
@@ -706,7 +705,7 @@ static const cvlist_t conversion_lists[4] =
 									      \
 	    /* At the beginning of a line, G2 designation is cleared.  */     \
 	    if (var == iso2022jp2 && ch == 0x0a)			      \
-	      set2 = UNSPECIFIED_set; 					      \
+	      set2 = UNSPECIFIED_set;					      \
 	  }								      \
 	else								      \
 	  {								      \
@@ -764,9 +763,9 @@ static const cvlist_t conversion_lists[4] =
 			++rp;						      \
 		      if (ch >= rp->start)				      \
 			{						      \
-			  unsigned char res =				      \
+			  unsigned char ch2 =				      \
 			    iso88597_from_ucs4[ch - 0xa0 + rp->idx];	      \
-			  if (res != '\0')				      \
+			  if (ch2 != '\0')				      \
 			    {						      \
 			      if (set2 != ISO88597_set)			      \
 				{					      \
@@ -789,7 +788,7 @@ static const cvlist_t conversion_lists[4] =
 				}					      \
 			      *outptr++ = ESC;				      \
 			      *outptr++ = 'N';				      \
-			      *outptr++ = res;				      \
+			      *outptr++ = ch2 - 0x80;			      \
 			      res = __GCONV_OK;				      \
 			      break;					      \
 			    }						      \

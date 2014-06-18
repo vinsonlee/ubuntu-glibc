@@ -1,5 +1,5 @@
 /* Return the offset of one string within another.
-   Copyright (C) 1994,1996,1997,2000,2001,2003,2008 Free Software Foundation, Inc.
+   Copyright (C) 1994-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* This particular implementation was written by Eric Blake, 2008.  */
 
@@ -36,15 +35,21 @@
 #define AVAILABLE(h, h_l, j, n_l)			\
   (!memchr ((h) + (h_l), '\0', (j) + (n_l) - (h_l))	\
    && ((h_l) = (j) + (n_l)))
+#define CHECK_EOL (1)
+#define RET0_IF_0(a) if (!a) goto ret0
 #include "str-two-way.h"
 
 #undef strstr
+
+#ifndef STRSTR
+#define STRSTR strstr
+#endif
 
 /* Return the first occurrence of NEEDLE in HAYSTACK.  Return HAYSTACK
    if NEEDLE is empty, otherwise NULL if NEEDLE is not found in
    HAYSTACK.  */
 char *
-strstr (const char *haystack_start, const char *needle_start)
+STRSTR (const char *haystack_start, const char *needle_start)
 {
   const char *haystack = haystack_start;
   const char *needle = needle_start;

@@ -1,5 +1,5 @@
 /* Return the offset of one string within another.
-   Copyright (C) 1994, 1996-2000, 2004, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1994-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /*
  * My personal strstr() implementation that beats most other algorithms.
@@ -37,13 +36,15 @@
 #include <stdbool.h>
 #include <strings.h>
 
-#define TOLOWER(Ch) (isupper (Ch) ? tolower (Ch) : (Ch))
+#define TOLOWER(Ch) tolower (Ch)
 
 /* Two-Way algorithm.  */
 #define RETURN_TYPE char *
 #define AVAILABLE(h, h_l, j, n_l)			\
   (!memchr ((h) + (h_l), '\0', (j) + (n_l) - (h_l))	\
    && ((h_l) = (j) + (n_l)))
+#define CHECK_EOL (1)
+#define RET0_IF_0(a) if (!a) goto ret0
 #define CANON_ELEMENT(c) TOLOWER (c)
 #define CMP_FUNC(p1, p2, l)				\
   __strncasecmp ((const char *) (p1), (const char *) (p2), l)
@@ -52,11 +53,16 @@
 #undef strcasestr
 #undef __strcasestr
 
+#ifndef STRCASESTR
+#define STRCASESTR __strcasestr
+#endif
+
+
 /* Find the first occurrence of NEEDLE in HAYSTACK, using
    case-insensitive comparison.  This function gives unspecified
    results in multibyte locales.  */
 char *
-__strcasestr (const char *haystack_start, const char *needle_start)
+STRCASESTR (const char *haystack_start, const char *needle_start)
 {
   const char *haystack = haystack_start;
   const char *needle = needle_start;
@@ -97,4 +103,6 @@ __strcasestr (const char *haystack_start, const char *needle_start)
 
 #undef LONG_NEEDLE_THRESHOLD
 
+#ifndef NO_ALIAS
 weak_alias (__strcasestr, strcasestr)
+#endif

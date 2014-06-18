@@ -1,4 +1,4 @@
-  /* Copyright (C) 1996-2002, 2003, 2004 Free Software Foundation, Inc.
+  /* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* All data returned by the network data base library are supplied in
    host order and returned in network order (suitable for use in
@@ -53,29 +52,31 @@
 
 __BEGIN_DECLS
 
+#if defined __USE_MISC || !defined __USE_XOPEN2K8
 /* Error status for non-reentrant lookup functions.
    We use a macro to access always the thread-specific `h_errno' variable.  */
-#define h_errno (*__h_errno_location ())
+# define h_errno (*__h_errno_location ())
 
 /* Function to get address of global `h_errno' variable.  */
 extern int *__h_errno_location (void) __THROW __attribute__ ((__const__));
 
 
 /* Possible values left in `h_errno'.  */
-#define	HOST_NOT_FOUND	1	/* Authoritative Answer Host not found.  */
-#define	TRY_AGAIN	2	/* Non-Authoritative Host not found,
+# define HOST_NOT_FOUND	1	/* Authoritative Answer Host not found.  */
+# define TRY_AGAIN	2	/* Non-Authoritative Host not found,
 				   or SERVERFAIL.  */
-#define	NO_RECOVERY	3	/* Non recoverable errors, FORMERR, REFUSED,
+# define NO_RECOVERY	3	/* Non recoverable errors, FORMERR, REFUSED,
 				   NOTIMP.  */
-#define	NO_DATA		4	/* Valid name, no data record of requested
+# define NO_DATA	4	/* Valid name, no data record of requested
 				   type.  */
+#endif
 #if defined __USE_MISC || defined __USE_GNU
 # define NETDB_INTERNAL	-1	/* See errno.  */
 # define NETDB_SUCCESS	0	/* No problem.  */
 # define NO_ADDRESS	NO_DATA	/* No address, look for MX record.  */
 #endif
 
-#ifdef __USE_XOPEN2K
+#if defined __USE_XOPEN2K || defined __USE_XOPEN_EXTENDED
 /* Highest reserved Internet port number.  */
 # define IPPORT_RESERVED	1024
 #endif
@@ -85,13 +86,13 @@ extern int *__h_errno_location (void) __THROW __attribute__ ((__const__));
 # define SCOPE_DELIMITER	'%'
 #endif
 
-#if defined __USE_MISC || defined __USE_GNU
+#ifdef __USE_MISC
 /* Print error indicated by `h_errno' variable on standard error.  STR
    if non-null is printed before the error string.  */
-extern void herror (__const char *__str) __THROW;
+extern void herror (const char *__str) __THROW;
 
 /* Return string associated with error ERR_NUM.  */
-extern __const char *hstrerror (int __err_num) __THROW;
+extern const char *hstrerror (int __err_num) __THROW;
 #endif
 
 
@@ -133,14 +134,14 @@ extern struct hostent *gethostent (void);
 
    This function is a possible cancellation point and therefore not
    marked with __THROW.  */
-extern struct hostent *gethostbyaddr (__const void *__addr, __socklen_t __len,
+extern struct hostent *gethostbyaddr (const void *__addr, __socklen_t __len,
 				      int __type);
 
 /* Return entry from host data base for host with NAME.
 
    This function is a possible cancellation point and therefore not
    marked with __THROW.  */
-extern struct hostent *gethostbyname (__const char *__name);
+extern struct hostent *gethostbyname (const char *__name);
 
 #ifdef __USE_MISC
 /* Return entry from host data base for host with NAME.  AF must be
@@ -151,7 +152,7 @@ extern struct hostent *gethostbyname (__const char *__name);
    cancellation point.  But due to similarity with an POSIX interface
    or due to the implementation it is a cancellation point and
    therefore not marked with __THROW.  */
-extern struct hostent *gethostbyname2 (__const char *__name, int __af);
+extern struct hostent *gethostbyname2 (const char *__name, int __af);
 
 /* Reentrant versions of the functions above.  The additional
    arguments specify a buffer of BUFLEN starting at BUF.  The last
@@ -168,20 +169,20 @@ extern int gethostent_r (struct hostent *__restrict __result_buf,
 			 struct hostent **__restrict __result,
 			 int *__restrict __h_errnop);
 
-extern int gethostbyaddr_r (__const void *__restrict __addr, __socklen_t __len,
+extern int gethostbyaddr_r (const void *__restrict __addr, __socklen_t __len,
 			    int __type,
 			    struct hostent *__restrict __result_buf,
 			    char *__restrict __buf, size_t __buflen,
 			    struct hostent **__restrict __result,
 			    int *__restrict __h_errnop);
 
-extern int gethostbyname_r (__const char *__restrict __name,
+extern int gethostbyname_r (const char *__restrict __name,
 			    struct hostent *__restrict __result_buf,
 			    char *__restrict __buf, size_t __buflen,
 			    struct hostent **__restrict __result,
 			    int *__restrict __h_errnop);
 
-extern int gethostbyname2_r (__const char *__restrict __name, int __af,
+extern int gethostbyname2_r (const char *__restrict __name, int __af,
 			     struct hostent *__restrict __result_buf,
 			     char *__restrict __buf, size_t __buflen,
 			     struct hostent **__restrict __result,
@@ -220,7 +221,7 @@ extern struct netent *getnetbyaddr (uint32_t __net, int __type);
 
    This function is a possible cancellation point and therefore not
    marked with __THROW.  */
-extern struct netent *getnetbyname (__const char *__name);
+extern struct netent *getnetbyname (const char *__name);
 
 #ifdef	__USE_MISC
 /* Reentrant versions of the functions above.  The additional
@@ -244,7 +245,7 @@ extern int getnetbyaddr_r (uint32_t __net, int __type,
 			   struct netent **__restrict __result,
 			   int *__restrict __h_errnop);
 
-extern int getnetbyname_r (__const char *__restrict __name,
+extern int getnetbyname_r (const char *__restrict __name,
 			   struct netent *__restrict __result_buf,
 			   char *__restrict __buf, size_t __buflen,
 			   struct netent **__restrict __result,
@@ -286,15 +287,14 @@ extern struct servent *getservent (void);
 
    This function is a possible cancellation point and therefore not
    marked with __THROW.  */
-extern struct servent *getservbyname (__const char *__name,
-				      __const char *__proto);
+extern struct servent *getservbyname (const char *__name, const char *__proto);
 
 /* Return entry from service data base which matches port PORT and
    protocol PROTO.
 
    This function is a possible cancellation point and therefore not
    marked with __THROW.  */
-extern struct servent *getservbyport (int __port, __const char *__proto);
+extern struct servent *getservbyport (int __port, const char *__proto);
 
 
 #ifdef	__USE_MISC
@@ -309,13 +309,13 @@ extern int getservent_r (struct servent *__restrict __result_buf,
 			 char *__restrict __buf, size_t __buflen,
 			 struct servent **__restrict __result);
 
-extern int getservbyname_r (__const char *__restrict __name,
-			    __const char *__restrict __proto,
+extern int getservbyname_r (const char *__restrict __name,
+			    const char *__restrict __proto,
 			    struct servent *__restrict __result_buf,
 			    char *__restrict __buf, size_t __buflen,
 			    struct servent **__restrict __result);
 
-extern int getservbyport_r (int __port, __const char *__restrict __proto,
+extern int getservbyport_r (int __port, const char *__restrict __proto,
 			    struct servent *__restrict __result_buf,
 			    char *__restrict __buf, size_t __buflen,
 			    struct servent **__restrict __result);
@@ -354,7 +354,7 @@ extern struct protoent *getprotoent (void);
 
    This function is a possible cancellation point and therefore not
    marked with __THROW.  */
-extern struct protoent *getprotobyname (__const char *__name);
+extern struct protoent *getprotobyname (const char *__name);
 
 /* Return entry from protocol data base which number is PROTO.
 
@@ -375,7 +375,7 @@ extern int getprotoent_r (struct protoent *__restrict __result_buf,
 			  char *__restrict __buf, size_t __buflen,
 			  struct protoent **__restrict __result);
 
-extern int getprotobyname_r (__const char *__restrict __name,
+extern int getprotobyname_r (const char *__restrict __name,
 			     struct protoent *__restrict __result_buf,
 			     char *__restrict __buf, size_t __buflen,
 			     struct protoent **__restrict __result);
@@ -392,7 +392,7 @@ extern int getprotobynumber_r (int __proto,
    cancellation point.  But due to similarity with an POSIX interface
    or due to the implementation it is a cancellation point and
    therefore not marked with __THROW.  */
-extern int setnetgrent (__const char *__netgroup);
+extern int setnetgrent (const char *__netgroup);
 
 /* Free all space allocated by previous `setnetgrent' call.
 
@@ -420,8 +420,8 @@ extern int getnetgrent (char **__restrict __hostp,
    cancellation point.  But due to similarity with an POSIX interface
    or due to the implementation it is a cancellation point and
    therefore not marked with __THROW.  */
-extern int innetgr (__const char *__netgroup, __const char *__host,
-		    __const char *__user, __const char *domain);
+extern int innetgr (const char *__netgroup, const char *__host,
+		    const char *__user, const char *__domain);
 
 /* Reentrant version of `getnetgrent' where result is placed in BUFFER.
 
@@ -449,9 +449,9 @@ extern int getnetgrent_r (char **__restrict __hostp,
    or due to the implementation it is a cancellation point and
    therefore not marked with __THROW.  */
 extern int rcmd (char **__restrict __ahost, unsigned short int __rport,
-		 __const char *__restrict __locuser,
-		 __const char *__restrict __remuser,
-		 __const char *__restrict __cmd, int *__restrict __fd2p);
+		 const char *__restrict __locuser,
+		 const char *__restrict __remuser,
+		 const char *__restrict __cmd, int *__restrict __fd2p);
 
 /* This is the equivalent function where the protocol can be selected
    and which therefore can be used for IPv6.
@@ -461,9 +461,9 @@ extern int rcmd (char **__restrict __ahost, unsigned short int __rport,
    or due to the implementation it is a cancellation point and
    therefore not marked with __THROW.  */
 extern int rcmd_af (char **__restrict __ahost, unsigned short int __rport,
-		    __const char *__restrict __locuser,
-		    __const char *__restrict __remuser,
-		    __const char *__restrict __cmd, int *__restrict __fd2p,
+		    const char *__restrict __locuser,
+		    const char *__restrict __remuser,
+		    const char *__restrict __cmd, int *__restrict __fd2p,
 		    sa_family_t __af);
 
 /* Call `rexecd' at port RPORT on remote machine *AHOST to execute
@@ -477,9 +477,9 @@ extern int rcmd_af (char **__restrict __ahost, unsigned short int __rport,
    or due to the implementation it is a cancellation point and
    therefore not marked with __THROW.  */
 extern int rexec (char **__restrict __ahost, int __rport,
-		  __const char *__restrict __name,
-		  __const char *__restrict __pass,
-		  __const char *__restrict __cmd, int *__restrict __fd2p);
+		  const char *__restrict __name,
+		  const char *__restrict __pass,
+		  const char *__restrict __cmd, int *__restrict __fd2p);
 
 /* This is the equivalent function where the protocol can be selected
    and which therefore can be used for IPv6.
@@ -489,9 +489,9 @@ extern int rexec (char **__restrict __ahost, int __rport,
    or due to the implementation it is a cancellation point and
    therefore not marked with __THROW.  */
 extern int rexec_af (char **__restrict __ahost, int __rport,
-		     __const char *__restrict __name,
-		     __const char *__restrict __pass,
-		     __const char *__restrict __cmd, int *__restrict __fd2p,
+		     const char *__restrict __name,
+		     const char *__restrict __pass,
+		     const char *__restrict __cmd, int *__restrict __fd2p,
 		     sa_family_t __af);
 
 /* Check whether user REMUSER on system RHOST is allowed to login as LOCUSER.
@@ -502,8 +502,8 @@ extern int rexec_af (char **__restrict __ahost, int __rport,
    cancellation point.  But due to similarity with an POSIX interface
    or due to the implementation it is a cancellation point and
    therefore not marked with __THROW.  */
-extern int ruserok (__const char *__rhost, int __suser,
-		    __const char *__remuser, __const char *__locuser);
+extern int ruserok (const char *__rhost, int __suser,
+		    const char *__remuser, const char *__locuser);
 
 /* This is the equivalent function where the protocol can be selected
    and which therefore can be used for IPv6.
@@ -512,9 +512,33 @@ extern int ruserok (__const char *__rhost, int __suser,
    cancellation point.  But due to similarity with an POSIX interface
    or due to the implementation it is a cancellation point and
    therefore not marked with __THROW.  */
-extern int ruserok_af (__const char *__rhost, int __suser,
-		       __const char *__remuser, __const char *__locuser,
+extern int ruserok_af (const char *__rhost, int __suser,
+		       const char *__remuser, const char *__locuser,
 		       sa_family_t __af);
+
+/* Check whether user REMUSER on system indicated by IPv4 address
+   RADDR is allowed to login as LOCUSER.  Non-IPv4 (e.g., IPv6) are
+   not supported.  If SUSER is not zero the user tries to become
+   superuser.  Return 0 if it is possible.
+
+   This function is not part of POSIX and therefore no official
+   cancellation point.  But due to similarity with an POSIX interface
+   or due to the implementation it is a cancellation point and
+   therefore not marked with __THROW.  */
+extern int iruserok (uint32_t __raddr, int __suser,
+		     const char *__remuser, const char *__locuser);
+
+/* This is the equivalent function where the pfamiliy if the address
+   pointed to by RADDR is determined by the value of AF.  It therefore
+   can be used for IPv6
+
+   This function is not part of POSIX and therefore no official
+   cancellation point.  But due to similarity with an POSIX interface
+   or due to the implementation it is a cancellation point and
+   therefore not marked with __THROW.  */
+extern int iruserok_af (const void *__raddr, int __suser,
+			const char *__remuser, const char *__locuser,
+			sa_family_t __af);
 
 /* Try to allocate reserved port, returning a descriptor for a socket opened
    at this port or -1 if unsuccessful.  The search for an available port
@@ -562,7 +586,7 @@ struct gaicb
   struct addrinfo *ar_result;	/* Pointer to result.  */
   /* The following are internal elements.  */
   int __return;
-  int __unused[5];
+  int __glibc_reserved[5];
 };
 
 /* Lookup mode.  */
@@ -635,25 +659,25 @@ struct gaicb
 
    This function is a possible cancellation point and therefore not
    marked with __THROW.  */
-extern int getaddrinfo (__const char *__restrict __name,
-			__const char *__restrict __service,
-			__const struct addrinfo *__restrict __req,
+extern int getaddrinfo (const char *__restrict __name,
+			const char *__restrict __service,
+			const struct addrinfo *__restrict __req,
 			struct addrinfo **__restrict __pai);
 
 /* Free `addrinfo' structure AI including associated storage.  */
 extern void freeaddrinfo (struct addrinfo *__ai) __THROW;
 
 /* Convert error return from getaddrinfo() to a string.  */
-extern __const char *gai_strerror (int __ecode) __THROW;
+extern const char *gai_strerror (int __ecode) __THROW;
 
 /* Translate a socket address to a location and service name.
 
    This function is a possible cancellation point and therefore not
    marked with __THROW.  */
-extern int getnameinfo (__const struct sockaddr *__restrict __sa,
+extern int getnameinfo (const struct sockaddr *__restrict __sa,
 			socklen_t __salen, char *__restrict __host,
 			socklen_t __hostlen, char *__restrict __serv,
-			socklen_t __servlen, unsigned int __flags);
+			socklen_t __servlen, int __flags);
 #endif	/* POSIX */
 
 #ifdef __USE_GNU
@@ -676,8 +700,8 @@ extern int getaddrinfo_a (int __mode, struct gaicb *__list[__restrict_arr],
    cancellation point.  But due to similarity with an POSIX interface
    or due to the implementation it is a cancellation point and
    therefore not marked with __THROW.  */
-extern int gai_suspend (__const struct gaicb *__const __list[], int __ent,
-			__const struct timespec *__timeout);
+extern int gai_suspend (const struct gaicb *const __list[], int __ent,
+			const struct timespec *__timeout);
 
 /* Get the error status of the request REQ.  */
 extern int gai_error (struct gaicb *__req) __THROW;

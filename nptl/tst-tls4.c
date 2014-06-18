@@ -1,4 +1,4 @@
-/* Copyright (C) 2003 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2003.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <dlfcn.h>
 #include <errno.h>
@@ -25,7 +24,6 @@
 #include <unistd.h>
 #include <tls.h>
 
-#if HAVE___THREAD && defined HAVE_TLS_MODEL_ATTRIBUTE
 
 #define N 3
 
@@ -181,11 +179,4 @@ do_test (void)
 
 #define TIMEOUT 5
 #define TEST_FUNCTION do_test ()
-
-#else
-
-#define TEST_FUNCTION 0
-
-#endif
-
 #include "../test-skeleton.c"

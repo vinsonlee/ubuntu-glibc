@@ -1,6 +1,5 @@
 /* Machine-specific calling sequence for `mcount' profiling function.  MIPS
-   Copyright (C) 1996, 1997, 2000, 2001, 2002, 2003, 2004
-	Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sgidefs.h>
 
@@ -39,6 +37,8 @@ static void __attribute_used__ __mcount (u_long frompc, u_long selfpc)
 #define MCOUNT asm(\
 	".globl _mcount;\n\t" \
 	".align 2;\n\t" \
+	".set push;\n\t" \
+	".set nomips16;\n\t" \
 	".type _mcount,@function;\n\t" \
 	".ent _mcount\n\t" \
         "_mcount:\n\t" \
@@ -69,9 +69,8 @@ static void __attribute_used__ __mcount (u_long frompc, u_long selfpc)
         "addu $29,$29,56;\n\t" \
         "j $31;\n\t" \
         "move $31,$1;\n\t" \
-        ".set reorder;\n\t" \
-        ".set at\n\t" \
-        ".end _mcount");
+	".end _mcount;\n\t" \
+	".set pop");
 
 #else
 
@@ -96,6 +95,8 @@ static void __attribute_used__ __mcount (u_long frompc, u_long selfpc)
 #define MCOUNT asm(\
 	".globl _mcount;\n\t" \
 	".align 3;\n\t" \
+	".set push;\n\t" \
+	".set nomips16;\n\t" \
 	".type _mcount,@function;\n\t" \
 	".ent _mcount\n\t" \
         "_mcount:\n\t" \
@@ -134,8 +135,7 @@ static void __attribute_used__ __mcount (u_long frompc, u_long selfpc)
         PTR_ADDU_STRING " $29,$29,96;\n\t" \
         "j $31;\n\t" \
         "move $31,$1;\n\t" \
-        ".set reorder;\n\t" \
-        ".set at\n\t" \
-        ".end _mcount");
+	".end _mcount;\n\t" \
+	".set pop");
 
 #endif

@@ -1,4 +1,4 @@
-/* Copyright (C) 2003, 2004 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <pthread.h>
@@ -25,7 +24,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#if HAVE___THREAD
 
 #define N 10
 static pthread_t th[N];
@@ -106,18 +104,11 @@ tf (void *arg)
 
   return NULL;
 }
-#endif
+
 
 int
 do_test (void)
 {
-#if !HAVE___THREAD
-
-  puts ("No __thread support in compiler, test skipped.");
-
-  return 0;
-#else
-
   if (pthread_barrier_init (&b, NULL, N + 1) != 0)
     {
       puts ("barrier_init failed");
@@ -207,7 +198,6 @@ do_test (void)
       }
 
   return 0;
-#endif
 }
 
 

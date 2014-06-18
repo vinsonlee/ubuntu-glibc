@@ -1,4 +1,4 @@
-/* Copyright (C) 1996, 1997, 1998, 2000, 2003, 2004, 2006 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Andreas Schwab, <schwab@issan.informatik.uni-dortmund.de>,
    December 1995.
@@ -14,15 +14,10 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
-#ifndef _LINUX_M68K_SYSDEP_H
-#define _LINUX_M68K_SYSDEP_H 1
-
-#include <sysdeps/unix/sysdep.h>
-#include <sysdeps/m68k/sysdep.h>
+#include <tls.h>
 
 /* Defines RTLD_PRIVATE_ERRNO.  */
 #include <dl-sysdep.h>
@@ -32,11 +27,7 @@
    of the kernel.  But these symbols do not follow the SYS_* syntax
    so we have to redefine the `SYS_ify' macro here.  */
 #undef SYS_ify
-#ifdef __STDC__
-# define SYS_ify(syscall_name)	__NR_##syscall_name
-#else
-# define SYS_ify(syscall_name)	__NR_/**/syscall_name
-#endif
+#define SYS_ify(syscall_name)	__NR_##syscall_name
 
 #ifdef __ASSEMBLER__
 
@@ -109,22 +100,30 @@ SYSCALL_ERROR_LABEL:							      \
        a pointer (e.g., mmap).  */					      \
     move.l %d0, %a0;							      \
     rts;
-# else /* !RTLD_PRIVATE_ERRNO */
-/* Store (- %d0) into errno through the GOT.  */
-#  if defined _LIBC_REENTRANT
-#   define SYSCALL_ERROR_HANDLER					      \
+# elif defined _LIBC_REENTRANT
+#  ifndef NOT_IN_libc
+#   define SYSCALL_ERROR_ERRNO __libc_errno
+#  else
+#   define SYSCALL_ERROR_ERRNO errno
+#  endif
+#  define SYSCALL_ERROR_HANDLER						      \
 SYSCALL_ERROR_LABEL:							      \
     neg.l %d0;								      \
     move.l %d0, -(%sp);							      \
-    jbsr __errno_location@PLTPC;					      \
+    cfi_adjust_cfa_offset (4);						      \
+    jbsr __m68k_read_tp@PLTPC;						      \
+    SYSCALL_ERROR_LOAD_GOT (%a1);					      \
+    add.l (SYSCALL_ERROR_ERRNO@TLSIE, %a1), %a0;			      \
     move.l (%sp)+, (%a0);						      \
+    cfi_adjust_cfa_offset (-4);						      \
     move.l &-1, %d0;							      \
     /* Copy return value to %a0 for syscalls that are declared to return      \
        a pointer (e.g., mmap).  */					      \
     move.l %d0, %a0;							      \
     rts;
-#  else /* !_LIBC_REENTRANT */
-#   define SYSCALL_ERROR_HANDLER					      \
+# else /* !_LIBC_REENTRANT */
+/* Store (- %d0) into errno through the GOT.  */
+#  define SYSCALL_ERROR_HANDLER						      \
 SYSCALL_ERROR_LABEL:							      \
     move.l (errno@GOTPC, %pc), %a0;					      \
     neg.l %d0;								      \
@@ -134,8 +133,7 @@ SYSCALL_ERROR_LABEL:							      \
        a pointer (e.g., mmap).  */					      \
     move.l %d0, %a0;							      \
     rts;
-#  endif /* _LIBC_REENTRANT */
-# endif /* RTLD_PRIVATE_ERRNO */
+# endif /* _LIBC_REENTRANT */
 #else
 # define SYSCALL_ERROR_HANDLER	/* Nothing here; code in sysdep.S is used.  */
 #endif /* PIC */
@@ -148,9 +146,11 @@ SYSCALL_ERROR_LABEL:							      \
 	arg 3		%d3	     call-saved
 	arg 4		%d4	     call-saved
 	arg 5		%d5	     call-saved
+	arg 6		%a0	     call-clobbered
 
    The stack layout upon entering the function is:
 
+	24(%sp)		Arg# 6
 	20(%sp)		Arg# 5
 	16(%sp)		Arg# 4
 	12(%sp)		Arg# 3
@@ -180,24 +180,35 @@ SYSCALL_ERROR_LABEL:							      \
 #define	UNDOARGS_1	UNDOARGS_0
 
 #define	DOARGS_2	_DOARGS_2 (8)
-#define	_DOARGS_2(n)	move.l %d2, %a0; move.l n(%sp), %d2; _DOARGS_1 (n-4)
-#define	UNDOARGS_2	UNDOARGS_1; move.l %a0, %d2
+#define	_DOARGS_2(n)	move.l %d2, %a0; cfi_register (%d2, %a0);	      \
+			move.l n(%sp), %d2; _DOARGS_1 (n-4)
+#define	UNDOARGS_2	UNDOARGS_1; move.l %a0, %d2; cfi_restore (%d2)
 
 #define DOARGS_3	_DOARGS_3 (12)
-#define _DOARGS_3(n)	move.l %d3, %a1; move.l n(%sp), %d3; _DOARGS_2 (n-4)
-#define UNDOARGS_3	UNDOARGS_2; move.l %a1, %d3
+#define _DOARGS_3(n)	move.l %d3, %a1; cfi_register (%d3, %a1);	      \
+			move.l n(%sp), %d3; _DOARGS_2 (n-4)
+#define UNDOARGS_3	UNDOARGS_2; move.l %a1, %d3; cfi_restore (%d3)
 
 #define DOARGS_4	_DOARGS_4 (16)
-#define _DOARGS_4(n)	move.l %d4, -(%sp); move.l n+4(%sp), %d4; _DOARGS_3 (n)
-#define UNDOARGS_4	UNDOARGS_3; move.l (%sp)+, %d4
+#define _DOARGS_4(n)	move.l %d4, -(%sp);				      \
+			cfi_adjust_cfa_offset (4); cfi_rel_offset (%d4, 0);   \
+			move.l n+4(%sp), %d4; _DOARGS_3 (n)
+#define UNDOARGS_4	UNDOARGS_3; move.l (%sp)+, %d4;			      \
+			cfi_adjust_cfa_offset (-4); cfi_restore (%d4)
 
 #define DOARGS_5	_DOARGS_5 (20)
-#define _DOARGS_5(n)	move.l %d5, -(%sp); move.l n+4(%sp), %d5; _DOARGS_4 (n)
-#define UNDOARGS_5	UNDOARGS_4; move.l (%sp)+, %d5
+#define _DOARGS_5(n)	move.l %d5, -(%sp); 				      \
+			cfi_adjust_cfa_offset (4); cfi_rel_offset (%d5, 0);   \
+			move.l n+4(%sp), %d5; _DOARGS_4 (n)
+#define UNDOARGS_5	UNDOARGS_4; move.l (%sp)+, %d5;			      \
+			cfi_adjust_cfa_offset (-4); cfi_restore (%d5)
 
 #define DOARGS_6	_DOARGS_6 (24)
-#define _DOARGS_6(n)	_DOARGS_5 (n-4); move.l %a0, -(%sp); move.l n+12(%sp), %a0;
-#define UNDOARGS_6	move.l (%sp)+, %a0; UNDOARGS_5
+#define _DOARGS_6(n)	_DOARGS_5 (n-4); move.l %a0, -(%sp);		      \
+			cfi_adjust_cfa_offset (4);			      \
+			move.l n+12(%sp), %a0;
+#define UNDOARGS_6	move.l (%sp)+, %a0; cfi_adjust_cfa_offset (-4);	      \
+			UNDOARGS_5
 
 
 #define	ret	rts
@@ -229,7 +240,7 @@ SYSCALL_ERROR_LABEL:							      \
    normally.  It will never touch errno.  This returns just what the kernel
    gave back.  */
 #undef INTERNAL_SYSCALL
-#define INTERNAL_SYSCALL(name, err, nr, args...)	\
+#define INTERNAL_SYSCALL_NCS(name, err, nr, args...)	\
   ({ unsigned int _sys_result;				\
      {							\
        /* Load argument values in temporary variables
@@ -237,7 +248,7 @@ SYSCALL_ERROR_LABEL:							      \
 	  before the call used registers are set.  */	\
        LOAD_ARGS_##nr (args)				\
        LOAD_REGS_##nr					\
-       register int _d0 asm ("%d0") = __NR_##name;	\
+       register int _d0 asm ("%d0") = name;		\
        asm volatile ("trap #0"				\
 		     : "=d" (_d0)			\
 		     : "0" (_d0) ASM_ARGS_##nr		\
@@ -245,6 +256,8 @@ SYSCALL_ERROR_LABEL:							      \
        _sys_result = _d0;				\
      }							\
      (int) _sys_result; })
+#define INTERNAL_SYSCALL(name, err, nr, args...)	\
+  INTERNAL_SYSCALL_NCS (__NR_##name, err, nr, ##args)
 
 #undef INTERNAL_SYSCALL_ERROR_P
 #define INTERNAL_SYSCALL_ERROR_P(val, err)		\
@@ -300,4 +313,13 @@ SYSCALL_ERROR_LABEL:							      \
 #define ASM_ARGS_6	ASM_ARGS_5, "a" (_a0)
 
 #endif /* not __ASSEMBLER__ */
+
+/* Pointer mangling is not yet supported for M68K.  */
+#define PTR_MANGLE(var) (void) (var)
+#define PTR_DEMANGLE(var) (void) (var)
+
+#if defined NEED_DL_SYSINFO || defined NEED_DL_SYSINFO_DSO
+/* M68K needs system-supplied DSO to access TLS helpers
+   even when statically linked.  */
+# define NEED_STATIC_SYSINFO_DSO 1
 #endif

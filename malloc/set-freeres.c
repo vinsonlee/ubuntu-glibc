@@ -1,4 +1,4 @@
-/* Copyright (C) 1997,1999,2000,2001,2002,2003 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,18 +12,15 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <atomic.h>
 #include <stdlib.h>
 #include <set-hooks.h>
 #include <libc-internal.h>
 
-#ifdef USE_IN_LIBIO
-# include "../libio/libioP.h"
-#endif
+#include "../libio/libioP.h"
 
 DEFINE_HOOK (__libc_subfreeres, (void));
 
@@ -36,19 +33,17 @@ __libc_freeres (void)
      protect for multiple executions since these are fatal.  */
   static long int already_called;
 
-  if (! atomic_compare_and_exchange_bool_acq (&already_called, 1, 0))
+  if (!atomic_compare_and_exchange_bool_acq (&already_called, 1, 0))
     {
-      void * const *p;
+      void *const *p;
 
-#ifdef USE_IN_LIBIO
       _IO_cleanup ();
-#endif
 
       RUN_HOOK (__libc_subfreeres, ());
 
       for (p = symbol_set_first_element (__libc_freeres_ptrs);
-	   ! symbol_set_end_p (__libc_freeres_ptrs, p); ++p)
-	free (*p);
+           !symbol_set_end_p (__libc_freeres_ptrs, p); ++p)
+        free (*p);
     }
 }
 libc_hidden_def (__libc_freeres)

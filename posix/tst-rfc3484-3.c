@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <ifaddrs.h>
+#include <stdint.h>
 
 /* Internal definitions used in the libc code.  */
 #define __getservbyname_r getservbyname_r
@@ -17,6 +18,12 @@ __check_pf (bool *p1, bool *p2, struct in6addrinfo **in6ai, size_t *in6ailen)
   *p1 = *p2 = true;
   *in6ai = NULL;
   *in6ailen = 0;
+}
+
+void
+attribute_hidden
+__free_in6ai (struct in6addrinfo *ai)
+{
 }
 
 void
@@ -47,6 +54,7 @@ _res_hconf_init (void)
 {
 }
 
+#undef	USE_NSCD
 #include "../sysdeps/posix/getaddrinfo.c"
 
 service_user *__nss_hosts_database attribute_hidden;
@@ -113,6 +121,8 @@ do_test (void)
   struct sockaddr_in so;
   so.sin_family = AF_INET;
   so.sin_addr.s_addr = h (0x0aa85f19);
+  /* Clear the rest of the structure to avoid warnings.  */
+  memset (so.sin_zero, '\0', sizeof (so.sin_zero));
 
   for (int i = 0; i < naddrs; ++i)
     {

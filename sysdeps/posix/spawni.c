@@ -1,5 +1,5 @@
 /* Guts of POSIX spawn interface.  Generic POSIX.1 version.
-   Copyright (C) 2000-2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,20 +13,23 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <spawn.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/resource.h>
 #include "spawn_int.h"
 #include <not-cancel.h>
 #include <local-setxid.h>
+#include <shlib-compat.h>
 
 
 /* The Unix standard contains a long explanation of the way to signal
@@ -64,6 +67,15 @@ script_execute (const char *file, char *const argv[], char *const envp[])
   }
 }
 
+static inline void
+maybe_script_execute (const char *file, char *const argv[], char *const envp[],
+                      int xflags)
+{
+  if (SHLIB_COMPAT (libc, GLIBC_2_2, GLIBC_2_15)
+      && (xflags & SPAWN_XFLAGS_TRY_SHELL)
+      && errno == ENOEXEC)
+    script_execute (file, argv, envp);
+}
 
 /* Spawn a new process executing PATH with the attributes describes in *ATTRP.
    Before running the process perform the actions described in FILE-ACTIONS. */
@@ -71,7 +83,7 @@ int
 __spawni (pid_t *pid, const char *file,
 	  const posix_spawn_file_actions_t *file_actions,
 	  const posix_spawnattr_t *attrp, char *const argv[],
-	  char *const envp[], int use_path)
+	  char *const envp[], int xflags)
 {
   pid_t new_pid;
   char *path, *p, *name;
@@ -142,9 +154,7 @@ __spawni (pid_t *pid, const char *file,
     }
   else if ((flags & POSIX_SPAWN_SETSCHEDULER) != 0)
     {
-      if (__sched_setscheduler (0, attrp->__policy,
-				(flags & POSIX_SPAWN_SETSCHEDPARAM) != 0
-				? &attrp->__sp : NULL) == -1)
+      if (__sched_setscheduler (0, attrp->__policy, &attrp->__sp) == -1)
 	_exit (SPAWN_ERROR);
     }
 #endif
@@ -164,6 +174,8 @@ __spawni (pid_t *pid, const char *file,
   if (file_actions != NULL)
     {
       int cnt;
+      struct rlimit64 fdlimit;
+      bool have_fdlimit = false;
 
       for (cnt = 0; cnt < file_actions->__used; ++cnt)
 	{
@@ -173,8 +185,19 @@ __spawni (pid_t *pid, const char *file,
 	    {
 	    case spawn_do_close:
 	      if (close_not_cancel (action->action.close_action.fd) != 0)
-		/* Signal the error.  */
-		_exit (SPAWN_ERROR);
+		{
+		  if (! have_fdlimit)
+		    {
+		      getrlimit64 (RLIMIT_NOFILE, &fdlimit);
+		      have_fdlimit = true;
+		    }
+
+		  /* Only signal errors for file descriptors out of range.  */
+		  if (action->action.close_action.fd < 0
+		      || action->action.close_action.fd >= fdlimit.rlim_cur)
+		    /* Signal the error.  */
+		    _exit (SPAWN_ERROR);
+		}
 	      break;
 
 	    case spawn_do_open:
@@ -214,13 +237,12 @@ __spawni (pid_t *pid, const char *file,
 	}
     }
 
-  if (! use_path || strchr (file, '/') != NULL)
+  if ((xflags & SPAWN_XFLAGS_USE_PATH) == 0 || strchr (file, '/') != NULL)
     {
       /* The FILE parameter is actually a path.  */
       __execve (file, argv, envp);
 
-      if (errno == ENOEXEC)
-	script_execute (file, argv, envp);
+      maybe_script_execute (file, argv, envp, xflags);
 
       /* Oh, oh.  `execve' returns.  This is bad.  */
       _exit (SPAWN_ERROR);
@@ -265,8 +287,7 @@ __spawni (pid_t *pid, const char *file,
       /* Try to execute this name.  If it works, execv will not return.  */
       __execve (startp, argv, envp);
 
-      if (errno == ENOEXEC)
-	script_execute (startp, argv, envp);
+      maybe_script_execute (startp, argv, envp, xflags);
 
       switch (errno)
 	{

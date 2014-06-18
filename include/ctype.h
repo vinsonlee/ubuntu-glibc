@@ -1,5 +1,10 @@
 #ifndef _CTYPE_H
 
+#ifndef _ISOMAC
+/* Initialize ctype locale data.  */
+extern void __ctype_init (void);
+libc_hidden_proto (__ctype_init)
+
 extern int __isctype (int __c, int __mask);
 
 # ifndef NOT_IN_libc
@@ -22,37 +27,31 @@ __libc_tsd_define (extern, const uint16_t *, CTYPE_B)
 __libc_tsd_define (extern, const int32_t *, CTYPE_TOUPPER)
 __libc_tsd_define (extern, const int32_t *, CTYPE_TOLOWER)
 
+
 CTYPE_EXTERN_INLINE const uint16_t ** __attribute__ ((const))
 __ctype_b_loc (void)
 {
-  const uint16_t **tablep = __libc_tsd_address (const uint16_t *, CTYPE_B);
-  if (__builtin_expect (*tablep == NULL, 0))
-    *tablep = (const uint16_t *) _NL_CURRENT (LC_CTYPE, _NL_CTYPE_CLASS) + 128;
-  return tablep;
+  return __libc_tsd_address (const uint16_t *, CTYPE_B);
 }
 
 CTYPE_EXTERN_INLINE const int32_t ** __attribute__ ((const))
 __ctype_toupper_loc (void)
 {
-  const int32_t **tablep = __libc_tsd_address (const int32_t *, CTYPE_TOUPPER);
-  if (__builtin_expect (*tablep == NULL, 0))
-    *tablep = ((int32_t *) _NL_CURRENT (LC_CTYPE, _NL_CTYPE_TOUPPER) + 128);
-  return tablep;
+  return __libc_tsd_address (const int32_t *, CTYPE_TOUPPER);
 }
 
 CTYPE_EXTERN_INLINE const int32_t ** __attribute__ ((const))
 __ctype_tolower_loc (void)
 {
-  const int32_t **tablep = __libc_tsd_address (const int32_t *, CTYPE_TOLOWER);
-  if (__builtin_expect (*tablep == NULL, 0))
-    *tablep = ((int32_t *) _NL_CURRENT (LC_CTYPE, _NL_CTYPE_TOLOWER) + 128);
-  return tablep;
+  return __libc_tsd_address (const int32_t *, CTYPE_TOLOWER);
 }
 
 # endif	/* Not NOT_IN_libc.  */
+#endif
 
-# include <ctype/ctype.h>
+#include <ctype/ctype.h>
 
+#ifndef _ISOMAC
 # if !defined __NO_CTYPE && !defined NOT_IN_libc
 /* The spec says that isdigit must only match the decimal digits.  We
    can check this without a memory access.  */
@@ -63,5 +62,6 @@ __ctype_tolower_loc (void)
 #  undef __isdigit_l
 #  define __isdigit_l(c, l) ({ int __c = (c); __c >= '0' && __c <= '9'; })
 # endif
+#endif
 
 #endif /* ctype.h */

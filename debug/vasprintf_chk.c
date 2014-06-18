@@ -1,5 +1,4 @@
-/* Copyright (C) 1995,1997,1999-2002,2004,2006,2008
-   Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.
 
    As a special exception, if you link the code in this file with
    files compiled with a GNU compiler to produce an executable,
@@ -53,8 +51,8 @@ __vasprintf_chk (char **result_ptr, int flags, const char *format,
 #ifdef _IO_MTSAFE_IO
   sf._sbf._f._lock = NULL;
 #endif
-  _IO_no_init ((_IO_FILE *) &sf._sbf, _IO_USER_LOCK, -1, NULL, NULL);
-  _IO_JUMPS ((struct _IO_FILE_plus *) &sf._sbf) = &_IO_str_jumps;
+  _IO_no_init (&sf._sbf._f, _IO_USER_LOCK, -1, NULL, NULL);
+  _IO_JUMPS (&sf._sbf) = &_IO_str_jumps;
   _IO_str_init_static_internal (&sf, string, init_string_size, string);
   sf._sbf._f._flags &= ~_IO_USER_BUF;
   sf._s._allocate_buffer = (_IO_alloc_type) malloc;
@@ -65,7 +63,7 @@ __vasprintf_chk (char **result_ptr, int flags, const char *format,
   if (flags > 0)
     sf._sbf._f._flags2 |= _IO_FLAGS2_FORTIFY;
 
-  ret = INTUSE(_IO_vfprintf) (&sf._sbf._f, format, args);
+  ret = _IO_vfprintf (&sf._sbf._f, format, args);
   if (ret < 0)
     {
       free (sf._sbf._f._IO_buf_base);

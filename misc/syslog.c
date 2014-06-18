@@ -51,16 +51,14 @@ static char sccsid[] = "@(#)syslog.c	8.4 (Berkeley) 3/18/94";
 #include <signal.h>
 #include <locale.h>
 
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include <libio/iolibio.h>
 #include <math_ldbl_opt.h>
 
-#define ftell(s) INTUSE(_IO_ftell) (s)
+#include <kernel-features.h>
+
+#define ftell(s) _IO_ftell (s)
 
 static int	LogType = SOCK_DGRAM;	/* type of socket connection */
 static int	LogFile = -1;		/* fd for log */
@@ -141,7 +139,7 @@ __vsyslog_chk(int pri, int flag, const char *fmt, va_list ap)
 	FILE *f;
 	char *buf = 0;
 	size_t bufsize = 0;
-	size_t prioff, msgoff;
+	size_t msgoff;
 #ifndef NO_SIGPIPE
  	struct sigaction action, oldaction;
  	int sigpipe;
@@ -192,7 +190,7 @@ __vsyslog_chk(int pri, int flag, const char *fmt, va_list ap)
 	else
 	  {
 	    __fsetlocking (f, FSETLOCKING_BYCALLER);
-	    prioff = fprintf (f, "<%d>", pri);
+	    fprintf (f, "<%d>", pri);
 	    (void) time (&now);
 	    f->_IO_write_ptr += __strftime_l (f->_IO_write_ptr,
 					      f->_IO_write_end
@@ -231,7 +229,7 @@ __vsyslog_chk(int pri, int flag, const char *fmt, va_list ap)
 	/* Output to stderr if requested. */
 	if (LogStat & LOG_PERROR) {
 		struct iovec iov[2];
-		register struct iovec *v = iov;
+		struct iovec *v = iov;
 
 		v->iov_base = buf + msgoff;
 		v->iov_len = bufsize - msgoff;
@@ -427,7 +425,7 @@ sigpipe_handler (int signo)
 #endif
 
 static void
-closelog_internal()
+closelog_internal (void)
 {
   if (!connected)
     return;
@@ -438,7 +436,7 @@ closelog_internal()
 }
 
 void
-closelog ()
+closelog (void)
 {
   /* Protect against multiple users and cancellation.  */
   __libc_cleanup_push (cancel_handler, NULL);

@@ -1,5 +1,4 @@
-/* Copyright (C) 1991,92,94,95,97,98,2000,2002,2004
-   Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* Versioned copy of sysdeps/generic/longjmp.c modified for AltiVec support. */
 
@@ -57,6 +55,6 @@ weak_alias (__vmx__libc_siglongjmp, __vmxsiglongjmp)
 
 default_symbol_version (__vmx__libc_longjmp, __libc_longjmp, GLIBC_PRIVATE);
 default_symbol_version (__vmx__libc_siglongjmp, __libc_siglongjmp, GLIBC_PRIVATE);
-default_symbol_version (__vmx_longjmp, _longjmp, GLIBC_2.3.4);
-default_symbol_version (__vmxlongjmp, longjmp, GLIBC_2.3.4);
-default_symbol_version (__vmxsiglongjmp, siglongjmp, GLIBC_2.3.4);
+versioned_symbol (libc, __vmx_longjmp, _longjmp, GLIBC_2_3_4);
+versioned_symbol (libc, __vmxlongjmp, longjmp, GLIBC_2_3_4);
+versioned_symbol (libc, __vmxsiglongjmp, siglongjmp, GLIBC_2_3_4);

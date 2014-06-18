@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2002, 2005, 2006 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -13,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -24,6 +23,7 @@
 #include <error.h>
 #include <langinfo.h>
 #include <string.h>
+#include <stdint.h>
 #include <sys/uio.h>
 
 #include <assert.h>
@@ -57,6 +57,8 @@ static struct
   { #Ab, #Term, #Lib },
 #define DEFINE_LANGUAGE_CODE3(Name, Term, Lib) \
   { "", #Term, #Lib },
+#define DEFINE_LANGUAGE_CODE2(Name, Term) \
+  { "", #Term, "" },
 #include "iso-639.def"
 };
 
@@ -347,97 +349,23 @@ address_output (struct localedef_t *locale, const struct charmap_t *charmap,
 		const char *output_path)
 {
   struct locale_address_t *address = locale->categories[LC_ADDRESS].address;
-  struct iovec iov[3 + _NL_ITEM_INDEX (_NL_NUM_LC_ADDRESS)];
-  struct locale_file data;
-  uint32_t idx[_NL_ITEM_INDEX (_NL_NUM_LC_ADDRESS)];
-  size_t cnt = 0;
+  struct locale_file file;
 
-  data.magic = LIMAGIC (LC_ADDRESS);
-  data.n = _NL_ITEM_INDEX (_NL_NUM_LC_ADDRESS);
-  iov[cnt].iov_base = (void *) &data;
-  iov[cnt].iov_len = sizeof (data);
-  ++cnt;
-
-  iov[cnt].iov_base = (void *) idx;
-  iov[cnt].iov_len = sizeof (idx);
-  ++cnt;
-
-  idx[cnt - 2] = iov[0].iov_len + iov[1].iov_len;
-  iov[cnt].iov_base = (void *) address->postal_fmt;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 2] = idx[cnt - 3] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) address->country_name;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 2] = idx[cnt - 3] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) address->country_post;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 2] = idx[cnt - 3] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) address->country_ab2;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 2] = idx[cnt - 3] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) address->country_ab3;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 2] = idx[cnt - 3] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) address->country_car;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 2] = idx[cnt - 3] + iov[cnt - 1].iov_len;
-
-  /* Align following data */
-  iov[cnt].iov_base = (void *) "\0\0";
-  iov[cnt].iov_len = ((idx[cnt - 2] + 3) & ~3) - idx[cnt - 2];
-  idx[cnt - 2] = (idx[cnt - 2] + 3) & ~3;
-  ++cnt;
-
-  iov[cnt].iov_base = (void *) &address->country_num;
-  iov[cnt].iov_len = sizeof (uint32_t);
-  ++cnt;
-
-  idx[cnt - 3] = idx[cnt - 4] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) address->country_isbn;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 3] = idx[cnt - 4] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) address->lang_name;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 3] = idx[cnt - 4] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) address->lang_ab;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 3] = idx[cnt - 4] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) address->lang_term;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 3] = idx[cnt - 4] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) address->lang_lib;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 3] = idx[cnt - 4] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) charmap->code_set_name;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  assert (cnt == 3 + _NL_ITEM_INDEX (_NL_NUM_LC_ADDRESS));
-
-  write_locale_data (output_path, LC_ADDRESS, "LC_ADDRESS",
-		     3 + _NL_ITEM_INDEX (_NL_NUM_LC_ADDRESS), iov);
+  init_locale_data (&file, _NL_ITEM_INDEX (_NL_NUM_LC_ADDRESS));
+  add_locale_string (&file, address->postal_fmt);
+  add_locale_string (&file, address->country_name);
+  add_locale_string (&file, address->country_post);
+  add_locale_string (&file, address->country_ab2);
+  add_locale_string (&file, address->country_ab3);
+  add_locale_string (&file, address->country_car);
+  add_locale_uint32 (&file, address->country_num);
+  add_locale_string (&file, address->country_isbn);
+  add_locale_string (&file, address->lang_name);
+  add_locale_string (&file, address->lang_ab);
+  add_locale_string (&file, address->lang_term);
+  add_locale_string (&file, address->lang_lib);
+  add_locale_string (&file, charmap->code_set_name);
+  write_locale_data (output_path, LC_ADDRESS, "LC_ADDRESS", &file);
 }
 
 

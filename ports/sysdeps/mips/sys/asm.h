@@ -1,5 +1,4 @@
-/* Copyright (C) 1997, 1998, 2002, 2003, 2004, 2005
-   Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ralf Baechle <ralf@gnu.org>.
 
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SYS_ASM_H
 #define _SYS_ASM_H
@@ -24,13 +22,13 @@
 #include <sgidefs.h>
 
 #ifndef CAT
-# ifdef __STDC__
-#  define __CAT(str1,str2) str1##str2
-# else
-#  define __CAT(str1,str2) str1/**/str2
-# endif
+# define __CAT(str1,str2) str1##str2
 # define CAT(str1,str2) __CAT(str1,str2)
 #endif
+
+/* Redefined as nonempty in the internal header.  */
+#define __mips_cfi_startproc /* Empty.  */
+#define __mips_cfi_endproc /* Empty.  */
 
 /*
  * Macros to handle different pointer/register sizes for 32/64-bit code
@@ -153,7 +151,8 @@ l:							\
 		.align	2;                              \
 		.type	symbol,@function;               \
 		.ent	symbol,0;                       \
-symbol:		.frame	sp,0,ra
+symbol:		.frame	sp,0,ra;			\
+		__mips_cfi_startproc
 
 /*
  * NESTED - declare nested routine entry point
@@ -163,13 +162,15 @@ symbol:		.frame	sp,0,ra
 		.align	2;                              \
 		.type	symbol,@function;               \
 		.ent	symbol,0;                       \
-symbol:		.frame	sp, framesize, rpc
+symbol:		.frame	sp, framesize, rpc;		\
+		__mips_cfi_startproc
 
 /*
  * END - mark end of function
  */
 #ifndef END
 # define END(function)                                   \
+		__mips_cfi_endproc;			\
 		.end	function;		        \
 		.size	function,.-function
 #endif
@@ -179,7 +180,7 @@ symbol:		.frame	sp, framesize, rpc
  */
 #define	EXPORT(symbol)                                  \
 		.globl	symbol;                         \
-symbol:
+symbol:		__mips_cfi_startproc
 
 /*
  * ABS - export absolute symbol
@@ -238,8 +239,8 @@ symbol		=	value
 # define PREFX(hint,addr)                                \
 		prefx	hint,addr
 #else
-# define PREF
-# define PREFX
+# define PREF(hint,addr)
+# define PREFX(hint,addr)
 #endif
 
 /*
@@ -471,7 +472,7 @@ symbol		=	value
 # define MTC0	dmtc0
 #endif
 
-/* The MIPS archtectures do not have a uniform memory model.  Particular
+/* The MIPS architectures do not have a uniform memory model.  Particular
    platforms may provide additional guarantees - for instance, the R4000
    LL and SC instructions implicitly perform a SYNC, and the 4K promises
    strong ordering.

@@ -1,5 +1,5 @@
 /* Cache handling for services lookup.
-   Copyright (C) 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@drepper.com>, 2007.
 
@@ -14,8 +14,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include <alloca.h>
 #include <assert.h>
@@ -23,6 +22,7 @@
 #include <libintl.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/mman.h>
 #include <kernel-features.h>
 
@@ -61,13 +61,13 @@ static const serv_response_header notfound =
 };
 
 
-static void
+static time_t
 cache_addserv (struct database_dyn *db, int fd, request_header *req,
 	       const void *key, struct servent *serv, uid_t owner,
-	       struct hashentry *he, struct datahead *dh, int errval)
+	       struct hashentry *const he, struct datahead *dh, int errval)
 {
+  bool all_written = true;
   ssize_t total;
-  ssize_t written;
   time_t t = time (NULL);
 
   /* We allocate all data in one memory block: the iov vector,
@@ -81,6 +81,7 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 
   assert (offsetof (struct dataset, resp) == offsetof (struct datahead, data));
 
+  time_t timeout = MAX_TIMEOUT_VALUE;
   if (serv == NULL)
     {
       if (he != NULL && errval == EAGAIN)
@@ -92,7 +93,10 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 	    /* Do not reset the value if we never not reload the record.  */
 	    dh->nreloads = reload_count - 1;
 
-	  written = total = 0;
+	  /* Reload with the same time-to-live value.  */
+	  timeout = dh->timeout = t + db->postimeout;
+
+	  total = 0;
 	}
       else
 	{
@@ -100,13 +104,21 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 	     case.  */
 	  total = sizeof (notfound);
 
-	  written = TEMP_FAILURE_RETRY (send (fd, &notfound, total,
-					      MSG_NOSIGNAL));
+	  if (fd != -1
+	      && TEMP_FAILURE_RETRY (send (fd, &notfound, total,
+					   MSG_NOSIGNAL)) != total)
+	    all_written = false;
 
-	  dataset = mempool_alloc (db, sizeof (struct dataset) + req->key_len,
-				   IDX_result_data);
-	  /* If we cannot permanently store the result, so be it.  */
-	  if (dataset != NULL)
+	  /* If we have a transient error or cannot permanently store
+	     the result, so be it.  */
+	  if (errval == EAGAIN || __builtin_expect (db->negtimeout == 0, 0))
+	    {
+	      /* Mark the old entry as obsolete.  */
+	      if (dh != NULL)
+		dh->usable = false;
+	    }
+	  else if ((dataset = mempool_alloc (db, (sizeof (struct dataset)
+						  + req->key_len), 1)) != NULL)
 	    {
 	      dataset->head.allocsize = sizeof (struct dataset) + req->key_len;
 	      dataset->head.recsize = total;
@@ -115,7 +127,7 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 	      dataset->head.usable = true;
 
 	      /* Compute the timeout time.  */
-	      dataset->head.timeout = t + db->negtimeout;
+	      timeout = dataset->head.timeout = t + db->negtimeout;
 
 	      /* This is the reply.  */
 	      memcpy (&dataset->resp, &notfound, total);
@@ -133,9 +145,6 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 			 + sizeof (struct dataset) + req->key_len, MS_ASYNC);
 		}
 
-	      /* Now get the lock to safely insert the records.  */
-	      pthread_rwlock_rdlock (&db->lock);
-
 	      (void) cache_add (req->type, &dataset->strdata, req->key_len,
 				&dataset->head, true, db, owner, he == NULL);
 
@@ -145,8 +154,6 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 	      if (dh != NULL)
 		dh->usable = false;
 	    }
-	  else
-	    ++db->head->addfailed;
 	}
     }
   else
@@ -177,7 +184,6 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 		+ s_name_len
 		+ s_proto_len
 		+ s_aliases_cnt * sizeof (uint32_t));
-      written = total;
 
       /* If we refill the cache, first assume the reconrd did not
 	 change.  Allocate memory on the cache since it is likely
@@ -187,13 +193,8 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
       dataset = NULL;
 
       if (he == NULL)
-	{
-	  dataset = (struct dataset *) mempool_alloc (db,
-						      total + req->key_len,
-						      IDX_result_data);
-	  if (dataset == NULL)
-	    ++db->head->addfailed;
-	}
+	dataset = (struct dataset *) mempool_alloc (db, total + req->key_len,
+						    1);
 
       if (dataset == NULL)
 	{
@@ -213,7 +214,7 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
       dataset->head.usable = true;
 
       /* Compute the timeout time.  */
-      dataset->head.timeout = t + db->postimeout;
+      timeout = dataset->head.timeout = t + db->postimeout;
 
       dataset->resp.version = NSCD_VERSION;
       dataset->resp.found = 1;
@@ -262,7 +263,7 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 		 appropriate memory and copy it.  */
 	      struct dataset *newp
 		= (struct dataset *) mempool_alloc (db, total + req->key_len,
-						    IDX_result_data);
+						    1);
 	      if (newp != NULL)
 		{
 		  /* Adjust pointers into the memory block.  */
@@ -273,8 +274,6 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 		  dataset = memcpy (newp, dataset, total + req->key_len);
 		  alloca_used = false;
 		}
-	      else
-		++db->head->addfailed;
 
 	      /* Mark the old record as obsolete.  */
 	      dh->usable = false;
@@ -292,25 +291,32 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 	    {
 	      assert (db->wr_fd != -1);
 	      assert ((char *) &dataset->resp > (char *) db->data);
-	      assert ((char *) &dataset->resp - (char *) db->head
+	      assert ((char *) dataset - (char *) db->head
 		      + total
 		      <= (sizeof (struct database_pers_head)
 			  + db->head->module * sizeof (ref_t)
 			  + db->head->data_size));
-	      written = sendfileall (fd, db->wr_fd,
-				     (char *) &dataset->resp
-				     - (char *) db->head, total);
+	      ssize_t written = sendfileall (fd, db->wr_fd,
+					     (char *) &dataset->resp
+					     - (char *) db->head,
+					     dataset->head.recsize);
+	      if (written != dataset->head.recsize)
+		{
 # ifndef __ASSUME_SENDFILE
-	      if (written == -1 && errno == ENOSYS)
-		goto use_write;
+		  if (written == -1 && errno == ENOSYS)
+		    goto use_write;
 # endif
+		  all_written = false;
+		}
 	    }
 	  else
 # ifndef __ASSUME_SENDFILE
 	  use_write:
 # endif
 #endif
-	    written = writeall (fd, &dataset->resp, total);
+	    if (writeall (fd, &dataset->resp, dataset->head.recsize)
+		!= dataset->head.recsize)
+	      all_written = false;
 	}
 
       /* Add the record to the database.  But only if it has not been
@@ -327,9 +333,6 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 		     + total + req->key_len, MS_ASYNC);
 	    }
 
-	  /* Now get the lock to safely insert the records.  */
-	  pthread_rwlock_rdlock (&db->lock);
-
 	  (void) cache_add (req->type, key_copy, req->key_len,
 			    &dataset->head, true, db, owner, he == NULL);
 
@@ -337,12 +340,14 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 	}
     }
 
-  if (__builtin_expect (written != total, 0) && debug_level > 0)
+  if (__builtin_expect (!all_written, 0) && debug_level > 0)
     {
       char buf[256];
       dbg_log (_("short write in %s: %s"),  __FUNCTION__,
 	       strerror_r (errno, buf, sizeof (buf)));
     }
+
+  return timeout;
 }
 
 
@@ -369,7 +374,7 @@ lookup (int type, char *key, struct servent *resultbufp, char *buffer,
 }
 
 
-static void
+static time_t
 addservbyX (struct database_dyn *db, int fd, request_header *req,
 	    char *key, uid_t uid, struct hashentry *he, struct datahead *dh)
 {
@@ -424,10 +429,12 @@ addservbyX (struct database_dyn *db, int fd, request_header *req,
 	buffer = (char *) extend_alloca (buffer, buflen, 2 * buflen);
     }
 
-  cache_addserv (db, fd, req, key, serv, uid, he, dh, errval);
+  time_t timeout = cache_addserv (db, fd, req, key, serv, uid, he, dh, errval);
 
   if (use_malloc)
     free (buffer);
+
+  return timeout;
 }
 
 
@@ -439,7 +446,7 @@ addservbyname (struct database_dyn *db, int fd, request_header *req,
 }
 
 
-void
+time_t
 readdservbyname (struct database_dyn *db, struct hashentry *he,
 		 struct datahead *dh)
 {
@@ -449,7 +456,7 @@ readdservbyname (struct database_dyn *db, struct hashentry *he,
       .key_len = he->len
     };
 
-  addservbyX (db, -1, &req, db->data + he->key, he->owner, he, dh);
+  return addservbyX (db, -1, &req, db->data + he->key, he->owner, he, dh);
 }
 
 
@@ -461,7 +468,7 @@ addservbyport (struct database_dyn *db, int fd, request_header *req,
 }
 
 
-void
+time_t
 readdservbyport (struct database_dyn *db, struct hashentry *he,
 		 struct datahead *dh)
 {
@@ -471,5 +478,5 @@ readdservbyport (struct database_dyn *db, struct hashentry *he,
       .key_len = he->len
     };
 
-  addservbyX (db, -1, &req, db->data + he->key, he->owner, he, dh);
+  return addservbyX (db, -1, &req, db->data + he->key, he->owner, he, dh);
 }

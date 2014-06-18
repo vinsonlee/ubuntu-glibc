@@ -1,39 +1,55 @@
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-/*
  * svc.c, Server-side remote procedure call interface.
  *
  * There are two sets of procedures here.  The xprt routines are
  * for handling transport handles.  The svc routines handle the
  * list of service routines.
+ *  Copyright (C) 2002-2014 Free Software Foundation, Inc.
+ *  This file is part of the GNU C Library.
+ *  Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
  *
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ *  The GNU C Library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  The GNU C Library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with the GNU C Library; if not, see
+ *  <http://www.gnu.org/licenses/>.
+ *
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <errno.h>
@@ -42,6 +58,7 @@
 #include <rpc/svc.h>
 #include <rpc/pmap_clnt.h>
 #include <sys/poll.h>
+#include <time.h>
 
 #ifdef _RPC_THREAD_SAFE_
 #define xports RPC_THREAD_VARIABLE(svc_xports_s)
@@ -116,7 +133,7 @@ xprt_register (SVCXPRT *xprt)
 					       POLLRDNORM | POLLRDBAND);
     }
 }
-libc_hidden_def (xprt_register)
+libc_hidden_nolink_sunrpc (xprt_register, GLIBC_2_0)
 
 /* De-activate a transport handle. */
 void
@@ -137,7 +154,11 @@ xprt_unregister (SVCXPRT *xprt)
 	  svc_pollfd[i].fd = -1;
     }
 }
+#ifdef EXPORT_RPC_SYMBOLS
 libc_hidden_def (xprt_unregister)
+#else
+libc_hidden_nolink_sunrpc (xprt_unregister, GLIBC_2_0)
+#endif
 
 
 /* ********************** CALLOUT list related stuff ************* */
@@ -212,7 +233,11 @@ pmap_it:
 
   return TRUE;
 }
+#ifdef EXPORT_RPC_SYMBOLS
 libc_hidden_def (svc_register)
+#else
+libc_hidden_nolink_sunrpc (svc_register, GLIBC_2_0)
+#endif
 
 /* Remove a service program from the callout list. */
 void
@@ -235,7 +260,7 @@ svc_unregister (rpcprog_t prog, rpcvers_t vers)
   if (! svc_is_mapped (prog, vers))
     pmap_unset (prog, vers);
 }
-libc_hidden_def (svc_unregister)
+libc_hidden_nolink_sunrpc (svc_unregister, GLIBC_2_0)
 
 /* ******************* REPLY GENERATION ROUTINES  ************ */
 
@@ -254,7 +279,11 @@ svc_sendreply (register SVCXPRT *xprt, xdrproc_t xdr_results,
   rply.acpted_rply.ar_results.proc = xdr_results;
   return SVC_REPLY (xprt, &rply);
 }
-INTDEF (svc_sendreply)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (svc_sendreply)
+#else
+libc_hidden_nolink_sunrpc (svc_sendreply, GLIBC_2_0)
+#endif
 
 /* No procedure error reply */
 void
@@ -268,6 +297,11 @@ svcerr_noproc (register SVCXPRT *xprt)
   rply.acpted_rply.ar_stat = PROC_UNAVAIL;
   SVC_REPLY (xprt, &rply);
 }
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (svcerr_noproc)
+#else
+libc_hidden_nolink_sunrpc (svcerr_noproc, GLIBC_2_0)
+#endif
 
 /* Can't decode args error reply */
 void
@@ -281,7 +315,11 @@ svcerr_decode (register SVCXPRT *xprt)
   rply.acpted_rply.ar_stat = GARBAGE_ARGS;
   SVC_REPLY (xprt, &rply);
 }
-INTDEF (svcerr_decode)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (svcerr_decode)
+#else
+libc_hidden_nolink_sunrpc (svcerr_decode, GLIBC_2_0)
+#endif
 
 /* Some system error */
 void
@@ -295,6 +333,11 @@ svcerr_systemerr (register SVCXPRT *xprt)
   rply.acpted_rply.ar_stat = SYSTEM_ERR;
   SVC_REPLY (xprt, &rply);
 }
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (svcerr_systemerr)
+#else
+libc_hidden_nolink_sunrpc (svcerr_systemerr, GLIBC_2_0)
+#endif
 
 /* Authentication error reply */
 void
@@ -308,7 +351,7 @@ svcerr_auth (SVCXPRT *xprt, enum auth_stat why)
   rply.rjcted_rply.rj_why = why;
   SVC_REPLY (xprt, &rply);
 }
-libc_hidden_def (svcerr_auth)
+libc_hidden_nolink_sunrpc (svcerr_auth, GLIBC_2_0)
 
 /* Auth too weak error reply */
 void
@@ -316,6 +359,7 @@ svcerr_weakauth (SVCXPRT *xprt)
 {
   svcerr_auth (xprt, AUTH_TOOWEAK);
 }
+libc_hidden_nolink_sunrpc (svcerr_weakauth, GLIBC_2_0)
 
 /* Program unavailable error reply */
 void
@@ -329,7 +373,7 @@ svcerr_noprog (register SVCXPRT *xprt)
   rply.acpted_rply.ar_stat = PROG_UNAVAIL;
   SVC_REPLY (xprt, &rply);
 }
-libc_hidden_def (svcerr_noprog)
+libc_hidden_nolink_sunrpc (svcerr_noprog, GLIBC_2_0)
 
 /* Program version mismatch error reply */
 void
@@ -346,7 +390,7 @@ svcerr_progvers (register SVCXPRT *xprt, rpcvers_t low_vers,
   rply.acpted_rply.ar_vers.high = high_vers;
   SVC_REPLY (xprt, &rply);
 }
-libc_hidden_def (svcerr_progvers)
+libc_hidden_nolink_sunrpc (svcerr_progvers, GLIBC_2_0)
 
 /* ******************* SERVER INPUT STUFF ******************* */
 
@@ -373,9 +417,9 @@ svc_getreq (int rdfds)
 
   FD_ZERO (&readfds);
   readfds.fds_bits[0] = rdfds;
-  INTUSE(svc_getreqset) (&readfds);
+  svc_getreqset (&readfds);
 }
-INTDEF (svc_getreq)
+libc_hidden_nolink_sunrpc (svc_getreq, GLIBC_2_0)
 
 void
 svc_getreqset (fd_set *readfds)
@@ -392,9 +436,9 @@ svc_getreqset (fd_set *readfds)
   maskp = readfds->fds_bits;
   for (sock = 0; sock < setsize; sock += NFDBITS)
     for (mask = *maskp++; (bit = ffsl (mask)); mask ^= (1L << (bit - 1)))
-      INTUSE(svc_getreq_common) (sock + bit - 1);
+      svc_getreq_common (sock + bit - 1);
 }
-INTDEF (svc_getreqset)
+libc_hidden_nolink_sunrpc (svc_getreqset, GLIBC_2_0)
 
 void
 svc_getreq_poll (struct pollfd *pfdp, int pollretval)
@@ -413,14 +457,18 @@ svc_getreq_poll (struct pollfd *pfdp, int pollretval)
 	  if (p->revents & POLLNVAL)
 	    xprt_unregister (xports[p->fd]);
 	  else
-	    INTUSE(svc_getreq_common) (p->fd);
+	    svc_getreq_common (p->fd);
 
 	  if (++fds_found >= pollretval)
 	    break;
 	}
     }
 }
-INTDEF (svc_getreq_poll)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (svc_getreq_poll)
+#else
+libc_hidden_nolink_sunrpc (svc_getreq_poll, GLIBC_2_2)
+#endif
 
 
 void
@@ -466,7 +514,7 @@ svc_getreq_common (const int fd)
 	      r.rq_xprt->xp_verf.oa_flavor = _null_auth.oa_flavor;
 	      r.rq_xprt->xp_verf.oa_length = 0;
 	    }
-	  else if ((why = INTUSE(_authenticate) (&r, &msg)) != AUTH_OK)
+	  else if ((why = _authenticate (&r, &msg)) != AUTH_OK)
 	    {
 	      svcerr_auth (xprt, why);
 	      goto call_done;
@@ -512,7 +560,22 @@ svc_getreq_common (const int fd)
     }
   while (stat == XPRT_MOREREQS);
 }
-INTDEF (svc_getreq_common)
+libc_hidden_nolink_sunrpc (svc_getreq_common, GLIBC_2_2)
+
+/* If there are no file descriptors available, then accept will fail.
+   We want to delay here so the connection request can be dequeued;
+   otherwise we can bounce between polling and accepting, never giving the
+   request a chance to dequeue and eating an enormous amount of cpu time
+   in svc_run if we're polling on many file descriptors.  */
+void
+__svc_accept_failed (void)
+{
+  if (errno == EMFILE)
+    {
+      struct timespec ts = { .tv_sec = 0, .tv_nsec = 50000000 };
+      __nanosleep (&ts, NULL);
+    }
+}
 
 #ifdef _RPC_THREAD_SAFE_
 

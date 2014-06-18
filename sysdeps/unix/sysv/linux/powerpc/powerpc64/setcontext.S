@@ -1,5 +1,5 @@
 /* Switch to context.
-   Copyright (C) 2002, 2004, 2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-   02110-1301 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <rtld-global-offsets.h>
@@ -27,10 +26,18 @@
 #include "ucontext_i.h"
 #include <asm/errno.h>
 
+	.section	".toc","aw"
+.LC__dl_hwcap:
+#ifdef SHARED
+	.tc _rtld_global_ro[TC],_rtld_global_ro
+#else
+	.tc _dl_hwcap[TC],_dl_hwcap
+#endif
+	.section ".text"
+
 #if SHLIB_COMPAT (libc, GLIBC_2_3, GLIBC_2_3_4)
 ENTRY(__novec_setcontext)
 	CALL_MCOUNT 1
-#ifdef __ASSUME_NEW_RT_SIGRETURN_SYSCALL
   mflr  r0
   std   r31,-8(1)
   cfi_offset(r31,-8)
@@ -62,10 +69,35 @@ ENTRY(__novec_setcontext)
   cmpdi r3,0
   bne   L(nv_error_exit)
 
+# ifdef SHARED
+/* Load _rtld-global._dl_hwcap.  */
+  ld    r5,RTLD_GLOBAL_RO_DL_HWCAP_OFFSET(r5)
+# else
+  ld    r5,0(r5) /* Load extern _dl_hwcap.  */
+# endif
+
   lfd  fp0,(SIGCONTEXT_FP_REGS+(32*8))(r31)
   lfd  fp31,(SIGCONTEXT_FP_REGS+(PT_R31*8))(r31)
   lfd  fp30,(SIGCONTEXT_FP_REGS+(PT_R30*8))(r31)
+
+# ifdef _ARCH_PWR6
+  /* Use the extended four-operand version of the mtfsf insn.  */
+  mtfsf  0xff,fp0,1,0
+# else
+  .machine push
+  .machine "power6"
+  /* Availability of DFP indicates a 64-bit FPSCR.  */
+  andi.  r6,r5,PPC_FEATURE_HAS_DFP
+  beq    5f
+  /* Use the extended four-operand version of the mtfsf insn.  */
+  mtfsf  0xff,fp0,1,0
+  b      6f
+  /* Continue to operate on the FPSCR as if it were 32-bits.  */
+5:
   mtfsf  0xff,fp0
+6:
+  .machine pop
+# endif /* _ARCH_PWR6 */
   lfd  fp29,(SIGCONTEXT_FP_REGS+(PT_R29*8))(r31)
   lfd  fp28,(SIGCONTEXT_FP_REGS+(PT_R28*8))(r31)
   lfd  fp27,(SIGCONTEXT_FP_REGS+(PT_R27*8))(r31)
@@ -96,6 +128,10 @@ ENTRY(__novec_setcontext)
   lfd  fp2,(SIGCONTEXT_FP_REGS+(PT_R2*8))(r31)
   lfd  fp1,(SIGCONTEXT_FP_REGS+(PT_R1*8))(r31)
   lfd  fp0,(SIGCONTEXT_FP_REGS+(PT_R0*8))(r31)
+
+  /* End FDE now, because the unwind info would be wrong while
+     we're reloading registers to switch to the new context.  */
+  cfi_endproc
 
   ld   r0,(SIGCONTEXT_GP_REGS+(PT_LNK*8))(r31)
   ld   r1,(SIGCONTEXT_GP_REGS+(PT_R1*8))(r31)
@@ -145,6 +181,11 @@ ENTRY(__novec_setcontext)
   ld   r31,(SIGCONTEXT_GP_REGS+(PT_R31*8))(r31)
   bctr
 
+  /* Re-establish FDE for the rest of the actual setcontext routine.  */
+  cfi_startproc
+  cfi_offset (lr, FRAME_LR_SAVE)
+  cfi_adjust_cfa_offset (128)
+
 L(nv_error_exit):
   ld   r0,128+FRAME_LR_SAVE(r1)
   addi r1,r1,128
@@ -166,22 +207,6 @@ L(nv_do_sigret):
   li   r0,SYS_ify(rt_sigreturn)
   sc
   /* No return.  */
-#else
-  /* If the kernel is not at least 2.4.21 then generate a ENOSYS stub.  */
-  mflr r0
-  std  r0,FRAME_LR_SAVE(r1)
-  cfi_offset(lr,FRAME_LR_SAVE)
-  stdu r1,-128(r1)
-  cfi_adjust_cfa_offset(128)
-  li   r3,ENOSYS
-  bl   JUMPTARGET(__syscall_error)
-  nop
-  li   r3,-1
-  ld   r0,128+FRAME_LR_SAVE(r1)
-  addi r1,r1,128
-  mtlr r0
-  blr
-#endif
 
 PSEUDO_END(__novec_setcontext)
 
@@ -189,19 +214,10 @@ compat_symbol (libc, __novec_setcontext, setcontext, GLIBC_2_3)
 
 #endif
 
-	.section	".toc","aw"
-.LC__dl_hwcap:
-#ifdef SHARED
-	.tc _rtld_global_ro[TC],_rtld_global_ro
-#else
-	.tc _dl_hwcap[TC],_dl_hwcap
-#endif
 	.section ".text"
-
 	.machine	"altivec"
 ENTRY(__setcontext)
 	CALL_MCOUNT 1
-#ifdef __ASSUME_NEW_RT_SIGRETURN_SYSCALL
   mflr  r0
   std   r31,-8(1)
   cfi_offset(r31,-8)
@@ -241,7 +257,7 @@ ENTRY(__setcontext)
 # else
   ld    r5,0(r5) /* Load extern _dl_hwcap.  */
 # endif
-  andis.  r5,r5,(PPC_FEATURE_HAS_ALTIVEC >> 16)
+  andis.  r6,r5,(PPC_FEATURE_HAS_ALTIVEC >> 16)
   beq   L(has_no_vec)
 
   cmpdi r10,0
@@ -346,7 +362,25 @@ L(has_no_vec):
   lfd  fp0,(SIGCONTEXT_FP_REGS+(32*8))(r31)
   lfd  fp31,(SIGCONTEXT_FP_REGS+(PT_R31*8))(r31)
   lfd  fp30,(SIGCONTEXT_FP_REGS+(PT_R30*8))(r31)
+
+# ifdef _ARCH_PWR6
+  /* Use the extended four-operand version of the mtfsf insn.  */
+  mtfsf  0xff,fp0,1,0
+# else
+  .machine push
+  .machine "power6"
+  /* Availability of DFP indicates a 64-bit FPSCR.  */
+  andi.  r6,r5,PPC_FEATURE_HAS_DFP
+  beq    7f
+  /* Use the extended four-operand version of the mtfsf insn.  */
+  mtfsf  0xff,fp0,1,0
+  b      8f
+  /* Continue to operate on the FPSCR as if it were 32-bits.  */
+7:
   mtfsf  0xff,fp0
+8:
+  .machine pop
+# endif /* _ARCH_PWR6 */
   lfd  fp29,(SIGCONTEXT_FP_REGS+(PT_R29*8))(r31)
   lfd  fp28,(SIGCONTEXT_FP_REGS+(PT_R28*8))(r31)
   lfd  fp27,(SIGCONTEXT_FP_REGS+(PT_R27*8))(r31)
@@ -377,6 +411,10 @@ L(has_no_vec):
   lfd  fp2,(SIGCONTEXT_FP_REGS+(PT_R2*8))(r31)
   lfd  fp1,(SIGCONTEXT_FP_REGS+(PT_R1*8))(r31)
   lfd  fp0,(SIGCONTEXT_FP_REGS+(PT_R0*8))(r31)
+
+  /* End FDE now, because the unwind info would be wrong while
+     we're reloading registers to switch to the new context.  */
+  cfi_endproc
 
   ld   r0,(SIGCONTEXT_GP_REGS+(PT_LNK*8))(r31)
   ld   r1,(SIGCONTEXT_GP_REGS+(PT_R1*8))(r31)
@@ -426,6 +464,11 @@ L(has_no_vec):
   ld   r31,(SIGCONTEXT_GP_REGS+(PT_R31*8))(r31)
   bctr
 
+  /* Re-establish FDE for the rest of the actual setcontext routine.  */
+  cfi_startproc
+  cfi_offset (lr, FRAME_LR_SAVE)
+  cfi_adjust_cfa_offset (128)
+
 L(error_exit):
   ld   r0,128+FRAME_LR_SAVE(r1)
   addi r1,r1,128
@@ -447,22 +490,6 @@ L(do_sigret):
   li   r0,SYS_ify(rt_sigreturn)
   sc
   /* No return.  */
-#else
-  /* If the kernel is not at least 2.4.21 then generate a ENOSYS stub.  */
-  mflr r0
-  std  r0,FRAME_LR_SAVE(r1)
-  cfi_offset (lr, FRAME_LR_SAVE)
-  stdu r1,-128(r1)
-  cfi_adjust_cfa_offset (128)
-  li   r3,ENOSYS
-  bl   JUMPTARGET(__syscall_error)
-  nop
-  li   r3,-1
-  ld   r0,128+FRAME_LR_SAVE(r1)
-  addi r1,r1,128
-  mtlr r0
-  blr
-#endif
 
 PSEUDO_END(__setcontext)
 

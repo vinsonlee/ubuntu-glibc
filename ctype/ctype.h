@@ -1,5 +1,4 @@
-/* Copyright (C) 1991,92,93,95,96,97,98,99,2001,2002,2004,2007,2008
-   	Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /*
  *	ISO C99 Standard 7.4: Character handling	<ctype.h>
@@ -78,15 +76,25 @@ enum
    rather than `unsigned char's because tolower (EOF) must be EOF, which
    doesn't fit into an `unsigned char'.  But today more important is that
    the arrays are also used for multi-byte character sets.  */
-extern __const unsigned short int **__ctype_b_loc (void)
-     __THROW __attribute__ ((__const));
-extern __const __int32_t **__ctype_tolower_loc (void)
-     __THROW __attribute__ ((__const));
-extern __const __int32_t **__ctype_toupper_loc (void)
-     __THROW __attribute__ ((__const));
+extern const unsigned short int **__ctype_b_loc (void)
+     __THROW __attribute__ ((__const__));
+extern const __int32_t **__ctype_tolower_loc (void)
+     __THROW __attribute__ ((__const__));
+extern const __int32_t **__ctype_toupper_loc (void)
+     __THROW __attribute__ ((__const__));
 
-#define __isctype(c, type) \
+
+#ifndef __cplusplus
+# define __isctype(c, type) \
   ((*__ctype_b_loc ())[(int) (c)] & (unsigned short int) type)
+#elif defined __USE_EXTERN_INLINES
+# define __isctype_f(type) \
+  __extern_inline int							      \
+  is##type (int __c) __THROW						      \
+  {									      \
+    return (*__ctype_b_loc ())[(int) (__c)] & (unsigned short int) _IS##type; \
+  }
+#endif
 
 #define	__isascii(c)	(((c) & ~0x7f) == 0)	/* If C is a 7 bit value.  */
 #define	__toascii(c)	((c) & 0x7f)		/* Mask off high bits.  */
@@ -169,7 +177,23 @@ __exctype (_tolower);
 	__res = (a)[(int) (c)];						      \
       __res; }))
 
-#if !defined __NO_CTYPE && !defined __cplusplus
+#if !defined __NO_CTYPE
+# ifdef __isctype_f
+__isctype_f (alnum)
+__isctype_f (alpha)
+__isctype_f (cntrl)
+__isctype_f (digit)
+__isctype_f (lower)
+__isctype_f (graph)
+__isctype_f (print)
+__isctype_f (punct)
+__isctype_f (space)
+__isctype_f (upper)
+__isctype_f (xdigit)
+#  ifdef __USE_ISOC99
+__isctype_f (blank)
+#  endif
+# elif defined __isctype
 # define isalnum(c)	__isctype((c), _ISalnum)
 # define isalpha(c)	__isctype((c), _ISalpha)
 # define iscntrl(c)	__isctype((c), _IScntrl)
@@ -181,9 +205,9 @@ __exctype (_tolower);
 # define isspace(c)	__isctype((c), _ISspace)
 # define isupper(c)	__isctype((c), _ISupper)
 # define isxdigit(c)	__isctype((c), _ISxdigit)
-
-# ifdef __USE_ISOC99
-#  define isblank(c)	__isctype((c), _ISblank)
+#  ifdef __USE_ISOC99
+#   define isblank(c)	__isctype((c), _ISblank)
+#  endif
 # endif
 
 # ifdef __USE_EXTERN_INLINES
@@ -216,7 +240,7 @@ __NTH (toupper (int __c))
 #endif /* Not __NO_CTYPE.  */
 
 
-#ifdef __USE_GNU
+#ifdef __USE_XOPEN2K8
 /* The concept of one static locale per category is not very well
    thought out.  Many applications will need to process its data using
    information from several different locales.  Another application is
@@ -292,7 +316,7 @@ extern int toupper_l (int __c, __locale_t __l) __THROW;
 
 #  define __isblank_l(c,l)	__isctype_l((c), _ISblank, (l))
 
-#  if defined __USE_SVID || defined __USE_MISC || defined __USE_XOPEN
+#  if defined __USE_SVID || defined __USE_MISC
 #   define __isascii_l(c,l)	((l), __isascii (c))
 #   define __toascii_l(c,l)	((l), __toascii (c))
 #  endif
@@ -311,14 +335,14 @@ extern int toupper_l (int __c, __locale_t __l) __THROW;
 
 #  define isblank_l(c,l)	__isblank_l ((c), (l))
 
-#  if defined __USE_SVID || defined __USE_MISC || defined __USE_XOPEN
+#  if defined __USE_SVID || defined __USE_MISC
 #   define isascii_l(c,l)	__isascii_l ((c), (l))
 #   define toascii_l(c,l)	__toascii_l ((c), (l))
 #  endif
 
 # endif /* Not __NO_CTYPE.  */
 
-#endif /* Use GNU.  */
+#endif /* Use POSIX 2008.  */
 
 __END_DECLS
 

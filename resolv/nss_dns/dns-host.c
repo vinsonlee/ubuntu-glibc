@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2004, 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Extended from original form by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* Parts of this file are plain copies of the file `gethtnamadr.c' from
    the bind package and it has the following copyright.  */
@@ -88,10 +87,6 @@
 #include <resolv/mapv4v6hostent.h>
 
 #define RESOLVSORT
-
-/* Maximum number of aliases we allow.  */
-#define MAX_NR_ALIASES	48
-#define MAX_NR_ADDRS	48
 
 #if PACKETSZ > 65536
 # define MAXPACKET	PACKETSZ
@@ -198,15 +193,32 @@ _nss_dns_gethostbyname3_r (const char *name, int af, struct hostent *result,
 			  1024, &host_buffer.ptr, NULL, NULL, NULL);
   if (n < 0)
     {
-      status = (errno == ECONNREFUSED
-		? NSS_STATUS_UNAVAIL : NSS_STATUS_NOTFOUND);
+      switch (errno)
+	{
+	case ESRCH:
+	  status = NSS_STATUS_TRYAGAIN;
+	  h_errno = TRY_AGAIN;
+	  break;
+	/* System has run out of file descriptors.  */
+	case EMFILE:
+	case ENFILE:
+	  h_errno = NETDB_INTERNAL;
+	  /* Fall through.  */
+	case ECONNREFUSED:
+	case ETIMEDOUT:
+	  status = NSS_STATUS_UNAVAIL;
+	  break;
+	default:
+	  status = NSS_STATUS_NOTFOUND;
+	  break;
+	}
       *h_errnop = h_errno;
       if (h_errno == TRY_AGAIN)
 	*errnop = EAGAIN;
       else
 	__set_errno (olderr);
 
-      /* If we are looking for a IPv6 address and mapping is enabled
+      /* If we are looking for an IPv6 address and mapping is enabled
 	 by having the RES_USE_INET6 bit in _res.options set, we try
 	 another lookup.  */
       if (af == AF_INET6 && (_res.options & RES_USE_INET6))
@@ -304,8 +316,26 @@ _nss_dns_gethostbyname4_r (const char *name, struct gaih_addrtuple **pat,
 			      &ans2p, &nans2p, &resplen2);
   if (n < 0)
     {
-      status = (errno == ECONNREFUSED
-		? NSS_STATUS_UNAVAIL : NSS_STATUS_NOTFOUND);
+      switch (errno)
+	{
+	case ESRCH:
+	  status = NSS_STATUS_TRYAGAIN;
+	  h_errno = TRY_AGAIN;
+	  break;
+	/* System has run out of file descriptors.  */
+	case EMFILE:
+	case ENFILE:
+	  h_errno = NETDB_INTERNAL;
+	  /* Fall through.  */
+	case ECONNREFUSED:
+	case ETIMEDOUT:
+	  status = NSS_STATUS_UNAVAIL;
+	  break;
+	default:
+	  status = NSS_STATUS_NOTFOUND;
+	  break;
+	}
+
       *herrnop = h_errno;
       if (h_errno == TRY_AGAIN)
 	*errnop = EAGAIN;
@@ -363,6 +393,19 @@ _nss_dns_gethostbyaddr2_r (const void *addr, socklen_t len, int af,
   size_t size;
   int n, status;
   int olderr = errno;
+
+ uintptr_t pad = -(uintptr_t) buffer % __alignof__ (struct host_data);
+ buffer += pad;
+ buflen = buflen > pad ? buflen - pad : 0;
+
+ if (__builtin_expect (buflen < sizeof (struct host_data), 0))
+   {
+     *errnop = ERANGE;
+     *h_errnop = NETDB_INTERNAL;
+     return NSS_STATUS_TRYAGAIN;
+   }
+
+ host_data = (struct host_data *) buffer;
 
   if (__res_maybe_init (&_res, 0) == -1)
     return NSS_STATUS_UNAVAIL;
@@ -558,7 +601,7 @@ getanswer_r (const querybuf *answer, int anslen, const char *qname, int qtype,
     char *h_addr_ptrs[0];
   } *host_data;
   int linebuflen;
-  register const HEADER *hp;
+  const HEADER *hp;
   const u_char *end_of_message, *cp;
   int n, ancount, qdcount;
   int haveanswer, had_error;
@@ -568,7 +611,6 @@ getanswer_r (const querybuf *answer, int anslen, const char *qname, int qtype,
   int (*name_ok) (const char *);
   u_char packtmp[NS_MAXCDNAME];
   int have_to_map = 0;
-  int32_t ttl = 0;
   uintptr_t pad = -(uintptr_t) buffer % __alignof__ (struct host_data);
   buffer += pad;
   if (__builtin_expect (buflen < sizeof (struct host_data) + pad, 0))
@@ -702,7 +744,7 @@ getanswer_r (const querybuf *answer, int anslen, const char *qname, int qtype,
       cp += INT16SZ;			/* type */
       class = __ns_get16 (cp);
       cp += INT16SZ;			/* class */
-      ttl = __ns_get32 (cp);
+      int32_t ttl = __ns_get32 (cp);
       cp += INT32SZ;			/* TTL */
       n = __ns_get16 (cp);
       cp += INT16SZ;			/* len */
@@ -715,6 +757,10 @@ getanswer_r (const querybuf *answer, int anslen, const char *qname, int qtype,
 
       if ((qtype == T_A || qtype == T_AAAA) && type == T_CNAME)
 	{
+	  /* A CNAME could also have a TTL entry.  */
+	  if (ttlp != NULL && ttl < *ttlp)
+	      *ttlp = ttl;
+
 	  if (ap >= &host_data->aliases[MAX_NR_ALIASES - 1])
 	    continue;
 	  n = dn_expand (answer->buf, end_of_message, cp, tbuf, sizeof tbuf);
@@ -799,7 +845,7 @@ getanswer_r (const querybuf *answer, int anslen, const char *qname, int qtype,
       switch (type)
 	{
 	case T_PTR:
-	  if (__builtin_expect (__strcasecmp (tname, bp) != 0, 0))
+	  if (__builtin_expect (strcasecmp (tname, bp) != 0, 0))
 	    {
 	      syslog (LOG_NOTICE | LOG_AUTH, AskedForGot, qname, bp);
 	      cp += n;
@@ -853,7 +899,8 @@ getanswer_r (const querybuf *answer, int anslen, const char *qname, int qtype,
 		}
 	      bp += n;
 	      linebuflen -= n;
-	      map_v4v6_hostent (result, &bp, &linebuflen);
+	      if (map_v4v6_hostent (result, &bp, &linebuflen))
+		goto too_small;
 	    }
 	  *h_errnop = NETDB_SUCCESS;
 	  return NSS_STATUS_SUCCESS;
@@ -873,9 +920,12 @@ getanswer_r (const querybuf *answer, int anslen, const char *qname, int qtype,
 	    }
 	  if (!haveanswer)
 	    {
-	      register int nn;
+	      int nn;
 
-	      if (ttlp != NULL && ttl != 0)
+	      /* We compose a single hostent out of the entire chain of
+	         entries, so the TTL of the hostent is essentially the lowest
+		 TTL in the chain.  */
+	      if (ttlp != NULL && ttl < *ttlp)
 		*ttlp = ttl;
 	      if (canonp != NULL)
 		*canonp = bp;
@@ -928,7 +978,8 @@ getanswer_r (const querybuf *answer, int anslen, const char *qname, int qtype,
 	}
 
       if (have_to_map)
-	map_v4v6_hostent (result, &bp, &linebuflen);
+	if (map_v4v6_hostent (result, &bp, &linebuflen))
+	  goto too_small;
       *h_errnop = NETDB_SUCCESS;
       return NSS_STATUS_SUCCESS;
     }
@@ -1017,7 +1068,7 @@ gaih_getanswer_slice (const querybuf *answer, int anslen, const char *qname,
 	  ++had_error;
 	  continue;
 	}
-      if (*firstp)
+      if (*firstp && canon == NULL)
 	{
 	  h_name = buffer;
 	  buffer += h_namelen;
@@ -1050,6 +1101,11 @@ gaih_getanswer_slice (const querybuf *answer, int anslen, const char *qname,
       if (type == T_CNAME)
 	{
 	  char tbuf[MAXDNAME];
+
+	  /* A CNAME could also have a TTL entry.  */
+	  if (ttlp != NULL && ttl < *ttlp)
+	      *ttlp = ttl;
+
 	  n = dn_expand (answer->buf, end_of_message, cp, tbuf, sizeof tbuf);
 	  if (__builtin_expect (n < 0 || res_hnok (tbuf) == 0, 0))
 	    {
@@ -1130,22 +1186,13 @@ gaih_getanswer_slice (const querybuf *answer, int anslen, const char *qname,
 
       if (*firstp)
 	{
-	  if (ttl != 0 && ttlp != NULL)
+	  /* We compose a single hostent out of the entire chain of
+	     entries, so the TTL of the hostent is essentially the lowest
+	     TTL in the chain.  */
+	  if (ttlp != NULL && ttl < *ttlp)
 	    *ttlp = ttl;
 
-	  if (canon != NULL)
-	    {
-	      (*pat)->name = canon;
-
-	      /* Reclaim buffer space.  */
-	      if (h_name + h_namelen == buffer)
-		{
-		  buffer = h_name;
-		  buflen += h_namelen;
-		}
-	    }
-	  else
-	    (*pat)->name = h_name;
+	  (*pat)->name = canon ?: h_name;
 
 	  *firstp = 0;
 	}
@@ -1200,7 +1247,13 @@ gaih_getanswer (const querybuf *answer1, int anslen1, const querybuf *answer2,
 				  &first);
   if ((status == NSS_STATUS_SUCCESS || status == NSS_STATUS_NOTFOUND
        || (status == NSS_STATUS_TRYAGAIN
-	   && (errno != ERANGE || *h_errnop != NO_RECOVERY)))
+	   /* We want to look at the second answer in case of an
+	      NSS_STATUS_TRYAGAIN only if the error is non-recoverable, i.e.
+	      *h_errnop is NO_RECOVERY. If not, and if the failure was due to
+	      an insufficient buffer (ERANGE), then we need to drop the results
+	      and pass on the NSS_STATUS_TRYAGAIN to the caller so that it can
+	      repeat the query with a larger buffer.  */
+	   && (*errnop != ERANGE || *h_errnop == NO_RECOVERY)))
       && answer2 != NULL && anslen2 > 0)
     {
       enum nss_status status2 = gaih_getanswer_slice(answer2, anslen2, qname,

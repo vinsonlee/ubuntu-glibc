@@ -1,5 +1,5 @@
 /* Optimized 32-bit memset implementation for POWER6.
-   Copyright (C) 1997,99, 2000,02,03,06,2007 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,13 +13,10 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-   02110-1301 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
-#include <bp-sym.h>
-#include <bp-asm.h>
 
 /* __ptr_t [r3] memset (__ptr_t s [r3], int c [r4], size_t n [r5]));
    Returns 's'.
@@ -29,7 +26,7 @@
    to 0, to take advantage of the dcbz instruction.  */
 
 	.machine power6
-EALIGN (BP_SYM (memset), 7, 0)
+EALIGN (memset, 7, 0)
 	CALL_MCOUNT
 
 #define rTMP	r0
@@ -51,7 +48,7 @@ L(_memset):
 	ble-	cr1, L(small)
 /* Align to word boundary.  */
 	cmplwi	cr5, rLEN, 31
-	rlwimi	rCHR, rCHR, 8, 16, 23 /* Replicate byte to halfword.  */
+	insrdi	rCHR, rCHR, 8, 48	/* Replicate byte to halfword.  */
 	beq+	L(aligned)
 	mtcrf	0x01, rMEMP0
 	subfic	rALIGN, rALIGN, 4
@@ -67,7 +64,7 @@ L(g0):
 /* Handle the case of size < 31.  */
 L(aligned):
 	mtcrf	0x01, rLEN
-	rlwimi	rCHR, rCHR, 16, 0, 15 /* Replicate halfword to word.  */
+	insrdi	rCHR, rCHR, 16, 32	/* Replicate halfword to word.  */
 	ble	cr5, L(medium)
 /* Align to 32-byte boundary.  */
 	andi.	rALIGN, rMEMP, 0x1C
@@ -104,7 +101,7 @@ L(nondcbz):
    boundary may not be at cache line (128-byte) boundary.  */
 L(nzloopstart):
 /* memset in 32-byte chunks until we get to a cache line boundary.
-   If rLEN is less then the distance to the next cache-line boundary use
+   If rLEN is less than the distance to the next cache-line boundary use
    cacheAligned1 code to finish the tail.  */
 	cmplwi	cr1,rLEN,128
 
@@ -240,7 +237,7 @@ L(nzCacheAligned256):
 	cmplwi	cr1,rLEN,256
 	addi	rMEMP3,rMEMP,64
 #ifdef NOT_IN_libc
-/* When we are not in libc we should use only GPRs to avoid the FPU lock 
+/* When we are not in libc we should use only GPRs to avoid the FPU lock
    interrupt.  */
 	stw	rCHR,0(rMEMP)
         stw     rCHR,4(rMEMP)
@@ -309,7 +306,7 @@ L(nzCacheAligned256):
    block zero instruction. */
 L(zloopstart):
 /* memset in 32-byte chunks until we get to a cache line boundary.
-   If rLEN is less then the distance to the next cache-line boundary use
+   If rLEN is less than the distance to the next cache-line boundary use
    cacheAligned1 code to finish the tail.  */
 	cmplwi	cr1,rLEN,128
 	beq	L(medium)
@@ -381,7 +378,7 @@ L(cacheAligned):
 	blt	cr1,L(cacheAligned1)
 	li	rMEMP2,128
 L(cacheAlignedx):
-	cmpldi	cr5,rLEN,640
+	cmplwi	cr5,rLEN,640
 	blt	cr6,L(cacheAligned128)
 	bgt	cr5,L(cacheAligned512)
 	cmplwi	cr6,rLEN,512
@@ -538,5 +535,5 @@ L(medium_28t):
         stw     rCHR, -4(rMEMP)
 	stw	rCHR, -8(rMEMP)
 	blr
-END (BP_SYM (memset))
+END (memset)
 libc_hidden_builtin_def (memset)

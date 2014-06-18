@@ -1,5 +1,5 @@
 /* termios type and macro definitions.  4.4 BSD/generic GNU version.
-   Copyright (C) 1993,94,96,97,99,2001 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _TERMIOS_H
 # error "Never include <bits/termios.h> directly; use <termios.h> instead."
@@ -124,8 +123,10 @@ struct termios
 #define	ICRNL	(1 << 8)	/* Map CR to NL on input.  */
 #define	IXON	(1 << 9)	/* Enable start/stop output control.  */
 #define	IXOFF	(1 << 10)	/* Enable start/stop input control.  */
-#ifdef	__USE_BSD
+#if defined __USE_BSD || defined __USE_UNIX98
 # define IXANY	(1 << 11)	/* Any character will restart after stop.  */
+#endif
+#ifdef	__USE_BSD
 # define IMAXBEL (1 << 13)	/* Ring bell when input queue is full.  */
 #endif
 #ifdef __USE_GNU

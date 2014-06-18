@@ -44,15 +44,11 @@
  *	TRIG(x) returns trig(x) nearly rounded
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <errno.h>
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
-	long double __cosl(long double x)
-#else
-	long double __cosl(x)
-	long double x;
-#endif
+long double __cosl(long double x)
 {
 	long double y[2],z=0.0L;
 	int64_t n, ix;
@@ -66,7 +62,14 @@
 	  return __kernel_cosl(x,z);
 
     /* cos(Inf or NaN) is NaN */
-	else if (ix>=0x7fff000000000000LL) return x-x;
+	else if (ix>=0x7fff000000000000LL) {
+	    if (ix == 0x7fff000000000000LL) {
+		GET_LDOUBLE_LSW64(n,x);
+		if (n == 0)
+		    __set_errno (EDOM);
+	    }
+	    return x-x;
+	}
 
     /* argument reduction needed */
 	else {

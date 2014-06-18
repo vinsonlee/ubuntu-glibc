@@ -1,5 +1,5 @@
 /* sem_wait -- wait on a semaphore.  Generic futex-using version.
-   Copyright (C) 2003, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Paul Mackerras <paulus@au.ibm.com>, 2003.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <sysdep.h>
@@ -37,6 +36,20 @@ __sem_wait_cleanup (void *arg)
   atomic_decrement (&isem->nwaiters);
 }
 
+/* This is in a seperate function in order to make sure gcc
+   puts the call site into an exception region, and thus the
+   cleanups get properly run.  */
+static int
+__attribute__ ((noinline))
+do_futex_wait (struct sparc_new_sem *isem)
+{
+  int err, oldtype = __pthread_enable_asynccancel ();
+
+  err = lll_futex_wait (&isem->value, 0, isem->private ^ FUTEX_PRIVATE_FLAG);
+
+  __pthread_disable_asynccancel (oldtype);
+  return err;
+}
 
 int
 __new_sem_wait (sem_t *sem)
@@ -53,15 +66,7 @@ __new_sem_wait (sem_t *sem)
 
   while (1)
     {
-      /* Enable asynchronous cancellation.  Required by the standard.  */
-      int oldtype = __pthread_enable_asynccancel ();
-
-      err = lll_futex_wait (&isem->value, 0,
-			    isem->private ^ FUTEX_PRIVATE_FLAG);
-
-      /* Disable asynchronous cancellation.  */
-      __pthread_disable_asynccancel (oldtype);
-
+      err = do_futex_wait(isem);
       if (err != 0 && err != -EWOULDBLOCK)
 	{
 	  __set_errno (-err);

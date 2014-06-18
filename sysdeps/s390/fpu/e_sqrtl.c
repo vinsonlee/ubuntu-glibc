@@ -1,6 +1,6 @@
 /* Square root.  S/390 FPU version.
-   Copyright (C) 2004, 2006 Free Software Foundation, Inc.
-   Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Contributed by Martin Schwidefsky <schwidefsky@de.ibm.com>.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math_private.h>
 
@@ -28,3 +27,4 @@ __ieee754_sqrtl (long double x)
   asm ( "sqxbr %0,%1" : "=f" (res) : "f" (x) );
   return res;
 }
+strong_alias (__ieee754_sqrtl, __sqrtl_finite)

@@ -1,40 +1,34 @@
-/* @(#)xdr.c	2.1 88/07/29 4.0 RPCSRC */
-/*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-#if !defined(lint) && defined(SCCSIDS)
-static char sccsid[] = "@(#)xdr.c 1.35 87/08/12";
-#endif
-
 /*
  * xdr.c, Generic XDR routines implementation.
  *
- * Copyright (C) 1986, Sun Microsystems, Inc.
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * These are the "generic" xdr routines used to serialize and de-serialize
  * most common data items.  See xdr.h for more info on the interface to
@@ -45,13 +39,12 @@ static char sccsid[] = "@(#)xdr.c 1.35 87/08/12";
 #include <limits.h>
 #include <string.h>
 #include <libintl.h>
+#include <wchar.h>
+#include <stdint.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#ifdef USE_IN_LIBIO
-# include <wchar.h>
-#endif
 
 /*
  * constants specific to the xdr "protocol"
@@ -77,6 +70,11 @@ xdr_free (xdrproc_t proc, char *objp)
   x.x_op = XDR_FREE;
   (*proc) (&x, objp);
 }
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_free)
+#else
+libc_hidden_nolink_sunrpc (xdr_free, GLIBC_2_0)
+#endif
 
 /*
  * XDR nothing
@@ -86,7 +84,11 @@ xdr_void (void)
 {
   return TRUE;
 }
-INTDEF(xdr_void)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_void)
+#else
+libc_hidden_nolink_sunrpc (xdr_void, GLIBC_2_0)
+#endif
 
 /*
  * XDR integers
@@ -115,14 +117,18 @@ xdr_int (XDR *xdrs, int *ip)
     }
   return FALSE;
 #elif INT_MAX == LONG_MAX
-  return INTUSE(xdr_long) (xdrs, (long *) ip);
+  return xdr_long (xdrs, (long *) ip);
 #elif INT_MAX == SHRT_MAX
-  return INTUSE(xdr_short) (xdrs, (short *) ip);
+  return xdr_short (xdrs, (short *) ip);
 #else
 #error unexpected integer sizes in_xdr_int()
 #endif
 }
-INTDEF(xdr_int)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_int)
+#else
+libc_hidden_nolink_sunrpc (xdr_int, GLIBC_2_0)
+#endif
 
 /*
  * XDR unsigned integers
@@ -150,14 +156,18 @@ xdr_u_int (XDR *xdrs, u_int *up)
     }
   return FALSE;
 #elif UINT_MAX == ULONG_MAX
-  return INTUSE(xdr_u_long) (xdrs, (u_long *) up);
+  return xdr_u_long (xdrs, (u_long *) up);
 #elif UINT_MAX == USHRT_MAX
-  return INTUSE(xdr_short) (xdrs, (short *) up);
+  return xdr_short (xdrs, (short *) up);
 #else
 #error unexpected integer sizes in_xdr_u_int()
 #endif
 }
-INTDEF(xdr_u_int)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_u_int)
+#else
+libc_hidden_nolink_sunrpc (xdr_u_int, GLIBC_2_0)
+#endif
 
 /*
  * XDR long integers
@@ -181,7 +191,11 @@ xdr_long (XDR *xdrs, long *lp)
 
   return FALSE;
 }
-INTDEF(xdr_long)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_long)
+#else
+libc_hidden_nolink_sunrpc (xdr_long, GLIBC_2_0)
+#endif
 
 /*
  * XDR unsigned long integers
@@ -216,7 +230,11 @@ xdr_u_long (XDR *xdrs, u_long *ulp)
     }
   return FALSE;
 }
-INTDEF(xdr_u_long)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_u_long)
+#else
+libc_hidden_nolink_sunrpc (xdr_u_long, GLIBC_2_0)
+#endif
 
 /*
  * XDR hyper integers
@@ -248,8 +266,11 @@ xdr_hyper (XDR *xdrs, quad_t *llp)
 
   return FALSE;
 }
-INTDEF(xdr_hyper)
-
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_hyper)
+#else
+libc_hidden_nolink_sunrpc (xdr_hyper, GLIBC_2_1_1)
+#endif
 
 /*
  * XDR hyper integers
@@ -281,19 +302,33 @@ xdr_u_hyper (XDR *xdrs, u_quad_t *ullp)
 
   return FALSE;
 }
-INTDEF(xdr_u_hyper)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_u_hyper)
+#else
+libc_hidden_nolink_sunrpc (xdr_u_hyper, GLIBC_2_1_1)
+#endif
 
 bool_t
 xdr_longlong_t (XDR *xdrs, quad_t *llp)
 {
-  return INTUSE(xdr_hyper) (xdrs, llp);
+  return xdr_hyper (xdrs, llp);
 }
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_longlong_t)
+#else
+libc_hidden_nolink_sunrpc (xdr_longlong_t, GLIBC_2_1_1)
+#endif
 
 bool_t
 xdr_u_longlong_t (XDR *xdrs, u_quad_t *ullp)
 {
-  return INTUSE(xdr_u_hyper) (xdrs, ullp);
+  return xdr_u_hyper (xdrs, ullp);
 }
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_u_longlong_t)
+#else
+libc_hidden_nolink_sunrpc (xdr_u_longlong_t, GLIBC_2_1_1)
+#endif
 
 /*
  * XDR short integers
@@ -322,7 +357,11 @@ xdr_short (XDR *xdrs, short *sp)
     }
   return FALSE;
 }
-INTDEF(xdr_short)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_short)
+#else
+libc_hidden_nolink_sunrpc (xdr_short, GLIBC_2_0)
+#endif
 
 /*
  * XDR unsigned short integers
@@ -351,7 +390,11 @@ xdr_u_short (XDR *xdrs, u_short *usp)
     }
   return FALSE;
 }
-INTDEF(xdr_u_short)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_u_short)
+#else
+libc_hidden_nolink_sunrpc (xdr_u_short, GLIBC_2_0)
+#endif
 
 
 /*
@@ -363,13 +406,18 @@ xdr_char (XDR *xdrs, char *cp)
   int i;
 
   i = (*cp);
-  if (!INTUSE(xdr_int) (xdrs, &i))
+  if (!xdr_int (xdrs, &i))
     {
       return FALSE;
     }
   *cp = i;
   return TRUE;
 }
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_char)
+#else
+libc_hidden_nolink_sunrpc (xdr_char, GLIBC_2_0)
+#endif
 
 /*
  * XDR an unsigned char
@@ -380,13 +428,18 @@ xdr_u_char (XDR *xdrs, u_char *cp)
   u_int u;
 
   u = (*cp);
-  if (!INTUSE(xdr_u_int) (xdrs, &u))
+  if (!xdr_u_int (xdrs, &u))
     {
       return FALSE;
     }
   *cp = u;
   return TRUE;
 }
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_u_char)
+#else
+libc_hidden_nolink_sunrpc (xdr_u_char, GLIBC_2_0)
+#endif
 
 /*
  * XDR booleans
@@ -415,7 +468,11 @@ xdr_bool (XDR *xdrs, bool_t *bp)
     }
   return FALSE;
 }
-INTDEF(xdr_bool)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_bool)
+#else
+libc_hidden_nolink_sunrpc (xdr_bool, GLIBC_2_0)
+#endif
 
 /*
  * XDR enumerations
@@ -454,19 +511,23 @@ xdr_enum (XDR *xdrs, enum_t *ep)
 	}
       return FALSE;
 #else
-      return INTUSE(xdr_long) (xdrs, (long *) ep);
+      return xdr_long (xdrs, (long *) ep);
 #endif
     }
   else if (sizeof (enum sizecheck) == sizeof (short))
     {
-      return INTUSE(xdr_short) (xdrs, (short *) ep);
+      return xdr_short (xdrs, (short *) ep);
     }
   else
     {
       return FALSE;
     }
 }
-INTDEF(xdr_enum)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_enum)
+#else
+libc_hidden_nolink_sunrpc (xdr_enum, GLIBC_2_0)
+#endif
 
 /*
  * XDR opaque data
@@ -517,7 +578,11 @@ xdr_opaque (XDR *xdrs, caddr_t cp, u_int cnt)
     }
   return FALSE;
 }
-INTDEF(xdr_opaque)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_opaque)
+#else
+libc_hidden_nolink_sunrpc (xdr_opaque, GLIBC_2_0)
+#endif
 
 /*
  * XDR counted bytes
@@ -537,7 +602,7 @@ xdr_bytes (xdrs, cpp, sizep, maxsize)
   /*
    * first deal with the length since xdr bytes are counted
    */
-  if (!INTUSE(xdr_u_int) (xdrs, sizep))
+  if (!xdr_u_int (xdrs, sizep))
     {
       return FALSE;
     }
@@ -569,7 +634,7 @@ xdr_bytes (xdrs, cpp, sizep, maxsize)
       /* fall into ... */
 
     case XDR_ENCODE:
-      return INTUSE(xdr_opaque) (xdrs, sp, nodesize);
+      return xdr_opaque (xdrs, sp, nodesize);
 
     case XDR_FREE:
       if (sp != NULL)
@@ -581,7 +646,11 @@ xdr_bytes (xdrs, cpp, sizep, maxsize)
     }
   return FALSE;
 }
-INTDEF(xdr_bytes)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_bytes)
+#else
+libc_hidden_nolink_sunrpc (xdr_bytes, GLIBC_2_0)
+#endif
 
 /*
  * Implemented here due to commonality of the object.
@@ -592,9 +661,13 @@ xdr_netobj (xdrs, np)
      struct netobj *np;
 {
 
-  return INTUSE(xdr_bytes) (xdrs, &np->n_bytes, &np->n_len, MAX_NETOBJ_SZ);
+  return xdr_bytes (xdrs, &np->n_bytes, &np->n_len, MAX_NETOBJ_SZ);
 }
-INTDEF(xdr_netobj)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_netobj)
+#else
+libc_hidden_nolink_sunrpc (xdr_netobj, GLIBC_2_0)
+#endif
 
 /*
  * XDR a discriminated union
@@ -620,7 +693,7 @@ xdr_union (xdrs, dscmp, unp, choices, dfault)
   /*
    * we deal with the discriminator;  it's an enum
    */
-  if (!INTUSE(xdr_enum) (xdrs, dscmp))
+  if (!xdr_enum (xdrs, dscmp))
     {
       return FALSE;
     }
@@ -642,7 +715,7 @@ xdr_union (xdrs, dscmp, unp, choices, dfault)
   return ((dfault == NULL_xdrproc_t) ? FALSE :
 	  (*dfault) (xdrs, unp, LASTUNSIGNED));
 }
-INTDEF(xdr_union)
+libc_hidden_nolink_sunrpc (xdr_union, GLIBC_2_0)
 
 
 /*
@@ -688,7 +761,7 @@ xdr_string (xdrs, cpp, maxsize)
     case XDR_DECODE:
       break;
     }
-  if (!INTUSE(xdr_u_int) (xdrs, &size))
+  if (!xdr_u_int (xdrs, &size))
     {
       return FALSE;
     }
@@ -722,7 +795,7 @@ xdr_string (xdrs, cpp, maxsize)
       /* fall into ... */
 
     case XDR_ENCODE:
-      return INTUSE(xdr_opaque) (xdrs, sp, size);
+      return xdr_opaque (xdrs, sp, size);
 
     case XDR_FREE:
       mem_free (sp, nodesize);
@@ -731,7 +804,11 @@ xdr_string (xdrs, cpp, maxsize)
     }
   return FALSE;
 }
-INTDEF(xdr_string)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_string)
+#else
+libc_hidden_nolink_sunrpc (xdr_string, GLIBC_2_0)
+#endif
 
 /*
  * Wrapper for xdr_string that can be called directly from
@@ -742,9 +819,14 @@ xdr_wrapstring (xdrs, cpp)
      XDR *xdrs;
      char **cpp;
 {
-  if (INTUSE(xdr_string) (xdrs, cpp, LASTUNSIGNED))
+  if (xdr_string (xdrs, cpp, LASTUNSIGNED))
     {
       return TRUE;
     }
   return FALSE;
 }
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_wrapstring)
+#else
+libc_hidden_nolink_sunrpc (xdr_wrapstring, GLIBC_2_0)
+#endif

@@ -1,5 +1,4 @@
-/* Copyright (C) 1991,1993,1995-1997,2000,2002,2005
-   Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "../locale/localeinfo.h"
 #include <errno.h>
@@ -24,12 +22,12 @@
 #include <time.h>
 
 /* This is defined in locale/C-time.c in the GNU libc.  */
-extern const struct locale_data _nl_C_LC_TIME attribute_hidden;
+extern const struct __locale_data _nl_C_LC_TIME attribute_hidden;
 #define ab_day_name(DAY) (_nl_C_LC_TIME.values[_NL_ITEM_INDEX (ABDAY_1)+(DAY)].string)
 #define ab_month_name(MON) (_nl_C_LC_TIME.values[_NL_ITEM_INDEX (ABMON_1)+(MON)].string)
 
 static const char format[] = "%.3s %.3s%3d %.2d:%.2d:%.2d %d\n";
-static char result[	         3+1+ 3+1+20+1+20+1+20+1+20+1+20+1 + 1];
+static char result[		 3+1+ 3+1+20+1+20+1+20+1+20+1+20+1 + 1];
 
 
 static char *

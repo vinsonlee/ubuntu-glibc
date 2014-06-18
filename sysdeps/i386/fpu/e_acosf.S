@@ -16,7 +16,9 @@ ENTRY(__ieee754_acosf)
 	fld1
 	fsubp				/* 1 - x^2 */
 	fsqrt				/* sqrt (1 - x^2) */
+	fabs
 	fxch	%st(1)
 	fpatan
 	ret
 END (__ieee754_acosf)
+strong_alias (__ieee754_acosf, __acosf_finite)

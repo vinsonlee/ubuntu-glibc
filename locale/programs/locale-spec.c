@@ -1,5 +1,5 @@
 /* Handle special requests.
-   Copyright (C) 1996, 1997, 1999, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1996.
 
@@ -14,13 +14,14 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
 
+#include <error.h>
+#include <libintl.h>
 #include <stdio.h>
 #include <string.h>
 #include <wchar.h>
@@ -124,4 +125,7 @@ locale_special (const char *name, int show_category_name,
       return;
     }
 #endif
+
+  /* If nothing matches, fail.  */
+  error (1, 0, gettext ("unknown name \"%s\""), name);
 }

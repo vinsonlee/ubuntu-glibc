@@ -1,1 +1,1 @@
-#include <sysdeps/unix/sysv/linux/i386/shmctl.c>
+#include <sysdeps/unix/sysv/linux/alpha/shmctl.c>

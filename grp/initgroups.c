@@ -1,4 +1,4 @@
-/* Copyright (C) 1989,91,93,1996-2005,2006,2008 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <alloca.h>
 #include <assert.h>
@@ -43,6 +42,8 @@ extern int __nss_group_lookup (service_user **nip, const char *name,
 extern void *__nss_lookup_function (service_user *ni, const char *fct_name);
 
 extern service_user *__nss_group_database attribute_hidden;
+service_user *__nss_initgroups_database;
+static bool use_initgroups_entry;
 
 
 #include "compat-initgroups.c"
@@ -56,7 +57,8 @@ internal_getgrouplist (const char *user, gid_t group, long int *size,
   if (__nss_not_use_nscd_group > 0
       && ++__nss_not_use_nscd_group > NSS_NSCD_RETRY)
     __nss_not_use_nscd_group = 0;
-  if (!__nss_not_use_nscd_group)
+  if (!__nss_not_use_nscd_group
+      && !__nss_database_custom[NSS_DBSIDX_group])
     {
       int n = __nscd_getgrouplist (user, group, size, groupsp, limit);
       if (n >= 0)
@@ -67,32 +69,42 @@ internal_getgrouplist (const char *user, gid_t group, long int *size,
     }
 #endif
 
-  service_user *nip = NULL;
-  initgroups_dyn_function fct;
   enum nss_status status = NSS_STATUS_UNAVAIL;
-  int no_more;
-  /* Start is one, because we have the first group as parameter.  */
-  long int start = 1;
+  int no_more = 0;
 
   /* Never store more than the starting *SIZE number of elements.  */
   assert (*size > 0);
   (*groupsp)[0] = group;
+  /* Start is one, because we have the first group as parameter.  */
+  long int start = 1;
 
-  if (__nss_group_database != NULL)
+  if (__nss_initgroups_database == NULL)
     {
-      no_more = 0;
-      nip = __nss_group_database;
+      if (__nss_database_lookup ("initgroups", NULL, "",
+				 &__nss_initgroups_database) < 0)
+	{
+	  if (__nss_group_database == NULL)
+	    no_more = __nss_database_lookup ("group", NULL, "compat files",
+					     &__nss_group_database);
+
+	  __nss_initgroups_database = __nss_group_database;
+	}
+      else
+	use_initgroups_entry = true;
     }
   else
-    no_more = __nss_database_lookup ("group", NULL,
-				     "compat [NOTFOUND=return] files", &nip);
+    /* __nss_initgroups_database might have been set through
+       __nss_configure_lookup in which case use_initgroups_entry was
+       not set here.  */
+    use_initgroups_entry = __nss_initgroups_database != __nss_group_database;
 
+  service_user *nip = __nss_initgroups_database;
   while (! no_more)
     {
       long int prev_start = start;
 
-      fct = __nss_lookup_function (nip, "initgroups_dyn");
-
+      initgroups_dyn_function fct = __nss_lookup_function (nip,
+							   "initgroups_dyn");
       if (fct == NULL)
 	status = compat_call (nip, user, group, &start, size, groupsp,
 			      limit, &errno);
@@ -119,7 +131,13 @@ internal_getgrouplist (const char *user, gid_t group, long int *size,
       if (NSS_STATUS_TRYAGAIN > status || status > NSS_STATUS_RETURN)
 	__libc_fatal ("illegal status in internal_getgrouplist");
 
-      if (status != NSS_STATUS_SUCCESS
+      /* For compatibility reason we will continue to look for more
+	 entries using the next service even though data has already
+	 been found if the nsswitch.conf file contained only a 'groups'
+	 line and no 'initgroups' line.  If the latter is available
+	 we always respect the status.  This means that the default
+	 for successful lookups is to return.  */
+      if ((use_initgroups_entry || status != NSS_STATUS_SUCCESS)
 	  && nss_next_action (nip, status) == NSS_ACTION_RETURN)
 	 break;
 
@@ -161,7 +179,7 @@ getgrouplist (const char *user, gid_t group, gid_t *groups, int *ngroups)
   return retval;
 }
 
-static_link_warning (getgrouplist)
+nss_interface_function (getgrouplist)
 
 /* Initialize the group set for the current user
    by reading the group database and using all groups
@@ -211,4 +229,4 @@ initgroups (const char *user, gid_t group)
 #endif
 }
 
-static_link_warning (initgroups)
+nss_interface_function (initgroups)

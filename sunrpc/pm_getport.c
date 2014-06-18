@@ -1,41 +1,35 @@
-/* @(#)pmap_getport.c	2.2 88/08/01 4.0 RPCSRC */
-/*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-#if !defined(lint) && defined(SCCSIDS)
-static char sccsid[] = "@(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";
-#endif
-
 /*
  * pmap_getport.c
  * Client interface to pmap rpc service.
  *
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdbool.h>
@@ -44,11 +38,6 @@ static char sccsid[] = "@(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
 #include <sys/socket.h>
-
-static const struct timeval timeout =
-{5, 0};
-static const struct timeval tottimeout =
-{60, 0};
 
 /*
  * Create a socket that is locally bound to a non-reserve port. For
@@ -87,16 +76,24 @@ __get_socket (struct sockaddr_in *saddr)
 
 /*
  * Find the mapped port for program,version.
+ * Internal version with additional parameters.
  * Calls the pmap service remotely to do the lookup.
  * Returns 0 if no map exists.
  */
 u_short
-pmap_getport (address, program, version, protocol)
+internal_function
+__libc_rpc_getport (address, program, version, protocol, timeout_sec,
+		    tottimeout_sec)
      struct sockaddr_in *address;
      u_long program;
      u_long version;
      u_int protocol;
+     time_t timeout_sec;
+     time_t tottimeout_sec;
 {
+  const struct timeval timeout = {timeout_sec, 0};
+  const struct timeval tottimeout = {tottimeout_sec, 0};
+
   u_short port = 0;
   int socket = -1;
   CLIENT *client;
@@ -110,13 +107,12 @@ pmap_getport (address, program, version, protocol)
       socket = __get_socket(address);
       if (socket != -1)
 	closeit = true;
-      client = INTUSE(clnttcp_create) (address, PMAPPROG, PMAPVERS, &socket,
-				       RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
+      client = clnttcp_create (address, PMAPPROG, PMAPVERS, &socket,
+			       RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
     }
   else
-    client = INTUSE(clntudp_bufcreate) (address, PMAPPROG, PMAPVERS, timeout,
-					&socket, RPCSMALLMSGSIZE,
-					RPCSMALLMSGSIZE);
+    client = clntudp_bufcreate (address, PMAPPROG, PMAPVERS, timeout,
+				&socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
   if (client != (CLIENT *) NULL)
     {
       struct rpc_createerr *ce = &get_rpc_createerr ();
@@ -124,8 +120,8 @@ pmap_getport (address, program, version, protocol)
       parms.pm_vers = version;
       parms.pm_prot = protocol;
       parms.pm_port = 0;	/* not needed or used */
-      if (CLNT_CALL (client, PMAPPROC_GETPORT, (xdrproc_t)INTUSE(xdr_pmap),
-		     (caddr_t)&parms, (xdrproc_t)INTUSE(xdr_u_short),
+      if (CLNT_CALL (client, PMAPPROC_GETPORT, (xdrproc_t)xdr_pmap,
+		     (caddr_t)&parms, (xdrproc_t)xdr_u_short,
 		     (caddr_t)&port, tottimeout) != RPC_SUCCESS)
 	{
 	  ce->cf_stat = RPC_PMAPFAILURE;
@@ -143,4 +139,25 @@ pmap_getport (address, program, version, protocol)
   address->sin_port = 0;
   return port;
 }
-libc_hidden_def (pmap_getport)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (__libc_rpc_getport)
+#else
+libc_hidden_nolink_sunrpc (__libc_rpc_getport, GLIBC_PRIVATE)
+#endif
+
+
+/*
+ * Find the mapped port for program,version.
+ * Calls the pmap service remotely to do the lookup.
+ * Returns 0 if no map exists.
+ */
+u_short
+pmap_getport (address, program, version, protocol)
+     struct sockaddr_in *address;
+     u_long program;
+     u_long version;
+     u_int protocol;
+{
+  return __libc_rpc_getport (address, program, version, protocol, 5, 60);
+}
+libc_hidden_nolink_sunrpc (pmap_getport, GLIBC_2_0)

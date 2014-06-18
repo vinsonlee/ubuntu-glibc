@@ -1,5 +1,5 @@
 /* Lookup helper function for Hurd implementation of *at functions.
-   Copyright (C) 2006 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <hurd.h>
 #include <hurd/lookup.h>
@@ -30,10 +29,16 @@ __file_name_lookup_at (int fd, int at_flags,
   error_t err;
   file_t result;
 
+  if ((at_flags & AT_SYMLINK_FOLLOW) && (at_flags & AT_SYMLINK_NOFOLLOW))
+    return (__hurd_fail (EINVAL), MACH_PORT_NULL);
+
   flags |= (at_flags & AT_SYMLINK_NOFOLLOW) ? O_NOLINK : 0;
   at_flags &= ~AT_SYMLINK_NOFOLLOW;
+  if (at_flags & AT_SYMLINK_FOLLOW)
+    flags &= ~O_NOLINK;
+  at_flags &= ~AT_SYMLINK_FOLLOW;
   if (at_flags != 0)
-    return __hurd_fail (EINVAL);
+    return (__hurd_fail (EINVAL), MACH_PORT_NULL);
 
   if (fd == AT_FDCWD || file_name[0] == '/')
     return __file_name_lookup (file_name, flags, mode);

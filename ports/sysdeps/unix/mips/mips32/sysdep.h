@@ -1,5 +1,4 @@
-/* Copyright (C) 1992, 1995, 1997, 1999, 2000, 2002, 2003
-   Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Brendan Kehoe (brendan@zen.org).
 
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdeps/unix/mips/sysdep.h>
 
@@ -26,8 +24,11 @@
 #ifdef __PIC__
 #define PSEUDO(name, syscall_name, args) \
   .align 2;								      \
+  .set nomips16;							      \
+  cfi_startproc;							      \
   99: la t9,__syscall_error;						      \
   jr t9;								      \
+  cfi_endproc;								      \
   ENTRY(name)								      \
   .set noreorder;							      \
   .cpload t9;								      \
@@ -39,9 +40,12 @@ L(syse1):
 #else
 #define PSEUDO(name, syscall_name, args) \
   .set noreorder;							      \
+  .set nomips16;							      \
   .align 2;								      \
+  cfi_startproc;							      \
   99: j __syscall_error;						      \
   nop;									      \
+  cfi_endproc;								      \
   ENTRY(name)								      \
   .set noreorder;							      \
   li v0, SYS_ify(syscall_name);						      \

@@ -1,6 +1,6 @@
 /* Declaration of functions and data types used for SHA256 sum computing
    library functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SHA256_H
 #define _SHA256_H 1
@@ -24,6 +23,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <endian.h>
 
 
 /* Structure to save state of computation between the single steps.  */
@@ -31,9 +31,20 @@ struct sha256_ctx
 {
   uint32_t H[8];
 
-  uint32_t total[2];
+  union
+  {
+    uint64_t total64;
+#define TOTAL64_low (1 - (BYTE_ORDER == LITTLE_ENDIAN))
+#define TOTAL64_high (BYTE_ORDER == LITTLE_ENDIAN)
+    uint32_t total[2];
+  };
   uint32_t buflen;
-  char buffer[128] __attribute__ ((__aligned__ (__alignof__ (uint32_t))));
+  union
+  {
+    char buffer[128];
+    uint32_t buffer32[32];
+    uint64_t buffer64[16];
+  };
 };
 
 /* Initialize structure containing state of computation.

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991,93,95,96,97,98,2001,02 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <bits/libc-lock.h>
 #include <signal.h>
@@ -31,10 +30,12 @@
 # define ABORT_INSTRUCTION
 #endif
 
-#ifdef USE_IN_LIBIO
-# include <libio/libioP.h>
-# define fflush(s) _IO_flush_all_lockp (0)
-#endif
+#include <libio/libioP.h>
+#define fflush(s) _IO_flush_all_lockp (0)
+
+/* Exported variable to locate abort message in core files etc.  */
+struct abort_msg_s *__abort_msg __attribute__ ((nocommon));
+libc_hidden_def (__abort_msg)
 
 /* We must avoid to run in circles.  Therefore we remember how far we
    already got.  */

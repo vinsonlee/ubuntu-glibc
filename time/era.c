@@ -1,5 +1,5 @@
 /* Helper functions used by strftime/strptime to handle locale-specific "eras".
-   Copyright (C) 1995-2002, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,15 +13,15 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "../locale/localeinfo.h"
 #include <bits/libc-lock.h>
 #include <stdlib.h>
 #include <wchar.h>
 #include <string.h>
+#include <stdint.h>
 
 /* Some of the functions here must not be used while setlocale is called.  */
 __libc_rwlock_define (extern, __libc_setlocale_lock attribute_hidden)
@@ -36,7 +36,7 @@ __libc_rwlock_define (extern, __libc_setlocale_lock attribute_hidden)
 /* Look up the era information in CURRENT's locale strings and
    cache it in CURRENT->private.  */
 static void internal_function
-_nl_init_era_entries (struct locale_data *current)
+_nl_init_era_entries (struct __locale_data *current)
 {
   size_t cnt;
   struct lc_time_data *data;
@@ -83,7 +83,7 @@ _nl_init_era_entries (struct locale_data *current)
 	      data->num_eras = 0;
 	      data->eras = NULL;
 	    }
-          else
+	  else
 	    {
 	      const char *ptr = CURRENT (_NL_TIME_ERA_ENTRIES);
 	      data->num_eras = new_num_eras;
@@ -140,7 +140,7 @@ _nl_init_era_entries (struct locale_data *current)
 
 struct era_entry *
 internal_function
-_nl_get_era_entry (const struct tm *tp, struct locale_data *current)
+_nl_get_era_entry (const struct tm *tp, struct __locale_data *current)
 {
   if (current->private.time == NULL || !current->private.time->era_initialized)
     _nl_init_era_entries (current);
@@ -167,7 +167,7 @@ _nl_get_era_entry (const struct tm *tp, struct locale_data *current)
 
 struct era_entry *
 internal_function
-_nl_select_era_entry (int cnt, struct locale_data *current)
+_nl_select_era_entry (int cnt, struct __locale_data *current)
 {
   if (current->private.time == NULL || !current->private.time->era_initialized)
     _nl_init_era_entries (current);

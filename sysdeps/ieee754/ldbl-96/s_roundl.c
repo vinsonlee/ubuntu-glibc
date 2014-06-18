@@ -1,5 +1,5 @@
 /* Round long double to integer away from zero.
-   Copyright (C) 1997, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -14,13 +14,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
 
-#include "math_private.h"
+#include <math_private.h>
 
 
 static const long double huge = 1.0e4930L;
@@ -38,15 +37,13 @@ __roundl (long double x)
     {
       if (j0 < 0)
 	{
-	  if (huge + x > 0.0)
+	  math_force_eval (huge + x);
+	  se &= 0x8000;
+	  i0 = i1 = 0;
+	  if (j0 == -1)
 	    {
-	      se &= 0x8000;
-	      i0 = i1 = 0;
-	      if (j0 == -1)
-		{
-		  se |= 0x3fff;
-		  i0 = 0x80000000;
-		}
+	      se |= 0x3fff;
+	      i0 = 0x80000000;
 	    }
 	}
       else
@@ -55,15 +52,14 @@ __roundl (long double x)
 	  if (((i0 & i) | i1) == 0)
 	    /* X is integral.  */
 	    return x;
-	  if (huge + x > 0.0)
-	    {
-	      /* Raise inexact if x != 0.  */
-	      u_int32_t j = i0 + (0x40000000 >> j0);
-	      if (j < i0)
-		se += 1;
-	      i0 = (j & ~i) | 0x80000000;
-	      i1 = 0;
-	    }
+
+	  /* Raise inexact if x != 0.  */
+	  math_force_eval (huge + x);
+	  u_int32_t j = i0 + (0x40000000 >> j0);
+	  if (j < i0)
+	    se += 1;
+	  i0 = (j & ~i) | 0x80000000;
+	  i1 = 0;
 	}
     }
   else if (j0 > 62)
@@ -81,22 +77,20 @@ __roundl (long double x)
 	/* X is integral.  */
 	return x;
 
-      if (huge + x > 0.0)
+      math_force_eval (huge + x);
+      /* Raise inexact if x != 0.  */
+      u_int32_t j = i1 + (1 << (62 - j0));
+      if (j < i1)
 	{
-	  /* Raise inexact if x != 0.  */
-	  u_int32_t j = i1 + (1 << (62 - j0));
-	  if (j < i1)
+	  u_int32_t k = i0 + 1;
+	  if (k < i0)
 	    {
-	      u_int32_t k = i0 + 1;
-	      if (k < i0)
-		{
-		  se += 1;
-		  k |= 0x80000000;
-		}
-	      i0 = k;
+	      se += 1;
+	      k |= 0x80000000;
 	    }
-	  i1 = j;
+	  i0 = k;
 	}
+      i1 = j;
       i1 &= ~i;
     }
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 1992, 1995, 1997, 2000 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Brendan Kehoe (brendan@zen.org).
 
@@ -13,29 +13,31 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <setjmp.h>
 #include <stdlib.h>
-
-#undef __longjmp
 
 #ifndef	__GNUC__
   #error This file uses GNU C extensions; you must compile with GCC.
 #endif
 
-void
-__longjmp (env, val_arg)
-     __jmp_buf env;
+static void __attribute__ ((nomips16))
+____longjmp (env_arg, val_arg)
+     __jmp_buf env_arg;
      int val_arg;
 {
   /* gcc 1.39.19 miscompiled the longjmp routine (as it did setjmp before
      the hack around it); force it to use $a1 for the longjmp value.
      Without this it saves $a1 in a register which gets clobbered
      along the way.  */
+  register struct __jmp_buf_internal_tag *env asm ("a0");
   register int val asm ("a1");
+#ifdef CHECK_SP
+  register long sp asm ("$29");
+  CHECK_SP (env[0].__sp, sp, long);
+#endif
 
 #ifdef __mips_hard_float
   /* Pull back the floating point callee-saved registers.  */
@@ -45,10 +47,6 @@ __longjmp (env, val_arg)
   asm volatile ("l.d $f26, %0" : : "m" (env[0].__fpregs[3]));
   asm volatile ("l.d $f28, %0" : : "m" (env[0].__fpregs[4]));
   asm volatile ("l.d $f30, %0" : : "m" (env[0].__fpregs[5]));
-
-  /* Get and reconstruct the floating point csr.  */
-  asm volatile ("lw $2, %0" : : "m" (env[0].__fpc_csr));
-  asm volatile ("ctc1 $2, $31");
 #endif
 
   /* Get the GP. */
@@ -84,3 +82,5 @@ __longjmp (env, val_arg)
   /* Avoid `volatile function does return' warnings.  */
   for (;;);
 }
+
+strong_alias (____longjmp, __longjmp);

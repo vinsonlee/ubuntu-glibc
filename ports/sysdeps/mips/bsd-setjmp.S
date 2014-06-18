@@ -1,5 +1,5 @@
 /* BSD `setjmp' entry point to `sigsetjmp (..., 1)'.  MIPS version.
-   Copyright (C) 1996, 1997, 2000 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,15 +13,16 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* This just does a tail-call to `__sigsetjmp (ARG, 1)'.
    We cannot do it in C because it must be a tail-call, so frame-unwinding
    in setjmp doesn't clobber the state restored by longjmp.  */
 
 #include <sysdep.h>
+
+	.set	nomips16
 
 #ifdef __PIC__
 	.option pic2
@@ -39,4 +40,4 @@ ENTRY (setjmp)
 #else
 	j	C_SYMBOL_NAME (__sigsetjmp)
 #endif
-	.end	setjmp
+END (setjmp)

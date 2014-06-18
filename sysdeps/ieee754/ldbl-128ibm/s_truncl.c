@@ -1,6 +1,6 @@
 /* Truncate (toward zero) long double floating-point values.
    IBM extended format long double version.
-   Copyright (C) 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,12 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
-
-/* This has been coded in assembler because GCC makes such a mess of it
-   when it's coded in C.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
 #include <math_ldbl_opt.h>
@@ -27,14 +23,8 @@
 #include <ieee754.h>
 
 
-#ifdef __STDC__
 long double
 __truncl (long double x)
-#else
-long double
-__truncl (x)
-     long double x;
-#endif
 {
   double xh, xl, hi, lo;
 

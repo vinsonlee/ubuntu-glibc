@@ -1,5 +1,5 @@
 /* Services file parser in nss_files module.
-   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <netinet/in.h>
 #include <netdb.h>
@@ -39,8 +38,9 @@ LINE_PARSER
 
 #include GENERIC
 
-DB_LOOKUP (servbyname, 2 + strlen (name) + (proto ? strlen (proto) : 0),
-	   (".%s/%s", name, proto ?: ""),
+DB_LOOKUP (servbyname, ':',
+	   strlen (name) + 2 + (proto == NULL ? 0 : strlen (proto)),
+	   ("%s/%s", name, proto ?: ""),
 	   {
 	     /* Must match both protocol (if specified) and name.  */
 	     if (proto != NULL && strcmp (result->s_proto, proto))
@@ -49,8 +49,8 @@ DB_LOOKUP (servbyname, 2 + strlen (name) + (proto ? strlen (proto) : 0),
 	   },
 	   const char *name, const char *proto)
 
-DB_LOOKUP (servbyport, 21 + (proto ? strlen (proto) : 0),
-	   ("=%d/%s", ntohs (port), proto ?: ""),
+DB_LOOKUP (servbyport, '=', 21 + (proto ? strlen (proto) : 0),
+	   ("%zd/%s", (ssize_t) ntohs (port), proto ?: ""),
 	   {
 	     /* Must match both port and protocol.  */
 	     if (result->s_port == port

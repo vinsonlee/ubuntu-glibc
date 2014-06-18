@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001 Free Software Foundation
+ * Copyright (C) 2001-2014 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,7 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 /******************************************************************/
 /*     MODULE_NAME:uasncs.c                                       */
@@ -40,7 +39,11 @@
 #include "powtwo.tbl"
 #include "MathLib.h"
 #include "uasncs.h"
-#include "math_private.h"
+#include <math_private.h>
+
+#ifndef SECTION
+# define SECTION
+#endif
 
 void __doasin(double x, double dx, double w[]);
 void __dubsin(double x, double dx, double v[]);
@@ -53,13 +56,12 @@ double __cos32(double x, double res, double res1);
 /* An ultimate asin routine. Given an IEEE double machine number x         */
 /* it computes the correctly rounded (to nearest) value of arcsin(x)       */
 /***************************************************************************/
-double __ieee754_asin(double x){
+double
+SECTION
+__ieee754_asin(double x){
   double x1,x2,xx,s1,s2,res1,p,t,res,r,cor,cc,y,c,z,w[2];
   mynumber u,v;
   int4 k,m,n;
-#if 0
-  int4 nn;
-#endif
 
   u.x = x;
   m = u.i[HIGH_HALF];
@@ -209,9 +211,9 @@ double __ieee754_asin(double x){
     else xx = -x - asncs.x[n];
     t = asncs.x[n+1]*xx;
     p=xx*xx*(asncs.x[n+2]+xx*(asncs.x[n+3]+xx*(asncs.x[n+4]+
-                      xx*(asncs.x[n+5]+xx*(asncs.x[n+6]
+		      xx*(asncs.x[n+5]+xx*(asncs.x[n+6]
 		      +xx*(asncs.x[n+7]+xx*(asncs.x[n+8]+
-                      xx*asncs.x[n+9])))))))+asncs.x[n+10];
+		      xx*asncs.x[n+9])))))))+asncs.x[n+10];
     t+=p;
     res =asncs.x[n+11] +t;
     cor = (asncs.x[n+11]-res)+t;
@@ -248,9 +250,9 @@ double __ieee754_asin(double x){
     else xx = -x - asncs.x[n];
     t = asncs.x[n+1]*xx;
     p=xx*xx*(asncs.x[n+2]+xx*(asncs.x[n+3]+xx*(asncs.x[n+4]+
-                         xx*(asncs.x[n+5]+xx*(asncs.x[n+6]
+			 xx*(asncs.x[n+5]+xx*(asncs.x[n+6]
 			 +xx*(asncs.x[n+7]+xx*(asncs.x[n+8]+
-                    xx*(asncs.x[n+9]+xx*asncs.x[n+10]))))))))+asncs.x[n+11];
+		    xx*(asncs.x[n+9]+xx*asncs.x[n+10]))))))))+asncs.x[n+11];
     t+=p;
     res =asncs.x[n+12] +t;
     cor = (asncs.x[n+12]-res)+t;
@@ -324,6 +326,9 @@ double __ieee754_asin(double x){
     return u.x/v.x;  /* NaN */
  }
 }
+#ifndef __ieee754_asin
+strong_alias (__ieee754_asin, __asin_finite)
+#endif
 
 /*******************************************************************/
 /*                                                                 */
@@ -331,17 +336,13 @@ double __ieee754_asin(double x){
 /*                                                                 */
 /*******************************************************************/
 
-double __ieee754_acos(double x)
+double
+SECTION
+__ieee754_acos(double x)
 {
   double x1,x2,xx,s1,s2,res1,p,t,res,r,cor,cc,y,c,z,w[2],eps;
-#if 0
-  double fc;
-#endif
   mynumber u,v;
   int4 k,m,n;
-#if 0
-  int4 nn;
-#endif
   u.x = x;
   m = u.i[HIGH_HALF];
   k = 0x7fffffff&m;
@@ -397,7 +398,7 @@ double __ieee754_acos(double x)
     else xx = -x - asncs.x[n];
     t = asncs.x[n+1]*xx;
     p=xx*xx*(asncs.x[n+2]+xx*(asncs.x[n+3]+xx*(asncs.x[n+4]+
-                   xx*(asncs.x[n+5]+xx*asncs.x[n+6]))))+asncs.x[n+7];
+		   xx*(asncs.x[n+5]+xx*asncs.x[n+6]))))+asncs.x[n+7];
     t+=p;
     y = (m>0)?(hp0.x-asncs.x[n+8]):(hp0.x+asncs.x[n+8]);
     t = (m>0)?(hp1.x-t):(hp1.x+t);
@@ -433,8 +434,8 @@ double __ieee754_acos(double x)
     else {xx = -x - asncs.x[n]; eps=1.02; }
     t = asncs.x[n+1]*xx;
     p=xx*xx*(asncs.x[n+2]+xx*(asncs.x[n+3]+xx*(asncs.x[n+4]+
-                   xx*(asncs.x[n+5]+xx*(asncs.x[n+6]+
-                   xx*asncs.x[n+7])))))+asncs.x[n+8];
+		   xx*(asncs.x[n+5]+xx*(asncs.x[n+6]+
+		   xx*asncs.x[n+7])))))+asncs.x[n+8];
     t+=p;
    y = (m>0)?(hp0.x-asncs.x[n+9]):(hp0.x+asncs.x[n+9]);
    t = (m>0)?(hp1.x-t):(hp1.x+t);
@@ -468,8 +469,8 @@ double __ieee754_acos(double x)
     else {xx = -x - asncs.x[n]; eps = 1.01; }
     t = asncs.x[n+1]*xx;
     p=xx*xx*(asncs.x[n+2]+xx*(asncs.x[n+3]+xx*(asncs.x[n+4]+
-                      xx*(asncs.x[n+5]+xx*(asncs.x[n+6]+xx*(asncs.x[n+7]+
-                      xx*asncs.x[n+8]))))))+asncs.x[n+9];
+		      xx*(asncs.x[n+5]+xx*(asncs.x[n+6]+xx*(asncs.x[n+7]+
+		      xx*asncs.x[n+8]))))))+asncs.x[n+9];
     t+=p;
     y = (m>0)?(hp0.x-asncs.x[n+10]):(hp0.x+asncs.x[n+10]);
     t = (m>0)?(hp1.x-t):(hp1.x+t);
@@ -503,9 +504,9 @@ double __ieee754_acos(double x)
     else {xx = -x - asncs.x[n]; eps =1.005; }
     t = asncs.x[n+1]*xx;
     p=xx*xx*(asncs.x[n+2]+xx*(asncs.x[n+3]+xx*(asncs.x[n+4]+
-                   xx*(asncs.x[n+5]+xx*(asncs.x[n+6]
+		   xx*(asncs.x[n+5]+xx*(asncs.x[n+6]
 		   +xx*(asncs.x[n+7]+xx*(asncs.x[n+8]+
-                   xx*asncs.x[n+9])))))))+asncs.x[n+10];
+		   xx*asncs.x[n+9])))))))+asncs.x[n+10];
     t+=p;
     y = (m>0)?(hp0.x-asncs.x[n+11]):(hp0.x+asncs.x[n+11]);
     t = (m>0)?(hp1.x-t):(hp1.x+t);
@@ -539,9 +540,9 @@ double __ieee754_acos(double x)
     else {xx = -x - asncs.x[n]; eps=1.005;}
     t = asncs.x[n+1]*xx;
     p=xx*xx*(asncs.x[n+2]+xx*(asncs.x[n+3]+xx*(asncs.x[n+4]+
-            xx*(asncs.x[n+5]+xx*(asncs.x[n+6]
+	    xx*(asncs.x[n+5]+xx*(asncs.x[n+6]
 	    +xx*(asncs.x[n+7]+xx*(asncs.x[n+8]+xx*(asncs.x[n+9]+
-            xx*asncs.x[n+10]))))))))+asncs.x[n+11];
+	    xx*asncs.x[n+10]))))))))+asncs.x[n+11];
     t+=p;
     y = (m>0)?(hp0.x-asncs.x[n+12]):(hp0.x+asncs.x[n+12]);
    t = (m>0)?(hp1.x-t):(hp1.x+t);
@@ -635,3 +636,6 @@ double __ieee754_acos(double x)
     return u.x/v.x;
   }
 }
+#ifndef __ieee754_acos
+strong_alias (__ieee754_acos, __acos_finite)
+#endif

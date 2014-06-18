@@ -1,5 +1,5 @@
 /* AltiVec/VMX (new) version of __longjmp for PowerPC.
-   Copyright (C)  1995-1997,1999,2000,2003,2004 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,27 +13,27 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <libc-symbols.h>
 #include <shlib-compat.h>
 
 #if defined NOT_IN_libc
 /* Build a non-versioned object for rtld-*.  */
+# define __longjmp_symbol __longjmp
 # include "__longjmp-common.S"
 
 #else /* !NOT_IN_libc */
 strong_alias (__vmx__longjmp, __longjmp);
-# define __longjmp  __vmx__longjmp
+# define __longjmp_symbol  __vmx__longjmp
 # include "__longjmp-common.S"
 
 # if defined SHARED && SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_3_4)
 #  define __NO_VMX__
 #  undef JB_SIZE
-#  undef __longjmp
-#  define __longjmp  __novmx__longjmp
+#  undef __longjmp_symbol
+#  define __longjmp_symbol  __novmx__longjmp
 #  include "__longjmp-common.S"
 # endif
 #endif /* !NOT_IN_libc */

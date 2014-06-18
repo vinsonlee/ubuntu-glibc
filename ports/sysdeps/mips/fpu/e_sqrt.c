@@ -1,4 +1,4 @@
-/* Copyright (C) 2002 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Hartvig Ekner <hartvige@mips.com>, 2002.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 
 #include <sgidefs.h>
@@ -23,13 +22,14 @@
 
 #if (_MIPS_ISA >= _MIPS_ISA_MIPS2)
 
-double
+double __attribute__ ((nomips16))
 __ieee754_sqrt (double x)
 {
   double z;
   __asm__ ("sqrt.d %0,%1" : "=f" (z) : "f" (x));
   return z;
 }
+strong_alias (__ieee754_sqrt, __sqrt_finite)
 
 #else
 

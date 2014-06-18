@@ -1,5 +1,5 @@
 /* Complex cosine hyperbole function.  m68k fpu version
-   Copyright (C) 1997, 1999 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Schwab <schwab@issan.informatik.uni-dortmund.de>.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <complex.h>
 #include <math.h>
@@ -48,7 +47,7 @@ s(__ccosh) (__complex__ float_type x)
 	     : "f" (__imag__ x));
       __real__ retval = cos_ix * m81(__ieee754_cosh) (__real__ x);
       if (ix_cond & __M81_COND_ZERO)
-	__imag__ retval = (m81(__signbit) (__real__ x)
+	__imag__ retval = (signbit (__real__ x)
 			   ? -__imag__ x : __imag__ x);
       else
 	__imag__ retval = sin_ix * m81(__ieee754_sinh) (__real__ x);
@@ -67,12 +66,11 @@ s(__ccosh) (__complex__ float_type x)
 	  if (rx_cond & __M81_COND_INF)
 	    __real__ retval = s(fabs) (__real__ x);
 	  else
-	    __real__ retval = 0.0/0.0;
+	    __real__ retval = s(__nan) ("");
 	  __imag__ retval = __imag__ x - __imag__ x;
 	}
     }
 
   return retval;
 }
-#define weak_aliasx(a,b) weak_alias(a,b)
-weak_aliasx (s(__ccosh), s(ccosh))
+weak_alias (s(__ccosh), s(ccosh))
