@@ -3,19 +3,22 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Ossama M. Khayat <okhayat@yahoo.com>, 2007, 2008.
+# Ossama Khayat <okhayat@yahoo.com>, 2010.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: ar\n"
 "Report-Msgid-Bugs-To: glibc@packages.debian.org\n"
-"POT-Creation-Date: 2008-02-26 21:34+0100\n"
-"PO-Revision-Date: 2008-03-18 15:39+0300\n"
-"Last-Translator: Ossama M. Khayat <okhayat@yahoo.com>\n"
+"POT-Creation-Date: 2014-05-21 00:04+0200\n"
+"PO-Revision-Date: 2010-09-09 01:07+0300\n"
+"Last-Translator: Ossama Khayat <okhayat@yahoo.com>\n"
 "Language-Team: Arabic <support@arabeyes.org>\n"
+"Language: ar\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Content-Transfer-Encoding: UTF-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=6; plural=n==1 ? 0 : n==0 ? 1 : n==2 ? 2: n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5\n"
+"Plural-Forms: \n"
 
 #. Type: multiselect
 #. Choices
@@ -102,7 +105,13 @@ msgid ""
 "program that needs manual stopping and restart after the glibc upgrade by "
 "yourself is xdm - because automatic restart might disconnect your active X11 "
 "sessions."
-msgstr "هناك بعض الخدمات والبرامج التي تستخدم NSS يجب إعادة تشغيلها، وإلا لن تستطيع تلك الخدمات البحث أو المصادقة بعد الآن. تستطيع عملية التثبيت إعادة تشغيل بعض الخدمات (مثل ssh أو telnetd)، إلا أن بعض الخدمات الأخرى لا يمكن إعادة تشغيلها آلياً. وإحدى تلك الخدمات هي xdm والتي يجب عليك تشغيلها يدوياً بعد عملية ترقية glibc ذلك أن عملية إعادة تشغيلها آلياً قد يوقف عمل جلسات X11 الحالية."
+msgstr ""
+"هناك بعض الخدمات والبرامج التي تستخدم NSS يجب إعادة تشغيلها، وإلا لن تستطيع "
+"تلك الخدمات البحث أو المصادقة بعد الآن. تستطيع عملية التثبيت إعادة تشغيل بعض "
+"الخدمات (مثل ssh أو telnetd)، إلا أن بعض الخدمات الأخرى لا يمكن إعادة "
+"تشغيلها آلياً. وإحدى تلك الخدمات هي xdm والتي يجب عليك تشغيلها يدوياً بعد "
+"عملية ترقية glibc ذلك أن عملية إعادة تشغيلها آلياً قد يوقف عمل جلسات X11 "
+"الحالية."
 
 #. Type: boolean
 #. Description
@@ -110,7 +119,9 @@ msgstr "هناك بعض الخدمات والبرامج التي تستخدم NS
 msgid ""
 "This script detected the following installed services which must be stopped "
 "before the upgrade: ${services}"
-msgstr "عثر البرنامج على الخدمات المثبتة التالية والتي يجب إيقافها قبل عملية الترقية: ${services}"
+msgstr ""
+"عثر البرنامج على الخدمات المثبتة التالية والتي يجب إيقافها قبل عملية "
+"الترقية: ${services}"
 
 #. Type: boolean
 #. Description
@@ -118,7 +129,9 @@ msgstr "عثر البرنامج على الخدمات المثبتة التال�
 msgid ""
 "If you want to interrupt the upgrade now and continue later, please answer "
 "No to the question below."
-msgstr "إن كنت تريد ايقاف عملة الترقية الآن وإتمامها لاحقاً، الرجاء الإجابة بالنفي للسؤال أدناه."
+msgstr ""
+"إن كنت تريد ايقاف عملة الترقية الآن وإتمامها لاحقاً، الرجاء الإجابة بالنفي "
+"للسؤال أدناه."
 
 #. Type: string
 #. Description
@@ -135,12 +148,17 @@ msgid ""
 "(for services such as ssh, this can affect your ability to login). Please "
 "review the following space-separated list of init.d scripts for services to "
 "be restarted now, and correct it if needed."
-msgstr "هناك بعض الخدمات والبرامج التي تستخدم NSS يجب إعادة تشغيلها، وإلا لن تستطيع تلك الخدمات البحث أو المصادقة بعد الآن. تستطيع عملية التثبيت إعادة تشغيل بعض الخدمات (مثل  ssh والتي قد تؤثر على قدرتك الدخول). الرجاء مراجعة قائمة برامج init.d هذه بالخدمات التي يجب إعادة تشغيلها الآن، وصححها إن كنت بحاجة إلى ذلك."
+msgstr ""
+"هناك بعض الخدمات والبرامج التي تستخدم NSS يجب إعادة تشغيلها، وإلا لن تستطيع "
+"تلك الخدمات البحث أو المصادقة بعد الآن. تستطيع عملية التثبيت إعادة تشغيل بعض "
+"الخدمات (مثل  ssh والتي قد تؤثر على قدرتك الدخول). الرجاء مراجعة قائمة برامج "
+"init.d هذه بالخدمات التي يجب إعادة تشغيلها الآن، وصححها إن كنت بحاجة إلى ذلك."
 
 #. Type: string
 #. Description
 #: ../debhelper.in/libc.templates:2001
-msgid "Note: restarting sshd/telnetd should not affect any existing connections."
+msgid ""
+"Note: restarting sshd/telnetd should not affect any existing connections."
 msgstr "ملاحظة: إعادة تشغيل sshd/telnetd يجب أن لايؤثر على أية اتصالات جارية."
 
 #. Type: error
@@ -164,6 +182,45 @@ msgid ""
 "You will need to start these manually by running '/etc/init.d/<service> "
 "start'."
 msgstr ""
-"عليك بتشغيل هذه الخدمات يدوياً بتنفيذ الأمر '/etc/init.d/<service> "
-"start'."
+"عليك بتشغيل هذه الخدمات يدوياً بتنفيذ الأمر '/etc/init.d/<service> start'."
 
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:4001
+msgid "xscreensaver and xlockmore must be restarted before upgrading"
+msgstr "يجب إعادة تشغيل xscreensaver و xlockmore قبل عملية الترقية"
+
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:4001
+msgid ""
+"One or more running instances of xscreensaver or xlockmore have been "
+"detected on this system. Because of incompatible library changes, the "
+"upgrade of the GNU libc library will leave you unable to authenticate to "
+"these programs. You should arrange for these programs to be restarted or "
+"stopped before continuing this upgrade, to avoid locking your users out of "
+"their current sessions."
+msgstr ""
+"عُثر على نسخة أو أكثر لبرنامج xscreensaver أو xlockmore على هذا النظام. وبسبب "
+"تغييرات المكتبة الغير متوافقة، فإن ترقية مكتبة GNU libc ستتسبّب بعدم تمكّنك من "
+"المصادقة باستخدام هذه البرامج. لذا، يجب أن ترتب عملية إعادة تشغيل أو إيقاف "
+"هذه البرامج قبل الاستمرار في الترقية، كي تتفادى حجز المستخدمين عن جلساتهم."
+
+#. Type: boolean
+#. Description
+#: ../debhelper.in/libc.templates:5001
+msgid "Restart services during package upgrades without asking?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../debhelper.in/libc.templates:5001
+msgid ""
+"There are services installed on your system which need to be restarted when "
+"certain libraries, such as libpam, libc, and libssl, are upgraded. Since "
+"these restarts may cause interruptions of service for the system, you will "
+"normally be prompted on each upgrade for the list of services you wish to "
+"restart.  You can choose this option to avoid being prompted; instead, all "
+"necessary restarts will be done for you automatically so you can avoid being "
+"asked questions on each library upgrade."
+msgstr ""

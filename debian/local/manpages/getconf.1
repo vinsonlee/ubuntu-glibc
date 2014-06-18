@@ -1,11 +1,11 @@
 .rn '' }`
-''' $RCSfile: getconf.1,v $$Revision: 1.1.2.1 $$Date: 2003/09/22 21:33:35 $
-'''
-''' $Log: getconf.1,v $
-''' Revision 1.1.2.1  2003/09/22 21:33:35  jbailey
-''' New directory for things we add to the package
-'''
-'''
+.\" $RCSfile: getconf.1,v $$Revision: 1.1.2.1 $$Date: 2003/09/22 21:33:35 $
+.\"
+.\" $Log: getconf.1,v $
+.\" Revision 1.1.2.1  2003/09/22 21:33:35  jbailey
+.\" New directory for things we add to the package
+.\"
+.\"
 .de Sh
 .br
 .if t .Sp
@@ -34,12 +34,12 @@
 
 .fi
 ..
-'''
-'''
-'''     Set up \*(-- to give an unbreakable dash;
-'''     string Tr holds user defined translation string.
-'''     Bell System Logo is used as a dummy character.
-'''
+.\"
+.\"
+.\"     Set up \*(-- to give an unbreakable dash;
+.\"     string Tr holds user defined translation string.
+.\"     Bell System Logo is used as a dummy character.
+.\"
 .tr \(*W-|\(bv\*(Tr
 .ie n \{\
 .ds -- \(*W-
@@ -48,10 +48,10 @@
 .if (\n(.H=4u)&(1m=20u) .ds -- \(*W\h'-12u'\(*W\h'-8u'-\" diablo 12 pitch
 .ds L" ""
 .ds R" ""
-'''   \*(M", \*(S", \*(N" and \*(T" are the equivalent of
-'''   \*(L" and \*(R", except that they are used on ".xx" lines,
-'''   such as .IP and .SH, which do another additional levels of
-'''   double-quote interpretation
+.\"   \*(M", \*(S", \*(N" and \*(T" are the equivalent of
+.\"   \*(L" and \*(R", except that they are used on ".xx" lines,
+.\"   such as .IP and .SH, which do another additional levels of
+.\"   double-quote interpretation
 .ds M" """
 .ds S" """
 .ds N" """""
@@ -96,7 +96,7 @@
 .nr % 0
 .rr F
 .\}
-.TH GETCONF 1 "etch" "7/Jan/2001" "Debian GNU/Linux"
+.TH GETCONF 1 "squeeze" "13/Jun/2010" "Debian GNU/Linux"
 .UC
 .if n .hy 0
 .if n .na
@@ -193,10 +193,18 @@
 .SH "NAME"
 getconf \- Query system configuration variables
 .SH "SYNOPSIS"
+\fBgetconf\fR \-a
+.P
 \fBgetconf\fR [\fB\-v specification\fR] system_var
 .PP
 \fBgetconf\fR [\fB\-v specification\fR] path_var pathname
 .SH "DESCRIPTION"
+\fB\-a\fR
+.PP
+.Vb 2
+\&        Displays all configuration variables for the current system
+\&        and their values.
+.Ve
 \fB\-v\fR
 .PP
 .Vb 2

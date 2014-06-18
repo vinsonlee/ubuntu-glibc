@@ -6,27 +6,16 @@
 # DP: Upstream status: not submitted
 # DP: Date: 2006-01-10
 
-Index: glibc-2.7/localedata/locales/fr_BE
-===================================================================
---- glibc-2.7.orig/localedata/locales/fr_BE	2007-10-23 08:51:25.000000000 -0400
-+++ glibc-2.7/localedata/locales/fr_BE	2007-10-23 08:56:54.000000000 -0400
-@@ -42,6 +42,7 @@
- category  "fr_BE:2000";LC_NAME
- category  "fr_BE:2000";LC_ADDRESS
- category  "fr_BE:2000";LC_TELEPHONE
-+category  "fr_BE:2000";LC_MEASUREMENT
- 
- END LC_IDENTIFICATION
- 
-@@ -79,7 +80,7 @@
- LC_NUMERIC
- decimal_point             "<U002C>"
- thousands_sep             "<U002E>"
--grouping                  0;0
-+grouping                  3;3
- END LC_NUMERIC
- 
- LC_TIME
+---
+ localedata/locales/fr_BE |   20 +++++++++++++++-----
+ localedata/locales/fr_CA |   15 ++++++++++-----
+ localedata/locales/fr_CH |   19 ++++++++++++++-----
+ localedata/locales/fr_FR |   21 ++++++++++++++++++---
+ localedata/locales/fr_LU |   19 ++++++++++++++-----
+ 5 files changed, 71 insertions(+), 23 deletions(-)
+
+--- a/localedata/locales/fr_BE
++++ b/localedata/locales/fr_BE
 @@ -117,9 +118,10 @@
  t_fmt   "<U0025><U0054>"
  am_pm   "";""
@@ -38,10 +27,10 @@ Index: glibc-2.7/localedata/locales/fr_BE
 +<U0025><U0042><U0020><U0025><U0059><U002C><U0020>/
 +<U0025><U0048><U003A><U0025><U004D><U003A><U0025><U0053><U0020>/
 +<U0028><U0055><U0054><U0043><U0025><U007A><U0029>"
- END LC_TIME
  
- LC_PAPER
-@@ -142,8 +144,7 @@
+ week    7;19971130;4
+ first_weekday 2
+@@ -146,8 +148,7 @@
  END LC_MEASUREMENT
  
  LC_NAME
@@ -51,42 +40,19 @@ Index: glibc-2.7/localedata/locales/fr_BE
  END LC_NAME
  
  LC_ADDRESS
-@@ -155,4 +156,13 @@
+@@ -159,6 +160,9 @@
  country_ab2 "<U0042><U0045>"
  country_ab3 "<U0042><U0045><U004C>"
  country_num 056
 +country_name "<U0042><U0065><U006C><U0067><U0069><U0071><U0075><U0065>"
-+country_car "<U0042>"
-+% FIXME
 +country_post "<U0042><U0045>"
 +country_isbn 2
-+lang_name "<U0066><U0072><U0061><U006E><U00E7><U0061><U0069><U0073>"
-+lang_ab   "<U0066><U0072>"
-+lang_term "<U0066><U0072><U0061>"
-+lang_lib  "<U0066><U0072><U0065>"
- END LC_ADDRESS
-Index: glibc-2.7/localedata/locales/fr_CA
-===================================================================
---- glibc-2.7.orig/localedata/locales/fr_CA	2007-10-23 08:51:25.000000000 -0400
-+++ glibc-2.7/localedata/locales/fr_CA	2007-10-23 08:56:54.000000000 -0400
-@@ -43,6 +43,7 @@
- category  "fr_CA:2000";LC_NAME
- category  "fr_CA:2000";LC_ADDRESS
- category  "fr_CA:2000";LC_TELEPHONE
-+category  "fr_CA:2000";LC_MEASUREMENT
- 
- END LC_IDENTIFICATION
- 
-@@ -80,7 +81,7 @@
- LC_NUMERIC
- decimal_point             "<U002C>"
- thousands_sep             "<U0020>"
--grouping                  0;0
-+grouping                  3;3
- END LC_NUMERIC
- 
- LC_TIME
-@@ -118,9 +119,10 @@
+ % B
+ country_car    "<U0042>"
+ % Français
+--- a/localedata/locales/fr_CA
++++ b/localedata/locales/fr_CA
+@@ -115,9 +116,10 @@
  t_fmt   "<U0025><U0054>"
  am_pm   "";""
  t_fmt_ampm ""
@@ -100,7 +66,7 @@ Index: glibc-2.7/localedata/locales/fr_CA
  END LC_TIME
  
  LC_PAPER
-@@ -136,8 +138,7 @@
+@@ -133,8 +135,7 @@
  END LC_MEASUREMENT
  
  LC_NAME
@@ -110,43 +76,19 @@ Index: glibc-2.7/localedata/locales/fr_CA
  END LC_NAME
  
  LC_ADDRESS
-@@ -149,4 +150,12 @@
+@@ -146,6 +147,9 @@
  country_ab2 "<U0043><U0041>"
  country_ab3 "<U0043><U0041><U004E>"
  country_num 124
 +country_name "<U0043><U0061><U006E><U0061><U0064><U0061>"
-+country_car "<U0043><U0044><U004E>"
 +country_post "<U0043><U0041>"
 +country_isbn 2
-+lang_name "<U0066><U0072><U0061><U006E><U00E7><U0061><U0069><U0073>"
-+lang_ab   "<U0066><U0072>"
-+lang_term "<U0066><U0072><U0061>"
-+lang_lib  "<U0066><U0072><U0065>"
- END LC_ADDRESS
-Index: glibc-2.7/localedata/locales/fr_CH
-===================================================================
---- glibc-2.7.orig/localedata/locales/fr_CH	2007-10-23 08:51:25.000000000 -0400
-+++ glibc-2.7/localedata/locales/fr_CH	2007-10-23 08:56:54.000000000 -0400
-@@ -43,6 +43,7 @@
- category  "fr_CH:2000";LC_NAME
- category  "fr_CH:2000";LC_ADDRESS
- category  "fr_CH:2000";LC_TELEPHONE
-+category  "fr_CH:2000";LC_MEASUREMENT
- 
- END LC_IDENTIFICATION
- 
-@@ -64,9 +65,7 @@
- END LC_MONETARY
- 
- LC_NUMERIC
--decimal_point             "<U002C>"
--thousands_sep             ""
--grouping                  0;0
-+copy "de_CH"
- END LC_NUMERIC
- 
- LC_TIME
-@@ -104,9 +103,10 @@
+ % CDN
+ country_car    "<U0043><U0044><U004E>"
+ % Français
+--- a/localedata/locales/fr_CH
++++ b/localedata/locales/fr_CH
+@@ -102,9 +103,10 @@
  t_fmt   "<U0025><U0054>"
  am_pm   "";""
  t_fmt_ampm ""
@@ -160,7 +102,7 @@ Index: glibc-2.7/localedata/locales/fr_CH
  END LC_TIME
  
  LC_PAPER
-@@ -128,8 +128,7 @@
+@@ -126,8 +128,7 @@
  END LC_MEASUREMENT
  
  LC_NAME
@@ -170,41 +112,19 @@ Index: glibc-2.7/localedata/locales/fr_CH
  END LC_NAME
  
  LC_ADDRESS
-@@ -141,4 +140,12 @@
+@@ -139,6 +140,9 @@
  country_ab2 "<U0043><U0048>"
  country_ab3 "<U0043><U0048><U0045>"
  country_num 756
 +country_name "<U0053><U0075><U0069><U0073><U0073><U0065>"
-+country_car "<U0043><U0048>"
 +country_post "<U0043><U0048>"
 +country_isbn 2
-+lang_name "<U0066><U0072><U0061><U006E><U00E7><U0061><U0069><U0073>"
-+lang_ab   "<U0066><U0072>"
-+lang_term "<U0066><U0072><U0061>"
-+lang_lib  "<U0066><U0072><U0065>"
- END LC_ADDRESS
-Index: glibc-2.7/localedata/locales/fr_FR
-===================================================================
---- glibc-2.7.orig/localedata/locales/fr_FR	2007-10-23 08:51:25.000000000 -0400
-+++ glibc-2.7/localedata/locales/fr_FR	2007-10-23 08:57:55.000000000 -0400
-@@ -42,6 +42,7 @@
- category  "fr_FR:2000";LC_NAME
- category  "fr_FR:2000";LC_ADDRESS
- category  "fr_FR:2000";LC_TELEPHONE
-+category  "fr_FR:2000";LC_MEASUREMENT
- 
- END LC_IDENTIFICATION
- 
-@@ -88,7 +89,7 @@
- LC_NUMERIC
- decimal_point             "<U002C>"
- thousands_sep             "<U0020>"
--grouping                  0;0
-+grouping                  3;3
- END LC_NUMERIC
- 
- LC_TIME
-@@ -126,9 +127,10 @@
+ % CH
+ country_car    "<U0043><U0048>"
+ % Français
+--- a/localedata/locales/fr_FR
++++ b/localedata/locales/fr_FR
+@@ -137,9 +138,10 @@
  t_fmt   "<U0025><U0054>"
  am_pm   "";""
  t_fmt_ampm ""
@@ -216,9 +136,9 @@ Index: glibc-2.7/localedata/locales/fr_FR
 +<U0025><U0048><U003A><U0025><U004D><U003A><U0025><U0053><U0020>/
 +<U0028><U0055><U0054><U0043><U0025><U007A><U0029>"
  
- week    7;19971201;4
- first_weekday 1
-@@ -155,6 +157,11 @@
+ week    7;19971130;4
+ first_weekday 2
+@@ -166,6 +168,11 @@
  LC_NAME
  name_fmt    "<U0025><U0064><U0025><U0074><U0025><U0067><U0025><U0074>/
  <U0025><U006D><U0025><U0074><U0025><U0066>"
@@ -230,42 +150,18 @@ Index: glibc-2.7/localedata/locales/fr_FR
  END LC_NAME
  
  LC_ADDRESS
-@@ -166,4 +173,12 @@
+@@ -177,6 +184,9 @@
  country_ab2 "<U0046><U0052>"
  country_ab3 "<U0046><U0052><U0041>"
  country_num 250
 +country_name "<U0046><U0072><U0061><U006E><U0063><U0065>"
-+country_car "<U0046>"
 +country_post "<U0046><U0052>"
 +country_isbn 2
-+lang_name "<U0066><U0072><U0061><U006E><U00E7><U0061><U0069><U0073>"
-+lang_ab   "<U0066><U0072>"
-+lang_term "<U0066><U0072><U0061>"
-+lang_lib  "<U0066><U0072><U0065>"
- END LC_ADDRESS
-Index: glibc-2.7/localedata/locales/fr_LU
-===================================================================
---- glibc-2.7.orig/localedata/locales/fr_LU	2007-10-23 08:51:25.000000000 -0400
-+++ glibc-2.7/localedata/locales/fr_LU	2007-10-23 08:56:54.000000000 -0400
-@@ -42,6 +42,7 @@
- category  "fr_LU:2000";LC_NAME
- category  "fr_LU:2000";LC_ADDRESS
- category  "fr_LU:2000";LC_TELEPHONE
-+category  "fr_LU:2000";LC_MEASUREMENT
- 
- END LC_IDENTIFICATION
- 
-@@ -78,8 +79,8 @@
- 
- LC_NUMERIC
- decimal_point             "<U002C>"
--thousands_sep             ""
--grouping                  0;0
-+thousands_sep             "<U0020>"
-+grouping                  3;3
- END LC_NUMERIC
- 
- LC_TIME
+ % F
+ country_car    "<U0046>"
+ % Français
+--- a/localedata/locales/fr_LU
++++ b/localedata/locales/fr_LU
 @@ -117,9 +118,10 @@
  t_fmt   "<U0025><U0054>"
  am_pm   "";""
@@ -277,10 +173,10 @@ Index: glibc-2.7/localedata/locales/fr_LU
 +<U0025><U0042><U0020><U0025><U0059><U002C><U0020>/
 +<U0025><U0048><U003A><U0025><U004D><U003A><U0025><U0053><U0020>/
 +<U0028><U0055><U0054><U0043><U0025><U007A><U0029>"
+ first_workday 2
+ first_weekday 2
  END LC_TIME
- 
- LC_PAPER
-@@ -141,8 +143,7 @@
+@@ -143,8 +145,7 @@
  END LC_MEASUREMENT
  
  LC_NAME
@@ -290,16 +186,13 @@ Index: glibc-2.7/localedata/locales/fr_LU
  END LC_NAME
  
  LC_ADDRESS
-@@ -154,4 +155,12 @@
+@@ -156,6 +157,9 @@
  country_ab2 "<U004C><U0055>"
  country_ab3 "<U004C><U0055><U0058>"
  country_num 442
 +country_name "<U004C><U0075><U0078><U0065><U006D><U0062><U006F><U0075><U0072><U0067>"
-+country_car "<U004C>"
 +country_post "<U004C><U0055>"
 +country_isbn 2
-+lang_name "<U0066><U0072><U0061><U006E><U00E7><U0061><U0069><U0073>"
-+lang_ab   "<U0066><U0072>"
-+lang_term "<U0066><U0072><U0061>"
-+lang_lib  "<U0066><U0072><U0065>"
- END LC_ADDRESS
+ % L
+ country_car    "<U004C>"
+ % Français

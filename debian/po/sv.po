@@ -1,27 +1,21 @@
-# translation of glibc_2.7-11_sv.po to swedish
-# Translators, if you are not familiar with the PO format, gettext
-# documentation is worth reading, especially sections dedicated to
-# this format, e.g. by running:
-# info -n '(gettext)PO Files'
-# info -n '(gettext)Header Entry'
-# Some information specific to po-debconf are available at
-# /usr/share/doc/po-debconf/README-trans
-# or http://www.debian.org/intl/l10n/po-debconf/README-trans
-# Developers do not need to manually edit POT or PO files.
+# Translation of glibc debconf template to Swedish
+# Copyright (C) 2014 Martin Bagge <brother@bsnet.se>
+# This file is distributed under the same license as the glibc package.
 #
-# Martin Bagge <martin.bagge@bthstudent.se>, 2008.
+# Martin Bagge <brother@bsnet.se>, 2008, 2011, 2014
 msgid ""
 msgstr ""
 "Project-Id-Version: glibc_2.7-11_sv\n"
 "Report-Msgid-Bugs-To: glibc@packages.debian.org\n"
-"POT-Creation-Date: 2008-02-26 21:34+0100\n"
-"PO-Revision-Date: 2008-07-24 11:55+0100\n"
-"Last-Translator: Martin Bagge <brother@bsnet.se>\n"
-"Language-Team: swedish <debian-l10n-swedish@lists.debian.org>\n"
+"POT-Creation-Date: 2014-05-21 00:04+0200\n"
+"PO-Revision-Date: 2014-06-12 22:58+0200\n"
+"Last-Translator: Martin Bagge / brother <brother@bsnet.se>\n"
+"Language-Team: Swedish <debian-l10n-swedish@lists.debian.org>\n"
+"Language: Swedish\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #. Type: multiselect
 #. Choices
@@ -38,14 +32,25 @@ msgstr "Lokalanpassningar att generera:"
 #. Type: multiselect
 #. Description
 #: ../debhelper.in/locales.templates:1002
-msgid "Locales are a framework to switch between multiple languages and allow users to use their language, country, characters, collation order, etc."
-msgstr "Lokalanpassning (locale) ‰r ett ramverk fˆr att v‰xla mellan flera sprÂk fˆr att lÂta anv‰ndare anv‰nda sitt sprÂk, land, tecken och sorteringsordning, etc."
+msgid ""
+"Locales are a framework to switch between multiple languages and allow users "
+"to use their language, country, characters, collation order, etc."
+msgstr ""
+"Lokalanpassning (locale) √§r ett ramverk f√∂r att v√§xla mellan flera spr√•k f√∂r "
+"att l√•ta anv√§ndare anv√§nda sitt spr√•k, land, tecken och sorteringsordning, "
+"etc."
 
 #. Type: multiselect
 #. Description
 #: ../debhelper.in/locales.templates:1002
-msgid "Please choose which locales to generate. UTF-8 locales should be chosen by default, particularly for new installations. Other character sets may be useful for backwards compatibility with older systems and software."
-msgstr "V‰lj vilka lokalanpassningar som ska genereras. UTF-8-lokaler bˆr v‰ljas som standard, speciellt fˆr nya installationer. Andra teckenupps‰ttningar kan vara anv‰ndbara fˆr bakÂtkompatibilitet med ‰ldre system och programvara."
+msgid ""
+"Please choose which locales to generate. UTF-8 locales should be chosen by "
+"default, particularly for new installations. Other character sets may be "
+"useful for backwards compatibility with older systems and software."
+msgstr ""
+"V√§lj vilka lokalanpassningar som ska genereras. UTF-8-lokaler b√∂r v√§ljas som "
+"standard, speciellt f√∂r nya installationer. Andra teckenupps√§ttningar kan "
+"vara anv√§ndbara f√∂r bak√•tkompatibilitet med √§ldre system och programvara."
 
 #. Type: select
 #. Choices
@@ -57,19 +62,31 @@ msgstr "Ingen"
 #. Description
 #: ../debhelper.in/locales.templates:2002
 msgid "Default locale for the system environment:"
-msgstr "V‰lj lokalanpassning som ska vara standard i systemet:"
+msgstr "V√§lj lokalanpassning som ska vara standard i systemet:"
 
 #. Type: select
 #. Description
 #: ../debhelper.in/locales.templates:2002
-msgid "Many packages in Debian use locales to display text in the correct language for the user. You can choose a default locale for the system from the generated locales."
-msgstr "MÂnga paket i Debian anv‰nder lokalanpassningar fˆr att visa text i det korrekta sprÂket fˆr anv‰ndaren. Du kan v‰lja en standardlokal fˆr systemet frÂn de genererade lokalerna."
+msgid ""
+"Many packages in Debian use locales to display text in the correct language "
+"for the user. You can choose a default locale for the system from the "
+"generated locales."
+msgstr ""
+"M√•nga paket i Debian anv√§nder lokalanpassningar f√∂r att visa text i det "
+"korrekta spr√•ket f√∂r anv√§ndaren. Du kan v√§lja en standardlokal f√∂r systemet "
+"fr√•n de genererade lokalerna."
 
 #. Type: select
 #. Description
 #: ../debhelper.in/locales.templates:2002
-msgid "This will select the default language for the entire system. If this system is a multi-user system where not all users are able to speak the default language, they will experience difficulties."
-msgstr "Detta kommer att v‰lja standardsprÂket fˆr hela systemet. Om du kˆr ett system med flera anv‰ndare d‰r inte alla talar det valda sprÂket, kan de fÂ problem."
+msgid ""
+"This will select the default language for the entire system. If this system "
+"is a multi-user system where not all users are able to speak the default "
+"language, they will experience difficulties."
+msgstr ""
+"Detta kommer att v√§lja standardspr√•ket f√∂r hela systemet. Om du k√∂r ett "
+"system med flera anv√§ndare d√§r inte alla talar det valda spr√•ket, kan de f√• "
+"problem."
 
 #. Type: boolean
 #. Description
@@ -80,54 +97,144 @@ msgstr "Vill du uppgradera glibc nu?"
 #. Type: boolean
 #. Description
 #: ../debhelper.in/libc.templates:1001
-msgid "Running services and programs that are using NSS need to be restarted, otherwise they might not be able to do lookup or authentication any more. The installation process is able to restart some services (such as ssh or telnetd), but other programs cannot be restarted automatically. One such program that needs manual stopping and restart after the glibc upgrade by yourself is xdm - because automatic restart might disconnect your active X11 sessions."
-msgstr "Kˆrande tj‰nster och program som anv‰nder NSS behˆver startas om, annars kanske de inte kan kˆra uppslag eller autentisering l‰ngre. Installationen kan starta om nÂgra tj‰nster (ex. ssh och telnetd), andra program kan inte startas om automatiskt - xdm ‰r ett sÂdant program som du mÂste starta om sj‰lv eftersom det skulle starta om din X-session."
+msgid ""
+"Running services and programs that are using NSS need to be restarted, "
+"otherwise they might not be able to do lookup or authentication any more. "
+"The installation process is able to restart some services (such as ssh or "
+"telnetd), but other programs cannot be restarted automatically. One such "
+"program that needs manual stopping and restart after the glibc upgrade by "
+"yourself is xdm - because automatic restart might disconnect your active X11 "
+"sessions."
+msgstr ""
+"K√∂rande tj√§nster och program som anv√§nder NSS beh√∂ver startas om, annars "
+"kanske de inte kan k√∂ra uppslag eller autentisering l√§ngre. Installationen "
+"kan starta om n√•gra tj√§nster (ex. ssh och telnetd), andra program kan inte "
+"startas om automatiskt - xdm √§r ett s√•dant program som du m√•ste starta om "
+"sj√§lv eftersom det skulle starta om din X-session."
 
 #. Type: boolean
 #. Description
 #: ../debhelper.in/libc.templates:1001
-msgid "This script detected the following installed services which must be stopped before the upgrade: ${services}"
-msgstr "Skriptet hittade fˆljande installerade tj‰nster som mÂste stoppas fˆre uppgraderingen: ${services}"
+msgid ""
+"This script detected the following installed services which must be stopped "
+"before the upgrade: ${services}"
+msgstr ""
+"Skriptet hittade f√∂ljande installerade tj√§nster som m√•ste stoppas f√∂re "
+"uppgraderingen: ${services}"
 
 #. Type: boolean
 #. Description
 #: ../debhelper.in/libc.templates:1001
-msgid "If you want to interrupt the upgrade now and continue later, please answer No to the question below."
-msgstr "Om du vill avbryta uppgraderingen nu och forts‰tta senare anger du Nej pÂ frÂgan nedan."
+msgid ""
+"If you want to interrupt the upgrade now and continue later, please answer "
+"No to the question below."
+msgstr ""
+"Om du vill avbryta uppgraderingen nu och forts√§tta senare anger du Nej p√• "
+"fr√•gan nedan."
 
 #. Type: string
 #. Description
 #: ../debhelper.in/libc.templates:2001
 msgid "Services to restart for GNU libc library upgrade:"
-msgstr "Tj‰nster att starta om fˆr uppgradering av GNU libc-biblioteket:"
+msgstr "Tj√§nster att starta om f√∂r uppgradering av GNU libc-biblioteket:"
 
 #. Type: string
 #. Description
 #: ../debhelper.in/libc.templates:2001
-msgid "Running services and programs that are using NSS need to be restarted, otherwise they might not be able to do lookup or authentication any more (for services such as ssh, this can affect your ability to login). Please review the following space-separated list of init.d scripts for services to be restarted now, and correct it if needed."
-msgstr "Kˆrande tj‰nster och program som anv‰nder NSS behˆver startas om, annars kanske de inte kan kˆra uppslag eller autentisering l‰ngre (fˆr tj‰nster sÂsom ssh kan det pÂverka din mˆjlighet att logga in). Granska fˆljande blankstegsseparerade lista ˆver init.d-skript fˆr tj‰nster som ska startas om nu, och gˆr ‰ndringar om det behˆvs."
+msgid ""
+"Running services and programs that are using NSS need to be restarted, "
+"otherwise they might not be able to do lookup or authentication any more "
+"(for services such as ssh, this can affect your ability to login). Please "
+"review the following space-separated list of init.d scripts for services to "
+"be restarted now, and correct it if needed."
+msgstr ""
+"K√∂rande tj√§nster och program som anv√§nder NSS beh√∂ver startas om, annars "
+"kanske de inte kan k√∂ra uppslag eller autentisering l√§ngre (f√∂r tj√§nster "
+"s√•som ssh kan det p√•verka din m√∂jlighet att logga in). Granska f√∂ljande "
+"blankstegsseparerade lista √∂ver init.d-skript f√∂r tj√§nster som ska startas "
+"om nu, och g√∂r √§ndringar om det beh√∂vs."
 
 #. Type: string
 #. Description
 #: ../debhelper.in/libc.templates:2001
-msgid "Note: restarting sshd/telnetd should not affect any existing connections."
-msgstr "Observera: omstart av sshd/telnetd ska inte pÂverka befintliga anslutningar."
+msgid ""
+"Note: restarting sshd/telnetd should not affect any existing connections."
+msgstr ""
+"Observera: omstart av sshd/telnetd ska inte p√•verka befintliga anslutningar."
 
 #. Type: error
 #. Description
 #: ../debhelper.in/libc.templates:3001
 msgid "Failure restarting some services for GNU libc upgrade"
-msgstr "Misslyckades med att starta om vissa tj‰nster fˆr uppgraderingen av GNU libc"
+msgstr ""
+"Misslyckades med att starta om vissa tj√§nster f√∂r uppgraderingen av GNU libc"
 
 #. Type: error
 #. Description
 #: ../debhelper.in/libc.templates:3001
-msgid "The following services could not be restarted for the GNU libc library upgrade:"
-msgstr "Fˆljande tj‰nster kunde inte startas om fˆr uppgraderingen av GNU libc-biblioteket:"
+msgid ""
+"The following services could not be restarted for the GNU libc library "
+"upgrade:"
+msgstr ""
+"F√∂ljande tj√§nster kunde inte startas om f√∂r uppgraderingen av GNU libc-"
+"biblioteket:"
 
 #. Type: error
 #. Description
 #: ../debhelper.in/libc.templates:3001
-msgid "You will need to start these manually by running '/etc/init.d/<service> start'."
-msgstr "Du behˆver starta dessa manuellt genom att kˆra \"/etc/init.d/<tj‰nst> start\"."
+msgid ""
+"You will need to start these manually by running '/etc/init.d/<service> "
+"start'."
+msgstr ""
+"Du beh√∂ver starta dessa manuellt genom att k√∂ra \"/etc/init.d/<tj√§nst> start"
+"\"."
 
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:4001
+msgid "xscreensaver and xlockmore must be restarted before upgrading"
+msgstr ""
+"xscreensaver och xlockmore m√•ste startas om innan uppgraderingen p√•b√∂rjas"
+
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:4001
+msgid ""
+"One or more running instances of xscreensaver or xlockmore have been "
+"detected on this system. Because of incompatible library changes, the "
+"upgrade of the GNU libc library will leave you unable to authenticate to "
+"these programs. You should arrange for these programs to be restarted or "
+"stopped before continuing this upgrade, to avoid locking your users out of "
+"their current sessions."
+msgstr ""
+"En eller flera instanser av xscreensaver eller xlockmore har hittats p√• "
+"systemet. P√• grund av inkompatibilitet i och med f√∂r√§ndringar av biblioteket "
+"kan uppgraderingen av GNU libc inneb√§ra att du inte kan autentisera med "
+"dessa program. Se till att alla instanser av programmen startas om eller "
+"stoppas innan du forts√§tter med denna uppgradering f√∂r att undvika att "
+"anv√§ndare blir utel√•sta fr√•n sina sessioner."
+
+#. Type: boolean
+#. Description
+#: ../debhelper.in/libc.templates:5001
+msgid "Restart services during package upgrades without asking?"
+msgstr "Ska tj√§nster startas om vid paketuppgraderingar utan att f√∂rst fr√•ga?"
+
+#. Type: boolean
+#. Description
+#: ../debhelper.in/libc.templates:5001
+msgid ""
+"There are services installed on your system which need to be restarted when "
+"certain libraries, such as libpam, libc, and libssl, are upgraded. Since "
+"these restarts may cause interruptions of service for the system, you will "
+"normally be prompted on each upgrade for the list of services you wish to "
+"restart.  You can choose this option to avoid being prompted; instead, all "
+"necessary restarts will be done for you automatically so you can avoid being "
+"asked questions on each library upgrade."
+msgstr ""
+"Det finns tj√§nster installerade p√• systemet som beh√∂ver startas om n√§r vissa "
+"bibliotek, exempelvis libpam, libc och libssl, uppgraderas. Eftersom dessa "
+"omstarter kan orsaka avbrott i tj√§nsten st√§lls normalt en fr√•ga vid varje "
+"uppgradering d√§r en lista med tj√§nster som ska startas om presenteras. Du "
+"kan v√§lja att aktivera detta alternativ f√∂r att undvika att fr√•gan st√§lls. "
+"Ist√§llet kommer alla n√∂dv√§ndiga omstarter att g√∂ras automatiskt."

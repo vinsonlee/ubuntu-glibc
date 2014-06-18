@@ -7,9 +7,14 @@
 # DP: Upstream status: not submitted
 # DP: Date: 2006-01-16
 
---- localedata/SUPPORTED.orig
-+++ localedata/SUPPORTED
-@@ -111,6 +111,7 @@
+---
+ localedata/SUPPORTED     |    1 +
+ localedata/locales/en_DK |   35 +++++------------------------------
+ 2 files changed, 6 insertions(+), 30 deletions(-)
+
+--- a/localedata/SUPPORTED
++++ b/localedata/SUPPORTED
+@@ -118,6 +118,7 @@
  en_CA.UTF-8/UTF-8 \
  en_CA/ISO-8859-1 \
  en_DK.UTF-8/UTF-8 \
@@ -17,8 +22,8 @@
  en_DK/ISO-8859-1 \
  en_GB.UTF-8/UTF-8 \
  en_GB/ISO-8859-1 \
---- localedata/locales/en_DK.orig
-+++ localedata/locales/en_DK
+--- a/localedata/locales/en_DK
++++ b/localedata/locales/en_DK
 @@ -60,27 +60,11 @@
  END LC_CTYPE
  
@@ -49,7 +54,7 @@
  END LC_NUMERIC
  
  LC_TIME
-@@ -125,8 +109,7 @@
+@@ -128,8 +112,7 @@
  END LC_TIME
  
  LC_MESSAGES
@@ -59,7 +64,7 @@
  END LC_MESSAGES
  
  LC_PAPER
-@@ -142,17 +125,9 @@
+@@ -145,8 +128,7 @@
  END LC_MEASUREMENT
  
  LC_NAME
@@ -69,13 +74,3 @@
  END LC_NAME
  
  LC_ADDRESS
--postal_fmt    "<U0025><U0066><U0025><U004E><U0025><U0061><U0025><U004E>/
--<U0025><U0064><U0025><U004E><U0025><U0062><U0025><U004E><U0025><U0073>/
--<U0020><U0025><U0068><U0020><U0025><U0065><U0020><U0025><U0072><U0025>/
--<U004E><U0025><U0025><U007A><U0020><U0025><U0054><U0025>/
--<U004E><U0025><U0063><U0025><U004E>"
--country_ab2 "<U0044><U004B>"
--country_ab3 "<U0044><U004E><U004B>"
--country_num 208
-+copy "da_DK"
- END LC_ADDRESS

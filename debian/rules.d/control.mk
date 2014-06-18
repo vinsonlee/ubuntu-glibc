@@ -1,21 +1,20 @@
-control_deps := $(addprefix debian/control.in/, libc6 libc6.1 libc0.1 libc0.3 sparc64 s390x powerpc ppc64 opt amd64 mipsn32 mips64)
+libc_packages := libc6 libc6.1 libc0.1 libc0.3
+libc0_1_archs := kfreebsd-amd64 kfreebsd-i386
+libc0_3_archs := hurd-i386
+libc6_archs   := amd64 arm arm64 armel armhf hppa i386 m68k mips mipsel mipsn32 mipsn32el mips64 mips64el powerpc powerpcspe ppc64 ppc64el sparc sparc64 s390x sh4 x32
+libc6_1_archs := alpha ia64
 
-debian/control.in/libc6: debian/control.in/libc debian/rules.d/control.mk
-	sed -e 's%@libc@%libc6%g' \
-	    -e 's%@archs@%amd64 arm armeb armel i386 m32r m68k mips mipsel powerpc ppc64 sparc s390 hppa sh3 sh4 sh3eb sh4eb%g' < $< > $@
+control_deps := $(wildcard debian/control.in/*) $(addprefix debian/control.in/, $(libc_packages))
 
-debian/control.in/libc6.1: debian/control.in/libc debian/rules.d/control.mk
-	sed -e 's%@libc@%libc6.1%g;s%@archs@%alpha ia64%g' < $< > $@
-
-debian/control.in/libc0.3: debian/control.in/libc debian/rules.d/control.mk
-	sed -e 's%@libc@%libc0.3%g;s%@archs@%hurd-i386%g;s/nscd, //' < $< > $@
-
-debian/control.in/libc0.1: debian/control.in/libc debian/rules.d/control.mk
-	sed -e 's%@libc@%libc0.1%g;s%@archs@%kfreebsd-i386 kfreebsd-amd64%g' < $< > $@
+$(patsubst %,debian/control.in/%,$(libc_packages)) :: debian/control.in/% : debian/control.in/libc debian/rules.d/control.mk
+	sed -e "s%@libc@%$*%g" \
+	    -e "s%@archs@%$($(subst .,_,$*)_archs)%g" \
+	    -e "s%@parchs@%$(filter-out $(no_libc_profile),$($(subst .,_,$*)_archs))%g" \
+	    -e "s%@libc-dev-conflict@%$(foreach arch,$(filter-out $*,$(libc_packages)),$(arch)-dev,)%g" \
+	    < $< > $@
 
 debian/control: $(stamp)control
-$(stamp)control: debian/control.in/main $(control_deps) \
-		   debian/rules.d/control.mk # debian/sysdeps/depflags.pl
+$(stamp)control: debian/rules.d/control.mk $(control_deps)
 
 	# Check that all files end with a new line
 	set -e ; for i in debian/control.in/* ; do \
@@ -28,17 +27,22 @@ $(stamp)control: debian/control.in/main $(control_deps) \
 	cat debian/control.in/libc0.3		>> $@T
 	cat debian/control.in/libc0.1		>> $@T
 	cat debian/control.in/i386		>> $@T
+	cat debian/control.in/sparc		>> $@T
 	cat debian/control.in/sparc64		>> $@T
-	cat debian/control.in/s390x		>> $@T
+	cat debian/control.in/s390 		>> $@T
 	cat debian/control.in/amd64		>> $@T
 	cat debian/control.in/powerpc		>> $@T
 	cat debian/control.in/ppc64		>> $@T
+	cat debian/control.in/mips32		>> $@T
 	cat debian/control.in/mipsn32		>> $@T
 	cat debian/control.in/mips64		>> $@T
+	cat debian/control.in/armhf		>> $@T
+	cat debian/control.in/armel		>> $@T
 	cat debian/control.in/kfreebsd-i386	>> $@T
+	cat debian/control.in/x32		>> $@T
 	cat debian/control.in/opt		>> $@T
 	cat debian/control.in/libnss-dns-udeb	>> $@T
 	cat debian/control.in/libnss-files-udeb	>> $@T
-	sed -e 's%@libc@%$(libc)%g;s%@glibc@%glibc%g' < $@T > debian/control
+	sed -e 's%@libc@%$(libc)%g' < $@T > debian/control
 	rm $@T
 	touch $@

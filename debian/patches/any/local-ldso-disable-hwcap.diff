@@ -7,9 +7,22 @@
 # DP:                 only need it because we support in-place upgrades.
 # DP: Date: 2003-10-28, (Updated 2005-01-02 gotom, 2007-05-20 aurel32)
 
---- elf/dl-sysdep.c.orig
-+++ elf/dl-sysdep.c
-@@ -408,6 +408,20 @@
+---
+ elf/dl-cache.c  |    6 ++++++
+ elf/dl-hwcaps.c |   21 +++++++++++++++++++--
+ 2 files changed, 25 insertions(+), 2 deletions(-)
+
+--- a/elf/dl-hwcaps.c
++++ b/elf/dl-hwcaps.c
+@@ -42,6 +42,7 @@ _dl_important_hwcaps (const char *platform, size_t platform_len, size_t *sz,
+   size_t cnt = platform != NULL;
+   size_t n, m;
+   size_t total;
++  struct r_strlenpair *temp;
+   struct r_strlenpair *result;
+   struct r_strlenpair *rp;
+   char *cp;
+@@ -417,8 +417,22 @@
    /* For TLS enabled builds always add 'tls'.  */
    ++cnt;
  
@@ -28,9 +41,12 @@
 +    }
 +
    /* Create temporary data structure to generate result table.  */
-   temp = (struct r_strlenpair *) alloca (cnt * sizeof (*temp));
+-  struct r_strlenpair temp[cnt];
++  temp = (struct r_strlenpair *) alloca (cnt * sizeof (*temp));
    m = 0;
-@@ -482,8 +496,11 @@
+ #ifdef NEED_DL_SYSINFO_DSO
+   if (dsocaps != NULL)
+@@ -496,8 +510,11 @@
    *sz = 1 << cnt;
    result = (struct r_strlenpair *) malloc (*sz * sizeof (*result) + total);
    if (result == NULL)
@@ -44,8 +60,8 @@
  
    if (cnt == 1)
      {
---- elf/dl-cache.c.orig
-+++ elf/dl-cache.c
+--- a/elf/dl-cache.c
++++ b/elf/dl-cache.c
 @@ -244,6 +244,7 @@
    if (cache_new != (void *) -1)
      {
@@ -54,16 +70,18 @@
  
        /* This is where the strings start.  */
        cache_data = (const char *) cache_new;
-@@ -255,11 +256,16 @@
+@@ -255,6 +256,9 @@
        if (platform != (uint64_t) -1)
  	platform = 1ULL << platform;
  
 +      if (__access ("/etc/ld.so.nohwcap", F_OK) == 0)
 +	disable_hwcap = 1;
 +
-       /* Only accept hwcap if it's for the right platform.  */
  #define _DL_HWCAP_TLS_MASK (1LL << 63)
- #define HWCAP_CHECK \
+       uint64_t hwcap_exclude = ~((GLRO(dl_hwcap) & GLRO(dl_hwcap_mask))
+ 				 | _DL_HWCAP_PLATFORM | _DL_HWCAP_TLS_MASK);
+@@ -265,6 +269,8 @@
+ 	continue;							      \
        if (GLRO(dl_osversion) && lib->osversion > GLRO(dl_osversion))	      \
  	continue;							      \
 +      if (disable_hwcap && lib->hwcap != 0)				      \

@@ -1,5 +1,6 @@
 # Kenshi Muto <kmuto@debian.org>, 2007
 # GOTO Masanori <gotom@debian.org>, -2007
+# Nobuhiro Iwamatsu <iwamatsu@debian.org>, 2010
 #
 #    Translators, if you are not familiar with the PO format, gettext
 #    documentation is worth reading, especially sections dedicated to
@@ -15,12 +16,13 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: locales 2.7-9\n"
+"Project-Id-Version: eglibc_2.13-38\n"
 "Report-Msgid-Bugs-To: glibc@packages.debian.org\n"
-"POT-Creation-Date: 2008-02-26 21:34+0100\n"
-"PO-Revision-Date: 2008-02-27 09:28+0900\n"
-"Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
-"Language-Team: Japanese <ja@li.org>\n"
+"POT-Creation-Date: 2014-05-21 00:04+0200\n"
+"PO-Revision-Date: 2012-12-31 23:29+0900\n"
+"Last-Translator: Nobuhiro Iwamatsu <iwamatsu@debian.org>\n"
+"Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
+"Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -45,7 +47,7 @@ msgid ""
 "to use their language, country, characters, collation order, etc."
 msgstr ""
 "ロケールとは、複数の言語を切り替え、ユーザが自身の言語・国・文字・並べ替え順"
-"序などを使えるように許可するための仕組みです。"
+"序などを使えるようにするための仕組みです。"
 
 #. Type: multiselect
 #. Description
@@ -69,7 +71,7 @@ msgstr "なし"
 #. Description
 #: ../debhelper.in/locales.templates:2002
 msgid "Default locale for the system environment:"
-msgstr "システム標準の環境変数として設定するデフォルトロケール:"
+msgstr "システムの環境変数として設定するデフォルトロケール:"
 
 #. Type: select
 #. Description
@@ -79,7 +81,7 @@ msgid ""
 "for the user. You can choose a default locale for the system from the "
 "generated locales."
 msgstr ""
-"ユーザに正しい言語でテキストを表示するため、Debian では多くのパッケージがロ"
+"ユーザに合った言語でテキストを表示するため、Debian では多くのパッケージがロ"
 "ケールを使用します。生成したロケールの中からシステムでのデフォルトロケールを"
 "選択できます。"
 
@@ -91,9 +93,9 @@ msgid ""
 "is a multi-user system where not all users are able to speak the default "
 "language, they will experience difficulties."
 msgstr ""
-"これはシステム全体のデフォルトロケールを選ぶことになります。このシステムがマ"
-"ルチユーザシステムで、すべてのユーザがデフォルトの言語を話すことができるとい"
-"うわけではない場合は、そういった人々は困難を感じることになってしまいます。"
+"これはシステム全体のデフォルトの言語を選ぶことになります。このシステムがマル"
+"チユーザシステムで、すべてのユーザがデフォルトの言語を話すことができるという"
+"わけではない場合は、そういった人々は困難を感じることになってしまいます。"
 
 #. Type: boolean
 #. Description
@@ -112,7 +114,14 @@ msgid ""
 "program that needs manual stopping and restart after the glibc upgrade by "
 "yourself is xdm - because automatic restart might disconnect your active X11 "
 "sessions."
-msgstr "NSS を利用している実行中のサービスおよびプログラムは、再起動する必要があります。さもないと、ルックアップおよび認証がもう利用できないことになります。インストール手続きではいくつかのサービス (ssh や telnetd など) を再起動することができますが、その他のプログラムは自動では再起動されません。手動での停止および glibc の更新のあとにあなた自身で再起動する必要のあるそのようなプログラムの 1 つとしては、xdm があります。というのも、自動再起動はあなたのアクティブな X11 のセッションを閉じてしまうことになるからです。"
+msgstr ""
+"NSS を利用している実行中のサービスおよびプログラムは、再起動する必要がありま"
+"す。さもないと、ルックアップおよび認証がもう利用できないことになります。イン"
+"ストール手続きではいくつかのサービス (ssh や telnetd など) を再起動することが"
+"できますが、その他のプログラムは自動では再起動されません。手動での停止および "
+"glibc の更新のあとにあなた自身で再起動する必要のあるそのようなプログラムの 1 "
+"つとしては、xdm があります。というのも、自動再起動はあなたのアクティブな X11 "
+"のセッションを閉じてしまうことになるからです。"
 
 #. Type: boolean
 #. Description
@@ -120,7 +129,9 @@ msgstr "NSS を利用している実行中のサービスおよびプログラ�
 msgid ""
 "This script detected the following installed services which must be stopped "
 "before the upgrade: ${services}"
-msgstr "スクリプトは、更新前に停止されなければならない以下のインストールされたサービスを検出しました: ${services}"
+msgstr ""
+"スクリプトは、更新前に停止されなければならない以下のサービスがインストールさ"
+"れているのを検出しました: ${services}"
 
 #. Type: boolean
 #. Description
@@ -128,7 +139,9 @@ msgstr "スクリプトは、更新前に停止されなければならない以
 msgid ""
 "If you want to interrupt the upgrade now and continue later, please answer "
 "No to the question below."
-msgstr "更新を今中止して後日続行したいのであれば、以下の質問で「いいえ」と答えてください。"
+msgstr ""
+"更新を今中止して後日続行したいのであれば、以下の質問で「いいえ」と答えてくだ"
+"さい。"
 
 #. Type: string
 #. Description
@@ -149,15 +162,15 @@ msgstr ""
 "NSS を利用している実行中のサービスおよびプログラムは、再起動する必要がありま"
 "す。さもないと、ルックアップおよび認証がもう利用できないことになります (ssh "
 "のようなサービスでは、これはログインできるかどうかに影響します)。以下のスペー"
-"スで区切られた、今再起動するサービスの init.d スクリプトのリストを見て、必要"
-"なら修正してください。"
+"スで区切られた、以下の init.d スクリプト一覧を確認して、サービスをここで再起"
+"動する必要があれば修正してください。"
 
 #. Type: string
 #. Description
 #: ../debhelper.in/libc.templates:2001
 msgid ""
 "Note: restarting sshd/telnetd should not affect any existing connections."
-msgstr "注意: sshd/telnetd の再起動は既存の接続には影響しないはずです。"
+msgstr "補足: sshd/telnetd の再起動は既存の接続には影響しないはずです。"
 
 #. Type: error
 #. Description
@@ -183,3 +196,54 @@ msgid ""
 msgstr ""
 "'/etc/init.d/<サービス> start' を実行することで、これらを手動で起動する必要が"
 "あります。"
+
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:4001
+msgid "xscreensaver and xlockmore must be restarted before upgrading"
+msgstr ""
+"xscreensaver と xlockmore はアップグレードする前に再起動する必要があります。"
+
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:4001
+msgid ""
+"One or more running instances of xscreensaver or xlockmore have been "
+"detected on this system. Because of incompatible library changes, the "
+"upgrade of the GNU libc library will leave you unable to authenticate to "
+"these programs. You should arrange for these programs to be restarted or "
+"stopped before continuing this upgrade, to avoid locking your users out of "
+"their current sessions."
+msgstr ""
+"このシステムで 1 つ以上の xscreensaver あるいは xlockmore の動作が検出されま"
+"した。非互換のライブラリ変更のため、GNU libc パッケージの更新はこれらのプログ"
+"ラムでの認証ができない状態になるでしょう。ユーザが現在のセッションの外に締め"
+"出されるのを避けるため、このパッケージの更新を続ける前に、これらのプログラム"
+"を再起動するか停止するように手配すべきです。"
+
+#. Type: boolean
+#. Description
+#: ../debhelper.in/libc.templates:5001
+msgid "Restart services during package upgrades without asking?"
+msgstr ""
+"パッケージのアップグレード中、質問することなくサービスを再起動しますか?"
+
+#. Type: boolean
+#. Description
+#: ../debhelper.in/libc.templates:5001
+msgid ""
+"There are services installed on your system which need to be restarted when "
+"certain libraries, such as libpam, libc, and libssl, are upgraded. Since "
+"these restarts may cause interruptions of service for the system, you will "
+"normally be prompted on each upgrade for the list of services you wish to "
+"restart.  You can choose this option to avoid being prompted; instead, all "
+"necessary restarts will be done for you automatically so you can avoid being "
+"asked questions on each library upgrade."
+msgstr ""
+"このシステムには、libpam や libc、libssl といった特定のライブラリがアップグ"
+"レードされたときに再起動を必要とするサービスがインストールされています。この"
+"再起動はそのシステムで動作しているサービスの中断を伴う可能性があるため、通常"
+"は再起動させるサービス一覧をアップグレードの度に質問します。このオプションを"
+"選択するとその質問を避けられます。代わりに、再起動が必要な場合は全て自動で再"
+"起動させるため、ライブラリをアップグレードする度に質問されるのを避けられま"
+"す。"

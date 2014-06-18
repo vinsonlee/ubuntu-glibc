@@ -1,11 +1,11 @@
 .rn '' }`
-''' $RCSfile: sprof.1,v $$Revision: 1.1.2.1 $$Date: 2003/09/22 21:33:35 $
-'''
-''' $Log: sprof.1,v $
-''' Revision 1.1.2.1  2003/09/22 21:33:35  jbailey
-''' New directory for things we add to the package
-'''
-'''
+.\" $RCSfile: sprof.1,v $$Revision: 1.1.2.1 $$Date: 2003/09/22 21:33:35 $
+.\"
+.\" $Log: sprof.1,v $
+.\" Revision 1.1.2.1  2003/09/22 21:33:35  jbailey
+.\" New directory for things we add to the package
+.\"
+.\"
 .de Sh
 .br
 .if t .Sp
@@ -34,13 +34,18 @@
 
 .fi
 ..
-'''
-'''
-'''     Set up \*(-- to give an unbreakable dash;
-'''     string Tr holds user defined translation string.
-'''     Bell System Logo is used as a dummy character.
-'''
-.tr \(*W-|\(bv\*(Tr
+.\"
+.\"
+.\"     Set up \*(-- to give an unbreakable dash;
+.\"     string Tr holds user defined translation string.
+.\"     Bell System Logo is used as a dummy character.
+.\"
+.\"     Avoid warning from groff about undefined string
+.if \n(.g \{\
+. if !dTr .ds Tr
+.\}
+.ie t .tr \(*W-|\(bv\*(Tr
+.el .tr \(*W-\*(Tr
 .ie n \{\
 .ds -- \(*W-
 .ds PI pi
@@ -48,10 +53,10 @@
 .if (\n(.H=4u)&(1m=20u) .ds -- \(*W\h'-12u'\(*W\h'-8u'-\" diablo 12 pitch
 .ds L" ""
 .ds R" ""
-'''   \*(M", \*(S", \*(N" and \*(T" are the equivalent of
-'''   \*(L" and \*(R", except that they are used on ".xx" lines,
-'''   such as .IP and .SH, which do another additional levels of
-'''   double-quote interpretation
+.\"   \*(M", \*(S", \*(N" and \*(T" are the equivalent of
+.\"   \*(L" and \*(R", except that they are used on ".xx" lines,
+.\"   such as .IP and .SH, which do another additional levels of
+.\"   double-quote interpretation
 .ds M" """
 .ds S" """
 .ds N" """""
@@ -82,13 +87,19 @@
 'br\}
 .\"	If the F register is turned on, we'll generate
 .\"	index entries out stderr for the following things:
-.\"		TH	Title 
+.\"		TH	Title
 .\"		SH	Header
-.\"		Sh	Subsection 
+.\"		Sh	Subsection
 .\"		Ip	Item
 .\"		X<>	Xref  (embedded
 .\"	Of course, you have to process the output yourself
 .\"	in some meaningful fashion.
+.\"     Avoid warning from groff about undefined register and macro
+. de IX
+..
+.if \n(.g \{\
+. if !rF . nr F 0
+.\}
 .if \nF \{
 .de IX
 .tm Index:\\$1\t\\n%\t"\\$2"
@@ -195,17 +206,17 @@ sprof \- Read and display shared object profiling data
 .SH "SYNOPSIS"
 \fBsprof\fR \fB\-p\fR|\fB\-c\fR [\fB\-q\fR]
 .SH "DESCRIPTION"
-\fB--call-pairs\fR, \fB\-c\fR
+\fB\-\-call-pairs\fR, \fB\-c\fR
 .PP
 .Vb 1
 \&        print list of count paths and their number of use
 .Ve
-\fB--flat-profile\fR, \fB\-p\fR
+\fB\-\-flat-profile\fR, \fB\-p\fR
 .PP
 .Vb 1
 \&        generate flat profile with counts and ticks
 .Ve
-\fB--graph\fR, \fB\-q\fR
+\fB\-\-graph\fR, \fB\-q\fR
 .PP
 .Vb 1
 \&        generate call graph

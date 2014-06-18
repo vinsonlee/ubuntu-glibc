@@ -1,16 +1,17 @@
-# Italian (it) translation of debconf templates for glibc
+# Italian (it) translation of debconf templates for eglibc
 # Copyright (C) 2006 Free Software Foundation, Inc.
-# This file is distributed under the same license as the glibc package.
-# Luca Monducci <luca.mo@tiscali.it>, 2005-2008.
+# This file is distributed under the same license as the eglibc package.
+# Luca Monducci <luca.mo@tiscali.it>, 2005-2009.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: glibc 2.7 debconf templates\n"
+"Project-Id-Version: eglibc 2.9 debconf templates\n"
 "Report-Msgid-Bugs-To: glibc@packages.debian.org\n"
-"POT-Creation-Date: 2008-02-26 21:34+0100\n"
-"PO-Revision-Date: 2008-03-08 11:50+0100\n"
+"POT-Creation-Date: 2014-05-21 00:04+0200\n"
+"PO-Revision-Date: 2009-05-31 10:25+0200\n"
 "Last-Translator: Luca Monducci <luca.mo@tiscali.it>\n"
 "Language-Team: Italian <debian-l10n-italian@lists.debian.org>\n"
+"Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -19,7 +20,7 @@ msgstr ""
 #. Choices
 #: ../debhelper.in/locales.templates:1001
 msgid "All locales"
-msgstr "Tutti i locale"
+msgstr "Tutti i «locale»"
 
 #. Type: multiselect
 #. Description
@@ -188,3 +189,46 @@ msgid ""
 "You will need to start these manually by running '/etc/init.d/<service> "
 "start'."
 msgstr "È necessario avviarli manualmente con «/etc/init.d/<servizio> start»."
+
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:4001
+msgid "xscreensaver and xlockmore must be restarted before upgrading"
+msgstr "Riavvio di xscreensaver e xlockmore prima dell'aggiornamento"
+
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:4001
+msgid ""
+"One or more running instances of xscreensaver or xlockmore have been "
+"detected on this system. Because of incompatible library changes, the "
+"upgrade of the GNU libc library will leave you unable to authenticate to "
+"these programs. You should arrange for these programs to be restarted or "
+"stopped before continuing this upgrade, to avoid locking your users out of "
+"their current sessions."
+msgstr ""
+"Su questo sistema sono state rilevate una o più istanze di xscreensaver o "
+"xlockmore in esecuzione. A causa di modifiche incompatibili nella libreria, "
+"l'aggiornamento della libreria GNU libc impedirà di autenticarsi con questi "
+"programmi. È necessario riavviare o fermare questi servizi prima di "
+"proseguire con questo aggiornamento per evitare di buttare fuori gli utenti "
+"dalle sessioni attualmente aperte."
+
+#. Type: boolean
+#. Description
+#: ../debhelper.in/libc.templates:5001
+msgid "Restart services during package upgrades without asking?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../debhelper.in/libc.templates:5001
+msgid ""
+"There are services installed on your system which need to be restarted when "
+"certain libraries, such as libpam, libc, and libssl, are upgraded. Since "
+"these restarts may cause interruptions of service for the system, you will "
+"normally be prompted on each upgrade for the list of services you wish to "
+"restart.  You can choose this option to avoid being prompted; instead, all "
+"necessary restarts will be done for you automatically so you can avoid being "
+"asked questions on each library upgrade."
+msgstr ""

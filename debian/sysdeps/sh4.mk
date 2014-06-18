@@ -1,6 +1,4 @@
-# Some tests assume a fast machine
-TIMEOUTFACTOR=4
+libc_add-ons = ports nptl $(add-ons)
 
-# Requires Linux 2.6.11 for NPTL
-libc_MIN_KERNEL_SUPPORTED = 2.6.11
-
+# Renesas SH enabled -ffinte-math-only. Some software need -mieee.
+extra_cflags = -mieee

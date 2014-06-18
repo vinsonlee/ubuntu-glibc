@@ -1,18 +1,27 @@
-commit e76c47eeb75382c25d232e97a2eba88b5ae2c046
-Author: Ulrich Drepper <drepper@redhat.com>
-Date:   Sat Mar 8 21:31:55 2008 +0000
+2014-05-20  Aurelien Jarno  <aurelien@aurel32.net>
 
-    (____STRTOF_INTERNAL): Consume closing brace on NAN(...) sequence.
+	[BZ #16965]
+	* stdlib/strtod_l.c (round_and_return): Add code to shift limbs
+	when the shift amount is modulo the limb size.
 
---- glibc-2.7.orig/stdlib/strtod_l.c
-+++ glibc-2.7/stdlib/strtod_l.c
-@@ -610,6 +610,9 @@
- 		  mant = STRTOULL (startp + 1, &endp, 0);
- 		  if (endp == cp)
- 		    SET_MANTISSA (retval, mant);
-+
-+		  /* Consume the closing brace.  */
-+		  ++cp;
- 		}
- 	    }
+diff --git a/stdlib/strtod_l.c b/stdlib/strtod_l.c
+--- a/stdlib/strtod_l.c
++++ b/stdlib/strtod_l.c
+@@ -243,9 +243,14 @@ round_and_return (mp_limb_t *retval, intmax_t exponent, int negative,
+ 	  more_bits |= ((round_limb & ((((mp_limb_t) 1) << round_bit) - 1))
+ 			!= 0);
  
+-	  (void) __mpn_rshift (retval, &retval[shift / BITS_PER_MP_LIMB],
+-			       RETURN_LIMB_SIZE - (shift / BITS_PER_MP_LIMB),
+-			       shift % BITS_PER_MP_LIMB);
++	  /* __mpn_rshift requires 0 < shift < BITS_PER_MP_LIMB.  */
++	  if ((shift % BITS_PER_MP_LIMB) != 0)
++	    (void) __mpn_rshift (retval, &retval[shift / BITS_PER_MP_LIMB],
++			         RETURN_LIMB_SIZE - (shift / BITS_PER_MP_LIMB),
++			         shift % BITS_PER_MP_LIMB);
++	  else
++	    for (i = 0; i < RETURN_LIMB_SIZE - (shift / BITS_PER_MP_LIMB); i++)
++	      retval[i] = retval[i + (shift / BITS_PER_MP_LIMB)];
+ 	  MPN_ZERO (&retval[RETURN_LIMB_SIZE - (shift / BITS_PER_MP_LIMB)],
+ 		    shift / BITS_PER_MP_LIMB);
+ 	}

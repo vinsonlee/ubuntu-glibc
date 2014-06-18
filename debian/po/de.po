@@ -1,15 +1,16 @@
 # Translation of glibc debconf templates to German
-# Copyright (C) Helge Kreutzmann <debian@helgefjell.de>, 2006-2008.
+# Copyright (C) Helge Kreutzmann <debian@helgefjell.de>, 2006-2009, 2011.
 # This file is distributed under the same license as the glibc package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: glibc 2.7-9\n"
+"Project-Id-Version: glibc 2.13-22\n"
 "Report-Msgid-Bugs-To: glibc@packages.debian.org\n"
-"POT-Creation-Date: 2008-02-26 21:34+0100\n"
-"PO-Revision-Date: 2008-02-26 22:41+0100\n"
+"POT-Creation-Date: 2014-05-21 00:04+0200\n"
+"PO-Revision-Date: 2011-12-14 19:39+0100\n"
 "Last-Translator: Helge Kreutzmann <debian@helgefjell.de>\n"
 "Language-Team: de <debian-l10n-german@lists.debian.org>\n"
+"Language: German\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -191,22 +192,54 @@ msgstr ""
 "Sie müssen diese manuell starten, indem Sie »/etc/init.d/<service> start« "
 "ausführen."
 
-#~ msgid "${services}"
-#~ msgstr "${services}"
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:4001
+msgid "xscreensaver and xlockmore must be restarted before upgrading"
+msgstr "Xscreensaver und Xlockmore müssen vor dem Upgrade neu gestartet werden"
 
-#~ msgid ""
-#~ "Choose which locales to generate.  The selection will be saved to `/etc/"
-#~ "locale.gen', which you can also edit manually (you need to run `locale-"
-#~ "gen' afterwards)."
-#~ msgstr ""
-#~ "Sie können hier Standorteinstellungen auswählen, die jetzt generiert "
-#~ "werden sollen. Diese Einstellung wird in »/etc/locale-gen« gespeichert. "
-#~ "Sie können diese Datei auch manuell ändern. Starten Sie nach der Änderung "
-#~ "»locale-gen«."
+#. Type: error
+#. Description
+#: ../debhelper.in/libc.templates:4001
+msgid ""
+"One or more running instances of xscreensaver or xlockmore have been "
+"detected on this system. Because of incompatible library changes, the "
+"upgrade of the GNU libc library will leave you unable to authenticate to "
+"these programs. You should arrange for these programs to be restarted or "
+"stopped before continuing this upgrade, to avoid locking your users out of "
+"their current sessions."
+msgstr ""
+"Eine oder mehrere laufende Instanzen von Xscreensaver oder Xlockmore sind "
+"auf diesem System entdeckt worden. Aufgrund inkompatibler Änderungen in "
+"Bibliotheken wird das GNU Libc-Upgrade Sie außerstande setzen, sich "
+"gegenüber diesen Programmen zu authentifizieren. Sie sollten dafür sorgen, "
+"dass diese Programme neu gestartet oder beendet werden, bevor Sie dieses "
+"Upgrade fortsetzen, damit Ihre Benutzer nicht aus ihren laufenden Sitzungen "
+"ausgesperrt werden."
 
-#~ msgid ""
-#~ "When `All locales' is selected, /etc/locale.gen will be set as a symlink "
-#~ "to /usr/share/i18n/SUPPORTED."
-#~ msgstr ""
-#~ "Wenn »Alle Standorteinstellungen« gewählt ist, wird /etc/locale.gen als "
-#~ "Symlink auf /usr/share/i18n/SUPPORTED eingerichtet."
+#. Type: boolean
+#. Description
+#: ../debhelper.in/libc.templates:5001
+msgid "Restart services during package upgrades without asking?"
+msgstr "Dienste bei Paket-Upgrades ohne Rückfrage neu starten?"
+
+#. Type: boolean
+#. Description
+#: ../debhelper.in/libc.templates:5001
+msgid ""
+"There are services installed on your system which need to be restarted when "
+"certain libraries, such as libpam, libc, and libssl, are upgraded. Since "
+"these restarts may cause interruptions of service for the system, you will "
+"normally be prompted on each upgrade for the list of services you wish to "
+"restart.  You can choose this option to avoid being prompted; instead, all "
+"necessary restarts will be done for you automatically so you can avoid being "
+"asked questions on each library upgrade."
+msgstr ""
+"Auf Ihrem System sind Dienste installiert, die beim Upgrade bestimmter "
+"Bibliotheken, wie Libpam, Libc und Libssl, neu gestartet werden müssen. Da "
+"diese Neustarts zu Unterbrechungen der Dienste für dieses System führen "
+"können, werden Sie normalerweise bei jedem Upgrade über die Liste der neu zu "
+"startenden Dienste befragt. Sie können diese Option wählen, um diese Abfrage "
+"zu vermeiden; stattdessen werden alle notwendigen Dienste-Neustarts für Sie "
+"automatisch vorgenommen und die Beantwortung von Fragen bei jedem Upgrade "
+"von Bibliotheken vermieden."
