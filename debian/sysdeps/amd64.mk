@@ -3,8 +3,8 @@ libc_extra_cflags = -O3
 extra_config_options = --enable-multi-arch --enable-lock-elision
 
 # build 32-bit (i386) alternative library
-GLIBC_MULTILIB_PASSES += i386
-DEB_ARCH_MULTILIB_PACKAGES += libc6-i386 libc6-dev-i386
+GLIBC_PASSES += i386
+DEB_ARCH_REGULAR_PACKAGES += libc6-i386 libc6-dev-i386
 libc6-i386_shlib_dep = libc6-i386 (>= $(shlib_dep_ver))
 i386_add-ons = nptl $(add-ons)
 i386_configure_target = i686-linux-gnu
@@ -39,8 +39,8 @@ ln -sf /lib32/ld-linux.so.2 debian/libc6-i386/lib
 endef
 
 # build x32 ABI alternative library
-GLIBC_MULTILIB_PASSES += x32
-DEB_ARCH_MULTILIB_PACKAGES += libc6-x32 libc6-dev-x32
+GLIBC_PASSES += x32
+DEB_ARCH_REGULAR_PACKAGES += libc6-x32 libc6-dev-x32
 libc6-x32_shlib_dep = libc6-x32 (>= $(shlib_dep_ver))
 x32_add-ons = nptl $(add-ons)
 x32_configure_target = x86_64-linux-gnux32
