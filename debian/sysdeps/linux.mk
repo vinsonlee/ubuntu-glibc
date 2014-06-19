@@ -1,5 +1,9 @@
 # When changing this, make sure to update debian/debhelper.in/libc.preinst!
-MIN_KERNEL_SUPPORTED := 2.6.32
+ifneq (,$(filter $(DEB_HOST_ARCH),powerpc ppc64 ppc64el armel armhf arm64 x32))
+  MIN_KERNEL_SUPPORTED := 2.6.32
+else
+  MIN_KERNEL_SUPPORTED := 2.6.24
+endif
 libc = libc6
 
 # Build and expect pt_chown on this platform

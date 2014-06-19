@@ -1,4 +1,5 @@
 libc_rtlddir = /lib64
+libc_extra_cflags = -O3
 extra_config_options = --enable-multi-arch --enable-lock-elision
 
 # build 32-bit (i386) alternative library
@@ -9,7 +10,7 @@ i386_add-ons = nptl $(add-ons)
 i386_configure_target = i686-linux-gnu
 i386_CC = $(CC) -m32
 i386_CXX = $(CXX) -m32
-i386_extra_cflags = -march=pentium4 -mtune=generic
+i386_extra_cflags = -march=pentium4 -mtune=generic -fno-regmove
 i386_extra_config_options = $(extra_config_options) --disable-profile
 i386_slibdir = /lib32
 i386_libdir = /usr/lib32
