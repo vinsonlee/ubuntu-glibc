@@ -1,5 +1,5 @@
 /* Disable floating-point exceptions.
-   Copyright (C) 2000 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 2000.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
 #include <fenv_libc.h>
@@ -35,7 +34,6 @@ fedisableexcept (int excepts)
   excepts &= FE_ALL_EXCEPT;
 
   new_exc &= ~(excepts << ENABLE_SHIFT);
-  new_exc &= ~_FPU_RESERVED;
   _FPU_SETCW (new_exc);
 
   return old_exc;

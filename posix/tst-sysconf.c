@@ -29,8 +29,12 @@ static struct
     N (MEMORY_PROTECTION),
     N (MESSAGE_PASSING),
     N (MONOTONIC_CLOCK),
+#ifdef _POSIX_PRIORITIZED_IO
     N (PRIORITIZED_IO),
+#endif
+#ifdef _POSIX_PRIORITY_SCHEDULING
     N (PRIORITY_SCHEDULING),
+#endif
     N (RAW_SOCKETS),
     N (READER_WRITER_LOCKS),
     N (REALTIME_SIGNALS),
@@ -42,7 +46,9 @@ static struct
     N (SPAWN),
     N (SPIN_LOCKS),
     N (SPORADIC_SERVER),
+#ifdef _POSIX_SYNCHRONIZED_IO
     N (SYNCHRONIZED_IO),
+#endif
     N (THREAD_ATTR_STACKADDR),
     N (THREAD_ATTR_STACKSIZE),
     N (THREAD_CPUTIME),
@@ -97,7 +103,7 @@ do_test (void)
 	  result = 1;
 	}
 
-#define STDVER 200112L
+#define STDVER 200809L
       if (scret > 0 && scret != STDVER && !posix_options[i].positive)
 	{
 	  printf ("sysconf(_SC_%s%s) must be %ldL\n",

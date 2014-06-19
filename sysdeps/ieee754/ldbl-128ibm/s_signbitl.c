@@ -1,5 +1,5 @@
 /* Return nonzero value if number is negative.
-   Copyright (C) 1997,1999,2004,2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -14,20 +14,21 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
-#include "math_private.h"
+#include <math_private.h>
 #include <math_ldbl_opt.h>
 
 int
 ___signbitl (long double x)
 {
   int64_t e;
+  double xhi;
 
-  GET_LDOUBLE_MSW64 (e, x);
+  xhi = ldbl_high (x);
+  EXTRACT_WORDS64 (e, xhi);
   return e < 0;
 }
 #ifdef IS_IN_libm

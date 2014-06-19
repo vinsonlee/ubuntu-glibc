@@ -1,5 +1,5 @@
 /* Fmemopen implementation.
-   Copyright (C) 2000, 2002, 2005, 2006, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Hanno Mueller, kontakt@hanno.de, 2000.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /*
  * fmemopen() - "my" version of a string stream
@@ -225,6 +224,7 @@ fmemopen (void *buf, size_t len, const char *mode)
 	  return NULL;
 	}
       c->buffer[0] = '\0';
+      c->maxpos = 0;
     }
   else
     {
@@ -235,14 +235,14 @@ fmemopen (void *buf, size_t len, const char *mode)
 	}
 
       c->buffer = buf;
+
+      if (mode[0] == 'w')
+	c->buffer[0] = '\0';
+
+      c->maxpos = strnlen (c->buffer, len);
     }
 
   c->size = len;
-
-  if (mode[0] == 'w')
-    c->buffer[0] = '\0';
-
-  c->maxpos = strlen (c->buffer);
 
   if (mode[0] == 'a')
     c->pos = c->maxpos;
@@ -258,3 +258,4 @@ fmemopen (void *buf, size_t len, const char *mode)
 
   return _IO_fopencookie (c, mode, iof);
 }
+libc_hidden_def (fmemopen)

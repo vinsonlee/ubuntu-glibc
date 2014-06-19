@@ -81,7 +81,7 @@ static const char rcsid[] = "$BINDId: res_comp.c,v 8.15 1999/10/13 16:39:39 vixi
 
 /*
  * Expand compressed domain name 'comp_dn' to full domain name.
- * 'msg' is a pointer to the begining of the message,
+ * 'msg' is a pointer to the beginning of the message,
  * 'eomorig' points to the first location after the message,
  * 'exp_dn' is a pointer to a buffer of size 'length' for the result.
  * Return size of compressed name or -1 if there was an error.
@@ -152,7 +152,7 @@ libresolv_hidden_def (dn_skipname)
 
 int
 res_hnok(const char *dn) {
-	int ppch = '\0', pch = PERIOD, ch = *dn++;
+	int pch = PERIOD, ch = *dn++;
 
 	while (ch != '\0') {
 		int nch = *dn++;
@@ -169,7 +169,7 @@ res_hnok(const char *dn) {
 			if (!middlechar(ch))
 				return (0);
 		}
-		ppch = pch, pch = ch, ch = nch;
+		pch = ch, ch = nch;
 	}
 	return (1);
 }

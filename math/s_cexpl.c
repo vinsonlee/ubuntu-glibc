@@ -1,5 +1,5 @@
 /* Return value of complex exponential function for long double complex value.
-   Copyright (C) 1997 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -14,16 +14,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <complex.h>
 #include <fenv.h>
 #include <math.h>
-
-#include "math_private.h"
-
+#include <math_private.h>
+#include <float.h>
 
 __complex__ long double
 __cexpl (__complex__ long double x)
@@ -32,26 +30,61 @@ __cexpl (__complex__ long double x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (rcls >= FP_ZERO)
+  if (__builtin_expect (rcls >= FP_ZERO, 1))
     {
       /* Real part is finite.  */
-      if (icls >= FP_ZERO)
+      if (__builtin_expect (icls >= FP_ZERO, 1))
 	{
 	  /* Imaginary part is finite.  */
-	  long double exp_val = __ieee754_expl (__real__ x);
+	  const int t = (int) ((LDBL_MAX_EXP - 1) * M_LN2l);
 	  long double sinix, cosix;
 
-	  __sincosl (__imag__ x, &sinix, &cosix);
-
-	  if (isfinite (exp_val))
+	  if (__builtin_expect (icls != FP_SUBNORMAL, 1))
 	    {
-	      __real__ retval = exp_val * cosix;
-	      __imag__ retval = exp_val * sinix;
+	      __sincosl (__imag__ x, &sinix, &cosix);
 	    }
 	  else
 	    {
-	      __real__ retval = __copysignl (exp_val, cosix);
-	      __imag__ retval = __copysignl (exp_val, sinix);
+	      sinix = __imag__ x;
+	      cosix = 1.0;
+	    }
+
+	  if (__real__ x > t)
+	    {
+	      long double exp_t = __ieee754_expl (t);
+	      __real__ x -= t;
+	      sinix *= exp_t;
+	      cosix *= exp_t;
+	      if (__real__ x > t)
+		{
+		  __real__ x -= t;
+		  sinix *= exp_t;
+		  cosix *= exp_t;
+		}
+	    }
+	  if (__real__ x > t)
+	    {
+	      /* Overflow (original real part of x > 3t).  */
+	      __real__ retval = LDBL_MAX * cosix;
+	      __imag__ retval = LDBL_MAX * sinix;
+	    }
+	  else
+	    {
+	      long double exp_val = __ieee754_expl (__real__ x);
+	      __real__ retval = exp_val * cosix;
+	      __imag__ retval = exp_val * sinix;
+	    }
+	  if (fabsl (__real__ retval) < LDBL_MIN)
+	    {
+	      volatile long double force_underflow
+		= __real__ retval * __real__ retval;
+	      (void) force_underflow;
+	    }
+	  if (fabsl (__imag__ retval) < LDBL_MIN)
+	    {
+	      volatile long double force_underflow
+		= __imag__ retval * __imag__ retval;
+	      (void) force_underflow;
 	    }
 	}
       else
@@ -61,15 +94,13 @@ __cexpl (__complex__ long double x)
 	  __real__ retval = __nanl ("");
 	  __imag__ retval = __nanl ("");
 
-#ifdef FE_INVALID
 	  feraiseexcept (FE_INVALID);
-#endif
 	}
     }
-  else if (rcls == FP_INFINITE)
+  else if (__builtin_expect (rcls == FP_INFINITE, 1))
     {
       /* Real part is infinite.  */
-      if (icls >= FP_ZERO)
+      if (__builtin_expect (icls >= FP_ZERO, 1))
 	{
 	  /* Imaginary part is finite.  */
 	  long double value = signbit (__real__ x) ? 0.0 : HUGE_VALL;
@@ -84,7 +115,15 @@ __cexpl (__complex__ long double x)
 	    {
 	      long double sinix, cosix;
 
-	      __sincosl (__imag__ x, &sinix, &cosix);
+	      if (__builtin_expect (icls != FP_SUBNORMAL, 1))
+	        {
+		  __sincosl (__imag__ x, &sinix, &cosix);
+	        }
+	      else
+		{
+		  sinix = __imag__ x;
+		  cosix = 1.0;
+		}
 
 	      __real__ retval = __copysignl (value, cosix);
 	      __imag__ retval = __copysignl (value, sinix);
@@ -95,10 +134,8 @@ __cexpl (__complex__ long double x)
 	  __real__ retval = HUGE_VALL;
 	  __imag__ retval = __nanl ("");
 
-#ifdef FE_INVALID
 	  if (icls == FP_INFINITE)
 	    feraiseexcept (FE_INVALID);
-#endif
 	}
       else
 	{
@@ -108,14 +145,18 @@ __cexpl (__complex__ long double x)
     }
   else
     {
-      /* If the real part is NaN the result is NaN + iNaN.  */
+      /* If the real part is NaN the result is NaN + iNaN unless the
+	 imaginary part is zero.  */
       __real__ retval = __nanl ("");
-      __imag__ retval = __nanl ("");
+      if (icls == FP_ZERO)
+	__imag__ retval = __imag__ x;
+      else
+	{
+	  __imag__ retval = __nanl ("");
 
-#ifdef FE_INVALID
-      if (rcls != FP_NAN || icls != FP_NAN)
-	feraiseexcept (FE_INVALID);
-#endif
+	  if (rcls != FP_NAN || icls != FP_NAN)
+	    feraiseexcept (FE_INVALID);
+	}
     }
 
   return retval;

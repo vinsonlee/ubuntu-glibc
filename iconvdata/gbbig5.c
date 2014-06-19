@@ -1,5 +1,5 @@
 /* Mapping tables from GB2312 to BIG5 and vice versa.
-   Copyright (C) 1999, 2000-2002 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1999.
 
@@ -14,16 +14,15 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <dlfcn.h>
 #include <gconv.h>
 #include <stdint.h>
 
 /*
- * This module does convertions between gb2312 and big5 encodings.
+ * This module does conversions between gb2312 and big5 encodings.
  * It is necessary because gb2312 encoding use simplified chinese,
  * while big5 use traditional one. Often times both the simplified
  * version of a chinese character and its traditional counterpart

@@ -17,21 +17,19 @@
 #  define errno rtld_errno
 extern int rtld_errno attribute_hidden;
 
-# else
+# elif !defined NOT_IN_libc || defined IN_LIB
 
 #  include <tls.h>
 
-#  if USE___THREAD
-#   undef  errno
-#   ifndef NOT_IN_libc
-#    define errno __libc_errno
-#   else
-#    define errno errno		/* For #ifndef errno tests.  */
-#   endif
-extern __thread int errno attribute_tls_model_ie;
+#  undef  errno
+#  ifndef NOT_IN_libc
+#   define errno __libc_errno
+#  else
+#   define errno errno		/* For #ifndef errno tests.  */
 #  endif
+extern __thread int errno attribute_tls_model_ie;
 
-# endif	/* RTLD_PRIVATE_ERRNO */
+# endif	/* !NOT_IN_libc || IN_LIB */
 
 # define __set_errno(val) (errno = (val))
 

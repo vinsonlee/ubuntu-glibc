@@ -51,7 +51,7 @@ libc {
     setfsgid; setfsuid;
 
     # s*
-    setresgid; setresuid; swapoff; swapon; sysctl;
+    setresgid; setresuid; swapoff; swapon; sysctl; sysinfo;
 
     # u*
     umount; uselib;
@@ -137,6 +137,34 @@ libc {
   }
   GLIBC_2.9 {
     epoll_create1; inotify_init1;
+  }
+  GLIBC_2.10 {
+    fallocate;
+  }
+  GLIBC_2.12 {
+    #errlist-compat	135
+    _sys_errlist; sys_errlist; _sys_nerr; sys_nerr;
+
+    ntp_gettimex;
+
+    recvmmsg;
+  }
+  GLIBC_2.13 {
+    prlimit; prlimit64;
+
+    fanotify_init; fanotify_mark;
+  }
+  GLIBC_2.14 {
+    clock_adjtime;
+
+    name_to_handle_at; open_by_handle_at;
+
+    setns;
+
+    sendmmsg;
+  }
+  GLIBC_2.15 {
+    process_vm_readv; process_vm_writev;
   }
   GLIBC_PRIVATE {
     # functions used in other libraries

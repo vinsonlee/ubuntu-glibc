@@ -1,35 +1,33 @@
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user or with the express written consent of
- * Sun Microsystems, Inc.
+ * From: @(#)rpc_svcout.c 1.29 89/03/30
  *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
+ * Copyright (c) 2010, Oracle America, Inc.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
  *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
  *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-
-/*
- * From: @(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -93,12 +91,8 @@ write_most (const char *infile /* our name */ , int netflag, int nomain)
   if (inetdflag || pmflag)
     {
       const char *var_type;
-#ifdef __GNU_LIBRARY__
       /* WHY? */
       var_type = (nomain ? "extern" : "");
-#else
-      var_type = (nomain ? "extern" : "static");
-#endif
       f_print (fout, "%s int _rpcpmstart;", var_type);
       f_print (fout, "\t\t/* Started by a port monitor ? */\n");
       if (!tirpcflag)
@@ -135,7 +129,6 @@ write_most (const char *infile /* our name */ , int netflag, int nomain)
   if (nomain)
     return;
 
-#ifdef __GNU_LIBRARY__
   if (Cflag)
     f_print (fout, "\nint\nmain (int argc, char **argv)\n");
   else
@@ -144,9 +137,6 @@ write_most (const char *infile /* our name */ , int netflag, int nomain)
       f_print (fout, "\tint argc;\n");
       f_print (fout, "\tchar **argv;\n");
     }
-#else
-  f_print (fout, "\nmain()\n");
-#endif
   f_print (fout, "{\n");
   if (inetdflag)
     {
@@ -363,7 +353,7 @@ write_real_program (const definition * def)
 	      f_print (fout, " (");
 	      /* arg name */
 	      if (proc->arg_num > 1)
-		f_print (fout, proc->args.argname);
+		f_print (fout, "%s", proc->args.argname);
 	      else
 		ptype (proc->args.decls->decl.prefix,
 		       proc->args.decls->decl.type, 0);
@@ -814,7 +804,7 @@ write_timeout_func (void)
     f_print (fout, "closedown (sig)\n\tint sig;\n");
   f_print (fout, "{\n");
 
-#if defined (__GNU_LIBRARY__) && 0
+#if 0
   f_print (fout, "\t(void) signal (sig, %s closedown);\n",
 	   Cflag ? "(SIG_PF)" : "(void(*)())");
 #endif

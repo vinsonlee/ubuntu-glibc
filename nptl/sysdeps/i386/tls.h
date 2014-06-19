@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  nptl/i386 version.
-   Copyright (C) 2002,2003,2004,2005,2006,2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _TLS_H
 #define _TLS_H	1
@@ -26,8 +25,8 @@
 # include <stddef.h>
 # include <stdint.h>
 # include <stdlib.h>
-# include <list.h>
 # include <sysdep.h>
+# include <libc-internal.h>
 # include <kernel-features.h>
 
 
@@ -56,7 +55,13 @@ typedef struct
   int gscope_flag;
 #ifndef __ASSUME_PRIVATE_FUTEX
   int private_futex;
+#else
+  int __glibc_reserved1;
 #endif
+  /* Reservation of some values for the TM ABI.  */
+  void *__private_tm[4];
+  /* GCC split stack support.  */
+  void *__private_ss;
 } tcbhead_t;
 
 # define TLS_MULTIPLE_THREADS_IN_TCB 1
@@ -65,11 +70,6 @@ typedef struct
 # include <tcb-offsets.h>
 #endif
 
-
-/* We require TLS support in the tools.  */
-#ifndef HAVE_TLS_SUPPORT
-# error "TLS support is required."
-#endif
 
 /* Alignment requirement for the stack.  For IA-32 this is governed by
    the SSE memory functions.  */
@@ -257,7 +257,7 @@ union user_desc_init
 
    The contained asm must *not* be marked volatile since otherwise
    assignments like
-        pthread_descr self = thread_self();
+	pthread_descr self = thread_self();
    do not get optimized away.  */
 # define THREAD_SELF \
   ({ struct pthread *__self;						      \
@@ -346,7 +346,7 @@ union user_desc_init
 									      \
 	 asm volatile ("movl %%eax,%%gs:%P1\n\t"			      \
 		       "movl %%edx,%%gs:%P2" :				      \
-		       : "A" (value),					      \
+		       : "A" ((uint64_t) cast_to_integer (value)),	      \
 			 "i" (offsetof (struct pthread, member)),	      \
 			 "i" (offsetof (struct pthread, member) + 4));	      \
        }})
@@ -373,7 +373,7 @@ union user_desc_init
 									      \
 	 asm volatile ("movl %%eax,%%gs:%P1(,%2,8)\n\t"			      \
 		       "movl %%edx,%%gs:4+%P1(,%2,8)" :			      \
-		       : "A" (value),					      \
+		       : "A" ((uint64_t) cast_to_integer (value)),	      \
 			 "i" (offsetof (struct pthread, member)),	      \
 			 "r" (idx));					      \
        }})
@@ -392,6 +392,17 @@ union user_desc_init
        /* Not necessary for other sizes in the moment.  */		      \
        abort ();							      \
      __ret; })
+
+
+/* Atomic logical and.  */
+#define THREAD_ATOMIC_AND(descr, member, val) \
+  (void) ({ if (sizeof ((descr)->member) == 4)				      \
+	      asm volatile (LOCK_PREFIX "andl %1, %%gs:%P0"		      \
+			    :: "i" (offsetof (struct pthread, member)),	      \
+			       "ir" (val));				      \
+	    else							      \
+	      /* Not necessary for other sizes in the moment.  */	      \
+	      abort (); })
 
 
 /* Atomic set bit.  */

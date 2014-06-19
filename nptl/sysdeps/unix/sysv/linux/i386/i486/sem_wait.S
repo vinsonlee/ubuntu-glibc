@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <shlib-compat.h>
@@ -108,24 +107,19 @@ __new_sem_wait:
 
 	negl	%esi
 #ifdef PIC
-	call	__i686.get_pc_thunk.bx
+	SETUP_PIC_REG(bx)
 #else
 	movl	$8f, %ebx
 8:
 #endif
 	addl	$_GLOBAL_OFFSET_TABLE_, %ebx
-#if USE___THREAD
-# ifdef NO_TLS_DIRECT_SEG_REFS
+#ifdef NO_TLS_DIRECT_SEG_REFS
 	movl	errno@gotntpoff(%ebx), %edx
 	addl	%gs:0, %edx
 	movl	%esi, (%edx)
-# else
+#else
 	movl	errno@gotntpoff(%ebx), %edx
 	movl	%esi, %gs:(%edx)
-# endif
-#else
-	call	__errno_location@plt
-	movl	%esi, (%eax)
 #endif
 	orl	$-1, %eax
 
@@ -228,13 +222,13 @@ sem_wait_cleanup:
 	.byte	14				# DW_CFA_def_cfa_offset
 	.uleb128 8
 	.byte   0x83				# DW_CFA_offset %ebx
-        .uleb128 2
+	.uleb128 2
 	.byte	4				# DW_CFA_advance_loc4
 	.long	.Lpush_esi-.Lpush_ebx
 	.byte	14				# DW_CFA_def_cfa_offset
 	.uleb128 12
 	.byte   0x86				# DW_CFA_offset %esi
-        .uleb128 3
+	.uleb128 3
 	.byte	4				# DW_CFA_advance_loc4
 	.long	.Lsub_esp-.Lpush_esi
 	.byte	14				# DW_CFA_def_cfa_offset
@@ -250,9 +244,9 @@ sem_wait_cleanup:
 	.byte	14				# DW_CFA_def_cfa_offset
 	.uleb128 16
 	.byte   0x83				# DW_CFA_offset %ebx
-        .uleb128 2
+	.uleb128 2
 	.byte   0x86				# DW_CFA_offset %esi
-        .uleb128 3
+	.uleb128 3
 	.align	4
 .LENDFDE:
 
@@ -327,24 +321,19 @@ __old_sem_wait:
 	je	3b
 	negl	%esi
 #ifdef PIC
-	call	__i686.get_pc_thunk.bx
+	SETUP_PIC_REG(bx)
 #else
 	movl	$4f, %ebx
 4:
 #endif
 	addl	$_GLOBAL_OFFSET_TABLE_, %ebx
-#if USE___THREAD
-# ifdef NO_TLS_DIRECT_SEG_REFS
+#ifdef NO_TLS_DIRECT_SEG_REFS
 	movl	errno@gotntpoff(%ebx), %edx
 	addl	%gs:0, %edx
 	movl	%esi, (%edx)
-# else
+#else
 	movl	errno@gotntpoff(%ebx), %edx
 	movl	%esi, %gs:(%edx)
-# endif
-#else
-	call	__errno_location@plt
-	movl	%esi, (%eax)
 #endif
 	orl	$-1, %eax
 	jmp	5b

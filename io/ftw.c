@@ -1,5 +1,5 @@
 /* File tree walker functions.
-   Copyright (C) 1996-2004, 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -543,7 +542,11 @@ fail:
 
   while (dir.stream != NULL && (d = __readdir64 (dir.stream)) != NULL)
     {
-      result = process_entry (data, &dir, d->d_name, NAMLEN (d), d->d_type);
+      int d_type = DT_UNKNOWN;
+#ifdef _DIRENT_HAVE_D_TYPE
+      d_type = d->d_type;
+#endif
+      result = process_entry (data, &dir, d->d_name, NAMLEN (d), d_type);
       if (result != 0)
 	break;
     }
@@ -790,6 +793,7 @@ ftw_startup (const char *dir, int is_nftw, void *func, int descriptors,
     {
       int save_err = errno;
       __fchdir (cwdfd);
+      close_not_cancel_no_status (cwdfd);
       __set_errno (save_err);
     }
   else if (cwd != NULL)

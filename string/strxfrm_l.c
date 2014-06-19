@@ -1,5 +1,4 @@
-/* Copyright (C) 1995, 1996, 1997, 2002, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Ulrich Drepper <drepper@gnu.org>, 1995.
 
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <langinfo.h>
@@ -86,7 +84,7 @@ utf8_encode (char *buf, int val)
 size_t
 STRXFRM (STRING_TYPE *dest, const STRING_TYPE *src, size_t n, __locale_t l)
 {
-  struct locale_data *current = l->__locales[LC_COLLATE];
+  struct __locale_data *current = l->__locales[LC_COLLATE];
   uint_fast32_t nrules = current->values[_NL_ITEM_INDEX (_NL_COLLATE_NRULES)].word;
   /* We don't assign the following values right away since it might be
      unnecessary in case there are no rules.  */
@@ -137,7 +135,7 @@ STRXFRM (STRING_TYPE *dest, const STRING_TYPE *src, size_t n, __locale_t l)
   if (srclen == 0)
     {
       if (n != 0)
-        *dest = L('\0');
+	*dest = L('\0');
       return 0;
     }
 
@@ -151,7 +149,7 @@ STRXFRM (STRING_TYPE *dest, const STRING_TYPE *src, size_t n, __locale_t l)
      values.  But since there is no limit on the length of the string
      we have to use `malloc' if the string is too long.  We should be
      very conservative here.  */
-  if (! __libc_use_alloca (srclen))
+  if (! __libc_use_alloca ((srclen + 1) * (sizeof (int32_t) + 1)))
     {
       idxarr = (int32_t *) malloc ((srclen + 1) * (sizeof (int32_t) + 1));
       rulearr = (unsigned char *) &idxarr[srclen];
@@ -176,7 +174,7 @@ STRXFRM (STRING_TYPE *dest, const STRING_TYPE *src, size_t n, __locale_t l)
   idxmax = 0;
   do
     {
-      int32_t tmp = findidx (&usrc);
+      int32_t tmp = findidx (&usrc, -1);
       rulearr[idxmax] = tmp >> 24;
       idxarr[idxmax] = tmp & 0xffffff;
 

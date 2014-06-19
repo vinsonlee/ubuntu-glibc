@@ -1,5 +1,5 @@
 /* 4.4BSD utility functions for error messages.
-   Copyright (C) 1995,96,98,2001,02 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <stdarg.h>
 #include <err.h>
@@ -24,11 +23,9 @@
 #include <string.h>
 #include <stdio.h>
 
-#ifdef USE_IN_LIBIO
-# include <wchar.h>
-# define flockfile(s) _IO_flockfile (s)
-# define funlockfile(s) _IO_funlockfile (s)
-#endif
+#include <wchar.h>
+#define flockfile(s) _IO_flockfile (s)
+#define funlockfile(s) _IO_funlockfile (s)
 
 extern char *__progname;
 
@@ -40,11 +37,10 @@ extern char *__progname;
   va_end (ap);								      \
 }
 
-#ifdef USE_IN_LIBIO
 static void
 convert_and_print (const char *format, __gnuc_va_list ap)
 {
-# define ALLOCA_LIMIT	2000
+#define ALLOCA_LIMIT	2000
   size_t len;
   wchar_t *wformat = NULL;
   mbstate_t st;
@@ -85,13 +81,11 @@ convert_and_print (const char *format, __gnuc_va_list ap)
 
   __vfwprintf (stderr, wformat, ap);
 }
-#endif
 
 void
 vwarnx (const char *format, __gnuc_va_list ap)
 {
   flockfile (stderr);
-#ifdef USE_IN_LIBIO
   if (_IO_fwide (stderr, 0) > 0)
     {
       __fwprintf (stderr, L"%s: ", __progname);
@@ -99,7 +93,6 @@ vwarnx (const char *format, __gnuc_va_list ap)
       putwc_unlocked (L'\n', stderr);
     }
   else
-#endif
     {
       fprintf (stderr, "%s: ", __progname);
       if (format)
@@ -116,7 +109,6 @@ vwarn (const char *format, __gnuc_va_list ap)
   int error = errno;
 
   flockfile (stderr);
-#ifdef USE_IN_LIBIO
   if (_IO_fwide (stderr, 0) > 0)
     {
       __fwprintf (stderr, L"%s: ", __progname);
@@ -129,7 +121,6 @@ vwarn (const char *format, __gnuc_va_list ap)
       __fwprintf (stderr, L"%m\n");
     }
   else
-#endif
     {
       fprintf (stderr, "%s: ", __progname);
       if (format)

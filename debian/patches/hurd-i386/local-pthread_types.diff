@@ -1,8 +1,0 @@
----
- sysdep/mach/hurd/bits/pthreadtypes.h |    1 +
- 1 file changed, 1 insertion(+)
-
---- a/sysdep/mach/hurd/bits/pthreadtypes.h
-+++ b/sysdep/mach/hurd/bits/pthreadtypes.h
-@@ -0,0 +1,1 @@
-+#include <pthread/pthreadtypes.h>

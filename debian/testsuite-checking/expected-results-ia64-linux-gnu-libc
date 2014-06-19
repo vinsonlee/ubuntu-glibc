@@ -5,21 +5,22 @@
 #
 annexc.out, Error 1 (ignored)
 check-localplt.out, Error 1
+run-conformtest.out, Error 1 (ignored)
+test-double.out, Error 1
+test-idouble.out, Error 1
+test-float.out, Error 1
+test-ifloat.out, Error 1
+tst-backtrace4.out, Error 1
 tst-cpuclock2.out, Error 1
+tst-cputimer1.out, Error 1
 tst-getcpu.out, Error 1
-tst-mutexpi4.out, Error 1
-tst-mutexpi5.out, Error 1
-tst-mutexpi5a.out, Error 1
-tst-mutexpi6.out, Error 1
-tst-mutexpi9.out, Error 1
-tst-oddstacklimit.out, Error 139
-tst-robustpi1.out, Error 1
-tst-robustpi2.out, Error 1
-tst-robustpi3.out, Error 1
-tst-robustpi4.out, Error 1
-tst-robustpi5.out, Error 1
-tst-robustpi6.out, Error 1
-tst-robustpi7.out, Error 1
-tst-robustpi8.out, Error 1
-tst-robustpi9.out, Error 1
-tst-timer.out, Error 139
+tst-long-dbl-fphex.out, Error 1
+tst-longjmp_chk2.out, Error 1
+tst-makecontext3.out, Error 1
+tst-setjmp-fp.out, Error 1
+tst-waitid.out, Error 1
+tst-writev.out, Error 1
+
+# This failure due to a GCC bug, this should be fixed in gcc-4.7 4.7.3-10
+# and gcc-4.8 4.8.2-9
+check-execstack.out, Error 1

@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-1999, 2001-2006, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1996.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <ctype.h>
 #include <errno.h>
@@ -360,7 +359,7 @@ getpwent_next_nss_netgr (const char *name, struct passwd *result, ent_t *ent,
 			 char *group, char *buffer, size_t buflen,
 			 int *errnop)
 {
-  char *curdomain, *host, *user, *domain, *p2;
+  char *curdomain = NULL, *host, *user, *domain, *p2;
   int status;
   size_t p2len;
 
@@ -369,15 +368,7 @@ getpwent_next_nss_netgr (const char *name, struct passwd *result, ent_t *ent,
   if (!nss_getpwnam_r)
     return NSS_STATUS_UNAVAIL;
 
-  if (yp_get_default_domain (&curdomain) != YPERR_SUCCESS)
-    {
-      ent->netgroup = false;
-      ent->first = false;
-      give_pwd_free (&ent->pwd);
-      return NSS_STATUS_UNAVAIL;
-    }
-
-  if (ent->first == true)
+  if (ent->first)
     {
       memset (&ent->netgrdata, 0, sizeof (struct __netgrent));
       __internal_setnetgrent (group, &ent->netgrdata);
@@ -386,9 +377,6 @@ getpwent_next_nss_netgr (const char *name, struct passwd *result, ent_t *ent,
 
   while (1)
     {
-      char *saved_cursor;
-
-      saved_cursor = ent->netgrdata.cursor;
       status = __internal_getnetgrent_r (&host, &user, &domain,
 					 &ent->netgrdata, buffer, buflen,
 					 errnop);
@@ -403,8 +391,19 @@ getpwent_next_nss_netgr (const char *name, struct passwd *result, ent_t *ent,
       if (user == NULL || user[0] == '-')
 	continue;
 
-      if (domain != NULL && strcmp (curdomain, domain) != 0)
-	continue;
+      if (domain != NULL)
+	{
+	  if (curdomain == NULL
+	      && yp_get_default_domain (&curdomain) != YPERR_SUCCESS)
+	    {
+	      __internal_endnetgrent (&ent->netgrdata);
+	      ent->netgroup = false;
+	      give_pwd_free (&ent->pwd);
+	      return NSS_STATUS_UNAVAIL;
+	    }
+	  if (strcmp (curdomain, domain) != 0)
+	    continue;
+	}
 
       /* If name != NULL, we are called from getpwnam.  */
       if (name != NULL)

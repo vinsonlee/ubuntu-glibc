@@ -5,12 +5,15 @@
 
 #define size_t unsigned int
 
+/* Defined as global variables to avoid warnings about unused variables.  */
+char *dummy0;
+char *dummy1;
+char *fill_info_table1;
+
+
 int
 main (int argc, char *argv[])
 {
-  char *dummy0;
-  char *dummy1;
-  char *fill_info_table1;
   char *over_top;
   size_t over_top_size = 0x3000;
   char *over_top_dup;
@@ -24,9 +27,9 @@ main (int argc, char *argv[])
       3fa000  dummy0
       3fa000  dummy1
         6000  info_table_2
-	3000  over_top
+        3000  over_top
 
-	*/
+   */
   /* mem: original_info_table */
   dummy0 = malloc (0x3fa000);
   /* mem: original_info_table, dummy0 */
@@ -51,15 +54,15 @@ main (int argc, char *argv[])
   for (i = 0; i < over_top_size; ++i)
     if (over_top[i] != 0)
       {
-	printf ("FAIL: malloc expands info table\n");
-	return 0;
+        printf ("FAIL: malloc expands info table\n");
+        return 0;
       }
 
   for (i = 0; i < over_top_dup_size; ++i)
     if (over_top_dup[i] != 1)
       {
-	printf ("FAIL: malloc expands info table\n");
-	return 0;
+        printf ("FAIL: malloc expands info table\n");
+        return 0;
       }
 
   printf ("PASS: malloc expands info table\n");

@@ -1,5 +1,4 @@
-/* Copyright (C) 1992,95,96,97,98,99,2000,2001,2002,2008
-     Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,13 +12,15 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
-#ifndef _SYS_STAT_H
+#if !defined _SYS_STAT_H && !defined _FCNTL_H
 # error "Never include <bits/stat.h> directly; use <sys/stat.h> instead."
 #endif
+
+#ifndef _BITS_STAT_H
+#define _BITS_STAT_H	1
 
 /* Versions of the `struct stat' data structure.  */
 #define _STAT_VER_LINUX_OLD	1
@@ -61,7 +62,7 @@ struct stat
 #else
     __blkcnt64_t st_blocks;		/* Number 512-byte blocks allocated. */
 #endif
-#ifdef __USE_MISC
+#if defined __USE_MISC || defined __USE_XOPEN2K8
     /* Nanosecond resolution timestamps are stored in a format
        equivalent to 'struct timespec'.  This is the type used
        whenever possible but the Unix namespace rules do not allow the
@@ -83,8 +84,8 @@ struct stat
     unsigned long int st_ctimensec;	/* Nsecs of last status change.  */
 #endif
 #ifndef __USE_FILE_OFFSET64
-    unsigned long int __unused4;
-    unsigned long int __unused5;
+    unsigned long int __glibc_reserved4;
+    unsigned long int __glibc_reserved5;
 #else
     __ino64_t st_ino;			/* File serial number.	*/
 #endif
@@ -107,7 +108,7 @@ struct stat64
     __blksize_t st_blksize;		/* Optimal block size for I/O.  */
 
     __blkcnt64_t st_blocks;		/* Number 512-byte blocks allocated. */
-#ifdef __USE_MISC
+# if defined __USE_MISC || defined __USE_XOPEN2K8
     /* Nanosecond resolution timestamps are stored in a format
        equivalent to 'struct timespec'.  This is the type used
        whenever possible but the Unix namespace rules do not allow the
@@ -117,14 +118,14 @@ struct stat64
     struct timespec st_atim;		/* Time of last access.  */
     struct timespec st_mtim;		/* Time of last modification.  */
     struct timespec st_ctim;		/* Time of last status change.  */
-#else
+# else
     __time_t st_atime;			/* Time of last access.  */
     unsigned long int st_atimensec;	/* Nscecs of last access.  */
     __time_t st_mtime;			/* Time of last modification.  */
     unsigned long int st_mtimensec;	/* Nsecs of last modification.  */
     __time_t st_ctime;			/* Time of last status change.  */
     unsigned long int st_ctimensec;	/* Nsecs of last status change.  */
-#endif
+# endif
     __ino64_t st_ino;			/* File serial number.		*/
   };
 #endif
@@ -163,8 +164,9 @@ struct stat64
 #define	__S_IWRITE	0200	/* Write by owner.  */
 #define	__S_IEXEC	0100	/* Execute by owner.  */
 
-#if defined __USE_ATFILE || defined __USE_GNU
-/* XXX This will change to the macro for the next 2008 POSIX revision.  */
+#ifdef __USE_ATFILE
 # define UTIME_NOW	((1l << 30) - 1l)
 # define UTIME_OMIT	((1l << 30) - 2l)
 #endif
+
+#endif	/* bits/stat.h */

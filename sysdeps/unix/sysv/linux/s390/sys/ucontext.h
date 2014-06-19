@@ -1,4 +1,4 @@
-/* Copyright (C) 2000, 2001, 2002 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Denis Joseph Barrow (djbarrow@de.ibm.com).
    This file is part of the GNU C Library.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SYS_UCONTEXT_H
 #define _SYS_UCONTEXT_H	1
@@ -34,7 +33,7 @@ typedef struct
 {
   unsigned long mask;
   unsigned long addr;
-} __attribute__ ((aligned(8))) __psw_t;
+} __attribute__ ((__aligned__(8))) __psw_t;
 
 /* Type for a general-purpose register.  */
 typedef unsigned long greg_t;
@@ -50,7 +49,7 @@ typedef unsigned long greg_t;
 # define NGREG 36
 #endif
 /* Must match kernels psw_t alignment.  */
-typedef greg_t gregset_t[NGREG] __attribute__ ((aligned(8)));
+typedef greg_t gregset_t[NGREG] __attribute__ ((__aligned__(8)));
 
 typedef union
   {
@@ -64,6 +63,15 @@ typedef struct
     unsigned int fpc;
     fpreg_t fprs[16];
   } fpregset_t;
+
+/* Bit is set if the uc_high_gprs field contains the upper halfs of
+   the 64 bit general purpose registers.  Since the uc_high_gprs field
+   is only available in the 32 bit version of ucontext_t it will never
+   be set for 64 bit.  */
+#define UCONTEXT_UC_FLAGS_HIGH_GPRS (1UL << 0)
+
+/* A new uc_flags constant will be defined when actually making use of
+   the reserved space: UCONTEXT_UCFLAGS_RESERVED (1UL << 1).  */
 
 /* Context to describe whole processor state.  */
 typedef struct
@@ -82,6 +90,10 @@ struct ucontext
     stack_t uc_stack;
     mcontext_t uc_mcontext;
     __sigset_t uc_sigmask;
+#ifndef __s390x__
+    unsigned long uc_high_gprs[16];
+#endif
+    char __reserved[512];
   };
 
 

@@ -8,7 +8,7 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
@@ -17,15 +17,11 @@
 static char rcsid[] = "$NetBSD: s_tanf.c,v 1.4 1995/05/10 20:48:20 jtc Exp $";
 #endif
 
-#include "math.h"
-#include "math_private.h"
+#include <errno.h>
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
-	float __tanf(float x)
-#else
-	float __tanf(x)
-	float x;
-#endif
+float __tanf(float x)
 {
 	float y[2],z=0.0;
 	int32_t n, ix;
@@ -37,7 +33,11 @@ static char rcsid[] = "$NetBSD: s_tanf.c,v 1.4 1995/05/10 20:48:20 jtc Exp $";
 	if(ix <= 0x3f490fda) return __kernel_tanf(x,z,1);
 
     /* tan(Inf or NaN) is NaN */
-	else if (ix>=0x7f800000) return x-x;		/* NaN */
+	else if (ix>=0x7f800000) {
+	  if (ix==0x7f800000)
+	    __set_errno (EDOM);
+	  return x-x;		/* NaN */
+	}
 
     /* argument reduction needed */
 	else {

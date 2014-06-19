@@ -11,9 +11,9 @@
 
 /* Changes for 128-bit long double are
    Copyright (C) 2001 Stephen L. Moshier <moshier@na-net.ornl.gov>
-   and are incorporated herein by permission of the author.  The author 
+   and are incorporated herein by permission of the author.  The author
    reserves the right to distribute this material elsewhere under different
-   copying permissions.  These modifications are distributed here under 
+   copying permissions.  These modifications are distributed here under
    the following terms:
 
     This library is free software; you can redistribute it and/or
@@ -27,8 +27,8 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
 /* __ieee754_coshl(x)
  * Method :
@@ -51,25 +51,14 @@
  *      only coshl(0)=1 is exact for finite x.
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
 static const long double one = 1.0, half = 0.5, huge = 1.0e4900L,
 ovf_thresh = 1.1357216553474703894801348310092223067821E4L;
-#else
-static long double one = 1.0, half = 0.5, huge = 1.0e4900L,
-ovf_thresh = 1.1357216553474703894801348310092223067821E4L;
-#endif
 
-#ifdef __STDC__
 long double
 __ieee754_coshl (long double x)
-#else
-long double
-__ieee754_coshl (x)
-     long double x;
-#endif
 {
   long double t, w;
   int32_t ex;
@@ -118,3 +107,4 @@ __ieee754_coshl (x)
   /* |x| > overflowthresold, cosh(x) overflow */
   return huge * huge;
 }
+strong_alias (__ieee754_coshl, __coshl_finite)

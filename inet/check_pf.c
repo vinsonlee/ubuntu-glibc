@@ -1,5 +1,5 @@
 /* Determine protocol families for which interfaces exist.  Generic version.
-   Copyright (C) 2003, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,13 +13,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <ifaddrs.h>
 #include <netdb.h>
-
+#include <stdint.h>
 
 void
 attribute_hidden
@@ -54,3 +53,19 @@ __check_pf (bool *seen_ipv4, bool *seen_ipv6,
 
   (void) freeifaddrs (ifa);
 }
+
+
+void
+__free_in6ai (struct in6addrinfo *in6ai)
+{
+  /* Nothing to do.  */
+}
+
+
+#ifdef IS_IN_nscd
+uint32_t
+__bump_nl_timestamp (void)
+{
+  return 0;
+}
+#endif

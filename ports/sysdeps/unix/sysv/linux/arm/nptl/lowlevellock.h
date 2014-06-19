@@ -1,4 +1,4 @@
-/* Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _LOWLEVELLOCK_H
 #define _LOWLEVELLOCK_H	1
@@ -35,7 +34,14 @@
 #define FUTEX_LOCK_PI		6
 #define FUTEX_UNLOCK_PI		7
 #define FUTEX_TRYLOCK_PI	8
+#define FUTEX_WAIT_BITSET	9
+#define FUTEX_WAKE_BITSET	10
+#define FUTEX_WAIT_REQUEUE_PI   11
+#define FUTEX_CMP_REQUEUE_PI    12
 #define FUTEX_PRIVATE_FLAG	128
+#define FUTEX_CLOCK_REALTIME	256
+
+#define FUTEX_BITSET_MATCH_ANY	0xffffffff
 
 /* Values for 'private' parameter of locking macros.  Yes, the
    definition seems to be backwards.  But it is not.  The bit will be
@@ -65,7 +71,7 @@
       : (fl))								      \
    : ((fl) | (((private) ^ FUTEX_PRIVATE_FLAG)				      \
 	      & THREAD_GETMEM (THREAD_SELF, header.private_futex))))
-# endif	      
+# endif
 #endif
 
 
@@ -80,6 +86,18 @@
 			      __lll_private_flag (FUTEX_WAIT, private),	      \
 			      (val), (timespec));			      \
     __ret;								      \
+  })
+
+#define lll_futex_timed_wait_bitset(futexp, val, timespec, clockbit, private) \
+  ({									\
+    INTERNAL_SYSCALL_DECL (__err);					\
+    long int __ret;							\
+    int __op = FUTEX_WAIT_BITSET | clockbit;				\
+    __ret = INTERNAL_SYSCALL (futex, __err, 6, (futexp),		\
+			      __lll_private_flag (__op, private),	\
+			      (val), (timespec), NULL /* Unused.  */,	\
+			      FUTEX_BITSET_MATCH_ANY);			\
+    __ret;								\
   })
 
 #define lll_futex_wake(futexp, nr, private) \
@@ -109,7 +127,7 @@
     __ret = INTERNAL_SYSCALL (futex, __err, 6, (futexp),		      \
 			      __lll_private_flag (FUTEX_CMP_REQUEUE, private),\
 			      (nr_wake), (nr_move), (mutex), (val));	      \
-    __ret;								      \
+    INTERNAL_SYSCALL_ERROR_P (__ret, __err);				      \
   })
 
 
@@ -122,7 +140,33 @@
 			      __lll_private_flag (FUTEX_WAKE_OP, private),    \
 			      (nr_wake), (nr_wake2), (futexp2),		      \
 			      FUTEX_OP_CLEAR_WAKE_IF_GT_ONE);		      \
-    __ret;								      \
+    INTERNAL_SYSCALL_ERROR_P (__ret, __err);				      \
+  })
+
+/* Priority Inheritance support.  */
+#define lll_futex_wait_requeue_pi(futexp, val, mutex, private) \
+  lll_futex_timed_wait_requeue_pi (futexp, val, NULL, 0, mutex, private)
+
+#define lll_futex_timed_wait_requeue_pi(futexp, val, timespec, clockbit,      \
+					mutex, private)			      \
+  ({									      \
+    INTERNAL_SYSCALL_DECL (__err);					      \
+    int __op = FUTEX_WAIT_REQUEUE_PI | clockbit;			      \
+									      \
+    INTERNAL_SYSCALL (futex, __err, 5, (futexp),			      \
+		      __lll_private_flag (__op, private),		      \
+		      (val), (timespec), mutex); 			      \
+  })
+
+#define lll_futex_cmp_requeue_pi(futexp, nr_wake, nr_move, mutex, val, priv)  \
+  ({									      \
+    INTERNAL_SYSCALL_DECL (__err);					      \
+    long int __ret;							      \
+									      \
+    __ret = INTERNAL_SYSCALL (futex, __err, 6, (futexp),		      \
+			      __lll_private_flag (FUTEX_CMP_REQUEUE_PI, priv),\
+			      (nr_wake), (nr_move), (mutex), (val));	      \
+    INTERNAL_SYSCALL_ERROR_P (__ret, __err);				      \
   })
 
 
@@ -252,7 +296,7 @@ extern int __lll_robust_timedlock_wait (int *futex, const struct timespec *,
     1  -  taken by one user
    >1  -  taken by more users */
 
-/* The kernel notifies a process which uses CLONE_CLEARTID via futex
+/* The kernel notifies a process which uses CLONE_CHILD_CLEARTID via futex
    wakeup when the clone terminates.  The memory location contains the
    thread ID while the clone is running and is reset to zero
    afterwards.	*/

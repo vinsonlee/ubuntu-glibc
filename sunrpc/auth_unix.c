@@ -1,33 +1,32 @@
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
+ * Copyright (c) 2010, 2011, Oracle America, Inc.
  *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
  *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
  *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-/*
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * auth_unix.c, Implements UNIX style authentication parameters.
@@ -46,15 +45,13 @@
 #include <unistd.h>
 #include <libintl.h>
 #include <sys/param.h>
+#include <wchar.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
 #include <rpc/auth_unix.h>
 
-#ifdef USE_IN_LIBIO
-# include <wchar.h>
-#endif
 
 /*
  * Unix authenticator operations vector
@@ -135,8 +132,8 @@ no_memory:
   /*
    * Serialize the parameters into origcred
    */
-  INTUSE(xdrmem_create) (&xdrs, mymem, MAX_AUTH_BYTES, XDR_ENCODE);
-  if (!INTUSE(xdr_authunix_parms) (&xdrs, &aup))
+  xdrmem_create (&xdrs, mymem, MAX_AUTH_BYTES, XDR_ENCODE);
+  if (!xdr_authunix_parms (&xdrs, &aup))
     abort ();
   au->au_origcred.oa_length = len = XDR_GETPOS (&xdrs);
   au->au_origcred.oa_flavor = AUTH_UNIX;
@@ -152,7 +149,7 @@ no_memory:
   marshal_new_auth (auth);
   return auth;
 }
-INTDEF (authunix_create)
+libc_hidden_nolink_sunrpc (authunix_create, GLIBC_2_0)
 
 /*
  * Returns an auth handle with parameters determined by doing lots of
@@ -209,15 +206,18 @@ authunix_create_default (void)
   /* This braindamaged Sun code forces us here to truncate the
      list of groups to NGRPS members since the code in
      authuxprot.c transforms a fixed array.  Grrr.  */
-  AUTH *result = INTUSE(authunix_create) (machname, uid, gid, MIN (NGRPS, len),
-					  gids);
+  AUTH *result = authunix_create (machname, uid, gid, MIN (NGRPS, len), gids);
 
   if (max_nr_groups >= ALLOCA_LIMIT || retry)
     free (gids);
 
   return result;
 }
-INTDEF (authunix_create_default)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (authunix_create_default)
+#else
+libc_hidden_nolink_sunrpc (authunix_create_default, GLIBC_2_0)
+#endif
 
 /*
  * authunix operations
@@ -246,8 +246,7 @@ authunix_validate (AUTH *auth, struct opaque_auth *verf)
   if (verf->oa_flavor == AUTH_SHORT)
     {
       au = AUTH_PRIVATE (auth);
-      INTUSE(xdrmem_create) (&xdrs, verf->oa_base, verf->oa_length,
-			     XDR_DECODE);
+      xdrmem_create (&xdrs, verf->oa_base, verf->oa_length, XDR_DECODE);
 
       if (au->au_shcred.oa_base != NULL)
 	{
@@ -255,14 +254,14 @@ authunix_validate (AUTH *auth, struct opaque_auth *verf)
 		    au->au_shcred.oa_length);
 	  au->au_shcred.oa_base = NULL;
 	}
-      if (INTUSE(xdr_opaque_auth) (&xdrs, &au->au_shcred))
+      if (xdr_opaque_auth (&xdrs, &au->au_shcred))
 	{
 	  auth->ah_cred = au->au_shcred;
 	}
       else
 	{
 	  xdrs.x_op = XDR_FREE;
-	  (void) INTUSE(xdr_opaque_auth) (&xdrs, &au->au_shcred);
+	  (void) xdr_opaque_auth (&xdrs, &au->au_shcred);
 	  au->au_shcred.oa_base = NULL;
 	  auth->ah_cred = au->au_origcred;
 	}
@@ -290,9 +289,9 @@ authunix_refresh (AUTH *auth)
   /* first deserialize the creds back into a struct authunix_parms */
   aup.aup_machname = NULL;
   aup.aup_gids = (gid_t *) NULL;
-  INTUSE(xdrmem_create) (&xdrs, au->au_origcred.oa_base,
-			 au->au_origcred.oa_length, XDR_DECODE);
-  stat = INTUSE(xdr_authunix_parms) (&xdrs, &aup);
+  xdrmem_create (&xdrs, au->au_origcred.oa_base,
+		 au->au_origcred.oa_length, XDR_DECODE);
+  stat = xdr_authunix_parms (&xdrs, &aup);
   if (!stat)
     goto done;
 
@@ -301,7 +300,7 @@ authunix_refresh (AUTH *auth)
   aup.aup_time = now.tv_sec;
   xdrs.x_op = XDR_ENCODE;
   XDR_SETPOS (&xdrs, 0);
-  stat = INTUSE(xdr_authunix_parms) (&xdrs, &aup);
+  stat = xdr_authunix_parms (&xdrs, &aup);
   if (!stat)
     goto done;
   auth->ah_cred = au->au_origcred;
@@ -309,7 +308,7 @@ authunix_refresh (AUTH *auth)
 done:
   /* free the struct authunix_parms created by deserializing */
   xdrs.x_op = XDR_FREE;
-  (void) INTUSE(xdr_authunix_parms) (&xdrs, &aup);
+  (void) xdr_authunix_parms (&xdrs, &aup);
   XDR_DESTROY (&xdrs);
   return stat;
 }
@@ -344,9 +343,9 @@ marshal_new_auth (AUTH *auth)
   XDR *xdrs = &xdr_stream;
   struct audata *au = AUTH_PRIVATE (auth);
 
-  INTUSE(xdrmem_create) (xdrs, au->au_marshed, MAX_AUTH_BYTES, XDR_ENCODE);
-  if ((!INTUSE(xdr_opaque_auth) (xdrs, &(auth->ah_cred))) ||
-      (!INTUSE(xdr_opaque_auth) (xdrs, &(auth->ah_verf))))
+  xdrmem_create (xdrs, au->au_marshed, MAX_AUTH_BYTES, XDR_ENCODE);
+  if ((!xdr_opaque_auth (xdrs, &(auth->ah_cred))) ||
+      (!xdr_opaque_auth (xdrs, &(auth->ah_verf))))
     perror (_("auth_unix.c: Fatal marshalling problem"));
   else
     au->au_mpos = XDR_GETPOS (xdrs);

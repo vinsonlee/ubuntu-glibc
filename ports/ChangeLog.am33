@@ -1,3 +1,112 @@
+2013-11-28  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/am33/fpu/fegetround.c (fegetround): Use libm_hidden_def.
+
+2013-10-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* sysdeps/unix/sysv/linux/am33/configure.in: Moved to ...
+	* sysdeps/unix/sysv/linux/am33/configure.ac: ... here.
+	* sysdeps/unix/sysv/linux/am33/configure: Regenerated.
+
+2013-08-29   Ondřej Bílka  <neleai@seznam.cz>
+
+	* sysdeps/unix/sysv/linux/am33/bits/fcntl.h: Fix typos.
+
+2013-08-21   Ondřej Bílka  <neleai@seznam.cz>
+
+	* sysdeps/am33/fpu/fraiseexcpt.c: Fix typos.
+
+2013-06-05  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/am33/elf/start.S: Remove trailing whitespace.
+	* sysdeps/am33/fpu/fgetexcptflg.c: Likewise.
+
+2013-05-01  Ryan S. Arnold  <rsa@linux.vnet.ibm.com>
+
+	* sysdeps/am33/atomicity.h: Add missing #include <stdint.h> due to
+	uint64_t or uint32_t usage.
+
+2013-03-11  Andreas Jaeger  <aj@suse.de>
+
+	* sysdeps/unix/sysv/linux/am33/bits/mman.h: Remove all defines
+	provided by bits/mman-linux.h and include <bits/mman-linux.h>.
+
+2013-02-28  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/am33/elf/start.S: Don't include "bp-sym.h".
+	(_start): Don't use BP_SYM.
+	* sysdeps/unix/sysv/linux/am33/clone.S: Don't include <bp-sym.h>.
+	(__clone): Don't use BP_SYM.
+
+2013-02-14  Joseph Myers  <joseph@codesourcery.com>
+
+	[BZ #13550]
+	* sysdeps/am33/dl-machine.h [!PROF && !__BOUNDED_POINTERS__]:
+	Remove __BOUNDED_POINTERS__ from condition.
+
+2013-02-13  Joseph Myers  <joseph@codesourcery.com>
+
+	[BZ #13550]
+	* sysdeps/am33/dl-machine.h (fixup): Do not use __unbounded.
+	* sysdeps/unix/sysv/linux/am33/brk.c (__brk): Do not use
+	__ptrvalue.
+
+2013-01-02  Joseph Myers  <joseph@codesourcery.com>
+
+	* All files with FSF copyright notices: Update copyright dates
+	using scripts/update-copyrights.
+
+2013-01-01  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/am33/bits/fcntl.h: Reformat copyright
+	notice.
+	* sysdeps/unix/sysv/linux/am33/sysdep.S: Likewise.
+
+2012-11-03  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/am33/fpu/fclrexcpt.c (feclearexcept): Add
+	libm_hidden_ver.
+
+	[BZ #3439]
+	* sysdeps/am33/fpu/bits/fenv.h (FE_INEXACT): Define macro to
+	integer constant usable in #if and use that to give value to enum
+	constant.
+	(FE_UNDERFLOW): Likewise.
+	(FE_OVERFLOW): Likewise.
+	(FE_DIVBYZERO): Likewise.
+	(FE_INVALID): Likewise.
+	(FE_TONEAREST): Likewise.
+
+2012-10-30  Joseph Myers  <joseph@codesourcery.com>
+
+	[BZ #14047]
+	* sysdeps/am33/tininess.h: New file.
+
+2012-10-09  Roland McGrath  <roland@hack.frob.com>
+
+	* sysdeps/unix/sysv/linux/am33/configure: Regenerated.
+
+2012-08-07  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/am33/configure.in (arch_minimum_kernel):
+	Change to 2.6.25.
+	* sysdeps/unix/sysv/linux/am33/configure: Regenerated.
+
+2012-08-01  Roland McGrath  <roland@hack.frob.com>
+
+	[BZ #14138]
+	* sysdeps/unix/sysv/linux/am33/getrlimit.c: File removed.
+
+2012-03-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	[BZ #13673]
+	Replace FSF snail mail address with URLs, as per GNU coding standards.
+
+2011-10-05  Andreas Schwab  <schwab@redhat.com>
+
+	* sysdeps/am33/dl-machine.h (elf_machine_rela)
+	(elf_machine_lazy_rel): Add parameter skip_ifunc.
+
 2007-10-22  Daniel Jacobowitz  <dan@codesourcery.com>
 
 	* sysdeps/unix/sysv/linux/am33/bits/fcntl.h (F_DUPFD_CLOEXEC): Define.

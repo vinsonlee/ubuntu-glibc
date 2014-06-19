@@ -1,4 +1,4 @@
-/* Copyright (C) 2005, 2006 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <fcntl.h>
@@ -66,6 +65,12 @@ linkat (fromfd, from, tofd, to, flags)
   if (fromfd != AT_FDCWD && from[0] != '/')
     {
       size_t filelen = strlen (from);
+      if (__builtin_expect (filelen == 0, 0))
+	{
+	  __set_errno (ENOENT);
+	  return -1;
+	}
+
       /* Buffer for the path name we are going to use.  It consists of
 	 - the string /proc/self/fd/
 	 - the file descriptor number

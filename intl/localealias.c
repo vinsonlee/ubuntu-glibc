@@ -1,5 +1,5 @@
 /* Handle aliases for locale names.
-   Copyright (C) 1995-2002, 2003, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* Tell glibc's <string.h> to provide a prototype for mempcpy().
    This must come before <config.h> because <config.h> may include
@@ -64,7 +63,7 @@ char *alloca ();
 /* Rename the non ANSI C functions.  This is required by the standard
    because some ANSI C functions will require linking with this object
    file and the name space must not be polluted.  */
-# define strcasecmp __strcasecmp
+# define strcasecmp(s1, s2) __strcasecmp_l (s1, s2, _nl_C_locobj_ptr)
 
 # ifndef mempcpy
 #  define mempcpy __mempcpy
@@ -221,7 +220,7 @@ read_alias_file (fname, fname_len)
 
   /* Note the file is opened with cancellation in the I/O functions
      disabled.  */
-  fp = fopen (full_fname, "rc");
+  fp = fopen (full_fname, "rce");
   freea (full_fname);
   if (fp == NULL)
     return 0;
@@ -363,7 +362,7 @@ out:
 
 
 static int
-extend_alias_table ()
+extend_alias_table (void)
 {
   size_t new_size;
   struct alias_map *new_map;

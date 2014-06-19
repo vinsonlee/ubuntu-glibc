@@ -1,5 +1,5 @@
 /* longjmp for PowerPC.
-   Copyright (C) 1995-99, 2000, 2003-2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,50 +13,47 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 1 Franklin Street, Fifth Floor, Boston MA
-   02110-1301 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
+#include <stap-probe.h>
 #define _ASM
 #ifdef __NO_VMX__
 # include <novmxsetjmp.h>
 #else
 # include <jmpbuf-offsets.h>
 #endif
-#include <bp-sym.h>
-#include <bp-asm.h>
 
 	.machine	"altivec"
-ENTRY (BP_SYM (__longjmp))
-	CHECK_BOUNDS_BOTH_WIDE_LIT (r3, r8, r9, JB_SIZE)
+ENTRY (__longjmp_symbol)
 #ifndef __NO_VMX__
 # ifdef PIC
 	mflr    r6
 	cfi_register (lr,r6)
-#  ifdef HAVE_ASM_PPC_REL16
-	bcl	20,31,1f
-1:	mflr	r5
-	addis	r5,r5,_GLOBAL_OFFSET_TABLE_-1b@ha
-	addi	r5,r5,_GLOBAL_OFFSET_TABLE_-1b@l
-#  else
-	bl      _GLOBAL_OFFSET_TABLE_@local-4
-	mflr    r5
-#  endif
+	SETUP_GOT_ACCESS(r5,got_label)
+	addis	r5,r5,_GLOBAL_OFFSET_TABLE_-got_label@ha
+	addi	r5,r5,_GLOBAL_OFFSET_TABLE_-got_label@l
 #  ifdef SHARED
+#   ifdef IS_IN_rtld
+	/* Inside ld.so we use the local alias to avoid runtime GOT
+	   relocations.  */
+	lwz     r5,_rtld_local_ro@got(r5)
+#   else
 	lwz     r5,_rtld_global_ro@got(r5)
+#   endif
 	mtlr    r6
 	cfi_same_value (lr)
-	lwz     r5,RTLD_GLOBAL_RO_DL_HWCAP_OFFSET(r5)
+	lwz     r5,RTLD_GLOBAL_RO_DL_HWCAP_OFFSET+LOWORD(r5)
 #  else
 	lwz     r5,_dl_hwcap@got(r5)
 	mtlr    r6
 	cfi_same_value (lr)
-	lwz     r5,0(r5)
+	lwz     r5,LOWORD(r5)
 #  endif
 # else
-	lis	r5,_dl_hwcap@ha
-	lwz     r5,_dl_hwcap@l(r5)
+	lis	r5,(_dl_hwcap+LOWORD)@ha
+	lwz     r5,(_dl_hwcap+LOWORD)@l(r5)
 # endif
 	andis.	r5,r5,(PPC_FEATURE_HAS_ALTIVEC >> 16)
 	beq	L(no_vmx)
@@ -64,7 +61,7 @@ ENTRY (BP_SYM (__longjmp))
 	andi.	r6,r5,0xf
 	lwz	r0,((JB_VRSAVE)*4)(3)
 	mtspr	VRSAVE,r0
-	beq+	aligned_restore_vmx
+	beq+	L(aligned_restore_vmx)
 	addi    r6,r5,16
 	lvsl	v0,0,r5
 	lvx	v1,0,r5
@@ -88,7 +85,7 @@ ENTRY (BP_SYM (__longjmp))
 	lvx	v1,0,r5
 	vperm   v31,v31,v1,v0
 	b       L(no_vmx)
-aligned_restore_vmx:
+L(aligned_restore_vmx):
 	addi	r6,r5,16
 	lvx	v20,0,r5
 	addi	r5,r5,32
@@ -114,8 +111,15 @@ aligned_restore_vmx:
 	lvx	v31,0,r6
 L(no_vmx):
 #endif
-#ifdef PTR_DEMANGLE
+#if defined PTR_DEMANGLE || defined CHECK_SP
 	lwz r24,(JB_GPR1*4)(r3)
+# ifdef CHECK_SP
+#  ifdef PTR_DEMANGLE
+	PTR_DEMANGLE3 (r24, r24, r25)
+#  endif
+	CHECK_SP (r24)
+	mr r1,r24
+# endif
 #else
 	lwz r1,(JB_GPR1*4)(r3)
 #endif
@@ -135,22 +139,27 @@ L(no_vmx):
 	lwz r20,((JB_GPRS+6)*4)(r3)
 	lfd fp20,((JB_FPRS+6*2)*4)(r3)
 #ifdef PTR_DEMANGLE
+# ifndef CHECK_SP
 	PTR_DEMANGLE3 (r1, r24, r25)
+# endif
 	PTR_DEMANGLE2 (r0, r25)
 #endif
+	/* longjmp/longjmp_target probe expects longjmp first argument (4@3),
+	   second argument (-4@4), and target address (4@0), respectively.  */
+	LIBC_PROBE (longjmp, 3, 4@3, -4@4, 4@0)
 	mtlr r0
 	lwz r21,((JB_GPRS+7)*4)(r3)
 	lfd fp21,((JB_FPRS+7*2)*4)(r3)
 	lwz r22,((JB_GPRS+8)*4)(r3)
 	lfd fp22,((JB_FPRS+8*2)*4)(r3)
-	lwz r0,(JB_CR*4)(r3)
+	lwz r5,(JB_CR*4)(r3)
 	lwz r23,((JB_GPRS+9)*4)(r3)
 	lfd fp23,((JB_FPRS+9*2)*4)(r3)
 	lwz r24,((JB_GPRS+10)*4)(r3)
 	lfd fp24,((JB_FPRS+10*2)*4)(r3)
 	lwz r25,((JB_GPRS+11)*4)(r3)
 	lfd fp25,((JB_FPRS+11*2)*4)(r3)
-	mtcrf 0xFF,r0
+	mtcrf 0xFF,r5
 	lwz r26,((JB_GPRS+12)*4)(r3)
 	lfd fp26,((JB_FPRS+12*2)*4)(r3)
 	lwz r27,((JB_GPRS+13)*4)(r3)
@@ -163,6 +172,7 @@ L(no_vmx):
 	lfd fp30,((JB_FPRS+16*2)*4)(r3)
 	lwz r31,((JB_GPRS+17)*4)(r3)
 	lfd fp31,((JB_FPRS+17*2)*4)(r3)
+	LIBC_PROBE (longjmp_target, 3, 4@3, -4@4, 4@0)
 	mr r3,r4
 	blr
-END (BP_SYM (__longjmp))
+END (__longjmp_symbol)

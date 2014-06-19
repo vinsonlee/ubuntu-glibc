@@ -1,6 +1,4 @@
-/* Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2002, 2003,
-   2004, 2005
-   Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #define _ERRNO_H
@@ -29,69 +26,37 @@
 #include <tls.h>
 
 #undef syscall_error
-#ifdef NO_UNDERSCORES
 __syscall_error:
-#else
-syscall_error:
-#endif
 #if defined (EWOULDBLOCK_sys) && EWOULDBLOCK_sys != EAGAIN
 	/* We translate the system's EWOULDBLOCK error into EAGAIN.
 	   The GNU C library always defines EWOULDBLOCK==EAGAIN.
 	   EWOULDBLOCK_sys is the original number.  */
-	cmp r0, $EWOULDBLOCK_sys /* Is it the old EWOULDBLOCK?  */
-	moveq r0, $EAGAIN	/* Yes; translate it to EAGAIN.  */
+	cmp	r0, $EWOULDBLOCK_sys /* Is it the old EWOULDBLOCK?  */
+	it	eq
+	moveq	r0, $EAGAIN	/* Yes; translate it to EAGAIN.  */
 #endif
 
-#if USE___THREAD
-	mov ip, lr
-	mov r1, r0
+#ifndef IS_IN_rtld
+	mov	r1, r0
+	GET_TLS (r2)
+	ldr	r2, 1f
+#ifdef __thumb__
+2:	add	r2, r2, pc
+	ldr	r2, [r2]
+#else
+2:	ldr	r2, [pc, r2]
+#endif
+	str	r1, [r0, r2]
+	mvn	r0, #0
+	DO_RET(lr)
 
-	mov r0, #0xffff0fff
-	mov lr, pc
-	sub pc, r0, #31
-
-	ldr r2, 1f
-2:	ldr r2, [pc, r2]
-	str r1, [r0, r2]
-	mvn r0, #0
-	RETINSTR (, ip)
-
-1:	.word errno(gottpoff) + (. - 2b - 8)
+1:	.word errno(gottpoff) + (. - 2b - PC_OFS)
 #elif RTLD_PRIVATE_ERRNO
-	ldr r1, 1f
-0:	str r0, [pc, r1]
-	mvn r0, $0
+	LDST_PCREL(str, r0, r1, C_SYMBOL_NAME(rtld_errno))
+	mvn	r0, #0
 	DO_RET(r14)
-
-1:	.word C_SYMBOL_NAME(rtld_errno) - 0b - 8
-#elif defined(_LIBC_REENTRANT)
-	str lr, [sp, #-4]!
-	str r0, [sp, #-4]!
-	bl PLTJMP(C_SYMBOL_NAME(__errno_location))
-	ldr r1, [sp], #4
-	str r1, [r0]
-	mvn r0, $0
-	ldr pc, [sp], #4	
 #else
-#ifndef	PIC
-	ldr r1, 1f
-	str r0, [r1]
-	mvn r0, $0
-	DO_RET (r14)
-
-1:	.long C_SYMBOL_NAME(errno)
-#else
-	@ we have to establish our PIC register
-	ldr r2, 1f
-	ldr r1, 2f
-0:	add r2, pc, r2
-	str r0, [r1, r2]
-	mvn r0, $0
-	DO_RET (r14)
-
-1:	.word _GLOBAL_OFFSET_TABLE_ - 0b - 8
-2:	.word C_SYMBOL_NAME(errno)(GOTOFF)
-#endif
+#error "Unsupported non-TLS case"
 #endif
 
 #undef	__syscall_error

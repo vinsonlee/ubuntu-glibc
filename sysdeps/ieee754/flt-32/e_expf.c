@@ -1,5 +1,5 @@
 /* Single-precision floating point e^x.
-   Copyright (C) 1997, 1998, 2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Geoffrey Keating <geoffk@ozemail.com.au>
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* How this works:
 
@@ -33,8 +32,8 @@
    Then e^x is approximated as
 
    e^x = 2^n ( e^(t/512 + delta[t])
-               + ( e^(t/512 + delta[t])
-                   * ( p(x + delta[t] + n * ln(2)) - delta ) ) )
+	       + ( e^(t/512 + delta[t])
+		   * ( p(x + delta[t] + n * ln(2)) - delta ) ) )
 
    where
    - p(x) is a polynomial approximating e(x)-1;
@@ -47,9 +46,6 @@
    to perform an 'accurate table method' expf, because of the range reduction
    overhead (compare exp2f).
    */
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
 #include <float.h>
 #include <ieee754.h>
 #include <math.h>
@@ -60,8 +56,8 @@
 extern const float __exp_deltatable[178];
 extern const double __exp_atable[355] /* __attribute__((mode(DF))) */;
 
-static const volatile float TWOM100 = 7.88860905e-31;
-static const volatile float TWO127 = 1.7014118346e+38;
+static const float TWOM100 = 7.88860905e-31;
+static const float TWO127 = 1.7014118346e+38;
 
 float
 __ieee754_expf (float x)
@@ -84,43 +80,39 @@ __ieee754_expf (float x)
       double x22, t, result, dx;
       float n, delta;
       union ieee754_double ex2_u;
-      fenv_t oldenv;
 
-      feholdexcept (&oldenv);
-#ifdef FE_TONEAREST
-      fesetround (FE_TONEAREST);
-#endif
+      {
+	SET_RESTORE_ROUND_NOEXF (FE_TONEAREST);
 
-      /* Calculate n.  */
-      n = x * M_1_LN2 + THREEp22;
-      n -= THREEp22;
-      dx = x - n*M_LN2;
+	/* Calculate n.  */
+	n = x * M_1_LN2 + THREEp22;
+	n -= THREEp22;
+	dx = x - n*M_LN2;
 
-      /* Calculate t/512.  */
-      t = dx + THREEp42;
-      t -= THREEp42;
-      dx -= t;
+	/* Calculate t/512.  */
+	t = dx + THREEp42;
+	t -= THREEp42;
+	dx -= t;
 
-      /* Compute tval = t.  */
-      tval = (int) (t * 512.0);
+	/* Compute tval = t.  */
+	tval = (int) (t * 512.0);
 
-      if (t >= 0)
-	delta = - __exp_deltatable[tval];
-      else
-	delta = __exp_deltatable[-tval];
+	if (t >= 0)
+	  delta = - __exp_deltatable[tval];
+	else
+	  delta = __exp_deltatable[-tval];
 
-      /* Compute ex2 = 2^n e^(t/512+delta[t]).  */
-      ex2_u.d = __exp_atable[tval+177];
-      ex2_u.ieee.exponent += (int) n;
+	/* Compute ex2 = 2^n e^(t/512+delta[t]).  */
+	ex2_u.d = __exp_atable[tval+177];
+	ex2_u.ieee.exponent += (int) n;
 
-      /* Approximate e^(dx+delta) - 1, using a second-degree polynomial,
-	 with maximum error in [-2^-10-2^-28,2^-10+2^-28]
-	 less than 5e-11.  */
-      x22 = (0.5000000496709180453 * dx + 1.0000001192102037084) * dx + delta;
+	/* Approximate e^(dx+delta) - 1, using a second-degree polynomial,
+	   with maximum error in [-2^-10-2^-28,2^-10+2^-28]
+	   less than 5e-11.  */
+	x22 = (0.5000000496709180453 * dx + 1.0000001192102037084) * dx + delta;
+      }
 
       /* Return result.  */
-      fesetenv (&oldenv);
-
       result = x22 * ex2_u.d + ex2_u.d;
       return (float) result;
     }
@@ -138,3 +130,4 @@ __ieee754_expf (float x)
     /* Return x, if x is a NaN or Inf; or overflow, otherwise.  */
     return TWO127*x;
 }
+strong_alias (__ieee754_expf, __expf_finite)

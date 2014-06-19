@@ -18,7 +18,7 @@
  		(var) = ((var)->field.le_next))
  
 +#define	LIST_FOREACH_SAFE(var, head, field, tvar)			\
-+	for (((var) = ((head)->lh_first);				\
++	for ((var) = ((head)->lh_first);				\
 +	    (var) && ((tvar) = ((var)->field.le_next), 1);		\
 +	    (var) = (tvar))
 +
@@ -59,7 +59,7 @@
  		(var) = ((var)->field.stqe_next))
  
 +#define	STAILQ_FOREACH_SAFE(var, head, field, tvar)			\
-+	for ((var) = ((elm)->field.stqe_next);				\
++	for ((var) = ((head)->stqh_first);				\
 +	    (var) && ((tvar) = ((var)->field.stqe_next), 1);		\
 +	    (var) = (tvar))
 +

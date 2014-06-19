@@ -1,5 +1,5 @@
 /* Netgroup file parser in nss_files modules.
-   Copyright (C) 1996, 1997, 2000, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <ctype.h>
 #include <errno.h>
@@ -47,7 +46,7 @@ libnss_files_hidden_proto (_nss_files_endnetgrent)
 	  status = NSS_STATUS_UNAVAIL;					      \
 	  goto the_end;							      \
 	}								      \
-      									      \
+									      \
       result->cursor = result->data + old_cursor;			      \
     }									      \
   while (0)
@@ -63,7 +62,7 @@ _nss_files_setnetgrent (const char *group, struct __netgrent *result)
     return NSS_STATUS_UNAVAIL;
 
   /* Find the netgroups file and open it.  */
-  fp = fopen (DATAFILE, "r");
+  fp = fopen (DATAFILE, "rce");
   if (fp == NULL)
     status = errno == EAGAIN ? NSS_STATUS_TRYAGAIN : NSS_STATUS_UNAVAIL;
   else
@@ -104,7 +103,8 @@ _nss_files_setnetgrent (const char *group, struct __netgrent *result)
 	      result->cursor += (curlen - group_len) - 1;
 	    }
 
-	  while (line[curlen - 1] == '\n' && line[curlen - 2] == '\\')
+	  while (curlen > 1 && line[curlen - 1] == '\n'
+		 && line[curlen - 2] == '\\')
 	    {
 	      /* Yes, we have a continuation line.  */
 	      if (found)

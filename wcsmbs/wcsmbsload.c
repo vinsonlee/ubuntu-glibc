@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2002,2004,2005,2008 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <ctype.h>
 #include <langinfo.h>
@@ -74,7 +73,7 @@ const struct gconv_fcts __wcsmbs_gconv_fcts_c =
   .towc = (struct __gconv_step *) &to_wc,
   .towc_nsteps = 1,
   .tomb = (struct __gconv_step *) &to_mb,
-  .tomb_nsteps = 1
+  .tomb_nsteps = 1,
 };
 
 
@@ -150,7 +149,7 @@ __libc_rwlock_define (extern, __libc_setlocale_lock attribute_hidden)
 /* Load conversion functions for the currently selected locale.  */
 void
 internal_function
-__wcsmbs_load_conv (struct locale_data *new_category)
+__wcsmbs_load_conv (struct __locale_data *new_category)
 {
   /* Acquire the lock.  */
   __libc_rwlock_wrlock (__libc_setlocale_lock);
@@ -166,7 +165,7 @@ __wcsmbs_load_conv (struct locale_data *new_category)
       int use_translit;
 
       /* Allocate the gconv_fcts structure.  */
-      new_fcts = malloc (sizeof *new_fcts);
+      new_fcts = calloc (1, sizeof *new_fcts);
       if (new_fcts == NULL)
 	goto failed;
 
@@ -186,14 +185,13 @@ __wcsmbs_load_conv (struct locale_data *new_category)
 	 represent all others.  */
       new_fcts->towc = __wcsmbs_getfct ("INTERNAL", complete_name,
 					&new_fcts->towc_nsteps);
-      new_fcts->tomb = (new_fcts->towc != NULL
-			? __wcsmbs_getfct (complete_name, "INTERNAL",
-					   &new_fcts->tomb_nsteps)
-			: NULL);
+      if (new_fcts->towc != NULL)
+	new_fcts->tomb = __wcsmbs_getfct (complete_name, "INTERNAL",
+					  &new_fcts->tomb_nsteps);
 
       /* If any of the conversion functions is not available we don't
 	 use any since this would mean we cannot convert back and
-	 forth.*/
+	 forth.  NB: NEW_FCTS was allocated with calloc.  */
       if (new_fcts->tomb == NULL)
 	{
 	  if (new_fcts->towc != NULL)
@@ -228,7 +226,7 @@ __wcsmbs_clone_conv (struct gconv_fcts *copy)
   *copy = *orig;
 
   /* Now increment the usage counters.
-     Note: This assumes copy->towc_nsteps == 1 and copy->tomb_nsteps == 1.  */
+     Note: This assumes copy->*_nsteps == 1.  */
   if (copy->towc->__shlib_handle != NULL)
     ++copy->towc->__counter;
   if (copy->tomb->__shlib_handle != NULL)
@@ -242,18 +240,21 @@ internal_function
 __wcsmbs_named_conv (struct gconv_fcts *copy, const char *name)
 {
   copy->towc = __wcsmbs_getfct ("INTERNAL", name, &copy->towc_nsteps);
-  if (copy->towc != NULL)
+  if (copy->towc == NULL)
+    return 1;
+
+  copy->tomb = __wcsmbs_getfct (name, "INTERNAL", &copy->tomb_nsteps);
+  if (copy->tomb == NULL)
     {
-      copy->tomb = __wcsmbs_getfct (name, "INTERNAL", &copy->tomb_nsteps);
-      if (copy->tomb == NULL)
-	__gconv_close_transform (copy->towc, copy->towc_nsteps);
+      __gconv_close_transform (copy->towc, copy->towc_nsteps);
+      return 1;
     }
 
-  return copy->towc == NULL || copy->tomb == NULL ? 1 : 0;
+  return 0;
 }
 
 void internal_function
-_nl_cleanup_ctype (struct locale_data *locale)
+_nl_cleanup_ctype (struct __locale_data *locale)
 {
   const struct gconv_fcts *const data = locale->private.ctype;
   if (data != NULL)

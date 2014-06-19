@@ -16,7 +16,7 @@
 +				* 2 * (1 << pop (mask))
  				* sizeof (struct loaded_l10nfile *)));
    if (retval == NULL)
-     return NULL;
+     {
 @@ -310,6 +310,15 @@ _nl_make_l10nflist (l10nfile_list, dirli
  				  language, territory, codeset,
  				  normalized_codeset, modifier, filename, 1);

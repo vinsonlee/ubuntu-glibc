@@ -1,5 +1,4 @@
-/* Copyright (C) 1996, 1997, 1998, 1999, 2002, 2004, 2007, 2008
-   Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Extended from original form by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* Parts of this file are plain copies of the file `getnetnamadr.c' from
    the bind package and it has the following copyright.  */
@@ -63,6 +61,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "nsswitch.h"
 #include <arpa/inet.h>
@@ -293,7 +292,6 @@ getanswer_r (const querybuf *answer, int anslen, struct netent *result,
   const unsigned char *cp = &answer->buf[HFIXEDSZ];
   char **alias_pointer;
   int have_answer;
-  char *ans;
   u_char packtmp[NS_MAXCDNAME];
 
   if (question_count == 0)
@@ -328,7 +326,6 @@ getanswer_r (const querybuf *answer, int anslen, struct netent *result,
   alias_pointer = result->n_aliases = &net_data->aliases[0];
   *alias_pointer = NULL;
   have_answer = 0;
-  ans = NULL;
 
   while (--answer_count >= 0 && cp < end_of_message)
     {
@@ -351,7 +348,6 @@ getanswer_r (const querybuf *answer, int anslen, struct netent *result,
       if (n < 0 || res_dnok (bp) == 0)
 	break;
       cp += n;
-      ans = strdupa (bp);
       GETSHORT (type, cp);
       GETSHORT (class, cp);
       cp += INT32SZ;		/* TTL */

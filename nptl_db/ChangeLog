@@ -1,3 +1,82 @@
+2013-05-31  Joseph Myers  <joseph@codesourcery.com>
+
+	* Makefile ($(objpfx)libthread_db.so): Remove dependencies on
+	libc.
+
+2013-05-16  Ryan S. Arnold  <rsa@linux.vnet.ibm.com>
+
+	* db_info.c: Add missing #include <stdint.h> due to uint64_t or
+	uint32_t usage.
+	* fetch-value.c: Likewise.
+	* td_ta_clear_event.c: Likewise.
+	* td_ta_set_event.c: Likewise.
+	* td_ta_tsd_iter.c: Likewise.
+	* td_thr_clear_event.c: Likewise.
+	* td_thr_get_info.c: Likewise.
+	* td_thr_set_event.c: Likewise.
+	* td_thr_tsd.c: Likewise.
+
+2013-01-02  Joseph Myers  <joseph@codesourcery.com>
+
+	* All files with FSF copyright notices: Update copyright dates
+	using scripts/update-copyrights.
+
+2013-01-01  Joseph Myers  <joseph@codesourcery.com>
+
+	* td_ta_thr_iter.c: Reformat copyright notice.
+	* td_thr_validate.c: Likewise.
+
+2012-11-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile ($(objpfx)db-symbols.out): Change readelf to $(READELF).
+
+2012-10-08  Jonathan Nieder  <jrnieder@gmail.com>
+
+	[BZ #14661]
+	* Makefile ($(objpfx)db-symbols.out): Force C locale when running
+	readelf -s.
+
+2012-03-07  Ulrich Drepper  <drepper@gmail.com>
+
+	* Makefile (distribute): Remove variable.
+
+2011-09-15  Andreas Schwab  <schwab@redhat.com>
+
+	* thread_dbP.h: Include <list.h>
+
+2009-08-23  Roland McGrath  <roland@redhat.com>
+
+	* td_ta_map_lwp2thr.c (__td_ta_lookup_th_unique): Move ta_ok check
+	and LOG call back to ...
+	(td_ta_map_lwp2thr): ... here.
+	Reported by Maciej W. Rozycki <macro@codesourcery.com>.
+
+2009-05-25  Aurelien Jarno  <aurelien@aurel32.net>
+
+	[BZ #10200]
+	* db-symbols.awk: Use the last field for the symbol name instead
+	of the 8th one.
+
+2009-03-19  Roland McGrath  <roland@redhat.com>
+
+	* td_symbol_list.c (DB_LOOKUP_NAME, DB_LOOKUP_NAME_TH_UNIQUE):
+	Use STRINGIFY macro in place of #argument.
+
+2009-02-27  Roland McGrath  <roland@redhat.com>
+
+	* td_symbol_list.c (symbol_list_arr): Move initializer guts to ...
+	* db-symbols.h: ... here, new file.
+	* db-symbols.awk: New file.
+	* Makefile (distribute): Add them.
+	($(objpfx)db-symbols.out): New target.
+	(tests): Depend on it.
+	($(objpfx)db-symbols.v.i): New dependent rule.
+
+2009-02-06  Ulrich Drepper  <drepper@redhat.com>
+
+	* td_thr_get_info.c (td_thr_get_info): Initialize schedpolicy in
+	the special case [Coverity CID 251].
+
 2008-03-25  Roland McGrath  <roland@redhat.com>
 
 	[BZ #5983]

@@ -1,5 +1,4 @@
-# Copyright (C) 1996,1997,1998,1999,2001,2002,2006,2007
-#	Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
 # Lesser General Public License for more details.
 
 # You should have received a copy of the GNU Lesser General Public
-# License along with the GNU C Library; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307 USA.
+# License along with the GNU C Library; if not, see
+# <http://www.gnu.org/licenses/>.
 
 # Makefile for installing libc message catalogs.
 
@@ -48,31 +46,32 @@ mo-installed = $(inst_msgcatdir)/%/LC_MESSAGES/$(domainname).mo
 # Files to install: a $(domainname).mo file for each language.
 install-others = $(LINGUAS:%=$(mo-installed))
 
-# Files to distribute: all the source and compiled binary translation files.
-distribute = $(ALL_LINGUAS:=.po) $(BROKEN_LINGUAS:=.po) $(ALL_LINGUAS:=.mo) \
-	     libc.pot header.pot
-
 
 include ../Rules
 
 # Generate the translation template from all the source files.
-libc.pot: header.pot libc.pot.files
+libc.pot: pot.header libc.pot.files
 	@rm -f $@.new
 	set `date -R`; disp="$$6"; \
 	sed -e 's/VERSION/$(version)/' \
 	    -e "s/DATE/`date +'%Y-%m-%d %H:%M'$$disp`/" \
+	    -e "s/CHARSET/UTF-8/" \
 	    $< > $@.new
+	egrep -v '\.ksh$$' $(word 2,$^) > $(objdir)/tmp-libc.pot-files
 	cd ..; $(XGETTEXT) --keyword=_ --keyword=N_ \
 			   --add-comments=TRANS --flag=error:3:c-format \
+			   --flag=f_print:2:c-format \
 			   --sort-by-file --omit-header -E -n -d - \
-			   -f po/$(word 2,$^) >> po/$@.new
+			   -f $(objdir)/tmp-libc.pot-files >> po/$@.new
+	egrep '\.ksh$$' $(word 2,$^) > $(objdir)/tmp-libc.pot-files
+	cd ..; $(XGETTEXT) --add-comments=TRANS --language=Shell \
+			   --sort-by-file --omit-header -E -n -o po/$@.new -j \
+			   -f $(objdir)/tmp-libc.pot-files po/$@.new
+	rm $(objdir)/tmp-libc.pot-files
 	mv -f $@.new $@
-ifeq ($(with-cvs),yes)
-	test ! -d CVS || cvs $(CVSOPTS) ci -m'Regenerated from source files' $@
-endif
 
 po-sed-cmd = \
-  '/\/tst-/d;$(foreach S,[ch] cxx sh bash,$(subst .,\.,/.$S\(.in\)*$$/p;))'
+  '/\/tst-/d;$(foreach S,[ch] cxx sh ksh bash,$(subst .,\.,/.$S\(.in\)*$$/p;))'
 
 # Omit tst-* files, and get only files with the given suffixes.
 libc.pot.files: FORCE
@@ -109,9 +108,6 @@ ifneq (,$(pofiles))
 	chmod 444 $@
 
 linguas: $(pofiles:$(podir)/%=%)
-ifeq ($(with-cvs),yes)
-	test ! -d CVS || cvs $(CVSOPTS) commit -m'Copied from $(podir)' $^
-endif
 linguas.mo: $(pofiles:$(podir)/%.po=%.mo)
 
 endif

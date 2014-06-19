@@ -1,13 +1,13 @@
 Patch from the OpenSUSE glibc
 
 ---
- sunrpc/bindrsvprt.c |  105 ++++++++++++++++++++++++++++++++++++++++++++++++----
- 1 file changed, 97 insertions(+), 8 deletions(-)
+ sunrpc/bindrsvprt.c |  107 ++++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 99 insertions(+), 8 deletions(-)
 
 --- a/sunrpc/bindrsvprt.c
 +++ b/sunrpc/bindrsvprt.c
-@@ -30,28 +30,106 @@
-  * Copyright (c) 1987 by Sun Microsystems, Inc.
+@@ -29,34 +29,114 @@
+  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   */
  
 +#include <stdio.h>
@@ -19,6 +19,7 @@ Patch from the OpenSUSE glibc
  #include <sys/types.h>
  #include <sys/socket.h>
  #include <netinet/in.h>
+ #include <bits/libc-lock.h>
  
 +#define STARTPORT 600
 +#define LOWPORT 512
@@ -48,7 +49,7 @@ Patch from the OpenSUSE glibc
 +  if (NULL == fp)
 +    return;
 +
-+  while (!feof (fp))
++  while (!feof_unlocked (fp))
 +    {
 +      unsigned long port;
 +      char *tmp, *cp;
@@ -68,6 +69,8 @@ Patch from the OpenSUSE glibc
 +        cp[strlen (cp) - 1] = '\0';
 +
 +      port = strtoul (cp, &tmp, 0);
++      while (isspace(*tmp))
++        ++tmp;
 +      if (*tmp != '\0' || (port == ULONG_MAX && errno == ERANGE))
 +	continue;
 +
@@ -98,6 +101,11 @@ Patch from the OpenSUSE glibc
 +}
 +
  /*
+  * Locks the static variables in this file.
+  */
+ __libc_lock_define_initialized (static, lock);
+ 
+ /*
   * Bind a socket to a privileged IP port
   */
  int
@@ -118,7 +126,7 @@ Patch from the OpenSUSE glibc
  
    if (sin == (struct sockaddr_in *) 0)
      {
-@@ -70,6 +148,7 @@
+@@ -69,6 +149,7 @@
        port = (__getpid () % NPORTS) + STARTPORT;
      }
  
@@ -126,7 +134,7 @@ Patch from the OpenSUSE glibc
    /* Initialize to make gcc happy.  */
    int res = -1;
  
-@@ -78,12 +157,22 @@
+@@ -77,12 +158,22 @@
   again:
    for (i = 0; i < nports; ++i)
      {

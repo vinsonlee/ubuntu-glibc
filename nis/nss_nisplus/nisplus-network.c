@@ -1,5 +1,4 @@
-/* Copyright (C) 1997,1998,2000-2003,2005,2006,2007
-   Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1997.
 
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <atomic.h>
 #include <ctype.h>
@@ -433,7 +431,7 @@ _nss_nisplus_getnetbyaddr_r (uint32_t addr, const int type,
     char buf2[18];
     int olderr = errno;
 
-    struct in_addr in = inet_makeaddr (addr, 0);
+    struct in_addr in = { .s_addr = htonl (addr) };
     strcpy (buf2, inet_ntoa (in));
     size_t b2len = strlen (buf2);
 

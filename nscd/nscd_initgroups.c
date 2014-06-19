@@ -1,4 +1,4 @@
-/* Copyright (C) 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2004.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <errno.h>
@@ -55,7 +54,8 @@ __nscd_getgrouplist (const char *user, gid_t group, long int *size,
   if (mapped != NO_MAPPING)
     {
       struct datahead *found = __nscd_cache_search (INITGROUPS, user,
-						    userlen, mapped);
+						    userlen, mapped,
+						    sizeof initgr_resp);
       if (found != NULL)
 	{
 	  respdata = (char *) (&found->data[0].initgrdata + 1);

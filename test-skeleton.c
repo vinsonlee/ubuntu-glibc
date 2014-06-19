@@ -1,5 +1,5 @@
 /* Skeleton for test programs.
-   Copyright (C) 1998,2000-2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <getopt.h>
@@ -132,7 +131,7 @@ create_temp_file (const char *base, char **filename)
 /* Timeout handler.  We kill the child and exit with an error.  */
 static void
 __attribute__ ((noreturn))
-timeout_handler (int sig __attribute__ ((unused)))
+signal_handler (int sig __attribute__ ((unused)))
 {
   int killed;
   int status;
@@ -166,6 +165,12 @@ timeout_handler (int sig __attribute__ ((unused)))
 #ifdef CLEANUP_HANDLER
   CLEANUP_HANDLER;
 #endif
+
+  if (sig == SIGINT)
+    {
+      signal (sig, SIG_DFL);
+      raise (sig);
+    }
 
   /* If we expected this signal: good!  */
 #ifdef EXPECTED_SIGNAL
@@ -325,8 +330,11 @@ main (int argc, char *argv[])
   /* Default timeout is two seconds.  */
 # define TIMEOUT 2
 #endif
-  signal (SIGALRM, timeout_handler);
+  signal (SIGALRM, signal_handler);
   alarm (TIMEOUT * timeoutfactor);
+
+  /* Make sure we clean up if the wrapper gets interrupted.  */
+  signal (SIGINT, signal_handler);
 
   /* Wait for the regular termination.  */
   termpid = TEMP_FAILURE_RETRY (waitpid (pid, &status, 0));

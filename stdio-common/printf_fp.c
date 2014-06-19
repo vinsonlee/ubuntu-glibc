@@ -1,5 +1,5 @@
 /* Floating point output for `printf'.
-   Copyright (C) 1995-2003, 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
    Written by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
@@ -15,9 +15,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* The gmp headers need some configuration frobs.  */
 #define HAVE_ALLOCA 1
@@ -28,6 +27,7 @@
 #include <float.h>
 #include <gmp-mparam.h>
 #include <gmp.h>
+#include <ieee754.h>
 #include <stdlib/gmp-impl.h>
 #include <stdlib/longlong.h>
 #include <stdlib/fpioconst.h>
@@ -39,6 +39,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <wchar.h>
+#include <stdbool.h>
+#include <rounding-mode.h>
 
 #ifdef COMPILE_WPRINTF
 # define CHAR_T        wchar_t
@@ -56,7 +58,7 @@
 /* This defines make it possible to use the same code for GNU C library and
    the GNU I/O library.	 */
 #define PUT(f, s, n) _IO_sputn (f, s, n)
-#define PAD(f, c, n) (wide ? _IO_wpadn (f, c, n) : INTUSE(_IO_padn) (f, c, n))
+#define PAD(f, c, n) (wide ? _IO_wpadn (f, c, n) : _IO_padn (f, c, n))
 /* We use this file GNU C library and GNU I/O library.	So make
    names equal.	 */
 #undef putc
@@ -70,7 +72,7 @@
 #define outchar(ch)							      \
   do									      \
     {									      \
-      register const int outc = (ch);					      \
+      const int outc = (ch);						      \
       if (putc (outc, fp) == EOF)					      \
 	{								      \
 	  if (buffer_malloced)						      \
@@ -83,7 +85,7 @@
 #define PRINT(ptr, wptr, len)						      \
   do									      \
     {									      \
-      register size_t outlen = (len);					      \
+      size_t outlen = (len);						      \
       if (len > 20)							      \
 	{								      \
 	  if (PUT (fp, wide ? (const char *) wptr : ptr, outlen) != outlen)   \
@@ -130,9 +132,6 @@
   memcpy (dst, src, (dst##size = src##size) * sizeof (mp_limb_t))
 #define MPN_GE(u,v) \
   (u##size > v##size || (u##size == v##size && __mpn_cmp (u, v, u##size) >= 0))
-
-extern int __isinfl_internal (long double) attribute_hidden;
-extern int __isnanl_internal (long double) attribute_hidden;
 
 extern mp_size_t __mpn_extract_double (mp_ptr res_ptr, mp_size_t size,
 				       int *expt, int *is_neg,
@@ -196,9 +195,6 @@ ___printf_fp (FILE *fp,
 
   /* Temporary bignum value.  */
   MPN_VAR(tmp);
-
-  /* Digit which is result of last hack_digit() call.  */
-  wchar_t digit;
 
   /* The type of output format that will be used: 'e'/'E' or 'f'.  */
   int type;
@@ -333,8 +329,10 @@ ___printf_fp (FILE *fp,
       fpnum.ldbl = *(const long double *) args[0];
 
       /* Check for special values: not a number or infinity.  */
+      int res;
       if (__isnanl (fpnum.ldbl))
 	{
+	  is_neg = signbit (fpnum.ldbl);
 	  if (isupper (info->spec))
 	    {
 	      special = "NAN";
@@ -345,10 +343,10 @@ ___printf_fp (FILE *fp,
 		special = "nan";
 		wspecial = L"nan";
 	      }
-	  is_neg = 0;
 	}
-      else if (__isinfl (fpnum.ldbl))
+      else if ((res = __isinfl (fpnum.ldbl)))
 	{
+	  is_neg = res < 0;
 	  if (isupper (info->spec))
 	    {
 	      special = "INF";
@@ -359,7 +357,6 @@ ___printf_fp (FILE *fp,
 	      special = "inf";
 	      wspecial = L"inf";
 	    }
-	  is_neg = fpnum.ldbl < 0;
 	}
       else
 	{
@@ -377,9 +374,11 @@ ___printf_fp (FILE *fp,
       fpnum.dbl = *(const double *) args[0];
 
       /* Check for special values: not a number or infinity.  */
+      int res;
       if (__isnan (fpnum.dbl))
 	{
-	  is_neg = 0;
+	  union ieee754_double u = { .d = fpnum.dbl };
+	  is_neg = u.ieee.negative != 0;
 	  if (isupper (info->spec))
 	    {
 	      special = "NAN";
@@ -391,9 +390,9 @@ ___printf_fp (FILE *fp,
 	      wspecial = L"nan";
 	    }
 	}
-      else if (__isinf (fpnum.dbl))
+      else if ((res = __isinf (fpnum.dbl)))
 	{
-	  is_neg = fpnum.dbl < 0;
+	  is_neg = res < 0;
 	  if (isupper (info->spec))
 	    {
 	      special = "INF";
@@ -637,7 +636,6 @@ ___printf_fp (FILE *fp,
       int exp10 = 0;
       int explog = LDBL_MAX_10_EXP_LOG;
       const struct mp_power *powers = &_fpioconst_pow10[explog + 1];
-      mp_size_t used_limbs = fracsize - 1;
 
       /* Now shift the input value to its right place.	*/
       cy = __mpn_lshift (frac, fp_input, fracsize, to_shift);
@@ -759,7 +757,6 @@ ___printf_fp (FILE *fp,
 			  fracsize = tmpsize - (i - 1);
 			}
 		    }
-		  used_limbs = fracsize - 1;
 		}
 	    }
 	  --explog;
@@ -881,15 +878,24 @@ ___printf_fp (FILE *fp,
 	/* Guess the number of groups we will make, and thus how
 	   many spaces we need for separator characters.  */
 	ngroups = __guess_grouping (intdig_max, grouping);
-	chars_needed += ngroups;
+	/* Allocate one more character in case rounding increases the
+	   number of groups.  */
+	chars_needed += ngroups + 1;
       }
 
     /* Allocate buffer for output.  We need two more because while rounding
        it is possible that we need two more characters in front of all the
        other output.  If the amount of memory we have to allocate is too
        large use `malloc' instead of `alloca'.  */
-    size_t wbuffer_to_alloc = (2 + (size_t) chars_needed) * sizeof (wchar_t);
-    buffer_malloced = ! __libc_use_alloca (chars_needed * 2 * sizeof (wchar_t));
+    if (__builtin_expect (chars_needed >= (size_t) -1 / sizeof (wchar_t) - 2
+			  || chars_needed < fracdig_max, 0))
+      {
+	/* Some overflow occurred.  */
+	__set_errno (ERANGE);
+	return -1;
+      }
+    size_t wbuffer_to_alloc = (2 + chars_needed) * sizeof (wchar_t);
+    buffer_malloced = ! __libc_use_alloca (wbuffer_to_alloc);
     if (__builtin_expect (buffer_malloced, 0))
       {
 	wbuffer = (wchar_t *) malloc (wbuffer_to_alloc);
@@ -944,33 +950,30 @@ ___printf_fp (FILE *fp,
       }
 
     /* Do rounding.  */
-    digit = hack_digit ();
-    if (digit > L'4')
+    wchar_t last_digit = wcp[-1] != decimalwc ? wcp[-1] : wcp[-2];
+    wchar_t next_digit = hack_digit ();
+    bool more_bits;
+    if (next_digit != L'0' && next_digit != L'5')
+      more_bits = true;
+    else if (fracsize == 1 && frac[0] == 0)
+      /* Rest of the number is zero.  */
+      more_bits = false;
+    else if (scalesize == 0)
+      {
+	/* Here we have to see whether all limbs are zero since no
+	   normalization happened.  */
+	size_t lcnt = fracsize;
+	while (lcnt >= 1 && frac[lcnt - 1] == 0)
+	  --lcnt;
+	more_bits = lcnt > 0;
+      }
+    else
+      more_bits = true;
+    int rounding_mode = get_rounding_mode ();
+    if (round_away (is_neg, (last_digit - L'0') & 1, next_digit >= L'5',
+		    more_bits, rounding_mode))
       {
 	wchar_t *wtp = wcp;
-
-	if (digit == L'5'
-	    && ((*(wcp - 1) != decimalwc && (*(wcp - 1) & 1) == 0)
-		|| ((*(wcp - 1) == decimalwc && (*(wcp - 2) & 1) == 0))))
-	  {
-	    /* This is the critical case.	 */
-	    if (fracsize == 1 && frac[0] == 0)
-	      /* Rest of the number is zero -> round to even.
-		 (IEEE 754-1985 4.1 says this is the default rounding.)  */
-	      goto do_expo;
-	    else if (scalesize == 0)
-	      {
-		/* Here we have to see whether all limbs are zero since no
-		   normalization happened.  */
-		size_t lcnt = fracsize;
-		while (lcnt >= 1 && frac[lcnt - 1] == 0)
-		  --lcnt;
-		if (lcnt == 0)
-		  /* Rest of the number is zero -> round to even.
-		     (IEEE 754-1985 4.1 says this is the default rounding.)  */
-		  goto do_expo;
-	      }
-	  }
 
 	if (fracdig_no > 0)
 	  {
@@ -1065,7 +1068,6 @@ ___printf_fp (FILE *fp,
 	  }
       }
 
-  do_expo:
     /* Now remove unnecessary '0' at the end of the string.  */
     while (fracdig_no > fracdig_min + added_zeros && *(wcp - 1) == L'0')
       {
@@ -1078,9 +1080,16 @@ ___printf_fp (FILE *fp,
       --wcp;
 
     if (grouping)
-      /* Add in separator characters, overwriting the same buffer.  */
-      wcp = group_number (wstartp, wcp, intdig_no, grouping, thousands_sepwc,
-			  ngroups);
+      {
+	/* Rounding might have changed the number of groups.  We allocated
+	   enough memory but we need here the correct number of groups.  */
+	if (intdig_no != intdig_max)
+	  ngroups = __guess_grouping (intdig_no, grouping);
+
+	/* Add in separator characters, overwriting the same buffer.  */
+	wcp = group_number (wstartp, wcp, intdig_no, grouping, thousands_sepwc,
+			    ngroups);
+      }
 
     /* Write the exponent if it is needed.  */
     if (type != 'f')
@@ -1200,7 +1209,7 @@ ___printf_fp (FILE *fp,
 
       tmpptr = buffer;
       if (__builtin_expect (info->i18n, 0))
-        {
+	{
 #ifdef COMPILE_WPRINTF
 	  wstartp = _i18n_number_rewrite (wstartp, wcp,
 					  wbuffer + wbuffer_to_alloc);
@@ -1214,7 +1223,7 @@ ___printf_fp (FILE *fp,
 	  assert ((uintptr_t) buffer <= (uintptr_t) tmpptr);
 	  assert ((uintptr_t) tmpptr < (uintptr_t) buffer_end);
 #endif
-        }
+	}
 
       PRINT (tmpptr, wstartp, wide ? wcp - wstartp : cp - tmpptr);
 

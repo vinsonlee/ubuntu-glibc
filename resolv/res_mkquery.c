@@ -77,12 +77,14 @@ static const char rcsid[] = "$BINDId: res_mkquery.c,v 8.12 1999/10/13 16:39:40 v
 #include <resolv.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 
 /* Options.  Leave them on. */
 /* #define DEBUG */
 
 #ifdef _LIBC
 # include <hp-timing.h>
+# include <stdint.h>
 # if HP_TIMING_AVAIL
 #  define RANDOM_BITS(Var) { uint64_t v64; HP_TIMING_NOW (v64); Var = v64; }
 # endif
@@ -103,9 +105,9 @@ res_nmkquery(res_state statp,
 	     u_char *buf,		/* buffer to put query */
 	     int buflen)		/* size of buffer */
 {
-	register HEADER *hp;
-	register u_char *cp;
-	register int n;
+	HEADER *hp;
+	u_char *cp;
+	int n;
 	u_char *dnptrs[20], **dpp, **lastdnptr;
 
 #ifdef DEBUG
@@ -244,10 +246,18 @@ __res_nopt(res_state statp,
 	*cp++ = 0;	/* "." */
 
 	NS_PUT16(T_OPT, cp);	/* TYPE */
-	NS_PUT16(anslen & 0xffff, cp);	/* CLASS = UDP payload size */
+	NS_PUT16(MIN(anslen, 0xffff), cp);	/* CLASS = UDP payload size */
 	*cp++ = NOERROR;	/* extended RCODE */
 	*cp++ = 0;		/* EDNS version */
-	/* XXX Once we support DNSSEC we change the flag value here.  */
+
+	if (statp->options & RES_USE_DNSSEC) {
+#ifdef DEBUG
+		if (statp->options & RES_DEBUG)
+			printf(";; res_opt()... ENDS0 DNSSEC\n");
+#endif
+		flags |= NS_OPT_DNSSEC_OK;
+	}
+
 	NS_PUT16(flags, cp);
 	NS_PUT16(0, cp);	/* RDLEN */
 	hp->arcount = htons(ntohs(hp->arcount) + 1);

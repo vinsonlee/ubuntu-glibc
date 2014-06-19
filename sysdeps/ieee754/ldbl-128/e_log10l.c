@@ -57,13 +57,11 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA 
-
+    License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
 /* Coefficients for ln(1+x) = x - x**2/2 + x**3 P(x)/Q(x)
  * 1/sqrt(2) <= x < sqrt(2)
@@ -179,8 +177,7 @@ deval (long double x, const long double *p, int n)
 
 
 long double
-__ieee754_log10l (x)
-     long double x;
+__ieee754_log10l (long double x)
 {
   long double z;
   long double y;
@@ -256,3 +253,4 @@ done:
   z += e * L102A;
   return (z);
 }
+strong_alias (__ieee754_log10l, __log10l_finite)

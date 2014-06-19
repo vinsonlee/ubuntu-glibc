@@ -1,7 +1,7 @@
 /*
  * UFC-crypt: ultra fast crypt(3) implementation
  *
- * Copyright (C) 1991, 92, 93, 96, 97, 98, 2000 Free Software Foundation, Inc.
+ * Copyright (C) 1991-2014 Free Software Foundation, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,8 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; see the file COPYING.LIB.  If not,
- * write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * see <http://www.gnu.org/licenses/>.
  *
  * @(#)crypt_util.c	2.56 12/20/96
  *
@@ -27,6 +26,7 @@
 #ifdef DEBUG
 #include <stdio.h>
 #endif
+#include <atomic.h>
 #include <string.h>
 
 #ifndef STATIC
@@ -47,7 +47,6 @@
 #include "crypt-private.h"
 
 /* Prototypes for local functions.  */
-#if __STDC__ - 0
 #ifndef __GNU_LIBRARY__
 void _ufc_clearmem (char *start, int cnt);
 void _ufc_copymem (char *from, char *to, int cnt);
@@ -56,7 +55,6 @@ void _ufc_copymem (char *from, char *to, int cnt);
 STATIC void shuffle_sb (long32 *k, ufc_long saltbits);
 #else
 STATIC void shuffle_sb (long64 *k, ufc_long saltbits);
-#endif
 #endif
 
 
@@ -114,53 +112,53 @@ static const int perm32[32] = {
  * The sboxes
  */
 static const int sbox[8][4][16]= {
-        { { 14,  4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7 },
-          {  0, 15,  7,  4, 14,  2, 13,  1, 10,  6, 12, 11,  9,  5,  3,  8 },
-          {  4,  1, 14,  8, 13,  6,  2, 11, 15, 12,  9,  7,  3, 10,  5,  0 },
-          { 15, 12,  8,  2,  4,  9,  1,  7,  5, 11,  3, 14, 10,  0,  6, 13 }
-        },
+	{ { 14,  4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7 },
+	  {  0, 15,  7,  4, 14,  2, 13,  1, 10,  6, 12, 11,  9,  5,  3,  8 },
+	  {  4,  1, 14,  8, 13,  6,  2, 11, 15, 12,  9,  7,  3, 10,  5,  0 },
+	  { 15, 12,  8,  2,  4,  9,  1,  7,  5, 11,  3, 14, 10,  0,  6, 13 }
+	},
 
-        { { 15,  1,  8, 14,  6, 11,  3,  4,  9,  7,  2, 13, 12,  0,  5, 10 },
-          {  3, 13,  4,  7, 15,  2,  8, 14, 12,  0,  1, 10,  6,  9, 11,  5 },
-          {  0, 14,  7, 11, 10,  4, 13,  1,  5,  8, 12,  6,  9,  3,  2, 15 },
-          { 13,  8, 10,  1,  3, 15,  4,  2, 11,  6,  7, 12,  0,  5, 14,  9 }
-        },
+	{ { 15,  1,  8, 14,  6, 11,  3,  4,  9,  7,  2, 13, 12,  0,  5, 10 },
+	  {  3, 13,  4,  7, 15,  2,  8, 14, 12,  0,  1, 10,  6,  9, 11,  5 },
+	  {  0, 14,  7, 11, 10,  4, 13,  1,  5,  8, 12,  6,  9,  3,  2, 15 },
+	  { 13,  8, 10,  1,  3, 15,  4,  2, 11,  6,  7, 12,  0,  5, 14,  9 }
+	},
 
-        { { 10,  0,  9, 14,  6,  3, 15,  5,  1, 13, 12,  7, 11,  4,  2,  8 },
-          { 13,  7,  0,  9,  3,  4,  6, 10,  2,  8,  5, 14, 12, 11, 15,  1 },
-          { 13,  6,  4,  9,  8, 15,  3,  0, 11,  1,  2, 12,  5, 10, 14,  7 },
-          {  1, 10, 13,  0,  6,  9,  8,  7,  4, 15, 14,  3, 11,  5,  2, 12 }
-        },
+	{ { 10,  0,  9, 14,  6,  3, 15,  5,  1, 13, 12,  7, 11,  4,  2,  8 },
+	  { 13,  7,  0,  9,  3,  4,  6, 10,  2,  8,  5, 14, 12, 11, 15,  1 },
+	  { 13,  6,  4,  9,  8, 15,  3,  0, 11,  1,  2, 12,  5, 10, 14,  7 },
+	  {  1, 10, 13,  0,  6,  9,  8,  7,  4, 15, 14,  3, 11,  5,  2, 12 }
+	},
 
-        { {  7, 13, 14,  3,  0,  6,  9, 10,  1,  2,  8,  5, 11, 12,  4, 15 },
-          { 13,  8, 11,  5,  6, 15,  0,  3,  4,  7,  2, 12,  1, 10, 14,  9 },
-          { 10,  6,  9,  0, 12, 11,  7, 13, 15,  1,  3, 14,  5,  2,  8,  4 },
-          {  3, 15,  0,  6, 10,  1, 13,  8,  9,  4,  5, 11, 12,  7,  2, 14 }
-        },
+	{ {  7, 13, 14,  3,  0,  6,  9, 10,  1,  2,  8,  5, 11, 12,  4, 15 },
+	  { 13,  8, 11,  5,  6, 15,  0,  3,  4,  7,  2, 12,  1, 10, 14,  9 },
+	  { 10,  6,  9,  0, 12, 11,  7, 13, 15,  1,  3, 14,  5,  2,  8,  4 },
+	  {  3, 15,  0,  6, 10,  1, 13,  8,  9,  4,  5, 11, 12,  7,  2, 14 }
+	},
 
-        { {  2, 12,  4,  1,  7, 10, 11,  6,  8,  5,  3, 15, 13,  0, 14,  9 },
-          { 14, 11,  2, 12,  4,  7, 13,  1,  5,  0, 15, 10,  3,  9,  8,  6 },
-          {  4,  2,  1, 11, 10, 13,  7,  8, 15,  9, 12,  5,  6,  3,  0, 14 },
-          { 11,  8, 12,  7,  1, 14,  2, 13,  6, 15,  0,  9, 10,  4,  5,  3 }
-        },
+	{ {  2, 12,  4,  1,  7, 10, 11,  6,  8,  5,  3, 15, 13,  0, 14,  9 },
+	  { 14, 11,  2, 12,  4,  7, 13,  1,  5,  0, 15, 10,  3,  9,  8,  6 },
+	  {  4,  2,  1, 11, 10, 13,  7,  8, 15,  9, 12,  5,  6,  3,  0, 14 },
+	  { 11,  8, 12,  7,  1, 14,  2, 13,  6, 15,  0,  9, 10,  4,  5,  3 }
+	},
 
-        { { 12,  1, 10, 15,  9,  2,  6,  8,  0, 13,  3,  4, 14,  7,  5, 11 },
-          { 10, 15,  4,  2,  7, 12,  9,  5,  6,  1, 13, 14,  0, 11,  3,  8 },
-          {  9, 14, 15,  5,  2,  8, 12,  3,  7,  0,  4, 10,  1, 13, 11,  6 },
-          {  4,  3,  2, 12,  9,  5, 15, 10, 11, 14,  1,  7,  6,  0,  8, 13 }
-        },
+	{ { 12,  1, 10, 15,  9,  2,  6,  8,  0, 13,  3,  4, 14,  7,  5, 11 },
+	  { 10, 15,  4,  2,  7, 12,  9,  5,  6,  1, 13, 14,  0, 11,  3,  8 },
+	  {  9, 14, 15,  5,  2,  8, 12,  3,  7,  0,  4, 10,  1, 13, 11,  6 },
+	  {  4,  3,  2, 12,  9,  5, 15, 10, 11, 14,  1,  7,  6,  0,  8, 13 }
+	},
 
-        { {  4, 11,  2, 14, 15,  0,  8, 13,  3, 12,  9,  7,  5, 10,  6,  1 },
-          { 13,  0, 11,  7,  4,  9,  1, 10, 14,  3,  5, 12,  2, 15,  8,  6 },
-          {  1,  4, 11, 13, 12,  3,  7, 14, 10, 15,  6,  8,  0,  5,  9,  2 },
-          {  6, 11, 13,  8,  1,  4, 10,  7,  9,  5,  0, 15, 14,  2,  3, 12 }
-        },
+	{ {  4, 11,  2, 14, 15,  0,  8, 13,  3, 12,  9,  7,  5, 10,  6,  1 },
+	  { 13,  0, 11,  7,  4,  9,  1, 10, 14,  3,  5, 12,  2, 15,  8,  6 },
+	  {  1,  4, 11, 13, 12,  3,  7, 14, 10, 15,  6,  8,  0,  5,  9,  2 },
+	  {  6, 11, 13,  8,  1,  4, 10,  7,  9,  5,  0, 15, 14,  2,  3, 12 }
+	},
 
-        { { 13,  2,  8,  4,  6, 15, 11,  1, 10,  9,  3, 14,  5,  0, 12,  7 },
-          {  1, 15, 13,  8, 10,  3,  7,  4, 12,  5,  6, 11,  0, 14,  9,  2 },
-          {  7, 11,  4,  1,  9, 12, 14,  2,  0,  6, 10, 13, 15,  3,  5,  8 },
-          {  2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11 }
-        }
+	{ { 13,  2,  8,  4,  6, 15, 11,  1, 10,  9,  3, 14,  5,  0, 12,  7 },
+	  {  1, 15, 13,  8, 10,  3,  7,  4, 12,  5,  6, 11,  0, 14,  9,  2 },
+	  {  7, 11,  4,  1,  9, 12, 14,  2,  0,  6, 10, 13, 15,  3,  5,  8 },
+	  {  2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11 }
+	}
 };
 
 /*
@@ -468,12 +466,14 @@ __init_des_r(__data)
 	  efp[comes_from_word][word_value][o_long] |= mask2;
       }
     }
+    atomic_write_barrier ();
     small_tables_initialized = 1;
 #ifdef __GNU_LIBRARY__
 small_tables_done:
     __libc_lock_unlock(_ufc_tables_lock);
 #endif
-  }
+  } else
+    atomic_read_barrier ();
 
   /*
    * Create the sb tables:
@@ -488,10 +488,20 @@ small_tables_done:
    *
    */
 
-  _ufc_clearmem((char*)__data->sb0, (int)sizeof(__data->sb0));
-  _ufc_clearmem((char*)__data->sb1, (int)sizeof(__data->sb1));
-  _ufc_clearmem((char*)__data->sb2, (int)sizeof(__data->sb2));
-  _ufc_clearmem((char*)__data->sb3, (int)sizeof(__data->sb3));
+  if (__data->sb0 + sizeof (__data->sb0) == __data->sb1
+      && __data->sb1 + sizeof (__data->sb1) == __data->sb2
+      && __data->sb2 + sizeof (__data->sb2) == __data->sb3)
+    _ufc_clearmem(__data->sb0,
+		  (int)sizeof(__data->sb0)
+		  + (int)sizeof(__data->sb1)
+		  + (int)sizeof(__data->sb2)
+		  + (int)sizeof(__data->sb3));
+  else {
+    _ufc_clearmem(__data->sb0, (int)sizeof(__data->sb0));
+    _ufc_clearmem(__data->sb1, (int)sizeof(__data->sb1));
+    _ufc_clearmem(__data->sb2, (int)sizeof(__data->sb2));
+    _ufc_clearmem(__data->sb3, (int)sizeof(__data->sb3));
+  }
 
   for(sg = 0; sg < 4; sg++) {
     int j1, j2;
@@ -543,7 +553,7 @@ small_tables_done:
 }
 
 void
-__init_des()
+__init_des (void)
 {
   __init_des_r(&_ufc_foobar);
 }
@@ -585,23 +595,55 @@ shuffle_sb(k, saltbits)
 #endif
 
 /*
- * Setup the unit for a new salt
- * Hopefully we'll not see a new salt in each crypt call.
+ * Return false iff C is in the specified alphabet for crypt salt.
  */
 
-void
+static bool
+bad_for_salt (char c)
+{
+  switch (c)
+    {
+    case '0' ... '9':
+    case 'A' ... 'Z':
+    case 'a' ... 'z':
+    case '.': case '/':
+      return false;
+
+    default:
+      return true;
+    }
+}
+
+/*
+ * Setup the unit for a new salt
+ * Hopefully we'll not see a new salt in each crypt call.
+ * Return false if an unexpected character was found in s[0] or s[1].
+ */
+
+bool
 _ufc_setup_salt_r(s, __data)
-     __const char *s;
+     const char *s;
      struct crypt_data * __restrict __data;
 {
   ufc_long i, j, saltbits;
+  char s0, s1;
 
   if(__data->initialized == 0)
     __init_des_r(__data);
 
-  if(s[0] == __data->current_salt[0] && s[1] == __data->current_salt[1])
-    return;
-  __data->current_salt[0] = s[0]; __data->current_salt[1] = s[1];
+  s0 = s[0];
+  if(bad_for_salt (s0))
+    return false;
+
+  s1 = s[1];
+  if(bad_for_salt (s1))
+    return false;
+
+  if(s0 == __data->current_salt[0] && s1 == __data->current_salt[1])
+    return true;
+
+  __data->current_salt[0] = s0;
+  __data->current_salt[1] = s1;
 
   /*
    * This is the only crypt change to DES:
@@ -635,6 +677,8 @@ _ufc_setup_salt_r(s, __data)
   shuffle_sb((LONGG)__data->sb3, __data->current_saltbits ^ saltbits);
 
   __data->current_saltbits = saltbits;
+
+  return true;
 }
 
 void
@@ -744,7 +788,7 @@ _ufc_dofinalperm_r(res, __data)
 void
 _ufc_output_conversion_r(v1, v2, salt, __data)
      ufc_long v1, v2;
-     __const char *salt;
+     const char *salt;
      struct crypt_data * __restrict __data;
 {
   int i, s, shf;
@@ -888,7 +932,7 @@ encrypt(__block, __edflag)
 
 void
 __setkey_r(__key, __data)
-     __const char *__key;
+     const char *__key;
      struct crypt_data * __restrict __data;
 {
   int i,j;
@@ -908,7 +952,7 @@ weak_alias (__setkey_r, setkey_r)
 
 void
 setkey(__key)
-     __const char *__key;
+     const char *__key;
 {
   __setkey_r(__key, &_ufc_foobar);
 }

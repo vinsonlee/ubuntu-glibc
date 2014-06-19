@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <stdarg.h>
@@ -30,9 +29,6 @@ union semun
   unsigned short int *array;	/* array for GETALL & SETALL */
   struct seminfo *__buf;	/* buffer for IPC_INFO */
 };
-
-#include <bp-checks.h>
-#include <bp-semctl.h>		/* definition of CHECK_SEMCTL needs union semum */
 
 int __semctl (int semid, int semnum, int cmd, ...);
 
@@ -50,7 +46,7 @@ __semctl (int semid, int semnum, int cmd, ...)
   va_end (ap);
 
   return INLINE_SYSCALL (semctl, 4, semid, semnum, cmd | __IPC_64,
-			 CHECK_SEMCTL (&arg, semid, cmd | __IPC_64)->array);
+			 arg.array);
 }
 
 #include <shlib-compat.h>

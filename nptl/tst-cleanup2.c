@@ -1,4 +1,4 @@
-/* Copyright (C) 2003 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Bao Duong <bduong@progress.com>, 2003.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <setjmp.h>
 #include <signal.h>
@@ -35,6 +34,12 @@ static int
 do_test (void)
 {
   char *p = NULL;
+  /* gcc can overwrite the success written value by scheduling instructions
+     around sprintf.  It is allowed to do this since according to C99 the first
+     argument of sprintf is a character array and NULL is not a valid character
+     array.  Mark the return value as volatile so that it gets reloaded on
+     return.  */
+  volatile int ret = 0;
   struct sigaction sa;
 
   sa.sa_handler = sig_handler;
@@ -51,7 +56,7 @@ do_test (void)
   if (setjmp (jmpbuf))
     {
       puts ("Exiting main...");
-      return 0;
+      return ret;
     }
 
   sprintf (p, "This should segv\n");

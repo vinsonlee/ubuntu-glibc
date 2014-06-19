@@ -1,8 +1,8 @@
 /* Return classification value corresponding to argument.
-   Copyright (C) 1997,1999,2002,2004,2006,2007 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997 and
-   		  Jakub Jelinek <jj@ultra.linux.cz>, 1999.
+		  Jakub Jelinek <jj@ultra.linux.cz>, 1999.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -15,13 +15,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
 
-#include "math_private.h"
+#include <math_private.h>
 #include <math_ldbl_opt.h>
 
   /*
@@ -47,8 +46,10 @@ ___fpclassifyl (long double x)
 {
   u_int64_t hx, lx;
   int retval = FP_NORMAL;
+  double xhi, xlo;
 
-  GET_LDOUBLE_WORDS64 (hx, lx, x);
+  ldbl_unpack (x, &xhi, &xlo);
+  EXTRACT_WORDS64 (hx, xhi);
   if ((hx & 0x7ff0000000000000ULL) == 0x7ff0000000000000ULL) {
       /* +/-NaN or +/-Inf */
       if (hx & 0x000fffffffffffffULL) {
@@ -66,6 +67,7 @@ ___fpclassifyl (long double x)
 	      retval = FP_NORMAL;
 	  } else {
 	      if ((hx & 0x7ff0000000000000ULL) == 0x0360000000000000ULL) {
+		  EXTRACT_WORDS64 (lx, xlo);
 		  if ((lx & 0x7fffffffffffffff)	/* lower is non-zero */
 		  && ((lx^hx) & 0x8000000000000000ULL)) { /* and sign differs */
 		      /* +/- denormal */

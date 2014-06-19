@@ -3,15 +3,16 @@
    the `.ctors' and `.dtors' sections so the lists are terminated, and
    calling those lists of functions.  */
 
-#include <libc-internal.h>
-#include <stdlib.h>
+#ifndef NO_CTORS_DTORS_SECTIONS
+# include <libc-internal.h>
+# include <stdlib.h>
 
 static void (*const __CTOR_LIST__[1]) (void)
-     __attribute__ ((section (".ctors")))
-     = { (void (*) (void)) -1 };
+  __attribute__ ((used, section (".ctors")))
+  = { (void (*) (void)) -1 };
 static void (*const __DTOR_LIST__[1]) (void)
-     __attribute__ ((section (".dtors")))
-     = { (void (*) (void)) -1 };
+  __attribute__ ((used, section (".dtors")))
+  = { (void (*) (void)) -1 };
 
 static inline void
 run_hooks (void (*const list[]) (void))
@@ -40,3 +41,4 @@ __libc_fini (void)
 
 void (*_fini_ptr) (void) __attribute__ ((section (".fini_array")))
      = &__libc_fini;
+#endif

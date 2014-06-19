@@ -28,8 +28,8 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
 /* __kernel_tanl( x, y, k )
  * kernel tan function on [-pi/4, pi/4], pi/4 ~ 0.7854
@@ -56,13 +56,9 @@
  *		       = 1 - 2*(tan(y) - (tan(y)^2)/(1+tan(y)))
  */
 
-#include "math.h"
-#include "math_private.h"
-#ifdef __STDC__
+#include <math.h>
+#include <math_private.h>
 static const long double
-#else
-static long double
-#endif
   one = 1.0L,
   pio4hi = 7.8539816339744830961566084581987569936977E-1L,
   pio4lo = 2.1679525325309452561992610065108379921906E-35L,
@@ -85,28 +81,21 @@ static long double
   /* 1.000000000000000000000000000000000000000E0 */
 
 
-#ifdef __STDC__
 long double
 __kernel_tanl (long double x, long double y, int iy)
-#else
-long double
-__kernel_tanl (x, y, iy)
-     long double x, y;
-     int iy;
-#endif
 {
   long double z, r, v, w, s;
-  int32_t ix, sign;
-  ieee854_long_double_shape_type u, u1;
+  int32_t ix, sign, hx, lx;
+  double xhi;
 
-  u.value = x;
-  ix = u.parts32.w0 & 0x7fffffff;
+  xhi = ldbl_high (x);
+  EXTRACT_WORDS (hx, lx, xhi);
+  ix = hx & 0x7fffffff;
   if (ix < 0x3c600000)		/* x < 2**-57 */
     {
-      if ((int) x == 0)
-	{			/* generate inexact */
-	  if ((ix | u.parts32.w1 | (u.parts32.w2 & 0x7fffffff) | u.parts32.w3
-	       | (iy + 1)) == 0)
+      if ((int) x == 0)		/* generate inexact */
+	{
+	  if ((ix | lx | (iy + 1)) == 0)
 	    return one / fabs (x);
 	  else
 	    return (iy == 1) ? x : -one / x;
@@ -114,7 +103,7 @@ __kernel_tanl (x, y, iy)
     }
   if (ix >= 0x3fe59420) /* |x| >= 0.6743316650390625 */
     {
-      if ((u.parts32.w0 & 0x80000000) != 0)
+      if ((hx & 0x80000000) != 0)
 	{
 	  x = -x;
 	  y = -y;
@@ -150,15 +139,13 @@ __kernel_tanl (x, y, iy)
     {				/* if allow error up to 2 ulp,
 				   simply return -1.0/(x+r) here */
       /*  compute -1.0/(x+r) accurately */
-      u1.value = w;
-      u1.parts32.w2 = 0;
-      u1.parts32.w3 = 0;
-      v = r - (u1.value - x);		/* u1+v = r+x */
+      long double u1, z1;
+
+      u1 = ldbl_high (w);
+      v = r - (u1 - x);		/* u1+v = r+x */
       z = -1.0 / w;
-      u.value = z;
-      u.parts32.w2 = 0;
-      u.parts32.w3 = 0;
-      s = 1.0 + u.value * u1.value;
-      return u.value + z * (s + u.value * v);
+      z1 = ldbl_high (z);
+      s = 1.0 + z1 * u1;
+      return z1 + z * (s + z1 * v);
     }
 }

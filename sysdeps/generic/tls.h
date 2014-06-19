@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  Generic version.
-   Copyright (C) 2002, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* An architecture-specific version of this file has to defined a
    number of symbols:
@@ -71,6 +70,6 @@
      THREAD_DTV()
 
      This macro returns the address of the DTV of the current thread.
-     This normally is done using the the thread register which points
+     This normally is done using the thread register which points
      to the dtv or the TCB (from which the DTV can found).
   */

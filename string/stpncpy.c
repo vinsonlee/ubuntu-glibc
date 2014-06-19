@@ -1,4 +1,4 @@
-/* Copyright (C) 1993, 1995, 1996, 1997, 2002 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* This is almost copied from strncpy.c, written by Torbjorn Granlund.  */
 
@@ -28,17 +27,19 @@
 # include <sys/types.h>
 #endif
 
-#ifndef weak_alias
-# define __stpncpy stpncpy
+#ifndef STPNCPY
+# ifdef weak_alias
+#  define STPNCPY	__stpncpy
+weak_alias (__stpncpy, stpncpy)
+# else
+#  define STPNCPY	stpncpy
+# endif
 #endif
 
 /* Copy no more than N characters of SRC to DEST, returning the address of
    the terminating '\0' in DEST, if any, or else DEST + N.  */
 char *
-__stpncpy (dest, src, n)
-     char *dest;
-     const char *src;
-     size_t n;
+STPNCPY (char *dest, const char *src, size_t n)
 {
   char c;
   char *s = dest;
@@ -96,5 +97,4 @@ __stpncpy (dest, src, n)
 }
 #ifdef weak_alias
 libc_hidden_def (__stpncpy)
-weak_alias (__stpncpy, stpncpy)
 #endif

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2003, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <lowlevellock.h>
@@ -23,6 +22,7 @@
 #include <pthread-errnos.h>
 #include <kernel-features.h>
 
+#include <stap-probe.h>
 
 	.text
 
@@ -40,6 +40,8 @@ __pthread_rwlock_wrlock:
 
 	xorl	%esi, %esi
 	movl	12(%esp), %ebx
+
+	LIBC_PROBE (wrlock_entry, 1, %ebx)
 
 	/* Get the lock.  */
 	movl	$1, %edx
@@ -177,8 +179,5 @@ __pthread_rwlock_wrlock:
 	cfi_endproc
 	.size	__pthread_rwlock_wrlock,.-__pthread_rwlock_wrlock
 
-	.globl	pthread_rwlock_wrlock
-pthread_rwlock_wrlock = __pthread_rwlock_wrlock
-
-	.globl	__pthread_rwlock_wrlock_internal
-__pthread_rwlock_wrlock_internal = __pthread_rwlock_wrlock
+strong_alias (__pthread_rwlock_wrlock, pthread_rwlock_wrlock)
+hidden_def (__pthread_rwlock_wrlock)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2003, 2005, 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <shlib-compat.h>
@@ -75,24 +74,19 @@ __new_sem_post:
 	cfi_offset(%ebx, -8)
 1:
 #ifdef PIC
-	call	__i686.get_pc_thunk.bx
+	SETUP_PIC_REG(bx)
 #else
 	movl	$4f, %ebx
 4:
 #endif
 	addl	$_GLOBAL_OFFSET_TABLE_, %ebx
-#if USE___THREAD
-# ifdef NO_TLS_DIRECT_SEG_REFS
+#ifdef NO_TLS_DIRECT_SEG_REFS
 	movl	errno@gotntpoff(%ebx), %edx
 	addl	%gs:0, %edx
 	movl	$EINVAL, (%edx)
-# else
+#else
 	movl	errno@gotntpoff(%ebx), %edx
 	movl	$EINVAL, %gs:(%edx)
-# endif
-#else
-	call	__errno_location@plt
-	movl	$EINVAL, (%eax)
 #endif
 
 	orl	$-1, %eax
@@ -101,24 +95,19 @@ __new_sem_post:
 
 3:
 #ifdef PIC
-	call	__i686.get_pc_thunk.bx
+	SETUP_PIC_REG(bx)
 #else
 	movl	$5f, %ebx
 5:
 #endif
 	addl	$_GLOBAL_OFFSET_TABLE_, %ebx
-#if USE___THREAD
-# ifdef NO_TLS_DIRECT_SEG_REFS
+#ifdef NO_TLS_DIRECT_SEG_REFS
 	movl	errno@gotntpoff(%ebx), %edx
 	addl	%gs:0, %edx
 	movl	$EOVERFLOW, (%edx)
-# else
+#else
 	movl	errno@gotntpoff(%ebx), %edx
 	movl	$EOVERFLOW, %gs:(%edx)
-# endif
-#else
-	call	__errno_location@plt
-	movl	$EOVERFLOW, (%eax)
 #endif
 
 	orl	$-1, %eax
@@ -158,16 +147,4 @@ __old_sem_post:
 	cfi_endproc
 	.size	__old_sem_post,.-__old_sem_post
 	compat_symbol(libpthread, __old_sem_post, sem_post, GLIBC_2_0)
-#endif
-
-
-#ifdef PIC
-	.section .gnu.linkonce.t.__i686.get_pc_thunk.bx,"ax",@progbits
-	.globl	__i686.get_pc_thunk.bx
-	.hidden	__i686.get_pc_thunk.bx
-	.type	__i686.get_pc_thunk.bx,@function
-__i686.get_pc_thunk.bx:
-	movl (%esp), %ebx;
-	ret
-	.size	__i686.get_pc_thunk.bx,.-__i686.get_pc_thunk.bx
 #endif

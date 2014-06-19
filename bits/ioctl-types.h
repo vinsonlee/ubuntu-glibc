@@ -1,5 +1,5 @@
 /* Structure types for pre-termios terminal ioctls.  Generic Unix version.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SYS_IOCTL_H
 # error "Never use <bits/ioctl-types.h> directly; include <sys/ioctl.h> instead."
@@ -64,7 +63,7 @@ struct sgttyb
 };
 
 #define	_IOT_sgttyb	/* Hurd ioctl type field.  */ \
-  _IOT (_IOTS (char), 6, _IOTS (short int), 1, 0, 0)
+  _IOT (_IOTS (char), 4, _IOTS (short int), 1, 0, 0)
 
 #if defined TIOCGWINSZ || defined TIOCSWINSZ
 /* Type of ARG for TIOCGWINSZ and TIOCSWINSZ requests.  */

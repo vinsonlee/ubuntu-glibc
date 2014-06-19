@@ -1,5 +1,5 @@
 /* Run-time dynamic linker data structures for loaded ELF shared objects.
-   Copyright (C) 2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef	_LDSODEFS_H
 
@@ -23,6 +22,8 @@
 #include_next <ldsodefs.h>
 
 /* Now define our stuff.  */
+
+#if _CALL_ELF != 2
 
 static __always_inline bool
 _dl_ppc64_is_opd_sym (const struct link_map *l, const ElfW(Sym) *sym)
@@ -73,5 +74,7 @@ _dl_ppc64_addr_sym_match (const struct link_map *l, const ElfW(Sym) *sym,
 #undef DL_ADDR_SYM_MATCH
 #define DL_ADDR_SYM_MATCH(L, SYM, MATCHSYM, ADDR) \
   _dl_ppc64_addr_sym_match (L, SYM, MATCHSYM, ADDR)
+
+#endif
 
 #endif /* ldsodefs.h */

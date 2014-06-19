@@ -37,16 +37,20 @@ postal_fmt    "<U0025><U0061><U0025><U004E><U0025><U0066><U0025><U004E>/
 <U004E><U0025><U0054><U0020><U0025><U007A><U0025>/
 <U004E><U0025><U0063><U0025><U004E>"
 % FIXME country_name "Canada" in inuktitut ?
-% FIXME country_post "CA" for Canada ? 
+% FIXME country_post "CA" for Canada ?
 country_ab2 "<U0043><U0041>"
 country_ab3 "<U0043><U0041><U004E>"
 country_num 124
-country_car "<U0043><U0041><U004E>" % FIXME
+% CDN
+country_car    "<U0043><U0044><U004E>"
 % FIXME country_isbn for Canada/inuktitut ?
 lang_name "<U1403><U14C4><U1483><U144E><U1450><U1466>"
-lang_ab "<U0069><U0075>"
-lang_term "<U0069><U006B><U0075>"
-lang_lib  "<U0069><U006B><U0075>"
+% iu
+lang_ab      "<U0069><U0075>"
+% iku
+lang_term    "<U0069><U006B><U0075>"
+% iku
+lang_lib     "<U0069><U006B><U0075>"
 END LC_ADDRESS
 
 %%%%%%%%%%%%%
@@ -119,10 +123,8 @@ yesexpr     "<U005B><U0079><U0059><U0073><U0053><U005D><U002E><U002A>"
 noexpr      "<U005B><U006E><U004E><U005D><U002E><U002A>"
 END LC_MESSAGES
 
-% Default paper: A4
 LC_PAPER
-height 297
-width 210
+copy "en_CA"
 END LC_PAPER
 
 % FIXME
@@ -130,8 +132,8 @@ LC_NAME
 copy "en_CA"
 END LC_NAME
 
-% Metric System (ISO 1000)
 LC_MEASUREMENT
+% metric
 measurement 1
 END LC_MEASUREMENT
 

@@ -1,5 +1,5 @@
 /* Round double value to long int.
-   Copyright (C) 1997, 2004 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -14,13 +14,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
 
-#include "math_private.h"
+#include <math_private.h>
 
 
 long int
@@ -51,7 +50,7 @@ __lround (double x)
   else if (j0 < (int32_t) (8 * sizeof (long int)) - 1)
     {
       if (j0 >= 52)
-	result = ((long int) i0 << (j0 - 20)) | (i1 << (j0 - 52));
+	result = ((long int) i0 << (j0 - 20)) | ((long int) i1 << (j0 - 52));
       else
 	{
 	  u_int32_t j = i1 + (0x80000000 >> (j0 - 20));

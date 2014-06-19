@@ -1,5 +1,4 @@
-/* Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -14,12 +13,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <shlib-compat.h>
 #include "pthreadP.h"
+#include <stap-probe.h>
 
 
 int
@@ -41,6 +40,8 @@ __pthread_cond_init (cond, cond_attr)
   cond->__data.__mutex = (icond_attr == NULL || (icond_attr->value & 1) == 0
 			  ? NULL : (void *) ~0l);
   cond->__data.__broadcast_seq = 0;
+
+  LIBC_PROBE (cond_init, 2, cond, cond_attr);
 
   return 0;
 }

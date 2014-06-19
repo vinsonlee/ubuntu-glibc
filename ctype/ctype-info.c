@@ -1,5 +1,4 @@
-/* Copyright (C) 1991,92,95,96,97,99,2000, 2002, 2008
-   Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #define CTYPE_EXTERN_INLINE /* Define real functions for accessors.  */
 #include <ctype.h>
@@ -24,6 +22,19 @@
 __libc_tsd_define (, const uint16_t *, CTYPE_B)
 __libc_tsd_define (, const int32_t *, CTYPE_TOLOWER)
 __libc_tsd_define (, const int32_t *, CTYPE_TOUPPER)
+
+
+void
+__ctype_init (void)
+{
+  const uint16_t **bp = __libc_tsd_address (const uint16_t *, CTYPE_B);
+  *bp = (const uint16_t *) _NL_CURRENT (LC_CTYPE, _NL_CTYPE_CLASS) + 128;
+  const int32_t **up = __libc_tsd_address (const int32_t *, CTYPE_TOUPPER);
+  *up = ((int32_t *) _NL_CURRENT (LC_CTYPE, _NL_CTYPE_TOUPPER) + 128);
+  const int32_t **lp = __libc_tsd_address (const int32_t *, CTYPE_TOLOWER);
+  *lp = ((int32_t *) _NL_CURRENT (LC_CTYPE, _NL_CTYPE_TOLOWER) + 128);
+}
+libc_hidden_def (__ctype_init)
 
 
 #include <shlib-compat.h>

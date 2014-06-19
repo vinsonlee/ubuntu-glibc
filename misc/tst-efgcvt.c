@@ -1,4 +1,4 @@
-/* Copyright (C) 1998, 1999, 2000, 2004 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE	1
@@ -178,13 +177,13 @@ special (void)
 
   p = ecvt (INFINITY, 10, &decpt, &sign);
   if (sign != 0 || strcmp (p, "inf") != 0)
-    output_error ("ecvt", NAN, 10, "inf", 0, 0, p, decpt, sign);
+    output_error ("ecvt", INFINITY, 10, "inf", 0, 0, p, decpt, sign);
 
   /* Simply make sure these calls with large NDIGITs don't crash.  */
   (void) ecvt (123.456, 10000, &decpt, &sign);
   (void) fcvt (123.456, 10000, &decpt, &sign);
 
-  /* Some tests for for the reentrant functions.  */
+  /* Some tests for the reentrant functions.  */
   /* Use a too small buffer.  */
   res = ecvt_r (123.456, 10, &decpt, &sign, buf, 1);
   if (res == 0)

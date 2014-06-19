@@ -1,5 +1,5 @@
 /* Miscellaneous tests which don't fit anywhere else.
-   Copyright (C) 2000, 2001, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
 #include <float.h>
@@ -23,6 +22,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <math-tests.h>
 
 
 int
@@ -722,300 +722,161 @@ main (void)
 
 #ifndef NO_LONG_DOUBLE
   {
-    union ieee854_long_double v1;
-    union ieee854_long_double v2;
-    long double ld;
+    long double v1, v2;
 
-    v1.d = ld = LDBL_MIN;
-    if (fpclassify (ld) != FP_NORMAL)
+    v1 = LDBL_MIN;
+    if (fpclassify (v1) != FP_NORMAL)
       {
-	printf ("fpclassify (LDBL_MIN) failed: %d\n", fpclassify (ld));
+	printf ("fpclassify (LDBL_MIN) failed: %d (%La)\n",
+		fpclassify (v1), v1);
 	result = 1;
       }
-    ld = nextafterl (ld, LDBL_MIN / 2.0);
-    if (fpclassify (ld) != FP_SUBNORMAL)
+    v2 = nextafterl (v1, LDBL_MIN / 2.0);
+    if (fpclassify (v2) != FP_SUBNORMAL)
       {
 	printf ("fpclassify (LDBL_MIN-epsilon) failed: %d (%La)\n",
-		fpclassify (ld), ld);
+		fpclassify (v2), v2);
 	result = 1;
       }
-    v2.d = ld = nextafterl (ld, LDBL_MIN);
-    if (fpclassify (ld) != FP_NORMAL)
+    v2 = nextafterl (v2, LDBL_MIN);
+    if (fpclassify (v2) != FP_NORMAL)
       {
 	printf ("fpclassify (LDBL_MIN-epsilon+epsilon) failed: %d (%La)\n",
-		fpclassify (ld), ld);
+		fpclassify (v2), v2);
 	result = 1;
       }
 
-    if (v1.ieee.mantissa0 != v2.ieee.mantissa0)
+    if (v1 != v2)
       {
-	printf ("LDBL_MIN: mantissa0 differs: %8x vs %8x\n",
-		v1.ieee.mantissa0, v2.ieee.mantissa0);
-	result = 1;
-      }
-    if (v1.ieee.mantissa1 != v2.ieee.mantissa1)
-      {
-	printf ("LDBL_MIN: mantissa1 differs: %8x vs %8x\n",
-		v1.ieee.mantissa1, v2.ieee.mantissa1);
-	result = 1;
-      }
-    if (v1.ieee.exponent != v2.ieee.exponent)
-      {
-	printf ("LDBL_MIN: exponent differs: %4x vs %4x\n",
-		v1.ieee.exponent, v2.ieee.exponent);
-	result = 1;
-      }
-    if (v1.ieee.negative != v2.ieee.negative)
-      {
-	printf ("LDBL_MIN: negative differs: %d vs %d\n",
-		v1.ieee.negative, v2.ieee.negative);
+	printf ("LDBL_MIN-epsilon+epsilon != LDBL_MIN: %La vs %La\n", v2, v1);
 	result = 1;
       }
 
-    v1.d = ld = -LDBL_MIN;
-    if (fpclassify (ld) != FP_NORMAL)
+    v1 = -LDBL_MIN;
+    if (fpclassify (v1) != FP_NORMAL)
       {
-	printf ("fpclassify (-LDBL_MIN) failed: %d\n", fpclassify (ld));
+	printf ("fpclassify (-LDBL_MIN) failed: %d (%La)\n",
+		fpclassify (v1), v1);
 	result = 1;
       }
-    ld = nextafterl (ld, -LDBL_MIN / 2.0);
-    if (fpclassify (ld) != FP_SUBNORMAL)
+    v2 = nextafterl (v1, -LDBL_MIN / 2.0);
+    if (fpclassify (v2) != FP_SUBNORMAL)
       {
 	printf ("fpclassify (-LDBL_MIN-epsilon) failed: %d (%La)\n",
-		fpclassify (ld), ld);
+		fpclassify (v2), v2);
 	result = 1;
       }
-    v2.d = ld = nextafterl (ld, -LDBL_MIN);
-    if (fpclassify (ld) != FP_NORMAL)
+    v2 = nextafterl (v2, -LDBL_MIN);
+    if (fpclassify (v2) != FP_NORMAL)
       {
 	printf ("fpclassify (-LDBL_MIN-epsilon+epsilon) failed: %d (%La)\n",
-		fpclassify (ld), ld);
+		fpclassify (v2), v2);
 	result = 1;
       }
 
-    if (v1.ieee.mantissa0 != v2.ieee.mantissa0)
+    if (v1 != v2)
       {
-	printf ("-LDBL_MIN: mantissa0 differs: %8x vs %8x\n",
-		v1.ieee.mantissa0, v2.ieee.mantissa0);
-	result = 1;
-      }
-    if (v1.ieee.mantissa1 != v2.ieee.mantissa1)
-      {
-	printf ("-LDBL_MIN: mantissa1 differs: %8x vs %8x\n",
-		v1.ieee.mantissa1, v2.ieee.mantissa1);
-	result = 1;
-      }
-    if (v1.ieee.exponent != v2.ieee.exponent)
-      {
-	printf ("-LDBL_MIN: exponent differs: %4x vs %4x\n",
-		v1.ieee.exponent, v2.ieee.exponent);
-	result = 1;
-      }
-    if (v1.ieee.negative != v2.ieee.negative)
-      {
-	printf ("-LDBL_MIN: negative differs: %d vs %d\n",
-		v1.ieee.negative, v2.ieee.negative);
+	printf ("-LDBL_MIN-epsilon+epsilon != -LDBL_MIN: %La vs %La\n", v2, v1);
 	result = 1;
       }
 
-    ld = LDBL_MAX;
-    if (fpclassify (ld) != FP_NORMAL)
+    v1 = LDBL_MAX;
+    if (fpclassify (v1) != FP_NORMAL)
       {
-	printf ("fpclassify (LDBL_MAX) failed: %d\n", fpclassify (ld));
+	printf ("fpclassify (LDBL_MAX) failed: %d (%La)\n",
+		fpclassify (v1), v1);
 	result = 1;
       }
-    ld = nextafterl (ld, INFINITY);
-    if (fpclassify (ld) != FP_INFINITE)
+    v2 = nextafterl (v1, INFINITY);
+    if (fpclassify (v2) != FP_INFINITE)
       {
-	printf ("fpclassify (LDBL_MAX+epsilon) failed: %d\n", fpclassify (ld));
-	result = 1;
-      }
-
-    ld = -LDBL_MAX;
-    if (fpclassify (ld) != FP_NORMAL)
-      {
-	printf ("fpclassify (-LDBL_MAX) failed: %d\n", fpclassify (ld));
-	result = 1;
-      }
-    ld = nextafterl (ld, -INFINITY);
-    if (fpclassify (ld) != FP_INFINITE)
-      {
-	printf ("fpclassify (-LDBL_MAX-epsilon) failed: %d\n",
-		fpclassify (ld));
+	printf ("fpclassify (LDBL_MAX+epsilon) failed: %d (%La)\n",
+		fpclassify (v2), v2);
 	result = 1;
       }
 
-    v1.d = ld = 0.0625;
-    ld = nextafterl (ld, 0.0);
-    v2.d = ld = nextafterl (ld, 1.0);
-
-    if (v1.ieee.mantissa0 != v2.ieee.mantissa0)
+    v1 = -LDBL_MAX;
+    if (fpclassify (v1) != FP_NORMAL)
       {
-	printf ("0.0625L down: mantissa0 differs: %8x vs %8x\n",
-		v1.ieee.mantissa0, v2.ieee.mantissa0);
+	printf ("fpclassify (-LDBL_MAX) failed: %d (%La)\n",
+		fpclassify (v1), v1);
 	result = 1;
       }
-    if (v1.ieee.mantissa1 != v2.ieee.mantissa1)
+    v2 = nextafterl (v1, -INFINITY);
+    if (fpclassify (v2) != FP_INFINITE)
       {
-	printf ("0.0625L down: mantissa1 differs: %8x vs %8x\n",
-		v1.ieee.mantissa1, v2.ieee.mantissa1);
-	result = 1;
-      }
-    if (v1.ieee.exponent != v2.ieee.exponent)
-      {
-	printf ("0.0625L down: exponent differs: %4x vs %4x\n",
-		v1.ieee.exponent, v2.ieee.exponent);
-	result = 1;
-      }
-    if (v1.ieee.negative != v2.ieee.negative)
-      {
-	printf ("0.0625L down: negative differs: %d vs %d\n",
-		v1.ieee.negative, v2.ieee.negative);
+	printf ("fpclassify (-LDBL_MAX-epsilon) failed: %d (%La)\n",
+		fpclassify (v2), v2);
 	result = 1;
       }
 
-    v1.d = ld = 0.0625;
-    ld = nextafterl (ld, 1.0);
-    v2.d = ld = nextafterl (ld, 0.0);
+    v1 = 0.0625;
+    v2 = nextafterl (v1, 0.0);
+    v2 = nextafterl (v2, 1.0);
 
-    if (v1.ieee.mantissa0 != v2.ieee.mantissa0)
+    if (v1 != v2)
       {
-	printf ("0.0625L up: mantissa0 differs: %8x vs %8x\n",
-		v1.ieee.mantissa0, v2.ieee.mantissa0);
-	result = 1;
-      }
-    if (v1.ieee.mantissa1 != v2.ieee.mantissa1)
-      {
-	printf ("0.0625L up: mantissa1 differs: %8x vs %8x\n",
-		v1.ieee.mantissa1, v2.ieee.mantissa1);
-	result = 1;
-      }
-    if (v1.ieee.exponent != v2.ieee.exponent)
-      {
-	printf ("0.0625L up: exponent differs: %4x vs %4x\n",
-		v1.ieee.exponent, v2.ieee.exponent);
-	result = 1;
-      }
-    if (v1.ieee.negative != v2.ieee.negative)
-      {
-	printf ("0.0625L up: negative differs: %d vs %d\n",
-		v1.ieee.negative, v2.ieee.negative);
+	printf ("0.0625L-epsilon+epsilon != 0.0625L: %La vs %La\n", v2, v1);
 	result = 1;
       }
 
-    v1.d = ld = -0.0625;
-    ld = nextafterl (ld, 0.0);
-    v2.d = ld = nextafterl (ld, -1.0);
+    v1 = 0.0625;
+    v2 = nextafterl (v1, 1.0);
+    v2 = nextafterl (v2, 0.0);
 
-    if (v1.ieee.mantissa0 != v2.ieee.mantissa0)
+    if (v1 != v2)
       {
-	printf ("-0.0625L up: mantissa0 differs: %8x vs %8x\n",
-		v1.ieee.mantissa0, v2.ieee.mantissa0);
-	result = 1;
-      }
-    if (v1.ieee.mantissa1 != v2.ieee.mantissa1)
-      {
-	printf ("-0.0625L up: mantissa1 differs: %8x vs %8x\n",
-		v1.ieee.mantissa1, v2.ieee.mantissa1);
-	result = 1;
-      }
-    if (v1.ieee.exponent != v2.ieee.exponent)
-      {
-	printf ("-0.0625L up: exponent differs: %4x vs %4x\n",
-		v1.ieee.exponent, v2.ieee.exponent);
-	result = 1;
-      }
-    if (v1.ieee.negative != v2.ieee.negative)
-      {
-	printf ("-0.0625L up: negative differs: %d vs %d\n",
-		v1.ieee.negative, v2.ieee.negative);
+	printf ("0.0625L+epsilon-epsilon != 0.0625L: %La vs %La\n", v2, v1);
 	result = 1;
       }
 
-    v1.d = ld = -0.0625;
-    ld = nextafterl (ld, -1.0);
-    v2.d = ld = nextafterl (ld, 0.0);
+    v1 = -0.0625;
+    v2 = nextafterl (v1, 0.0);
+    v2 = nextafterl (v2, -1.0);
 
-    if (v1.ieee.mantissa0 != v2.ieee.mantissa0)
+    if (v1 != v2)
       {
-	printf ("-0.0625L down: mantissa0 differs: %8x vs %8x\n",
-		v1.ieee.mantissa0, v2.ieee.mantissa0);
-	result = 1;
-      }
-    if (v1.ieee.mantissa1 != v2.ieee.mantissa1)
-      {
-	printf ("-0.0625L down: mantissa1 differs: %8x vs %8x\n",
-		v1.ieee.mantissa1, v2.ieee.mantissa1);
-	result = 1;
-      }
-    if (v1.ieee.exponent != v2.ieee.exponent)
-      {
-	printf ("-0.0625L down: exponent differs: %4x vs %4x\n",
-		v1.ieee.exponent, v2.ieee.exponent);
-	result = 1;
-      }
-    if (v1.ieee.negative != v2.ieee.negative)
-      {
-	printf ("-0.0625L down: negative differs: %d vs %d\n",
-		v1.ieee.negative, v2.ieee.negative);
+	printf ("-0.0625L+epsilon-epsilon != -0.0625L: %La vs %La\n", v2, v1);
 	result = 1;
       }
 
-    v1.d = ld = 0.0;
-    ld = nextafterl (ld, 1.0);
-    v2.d = nextafterl (ld, -1.0);
+    v1 = -0.0625;
+    v2 = nextafterl (v1, -1.0);
+    v2 = nextafterl (v2, 0.0);
 
-    if (v1.ieee.mantissa0 != v2.ieee.mantissa0)
+    if (v1 != v2)
       {
-	printf ("0.0L up: mantissa0 differs: %8x vs %8x\n",
-		v1.ieee.mantissa0, v2.ieee.mantissa0);
-	result = 1;
-      }
-    if (v1.ieee.mantissa1 != v2.ieee.mantissa1)
-      {
-	printf ("0.0L up: mantissa1 differs: %8x vs %8x\n",
-		v1.ieee.mantissa1, v2.ieee.mantissa1);
-	result = 1;
-      }
-    if (v1.ieee.exponent != v2.ieee.exponent)
-      {
-	printf ("0.0L up: exponent differs: %4x vs %4x\n",
-		v1.ieee.exponent, v2.ieee.exponent);
-	result = 1;
-      }
-    if (0 != v2.ieee.negative)
-      {
-	printf ("0.0L up: negative differs: 0 vs %d\n",
-		v2.ieee.negative);
+	printf ("-0.0625L-epsilon+epsilon != -0.0625L: %La vs %La\n", v2, v1);
 	result = 1;
       }
 
-    v1.d = ld = 0.0;
-    ld = nextafterl (ld, -1.0);
-    v2.d = nextafterl (ld, 1.0);
+    v1 = 0.0;
+    v2 = nextafterl (v1, 1.0);
+    v2 = nextafterl (v2, -1.0);
 
-    if (v1.ieee.mantissa0 != v2.ieee.mantissa0)
+    if (v1 != v2)
       {
-	printf ("0.0L down: mantissa0 differs: %8x vs %8x\n",
-		v1.ieee.mantissa0, v2.ieee.mantissa0);
+	printf ("0.0+epsilon-epsilon != 0.0L: %La vs %La\n", v2, v1);
 	result = 1;
       }
-    if (v1.ieee.mantissa1 != v2.ieee.mantissa1)
+    if (signbit (v2))
       {
-	printf ("0.0L down: mantissa1 differs: %8x vs %8x\n",
-		v1.ieee.mantissa1, v2.ieee.mantissa1);
+	printf ("0.0+epsilon-epsilon is negative\n");
 	result = 1;
       }
-    if (v1.ieee.exponent != v2.ieee.exponent)
+
+    v1 = 0.0;
+    v2 = nextafterl (v1, -1.0);
+    v2 = nextafterl (v2, 1.0);
+
+    if (v1 != v2)
       {
-	printf ("0.0L down: exponent differs: %4x vs %4x\n",
-		v1.ieee.exponent, v2.ieee.exponent);
+	printf ("0.0-epsilon+epsilon != 0.0L: %La vs %La\n", v2, v1);
 	result = 1;
       }
-    if (1 != v2.ieee.negative)
+    if (!signbit (v2))
       {
-	printf ("0.0L down: negative differs: 1 vs %d\n",
-		v2.ieee.negative);
+	printf ("0.0-epsilon+epsilon is positive\n");
 	result = 1;
       }
 
@@ -1057,7 +918,7 @@ main (void)
     }
 #endif
 
-#ifdef __i386__
+#if defined (__i386__) || defined (__x86_64__)
   /* This is a test for the strange long doubles in x86 FPUs.  */
   {
     union
@@ -1075,7 +936,7 @@ main (void)
       }
   }
 
-  /* Special NaNs in x86 long double.  Test for scalbl.  */
+  /* Special qNaNs in x86 long double.  Test for scalbl.  */
   {
     union
     {
@@ -1088,12 +949,12 @@ main (void)
     r = scalbl (u.d, 0.0);
     if (!isnan (r))
       {
-	puts ("scalbl(NaN, 0) does not return NaN");
+	puts ("scalbl (qNaN, 0) does not return NaN");
 	result = 1;
       }
     else if (memcmp (&r, &u.d, sizeof (double)) != 0)
       {
-	puts ("scalbl(NaN, 0) does not return the same NaN");
+	puts ("scalbl (qNaN, 0) does not return the same NaN");
 	result = 1;
       }
   }
@@ -1117,7 +978,7 @@ main (void)
       }
     else if (fetestexcept (FE_UNDERFLOW))
       {
-	puts ("scalbl(NaN, 0) raises underflow exception");
+	puts ("scalbl (LDBL_MIN, 2147483647) raises underflow exception");
 	result = 1;
       }
 
@@ -1135,7 +996,7 @@ main (void)
       }
     else if (fetestexcept (FE_OVERFLOW))
       {
-	puts ("scalbl(NaN, 0) raises overflow exception");
+	puts ("scalbl (LDBL_MAX, -2147483647) raises overflow exception");
 	result = 1;
       }
   }
@@ -1187,12 +1048,14 @@ main (void)
   (void) &f2;
   feclearexcept (FE_ALL_EXCEPT);
   f2 += f1;
+#if defined(FE_OVERFLOW) && defined(FE_INEXACT)
   int fe = fetestexcept (FE_ALL_EXCEPT);
-  if (fe != (FE_OVERFLOW | FE_INEXACT))
+  if (EXCEPTION_TESTS (float) && fe != (FE_OVERFLOW | FE_INEXACT))
     {
       printf ("float overflow test failed: %x\n", fe);
       result = 1;
     }
+#endif
 
   volatile double d1 = DBL_MAX;
   volatile double d2 = DBL_MAX / 2;
@@ -1200,12 +1063,14 @@ main (void)
   (void) &d2;
   feclearexcept (FE_ALL_EXCEPT);
   d2 += d1;
+#if defined(FE_OVERFLOW) && defined(FE_INEXACT)
   fe = fetestexcept (FE_ALL_EXCEPT);
-  if (fe != (FE_OVERFLOW | FE_INEXACT))
+  if (EXCEPTION_TESTS (double) && fe != (FE_OVERFLOW | FE_INEXACT))
     {
       printf ("double overflow test failed: %x\n", fe);
       result = 1;
     }
+#endif
 
 #ifndef NO_LONG_DOUBLE
   volatile long double ld1 = LDBL_MAX;
@@ -1214,12 +1079,14 @@ main (void)
   (void) &ld2;
   feclearexcept (FE_ALL_EXCEPT);
   ld2 += ld1;
+# if defined(FE_OVERFLOW) && defined(FE_INEXACT)
   fe = fetestexcept (FE_ALL_EXCEPT);
-  if (fe != (FE_OVERFLOW | FE_INEXACT))
+  if (EXCEPTION_TESTS (long double) && fe != (FE_OVERFLOW | FE_INEXACT))
     {
       printf ("long double overflow test failed: %x\n", fe);
       result = 1;
     }
+# endif
 #endif
 
 #if !defined NO_LONG_DOUBLE && LDBL_MANT_DIG == 113
@@ -1289,7 +1156,11 @@ main (void)
 	  if (fesetround (mode))
 	    {
 	      printf ("failed to set rounding mode to %s\n", mstr);
-	      result = 1;
+	      if (ROUNDING_TESTS (long double, mode)
+		  && ROUNDING_TESTS (double, mode))
+		result = 1;
+	      else
+		puts ("ignoring this failure");
 	      break;
 	    }
 	  d5 = ld5 * i;
@@ -1300,7 +1171,11 @@ main (void)
 	    {
 	      printf ("%La incorrectly rounded to %s as %a\n",
 		      ld5 * i, mstr, d5);
-	      result = 1;
+	      if (ROUNDING_TESTS (long double, mode)
+		  && ROUNDING_TESTS (double, mode))
+		result = 1;
+	      else
+		puts ("ignoring this failure");
 	    }
 	}
     }
@@ -1316,7 +1191,11 @@ main (void)
   if (d7 != nextafter (0.0, 1.0))
     {
       printf ("%La incorrectly rounded upward to %a\n", ld7, d7);
-      result = 1;
+      if (ROUNDING_TESTS (long double, FE_UPWARD)
+	  && ROUNDING_TESTS (double, FE_UPWARD))
+	result = 1;
+      else
+	puts ("ignoring this failure");
     }
 #endif
 

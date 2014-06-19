@@ -1,6 +1,8 @@
---- sysdeps/posix/getaddrinfo.c~	2008-07-30 19:14:22.000000000 +0000
-+++ sysdeps/posix/getaddrinfo.c	2008-11-29 09:01:04.000000000 +0000
-@@ -269,7 +269,7 @@
+diff --git a/sysdeps/posix/getaddrinfo.c b/sysdeps/posix/getaddrinfo.c
+index adb3c4f..d12835c 100644
+--- a/sysdeps/posix/getaddrinfo.c
++++ b/sysdeps/posix/getaddrinfo.c
+@@ -263,7 +263,7 @@ extern service_user *__nss_hosts_database attribute_hidden;
  static int
  gaih_inet (const char *name, const struct gaih_service *service,
  	   const struct addrinfo *req, struct addrinfo **pai,
@@ -9,16 +11,16 @@
  {
    const struct gaih_typeproto *tp = gaih_inet_typeproto;
    struct gaih_servtuple *st = (struct gaih_servtuple *) &nullserv;
-@@ -762,7 +762,7 @@
- 		  if (fct != NULL)
+@@ -706,7 +706,7 @@ gaih_inet (const char *name, const struct gaih_service *service,
+ 	      if (fct != NULL)
+ 		{
+ 		  if (req->ai_family == AF_INET6
+-		      || req->ai_family == AF_UNSPEC)
++		      || (req->ai_family == AF_UNSPEC && usable_ipv6))
  		    {
- 		      if (req->ai_family == AF_INET6
--			  || req->ai_family == AF_UNSPEC)
-+			  || (req->ai_family == AF_UNSPEC && usable_ipv6))
- 			{
- 			  gethosts (AF_INET6, struct in6_addr);
- 			  no_inet6_data = no_data;
-@@ -2151,7 +2151,7 @@
+ 		      gethosts (AF_INET6, struct in6_addr);
+ 		      no_inet6_data = no_data;
+@@ -1903,7 +1903,7 @@ getaddrinfo (const char *name, const char *service,
    if (hints->ai_family == AF_UNSPEC || hints->ai_family == AF_INET
        || hints->ai_family == AF_INET6)
      {
@@ -27,15 +29,19 @@
        if (last_i != 0)
  	{
  	  freeaddrinfo (p);
---- sysdeps/unix/sysv/linux/check_pf.c~	2008-03-06 16:51:24.073172073 +0100
-+++ sysdeps/unix/sysv/linux/check_pf.c	2008-03-06 17:08:00.978210159 +0100
-@@ -178,7 +178,8 @@
- 		    }
- 		  else
- 		    {
--		      if (!IN6_IS_ADDR_LOOPBACK (address))
-+		      if (!IN6_IS_ADDR_LOOPBACK (address ?: local) &&
-+			  ifam->ifa_scope < RT_SCOPE_LINK)
- 			*seen_ipv6 = true;
- 		    }
- 		}
+diff --git a/sysdeps/unix/sysv/linux/check_pf.c b/sysdeps/unix/sysv/linux/check_pf.c
+index 46161a8..5287ed0 100644
+--- a/sysdeps/unix/sysv/linux/check_pf.c
++++ b/sysdeps/unix/sysv/linux/check_pf.c
+@@ -146,7 +146,10 @@ make_request (int fd, pid_t pid, bool *seen_ipv4, bool *seen_ipv6,
+ 		  *seen_ipv4 = true;
+ 		  break;
+ 		case AF_INET6:
+-		  *seen_ipv6 = true;
++		  if (ifam->ifa_scope < RT_SCOPE_LINK)
++		    {
++		      *seen_ipv6 = true;
++		    }
+ 
+ 		  if (ifam->ifa_flags & (IFA_F_DEPRECATED
+ 					 | IFA_F_TEMPORARY

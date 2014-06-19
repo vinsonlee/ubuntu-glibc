@@ -48,11 +48,12 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
-#include "math.h"
-#include "math_private.h"
+#include <errno.h>
+#include <math.h>
+#include <math_private.h>
 #include <math_ldbl_opt.h>
 
 /* exp(x) - 1 = x + 0.5 x^2 + x^3 P(x)/Q(x)
@@ -84,26 +85,28 @@ static const long double
 /* ln (2^16384 * (1 - 2^-113)) */
   maxlog = 1.1356523406294143949491931077970764891253E4L,
 /* ln 2^-114 */
-  minarg = -7.9018778583833765273564461846232128760607E1L, big = 2e307L;
+  minarg = -7.9018778583833765273564461846232128760607E1L, big = 1e290L;
 
 
 long double
 __expm1l (long double x)
 {
   long double px, qx, xx;
-  int32_t ix, sign;
-  ieee854_long_double_shape_type u;
+  int32_t ix, lx, sign;
   int k;
+  double xhi;
 
   /* Detect infinity and NaN.  */
-  u.value = x;
-  ix = u.parts32.w0;
+  xhi = ldbl_high (x);
+  EXTRACT_WORDS (ix, lx, xhi);
   sign = ix & 0x80000000;
   ix &= 0x7fffffff;
+  if (!sign && ix >= 0x40600000)
+    return __expl (x);
   if (ix >= 0x7ff00000)
     {
       /* Infinity. */
-      if (((ix & 0xfffff) | u.parts32.w1 | (u.parts32.w2&0x7fffffff) | u.parts32.w3) == 0)
+      if (((ix - 0x7ff00000) | lx) == 0)
 	{
 	  if (sign)
 	    return -1.0L;
@@ -115,12 +118,15 @@ __expm1l (long double x)
     }
 
   /* expm1(+- 0) = +- 0.  */
-  if ((ix == 0) && (u.parts32.w1 | (u.parts32.w2&0x7fffffff) | u.parts32.w3) == 0)
+  if ((ix | lx) == 0)
     return x;
 
   /* Overflow.  */
   if (x > maxlog)
-    return (big * big);
+    {
+      __set_errno (ERANGE);
+      return (big * big);
+    }
 
   /* Minimum value.  */
   if (x < minarg)

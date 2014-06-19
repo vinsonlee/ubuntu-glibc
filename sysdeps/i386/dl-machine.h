@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  i386 version.
-   Copyright (C) 1995-2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef dl_machine_h
 #define dl_machine_h
@@ -145,18 +144,16 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 
 #ifdef IN_DL_RUNTIME
 
-# if !defined PROF && !__BOUNDED_POINTERS__
+# ifndef PROF
 /* We add a declaration of this function here so that in dl-runtime.c
    the ELF_MACHINE_RUNTIME_TRAMPOLINE macro really can pass the parameters
    in registers.
 
    We cannot use this scheme for profiling because the _mcount call
    destroys the passed register information.  */
-/* GKM FIXME: Fix trampoline to pass bounds so we can do
-   without the `__unbounded' qualifier.  */
 #define ARCH_FIXUP_ATTRIBUTE __attribute__ ((regparm (3), stdcall, unused))
 
-extern ElfW(Addr) _dl_fixup (struct link_map *__unbounded l,
+extern ElfW(Addr) _dl_fixup (struct link_map *l,
 			     ElfW(Word) reloc_offset)
      ARCH_FIXUP_ATTRIBUTE;
 extern ElfW(Addr) _dl_profile_fixup (struct link_map *l,
@@ -243,18 +240,12 @@ _dl_start_user:\n\
    define the value.
    ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
    of the main executable's symbols, as for a COPY reloc.  */
-#if !defined RTLD_BOOTSTRAP || USE___THREAD
 # define elf_machine_type_class(type) \
   ((((type) == R_386_JMP_SLOT || (type) == R_386_TLS_DTPMOD32		      \
      || (type) == R_386_TLS_DTPOFF32 || (type) == R_386_TLS_TPOFF32	      \
      || (type) == R_386_TLS_TPOFF || (type) == R_386_TLS_DESC)		      \
     * ELF_RTYPE_CLASS_PLT)						      \
    | (((type) == R_386_COPY) * ELF_RTYPE_CLASS_COPY))
-#else
-# define elf_machine_type_class(type) \
-  ((((type) == R_386_JMP_SLOT) * ELF_RTYPE_CLASS_PLT)			      \
-   | (((type) == R_386_COPY) * ELF_RTYPE_CLASS_COPY))
-#endif
 
 /* A reloc type used for ld.so cmdline arg lookups to reject PLT entries.  */
 #define ELF_MACHINE_JMP_SLOT	R_386_JMP_SLOT
@@ -311,47 +302,61 @@ auto inline void
 __attribute ((always_inline))
 elf_machine_rel (struct link_map *map, const Elf32_Rel *reloc,
 		 const Elf32_Sym *sym, const struct r_found_version *version,
-		 void *const reloc_addr_arg)
+		 void *const reloc_addr_arg, int skip_ifunc)
 {
   Elf32_Addr *const reloc_addr = reloc_addr_arg;
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
 
-#if !defined RTLD_BOOTSTRAP || !defined HAVE_Z_COMBRELOC
+# if !defined RTLD_BOOTSTRAP || !defined HAVE_Z_COMBRELOC
   if (__builtin_expect (r_type == R_386_RELATIVE, 0))
     {
-# if !defined RTLD_BOOTSTRAP && !defined HAVE_Z_COMBRELOC
+#  if !defined RTLD_BOOTSTRAP && !defined HAVE_Z_COMBRELOC
       /* This is defined in rtld.c, but nowhere in the static libc.a;
 	 make the reference weak so static programs can still link.
 	 This declaration cannot be done when compiling rtld.c
 	 (i.e. #ifdef RTLD_BOOTSTRAP) because rtld.c contains the
 	 common defn for _dl_rtld_map, which is incompatible with a
 	 weak decl in the same file.  */
-#  ifndef SHARED
+#   ifndef SHARED
       weak_extern (_dl_rtld_map);
-#  endif
+#   endif
       if (map != &GL(dl_rtld_map)) /* Already done in rtld itself.  */
-# endif
+#  endif
 	*reloc_addr += map->l_addr;
     }
-# ifndef RTLD_BOOTSTRAP
+#  ifndef RTLD_BOOTSTRAP
   else if (__builtin_expect (r_type == R_386_NONE, 0))
     return;
-# endif
+#  endif
   else
-#endif	/* !RTLD_BOOTSTRAP and have no -z combreloc */
+# endif	/* !RTLD_BOOTSTRAP and have no -z combreloc */
     {
+# ifndef RTLD_BOOTSTRAP
       const Elf32_Sym *const refsym = sym;
+# endif
       struct link_map *sym_map = RESOLVE_MAP (&sym, version, r_type);
       Elf32_Addr value = sym_map == NULL ? 0 : sym_map->l_addr + sym->st_value;
 
+      if (sym != NULL
+	  && __builtin_expect (ELFW(ST_TYPE) (sym->st_info) == STT_GNU_IFUNC,
+			       0)
+	  && __builtin_expect (sym->st_shndx != SHN_UNDEF, 1)
+	  && __builtin_expect (!skip_ifunc, 1))
+	value = ((Elf32_Addr (*) (void)) value) ();
+
       switch (r_type)
 	{
+# ifndef RTLD_BOOTSTRAP
+	case R_386_SIZE32:
+	  /* Set to symbol size plus addend.  */
+	  *reloc_addr += sym->st_size;
+	  break;
+# endif
 	case R_386_GLOB_DAT:
 	case R_386_JMP_SLOT:
 	  *reloc_addr = value;
 	  break;
 
-#if !defined RTLD_BOOTSTRAP || USE___THREAD
 	case R_386_TLS_DTPMOD32:
 # ifdef RTLD_BOOTSTRAP
 	  /* During startup the dynamic linker is always the module
@@ -408,9 +413,9 @@ elf_machine_rel (struct link_map *map, const Elf32_Rel *reloc,
 	  }
 	case R_386_TLS_TPOFF32:
 	  /* The offset is positive, backward from the thread pointer.  */
-# ifdef RTLD_BOOTSTRAP
+#  ifdef RTLD_BOOTSTRAP
 	  *reloc_addr += map->l_tls_offset - sym->st_value;
-# else
+#  else
 	  /* We know the offset of object the symbol is contained in.
 	     It is a positive value which will be subtracted from the
 	     thread pointer.  To get the variable position in the TLS
@@ -437,9 +442,8 @@ elf_machine_rel (struct link_map *map, const Elf32_Rel *reloc,
 	    }
 # endif
 	  break;
-#endif	/* use TLS */
 
-#ifndef RTLD_BOOTSTRAP
+# ifndef RTLD_BOOTSTRAP
 	case R_386_32:
 	  *reloc_addr += value;
 	  break;
@@ -460,26 +464,30 @@ elf_machine_rel (struct link_map *map, const Elf32_Rel *reloc,
 	      strtab = (const char *) D_PTR (map, l_info[DT_STRTAB]);
 	      _dl_error_printf ("\
 %s: Symbol `%s' has different size in shared object, consider re-linking\n",
-				rtld_progname ?: "<program name unknown>",
-				strtab + refsym->st_name);
+				RTLD_PROGNAME, strtab + refsym->st_name);
 	    }
 	  memcpy (reloc_addr_arg, (void *) value,
 		  MIN (sym->st_size, refsym->st_size));
 	  break;
+	case R_386_IRELATIVE:
+	  value = map->l_addr + *reloc_addr;
+	  value = ((Elf32_Addr (*) (void)) value) ();
+	  *reloc_addr = value;
+	  break;
 	default:
 	  _dl_reloc_bad_type (map, r_type, 0);
 	  break;
-#endif	/* !RTLD_BOOTSTRAP */
+# endif	/* !RTLD_BOOTSTRAP */
 	}
     }
 }
 
-#ifndef RTLD_BOOTSTRAP
+# ifndef RTLD_BOOTSTRAP
 auto inline void
 __attribute__ ((always_inline))
 elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 		  const Elf32_Sym *sym, const struct r_found_version *version,
-		  void *const reloc_addr_arg)
+		  void *const reloc_addr_arg, int skip_ifunc)
 {
   Elf32_Addr *const reloc_addr = reloc_addr_arg;
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
@@ -488,20 +496,29 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
     *reloc_addr = map->l_addr + reloc->r_addend;
   else if (r_type != R_386_NONE)
     {
-# ifndef RESOLVE_CONFLICT_FIND_MAP
+#  ifndef RESOLVE_CONFLICT_FIND_MAP
       const Elf32_Sym *const refsym = sym;
-# endif
+#  endif
       struct link_map *sym_map = RESOLVE_MAP (&sym, version, r_type);
       Elf32_Addr value = sym == NULL ? 0 : sym_map->l_addr + sym->st_value;
 
+      if (sym != NULL
+	  && __builtin_expect (sym->st_shndx != SHN_UNDEF, 1)
+	  && __builtin_expect (ELFW(ST_TYPE) (sym->st_info) == STT_GNU_IFUNC, 0)
+	  && __builtin_expect (!skip_ifunc, 1))
+	value = ((Elf32_Addr (*) (void)) value) ();
+
       switch (ELF32_R_TYPE (reloc->r_info))
 	{
+	case R_386_SIZE32:
+	  /* Set to symbol size plus addend.  */
+	  value = sym->st_size;
 	case R_386_GLOB_DAT:
 	case R_386_JMP_SLOT:
 	case R_386_32:
 	  *reloc_addr = value + reloc->r_addend;
 	  break;
-# ifndef RESOLVE_CONFLICT_FIND_MAP
+#  ifndef RESOLVE_CONFLICT_FIND_MAP
 	  /* Not needed for dl-conflict.c.  */
 	case R_386_PC32:
 	  *reloc_addr = (value + reloc->r_addend - (Elf32_Addr) reloc_addr);
@@ -523,19 +540,19 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 	    struct tlsdesc volatile *td =
 	      (struct tlsdesc volatile *)reloc_addr;
 
-# ifndef RTLD_BOOTSTRAP
+#   ifndef RTLD_BOOTSTRAP
 	    if (!sym)
 	      {
 		td->arg = (void*)reloc->r_addend;
 		td->entry = _dl_tlsdesc_undefweak;
 	      }
 	    else
-# endif
+#   endif
 	      {
-# ifndef RTLD_BOOTSTRAP
-#  ifndef SHARED
+#   ifndef RTLD_BOOTSTRAP
+#    ifndef SHARED
 		CHECK_STATIC_TLS (map, sym_map);
-#  else
+#    else
 		if (!TRY_STATIC_TLS (map, sym_map))
 		  {
 		    td->arg = _dl_make_tlsdesc_dynamic
@@ -543,8 +560,8 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 		    td->entry = _dl_tlsdesc_dynamic;
 		  }
 		else
-#  endif
-# endif
+#    endif
+#   endif
 		  {
 		    td->arg = (void*)(sym->st_value - sym_map->l_tls_offset
 				      + reloc->r_addend);
@@ -592,13 +609,17 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 	      strtab = (const char *) D_PTR (map, l_info[DT_STRTAB]);
 	      _dl_error_printf ("\
 %s: Symbol `%s' has different size in shared object, consider re-linking\n",
-				rtld_progname ?: "<program name unknown>",
-				strtab + refsym->st_name);
+				RTLD_PROGNAME, strtab + refsym->st_name);
 	    }
 	  memcpy (reloc_addr_arg, (void *) value,
 		  MIN (sym->st_size, refsym->st_size));
 	  break;
-# endif /* !RESOLVE_CONFLICT_FIND_MAP */
+#  endif /* !RESOLVE_CONFLICT_FIND_MAP */
+	case R_386_IRELATIVE:
+	  value = map->l_addr + reloc->r_addend;
+	  value = ((Elf32_Addr (*) (void)) value) ();
+	  *reloc_addr = value;
+	  break;
 	default:
 	  /* We add these checks in the version to relocate ld.so only
 	     if we are still debugging.  */
@@ -607,7 +628,7 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 	}
     }
 }
-#endif	/* !RTLD_BOOTSTRAP */
+# endif	/* !RTLD_BOOTSTRAP */
 
 auto inline void
 __attribute ((always_inline))
@@ -619,7 +640,7 @@ elf_machine_rel_relative (Elf32_Addr l_addr, const Elf32_Rel *reloc,
   *reloc_addr += l_addr;
 }
 
-#ifndef RTLD_BOOTSTRAP
+# ifndef RTLD_BOOTSTRAP
 auto inline void
 __attribute__ ((always_inline))
 elf_machine_rela_relative (Elf32_Addr l_addr, const Elf32_Rela *reloc,
@@ -628,12 +649,13 @@ elf_machine_rela_relative (Elf32_Addr l_addr, const Elf32_Rela *reloc,
   Elf32_Addr *const reloc_addr = reloc_addr_arg;
   *reloc_addr = l_addr + reloc->r_addend;
 }
-#endif	/* !RTLD_BOOTSTRAP */
+# endif	/* !RTLD_BOOTSTRAP */
 
 auto inline void
 __attribute__ ((always_inline))
 elf_machine_lazy_rel (struct link_map *map,
-		      Elf32_Addr l_addr, const Elf32_Rel *reloc)
+		      Elf32_Addr l_addr, const Elf32_Rel *reloc,
+		      int skip_ifunc)
 {
   Elf32_Addr *const reloc_addr = (void *) (l_addr + reloc->r_offset);
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
@@ -672,37 +694,45 @@ elf_machine_lazy_rel (struct link_map *map,
 	  const ElfW(Sym) *const symtab =
 	    (const void *) D_PTR (map, l_info[DT_SYMTAB]);
 
-#ifdef RTLD_BOOTSTRAP
+# ifdef RTLD_BOOTSTRAP
 	  /* The dynamic linker always uses versioning.  */
 	  assert (map->l_info[VERSYMIDX (DT_VERSYM)] != NULL);
-#else
+# else
 	  if (map->l_info[VERSYMIDX (DT_VERSYM)])
-#endif
+# endif
 	    {
 	      const ElfW(Half) *const version =
 		(const void *) D_PTR (map, l_info[VERSYMIDX (DT_VERSYM)]);
 	      ElfW(Half) ndx = version[ELFW(R_SYM) (r->r_info)] & 0x7fff;
 	      elf_machine_rel (map, r, &symtab[ELFW(R_SYM) (r->r_info)],
 			       &map->l_versions[ndx],
-			       (void *) (l_addr + r->r_offset));
+			       (void *) (l_addr + r->r_offset), skip_ifunc);
 	    }
-#ifndef RTLD_BOOTSTRAP
+# ifndef RTLD_BOOTSTRAP
 	  else
 	    elf_machine_rel (map, r, &symtab[ELFW(R_SYM) (r->r_info)], NULL,
-			     (void *) (l_addr + r->r_offset));
-#endif
+			     (void *) (l_addr + r->r_offset), skip_ifunc);
+# endif
 	}
+    }
+  else if (__builtin_expect (r_type == R_386_IRELATIVE, 0))
+    {
+      Elf32_Addr value = map->l_addr + *reloc_addr;
+      if (__builtin_expect (!skip_ifunc, 1))
+	value = ((Elf32_Addr (*) (void)) value) ();
+      *reloc_addr = value;
     }
   else
     _dl_reloc_bad_type (map, r_type, 1);
 }
 
-#ifndef RTLD_BOOTSTRAP
+# ifndef RTLD_BOOTSTRAP
 
 auto inline void
 __attribute__ ((always_inline))
 elf_machine_lazy_rela (struct link_map *map,
-		       Elf32_Addr l_addr, const Elf32_Rela *reloc)
+		       Elf32_Addr l_addr, const Elf32_Rela *reloc,
+		       int skip_ifunc)
 {
   Elf32_Addr *const reloc_addr = (void *) (l_addr + reloc->r_offset);
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
@@ -716,10 +746,17 @@ elf_machine_lazy_rela (struct link_map *map,
       td->arg = (void*)reloc;
       td->entry = _dl_tlsdesc_resolve_rela;
     }
+  else if (__builtin_expect (r_type == R_386_IRELATIVE, 0))
+    {
+      Elf32_Addr value = map->l_addr + reloc->r_addend;
+      if (__builtin_expect (!skip_ifunc, 1))
+	value = ((Elf32_Addr (*) (void)) value) ();
+      *reloc_addr = value;
+    }
   else
     _dl_reloc_bad_type (map, r_type, 1);
 }
 
-#endif	/* !RTLD_BOOTSTRAP */
+# endif	/* !RTLD_BOOTSTRAP */
 
 #endif /* RESOLVE_MAP */

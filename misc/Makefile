@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2006, 2007 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
 # Lesser General Public License for more details.
 
 # You should have received a copy of the GNU Lesser General Public
-# License along with the GNU C Library; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307 USA.
+# License along with the GNU C Library; if not, see
+# <http://www.gnu.org/licenses/>.
 
 #
 #	Sub-makefile for misc portion of the library.
@@ -26,26 +25,28 @@ headers	:= sys/uio.h bits/uio.h sys/ioctl.h bits/ioctls.h bits/ioctl-types.h \
 	   sys/ptrace.h sys/file.h sys/dir.h sys/cdefs.h \
 	   ar.h a.out.h libgen.h stab.h bits/stab.def sgtty.h \
 	   ttyent.h paths.h sys/reboot.h \
-	   sys/mman.h sys/param.h fstab.h mntent.h search.h err.h error.h \
+	   sys/mman.h sys/param.h bits/param.h \
+	   fstab.h mntent.h search.h err.h error.h \
 	   sys/queue.h sysexits.h syscall.h sys/syscall.h sys/swap.h \
 	   sys/select.h ustat.h sys/ustat.h bits/ustat.h sys/sysinfo.h \
 	   regexp.h bits/select.h bits/mman.h sys/xattr.h \
 	   syslog.h sys/syslog.h \
-	   bits/syslog.h bits/syslog-ldbl.h bits/syslog-path.h bits/error.h
+	   bits/syslog.h bits/syslog-ldbl.h bits/syslog-path.h bits/error.h \
+	   bits/select2.h bits/hwcap.h sys/auxv.h
 
 routines := brk sbrk sstk ioctl \
-	    readv writev \
+	    readv writev preadv preadv64 pwritev pwritev64 \
 	    setreuid setregid \
 	    seteuid setegid \
 	    getpagesize \
 	    getdtsz \
 	    gethostname sethostname getdomain setdomain \
 	    select pselect \
-	    acct chroot fsync sync fdatasync reboot \
+	    acct chroot fsync sync fdatasync syncfs reboot \
 	    gethostid sethostid \
 	    revoke vhangup \
 	    swapon swapoff mktemp mkstemp mkstemp64 mkdtemp \
-	    mkostemp mkostemp64 \
+	    mkostemp mkostemp64 mkstemps mkstemps64 mkostemps mkostemps64 \
 	    ualarm usleep \
 	    gtty stty \
 	    ptrace \
@@ -64,26 +65,23 @@ routines := brk sbrk sstk ioctl \
 	    getloadavg getclktck \
 	    fgetxattr flistxattr fremovexattr fsetxattr getxattr \
 	    listxattr lgetxattr llistxattr lremovexattr lsetxattr \
-	    removexattr setxattr
-
-distribute := device-nrs.h
+	    removexattr setxattr getauxval ifunc-impl-list
 
 generated := tst-error1.mtrace tst-error1-mem
 
 include ../Makeconfig
 
 aux := init-misc
-ifeq ($(build-static),yes)
-install-lib := libbsd-compat.a libg.a
-endif
+install-lib := libg.a
 gpl2lgpl := error.c error.h
 
 tests := tst-dirname tst-tsearch tst-fdset tst-efgcvt tst-mntent tst-hsearch \
-	 tst-error1 tst-pselect tst-insremque tst-mntent2
-ifeq (no,$(cross-compiling))
+	 tst-error1 tst-pselect tst-insremque tst-mntent2 bug-hsearch1
+ifeq ($(run-built-tests),yes)
 tests: $(objpfx)tst-error1-mem
 endif
 
+CFLAGS-select.c = -fexceptions -fasynchronous-unwind-tables
 CFLAGS-tsearch.c = $(uses-callbacks)
 CFLAGS-lsearch.c = $(uses-callbacks)
 CFLAGS-pselect.c = -fexceptions
@@ -99,21 +97,15 @@ CFLAGS-getsysstats.c = -fexceptions
 CFLAGS-getusershell.c = -fexceptions
 CFLAGS-err.c = -fexceptions
 CFLAGS-tst-tsearch.c = $(stack-align-test-flags)
-CFLAGS-mntent_r.c = -D_IO_MTSAFE_IO
 
 include ../Rules
 
-$(objpfx)libbsd-compat.a: $(dep-dummy-lib); $(make-dummy-lib)
 $(objpfx)libg.a: $(dep-dummy-lib); $(make-dummy-lib)
 
 ifeq ($(build-shared),yes)
 $(objpfx)tst-tsearch: $(common-objpfx)math/libm.so$(libm.so-version)
 else
 $(objpfx)tst-tsearch: $(common-objpfx)math/libm.a
-endif
-
-ifeq ($(build-bounded),yes)
-$(objpfx)tst-tsearch-bp: $(common-objpfx)math/libm_b.a
 endif
 
 tst-error1-ENV = MALLOC_TRACE=$(objpfx)tst-error1.mtrace

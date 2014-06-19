@@ -1,4 +1,4 @@
-/* Copyright (c) 1998, 1999, 2003-2007, 2008 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -13,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <atomic.h>
@@ -45,9 +44,9 @@ extern void *xcalloc (size_t n, size_t s);
 unsigned int reload_count = DEFAULT_RELOAD_LIMIT;
 
 
-static void (*const readdfcts[LASTREQ]) (struct database_dyn *,
-					 struct hashentry *,
-					 struct datahead *) =
+static time_t (*const readdfcts[LASTREQ]) (struct database_dyn *,
+					   struct hashentry *,
+					   struct datahead *) =
 {
   [GETPWBYNAME] = readdpwbyname,
   [GETPWBYUID] = readdpwbyuid,
@@ -60,7 +59,9 @@ static void (*const readdfcts[LASTREQ]) (struct database_dyn *,
   [GETAI] = readdhstai,
   [INITGROUPS] = readdinitgroups,
   [GETSERVBYNAME] = readdservbyname,
-  [GETSERVBYPORT] = readdservbyport
+  [GETSERVBYPORT] = readdservbyport,
+  [GETNETGRENT] = readdgetnetgrent,
+  [INNETGR] = readdinnetgr
 };
 
 
@@ -70,7 +71,7 @@ static void (*const readdfcts[LASTREQ]) (struct database_dyn *,
 
    This function must be called with the read-lock held.  */
 struct datahead *
-cache_search (request_type type, void *key, size_t len,
+cache_search (request_type type, const void *key, size_t len,
 	      struct database_dyn *table, uid_t owner)
 {
   unsigned long int hash = __nis_hash (key, len) % table->head->module;
@@ -155,20 +156,14 @@ cache_add (int type, const void *key, size_t len, struct datahead *packet,
   unsigned long int hash = __nis_hash (key, len) % table->head->module;
   struct hashentry *newp;
 
-  newp = mempool_alloc (table, sizeof (struct hashentry), IDX_record_data);
+  newp = mempool_alloc (table, sizeof (struct hashentry), 0);
   /* If we cannot allocate memory, just do not do anything.  */
   if (newp == NULL)
     {
-      ++table->head->addfailed;
-
       /* If necessary mark the entry as unusable so that lookups will
 	 not use it.  */
       if (first)
 	packet->usable = false;
-
-      /* Mark the in-flight memory as unused.  */
-      for (enum in_flight idx = 0; idx < IDX_record_data; ++idx)
-	mem_in_flight.block[idx].dbidx = -1;
 
       return -1;
     }
@@ -185,7 +180,7 @@ cache_add (int type, const void *key, size_t len, struct datahead *packet,
   /* Put the new entry in the first position.  */
   do
     newp->next = table->head->array[hash];
-  while (atomic_compare_and_exchange_bool_acq (&table->head->array[hash],
+  while (atomic_compare_and_exchange_bool_rel (&table->head->array[hash],
 					       (ref_t) ((char *) newp
 							- table->data),
 					       (ref_t) newp->next));
@@ -234,10 +229,6 @@ cache_add (int type, const void *key, size_t len, struct datahead *packet,
 	pthread_cond_signal (&table->prune_cond);
     }
 
-  /* Mark the in-flight memory as unused.  */
-  for (enum in_flight idx = 0; idx < IDX_last; ++idx)
-    mem_in_flight.block[idx].dbidx = -1;
-
   return 0;
 }
 
@@ -274,28 +265,40 @@ prune_cache (struct database_dyn *table, time_t now, int fd)
 
   /* If we check for the modification of the underlying file we invalidate
      the entries also in this case.  */
-  if (table->inotify_descr < 0 && table->check_file && now != LONG_MAX)
+  if (table->check_file && now != LONG_MAX)
     {
-      struct stat64 st;
+      struct traced_file *runp = table->traced_files;
 
-      if (stat64 (table->filename, &st) < 0)
+      while (runp != NULL)
 	{
-	  char buf[128];
-	  /* We cannot stat() the file, disable file checking if the
-             file does not exist.  */
-	  dbg_log (_("cannot stat() file `%s': %s"),
-		   table->filename, strerror_r (errno, buf, sizeof (buf)));
-	  if (errno == ENOENT)
-	    table->check_file = 0;
-	}
-      else
-	{
-	  if (st.st_mtime != table->file_mtime)
+#ifdef HAVE_INOTIFY
+	  if (runp->inotify_descr == -1)
+#endif
 	    {
-	      /* The file changed.  Invalidate all entries.  */
-	      now = LONG_MAX;
-	      table->file_mtime = st.st_mtime;
+	      struct stat64 st;
+
+	      if (stat64 (runp->fname, &st) < 0)
+		{
+		  char buf[128];
+		  /* We cannot stat() the file, disable file checking if the
+		     file does not exist.  */
+		  dbg_log (_("cannot stat() file `%s': %s"),
+			   runp->fname, strerror_r (errno, buf, sizeof (buf)));
+		  if (errno == ENOENT)
+		    table->check_file = 0;
+		}
+	      else
+		{
+		  if (st.st_mtime != table->file_mtime)
+		    {
+		      /* The file changed.  Invalidate all entries.  */
+		      now = LONG_MAX;
+		      table->file_mtime = st.st_mtime;
+		    }
+		}
 	    }
+
+	  runp = runp->next;
 	}
     }
 
@@ -399,7 +402,8 @@ prune_cache (struct database_dyn *table, time_t now, int fd)
 		      assert (runp->type < LASTREQ
 			      && readdfcts[runp->type] != NULL);
 
-		      readdfcts[runp->type] (table, runp, dh);
+		      time_t timeout = readdfcts[runp->type] (table, runp, dh);
+		      next_timeout = MIN (next_timeout, timeout);
 
 		      /* If the entry has been replaced, we might need
 			 cleanup.  */

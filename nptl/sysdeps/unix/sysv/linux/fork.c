@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2003, 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <stdlib.h>
@@ -29,13 +28,14 @@
 #include <ldsodefs.h>
 #include <bits/stdio-lock.h>
 #include <atomic.h>
+#include <pthreadP.h>
 
 
 unsigned long int *__fork_generation_pointer;
 
 
 
-/* The single linked list of all currently registered for handlers.  */
+/* The single linked list of all currently registered fork handlers.  */
 struct fork_handler *__fork_handlers;
 
 
@@ -86,8 +86,8 @@ __libc_fork (void)
 	 just go away.  The unloading code works in the order of the
 	 list.
 
-         While executing the registered handlers we are building a
-         list of all the entries so that we can go backward later on.  */
+	 While executing the registered handlers we are building a
+	 list of all the entries so that we can go backward later on.  */
       while (1)
 	{
 	  /* Execute the handler if there is one.  */
@@ -154,6 +154,24 @@ __libc_fork (void)
       GL(dl_cpuclock_offset) = now;
 #endif
 
+#ifdef __NR_set_robust_list
+      /* Initialize the robust mutex list which has been reset during
+	 the fork.  We do not check for errors since if it fails here
+	 it failed at process start as well and noone could have used
+	 robust mutexes.  We also do not have to set
+	 self->robust_head.futex_offset since we inherit the correct
+	 value from the parent.  */
+# ifdef SHARED
+      if (__builtin_expect (__libc_pthread_functions_init, 0))
+	PTHFCT_CALL (ptr_set_robust, (self));
+# else
+      extern __typeof (__nptl_set_robust) __nptl_set_robust
+	__attribute__((weak));
+      if (__builtin_expect (__nptl_set_robust != NULL, 0))
+	__nptl_set_robust (self);
+# endif
+#endif
+
       /* Reset the file list.  These are recursive mutexes.  */
       fresetlockfiles ();
 
@@ -170,10 +188,10 @@ __libc_fork (void)
 	    allp->handler->child_handler ();
 
 	  /* Note that we do not have to wake any possible waiter.
- 	     This is the only thread in the new process.  The count
- 	     may have been bumped up by other threads doing a fork.
- 	     We reset it to 1, to avoid waiting for non-existing
- 	     thread(s) to release the count.  */
+	     This is the only thread in the new process.  The count
+	     may have been bumped up by other threads doing a fork.
+	     We reset it to 1, to avoid waiting for non-existing
+	     thread(s) to release the count.  */
 	  allp->handler->refcntr = 1;
 
 	  /* XXX We could at this point look through the object pool

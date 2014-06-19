@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  NPTL/ARM version.
-   Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _TLS_H
 #define _TLS_H	1
@@ -42,14 +41,6 @@ typedef union dtv
 # include <tcb-offsets.h>
 #endif /* __ASSEMBLER__ */
 
-
-/* We require TLS support in the tools.  */
-#ifndef HAVE_TLS_SUPPORT
-# error "TLS support is required."
-#endif
-
-/* Signal that TLS support is available.  */
-# define USE_TLS	1
 
 #ifndef __ASSEMBLER__
 
@@ -127,10 +118,6 @@ typedef struct
   descr->member = (value)
 #define THREAD_SETMEM_NC(descr, member, idx, value) \
   descr->member[idx] = (value)
-
-/* Initializing the thread pointer will generate a SIGILL if the syscall
-   is not available.  */
-#define TLS_INIT_TP_EXPENSIVE 1
 
 /* Get and set the global scope generation counter in struct pthread.  */
 #define THREAD_GSCOPE_FLAG_UNUSED 0

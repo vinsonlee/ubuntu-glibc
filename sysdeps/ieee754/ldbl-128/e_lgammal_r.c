@@ -65,11 +65,11 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
 static const long double PIL = 3.1415926535897932384626433832795028841972E0L;
 static const long double MAXLGM = 1.0485738685148938358098967157129705071571E4928L;
@@ -754,15 +754,8 @@ deval (long double x, const long double *p, int n)
 }
 
 
-#ifdef __STDC__
 long double
 __ieee754_lgammal_r (long double x, int *signgamp)
-#else
-long double
-__ieee754_lgammal_r (x, signgamp)
-     long double x;
-     int *signgamp;
-#endif
 {
   long double p, q, w, z, nx;
   int i, nn;
@@ -775,7 +768,7 @@ __ieee754_lgammal_r (x, signgamp)
   if (x == 0.0L)
     {
       if (__signbitl (x))
-        *signgamp = -1;
+	*signgamp = -1;
     }
 
   if (x < 0.0L)
@@ -789,6 +782,8 @@ __ieee754_lgammal_r (x, signgamp)
 	*signgamp = -1;
       else
 	*signgamp = 1;
+      if (q < 0x1p-120L)
+	return -__logl (q);
       z = q - p;
       if (z > 0.5L)
 	{
@@ -796,8 +791,6 @@ __ieee754_lgammal_r (x, signgamp)
 	  z = p - q;
 	}
       z = q * __sinl (PIL * z);
-      if (z == 0.0L)
-	return (*signgamp * huge * huge);
       w = __ieee754_lgammal_r (q, &i);
       z = __logl (PIL / z) - w;
       return (z);
@@ -812,7 +805,9 @@ __ieee754_lgammal_r (x, signgamp)
 	{
 	case 0:
 	  /* log gamma (x + 1) = log(x) + log gamma(x) */
-	  if (x <= 0.125)
+	  if (x < 0x1p-120L)
+	    return -__logl (x);
+	  else if (x <= 0.125)
 	    {
 	      p = x * neval (x, RN1, NRN1) / deval (x, RD1, NRD1);
 	    }
@@ -863,7 +858,7 @@ __ieee754_lgammal_r (x, signgamp)
 		{
 		  z = x - 0.75L;
 		  p = z * neval (z, RN1r75, NRN1r75)
-		        / deval (z, RD1r75, NRD1r75);
+			/ deval (z, RD1r75, NRD1r75);
 		  p += lgam1r75b;
 		  p += lgam1r75a;
 		}
@@ -1040,3 +1035,4 @@ __ieee754_lgammal_r (x, signgamp)
   q += neval (p, RASY, NRASY) / x;
   return (q);
 }
+strong_alias (__ieee754_lgammal_r, __lgammal_r_finite)

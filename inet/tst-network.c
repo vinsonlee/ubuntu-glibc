@@ -1,5 +1,5 @@
 /* Test for inet_network.
-   Copyright (C) 2000, 2002 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 2000.
 
@@ -14,11 +14,11 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -38,6 +38,7 @@ struct
   {"0x0", 0},
   /* Now some invalid addresses.  */
   {"0x", INADDR_NONE},
+  {"1 bar", INADDR_NONE}, /* Bug 15277.  */
   {"141.30.225.2800", INADDR_NONE},
   {"141.76.1.1.1", INADDR_NONE},
   {"141.76.1.11.", INADDR_NONE},

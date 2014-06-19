@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2002, 2003 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1995.
 
@@ -13,12 +13,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "localeinfo.h"
 #include <endian.h>
+#include <stdint.h>
 
 #include "C-translit.h"
 
@@ -528,7 +528,7 @@ _nl_C_LC_CTYPE_width attribute_hidden =
 };
 
 /* Number of fields with fixed meanings, starting at 0.  */
-#define NR_FIXED 71
+#define NR_FIXED 72
 /* Number of class fields, starting at CLASS_OFFSET.  */
 #define NR_CLASSES 12
 /* Number of map fields, starting at MAP_OFFSET.  */
@@ -538,7 +538,7 @@ _nl_C_LC_CTYPE_width attribute_hidden =
    NR_FIXED == _NL_ITEM_INDEX (_NL_CTYPE_EXTRA_MAP_1). */
 typedef int assertion1[1 - 2 * (NR_FIXED != _NL_ITEM_INDEX (_NL_CTYPE_EXTRA_MAP_1))];
 
-const struct locale_data _nl_C_LC_CTYPE attribute_hidden =
+const struct __locale_data _nl_C_LC_CTYPE attribute_hidden =
 {
   _nl_C_name,
   NULL, 0, 0,			/* no file mapped */
@@ -666,6 +666,8 @@ const struct locale_data _nl_C_LC_CTYPE attribute_hidden =
     /* _NL_CTYPE_TRANSLIT_IGNORE */
     { .wstr = NULL },
     /* _NL_CTYPE_MAP_TO_NONASCII */
+    { .word = 0 },
+    /* _NL_CTYPE_NONASCII_CASE */
     { .word = 0 },
     /* NR_CLASSES wctype_tables */
     { .string = (const char *) _nl_C_LC_CTYPE_class_upper.header },

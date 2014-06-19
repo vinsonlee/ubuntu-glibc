@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sched.h>
 #include <setjmp.h>
@@ -24,11 +23,12 @@
 #include <atomic.h>
 #include <ldsodefs.h>
 #include <tls.h>
+#include <stdint.h>
 
 #include "kernel-features.h"
 
 
-#define CLONE_SIGNAL    	(CLONE_SIGHAND | CLONE_THREAD)
+#define CLONE_SIGNAL		(CLONE_SIGHAND | CLONE_THREAD)
 
 /* Unless otherwise specified, the thread "register" is going to be
    initialized with a pointer to the TCB.  */
@@ -72,16 +72,20 @@ do_clone (struct pthread *pd, const struct pthread_attr *attr,
      that cares whether the thread count is correct.  */
   atomic_increment (&__nptl_nthreads);
 
-  if (ARCH_CLONE (fct, STACK_VARIABLES_ARGS, clone_flags,
-		  pd, &pd->tid, TLS_VALUE, &pd->tid) == -1)
+  int rc = ARCH_CLONE (fct, STACK_VARIABLES_ARGS, clone_flags,
+		       pd, &pd->tid, TLS_VALUE, &pd->tid);
+
+  if (__builtin_expect (rc == -1, 0))
     {
       atomic_decrement (&__nptl_nthreads); /* Oops, we lied for a second.  */
 
-      /* Failed.  If the thread is detached, remove the TCB here since
-	 the caller cannot do this.  The caller remembered the thread
-	 as detached and cannot reverify that it is not since it must
-	 not access the thread descriptor again.  */
-      if (IS_DETACHED (pd))
+      /* Perhaps a thread wants to change the IDs and if waiting
+	 for this stillborn thread.  */
+      if (__builtin_expect (atomic_exchange_acq (&pd->setxid_futex, 0)
+			    == -2, 0))
+	lll_futex_wake (&pd->setxid_futex, 1, LLL_PRIVATE);
+
+      /* Free the resources.  */
 	__deallocate_stack (pd);
 
       /* We have to translate error codes.  */
@@ -106,13 +110,12 @@ do_clone (struct pthread *pd, const struct pthread_attr *attr,
 		 send it the cancellation signal.  */
 	      INTERNAL_SYSCALL_DECL (err2);
 	    err_out:
-#if __ASSUME_TGKILL
 	      (void) INTERNAL_SYSCALL (tgkill, err2, 3,
 				       THREAD_GETMEM (THREAD_SELF, pid),
 				       pd->tid, SIGCANCEL);
-#else
-	      (void) INTERNAL_SYSCALL (tkill, err2, 2, pd->tid, SIGCANCEL);
-#endif
+
+	      /* We do not free the stack here because the canceled thread
+		 itself will do this.  */
 
 	      return (INTERNAL_SYSCALL_ERROR_P (res, err)
 		      ? INTERNAL_SYSCALL_ERRNO (res, err)
@@ -173,18 +176,11 @@ create_thread (struct pthread *pd, const struct pthread_attr *attr,
 	sys_exit() in the location pointed to by the seventh parameter
 	to CLONE.
 
-     CLONE_DETACHED
-	No signal is generated if the thread exists and it is
-	automatically reaped.
-
      The termination signal is chosen to be zero which means no signal
      is sent.  */
   int clone_flags = (CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGNAL
 		     | CLONE_SETTLS | CLONE_PARENT_SETTID
 		     | CLONE_CHILD_CLEARTID | CLONE_SYSVSEM
-#if __ASSUME_NO_CLONE_DETACHED == 0
-		     | CLONE_DETACHED
-#endif
 		     | 0);
 
   if (__builtin_expect (THREAD_GETMEM (THREAD_SELF, report_events), 0))

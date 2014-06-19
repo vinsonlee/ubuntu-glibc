@@ -1,4 +1,4 @@
-/* Copyright (C) 2003, 2004, 2006, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky <schwidefsky@de.ibm.com>, 2003.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <endian.h>
 #include <errno.h>
@@ -23,6 +22,7 @@
 #include <lowlevellock.h>
 #include <pthread.h>
 #include <pthreadP.h>
+#include <stap-probe.h>
 
 #include <shlib-compat.h>
 #include <kernel-features.h>
@@ -32,6 +32,8 @@ int
 __pthread_cond_broadcast (cond)
      pthread_cond_t *cond;
 {
+  LIBC_PROBE (cond_broadcast, 1, cond);
+
   int pshared = (cond->__data.__mutex == (void *) ~0l)
 		? LLL_SHARED : LLL_PRIVATE;
   /* Make sure we are alone.  */
@@ -51,34 +53,34 @@ __pthread_cond_broadcast (cond)
       /* We are done.  */
       lll_unlock (cond->__data.__lock, pshared);
 
-      /* Do not use requeue for pshared condvars.  */
-      if (cond->__data.__mutex == (void *) ~0l)
-	goto wake_all;
-
       /* Wake everybody.  */
       pthread_mutex_t *mut = (pthread_mutex_t *) cond->__data.__mutex;
 
-      /* XXX: Kernel so far doesn't support requeue to PI futex.  */
-      /* XXX: Kernel so far can only requeue to the same type of futex,
-	 in this case private (we don't requeue for pshared condvars).  */
-      if (__builtin_expect (mut->__data.__kind
-			    & (PTHREAD_MUTEX_PRIO_INHERIT_NP
-			       | PTHREAD_MUTEX_PSHARED_BIT), 0))
+      /* Do not use requeue for pshared condvars.  */
+      if (mut == (void *) ~0l
+	  || PTHREAD_MUTEX_PSHARED (mut) & PTHREAD_MUTEX_PSHARED_BIT)
 	goto wake_all;
 
-      /* lll_futex_requeue returns 0 for success and non-zero
-	 for errors.  */
-      if (__builtin_expect (lll_futex_requeue (&cond->__data.__futex, 1,
-					       INT_MAX, &mut->__data.__lock,
-					       futex_val, LLL_PRIVATE), 0))
+#if (defined lll_futex_cmp_requeue_pi \
+     && defined __ASSUME_REQUEUE_PI)
+      if (USE_REQUEUE_PI (mut))
 	{
-	  /* The requeue functionality is not available.  */
-	wake_all:
-	  lll_futex_wake (&cond->__data.__futex, INT_MAX, pshared);
+	  if (lll_futex_cmp_requeue_pi (&cond->__data.__futex, 1, INT_MAX,
+					&mut->__data.__lock, futex_val,
+					LLL_PRIVATE) == 0)
+	    return 0;
 	}
+      else
+#endif
+	/* lll_futex_requeue returns 0 for success and non-zero
+	   for errors.  */
+	if (!__builtin_expect (lll_futex_requeue (&cond->__data.__futex, 1,
+						  INT_MAX, &mut->__data.__lock,
+						  futex_val, LLL_PRIVATE), 0))
+	  return 0;
 
-      /* That's all.  */
-      return 0;
+wake_all:
+      lll_futex_wake (&cond->__data.__futex, INT_MAX, pshared);
     }
 
   /* We are done.  */

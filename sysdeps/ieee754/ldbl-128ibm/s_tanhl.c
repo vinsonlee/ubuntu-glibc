@@ -38,28 +38,21 @@ static char rcsid[] = "$NetBSD: s_tanh.c,v 1.7 1995/05/10 20:48:22 jtc Exp $";
  *	only tanh(0)=0 is exact for finite argument.
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 #include <math_ldbl_opt.h>
 
-#ifdef __STDC__
 static const long double one=1.0L, two=2.0L, tiny = 1.0e-300L;
-#else
-static long double one=1.0L, two=2.0L, tiny = 1.0e-300L;
-#endif
 
-#ifdef __STDC__
-	long double __tanhl(long double x)
-#else
-	long double __tanhl(x)
-	long double x;
-#endif
+long double __tanhl(long double x)
 {
 	long double t,z;
-	int64_t jx,ix,lx;
+	int64_t jx,ix;
+	double xhi;
 
     /* High word of |x|. */
-	GET_LDOUBLE_WORDS64(jx,lx,x);
+	xhi = ldbl_high (x);
+	EXTRACT_WORDS64 (jx, xhi);
 	ix = jx&0x7fffffffffffffffLL;
 
     /* x is INF or NaN */
@@ -70,7 +63,7 @@ static long double one=1.0L, two=2.0L, tiny = 1.0e-300L;
 
     /* |x| < 22 */
 	if (ix < 0x4036000000000000LL) {		/* |x|<22 */
-	    if ((ix | (lx&0x7fffffffffffffffLL)) == 0)
+	    if (ix == 0)
 		return x;		/* x == +-0 */
 	    if (ix<0x3c60000000000000LL) 	/* |x|<2**-57 */
 		return x*(one+x);    	/* tanh(small) = small */

@@ -1,5 +1,5 @@
 /* `sln' program to create symbolic links between files.
-   Copyright (C) 1998, 1999, 2001 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,12 +13,17 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
-
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include <error.h>
 #include <errno.h>
+#include <libintl.h>
+#include <locale.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -28,19 +33,37 @@
 #include <string.h>
 #include <limits.h>
 
+#include "../version.h"
+
+#define PACKAGE _libc_intl_domainname
+
 #if !defined S_ISDIR && defined S_IFDIR
 #define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 #endif
 
 static int makesymlink (const char *src, const char *dest);
 static int makesymlinks (const char *file);
+static void usage (void);
 
 int
 main (int argc, char **argv)
 {
+  /* Set locale via LC_ALL.  */
+  setlocale (LC_ALL, "");
+
+  /* Set the text message domain.  */
+  textdomain (PACKAGE);
+
   switch (argc)
     {
     case 2:
+      if (strcmp (argv[1], "--version") == 0) {
+	printf ("sln %s%s\n", PKGVERSION, VERSION);
+	return 0;
+      } else if (strcmp (argv[1], "--help") == 0) {
+	usage ();
+	return 0;
+      }
       return makesymlinks (argv [1]);
       break;
 
@@ -49,10 +72,18 @@ main (int argc, char **argv)
       break;
 
     default:
-      printf ("Usage: %s src dest|file\n", argv [0]);
+      usage ();
       return 1;
       break;
     }
+}
+
+static void
+usage (void)
+{
+  printf (_("Usage: sln src dest|file\n\n"));
+  printf (_("For bug reporting instructions, please see:\n\
+%s.\n"), REPORT_BUGS_TO);
 }
 
 static int
@@ -75,7 +106,7 @@ makesymlinks (file)
       fp = fopen (file, "r");
       if (fp == NULL)
 	{
-	  fprintf (stderr, "%s: file open error: %m\n", file);
+	  fprintf (stderr, _("%s: file open error: %m\n"), file);
 	  return 1;
 	}
     }
@@ -112,7 +143,7 @@ makesymlinks (file)
 	++cp;
       if (*cp == '\0')
 	{
-	  fprintf (stderr, "No target in line %d\n", lineno);
+	  fprintf (stderr, _("No target in line %d\n"), lineno);
 	  ret = 1;
 	  continue;
 	}
@@ -144,21 +175,21 @@ makesymlink (src, dest)
     {
       if (S_ISDIR (stats.st_mode))
 	{
-	  fprintf (stderr, "%s: destination must not be a directory\n",
-	  	   dest);
+	  fprintf (stderr, _("%s: destination must not be a directory\n"),
+		   dest);
 	  return 1;
 	}
       else if (unlink (dest) && errno != ENOENT)
 	{
-	  fprintf (stderr, "%s: failed to remove the old destination\n",
-	  	   dest);
+	  fprintf (stderr, _("%s: failed to remove the old destination\n"),
+		   dest);
 	  return 1;
 	}
     }
   else if (errno != ENOENT)
     {
       error = strerror (errno);
-      fprintf (stderr, "%s: invalid destination: %s\n", dest, error);
+      fprintf (stderr, _("%s: invalid destination: %s\n"), dest, error);
       return -1;
     }
 
@@ -173,8 +204,8 @@ makesymlink (src, dest)
         {
 	  error = strerror (errno);
 	  unlink (dest);
-	  fprintf (stderr, "Invalid link from \"%s\" to \"%s\": %s\n",
-	  	   src, dest, error);
+	  fprintf (stderr, _("Invalid link from \"%s\" to \"%s\": %s\n"),
+		   src, dest, error);
 	  return 1;
 	}
       return 0;
@@ -182,8 +213,8 @@ makesymlink (src, dest)
   else
     {
       error = strerror (errno);
-      fprintf (stderr, "Invalid link from \"%s\" to \"%s\": %s\n",
-      	       src, dest, error);
+      fprintf (stderr, _("Invalid link from \"%s\" to \"%s\": %s\n"),
+	       src, dest, error);
       return 1;
     }
 }

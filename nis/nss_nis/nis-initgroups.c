@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2000,2002,2003,2004,2006 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1998.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <alloca.h>
 #include <ctype.h>
@@ -139,7 +138,7 @@ get_uid (const char *user, uid_t *uidp)
       if (r != ERANGE)
 	break;
 
-      extend_alloca (buf, buflen, 2 * buflen);
+      buf = extend_alloca (buf, buflen, 2 * buflen);
     }
 
   return 1;

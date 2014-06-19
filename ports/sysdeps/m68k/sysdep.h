@@ -1,5 +1,5 @@
 /* Assembler macros for m68k.
-   Copyright (C) 1998, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,36 +13,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdeps/generic/sysdep.h>
 
 #ifdef __ASSEMBLER__
-
-/* Syntactic details of assembler.  */
-
-# ifdef HAVE_ELF
-
-/* ELF uses byte-counts for .align, most others use log2 of count of bytes.  */
-#  define ALIGNARG(log2) 1<<log2
-/* For ELF we need the `.type' directive to make shared libs work right.  */
-#  define ASM_TYPE_DIRECTIVE(name,typearg) .type name,typearg
-#  define ASM_SIZE_DIRECTIVE(name) .size name,.-name
-
-/* In ELF C symbols are asm symbols.  */
-#  undef NO_UNDERSCORES
-#  define NO_UNDERSCORES
-
-# else
-
-#  define ALIGNARG(log2) log2
-#  define ASM_TYPE_DIRECTIVE(name,type)	/* Nothing is specified.  */
-#  define ASM_SIZE_DIRECTIVE(name)	/* Nothing is specified.  */
-
-# endif
-
 
 /* Define an entry point visible from C.
 
@@ -51,13 +27,16 @@
    the current source file.  */
 # define ENTRY(name)							      \
   .globl C_SYMBOL_NAME(name);						      \
-  ASM_TYPE_DIRECTIVE (C_SYMBOL_NAME(name),@function);			      \
-  .align ALIGNARG(2);							      \
+  .type C_SYMBOL_NAME(name),@function;					      \
+  .p2align 2;								      \
   C_LABEL(name)								      \
+  cfi_startproc;							      \
   CALL_MCOUNT
 
 # undef END
-# define END(name) ASM_SIZE_DIRECTIVE(name)
+# define END(name)							      \
+  cfi_endproc;								      \
+  .size name,.-name
 
 
 /* If compiled for profiling, call `_mcount' at the start of each function.  */
@@ -65,26 +44,21 @@
 /* The mcount code relies on a normal frame pointer being on the stack
    to locate our caller, so push one just for its benefit.  */
 #  define CALL_MCOUNT \
-  move.l %fp, -(%sp); move.l %sp, %fp;					      \
-  jbsr JUMPTARGET (mcount);						      \
-  move.l (%sp)+, %fp;
+  move.l %fp, -(%sp);							      \
+  cfi_adjust_cfa_offset (4);  cfi_rel_offset (%a6, 0);			      \
+  move.l %sp, %fp;							      \
+  jbsr JUMPTARGET (_mcount);						      \
+  move.l (%sp)+, %fp;							      \
+  cfi_adjust_cfa_offset (-4); cfi_restore (%a6);
 # else
 #  define CALL_MCOUNT		/* Do nothing.  */
 # endif
 
-# ifdef	NO_UNDERSCORES
-/* Since C identifiers are not normally prefixed with an underscore
-   on this system, the asm identifier `syscall_error' intrudes on the
-   C name space.  Make sure we use an innocuous name.  */
-#  define syscall_error	__syscall_error
-#  define mcount	_mcount
-# endif
-
 # define PSEUDO(name, syscall_name, args)				      \
-  .globl syscall_error;							      \
+  .globl __syscall_error;						      \
   ENTRY (name)								      \
     DO_CALL (syscall_name, args);					      \
-    jcc JUMPTARGET(syscall_error)
+    jcc JUMPTARGET(__syscall_error)
 
 # undef PSEUDO_END
 # define PSEUDO_END(name)						      \
@@ -96,27 +70,5 @@
 # else
 #  define JUMPTARGET(name)	name
 # endif
-
-/* Perform operation OP with PC-relative SRC as the first operand and
-   DST as the second.  TMP is available as a temporary if needed.  */
-#ifdef __mcoldfire__
-#define PCREL_OP(OP, SRC, DST, TMP) \
-  move.l &SRC - ., TMP; OP (-8, %pc, TMP), DST
-#else
-#define PCREL_OP(OP, SRC, DST, TMP) \
-  OP SRC(%pc), DST
-#endif
-
-#else
-
-/* As above, but PC is the spelling of the PC register.  We need this
-   so that the macro can be used in both normal and extended asms.  */
-#ifdef __mcoldfire__
-#define PCREL_OP(OP, SRC, DST, TMP, PC) \
-  "move.l #" SRC " - ., " TMP "\n\t" OP " (-8, " PC ", " TMP "), " DST
-#else
-#define PCREL_OP(OP, SRC, DST, TMP, PC) \
-  OP " " SRC "(" PC "), " DST
-#endif
 
 #endif	/* __ASSEMBLER__ */

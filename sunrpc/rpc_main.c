@@ -1,35 +1,33 @@
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user or with the express written consent of
- * Sun Microsystems, Inc.
+ * From @(#)rpc_main.c 1.30 89/03/30
  *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
+ * Copyright (c) 2010, Oracle America, Inc.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
  *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
  *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-
-/*
- * From @(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI;
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -41,6 +39,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <libintl.h>
+#include <locale.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,6 +50,9 @@
 #include "rpc_util.h"
 #include "rpc_scan.h"
 #include "proto.h"
+
+#include "../version.h"
+#define PACKAGE _libc_intl_domainname
 
 #define EXTEND	1		/* alias for TRUE */
 #define DONT_EXTEND	0	/* alias for FALSE */
@@ -74,12 +76,9 @@ struct commandline
 
 static const char *cmdname;
 
-#define SVR4_CPP "/usr/ccs/lib/cpp"
-#define SUNOS_CPP "/lib/cpp"
-
 static const char *svcclosetime = "120";
 static int cppDefined;	/* explicit path for C preprocessor */
-static const char *CPP = SUNOS_CPP;
+static const char *CPP = "/lib/cpp";
 static const char CPPFLAGS[] = "-C";
 static char *pathbuf;
 static int cpp_pid;
@@ -132,8 +131,9 @@ static void addarg (const char *cp);
 static void putarg (int whereto, const char *cp);
 static void checkfiles (const char *infile, const char *outfile);
 static int parseargs (int argc, const char *argv[], struct commandline *cmd);
-static void usage (void) __attribute__ ((noreturn));
-static void options_usage (void) __attribute__ ((noreturn));
+static void usage (FILE *stream, int status) __attribute__ ((noreturn));
+static void options_usage (FILE *stream, int status) __attribute__ ((noreturn));
+static void print_version (void);
 static void c_initialize (void);
 static char *generate_guard (const char *pathname);
 
@@ -162,18 +162,10 @@ int indefinitewait;		/* If started by port monitors, hang till it wants */
 int exitnow;			/* If started by port monitors, exit after the call */
 int timerflag;			/* TRUE if !indefinite && !exitnow */
 int newstyle;			/* newstyle of passing arguments (by value) */
-#ifdef __GNU_LIBRARY__
 int Cflag = 1;			/* ANSI C syntax */
-#else
-int Cflag;			/* ANSI C/C++ syntax */
-#endif
 int CCflag;			/* C++ files */
 static int allfiles;		/* generate all files */
-#ifdef __GNU_LIBRARY__
 int tirpcflag;			/* generating code for tirpc, by default */
-#else
-int tirpcflag = 1;		/* generating code for tirpc, by default */
-#endif
 xdrfunc *xdrfunc_head;		/* xdr function list */
 xdrfunc *xdrfunc_tail;		/* xdr function list */
 
@@ -182,10 +174,13 @@ main (int argc, const char *argv[])
 {
   struct commandline cmd;
 
+  setlocale (LC_ALL, "");
+  textdomain (_libc_intl_domainname);
+
   (void) memset ((char *) &cmd, 0, sizeof (struct commandline));
   clear_args ();
   if (!parseargs (argc, argv, &cmd))
-    usage ();
+    usage (stderr, 1);
 
   if (cmd.cflag || cmd.hflag || cmd.lflag || cmd.tflag || cmd.sflag ||
       cmd.mflag || cmd.nflag || cmd.Ssflag || cmd.Scflag)
@@ -331,25 +326,19 @@ clear_args (void)
 static void
 find_cpp (void)
 {
-  struct stat buf;
+  struct stat64 buf;
 
-  if (stat (CPP, &buf) < 0)
-    {				/* /lib/cpp or explicit cpp does not exist */
-      if (cppDefined)
-	{
-	  fprintf (stderr, _ ("cannot find C preprocessor: %s \n"), CPP);
-	  crash ();
-	}
-      else
-	{			/* try the other one */
-	  CPP = SVR4_CPP;
-	  if (stat (CPP, &buf) < 0)
-	    {			/* can't find any cpp */
-	      fputs (_ ("cannot find any C preprocessor (cpp)\n"), stdout);
-	      crash ();
-	    }
-	}
+  if (stat64 (CPP, &buf) == 0)
+    return;
+
+  if (cppDefined) /* user specified cpp but it does not exist */
+    {
+      fprintf (stderr, _ ("cannot find C preprocessor: %s\n"), CPP);
+      crash ();
     }
+
+  /* fall back to system CPP */
+  CPP = "cpp";
 }
 
 /*
@@ -380,8 +369,13 @@ open_input (const char *infile, const char *define)
       close (1);
       dup2 (pd[1], 1);
       close (pd[0]);
-      execv (arglist[0], (char **) arglist);
-      perror ("execv");
+      execvp (arglist[0], (char **) arglist);
+      if (errno == ENOENT)
+        {
+          fprintf (stderr, _ ("cannot find C preprocessor: %s\n"), CPP);
+          exit (1);
+        }
+      perror ("execvp");
       exit (1);
     case -1:
       perror ("fork");
@@ -649,7 +643,7 @@ h_output (const char *infile, const char *define, int extend,
     }
   else if (tblflag)
     {
-      fprintf (fout, rpcgen_table_dcl);
+      fprintf (fout, "%s", rpcgen_table_dcl);
     }
 
   if (Cflag)
@@ -705,37 +699,18 @@ s_output (int argc, const char *argv[], const char *infile, const char *define,
     }
 
   if (!tirpcflag && inetdflag)
-#ifdef __GNU_LIBRARY__
     fprintf (fout, "#include <sys/ioctl.h> /* ioctl, TIOCNOTTY */\n");
-#else
-    fprintf (fout, "#include <sys/ttycom.h>/* TIOCNOTTY */\n");
-#endif
   if (Cflag && (inetdflag || pmflag))
     {
-#ifdef __GNU_LIBRARY__
       fprintf (fout, "#include <sys/types.h> /* open */\n");
       fprintf (fout, "#include <sys/stat.h> /* open */\n");
       fprintf (fout, "#include <fcntl.h> /* open */\n");
       fprintf (fout, "#include <unistd.h> /* getdtablesize */\n");
-#else
-      fprintf (fout, "#ifdef __cplusplus\n");
-      fprintf (fout, "#include <sysent.h> /* getdtablesize, open */\n");
-      fprintf (fout, "#endif /* __cplusplus */\n");
-      if (tirpcflag)
-	fprintf (fout, "#include <unistd.h> /* setsid */\n");
-#endif
     }
-#ifdef __GNU_LIBRARY__
   if (tirpcflag && !(Cflag && (inetdflag || pmflag)))
-#else
-  if (tirpcflag)
-#endif
     fprintf (fout, "#include <sys/types.h>\n");
 
   fprintf (fout, "#include <memory.h>\n");
-#ifndef __GNU_LIBRARY__
-  fprintf (fout, "#include <stropts.h>\n");
-#endif
   if (inetdflag || !tirpcflag)
     {
       fprintf (fout, "#include <sys/socket.h>\n");
@@ -750,25 +725,13 @@ s_output (int argc, const char *argv[], const char *infile, const char *define,
     fprintf (fout, "#include <sys/resource.h> /* rlimit */\n");
   if (logflag || inetdflag || pmflag)
     {
-#ifdef __GNU_LIBRARY__
       fprintf (fout, "#include <syslog.h>\n");
-#else
-      fprintf (fout, "#ifdef SYSLOG\n");
-      fprintf (fout, "#include <syslog.h>\n");
-      fprintf (fout, "#else\n");
-      fprintf (fout, "#define LOG_ERR 1\n");
-      fprintf (fout, "#define openlog(a, b, c)\n");
-      fprintf (fout, "#endif\n");
-#endif
     }
 
   /* for ANSI-C */
   if (Cflag)
     fprintf (fout, "\n#ifndef SIG_PF\n#define SIG_PF void(*)(int)\n#endif\n");
 
-#ifndef __GNU_LIBRARY__
-  fprintf (fout, "\n#ifdef DEBUG\n#define RPC_SVC_FG\n#endif\n");
-#endif
   if (timerflag)
     fprintf (fout, "\n#define _RPCSVC_CLOSEDOWN %s\n", svcclosetime);
   while ((def = get_definition ()) != NULL)
@@ -787,7 +750,7 @@ s_output (int argc, const char *argv[], const char *infile, const char *define,
 	{
 	  if (outfilename)
 	    unlink (outfilename);
-	  usage ();
+	  usage (stderr, 1);
 	}
       write_rest ();
     }
@@ -1151,17 +1114,17 @@ putarg (int whereto, const char *cp)
 static void
 checkfiles (const char *infile, const char *outfile)
 {
-  struct stat buf;
+  struct stat64 buf;
 
   if (infile)			/* infile ! = NULL */
-    if (stat (infile, &buf) < 0)
+    if (stat64 (infile, &buf) < 0)
       {
 	perror (infile);
 	crash ();
       }
   if (outfile)
     {
-      if (stat (outfile, &buf) < 0)
+      if (stat64 (outfile, &buf) < 0)
 	return;			/* file does not exist */
       else
 	{
@@ -1218,6 +1181,10 @@ parseargs (int argc, const char *argv[], struct commandline *cmd)
 	    }
 	  cmd->infile = argv[i];
 	}
+      else if (strcmp (argv[i], "--help") == 0)
+	usage (stdout, 0);
+      else if (strcmp (argv[i], "--version") == 0)
+	print_version ();
       else
 	{
 	  for (j = 1; argv[i][j] != 0; j++)
@@ -1260,25 +1227,21 @@ parseargs (int argc, const char *argv[], struct commandline *cmd)
 		  Cflag = 1;
 		  break;
 
-#ifdef __GNU_LIBRARY__
 		case 'k':  /* K&R C syntax */
 		  Cflag = 0;
 		  break;
 
-#endif
 		case 'b':  /* turn TIRPC flag off for
 			      generating backward compatible
 			   */
 		  tirpcflag = 0;
 		  break;
 
-#ifdef __GNU_LIBRARY__
 		case '5':  /* turn TIRPC flag on for
 			      generating SysVr4 compatible
 			   */
 		  tirpcflag = 1;
 		  break;
-#endif
 		case 'I':
 		  inetdflag = 1;
 		  break;
@@ -1399,9 +1362,6 @@ parseargs (int argc, const char *argv[], struct commandline *cmd)
   else
     {				/* 4.1 mode */
       pmflag = 0;		/* set pmflag only in tirpcmode */
-#ifndef __GNU_LIBRARY__
-      inetdflag = 1;            /* inetdflag is TRUE by default */
-#endif
       if (cmd->nflag)
 	{			/* netid needs TIRPC */
 	  f_print (stderr, _("Cannot use netid flag without TIRPC!\n"));
@@ -1442,46 +1402,59 @@ parseargs (int argc, const char *argv[], struct commandline *cmd)
 }
 
 static void
-usage (void)
+usage (FILE *stream, int status)
 {
-  fprintf (stderr, _("usage: %s infile\n"), cmdname);
-  fprintf (stderr, _("\t%s [-abkCLNTM][-Dname[=value]] [-i size] \
+  fprintf (stream, _("usage: %s infile\n"), cmdname);
+  fprintf (stream, _("\t%s [-abkCLNTM][-Dname[=value]] [-i size] \
 [-I [-K seconds]] [-Y path] infile\n"), cmdname);
-  fprintf (stderr, _("\t%s [-c | -h | -l | -m | -t | -Sc | -Ss | -Sm] \
+  fprintf (stream, _("\t%s [-c | -h | -l | -m | -t | -Sc | -Ss | -Sm] \
 [-o outfile] [infile]\n"), cmdname);
-  fprintf (stderr, _("\t%s [-s nettype]* [-o outfile] [infile]\n"), cmdname);
-  fprintf (stderr, _("\t%s [-n netid]* [-o outfile] [infile]\n"), cmdname);
-  options_usage ();
-  exit (1);
+  fprintf (stream, _("\t%s [-s nettype]* [-o outfile] [infile]\n"), cmdname);
+  fprintf (stream, _("\t%s [-n netid]* [-o outfile] [infile]\n"), cmdname);
+  options_usage (stream, status);
+  exit (status);
 }
 
 static void
-options_usage (void)
+options_usage (FILE *stream, int status)
 {
-  f_print (stderr, "options:\n");
-  f_print (stderr, "-a\t\tgenerate all files, including samples\n");
-  f_print (stderr, "-b\t\tbackward compatibility mode (generates code for SunOS 4.1)\n");
-  f_print (stderr, "-c\t\tgenerate XDR routines\n");
-  f_print (stderr, "-C\t\tANSI C mode\n");
-  f_print (stderr, "-Dname[=value]\tdefine a symbol (same as #define)\n");
-  f_print (stderr, "-h\t\tgenerate header file\n");
-  f_print (stderr, "-i size\t\tsize at which to start generating inline code\n");
-  f_print (stderr, "-I\t\tgenerate code for inetd support in server (for SunOS 4.1)\n");
-  f_print (stderr, "-K seconds\tserver exits after K seconds of inactivity\n");
-  f_print (stderr, "-l\t\tgenerate client side stubs\n");
-  f_print (stderr, "-L\t\tserver errors will be printed to syslog\n");
-  f_print (stderr, "-m\t\tgenerate server side stubs\n");
-  f_print (stderr, "-M\t\tgenerate MT-safe code\n");
-  f_print (stderr, "-n netid\tgenerate server code that supports named netid\n");
-  f_print (stderr, "-N\t\tsupports multiple arguments and call-by-value\n");
-  f_print (stderr, "-o outfile\tname of the output file\n");
-  f_print (stderr, "-s nettype\tgenerate server code that supports named nettype\n");
-  f_print (stderr, "-Sc\t\tgenerate sample client code that uses remote procedures\n");
-  f_print (stderr, "-Ss\t\tgenerate sample server code that defines remote procedures\n");
-  f_print (stderr, "-Sm \t\tgenerate makefile template \n");
-  f_print (stderr, "-t\t\tgenerate RPC dispatch table\n");
-  f_print (stderr, "-T\t\tgenerate code to support RPC dispatch tables\n");
-  f_print (stderr, "-Y path\t\tdirectory name to find C preprocessor (cpp)\n");
+  f_print (stream, _("options:\n"));
+  f_print (stream, _("-a\t\tgenerate all files, including samples\n"));
+  f_print (stream, _("-b\t\tbackward compatibility mode (generates code for SunOS 4.1)\n"));
+  f_print (stream, _("-c\t\tgenerate XDR routines\n"));
+  f_print (stream, _("-C\t\tANSI C mode\n"));
+  f_print (stream, _("-Dname[=value]\tdefine a symbol (same as #define)\n"));
+  f_print (stream, _("-h\t\tgenerate header file\n"));
+  f_print (stream, _("-i size\t\tsize at which to start generating inline code\n"));
+  f_print (stream, _("-I\t\tgenerate code for inetd support in server (for SunOS 4.1)\n"));
+  f_print (stream, _("-K seconds\tserver exits after K seconds of inactivity\n"));
+  f_print (stream, _("-l\t\tgenerate client side stubs\n"));
+  f_print (stream, _("-L\t\tserver errors will be printed to syslog\n"));
+  f_print (stream, _("-m\t\tgenerate server side stubs\n"));
+  f_print (stream, _("-M\t\tgenerate MT-safe code\n"));
+  f_print (stream, _("-n netid\tgenerate server code that supports named netid\n"));
+  f_print (stream, _("-N\t\tsupports multiple arguments and call-by-value\n"));
+  f_print (stream, _("-o outfile\tname of the output file\n"));
+  f_print (stream, _("-s nettype\tgenerate server code that supports named nettype\n"));
+  f_print (stream, _("-Sc\t\tgenerate sample client code that uses remote procedures\n"));
+  f_print (stream, _("-Ss\t\tgenerate sample server code that defines remote procedures\n"));
+  f_print (stream, _("-Sm \t\tgenerate makefile template \n"));
+  f_print (stream, _("-t\t\tgenerate RPC dispatch table\n"));
+  f_print (stream, _("-T\t\tgenerate code to support RPC dispatch tables\n"));
+  f_print (stream, _("-Y path\t\tdirectory name to find C preprocessor (cpp)\n"));
+  f_print (stream, _("-5\t\tSysVr4 compatibility mode\n"));
+  f_print (stream, _("--help\t\tgive this help list\n"));
+  f_print (stream, _("--version\tprint program version\n"));
 
-  exit (1);
+  f_print (stream, _("\n\
+For bug reporting instructions, please see:\n\
+%s.\n"), REPORT_BUGS_TO);
+  exit (status);
+}
+
+static void
+print_version (void)
+{
+  printf ("rpcgen %s%s\n", PKGVERSION, VERSION);
+  exit (0);
 }

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991,95,96,97,99,2001,2002,2005 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,20 +29,28 @@ DEFINE_HOOK (__libc_atexit, (void))
    in the reverse of the order in which they were registered
    perform stdio cleanup, and terminate program execution with STATUS.  */
 void
-exit (int status)
+attribute_hidden
+__run_exit_handlers (int status, struct exit_function_list **listp,
+		     bool run_list_atexit)
 {
+  /* First, call the TLS destructors.  */
+#ifndef SHARED
+  if (&__call_tls_dtors != NULL)
+#endif
+    __call_tls_dtors ();
+
   /* We do it this way to handle recursive calls to exit () made by
      the functions registered with `atexit' and `on_exit'. We call
      everyone on the list and use the status value in the last
      exit (). */
-  while (__exit_funcs != NULL)
+  while (*listp != NULL)
     {
-      struct exit_function_list *old;
+      struct exit_function_list *cur = *listp;
 
-      while (__exit_funcs->idx > 0)
+      while (cur->idx > 0)
 	{
 	  const struct exit_function *const f =
-	    &__exit_funcs->fns[--__exit_funcs->idx];
+	    &cur->fns[--cur->idx];
 	  switch (f->flavor)
 	    {
 	      void (*atfct) (void);
@@ -77,16 +84,23 @@ exit (int status)
 	    }
 	}
 
-      old = __exit_funcs;
-      __exit_funcs = __exit_funcs->next;
-      if (__exit_funcs != NULL)
+      *listp = cur->next;
+      if (*listp != NULL)
 	/* Don't free the last element in the chain, this is the statically
 	   allocate element.  */
-	free (old);
+	free (cur);
     }
 
-  RUN_HOOK (__libc_atexit, ());
+  if (run_list_atexit)
+    RUN_HOOK (__libc_atexit, ());
 
   _exit (status);
+}
+
+
+void
+exit (int status)
+{
+  __run_exit_handlers (status, &__exit_funcs, true);
 }
 libc_hidden_def (exit)

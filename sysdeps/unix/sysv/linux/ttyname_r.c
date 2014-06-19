@@ -1,4 +1,4 @@
-/* Copyright (C) 1991,92,93,1995-2001,2003,2006 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <limits.h>
@@ -27,7 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <stdio-common/_itoa.h>
+#include <_itoa.h>
 #include <kernel-features.h>
 
 static int getttyname_r (char *buf, size_t buflen,
@@ -122,35 +121,45 @@ __ttyname_r (int fd, char *buf, size_t buflen)
   if (__builtin_expect (__tcgetattr (fd, &term) < 0, 0))
     return errno;
 
+  if (__fxstat64 (_STAT_VER, fd, &st) < 0)
+    return errno;
+
   /* We try using the /proc filesystem.  */
   *_fitoa_word (fd, __stpcpy (procname, "/proc/self/fd/"), 10, 0) = '\0';
 
   ssize_t ret = __readlink (procname, buf, buflen - 1);
-  if (__builtin_expect (ret == -1 && errno == ENOENT, 0))
-    {
-      __set_errno (EBADF);
-      return EBADF;
-    }
-
   if (__builtin_expect (ret == -1 && errno == ENAMETOOLONG, 0))
     {
       __set_errno (ERANGE);
       return ERANGE;
     }
 
-  if (__builtin_expect (ret != -1
-#ifndef __ASSUME_PROC_SELF_FD_SYMLINK
-			/* This is for Linux 2.0.  */
-			&& buf[0] != '['
-#endif
-			, 1))
+  if (__builtin_expect (ret != -1, 1))
     {
-      buf[ret] = '\0';
-      return 0;
-    }
+#define UNREACHABLE_LEN strlen ("(unreachable)")
+      if (ret > UNREACHABLE_LEN
+	  && memcmp (buf, "(unreachable)", UNREACHABLE_LEN) == 0)
+	{
+	  memmove (buf, buf + UNREACHABLE_LEN, ret - UNREACHABLE_LEN);
+	  ret -= UNREACHABLE_LEN;
+	}
 
-  if (__fxstat64 (_STAT_VER, fd, &st) < 0)
-    return errno;
+      /* readlink need not terminate the string.  */
+      buf[ret] = '\0';
+
+      /* Verify readlink result, fall back on iterating through devices.  */
+      if (buf[0] == '/'
+	  && __xstat64 (_STAT_VER, buf, &st1) == 0
+#ifdef _STATBUF_ST_RDEV
+	  && S_ISCHR (st1.st_mode)
+	  && st1.st_rdev == st.st_rdev
+#else
+	  && st1.st_ino == st.st_ino
+	  && st1.st_dev == st.st_dev
+#endif
+	  )
+	return 0;
+    }
 
   /* Prepare the result buffer.  */
   memcpy (buf, "/dev/pts/", sizeof ("/dev/pts/"));

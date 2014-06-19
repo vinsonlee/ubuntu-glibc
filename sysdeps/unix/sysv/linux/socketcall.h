@@ -1,5 +1,5 @@
 /* ID for functions called via socketcall system call.
-   Copyright (C) 1995, 1996, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SYS_SOCKETCALL_H
 #define _SYS_SOCKETCALL_H	1
@@ -23,7 +22,7 @@
 /* Define unique numbers for the operations permitted on socket.  Linux
    uses a single system call for all these functions.  The relevant code
    file is /usr/include/linux/net.h.
-   We cannot use a enum here because the values are used in assembler
+   We cannot use an enum here because the values are used in assembler
    code.  */
 
 #define SOCKOP_socket		1
@@ -43,6 +42,8 @@
 #define SOCKOP_getsockopt	15
 #define SOCKOP_sendmsg		16
 #define SOCKOP_recvmsg		17
-#define SOCKOP_paccept		18
+#define SOCKOP_accept4		18
+#define SOCKOP_recvmmsg		19
+#define SOCKOP_sendmmsg		20
 
 #endif /* sys/socketcall.h */
