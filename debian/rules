@@ -150,12 +150,8 @@ else
   ifeq (,$(filter $(DEB_HOST_ARCH),$(no_libc_profile)))
     DEB_ARCH_REGULAR_PACKAGES += $(libc)-prof
   endif
-  DEB_INDEP_REGULAR_PACKAGES = glibc-doc glibc-source locales
+  DEB_INDEP_REGULAR_PACKAGES = glibc-doc glibc-source
   DEB_UDEB_PACKAGES = $(libc)-udeb libnss-dns-udeb libnss-files-udeb
-  ## Locales can only be pre-generated during native compiles
-  ifeq ($(DEB_HOST_ARCH),$(DEB_BUILD_ARCH))
-    DEB_ARCH_REGULAR_PACKAGES += locales-all
-  endif
 endif
 
 # Generic kernel version check

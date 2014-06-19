@@ -85,131 +85,101 @@ then
 	    ln -sf spool/mail /var/mail
 	fi
 	if dpkg --compare-versions "$preversion" lt 2.19; then
-	    check="apache2.2-common apache apache-ssl apache-perl autofs at"
-	    check="$check boa cucipop courier-authdaemon cron cups exim"
-	    check="$check exim4-base dovecot-common cucipop incron lprng lpr"
-	    check="$check lpr-ppd mysql-server nis openbsd-inetd"
-	    check="$check openldapd proftpd postfix postfix-tls rsync samba"
-	    check="$check sasl2-bin slapd smail sendmail snmpd ssh"
-	    check="$check spamassassin vsftpd wu-ftpd wu-ftpd-academ wwwoffle"
-	    check="$check webmin dropbear gdm"
-	    # NSS services check: NSS_CHECK
-	    if [ -n "$services" ]; then
+	    # LP #504198; purge locales between major versions
+	    if which locale-gen >/dev/null; then
+		locale-gen --purge
+	    fi
+	    # give a reboot notification on major version upgrades
+	    if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
+		/usr/share/update-notifier/notify-reboot-required
+	    fi
+	    check=""
+	    [ -f /var/run/services.need_restart ] && check=$(cat /var/run/services.need_restart 2>/dev/null)
+	    # Change service names back into package names, so that we can
+	    # double-check package installation.
+	    check=$(echo "$check" | \
+	            sed -e's/\bapache2\b/apache2.2-common/g' \
+	                -e's/\batd\b/at/g' \
+	                -e's/\bdovecot\b/dovecot-common/g' \
+	                -e's/\bexim4\b/exim4-base/g' \
+	                -e's/\blpd\b/lpr/g' \
+	                -e's/\blpd-ppd\b/lpr-ppd/g' \
+	                -e's/\bmysql\b/mysql-server/g' \
+	                -e's/\bsaslauthd\b/sasl2-bin/g' \
+	    )
 
-	        if [ -f /usr/share/debconf/confmodule ] ; then
-		    db_version 2.0
-		    db_input critical libraries/restart-without-asking || true
-		    db_go || true
-		    db_get libraries/restart-without-asking
-		    if [ "$RET" != true ]; then
-			db_reset glibc/restart-services
-			db_set glibc/restart-services "$services"
-			db_input critical glibc/restart-services || true
-			db_go || true
-			db_get glibc/restart-services
-			if [ "x$RET" != "x" ]
-			then
-			    services="$RET"
+	    # Check to see which of the services that were running at unpack
+	    # time are still around
+            # the following substitution processes the check variable
+            # and returns results in the services variable
+	    # NSS services check: NSS_CHECK
+	    # If there are services that we *stopped* in the preinst, don't
+	    # forget to restart them now
+	    if [ -e /var/run/services.need_start ]; then
+		services="$(cat /var/run/services.need_start) $services"
+	    fi
+	    if [ -n "$services" ]; then
+		echo "Restarting services possibly affected by the upgrade:"
+		failed=""
+		for service in $services; do
+		    # We can't just use a generic rewrite here, as it was
+		    # samba in wheezy and smbd in jessie, which confuses.
+		    if [ "$service" = "samba" ]; then
+			if [ -x /etc/init.d/smbd ] || [ -f /etc/init/smbd ]; then
+			    service="smbd"
+			fi
+		    fi
+		    if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+			idl="invoke-rc.d ${service}"
+			idlopt="restart"
+		    elif [ -f /usr/share/file-rc/rc ] || [ -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
+			idl=$(filerc $rl $service)
+			idlopt="restart"
+		    else
+			idl=$(ls /etc/rc${rl}.d/S??${service} 2> /dev/null | head -1)
+			idlopt="restart"
+		    fi
+		    echo -n "  $service: restarting..."
+		    if $idl $idlopt > /dev/null 2>&1; then
+			echo "done."
+		    else
+			echo "FAILED! ($?)"
+			failed="$service $failed"
+		    fi
+		done
+	
+		echo
+		if [ -n "$failed" ]; then
+		    if [ -f /usr/share/debconf/confmodule ] ; then
+			db_fset glibc/restart-failed seen false
+			db_subst glibc/restart-failed services "$failed"
+			if [ "$RELEASE_UPGRADE_MODE" = desktop ]; then
+			    db_input medium glibc/restart-failed || true
 			else
-			    services=""
+			    db_input critical glibc/restart-failed || true
+			fi
+			db_go || true
+		    else
+			echo "The following services failed to start: $failed"
+			echo
+			echo "You will need to start these manually by running \`/etc/init.d/<service> start'"
+			echo "If the service still fails to start, you may need to file a bug on"
+			echo "$(package_name) or the service involved."
+			frontend=`echo "$DEBIAN_FRONTEND" | tr '[:upper:]' '[:lower:]'`
+			if [ "$frontend" != noninteractive ]; then
+			    echo
+			    echo -n "Press ENTER to continue: "
+			    read foo
 			fi
 		    fi
 		else
-		    echo
-		    echo "Name Service Switch update in the C Library: post-installation question."
-		    echo
-		    echo "Running services and programs that are using NSS need to be restarted,"
-		    echo "otherwise they might not be able to do lookup or authentication any more"
-		    echo "(for services such as ssh, this can affect your ability to login)."
-		    echo "Note: restarting sshd/telnetd should not affect any existing connections."
-		    echo
-		    echo "The services detected are: "
-		    echo "        $services"
-		    echo
-		    echo "If other services have begun to fail mysteriously after this upgrade, it is"
-		    echo "probably necessary to restart them too.  We recommend that you reboot your"
-		    echo "machine after the upgrade to avoid NSS-related troubles."
-		    echo
-		    frontend=`echo "$DEBIAN_FRONTEND" | tr '[:upper:]' '[:lower:]'`
-		    if [ "$frontend" = noninteractive ]; then
-		    	echo "Non-interactive mode, restarting services"
-		    	answer=yes
-		    else
-		    	echo -n "Do you wish to restart services? [Y/n] "
-		    	read answer
-		    	case $answer in
-			    N*|n*) services="" ;;
-			    *) ;;
-		        esac
-		    fi
+		    echo "Services restarted successfully."
+		    rm -f /var/run/services.need_start /var/run/services.need_restart
 		fi
-		echo
-		if [ "$services" != "" ]; then
-		    echo "Restarting services possibly affected by the upgrade:"
-		    failed=""
-		    for service in $services; do
-			# We can't just use a generic rewrite here, as it was
-			# samba in wheezy and smbd in jessie, which confuses.
-			if [ "$service" = "samba" ]; then
-			    if [ -x /etc/init.d/smbd ] || [ -f /etc/init/smbd ]; then
-				service="smbd"
-			    fi
-			fi
-		    	if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
-			    idl="invoke-rc.d ${service}"
-			elif [ -f /usr/share/file-rc/rc ] || [ -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
-			    idl=$(filerc $rl $service)
-			else
-			    idl=$(ls /etc/rc${rl}.d/S??${service} 2> /dev/null | head -1)
-			fi
-			case "$service" in
-			    gdm)
-				echo -n "  $service: reloading..."
-				if $idl reload > /dev/null 2>&1; then
-				    echo "done."
-				else
-				    echo "FAILED! ($?)"
-				    failed="$service $failed"
-				fi
-				;;
-			    *)
-				echo -n "  $service: restarting..."
-				if $idl restart > /dev/null 2>&1; then
-				    echo "done."
-				else
-				    echo "FAILED! ($?)"
-				    failed="$service $failed"
-				fi
-				;;
-			esac
-		    done
-		    echo
-		    if [ -n "$failed" ]; then
-	        	if [ -f /usr/share/debconf/confmodule ] ; then
-		    	    db_fset glibc/restart-failed seen false
-			    db_subst glibc/restart-failed services "$failed"
-			    db_input critical glibc/restart-failed || true
-			    db_go || true
-			else
-			    echo "The following services failed to start: $failed"
-			    echo
-			    echo "You will need to start these manually by running \`/etc/init.d/<service> start'"
-			    echo "If the service still fails to start, you may need to file a bug on"
-			    echo "$(package_name) or the service involved."
-			    frontend=`echo "$DEBIAN_FRONTEND" | tr '[:upper:]' '[:lower:]'`
-			    if [ "$frontend" != noninteractive ]; then
-			    	echo
-			    	echo -n "Press ENTER to continue: "
-			    	read foo
-			    fi
-			fi
-		    else
-			echo "Services restarted successfully."
-                    fi
-		fi
-                # Shut down the frontend, to make sure none of the
+	
+		# Shut down the frontend, to make sure none of the
 		# restarted services keep a connection open to it
-	        if [ -f /usr/share/debconf/confmodule ] ; then
+		if [ -f /usr/share/debconf/confmodule ] ; then
 		    db_stop
 		fi
 	    else

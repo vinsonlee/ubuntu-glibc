@@ -171,13 +171,19 @@ then
 	    fi
 
 	    check="kdm postgresql xdm"
+            # the following substitution processes the check variable
+            # and returns results in the services variable
 	    # NSS services check: NSS_CHECK
 	    if [ -n "$services" ]; then 
 		if [ -f /usr/share/debconf/confmodule ] ; then
 	            db_version 2.0
 		    db_reset glibc/upgrade
 		    db_subst glibc/upgrade services $services
-		    db_input critical glibc/upgrade || true
+		    if [ "$RELEASE_UPGRADE_MODE" = desktop ]; then
+			db_input medium glibc/upgrade || true
+		    else
+			db_input critical glibc/upgrade || true
+		    fi
 		    db_go || true
 		    db_get glibc/upgrade
 		    answer=$RET
@@ -220,6 +226,118 @@ then
 	            exit 1
 		fi
 	    fi
+
+            services=""
+            check="apache2.2-common apache apache-ssl apache-perl autofs at"
+            check="$check boa cucipop courier-authdaemon cron cups exim"
+            check="$check exim4-base dovecot-common cucipop incron lprng lpr"
+            check="$check lpr-ppd mysql-server nis openbsd-inetd"
+            check="$check openldapd proftpd postfix postfix-tls rsync samba"
+            check="$check sasl2-bin slapd smail sendmail snmpd ssh"
+            check="$check spamassassin vsftpd wu-ftpd wu-ftpd-academ wwwoffle"
+            check="$check webmin dropbear"
+            # the following substitution processes the check variable
+            # and returns results in the services variable
+            # NSS services check: NSS_CHECK
+            if [ -n "$services" ]; then
+                if [ -f /usr/share/debconf/confmodule ] ; then
+                    db_version 2.0
+                    if [ "$RELEASE_UPGRADE_MODE" = desktop ]; then
+                        db_input medium libraries/restart-without-asking || true
+                    else
+                        db_input critical libraries/restart-without-asking || true
+                    fi
+                    db_go || true
+    
+                    db_get libraries/restart-without-asking
+                    if [ "$RET" != true ]; then
+                        db_reset glibc/restart-services
+                        db_set glibc/restart-services "$services"
+                        if [ "$RELEASE_UPGRADE_MODE" = desktop ]; then
+                            db_input medium glibc/restart-services || true
+                        else
+                            db_input critical glibc/restart-services || true
+                        fi
+                        db_go || true
+                        db_get glibc/restart-services
+                        services="$RET"
+                    fi
+                else
+                    echo
+                    echo "Name Service Switch update in the C Library: post-installation question."
+                    echo
+                    echo "Running services and programs that are using NSS need to be restarted,"
+                    echo "otherwise they might not be able to do lookup or authentication any more"
+                    echo "(for services such as ssh, this can affect your ability to login)."
+                    echo "Note: restarting sshd/telnetd should not affect any existing connections."
+                    echo
+                    echo "The services detected are: "
+                    echo "        $services"
+                    echo
+                    echo "If other services have begun to fail mysteriously after this upgrade, it is"
+                    echo "probably necessary to restart them too.  We recommend that you reboot your"
+                    echo "machine after the upgrade to avoid NSS-related troubles."
+                    echo
+                    frontend=`echo "$DEBIAN_FRONTEND" | tr '[:upper:]' '[:lower:]'`
+                    if [ "$frontend" = noninteractive ]; then
+                            echo "Non-interactive mode, restarting services"
+                            answer=yes
+                    else
+                            echo -n "Do you wish to restart services? [Y/n] "
+                            read answer
+                            case $answer in
+                            N*|n*) services="" ;;
+                            *) ;;
+                            esac
+                    fi
+                fi
+
+                if [ -n "$services" ]; then
+                    echo "Stopping some services possibly affected by the upgrade (will be restarted later):"
+                    for service in $services; do
+			# We can't just use a generic rewrite here, as it was
+			# samba in wheezy and smbd in jessie, which confuses.
+                        if [ "$service" = "samba" ]; then
+                            if [ -x /etc/init.d/smbd ] || [ -f /etc/init/smbd ]; then
+                                service="smbd"
+                            fi
+                        fi
+                        if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+                            idl="invoke-rc.d ${service}"
+                            idlopt="stop"
+                        elif [ -f /usr/share/file-rc/rc ] || [ -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
+                            idl=$(filerc $rl $service)
+                            idlopt="stop"
+                        else
+                            idl=$(ls /etc/rc${rl}.d/S??${service} 2> /dev/null | head -1)
+                            idlopt="stop"
+                        fi
+                        case "$service" in
+                            cron)
+                                # See bug (LP: #508083)
+                                echo -n "  $service: stopping..."
+                                if $idl $idlopt > /dev/null 2>&1; then
+                                    echo "done."
+                                    echo "$service" >> /var/run/services.need_start
+                                else
+                                    echo "FAILED! ($?)"
+                                    echo "$service" >> /var/run/services.need_restart
+                                fi
+                              ;;
+
+                            *)
+                                # log service details to allow postinst to handle the
+                                # restart.
+                                echo "$service" >> /var/run/services.need_restart
+                              ;;
+                        esac
+                    done
+    
+                fi
+                echo
+            else
+                echo "Nothing to restart."
+            fi
 	fi # end upgrading and $preversion lt 2.19
     fi # Upgrading
 
@@ -357,11 +475,16 @@ then
         # sanity checking for the appropriate kernel on each architecture.
         kernel_ver=`uname -r`
 
-        # The GNU libc requires a >= 2.6.32 kernel, found in squeeze/lucid/RHEL6
-        if linux_compare_versions "$kernel_ver" lt 2.6.32
+        case $realarch in
+            ppc*)      vmin=2.6.32;; # keep minimum support at lucid/squeeze/RHEL6
+            arm)       vmin=2.6.32;; # keep minimum support at lucid/squeeze/RHEL6
+            *)         vmin=2.6.24;; # kernel version in hardy used on Xen-based ppa buildds
+        esac
+
+        if linux_compare_versions "$kernel_ver" lt ${vmin}
         then
             echo WARNING: this version of the GNU libc requires kernel version
-            echo 2.6.32 or later.  Please upgrade your kernel before installing
+            echo ${vmin} or later.  Please upgrade your kernel before installing
             echo glibc.
             kernel26_help
 
@@ -410,12 +533,12 @@ case $type in
 esac
 
 if [ -n "$preversion" ]; then
-    if dpkg --compare-versions "$preversion" lt 2.13-39; then
+    if dpkg --compare-versions "$preversion" lt 2.16; then
        # upgrading from a pre-multiarch libc to a multiarch libc; we have
        # to blow away /etc/ld.so.cache, otherwise the old unpacked libc
        # is still first in the cache and segfaults when combined with
        # our newly-unpacked ld.so. Do this last to avoid slowing down the
-       # rest of the upgrade.  Version number bumped to 2.13-39 to also
+       # rest of the upgrade.  Version number bumped to 2.16 to also
        # cover cache format upgrades for ARM.
        rm -f /etc/ld.so.cache
        rm -f /var/cache/ldconfig/aux-cache

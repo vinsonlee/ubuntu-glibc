@@ -57,6 +57,10 @@ arm/local-soname-hack.diff
 arm/local-vfp-sysdeps.diff
 arm/unsubmitted-ldso-multilib.diff
 
+arm64/submitted-align.diff
+arm64/submitted-setcontext.diff
+arm64/submitted-tst-setcontext.diff
+
 hppa/local-inlining.diff
 hppa/submitted-fadvise64_64.diff
 hppa/submitted-nptl-carlos.diff
@@ -176,6 +180,7 @@ mips/submitted-rld_map.diff
 powerpc/local-math-logb.diff
 powerpc/cvs-ibm-branch.diff
 powerpc/local-powerpc8xx-dcbz.diff
+powerpc/local-tune-power8.diff
 
 s390/submitted-nexttowardf.diff
 
@@ -252,3 +257,12 @@ any/cvs-resolv-reuse-fd.diff
 any/submitted-argp-attribute.diff
 any/submitted-resolv-ipv6-nameservers.diff
 any/cvs-posix_spawn_file_actions_addopen.diff
+
+# Ubuntu patches live in their own little world, to maintain sanity
+ubuntu/lddebug-scopes.diff
+ubuntu/local-altlocaledir.diff
+ubuntu/local-CVE-2012-3406.diff
+ubuntu/local-disable-ld_audit.diff
+ubuntu/local-disable-nscd-netgroup-caching.diff
+ubuntu/submitted-no-sprintf-pre-truncate.diff
+ubuntu/submitted-no-stack-backtrace.diff
