@@ -4,7 +4,6 @@ Section: libs
 Priority: optional
 Depends: libc6 (= ${binary:Version}), ${misc:Depends}
 Replaces: libc6-dev-i386
-Build-Profiles: !stage1 !nobiarch
 Description: GNU C Library: 32-bit shared libraries for AMD64
  This package includes shared versions of the standard C
  library and the standard math library, as well as many others.
@@ -19,7 +18,6 @@ Conflicts: libc6-i386 (<= 2.9-18), libc6-dev (<< 2.13-14)
 Replaces: libc6-dev (<< 2.13-11)
 Depends: libc6-i386 (= ${binary:Version}), libc6-dev (= ${binary:Version}), ${misc:Depends}
 Recommends: gcc-multilib
-Build-Profiles: !nobiarch
 Description: GNU C Library: 32-bit development libraries for AMD64
  Contains the symlinks and object files needed to compile and link programs
  which use the standard C library. This is the 32bit version of the
