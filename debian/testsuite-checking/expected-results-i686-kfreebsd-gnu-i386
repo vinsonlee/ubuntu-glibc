@@ -23,13 +23,6 @@ tst-timer4.out, Error 1
 tst-timer5.out, Error 1
 tst-waitid.out, Error 1
 #
-# will expectedly SIGSEGV on kfreebsd 10.0 and later, due to having
-# nxstack=1 by default (bug #762404)
-#
-tst-execstack-needed.out, Error 1
-tst-execstack.out, Error 1
-tst-execstack-prog.out, Error 1
-#
 # needs newer kernel - see #716746
 #
 tst-cpuclock1.out, Error 1
@@ -42,6 +35,8 @@ tst-cputimer3.out, Error 1
 #
 #   AT_EXECFN is unsupported
 tst-auxv.o, Error 1
+#   system() is only partially wrapped, the fork is not cancel point
+tst-cancel-wrappers.out, Error 1
 #   probably due to kernel
 tst-shm.out, Error 1
 #

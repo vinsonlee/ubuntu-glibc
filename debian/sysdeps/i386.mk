@@ -1,4 +1,4 @@
-extra_config_options = --enable-multi-arch
+extra_config_options = --enable-multi-arch --enable-lock-elision
 
 # We use -march=i686 and glibc's i686 routines use cmov, so require it.
 # A Debian-local glibc patch adds cmov to the search path.
@@ -9,7 +9,7 @@ i686_add-ons = nptl $(add-ons)
 i686_configure_target=i686-linux-gnu
 i686_extra_cflags = -march=i686 -mtune=generic
 i686_slibdir = /lib/$(DEB_HOST_MULTIARCH)/i686/cmov
-i686_extra_config_options = $(extra_config_options)
+i686_extra_config_options = $(extra_config_options) --disable-profile
 
 # We use -mno-tls-direct-seg-refs to not wrap-around segments, as it
 # greatly increase the speed when running under the 32bit Xen hypervisor.
@@ -19,7 +19,7 @@ xen_add-ons = nptl $(add-ons)
 xen_configure_target=i686-linux-gnu
 xen_extra_cflags = -march=i686 -mtune=generic -mno-tls-direct-seg-refs
 xen_slibdir = /lib/$(DEB_HOST_MULTIARCH)/i686/nosegneg
-xen_extra_config_options = $(extra_config_options)
+xen_extra_config_options = $(extra_config_options) --disable-profile
 
 define libc6-xen_extra_pkg_install
 mkdir -p debian/libc6-xen/etc/ld.so.conf.d
@@ -32,8 +32,8 @@ echo 'hwcap 1 nosegneg'                                                       >>
 endef
 
 # build 64-bit (amd64) alternative library
-GLIBC_MULTILIB_PASSES += amd64
-DEB_ARCH_MULTILIB_PACKAGES += libc6-amd64 libc6-dev-amd64
+GLIBC_PASSES += amd64
+DEB_ARCH_REGULAR_PACKAGES += libc6-amd64 libc6-dev-amd64
 libc6-amd64_shlib_dep = libc6-amd64 (>= $(shlib_dep_ver))
 amd64_add-ons = nptl $(add-ons)
 amd64_configure_target = x86_64-linux-gnu
@@ -41,7 +41,7 @@ amd64_configure_target = x86_64-linux-gnu
 # /usr/include/asm wrappers need that symbol.
 amd64_CC = $(CC) -m64 -D__x86_64__
 amd64_CXX = $(CXX) -m64 -D__x86_64__
-amd64_extra_config_options = $(extra_config_options)
+amd64_extra_config_options = $(extra_config_options) --disable-profile
 amd64_rtlddir = /lib64
 amd64_slibdir = /lib64
 amd64_libdir = /usr/lib64
@@ -51,13 +51,11 @@ cp debian/tmp-amd64/usr/bin/ldd \
 	debian/tmp-libc/usr/bin
 endef
 
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 define libc6-dev_extra_pkg_install
 mkdir -p debian/libc6-dev/$(libdir)/xen
 cp -af debian/tmp-xen/$(libdir)/*.a \
 	debian/libc6-dev/$(libdir)/xen
 endef
-endif
 
 define libc6-dev-amd64_extra_pkg_install
 
@@ -78,14 +76,14 @@ done
 endef
 
 # build x32 ABI alternative library
-GLIBC_MULTILIB_PASSES += x32
-DEB_ARCH_MULTILIB_PACKAGES += libc6-x32 libc6-dev-x32
+GLIBC_PASSES += x32
+DEB_ARCH_REGULAR_PACKAGES += libc6-x32 libc6-dev-x32
 libc6-x32_shlib_dep = libc6-x32 (>= $(shlib_dep_ver))
 x32_add-ons = nptl $(add-ons)
 x32_configure_target = x86_64-linux-gnux32
 x32_CC = $(CC) -mx32
 x32_CXX = $(CXX) -mx32
-x32_extra_config_options = $(extra_config_options)
+x32_extra_config_options = $(extra_config_options) --disable-profile
 x32_rtlddir = /libx32
 x32_slibdir = /libx32
 x32_libdir = /usr/libx32

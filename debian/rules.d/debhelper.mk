@@ -8,10 +8,6 @@ debug-packages = $(filter %-dbg,$(DEB_ARCH_REGULAR_PACKAGES))
 non-debug-packages = $(filter-out %-dbg,$(DEB_ARCH_REGULAR_PACKAGES))
 $(patsubst %,$(stamp)binaryinst_%,$(debug-packages)):: $(patsubst %,$(stamp)binaryinst_%,$(non-debug-packages))
 
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-DH_STRIP_DEBUG_PACKAGE=--dbg-package=$(libc)-dbg
-endif
-
 $(patsubst %,$(stamp)binaryinst_%,$(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGULAR_PACKAGES)):: $(patsubst %,$(stamp)install_%,$(GLIBC_PASSES)) debhelper
 	@echo Running debhelper for $(curpass)
 	dh_testroot
@@ -53,7 +49,7 @@ ifeq ($(filter nostrip,$(DEB_BUILD_OPTIONS)),)
 	# strip *.o files as dh_strip does not (yet?) do it.
 	if test "$(NOSTRIP_$(curpass))" != 1; then				\
 	  if test "$(NODEBUG_$(curpass))" != 1; then				\
-	    dh_strip -p$(curpass) -Xlibpthread $(DH_STRIP_DEBUG_PACKAGE);	\
+	    dh_strip -p$(curpass) -Xlibpthread --dbg-package=$(libc)-dbg;	\
 	    (cd debian/$(curpass);						\
 	      find . -name libpthread-\*.so -exec objcopy			\
 	        --only-keep-debug '{}' ../$(libc)-dbg/usr/lib/debug/'{}'	\
@@ -170,7 +166,6 @@ $(stamp)debhelper-common:
 	  case $$y in \
 	    *.install) \
 	      sed -e "s/^#.*//" -i $$y ; \
-	      $(if $(filter $(pt_chown),no),sed -e "/pt_chown/d" -i $$y ;) \
 	      ;; \
 	  esac; \
 	done
@@ -179,10 +174,8 @@ $(stamp)debhelper-common:
 	perl -i -pe 'BEGIN {undef $$/; open(IN, "debian/tmp-libc/usr/share/i18n/SUPPORTED"); $$j=<IN>;} s/__PROVIDED_LOCALES__/$$j/g;' debian/locales.config debian/locales.postinst
 
 	# Generate common substvars files.
-	: > tmp.substvars
-ifeq ($(filter stage2,$(DEB_BUILD_PROFILES)),)
-	echo 'libgcc:Depends=libgcc1 [!hppa !m68k], libgcc2 [m68k], libgcc4 [hppa]' >> tmp.substvars
-endif
+	echo "locale:Depends=$(shell perl debian/debver2localesdep.pl $(LOCALES_DEP_VER))" > tmp.substvars
+	echo "locale-compat:Depends=$(shell perl debian/debver2localesdep.pl $(LOCALES_COMPAT_VER))" >> tmp.substvars
 
 	for pkg in $(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGULAR_PACKAGES) $(DEB_UDEB_PACKAGES); do \
 	  cp tmp.substvars debian/$$pkg.substvars; \
@@ -191,7 +184,7 @@ endif
 
 	touch $@
 
-ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ifeq ($(DEB_BUILD_PROFILE),bootstrap)
 $(patsubst %,debhelper_%,$(GLIBC_PASSES)) :: debhelper_% : $(stamp)debhelper_%
 $(stamp)debhelper_%: $(stamp)debhelper-common $(stamp)install_%
 	libdir=$(call xx,libdir) ; \
@@ -213,7 +206,9 @@ $(stamp)debhelper_%: $(stamp)debhelper-common $(stamp)install_%
 	  done ; \
 	done
 
-	sed -e "/LIBDIR.*.a /d" -e "s#LIBDIR#lib#g" -i debian/$(libc)-dev.install
+	egrep -v "LIBDIR.*.a " debian/$(libc)-dev.install >debian/$(libc)-dev.install-
+	mv debian/$(libc)-dev.install- debian/$(libc)-dev.install
+	sed -e "s#LIBDIR#lib#g" -i debian/$(libc)-dev.install
 else
 $(patsubst %,debhelper_%,$(GLIBC_PASSES)) :: debhelper_% : $(stamp)debhelper_%
 $(stamp)debhelper_%: $(stamp)debhelper-common $(stamp)install_%
@@ -224,7 +219,7 @@ $(stamp)debhelper_%: $(stamp)debhelper-common $(stamp)install_%
 	rtld_so=`LANG=C LC_ALL=C readelf -l debian/tmp-$$curpass/usr/bin/iconv | grep "interpreter" | sed -e 's/.*interpreter: \(.*\)]/\1/g'`; \
 	case "$$curpass:$$slibdir" in \
 	  libc:*) \
-	    templates="libc libc-dev libc-pic libc-udeb libnss-dns-udeb libnss-files-udeb" \
+	    templates="libc libc-dev libc-pic libc-prof libc-udeb libnss-dns-udeb libnss-files-udeb" \
 	    pass="" \
 	    suffix="" \
 	    ;; \

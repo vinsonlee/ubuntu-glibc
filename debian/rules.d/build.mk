@@ -11,7 +11,7 @@ define logme
 (exec 3>&1; exit `( ( ( $(2) ) 2>&1 3>&-; echo $$? >&4) | tee $(1) >&3) 4>&1`)
 endef
 
-ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ifeq ($(DEB_BUILD_PROFILE),bootstrap)
     libc_extra_config_options = $(extra_config_options) --disable-sanity-checks \
                                --enable-hacker-mode
 endif
@@ -84,6 +84,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		--host=$(call xx,configure_target) \
 		--build=$$configure_build --prefix=/usr --without-cvs \
 		--enable-add-ons=$(standard-add-ons)"$(call xx,add-ons)" \
+		--enable-profile \
 		--without-selinux \
 		--enable-stackguard-randomization \
 		--enable-obsolete-rpc \
@@ -98,7 +99,7 @@ $(patsubst %,build_%,$(GLIBC_PASSES)) :: build_% : $(stamp)build_%
 $(stamp)build_%: $(stamp)configure_%
 	@echo Building $(curpass)
 
-ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ifeq ($(DEB_BUILD_PROFILE),bootstrap)
 	$(MAKE) cross-compiling=yes -C $(DEB_BUILDDIR) $(NJOBS) csu/subdir_lib
 else
 	$(call logme, -a $(log_build), $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS))
@@ -157,7 +158,7 @@ $(patsubst %,install_%,$(GLIBC_PASSES)) :: install_% : $(stamp)install_%
 $(stamp)install_%: $(stamp)check_%
 	@echo Installing $(curpass)
 	rm -rf $(CURDIR)/debian/tmp-$(curpass)
-ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ifeq ($(DEB_BUILD_PROFILE),bootstrap)
 	$(call logme, -a $(log_build), $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS)	\
 	    cross-compiling=yes install_root=$(CURDIR)/debian/tmp-$(curpass)	\
 	    install-bootstrap-headers=yes install-headers )

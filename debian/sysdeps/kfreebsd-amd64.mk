@@ -2,8 +2,8 @@
 extra_config_options = --disable-compatible-utmp --disable-multi-arch
 
 # build 32-bit (i386) alternative library
-GLIBC_MULTILIB_PASSES += i386
-DEB_ARCH_MULTILIB_PACKAGES += libc0.1-i386 libc0.1-dev-i386
+GLIBC_PASSES += i386
+DEB_ARCH_REGULAR_PACKAGES += libc0.1-i386 libc0.1-dev-i386
 libc0.1-i386_shlib_dep = libc0.1-i386 (>= $(shlib_dep_ver))
 
 i386_configure_target = i686-kfreebsd-gnu
@@ -11,7 +11,7 @@ i386_CC = $(CC) -m32
 i386_CXX = $(CXX) -m32
 i386_add-ons = ports fbtl $(add-ons)
 i386_extra_cflags = -march=pentium4 -mtune=generic
-i386_extra_config_options = $(extra_config_options)
+i386_extra_config_options = $(extra_config_options) --disable-profile
 i386_slibdir = /lib32
 i386_libdir = /usr/lib32
 

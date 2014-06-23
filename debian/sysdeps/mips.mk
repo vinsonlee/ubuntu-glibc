@@ -2,8 +2,8 @@ libc_add-ons = ports nptl $(add-ons)
 extra_cflags = -mno-plt
 
 # build 32-bit (n32) alternative library
-GLIBC_MULTILIB_PASSES += mipsn32
-DEB_ARCH_MULTILIB_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
+GLIBC_PASSES += mipsn32
+DEB_ARCH_REGULAR_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
 mipsn32_add-ons = ports nptl $(add-ons)
 mipsn32_configure_target = mips64-linux-gnuabin32
 mipsn32_extra_cflags = -mno-plt
@@ -13,11 +13,11 @@ libc6-mipsn32_shlib_dep = libc6-mipsn32 (>= $(shlib_dep_ver))
 mipsn32_rtlddir = /lib32
 mipsn32_slibdir = /lib32
 mipsn32_libdir = /usr/lib32
-mipsn32_extra_config_options := $(extra_config_options)
+mipsn32_extra_config_options := $(extra_config_options) --disable-profile
 
 # build 64-bit alternative library
-GLIBC_MULTILIB_PASSES += mips64
-DEB_ARCH_MULTILIB_PACKAGES += libc6-mips64 libc6-dev-mips64
+GLIBC_PASSES += mips64
+DEB_ARCH_REGULAR_PACKAGES += libc6-mips64 libc6-dev-mips64
 mips64_add-ons = ports nptl $(add-ons)
 mips64_configure_target = mips64-linux-gnuabi64
 mips64_extra_cflags = -mno-plt
@@ -27,7 +27,7 @@ libc6-mips64_shlib_dep = libc6-mips64 (>= $(shlib_dep_ver))
 mips64_rtlddir = /lib64
 mips64_slibdir = /lib64
 mips64_libdir = /usr/lib64
-mips64_extra_config_options := $(extra_config_options)
+mips64_extra_config_options := $(extra_config_options) --disable-profile
 
 define libc6-dev-mips64_extra_pkg_install
 

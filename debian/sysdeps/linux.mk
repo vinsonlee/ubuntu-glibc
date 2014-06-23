@@ -2,17 +2,17 @@
 MIN_KERNEL_SUPPORTED := 2.6.32
 libc = libc6
 
-# Do not build pt_chown on this platform
-pt_chown = no
+# Build and expect pt_chown on this platform
+pt_chown = yes
 
 # NPTL Config
 threads = yes
 libc_add-ons = nptl $(add-ons)
 
-ifneq ($(filter stage1 stage2,$(DEB_BUILD_PROFILES)),)
+ifeq ($(DEB_BUILD_PROFILE),bootstrap)
   libc_extra_config_options = $(extra_config_options)
 else
-  libc_extra_config_options = --with-selinux $(extra_config_options)
+  libc_extra_config_options = --with-selinux --enable-systemtap $(extra_config_options)
 endif
 
 ifndef LINUX_SOURCE
@@ -44,7 +44,7 @@ $(stamp)mkincludedir:
 	ln -s $(LINUX_HEADERS)/linux debian/include
 
 	# Library headers
-	for h in libaudit.h selinux sys/capability.h ; do \
+	for h in libaudit.h selinux sys/capability.h sys/sdt.h ; do \
 	    mkdir -p debian/include/$$(dirname $$h) ; \
 	    if [ -d "/usr/include/$(DEB_HOST_MULTIARCH)/$$h" ]; then \
 	        ln -s /usr/include/$(DEB_HOST_MULTIARCH)/$$h debian/include/$$h ; \
