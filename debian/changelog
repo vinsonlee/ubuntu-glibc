@@ -1,3 +1,20 @@
+glibc (2.19-4) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/debhelper.in/libc.{preinst,postrm,postinst}: correctly remove
+    old ld.so configuration if more than one libc6 package is installed
+    (multiarch case).  Closes: #752389, #752404.
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/tg-tls-threadvar.diff: Update to fix gcc-4.9 build.
+
+  [ Adam Conrad ]
+  * debian/control.in/main: glibc-source Conflics/Replaces eglibc-source.
+  * debian/patches/powerpc/local-powerpc8xx-dcbz.diff: Restrict the trap
+    to 32-bit builds, since the Freescale 8xx CPUs aren't 64-bit capable.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 23 Jun 2014 20:10:39 +0200
+
 glibc (2.19-3experimental0) experimental; urgency=medium
 
   [ Aurelien Jarno]
