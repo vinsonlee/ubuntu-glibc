@@ -1,6 +1,5 @@
 /* siginfo_t, sigevent and constants.  Linux/MIPS version.
-   Copyright (C) 1997, 1998, 2000, 2001, 2002, 2003, 2004, 2005, 2008
-	Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #if !defined _SIGNAL_H && !defined __need_siginfo_t \
     && !defined __need_sigevent_t
@@ -50,7 +48,7 @@ typedef union sigval
 # endif
 
 
-typedef struct siginfo
+typedef struct
   {
     int si_signo;		/* Signal number.  */
     int si_code;		/* Signal code.  */
@@ -100,6 +98,7 @@ typedef struct siginfo
 	struct
 	  {
 	    void *si_addr;	/* Faulting insn/memory ref.  */
+	    short int si_addr_lsb;	/* Valid LSB of the reported address.  */
 	  } _sigfault;
 
 	/* SIGPOLL.  */
@@ -124,6 +123,7 @@ typedef struct siginfo
 # define si_int		_sifields._rt.si_sigval.sival_int
 # define si_ptr		_sifields._rt.si_sigval.sival_ptr
 # define si_addr	_sifields._sigfault.si_addr
+# define si_addr_lsb	_sifields._sigfault.si_addr_lsb
 # define si_band	_sifields._sigpoll.si_band
 # define si_fd		_sifields._sigpoll.si_fd
 
@@ -146,7 +146,7 @@ enum
 # define SI_ASYNCIO	SI_ASYNCIO
   SI_QUEUE,			/* Sent by sigqueue.  */
 # define SI_QUEUE	SI_QUEUE
-  SI_USER,			/* Sent by kill, sigsend, raise.  */
+  SI_USER,			/* Sent by kill, sigsend.  */
 # define SI_USER	SI_USER
   SI_KERNEL = 0x80		/* Send by kernel.  */
 #define SI_KERNEL	SI_KERNEL
@@ -211,8 +211,12 @@ enum
 # define BUS_ADRALN	BUS_ADRALN
   BUS_ADRERR,			/* Non-existant physical address.  */
 # define BUS_ADRERR	BUS_ADRERR
-  BUS_OBJERR			/* Object specific hardware error.  */
+  BUS_OBJERR,			/* Object specific hardware error.  */
 # define BUS_OBJERR	BUS_OBJERR
+  BUS_MCEERR_AR,		/* Hardware memory error: action required.  */
+# define BUS_MCEERR_AR	BUS_MCEERR_AR
+  BUS_MCEERR_AO			/* Hardware memory error: action optional.  */
+# define BUS_MCEERR_AO	BUS_MCEERR_AO
 };
 
 /* `si_code' values for SIGTRAP signal.  */
@@ -274,6 +278,12 @@ enum
 #  define __SIGEV_PAD_SIZE	((__SIGEV_MAX_SIZE / sizeof (int)) - 3)
 # endif
 
+/* Forward declaration.  */
+# ifndef __have_pthread_attr_t
+typedef union pthread_attr_t pthread_attr_t;
+#  define __have_pthread_attr_t	1
+# endif
+
 typedef struct sigevent
   {
     sigval_t sigev_value;
@@ -291,7 +301,7 @@ typedef struct sigevent
 	struct
 	  {
 	    void (*_function) (sigval_t);	/* Function to start.  */
-	    void *_attribute;			/* Really pthread_attr_t.  */
+	    pthread_attr_t *_attribute;		/* Thread attributes.  */
 	  } _sigev_thread;
       } _sigev_un;
   } sigevent_t;

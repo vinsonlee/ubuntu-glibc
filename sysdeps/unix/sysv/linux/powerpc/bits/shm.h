@@ -1,5 +1,4 @@
-/* Copyright (C) 1995, 1996, 1997, 2000, 2002, 2004
-   Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SYS_SHM_H
 # error "Never include <bits/shm.h> directly; use <sys/shm.h> instead."
@@ -28,9 +26,10 @@
 #define SHM_W          0200            /* or S_IWUGO from <linux/stat.h> */
 
 /* Flags for `shmat'.  */
-#define SHM_RDONLY     010000          /* attach read-only else read-write */
-#define SHM_RND                020000          /* round attach address to SHMLBA */
-#define SHM_REMAP      040000          /* take-over region on attach */
+#define SHM_RDONLY	010000          /* attach read-only else read-write */
+#define SHM_RND		020000          /* round attach address to SHMLBA */
+#define SHM_REMAP	040000          /* take-over region on attach */
+#define SHM_EXEC	0100000		/* execution access */
 
 /* Commands for `shmctl'.  */
 #define SHM_LOCK       11              /* lock segment (root only) */
@@ -51,26 +50,26 @@ struct shmid_ds
   {
     struct ipc_perm shm_perm;          /* operation permission struct */
 #if __WORDSIZE == 32
-    unsigned int __unused1;
+    unsigned int __glibc_reserved1;
 #endif
     __time_t shm_atime;                        /* time of last shmat() */
 #if __WORDSIZE == 32
-    unsigned int __unused2;
+    unsigned int __glibc_reserved2;
 #endif
     __time_t shm_dtime;                        /* time of last shmdt() */
 #if __WORDSIZE == 32
-    unsigned int __unused3;
+    unsigned int __glibc_reserved3;
 #endif
     __time_t shm_ctime;			/* time of last change by shmctl() */
 #if __WORDSIZE == 32
-    unsigned int __unused4;
+    unsigned int __glibc_reserved4;
 #endif
     size_t shm_segsz;                  /* size of segment in bytes */
     __pid_t shm_cpid;                  /* pid of creator */
     __pid_t shm_lpid;                  /* pid of last shmop */
     shmatt_t shm_nattch;               /* number of current attaches */
-    unsigned long __unused5;
-    unsigned long __unused6;
+    unsigned long __glibc_reserved5;
+    unsigned long __glibc_reserved6;
   };
 
 #ifdef __USE_MISC
@@ -92,10 +91,10 @@ struct shminfo
     unsigned long int shmmni;
     unsigned long int shmseg;
     unsigned long int shmall;
-    unsigned long int __unused1;
-    unsigned long int __unused2;
-    unsigned long int __unused3;
-    unsigned long int __unused4;
+    unsigned long int __glibc_reserved1;
+    unsigned long int __glibc_reserved2;
+    unsigned long int __glibc_reserved3;
+    unsigned long int __glibc_reserved4;
   };
 
 struct shm_info

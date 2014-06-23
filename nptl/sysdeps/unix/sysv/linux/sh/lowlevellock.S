@@ -1,5 +1,4 @@
-/* Copyright (C) 2003, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <pthread-errnos.h>
@@ -36,6 +34,13 @@
 	mov	#(FUTEX_WAIT | FUTEX_PRIVATE_FLAG), tmp; \
 	extu.b	tmp, tmp; \
 	xor	tmp, reg
+# define LOAD_FUTEX_WAIT_ABS(reg,tmp,tmp2) \
+	mov	#(FUTEX_WAIT_BITSET | FUTEX_PRIVATE_FLAG), tmp; \
+	extu.b	tmp, tmp; \
+	mov	#(FUTEX_CLOCK_REALTIME >> 8), tmp2; \
+	swap.b	tmp2, tmp2; \
+	or	tmp2, tmp; \
+	xor	tmp, reg
 # define LOAD_FUTEX_WAKE(reg,tmp,tmp2) \
 	mov	#(FUTEX_WAKE | FUTEX_PRIVATE_FLAG), tmp; \
 	extu.b	tmp, tmp; \
@@ -45,7 +50,7 @@
 #  define LOAD_PRIVATE_FUTEX_WAIT(reg,tmp,tmp2) \
 	stc	gbr, tmp	; \
 	mov.w	99f, reg	; \
-	add	reg, tmp 	; \
+	add	reg, tmp	; \
 	bra	98f		; \
 	 mov.l	@tmp, reg	; \
 99:	.word	PRIVATE_FUTEX - TLS_PRE_TCB_SIZE ; \
@@ -54,7 +59,7 @@
 #  define LOAD_PRIVATE_FUTEX_WAIT(reg,tmp,tmp2) \
 	stc	gbr, tmp	; \
 	mov.w	99f, reg	; \
-	add	reg, tmp 	; \
+	add	reg, tmp	; \
 	mov.l	@tmp, reg	; \
 	bra	98f		; \
 	 mov	#FUTEX_WAIT, tmp ; \
@@ -64,7 +69,7 @@
 # define LOAD_PRIVATE_FUTEX_WAKE(reg,tmp,tmp2) \
 	stc	gbr, tmp	; \
 	mov.w	99f, reg	; \
-	add	reg, tmp 	; \
+	add	reg, tmp	; \
 	mov.l	@tmp, reg	; \
 	bra	98f		; \
 	 mov	#FUTEX_WAKE, tmp ; \
@@ -74,7 +79,7 @@
 #  define LOAD_FUTEX_WAIT(reg,tmp,tmp2) \
 	stc	gbr, tmp	; \
 	mov.w	99f, tmp2	; \
-	add	tmp2, tmp 	; \
+	add	tmp2, tmp	; \
 	mov.l	@tmp, tmp2	; \
 	bra	98f		; \
 	 mov	#FUTEX_PRIVATE_FLAG, tmp ; \
@@ -86,7 +91,7 @@
 #  define LOAD_FUTEX_WAIT(reg,tmp,tmp2) \
 	stc	gbr, tmp	; \
 	mov.w	99f, tmp2	; \
-	add	tmp2, tmp 	; \
+	add	tmp2, tmp	; \
 	mov.l	@tmp, tmp2	; \
 	bra	98f		; \
 	 mov	#FUTEX_PRIVATE_FLAG, tmp ; \
@@ -97,10 +102,26 @@
 	mov	#FUTEX_WAIT, tmp ; \
 	or	tmp, reg
 # endif
+# define LOAD_FUTEX_WAIT_ABS(reg,tmp,tmp2) \
+	stc	gbr, tmp	; \
+	mov.w	99f, tmp2	; \
+	add	tmp2, tmp	; \
+	mov.l	@tmp, tmp2	; \
+	bra	98f		; \
+	 mov	#FUTEX_PRIVATE_FLAG, tmp ; \
+99:	.word	PRIVATE_FUTEX - TLS_PRE_TCB_SIZE ; \
+98:	extu.b	tmp, tmp	; \
+	xor	tmp, reg	; \
+	and	tmp2, reg	; \
+	mov	#FUTEX_WAIT_BITSET, tmp ; \
+	mov	#(FUTEX_CLOCK_REALTIME >> 8), tmp2; \
+	swap.b	tmp2, tmp2; \
+	or	tmp2, tmp; \
+	or	tmp, reg
 # define LOAD_FUTEX_WAKE(reg,tmp,tmp2) \
 	stc	gbr, tmp	; \
 	mov.w	99f, tmp2	; \
-	add	tmp2, tmp 	; \
+	add	tmp2, tmp	; \
 	mov.l	@tmp, tmp2	; \
 	bra	98f		; \
 	 mov	#FUTEX_PRIVATE_FLAG, tmp ; \
@@ -144,6 +165,8 @@ __lll_lock_wait_private:
 	bf	1b
 
 	mov.l	@r15+, r8
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (r8)
 	rts
 	 mov	r2, r0
 	cfi_endproc
@@ -187,23 +210,110 @@ __lll_lock_wait:
 	bf	1b
 
 	mov.l	@r15+, r8
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (r8)
 	mov.l	@r15+, r9
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (r9)
 	ret
 	 mov	r2, r0
 	cfi_endproc
 	.size	__lll_lock_wait,.-__lll_lock_wait
 
+	/*      r5  (r8): futex
+		r7 (r11): flags
+		r6  (r9): timeout
+		r4 (r10): futex value
+	*/
 	.globl	__lll_timedlock_wait
 	.type	__lll_timedlock_wait,@function
 	.hidden	__lll_timedlock_wait
 	.align	5
 	cfi_startproc
 __lll_timedlock_wait:
+	mov.l	r12, @-r15
+	cfi_adjust_cfa_offset(4)
+	cfi_rel_offset (r12, 0)
+
+# ifndef __ASSUME_FUTEX_CLOCK_REALTIME
+	mov.l	.Lhave, r1
+#  ifdef PIC
+	mova	.Lgot, r0
+	mov.l	.Lgot, r12
+	add	r0, r12
+	add	r12, r1
+#  endif
+	mov.l	@r1, r0
+	tst	r0, r0
+	bt	.Lreltmo
+# endif
+
+	/* if (timeout->tv_sec < 0) return ETIMEDOUT; */
+	mov.l	@r6, r1
+	cmp/pz	r1
+	bf/s	5f
+	 mov	#ETIMEDOUT, r0
+
+	mov	r4, r2
+	mov	r5, r4
+	mov	r7, r5
+	mov	r6, r7
+	LOAD_FUTEX_WAIT_ABS (r5, r0, r1)
+
+	mov	#2, r6
+	cmp/eq	r6, r2
+	bf/s	2f
+	 mov	r6, r2
+
+1:
+	mov	#2, r6
+	mov	#-1, r1
+	mov	#SYS_futex, r3
+	extu.b	r3, r3
+	trapa	#0x16
+	SYSCALL_INST_PAD
+	mov	r0, r6
+
+2:
+	XCHG	(r2, @r4, r3)	/* NB:   lock is implied */
+
+	tst	r3, r3
+	bt/s	3f
+	 mov	r6, r0
+
+	cmp/eq	#-ETIMEDOUT, r0
+	bt	4f
+	cmp/eq	#-EINVAL, r0
+	bf	1b
+4:
+	neg	r0, r3
+3:
+	mov	r3, r0
+5:
+	rts
+	 mov.l	@r15+, r12
+	/* Omit CFI for restore in delay slot.  */
+
+# ifndef __ASSUME_FUTEX_CLOCK_REALTIME
+	.align	2
+# ifdef PIC
+.Lgot:
+	.long	_GLOBAL_OFFSET_TABLE_
+.Lhave:
+	.long	__have_futex_clock_realtime@GOTOFF
+# else
+.Lhave:
+	.long	__have_futex_clock_realtime
+# endif
+
+.Lreltmo:
 	/* Check for a valid timeout value.  */
 	mov.l	@(4,r6), r1
 	mov.l	.L1g, r0
 	cmp/hs	r0, r1
 	bt	3f
+
+	cfi_remember_state
 
 	mov.l	r11, @-r15
 	cfi_adjust_cfa_offset(4)
@@ -231,7 +341,7 @@ __lll_timedlock_wait:
 
 	tst	r3, r3
 	bt	6f
-	
+
 1:
 	/* Get current time.  */
 	mov	r15, r4
@@ -285,17 +395,35 @@ __lll_timedlock_wait:
 2:	mov	#ETIMEDOUT, r3
 
 6:
-	mov	r3, r0
 	add	#8, r15
+	cfi_adjust_cfa_offset (-8)
 	mov.l	@r15+, r8
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (r8)
 	mov.l	@r15+, r9
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (r9)
 	mov.l	@r15+, r10
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (r10)
+	mov.l	@r15+, r11
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (r11)
+	mov.l	@r15+, r12
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (r12)
 	rts
-	 mov.l	@r15+, r11
+	 mov	r3, r0
+
+	cfi_restore_state
 
 3:
+	mov.l	@r15+, r12
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (r12)
 	rts
 	 mov	#EINVAL, r0
+# endif
 	cfi_endproc
 
 .L1k:
@@ -417,10 +545,16 @@ __lll_timedwait_tid:
 4:
 	mov	#0, r0
 3:
+	cfi_remember_state
 	add	#8, r15
+	cfi_adjust_cfa_offset (-8)
 	mov.l	@r15+, r8
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (r8)
 	rts
 	 mov.l	@r15+, r9
+	/* Omit CFI for restore in delay slot.  */
+	cfi_restore_state
 1:
 	/* Check whether the time expired.  */
 	mov	#-ETIMEDOUT, r1

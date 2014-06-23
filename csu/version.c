@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2006, 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,30 +12,33 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "version.h"
 #include <tls.h>
+#include <libc-abis.h>
 #include <gnu/libc-version.h>
 
 static const char __libc_release[] = RELEASE;
 static const char __libc_version[] = VERSION;
 
 static const char banner[] =
-"GNU C Library "RELEASE" release version "VERSION", by Roland McGrath et al.\n\
-Copyright (C) 2008 Free Software Foundation, Inc.\n\
+"GNU C Library "PKGVERSION RELEASE" release version "VERSION", by Roland McGrath et al.\n\
+Copyright (C) 2014 Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.\n\
 There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n\
 PARTICULAR PURPOSE.\n\
 Compiled by GNU CC version "__VERSION__".\n"
 #include "version-info.h"
+#ifdef LIBC_ABIS_STRING
+LIBC_ABIS_STRING
+#endif
 #ifdef GLIBC_OLDEST_ABI
 "The oldest ABI supported: " GLIBC_OLDEST_ABI ".\n"
 #endif
 "For bug reporting instructions, please see:\n\
-<http://www.gnu.org/software/libc/bugs.html>.\n";
+"REPORT_BUGS_TO".\n";
 
 #include <unistd.h>
 
@@ -62,7 +65,6 @@ __gnu_get_libc_version (void)
 }
 weak_alias (__gnu_get_libc_version, gnu_get_libc_version)
 
-#ifdef HAVE_ELF
 /* This function is the entry point for the shared object.
    Running the library as a program will get here.  */
 
@@ -73,4 +75,3 @@ __libc_main (void)
   __libc_print_version ();
   _exit (0);
 }
-#endif

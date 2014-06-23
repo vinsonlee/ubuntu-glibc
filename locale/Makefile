@@ -1,4 +1,4 @@
-# Copyright (C) 1991,1992,1995-2003,2005 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
 # Lesser General Public License for more details.
 
 # You should have received a copy of the GNU Lesser General Public
-# License along with the GNU C Library; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307 USA.
+# License along with the GNU C Library; if not, see
+# <http://www.gnu.org/licenses/>.
 
 #
 #	Makefile for locales.
@@ -22,23 +21,10 @@
 subdir	:= locale
 
 headers		= locale.h bits/locale.h langinfo.h xlocale.h
-distribute	= localeinfo.h categories.def iso-639.def iso-3166.def \
-		  iso-4217.def weight.h weightwc.h strlen-hash.h elem-hash.h \
-		  indigits.h indigitswc.h outdigits.h outdigitswc.h \
-		  coll-lookup.h C-translit.h.in C-translit.h gen-translit.pl \
-		  locarchive.h hashval.h \
-		  $(addprefix programs/, \
-			      locale.c localedef.c \
-			      $(localedef-modules:=.c) $(locale-modules:=.c) \
-			      $(lib-modules:=.c) config.h simple-hash.h \
-			      charmap-kw.gperf charmap-kw.h locfile-token.h \
-			      locfile-kw.gperf locfile-kw.h linereader.h \
-			      locfile.h charmap.h repertoire.h localedef.h \
-			      3level.h charmap-dir.h locarchive.c)
 routines	= setlocale findlocale loadlocale loadarchive \
 		  localeconv nl_langinfo nl_langinfo_l mb_cur_max \
 		  newlocale duplocale freelocale uselocale
-tests		= tst-C-locale
+tests		= tst-C-locale tst-locname tst-duplocale
 categories	= ctype messages monetary numeric time paper name \
 		  address telephone measurement identification collate
 aux		= $(categories:%=lc-%) $(categories:%=C-%) SYS_libc C_name \
@@ -59,10 +45,11 @@ vpath %.c programs ../crypt
 vpath %.h programs
 vpath %.gperf programs
 
-localedef-modules	:= $(categories:%=ld-%) charmap linereader locfile \
+localedef-modules	:= localedef $(categories:%=ld-%) \
+			   charmap linereader locfile \
 			   repertoire locarchive
 localedef-aux		:= md5
-locale-modules		:= locale-spec
+locale-modules		:= locale locale-spec
 lib-modules		:= charmap-dir simple-hash xmalloc xstrdup
 
 
@@ -70,6 +57,8 @@ GPERF = gperf
 GPERFFLAGS = -acCgopt -k1,2,5,9,$$ -L ANSI-C
 
 include ../Rules
+
+CFLAGS-md5.c = -I../crypt
 
 programs/%-kw.h: programs/%-kw.gperf
 	cd programs \
@@ -84,32 +73,28 @@ $(objpfx)localedef $(objpfx)locale: $(lib-modules:%=$(objpfx)%.o)
 C-translit.h: C-translit.h.in gen-translit.pl
 	$(PERL) gen-translit.pl < $< > $@.tmp
 	mv -f $@.tmp $@
-ifeq ($(with-cvs),yes)
-	test ! -d CVS || cvs $(CVSOPTS) commit -mRegenerated $@
-endif
 
 localepath = "$(localedir):$(i18ndir)"
 
-locale-CPPFLAGS := -DLOCALE_PATH='$(localepath)' \
-		   -DLOCALEDIR='"$(localedir)"' \
-		   -DLOCALE_ALIAS_PATH='"$(msgcatdir)"' \
-		   -DCHARMAP_PATH='"$(i18ndir)/charmaps"' \
-		   -DREPERTOIREMAP_PATH='"$(i18ndir)/repertoiremaps"' \
-		   -DLOCSRCDIR='"$(i18ndir)/locales"' -DHAVE_CONFIG_H \
-		   -Iprograms
+# -Iprograms doesn't really belong here, but this gets it at the head
+# of the list instead of the tail, where CPPFLAGS-$(lib) gets added.
+# We need it before the standard -I's to see programs/config.h first.
+locale-CPPFLAGS = -DLOCALEDIR='"$(localedir)"' \
+		  -DLOCALE_ALIAS_PATH='"$(msgcatdir)"' \
+		  -Iprograms
+
+CPPFLAGS-locale-programs = -DLOCALE_PATH='$(localepath)' \
+			   -DCHARMAP_PATH='"$(i18ndir)/charmaps"' \
+			   -DREPERTOIREMAP_PATH='"$(i18ndir)/repertoiremaps"' \
+			   -DLOCSRCDIR='"$(i18ndir)/locales"' \
+			   -DHAVE_CONFIG_H -DNOT_IN_libc
 
 CFLAGS-charmap.c = -Wno-write-strings -Wno-char-subscripts
 CFLAGS-locfile.c = -Wno-write-strings -Wno-char-subscripts
 CFLAGS-charmap-dir.c = -Wno-write-strings
 
-# This makes sure -DNOT_IN_libc is passed for all these modules.
+# This makes sure -DNOT_IN_libc et al are passed for all these modules.
 cpp-srcs-left := $(addsuffix .c,$(localedef-modules) $(localedef-aux) \
-			        $(locale-modules) $(lib-modules))
-lib := nonlib
+				$(locale-modules) $(lib-modules))
+lib := locale-programs
 include $(patsubst %,$(..)cppflags-iterator.mk,$(cpp-srcs-left))
-
-# Depend on libc.so so a DT_NEEDED is generated in the shared objects.
-# This ensures they will load libc.so for needed symbols if loaded by
-# a statically-linked program that hasn't already loaded it.
-$(objpfx)libBrokenLocale.so: $(common-objpfx)libc.so \
-			     $(common-objpfx)libc_nonshared.a

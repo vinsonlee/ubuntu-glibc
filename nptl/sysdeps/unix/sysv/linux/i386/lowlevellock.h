@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2003, 2004, 2006, 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,12 +13,13 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _LOWLEVELLOCK_H
 #define _LOWLEVELLOCK_H	1
+
+#include <stap-probe.h>
 
 #ifndef __ASSEMBLER__
 # include <time.h>
@@ -52,7 +53,14 @@
 #define FUTEX_LOCK_PI		6
 #define FUTEX_UNLOCK_PI		7
 #define FUTEX_TRYLOCK_PI	8
+#define FUTEX_WAIT_BITSET	9
+#define FUTEX_WAKE_BITSET	10
+#define FUTEX_WAIT_REQUEUE_PI	11
+#define FUTEX_CMP_REQUEUE_PI	12
 #define FUTEX_PRIVATE_FLAG	128
+#define FUTEX_CLOCK_REALTIME	256
+
+#define FUTEX_BITSET_MATCH_ANY	0xffffffff
 
 #define FUTEX_OP_CLEAR_WAKE_IF_GT_ONE	((4 << 24) | 1)
 
@@ -86,7 +94,7 @@
 	asm ("andl %%gs:%P1, %0" : "+r" (__fl)				      \
 	     : "i" (offsetof (struct pthread, header.private_futex)));	      \
 	__fl | (fl); }))
-# endif	      
+# endif
 #endif
 
 #ifndef __ASSEMBLER__
@@ -216,19 +224,21 @@ LLL_STUB_UNWIND_INFO_END
 
 
 #define lll_futex_wake(futex, nr, private) \
-  do {									      \
-    int __ignore;							      \
+  ({									      \
+    int __status;							      \
     register __typeof (nr) _nr asm ("edx") = (nr);			      \
+    LIBC_PROBE (lll_futex_wake, 3, futex, nr, private);                       \
     __asm __volatile (LLL_EBX_LOAD					      \
 		      LLL_ENTER_KERNEL					      \
 		      LLL_EBX_LOAD					      \
-		      : "=a" (__ignore)					      \
+		      : "=a" (__status)					      \
 		      : "0" (SYS_futex), LLL_EBX_REG (futex),		      \
 			"c" (__lll_private_flag (FUTEX_WAKE, private)),	      \
 			"d" (_nr),					      \
 			"i" (0) /* phony, to align next arg's number */,      \
 			"i" (offsetof (tcbhead_t, sysinfo)));		      \
-  } while (0)
+    __status;								      \
+  })
 
 
 /* NB: in the lll_trylock macro we simply return the value in %eax
@@ -420,6 +430,12 @@ LLL_STUB_UNWIND_INFO_END
 		       : "memory");					      \
      result; })
 
+extern int __lll_timedlock_elision (int *futex, short *adapt_count,
+					 const struct timespec *timeout,
+					 int private) attribute_hidden;
+
+#define lll_timedlock_elision(futex, adapt_count, timeout, private)	\
+  __lll_timedlock_elision(&(futex), &(adapt_count), timeout, private)
 
 #define lll_robust_timedlock(futex, timeout, id, private) \
   ({ int result, ignore1, ignore2, ignore3;				      \
@@ -535,7 +551,7 @@ LLL_STUB_UNWIND_INFO_END
 #define lll_islocked(futex) \
   (futex != LLL_LOCK_INITIALIZER)
 
-/* The kernel notifies a process with uses CLONE_CLEARTID via futex
+/* The kernel notifies a process which uses CLONE_CHILD_CLEARTID via futex
    wakeup when the clone terminates.  The memory location contains the
    thread ID while the clone is running and is reset to zero
    afterwards.
@@ -572,6 +588,22 @@ extern int __lll_timedwait_tid (int *tid, const struct timespec *abstime)
 	  __result = __lll_timedwait_tid (&tid, abstime);		      \
       }									      \
     __result; })
+
+extern int __lll_lock_elision (int *futex, short *adapt_count, int private)
+  attribute_hidden;
+
+extern int __lll_unlock_elision(int *lock, int private)
+  attribute_hidden;
+
+extern int __lll_trylock_elision(int *lock, short *adapt_count)
+  attribute_hidden;
+
+#define lll_lock_elision(futex, adapt_count, private) \
+  __lll_lock_elision (&(futex), &(adapt_count), private)
+#define lll_unlock_elision(futex, private) \
+  __lll_unlock_elision (&(futex), private)
+#define lll_trylock_elision(futex, adapt_count) \
+  __lll_trylock_elision(&(futex), &(adapt_count))
 
 #endif  /* !__ASSEMBLER__ */
 

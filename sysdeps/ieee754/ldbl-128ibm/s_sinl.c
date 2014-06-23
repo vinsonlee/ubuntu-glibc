@@ -44,22 +44,20 @@
  *	TRIG(x) returns trig(x) nearly rounded
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <errno.h>
+#include <math.h>
+#include <math_private.h>
 #include <math_ldbl_opt.h>
 
-#ifdef __STDC__
-	long double __sinl(long double x)
-#else
-	long double __sinl(x)
-	long double x;
-#endif
+long double __sinl(long double x)
 {
 	long double y[2],z=0.0L;
 	int64_t n, ix;
+	double xhi;
 
     /* High word of x. */
-	GET_LDOUBLE_MSW64(ix,x);
+	xhi = ldbl_high (x);
+	EXTRACT_WORDS64 (ix, xhi);
 
     /* |x| ~< pi/4 */
 	ix &= 0x7fffffffffffffffLL;
@@ -67,8 +65,11 @@
 	  return __kernel_sinl(x,z,0);
 
     /* sin(Inf or NaN) is NaN */
-	else if (ix>=0x7ff0000000000000LL) return x-x;
-
+	else if (ix>=0x7ff0000000000000LL) {
+	    if (ix == 0x7ff0000000000000LL)
+		__set_errno (EDOM);
+	    return x-x;
+	}
     /* argument reduction needed */
 	else {
 	    n = __ieee754_rem_pio2l(x,y);

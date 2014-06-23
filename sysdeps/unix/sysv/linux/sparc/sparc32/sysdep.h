@@ -1,5 +1,4 @@
-/* Copyright (C) 1997, 2002, 2003, 2004, 2006, 2008
-   Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Miguel de Icaza <miguel@gnu.ai.mit.edu>, January 1997.
 
@@ -14,14 +13,13 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _LINUX_SPARC32_SYSDEP_H
 #define _LINUX_SPARC32_SYSDEP_H 1
 
-#include <sysdeps/unix/sparc/sysdep.h>
+#include <sysdeps/unix/sysv/linux/sparc/sysdep.h>
 
 #ifdef IS_IN_rtld
 # include <dl-sysdep.h>		/* Defines RTLD_PRIVATE_ERRNO.  */
@@ -35,103 +33,86 @@
 
 #define LOADSYSCALL(x) mov __NR_##x, %g1
 
-/* Linux/SPARC uses a different trap number */
 #undef PSEUDO
-#undef PSEUDO_NOERRNO
-#undef PSEUDO_ERRVAL
-#undef PSEUDO_END
-#undef ENTRY
-#undef END
-#undef LOC
-
-#define ENTRY(name)			\
-	.align	4;			\
-	.global	C_SYMBOL_NAME(name);	\
-	.type	name, @function;	\
-C_LABEL(name)				\
-	cfi_startproc;
-
-#define END(name)			\
-	cfi_endproc;			\
-	.size name, . - name
-
-#define LOC(name)  .L##name
-
-	/* If the offset to __syscall_error fits into a signed 22-bit
-	 * immediate branch offset, the linker will relax the call into
-	 * a normal branch.
-	 */
 #define PSEUDO(name, syscall_name, args)	\
 	.text;					\
-	.globl		__syscall_error;	\
 ENTRY(name);					\
 	LOADSYSCALL(syscall_name);		\
 	ta		0x10;			\
 	bcc		1f;			\
-	 mov		%o7, %g1;		\
-	call		__syscall_error;	\
-	 mov		%g1, %o7;		\
+	 nop;					\
+	SYSCALL_ERROR_HANDLER			\
 1:
 
+#undef PSEUDO_NOERRNO
 #define PSEUDO_NOERRNO(name, syscall_name, args)\
 	.text;					\
 ENTRY(name);					\
 	LOADSYSCALL(syscall_name);		\
 	ta		0x10;
 
+#undef PSEUDO_ERRVAL
 #define PSEUDO_ERRVAL(name, syscall_name, args)	\
 	.text;					\
 ENTRY(name);					\
 	LOADSYSCALL(syscall_name);		\
 	ta		0x10;
 
+#undef PSEUDO_END
 #define PSEUDO_END(name)			\
 	END(name)
 
-#else  /* __ASSEMBLER__ */
-
-#if defined SHARED && defined DO_VERSIONING && defined PIC \
-    && !defined NO_HIDDEN && !defined NOT_IN_libc
-# define CALL_ERRNO_LOCATION "call   __GI___errno_location;"
+#ifndef PIC
+# define SYSCALL_ERROR_HANDLER			\
+	mov	%o7, %g1;			\
+	call	__syscall_error;		\
+	 mov	%g1, %o7;
 #else
-# define CALL_ERRNO_LOCATION "call   __errno_location;"
-#endif
+# if RTLD_PRIVATE_ERRNO
+#  define SYSCALL_ERROR_HANDLER			\
+0:	SETUP_PIC_REG_LEAF(o2,g1)		\
+	sethi	%gdop_hix22(rtld_errno), %g1;	\
+	xor	%g1, %gdop_lox10(rtld_errno), %g1;\
+	ld	[%o2 + %g1], %g1, %gdop(rtld_errno); \
+	st	%o0, [%g1];			\
+	jmp	%o7 + 8;			\
+	 mov	-1, %o0;
+# elif defined _LIBC_REENTRANT
+
+#  ifndef NOT_IN_libc
+#   define SYSCALL_ERROR_ERRNO __libc_errno
+#  else
+#   define SYSCALL_ERROR_ERRNO errno
+#  endif
+#  define SYSCALL_ERROR_HANDLER					\
+0:	SETUP_PIC_REG_LEAF(o2,g1)				\
+	sethi	%tie_hi22(SYSCALL_ERROR_ERRNO), %g1;		\
+	add	%g1, %tie_lo10(SYSCALL_ERROR_ERRNO), %g1;	\
+	ld	[%o2 + %g1], %g1, %tie_ld(SYSCALL_ERROR_ERRNO);	\
+	st	%o0, [%g7 + %g1];				\
+	jmp	%o7 + 8;					\
+	 mov	-1, %o0;
+# else
+#  define SYSCALL_ERROR_HANDLER		\
+0:	SETUP_PIC_REG_LEAF(o2,g1)	\
+	sethi	%gdop_hix22(errno), %g1;\
+	xor	%g1, %gdop_lox10(errno), %g1;\
+	ld	[%o2 + %g1], %g1, %gdop(errno);\
+	st	%o0, [%g1];		\
+	jmp	%o7 + 8;		\
+	 mov	-1, %o0;
+# endif	/* _LIBC_REENTRANT */
+#endif	/* PIC */
+
+
+#else  /* __ASSEMBLER__ */
 
 #define __SYSCALL_STRING						\
 	"ta	0x10;"							\
-	"bcs	2f;"							\
-	" nop;"								\
-	"1:"								\
-	".subsection 2;"						\
-	"2:"								\
-	"save	%%sp, -192, %%sp;"					\
-	CALL_ERRNO_LOCATION						\
-	" nop;"								\
-	"st	%%i0,[%%o0];"						\
-	"ba	1b;"							\
-	" restore %%g0, -1, %%o0;"					\
-	".previous;"
-
-#define __CLONE_SYSCALL_STRING						\
-	"ta	0x10;"							\
-	"bcs	2f;"							\
-	" sub	%%o1, 1, %%o1;"						\
-	"and	%%o0, %%o1, %%o0;"					\
-	"1:"								\
-	".subsection 2;"						\
-	"2:"								\
-	"save	%%sp, -192, %%sp;"					\
-	CALL_ERRNO_LOCATION						\
-	" nop;"								\
-	"st	%%i0, [%%o0];"						\
-	"ba	1b;"							\
-	" restore %%g0, -1, %%o0;"					\
-	".previous;"
-
-#define __INTERNAL_SYSCALL_STRING					\
-	"ta	0x10;"							\
-	"bcs,a	1f;"							\
-	" sub	%%g0, %%o0, %%o0;"					\
+	"bcc	1f;"							\
+	" mov	0, %%g1;"						\
+	"sub	%%g0, %%o0, %%o0;"					\
+	"mov	1, %%g1;"						\
 	"1:"
 
 #define __SYSCALL_CLOBBERS						\
@@ -140,8 +121,6 @@ ENTRY(name);					\
 	"f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",		\
 	"f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31",		\
 	"cc", "memory"
-
-#include <sysdeps/unix/sysv/linux/sparc/sysdep.h>
 
 #endif	/* __ASSEMBLER__ */
 

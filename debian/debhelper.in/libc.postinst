@@ -7,58 +7,11 @@ preversion=$2
 
 package_name()
 {
-    echo LIBC
-}
-
-# Borrowed from sysvinit's postinst.
-#	Function like update-rc.d but simpler & faster.
-#	Usage: updatercd basename start|stop NN runlevel .
-#
-#	Now we use the real update-rc.d, so now this function should
-#	be equivalent to /usr/sbin/update-rc.d.
-#
-updatercd() {
-
-	if [ ! -f /etc/init.d/$1 ]
-	then
-		return
-	fi
-
-	if [ -x /usr/sbin/update-rc.d ]
-	then
-		update-rc.d "$@" > /dev/null
-		return $?
-	fi
-
-	base=$1
-	shift
-	while [ "$1" != "" ]
-	do
-		if [ "$1" = stop ]
-		then
-			tlet=K
-		else
-			tlet=S
-		fi
-		lev=$2
-		shift 2
-		while [ "$1" != "." ]
-		do
-			cd /etc/rc$1.d
-			tmp="`echo $tlet??$base`"
-			case "$tmp" in
-				"$tlet??$base")
-					# Not present yet.
-					ln -s ../init.d/$base $tlet$lev$base
-					;;
-				*)
-					# Already present.
-					;;
-			esac
-			shift
-		done
-		shift
-	done
+    if dpkg --assert-multi-arch 2>/dev/null; then
+        echo LIBC:${DPKG_MAINTSCRIPT_ARCH}
+    else
+        echo LIBC
+    fi
 }
 
 # element() is a helper function for file-rc:
@@ -117,16 +70,6 @@ checkpkgver () {
 
 if [ "$type" = "configure" ]
 then
-    # Add support for /etc/ld.so.conf.d
-    if [ -e /etc/ld.so.conf ]; then
-        [ -z "$(tail -n 1 /etc/ld.so.conf)" ] || echo >> /etc/ld.so.conf
-    else
-        touch /etc/ld.so.conf
-    fi
-    if ! grep -q '^include /etc/ld.so.conf.d/.*\.conf$' /etc/ld.so.conf ; then
-        echo 'include /etc/ld.so.conf.d/*.conf' >> /etc/ld.so.conf
-    fi
-
     # We don't use a registry anymore, remove the old file
     rm -f /etc/ld.so.hwcappkgs
  
@@ -141,30 +84,35 @@ then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions "$preversion" lt 2.9-5; then
-	    check="apache2-common apache apache-ssl apache-perl autofs at"
+	if dpkg --compare-versions "$preversion" lt 2.19; then
+	    check="apache2.2-common apache apache-ssl apache-perl autofs at"
 	    check="$check boa cucipop courier-authdaemon cron cups exim"
-	    check="$check exim4-base dovecot-common cucipop lprng lpr"
+	    check="$check exim4-base dovecot-common cucipop incron lprng lpr"
 	    check="$check lpr-ppd mysql-server nis openbsd-inetd"
-	    check="$check openldapd postfix postfix-tls rsync samba"
+	    check="$check openldapd proftpd postfix postfix-tls rsync samba"
 	    check="$check sasl2-bin slapd smail sendmail snmpd ssh"
 	    check="$check spamassassin vsftpd wu-ftpd wu-ftpd-academ wwwoffle"
-	    check="$check webmin dropbear"
+	    check="$check webmin dropbear gdm"
 	    # NSS services check: NSS_CHECK
 	    if [ -n "$services" ]; then
 
 	        if [ -f /usr/share/debconf/confmodule ] ; then
 		    db_version 2.0
-		    db_reset glibc/restart-services
-		    db_set glibc/restart-services "$services"
-		    db_input critical glibc/restart-services || true
+		    db_input critical libraries/restart-without-asking || true
 		    db_go || true
-		    db_get glibc/restart-services
-		    if [ "x$RET" != "x" ]
-		    then
-		        services="$RET"
-		    else
-		    	services=""
+		    db_get libraries/restart-without-asking
+		    if [ "$RET" != true ]; then
+			db_reset glibc/restart-services
+			db_set glibc/restart-services "$services"
+			db_input critical glibc/restart-services || true
+			db_go || true
+			db_get glibc/restart-services
+			if [ "x$RET" != "x" ]
+			then
+			    services="$RET"
+			else
+			    services=""
+			fi
 		    fi
 		else
 		    echo
@@ -200,6 +148,13 @@ then
 		    echo "Restarting services possibly affected by the upgrade:"
 		    failed=""
 		    for service in $services; do
+			# We can't just use a generic rewrite here, as it was
+			# samba in wheezy and smbd in jessie, which confuses.
+			if [ "$service" = "samba" ]; then
+			    if [ -x /etc/init.d/smbd ] || [ -f /etc/init/smbd ]; then
+				service="smbd"
+			    fi
+			fi
 		    	if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
 			    idl="invoke-rc.d ${service}"
 			elif [ -f /usr/share/file-rc/rc ] || [ -f /usr/lib/file-rc/rc ] && [ -f /etc/runlevel.conf ]; then
@@ -207,16 +162,26 @@ then
 			else
 			    idl=$(ls /etc/rc${rl}.d/S??${service} 2> /dev/null | head -1)
 			fi
-			echo -n "  $service: stopping..."
-			$idl stop > /dev/null 2>&1 || true
-			sleep 2
-			echo -n "starting..."
-			if $idl start > /dev/null 2>&1; then
-			    echo "done."
-			else
-			    echo "FAILED! ($?)"
-			    failed="$service $failed"
-			fi
+			case "$service" in
+			    gdm)
+				echo -n "  $service: reloading..."
+				if $idl reload > /dev/null 2>&1; then
+				    echo "done."
+				else
+				    echo "FAILED! ($?)"
+				    failed="$service $failed"
+				fi
+				;;
+			    *)
+				echo -n "  $service: restarting..."
+				if $idl restart > /dev/null 2>&1; then
+				    echo "done."
+				else
+				    echo "FAILED! ($?)"
+				    failed="$service $failed"
+				fi
+				;;
+			esac
 		    done
 		    echo
 		    if [ -n "$failed" ]; then
@@ -250,51 +215,44 @@ then
 	    else
 		echo "Nothing to restart."
 	    fi
-	fi # end upgrading and $preversion lt 2.6-1
+	fi # end upgrading and $preversion lt 2.19
     fi # Upgrading
 
-    # Generate cache file /usr/lib/gconv/gconv-modules.cache
-    iconvconfig || true
-
-#   # DO NOT FOLLOW THIS EXAMPLE IN OTHER PACKAGES
-    updatercd glibc.sh start 01 S .
-    if [ -x /usr/sbin/invoke-rc.d ]; then
-	invoke-rc.d glibc.sh start
+    # Restart init.  Currently handles chroots and upstart, and assumes
+    # anything else is going to not fail at behaving like sysvinit:
+    TELINIT=yes
+    if ischroot 2>/dev/null; then
+        # Don't bother trying to re-exec init from a chroot:
+        TELINIT=no
     else
-	/etc/init.d/glibc.sh 2>/dev/null || true
+        if [ -x "`which initctl`" ]; then
+            UPSTART=$(initctl version 2>/dev/null | awk '/upstart/ {print $3}' | tr -d ')')
+            if dpkg --compare-versions "$UPSTART" lt-nl 1.6.1; then
+                # This is an old upstart that can't re-exec statefully:
+                TELINIT=no
+                touch /var/run/init.upgraded
+            fi
+        fi
+    fi
+    if [ "$TELINIT" = "yes" ]; then
+        telinit u 2>/dev/null || true ; sleep 1
     fi
 fi
 
-if [ "`uname -s`" = Linux ]; then
-#
-#       Upgrade init if possible. There was a bug in all versions
-#       up to and including 2.75-4, which didn't affect i386 but
-#       did affect most other architectures.
-#
-sysvinitver="`dpkg -s sysvinit 2>/dev/null | grep ^Version: | sed -e 's/^Version: *//'`"
-case "`uname -m`" in
-        i?86)
-                badsysvinitver="2.[0-6]*|2.7[0-3]*"
-                ;;
-        *)
-                badsysvinitver="2.[0-6]*|2.7[0-4]*|2.75-*"
-                ;;
+# We now use the multiarch triplet instead of the GNU triplet for the ld.so
+# configuration file, in order to keep a stable path. Remove the old file.
+case ${DPKG_MAINTSCRIPT_ARCH:-$(dpkg --print-architecture)} in
+    hurd-i386)
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-gnu.conf 2.19-4~ libc6:hurd-i386 -- "$@"
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-gnu-gnu.conf 2.19-4~ libc6:hurd-i386 -- "$@"
+        ;;
+    i386)
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-linux-gnu.conf 2.19-4~ libc6:i386 -- "$@"
+        ;;
+    kfreebsd-i386)
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-kfreebsd-gnu.conf 2.19-4~ libc6:kfreebsd-i386 -- "$@"
+        ;;
 esac
-# Black magic. If we are in a chroot, then /proc/1/exe will not resolve to
-# a file (will return EPERM). This keeps us from breaking things in
-# debootstrap, and the like.
-case "$sysvinitver" in
-        $badsysvinitver)
-                ;;
-        *)
-		if [ "$(stat -c %d/%i /)" = "$(stat -Lc %d/%i /proc/1/root 2>/dev/null)" ]; then
-			# the devicenumber/inode pair of / is the same as that of /sbin/init's
-			# root, so we're *not* in a chroot
-			(init u ; sleep 1)
-		fi
-		;;
-esac
-fi
 
 #DEBHELPER#
 

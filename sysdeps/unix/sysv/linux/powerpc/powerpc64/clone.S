@@ -1,5 +1,5 @@
 /* Wrapper around clone system call.  PowerPC64 version.
-   Copyright (C) 1997,98,99,2000,02,04, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,15 +13,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-   02110-1301 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #define _ERRNO_H	1
 #include <bits/errno.h>
-#include <bp-sym.h>
-#include <bp-asm.h>
 
 #define CLONE_VM	0x00000100
 #define CLONE_THREAD	0x00010000
@@ -34,11 +31,8 @@
                   int flags [r5], void *arg [r6], void *parent_tid [r7],
                   void *tls [r8], void *child_tid [r9]); */
 
-ENTRY (BP_SYM (__clone))
+ENTRY (__clone)
 	CALL_MCOUNT 7
-	/* GKM FIXME: add bounds checks, where sensible.  */
-	DISCARD_BOUNDS (r4)
-	DISCARD_BOUNDS (r6)
 
 	/* Check for child_stack == NULL || fn == NULL.  */
 	cmpdi	cr0,r4,0
@@ -46,35 +40,32 @@ ENTRY (BP_SYM (__clone))
 	cror	cr0*4+eq,cr1*4+eq,cr0*4+eq
 	beq-	cr0,L(badargs)
 
-	/* Set up stack frame for parent.  */
-	stdu	r1,-80(r1)
-	cfi_adjust_cfa_offset (80)
-	std	r29,56(r1)
-	std	r30,64(r1)
-	std	r31,72(r1)
-	cfi_offset(r29,-56)
-	cfi_offset(r30,-64)
-	cfi_offset(r31,-72)
+	/* Save some regs in the "red zone".  */
 #ifdef RESET_PID
-	std	r28,48(r1)
-	cfi_offset(r28,-48)
+	std	r29,-24(r1)
 #endif
+	std	r30,-16(r1)
+	std	r31,-8(r1)
+#ifdef RESET_PID
+	cfi_offset(r29,-24)
+#endif
+	cfi_offset(r30,-16)
+	cfi_offset(r31,-8)
 
 	/* Set up stack frame for child.  */
 	clrrdi	r4,r4,4
 	li	r0,0
-	stdu	r0,-48(r4) /* min stack frame is 48 bytes per ABI */
+	stdu	r0,-FRAME_MIN_SIZE_PARM(r4)
 
 	/* Save fn, args, stack across syscall.  */
-	mr	r29,r3			/* Function in r29.  */
-	mr	r30,r4			/* Stack pointer in r30.  */
+	mr	r30,r3			/* Function in r30.  */
 #ifdef RESET_PID
-	mr	r28,r5			/* Flags in r28.  */
+	mr	r29,r5			/* Flags in r29.  */
 #endif
 	mr	r31,r6			/* Argument in r31.  */
 
-	/* 'flags' argument is first parameter to clone syscall. (The other
-	   argument is the stack pointer, already in r4.)  */
+	/* 'flags' argument is first parameter to clone syscall.
+	   Second is the stack pointer, already in r4.  */
 	mr	r3,r5
   /* Move the parent_tid, child_tid and tls arguments. */
 	mr	r5,r7
@@ -94,9 +85,9 @@ ENTRY (BP_SYM (__clone))
 	bne-	cr1,L(parent)		/* The '-' is to minimise the race.  */
 
 #ifdef RESET_PID
-	andis.	r0,r28,CLONE_THREAD>>16
+	andis.	r0,r29,CLONE_THREAD>>16
 	bne+	cr0,L(oldpid)
-	andi.	r0,r28,CLONE_VM
+	andi.	r0,r29,CLONE_VM
 	li	r3,-1
 	bne-	cr0,L(nomoregetpid)
 	DO_CALL(SYS_ify(getpid))
@@ -106,38 +97,46 @@ L(nomoregetpid):
 L(oldpid):
 #endif
 
-	std	r2,40(r1)
+	std	r2,FRAME_TOC_SAVE(r1)
 	/* Call procedure.  */
-	ld	r0,0(r29)
-	ld	r2,8(r29)
-	mtctr	r0
+	PPC64_LOAD_FUNCPTR r30
 	mr	r3,r31
 	bctrl
-	ld	r2,40(r1)
+	ld	r2,FRAME_TOC_SAVE(r1)
 	/* Call _exit with result from procedure.  */
 #ifdef SHARED
 	b	JUMPTARGET(__GI__exit)
 #else
 	b	JUMPTARGET(_exit)
+	/* We won't ever get here but provide a nop so that the linker
+	   will insert a toc adjusting stub if necessary.  */
+	nop
 #endif
+
+L(badargs):
+	cfi_startproc
+	li	r3,EINVAL
+	TAIL_CALL_SYSCALL_ERROR
 
 L(parent):
 	/* Parent.  Restore registers & return.  */
 #ifdef RESET_PID
-	ld	r28,48(r1)
+	cfi_offset(r29,-24)
 #endif
-	ld	r31,72(r1)
-	ld	r30,64(r1)
-	ld	r29,56(r1)
-	addi	r1,r1,80
-	bnslr+
-	b	JUMPTARGET(__syscall_error)
+	cfi_offset(r30,-16)
+	cfi_offset(r31,-8)
+#ifdef RESET_PID
+	ld	r29,-24(r1)
+#endif
+	ld	r30,-16(r1)
+	ld	r31,-8(r1)
+#ifdef RESET_PID
+	cfi_restore(r29)
+#endif
+	cfi_restore(r30)
+	cfi_restore(r31)
+	PSEUDO_RET
 
-L(badargs):
-	li	r3,EINVAL
-	b	JUMPTARGET(__syscall_error)
+END (__clone)
 
-	cfi_startproc
-END (BP_SYM (__clone))
-
-weak_alias (BP_SYM (__clone), BP_SYM (clone))
+weak_alias (__clone, clone)

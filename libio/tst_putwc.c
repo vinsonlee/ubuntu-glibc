@@ -1,5 +1,5 @@
 /* Simple test of putwc in the C locale.
-   Copyright (C) 2000 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <error.h>
@@ -74,13 +73,16 @@ do_test (void)
   /* Now close the file, open it again, and read again.  */
   if (fclose (fp) != 0)
     {
-      printf ("failure during fclose(): %m");
+      printf ("failure during fclose: %m\n");
       res = 1;
     }
 
   fp = fopen (outname, "r");
   if (fp == NULL)
-    error (EXIT_FAILURE, errno, "cannot reopen file");
+    {
+      printf ("cannot reopen file: %m\n");
+      return 1;
+    }
 
   /* We can remove the file now.  */
   remove (outname);
@@ -104,7 +106,7 @@ do_test (void)
 
   if (fclose (fp) != 0)
     {
-      puts ("failure during fclose()");
+      printf ("failure during fclose: %m\n");
       res = 1;
     }
 

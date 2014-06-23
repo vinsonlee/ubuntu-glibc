@@ -19,22 +19,19 @@ static char rcsid[] = "$NetBSD: s_isnan.c,v 1.8 1995/05/10 20:47:36 jtc Exp $";
  * no branching!
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
-	int __isnan(double x)
-#else
-	int __isnan(x)
-	double x;
-#endif
+#undef __isnan
+int
+__isnan (double x)
 {
-	int32_t hx,lx;
-	EXTRACT_WORDS(hx,lx,x);
-	hx &= 0x7fffffff;
-	hx |= (u_int32_t)(lx|(-lx))>>31;
-	hx = 0x7ff00000 - hx;
-	return (int)(((u_int32_t)hx)>>31);
+  int32_t hx, lx;
+  EXTRACT_WORDS (hx, lx, x);
+  hx &= 0x7fffffff;
+  hx |= (u_int32_t) (lx | (-lx)) >> 31;
+  hx = 0x7ff00000 - hx;
+  return (int) (((u_int32_t) hx) >> 31);
 }
 hidden_def (__isnan)
 weak_alias (__isnan, isnan)

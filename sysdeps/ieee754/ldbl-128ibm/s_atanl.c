@@ -55,11 +55,12 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
 
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 #include <math_ldbl_opt.h>
 
 /* arctan(k/8), k = 0, ..., 82 */
@@ -172,26 +173,39 @@ static const long double
 long double
 __atanl (long double x)
 {
-  int k, sign;
+  int32_t k, sign, lx;
   long double t, u, p, q;
-  ieee854_long_double_shape_type s;
+  double xhi;
 
-  s.value = x;
-  k = s.parts32.w0;
-  if (k & 0x80000000)
-    sign = 1;
-  else
-    sign = 0;
+  xhi = ldbl_high (x);
+  EXTRACT_WORDS (k, lx, xhi);
+  sign = k & 0x80000000;
 
   /* Check for IEEE special cases.  */
   k &= 0x7fffffff;
   if (k >= 0x7ff00000)
     {
       /* NaN. */
-      if ((k & 0xfffff) | s.parts32.w1 )
+      if (((k - 0x7ff00000) | lx) != 0)
 	return (x + x);
 
       /* Infinity. */
+      if (sign)
+	return -atantbl[83];
+      else
+	return atantbl[83];
+    }
+
+  if (k <= 0x3c800000) /* |x| <= 2**-55.  */
+    {
+      /* Raise inexact.  */
+      if (1e300L + x > 0.0)
+	return x;
+    }
+
+  if (k >= 0x46c00000) /* |x| >= 2**109.  */
+    {
+      /* Saturate result to {-,+}pi/2.  */
       if (sign)
 	return -atantbl[83];
       else

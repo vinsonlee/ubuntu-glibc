@@ -1,6 +1,6 @@
 /* Software floating-point emulation.
    Return 0 iff a == b, 1 otherwise
-   Copyright (C) 1997,1999,2006,2007 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson (rth@cygnus.com) and
 		  Jakub Jelinek (jj@ultra.linux.cz).
@@ -25,27 +25,29 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, 51 Franklin Street, Fifth Floor, Boston,
-   MA 02110-1301, USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "soft-fp.h"
 #include "single.h"
 
-CMPtype __eqsf2(SFtype a, SFtype b)
+CMPtype
+__eqsf2 (SFtype a, SFtype b)
 {
   FP_DECL_EX;
-  FP_DECL_S(A); FP_DECL_S(B);
+  FP_DECL_S (A);
+  FP_DECL_S (B);
   CMPtype r;
 
-  FP_UNPACK_RAW_S(A, a);
-  FP_UNPACK_RAW_S(B, b);
-  FP_CMP_EQ_S(r, A, B);
-  if (r && (FP_ISSIGNAN_S(A) || FP_ISSIGNAN_S(B)))
-    FP_SET_EXCEPTION(FP_EX_INVALID);
+  FP_INIT_EXCEPTIONS;
+  FP_UNPACK_RAW_S (A, a);
+  FP_UNPACK_RAW_S (B, b);
+  FP_CMP_EQ_S (r, A, B);
+  if (r && (FP_ISSIGNAN_S (A) || FP_ISSIGNAN_S (B)))
+    FP_SET_EXCEPTION (FP_EX_INVALID);
   FP_HANDLE_EXCEPTIONS;
 
   return r;
 }
 
-strong_alias(__eqsf2, __nesf2);
+strong_alias (__eqsf2, __nesf2);

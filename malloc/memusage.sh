@@ -1,5 +1,5 @@
 #! @BASH@
-# Copyright (C) 1999-2007, 2008 Free Software Foundation, Inc.
+# Copyright (C) 1999-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 # Contributed by Ulrich Drepper <drepper@gnu.org>, 1999.
 
@@ -14,9 +14,8 @@
 # Lesser General Public License for more details.
 
 # You should have received a copy of the GNU Lesser General Public
-# License along with the GNU C Library; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307 USA.
+# License along with the GNU C Library; if not, see
+# <http://www.gnu.org/licenses/>.
 
 memusageso='@SLIBDIR@/libmemusage.so'
 memusagestat='@BINDIR@/memusagestat'
@@ -24,13 +23,13 @@ TEXTDOMAIN=libc
 
 # Print usage message.
 do_usage() {
-  echo >&2 $"Try \`memusage --help' for more information."
+  printf >&2 $"Try \`%s --help' or \`%s --usage' for more information.\n" memusage memusage
   exit 1
 }
 
 # Message for missing argument.
 do_missing_arg() {
-  echo >&2 $"memusage: option \`$1' requires an argument"
+  printf >&2 $"%s: option '%s' requires an argument\n" memusage "$1"
   do_usage
 }
 
@@ -61,17 +60,18 @@ Profile memory usage of PROGRAM.
 Mandatory arguments to long options are also mandatory for any corresponding
 short options.
 
-For bug reporting instructions, please see:
-<http://www.gnu.org/software/libc/bugs.html>."
+"
+  printf $"For bug reporting instructions, please see:\\n%s.\\n" \
+    "@REPORT_BUGS_TO@"
   exit 0
 }
 
 do_version() {
-  echo 'memusage (GNU libc) @VERSION@'
+  echo 'memusage @PKGVERSION@@VERSION@'
   printf $"Copyright (C) %s Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-" "2008"
+" "2014"
   printf $"Written by %s.
 " "Ulrich Drepper"
   exit 0
@@ -97,9 +97,9 @@ while test $# -gt 0; do
     ;;
   --us | --usa | --usag | --usage)
     echo $"Syntax: memusage [--data=FILE] [--progname=NAME] [--png=FILE] [--unbuffered]
-            [--buffer=SIZE] [--no-timer] [--time-based] [--total]
-            [--title=STRING] [--x-size=SIZE] [--y-size=SIZE]
-            PROGRAM [PROGRAMOPTION]..."
+	    [--buffer=SIZE] [--no-timer] [--time-based] [--total]
+	    [--title=STRING] [--x-size=SIZE] [--y-size=SIZE]
+	    PROGRAM [PROGRAMOPTION]..."
     exit 0
     ;;
   -n | --pr | --pro | --prog | --progn | --progna | --prognam | --progname)

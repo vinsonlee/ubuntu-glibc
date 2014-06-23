@@ -1,5 +1,5 @@
 /* Machine-specific audit interfaces for dynamic linker.  SPARC version.
-   Copyright (C) 2005 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef	_LINK_H
 # error "Never include <bits/link.h> directly; use <link.h> instead."
@@ -75,7 +74,7 @@ extern unsigned int la_sparc32_gnu_pltexit (Elf32_Sym *__sym,
 					    uintptr_t *__defcook,
 					     const La_sparc32_regs *__inregs,
 					    La_sparc32_retval *__outregs,
-					    const char *symname);
+					    const char *__symname);
 
 #else
 
@@ -93,7 +92,7 @@ extern unsigned int la_sparc64_gnu_pltexit (Elf64_Sym *__sym,
 					    uintptr_t *__defcook,
 					    const La_sparc64_regs *__inregs,
 					    La_sparc64_retval *__outregs,
-					    const char *symname);
+					    const char *__symname);
 
 #endif
 

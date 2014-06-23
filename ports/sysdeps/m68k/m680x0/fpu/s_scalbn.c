@@ -1,4 +1,4 @@
-/* Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #define scalbln __no_scalbln_decl
 #define scalblnf __no_scalblnf_decl
@@ -46,9 +45,6 @@ __CONCATX(__scalbn,suffix) (x, exp)
 {
   return __m81_u(__CONCATX(__scalbn,suffix))(x, exp);
 }
-
-#define weak_aliasx(a,b) weak_alias(a,b)
-#define strong_aliasx(a,b) strong_alias(a,b)
-weak_aliasx (__CONCATX(__scalbn,suffix), __CONCATX(scalbn,suffix))
-strong_aliasx (__CONCATX(__scalbn,suffix), __CONCATX(__scalbln,suffix))
-weak_aliasx (__CONCATX(__scalbn,suffix), __CONCATX(scalbln,suffix))
+weak_alias (__CONCATX(__scalbn,suffix), __CONCATX(scalbn,suffix))
+strong_alias (__CONCATX(__scalbn,suffix), __CONCATX(__scalbln,suffix))
+weak_alias (__CONCATX(__scalbn,suffix), __CONCATX(scalbln,suffix))

@@ -1,40 +1,34 @@
-/* @(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC */
-/*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-#if !defined(lint) && defined(SCCSIDS)
-static char sccsid[] = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
-#endif
-
 /*
  * rpc_prot.c
  *
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * This set of routines implements the rpc message definition,
  * its serializer and some common rpc utility routines.
@@ -58,12 +52,12 @@ bool_t
 xdr_opaque_auth (XDR *xdrs, struct opaque_auth *ap)
 {
 
-  if (INTUSE(xdr_enum) (xdrs, &(ap->oa_flavor)))
-    return INTUSE(xdr_bytes) (xdrs, &ap->oa_base,
+  if (xdr_enum (xdrs, &(ap->oa_flavor)))
+    return xdr_bytes (xdrs, &ap->oa_base,
 		      &ap->oa_length, MAX_AUTH_BYTES);
   return FALSE;
 }
-INTDEF(xdr_opaque_auth)
+libc_hidden_nolink_sunrpc (xdr_opaque_auth, GLIBC_2_0)
 
 /*
  * XDR a DES block
@@ -71,9 +65,9 @@ INTDEF(xdr_opaque_auth)
 bool_t
 xdr_des_block (XDR *xdrs, des_block *blkp)
 {
-  return INTUSE(xdr_opaque) (xdrs, (caddr_t) blkp, sizeof (des_block));
+  return xdr_opaque (xdrs, (caddr_t) blkp, sizeof (des_block));
 }
-INTDEF(xdr_des_block)
+libc_hidden_nolink_sunrpc (xdr_des_block, GLIBC_2_0)
 
 /* * * * * * * * * * * * * * XDR RPC MESSAGE * * * * * * * * * * * * * * * */
 
@@ -84,24 +78,24 @@ bool_t
 xdr_accepted_reply (XDR *xdrs, struct accepted_reply *ar)
 {
   /* personalized union, rather than calling xdr_union */
-  if (!INTUSE(xdr_opaque_auth) (xdrs, &(ar->ar_verf)))
+  if (!xdr_opaque_auth (xdrs, &(ar->ar_verf)))
     return FALSE;
-  if (!INTUSE(xdr_enum) (xdrs, (enum_t *) & (ar->ar_stat)))
+  if (!xdr_enum (xdrs, (enum_t *) & (ar->ar_stat)))
     return FALSE;
   switch (ar->ar_stat)
     {
     case SUCCESS:
       return ((*(ar->ar_results.proc)) (xdrs, ar->ar_results.where));
     case PROG_MISMATCH:
-      if (!INTUSE(xdr_u_long) (xdrs, &(ar->ar_vers.low)))
+      if (!xdr_u_long (xdrs, &(ar->ar_vers.low)))
 	return FALSE;
-      return (INTUSE(xdr_u_long) (xdrs, &(ar->ar_vers.high)));
+      return (xdr_u_long (xdrs, &(ar->ar_vers.high)));
     default:
       return TRUE;
     }
   return TRUE;		/* TRUE => open ended set of problems */
 }
-INTDEF(xdr_accepted_reply)
+libc_hidden_nolink_sunrpc (xdr_accepted_reply, GLIBC_2_0)
 
 /*
  * XDR the MSG_DENIED part of a reply message union
@@ -110,26 +104,26 @@ bool_t
 xdr_rejected_reply (XDR *xdrs, struct rejected_reply *rr)
 {
   /* personalized union, rather than calling xdr_union */
-  if (!INTUSE(xdr_enum) (xdrs, (enum_t *) & (rr->rj_stat)))
+  if (!xdr_enum (xdrs, (enum_t *) & (rr->rj_stat)))
     return FALSE;
   switch (rr->rj_stat)
     {
     case RPC_MISMATCH:
-      if (!INTUSE(xdr_u_long) (xdrs, &(rr->rj_vers.low)))
+      if (!xdr_u_long (xdrs, &(rr->rj_vers.low)))
 	return FALSE;
-      return INTUSE(xdr_u_long) (xdrs, &(rr->rj_vers.high));
+      return xdr_u_long (xdrs, &(rr->rj_vers.high));
 
     case AUTH_ERROR:
-      return INTUSE(xdr_enum) (xdrs, (enum_t *) & (rr->rj_why));
+      return xdr_enum (xdrs, (enum_t *) & (rr->rj_why));
     }
   return FALSE;
 }
-INTDEF(xdr_rejected_reply)
+libc_hidden_nolink_sunrpc (xdr_rejected_reply, GLIBC_2_0)
 
 static const struct xdr_discrim reply_dscrm[3] =
 {
-  {(int) MSG_ACCEPTED, (xdrproc_t) INTUSE(xdr_accepted_reply)},
-  {(int) MSG_DENIED, (xdrproc_t) INTUSE(xdr_rejected_reply)},
+  {(int) MSG_ACCEPTED, (xdrproc_t) xdr_accepted_reply},
+  {(int) MSG_DENIED, (xdrproc_t) xdr_rejected_reply},
   {__dontcare__, NULL_xdrproc_t}};
 
 /*
@@ -140,15 +134,15 @@ xdr_replymsg (xdrs, rmsg)
      XDR *xdrs;
      struct rpc_msg *rmsg;
 {
-  if (INTUSE(xdr_u_long) (xdrs, &(rmsg->rm_xid)) &&
-      INTUSE(xdr_enum) (xdrs, (enum_t *) & (rmsg->rm_direction)) &&
+  if (xdr_u_long (xdrs, &(rmsg->rm_xid)) &&
+      xdr_enum (xdrs, (enum_t *) & (rmsg->rm_direction)) &&
       (rmsg->rm_direction == REPLY))
-    return INTUSE(xdr_union) (xdrs, (enum_t *) & (rmsg->rm_reply.rp_stat),
-			      (caddr_t) & (rmsg->rm_reply.ru), reply_dscrm,
-			      NULL_xdrproc_t);
+    return xdr_union (xdrs, (enum_t *) & (rmsg->rm_reply.rp_stat),
+		      (caddr_t) & (rmsg->rm_reply.ru), reply_dscrm,
+		      NULL_xdrproc_t);
   return FALSE;
 }
-INTDEF(xdr_replymsg)
+libc_hidden_nolink_sunrpc (xdr_replymsg, GLIBC_2_0)
 
 
 /*
@@ -166,14 +160,14 @@ xdr_callhdr (xdrs, cmsg)
   cmsg->rm_call.cb_rpcvers = RPC_MSG_VERSION;
   if (
        (xdrs->x_op == XDR_ENCODE) &&
-       INTUSE(xdr_u_long) (xdrs, &(cmsg->rm_xid)) &&
-       INTUSE(xdr_enum) (xdrs, (enum_t *) & (cmsg->rm_direction)) &&
-       INTUSE(xdr_u_long) (xdrs, &(cmsg->rm_call.cb_rpcvers)) &&
-       INTUSE(xdr_u_long) (xdrs, &(cmsg->rm_call.cb_prog)))
-    return INTUSE(xdr_u_long) (xdrs, &(cmsg->rm_call.cb_vers));
+       xdr_u_long (xdrs, &(cmsg->rm_xid)) &&
+       xdr_enum (xdrs, (enum_t *) & (cmsg->rm_direction)) &&
+       xdr_u_long (xdrs, &(cmsg->rm_call.cb_rpcvers)) &&
+       xdr_u_long (xdrs, &(cmsg->rm_call.cb_prog)))
+    return xdr_u_long (xdrs, &(cmsg->rm_call.cb_vers));
   return FALSE;
 }
-INTDEF(xdr_callhdr)
+libc_hidden_nolink_sunrpc (xdr_callhdr, GLIBC_2_0)
 
 /* ************************** Client utility routine ************* */
 
@@ -220,7 +214,7 @@ rejected (enum reject_stat rjct_stat,
 {
   switch (rjct_stat)
     {
-    case RPC_VERSMISMATCH:
+    case RPC_MISMATCH:
       error->re_status = RPC_VERSMISMATCH;
       return;
     case AUTH_ERROR:
@@ -283,4 +277,4 @@ _seterr_reply (struct rpc_msg *msg,
       break;
     }
 }
-libc_hidden_def (_seterr_reply)
+libc_hidden_nolink_sunrpc (_seterr_reply, GLIBC_2_0)

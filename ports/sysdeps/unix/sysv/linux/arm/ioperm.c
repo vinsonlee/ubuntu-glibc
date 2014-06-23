@@ -1,4 +1,4 @@
-/* Copyright (C) 1998, 1999, 2003, 2005, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Phil Blundell, based on the Alpha version by
    David Mosberger.
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* I/O port access on the ARM is something of a fiction.  What we do is to
    map an appropriate area of /dev/mem into user space so that a program
@@ -135,7 +134,7 @@ init_iosys (void)
     {
       FILE * fp;
 
-      fp = fopen (PATH_CPUINFO, "r");
+      fp = fopen (PATH_CPUINFO, "rce");
       if (! fp)
 	return -1;
       while ((n = fscanf (fp, "Hardware\t: %256[^\n]\n", systype))

@@ -1,8 +1,4 @@
-#include <tls.h>
 #include <stdlib.h>
-
-#if defined HAVE___THREAD && defined HAVE_TLS_MODEL_ATTRIBUTE
-# define USE_TLS__THREAD
 
 struct A
 {
@@ -34,4 +30,3 @@ extern int f9b (void);
 extern int f10b (void);
 extern void check1 (void);
 extern void check2 (void);
-#endif

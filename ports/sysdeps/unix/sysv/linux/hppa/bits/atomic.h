@@ -1,4 +1,4 @@
-/* Copyright (C) 2003 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Carlos O'Donell <carlos@baldric.uwo.ca>, 2005.
 
@@ -13,14 +13,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
-#include <stdint.h>
-#include <sysdep.h>
-#include <abort-instr.h>
-#include <kernel-features.h>
+#include <stdint.h> /*  Required for type definitions e.g. uint8_t.  */
+#include <abort-instr.h> /*  Required for ABORT_INSTRUCTIUON.  */
+#include <kernel-features.h> /*  Required for __ASSUME_LWS_CAS.  */
 
 /* We need EFAULT, ENONSYS */
 #if !defined EFAULT && !defined ENOSYS
@@ -51,13 +49,13 @@ typedef uintmax_t uatomic_max_t;
      *addr = new;
    return prev; */
 
-/* Use the kernel atomic light weight syscalls on hppa.  */ 
+/* Use the kernel atomic light weight syscalls on hppa.  */
 #define _LWS "0xb0"
 #define _LWS_CAS "0"
 /* Note r31 is the link register.  */
 #define _LWS_CLOBBER "r1", "r26", "r25", "r24", "r23", "r22", "r21", "r20", "r28", "r31", "memory"
 /* String constant for -EAGAIN.  */
-#define _ASM_EAGAIN "-11" 
+#define _ASM_EAGAIN "-11"
 /* String constant for -EDEADLOCK.  */
 #define _ASM_EDEADLOCK "-45"
 
@@ -81,14 +79,13 @@ typedef uintmax_t uatomic_max_t;
 	"cmpb,=,n %%r25, %%r21, 0b		\n\t"			\
 	"nop					\n\t"			\
 	"stw	%%r28, %0			\n\t"			\
-        "sub	%%r0, %%r21, %%r21		\n\t"			\
 	"stw	%%r21, %1			\n\t"			\
 	: "=m" (lws_ret), "=m" (lws_errno) 				\
         : "r" (mem), "r" (oldval), "r" (newval)				\
 	: _LWS_CLOBBER							\
      );									\
     									\
-     if(lws_errno == EFAULT || lws_errno == ENOSYS)			\
+     if(lws_errno == -EFAULT || lws_errno == -ENOSYS)			\
      	ABORT_INSTRUCTION;						\
     									\
      lws_ret;								\
@@ -99,11 +96,11 @@ typedef uintmax_t uatomic_max_t;
      int ret;								\
      ret = atomic_compare_and_exchange_val_acq(mem, newval, oldval);	\
      /* Return 1 if it was already acquired.  */			\
-     (ret != oldval);							\
+     (ret != (int)oldval);						\
    })
 #else
 # error __ASSUME_LWS_CAS is required to build glibc.
-#endif	
+#endif
 /* __ASSUME_LWS_CAS */
 
 #endif

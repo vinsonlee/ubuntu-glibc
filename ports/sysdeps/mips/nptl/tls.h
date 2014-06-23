@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  NPTL/MIPS version.
-   Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _TLS_H
 #define _TLS_H	1
@@ -38,12 +37,17 @@ typedef union dtv
   } pointer;
 } dtv_t;
 
+#ifdef __mips16
+/* MIPS16 uses GCC builtin to access the TP.  */
+# define READ_THREAD_POINTER() (__builtin_thread_pointer ())
+#else
 /* Note: rd must be $v1 to be ABI-conformant.  */
 # define READ_THREAD_POINTER() \
     ({ void *__result;							      \
        asm volatile (".set\tpush\n\t.set\tmips32r2\n\t"			      \
 		     "rdhwr\t%0, $29\n\t.set\tpop" : "=v" (__result));	      \
        __result; })
+#endif
 
 #else /* __ASSEMBLER__ */
 # include <tcb-offsets.h>
@@ -55,14 +59,6 @@ typedef union dtv
 	.set	pop
 #endif /* __ASSEMBLER__ */
 
-
-/* We require TLS support in the tools.  */
-#ifndef HAVE_TLS_SUPPORT
-# error "TLS support is required."
-#endif
-
-/* Signal that TLS support is available.  */
-#define USE_TLS	1
 
 #ifndef __ASSEMBLER__
 

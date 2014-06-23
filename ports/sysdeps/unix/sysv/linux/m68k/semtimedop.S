@@ -1,4 +1,4 @@
-/* Copyright (C) 2003 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Schwab <schwab@suse.de>, 2003.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 
@@ -34,7 +33,12 @@ ENTRY (semtimedop)
 	/* Save registers.  */
 	move.l	%d2, %a1
 	move.l	%d3, -(%sp)
+	cfi_adjust_cfa_offset (4)
 	move.l	%d5, -(%sp)
+	cfi_adjust_cfa_offset (4)
+	cfi_register (%d2, %a1)
+	cfi_rel_offset (%d3, 0)
+	cfi_rel_offset (%d5, 4)
 
 	move.l	#SYSOP_semtimedop, %d1
 	move.l	SEMID(%sp), %d2
@@ -47,8 +51,13 @@ ENTRY (semtimedop)
 
 	/* Restore registers.  */
 	move.l	(%sp)+, %d5
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (%d5)
 	move.l	(%sp)+, %d3
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (%d3)
 	move.l	%a1, %d2
+	cfi_restore (%d2)
 
 	/* Check for error.  */
 	tst.l	%d0

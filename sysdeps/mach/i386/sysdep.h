@@ -1,5 +1,4 @@
-/* Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2007
-     Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -14,9 +13,11 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
+
+#ifndef _MACH_I386_SYSDEP_H
+#define _MACH_I386_SYSDEP_H 1
 
 /* Defines RTLD_PRIVATE_ERRNO and USE_DL_SYSINFO.  */
 #include <dl-sysdep.h>
@@ -27,7 +28,7 @@
 #define SNARF_ARGS(entry_sp, argc, argv, envp)				      \
   do									      \
     {									      \
-      register char **p;						      \
+      char **p;								      \
       argc = (int) *entry_sp;						      \
       argv = (char **) (entry_sp + 1);					      \
       p = argv;								      \
@@ -64,3 +65,5 @@
 #undef ENTRY
 #undef ALIGN
 #include <sysdeps/unix/i386/sysdep.h>
+
+#endif /* mach/i386/sysdep.h */

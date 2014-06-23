@@ -1,4 +1,4 @@
-/* Copyright (C) 1999, 2000, 2002, 2003, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 1999.
 
@@ -13,27 +13,35 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _LDCONFIG_H
 #define _LDCONFIG_H
 
-#define FLAG_ANY		-1
-#define FLAG_TYPE_MASK		0x00ff
-#define FLAG_LIBC4		0x0000
-#define FLAG_ELF		0x0001
-#define FLAG_ELF_LIBC5		0x0002
-#define FLAG_ELF_LIBC6		0x0003
-#define FLAG_REQUIRED_MASK	0xff00
-#define FLAG_SPARC_LIB64	0x0100
-#define FLAG_IA64_LIB64		0x0200
-#define FLAG_X8664_LIB64	0x0300
-#define FLAG_S390_LIB64		0x0400
-#define FLAG_POWERPC_LIB64	0x0500
-#define FLAG_MIPS64_LIBN32	0x0600
-#define FLAG_MIPS64_LIBN64	0x0700
+#include <stdint.h>
+
+#define FLAG_ANY			-1
+#define FLAG_TYPE_MASK			0x00ff
+#define FLAG_LIBC4			0x0000
+#define FLAG_ELF			0x0001
+#define FLAG_ELF_LIBC5			0x0002
+#define FLAG_ELF_LIBC6			0x0003
+#define FLAG_REQUIRED_MASK		0xff00
+#define FLAG_SPARC_LIB64		0x0100
+#define FLAG_IA64_LIB64			0x0200
+#define FLAG_X8664_LIB64		0x0300
+#define FLAG_S390_LIB64			0x0400
+#define FLAG_POWERPC_LIB64		0x0500
+#define FLAG_MIPS64_LIBN32		0x0600
+#define FLAG_MIPS64_LIBN64		0x0700
+#define FLAG_X8664_LIBX32		0x0800
+#define FLAG_ARM_LIBHF			0x0900
+#define FLAG_AARCH64_LIB64		0x0a00
+#define FLAG_ARM_LIBSF			0x0b00
+#define FLAG_MIPS_LIB32_NAN2008		0x0c00
+#define FLAG_MIPS64_LIBN32_NAN2008	0x0d00
+#define FLAG_MIPS64_LIBN64_NAN2008	0x0e00
 
 /* Name of auxiliary cache.  */
 #define _PATH_LDCONFIG_AUX_CACHE "/var/cache/ldconfig/aux-cache"
@@ -81,9 +89,6 @@ extern int opt_verbose;
 extern int opt_format;
 
 /* Prototypes for a few program-wide used functions.  */
-extern void *xmalloc (size_t __n);
-extern void *xcalloc (size_t __n, size_t __size);
-extern void *xrealloc (void *__p, size_t __n);
-extern char *xstrdup (const char *__str);
+#include <programs/xmalloc.h>
 
 #endif /* ! _LDCONFIG_H  */

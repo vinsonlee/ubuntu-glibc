@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,17 +13,17 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <shlib-compat.h>
 #include <lowlevellock.h>
 #include <lowlevelcond.h>
 #include <kernel-features.h>
+#include <pthread-pi-defines.h>
 #include <pthread-errnos.h>
-
+#include <stap-probe.h>
 
 	.text
 
@@ -36,12 +36,15 @@ __pthread_cond_signal:
 	cfi_startproc
 	pushl	%ebx
 	cfi_adjust_cfa_offset(4)
+	cfi_rel_offset(%ebx, 0)
 	pushl	%edi
 	cfi_adjust_cfa_offset(4)
-	cfi_offset(%ebx, -8)
-	cfi_offset(%edi, -12)
+	cfi_rel_offset(%edi, 0)
+	cfi_remember_state
 
 	movl	12(%esp), %edi
+
+	LIBC_PROBE (cond_signal, 1, %edi)
 
 	/* Get internal lock.  */
 	movl	$1, %edx
@@ -75,17 +78,27 @@ __pthread_cond_signal:
 	/* Wake up one thread.  */
 	pushl	%esi
 	cfi_adjust_cfa_offset(4)
+	cfi_rel_offset(%esi, 0)
 	pushl	%ebp
 	cfi_adjust_cfa_offset(4)
-	cfi_offset(%esi, -16)
-	cfi_offset(%ebp, -20)
+	cfi_rel_offset(%ebp, 0)
 
 #if FUTEX_PRIVATE_FLAG > 255
 	xorl	%ecx, %ecx
 #endif
 	cmpl	$-1, dep_mutex-cond_futex(%ebx)
 	sete	%cl
-	subl	$1, %ecx
+	je	8f
+
+	movl	dep_mutex-cond_futex(%ebx), %edx
+	/* Requeue to a non-robust PI mutex if the PI bit is set and
+	   the robust bit is not set.  */
+	movl	MUTEX_KIND(%edx), %eax
+	andl	$(ROBUST_BIT|PI_BIT), %eax
+	cmpl	$PI_BIT, %eax
+	je	9f
+
+8:	subl	$1, %ecx
 #ifdef __ASSUME_PRIVATE_FUTEX
 	andl	$FUTEX_PRIVATE_FLAG, %ecx
 #else
@@ -121,13 +134,36 @@ __pthread_cond_signal:
 	cfi_restore(%ebx)
 	ret
 
-	cfi_adjust_cfa_offset(8)
-	cfi_offset(%ebx, -8)
-	cfi_offset(%edi, -12)
+	cfi_restore_state
 
-7:	/* %ecx should be either FUTEX_WAKE_OP or
-	   FUTEX_WAKE_OP|FUTEX_PRIVATE_FLAG from the previous syscall.  */
-	xorl	$(FUTEX_WAKE ^ FUTEX_WAKE_OP), %ecx
+9:	movl	$(FUTEX_CMP_REQUEUE_PI|FUTEX_PRIVATE_FLAG), %ecx
+	movl	$SYS_futex, %eax
+	movl	$1, %edx
+	xorl	%esi, %esi
+	movl	dep_mutex-cond_futex(%ebx), %edi
+	movl	(%ebx), %ebp
+	/* FIXME: Until Ingo fixes 4G/4G vDSO, 6 arg syscalls are broken for
+	   sysenter.
+	ENTER_KERNEL  */
+	int	$0x80
+	popl	%ebp
+	popl	%esi
+
+	leal	-cond_futex(%ebx), %edi
+
+	/* For any kind of error, we try again with WAKE.
+	   The general test also covers running on old kernels.  */
+	cmpl	$-4095, %eax
+	jb	4f
+
+7:
+#ifdef __ASSUME_PRIVATE_FUTEX
+	andl	$FUTEX_PRIVATE_FLAG, %ecx
+#else
+	andl	%gs:PRIVATE_FUTEX, %ecx
+#endif
+	orl	$FUTEX_WAKE, %ecx
+
 	movl	$SYS_futex, %eax
 	/* %edx should be 1 already from $FUTEX_WAKE_OP syscall.
 	movl	$1, %edx  */

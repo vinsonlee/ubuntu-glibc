@@ -1,5 +1,5 @@
 /* Print floating point number in hexadecimal notation according to ISO C99.
-   Copyright (C) 1997,1998,1999,2000,2001,2005 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef LONG_DOUBLE_DENORM_BIAS
 # define LONG_DOUBLE_DENORM_BIAS (IEEE854_LONG_DOUBLE_BIAS - 1)
@@ -26,10 +25,11 @@ do {									      \
       /* The "strange" 80 bit format on ix86 and m68k has an explicit	      \
 	 leading digit in the 64 bit mantissa.  */			      \
       unsigned long long int num;					      \
+      union ieee854_long_double u;					      \
+      u.d = fpnum.ldbl;							      \
 									      \
-									      \
-      num = (((unsigned long long int) fpnum.ldbl.ieee.mantissa0) << 32	      \
-	     | fpnum.ldbl.ieee.mantissa1);				      \
+      num = (((unsigned long long int) u.ieee.mantissa0) << 32		      \
+	     | u.ieee.mantissa1);					      \
 									      \
       zero_mantissa = num == 0;						      \
 									      \
@@ -58,10 +58,11 @@ do {									      \
 									      \
       /* We use a full nibble for the leading digit.  */		      \
       leading = *numstr++;						      \
+      wnumstr++;							      \
 									      \
       /* We have 3 bits from the mantissa in the leading nibble.	      \
 	 Therefore we are here using `IEEE854_LONG_DOUBLE_BIAS + 3'.  */      \
-      exponent = fpnum.ldbl.ieee.exponent;				      \
+      exponent = u.ieee.exponent;					      \
 									      \
       if (exponent == 0)						      \
 	{								      \

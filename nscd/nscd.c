@@ -1,4 +1,4 @@
-/* Copyright (c) 1998-2006, 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1998.
 
@@ -13,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 /* nscd - Name Service Cache Daemon. Caches passwd, group, and hosts.  */
 
@@ -46,6 +45,9 @@
 #include "selinux.h"
 #include "../nss/nsswitch.h"
 #include <device-nrs.h>
+#ifdef HAVE_INOTIFY
+# include <sys/inotify.h>
+#endif
 
 /* Get libc version number.  */
 #include <version.h>
@@ -69,7 +71,20 @@ thread_info_t thread_info;
 int do_shutdown;
 int disabled_passwd;
 int disabled_group;
-int go_background = 1;
+
+typedef enum
+{
+  /* Running in background as daemon.  */
+  RUN_DAEMONIZE,
+  /* Running in foreground but otherwise behave like a daemon,
+     i.e., detach from terminal and use syslog.  This allows
+     better integration with services like systemd.  */
+  RUN_FOREGROUND,
+  /* Run in foreground in debug mode.  */
+  RUN_DEBUG
+} run_modes;
+
+static run_modes run_mode = RUN_DAEMONIZE;
 
 static const char *conffile = _PATH_NSCDCONF;
 
@@ -91,6 +106,9 @@ static int write_pid (const char *file);
 static void print_version (FILE *stream, struct argp_state *state);
 void (*argp_program_version_hook) (FILE *, struct argp_state *) = print_version;
 
+/* Function to print some extra text in the help message.  */
+static char *more_help (int key, const char *text, void *input);
+
 /* Definitions of arguments for argp functions.  */
 static const struct argp_option options[] =
 {
@@ -98,6 +116,8 @@ static const struct argp_option options[] =
     N_("Read configuration data from NAME") },
   { "debug", 'd', NULL, 0,
     N_("Do not fork and display messages on the current tty") },
+  { "foreground", 'F', NULL, 0,
+    N_("Do not fork, but otherwise behave like a daemon") },
   { "nthreads", 't', N_("NUMBER"), 0, N_("Start NUMBER threads") },
   { "shutdown", 'K', NULL, 0, N_("Shut the server down") },
   { "statistics", 'g', NULL, 0, N_("Print current configuration statistics") },
@@ -117,7 +137,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state);
 /* Data structure to communicate with argp functions.  */
 static struct argp argp =
 {
-  options, parse_opt, NULL, doc,
+  options, parse_opt, NULL, doc, NULL, more_help
 };
 
 /* True if only statistics are requested.  */
@@ -168,16 +188,20 @@ main (int argc, char **argv)
   /* Determine page size.  */
   pagesize_m1 = getpagesize () - 1;
 
-  /* Behave like a daemon.  */
-  if (go_background)
+  if (run_mode == RUN_DAEMONIZE || run_mode == RUN_FOREGROUND)
     {
       int i;
+      pid_t pid;
 
-      pid_t pid = fork ();
-      if (pid == -1)
-	error (EXIT_FAILURE, errno, _("cannot fork"));
-      if (pid != 0)
-	exit (0);
+      /* Behave like a daemon.  */
+      if (run_mode == RUN_DAEMONIZE)
+	{
+	  pid = fork ();
+	  if (pid == -1)
+	    error (EXIT_FAILURE, errno, _("cannot fork"));
+	  if (pid != 0)
+	    exit (0);
+	}
 
       int nullfd = open (_PATH_DEVNULL, O_RDWR);
       if (nullfd != -1)
@@ -228,12 +252,6 @@ main (int argc, char **argv)
 	for (i = min_close_fd; i < getdtablesize (); i++)
 	  close (i);
 
-      pid = fork ();
-      if (pid == -1)
-	error (EXIT_FAILURE, errno, _("cannot fork"));
-      if (pid != 0)
-	exit (0);
-
       setsid ();
 
       if (chdir ("/") != 0)
@@ -243,7 +261,7 @@ main (int argc, char **argv)
       openlog ("nscd", LOG_CONS | LOG_ODELAY, LOG_DAEMON);
 
       if (write_pid (_PATH_NSCDPID) < 0)
-        dbg_log ("%s: %s", _PATH_NSCDPID, strerror (errno));
+	dbg_log ("%s: %s", _PATH_NSCDPID, strerror (errno));
 
       if (!init_logfile ())
 	dbg_log (_("Could not create log file"));
@@ -254,12 +272,8 @@ main (int argc, char **argv)
       signal (SIGTSTP, SIG_IGN);
     }
   else
-    /* In foreground mode we are not paranoid.  */
+    /* In debug mode we are not paranoid.  */
     paranoia = 0;
-
-  /* Start the SELinux AVC.  */
-  if (selinux_enabled)
-    nscd_avc_init ();
 
   signal (SIGINT, termination_handler);
   signal (SIGQUIT, termination_handler);
@@ -269,11 +283,30 @@ main (int argc, char **argv)
   /* Cleanup files created by a previous 'bind'.  */
   unlink (_PATH_NSCDSOCKET);
 
+#ifdef HAVE_INOTIFY
+  /* Use inotify to recognize changed files.  */
+  inotify_fd = inotify_init1 (IN_NONBLOCK);
+# ifndef __ASSUME_IN_NONBLOCK
+  if (inotify_fd == -1 && errno == ENOSYS)
+    {
+      inotify_fd = inotify_init ();
+      if (inotify_fd != -1)
+	fcntl (inotify_fd, F_SETFL, O_RDONLY | O_NONBLOCK);
+    }
+# endif
+#endif
+
+#ifdef USE_NSCD
   /* Make sure we do not get recursive calls.  */
-  __nss_disable_nscd ();
+  __nss_disable_nscd (register_traced_file);
+#endif
 
   /* Init databases.  */
   nscd_init ();
+
+  /* Start the SELinux AVC.  */
+  if (selinux_enabled)
+    nscd_avc_init ();
 
   /* Handle incoming requests */
   start_threads ();
@@ -290,7 +323,11 @@ parse_opt (int key, char *arg, struct argp_state *state)
     {
     case 'd':
       ++debug_level;
-      go_background = 0;
+      run_mode = RUN_DEBUG;
+      break;
+
+    case 'F':
+      run_mode = RUN_FOREGROUND;
       break;
 
     case 'f':
@@ -338,7 +375,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
 	      break;
 
 	  if (cnt == lastdb)
-	    return ARGP_ERR_UNKNOWN;
+	    {
+	      argp_error (state, _("'%s' is not a known database"), arg);
+	      return EINVAL;
+	    }
 
 	  size_t arg_len = strlen (arg) + 1;
 	  struct
@@ -398,16 +438,55 @@ parse_opt (int key, char *arg, struct argp_state *state)
   return 0;
 }
 
+/* Print bug-reporting information in the help message.  */
+static char *
+more_help (int key, const char *text, void *input)
+{
+  char *tables, *tp = NULL;
+
+  switch (key)
+    {
+    case ARGP_KEY_HELP_EXTRA:
+      {
+	dbtype cnt;
+
+	tables = xmalloc (sizeof (dbnames) + 1);
+	for (cnt = 0; cnt < lastdb; cnt++)
+	  {
+	    strcat (tables, dbnames[cnt]);
+	    strcat (tables, " ");
+	  }
+      }
+
+      /* We print some extra information.  */
+      if (asprintf (&tp, gettext ("\
+Supported tables:\n\
+%s\n\
+\n\
+For bug reporting instructions, please see:\n\
+%s.\n\
+"), tables, REPORT_BUGS_TO) < 0)
+	tp = NULL;
+      free (tables);
+      return tp;
+
+    default:
+      break;
+    }
+
+  return (char *) text;
+}
+
 /* Print the version information.  */
 static void
 print_version (FILE *stream, struct argp_state *state)
 {
-  fprintf (stream, "nscd (GNU %s) %s\n", PACKAGE, VERSION);
+  fprintf (stream, "nscd %s%s\n", PKGVERSION, VERSION);
   fprintf (stream, gettext ("\
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
-"), "2008");
+"), "2014");
   fprintf (stream, gettext ("Written by %s.\n"),
 	   "Thorsten Kukuk and Ulrich Drepper");
 }
@@ -454,7 +533,7 @@ termination_handler (int signum)
   /* Synchronize memory.  */
   for (int cnt = 0; cnt < lastdb; ++cnt)
     {
-      if (!dbs[cnt].enabled)
+      if (!dbs[cnt].enabled || dbs[cnt].head == NULL)
 	continue;
 
       /* Make sure nobody keeps using the database.  */
@@ -464,10 +543,6 @@ termination_handler (int signum)
 	// XXX async OK?
 	msync (dbs[cnt].head, dbs[cnt].memsize, MS_ASYNC);
     }
-
-  /* Shutdown the SELinux AVC.  */
-  if (selinux_enabled)
-    nscd_avc_destroy ();
 
   _exit (EXIT_SUCCESS);
 }
@@ -492,7 +567,7 @@ check_pid (const char *file)
 	 the PID is the same as the current process' since tha latter
 	 can mean we re-exec.  */
       if ((n != 1 || kill (pid, 0) == 0) && pid != getpid ())
-        return 1;
+	return 1;
     }
 
   return 0;

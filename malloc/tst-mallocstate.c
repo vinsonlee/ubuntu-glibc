@@ -1,4 +1,4 @@
-/* Copyright (C) 2001 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Wolfram Gloger <wg@malloc.de>, 2001.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <stdio.h>
@@ -49,19 +48,19 @@ main (void)
 
   free (malloc (10));
 
-  for (i=0; i<100; ++i)
+  for (i = 0; i < 100; ++i)
     {
       save_state = malloc_get_state ();
       if (save_state == NULL)
-	{
-	  merror ("malloc_get_state () failed.");
-	  break;
-	}
+        {
+          merror ("malloc_get_state () failed.");
+          break;
+        }
       /*free (malloc (10)); This could change the top chunk! */
       malloc_set_state (save_state);
-      p1 = realloc (p1, i*4 + 4);
+      p1 = realloc (p1, i * 4 + 4);
       if (p1 == NULL)
-	merror ("realloc (i*4) failed.");
+        merror ("realloc (i*4) failed.");
       free (save_state);
     }
 

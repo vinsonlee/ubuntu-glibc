@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+# Copyright (C) 1995-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
 # Lesser General Public License for more details.
 
 # You should have received a copy of the GNU Lesser General Public
-# License along with the GNU C Library; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307 USA.
+# License along with the GNU C Library; if not, see
+# <http://www.gnu.org/licenses/>.
 
 subdir		:= dlfcn
 headers		:= bits/dlfcn.h dlfcn.h
@@ -23,18 +22,12 @@ libdl-routines	:= dlopen dlclose dlsym dlvsym dlerror dladdr dladdr1 dlinfo \
 		   dlmopen dlfcn
 routines	:= $(patsubst %,s%,$(filter-out dlfcn,$(libdl-routines)))
 elide-routines.os := $(routines)
-distribute	:= dlopenold.c glreflib1.c glreflib2.c glreflib3.c \
-		   failtestmod.c \
-		   defaultmod1.c defaultmod2.c errmsg1mod.c modatexit.c \
-		   modcxaatexit.c modstatic.c modstatic2.c \
-		   bug-dlsym1-lib1.c bug-dlsym1-lib2.c bug-atexit1-lib.c \
-		   bug-atexit2-lib.c
 
 extra-libs-others := libdl
 
 include ../Makeconfig
 
-ifeq ($(versioning),yes)
+ifeq ($(build-shared),yes)
 libdl-routines	+= dlopenold
 libdl-shared-only-routines := dlopenold dlfcn
 endif
@@ -42,23 +35,27 @@ endif
 ifeq (yes,$(build-shared))
 tests = glrefmain failtest tst-dladdr default errmsg1 tstcxaatexit \
 	bug-dlopen1 bug-dlsym1 tst-dlinfo bug-atexit1 bug-atexit2 \
-	bug-atexit3 tstatexit
+	bug-atexit3 tstatexit bug-dl-leaf
 endif
 modules-names = glreflib1 glreflib2 glreflib3 failtestmod defaultmod1 \
 		defaultmod2 errmsg1mod modatexit modcxaatexit \
 		bug-dlsym1-lib1 bug-dlsym1-lib2 bug-atexit1-lib \
-		bug-atexit2-lib bug-atexit3-lib
+		bug-atexit2-lib bug-atexit3-lib bug-dl-leaf-lib \
+		bug-dl-leaf-lib-cb
 
 failtestmod.so-no-z-defs = yes
 glreflib2.so-no-z-defs = yes
 errmsg1mod.so-no-z-defs = yes
 
-ifeq (yesyesyes,$(build-static)$(build-shared)$(elf))
-tests += tststatic tststatic2
-tests-static += tststatic tststatic2
-modules-names += modstatic modstatic2
+ifeq (yes,$(build-shared))
+tests += tststatic tststatic2 tststatic3 tststatic4 tststatic5
+tests-static += tststatic tststatic2 tststatic3 tststatic4 tststatic5
+modules-names += modstatic modstatic2 modstatic3 modstatic5
 tststatic-ENV = LD_LIBRARY_PATH=$(objpfx):$(common-objpfx):$(common-objpfx)elf
-tststatic2-ENV = LD_LIBRARY_PATH=$(objpfx):$(common-objpfx):$(common-objpfx)elf
+tststatic2-ENV = $(tststatic-ENV)
+tststatic3-ENV = $(tststatic-ENV)
+tststatic4-ENV = $(tststatic-ENV)
+tststatic5-ENV = $(tststatic-ENV)
 endif
 
 extra-test-objs += $(modules-names:=.os)
@@ -89,9 +86,9 @@ LDFLAGS-glreflib3.so = -Wl,-rpath,:
 
 LDFLAGS-default = $(LDFLAGS-rdynamic)
 $(objpfx)default: $(libdl) $(objpfx)defaultmod1.so $(objpfx)defaultmod2.so
-$(objpfx)defaultmod1.so: $(libdl) $(common-objpfx)libc_nonshared.a
+$(objpfx)defaultmod1.so: $(libdl)
 LDFLAGS-defaultmod2.so = $(LDFLAGS-Bsymbolic)
-$(objpfx)defaultmod2.so: $(libdl) $(common-objpfx)libc_nonshared.a
+$(objpfx)defaultmod2.so: $(libdl)
 
 $(objpfx)errmsg1: $(libdl)
 $(objpfx)errmsg1.out: $(objpfx)errmsg1 $(objpfx)errmsg1mod.so
@@ -102,8 +99,6 @@ $(objpfx)tstatexit.out: $(objpfx)tstatexit $(objpfx)modatexit.so
 $(objpfx)tstcxaatexit: $(libdl)
 $(objpfx)tstcxaatexit.out: $(objpfx)tstcxaatexit $(objpfx)modcxaatexit.so
 
-$(objpfx)modatexit.so: $(common-objpfx)libc.so $(common-objpfx)libc_nonshared.a
-
 $(objpfx)tststatic: $(objpfx)libdl.a
 $(objpfx)tststatic.out: $(objpfx)tststatic $(objpfx)modstatic.so
 
@@ -111,40 +106,35 @@ $(objpfx)tststatic2: $(objpfx)libdl.a
 $(objpfx)tststatic2.out: $(objpfx)tststatic2 $(objpfx)modstatic.so \
 			 $(objpfx)modstatic2.so
 
-$(objpfx)modstatic2.so: $(libdl) $(common-objpfx)libc.so \
-			$(common-objpfx)libc_nonshared.a
+$(objpfx)modstatic2.so: $(libdl)
+
+$(objpfx)tststatic3: $(objpfx)libdl.a
+$(objpfx)tststatic3.out: $(objpfx)tststatic3 $(objpfx)modstatic3.so
+
+$(objpfx)tststatic4: $(objpfx)libdl.a
+$(objpfx)tststatic4.out: $(objpfx)tststatic4 $(objpfx)modstatic3.so
+
+$(objpfx)tststatic5: $(objpfx)libdl.a
+$(objpfx)tststatic5.out: $(objpfx)tststatic5 $(objpfx)modstatic5.so
 
 $(objpfx)bug-dlopen1: $(libdl)
 
 $(objpfx)bug-dlsym1: $(libdl) $(objpfx)bug-dlsym1-lib2.so
 $(objpfx)bug-dlsym1.out: $(objpfx)bug-dlsym1-lib1.so \
 			 $(objpfx)bug-dlsym1-lib2.so
-$(objpfx)bug-dlsym1-lib1.so: $(objpfx)bug-dlsym1-lib2.so \
-			     $(common-objpfx)libc.so \
-			     $(common-objpfx)libc_nonshared.a
-$(objpfx)bug-dlsym1-lib2.so: $(common-objpfx)libc.so \
-			     $(common-objpfx)libc_nonshared.a
+$(objpfx)bug-dlsym1-lib1.so: $(objpfx)bug-dlsym1-lib2.so
 
 $(objpfx)bug-atexit1: $(libdl)
 $(objpfx)bug-atexit1.out: $(objpfx)bug-atexit1-lib.so
-$(objpfx)bug-atexit1-lib.so: $(common-objpfx)libc.so \
-			     $(common-objpfx)libc_nonshared.a
 
 $(objpfx)bug-atexit2: $(libdl)
 $(objpfx)bug-atexit2.out: $(objpfx)bug-atexit2-lib.so
-$(objpfx)bug-atexit2-lib.so: $(common-objpfx)libc.so \
-			     $(common-objpfx)libc_nonshared.a
 
-LDLIBS-bug-atexit3-lib.so = -lstdc++ -lgcc_eh $(common-objpfx)elf/ld.so \
-			    $(common-objpfx)libc_nonshared.a
+LDLIBS-bug-atexit3-lib.so = -lstdc++ -lgcc_eh
 $(objpfx)bug-atexit3: $(libdl)
 $(objpfx)bug-atexit3.out: $(objpfx)bug-atexit3-lib.so
-$(objpfx)bug-atexit3-lib.so: $(common-objpfx)libc.so \
-			     $(common-objpfx)libc_nonshared.a
 
-
-# Depend on libc.so so a DT_NEEDED is generated in the shared objects.
-# This ensures they will load libc.so for needed symbols if loaded by
-# a statically-linked program that hasn't already loaded it.
-$(objpfx)libdl.so: $(common-objpfx)libc.so $(common-objpfx)libc_nonshared.a \
-		   $(if $(filter yes,$(elf)), $(elfobjdir)/ld.so)
+$(objpfx)bug-dl-leaf: $(objpfx)bug-dl-leaf-lib.so
+$(objpfx)bug-dl-leaf.out: $(objpfx)bug-dl-leaf-lib-cb.so
+$(objpfx)bug-dl-leaf-lib.so: $(libdl)
+$(objpfx)bug-dl-leaf-lib-cb.so: $(objpfx)bug-dl-leaf-lib.so

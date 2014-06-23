@@ -1,5 +1,5 @@
 /* Definitions for thread-local data handling.  NPTL/sparc version.
-   Copyright (C) 2003, 2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _TLS_H
 #define _TLS_H
@@ -65,10 +64,6 @@ typedef struct
 # include <tcb-offsets.h>
 #endif /* __ASSEMBLER__ */
 
-/* We require TLS support in the tools.  */
-#ifndef HAVE_TLS_SUPPORT
-# error "TLS support is required."
-#endif
 
 #ifndef __ASSEMBLER__
 /* Get system call information.  */
@@ -122,9 +117,9 @@ register struct pthread *__thread_self __asm__("%g7");
 #define THREAD_SELF  __thread_self
 
 /* Magic for libthread_db to know how to do THREAD_SELF.  */
-# define DB_THREAD_SELF_INCLUDE <sys/ucontext.h>
 # define DB_THREAD_SELF \
-  REGISTER (32, 32, REG_G7 * 4, 0) REGISTER (64, 64, REG_G7 * 8, 0)
+  REGISTER (32, 32, 10 * 4, 0) \
+  REGISTER (64, __WORDSIZE, (6 * 8) + (__WORDSIZE==64?0:4), 0)
 
 /* Access to data in the thread descriptor is easy.  */
 #define THREAD_GETMEM(descr, member) \

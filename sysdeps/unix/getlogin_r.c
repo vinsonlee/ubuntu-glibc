@@ -1,5 +1,5 @@
 /* Reentrant function to return the current login name.  Unix version.
-   Copyright (C) 1991,92,96,97,98,2002 Free Software Foundation, Inc.
+   Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <unistd.h>
@@ -31,6 +30,9 @@
    If it cannot be determined or some other error occurred, return the error
    code.  Otherwise return 0.  */
 
+#ifdef STATIC
+STATIC
+#endif
 int
 getlogin_r (name, name_len)
      char *name;
@@ -96,4 +98,6 @@ getlogin_r (name, name_len)
 
   return result;
 }
+#ifndef STATIC
 libc_hidden_def (getlogin_r)
+#endif

@@ -1,4 +1,4 @@
-/* Copyright (C) 1999, 2006, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
 #include <stdlib.h>
@@ -44,12 +43,11 @@ libc_hidden_proto (STRTOF)
 #define FLOAT_HUGE_VAL	HUGE_VALL
 # define SET_MANTISSA(flt, mant) \
   do { union ibm_extended_long_double u;				      \
-       u.d = (flt);							      \
-       if ((mant & 0xfffffffffffffULL) == 0)				      \
-	 mant = 0x8000000000000ULL;					      \
-       u.ieee.mantissa0 = ((mant) >> 32) & 0xfffff;			      \
-       u.ieee.mantissa1 = (mant) & 0xffffffff;				      \
-       (flt) = u.d;							      \
+       u.ld = (flt);							      \
+       u.d[0].ieee_nan.mantissa0 = (mant) >> 32;			      \
+       u.d[0].ieee_nan.mantissa1 = (mant);				      \
+       if ((u.d[0].ieee.mantissa0 | u.d[0].ieee.mantissa1) != 0)	      \
+	 (flt) = u.ld;							      \
   } while (0)
 
 #include <strtod_l.c>

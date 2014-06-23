@@ -1,5 +1,4 @@
-/* Copyright (C) 1997,1998,2000-2003,2005,2006,2007
-   Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1997.
 
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <atomic.h>
 #include <ctype.h>
@@ -40,10 +38,10 @@ static u_long tablename_len;
 
 
 #define NISENTRYVAL(idx, col, res) \
-        (NIS_RES_OBJECT (res)[idx].zo_data.objdata_u.en_data.en_cols.en_cols_val[col].ec_value.ec_value_val)
+	(NIS_RES_OBJECT (res)[idx].zo_data.objdata_u.en_data.en_cols.en_cols_val[col].ec_value.ec_value_val)
 
 #define NISENTRYLEN(idx, col, res) \
-        (NIS_RES_OBJECT (res)[idx].zo_data.objdata_u.en_data.en_cols.en_cols_val[col].ec_value.ec_value_len)
+	(NIS_RES_OBJECT (res)[idx].zo_data.objdata_u.en_data.en_cols.en_cols_val[col].ec_value.ec_value_len)
 
 static int
 _nss_nisplus_parse_etherent (nis_result *result, struct etherent *ether,
@@ -136,7 +134,7 @@ _nss_nisplus_setetherent (int stayopen)
 
   __libc_lock_unlock (lock);
 
-  return NSS_STATUS_SUCCESS;
+  return status;
 }
 
 enum nss_status

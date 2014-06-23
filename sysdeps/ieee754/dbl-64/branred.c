@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * Written by International Business Machines Corp.
- * Copyright (C) 2001 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2014 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,7 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 /*******************************************************************/
 /*                                                                 */
@@ -36,7 +35,11 @@
 #include "endian.h"
 #include "mydefs.h"
 #include "branred.h"
-#include "math_private.h"
+#include <math_private.h>
+
+#ifndef SECTION
+# define SECTION
+#endif
 
 
 /*******************************************************************/
@@ -45,16 +48,12 @@
 /* x=n*pi/2+(a+aa), abs(a+aa)<pi/4, n=0,+-1,+-2,....               */
 /* Routine return integer (n mod 4)                                */
 /*******************************************************************/
-int __branred(double x, double *a, double *aa)
+int
+SECTION
+__branred(double x, double *a, double *aa)
 {
   int i,k;
-#if 0
-  int n;
-#endif
   mynumber  u,gor;
-#if 0
-  mynumber v;
-#endif
   double r[6],s,t,sum,b,bb,sum1,sum2,b1,bb1,b2,bb2,x1,x2,t1,t2;
 
   x*=tm600.x;

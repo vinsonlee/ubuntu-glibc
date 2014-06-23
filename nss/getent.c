@@ -1,4 +1,4 @@
-/* Copyright (c) 1998-2007, 2008 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1998.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* getent: get entries from administrative database.  */
 
@@ -24,12 +23,14 @@
 #include <ctype.h>
 #include <error.h>
 #include <grp.h>
+#include <gshadow.h>
 #include <libintl.h>
 #include <locale.h>
 #include <mcheck.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <shadow.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,14 +55,13 @@ static const char args_doc[] = N_("database [key ...]");
 /* Supported options. */
 static const struct argp_option args_options[] =
   {
-    { "service", 's', "CONFIG", 0, N_("Service configuration to be used") },
+    { "service", 's', N_("CONFIG"), 0, N_("Service configuration to be used") },
+    { "no-idn", 'i', NULL, 0, N_("disable IDN encoding") },
     { NULL, 0, NULL, 0, NULL },
   };
 
 /* Short description of program.  */
-static const char doc[] = N_("Get entries from administrative database.\v\
-For bug reporting instructions, please see:\n\
-<http://www.gnu.org/software/libc/bugs.html>.\n");
+static const char doc[] = N_("Get entries from administrative database.");
 
 /* Prototype for option handler.  */
 static error_t parse_option (int key, char *arg, struct argp_state *state);
@@ -75,21 +75,24 @@ static struct argp argp =
     args_options, parse_option, args_doc, doc, NULL, more_help
   };
 
+/* Additional getaddrinfo flags for IDN encoding.  */
+static int idn_flags = AI_IDN | AI_CANONIDN;
+
 /* Print the version information.  */
 static void
 print_version (FILE *stream, struct argp_state *state)
 {
-  fprintf (stream, "getent (GNU %s) %s\n", PACKAGE, VERSION);
+  fprintf (stream, "getent %s%s\n", PKGVERSION, VERSION);
   fprintf (stream, gettext ("\
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
-"), "2008");
+"), "2014");
   fprintf (stream, gettext ("Written by %s.\n"), "Thorsten Kukuk");
 }
 
 /* This is for aliases */
-static inline void
+static void
 print_aliases (struct aliasent *alias)
 {
   unsigned int i = 0;
@@ -178,7 +181,7 @@ ethers_keys (int number, char *key[])
 }
 
 /* This is for group */
-static inline void
+static void
 print_group (struct group *grp)
 {
   unsigned int i = 0;
@@ -229,6 +232,70 @@ group_keys (int number, char *key[])
 	result = 2;
       else
 	print_group (grp);
+    }
+
+  return result;
+}
+
+/* This is for gshadow */
+static void
+print_gshadow (struct sgrp *sg)
+{
+  unsigned int i = 0;
+
+  printf ("%s:%s:",
+	  sg->sg_namp ? sg->sg_namp : "",
+	  sg->sg_passwd ? sg->sg_passwd : "");
+
+  while (sg->sg_adm[i] != NULL)
+    {
+      fputs_unlocked (sg->sg_adm[i], stdout);
+      ++i;
+      if (sg->sg_adm[i] != NULL)
+	putchar_unlocked (',');
+    }
+
+  putchar_unlocked (':');
+
+  i = 0;
+  while (sg->sg_mem[i] != NULL)
+    {
+      fputs_unlocked (sg->sg_mem[i], stdout);
+      ++i;
+      if (sg->sg_mem[i] != NULL)
+	putchar_unlocked (',');
+    }
+
+  putchar_unlocked ('\n');
+}
+
+static int
+gshadow_keys (int number, char *key[])
+{
+  int result = 0;
+  int i;
+
+  if (number == 0)
+    {
+      struct sgrp *sg;
+
+      setsgent ();
+      while ((sg = getsgent ()) != NULL)
+	print_gshadow (sg);
+      endsgent ();
+      return result;
+    }
+
+  for (i = 0; i < number; ++i)
+    {
+      struct sgrp *sg;
+
+      sg = getsgnam (key[i]);
+
+      if (sg == NULL)
+	result = 2;
+      else
+	print_gshadow (sg);
     }
 
   return result;
@@ -314,7 +381,8 @@ ahosts_keys_int (int af, int xflags, int number, char *key[])
 
   struct addrinfo hint;
   memset (&hint, '\0', sizeof (hint));
-  hint.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG | AI_CANONNAME | xflags;
+  hint.ai_flags = (AI_V4MAPPED | AI_ADDRCONFIG | AI_CANONNAME
+		   | idn_flags | xflags);
   hint.ai_family = af;
 
   for (i = 0; i < number; ++i)
@@ -403,7 +471,6 @@ static int
 netgroup_keys (int number, char *key[])
 {
   int result = 0;
-  int i;
 
   if (number == 0)
     {
@@ -411,18 +478,28 @@ netgroup_keys (int number, char *key[])
       return 3;
     }
 
-  for (i = 0; i < number; ++i)
+  if (number == 4)
     {
-      if (!setnetgrent (key[i]))
+      char *host = strcmp (key[1], "*") == 0 ? NULL : key[1];
+      char *user = strcmp (key[2], "*") == 0 ? NULL : key[2];
+      char *domain = strcmp (key[3], "*") == 0 ? NULL : key[3];
+
+      printf ("%-21s (%s,%s,%s) = %d\n",
+	      key[0], host ?: "", user ?: "", domain ?: "",
+	      innetgr (key[0], host, user, domain));
+    }
+  else if (number == 1)
+    {
+      if (!setnetgrent (key[0]))
 	result = 2;
       else
 	{
 	  char *p[3];
 
-	  printf ("%-21s", key[i]);
+	  printf ("%-21s", key[0]);
 
 	  while (getnetgrent (p, p + 1, p + 2))
-	    printf (" (%s, %s, %s)", p[0] ?: " ", p[1] ?: "", p[2] ?: "");
+	    printf (" (%s,%s,%s)", p[0] ?: " ", p[1] ?: "", p[2] ?: "");
 	  putchar_unlocked ('\n');
 	}
     }
@@ -430,6 +507,44 @@ netgroup_keys (int number, char *key[])
   endnetgrent ();
 
   return result;
+}
+
+/* This is for initgroups */
+static int
+initgroups_keys (int number, char *key[])
+{
+  int ngrps = 100;
+  size_t grpslen = ngrps * sizeof (gid_t);
+  gid_t *grps = alloca (grpslen);
+
+  if (number == 0)
+    {
+      fprintf (stderr, _("Enumeration not supported on %s\n"), "initgroups");
+      return 3;
+    }
+
+  for (int i = 0; i < number; ++i)
+    {
+      int no = ngrps;
+      int n;
+      while ((n = getgrouplist (key[i], -1, grps, &no)) == -1
+	     && no > ngrps)
+	{
+	  grps = extend_alloca (grps, grpslen, no * sizeof (gid_t));
+	  ngrps = no;
+	}
+
+      if (n == -1)
+	return 1;
+
+      printf ("%-21s", key[i]);
+      for (int j = 0; j < n; ++j)
+	if (grps[j] != -1)
+	  printf (" %ld", (long int) grps[j]);
+      putchar_unlocked ('\n');
+    }
+
+  return 0;
 }
 
 /* This is for networks */
@@ -448,8 +563,6 @@ print_networks (struct netent *net)
       putchar_unlocked (' ');
       fputs_unlocked (net->n_aliases[i], stdout);
       ++i;
-      if (net->n_aliases[i] != NULL)
-	putchar_unlocked (',');
     }
   putchar_unlocked ('\n');
 }
@@ -473,7 +586,7 @@ networks_keys (int number, char *key[])
   for (i = 0; i < number; ++i)
     {
       if (isdigit (key[i][0]))
-	net = getnetbyaddr (inet_addr (key[i]), AF_UNIX);
+	net = getnetbyaddr (ntohl (inet_addr (key[i])), AF_UNSPEC);
       else
 	net = getnetbyname (key[i]);
 
@@ -487,7 +600,7 @@ networks_keys (int number, char *key[])
 }
 
 /* Now is all for passwd */
-static inline void
+static void
 print_passwd (struct passwd *pwd)
 {
   printf ("%s:%s:%lu:%lu:%s:%s:%s\n",
@@ -538,7 +651,7 @@ passwd_keys (int number, char *key[])
 }
 
 /* This is for protocols */
-static inline void
+static void
 print_protocols (struct protoent *proto)
 {
   unsigned int i;
@@ -588,7 +701,7 @@ protocols_keys (int number, char *key[])
 }
 
 /* Now is all for rpc */
-static inline void
+static void
 print_rpc (struct rpcent *rpc)
 {
   int i;
@@ -675,8 +788,12 @@ services_keys (int number, char *key[])
       if (proto != NULL)
 	*proto++ = '\0';
 
-      if (isdigit (key[i][0]))
-	serv = getservbyport (htons (atol (key[i])), proto);
+      char *endptr;
+      long port = strtol (key[i], &endptr, 10);
+
+      if (isdigit (key[i][0]) && *endptr == '\0'
+	  && 0 <= port && port <= 65535)
+	serv = getservbyport (htons (port), proto);
       else
 	serv = getservbyname (key[i], proto);
 
@@ -728,7 +845,7 @@ shadow_keys (int number, char *key[])
       setspent ();
       while ((sp = getspent ()) != NULL)
 	print_shadow (sp);
-      endpwent ();
+      endspent ();
       return result;
     }
 
@@ -760,7 +877,9 @@ D(ahostsv6)
 D(aliases)
 D(ethers)
 D(group)
+D(gshadow)
 D(hosts)
+D(initgroups)
 D(netgroup)
 D(networks)
 D(passwd)
@@ -797,6 +916,10 @@ parse_option (int key, char *arg, struct argp_state *state)
 	  if (databases[i].name == NULL)
 	    error (EXIT_FAILURE, 0, gettext ("Unknown database name"));
 	}
+      break;
+
+    case 'i':
+      idn_flags = 0;
       break;
 
     default:
@@ -840,6 +963,12 @@ more_help (int key, const char *text, void *input)
 	      fputs_unlocked (databases[i].name, fp);
 	      col += len + 1;
 	    }
+
+	  fputs ("\n\n", fp);
+
+	  fprintf (fp, gettext ("\
+For bug reporting instructions, please see:\n\
+%s.\n"), REPORT_BUGS_TO);
 
 	  if (fclose (fp) == 0)
 	    return doc;

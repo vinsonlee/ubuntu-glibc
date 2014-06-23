@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,14 +13,15 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include "pthreadP.h"
 #include <hp-timing.h>
 #include <ldsodefs.h>
@@ -31,6 +32,8 @@
 
 #include <shlib-compat.h>
 
+#include <stap-probe.h>
+
 
 /* Local function to start thread and handle cleanup.  */
 static int start_thread (void *arg);
@@ -40,10 +43,10 @@ static int start_thread (void *arg);
 int __pthread_debug;
 
 /* Globally enabled events.  */
-static td_thr_events_t __nptl_threads_events;
+static td_thr_events_t __nptl_threads_events __attribute_used__;
 
 /* Pointer to descriptor with the last event.  */
-static struct pthread *__nptl_last_event;
+static struct pthread *__nptl_last_event __attribute_used__;
 
 /* Number of threads running.  */
 unsigned int __nptl_nthreads = 1;
@@ -239,6 +242,13 @@ start_thread (void *arg)
   /* Initialize resolver state pointer.  */
   __resp = &pd->res;
 
+  /* Initialize pointers to locale data.  */
+  __ctype_init ();
+
+  /* Allow setxid from now onwards.  */
+  if (__builtin_expect (atomic_exchange_acq (&pd->setxid_futex, 0) == -2, 0))
+    lll_futex_wake (&pd->setxid_futex, 1, LLL_PRIVATE);
+
 #ifdef __NR_set_robust_list
 # ifndef __ASSUME_SET_ROBUST_LIST
   if (__set_robust_list_avail >= 0)
@@ -292,6 +302,8 @@ start_thread (void *arg)
 	  CANCEL_RESET (oldtype);
 	}
 
+      LIBC_PROBE (pthread_start, 3, (pthread_t) pd, pd->start_routine, pd->arg);
+
       /* Run the code the user provided.  */
 #ifdef CALL_THREAD_FCT
       THREAD_SETMEM (pd, result, CALL_THREAD_FCT (pd));
@@ -299,6 +311,12 @@ start_thread (void *arg)
       THREAD_SETMEM (pd, result, pd->start_routine (pd->arg));
 #endif
     }
+
+  /* Call destructors for the thread_local TLS variables.  */
+#ifndef SHARED
+  if (&__call_tls_dtors != NULL)
+#endif
+    __call_tls_dtors ();
 
   /* Run the destructor for the thread-local data.  */
   __nptl_deallocate_tsd ();
@@ -348,7 +366,7 @@ start_thread (void *arg)
 
 #ifndef __ASSUME_SET_ROBUST_LIST
   /* If this thread has any robust mutexes locked, handle them now.  */
-# if __WORDSIZE == 64
+# ifdef __PTHREAD_MUTEX_HAVE_PREV
   void *robust = pd->robust_head.list;
 # else
   __pthread_slist_t *robust = pd->robust_list.__next;
@@ -377,6 +395,19 @@ start_thread (void *arg)
     }
 #endif
 
+  /* Mark the memory of the stack as usable to the kernel.  We free
+     everything except for the space used for the TCB itself.  */
+  size_t pagesize_m1 = __getpagesize () - 1;
+#ifdef _STACK_GROWS_DOWN
+  char *sp = CURRENT_STACK_FRAME;
+  size_t freesize = (sp - (char *) pd->stackblock) & ~pagesize_m1;
+#else
+# error "to do"
+#endif
+  assert (freesize < pd->stackblock_size);
+  if (freesize > PTHREAD_STACK_MIN)
+    __madvise (pd->stackblock, freesize - PTHREAD_STACK_MIN, MADV_DONTNEED);
+
   /* If the thread is detached free the TCB.  */
   if (IS_DETACHED (pd))
     /* Free the TCB.  */
@@ -396,7 +427,7 @@ start_thread (void *arg)
   /* We cannot call '_exit' here.  '_exit' will terminate the process.
 
      The 'exit' implementation in the kernel will signal when the
-     process is really dead since 'clone' got passed the CLONE_CLEARTID
+     process is really dead since 'clone' got passed the CLONE_CHILD_CLEARTID
      flag.  The 'tid' field in the TCB will be set to zero.
 
      The exit code is zero since in case all threads exit by calling
@@ -406,15 +437,6 @@ start_thread (void *arg)
   /* NOTREACHED */
   return 0;
 }
-
-
-/* Default thread attributes for the case when the user does not
-   provide any.  */
-static const struct pthread_attr default_attr =
-  {
-    /* Just some value > 0 which gets rounded to the nearest page size.  */
-    .guardsize = 1,
-  };
 
 
 int
@@ -427,17 +449,47 @@ __pthread_create_2_1 (newthread, attr, start_routine, arg)
   STACK_VARIABLES;
 
   const struct pthread_attr *iattr = (struct pthread_attr *) attr;
+  struct pthread_attr default_attr;
+  bool free_cpuset = false;
   if (iattr == NULL)
-    /* Is this the best idea?  On NUMA machines this could mean
-       accessing far-away memory.  */
-    iattr = &default_attr;
+    {
+      lll_lock (__default_pthread_attr_lock, LLL_PRIVATE);
+      default_attr = __default_pthread_attr;
+      size_t cpusetsize = default_attr.cpusetsize;
+      if (cpusetsize > 0)
+	{
+	  cpu_set_t *cpuset;
+	  if (__glibc_likely (__libc_use_alloca (cpusetsize)))
+	    cpuset = __alloca (cpusetsize);
+	  else
+	    {
+	      cpuset = malloc (cpusetsize);
+	      if (cpuset == NULL)
+		{
+		  lll_unlock (__default_pthread_attr_lock, LLL_PRIVATE);
+		  return ENOMEM;
+		}
+	      free_cpuset = true;
+	    }
+	  memcpy (cpuset, default_attr.cpuset, cpusetsize);
+	  default_attr.cpuset = cpuset;
+	}
+      lll_unlock (__default_pthread_attr_lock, LLL_PRIVATE);
+      iattr = &default_attr;
+    }
 
   struct pthread *pd = NULL;
   int err = ALLOCATE_STACK (iattr, &pd);
+  int retval = 0;
+
   if (__builtin_expect (err != 0, 0))
     /* Something went wrong.  Maybe a parameter of the attributes is
-       invalid or we could not allocate memory.  */
-    return err;
+       invalid or we could not allocate memory.  Note we have to
+       translate error codes.  */
+    {
+      retval = err == ENOMEM ? EAGAIN : err;
+      goto out;
+    }
 
 
   /* Initialize the TCB.  All initializations with zero should be
@@ -488,8 +540,7 @@ __pthread_create_2_1 (newthread, attr, start_routine, arg)
 #endif
 
   /* Determine scheduling parameters for the thread.  */
-  if (attr != NULL
-      && __builtin_expect ((iattr->flags & ATTR_FLAG_NOTINHERITSCHED) != 0, 0)
+  if (__builtin_expect ((iattr->flags & ATTR_FLAG_NOTINHERITSCHED) != 0, 0)
       && (iattr->flags & (ATTR_FLAG_SCHED_SET | ATTR_FLAG_POLICY_SET)) != 0)
     {
       INTERNAL_SYSCALL_DECL (scerr);
@@ -520,33 +571,32 @@ __pthread_create_2_1 (newthread, attr, start_routine, arg)
       if (pd->schedparam.sched_priority < minprio
 	  || pd->schedparam.sched_priority > maxprio)
 	{
-	  err = EINVAL;
-	  goto errout;
+	  /* Perhaps a thread wants to change the IDs and if waiting
+	     for this stillborn thread.  */
+	  if (__builtin_expect (atomic_exchange_acq (&pd->setxid_futex, 0)
+				== -2, 0))
+	    lll_futex_wake (&pd->setxid_futex, 1, LLL_PRIVATE);
+
+	  __deallocate_stack (pd);
+
+	  retval = EINVAL;
+	  goto out;
 	}
     }
 
   /* Pass the descriptor to the caller.  */
   *newthread = (pthread_t) pd;
 
-  /* Remember whether the thread is detached or not.  In case of an
-     error we have to free the stacks of non-detached stillborn
-     threads.  */
-  bool is_detached = IS_DETACHED (pd);
+  LIBC_PROBE (pthread_create, 4, newthread, attr, start_routine, arg);
 
   /* Start the thread.  */
-  err = create_thread (pd, iattr, STACK_VARIABLES_ARGS);
-  if (err != 0)
-    {
-      /* Something went wrong.  Free the resources.  */
-      if (!is_detached)
-	{
-	errout:
-	  __deallocate_stack (pd);
-	}
-      return err;
-    }
+  retval = create_thread (pd, iattr, STACK_VARIABLES_ARGS);
 
-  return 0;
+ out:
+  if (__glibc_unlikely (free_cpuset))
+    free (default_attr.cpuset);
+
+  return retval;
 }
 versioned_symbol (libpthread, __pthread_create_2_1, pthread_create, GLIBC_2_1);
 

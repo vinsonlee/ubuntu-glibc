@@ -1,6 +1,6 @@
 /* Copy memory to memory until the specified number of bytes
    has been copied with error checking.  Overlap is NOT handled correctly.
-   Copyright (C) 1991, 1997, 2003, 2004 Free Software Foundation, Inc.
+   Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Torbjorn Granlund (tege@sics.se).
 
@@ -15,9 +15,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <string.h>
 #include <memcopy.h>
@@ -33,34 +32,5 @@ __memcpy_chk (dstpp, srcpp, len, dstlen)
   if (__builtin_expect (dstlen < len, 0))
     __chk_fail ();
 
-  unsigned long int dstp = (long int) dstpp;
-  unsigned long int srcp = (long int) srcpp;
-
-  /* Copy from the beginning to the end.  */
-
-  /* If there not too few bytes to copy, use word copy.  */
-  if (len >= OP_T_THRES)
-    {
-      /* Copy just a few bytes to make DSTP aligned.  */
-      len -= (-dstp) % OPSIZ;
-      BYTE_COPY_FWD (dstp, srcp, (-dstp) % OPSIZ);
-
-      /* Copy whole pages from SRCP to DSTP by virtual address manipulation,
-	 as much as possible.  */
-
-      PAGE_COPY_FWD_MAYBE (dstp, srcp, len, len);
-
-      /* Copy from SRCP to DSTP taking advantage of the known alignment of
-	 DSTP.  Number of bytes remaining is put in the third argument,
-	 i.e. in LEN.  This number may vary from machine to machine.  */
-
-      WORD_COPY_FWD (dstp, srcp, len, len);
-
-      /* Fall out and copy the tail.  */
-    }
-
-  /* There are just a few bytes to copy.  Use byte memory operations.  */
-  BYTE_COPY_FWD (dstp, srcp, len);
-
-  return dstpp;
+  return memcpy (dstpp, srcpp, len);
 }

@@ -1,6 +1,5 @@
 /* FPU control word bits.  AM33/2.0 version.
-   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2004
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Alexandre Oliva <aoliva@redhat.com>
    based on the corresponding file in the mips port.
@@ -16,9 +15,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _FPU_CONTROL_H
 #define _FPU_CONTROL_H

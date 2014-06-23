@@ -1,4 +1,4 @@
-/* Copyright (C) 1996, 1998, 1999 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef	_SYS_IO_H
 
@@ -35,13 +34,13 @@ extern int ioperm (unsigned long int __from, unsigned long int __num,
 extern int iopl (int __level) __THROW;
 
 /* The functions that actually perform reads and writes.  */
-extern unsigned char inb (unsigned long int port) __THROW;
-extern unsigned short int inw (unsigned long int port) __THROW;
-extern unsigned long int inl (unsigned long int port) __THROW;
+extern unsigned char inb (unsigned long int __port) __THROW;
+extern unsigned short int inw (unsigned long int __port) __THROW;
+extern unsigned long int inl (unsigned long int __port) __THROW;
 
-extern void outb (unsigned char value, unsigned long int port) __THROW;
-extern void outw (unsigned short value, unsigned long int port) __THROW;
-extern void outl (unsigned long value, unsigned long int port) __THROW;
+extern void outb (unsigned char __value, unsigned long int __port) __THROW;
+extern void outw (unsigned short __value, unsigned long int __port) __THROW;
+extern void outl (unsigned long __value, unsigned long int __port) __THROW;
 
 __END_DECLS
 

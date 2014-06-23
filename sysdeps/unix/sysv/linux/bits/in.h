@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-1999, 2000, 2004, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,14 +12,25 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* Linux version.  */
 
 #ifndef _NETINET_IN_H
 # error "Never use <bits/in.h> directly; include <netinet/in.h> instead."
+#endif
+
+/* If the application has already included linux/in6.h from a linux-based
+   kernel then we will not define the IPv6 IPPROTO_* defines, in6_addr (nor the
+   defines), sockaddr_in6, or ipv6_mreq.  The ABI used by the linux-kernel and
+   glibc match exactly.  Neither the linux kernel nor glibc should break this
+   ABI without coordination.  */
+#ifdef _UAPI_LINUX_IN6_H
+/* This is not quite the same API since the kernel always defines s6_addr16 and
+   s6_addr32. This is not a violation of POSIX since POSIX says "at least the
+   following member" and that holds true.  */
+# define __USE_KERNEL_IPV6_DEFS
 #endif
 
 /* Options for use with `getsockopt' and `setsockopt' at the IP level.
@@ -51,19 +62,34 @@
 # define MCAST_JOIN_SOURCE_GROUP 46 /* group_source_req: join source-spec gr */
 # define MCAST_LEAVE_SOURCE_GROUP 47 /* group_source_req: leave source-spec gr*/
 # define MCAST_MSFILTER 48
+# define IP_MULTICAST_ALL 49
+# define IP_UNICAST_IF 50
 
 # define MCAST_EXCLUDE   0
 # define MCAST_INCLUDE   1
 #endif
 
-#define IP_ROUTER_ALERT    5	/* bool */
-#define IP_PKTINFO         8	/* bool */
-#define IP_PKTOPTIONS      9
-#define IP_PMTUDISC        10	/* obsolete name? */
-#define IP_MTU_DISCOVER    10	/* int; see below */
-#define IP_RECVERR         11	/* bool */
-#define IP_RECVTTL         12	/* bool */
-#define IP_RECVTOS         13	/* bool */
+#define IP_ROUTER_ALERT	5	/* bool */
+#define IP_PKTINFO	8	/* bool */
+#define IP_PKTOPTIONS	9
+#define IP_PMTUDISC	10	/* obsolete name? */
+#define IP_MTU_DISCOVER	10	/* int; see below */
+#define IP_RECVERR	11	/* bool */
+#define IP_RECVTTL	12	/* bool */
+#define IP_RECVTOS	13	/* bool */
+#define IP_MTU		14	/* int */
+#define IP_FREEBIND	15
+#define IP_IPSEC_POLICY 16
+#define IP_XFRM_POLICY	17
+#define IP_PASSSEC	18
+#define IP_TRANSPARENT	19
+#define IP_MULTICAST_ALL 49	/* bool */
+
+/* TProxy original addresses */
+#define IP_ORIGDSTADDR       20
+#define IP_RECVORIGDSTADDR   IP_ORIGDSTADDR
+
+#define IP_MINTTL       21
 
 
 /* IP_MTU_DISCOVER arguments.  */

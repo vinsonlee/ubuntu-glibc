@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2006, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _DESCR_H
 #define _DESCR_H	1
@@ -26,6 +25,7 @@
 #include <stdbool.h>
 #include <sys/types.h>
 #include <hp-timing.h>
+#define __need_list_t
 #include <list.h>
 #include <lowlevellock.h>
 #include <pthreaddef.h>
@@ -131,6 +131,21 @@ struct pthread
 #else
     struct
     {
+      /* multiple_threads is enabled either when the process has spawned at
+	 least one thread or when a single-threaded process cancels itself.
+	 This enables additional code to introduce locking before doing some
+	 compare_and_exchange operations and also enable cancellation points.
+	 The concepts of multiple threads and cancellation points ideally
+	 should be separate, since it is not necessary for multiple threads to
+	 have been created for cancellation points to be enabled, as is the
+	 case is when single-threaded process cancels itself.
+
+	 Since enabling multiple_threads enables additional code in
+	 cancellation points and compare_and_exchange operations, there is a
+	 potential for an unneeded performance hit when it is enabled in a
+	 single-threaded, self-canceling process.  This is OK though, since a
+	 single-threaded process will enable async cancellation only when it
+	 looks to cancel itself and is hence going to end anyway.  */
       int multiple_threads;
       int gscope_flag;
 # ifndef __ASSUME_PRIVATE_FUTEX
@@ -143,7 +158,7 @@ struct pthread
        is private and subject to change without affecting the official ABI.
        We just have it here in case it might be convenient for some
        implementation-specific instrumentation hack or suchlike.  */
-    void *__padding[16];
+    void *__padding[24];
   };
 
   /* This descriptor's link on the `stack_used' or `__stack_user' list.  */
@@ -243,25 +258,25 @@ struct pthread
   int cancelhandling;
   /* Bit set if cancellation is disabled.  */
 #define CANCELSTATE_BIT		0
-#define CANCELSTATE_BITMASK	0x01
+#define CANCELSTATE_BITMASK	(0x01 << CANCELSTATE_BIT)
   /* Bit set if asynchronous cancellation mode is selected.  */
 #define CANCELTYPE_BIT		1
-#define CANCELTYPE_BITMASK	0x02
+#define CANCELTYPE_BITMASK	(0x01 << CANCELTYPE_BIT)
   /* Bit set if canceling has been initiated.  */
 #define CANCELING_BIT		2
-#define CANCELING_BITMASK	0x04
+#define CANCELING_BITMASK	(0x01 << CANCELING_BIT)
   /* Bit set if canceled.  */
 #define CANCELED_BIT		3
-#define CANCELED_BITMASK	0x08
+#define CANCELED_BITMASK	(0x01 << CANCELED_BIT)
   /* Bit set if thread is exiting.  */
 #define EXITING_BIT		4
-#define EXITING_BITMASK		0x10
+#define EXITING_BITMASK		(0x01 << EXITING_BIT)
   /* Bit set if thread terminated and TCB is freed.  */
 #define TERMINATED_BIT		5
-#define TERMINATED_BITMASK	0x20
+#define TERMINATED_BITMASK	(0x01 << TERMINATED_BIT)
   /* Bit set if thread is supposed to change XID.  */
 #define SETXID_BIT		6
-#define SETXID_BITMASK		0x40
+#define SETXID_BITMASK		(0x01 << SETXID_BIT)
   /* Mask for the rest.  Helps the compiler to optimize.  */
 #define CANCEL_RESTMASK		0xffffff80
 

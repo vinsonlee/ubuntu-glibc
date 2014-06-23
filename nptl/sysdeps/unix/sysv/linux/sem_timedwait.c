@@ -1,5 +1,5 @@
 /* sem_timedwait -- wait on a semaphore.  Generic futex-using version.
-   Copyright (C) 2003, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Paul Mackerras <paulus@au.ibm.com>, 2003.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <sysdep.h>
@@ -30,6 +29,21 @@
 
 extern void __sem_wait_cleanup (void *arg) attribute_hidden;
 
+/* This is in a seperate function in order to make sure gcc
+   puts the call site into an exception region, and thus the
+   cleanups get properly run.  */
+static int
+__attribute__ ((noinline))
+do_futex_timed_wait (struct new_sem *isem, struct timespec *rt)
+{
+  int err, oldtype = __pthread_enable_asynccancel ();
+
+  err = lll_futex_timed_wait (&isem->value, 0, rt,
+			      isem->private ^ FUTEX_PRIVATE_FLAG);
+
+  __pthread_disable_asynccancel (oldtype);
+  return err;
+}
 
 int
 sem_timedwait (sem_t *sem, const struct timespec *abstime)
@@ -69,7 +83,6 @@ sem_timedwait (sem_t *sem, const struct timespec *abstime)
 	}
 
       /* Already timed out?  */
-      err = -ETIMEDOUT;
       if (sec < 0)
 	{
 	  __set_errno (ETIMEDOUT);
@@ -80,16 +93,7 @@ sem_timedwait (sem_t *sem, const struct timespec *abstime)
       /* Do wait.  */
       rt.tv_sec = sec;
       rt.tv_nsec = nsec;
-
-      /* Enable asynchronous cancellation.  Required by the standard.  */
-      int oldtype = __pthread_enable_asynccancel ();
-
-      err = lll_futex_timed_wait (&isem->value, 0, &rt,
-				  isem->private ^ FUTEX_PRIVATE_FLAG);
-
-      /* Disable asynchronous cancellation.  */
-      __pthread_disable_asynccancel (oldtype);
-
+      err = do_futex_timed_wait(isem, &rt);
       if (err != 0 && err != -EWOULDBLOCK)
 	{
 	  __set_errno (-err);

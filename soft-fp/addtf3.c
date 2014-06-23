@@ -1,6 +1,6 @@
 /* Software floating-point emulation.
    Return a + b
-   Copyright (C) 1997,1999,2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson (rth@cygnus.com) and
 		  Jakub Jelinek (jj@ultra.linux.cz).
@@ -25,24 +25,26 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, 51 Franklin Street, Fifth Floor, Boston,
-   MA 02110-1301, USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "soft-fp.h"
 #include "quad.h"
 
-TFtype __addtf3(TFtype a, TFtype b)
+TFtype
+__addtf3 (TFtype a, TFtype b)
 {
   FP_DECL_EX;
-  FP_DECL_Q(A); FP_DECL_Q(B); FP_DECL_Q(R);
+  FP_DECL_Q (A);
+  FP_DECL_Q (B);
+  FP_DECL_Q (R);
   TFtype r;
 
   FP_INIT_ROUNDMODE;
-  FP_UNPACK_SEMIRAW_Q(A, a);
-  FP_UNPACK_SEMIRAW_Q(B, b);
-  FP_ADD_Q(R, A, B);
-  FP_PACK_SEMIRAW_Q(r, R);
+  FP_UNPACK_SEMIRAW_Q (A, a);
+  FP_UNPACK_SEMIRAW_Q (B, b);
+  FP_ADD_Q (R, A, B);
+  FP_PACK_SEMIRAW_Q (r, R);
   FP_HANDLE_EXCEPTIONS;
 
   return r;

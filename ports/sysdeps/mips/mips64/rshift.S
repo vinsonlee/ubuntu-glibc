@@ -1,6 +1,6 @@
 /* MIPS3 __mpn_rshift --
  *
- * Copyright (C) 1995, 2000, 2002, 2003 Free Software Foundation, Inc.
+ * Copyright (C) 1995-2014 Free Software Foundation, Inc.
  *
  * This file is part of the GNU MP Library.
  *
@@ -15,9 +15,8 @@
  * License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the GNU MP Library; see the file COPYING.LIB.  If not, write to
- * the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
- * MA 02111-1307, USA.
+ * along with the GNU MP Library.  If not, see
+ * <http://www.gnu.org/licenses/>.
  */
 
 #include <sysdep.h>
@@ -33,11 +32,7 @@
 #ifdef __PIC__
 	.option pic2
 #endif
-	.text
-	.align	2
-	.globl	__mpn_rshift
-	.ent	__mpn_rshift
-__mpn_rshift:
+ENTRY (__mpn_rshift)
 #ifdef __PIC__
 	SETUP_GP /* ??? unused */
 #endif
@@ -99,4 +94,4 @@ L(Loop):	ld	$3,8($5)
 L(Lend):	dsrl	$8,$10,$7
 	j	$31
 	sd	$8,0($4)
-	.end	__mpn_rshift
+END (__mpn_rshift)

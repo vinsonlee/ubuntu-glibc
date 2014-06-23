@@ -1,5 +1,5 @@
 # Combine version map fragments into version scripts for our shared objects.
-# Copyright (C) 1998,99,2000,2002,2005 Free Software Foundation, Inc.
+# Copyright (C) 1998-2014 Free Software Foundation, Inc.
 # Written by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
 # This script expects the following variables to be defined:
@@ -28,10 +28,8 @@ BEGIN {
   close(defsfile);
 
   tmpfile = buildroot "Versions.tmp";
-  # Note this sorting presumes only single digits between dots for proper
-  # numeric ordering.  sort -n doesn't do quite the right thing either,
-  # and in some non-GNU sort implementations does not sort at all.
-  sort = "sort > " tmpfile;
+  # POSIX sort needed.
+  sort = "sort -t. -k 1,1 -k 2n,2n -k 3 > " tmpfile;
 }
 
 # Remove comment lines.
@@ -135,5 +133,5 @@ END {
   printf("\n");
   closeversion(oldver, veryoldver);
   close_and_move(outfile, real_outfile);
-  system("rm -f " tmpfile);
+  #system("rm -f " tmpfile);
 }

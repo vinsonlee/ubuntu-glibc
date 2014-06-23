@@ -1,5 +1,5 @@
 /* Mapping tables for JOHAB handling.
-   Copyright (C) 1998, 1999, 2000-2002, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jungshik Shin <jshin@pantheon.yale.edu>
    and Ulrich Drepper <drepper@cygnus.com>, 1998.
@@ -15,9 +15,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <dlfcn.h>
 #include <stdint.h>
@@ -93,7 +92,7 @@ static const int init_to_bit[19] =
 
 static const int mid_to_bit[21] =
 {
-          0x0060, 0x0080, 0x00a0, 0x00c0, 0x00e0,
+	  0x0060, 0x0080, 0x00a0, 0x00c0, 0x00e0,
   0x0140, 0x0160, 0x0180, 0x01a0, 0x01c0, 0x1e0,
   0x0240, 0x0260, 0x0280, 0x02a0, 0x02c0, 0x02e0,
   0x0340, 0x0360, 0x0380, 0x03a0
@@ -132,7 +131,7 @@ static const uint16_t jamo_from_ucs_table[51] =
 };
 
 
-static inline uint32_t
+static uint32_t
 johab_sym_hanja_to_ucs (uint_fast32_t idx, uint_fast32_t c1, uint_fast32_t c2)
 {
   if (idx <= 0xdefe)
@@ -255,7 +254,7 @@ johab_sym_hanja_to_ucs (uint_fast32_t idx, uint_fast32_t c1, uint_fast32_t c2)
 						   + ch2 - (ch2 > 0x90	      \
 							    ? 0x43 : 0x31)];  \
 		       else						      \
-		         ch = __ksc5601_hanja_to_ucs[(ch - 0xe0) *192	      \
+			 ch = __ksc5601_hanja_to_ucs[(ch - 0xe0) *192	      \
 						     + ch2 -  (ch2 > 0x90     \
 							       ?0x43 : 0x31)];\
 		    */							      \

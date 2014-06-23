@@ -1,5 +1,5 @@
 /* Check whether caller comes from the right place.
-   Copyright (C) 2004 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <ldsodefs.h>
@@ -35,7 +34,7 @@ _dl_check_caller (const void *caller, enum allowmask mask)
 #endif
   static const char expected4[] = LD_SO;
 
-  for (Lmid_t ns = 0; ns < DL_NNS; ++ns)
+  for (Lmid_t ns = 0; ns < GL(dl_nns); ++ns)
     for (struct link_map *l = GL(dl_ns)[ns]._ns_loaded; l != NULL;
 	 l = l->l_next)
       if (caller >= (const void *) l->l_map_start

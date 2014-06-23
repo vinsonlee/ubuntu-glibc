@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-1998,2001,2002,2003,2006 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <signal.h>
@@ -43,7 +42,17 @@ __pselect (int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
      precision and therefore the `pselect` should be available.  But
      for now it is hardly found.  */
   if (timeout != NULL)
-    TIMESPEC_TO_TIMEVAL (&tval, timeout);
+    {
+      /* Catch bugs which would be hidden by the TIMESPEC_TO_TIMEVAL
+	 computations.  The division by 1000 truncates values.  */
+      if (__builtin_expect (timeout->tv_nsec < 0, 0))
+	{
+	  __set_errno (EINVAL);
+	  return -1;
+	}
+
+      TIMESPEC_TO_TIMEVAL (&tval, timeout);
+    }
 
   /* The setting and restoring of the signal mask and the select call
      should be an atomic operation.  This can't be done without kernel

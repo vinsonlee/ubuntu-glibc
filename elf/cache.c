@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2003,2005,2006,2007 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 1999.
 
@@ -13,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <error.h>
@@ -26,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -91,6 +91,29 @@ print_entry (const char *lib, int flag, unsigned int osversion,
       break;
     case FLAG_MIPS64_LIBN64:
       fputs (",64bit", stdout);
+      break;
+    case FLAG_X8664_LIBX32:
+      fputs (",x32", stdout);
+      break;
+    case FLAG_ARM_LIBHF:
+      fputs (",hard-float", stdout);
+      break;
+    case FLAG_AARCH64_LIB64:
+      fputs (",AArch64", stdout);
+      break;
+    /* Uses the ARM soft-float ABI.  */
+    case FLAG_ARM_LIBSF:
+      fputs (",soft-float", stdout);
+      break;
+    case FLAG_MIPS_LIB32_NAN2008:
+      fputs (",nan2008", stdout);
+      break;
+    case FLAG_MIPS64_LIBN32_NAN2008:
+      fputs (",N32,nan2008", stdout);
+      break;
+    case FLAG_MIPS64_LIBN64_NAN2008:
+      fputs (",64bit,nan2008", stdout);
+      break;
     case 0:
       break;
     default:
@@ -361,7 +384,7 @@ save_cache (const char *cache_name)
 	{
 	  /* We could subtract file_entries_new_size from str_offset -
 	     not doing so makes the code easier, the string table
-	     always begins at the beginning of the the new cache
+	     always begins at the beginning of the new cache
 	     struct.  */
 	  file_entries_new->libs[idx_new].flags = entry->flags;
 	  file_entries_new->libs[idx_new].osversion = entry->osversion;
@@ -675,7 +698,6 @@ load_aux_cache (const char *aux_cache_name)
   if (aux_cache == MAP_FAILED
       || aux_cache_size < sizeof (struct aux_cache_file)
       || memcmp (aux_cache->magic, AUX_CACHEMAGIC, sizeof AUX_CACHEMAGIC - 1)
-      || aux_cache->nlibs < 0
       || aux_cache->nlibs >= aux_cache_size)
     {
       close (fd);

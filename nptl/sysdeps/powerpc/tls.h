@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  NPTL/PowerPC version.
-   Copyright (C) 2003, 2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _TLS_H
 #define _TLS_H	1
@@ -43,11 +42,6 @@ typedef union dtv
 #endif /* __ASSEMBLER__ */
 
 
-/* We require TLS support in the tools.  */
-#ifndef HAVE_TLS_SUPPORT
-# error "TLS support is required."
-#endif
-
 #ifndef __ASSEMBLER__
 
 /* Get system call information.  */
@@ -67,6 +61,18 @@ typedef union dtv
    are private.  */
 typedef struct
 {
+  /* Reservation for Dynamic System Optimizer ABI.  */
+  uintptr_t dso_slot2;
+  uintptr_t dso_slot1;
+  /* Reservation for tar register (ISA 2.07).  */
+  uintptr_t tar_save;
+  /* GCC split stack support.  */
+  void *__private_ss;
+  /* Reservation for the Event-Based Branching ABI.  */
+  uintptr_t ebb_handler;
+  uintptr_t ebb_ctx_pointer;
+  uintptr_t ebb_reserved1;
+  uintptr_t ebb_reserved2;
   uintptr_t pointer_guard;
   uintptr_t stack_guard;
   dtv_t *dtv;

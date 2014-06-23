@@ -1,5 +1,5 @@
 /* Internal libc stuff for floating point environment routines.
-   Copyright (C) 1997, 2006, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,16 +13,19 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _FENV_LIBC_H
 #define _FENV_LIBC_H	1
 
 #include <fenv.h>
+#include <ldsodefs.h>
+#include <sysdep.h>
 
-libm_hidden_proto (__fe_nomask_env)
+extern const fenv_t *__fe_nomask_env_priv (void);
+
+extern const fenv_t *__fe_mask_env (void) attribute_hidden;
 
 /* The sticky bits in the FPSCR indicating exceptions have occurred.  */
 #define FPSCR_STICKY_BITS ((FE_ALL_EXCEPT | FE_ALL_INVALID) & ~FE_INVALID)
@@ -34,7 +37,16 @@ libm_hidden_proto (__fe_nomask_env)
 
 /* Equivalent to fesetenv, but takes a fenv_t instead of a pointer.  */
 #define fesetenv_register(env) \
-        ({ double d = (env); asm volatile ("mtfsf 0xff,%0" : : "f" (d)); })
+	do { \
+	  double d = (env); \
+	  if(GLRO(dl_hwcap) & PPC_FEATURE_HAS_DFP) \
+	    asm volatile (".machine push; " \
+			  ".machine \"power6\"; " \
+			  "mtfsf 0xff,%0,1,0; " \
+			  ".machine pop" : : "f" (d)); \
+	  else \
+	    asm volatile ("mtfsf 0xff,%0" : : "f" (d)); \
+	} while(0)
 
 /* This very handy macro:
    - Sets the rounding mode to 'round to nearest';
@@ -42,7 +54,13 @@ libm_hidden_proto (__fe_nomask_env)
    - Prevents exceptions from being raised for inexact results.
    These things happen to be exactly what you need for typical elementary
    functions.  */
-#define relax_fenv_state() asm ("mtfsfi 7,0")
+#define relax_fenv_state() \
+	do { \
+	   if (GLRO(dl_hwcap) & PPC_FEATURE_HAS_DFP) \
+	     asm (".machine push; .machine \"power6\"; " \
+		  "mtfsfi 7,0,1; .machine pop"); \
+	   asm ("mtfsfi 7,0"); \
+	} while(0)
 
 /* Set/clear a particular FPSCR bit (for instance,
    reset_fpscr_bit(FPSCR_VE);
@@ -53,7 +71,7 @@ libm_hidden_proto (__fe_nomask_env)
 typedef union
 {
   fenv_t fenv;
-  unsigned int l[2];
+  unsigned long long l;
 } fenv_union_t;
 
 
@@ -65,7 +83,6 @@ __fegetround (void)
 		"mfcr  %0" : "=r"(result) : : "cr7");
   return result & 3;
 }
-#define fegetround() __fegetround()
 
 static inline int
 __fesetround (int round)
@@ -89,7 +106,6 @@ __fesetround (int round)
 
   return 0;
 }
-#define fesetround(mode) __fesetround(mode)
 
 /* Definitions of all the FPSCR bit numbers */
 enum {
@@ -100,7 +116,7 @@ enum {
   FPSCR_UX,        /* underflow */
   FPSCR_ZX,        /* zero divide */
   FPSCR_XX,        /* inexact */
-  FPSCR_VXSNAN,    /* invalid operation for SNaN */
+  FPSCR_VXSNAN,    /* invalid operation for sNaN */
   FPSCR_VXISI,     /* invalid operation for Inf-Inf */
   FPSCR_VXIDI,     /* invalid operation for Inf/Inf */
   FPSCR_VXZDZ,     /* invalid operation for 0/0 */
@@ -122,12 +138,21 @@ enum {
   FPSCR_UE,        /* underflow exception enable */
   FPSCR_ZE,        /* zero divide exception enable */
   FPSCR_XE,        /* inexact exception enable */
+#ifdef _ARCH_PWR6
+  FPSCR_29,        /* Reserved in ISA 2.05  */
+#else
   FPSCR_NI         /* non-IEEE mode (typically, no denormalised numbers) */
+#endif /* _ARCH_PWR6 */
   /* the remaining two least-significant bits keep the rounding mode */
 };
 
+#ifdef _ARCH_PWR6
+  /* Not supported in ISA 2.05.  Provided for source compat only.  */
+# define FPSCR_NI 29
+#endif /* _ARCH_PWR6 */
+
 /* This operation (i) sets the appropriate FPSCR bits for its
-   parameter, (ii) converts SNaN to the corresponding NaN, and (iii)
+   parameter, (ii) converts sNaN to the corresponding qNaN, and (iii)
    otherwise passes its parameter through unchanged (in particular, -0
    and +0 stay as they were).  The `obvious' way to do this is optimised
    out by gcc.  */

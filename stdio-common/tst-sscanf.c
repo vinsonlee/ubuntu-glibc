@@ -1,4 +1,4 @@
-/* Copyright (C) 2000, 2002, 2004, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2000.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -93,6 +92,8 @@ struct test
   { L("foo bar"), L("foo bar"), 0 },
   { L("foo bar"), L("foo %d"), 0 },
   { L("foo bar"), L("foon%d"), 0 },
+  { L("foo (nil)"), L("foo %p"), 1},
+  { L("foo (nil)"), L("foo %4p"), 0},
   { L("foo "), L("foo %n"), 0 },
   { L("foo%bar1"), L("foo%%bar%d"), 1 },
   /* Some OSes skip whitespace here while others don't.  */
@@ -108,6 +109,19 @@ struct test double_tests[] =
   { L("-0x1p0"), L("%2g"), 1 },
   { L("-..1"), L("%g"), 0 },
   { L("-inf"), L("%g"), 1 }
+};
+
+struct test2
+{
+  const CHAR *str;
+  const CHAR *fmt;
+  int retval;
+  char residual;
+} double_tests2[] =
+{
+  { L("0e+0"), L("%g%c"), 1, 0 },
+  { L("0xe+0"), L("%g%c"), 2, '+' },
+  { L("0x.e+0"), L("%g%c"), 2, '+' },
 };
 
 int
@@ -193,6 +207,27 @@ main (void)
 	{
 	  printf ("double_tests[%d] returned %d != %d\n",
 		  i, ret, double_tests[i].retval);
+	  result = 1;
+	}
+    }
+
+  for (i = 0; i < sizeof (double_tests2) / sizeof (double_tests2[0]); ++i)
+    {
+      double dummy;
+      int ret;
+      char c = 0;
+
+      if ((ret = SSCANF (double_tests2[i].str, double_tests2[i].fmt,
+			 &dummy, &c)) != double_tests2[i].retval)
+	{
+	  printf ("double_tests2[%d] returned %d != %d\n",
+		  i, ret, double_tests2[i].retval);
+	  result = 1;
+	}
+      else if (ret == 2 && c != double_tests2[i].residual)
+	{
+	  printf ("double_tests2[%d] stopped at '%c' != '%c'\n",
+		  i, c, double_tests2[i].residual);
 	  result = 1;
 	}
     }

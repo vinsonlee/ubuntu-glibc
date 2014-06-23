@@ -16,9 +16,9 @@
 
 /* Changes for 128-bit long double are
    Copyright (C) 2001 Stephen L. Moshier <moshier@na-net.ornl.gov>
-   and are incorporated herein by permission of the author.  The author 
+   and are incorporated herein by permission of the author.  The author
    reserves the right to distribute this material elsewhere under different
-   copying permissions.  These modifications are distributed here under 
+   copying permissions.  These modifications are distributed here under
    the following terms:
 
     This library is free software; you can redistribute it and/or
@@ -32,8 +32,8 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
 /* __ieee754_sinhl(x)
  * Method :
@@ -53,25 +53,14 @@
  *      only sinhl(0)=0 is exact for finite x.
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
 static const long double one = 1.0, shuge = 1.0e4931L,
 ovf_thresh = 1.1357216553474703894801348310092223067821E4L;
-#else
-static long double one = 1.0, shuge = 1.0e4931L,
-ovf_thresh = 1.1357216553474703894801348310092223067821E4L;
-#endif
 
-#ifdef __STDC__
 long double
 __ieee754_sinhl (long double x)
-#else
-long double
-__ieee754_sinhl (x)
-     long double x;
-#endif
 {
   long double t, w, h;
   u_int32_t jx, ix;
@@ -121,3 +110,4 @@ __ieee754_sinhl (x)
   /* |x| > overflowthreshold, sinhl(x) overflow */
   return x * shuge;
 }
+strong_alias (__ieee754_sinhl, __sinhl_finite)

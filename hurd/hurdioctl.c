@@ -1,5 +1,5 @@
 /* ioctl commands which must be done in the C library.
-   Copyright (C) 1994,95,96,97,99,2001,02 Free Software Foundation, Inc.
+   Copyright (C) 1994-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <hurd.h>
 #include <hurd/fd.h>
@@ -169,33 +168,28 @@ _hurd_locked_install_cttyid (mach_port_t cttyid)
   for (i = 0; i < _hurd_dtablesize; ++i)
     {
       struct hurd_fd *const d = _hurd_dtable[i];
-      mach_port_t newctty;
+      mach_port_t newctty = MACH_PORT_NULL;
 
       if (d == NULL)
 	/* Nothing to do for an unused descriptor cell.  */
 	continue;
 
-      if (cttyid == MACH_PORT_NULL)
-	/* We now have no controlling tty at all.  */
-	newctty = MACH_PORT_NULL;
-      else
+      if (cttyid != MACH_PORT_NULL)
+	/* We do have some controlling tty.  */
 	HURD_PORT_USE (&d->port,
 		       ({ mach_port_t id;
 			  /* Get the io object's cttyid port.  */
 			  if (! __term_getctty (port, &id))
 			    {
-			      if (id == cttyid && /* Is it ours?  */
+			      if (id == cttyid /* Is it ours?  */
 				  /* Get the ctty io port.  */
-				  __term_open_ctty (port,
-						    _hurd_pid, _hurd_pgrp,
-						    &newctty))
+				  && __term_open_ctty (port,
+						       _hurd_pid, _hurd_pgrp,
+						       &newctty))
 				/* XXX it is our ctty but the call failed? */
 				newctty = MACH_PORT_NULL;
-			      __mach_port_deallocate
-				(__mach_task_self (), (mach_port_t) id);
+			      __mach_port_deallocate (__mach_task_self (), id);
 			    }
-			  else
-			    newctty = MACH_PORT_NULL;
 			  0;
 			}));
 
@@ -243,6 +237,32 @@ _hurd_setcttyid (mach_port_t cttyid)
 }
 
 
+static inline error_t
+do_tiocsctty (io_t port, io_t ctty)
+{
+  mach_port_t cttyid;
+  error_t err;
+
+  if (ctty != MACH_PORT_NULL)
+    /* PORT is already the ctty.  Nothing to do.  */
+    return 0;
+
+  /* Get PORT's cttyid port.  */
+  err = __term_getctty (port, &cttyid);
+  if (err)
+    return err;
+
+  /* Change the terminal's pgrp to ours.  */
+  err = __tioctl_tiocspgrp (port, _hurd_pgrp);
+  if (err)
+    __mach_port_deallocate (__mach_task_self (), cttyid);
+  else
+    /* Make it our own.  */
+    install_ctty (cttyid);
+
+  return err;
+}
+
 /* Make FD be the controlling terminal.
    This function is called for `ioctl (fd, TCIOSCTTY)'.  */
 
@@ -250,27 +270,7 @@ static int
 tiocsctty (int fd,
 	   int request)		/* Always TIOCSCTTY.  */
 {
-  mach_port_t cttyid;
-  error_t err;
-
-  /* Get FD's cttyid port, unless it is already ours.  */
-  err = HURD_DPORT_USE (fd, ctty != MACH_PORT_NULL ? EADDRINUSE :
-			__term_getctty (port, &cttyid));
-  if (err == EADDRINUSE)
-    /* FD is already the ctty.  Nothing to do.  */
-    return 0;
-  else if (err)
-    return __hurd_fail (err);
-
-  /* Change the terminal's pgrp to ours.  */
-  err = HURD_DPORT_USE (fd, __tioctl_tiocspgrp (port, _hurd_pgrp));
-  if (err)
-    return __hurd_fail (err);
-
-  /* Make it our own.  */
-  install_ctty (cttyid);
-
-  return 0;
+  return __hurd_fail (HURD_DPORT_USE (fd, do_tiocsctty (port, ctty)));
 }
 _HURD_HANDLE_IOCTL (tiocsctty, TIOCSCTTY);
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <features.h>
@@ -34,13 +33,17 @@
   other than the PRESERVED state.  */
 
 ENTRY(__swapcontext)
+	/* While not part of the ABI a system call never clobbers r0
+	   or r1.  So keeping the values here while calling
+	   rt_sigprocmask is ok.  */
 	lgr	%r1,%r2
-	lgr      %r5,%r3
+	lgr     %r0,%r3
 
 	/* sigprocmask (SIG_BLOCK, NULL, &sc->sc_mask).  */
 	la      %r2,SIG_BLOCK
 	slgr	%r3,%r3
 	la	%r4,SC_MASK(%r1)
+	lghi	%r5,_NSIG8
 	svc	SYS_ify(rt_sigprocmask)
 
 	/* Store fpu context.  */
@@ -62,22 +65,29 @@ ENTRY(__swapcontext)
 	std     %f14,SC_FPRS+112(%r1)
 	std     %f15,SC_FPRS+120(%r1)
 
-	/* Set __swapcontext return value to 0.  */
-	slgr     %r2,%r2
-
 	/* Store access registers.  */
 	stam    %a0,%a15,SC_ACRS(%r1)
+
+	/* Set __swapcontext return value to 0.  */
+	slgr	%r2,%r2
 
 	/* Store general purpose registers.  */
 	stmg    %r0,%r15,SC_GPRS(%r1)
 
-	/* sigprocmask (SIG_SETMASK, &sc->sc_mask, NULL).  */
+	/* Copy uc_flags into the new ucontext_t.  */
+	lgr	%r5,%r0
+	lg	%r2,SC_FLGS(%r5)
+	stg	%r2,SC_FLGS(%r1)
+
+	/* rt_sigprocmask (SIG_SETMASK, &sc->sc_mask, NULL, sigsetsize).  */
 	la      %r2,SIG_BLOCK
 	la	%r3,SC_MASK(%r5)
 	slgr	%r4,%r4
+	lghi	%r5,_NSIG8
 	svc	SYS_ify(rt_sigprocmask)
 
 	/* Load fpu context.  */
+	lgr	%r5,%r0
 	lfpc	SC_FPC(%r5)
 	ld	%f0,SC_FPRS(%r5)
 	ld      %f1,SC_FPRS+8(%r5)
@@ -98,11 +108,11 @@ ENTRY(__swapcontext)
 
 	/* Don't touch %a0 and %a1, used for thread purposes.  */
 	lam     %a2,%a15,SC_ACRS+8(%r5)
- 
+
 	/* Load general purpose registers.  */
 	lmg	%r0,%r15,SC_GPRS(%r5)
 
 	/* Return.  */
 	br	%r14
-END(__swapcontext)	
+END(__swapcontext)
 weak_alias (__swapcontext, swapcontext)

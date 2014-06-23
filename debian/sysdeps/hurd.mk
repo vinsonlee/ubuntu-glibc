@@ -1,10 +1,13 @@
 # This is for the GNU OS.  Commonly known as the Hurd.
-
-GLIBC_OVERLAYS ?= $(shell ls glibc-linuxthreads* glibc-ports* glibc-libidn*)
-
-threads = no
 libc = libc0.3
-slibdir = /lib
+
+# Build and expect pt_chown on this platform
+pt_chown = yes
+
+# Linuxthreads Config (we claim "no threads" as nptl keys off this)
+threads = no
+libc_add-ons = libpthread $(add-ons)
+libc_extra_config_options := $(extra_config_options)
 
 # Glibc should really do this for us.
 define libc_extra_install
@@ -16,11 +19,3 @@ endef
 define kernel_check
 true
 endef
-
-libc_extra_config_options := $(extra_config_options)
-
-# Only use libidn as add-on.
-standard-add-ons = libidn
-
-# disabled because the testsuite is known to provoke build abortions.
-RUN_TESTSUITE = no

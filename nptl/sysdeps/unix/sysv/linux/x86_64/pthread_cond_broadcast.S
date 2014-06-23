@@ -1,5 +1,4 @@
-/* Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <shlib-compat.h>
@@ -25,7 +23,7 @@
 #include <kernel-features.h>
 #include <pthread-pi-defines.h>
 #include <pthread-errnos.h>
-
+#include <stap-probe.h>
 
 	.text
 
@@ -34,6 +32,8 @@
 	.type	__pthread_cond_broadcast, @function
 	.align	16
 __pthread_cond_broadcast:
+
+	LIBC_PROBE (cond_broadcast, 1, %rdi)
 
 	/* Get internal lock.  */
 	movl	$1, %esi
@@ -60,21 +60,25 @@ __pthread_cond_broadcast:
 	incl	broadcast_seq-cond_futex(%rdi)
 
 	/* Get the address of the mutex used.  */
-	movq	dep_mutex-cond_futex(%rdi), %r8
+	mov	dep_mutex-cond_futex(%rdi), %R8_LP
 
 	/* Unlock.  */
 	LOCK
 	decl	cond_lock-cond_futex(%rdi)
 	jne	7f
 
-8:	cmpq	$-1, %r8
+8:	cmp	$-1, %R8_LP
 	je	9f
 
-	/* XXX: The kernel so far doesn't support requeue to PI futex.  */
-	/* XXX: The kernel only supports FUTEX_CMP_REQUEUE to the same
-	   type of futex (private resp. shared).  */
-	testl	$(PI_BIT | PS_BIT), MUTEX_KIND(%r8)
+	/* Do not use requeue for pshared condvars.  */
+	testl	$PS_BIT, MUTEX_KIND(%r8)
 	jne	9f
+
+	/* Requeue to a PI mutex if the PI bit is set.  */
+	movl	MUTEX_KIND(%r8), %eax
+	andl	$(ROBUST_BIT|PI_BIT), %eax
+	cmpl	$PI_BIT, %eax
+	je	81f
 
 	/* Wake up all threads.  */
 #ifdef __ASSUME_PRIVATE_FUTEX
@@ -97,6 +101,20 @@ __pthread_cond_broadcast:
 10:	xorl	%eax, %eax
 	retq
 
+	/* Wake up all threads.  */
+81:	movl	$(FUTEX_CMP_REQUEUE_PI|FUTEX_PRIVATE_FLAG), %esi
+	movl	$SYS_futex, %eax
+	movl	$1, %edx
+	movl	$0x7fffffff, %r10d
+	syscall
+
+	/* For any kind of error, which mainly is EAGAIN, we try again
+	   with WAKE.  The general test also covers running on old
+	   kernels.  */
+	cmpq	$-4095, %rax
+	jb	10b
+	jmp	9f
+
 	.align	16
 	/* Unlock.  */
 4:	LOCK
@@ -111,7 +129,7 @@ __pthread_cond_broadcast:
 #if cond_lock != 0
 	addq	$cond_lock, %rdi
 #endif
-	cmpq	$-1, dep_mutex-cond_lock(%rdi)
+	LP_OP(cmp) $-1, dep_mutex-cond_lock(%rdi)
 	movl	$LLL_PRIVATE, %eax
 	movl	$LLL_SHARED, %esi
 	cmovne	%eax, %esi
@@ -123,7 +141,7 @@ __pthread_cond_broadcast:
 
 	/* Unlock in loop requires wakeup.  */
 5:	addq	$cond_lock-cond_futex, %rdi
-	cmpq	$-1, dep_mutex-cond_lock(%rdi)
+	LP_OP(cmp) $-1, dep_mutex-cond_lock(%rdi)
 	movl	$LLL_PRIVATE, %eax
 	movl	$LLL_SHARED, %esi
 	cmovne	%eax, %esi
@@ -132,7 +150,7 @@ __pthread_cond_broadcast:
 
 	/* Unlock in loop requires wakeup.  */
 7:	addq	$cond_lock-cond_futex, %rdi
-	cmpq	$-1, %r8
+	cmp	$-1, %R8_LP
 	movl	$LLL_PRIVATE, %eax
 	movl	$LLL_SHARED, %esi
 	cmovne	%eax, %esi
@@ -141,7 +159,7 @@ __pthread_cond_broadcast:
 	jmp	8b
 
 9:	/* The futex requeue functionality is not available.  */
-	cmpq	$-1, %r8
+	cmp	$-1, %R8_LP
 	movl	$0x7fffffff, %edx
 #ifdef __ASSUME_PRIVATE_FUTEX
 	movl	$FUTEX_WAKE, %eax

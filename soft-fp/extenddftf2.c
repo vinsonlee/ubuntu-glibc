@@ -1,6 +1,6 @@
 /* Software floating-point emulation.
    Return a converted to IEEE quad
-   Copyright (C) 1997,1999,2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson (rth@cygnus.com) and
 		  Jakub Jelinek (jj@ultra.linux.cz).
@@ -25,29 +25,29 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, 51 Franklin Street, Fifth Floor, Boston,
-   MA 02110-1301, USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "soft-fp.h"
 #include "double.h"
 #include "quad.h"
 
-TFtype __extenddftf2(DFtype a)
+TFtype
+__extenddftf2 (DFtype a)
 {
   FP_DECL_EX;
-  FP_DECL_D(A);
-  FP_DECL_Q(R);
+  FP_DECL_D (A);
+  FP_DECL_Q (R);
   TFtype r;
 
-  FP_INIT_ROUNDMODE;
-  FP_UNPACK_RAW_D(A, a);
+  FP_INIT_EXCEPTIONS;
+  FP_UNPACK_RAW_D (A, a);
 #if (2 * _FP_W_TYPE_SIZE) < _FP_FRACBITS_Q
-  FP_EXTEND(Q,D,4,2,R,A);
+  FP_EXTEND (Q, D, 4, 2, R, A);
 #else
-  FP_EXTEND(Q,D,2,1,R,A);
+  FP_EXTEND (Q, D, 2, 1, R, A);
 #endif
-  FP_PACK_RAW_Q(r, R);
+  FP_PACK_RAW_Q (r, R);
   FP_HANDLE_EXCEPTIONS;
 
   return r;

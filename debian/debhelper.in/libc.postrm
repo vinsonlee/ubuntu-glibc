@@ -9,30 +9,24 @@ if [ "$1" = remove ]; then
 	    suidunregister -s LIBC /usr/libexec/pt_chown
 	fi
     fi
-    #  Created in the postinst by iconvconfig
-    rm -f /usr/lib/gconv/gconv-modules.cache || true
-fi
-
-if [ "$1" = upgrade ]; then
-    case $(dpkg --print-architecture) in
-	i386|sparc)
-	    if dpkg --compare-versions "$2" lt 2.3.4-3; then
-		# Make sure the downgraded package does not support
-		# ld.so.hwcappkgs mechanism on i686 and sparc.
-		rm -f /etc/ld.so.hwcappkgs
-		echo "downgrade-to-old-glibc" >> /etc/ld.so.nohwcap
-
-		echo
-		echo You are trying to downgrade to glibc 2.3.4-2 or earlier.
-		echo Such old packages do not support the version mismatch between
-		echo standard libc and hwcap libc using /etc/ld.so.hwcappkgs
-		echo on i386 and sparc.  To be safe from library inconsistency,
-		echo hwcap libraries are disabled until glibc 2.3.4-3 or later
-		echo is installed.
-		echo
-	    fi
-	    ;;
+    # When both the multiarch and the corresponding biarch packages are
+    # installed, removing the multiarch package will remove the dynamic
+    # linker. Recreate it in the postinst.
+    ARCH=${DPKG_MAINTSCRIPT_ARCH:-$(dpkg --print-architecture)}
+    case "${ARCH}" in
+        kfreebsd-i386 | s390 | powerpc)
+            target="/lib32/ld.so.1"
+            ;;
+        i386 | sparc)
+            target="/lib32/ld-linux.so.2"
+            ;;
+        *)
+            target="$(dpkg-query -L LIBC-${ARCH} 2>/dev/null | grep -E '/lib.*/ld-[0-9.]+\.so$' || true)"
+            ;;
     esac
+    if [ -f "$target" ] && ! [ -f RTLD_SO ] ; then
+        ln -sf ${target#$(dirname RTLD_SO)/} RTLD_SO
+    fi
 fi
 
 if [ "$1" = deconfigure ]; then
@@ -42,6 +36,21 @@ fi
 #if [ "$1" = purge ]; then
 #    update-rc.d mountkernfs remove > /dev/null
 #fi
+
+# We now use the multiarch triplet instead of the GNU triplet for the ld.so
+# configuration file, in order to keep a stable path. Remove the old file.
+case ${DPKG_MAINTSCRIPT_ARCH:-$(dpkg --print-architecture)} in
+    hurd-i386)
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-gnu.conf 2.19-4~ libc6:hurd-i386 -- "$@"
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-gnu-gnu.conf 2.19-4~ libc6:hurd-i386 -- "$@"
+        ;;
+    i386)
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-linux-gnu.conf 2.19-4~ libc6:i386 -- "$@"
+        ;;
+    kfreebsd-i386)
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-kfreebsd-gnu.conf 2.19-4~ libc6:kfreebsd-i386 -- "$@"
+        ;;
+esac
 
 #DEBHELPER#
 

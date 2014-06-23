@@ -1,4 +1,4 @@
-/* Copyright (C) 1993, 1995-2006, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David Mosberger (davidm@azstarnet.com).
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* This file provides a Linux /etc/host.conf compatible front end to
    the various name resolvers (/etc/hosts, named, NIS server, etc.).
@@ -45,9 +44,7 @@
 #include <bits/libc-lock.h>
 #include "ifreq.h"
 #include "res_hconf.h"
-#ifdef USE_IN_LIBIO
-# include <wchar.h>
-#endif
+#include <wchar.h>
 
 #define _PATH_HOSTCONF	"/etc/host.conf"
 
@@ -308,7 +305,7 @@ do_init (void)
   if (hconf_name == NULL)
     hconf_name = _PATH_HOSTCONF;
 
-  fp = fopen (hconf_name, "rc");
+  fp = fopen (hconf_name, "rce");
   if (fp)
     {
       /* No threads using this stream.  */
@@ -362,6 +359,7 @@ _res_hconf_init (void)
 
 
 #ifndef NOT_IN_libc
+# if defined SIOCGIFCONF && defined SIOCGIFNETMASK
 /* List of known interfaces.  */
 libc_freeres_ptr (
 static struct netaddr
@@ -376,6 +374,7 @@ static struct netaddr
     } ipv4;
   } u;
 } *ifaddrs);
+# endif
 
 /* Reorder addresses returned in a hostent such that the first address
    is an address on the local subnet, if there is such an address.
@@ -461,7 +460,7 @@ _res_hconf_reorder_addrs (struct hostent *hp)
 
 	cleanup:
 	  /* Release lock, preserve error value, and close socket.  */
-	  save = errno;
+	  errno = save;
 
 	  num_ifs = new_num_ifs;
 

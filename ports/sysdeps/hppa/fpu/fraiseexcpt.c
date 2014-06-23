@@ -1,5 +1,5 @@
 /* Raise given exceptions.
-   Copyright (C) 1997, 1999, 2000, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David Huggins-Daines <dhd@debian.org>
 
@@ -14,15 +14,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
 #include <float.h>
 #include <math.h>
 
-/* Please see section 10, 
+/* Please see section 10,
    page 10-5 "Delayed Trapping" in the PA-RISC 2.0 Architecture manual */
 
 int
@@ -39,11 +38,11 @@ feraiseexcept (int excepts)
      occur. */
 
   /* We use "fldd 0(%%sr0,%%sp),%0" to flush the delayed exception */
-	
+
   /* First: Invalid exception.  */
   if (excepts & FE_INVALID)
     {
-      /* One example of a invalid operation is 0 * Infinity.  */
+      /* One example of an invalid operation is 0 * Infinity.  */
       double d = HUGE_VAL;
       __asm__ __volatile__ (
 		"	fcpy,dbl %%fr0,%%fr22\n"

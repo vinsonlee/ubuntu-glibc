@@ -1,5 +1,4 @@
-/* Copyright (c) 1997-1999, 2003, 2004, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+/* Copyright (c) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1997.
 
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <string.h>
@@ -101,8 +99,8 @@ __create_ib_request (const_nis_name name, unsigned int flags)
 	}
       *val++ = '\0';
       if (search_len + 1 >= size)
-        {
-          size += 1;
+	{
+	  size += 1;
 	  nis_attr *newp = realloc (search_val, size * sizeof (nis_attr));
 	  if (newp == NULL)
 	    goto free_null;
@@ -279,8 +277,8 @@ nis_list (const_nis_name name, unsigned int flags,
 				 &dir, &bptr, flags & ~MASTER_ONLY);
       if (status != NIS_SUCCESS)
 	{
-          NIS_RES_STATUS (res) = status;
-          goto fail3;
+	  NIS_RES_STATUS (res) = status;
+	  goto fail3;
 	}
 
       while (__nisbind_connect (&bptr) != NIS_SUCCESS)
@@ -368,12 +366,12 @@ nis_list (const_nis_name name, unsigned int flags,
 	    else if ((flags & FOLLOW_PATH)
 		     && NIS_RES_STATUS (res) == NIS_PARTIAL)
 	      {
-		clnt_status = __follow_path (&tablepath, &tableptr, ibreq,
-					     &bptr);
-		if (clnt_status != NIS_SUCCESS)
+		enum nis_error err = __follow_path (&tablepath, &tableptr,
+						    ibreq, &bptr);
+		if (err != NIS_SUCCESS)
 		  {
-		    if (clnt_status == NIS_NOMEMORY)
-		      NIS_RES_STATUS (res) = clnt_status;
+		    if (err == NIS_NOMEMORY)
+		      NIS_RES_STATUS (res) = err;
 		    ++done;
 		  }
 		else
@@ -428,15 +426,15 @@ nis_list (const_nis_name name, unsigned int flags,
 		    NIS_RES_STATUS (allres) = NIS_RES_STATUS (res);
 		    xdr_free ((xdrproc_t) _xdr_nis_result, (char *) res);
 		  }
-		clnt_status = __follow_path (&tablepath, &tableptr, ibreq,
-					     &bptr);
-		if (clnt_status != NIS_SUCCESS)
+		enum nis_error err = __follow_path (&tablepath, &tableptr,
+						    ibreq, &bptr);
+		if (err != NIS_SUCCESS)
 		  {
 		    /* Prepare for the nis_freeresult call.  */
 		    memset (res, '\0', sizeof (*res));
 
-		    if (clnt_status == NIS_NOMEMORY)
-		      NIS_RES_STATUS (allres) = clnt_status;
+		    if (err == NIS_NOMEMORY)
+		      NIS_RES_STATUS (allres) = err;
 		    ++done;
 		  }
 	      }
@@ -453,12 +451,12 @@ nis_list (const_nis_name name, unsigned int flags,
 		  ++done;
 		else
 		  {
-		    clnt_status
+		    enum nis_error err
 		      = __follow_path (&tablepath, &tableptr, ibreq, &bptr);
-		    if (clnt_status != NIS_SUCCESS)
+		    if (err != NIS_SUCCESS)
 		      {
-			if (clnt_status == NIS_NOMEMORY)
-			  NIS_RES_STATUS (res) = clnt_status;
+			if (err == NIS_NOMEMORY)
+			  NIS_RES_STATUS (res) = err;
 			++done;
 		      }
 		  }

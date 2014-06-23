@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2002, 2004, 2005 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* Tell glibc's <string.h> to provide a prototype for stpcpy().
    This must come before <config.h> because <config.h> may include
@@ -86,10 +85,6 @@ argz_count__ (argz, len)
 }
 # undef __argz_count
 # define __argz_count(argz, len) argz_count__ (argz, len)
-#else
-# ifdef _LIBC
-#  define __argz_count(argz, len) INTUSE(__argz_count) (argz, len)
-# endif
 #endif	/* !_LIBC && !HAVE___ARGZ_COUNT */
 
 #if !defined _LIBC && !defined HAVE___ARGZ_STRINGIFY
@@ -114,11 +109,6 @@ argz_stringify__ (argz, len, sep)
 }
 # undef __argz_stringify
 # define __argz_stringify(argz, len, sep) argz_stringify__ (argz, len, sep)
-#else
-# ifdef _LIBC
-#  define __argz_stringify(argz, len, sep) \
-  INTUSE(__argz_stringify) (argz, len, sep)
-# endif
 #endif	/* !_LIBC && !HAVE___ARGZ_STRINGIFY */
 
 #if !defined _LIBC && !defined HAVE___ARGZ_NEXT
@@ -134,7 +124,7 @@ argz_next__ (argz, argz_len, entry)
   if (entry)
     {
       if (entry < argz + argz_len)
-        entry = strchr (entry, '\0') + 1;
+	entry = strchr (entry, '\0') + 1;
 
       return entry >= argz + argz_len ? NULL : (char *) entry;
     }
@@ -150,6 +140,7 @@ argz_next__ (argz, argz_len, entry)
 
 
 /* Return number of bits set in X.  */
+#ifndef ARCH_POP
 static int pop PARAMS ((int x));
 
 static inline int
@@ -164,6 +155,7 @@ pop (x)
 
   return x;
 }
+#endif
 
 
 struct loaded_l10nfile *
@@ -332,13 +324,18 @@ _nl_normalize_codeset (codeset, name_len)
   char *retval;
   char *wp;
   size_t cnt;
+#ifdef NOT_IN_libc
+  locale_t locale = newlocale (0, "C", NULL);
+#else
+# define locale _nl_C_locobj_ptr
+#endif
 
   for (cnt = 0; cnt < name_len; ++cnt)
-    if (isalnum ((unsigned char) codeset[cnt]))
+    if (__isalnum_l ((unsigned char) codeset[cnt], locale))
       {
 	++len;
 
-	if (isalpha ((unsigned char) codeset[cnt]))
+	if (! __isdigit_l ((unsigned char) codeset[cnt], locale))
 	  only_digit = 0;
       }
 
@@ -346,15 +343,14 @@ _nl_normalize_codeset (codeset, name_len)
 
   if (retval != NULL)
     {
+      wp = retval;
       if (only_digit)
-	wp = stpcpy (retval, "iso");
-      else
-	wp = retval;
+	wp = stpcpy (wp, "iso");
 
       for (cnt = 0; cnt < name_len; ++cnt)
-	if (isalpha ((unsigned char) codeset[cnt]))
-	  *wp++ = tolower ((unsigned char) codeset[cnt]);
-	else if (isdigit ((unsigned char) codeset[cnt]))
+	if (__isalpha_l ((unsigned char) codeset[cnt], locale))
+	  *wp++ = __tolower_l ((unsigned char) codeset[cnt], locale);
+	else if (__isdigit_l ((unsigned char) codeset[cnt], locale))
 	  *wp++ = codeset[cnt];
 
       *wp = '\0';

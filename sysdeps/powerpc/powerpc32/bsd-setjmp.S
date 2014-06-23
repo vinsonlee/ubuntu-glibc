@@ -1,5 +1,5 @@
 /* BSD `setjmp' entry point to `sigsetjmp (..., 1)'.  PowerPC32/64 version.
-   Copyright (C) 1994,1997,1999,2000,2003,2004 Free Software Foundation, Inc.
+   Copyright (C) 1994-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,13 +13,11 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 #include <shlib-compat.h>
 #include <libc-symbols.h>
 #include <sysdep.h>
-#include <bp-sym.h>
 
 #if defined SHARED && SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_3_4)
 
@@ -28,7 +26,7 @@ ENTRY (__novmxsetjmp)
 	b __novmx__sigsetjmp@local
 END (__novmxsetjmp)
 strong_alias (__novmxsetjmp, __novmx__setjmp)
-symbol_version (__novmxsetjmp, setjmp, GLIBC_2.0)
+compat_symbol (libc, __novmxsetjmp, setjmp, GLIBC_2_0)
 
 #endif  /* defined SHARED && SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_3_4) ) */
 
@@ -38,4 +36,4 @@ ENTRY (__vmxsetjmp)
 END (__vmxsetjmp)
 strong_alias (__vmxsetjmp, __vmx__setjmp)
 strong_alias (__vmx__setjmp, __setjmp)
-default_symbol_version (__vmxsetjmp,setjmp,GLIBC_2.3.4)
+versioned_symbol (libc, __vmxsetjmp, setjmp, GLIBC_2_3_4)

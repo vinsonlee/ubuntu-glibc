@@ -2,30 +2,18 @@
  * wrapper exp2l(x)
  */
 
-#include <float.h>
 #include <math.h>
-#include "math_private.h"
-
-static const long double o_threshold = (long double) LDBL_MAX_EXP;
-static const long double u_threshold
-  = (long double) (LDBL_MIN_EXP - LDBL_MANT_DIG - 1);
+#include <math_private.h>
 
 long double
-__exp2l (long double x)			/* wrapper exp2l */
+__exp2l (long double x)
 {
-#ifdef _IEEE_LIBM
-  return __ieee754_exp2l (x);
-#else
-  long double z;
-  z = __ieee754_exp2l (x);
-  if (_LIB_VERSION != _IEEE_ && __finitel (x))
-    {
-      if (x > o_threshold)
-	return __kernel_standard (x, x, 244); /* exp2l overflow */
-      else if (x <= u_threshold)
-	return __kernel_standard (x, x, 245); /* exp2l underflow */
-    }
+  long double z = __ieee754_exp2l (x);
+  if (__builtin_expect (!__finitel (z) || z == 0, 0)
+      && __finitel (x) && _LIB_VERSION != _IEEE_)
+    /* exp2 overflow: 244, exp2 underflow: 245 */
+    return __kernel_standard_l (x, x, 244 + !!__signbitl (x));
+
   return z;
-#endif
 }
 weak_alias (__exp2l, exp2l)

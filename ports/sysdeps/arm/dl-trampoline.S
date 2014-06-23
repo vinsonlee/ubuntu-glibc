@@ -1,5 +1,5 @@
 /* PLT trampolines.  ARM version.
-   Copyright (C) 2005 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,22 +13,18 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
+/* ??? Needs more rearrangement for the LDM to handle thumb mode.  */
+#define NO_THUMB
 #include <sysdep.h>
 #include <libc-symbols.h>
-
-#if defined(__USE_BX__)
-#define BX(x) bx	x
-#else
-#define BX(x) mov	pc, x
-#endif
 
 	.text
 	.globl _dl_runtime_resolve
 	.type _dl_runtime_resolve, #function
+	CFI_SECTIONS
 	cfi_startproc
 	.align 2
 _dl_runtime_resolve:
@@ -41,7 +37,7 @@ _dl_runtime_resolve:
 	@	lr points to &GOT[2]
 
 	@ Save arguments.  We save r4 to realign the stack.
-	stmdb	sp!,{r0-r4}
+	push	{r0-r4}
 	cfi_adjust_cfa_offset (20)
 	cfi_rel_offset (r0, 0)
 	cfi_rel_offset (r1, 4)
@@ -65,7 +61,7 @@ _dl_runtime_resolve:
 
 	@ get arguments and return address back.  We restore r4
 	@ only to realign the stack.
-	ldmia	sp!, {r0-r4,lr}
+	pop	{r0-r4,lr}
 	cfi_adjust_cfa_offset (-24)
 
 	@ jump to the newly found address
@@ -77,6 +73,7 @@ _dl_runtime_resolve:
 #ifndef PROF
 	.globl _dl_runtime_profile
 	.type _dl_runtime_profile, #function
+	CFI_SECTIONS
 	cfi_startproc
 	.align 2
 _dl_runtime_profile:
@@ -189,8 +186,7 @@ _dl_runtime_profile:
 	add	ip, r7, #72
 	ldmia	ip, {r0-r3}
 	ldr	ip, [r7, #264]
-	mov	lr, pc
-	BX(ip)
+	BLX(ip)
 	stmia	r7, {r0-r3}
 
 	@ Call pltexit.

@@ -1,5 +1,5 @@
 /* Run-time dynamic linker data structures for loaded ELF shared objects.
-   Copyright (C) 2005 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _ARM_LDSODEFS_H
 #define _ARM_LDSODEFS_H 1
@@ -33,7 +32,7 @@ struct La_arm_retval;
 
 #define ARCH_PLTEXIT_MEMBERS \
     Elf32_Addr (*arm_gnu_pltexit) (Elf32_Sym *, unsigned int, uintptr_t *,   \
-				   uintptr_t *, struct La_arm_regs *,	     \
+				   uintptr_t *, const struct La_arm_regs *,  \
 				   struct La_arm_retval *, const char *)
 
 #include_next <ldsodefs.h>

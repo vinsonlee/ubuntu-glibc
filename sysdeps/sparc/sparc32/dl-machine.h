@@ -1,6 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  SPARC version.
-   Copyright (C) 1996-2003, 2004, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef dl_machine_h
 #define dl_machine_h
@@ -26,20 +24,9 @@
 #include <string.h>
 #include <sys/param.h>
 #include <ldsodefs.h>
+#include <sysdep.h>
 #include <tls.h>
-
-#ifndef VALIDX
-# define VALIDX(tag) (DT_NUM + DT_THISPROCNUM + DT_VERSIONTAGNUM \
-		      + DT_EXTRANUM + DT_VALTAGIDX (tag))
-#endif
-
-/* Some SPARC opcodes we need to use for self-modifying code.  */
-#define OPCODE_NOP	0x01000000 /* nop */
-#define OPCODE_CALL	0x40000000 /* call ?; add PC-rel word address */
-#define OPCODE_SETHI_G1	0x03000000 /* sethi ?, %g1; add value>>10 */
-#define OPCODE_JMP_G1	0x81c06000 /* jmp %g1+?; add lo 10 bits of value */
-#define OPCODE_SAVE_SP	0x9de3bfa8 /* save %sp, -(16+6)*4, %sp */
-#define OPCODE_BA	0x30800000 /* b,a ?; add PC-rel word address */
+#include <dl-plt.h>
 
 /* Return nonzero iff ELF header is compatible with the running host.  */
 static inline int
@@ -145,7 +132,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 		 nop
 		.word MAP
 
-         The PC value (pltpc) saved in %g2 by the jmpl points near the
+	 The PC value (pltpc) saved in %g2 by the jmpl points near the
 	 location where we store the link_map pointer for this object.  */
 
       plt[0] = 0x05000000 | ((rfunc >> 10) & 0x003fffff);
@@ -173,15 +160,19 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 	     in .rela.plt.  */
 	  while (rela < relaend)
 	    {
-	      *(unsigned int *) rela->r_offset
-		= OPCODE_SETHI_G1 | (rela->r_offset - (Elf32_Addr) plt);
-	      *(unsigned int *) (rela->r_offset + 4)
+	      *(unsigned int *) (rela->r_offset + l->l_addr)
+		= OPCODE_SETHI_G1 | (rela->r_offset + l->l_addr
+				     - (Elf32_Addr) plt);
+	      *(unsigned int *) (rela->r_offset + l->l_addr + 4)
 		= OPCODE_BA | ((((Elf32_Addr) plt
-				 - rela->r_offset - 4) >> 2) & 0x3fffff);
+				 - rela->r_offset - l->l_addr - 4) >> 2)
+			       & 0x3fffff);
 	      if (do_flush)
 		{
-		  __asm __volatile ("flush %0" : : "r"(rela->r_offset));
-		  __asm __volatile ("flush %0+4" : : "r"(rela->r_offset));
+		  __asm __volatile ("flush %0" : : "r" (rela->r_offset
+							+ l->l_addr));
+		  __asm __volatile ("flush %0+4" : : "r" (rela->r_offset
+							  + l->l_addr));
 		}
 	      ++rela;
 	    }
@@ -195,26 +186,17 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
    PLT entries should not be allowed to define the value.
    ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
    of the main executable's symbols, as for a COPY reloc.  */
-#if !defined RTLD_BOOTSTRAP || USE___THREAD
-# define elf_machine_type_class(type) \
+#define elf_machine_type_class(type) \
   ((((type) == R_SPARC_JMP_SLOT						      \
      || ((type) >= R_SPARC_TLS_GD_HI22 && (type) <= R_SPARC_TLS_TPOFF64))     \
     * ELF_RTYPE_CLASS_PLT)						      \
    | (((type) == R_SPARC_COPY) * ELF_RTYPE_CLASS_COPY))
-#else
-# define elf_machine_type_class(type) \
-  ((((type) == R_SPARC_JMP_SLOT) * ELF_RTYPE_CLASS_PLT)			      \
-   | (((type) == R_SPARC_COPY) * ELF_RTYPE_CLASS_COPY))
-#endif
 
 /* A reloc type used for ld.so cmdline arg lookups to reject PLT entries.  */
 #define ELF_MACHINE_JMP_SLOT	R_SPARC_JMP_SLOT
 
 /* The SPARC never uses Elf32_Rel relocations.  */
 #define ELF_MACHINE_NO_REL 1
-
-/* The SPARC overlaps DT_RELA and DT_PLTREL.  */
-#define ELF_MACHINE_PLTREL_OVERLAP 1
 
 /* Undo the sub %sp, 6*4, %sp; add %sp, 22*4, %o0 below to get at the
    value we want in __libc_stack_end.  */
@@ -224,6 +206,11 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 /* Initial entry point code for the dynamic linker.
    The C function `_dl_start' is the real entry point;
    its return value is the user program's entry point.  */
+
+#define RTLD_GOT_ADDRESS(pic_reg, reg, symbol)	\
+	"sethi	%gdop_hix22(" #symbol "), " #reg "\n\t" \
+	"xor	" #reg ", %gdop_lox10(" #symbol "), " #reg "\n\t" \
+	"ld	[" #pic_reg " + " #reg "], " #reg ", %gdop(" #symbol ")"
 
 #define RTLD_START __asm__ ("\
 	.text\n\
@@ -249,17 +236,13 @@ _dl_start_user:\n\
 	mov	%o0, %l0\n\
   /* See if we were run as a command with the executable file name as an\n\
      extra leading argument.  If so, adjust the contents of the stack.  */\n\
-	sethi	%hi(_dl_skip_args), %g2\n\
-	or	%g2, %lo(_dl_skip_args), %g2\n\
-	ld	[%l7+%g2], %i0\n\
-	ld	[%i0], %i0\n\
+	" RTLD_GOT_ADDRESS(%l7, %g2, _dl_skip_args) "\n\
+	ld	[%g2], %i0\n\
 	tst	%i0\n\
 	beq	3f\n\
 	 ld	[%sp+22*4], %i5		/* load argc */\n\
 	/* Find out how far to shift.  */\n\
-	sethi	%hi(_dl_argv), %l3\n\
-	or	%l3, %lo(_dl_argv), %l3\n\
-	ld	[%l7+%l3], %l3\n\
+	" RTLD_GOT_ADDRESS(%l7, %l3, _dl_argv) "\n\
 	sub	%i5, %i0, %i5\n\
 	ld	[%l3], %l4\n\
 	sll	%i0, 2, %i2\n\
@@ -292,60 +275,21 @@ _dl_start_user:\n\
 	bne	23b\n\
 	 add	%i1, 8, %i1\n\
   /* %o0 = _dl_loaded, %o1 = argc, %o2 = argv, %o3 = envp.  */\n\
-3:	sethi	%hi(_rtld_local), %o0\n\
+3:	" RTLD_GOT_ADDRESS(%l7, %o0, _rtld_local) "\n\
 	add	%sp, 23*4, %o2\n\
-	orcc	%o0, %lo(_rtld_local), %o0\n\
 	sll	%i5, 2, %o3\n\
-	ld	[%l7+%o0], %o0\n\
 	add	%o3, 4, %o3\n\
 	mov	%i5, %o1\n\
 	add	%o2, %o3, %o3\n\
 	call	_dl_init_internal\n\
 	 ld	[%o0], %o0\n\
   /* Pass our finalizer function to the user in %g1.  */\n\
-	sethi	%hi(_dl_fini), %g1\n\
-	or	%g1, %lo(_dl_fini), %g1\n\
-	ld	[%l7+%g1], %g1\n\
+	" RTLD_GOT_ADDRESS(%l7, %g1, _dl_fini) "\n\
   /* Jump to the user's entry point and deallocate the extra stack we got.  */\n\
 	jmp	%l0\n\
 	 add	%sp, 6*4, %sp\n\
 	.size   _dl_start_user, . - _dl_start_user\n\
 	.previous");
-
-static inline __attribute__ ((always_inline)) Elf32_Addr
-sparc_fixup_plt (const Elf32_Rela *reloc, Elf32_Addr *reloc_addr,
-		 Elf32_Addr value, int t, int do_flush)
-{
-  Elf32_Sword disp = value - (Elf32_Addr) reloc_addr;
-
-  if (0 && disp >= -0x800000 && disp < 0x800000)
-    {
-      /* Don't need to worry about thread safety. We're writing just one
-	 instruction.  */
-
-      reloc_addr[0] = OPCODE_BA | ((disp >> 2) & 0x3fffff);
-      if (do_flush)
-	__asm __volatile ("flush %0" : : "r"(reloc_addr));
-    }
-  else
-    {
-      /* For thread safety, write the instructions from the bottom and
-	 flush before we overwrite the critical "b,a".  This of course
-	 need not be done during bootstrapping, since there are no threads.
-	 But we also can't tell if we _can_ use flush, so don't. */
-
-      reloc_addr += t;
-      reloc_addr[1] = OPCODE_JMP_G1 | (value & 0x3ff);
-      if (do_flush)
-	__asm __volatile ("flush %0+4" : : "r"(reloc_addr));
-
-      reloc_addr[0] = OPCODE_SETHI_G1 | (value >> 10);
-      if (do_flush)
-	__asm __volatile ("flush %0" : : "r"(reloc_addr));
-    }
-
-  return value;
-}
 
 static inline Elf32_Addr
 elf_machine_fixup_plt (struct link_map *map, lookup_t t,
@@ -385,13 +329,17 @@ auto inline void
 __attribute__ ((always_inline))
 elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 		  const Elf32_Sym *sym, const struct r_found_version *version,
-		  void *const reloc_addr_arg)
+		  void *const reloc_addr_arg, int skip_ifunc)
 {
   Elf32_Addr *const reloc_addr = reloc_addr_arg;
+#if !defined RTLD_BOOTSTRAP && !defined RESOLVE_CONFLICT_FIND_MAP
   const Elf32_Sym *const refsym = sym;
+#endif
   Elf32_Addr value;
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
+#if !defined RESOLVE_CONFLICT_FIND_MAP
   struct link_map *sym_map = NULL;
+#endif
 
 #if !defined RTLD_BOOTSTRAP && !defined HAVE_Z_COMBRELOC
   /* This is defined in rtld.c, but nowhere in the static libc.a; make the
@@ -404,6 +352,12 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 
   if (__builtin_expect (r_type == R_SPARC_NONE, 0))
     return;
+
+  if (__builtin_expect (r_type == R_SPARC_SIZE32, 0))
+    {
+      *reloc_addr = sym->st_size + reloc->r_addend;
+      return;
+    }
 
 #if !defined RTLD_BOOTSTRAP || !defined HAVE_Z_COMBRELOC
   if (__builtin_expect (r_type == R_SPARC_RELATIVE, 0))
@@ -433,6 +387,14 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 
   value += reloc->r_addend;	/* Assume copy relocs have zero addend.  */
 
+  if (sym != NULL
+      && __builtin_expect (ELFW(ST_TYPE) (sym->st_info) == STT_GNU_IFUNC, 0)
+      && __builtin_expect (sym->st_shndx != SHN_UNDEF, 1)
+      && __builtin_expect (!skip_ifunc, 1))
+    {
+      value = ((Elf32_Addr (*) (int)) value) (GLRO(dl_hwcap));
+    }
+
   switch (r_type)
     {
 #if !defined RTLD_BOOTSTRAP && !defined RESOLVE_CONFLICT_FIND_MAP
@@ -449,8 +411,7 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 	  strtab = (const void *) D_PTR (map, l_info[DT_STRTAB]);
 	  _dl_error_printf ("\
 %s: Symbol `%s' has different size in shared object, consider re-linking\n",
-			    rtld_progname ?: "<program name unknown>",
-			    strtab + refsym->st_name);
+			    RTLD_PROGNAME, strtab + refsym->st_name);
 	}
       memcpy (reloc_addr_arg, (void *) value,
 	      MIN (sym->st_size, refsym->st_size));
@@ -460,6 +421,13 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
     case R_SPARC_32:
       *reloc_addr = value;
       break;
+    case R_SPARC_IRELATIVE:
+      value = ((Elf32_Addr (*) (int)) value) (GLRO(dl_hwcap));
+      *reloc_addr = value;
+      break;
+    case R_SPARC_JMP_IREL:
+      value = ((Elf32_Addr (*) (int)) value) (GLRO(dl_hwcap));
+      /* Fall thru */
     case R_SPARC_JMP_SLOT:
       {
 #if !defined RTLD_BOOTSTRAP && !defined __sparc_v9__
@@ -477,8 +445,7 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 	sparc_fixup_plt (reloc, reloc_addr, value, 0, do_flush);
       }
       break;
-#if (!defined RTLD_BOOTSTRAP || USE___THREAD) \
-    && !defined RESOLVE_CONFLICT_FIND_MAP
+#ifndef RESOLVE_CONFLICT_FIND_MAP
     case R_SPARC_TLS_DTPMOD32:
       /* Get the information from the link map returned by the
 	 resolv function.  */
@@ -576,18 +543,25 @@ elf_machine_rela_relative (Elf32_Addr l_addr, const Elf32_Rela *reloc,
 auto inline void
 __attribute__ ((always_inline))
 elf_machine_lazy_rel (struct link_map *map,
-		      Elf32_Addr l_addr, const Elf32_Rela *reloc)
+		      Elf32_Addr l_addr, const Elf32_Rela *reloc,
+		      int skip_ifunc)
 {
-  switch (ELF32_R_TYPE (reloc->r_info))
+  Elf32_Addr *const reloc_addr = (void *) (l_addr + reloc->r_offset);
+  const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
+
+  if (__builtin_expect (r_type == R_SPARC_JMP_SLOT, 1))
+    ;
+  else if (r_type == R_SPARC_JMP_IREL)
     {
-    case R_SPARC_NONE:
-      break;
-    case R_SPARC_JMP_SLOT:
-      break;
-    default:
-      _dl_reloc_bad_type (map, ELFW(R_TYPE) (reloc->r_info), 1);
-      break;
+      Elf32_Addr value = map->l_addr + reloc->r_addend;
+      if (__builtin_expect (!skip_ifunc, 1))
+	value = ((Elf32_Addr (*) (int)) value) (GLRO(dl_hwcap));
+      sparc_fixup_plt (reloc, reloc_addr, value, 1, 1);
     }
+  else if (r_type == R_SPARC_NONE)
+    ;
+  else
+    _dl_reloc_bad_type (map, r_type, 1);
 }
 
 #endif	/* RESOLVE_MAP */

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,16 +13,17 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <shlib-compat.h>
 #include <lowlevellock.h>
 #include <lowlevelcond.h>
+#include <pthread-pi-defines.h>
 #include <kernel-features.h>
 #include <pthread-errnos.h>
+#include <stap-probe.h>
 
 
 	.text
@@ -32,6 +33,8 @@
 	.type	__pthread_cond_signal, @function
 	.align	16
 __pthread_cond_signal:
+
+	LIBC_PROBE (cond_signal, 1, %rdi)
 
 	/* Get internal lock.  */
 	movq	%rdi, %r8
@@ -55,20 +58,26 @@ __pthread_cond_signal:
 	addl	$1, (%rdi)
 
 	/* Wake up one thread.  */
-	cmpq	$-1, dep_mutex(%r8)
+	LP_OP(cmp) $-1, dep_mutex(%r8)
+	movl	$FUTEX_WAKE_OP, %esi
 	movl	$1, %edx
-#ifdef __ASSUME_PRIVATE_FUTEX
-	movl	$FUTEX_WAKE_OP, %eax
-	movl	$(FUTEX_WAKE_OP|FUTEX_PRIVATE_FLAG), %esi
-	cmove	%eax, %esi
-#else
-	movl	$0, %eax
-	movl	%fs:PRIVATE_FUTEX, %esi
-	cmove	%eax, %esi
-	orl	$FUTEX_WAKE_OP, %esi
-#endif
-	movl	$1, %r10d
 	movl	$SYS_futex, %eax
+	je	8f
+
+	/* Get the address of the mutex used.  */
+	mov     dep_mutex(%r8), %RCX_LP
+	movl	MUTEX_KIND(%rcx), %r11d
+	andl	$(ROBUST_BIT|PI_BIT), %r11d
+	cmpl	$PI_BIT, %r11d
+	je	9f
+
+#ifdef __ASSUME_PRIVATE_FUTEX
+	movl	$(FUTEX_WAKE_OP|FUTEX_PRIVATE_FLAG), %esi
+#else
+	orl	%fs:PRIVATE_FUTEX, %esi
+#endif
+
+8:	movl	$1, %r10d
 #if cond_lock != 0
 	addq	$cond_lock, %r8
 #endif
@@ -85,9 +94,27 @@ __pthread_cond_signal:
 	xorl	%eax, %eax
 	retq
 
-7:	/* %esi should be either FUTEX_WAKE_OP or
-	   FUTEX_WAKE_OP|FUTEX_PRIVATE_FLAG from the previous syscall.  */
-	xorl	$(FUTEX_WAKE ^ FUTEX_WAKE_OP), %esi
+	/* Wake up one thread and requeue none in the PI Mutex case.  */
+9:	movl	$(FUTEX_CMP_REQUEUE_PI|FUTEX_PRIVATE_FLAG), %esi
+	movq	%rcx, %r8
+	xorq	%r10, %r10
+	movl	(%rdi), %r9d	// XXX Can this be right?
+	syscall
+
+	leaq	-cond_futex(%rdi), %r8
+
+	/* For any kind of error, we try again with WAKE.
+	   The general test also covers running on old kernels.  */
+	cmpq	$-4095, %rax
+	jb	4f
+
+7:
+#ifdef __ASSUME_PRIVATE_FUTEX
+	andl	$FUTEX_PRIVATE_FLAG, %esi
+#else
+	andl	%fs:PRIVATE_FUTEX, %esi
+#endif
+	orl	$FUTEX_WAKE, %esi
 	movl	$SYS_futex, %eax
 	/* %rdx should be 1 already from $FUTEX_WAKE_OP syscall.
 	movl	$1, %edx  */
@@ -110,7 +137,7 @@ __pthread_cond_signal:
 #if cond_lock != 0
 	addq	$cond_lock, %rdi
 #endif
-	cmpq	$-1, dep_mutex-cond_lock(%rdi)
+	LP_OP(cmp) $-1, dep_mutex-cond_lock(%rdi)
 	movl	$LLL_PRIVATE, %eax
 	movl	$LLL_SHARED, %esi
 	cmovne	%eax, %esi
@@ -126,7 +153,7 @@ __pthread_cond_signal:
 #if cond_lock != 0
 	addq	$cond_lock, %rdi
 #endif
-	cmpq	$-1, dep_mutex-cond_lock(%rdi)
+	LP_OP(cmp) $-1, dep_mutex-cond_lock(%rdi)
 	movl	$LLL_PRIVATE, %eax
 	movl	$LLL_SHARED, %esi
 	cmovne	%eax, %esi

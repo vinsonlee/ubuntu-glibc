@@ -1,4 +1,4 @@
-/* Copyright (C) 2003, 2004 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <dlfcn.h>
 #include <errno.h>
@@ -73,13 +72,6 @@ int nsigs;
 int
 do_test (void)
 {
-#if !HAVE___THREAD
-
-  puts ("No __thread support in compiler, test skipped.");
-
-  return 0;
-#else
-
   if ((uintptr_t) pthread_self () & (TCB_ALIGNMENT - 1))
     {
       puts ("initial thread's struct pthread not aligned enough");
@@ -206,7 +198,6 @@ do_test (void)
     }
 
   return 0;
-#endif
 }
 
 

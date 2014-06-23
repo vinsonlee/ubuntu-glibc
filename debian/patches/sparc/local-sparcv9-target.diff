@@ -11,7 +11,7 @@
 
 --- a/configure
 +++ b/configure
-@@ -2309,6 +2309,11 @@
+@@ -3856,6 +3856,11 @@
    machine="powerpc"
  fi
  
@@ -23,9 +23,9 @@
  # Braindead PowerPC box with absolutely no FPU.
  case "$machine-$host_os" in
    powerpc*-*soft)
---- a/configure.in
-+++ b/configure.in
-@@ -308,6 +308,11 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -336,6 +336,11 @@
    machine="powerpc"
  fi
  
