@@ -1,4 +1,4 @@
-/* Copyright (c) 1998, 1999, 2000, 2004, 2005 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1998.
 
@@ -13,19 +13,15 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <rpc/types.h>
 
 /* We play dirty tricks with aliases.  */
-#define xdr_quad_t Xdr_quad_t
-#define xdr_u_quad_t Xdr_u_quad_t
 #include <rpc/xdr.h>
-#undef xdr_quad_t
-#undef xdr_u_quad_t
 
+#include <stdint.h>
 
 /* XDR 64bit integers */
 bool_t
@@ -41,7 +37,7 @@ xdr_int64_t (XDR *xdrs, int64_t *ip)
       return (XDR_PUTINT32(xdrs, &t1) && XDR_PUTINT32(xdrs, &t2));
     case XDR_DECODE:
       if (!XDR_GETINT32(xdrs, &t1) || !XDR_GETINT32(xdrs, &t2))
-        return FALSE;
+	return FALSE;
       *ip = ((int64_t) t1) << 32;
       *ip |= (uint32_t) t2;	/* Avoid sign extension.  */
       return TRUE;
@@ -51,7 +47,14 @@ xdr_int64_t (XDR *xdrs, int64_t *ip)
       return FALSE;
     }
 }
-strong_alias (xdr_int64_t, xdr_quad_t)
+libc_hidden_nolink_sunrpc (xdr_int64_t, GLIBC_2_1_1)
+
+bool_t
+xdr_quad_t (XDR *xdrs, quad_t *ip)
+{
+  return xdr_int64_t (xdrs, (int64_t *) ip);
+}
+libc_hidden_nolink_sunrpc (xdr_quad_t, GLIBC_2_3_4)
 
 /* XDR 64bit unsigned integers */
 bool_t
@@ -70,7 +73,7 @@ xdr_uint64_t (XDR *xdrs, uint64_t *uip)
     case XDR_DECODE:
       if (!XDR_GETINT32(xdrs, (int32_t *) &t1) ||
 	  !XDR_GETINT32(xdrs, (int32_t *) &t2))
-        return FALSE;
+	return FALSE;
       *uip = ((uint64_t) t1) << 32;
       *uip |= t2;
       return TRUE;
@@ -80,7 +83,14 @@ xdr_uint64_t (XDR *xdrs, uint64_t *uip)
       return FALSE;
     }
 }
-strong_alias (xdr_int64_t, xdr_u_quad_t)
+libc_hidden_nolink_sunrpc (xdr_uint64_t, GLIBC_2_1_1)
+
+bool_t
+xdr_u_quad_t (XDR *xdrs, u_quad_t *ip)
+{
+  return xdr_uint64_t (xdrs, (uint64_t *) ip);
+}
+libc_hidden_nolink_sunrpc (xdr_u_quad_t, GLIBC_2_3_4)
 
 /* XDR 32bit integers */
 bool_t
@@ -98,6 +108,7 @@ xdr_int32_t (XDR *xdrs, int32_t *lp)
       return FALSE;
     }
 }
+libc_hidden_nolink_sunrpc (xdr_int32_t, GLIBC_2_1)
 
 /* XDR 32bit unsigned integers */
 bool_t
@@ -115,6 +126,11 @@ xdr_uint32_t (XDR *xdrs, uint32_t *ulp)
       return FALSE;
     }
 }
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (xdr_uint32_t)
+#else
+libc_hidden_nolink_sunrpc (xdr_uint32_t, GLIBC_2_1)
+#endif
 
 /* XDR 16bit integers */
 bool_t
@@ -138,6 +154,7 @@ xdr_int16_t (XDR *xdrs, int16_t *ip)
       return FALSE;
     }
 }
+libc_hidden_nolink_sunrpc (xdr_int16_t, GLIBC_2_1)
 
 /* XDR 16bit unsigned integers */
 bool_t
@@ -161,6 +178,7 @@ xdr_uint16_t (XDR *xdrs, uint16_t *uip)
       return FALSE;
     }
 }
+libc_hidden_nolink_sunrpc (xdr_uint16_t, GLIBC_2_1)
 
 /* XDR 8bit integers */
 bool_t
@@ -184,6 +202,7 @@ xdr_int8_t (XDR *xdrs, int8_t *ip)
       return FALSE;
     }
 }
+libc_hidden_nolink_sunrpc (xdr_int8_t, GLIBC_2_1)
 
 /* XDR 8bit unsigned integers */
 bool_t
@@ -207,3 +226,4 @@ xdr_uint8_t (XDR *xdrs, uint8_t *uip)
       return FALSE;
     }
 }
+libc_hidden_nolink_sunrpc (xdr_uint8_t, GLIBC_2_1)

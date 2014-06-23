@@ -1,4 +1,4 @@
-/* Copyright (C) 1991,96,97,98,99,2000,2001,2003 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <ctype.h>
 #include <locale.h>
@@ -65,13 +64,16 @@ static const struct ltest tests[] =
     { "0x0.8p-1022",
       1.11253692925360069154511635866620203210960799023116591527666e-308,
       '\0', 0 },
-#if __GNUC_PREREQ(2,96)
-    /* For older GCC release HUGE_VAL is not a constant.  */
     { "Inf", HUGE_VAL, '\0', 0 },
     { "-Inf", -HUGE_VAL, '\0', 0 },
     { "+InFiNiTy", HUGE_VAL, '\0', 0 },
-#endif
     { "0x80000Ap-23", 0x80000Ap-23, '\0', 0 },
+    { "1e-324", 0, '\0', ERANGE },
+    { "0x100000000000008p0", 0x1p56, '\0', 0 },
+    { "0x100000000000008.p0", 0x1p56, '\0', 0 },
+    { "0x100000000000008.00p0", 0x1p56, '\0', 0 },
+    { "0x10000000000000800p0", 0x1p64, '\0', 0 },
+    { "0x10000000000000801p0", 0x1.0000000000001p64, '\0', 0 },
     { NULL, 0, '\0', 0 }
   };
 
@@ -83,7 +85,7 @@ int
 main (int argc, char ** argv)
 {
   char buf[100];
-  register const struct ltest *lt;
+  const struct ltest *lt;
   char *ep;
   int status = 0;
   int save_errno;
@@ -182,7 +184,7 @@ main (int argc, char ** argv)
 static void
 expand (dst, c)
      char *dst;
-     register int c;
+     int c;
 {
   if (isprint (c))
     {

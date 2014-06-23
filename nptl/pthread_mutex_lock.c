@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <errno.h>
@@ -24,7 +23,16 @@
 #include <not-cancel.h>
 #include "pthreadP.h"
 #include <lowlevellock.h>
+#include <stap-probe.h>
 
+#ifndef lll_lock_elision
+#define lll_lock_elision(lock, try_lock, private)	({ \
+      lll_lock (lock, private); 0; })
+#endif
+
+#ifndef lll_trylock_elision
+#define lll_trylock_elision(a,t) lll_trylock(a)
+#endif
 
 #ifndef LLL_MUTEX_LOCK
 # define LLL_MUTEX_LOCK(mutex) \
@@ -34,8 +42,20 @@
 # define LLL_ROBUST_MUTEX_LOCK(mutex, id) \
   lll_robust_lock ((mutex)->__data.__lock, id, \
 		   PTHREAD_ROBUST_MUTEX_PSHARED (mutex))
+# define LLL_MUTEX_LOCK_ELISION(mutex) \
+  lll_lock_elision ((mutex)->__data.__lock, (mutex)->__data.__elision, \
+		   PTHREAD_MUTEX_PSHARED (mutex))
+# define LLL_MUTEX_TRYLOCK_ELISION(mutex) \
+  lll_trylock_elision((mutex)->__data.__lock, (mutex)->__data.__elision, \
+		   PTHREAD_MUTEX_PSHARED (mutex))
 #endif
 
+#ifndef FORCE_ELISION
+#define FORCE_ELISION(m, s)
+#endif
+
+static int __pthread_mutex_lock_full (pthread_mutex_t *mutex)
+     __attribute_noinline__;
 
 int
 __pthread_mutex_lock (mutex)
@@ -43,15 +63,40 @@ __pthread_mutex_lock (mutex)
 {
   assert (sizeof (mutex->__size) >= sizeof (mutex->__data));
 
-  int oldval;
-  pid_t id = THREAD_GETMEM (THREAD_SELF, tid);
+  unsigned int type = PTHREAD_MUTEX_TYPE_ELISION (mutex);
 
-  int retval = 0;
-  switch (__builtin_expect (PTHREAD_MUTEX_TYPE (mutex),
-			    PTHREAD_MUTEX_TIMED_NP))
+  LIBC_PROBE (mutex_entry, 1, mutex);
+
+  if (__builtin_expect (type & ~(PTHREAD_MUTEX_KIND_MASK_NP
+				 | PTHREAD_MUTEX_ELISION_FLAGS_NP), 0))
+    return __pthread_mutex_lock_full (mutex);
+
+  if (__builtin_expect (type == PTHREAD_MUTEX_TIMED_NP, 1))
+    {
+      FORCE_ELISION (mutex, goto elision);
+    simple:
+      /* Normal mutex.  */
+      LLL_MUTEX_LOCK (mutex);
+      assert (mutex->__data.__owner == 0);
+    }
+#ifdef HAVE_ELISION
+  else if (__builtin_expect (type == PTHREAD_MUTEX_TIMED_ELISION_NP, 1))
+    {
+  elision: __attribute__((unused))
+      /* This case can never happen on a system without elision,
+         as the mutex type initialization functions will not
+	 allow to set the elision flags.  */
+      /* Don't record owner or users for elision case.  This is a
+         tail call.  */
+      return LLL_MUTEX_LOCK_ELISION (mutex);
+    }
+#endif
+  else if (__builtin_expect (PTHREAD_MUTEX_TYPE (mutex)
+			     == PTHREAD_MUTEX_RECURSIVE_NP, 1))
     {
       /* Recursive mutex.  */
-    case PTHREAD_MUTEX_RECURSIVE_NP:
+      pid_t id = THREAD_GETMEM (THREAD_SELF, tid);
+
       /* Check whether we already hold the mutex.  */
       if (mutex->__data.__owner == id)
 	{
@@ -70,24 +115,10 @@ __pthread_mutex_lock (mutex)
 
       assert (mutex->__data.__owner == 0);
       mutex->__data.__count = 1;
-      break;
-
-      /* Error checking mutex.  */
-    case PTHREAD_MUTEX_ERRORCHECK_NP:
-      /* Check whether we already hold the mutex.  */
-      if (__builtin_expect (mutex->__data.__owner == id, 0))
-	return EDEADLK;
-
-      /* FALLTHROUGH */
-
-    case PTHREAD_MUTEX_TIMED_NP:
-    simple:
-      /* Normal mutex.  */
-      LLL_MUTEX_LOCK (mutex);
-      assert (mutex->__data.__owner == 0);
-      break;
-
-    case PTHREAD_MUTEX_ADAPTIVE_NP:
+    }
+  else if (__builtin_expect (PTHREAD_MUTEX_TYPE (mutex)
+			  == PTHREAD_MUTEX_ADAPTIVE_NP, 1))
+    {
       if (! __is_smp)
 	goto simple;
 
@@ -113,8 +144,38 @@ __pthread_mutex_lock (mutex)
 	  mutex->__data.__spins += (cnt - mutex->__data.__spins) / 8;
 	}
       assert (mutex->__data.__owner == 0);
-      break;
+    }
+  else
+    {
+      pid_t id = THREAD_GETMEM (THREAD_SELF, tid);
+      assert (PTHREAD_MUTEX_TYPE (mutex) == PTHREAD_MUTEX_ERRORCHECK_NP);
+      /* Check whether we already hold the mutex.  */
+      if (__builtin_expect (mutex->__data.__owner == id, 0))
+	return EDEADLK;
+      goto simple;
+    }
 
+  pid_t id = THREAD_GETMEM (THREAD_SELF, tid);
+
+  /* Record the ownership.  */
+  mutex->__data.__owner = id;
+#ifndef NO_INCR
+  ++mutex->__data.__nusers;
+#endif
+
+  LIBC_PROBE (mutex_acquired, 1, mutex);
+
+  return 0;
+}
+
+static int
+__pthread_mutex_lock_full (pthread_mutex_t *mutex)
+{
+  int oldval;
+  pid_t id = THREAD_GETMEM (THREAD_SELF, tid);
+
+  switch (PTHREAD_MUTEX_TYPE (mutex))
+    {
     case PTHREAD_MUTEX_ROBUST_RECURSIVE_NP:
     case PTHREAD_MUTEX_ROBUST_ERRORCHECK_NP:
     case PTHREAD_MUTEX_ROBUST_NORMAL_NP:
@@ -332,8 +393,7 @@ __pthread_mutex_lock (mutex)
 	    INTERNAL_SYSCALL_DECL (__err);
 	    INTERNAL_SYSCALL (futex, __err, 4, &mutex->__data.__lock,
 			      __lll_private_flag (FUTEX_UNLOCK_PI,
-						  PTHREAD_ROBUST_MUTEX_PSHARED (mutex)
-),
+						  PTHREAD_ROBUST_MUTEX_PSHARED (mutex)),
 			      0, 0);
 
 	    THREAD_SETMEM (THREAD_SELF, robust_head.list_op_pending, NULL);
@@ -390,7 +450,7 @@ __pthread_mutex_lock (mutex)
 		return EINVAL;
 	      }
 
-	    retval = __pthread_tpp_change_priority (oldprio, ceiling);
+	    int retval = __pthread_tpp_change_priority (oldprio, ceiling);
 	    if (retval)
 	      return retval;
 
@@ -445,9 +505,30 @@ __pthread_mutex_lock (mutex)
   ++mutex->__data.__nusers;
 #endif
 
-  return retval;
+  LIBC_PROBE (mutex_acquired, 1, mutex);
+
+  return 0;
 }
 #ifndef __pthread_mutex_lock
 strong_alias (__pthread_mutex_lock, pthread_mutex_lock)
-strong_alias (__pthread_mutex_lock, __pthread_mutex_lock_internal)
+hidden_def (__pthread_mutex_lock)
+#endif
+
+
+#ifdef NO_INCR
+void
+__pthread_mutex_cond_lock_adjust (mutex)
+     pthread_mutex_t *mutex;
+{
+  assert ((mutex->__data.__kind & PTHREAD_MUTEX_PRIO_INHERIT_NP) != 0);
+  assert ((mutex->__data.__kind & PTHREAD_MUTEX_ROBUST_NORMAL_NP) == 0);
+  assert ((mutex->__data.__kind & PTHREAD_MUTEX_PSHARED_BIT) == 0);
+
+  /* Record the ownership.  */
+  pid_t id = THREAD_GETMEM (THREAD_SELF, tid);
+  mutex->__data.__owner = id;
+
+  if (mutex->__data.__kind == PTHREAD_MUTEX_PI_RECURSIVE_NP)
+    ++mutex->__data.__count;
+}
 #endif

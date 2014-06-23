@@ -1,51 +1,41 @@
-/* @(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC */
-/*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-#if !defined(lint) && defined(SCCSIDS)
-static char sccsid[] = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
-#endif
-
 /*
  * clnt_perror.c
  *
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ * Copyright (c) 2010, 2011, Oracle America, Inc.
  *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <stdio.h>
 #include <string.h>
 #include <libintl.h>
 #include <rpc/rpc.h>
-
-#ifdef USE_IN_LIBIO
-# include <wchar.h>
-# include <libio/iolibio.h>
-#endif
+#include <wchar.h>
+#include <libio/iolibio.h>
 
 static char *auth_errmsg (enum auth_stat stat) internal_function;
 
@@ -137,14 +127,18 @@ clnt_sperror (CLIENT * rpch, const char *msg)
 
   return str;
 }
-libc_hidden_def (clnt_sperror)
+libc_hidden_nolink_sunrpc (clnt_sperror, GLIBC_2_0)
 
 void
 clnt_perror (CLIENT * rpch, const char *msg)
 {
   (void) __fxprintf (NULL, "%s", clnt_sperror (rpch, msg));
 }
+#ifdef EXPORT_RPC_SYMBOLS
 libc_hidden_def (clnt_perror)
+#else
+libc_hidden_nolink_sunrpc (clnt_perror, GLIBC_2_0)
+#endif
 
 
 struct rpc_errtab
@@ -273,7 +267,11 @@ clnt_perrno (enum clnt_stat num)
 {
   (void) __fxprintf (NULL, "%s", clnt_sperrno (num));
 }
-
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (clnt_perrno)
+#else
+libc_hidden_nolink_sunrpc (clnt_perrno, GLIBC_2_0)
+#endif
 
 char *
 clnt_spcreateerror (const char *msg)
@@ -310,13 +308,18 @@ clnt_spcreateerror (const char *msg)
 
   return str;
 }
-libc_hidden_def (clnt_spcreateerror)
+libc_hidden_nolink_sunrpc (clnt_spcreateerror, GLIBC_2_0)
 
 void
 clnt_pcreateerror (const char *msg)
 {
   (void) __fxprintf (NULL, "%s", clnt_spcreateerror (msg));
 }
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (clnt_pcreateerror)
+#else
+libc_hidden_nolink_sunrpc (clnt_pcreateerror, GLIBC_2_0)
+#endif
 
 struct auth_errtab
 {

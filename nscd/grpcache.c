@@ -1,5 +1,5 @@
 /* Cache handling for group lookup.
-   Copyright (C) 1998-2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -14,8 +14,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include <alloca.h>
 #include <assert.h>
@@ -71,13 +70,13 @@ static const gr_response_header notfound =
 };
 
 
-static void
+static time_t
 cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	     const void *key, struct group *grp, uid_t owner,
-	     struct hashentry *he, struct datahead *dh, int errval)
+	     struct hashentry *const he, struct datahead *dh, int errval)
 {
+  bool all_written = true;
   ssize_t total;
-  ssize_t written;
   time_t t = time (NULL);
 
   /* We allocate all data in one memory block: the iov vector,
@@ -91,6 +90,7 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 
   assert (offsetof (struct dataset, resp) == offsetof (struct datahead, data));
 
+  time_t timeout = MAX_TIMEOUT_VALUE;
   if (grp == NULL)
     {
       if (he != NULL && errval == EAGAIN)
@@ -102,7 +102,10 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	    /* Do not reset the value if we never not reload the record.  */
 	    dh->nreloads = reload_count - 1;
 
-	  written = total = 0;
+	  /* Reload with the same time-to-live value.  */
+	  timeout = dh->timeout = t + db->postimeout;
+
+	  total = 0;
 	}
       else
 	{
@@ -110,13 +113,20 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	     case.  */
 	  total = sizeof (notfound);
 
-	  written = TEMP_FAILURE_RETRY (send (fd, &notfound, total,
-					      MSG_NOSIGNAL));
+	  if (fd != -1
+	      && TEMP_FAILURE_RETRY (send (fd, &notfound, total,
+					   MSG_NOSIGNAL)) != total)
+	    all_written = false;
 
-	  dataset = mempool_alloc (db, sizeof (struct dataset) + req->key_len,
-				   IDX_result_data);
-	  /* If we cannot permanently store the result, so be it.  */
-	  if (dataset != NULL)
+	  /* If we have a transient error or cannot permanently store
+	     the result, so be it.  */
+	  if (errno == EAGAIN || __builtin_expect (db->negtimeout == 0, 0))
+	    {
+	      /* Mark the old entry as obsolete.  */
+	      if (dh != NULL)
+		dh->usable = false;
+	    }
+	  else if ((dataset = mempool_alloc (db, sizeof (struct dataset) + req->key_len, 1)) != NULL)
 	    {
 	      dataset->head.allocsize = sizeof (struct dataset) + req->key_len;
 	      dataset->head.recsize = total;
@@ -125,7 +135,7 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	      dataset->head.usable = true;
 
 	      /* Compute the timeout time.  */
-	      dataset->head.timeout = t + db->negtimeout;
+	      timeout = dataset->head.timeout = t + db->negtimeout;
 
 	      /* This is the reply.  */
 	      memcpy (&dataset->resp, &notfound, total);
@@ -143,9 +153,6 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 			 + sizeof (struct dataset) + req->key_len, MS_ASYNC);
 		}
 
-	      /* Now get the lock to safely insert the records.  */
-	      pthread_rwlock_rdlock (&db->lock);
-
 	      (void) cache_add (req->type, &dataset->strdata, req->key_len,
 				&dataset->head, true, db, owner, he == NULL);
 
@@ -155,8 +162,6 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	      if (dh != NULL)
 		dh->usable = false;
 	    }
-	  else
-	    ++db->head->addfailed;
 	}
     }
   else
@@ -171,7 +176,8 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
       char *cp;
       const size_t key_len = strlen (key);
       const size_t buf_len = 3 * sizeof (grp->gr_gid) + key_len + 1;
-      char *buf = alloca (buf_len);
+      size_t alloca_used = 0;
+      char *buf = alloca_account (buf_len, alloca_used);
       ssize_t n;
       size_t cnt;
 
@@ -183,41 +189,47 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
       /* Determine the length of all members.  */
       while (grp->gr_mem[gr_mem_cnt])
 	++gr_mem_cnt;
-      gr_mem_len = (uint32_t *) alloca (gr_mem_cnt * sizeof (uint32_t));
+      gr_mem_len = alloca_account (gr_mem_cnt * sizeof (uint32_t), alloca_used);
       for (gr_mem_cnt = 0; grp->gr_mem[gr_mem_cnt]; ++gr_mem_cnt)
 	{
 	  gr_mem_len[gr_mem_cnt] = strlen (grp->gr_mem[gr_mem_cnt]) + 1;
 	  gr_mem_len_total += gr_mem_len[gr_mem_cnt];
 	}
 
-      written = total = (offsetof (struct dataset, strdata)
-			 + gr_mem_cnt * sizeof (uint32_t)
-			 + gr_name_len + gr_passwd_len + gr_mem_len_total);
+      total = (offsetof (struct dataset, strdata)
+	       + gr_mem_cnt * sizeof (uint32_t)
+	       + gr_name_len + gr_passwd_len + gr_mem_len_total);
 
       /* If we refill the cache, first assume the reconrd did not
 	 change.  Allocate memory on the cache since it is likely
 	 discarded anyway.  If it turns out to be necessary to have a
 	 new record we can still allocate real memory.  */
-      bool alloca_used = false;
+      bool dataset_temporary = false;
+      bool dataset_malloced = false;
       dataset = NULL;
 
       if (he == NULL)
-	{
-	  dataset = (struct dataset *) mempool_alloc (db, total + n,
-						      IDX_result_data);
-	  if (dataset == NULL)
-	    ++db->head->addfailed;
-	}
+	dataset = (struct dataset *) mempool_alloc (db, total + n, 1);
 
       if (dataset == NULL)
 	{
 	  /* We cannot permanently add the result in the moment.  But
 	     we can provide the result as is.  Store the data in some
 	     temporary memory.  */
-	  dataset = (struct dataset *) alloca (total + n);
+	  if (! __libc_use_alloca (alloca_used + total + n))
+	    {
+	      dataset = malloc (total + n);
+	      /* Perhaps we should log a message that we were unable
+		 to allocate memory for a large request.  */
+	      if (dataset == NULL)
+		goto out;
+	      dataset_malloced = true;
+	    }
+	  else
+	    dataset = alloca_account (total + n, alloca_used);
 
 	  /* We cannot add this record to the permanent database.  */
-	  alloca_used = true;
+	  dataset_temporary = true;
 	}
 
       dataset->head.allocsize = total + n;
@@ -227,7 +239,7 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
       dataset->head.usable = true;
 
       /* Compute the timeout time.  */
-      dataset->head.timeout = t + db->postimeout;
+      timeout = dataset->head.timeout = t + db->postimeout;
 
       dataset->resp.version = NSCD_VERSION;
       dataset->resp.found = 1;
@@ -271,14 +283,18 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 		 allocated on the stack and need not be freed.  */
 	      dh->timeout = dataset->head.timeout;
 	      ++dh->nreloads;
+
+	      /* If the new record was allocated via malloc, then we must free
+		 it here.  */
+	      if (dataset_malloced)
+		free (dataset);
 	    }
 	  else
 	    {
 	      /* We have to create a new record.  Just allocate
 		 appropriate memory and copy it.  */
 	      struct dataset *newp
-		= (struct dataset *) mempool_alloc (db, total + n,
-						    IDX_result_data);
+		= (struct dataset *) mempool_alloc (db, total + n, 1);
 	      if (newp != NULL)
 		{
 		  /* Adjust pointers into the memory block.  */
@@ -287,10 +303,8 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 		  key_copy = (char *) newp + (key_copy - (char *) dataset);
 
 		  dataset = memcpy (newp, dataset, total + n);
-		  alloca_used = false;
+		  dataset_temporary = false;
 		}
-	      else
-		++db->head->addfailed;
 
 	      /* Mark the old record as obsolete.  */
 	      dh->usable = false;
@@ -304,34 +318,41 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	  assert (fd != -1);
 
 #ifdef HAVE_SENDFILE
-	  if (__builtin_expect (db->mmap_used, 1) && !alloca_used)
+	  if (__builtin_expect (db->mmap_used, 1) && ! dataset_temporary)
 	    {
 	      assert (db->wr_fd != -1);
 	      assert ((char *) &dataset->resp > (char *) db->data);
-	      assert ((char *) &dataset->resp - (char *) db->head
+	      assert ((char *) dataset - (char *) db->head
 		      + total
 		      <= (sizeof (struct database_pers_head)
 			  + db->head->module * sizeof (ref_t)
 			  + db->head->data_size));
-	      written = sendfileall (fd, db->wr_fd,
-				     (char *) &dataset->resp
-				     - (char *) db->head, total);
+	      ssize_t written = sendfileall (fd, db->wr_fd,
+					     (char *) &dataset->resp
+					     - (char *) db->head,
+					     dataset->head.recsize);
+	      if (written != dataset->head.recsize)
+		{
 # ifndef __ASSUME_SENDFILE
-	      if (written == -1 && errno == ENOSYS)
-		goto use_write;
+		  if (written == -1 && errno == ENOSYS)
+		    goto use_write;
 # endif
+		  all_written = false;
+		}
 	    }
 	  else
 # ifndef __ASSUME_SENDFILE
 	  use_write:
 # endif
 #endif
-	    written = writeall (fd, &dataset->resp, total);
+	    if (writeall (fd, &dataset->resp, dataset->head.recsize)
+		!= dataset->head.recsize)
+	      all_written = false;
 	}
 
       /* Add the record to the database.  But only if it has not been
 	 stored on the stack.  */
-      if (! alloca_used)
+      if (! dataset_temporary)
 	{
 	  /* If necessary, we also propagate the data to disk.  */
 	  if (db->persistent)
@@ -342,9 +363,6 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 		     ((uintptr_t) dataset & pagesize_m1) + total + n,
 		     MS_ASYNC);
 	    }
-
-	  /* Now get the lock to safely insert the records.  */
-	  pthread_rwlock_rdlock (&db->lock);
 
 	  /* NB: in the following code we always must add the entry
 	     marked with FIRST first.  Otherwise we end up with
@@ -389,12 +407,14 @@ cache_addgr (struct database_dyn *db, int fd, request_header *req,
 	}
     }
 
-  if (__builtin_expect (written != total, 0) && debug_level > 0)
+  if (__builtin_expect (!all_written, 0) && debug_level > 0)
     {
       char buf[256];
       dbg_log (_("short write in %s: %s"),  __FUNCTION__,
 	       strerror_r (errno, buf, sizeof (buf)));
     }
+
+  return timeout;
 }
 
 
@@ -416,7 +436,7 @@ lookup (int type, union keytype key, struct group *resultbufp, char *buffer,
 }
 
 
-static void
+static time_t
 addgrbyX (struct database_dyn *db, int fd, request_header *req,
 	  union keytype key, const char *keystr, uid_t uid,
 	  struct hashentry *he, struct datahead *dh)
@@ -472,10 +492,12 @@ addgrbyX (struct database_dyn *db, int fd, request_header *req,
 	buffer = (char *) extend_alloca (buffer, buflen, 2 * buflen);
     }
 
-  cache_addgr (db, fd, req, keystr, grp, uid, he, dh, errval);
+  time_t timeout = cache_addgr (db, fd, req, keystr, grp, uid, he, dh, errval);
 
   if (use_malloc)
     free (buffer);
+
+  return timeout;
 }
 
 
@@ -489,7 +511,7 @@ addgrbyname (struct database_dyn *db, int fd, request_header *req,
 }
 
 
-void
+time_t
 readdgrbyname (struct database_dyn *db, struct hashentry *he,
 	       struct datahead *dh)
 {
@@ -500,7 +522,7 @@ readdgrbyname (struct database_dyn *db, struct hashentry *he,
     };
   union keytype u = { .v = db->data + he->key };
 
-  addgrbyX (db, -1, &req, u, db->data + he->key, he->owner, he, dh);
+  return addgrbyX (db, -1, &req, u, db->data + he->key, he->owner, he, dh);
 }
 
 
@@ -514,7 +536,7 @@ addgrbygid (struct database_dyn *db, int fd, request_header *req,
   if (*(char *) key == '\0' || *ep != '\0')  /* invalid numeric uid */
     {
       if (debug_level > 0)
-        dbg_log (_("Invalid numeric gid \"%s\"!"), (char *) key);
+	dbg_log (_("Invalid numeric gid \"%s\"!"), (char *) key);
 
       errno = EINVAL;
       return;
@@ -526,7 +548,7 @@ addgrbygid (struct database_dyn *db, int fd, request_header *req,
 }
 
 
-void
+time_t
 readdgrbygid (struct database_dyn *db, struct hashentry *he,
 	      struct datahead *dh)
 {
@@ -543,5 +565,5 @@ readdgrbygid (struct database_dyn *db, struct hashentry *he,
     };
   union keytype u = { .g = gid };
 
-  addgrbyX (db, -1, &req, u, db->data + he->key, he->owner, he, dh);
+  return addgrbyX (db, -1, &req, u, db->data + he->key, he->owner, he, dh);
 }

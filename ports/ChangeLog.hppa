@@ -1,3 +1,714 @@
+2014-02-03  Carlos O'Donell  <carlos@redhat.com>
+
+	* sysdeps/hppa/fpu/libm-test-ulps: Regenerate.
+
+2013-11-28  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/hppa/fpu/fegetround.c (fegetround): Use libm_hidden_def.
+
+2013-11-26  Ondřej Bílka  <neleai@seznam.cz>
+	* sysdeps/unix/sysv/linux/hppa/bits/ipc.h: Use __glibc_reserved instead __unused.
+	* sysdeps/unix/sysv/linux/hppa/bits/msq.h: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/bits/sem.h: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/bits/shm.h: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/kernel_stat.h: Likewise.
+
+2013-11-21  Guy Martin  <gmsoft@tuxicoman.be>
+
+	* sysdeps/hppa/dl-lookupcfg.h: Remove obsolete
+	DL_DT_INIT_ADDRESS() and DL_DT_FINI_ADDRESS() macro and implement
+	DL_CALL_DT_INIT() as well as DL_CALL_DT_FINI().
+	Define DL_DT_FUNCTION_ADDRESS().
+	* sysdeps/hppa/dl-machine.h: Update ELF_MACHINE_START_ADDRESS()
+	to use DL_DT_FUNCTION_ADDRESS().
+
+2013-10-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* sysdeps/hppa/configure.in: Moved to ...
+	* sysdeps/hppa/configure.ac: ... here.
+	* sysdeps/hppa/configure: Regenerated.
+
+2013-09-11  Andreas Schwab  <schwab@suse.de>
+
+	* sysdeps/unix/sysv/linux/hppa/bits/fcntl.h (__O_TMPFILE): Define.
+
+2013-09-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* sysdeps/unix/sysv/linux/hppa/syscalls.list (fanotify_mark): New
+	entry.
+	* sysdeps/unix/sysv/linux/hppa/Versions (libc): Add GLIBC_2.19 and
+	fanotify_mark.
+
+2013-08-30   Ondřej Bílka  <neleai@seznam.cz>
+
+	* sysdeps/unix/sysv/linux/hppa/clone.S: Fix typos.
+	* sysdeps/unix/sysv/linux/hppa/nptl/pthread.h: Likewise.
+
+2013-08-21   Ondřej Bílka  <neleai@seznam.cz>
+
+	* sysdeps/hppa/dl-lookupcfg.h: Fix typos.
+	* sysdeps/hppa/fpu/fraiseexcpt.c: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/sysdep.h: Likewise.
+
+2013-07-23  Carlos O'Donell  <carlos@redhat.com>
+
+	* sysdeps/hppa/fpu/libm-test-ulps: Regenerate.
+
+2013-06-05  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/hppa/configure.in: Remove trailing whitespace.
+	* sysdeps/hppa/dl-fptr.c: Likewise.
+	* sysdeps/hppa/dl-fptr.h: Likewise.
+	* sysdeps/hppa/dl-irel.h: Likewise.
+	* sysdeps/hppa/dl-trampoline.S: Likewise.
+	* sysdeps/hppa/fpu/bits/fenv.h: Likewise.
+	* sysdeps/hppa/fpu/fedisblxcpt.c: Likewise.
+	* sysdeps/hppa/fpu/fegetenv.c: Likewise.
+	* sysdeps/hppa/fpu/fegetexcept.c: Likewise.
+	* sysdeps/hppa/fpu/feholdexcpt.c: Likewise.
+	* sysdeps/hppa/fpu/fesetenv.c: Likewise.
+	* sysdeps/hppa/fpu/fesetround.c: Likewise.
+	* sysdeps/hppa/fpu/feupdateenv.c: Likewise.
+	* sysdeps/hppa/fpu/fgetexcptflg.c: Likewise.
+	* sysdeps/hppa/fpu/fraiseexcpt.c: Likewise.
+	* sysdeps/hppa/fpu/ftestexcept.c: Likewise.
+	* sysdeps/hppa/hppa1.1/addmul_1.S: Likewise.
+	* sysdeps/hppa/hppa1.1/mul_1.S: Likewise.
+	* sysdeps/hppa/hppa1.1/submul_1.S: Likewise.
+	* sysdeps/hppa/hppa1.1/udiv_qrnnd.S: Likewise.
+	* sysdeps/hppa/nptl/pthread_spin_init.c: Likewise.
+	* sysdeps/hppa/nptl/pthread_spin_unlock.c: Likewise.
+	* sysdeps/hppa/nptl/tls.h: Likewise.
+	* sysdeps/hppa/rshift.S: Likewise.
+	* sysdeps/hppa/start.S: Likewise.
+	* sysdeps/hppa/sysdep.h: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/bits/atomic.h: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/clone.S: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/internaltypes.h: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/makecontext.c: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/mmap.c: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/nptl/bits/pthreadtypes.h: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/nptl/lowlevellock.h: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/nptl/pt-vfork.S: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/nptl/pthreadP.h: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/nptl/sysdep-cancel.h: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/setcontext.S: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/syscalls.list: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/sysdep.c: Likewise.
+
+2013-05-29  Siddhesh Poyarekar  <siddhesh@redhat.com>
+
+	[BZ #15465]
+	* sysdeps/hppa/dl-machine.h (elf_machine_rela): Use
+	RTLD_PROGNAME.
+	(elf_machine_rela_relative): Likewise.
+
+2013-05-22  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/hppa/fpu/libm-test-ulps: Update test names.
+
+2013-05-19  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/hppa/fpu/libm-test-ulps: Update names of sincos tests.
+
+2013-05-15  Carlos O'Donell  <carlos@redhat.com>
+
+	* sysdeps/hppa/fpu/libm-test-ulps: Remove old values for ceil, floor,
+	rint, round, trunc, llrint, and llround.
+
+	* sysdeps/hppa/fpu/libm-test-ulps: Regenerate.
+
+2013-05-15  Guy Martin  <gmsoft@tuxicoman.be>
+	    Carlos O'Donell  <carlos@redhat.com>
+
+	[BZ# 15000]
+	* ports/sysdeps/hppa/fpu/fpu_control.h (_FPU_GETCW): Set cw.
+	(_FPU_SETCW): Pass address to fldd.
+
+2013-04-02  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* sysdeps/hppa/math_private.h: New file.
+
+2013-03-06  Andreas Jaeger  <aj@suse.de>
+
+	* sysdeps/unix/sysv/linux/hppa/bits/msq.h (MSG_COPY): Define.
+	* ports/sysdeps/unix/sysv/linux/hppa/bits/mman.h (MAP_HUGE_MASK)
+	(MAP_HUGE_SHIFT): Define.
+
+2013-02-14  Carlos O'Donell  <carlos@redhat.com>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/lowlevellock.c
+	(lll_unlock_wake_cb): Remove.
+	* ports/sysdeps/unix/sysv/linux/hppa/nptl/lowlevellock.h:
+	Remove prototype for lll_unlock_wake_cb.
+
+2013-01-10  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/hppa/fpu/fpu_control.h (_FPU_GETCW): Use __extension__
+	with long long.
+	(_FPU_SETCW): Likewise.
+	* sysdeps/unix/sysv/linux/hppa/bits/ipc.h (struct ipc_perm):
+	Likewise.
+
+2013-01-08  Andreas Jaeger  <aj@suse.de>
+
+	[BZ# 14985]
+	* sysdeps/unix/sysv/linux/hppa/sys/epoll.h (EPOLL_NONBLOCK):
+	Remove.
+
+2013-01-02  Joseph Myers  <joseph@codesourcery.com>
+
+	* All files with FSF copyright notices: Update copyright dates
+	using scripts/update-copyrights.
+
+2012-11-29  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/unix/sysv/linux/hppa/bits/socket.h: Delete file.
+	* sysdeps/unix/sysv/linux/hppa/bits/socket_type.h: New file.
+
+	* sysdeps/hppa/fpu/feholdexcpt.c: Cast return to unsigned long long *.
+	* sysdeps/unix/sysv/linux/hppa/mmap.c: Cast return to __ptr_t.
+
+2012-11-19  Mike Frysinger  <vapier@gentoo.org>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/pthread_once.c: Replace _internal
+	alias by hidden_def.
+
+2012-11-18  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/hppa/fpu/fesetenv.c: Reset FPU to default for FE_DFL_ENV.
+
+	* sysdeps/hppa/get-rounding-mode.h: New file.
+	* sysdeps/hppa/fpu/fegetround.c: Use get_rounding_mode.
+
+	* ports/sysdeps/hppa/fpu/fpu_control.h: New file.
+
+	* ports/sysdeps/hppa/__longjmp.S: Removed.
+	* ports/sysdeps/hppa/__longjmp.c: New file.
+	* ports/sysdeps/unix/sysv/linux/hppa/____longjmp_chk.c: New file.
+	* ports/sysdeps/hppa/bits/setjmp.h: Use union for __jmp_buf.
+	* ports/sysdeps/hppa/setjmp.S: Comment byte offsets and padding.
+
+2012-11-05  Joseph Myers  <joseph@codesourcery.com>
+
+	[BZ #14805]
+	* sysdeps/hppa/fpu/bits/fenv.h (FE_DFL_ENV): Use cast to const
+	fenv_t *.
+	(FE_NOMASK_ENV): Likewise.
+
+2012-11-03  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/hppa/fpu/fclrexcpt.c (feclearexcept): Add
+	libm_hidden_def.
+
+	[BZ #3439]
+	* sysdeps/hppa/fpu/bits/fenv.h (FE_INVALID): Define macro to
+	integer constant usable in #if and use that to give value to enum
+	constant.
+	(FE_DIVBYZERO): Likewise.
+	(FE_OVERFLOW): Likewise.
+	(FE_UNDERFLOW): Likewise.
+	(FE_INEXACT): Likewise.
+	(FE_TONEAREST): Likewise.
+	(FE_TOWARDZERO): Likewise.
+	(FE_UPWARD): Likewise.
+	(FE_DOWNWARD): Likewise.
+
+2012-10-30  Joseph Myers  <joseph@codesourcery.com>
+
+	[BZ #14047]
+	* sysdeps/hppa/tininess.h: New file.
+
+2012-10-29  Carlos O'Donell  <carlos@systemhalted.org>
+
+	[BZ #14447]
+	* sysdeps/unix/sysv/linux/hppa/sysdep.h (ENTRY): Add cfi_startproc.
+	Use .cfi_offset for rp store.
+	(ENTRY_LEAF): Likewise.
+	(END) Add cfi_Endproc.
+	(DO_CALL): Add cfi directives.
+
+	* sysdeps/unix/sysv/linux/hppa/sysdep.h: Document register clobbering.
+	[PIC](TREG, SAVE_PIC, LOAD_PIC, TREG_ASM, SAVE_ASM_PIC, LOAD_ASM_PIC
+	CLOB_TREG, PIC_REG_DEF, PIC_REG_USE): Move...
+	(TREG, SAVE_PIC, LOAD_PIC, TREG_ASM, SAVE_ASM_PIC, LOAD_ASM_PIC
+	CLOB_TREG, PIC_REG_DEF, PIC_REG_USE): ... to here.
+	[!PIC](TREG, SAVE_PIC, LOAD_PIC, TREG_ASM, SAVE_ASM_PIC, LOAD_ASM_PIC
+	CLOB_TREG, PIC_REG_DEF, PIC_REG_USE): Remove.
+	(TREG): Use r4.
+
+	* sysdeps/unix/sysv/linux/hppa/sysdep.h: Don't include sys/syscall.h.
+	Document nop removal.
+	(PSEUDO): Remove nop.
+	(PSEUDO_NOERRNO): Likeise.
+	(PSEUDO_ERRVAL): Likewise.
+
+	* sysdeps/unix/sysv/linux/hppa/sysdep.h: Remove trailing whitespace.
+
+2012-10-26  Andreas Jaeger  <aj@suse.de>
+
+	* sysdeps/unix/sysv/linux/hppa/bits/fcntl.h: Remove all
+	definitions and declarations that are provided by
+	<bits/fcntl-linux.h> and include <bits/fcntl-linux.h>.
+	(__O_PATH): Define.
+
+2012-10-24  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/hppa/nptl/Makefile (tst-oddstacklimit-ENV): Remove.
+	* sysdeps/hppa/nptl/tst-oddstacklimit.c: New file.
+
+2012-10-10  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/pthread.h: Update.
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/pt-initfini.c: Removed.
+
+	* sysdeps/hppa/nptl/shlib-versions: New file.
+
+2012-10-02  Siddhesh Poyarekar  <siddhesh@redhat.com>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/lowlevellock.h: Fix clone
+	flag name in comment to CLONE_CHILD_CLEARTID.
+
+2012-09-20  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/unix/sysv/linux/hppa/syscalls.list: Use __prlimit64 as
+	the strong name.
+
+2012-09-20  Carlos O'Donell  <carlos@systemhalted.org>
+	    Andreas Schwab  <schwab@linux-m68k.org>
+
+	* sysdeps/unix/sysv/linux/hppa/Versions: Add new errlist-compat
+	entry value of 260 for GLIBC_2.17.
+	* sysdeps/unix/sysv/linux/hppa/bits/errno.h (EHWPOISON): Define if
+	not defined.
+
+2012-08-27  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/kernel-features.h
+	(__ASSUME_STAT64_SYSCALL): Remove.
+
+2012-08-20  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/kernel-features.h
+	(__ASSUME_MMAP2_SYSCALL): Remove.
+
+2012-08-15  Maxim Kuvyrkov  <maxim@codesourcery.com>
+
+	* sysdeps/hppa/nptl/pthread_spin_lock.c: Use generic code.
+	* sysdeps/hppa/nptl/pthread_spin_trylock.c: Remove, use generic version.
+
+2012-08-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* sysdeps/unix/sysv/linux/hppa/syscalls.list: Add prlimit64.
+	* sysdeps/unix/sysv/linux/hppa/Versions (GLIBC_2.17): Likewise.
+
+2012-08-07  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/configure.in: Remove.
+	* sysdeps/unix/sysv/linux/hppa/nptl/configure: Likewise.
+	* sysdeps/unix/sysv/linux/hppa/kernel-features.h
+	(__ASSUME_LWS_CAS): Define unconditionally.
+
+2012-08-01  Joseph Myers  <joseph@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/kernel-features.h
+	(__ASSUME_FCNTL64): Remove.
+
+2012-07-26  Andreas Jaeger  <aj@suse.de>
+
+	* sysdeps/unix/sysv/linux/hppa/sys/epoll.h (EPOLLWAKEUP): Add new
+	value.
+
+2012-05-19  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/hppa/add_n.s: Rename this...
+	* sysdeps/hppa/add_n.S: ... to this.
+	* sysdeps/hppa/hppa1.1/addmul_1.s: Rename this...
+	* sysdeps/hppa/hppa1.1/addmul_1.S: ... to this.
+	* sysdeps/hppa/hppa1.1/mul_1.s: Rename this...
+	* sysdeps/hppa/hppa1.1/mul_1.S ... to this.
+	* sysdeps/hppa/hppa1.1/submul_1.s: Rename this...
+	* sysdeps/hppa/hppa1.1/submul_1.S: ... to this.
+	* sysdeps/hppa/hppa1.1/udiv_qrnnd.s: Rname this...
+	* sysdeps/hppa/hppa1.1/udiv_qrnnd.S: ... to this.
+	* sysdeps/hppa/lshift.s: Rename this...
+	* sysdeps/hppa/lshift.S: ... to this.
+	* sysdeps/hppa/rshift.s: Rename this...
+	* sysdeps/hppa/rshift.S: ... to this.
+	* sysdeps/hppa/sub_n.s: Rename this...
+	* sysdeps/hppa/sub_n.S: ... to this.
+	* sysdeps/hppa/udiv_qrnnd.s: Rename this...
+	* sysdeps/hppa/udiv_qrnnd.S: ... to this.
+
+2012-05-17  Siddhesh Poyarekar  <siddhesh@redhat.com>
+
+	* sysdeps/hppa/libgcc_s.h: Remove.
+	* sysdeps/hppa/shlib-versions: Add libgcc_s.
+
+2012-04-17  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/hppa/dl-irel.h: New file.
+
+2012-04-17  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/hppa/dl-fptr.h: Add prototype for _dl_fptr_init.
+	* sysdeps/hppa/dl-fptr.c: New file.
+	* sysdeps/hppa/dl-machine.h (ELF_MACHINE_BEFORE_RTLD_RELOC):
+	Call _dl_fptr_init.
+
+2012-04-17  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/hppa/elf/configure: Removed file.
+	* sysdeps/hppa/elf/configure.in: Move to...
+	* sysdeps/hppa/configure.in: ... here.
+	* sysdeps/hppa/configure: Regenerate.
+	* sysdeps/hppa/elf/initfini.c: Removed file.
+	* sysdeps/hppa/crti.S: New file.
+	* sysdeps/hppa/crtn.S: New file.
+	* sysdeps/hppa/elf/entry.h: Moved to ...
+	* sysdeps/hppa/entry.h: ... here.
+	* sysdeps/hppa/elf/start.S: Move to ...
+	* sysdeps/hppa/start.S: ... here.
+
+2012-03-22  Carlos O'Donell  <carlos@systemhalted.org>
+
+	[BZ #6730]
+
+	* sysdeps/unix/sysv/linux/hppa/bits/atomic.h: Don't negate %r21 and
+	check for -EFAULT and -ENOSYS instead.
+
+2012-03-09  Richard Henderson  <rth@twiddle.net>
+
+	* sysdeps/hppa/hppa1.1/s_signbit.c: Use <> to include math_private.h.
+
+2012-03-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	[BZ #13673]
+	Replace FSF snail mail address with URLs, as per GNU coding standards.
+
+2012-03-03  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/bits/pthreadtypes.h: Name
+	pthread_attr_t union.
+	* sysdeps/unix/sysv/linux/hppa/nptl/pthread.h: Sync from libc copy.
+	* sysdeps/unix/sysv/linux/hppa/bits/socket.h: Likewise.
+
+2012-01-08  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/unix/sysv/linux/hppa/sys/epoll.h (EPOLLONESHOT)
+	(EPOLLET): Initialize with unsiged values.
+
+2012-01-08  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/pthread.h: Sync from libc copy.
+
+2012-01-08  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/unix/sysv/linux/hppa/sys/epoll.h: Use const instead of __const.
+	* sysdeps/unix/sysv/linux/hppa/sys/timerfd.h: Likewise.
+
+2011-10-21  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/unix/sysv/linux/hppa/sys/procfs.h: Update copyright year.
+	Do not include signal.h and sys/ucontext.h.
+
+2011-10-20  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/sysdep-cancel.h: Update copyright
+	year.
+	(PSEUDO): Define __*_nocancel version. Add CFI directives to __*_nocancel
+	and normal version.
+	(PUSHARGS_1): Add CFI directive.
+	(PUSHARGS_2): Likewise.
+	(PUSHARGS_3): Likewise.
+	(PUSHARGS_4): Likewise.
+	(PUSHARGS_5): Likewise.
+	(PUSHARGS_6): Likewise.
+	(POPARGS_1): Likewise.
+	(POPARGS_2): Likewise.
+	(POPARGS_3): Likewise.
+	(POPARGS_4): Likewise.
+	(POPARGS_5): Likewise.
+	(POPARGS_6): Likewise.
+
+2011-10-20  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/unix/sysv/linux/hppa/linuxthreads/aio_cancel.c: Remove.
+	* sysdeps/unix/sysv/linux/hppa/linuxthreads/bits/initspin.h: Remove.
+	* sysdeps/unix/sysv/linux/hppa/linuxthreads/bits/pthreadtypes.h: Remove.
+	* sysdeps/unix/sysv/linux/hppa/linuxthreads/malloc-machine.h: Remove.
+	* sysdeps/unix/sysv/linux/hppa/linuxthreads/pt-initfini.c: Remove.
+	* sysdeps/unix/sysv/linux/hppa/linuxthreads/sysdep-cancel.h: Remove.
+	* sysdeps/hppa/linuxthreads/pspinlock.c: Remove.
+	* sysdeps/hppa/linuxthreads/pt-machine.h: Remove.
+	* sysdeps/hppa/linuxthreads/tls.h: Remove.
+
+2011-10-20  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/hppa/stackinfo.h: Update copyright year.
+	Include elf.h and define DEFAULT_STACK_PERMS.
+
+2011-10-20  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/unix/sysv/linux/hppa/bits/fcntl.h: Synchronize
+	with canonical fcntl.h.
+
+2011-10-20  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/hppa/fpu/fegetenv.c: Add hidden alias.
+	* sysdeps/hppa/fpu/feupdateenv.c: Likewise.
+	* sysdeps/hppa/fpu/ftestexcept.c: Likewise.
+
+2011-10-20  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/hppa/dl-tls.h: Update copyright year.
+	Define TLS_DTV_UNALLOCATED.
+
+2011-10-20  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/hppa/elf/configure.in: Always test for TLS support
+	and error out if missing.
+	* sysdeps/hppa/elf/configure: Regenerate.
+	* sysdeps/hppa/configure: Regenerate.
+
+2011-10-20  Carlos O'Donell  <carlos@systemhalted.org>
+
+	* sysdeps/hppa/nptl/tls.h: Update copyright year.
+	Remove HAVE_TLS_SUPPORT check.
+
+2011-10-17  Guy Martin  <gmsoft@tuxicoman.be>
+
+	* sysdeps/unix/sysv/linux/hppa/sys/epoll.h
+	Fix EPOLL_CLOEXEC and EPOLL_NONBLOCK to match kernel definition.
+	* sysdeps/unix/sysv/linux/hppa/sys/eventfd.h
+	Fix EFD_CLOEXEC and EFD_NONBLOCK to match kernel definition.
+	* sysdeps/unix/sysv/linux/hppa/sys/inotify.h
+	Fix IN_CLOEXEC and IN_NONBLOCK to match kernel definition.
+	* sysdeps/unix/sysv/linux/hppa/sys/signalfd.h
+	Fix SFD_CLOEXEC and SFD_NONBLOCK to match kernel definition.
+	* sysdeps/unix/sysv/linux/hppa/sys/timerfd.h
+	Fix TFD_CLOEXEC and TFD_NONBLOCK to match kernel definition.
+
+2011-10-05  Andreas Schwab  <schwab@redhat.com>
+
+	* sysdeps/hppa/dl-machine.h (elf_machine_rela)
+	(elf_machine_lazy_rel): Add parameter skip_ifunc.
+
+2010-06-24  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/pt-vfork.S: Only create stack
+	frame around call to SYSCALL_ERROR_HANDLER. Do not restore %rp
+	from the stack frame on successfull return.
+
+2010-06-23  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/getcontext.S (__getcontext_ret):
+	Document that this function is a non-standard calling ABI.
+	Document register usage.
+	(__getcontext): Use normal %sp without adjustment. Use named
+	resgister %sp.
+	* sysdeps/unix/sysv/linux/hppa/makecontext.c: Remove FRAME_SIZE.
+	Define FRAME_SIZE_UL, FRAME_SIZE_BYTES, ARGS.
+	(__makecontext): Create and setup a stack frame.
+	* sysdeps/unix/sysv/linux/hppa/setcontext.S (__setcontext):
+	Use named register %sp. Do not use oSS_SP.
+
+2010-06-07  Andreas Schwab  <schwab@redhat.com>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/pthread.h: Update to agree
+	with generic file.
+
+2010-03-30  Carlos O'Donell <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/bits/socket.h: Define
+	MSG_WAITFORONE.
+
+2010-02-17  Matt Turner  <mattst88@gmail.com>
+
+	* sysdeps/unix/sysv/linux/hppa/bits/socket.h: Actually fix
+	SOCK_CLOEXEC to match O_CLOEXEC.
+
+2010-02-02  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/bits/mman.h: Define
+	MADV_MERGEABLE and MADV_UNMERGEABLE.
+
+2010-02-02  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/hppa/nptl/tls.h (__set_cr27): Clobber
+	link register r31.
+
+2010-02-02  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/makecontext.c (__makecontext):
+	Support more than 8 arguments.
+
+2010-02-01  Kyle McMartin  <kyle@redhat.com>
+
+	* sysdeps/unix/sysv/linux/hppa/bits/socket.h: Fix value of
+	SOCK_CLOEXEC to match O_CLOEXEC.
+
+2010-02-01  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/Versions: Bump
+	errlist-compat to 257 for GLIBC_2.12.
+	* sysdeps/unix/sysv/linux/hppa/bits/errno.h
+	(EOWNERDEAD): Define if not already defined.
+	(ENOTRECOVERABLE): Likewise.
+	(ERFKILL): Likewise.
+
+2009-11-29  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/bits/fcntl.h:
+	Rearrange file to reduce future maintenance.
+	[__USE_GNU]: Update F_GETOWN_EX, and F_SETOWN_EX.
+	Define f_owner_ex an __pid_type.
+
+2009-11-25  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/bits/pthreadtypes.h:
+	Use correct alignment for pthread_mutex_t, pthread_cond_t,
+	and pthread_rwlock_t.
+
+2009-11-22  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/bits/atomic.h: Avoid warnings
+	by casting oldval to int.
+
+2009-11-15  Carlos O'Donell  <carlos@codesourcery.com>
+
+	[BZ #6676]
+
+	* sysdeps/unix/sysv/linux/hppa/socket.h: Move from here...
+	* sysdeps/unix/sysv/linux/hppa/bits/socket.h: ... to here.
+
+2009-11-15  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/Versions (libc): Add
+	fallocate64@@GLIBC_2.11.
+	* sysdeps/unix/sysv/linux/hppa/bits/fcntl.h
+	[__USE_GNU]: Define F_GETOWN_EX, and F_SETOWN_EX.
+	[!__USE_FILE_OFFSET64]: Define fallocate.
+	[__USE_FILE_OFFSET64 && __REDIRECT]: Define __REDIRECT.
+	[__USE_FILE_OFFSET64 && !__REDIRECT]: Define fallocate as
+	fallocate64.
+	[__USE_LARGEFILE64]: define fallocate64.
+
+2009-11-15  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/hppa/dl-fptr.h: Update copyright year.
+	Reduce ELF_MACHINE_BOOT_FPTR_TABLE_LEN to 64.
+	Implement ELF_MACHINE_LOAD_ADDRESS using PC relative loads.
+
+2009-11-15  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/lowlevellock.h:
+	Remove FUTEX_WAITERS, FUTEX_OWNER_DIED, and FUTEX_TID_MASK.
+
+2009-11-15  Carlos O'Donell  <carlos@codesourcery.com>
+	    Aurelian Jarno  <aurelien@aurel32.net>
+
+	[BZ #10527]
+
+	* sysdeps/unix/sysv/linux/hppa/socket.h: New file.
+
+2009-11-15  Carlos O'Donell  <carlos@codesourcery.com>
+
+	[BZ #6676]
+
+	* sysdeps/hppa/elf/start.S: Use R_PARISC_DLTIND* relocations
+	to support -fPIE.
+
+2009-11-08  Carlos O'Donell  <carlos@codesourcery.com>
+
+	[BZ #10920]
+
+	* sysdeps/hppa/libgcc_s.h: New file.
+	* sysdeps/unix/sysv/linux/hppa/nptl/unwind-forcedunwind.c: Remove.
+	* sysdeps/unix/sysv/linux/hppa/nptl/unwind-resume.c: Remove.
+
+2009-09-08  Carlos O'Donell  <carlos@codesourcery.com>
+
+	sysdeps/unix/sysv/linux/hppa/
+	* internaltypes.h: New file.
+
+	sysdeps/unix/sysv/linux/hppa/nptl/
+	* pthreadP.h: New file.
+	* pthread.h: New file.
+	* pthread_cond_broadcast.c: New file.
+	* pthread_cond_destroy.c: New file.
+	* pthread_cond_init.c: New file.
+	* pthread_cond_signal.c: New file.
+	* pthread_cond_timedwait.c: New file.
+	* pthread_cond_wait.c: New file.
+	* bits/pthreadtypes.h: Make pthread_mutex_t,
+	pthread_rwlock_t, and pthread_cond_t backwards
+	compatible.
+
+2009-04-24  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/hppa/hppa1.1/s_signbit.c: New file.
+
+2009-04-23  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/hppa/dl-machine.h: Remove VALID_ELF_OSABI,
+	VALID_ELF_ABIVERSION, and VALID_ELF_HEADER.
+
+2009-04-23  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/bits/atomic.h: Do not include
+	sysdep.h. Document the reason for other includes.
+
+2009-04-23  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/sysdep.h [!__ASSEMBLER__]:
+	Include errno.h.
+
+2009-02-25  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/bits/pthreadtypes.h:
+	Adjust comment. Sort macros alphabetically. Remove old
+	lock comments.
+
+2009-02-25  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/unwind-forcedunwind.c:
+	Update from nptl/sysdeps/pthread/unwind-forcedunwind.c
+	* sysdeps/unix/sysv/linux/hppa/nptl/unwind-resume.c:
+	Update from nptl/sysdeps/pthread/unwind-resume.c
+
+2009-02-25  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/lowlevellock.h: Define
+	FUTEX_WAIT_BITSET, FUTEX_WAKE_BITSET, FUTEX_CLOCK_REALTIME,
+	and FUTEX_BITSET_MATCH_ANY.
+
+2009-02-22  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/unix/sysv/linux/hppa/Versions: Add missing bracket.
+
+2009-02-22  Carlos O'Donell  <carlos@codesourcery.com>
+
+	* sysdeps/hppa/dl-machine.h: Use _dl_runtime_profile.
+
+2009-02-13  Khem Raj  <raj.khem@gmail.com>
+
+	* sysdeps/unix/sysv/linux/hppa/nptl/unwind-forcedunwind.c
+	(libgcc_s_handle): New variable.
+	(pthread_cancel_init): Depend in libgcc_s_handle for decision to
+	load DSO.  Assign last.
+	(__unwind_freeres): New function.
+
+2009-02-09  Arthur Loiret  <aloiret@debian.org>
+
+	[BZ #9717]
+
+	* sysdeps/unix/sysv/linux/hppa/linuxthreads/malloc-machine.h
+	(MALLOC): Adjust __libc_tsd_define arguments.
+	(tsd_setspecific, tsd_getspecific): Adjust __libc_tsd_{set,get}
+	arguments.
+
 2008-08-07  Helge Deller  <deller@gmx.de>
 
 	* sysdeps/unix/sysv/linux/hppa/ucontext_i.sym: New file.
@@ -11,9 +722,9 @@
 	    Carlos O'Donell  <carlos@systemhalted.org>
 
 	[BZ #6037]
-	* sysdeps/unix/sysv/linux/hppa/bits/atomic.h: Check for -11 
+	* sysdeps/unix/sysv/linux/hppa/bits/atomic.h: Check for -11
 	(-EAGAIN) instead of 11. Loop again when the kernel
-	returns -45 (-EDEADLOCK). Add back memory clobber. 
+	returns -45 (-EDEADLOCK). Add back memory clobber.
 	Do not initialize lws_ret and lws_errno.
 
 2008-06-17  Guy Martin  <gmsoft@tuxicoman.be>
@@ -47,7 +758,7 @@
 	    Guy Martin <gmsoft@tuxicoman.be>
 
 	[BZ #5923]
-	* sysdeps/unix/sysv/linux/hppa/nptl/lowlevellock.h: Pass 
+	* sysdeps/unix/sysv/linux/hppa/nptl/lowlevellock.h: Pass
 	timespec and futexp.
 
 2008-02-22  Carlos O'Donell  <carlos@codesourcery.com>
@@ -195,7 +906,7 @@
 
 2007-05-17  Carlos O'Donell  <carlos@systemhalted.org>
 
-	* sysdeps/unix/sysv/linux/hppa/nptl/bits/semaphore.h 
+	* sysdeps/unix/sysv/linux/hppa/nptl/bits/semaphore.h
 	(SEM_VALUE_MAX): Remove.
 
 2007-05-17  Carlos O'Donell  <carlos@systemhalted.org>
@@ -205,14 +916,14 @@
 	(INLINE_SYSCALL): Use PIC_REG_DEF, PIC_REG_USE.
 	(INTERNAL_SYSCALL): Likewise.
 	(INTERNAL_SYSCALL_NCS): Likewise.
-	* sysdeps/unix/sysv/linux/hppa/sysdep.c (syscall): Use 
+	* sysdeps/unix/sysv/linux/hppa/sysdep.c (syscall): Use
 	PIC_REG_DEF, PIC_REG_USE.
 
 2007-05-01  Carlos O'Donell  <carlos@systemhalted.org>
 
 	* sysdeps/unix/sysv/linux/hppa/linuxthreads/bits/pthreadtypes.h
-	[__USE_XOPEN2K]: Define pthread_rwlock_t and 
-	pthread_rwlockattr_t. 
+	[__USE_XOPEN2K]: Define pthread_rwlock_t and
+	pthread_rwlockattr_t.
 
 2007-02-02  Carlos O'Donell  <carlos@systemhalted.org>
 
@@ -246,18 +957,18 @@
 2006-09-20  Carlos O'Donell  <carlos@systemhalted.org>
 
 	* sysdeps/unix/sysv/linux/hppa/bits/fcntl.h (splice): Add offin
-	and offout arguments to the prototype. 
+	and offout arguments to the prototype.
 
 2006-09-15  Carlos O'Donell  <carlos@systemhalted.org>
 
 	* sysdeps/hppa/nptl/tcb-offsets.sym: Define TID_THREAD_OFFSET.
-	* sysdeps/unix/sysv/linux/hppa/clone.S: Handle RESET_PID, and 
+	* sysdeps/unix/sysv/linux/hppa/clone.S: Handle RESET_PID, and
 	restore r19 before call to _exit.
 	* sysdeps/unix/sysv/linux/hppa/nptl/clone.S: New file.
 
 2006-09-13  Carlos O'Donell  <carlos@systemhalted.org>
 
-	* sysdeps/hppa/dl-machine.h (RTLD_START): Comment the use of 
+	* sysdeps/hppa/dl-machine.h (RTLD_START): Comment the use of
 	_dl_fini_plabel.
 	* sysdeps/hppa/elf/start.S: Correctly pass r23 to argument 6 of
 	__libc_start_main. Comment the order of arguments at entry and
@@ -277,7 +988,7 @@
 	as -EAGAIN.
 	* sysdeps/unix/sysv/linux/hppa/bits/mman.h: Adjust definitions to
 	match required standards.
-	* sysdeps/unix/sysv/linux/hppa/nptl/lowlevellock.h 
+	* sysdeps/unix/sysv/linux/hppa/nptl/lowlevellock.h
 	(lll_futex_wait): Return __ret.
 	(lll_futex_timed_wait): Likewise.
 	(lll_futex_wake): Likewise.
@@ -300,7 +1011,7 @@
 
 2006-07-24  Carlos O'Donell  <carlos@systemhalted.org>
 
-	* sysdeps/unix/sysv/linux/hppa/nptl/bits/pthreadtypes.h: 
+	* sysdeps/unix/sysv/linux/hppa/nptl/bits/pthreadtypes.h:
 	__SIZEOF_PTHREAD_COND_T is 64 bytes. Remove __PAD_ATOMIC_LOCK_T.
 
 2006-07-18  Carlos O'Donell  <carlos@systemhalted.org>
@@ -326,7 +1037,7 @@
 
 	* sysdeps/unix/sysv/linux/hppa/xstat.c: New file.
 	* sysdeps/unix/sysv/linux/hppa/lxstat.c: Likewise.
-	* sysdeps/unix/sysv/linux/hppa/fxstat.c: Likewise. 
+	* sysdeps/unix/sysv/linux/hppa/fxstat.c: Likewise.
 	* sysdeps/unix/sysv/linux/hppa/fxstatat.c: Likewise.
 
 2006-07-13  Carlos O'Donell  <carlos@systemhalted.org>
@@ -355,12 +1066,12 @@
 
 2006-06-08  Carlos O'Donell  <carlos@systemhalted.org>
 
-	* sysdeps/unix/sysv/linux/hppa/Versions: new errlist compat entry 
+	* sysdeps/unix/sysv/linux/hppa/Versions: new errlist compat entry
 	for up to 256 errnos
 
 2006-06-08  Carlos O'Donell  <carlos@systemhalted.org>
 
-	* sysdeps/hppa/hppa1.1/Implies: Remove ieee754/ldbl-128. 
+	* sysdeps/hppa/hppa1.1/Implies: Remove ieee754/ldbl-128.
 	* sysdeps/unix/sysv/linux/hppa/kernel-features.h
 	[__LINUX_KERNEL_VERSION >= 0x020609]: Define __ASSUME_LWS_CAS.
 	* sysdeps/unix/sysv/linux/hppa/bits/atomic.h: New file.
@@ -458,9 +1169,9 @@
 
 2006-04-19  Carlos O'Donell  <carlos@systemhalted.org>
 
-	* sysdeps/unix/sysv/linux/hppa/bits/mman.h [__USE_GNU]: 
+	* sysdeps/unix/sysv/linux/hppa/bits/mman.h [__USE_GNU]:
 	Define MMAP_FIXED.
-	* sysdeps/unix/sysv/linux/hppa/bits/fcntl.h [__USE_GNU]: 
+	* sysdeps/unix/sysv/linux/hppa/bits/fcntl.h [__USE_GNU]:
 	Define SYNC_FILE_RANGE_WAIT_BEFORE, SYNC_FILE_RANGE_WRITE,
 	SYNC_FILE_RANGE_WAIT_AFTER, sync_file_range, splice, tee.
 

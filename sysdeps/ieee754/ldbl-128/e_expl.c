@@ -1,5 +1,5 @@
 /* Quad-precision floating point e^x.
-   Copyright (C) 1999 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jj@ultra.linux.cz>
    Partly based on double-precision code
@@ -16,9 +16,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* The basic design here is from
    Abraham Ziv, "Fast Evaluation of Elementary Mathematical Functions with
@@ -73,7 +72,7 @@ static const long double C[] = {
 /* Smallest integer x for which e^x overflows.  */
 #define himark C[0]
  11356.523406294143949491931077970765L,
- 
+
 /* Largest integer x for which e^x underflows.  */
 #define lomark C[1]
 -11433.4627433362978788372438434526231L,
@@ -118,7 +117,7 @@ static const long double C[] = {
 #define TWO15 C[11]
  32768.0L,
 
-/* Chebyshev polynom coeficients for (exp(x)-1)/x */
+/* Chebyshev polynom coefficients for (exp(x)-1)/x */
 #define P1 C[12]
 #define P2 C[13]
 #define P3 C[14]
@@ -216,7 +215,7 @@ __ieee754_expl (long double x)
 	  ex3_u.d = (result - ex2_u.d) - x22 * ex2_u.d;
 	  ex2_u.d = result;
 	  ex3_u.ieee.exponent += LDBL_MANT_DIG + 15 + IEEE854_LONG_DOUBLE_BIAS
-	  			 - ex2_u.ieee.exponent;
+				 - ex2_u.ieee.exponent;
 	  n_i = abs (ex3_u.d);
 	  n_i = (n_i + 1) / 2;
 	  fesetenv (&oldenv);
@@ -247,3 +246,4 @@ __ieee754_expl (long double x)
     /* Return x, if x is a NaN or Inf; or overflow, otherwise.  */
     return TWO16383*x;
 }
+strong_alias (__ieee754_expl, __expl_finite)

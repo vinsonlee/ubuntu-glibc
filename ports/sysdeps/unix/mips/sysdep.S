@@ -1,5 +1,4 @@
-/* Copyright (C) 1992, 1993, 1994, 1997, 1998, 1999, 2000, 2002, 2003 
-   Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Brendan Kehoe (brendan@zen.org).
 
@@ -14,14 +13,15 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #define _ERRNO_H
 #include <bits/errno.h>
 #include <sys/asm.h>
+
+	.set	nomips16
 
 #ifdef _LIBC_REENTRANT
 
@@ -30,7 +30,7 @@ FRAMESZ= (((NARGSAVE+LOCALSZ)*SZREG)+ALSZ)&ALMASK
 RAOFF= FRAMESZ-(1*SZREG)
 GPOFF= FRAMESZ-(2*SZREG)
 V0OFF= FRAMESZ-(3*SZREG)
-	
+
 ENTRY(__syscall_error)
 #ifdef __PIC__
 	.set noat
@@ -79,7 +79,7 @@ ENTRY(__syscall_error)
 	SETUP_GPX (AT)
 #endif
 	SETUP_GPX64 (t9, AT)
-	
+
 #if defined (EWOULDBLOCK_sys) && EWOULDBLOCK_sys != EAGAIN
 	/* We translate the system's EWOULDBLOCK error into EAGAIN.
 	   The GNU C library always defines EWOULDBLOCK==EAGAIN.

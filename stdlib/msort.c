@@ -1,6 +1,6 @@
 /* An alternative to qsort, with an identical interface.
    This file is part of the GNU C Library.
-   Copyright (C) 1992,95-97,99,2000,01,02,04,07 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
    Written by Mike Haertel, September 1988.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <alloca.h>
 #include <stdint.h>
@@ -25,6 +24,7 @@
 #include <unistd.h>
 #include <memcopy.h>
 #include <errno.h>
+#include <atomic.h>
 
 struct msort_param
 {
@@ -182,7 +182,7 @@ qsort_r (void *b, size_t n, size_t s, __compar_d_fn_t cmp, void *arg)
       static long int phys_pages;
       static int pagesize;
 
-      if (phys_pages == 0)
+      if (pagesize == 0)
 	{
 	  phys_pages = __sysconf (_SC_PHYS_PAGES);
 
@@ -196,6 +196,9 @@ qsort_r (void *b, size_t n, size_t s, __compar_d_fn_t cmp, void *arg)
 	  /* The following determines that we will never use more than
 	     a quarter of the physical memory.  */
 	  phys_pages /= 4;
+
+	  /* Make sure phys_pages is written to memory.  */
+	  atomic_write_barrier ();
 
 	  pagesize = __sysconf (_SC_PAGESIZE);
 	}

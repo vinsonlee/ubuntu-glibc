@@ -1,6 +1,6 @@
 /* Data structure for communication from the run-time dynamic linker for
    loaded ELF shared objects.
-   Copyright (C) 1995-2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef	_PRIVATE_LINK_H
 #define	_PRIVATE_LINK_H	1
@@ -38,7 +37,7 @@ struct link_map;
 extern unsigned int la_objopen (struct link_map *__map, Lmid_t __lmid,
 				uintptr_t *__cookie);
 
-
+#include <stdint.h>
 #include <stddef.h>
 #include <bits/linkmap.h>
 #include <dl-lookupcfg.h>
@@ -88,7 +87,8 @@ struct link_map
     /* These first few members are part of the protocol with the debugger.
        This is the same format used in SVR4.  */
 
-    ElfW(Addr) l_addr;		/* Base address shared object is loaded at.  */
+    ElfW(Addr) l_addr;		/* Difference between the address in the ELF
+				   file and the addresses in memory.  */
     char *l_name;		/* Absolute file name object was found in.  */
     ElfW(Dyn) *l_ld;		/* Dynamic section of the shared object.  */
     struct link_map *l_next, *l_prev; /* Chain of loaded objects.  */
@@ -180,7 +180,6 @@ struct link_map
     unsigned int l_need_tls_init:1; /* Nonzero if GL(dl_init_static_tls)
 				       should be called on this link map
 				       when relocation finishes.  */
-    unsigned int l_used:1;	/* Nonzero if the DSO is used.  */
     unsigned int l_auditing:1;	/* Nonzero if the DSO is used in auditing.  */
     unsigned int l_audit_any_plt:1; /* Nonzero if at least one audit module
 				       is interested in the PLT interception.*/
@@ -189,6 +188,13 @@ struct link_map
     unsigned int l_contiguous:1; /* Nonzero if inter-segment holes are
 				    mprotected or if no holes are present at
 				    all.  */
+    unsigned int l_symbolic_in_local_scope:1; /* Nonzero if l_local_scope
+						 during LD_TRACE_PRELINKING=1
+						 contains any DT_SYMBOLIC
+						 libraries.  */
+    unsigned int l_free_initfini:1; /* Nonzero if l_initfini can be
+				       freed, ie. not allocated with
+				       the dummy malloc in ld.so.  */
 
     /* Collected information about own RPATH directories.  */
     struct r_search_path_struct l_rpath_dirs;
@@ -239,12 +245,15 @@ struct link_map
     struct link_map **l_initfini;
 
     /* List of the dependencies introduced through symbol binding.  */
-    unsigned int l_reldepsmax;
     struct link_map_reldeps
       {
 	unsigned int act;
 	struct link_map *list[];
       } *l_reldeps;
+    unsigned int l_reldepsmax;
+
+    /* Nonzero if the DSO is used.  */
+    unsigned int l_used;
 
     /* Various flag words.  */
     ElfW(Word) l_feature_1;
@@ -281,7 +290,7 @@ struct link_map
 #endif
 #ifndef FORCED_DYNAMIC_TLS_OFFSET
 # if NO_TLS_OFFSET == 0
-#  define FORCED_DYNAMIC_TLS_OFFSET 1
+#  define FORCED_DYNAMIC_TLS_OFFSET -1
 # elif NO_TLS_OFFSET == -1
 #  define FORCED_DYNAMIC_TLS_OFFSET -2
 # else
@@ -292,6 +301,9 @@ struct link_map
     ptrdiff_t l_tls_offset;
     /* Index of the module in the dtv array.  */
     size_t l_tls_modid;
+
+    /* Number of thread_local objects constructed by this DSO.  */
+    size_t l_tls_dtor_count;
 
     /* Information used to change permission after the relocations are
        done.  */
@@ -321,5 +333,10 @@ struct link_map
 extern int __dl_iterate_phdr (int (*callback) (struct dl_phdr_info *info,
 					       size_t size, void *data),
 			      void *data);
+
+/* We use this macro to refer to ELF macros independent of the native
+   wordsize.  `ELFW(R_TYPE)' is used in place of `ELF32_R_TYPE' or
+   `ELF64_R_TYPE'.  */
+#define ELFW(type)	_ElfW (ELF, __ELF_NATIVE_CLASS, type)
 
 #endif /* include/link.h */

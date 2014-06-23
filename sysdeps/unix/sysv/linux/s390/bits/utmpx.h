@@ -1,6 +1,5 @@
 /* Structures and definitions for the user accounting database.  GNU version.
-   Copyright (C) 1997, 1998, 2000, 2001, 2002, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _UTMPX_H
 # error "Never include <bits/utmpx.h> directly; use <utmpx.h> instead."
@@ -80,7 +78,7 @@ struct utmpx
   struct timeval ut_tv;		/* Time entry was made.  */
 #endif
   __int32_t ut_addr_v6[4];	/* Internet address of remote host.  */
-  char __unused[20];		/* Reserved for future use.  */
+  char __glibc_reserved[20];		/* Reserved for future use.  */
 };
 
 

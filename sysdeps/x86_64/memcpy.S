@@ -1,7 +1,7 @@
 /*
    Optimized memcpy for x86-64.
 
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
    Contributed by Evandro Menezes <evandro.menezes@amd.com>, 2007.
 
    This file is part of the GNU C Library.
@@ -17,9 +17,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.
 */
 
 #include <sysdep.h>
@@ -31,6 +30,12 @@
 #  define RETVAL	(0)
 #else
 #  define RETVAL	(-8)
+#  if defined SHARED && !defined USE_MULTIARCH && !defined NOT_IN_libc
+#    define memcpy	__memcpy
+#    undef libc_hidden_builtin_def
+#    define libc_hidden_builtin_def(name) \
+	.globl __GI_memcpy; __GI_memcpy = __memcpy
+#  endif
 #endif
 #define SAVE0	(RETVAL - 8)
 #define SAVE1	(SAVE0	- 8)
@@ -40,12 +45,12 @@
         .text
 
 #if defined PIC && !defined NOT_IN_libc
-ENTRY (__memcpy_chk)
+ENTRY_CHK (__memcpy_chk)
 
 	cmpq	%rdx, %rcx
 	jb	HIDDEN_JUMPTARGET (__chk_fail)
 
-END (__memcpy_chk)
+END_CHK (__memcpy_chk)
 #endif
 
 ENTRY(memcpy)				/* (void *, const void*, size_t) */
@@ -249,7 +254,7 @@ L(32after):
 
 L(fasttry):				/* first 1/2 L1 */
 #ifndef NOT_IN_libc			/* only up to this algorithm outside of libc.so */
-	movq	__x86_64_data_cache_size_half(%rip), %r11
+	mov	__x86_data_cache_size_half(%rip), %R11_LP
 	cmpq	%rdx, %r11		/* calculate the smaller of */
 	cmovaq	%rdx, %r11		/* remaining bytes and 1/2 L1 */
 #endif
@@ -298,7 +303,7 @@ L(fastafter):
 /* Handle large blocks smaller than 1/2 L2. */
 
 L(pretry):				/* first 1/2 L2 */
-	movq	__x86_64_shared_cache_size_half (%rip), %r8
+	mov	__x86_shared_cache_size_half (%rip), %R8_LP
 	cmpq	%rdx, %r8		/* calculate the lesser of */
 	cmovaq	%rdx, %r8		/* remaining bytes and 1/2 L2 */
 
@@ -317,7 +322,7 @@ L(pre):					/* 64-byte with prefetching */
 	movq	%rbx, SAVE3(%rsp)
 	cfi_rel_offset (%rbx, SAVE3)
 
-	cmpl	$0, __x86_64_prefetchw(%rip)
+	cmpl	$0, __x86_prefetchw(%rip)
 	jz	L(preloop)		/* check if PREFETCHW OK */
 
 	.p2align 4
@@ -571,4 +576,9 @@ END(memcpy)
 
 #ifndef USE_AS_MEMPCPY
 libc_hidden_builtin_def (memcpy)
+# if defined SHARED && !defined USE_MULTIARCH && !defined NOT_IN_libc
+#  undef memcpy
+#  include <shlib-compat.h>
+versioned_symbol (libc, __memcpy, memcpy, GLIBC_2_14);
+# endif
 #endif

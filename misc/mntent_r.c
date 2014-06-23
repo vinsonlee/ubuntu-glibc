@@ -1,6 +1,5 @@
 /* Utilities for reading/writing fstab, mtab, etc.
-   Copyright (C) 1995-2000, 2001, 2002, 2003, 2006
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <alloca.h>
 #include <mntent.h>
@@ -25,10 +23,8 @@
 #include <string.h>
 #include <sys/types.h>
 
-#ifdef USE_IN_LIBIO
-# define flockfile(s) _IO_flockfile (s)
-# define funlockfile(s) _IO_funlockfile (s)
-#endif
+#define flockfile(s) _IO_flockfile (s)
+#define funlockfile(s) _IO_funlockfile (s)
 
 #undef __setmntent
 #undef __endmntent
@@ -40,10 +36,10 @@ FILE *
 __setmntent (const char *file, const char *mode)
 {
   /* Extend the mode parameter with "c" to disable cancellation in the
-     I/O functions.  */
+     I/O functions and "e" to set FD_CLOEXEC.  */
   size_t modelen = strlen (mode);
-  char newmode[modelen + 2];
-  memcpy (mempcpy (newmode, mode, modelen), "c", 2);
+  char newmode[modelen + 3];
+  memcpy (mempcpy (newmode, mode, modelen), "ce", 3);
   FILE *result = fopen (file, newmode);
 
   if (result != NULL)
@@ -52,7 +48,7 @@ __setmntent (const char *file, const char *mode)
 
   return result;
 }
-INTDEF(__setmntent)
+libc_hidden_def (__setmntent)
 weak_alias (__setmntent, setmntent)
 
 
@@ -64,7 +60,7 @@ __endmntent (FILE *stream)
     fclose (stream);
   return 1;		/* SunOS 4.x says to always return 1 */
 }
-INTDEF(__endmntent)
+libc_hidden_def (__endmntent)
 weak_alias (__endmntent, endmntent)
 
 
@@ -181,7 +177,7 @@ __getmntent_r (FILE *stream, struct mntent *mp, char *buffer, int bufsiz)
 
   return mp;
 }
-INTDEF(__getmntent_r)
+libc_hidden_def (__getmntent_r)
 weak_alias (__getmntent_r, getmntent_r)
 
 
@@ -194,7 +190,7 @@ weak_alias (__getmntent_r, getmntent_r)
     const char *rp = name;						      \
 									      \
     while (*rp != '\0')							      \
-      if (*rp == ' ' || *rp == '\t' || *rp == '\\')			      \
+      if (*rp == ' ' || *rp == '\t' || *rp == '\n' || *rp == '\\')	      \
 	break;								      \
       else								      \
 	++rp;								      \
@@ -202,7 +198,7 @@ weak_alias (__getmntent_r, getmntent_r)
     if (*rp != '\0')							      \
       {									      \
 	/* In the worst case the length of the string can increase to	      \
-	   founr times the current length.  */				      \
+	   four times the current length.  */				      \
 	char *wp;							      \
 									      \
 	rp = name;							      \
@@ -263,8 +259,8 @@ __addmntent (FILE *stream, const struct mntent *mnt)
 		   mntcopy.mnt_type,
 		   mntcopy.mnt_opts,
 		   mntcopy.mnt_freq,
-		   mntcopy.mnt_passno)
-	  < 0 ? 1 : 0);
+		   mntcopy.mnt_passno) < 0
+	  || fflush (stream) != 0);
 }
 weak_alias (__addmntent, addmntent)
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2001, 2002 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SYS_SEM_H
 # error "Never include <bits/sem.h> directly; use <sys/sem.h> instead."
@@ -42,15 +41,15 @@ struct semid_ds
   struct ipc_perm sem_perm;		/* operation permission struct */
   __time_t sem_otime;			/* last semop() time */
 #if __WORDSIZE != 64
-  unsigned long int __unused1;
+  unsigned long int __glibc_reserved1;
 #endif
   __time_t sem_ctime;			/* last time changed by semctl() */
 #if __WORDSIZE != 64
-  unsigned long int __unused2;
+  unsigned long int __glibc_reserved2;
 #endif
   unsigned long int sem_nsems;		/* number of semaphores in set */
-  unsigned long int __unused3;
-  unsigned long int __unused4;
+  unsigned long int __glibc_reserved3;
+  unsigned long int __glibc_reserved4;
 };
 
 /* The user should define a union like the following to use it for arguments

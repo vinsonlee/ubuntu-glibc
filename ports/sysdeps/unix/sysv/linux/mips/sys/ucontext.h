@@ -1,5 +1,4 @@
-/* Copyright (C) 1997, 1998, 2000, 2003, 2004, 2006 Free Software
-   Foundation, Inc.  This file is part of the GNU C Library.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.  This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -12,9 +11,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* Don't rely on this, the interface is currently messed up and may need to
    be broken to be fixed.  */
@@ -56,12 +54,9 @@ typedef struct fpregset {
 #if _MIPS_SIM == _ABIO32
 /* Earlier versions of glibc for mips had an entirely different
    definition of mcontext_t, that didn't even resemble the
-   corresponding kernel data structure.  Since all legitimate uses of
-   ucontext_t in glibc mustn't have accessed anything beyond
-   uc_mcontext and, even then, taking a pointer to it, casting it to
-   sigcontext_t, and accessing it as such, which is what it has always
-   been, this can still be rectified.  Fortunately, makecontext,
-   [gs]etcontext et all have never been implemented.  */
+   corresponding kernel data structure.  Fortunately, makecontext,
+   [gs]etcontext et all were not implemented back then, so this can
+   still be rectified.  */
 typedef struct
   {
     unsigned int regmask;

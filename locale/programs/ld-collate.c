@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2003, 2005-2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1995.
 
@@ -13,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -24,6 +23,7 @@
 #include <error.h>
 #include <stdlib.h>
 #include <wchar.h>
+#include <stdint.h>
 #include <sys/param.h>
 
 #include "localedef.h"
@@ -44,6 +44,8 @@ static inline void
 __attribute ((always_inline))
 obstack_int32_grow (struct obstack *obstack, int32_t data)
 {
+  assert (LOCFILE_ALIGNED_P (obstack_object_size (obstack)));
+  data = maybe_swap_uint32 (data);
   if (sizeof (int32_t) == sizeof (int))
     obstack_int_grow (obstack, data);
   else
@@ -54,6 +56,8 @@ static inline void
 __attribute ((always_inline))
 obstack_int32_grow_fast (struct obstack *obstack, int32_t data)
 {
+  assert (LOCFILE_ALIGNED_P (obstack_object_size (obstack)));
+  data = maybe_swap_uint32 (data);
   if (sizeof (int32_t) == sizeof (int))
     obstack_int_grow_fast (obstack, data);
   else
@@ -165,7 +169,7 @@ struct symbol_t
 #define ELEMENT struct element_t *
 #define DEFAULT NULL
 #define ITERATE
-#define NO_FINALIZE
+#define NO_ADD_LOCALE
 #include "3level.h"
 
 /* Sparse table of int32_t.  */
@@ -203,6 +207,8 @@ struct locale_collate_t
   struct section_list *current_section;
   /* There always can be an unnamed section.  */
   struct section_list unnamed_section;
+  /* Flag whether the unnamed section has been defined.  */
+  bool unnamed_section_defined;
   /* To make handling of errors easier we have another section.  */
   struct section_list error_section;
   /* Sometimes we are defining the values for collating symbols before
@@ -346,6 +352,9 @@ new_element (struct locale_collate_t *collate, const char *mbs, size_t mbslen,
     {
       size_t nwcs = wcslen ((wchar_t *) wcs);
       uint32_t zero = 0;
+      /* Handle <U0000> as a single character.  */
+      if (nwcs == 0)
+	nwcs = 1;
       obstack_grow (&collate->mempool, wcs, nwcs * sizeof (uint32_t));
       obstack_grow (&collate->mempool, &zero, sizeof (uint32_t));
       newp->wcs = (uint32_t *) obstack_finish (&collate->mempool);
@@ -634,7 +643,7 @@ find_element (struct linereader *ldfile, struct locale_collate_t *collate,
   if (find_entry (&collate->seq_table, str, len, &result) != 0)
     {
       /* Nope, not define yet.  So we see whether it is a
-         collation symbol.  */
+	 collation symbol.  */
       void *ptr;
 
       if (find_entry (&collate->sym_table, str, len, &ptr) == 0)
@@ -788,7 +797,7 @@ insert_weights (struct linereader *ldfile, struct element_t *elem,
 	      if (*cp == '<')
 		{
 		  /* Ahh, it's a bsymbol or an UCS4 value.  If it's
-                     the latter we have to unify the name.  */
+		     the latter we have to unify the name.  */
 		  const char *startp = ++cp;
 		  size_t len;
 
@@ -1302,8 +1311,8 @@ order for `%.*s' already defined at %s:%Zu"),
       else
 	{
 	  /* Determine the range.  To do so we have to determine the
-             common prefix of the both names and then the numeric
-             values of both ends.  */
+	     common prefix of the both names and then the numeric
+	     values of both ends.  */
 	  size_t lenfrom = strlen (startp->name);
 	  size_t lento = strlen (endp->name);
 	  char buf[lento + 1];
@@ -1811,8 +1820,6 @@ symbol `%s' has the same encoding as"), (*eptr)->name);
       runp = runp->next;
     }
 
-  collseq_table_finalize (&collate->wcseqorder);
-
   /* Now determine whether the UNDEFINED entry is needed and if yes,
      whether it was defined.  */
   collate->undefined.used_in_level = need_undefined ? ~0ul : 0;
@@ -1955,6 +1962,7 @@ output_weightwc (struct obstack *pool, struct locale_collate_t *collate,
       obstack_int32_grow (pool, j);
 
       obstack_grow (pool, buf, j * sizeof (int32_t));
+      maybe_swap_uint32_obstack (pool, j);
     }
 
   return retval | ((elem->section->ruleidx & 0x7f) << 24);
@@ -1985,7 +1993,6 @@ add_to_tablewc (uint32_t ch, struct element_t *runp)
     {
       /* As for the singlebyte table, we recognize sequences and
 	 compress them.  */
-      struct element_t *lastp;
 
       collidx_table_add (atwc.tablewc, ch,
 			 -(obstack_object_size (atwc.extrapool)
@@ -2074,6 +2081,7 @@ add_to_tablewc (uint32_t ch, struct element_t *runp)
 	      weightidx = output_weightwc (atwc.weightpool, atwc.collate,
 					   runp);
 
+	      assert (runp->nwcs > 0);
 	      added = (1 + 1 + runp->nwcs - 1) * sizeof (int32_t);
 	      if (sizeof (int) == sizeof (int32_t))
 		obstack_make_room (atwc.extrapool, added);
@@ -2085,7 +2093,6 @@ add_to_tablewc (uint32_t ch, struct element_t *runp)
 	    }
 
 	  /* Next entry.  */
-	  lastp = runp;
 	  runp = runp->wcnext;
 	}
       while (runp != NULL);
@@ -2098,10 +2105,7 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
 {
   struct locale_collate_t *collate = locale->categories[LC_COLLATE].collate;
   const size_t nelems = _NL_ITEM_INDEX (_NL_NUM_LC_COLLATE);
-  struct iovec iov[2 + nelems];
-  struct locale_file data;
-  uint32_t idx[nelems];
-  size_t cnt;
+  struct locale_file file;
   size_t ch;
   int32_t tablemb[256];
   struct obstack weightpool;
@@ -2114,51 +2118,22 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
   int i;
   struct element_t *runp;
 
-  data.magic = LIMAGIC (LC_COLLATE);
-  data.n = nelems;
-  iov[0].iov_base = (void *) &data;
-  iov[0].iov_len = sizeof (data);
-
-  iov[1].iov_base = (void *) idx;
-  iov[1].iov_len = sizeof (idx);
-
-  idx[0] = iov[0].iov_len + iov[1].iov_len;
-  cnt = 0;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_NRULES));
-  iov[2 + cnt].iov_base = &nrules;
-  iov[2 + cnt].iov_len = sizeof (uint32_t);
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  ++cnt;
+  init_locale_data (&file, nelems);
+  add_locale_uint32 (&file, nrules);
 
   /* If we have no LC_COLLATE data emit only the number of rules as zero.  */
   if (collate == NULL)
     {
-      int32_t dummy = 0;
-
-      while (cnt < _NL_ITEM_INDEX (_NL_NUM_LC_COLLATE))
+      size_t idx;
+      for (idx = 1; idx < nelems; idx++)
 	{
 	  /* The words have to be handled specially.  */
-	  if (cnt == _NL_ITEM_INDEX (_NL_COLLATE_SYMB_HASH_SIZEMB))
-	    {
-	      iov[2 + cnt].iov_base = &dummy;
-	      iov[2 + cnt].iov_len = sizeof (int32_t);
-	    }
+	  if (idx == _NL_ITEM_INDEX (_NL_COLLATE_SYMB_HASH_SIZEMB))
+	    add_locale_uint32 (&file, 0);
 	  else
-	    {
-	      iov[2 + cnt].iov_base = NULL;
-	      iov[2 + cnt].iov_len = 0;
-	    }
-
-	  if (cnt + 1 < _NL_ITEM_INDEX (_NL_NUM_LC_COLLATE))
-	    idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-	  ++cnt;
+	    add_locale_empty (&file);
 	}
-
-      assert (cnt == _NL_ITEM_INDEX (_NL_NUM_LC_COLLATE));
-
-      write_locale_data (output_path, LC_COLLATE, "LC_COLLATE", 2 + cnt, iov);
-
+      write_locale_data (output_path, LC_COLLATE, "LC_COLLATE", &file);
       return;
     }
 
@@ -2185,17 +2160,13 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
 	++i;
       }
   /* And align the output.  */
-  i = (nrules * i) % __alignof__ (int32_t);
+  i = (nrules * i) % LOCFILE_ALIGN;
   if (i > 0)
     do
       obstack_1grow (&weightpool, '\0');
-    while (++i < __alignof__ (int32_t));
+    while (++i < LOCFILE_ALIGN);
 
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_RULESETS));
-  iov[2 + cnt].iov_len = obstack_object_size (&weightpool);
-  iov[2 + cnt].iov_base = obstack_finish (&weightpool);
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  ++cnt;
+  add_locale_raw_obstack (&file, &weightpool);
 
   /* Generate the 8-bit table.  Walk through the lists of sequences
      starting with the same byte and add them one after the other to
@@ -2222,14 +2193,14 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
     else
       {
 	/* The entries in the list are sorted by length and then
-           alphabetically.  This is the order in which we will add the
-           elements to the collation table.  This allows simply walking
+	   alphabetically.  This is the order in which we will add the
+	   elements to the collation table.  This allows simply walking
 	   the table in sequence and stopping at the first matching
-           entry.  Since the longer sequences are coming first in the
-           list they have the possibility to match first, just as it
-           has to be.  In the worst case we are walking to the end of
-           the list where we put, if no singlebyte sequence is defined
-           in the locale definition, the weights for UNDEFINED.
+	   entry.  Since the longer sequences are coming first in the
+	   list they have the possibility to match first, just as it
+	   has to be.  In the worst case we are walking to the end of
+	   the list where we put, if no singlebyte sequence is defined
+	   in the locale definition, the weights for UNDEFINED.
 
 	   To reduce the length of the search list we compress them a bit.
 	   This happens by collecting sequences of consecutive byte
@@ -2239,8 +2210,7 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
 	struct element_t *runp = collate->mbheads[ch];
 	struct element_t *lastp;
 
-	assert ((obstack_object_size (&extrapool)
-		 & (__alignof__ (int32_t) - 1)) == 0);
+	assert (LOCFILE_ALIGNED_P (obstack_object_size (&extrapool)));
 
 	tablemb[ch] = -obstack_object_size (&extrapool);
 
@@ -2265,11 +2235,9 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
 		struct element_t *curp;
 
 		/* Compute how much space we will need.  */
-		added = ((sizeof (int32_t) + 1 + 2 * (runp->nmbs - 1)
-			  + __alignof__ (int32_t) - 1)
-			 & ~(__alignof__ (int32_t) - 1));
-		assert ((obstack_object_size (&extrapool)
-			 & (__alignof__ (int32_t) - 1)) == 0);
+		added = LOCFILE_ALIGN_UP (sizeof (int32_t) + 1
+					  + 2 * (runp->nmbs - 1));
+		assert (LOCFILE_ALIGNED_P (obstack_object_size (&extrapool)));
 		obstack_make_room (&extrapool, added);
 
 		/* More than one consecutive entry.  We mark this by having
@@ -2297,7 +2265,7 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
 		  obstack_1grow_fast (&extrapool, curp->mbs[i]);
 
 		/* Now find the end of the consecutive sequence and
-                   add all the indeces in the indirect pool.  */
+		   add all the indeces in the indirect pool.  */
 		do
 		  {
 		    weightidx = output_weight (&weightpool, collate, curp);
@@ -2312,7 +2280,7 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
 		obstack_int32_grow (&indirectpool, weightidx);
 
 		/* And add the end byte sequence.  Without length this
-                   time.  */
+		   time.  */
 		for (i = 1; i < curp->nmbs; ++i)
 		  obstack_1grow_fast (&extrapool, curp->mbs[i]);
 	      }
@@ -2326,11 +2294,9 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
 		/* Output the weight info.  */
 		weightidx = output_weight (&weightpool, collate, runp);
 
-		added = ((sizeof (int32_t) + 1 + runp->nmbs - 1
-			  + __alignof__ (int32_t) - 1)
-			 & ~(__alignof__ (int32_t) - 1));
-		assert ((obstack_object_size (&extrapool)
-			 & (__alignof__ (int32_t) - 1)) == 0);
+		added = LOCFILE_ALIGN_UP (sizeof (int32_t) + 1
+					  + runp->nmbs - 1);
+		assert (LOCFILE_ALIGNED_P (obstack_object_size (&extrapool)));
 		obstack_make_room (&extrapool, added);
 
 		obstack_int32_grow_fast (&extrapool, weightidx);
@@ -2342,8 +2308,7 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
 	      }
 
 	    /* Add alignment bytes if necessary.  */
-	    while ((obstack_object_size (&extrapool)
-		    & (__alignof__ (int32_t) - 1)) != 0)
+	    while (!LOCFILE_ALIGNED_P (obstack_object_size (&extrapool)))
 	      obstack_1grow_fast (&extrapool, '\0');
 
 	    /* Next entry.  */
@@ -2352,15 +2317,13 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
 	  }
 	while (runp != NULL);
 
-	assert ((obstack_object_size (&extrapool)
-		 & (__alignof__ (int32_t) - 1)) == 0);
+	assert (LOCFILE_ALIGNED_P (obstack_object_size (&extrapool)));
 
 	/* If the final entry in the list is not a single character we
-           add an UNDEFINED entry here.  */
+	   add an UNDEFINED entry here.  */
 	if (lastp->nmbs != 1)
 	  {
-	    int added = ((sizeof (int32_t) + 1 + 1 + __alignof__ (int32_t) - 1)
-			 & ~(__alignof__ (int32_t) - 1));
+	    int added = LOCFILE_ALIGN_UP (sizeof (int32_t) + 1 + 1);
 	    obstack_make_room (&extrapool, added);
 
 	    obstack_int32_grow_fast (&extrapool, 0);
@@ -2370,67 +2333,26 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
 	    obstack_1grow_fast (&extrapool, 0);
 
 	    /* Add alignment bytes if necessary.  */
-	    while ((obstack_object_size (&extrapool)
-		    & (__alignof__ (int32_t) - 1)) != 0)
+	    while (!LOCFILE_ALIGNED_P (obstack_object_size (&extrapool)))
 	      obstack_1grow_fast (&extrapool, '\0');
 	  }
       }
 
   /* Add padding to the tables if necessary.  */
-  while ((obstack_object_size (&weightpool) & (__alignof__ (int32_t) - 1))
-	 != 0)
+  while (!LOCFILE_ALIGNED_P (obstack_object_size (&weightpool)))
     obstack_1grow (&weightpool, 0);
 
   /* Now add the four tables.  */
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_TABLEMB));
-  iov[2 + cnt].iov_base = tablemb;
-  iov[2 + cnt].iov_len = sizeof (tablemb);
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  assert ((iov[2 + cnt].iov_len & (__alignof__ (int32_t) - 1)) == 0);
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_WEIGHTMB));
-  iov[2 + cnt].iov_len = obstack_object_size (&weightpool);
-  iov[2 + cnt].iov_base = obstack_finish (&weightpool);
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_EXTRAMB));
-  iov[2 + cnt].iov_len = obstack_object_size (&extrapool);
-  iov[2 + cnt].iov_base = obstack_finish (&extrapool);
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_INDIRECTMB));
-  iov[2 + cnt].iov_len = obstack_object_size (&indirectpool);
-  iov[2 + cnt].iov_base = obstack_finish (&indirectpool);
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  assert ((iov[2 + cnt].iov_len & (__alignof__ (int32_t) - 1)) == 0);
-  ++cnt;
-
+  add_locale_uint32_array (&file, (const uint32_t *) tablemb, 256);
+  add_locale_raw_obstack (&file, &weightpool);
+  add_locale_raw_obstack (&file, &extrapool);
+  add_locale_raw_obstack (&file, &indirectpool);
 
   /* Now the same for the wide character table.  We need to store some
      more information here.  */
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_GAP1));
-  iov[2 + cnt].iov_base = NULL;
-  iov[2 + cnt].iov_len = 0;
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  assert (idx[cnt] % __alignof__ (int32_t) == 0);
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_GAP2));
-  iov[2 + cnt].iov_base = NULL;
-  iov[2 + cnt].iov_len = 0;
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  assert (idx[cnt] % __alignof__ (int32_t) == 0);
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_GAP3));
-  iov[2 + cnt].iov_base = NULL;
-  iov[2 + cnt].iov_len = 0;
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  assert (idx[cnt] % __alignof__ (int32_t) == 0);
-  ++cnt;
+  add_locale_empty (&file);
+  add_locale_empty (&file);
+  add_locale_empty (&file);
 
   /* Since we are using the sign of an integer to mark indirection the
      offsets in the arrays we are indirectly referring to must not be
@@ -2462,41 +2384,11 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
 
   memset (&atwc, 0, sizeof (atwc));
 
-  collidx_table_finalize (&tablewc);
-
   /* Now add the four tables.  */
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_TABLEWC));
-  iov[2 + cnt].iov_base = tablewc.result;
-  iov[2 + cnt].iov_len = tablewc.result_size;
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  assert (iov[2 + cnt].iov_len % sizeof (int32_t) == 0);
-  assert (idx[cnt] % __alignof__ (int32_t) == 0);
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_WEIGHTWC));
-  iov[2 + cnt].iov_len = obstack_object_size (&weightpool);
-  iov[2 + cnt].iov_base = obstack_finish (&weightpool);
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  assert (iov[2 + cnt].iov_len % sizeof (int32_t) == 0);
-  assert (idx[cnt] % __alignof__ (int32_t) == 0);
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_EXTRAWC));
-  iov[2 + cnt].iov_len = obstack_object_size (&extrapool);
-  iov[2 + cnt].iov_base = obstack_finish (&extrapool);
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  assert (iov[2 + cnt].iov_len % sizeof (int32_t) == 0);
-  assert (idx[cnt] % __alignof__ (int32_t) == 0);
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_INDIRECTWC));
-  iov[2 + cnt].iov_len = obstack_object_size (&indirectpool);
-  iov[2 + cnt].iov_base = obstack_finish (&indirectpool);
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  assert (iov[2 + cnt].iov_len % sizeof (int32_t) == 0);
-  assert (idx[cnt] % __alignof__ (int32_t) == 0);
-  ++cnt;
-
+  add_locale_collidx_table (&file, &tablewc);
+  add_locale_raw_obstack (&file, &weightpool);
+  add_locale_raw_obstack (&file, &extrapool);
+  add_locale_raw_obstack (&file, &indirectpool);
 
   /* Finally write the table with collation element names out.  It is
      a hash table with a simple function which gets the name of the
@@ -2563,7 +2455,7 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
  	  elem_table[idx * 2] = hash;
 	  elem_table[idx * 2 + 1] = obstack_object_size (&extrapool);
 
-	  /* The the string itself including length.  */
+	  /* The string itself including length.  */
 	  obstack_1grow (&extrapool, namelen);
 	  obstack_grow (&extrapool, runp->name, namelen);
 
@@ -2586,6 +2478,7 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
 	  obstack_int32_grow (&extrapool, runp->nwcs);
 	  obstack_grow (&extrapool, runp->wcs,
 			runp->nwcs * sizeof (uint32_t));
+	  maybe_swap_uint32_obstack (&extrapool, runp->nwcs);
 
 	  obstack_int32_grow (&extrapool, runp->wcseqorder);
 	}
@@ -2594,47 +2487,13 @@ collate_output (struct localedef_t *locale, const struct charmap_t *charmap,
     }
 
   /* Prepare to write out this data.  */
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_SYMB_HASH_SIZEMB));
-  iov[2 + cnt].iov_base = &elem_size;
-  iov[2 + cnt].iov_len = sizeof (int32_t);
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  assert (idx[cnt] % __alignof__ (int32_t) == 0);
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_SYMB_TABLEMB));
-  iov[2 + cnt].iov_base = elem_table;
-  iov[2 + cnt].iov_len = elem_size * 2 * sizeof (int32_t);
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  assert (idx[cnt] % __alignof__ (int32_t) == 0);
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_SYMB_EXTRAMB));
-  iov[2 + cnt].iov_len = obstack_object_size (&extrapool);
-  iov[2 + cnt].iov_base = obstack_finish (&extrapool);
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_COLLSEQMB));
-  iov[2 + cnt].iov_base = collate->mbseqorder;
-  iov[2 + cnt].iov_len = 256;
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_COLLSEQWC));
-  iov[2 + cnt].iov_base = collate->wcseqorder.result;
-  iov[2 + cnt].iov_len = collate->wcseqorder.result_size;
-  idx[1 + cnt] = idx[cnt] + iov[2 + cnt].iov_len;
-  assert (idx[cnt] % __alignof__ (int32_t) == 0);
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_COLLATE_CODESET));
-  iov[2 + cnt].iov_base = (void *) charmap->code_set_name;
-  iov[2 + cnt].iov_len = strlen (iov[2 + cnt].iov_base) + 1;
-  ++cnt;
-
-  assert (cnt == _NL_ITEM_INDEX (_NL_NUM_LC_COLLATE));
-
-  write_locale_data (output_path, LC_COLLATE, "LC_COLLATE", 2 + cnt, iov);
+  add_locale_uint32 (&file, elem_size);
+  add_locale_uint32_array (&file, elem_table, 2 * elem_size);
+  add_locale_raw_obstack (&file, &extrapool);
+  add_locale_raw_data (&file, collate->mbseqorder, 256);
+  add_locale_collseq_table (&file, &collate->wcseqorder);
+  add_locale_string (&file, charmap->code_set_name);
+  write_locale_data (output_path, LC_COLLATE, "LC_COLLATE", &file);
 
   obstack_free (&weightpool, NULL);
   obstack_free (&extrapool, NULL);
@@ -2674,7 +2533,7 @@ skip_to (struct linereader *ldfile, struct locale_collate_t *collate,
 	}
       else if (nowtok == tok_else)
 	{
-	  lr_error (ldfile, _("%s: more then one 'else'"), "LC_COLLATE");
+	  lr_error (ldfile, _("%s: more than one 'else'"), "LC_COLLATE");
 	}
 
       lr_ignore_rest (ldfile, 0);
@@ -3293,7 +3152,7 @@ error while adding equivalent collating symbol"));
 	      else
 		{
 		  /* One should not be allowed to open the same
-                     section twice.  */
+		     section twice.  */
 		  if (sp->first != NULL)
 		    lr_error (ldfile, _("\
 %s: multiple order definitions for section `%s'"),
@@ -3349,7 +3208,7 @@ error while adding equivalent collating symbol"));
 		 section.  */
 	      collate->current_section = &collate->unnamed_section;
 
-	      if (collate->unnamed_section.first != NULL)
+	      if (collate->unnamed_section_defined)
 		lr_error (ldfile, _("\
 %s: multiple order definitions for unnamed section"),
 			  "LC_COLLATE");
@@ -3359,6 +3218,7 @@ error while adding equivalent collating symbol"));
 		     the collate->sections list.  */
 		  collate->unnamed_section.next = collate->sections;
 		  collate->sections = &collate->unnamed_section;
+		  collate->unnamed_section_defined = true;
 		}
 	    }
 
@@ -3579,9 +3439,9 @@ error while adding equivalent collating symbol"));
 	      else
 		{
 		  /* This is bad.  The section after which we have to
-                     reorder does not exist.  Therefore we cannot
-                     process the whole rest of this reorder
-                     specification.  */
+		     reorder does not exist.  Therefore we cannot
+		     process the whole rest of this reorder
+		     specification.  */
 		  lr_error (ldfile, _("%s: section `%.*s' not known"),
 			    "LC_COLLATE", (int) arg->val.str.lenmb,
 			    arg->val.str.startmb);
@@ -3657,9 +3517,9 @@ error while adding equivalent collating symbol"));
 	  if (state == 0)
 	    {
 	      /* We are outside an `order_start' region.  This means
-                 we must only accept definitions of values for
-                 collation symbols since these are purely abstract
-                 values and don't need directions associated.  */
+		 we must only accept definitions of values for
+		 collation symbols since these are purely abstract
+		 values and don't need directions associated.  */
 	      void *ptr;
 
 	      if (find_entry (&collate->seq_table, symstr, symlen, &ptr) == 0)
@@ -3741,7 +3601,7 @@ error while adding equivalent collating symbol"));
 		    seqp->next->last = seqp->last;
 
 		  /* We also have to check whether this entry is the
-                     first or last of a section.  */
+		     first or last of a section.  */
 		  if (seqp->section->first == seqp)
 		    {
 		      if (seqp->section->first == seqp->section->last)
@@ -3798,7 +3658,7 @@ error while adding equivalent collating symbol"));
 		    }
 
 		  /* Process the rest of the line which might change
-                     the collation rules.  */
+		     the collation rules.  */
 		  arg = lr_token (ldfile, charmap, result, repertoire,
 				  verbose);
 		  if (arg->tok != tok_eof && arg->tok != tok_eol)
@@ -3810,8 +3670,8 @@ error while adding equivalent collating symbol"));
 	  else if (was_ellipsis != tok_none)
 	    {
 	      /* Using the information in the `ellipsis_weight'
-                 element and this and the last value we have to handle
-                 the ellipsis now.  */
+		 element and this and the last value we have to handle
+		 the ellipsis now.  */
 	      assert (state == 1);
 
 	      handle_ellipsis (ldfile, symstr, symlen, was_ellipsis, charmap,
@@ -3871,7 +3731,7 @@ error while adding equivalent collating symbol"));
 	case tok_ellipsis3: /* absolute ellipsis */
 	case tok_ellipsis4: /* symbolic decimal ellipsis */
 	  /* This is the symbolic (decimal or hexadecimal) or absolute
-             ellipsis.  */
+	     ellipsis.  */
 	  if (was_ellipsis != tok_none)
 	    goto err_label;
 

@@ -1,5 +1,5 @@
 /* Make a link between file names relative to open directories.  Hurd version.
-   Copyright (C) 2006 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <fcntl.h>
@@ -38,7 +37,9 @@ linkat (fromfd, from, tofd, to, flags)
   file_t oldfile, linknode, todir;
   char *toname;
 
-  oldfile = __file_name_lookup_at (fromfd, flags, from, 0, 0);
+  /* POSIX says linkat doesn't follow symlinks by default, so pass
+     O_NOLINK.  That can be overridden by AT_SYMLINK_FOLLOW in FLAGS.  */
+  oldfile = __file_name_lookup_at (fromfd, flags, from, O_NOLINK, 0);
   if (oldfile == MACH_PORT_NULL)
     return -1;
 

@@ -1,5 +1,5 @@
 /* Functions to read locale data files.
-   Copyright (C) 1996-2004, 2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <errno.h>
@@ -61,7 +60,7 @@ static const enum value_type *const _nl_value_types[] =
 };
 
 
-struct locale_data *
+struct __locale_data *
 internal_function
 _nl_intern_locale_data (int category, const void *data, size_t datasize)
 {
@@ -71,7 +70,7 @@ _nl_intern_locale_data (int category, const void *data, size_t datasize)
       unsigned int nstrings;
       unsigned int strindex[0];
     } *const filedata = data;
-  struct locale_data *newdata;
+  struct __locale_data *newdata;
   size_t cnt;
 
   if (__builtin_expect (datasize < sizeof *filedata, 0)
@@ -149,7 +148,7 @@ _nl_intern_locale_data (int category, const void *data, size_t datasize)
 	newdata->values[cnt].string = newdata->filedata + idx;
       else
 	{
-	  if (idx % __alignof__ (u_int32_t) != 0)
+	  if (!LOCFILE_ALIGNED_P (idx))
 	    goto puntdata;
 	  newdata->values[cnt].word =
 	    *((const u_int32_t *) (newdata->filedata + idx));
@@ -166,14 +165,14 @@ _nl_load_locale (struct loaded_l10nfile *file, int category)
   int fd;
   void *filedata;
   struct stat64 st;
-  struct locale_data *newdata;
+  struct __locale_data *newdata;
   int save_err;
   int alloc = ld_mapped;
 
   file->decided = 1;
   file->data = NULL;
 
-  fd = open_not_cancel_2 (file->filename, O_RDONLY);
+  fd = open_not_cancel_2 (file->filename, O_RDONLY | O_CLOEXEC);
   if (__builtin_expect (fd, 0) < 0)
     /* Cannot open the file.  */
     return;
@@ -187,7 +186,7 @@ _nl_load_locale (struct loaded_l10nfile *file, int category)
   if (__builtin_expect (S_ISDIR (st.st_mode), 0))
     {
       /* LOCALE/LC_foo is a directory; open LOCALE/LC_foo/SYS_LC_foo
-           instead.  */
+	   instead.  */
       char *newp;
       size_t filenamelen;
 
@@ -201,7 +200,7 @@ _nl_load_locale (struct loaded_l10nfile *file, int category)
 		 _nl_category_names.str + _nl_category_name_idxs[category],
 		 _nl_category_name_sizes[category] + 1);
 
-      fd = open_not_cancel_2 (newp, O_RDONLY);
+      fd = open_not_cancel_2 (newp, O_RDONLY | O_CLOEXEC);
       if (__builtin_expect (fd, 0) < 0)
 	return;
 
@@ -224,6 +223,7 @@ _nl_load_locale (struct loaded_l10nfile *file, int category)
 		     PROT_READ, MAP_FILE|MAP_COPY, fd, 0);
   if (__builtin_expect (filedata == MAP_FAILED, 0))
     {
+      filedata = NULL;
       if (__builtin_expect (errno, ENOSYS) == ENOSYS)
 	{
 #endif	/* _POSIX_MAPPED_FILES */
@@ -282,7 +282,7 @@ _nl_load_locale (struct loaded_l10nfile *file, int category)
 
 void
 internal_function
-_nl_unload_locale (struct locale_data *locale)
+_nl_unload_locale (struct __locale_data *locale)
 {
   if (locale->private.cleanup)
     (*locale->private.cleanup) (locale);

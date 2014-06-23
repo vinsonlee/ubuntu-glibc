@@ -19,6 +19,22 @@ libc {
   GLIBC_2.4 {
     #errlist-compat	256
     _sys_errlist; sys_errlist; _sys_nerr; sys_nerr;
+  }
+  GLIBC_2.11 {
+    fallocate64;
+  }
+  GLIBC_2.12 {
+    #errlist-compat	257
+    _sys_errlist; sys_errlist; _sys_nerr; sys_nerr;
+  }
+  GLIBC_2.17 {
+    #errlist-compat	260
+    _sys_errlist; sys_errlist; _sys_nerr; sys_nerr;
+    prlimit64;
+  }
+  GLIBC_2.19 {
+    fanotify_mark;
+  }
 }
 librt {
   GLIBC_2.3 {

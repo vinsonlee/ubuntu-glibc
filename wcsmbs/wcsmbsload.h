@@ -1,4 +1,4 @@
-/* Copyright (C) 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _WCSMBSLOAD_H
 #define _WCSMBSLOAD_H	1
@@ -38,7 +37,7 @@ struct gconv_fcts
 extern const struct gconv_fcts __wcsmbs_gconv_fcts_c attribute_hidden;
 
 /* Load conversion functions for the currently selected locale.  */
-extern void __wcsmbs_load_conv (struct locale_data *new_category)
+extern void __wcsmbs_load_conv (struct __locale_data *new_category)
      internal_function;
 
 /* Clone the current `__wcsmbs_load_conv' value.  */
@@ -50,7 +49,7 @@ extern int __wcsmbs_named_conv (struct gconv_fcts *copy, const char *name)
      internal_function;
 
 /* Function used for the `private.cleanup' hook.  */
-extern void _nl_cleanup_ctype (struct locale_data *)
+extern void _nl_cleanup_ctype (struct __locale_data *)
      internal_function attribute_hidden;
 
 
@@ -62,12 +61,12 @@ extern struct __gconv_step *__wcsmbs_getfct (const char *to, const char *from,
 					     size_t *nstepsp)
      attribute_hidden;
 
-extern const struct locale_data _nl_C_LC_CTYPE attribute_hidden;
+extern const struct __locale_data _nl_C_LC_CTYPE attribute_hidden;
 
 /* Check whether the LC_CTYPE locale changed since the last call.
    Update the pointers appropriately.  */
 static inline const struct gconv_fcts *
-get_gconv_fcts (struct locale_data *data)
+get_gconv_fcts (struct __locale_data *data)
 {
   if (__builtin_expect (data->private.ctype == NULL, 0))
     {

@@ -1,5 +1,4 @@
-/* Copyright (C) 1994,1995,1996,1997,1999,2001,2002,2004,2005,2006
-	Free Software Foundation, Inc.
+/* Copyright (C) 1994-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <unistd.h>
@@ -35,6 +33,11 @@
 /* Things that want to be locked while forking.  */
 symbol_set_declare (_hurd_fork_locks)
 
+
+/* Application callbacks registered through pthread_atfork.  */
+DEFINE_HOOK (_hurd_atfork_prepare_hook, (void));
+DEFINE_HOOK (_hurd_atfork_child_hook, (void));
+DEFINE_HOOK (_hurd_atfork_parent_hook, (void));
 
 /* Things that want to be called before we fork, to prepare the parent for
    task_create, when the new child task will inherit our address space.  */
@@ -63,6 +66,8 @@ __fork (void)
   size_t i;
   error_t err;
   struct hurd_sigstate *volatile ss;
+
+  RUN_HOOK (_hurd_atfork_prepare_hook, ());
 
   ss = _hurd_self_sigstate ();
   __spin_lock (&ss->critical_section_lock);
@@ -313,7 +318,7 @@ __fork (void)
 	    {
 	      /* This is a send right or a dead name.
 		 Give the child as many references for it as we have.  */
-	      mach_port_urefs_t refs, *record_refs = NULL;
+	      mach_port_urefs_t refs = 0, *record_refs = NULL;
 	      mach_port_t insert;
 	      mach_msg_type_name_t insert_type = MACH_MSG_TYPE_COPY_SEND;
 	      if (portnames[i] == newtask || portnames[i] == newproc)
@@ -696,6 +701,14 @@ __fork (void)
   }
 
   _hurd_critical_section_unlock (ss);
+
+  if (!err)
+    {
+      if (pid != 0)
+	RUN_HOOK (_hurd_atfork_parent_hook, ());
+      else
+	RUN_HOOK (_hurd_atfork_child_hook, ());
+    }
 
   return err ? __hurd_fail (err) : pid;
 }

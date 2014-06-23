@@ -1,5 +1,5 @@
 /* Atomic operations.  sparc32 version.
-   Copyright (C) 2003, 2004, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2003.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _BITS_ATOMIC_H
 #define _BITS_ATOMIC_H	1
@@ -231,6 +230,10 @@ volatile unsigned char __sparc32_atomic_locks[64]
        abort ();						      \
      __v7_exchange_24_rel (mem, newval); })
 
+# define atomic_full_barrier() __asm ("" ::: "memory")
+# define atomic_read_barrier() atomic_full_barrier ()
+# define atomic_write_barrier() atomic_full_barrier ()
+
 #else
 
 /* In libc.a/libpthread.a etc. we don't know if we'll be run on
@@ -238,13 +241,10 @@ volatile unsigned char __sparc32_atomic_locks[64]
    apps on v9 CPUs e.g. with process shared primitives, use cas insn
    on v9 CPUs and ldstub on pre-v9.  */
 
-/* Avoid <ldsodefs.h> include here.  */
 extern uint64_t _dl_hwcap __attribute__((weak));
-# define __ATOMIC_HWCAP_SPARC_V9	16
 # define __atomic_is_v9 \
   (__builtin_expect (&_dl_hwcap != 0, 1) \
-   && __builtin_expect (_dl_hwcap & __ATOMIC_HWCAP_SPARC_V9, \
-			__ATOMIC_HWCAP_SPARC_V9))
+   && __builtin_expect (_dl_hwcap & HWCAP_SPARC_V9, HWCAP_SPARC_V9))
 
 # define atomic_compare_and_exchange_val_acq(mem, newval, oldval) \
   ({								      \
@@ -322,6 +322,35 @@ extern uint64_t _dl_hwcap __attribute__((weak));
        __acev_w24ret = __v7_exchange_24_rel (mem, newval);	      \
      __acev_w24ret; })
 
+#define atomic_full_barrier()						\
+  do {									\
+     if (__atomic_is_v9)						\
+       /* membar #LoadLoad | #LoadStore | #StoreLoad | #StoreStore */	\
+       __asm __volatile (".word 0x8143e00f" : : : "memory");		\
+     else								\
+       __asm __volatile ("" : : : "memory");				\
+  } while (0)
+
+#define atomic_read_barrier()						\
+  do {									\
+     if (__atomic_is_v9)						\
+       /* membar #LoadLoad | #LoadStore */				\
+       __asm __volatile (".word 0x8143e005" : : : "memory");		\
+     else								\
+       __asm __volatile ("" : : : "memory");				\
+  } while (0)
+
+#define atomic_write_barrier()						\
+  do {									\
+     if (__atomic_is_v9)						\
+       /* membar  #StoreLoad | #StoreStore */				\
+       __asm __volatile (".word 0x8143e00a" : : : "memory");		\
+     else								\
+       __asm __volatile ("" : : : "memory");				\
+  } while (0)
+
 #endif
+
+#include <sysdep.h>
 
 #endif	/* bits/atomic.h */

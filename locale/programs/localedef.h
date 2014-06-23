@@ -1,5 +1,5 @@
 /* General definitions for localedef(1).
-   Copyright (C) 1998,1999,2000,2001,2002,2005 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -14,8 +14,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #ifndef _LOCALEDEF_H
 #define _LOCALEDEF_H	1
@@ -121,10 +120,7 @@ extern const char *alias_file;
 
 
 /* Prototypes for a few program-wide used functions.  */
-extern void *xmalloc (size_t __n);
-extern void *xcalloc (size_t __n, size_t __size);
-extern void *xrealloc (void *__p, size_t __n);
-extern char *xstrdup (const char *__str);
+#include <programs/xmalloc.h>
 
 
 /* Wrapper to switch LC_CTYPE back to the locale specified in the
@@ -174,7 +170,9 @@ extern int add_locales_to_archive (size_t nlist, char *list[], bool replace);
 /* Removed named locales from archive.  */
 extern int delete_locales_from_archive (size_t nlist, char *list[]);
 
-/* List content of locale archive.  */
-extern void show_archive_content (int verbose);
+/* List content of locale archive. If FNAME is non-null use that as
+   the locale archive to list, otherwise the default.  */
+extern void show_archive_content (const char *fname,
+				  int verbose) __attribute__ ((noreturn));
 
 #endif /* localedef.h */

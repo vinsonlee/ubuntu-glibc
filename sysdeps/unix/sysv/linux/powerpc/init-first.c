@@ -1,4 +1,5 @@
-/* Copyright (C) 2007 Free Software Foundation, Inc.
+/* Initialization code run first thing by the ELF startup code.  Linux/PowerPC.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifdef SHARED
 # include <dl-vdso.h>
@@ -27,7 +27,14 @@ void *__vdso_gettimeofday attribute_hidden;
 void *__vdso_clock_gettime;
 void *__vdso_clock_getres;
 void *__vdso_get_tbfreq;
-
+void *__vdso_getcpu;
+void *__vdso_time;
+#if defined(__PPC64__) || defined(__powerpc64__)
+void *__vdso_sigtramp_rt64;
+#else
+void *__vdso_sigtramp32;
+void *__vdso_sigtramp_rt32;
+#endif
 
 static inline void
 _libc_vdso_platform_setup (void)
@@ -40,10 +47,24 @@ _libc_vdso_platform_setup (void)
 
   __vdso_clock_getres = _dl_vdso_vsym ("__kernel_clock_getres", &linux2615);
 
-  __vdso_get_tbfreq = _dl_vdso_vsym ("__kernel_vdso_get_tbfreq", &linux2615);
+  __vdso_get_tbfreq = _dl_vdso_vsym ("__kernel_get_tbfreq", &linux2615);
+
+  __vdso_getcpu = _dl_vdso_vsym ("__kernel_getcpu", &linux2615);
+
+  __vdso_time = _dl_vdso_vsym ("__kernel_time", &linux2615);
+
+  /* PPC64 uses only one signal trampoline symbol, while PPC32 will use
+     two depending if SA_SIGINFO is used (__kernel_sigtramp_rt32) or not
+     (__kernel_sigtramp32).  */
+#if defined(__PPC64__) || defined(__powerpc64__)
+  __vdso_sigtramp_rt64 = _dl_vdso_vsym ("__kernel_sigtramp_rt64", &linux2615);
+#else
+  __vdso_sigtramp32 = _dl_vdso_vsym ("__kernel_sigtramp32", &linux2615);
+  __vdso_sigtramp_rt32 = _dl_vdso_vsym ("__kernel_sigtramp_rt32", &linux2615);
+#endif
 }
 
 # define VDSO_SETUP _libc_vdso_platform_setup
 #endif
 
-#include "../init-first.c"
+#include <csu/init-first.c>

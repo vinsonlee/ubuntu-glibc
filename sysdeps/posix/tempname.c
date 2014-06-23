@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2001, 2006, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #if HAVE_CONFIG_H
 # include <config.h>
@@ -102,8 +101,12 @@
 # define __xstat64(version, path, buf) stat (path, buf)
 #endif
 
-#if ! (HAVE___SECURE_GETENV || _LIBC)
-# define __secure_getenv getenv
+#if ! (HAVE_SECURE_GETENV || _LIBC)
+# ifdef HAVE___SECURE_GETENV
+#  define __libc_secure_getenv __secure_getenv
+# else
+#  define __libc_secure_getenv getenv
+# endif
 #endif
 
 #ifdef _LIBC
@@ -169,7 +172,7 @@ __path_search (char *tmpl, size_t tmpl_len, const char *dir, const char *pfx,
 
   if (try_tmpdir)
     {
-      d = __secure_getenv ("TMPDIR");
+      d = __libc_secure_getenv ("TMPDIR");
       if (d != NULL && direxists (d))
 	dir = d;
       else if (dir != NULL && direxists (dir))
@@ -210,9 +213,9 @@ static const char letters[] =
 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 /* Generate a temporary file name based on TMPL.  TMPL must match the
-   rules for mk[s]temp (i.e. end in "XXXXXX").  The name constructed
-   does not exist at the time of the call to __gen_tempname.  TMPL is
-   overwritten with the result.
+   rules for mk[s]temp (i.e. end in "XXXXXX", possibly with a suffix).
+   The name constructed does not exist at the time of the call to
+   __gen_tempname.  TMPL is overwritten with the result.
 
    KIND may be one of:
    __GT_NOCREATE:	simply verify that the name does not exist
@@ -223,7 +226,7 @@ static const char letters[] =
 
    We use a clever algorithm to get hard-to-predict names. */
 int
-__gen_tempname (char *tmpl, int flags, int kind)
+__gen_tempname (char *tmpl, int suffixlen, int flags, int kind)
 {
   int len;
   char *XXXXXX;
@@ -251,14 +254,14 @@ __gen_tempname (char *tmpl, int flags, int kind)
 #endif
 
   len = strlen (tmpl);
-  if (len < 6 || strcmp (&tmpl[len - 6], "XXXXXX"))
+  if (len < 6 + suffixlen || memcmp (&tmpl[len - 6 - suffixlen], "XXXXXX", 6))
     {
       __set_errno (EINVAL);
       return -1;
     }
 
   /* This is where the Xs start.  */
-  XXXXXX = &tmpl[len - 6];
+  XXXXXX = &tmpl[len - 6 - suffixlen];
 
   /* Get some more or less random data.  */
 #ifdef RANDOM_BITS

@@ -1,5 +1,5 @@
 /* Return current rounding direction.
-   Copyright (C) 2000 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David Huggins-Daines <dhd@debian.org>, 2000
 
@@ -14,21 +14,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
-#include <fenv.h>
+#include <get-rounding-mode.h>
 
 int
 fegetround (void)
 {
-  union { unsigned long long l; unsigned int sw[2] } s;
-
-  /* Get the current status word. */
-  __asm__ ("fstd %%fr0,0(%1)	\n\t" 
-	   "fldd 0(%1),%%fr0	\n\t" 
-           : "=m" (s.l) : "r" (&s.l));
-
-  return (s.sw[0] & FE_DOWNWARD);
+  return get_rounding_mode ();
 }
+libm_hidden_def (fegetround)

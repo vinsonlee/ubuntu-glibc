@@ -1,5 +1,5 @@
 /* Header for nscd SELinux access controls.
-   Copyright (C) 2004, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Matthew Rickard <mjricka@epoch.ncsc.mil>, 2004.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SELINUX_H
 #define _SELINUX_H 1
@@ -35,8 +34,6 @@ struct avc_cache_stats;
 
 /* Initialize the userspace AVC.  */
 extern void nscd_avc_init (void);
-/* Destroy the userspace AVC.  */
-extern void nscd_avc_destroy (void);
 /* Determine if we are running on an SELinux kernel.  */
 extern void nscd_selinux_enabled (int *selinux_enabled);
 /* Check if the client has permission for the request type.  */
@@ -47,7 +44,7 @@ extern void nscd_avc_cache_stats (struct avc_cache_stats *cstats);
 extern void nscd_avc_print_stats (struct avc_cache_stats *cstats);
 
 # ifdef HAVE_LIBCAP
-/* Preserve capabilities to connect to connnect to the audit daemon.  */
+/* Preserve capabilities to connect to the audit daemon. */
 extern cap_t preserve_capabilities (void);
 /* Install final capabilities.  */
 extern void install_real_capabilities (cap_t new_caps);
@@ -55,7 +52,6 @@ extern void install_real_capabilities (cap_t new_caps);
 #else
 # define selinux_enabled 0
 # define nscd_avc_init() (void) 0
-# define nscd_avc_destroy() (void) 0
 # define nscd_selinux_enabled(selinux_enabled) (void) 0
 # define nscd_request_avc_has_perm(fd, req) 0
 # define nscd_avc_cache_stats(cstats) (void) 0

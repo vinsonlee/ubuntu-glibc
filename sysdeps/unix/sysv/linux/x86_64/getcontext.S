@@ -1,5 +1,5 @@
 /* Save current context.
-   Copyright (C) 2002, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 2002.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 
@@ -62,6 +61,7 @@ ENTRY(__getcontext)
 	movq	%rcx, oFPREGS(%rdi)
 	/* Save the floating-point environment.  */
 	fnstenv	(%rcx)
+	fldenv	(%rcx)
 	stmxcsr oMXCSR(%rdi)
 
 	/* Save the current signal mask with
@@ -81,7 +81,6 @@ ENTRY(__getcontext)
 
 	/* All done, return 0 for success.  */
 	xorl	%eax, %eax
-L(pseudo_end):
 	ret
 PSEUDO_END(__getcontext)
 

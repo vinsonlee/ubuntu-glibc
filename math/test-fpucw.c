@@ -1,4 +1,4 @@
-/* Copyright (C) 2000 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 2000.
 
@@ -13,12 +13,15 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <fpu_control.h>
 #include <stdio.h>
+
+#ifndef FPU_CONTROL
+# define FPU_CONTROL _FPU_DEFAULT
+#endif
 
 int
 main (void)
@@ -31,11 +34,11 @@ main (void)
 
   cw &= ~_FPU_RESERVED;
 
-  if (cw != (_FPU_DEFAULT & ~_FPU_RESERVED))
+  if (cw != (FPU_CONTROL & ~_FPU_RESERVED))
     printf ("control word is 0x%lx but should be 0x%lx.\n",
-	    (long int) cw, (long int) (_FPU_DEFAULT & ~_FPU_RESERVED));
+	    (long int) cw, (long int) (FPU_CONTROL & ~_FPU_RESERVED));
 
-  return cw != (_FPU_DEFAULT & ~_FPU_RESERVED);
+  return cw != (FPU_CONTROL & ~_FPU_RESERVED);
 
 #else
   return 0;

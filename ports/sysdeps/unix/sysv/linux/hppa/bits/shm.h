@@ -1,4 +1,4 @@
-/* Copyright (C) 1995, 1996, 1997, 2000, 2002 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SYS_SHM_H
 # error "Never include <bits/shm.h> directly; use <sys/shm.h> instead."
@@ -65,8 +64,8 @@ struct shmid_ds
     __pid_t shm_cpid;			/* pid of creator */
     __pid_t shm_lpid;			/* pid of last shmop */
     shmatt_t shm_nattch;		/* number of current attaches */
-    unsigned long int __unused1;
-    unsigned long int __unused2;
+    unsigned long int __glibc_reserved1;
+    unsigned long int __glibc_reserved2;
   };
 
 #ifdef __USE_MISC
@@ -88,10 +87,10 @@ struct	shminfo
     unsigned long shmmni;
     unsigned long shmseg;
     unsigned long shmall;
-    unsigned long __unused1;
-    unsigned long __unused2;
-    unsigned long __unused3;
-    unsigned long __unused4;
+    unsigned long __glibc_reserved1;
+    unsigned long __glibc_reserved2;
+    unsigned long __glibc_reserved3;
+    unsigned long __glibc_reserved4;
   };
 
 struct shm_info

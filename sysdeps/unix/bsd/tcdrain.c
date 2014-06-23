@@ -1,4 +1,4 @@
-/* Copyright (C) 1991, 1996, 1997 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,27 +12,16 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
-#include <errno.h>
 #include <stddef.h>
-#include <termios.h>
-#include <unistd.h>
-
-#include "bsdtty.h"
+#include <sys/ioctl.h>
 
 /* Wait for pending output to be written on FD.  */
 int
 __libc_tcdrain (int fd)
 {
-  /* The TIOCSETP control waits for pending output to be written before
-     affecting its changes, so we use that without changing anything.  */
-  struct sgttyb b;
-  if (__ioctl (fd, TIOCGETP, (void *) &b) < 0 ||
-      __ioctl (fd, TIOCSETP, (void *) &b) < 0)
-    return -1;
-  return 0;
+  return __ioctl (fd, TIOCDRAIN);
 }
 weak_alias (__libc_tcdrain, tcdrain)

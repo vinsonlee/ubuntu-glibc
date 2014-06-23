@@ -1,5 +1,5 @@
 /* Conversion loop frame work.
-   Copyright (C) 1998-2002, 2003, 2005, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* This file provides a frame for the reader loop in all conversion modules.
    The actual code must (of course) be provided in the actual module source
@@ -39,7 +38,7 @@
      BODY		this is supposed to expand to the body of the loop.
 			The user must provide this.
 
-     EXTRA_LOOP_DECLS	extra arguments passed from converion loop call.
+     EXTRA_LOOP_DECLS	extra arguments passed from conversion loop call.
 
      INIT_PARAMS	code to define and initialize variables from params.
      UPDATE_PARAMS	code to store result in params.
@@ -66,8 +65,8 @@
 #undef FCTNAME2
 #if defined _STRING_ARCH_unaligned || !defined DEFINE_UNALIGNED
 /* We can handle unaligned memory access.  */
-# define get16(addr) *((__const uint16_t *) (addr))
-# define get32(addr) *((__const uint32_t *) (addr))
+# define get16(addr) *((const uint16_t *) (addr))
+# define get32(addr) *((const uint32_t *) (addr))
 
 /* We need no special support for writing values either.  */
 # define put16(addr, val) *((uint16_t *) (addr)) = (val)
@@ -78,13 +77,13 @@
 /* Distinguish between big endian and little endian.  */
 # if __BYTE_ORDER == __LITTLE_ENDIAN
 #  define get16(addr) \
-     (((__const unsigned char *) (addr))[1] << 8			      \
-      | ((__const unsigned char *) (addr))[0])
+     (((const unsigned char *) (addr))[1] << 8				      \
+      | ((const unsigned char *) (addr))[0])
 #  define get32(addr) \
-     (((((__const unsigned char *) (addr))[3] << 8			      \
-	| ((__const unsigned char *) (addr))[2]) << 8			      \
-       | ((__const unsigned char *) (addr))[1]) << 8			      \
-      | ((__const unsigned char *) (addr))[0])
+     (((((const unsigned char *) (addr))[3] << 8			      \
+	| ((const unsigned char *) (addr))[2]) << 8			      \
+       | ((const unsigned char *) (addr))[1]) << 8			      \
+      | ((const unsigned char *) (addr))[0])
 
 #  define put16(addr, val) \
      ({ uint16_t __val = (val);						      \
@@ -103,13 +102,13 @@
 	(void) 0; })
 # else
 #  define get16(addr) \
-     (((__const unsigned char *) (addr))[0] << 8			      \
-      | ((__const unsigned char *) (addr))[1])
+     (((const unsigned char *) (addr))[0] << 8				      \
+      | ((const unsigned char *) (addr))[1])
 #  define get32(addr) \
-     (((((__const unsigned char *) (addr))[0] << 8			      \
-	| ((__const unsigned char *) (addr))[1]) << 8			      \
-       | ((__const unsigned char *) (addr))[2]) << 8			      \
-      | ((__const unsigned char *) (addr))[3])
+     (((((const unsigned char *) (addr))[0] << 8			      \
+	| ((const unsigned char *) (addr))[1]) << 8			      \
+       | ((const unsigned char *) (addr))[2]) << 8			      \
+      | ((const unsigned char *) (addr))[3])
 
 #  define put16(addr, val) \
      ({ uint16_t __val = (val);						      \
@@ -390,15 +389,20 @@ SINGLE(LOOPFCT) (struct __gconv_step *step,
   UNPACK_BYTES
 #else
   /* Add the bytes from the state to the input buffer.  */
+  assert ((state->__count & 7) <= sizeof (state->__value));
   for (inlen = 0; inlen < (size_t) (state->__count & 7); ++inlen)
     bytebuf[inlen] = state->__value.__wchb[inlen];
 #endif
 
   /* Are there enough bytes in the input buffer?  */
-  if (__builtin_expect (inptr + (MIN_NEEDED_INPUT - inlen) > inend, 0))
+  if (MIN_NEEDED_INPUT > 1
+      && __builtin_expect (inptr + (MIN_NEEDED_INPUT - inlen) > inend, 0))
     {
       *inptrp = inend;
 #ifdef STORE_REST
+      while (inptr < inend)
+	bytebuf[inlen++] = *inptr++;
+
       inptr = bytebuf;
       inptrp = &inptr;
       inend = &bytebuf[inlen];
@@ -470,7 +474,7 @@ SINGLE(LOOPFCT) (struct __gconv_step *step,
       /* We don't have enough input for another complete input
 	 character.  */
       assert (inend - inptr > (state->__count & ~7));
-      assert (inend - inptr <= 7);
+      assert (inend - inptr <= sizeof (state->__value));
       state->__count = (state->__count & ~7) | (inend - inptr);
       inlen = 0;
       while (inptr < inend)

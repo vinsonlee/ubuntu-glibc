@@ -1,4 +1,4 @@
-/* Copyright (C) 2003, 2004, 2005 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <tls.h>
@@ -24,57 +23,163 @@
 
 #if !defined NOT_IN_libc || defined IS_IN_libpthread || defined IS_IN_librt
 
+/* NOTE: We do mark syscalls with unwind annotations, for the benefit of
+   cancellation; but they're really only accurate at the point of the
+   syscall.  The ARM unwind directives are not rich enough without adding
+   a custom personality function.  */
+
 # undef PSEUDO
 # define PSEUDO(name, syscall_name, args)				\
-  .section ".text";							\
-    PSEUDO_PROLOGUE;							\
-  .type __##syscall_name##_nocancel,%function;				\
-  .globl __##syscall_name##_nocancel;					\
-  __##syscall_name##_nocancel:						\
-    DO_CALL (syscall_name, args);					\
-    PSEUDO_RET;								\
-  .size __##syscall_name##_nocancel,.-__##syscall_name##_nocancel;	\
+	.text;								\
+  ENTRY (__##syscall_name##_nocancel);					\
+	CFI_SECTIONS;							\
+	DO_CALL (syscall_name, args);					\
+	cmn	r0, $4096;						\
+	PSEUDO_RET;							\
+  END (__##syscall_name##_nocancel);					\
   ENTRY (name);								\
-    SINGLE_THREAD_P;							\
-    DOARGS_##args;							\
-    bne .Lpseudo_cancel;						\
-    DO_CALL (syscall_name, 0);						\
-    UNDOARGS_##args;							\
-    cmn r0, $4096;							\
-    PSEUDO_RET;								\
+	SINGLE_THREAD_P;						\
+	DOARGS_##args;							\
+	bne .Lpseudo_cancel;						\
+	cfi_remember_state;						\
+	ldr	r7, =SYS_ify (syscall_name);				\
+	swi	0x0;							\
+	UNDOARGS_##args;						\
+	cmn	r0, $4096;						\
+	PSEUDO_RET;							\
+	cfi_restore_state;						\
   .Lpseudo_cancel:							\
-    DOCARGS_##args;	/* save syscall args etc. around CENABLE.  */	\
-    CENABLE;								\
-    mov ip, r0;		/* put mask in safe place.  */			\
-    UNDOCARGS_##args;	/* restore syscall args.  */			\
-    swi SYS_ify (syscall_name);	/* do the call.  */			\
-    str r0, [sp, $-4]!; /* save syscall return value.  */		\
-    mov r0, ip;		/* get mask back.  */				\
-    CDISABLE;								\
-    ldmfd sp!, {r0, lr}; /* retrieve return value and address.  */	\
-    UNDOARGS_##args;							\
-    cmn r0, $4096;
+	.fnstart;	/* matched by the .fnend in UNDOARGS below.  */	\
+	DOCARGS_##args;	/* save syscall args etc. around CENABLE.  */	\
+	CENABLE;							\
+	mov ip, r0;		/* put mask in safe place.  */		\
+	UNDOCARGS_##args;	/* restore syscall args.  */		\
+	ldr	r7, =SYS_ify (syscall_name);				\
+	swi	0x0;		/* do the call.  */			\
+	mov	r7, r0;		/* save syscall return value.  */	\
+	mov	r0, ip;		/* get mask back.  */			\
+	CDISABLE;							\
+	mov	r0, r7;		/* retrieve return value.  */		\
+	RESTORE_LR_##args;						\
+	UNDOARGS_##args;						\
+	cmn	r0, $4096
 
-# define DOCARGS_0	str lr, [sp, #-4]!;
+/* DOARGS pushes eight bytes on the stack for five arguments, twelve bytes for
+   six arguments, and four bytes for fewer.  In order to preserve doubleword
+   alignment, sometimes we must save an extra register.  */
+
+# define RESTART_UNWIND				\
+	.fnend;					\
+	.fnstart;				\
+	.save	{r7};				\
+	.save	{lr}
+
+# define DOCARGS_0				\
+	.save {r7};				\
+	push	{lr};				\
+	cfi_adjust_cfa_offset (4);		\
+	cfi_rel_offset (lr, 0);			\
+	.save	{lr}
 # define UNDOCARGS_0
+# define RESTORE_LR_0				\
+	pop	{lr};				\
+	cfi_adjust_cfa_offset (-4);		\
+	cfi_restore (lr)
 
-# define DOCARGS_1	stmfd sp!, {r0, lr};
-# define UNDOCARGS_1	ldr r0, [sp], #4;
+# define DOCARGS_1				\
+	.save	{r7};				\
+	push	{r0, r1, lr};			\
+	cfi_adjust_cfa_offset (12);		\
+	cfi_rel_offset (lr, 8);			\
+	.save	{lr};				\
+	.pad	#8
+# define UNDOCARGS_1				\
+	ldr r0, [sp], #8;			\
+	cfi_adjust_cfa_offset (-8);		\
+	RESTART_UNWIND
+# define RESTORE_LR_1				\
+	RESTORE_LR_0
 
-# define DOCARGS_2	stmfd sp!, {r0, r1, lr};
-# define UNDOCARGS_2	ldmfd sp!, {r0, r1};
+# define DOCARGS_2				\
+	.save	{r7};				\
+	push	{r0, r1, lr};			\
+	cfi_adjust_cfa_offset (12);		\
+	cfi_rel_offset (lr, 8);			\
+	.save	{lr};				\
+	.pad	#8
+# define UNDOCARGS_2				\
+	pop	{r0, r1};			\
+	cfi_adjust_cfa_offset (-8);		\
+	RESTART_UNWIND
+# define RESTORE_LR_2				\
+	RESTORE_LR_0
 
-# define DOCARGS_3	stmfd sp!, {r0, r1, r2, lr};
-# define UNDOCARGS_3	ldmfd sp!, {r0, r1, r2};
+# define DOCARGS_3				\
+	.save	{r7};				\
+	push	{r0, r1, r2, r3, lr};		\
+	cfi_adjust_cfa_offset (20);		\
+	cfi_rel_offset (lr, 16);		\
+	.save	{lr};				\
+	.pad	#16
+# define UNDOCARGS_3				\
+	pop	{r0, r1, r2, r3};		\
+	cfi_adjust_cfa_offset (-16);		\
+	RESTART_UNWIND
+# define RESTORE_LR_3				\
+	RESTORE_LR_0
 
-# define DOCARGS_4	stmfd sp!, {r0, r1, r2, r3, lr};
-# define UNDOCARGS_4	ldmfd sp!, {r0, r1, r2, r3};
+# define DOCARGS_4				\
+	.save	{r7};				\
+	push	{r0, r1, r2, r3, lr};		\
+	cfi_adjust_cfa_offset (20);		\
+	cfi_rel_offset (lr, 16);		\
+	.save	{lr};				\
+	.pad	#16
+# define UNDOCARGS_4				\
+	pop	{r0, r1, r2, r3};		\
+	cfi_adjust_cfa_offset (-16);		\
+	RESTART_UNWIND
+# define RESTORE_LR_4				\
+	RESTORE_LR_0
 
-# define DOCARGS_5	DOCARGS_4
-# define UNDOCARGS_5	UNDOCARGS_4
+/* r4 is only stmfd'ed for correct stack alignment.  */
+# define DOCARGS_5				\
+	.save	{r4, r7};			\
+	push	{r0, r1, r2, r3, r4, lr};	\
+	cfi_adjust_cfa_offset (24);		\
+	cfi_rel_offset (lr, 20);		\
+	.save	{lr};				\
+	.pad	#20
+# define UNDOCARGS_5				\
+	pop	{r0, r1, r2, r3};		\
+	cfi_adjust_cfa_offset (-16);		\
+	.fnend;					\
+	.fnstart;				\
+	.save	{r4, r7};			\
+	.save	{lr};				\
+	.pad	#4
+# define RESTORE_LR_5				\
+	pop	{r4, lr};			\
+	cfi_adjust_cfa_offset (-8);		\
+	/* r4 will be marked as restored later.  */ \
+	cfi_restore (lr)
 
-# define DOCARGS_6	DOCARGS_5
-# define UNDOCARGS_6	UNDOCARGS_5
+# define DOCARGS_6				\
+	.save	{r4, r5, r7};			\
+	push	{r0, r1, r2, r3, lr};		\
+	cfi_adjust_cfa_offset (20);		\
+	cfi_rel_offset (lr, 16);		\
+	.save	{lr};				\
+	.pad	#16
+# define UNDOCARGS_6				\
+	pop	{r0, r1, r2, r3};		\
+	cfi_adjust_cfa_offset (-16);		\
+	.fnend;					\
+	.fnstart;				\
+	.save	{r4, r5, r7};			\
+	.save	{lr};
+# define RESTORE_LR_6				\
+	RESTORE_LR_0
 
 # ifdef IS_IN_libpthread
 #  define CENABLE	bl PLTJMP(__pthread_enable_asynccancel)
@@ -97,12 +202,8 @@ extern int __local_multiple_threads attribute_hidden;
 #   define SINGLE_THREAD_P __builtin_expect (__local_multiple_threads == 0, 1)
 #  else
 #   define SINGLE_THREAD_P						\
-  ldr ip, 1b;								\
-2:									\
-  ldr ip, [pc, ip];							\
-  teq ip, #0;
-#   define PSEUDO_PROLOGUE						\
-  1:  .word __local_multiple_threads - 2f - 8;
+	LDST_PCREL(ldr, ip, ip, __local_multiple_threads);		\
+	teq ip, #0
 #  endif
 # else
 /*  There is no __local_multiple_threads for librt, so use the TCB.  */
@@ -111,13 +212,17 @@ extern int __local_multiple_threads attribute_hidden;
   __builtin_expect (THREAD_GETMEM (THREAD_SELF,				\
 				   header.multiple_threads) == 0, 1)
 #  else
-#   define PSEUDO_PROLOGUE
 #   define SINGLE_THREAD_P						\
-  stmfd	sp!, {r0, lr};							\
-  bl	__aeabi_read_tp;						\
-  ldr	ip, [r0, #MULTIPLE_THREADS_OFFSET];				\
-  ldmfd	sp!, {r0, lr};							\
-  teq	ip, #0
+	push	{r0, lr};						\
+	cfi_adjust_cfa_offset (8);					\
+	cfi_rel_offset (lr, 4);						\
+	GET_TLS (lr);							\
+	NEGOFF_ADJ_BASE (r0, MULTIPLE_THREADS_OFFSET);			\
+	ldr	ip, NEGOFF_OFF1 (r0, MULTIPLE_THREADS_OFFSET);		\
+	pop	{r0, lr};						\
+	cfi_adjust_cfa_offset (-8);					\
+	cfi_restore (lr);						\
+	teq	ip, #0
 #   define SINGLE_THREAD_P_PIC(x) SINGLE_THREAD_P
 #  endif
 # endif

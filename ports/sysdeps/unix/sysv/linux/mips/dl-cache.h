@@ -1,5 +1,5 @@
 /* Support for reading /etc/ld.so.cache files written by Linux ldconfig.
-   Copyright (C) 2003, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,17 +13,32 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <ldconfig.h>
 
-/* Redefine the cache ID for new ABIs; o32 keeps using the generic check.  */
-#if _MIPS_SIM == _ABI64
-# define _DL_CACHE_DEFAULT_ID	(FLAG_MIPS64_LIBN64 | FLAG_ELF_LIBC6)
-#elif _MIPS_SIM == _ABIN32
-# define _DL_CACHE_DEFAULT_ID	(FLAG_MIPS64_LIBN32 | FLAG_ELF_LIBC6)
+#if ((defined __mips_nan2008 && !defined HAVE_MIPS_NAN2008) \
+     || (!defined __mips_nan2008 && defined HAVE_MIPS_NAN2008))
+# error "Configuration inconsistency: __mips_nan2008 != HAVE_MIPS_NAN2008, overridden CFLAGS?"
+#endif
+
+/* Redefine the cache ID for new ABIs and 2008 NaN support; legacy o32
+   keeps using the generic check.  */
+#ifdef __mips_nan2008
+# if _MIPS_SIM == _ABIO32
+#  define _DL_CACHE_DEFAULT_ID	(FLAG_MIPS_LIB32_NAN2008 | FLAG_ELF_LIBC6)
+# elif _MIPS_SIM == _ABI64
+#  define _DL_CACHE_DEFAULT_ID	(FLAG_MIPS64_LIBN64_NAN2008 | FLAG_ELF_LIBC6)
+# elif _MIPS_SIM == _ABIN32
+#  define _DL_CACHE_DEFAULT_ID	(FLAG_MIPS64_LIBN32_NAN2008 | FLAG_ELF_LIBC6)
+# endif
+#else
+# if _MIPS_SIM == _ABI64
+#  define _DL_CACHE_DEFAULT_ID	(FLAG_MIPS64_LIBN64 | FLAG_ELF_LIBC6)
+# elif _MIPS_SIM == _ABIN32
+#  define _DL_CACHE_DEFAULT_ID	(FLAG_MIPS64_LIBN32 | FLAG_ELF_LIBC6)
+# endif
 #endif
 
 #ifdef _DL_CACHE_DEFAULT_ID

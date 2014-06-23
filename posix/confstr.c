@@ -1,5 +1,4 @@
-/* Copyright (C) 1991, 1996, 1997, 2000-2002, 2003, 2004
-   Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <stddef.h>
 #include <errno.h>
@@ -36,6 +34,10 @@ confstr (name, buf, len)
   const char *string = "";
   size_t string_len = 1;
 
+  /* Note that this buffer must be large enough for the longest strings
+     used below.  */
+  char restenvs[4 * sizeof "POSIX_V7_LPBIG_OFFBIG"];
+
   switch (name)
     {
     case _CS_PATH:
@@ -46,77 +48,63 @@ confstr (name, buf, len)
       }
       break;
 
-    case _CS_V6_WIDTH_RESTRICTED_ENVS:
-      /* We have to return a newline-separated list of named of
-	 programming environements in which the widths of blksize_t,
+      /* For _CS_V7_WIDTH_RESTRICTED_ENVS, _CS_V6_WIDTH_RESTRICTED_ENVS
+	 and _CS_V5_WIDTH_RESTRICTED_ENVS:
+
+	 We have to return a newline-separated list of names of
+	 programming environments in which the widths of blksize_t,
 	 cc_t, mode_t, nfds_t, pid_t, ptrdiff_t, size_t, speed_t,
 	 ssize_t, suseconds_t, tcflag_t, useconds_t, wchar_t, and
 	 wint_t types are no greater than the width of type long.
 
-	 Currently this means all environment which the system allows.  */
-      {
-	char restenvs[4 * sizeof "POSIX_V6_LPBIG_OFFBIG"];
+	 Currently this means all environments that the system allows.  */
 
-	string_len = 0;
-#ifndef _POSIX_V6_ILP32_OFF32
-        if (__sysconf (_SC_V6_ILP32_OFF32) > 0)
-#endif
-#if !defined _POSIX_V6_ILP32_OFF32 || _POSIX_V6_ILP32_OFF32 > 0
-          {
-            memcpy (restenvs + string_len, "POSIX_V6_ILP32_OFF32",
-                    sizeof "POSIX_V6_ILP32_OFF32" - 1);
-            string_len += sizeof "POSIX_V6_ILP32_OFF32" - 1;
-          }
-#endif
-#ifndef _POSIX_V6_ILP32_OFFBIG
-        if (__sysconf (_SC_V6_ILP32_OFFBIG) > 0)
-#endif
-#if !defined _POSIX_V6_ILP32_OFFBIG || _POSIX_V6_ILP32_OFFBIG > 0
-          {
-            if (string_len)
-              restenvs[string_len++] = '\n';
-            memcpy (restenvs + string_len, "POSIX_V6_ILP32_OFFBIG",
-                    sizeof "POSIX_V6_ILP32_OFFBIG" - 1);
-            string_len += sizeof "POSIX_V6_ILP32_OFFBIG" - 1;
-          }
-#endif
-#ifndef _POSIX_V6_LP64_OFF64
-        if (__sysconf (_SC_V6_LP64_OFF64) > 0)
-#endif
-#if !defined _POSIX_V6_LP64_OFF64 || _POSIX_V6_LP64_OFF64 > 0
-          {
-            if (string_len)
-              restenvs[string_len++] = '\n';
-            memcpy (restenvs + string_len, "POSIX_V6_LP64_OFF64",
-                    sizeof "POSIX_V6_LP64_OFF64" - 1);
-            string_len += sizeof "POSIX_V6_LP64_OFF64" - 1;
-          }
-#endif
-#ifndef _POSIX_V6_LPBIG_OFFBIG
-        if (__sysconf (_SC_V6_LPBIG_OFFBIG) > 0)
-#endif
-#if !defined _POSIX_V6_LPBIG_OFFBIG || _POSIX_V6_LPBIG_OFFBIG > 0
-          {
-            if (string_len)
-              restenvs[string_len++] = '\n';
-            memcpy (restenvs + string_len, "POSIX_V6_LPBIG_OFFBIG",
-                    sizeof "POSIX_V6_LPBIG_OFFBIG" - 1);
-            string_len += sizeof "POSIX_V6_LPBIG_OFFBIG" - 1;
-          }
-#endif
-        restenvs[string_len++] = '\0';
-	string = restenvs;
-      }
+#define START_ENV_GROUP(VERSION)		\
+    case _CS_##VERSION##_WIDTH_RESTRICTED_ENVS:	\
+      string_len = 0;
+
+#define END_ENV_GROUP(VERSION)			\
+      restenvs[string_len++] = '\0';		\
+      string = restenvs;			\
       break;
+
+#define KNOWN_ABSENT_ENVIRONMENT(SC_PREFIX, ENV_PREFIX, SUFFIX)	\
+      /* Empty.  */
+
+#define KNOWN_PRESENT_ENV_STRING(STR)		\
+      if (string_len > 0)			\
+	restenvs[string_len++] = '\n';		\
+      memcpy (restenvs + string_len, STR,	\
+	      sizeof STR - 1);			\
+      string_len += sizeof STR - 1;
+
+#define KNOWN_PRESENT_ENVIRONMENT(SC_PREFIX, ENV_PREFIX, SUFFIX)	\
+      KNOWN_PRESENT_ENV_STRING (#ENV_PREFIX "_" #SUFFIX)
+
+#define UNKNOWN_ENVIRONMENT(SC_PREFIX, ENV_PREFIX, SUFFIX)		\
+      if (__sysconf (_SC_##SC_PREFIX##_##SUFFIX) > 0)			\
+	{								\
+	  KNOWN_PRESENT_ENVIRONMENT (SC_PREFIX, ENV_PREFIX, SUFFIX)	\
+	}
+
+#include "posix-envs.def"
+
+#undef START_ENV_GROUP
+#undef END_ENV_GROUP
+#undef KNOWN_ABSENT_ENVIRONMENT
+#undef KNOWN_PRESENT_ENV_STRING
+#undef KNOWN_PRESENT_ENVIRONMENT
+#undef UNKNOWN_ENVIRONMENT
 
     case _CS_XBS5_ILP32_OFF32_CFLAGS:
     case _CS_POSIX_V6_ILP32_OFF32_CFLAGS:
+    case _CS_POSIX_V7_ILP32_OFF32_CFLAGS:
 #ifdef __ILP32_OFF32_CFLAGS
-# if _POSIX_V6_ILP32_OFF32 == -1
+# if _POSIX_V7_ILP32_OFF32 == -1
 #  error "__ILP32_OFF32_CFLAGS should not be defined"
-# elif !defined _POSIX_V6_ILP32_OFF32
-      if (__sysconf (_SC_V6_ILP32_OFF32) < 0)
-        break;
+# elif !defined _POSIX_V7_ILP32_OFF32
+      if (__sysconf (_SC_V7_ILP32_OFF32) < 0)
+	break;
 # endif
       string = __ILP32_OFF32_CFLAGS;
       string_len = sizeof (__ILP32_OFF32_CFLAGS);
@@ -125,12 +113,13 @@ confstr (name, buf, len)
 
     case _CS_XBS5_ILP32_OFFBIG_CFLAGS:
     case _CS_POSIX_V6_ILP32_OFFBIG_CFLAGS:
+    case _CS_POSIX_V7_ILP32_OFFBIG_CFLAGS:
 #ifdef __ILP32_OFFBIG_CFLAGS
-# if _POSIX_V6_ILP32_OFFBIG == -1
+# if _POSIX_V7_ILP32_OFFBIG == -1
 #  error "__ILP32_OFFBIG_CFLAGS should not be defined"
-# elif !defined _POSIX_V6_ILP32_OFFBIG
-      if (__sysconf (_SC_V6_ILP32_OFFBIG) < 0)
-        break;
+# elif !defined _POSIX_V7_ILP32_OFFBIG
+      if (__sysconf (_SC_V7_ILP32_OFFBIG) < 0)
+	break;
 # endif
       string = __ILP32_OFFBIG_CFLAGS;
       string_len = sizeof (__ILP32_OFFBIG_CFLAGS);
@@ -139,12 +128,13 @@ confstr (name, buf, len)
 
     case _CS_XBS5_LP64_OFF64_CFLAGS:
     case _CS_POSIX_V6_LP64_OFF64_CFLAGS:
+    case _CS_POSIX_V7_LP64_OFF64_CFLAGS:
 #ifdef __LP64_OFF64_CFLAGS
-# if _POSIX_V6_LP64_OFF64 == -1
+# if _POSIX_V7_LP64_OFF64 == -1
 #  error "__LP64_OFF64_CFLAGS should not be defined"
-# elif !defined _POSIX_V6_LP64_OFF64
-      if (__sysconf (_SC_V6_LP64_OFF64) < 0)
-        break;
+# elif !defined _POSIX_V7_LP64_OFF64
+      if (__sysconf (_SC_V7_LP64_OFF64) < 0)
+	break;
 # endif
       string = __LP64_OFF64_CFLAGS;
       string_len = sizeof (__LP64_OFF64_CFLAGS);
@@ -153,12 +143,13 @@ confstr (name, buf, len)
 
     case _CS_XBS5_ILP32_OFF32_LDFLAGS:
     case _CS_POSIX_V6_ILP32_OFF32_LDFLAGS:
+    case _CS_POSIX_V7_ILP32_OFF32_LDFLAGS:
 #ifdef __ILP32_OFF32_LDFLAGS
-# if _POSIX_V6_ILP32_OFF32 == -1
+# if _POSIX_V7_ILP32_OFF32 == -1
 #  error "__ILP32_OFF32_LDFLAGS should not be defined"
-# elif !defined _POSIX_V6_ILP32_OFF32
-      if (__sysconf (_SC_V6_ILP32_OFF32) < 0)
-        break;
+# elif !defined _POSIX_V7_ILP32_OFF32
+      if (__sysconf (_SC_V7_ILP32_OFF32) < 0)
+	break;
 # endif
       string = __ILP32_OFF32_LDFLAGS;
       string_len = sizeof (__ILP32_OFF32_LDFLAGS);
@@ -167,12 +158,13 @@ confstr (name, buf, len)
 
     case _CS_XBS5_ILP32_OFFBIG_LDFLAGS:
     case _CS_POSIX_V6_ILP32_OFFBIG_LDFLAGS:
+    case _CS_POSIX_V7_ILP32_OFFBIG_LDFLAGS:
 #ifdef __ILP32_OFFBIG_LDFLAGS
-# if _POSIX_V6_ILP32_OFFBIG == -1
+# if _POSIX_V7_ILP32_OFFBIG == -1
 #  error "__ILP32_OFFBIG_LDFLAGS should not be defined"
-# elif !defined _POSIX_V6_ILP32_OFFBIG
-      if (__sysconf (_SC_V6_ILP32_OFFBIG) < 0)
-        break;
+# elif !defined _POSIX_V7_ILP32_OFFBIG
+      if (__sysconf (_SC_V7_ILP32_OFFBIG) < 0)
+	break;
 # endif
       string = __ILP32_OFFBIG_LDFLAGS;
       string_len = sizeof (__ILP32_OFFBIG_LDFLAGS);
@@ -181,12 +173,13 @@ confstr (name, buf, len)
 
     case _CS_XBS5_LP64_OFF64_LDFLAGS:
     case _CS_POSIX_V6_LP64_OFF64_LDFLAGS:
+    case _CS_POSIX_V7_LP64_OFF64_LDFLAGS:
 #ifdef __LP64_OFF64_LDFLAGS
-# if _POSIX_V6_LP64_OFF64 == -1
+# if _POSIX_V7_LP64_OFF64 == -1
 #  error "__LP64_OFF64_LDFLAGS should not be defined"
-# elif !defined _POSIX_V6_LP64_OFF64
-      if (__sysconf (_SC_V6_LP64_OFF64) < 0)
-        break;
+# elif !defined _POSIX_V7_LP64_OFF64
+      if (__sysconf (_SC_V7_LP64_OFF64) < 0)
+	break;
 # endif
       string = __LP64_OFF64_LDFLAGS;
       string_len = sizeof (__LP64_OFF64_LDFLAGS);
@@ -241,6 +234,17 @@ confstr (name, buf, len)
     case _CS_POSIX_V6_LPBIG_OFFBIG_LDFLAGS:
     case _CS_POSIX_V6_LPBIG_OFFBIG_LIBS:
     case _CS_POSIX_V6_LPBIG_OFFBIG_LINTFLAGS:
+
+    case _CS_POSIX_V7_ILP32_OFF32_LIBS:
+    case _CS_POSIX_V7_ILP32_OFF32_LINTFLAGS:
+    case _CS_POSIX_V7_ILP32_OFFBIG_LIBS:
+    case _CS_POSIX_V7_ILP32_OFFBIG_LINTFLAGS:
+    case _CS_POSIX_V7_LP64_OFF64_LIBS:
+    case _CS_POSIX_V7_LP64_OFF64_LINTFLAGS:
+    case _CS_POSIX_V7_LPBIG_OFFBIG_CFLAGS:
+    case _CS_POSIX_V7_LPBIG_OFFBIG_LDFLAGS:
+    case _CS_POSIX_V7_LPBIG_OFFBIG_LIBS:
+    case _CS_POSIX_V7_LPBIG_OFFBIG_LINTFLAGS:
       /* GNU libc does not require special actions to use LFS functions.  */
       break;
 
@@ -259,6 +263,13 @@ confstr (name, buf, len)
       __set_errno (EINVAL);
       return 0;
 #endif
+
+    case _CS_V6_ENV:
+    case _CS_V7_ENV:
+      /* Maybe something else is needed in future.  */
+      string = "POSIXLY_CORRECT=1";
+      string_len = sizeof ("POSIXLY_CORRECT=1");
+      break;
 
     default:
       __set_errno (EINVAL);

@@ -1,7 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <errno.h>
-#include "math_private.h"
+#include <math_private.h>
 
 long double
 __kernel_cosl (long double x, long double y)
@@ -12,4 +12,3 @@ __kernel_cosl (long double x, long double y)
 }
 
 stub_warning (__kernel_cosl)
-#include <stub-tag.h>

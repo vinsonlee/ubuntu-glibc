@@ -1,5 +1,4 @@
-/* Copyright (C) 1996-1999,2001,2002,2003,2004,2007
-   Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _NSSWITCH_H
 #define _NSSWITCH_H	1
@@ -28,6 +26,7 @@
 #include <resolv.h>
 #include <search.h>
 #include <dlfcn.h>
+#include <stdbool.h>
 
 /* Actions performed after lookup finished.  */
 typedef enum
@@ -96,6 +95,27 @@ typedef struct name_database
 } name_database;
 
 
+/* Indices into DATABASES in nsswitch.c and __NSS_DATABASE_CUSTOM.  */
+enum
+  {
+#define DEFINE_DATABASE(arg) NSS_DBSIDX_##arg,
+#include "databases.def"
+#undef DEFINE_DATABASE
+    NSS_DBSIDX_max
+  };
+
+/* Flags whether custom rules for database is set.  */
+extern bool __nss_database_custom[NSS_DBSIDX_max];
+
+/* Warning for NSS functions, which don't require dlopen if glibc
+   was built with --enable-static-nss.  */
+#ifdef DO_STATIC_NSS
+# define nss_interface_function(name)
+#else
+# define nss_interface_function(name) static_link_warning (name)
+#endif
+
+
 /* Interface functions for NSS.  */
 
 /* Get the data structure representing the specified database.
@@ -111,7 +131,8 @@ libc_hidden_proto (__nss_database_lookup)
    position is remembered in NI.  The function returns a value < 0 if
    an error occurred or no such function exists.  */
 extern int __nss_lookup (service_user **ni, const char *fct_name,
-			 const char *fct2_name, void **fctp) attribute_hidden;
+			 const char *fct2_name, void **fctp);
+libc_hidden_proto (__nss_lookup)
 
 /* Determine the next step in the lookup process according to the
    result STATUS of the call to the last function returned by
@@ -139,8 +160,10 @@ extern void *__nss_lookup_function (service_user *ni, const char *fct_name);
 libc_hidden_proto (__nss_lookup_function)
 
 
-/* Called by NSCD to disable recursive calls.  */
-extern void __nss_disable_nscd (void);
+/* Called by NSCD to disable recursive calls and enable special handling
+   when used in nscd.  */
+struct traced_file;
+extern void __nss_disable_nscd (void (*) (size_t, struct traced_file *));
 
 
 typedef int (*db_lookup_function) (service_user **, const char *, const char *,
@@ -181,5 +204,9 @@ extern int __nss_hostname_digits_dots (const char *name,
 				       enum nss_status *status, int af,
 				       int *h_errnop);
 libc_hidden_proto (__nss_hostname_digits_dots)
+
+/* Maximum number of aliases we allow.  */
+#define MAX_NR_ALIASES  48
+#define MAX_NR_ADDRS    48
 
 #endif	/* nsswitch.h */

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2003, 2004 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <signal.h>
@@ -44,6 +43,7 @@ pthread_cancel (th)
   int newval;
   do
     {
+    again:
       oldval = pd->cancelhandling;
       newval = oldval | CANCELING_BITMASK | CANCELED_BITMASK;
 
@@ -59,7 +59,10 @@ pthread_cancel (th)
       if (CANCEL_ENABLED_AND_CANCELED_AND_ASYNCHRONOUS (newval))
 	{
 	  /* Mark the cancellation as "in progress".  */
-	  atomic_bit_set (&pd->cancelhandling, CANCELING_BIT);
+	  if (atomic_compare_and_exchange_bool_acq (&pd->cancelhandling,
+						    oldval | CANCELING_BITMASK,
+						    oldval))
+	    goto again;
 
 	  /* The cancellation handler will take care of marking the
 	     thread as canceled.  */
@@ -72,26 +75,23 @@ pthread_cancel (th)
 	     a signal handler.  But this is no allowed, pthread_cancel
 	     is not guaranteed to be async-safe.  */
 	  int val;
-#if __ASSUME_TGKILL
 	  val = INTERNAL_SYSCALL (tgkill, err, 3,
 				  THREAD_GETMEM (THREAD_SELF, pid), pd->tid,
 				  SIGCANCEL);
-#else
-# ifdef __NR_tgkill
-	  val = INTERNAL_SYSCALL (tgkill, err, 3,
-				  THREAD_GETMEM (THREAD_SELF, pid), pd->tid,
-				  SIGCANCEL);
-	  if (INTERNAL_SYSCALL_ERROR_P (val, err)
-	      && INTERNAL_SYSCALL_ERRNO (val, err) == ENOSYS)
-# endif
-	    val = INTERNAL_SYSCALL (tkill, err, 2, pd->tid, SIGCANCEL);
-#endif
 
 	  if (INTERNAL_SYSCALL_ERROR_P (val, err))
 	    result = INTERNAL_SYSCALL_ERRNO (val, err);
 
 	  break;
 	}
+
+	/* A single-threaded process should be able to kill itself, since there is
+	   nothing in the POSIX specification that says that it cannot.  So we set
+	   multiple_threads to true so that cancellation points get executed.  */
+	THREAD_SETMEM (THREAD_SELF, header.multiple_threads, 1);
+#ifndef TLS_MULTIPLE_THREADS_IN_TCB
+	__pthread_multiple_threads = *__libc_multiple_threads_ptr = 1;
+#endif
     }
   /* Mark the thread as canceled.  This has to be done
      atomically since other bits could be modified as well.  */

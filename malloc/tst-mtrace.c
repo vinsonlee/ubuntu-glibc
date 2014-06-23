@@ -1,5 +1,5 @@
 /* Test program for mtrace.
-   Copyright (C) 2000 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <mcheck.h>
 #include <paths.h>
@@ -56,20 +55,20 @@ main (void)
       ssize_t n = getline (&line, &linelen, fp);
 
       if (n < 0)
-	break;
+        break;
 
       if (n == 0)
-	continue;
+        continue;
 
       copy = strdup (line);
       if (copy == NULL)
-	abort ();
+        abort ();
 
       p = (char **) tsearch (copy, &root,
-			     (int (*) (const void *, const void *)) strcmp);
+                             (int (*)(const void *, const void *))strcmp);
       if (*p != copy)
-	/* This line wasn't added.  */
-	free (copy);
+        /* This line wasn't added.  */
+        free (copy);
     }
 
   fclose (fp);

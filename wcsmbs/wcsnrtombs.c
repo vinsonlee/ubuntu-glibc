@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2000, 2002, 2003, 2005 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1996.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <dlfcn.h>
@@ -77,9 +76,13 @@ __wcsnrtombs (dst, src, nwc, len, ps)
   /* We have to handle DST == NULL special.  */
   if (dst == NULL)
     {
+      mbstate_t temp_state;
       unsigned char buf[256];		/* Just an arbitrary value.  */
       const unsigned char *inbuf = (const unsigned char *) *src;
       size_t dummy;
+
+      temp_state = *data.__statep;
+      data.__statep = &temp_state;
 
       result = 0;
       data.__outbufend = buf + sizeof (buf);

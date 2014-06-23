@@ -1,4 +1,4 @@
-/* Copyright (c) 1998, 2000, 2004, 2005 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1998.
 
@@ -13,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -53,14 +52,23 @@ void
 dbg_log (const char *fmt,...)
 {
   va_list ap;
-  char msg[512], msg2[512];
+  char msg2[512];
 
   va_start (ap, fmt);
-  vsnprintf (msg2, sizeof (msg), fmt, ap);
+  vsnprintf (msg2, sizeof (msg2), fmt, ap);
 
   if (debug_level > 0)
     {
-      snprintf (msg, sizeof (msg), "%d: %s%s", getpid (), msg2,
+      time_t t = time (NULL);
+
+      struct tm now;
+      localtime_r (&t, &now);
+
+      char buf[256];
+      strftime (buf, sizeof (buf), "%c", &now);
+
+      char msg[512];
+      snprintf (msg, sizeof (msg), "%s - %d: %s%s", buf, getpid (), msg2,
 		msg2[strlen (msg2) - 1] == '\n' ? "" : "\n");
       if (dbgout)
 	{

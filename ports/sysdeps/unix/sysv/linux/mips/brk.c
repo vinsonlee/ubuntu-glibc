@@ -1,5 +1,5 @@
 /* brk system call for Linux/MIPS.
-   Copyright (C) 2000, 2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <unistd.h>
@@ -31,19 +30,10 @@ weak_alias (__curbrk, ___brk_addr)
 int
 __brk (void *addr)
 {
+  INTERNAL_SYSCALL_DECL (err);
   void *newbrk;
 
-  {
-    register long int res __asm__ ("$2");
-
-    asm ("move\t$4,%2\n\t"
-	 "li\t%0,%1\n\t"
-	 "syscall"		/* Perform the system call.  */
-	 : "=r" (res)
-	 : "I" (SYS_ify (brk)), "r" (addr)
-	 : "$4", "$7", __SYSCALL_CLOBBERS);
-    newbrk = (void *) res;
-  }
+  newbrk = (void *) INTERNAL_SYSCALL (brk, err, 1, addr);
   __curbrk = newbrk;
 
   if (newbrk < addr)

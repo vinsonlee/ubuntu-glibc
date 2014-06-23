@@ -1,5 +1,5 @@
 /* Definitions for POSIX memory map interface.  Linux/HPPA version.
-   Copyright (C) 1997, 1998, 2000, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SYS_MMAN_H
 # error "Never use <bits/mman.h> directly; include <sys/mman.h> instead."
@@ -45,6 +44,9 @@
 # define MAP_ANONYMOUS	0x10		/* Don't use a file */
 # define MAP_ANON	MAP_ANONYMOUS
 # define MAP_VARIABLE	0
+/* When MAP_HUGETLB is set bits [26:31] encode the log2 of the huge page size.  */
+# define MAP_HUGE_SHIFT	26
+# define MAP_HUGE_MASK	0x3f
 #endif
 
 /* These are Linux-specific.  */
@@ -86,6 +88,8 @@
 # define MADV_REMOVE	  9	/* Remove these pages and resources.  */
 # define MADV_DONTFORK	 10	/* Do not inherit across fork.  */
 # define MADV_DOFORK	 11	/* Do inherit across fork.  */
+# define MADV_MERGEABLE   65	/* KSM may merge identical pages */
+# define MADV_UNMERGEABLE 66	/* KSM may not merge identical pages */
 #endif
 
 /* The range 12-64 is reserved for page size specification. */

@@ -27,4 +27,10 @@ libc {
   GLIBC_2.3.4 {
     setcontext; getcontext; swapcontext; makecontext;
   }
+  GLIBC_2.11 {
+    fallocate64;
+  }
+  GLIBC_2.17 {
+    __ppc_get_timebase_freq;
+  }
 }

@@ -1,6 +1,5 @@
 /* The proper definitions for Linux/MIPS's sigaction.
-   Copyright (C) 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2003
-	Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SIGNAL_H
 # error "Never include <bits/sigaction.h> directly; use <signal.h> instead."
@@ -64,6 +62,8 @@ struct sigaction
 				    three arguments instead of one.  */
 #if defined __USE_UNIX98 || defined __USE_MISC
 # define SA_ONSTACK   0x08000000 /* Use signal stack by using `sa_restorer'. */
+#endif
+#if defined __USE_UNIX98 || defined __USE_MISC || defined __USE_XOPEN2K8
 # define SA_RESETHAND 0x80000000 /* Reset to SIG_DFL on entry to handler.  */
 # define SA_RESTART   0x10000000 /* Restart syscall on signal return.  */
 # define SA_NODEFER   0x40000000 /* Don't automatically block the signal when

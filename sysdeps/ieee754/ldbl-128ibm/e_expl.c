@@ -1,5 +1,5 @@
 /* Quad-precision floating point e^x.
-   Copyright (C) 1999,2004,2006, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jj@ultra.linux.cz>
    Partly based on double-precision code
@@ -16,9 +16,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* The basic design here is from
    Abraham Ziv, "Fast Evaluation of Elementary Mathematical Functions with
@@ -71,11 +70,11 @@
 static const long double C[] = {
 /* Smallest integer x for which e^x overflows.  */
 #define himark C[0]
- 709.08956571282405153382846025171462914L,
+ 709.78271289338399678773454114191496482L,
 
 /* Largest integer x for which e^x underflows.  */
 #define lomark C[1]
--709.08956571282405153382846025171462914L,
+-744.44007192138126231410729844608163411L,
 
 /* 3x2^96 */
 #define THREEp96 C[2]
@@ -117,7 +116,7 @@ static const long double C[] = {
 #define TWO15 C[11]
  32768.0L,
 
-/* Chebyshev polynom coeficients for (exp(x)-1)/x */
+/* Chebyshev polynom coefficients for (exp(x)-1)/x */
 #define P1 C[12]
 #define P2 C[13]
 #define P3 C[14]
@@ -135,18 +134,17 @@ static const long double C[] = {
 long double
 __ieee754_expl (long double x)
 {
+  long double result, x22;
+  union ibm_extended_long_double ex2_u, scale_u;
+  int unsafe;
+
   /* Check for usual case.  */
   if (isless (x, himark) && isgreater (x, lomark))
     {
-      int tval1, tval2, unsafe, n_i, exponent2;
-      long double x22, n, result, xl;
-      union ibm_extended_long_double ex2_u, scale_u;
-      fenv_t oldenv;
+      int tval1, tval2, n_i, exponent2;
+      long double n, xl;
 
-      feholdexcept (&oldenv);
-#ifdef FE_TONEAREST
-      fesetround (FE_TONEAREST);
-#endif
+      SET_RESTORE_ROUND (FE_TONEAREST);
 
       n = __roundl (x*M_1_LN2);
       x = x-n*M_LN2_0;
@@ -163,49 +161,44 @@ __ieee754_expl (long double x)
       x = x + xl;
 
       /* Compute ex2 = 2^n_0 e^(argtable[tval1]) e^(argtable[tval2]).  */
-      ex2_u.d = __expl_table[T_EXPL_RES1 + tval1]
-		* __expl_table[T_EXPL_RES2 + tval2];
+      ex2_u.ld = (__expl_table[T_EXPL_RES1 + tval1]
+		  * __expl_table[T_EXPL_RES2 + tval2]);
       n_i = (int)n;
       /* 'unsafe' is 1 iff n_1 != 0.  */
       unsafe = fabsl(n_i) >= -LDBL_MIN_EXP - 1;
-      ex2_u.ieee.exponent += n_i >> unsafe;
+      ex2_u.d[0].ieee.exponent += n_i >> unsafe;
       /* Fortunately, there are no subnormal lowpart doubles in
 	 __expl_table, only normal values and zeros.
 	 But after scaling it can be subnormal.  */
-      exponent2 = ex2_u.ieee.exponent2 + (n_i >> unsafe);
-      if (ex2_u.ieee.exponent2 == 0)
-	/* assert ((ex2_u.ieee.mantissa2|ex2_u.ieee.mantissa3) == 0) */;
+      exponent2 = ex2_u.d[1].ieee.exponent + (n_i >> unsafe);
+      if (ex2_u.d[1].ieee.exponent == 0)
+	/* assert ((ex2_u.d[1].ieee.mantissa0|ex2_u.d[1].ieee.mantissa1) == 0) */;
       else if (exponent2 > 0)
-	ex2_u.ieee.exponent2 = exponent2;
+	ex2_u.d[1].ieee.exponent = exponent2;
       else if (exponent2 <= -54)
 	{
-	  ex2_u.ieee.exponent2 = 0;
-	  ex2_u.ieee.mantissa2 = 0;
-	  ex2_u.ieee.mantissa3 = 0;
+	  ex2_u.d[1].ieee.exponent = 0;
+	  ex2_u.d[1].ieee.mantissa0 = 0;
+	  ex2_u.d[1].ieee.mantissa1 = 0;
 	}
       else
 	{
 	  static const double
 	    two54 = 1.80143985094819840000e+16, /* 4350000000000000 */
 	    twom54 = 5.55111512312578270212e-17; /* 3C90000000000000 */
-	  ex2_u.dd[1] *= two54;
-	  ex2_u.ieee.exponent2 += n_i >> unsafe;
-	  ex2_u.dd[1] *= twom54;
+	  ex2_u.d[1].d *= two54;
+	  ex2_u.d[1].ieee.exponent += n_i >> unsafe;
+	  ex2_u.d[1].d *= twom54;
 	}
 
       /* Compute scale = 2^n_1.  */
-      scale_u.d = 1.0L;
-      scale_u.ieee.exponent += n_i - (n_i >> unsafe);
+      scale_u.ld = 1.0L;
+      scale_u.d[0].ieee.exponent += n_i - (n_i >> unsafe);
 
       /* Approximate e^x2 - 1, using a seventh-degree polynomial,
 	 with maximum error in [-2^-16-2^-53,2^-16+2^-53]
 	 less than 4.8e-39.  */
       x22 = x + x*x*(P1+x*(P2+x*(P3+x*(P4+x*(P5+x*P6)))));
-
-      /* Return result.  */
-      fesetenv (&oldenv);
-
-      result = x22 * ex2_u.d + ex2_u.d;
 
       /* Now we can test whether the result is ultimate or if we are unsure.
 	 In the later case we should probably call a mpn based routine to give
@@ -224,7 +217,7 @@ __ieee754_expl (long double x)
 	  ex3_u.d = (result - ex2_u.d) - x22 * ex2_u.d;
 	  ex2_u.d = result;
 	  ex3_u.ieee.exponent += LDBL_MANT_DIG + 15 + IEEE854_LONG_DOUBLE_BIAS
-	  			 - ex2_u.ieee.exponent;
+				 - ex2_u.ieee.exponent;
 	  n_i = abs (ex3_u.d);
 	  n_i = (n_i + 1) / 2;
 	  fesetenv (&oldenv);
@@ -236,10 +229,6 @@ __ieee754_expl (long double x)
 	    return __ieee754_expl_proc2 (origx);
 	  }
        */
-      if (!unsafe)
-	return result;
-      else
-	return result * scale_u.d;
     }
   /* Exceptional cases:  */
   else if (isless (x, himark))
@@ -254,4 +243,10 @@ __ieee754_expl (long double x)
   else
     /* Return x, if x is a NaN or Inf; or overflow, otherwise.  */
     return TWO1023*x;
+
+  result = x22 * ex2_u.ld + ex2_u.ld;
+  if (!unsafe)
+    return result;
+  return result * scale_u.ld;
 }
+strong_alias (__ieee754_expl, __expl_finite)

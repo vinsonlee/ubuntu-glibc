@@ -1,5 +1,5 @@
 /* Guts of POSIX spawn interface.  Stub version.
-   Copyright (C) 2001 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <spawn.h>
@@ -36,11 +35,10 @@ int
 __spawni (pid_t *pid, const char *file,
 	  const posix_spawn_file_actions_t *file_actions,
 	  const posix_spawnattr_t *attrp, char *const argv[],
-	  char *const envp[], int use_path)
+	  char *const envp[], int xflags)
 {
   __set_errno (ENOSYS);
   return -1;
 }
 
 stub_warning (__spawni)
-#include <stub-tag.h>

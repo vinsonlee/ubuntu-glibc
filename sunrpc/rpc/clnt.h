@@ -1,37 +1,34 @@
-/* @(#)clnt.h	2.1 88/07/29 4.0 RPCSRC; from 1.31 88/02/08 SMI*/
-/*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-
 /*
  * clnt.h - Client side remote procedure call interface.
  *
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _RPC_CLNT_H
@@ -92,11 +89,11 @@ enum clnt_stat {
 	RPC_INTR=18,
 	RPC_TLIERROR=20,
 	RPC_UDERROR=23,
-        /*
-         * asynchronous errors
-         */
-        RPC_INPROGRESS = 24,
-        RPC_STALERACHANDLE = 25
+	/*
+	 * asynchronous errors
+	 */
+	RPC_INPROGRESS = 24,
+	RPC_STALERACHANDLE = 25
 };
 
 
@@ -135,7 +132,7 @@ struct CLIENT {
   struct clnt_ops {
     enum clnt_stat (*cl_call) (CLIENT *, u_long, xdrproc_t, caddr_t, xdrproc_t,
 			       caddr_t, struct timeval);
-			       	/* call remote procedure */
+				/* call remote procedure */
     void (*cl_abort) (void);	/* abort a call */
     void (*cl_geterr) (CLIENT *, struct rpc_err *);
 				/* get specific error code */
@@ -277,7 +274,7 @@ struct CLIENT {
  *	u_long prog;
  *	u_long vers;
  */
-extern CLIENT *clntraw_create (__const u_long __prog, __const u_long __vers)
+extern CLIENT *clntraw_create (const u_long __prog, const u_long __vers)
      __THROW;
 
 
@@ -291,8 +288,8 @@ extern CLIENT *clntraw_create (__const u_long __prog, __const u_long __vers)
  *	u_ong vers;	-- version number
  *	char *prot;	-- protocol
  */
-extern CLIENT *clnt_create (__const char *__host, __const u_long __prog,
-			    __const u_long __vers, __const char *__prot)
+extern CLIENT *clnt_create (const char *__host, const u_long __prog,
+			    const u_long __vers, const char *__prot)
      __THROW;
 
 
@@ -359,17 +356,17 @@ extern CLIENT *clntunix_create  (struct sockaddr_un *__raddr, u_long __program,
 				 u_int __sendsz, u_int __recvsz) __THROW;
 
 
-extern int callrpc (__const char *__host, __const u_long __prognum,
-		    __const u_long __versnum, __const u_long __procnum,
-		    __const xdrproc_t __inproc, __const char *__in,
-		    __const xdrproc_t __outproc, char *__out) __THROW;
+extern int callrpc (const char *__host, const u_long __prognum,
+		    const u_long __versnum, const u_long __procnum,
+		    const xdrproc_t __inproc, const char *__in,
+		    const xdrproc_t __outproc, char *__out) __THROW;
 extern int _rpc_dtablesize (void) __THROW;
 
 /*
  * Print why creation failed
  */
-extern void clnt_pcreateerror (__const char *__msg);	/* stderr */
-extern char *clnt_spcreateerror(__const char *__msg) __THROW;	/* string */
+extern void clnt_pcreateerror (const char *__msg);	/* stderr */
+extern char *clnt_spcreateerror(const char *__msg) __THROW;	/* string */
 
 /*
  * Like clnt_perror(), but is more verbose in its output
@@ -379,9 +376,9 @@ extern void clnt_perrno (enum clnt_stat __num);		/* stderr */
 /*
  * Print an English error message, given the client error code
  */
-extern void clnt_perror (CLIENT *__clnt, __const char *__msg);
+extern void clnt_perror (CLIENT *__clnt, const char *__msg);
 							/* stderr */
-extern char *clnt_sperror (CLIENT *__clnt, __const char *__msg) __THROW;
+extern char *clnt_sperror (CLIENT *__clnt, const char *__msg) __THROW;
 							/* string */
 
 /*
@@ -404,8 +401,8 @@ extern char *clnt_sperrno (enum clnt_stat __num) __THROW;	/* string */
 /*
  * get the port number on the host for the rpc program,version and proto
  */
-extern int getrpcport (__const char * __host, u_long __prognum,
-		       u_long __versnum, u_int proto) __THROW;
+extern int getrpcport (const char * __host, u_long __prognum,
+		       u_long __versnum, u_int __proto) __THROW;
 
 /*
  * get the local host's IP address without consulting

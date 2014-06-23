@@ -1,6 +1,5 @@
 /* Header describing internals of libintl library.
-   Copyright (C) 1995-1999, 2000, 2001, 2004-2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Ulrich Drepper <drepper@cygnus.com>, 1995.
 
@@ -15,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _GETTEXTP_H
 #define _GETTEXTP_H
@@ -52,12 +50,6 @@
 
 #ifndef attribute_hidden
 # define attribute_hidden
-#endif
-
-/* Tell the compiler when a conditional or integer expression is
-   almost always true or almost always false.  */
-#ifndef HAVE_BUILTIN_EXPECT
-# define __builtin_expect(expr, val) (expr)
 #endif
 
 #ifndef W

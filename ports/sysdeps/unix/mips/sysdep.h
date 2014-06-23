@@ -1,5 +1,4 @@
-/* Copyright (C) 1992, 1995, 1997, 1999, 2000, 2002, 2003, 2004
-   Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Brendan Kehoe (brendan@zen.org).
 
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sgidefs.h>
 #include <sysdeps/unix/sysdep.h>
@@ -29,39 +27,43 @@
   .globl name;								      \
   .align 2;								      \
   .ent name,0;								      \
-  name##:
+  name##:								      \
+  cfi_startproc;
 
 #undef END
 #define	END(function)                                   \
+		cfi_endproc;				\
 		.end	function;		        \
 		.size	function,.-function
 
 #define ret	j ra ; nop
 
 #undef PSEUDO_END
-#define PSEUDO_END(sym) .end sym; .size sym,.-sym
+#define PSEUDO_END(sym) cfi_endproc; .end sym; .size sym,.-sym
 
 #define PSEUDO_NOERRNO(name, syscall_name, args)	\
   .align 2;						\
   ENTRY(name)						\
+  .set nomips16;					\
   .set noreorder;					\
   li v0, SYS_ify(syscall_name);				\
   syscall
 
 #undef PSEUDO_END_NOERRNO
-#define PSEUDO_END_NOERRNO(sym) .end sym; .size sym,.-sym
+#define PSEUDO_END_NOERRNO(sym) cfi_endproc; .end sym; .size sym,.-sym
 
 #define ret_NOERRNO ret
 
 #define PSEUDO_ERRVAL(name, syscall_name, args)	\
   .align 2;						\
   ENTRY(name)						\
+  .set nomips16;					\
   .set noreorder;					\
   li v0, SYS_ify(syscall_name);				\
   syscall
 
 #undef PSEUDO_END_ERRVAL
-#define PSEUDO_END_ERRVAL(sym) .end sym; .size sym,.-sym
+#define PSEUDO_END_ERRVAL(sym) cfi_endproc; .end sym; .size sym,.-sym
 
 #define ret_ERRVAL ret
 

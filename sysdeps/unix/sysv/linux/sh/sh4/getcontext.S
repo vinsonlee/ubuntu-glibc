@@ -1,5 +1,5 @@
 /* Save current context.
-   Copyright (C) 2005 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 
@@ -61,6 +60,7 @@ ENTRY(__getcontext)
 	mov.l	r9, @-r0
 	mov.l	r8, @-r0
 
+#ifdef __SH_FPU_ANY__
 	mov	r4, r0
 	/* We need 2 add instruction because oFPUL+4 > 127.  */
 	add	#124,r0
@@ -101,6 +101,7 @@ ENTRY(__getcontext)
 	fmov.s	fr2, @-r0
 	fmov.s	fr1, @-r0
 	fmov.s	fr0, @-r0
+#endif /* __SH_FPU_ANY__ */
 
 	/* sigprocmask (SIG_BLOCK, NULL, &uc->uc_sigmask).  */
 	mov	r4, r6
@@ -117,7 +118,7 @@ ENTRY(__getcontext)
 	not	r1, r1			// r1=0 means r0 = -1 to -4095
 	tst	r1, r1			// i.e. error in linux
 	bf	.Lgetcontext_end
-.Lsyscall_error:	
+.Lsyscall_error:
 	SYSCALL_ERROR_HANDLER
 .Lgetcontext_end:
 	/* All done, return 0 for success.  */

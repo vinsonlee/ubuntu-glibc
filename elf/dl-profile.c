@@ -1,5 +1,5 @@
 /* Profiling of shared libraries.
-   Copyright (C) 1997-2002, 2003, 2004, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
    Based on the BSD mcount implementation.
@@ -15,9 +15,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <errno.h>
@@ -28,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <ldsodefs.h>
 #include <sys/gmon.h>
 #include <sys/gmon_out.h>
@@ -131,7 +131,18 @@ struct here_cg_arc_record
   {
     uintptr_t from_pc;
     uintptr_t self_pc;
-    uint32_t count;
+    /* The count field is atomically incremented in _dl_mcount, which
+       requires it to be properly aligned for its type, and for this
+       alignment to be visible to the compiler.  The amount of data
+       before an array of this structure is calculated as
+       expected_size in _dl_start_profile.  Everything in that
+       calculation is a multiple of 4 bytes (in the case of
+       kcountsize, because it is derived from a subtraction of
+       page-aligned values, and the corresponding calculation in
+       __monstartup also ensures it is at least a multiple of the size
+       of u_long), so all copies of this field do in fact have the
+       appropriate alignment.  */
+    uint32_t count __attribute__ ((aligned (__alignof__ (uint32_t))));
   } __attribute__ ((packed));
 
 static struct here_cg_arc_record *data;
@@ -178,8 +189,6 @@ _dl_start_profile (void)
   const ElfW(Phdr) *ph;
   ElfW(Addr) mapstart = ~((ElfW(Addr)) 0);
   ElfW(Addr) mapend = 0;
-  struct gmon_hdr gmon_hdr;
-  struct gmon_hist_hdr hist_hdr;
   char *hist, *cp;
   size_t idx;
   size_t tossize;
@@ -251,15 +260,52 @@ _dl_start_profile (void)
 		   + 4 + 4 + fromssize * sizeof (struct here_cg_arc_record));
 
   /* Create the gmon_hdr we expect or write.  */
-  memset (&gmon_hdr, '\0', sizeof (struct gmon_hdr));
+  struct real_gmon_hdr
+  {
+    char cookie[4];
+    int32_t version;
+    char spare[3 * 4];
+  } gmon_hdr;
+  if (sizeof (gmon_hdr) != sizeof (struct gmon_hdr)
+      || (offsetof (struct real_gmon_hdr, cookie)
+	  != offsetof (struct gmon_hdr, cookie))
+      || (offsetof (struct real_gmon_hdr, version)
+	  != offsetof (struct gmon_hdr, version)))
+    abort ();
+
   memcpy (&gmon_hdr.cookie[0], GMON_MAGIC, sizeof (gmon_hdr.cookie));
-  *(int32_t *) gmon_hdr.version = GMON_SHOBJ_VERSION;
+  gmon_hdr.version = GMON_SHOBJ_VERSION;
+  memset (gmon_hdr.spare, '\0', sizeof (gmon_hdr.spare));
 
   /* Create the hist_hdr we expect or write.  */
-  *(char **) hist_hdr.low_pc = (char *) mapstart;
-  *(char **) hist_hdr.high_pc = (char *) mapend;
-  *(int32_t *) hist_hdr.hist_size = kcountsize / sizeof (HISTCOUNTER);
-  *(int32_t *) hist_hdr.prof_rate = __profile_frequency ();
+  struct real_gmon_hist_hdr
+  {
+    char *low_pc;
+    char *high_pc;
+    int32_t hist_size;
+    int32_t prof_rate;
+    char dimen[15];
+    char dimen_abbrev;
+  } hist_hdr;
+  if (sizeof (hist_hdr) != sizeof (struct gmon_hist_hdr)
+      || (offsetof (struct real_gmon_hist_hdr, low_pc)
+	  != offsetof (struct gmon_hist_hdr, low_pc))
+      || (offsetof (struct real_gmon_hist_hdr, high_pc)
+	  != offsetof (struct gmon_hist_hdr, high_pc))
+      || (offsetof (struct real_gmon_hist_hdr, hist_size)
+	  != offsetof (struct gmon_hist_hdr, hist_size))
+      || (offsetof (struct real_gmon_hist_hdr, prof_rate)
+	  != offsetof (struct gmon_hist_hdr, prof_rate))
+      || (offsetof (struct real_gmon_hist_hdr, dimen)
+	  != offsetof (struct gmon_hist_hdr, dimen))
+      || (offsetof (struct real_gmon_hist_hdr, dimen_abbrev)
+	  != offsetof (struct gmon_hist_hdr, dimen_abbrev)))
+    abort ();
+
+  hist_hdr.low_pc = (char *) mapstart;
+  hist_hdr.high_pc = (char *) mapend;
+  hist_hdr.hist_size = kcountsize / sizeof (HISTCOUNTER);
+  hist_hdr.prof_rate = __profile_frequency ();
   if (sizeof (hist_hdr.dimen) >= sizeof ("seconds"))
     {
       memcpy (hist_hdr.dimen, "seconds", sizeof ("seconds"));

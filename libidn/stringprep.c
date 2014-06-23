@@ -14,9 +14,7 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with GNU Libidn; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
+ * License along with GNU Libidn; if not, see <http://www.gnu.org/licenses/>.
  */
 
 #if HAVE_CONFIG_H
@@ -25,6 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "stringprep.h"
 
@@ -564,7 +563,7 @@ stringprep_profile (const char *in,
  * @STRINGPREP_CONTAINS_PROHIBITED: String contain code points
  *   prohibited by the profile.
  * @STRINGPREP_BIDI_BOTH_L_AND_RAL: String contain code points with
- *   conflicting bidirection category.
+ *   conflicting bidirectional category.
  * @STRINGPREP_BIDI_LEADTRAIL_NOT_RAL: Leading and trailing character
  *   in string not of proper bidirectional category.
  * @STRINGPREP_BIDI_CONTAINS_PROHIBITED: Contains prohibited code

@@ -1,6 +1,6 @@
 /* Round argument to nearest integral value according to current rounding
    direction.
-   Copyright (C) 1997, 2004, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -15,13 +15,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
 
-#include "math_private.h"
+#include <math_private.h>
 
 static const double two52[2] =
 {
@@ -34,7 +33,7 @@ long int
 __lrint (double x)
 {
   int32_t j0;
-  u_int32_t i0,i1;
+  u_int32_t i0, i1;
   volatile double w;
   double t;
   long int result;

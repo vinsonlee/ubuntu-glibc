@@ -1,5 +1,4 @@
-/* Copyright (C) 1991,1992,1993,1996,1997,1998,1999,2000,2001,2002,2003,2007
-	Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #if HAVE_CONFIG_H
 # include <config.h>
@@ -39,6 +37,12 @@
 
 #if defined STDC_HEADERS || defined _LIBC
 # include <stdlib.h>
+#endif
+
+#ifdef _LIBC
+# include <alloca.h>
+#else
+# define alloca_account(size., var) alloca (size)
 #endif
 
 /* For platform which support the ISO C amendement 1 functionality we
@@ -330,8 +334,11 @@ fnmatch (pattern, string, flags)
       mbstate_t ps;
       size_t n;
       const char *p;
+      wchar_t *wpattern_malloc = NULL;
       wchar_t *wpattern;
+      wchar_t *wstring_malloc = NULL;
       wchar_t *wstring;
+      size_t alloca_used = 0;
 
       /* Convert the strings into wide characters.  */
       memset (&ps, '\0', sizeof (ps));
@@ -343,7 +350,8 @@ fnmatch (pattern, string, flags)
 #endif
       if (__builtin_expect (n < 1024, 1))
 	{
-	  wpattern = (wchar_t *) alloca ((n + 1) * sizeof (wchar_t));
+	  wpattern = (wchar_t *) alloca_account ((n + 1) * sizeof (wchar_t),
+						 alloca_used);
 	  n = mbsrtowcs (wpattern, &p, n + 1, &ps);
 	  if (__builtin_expect (n == (size_t) -1, 0))
 	    /* Something wrong.
@@ -365,8 +373,16 @@ fnmatch (pattern, string, flags)
 	       XXX Do we have to set `errno' to something which mbsrtows hasn't
 	       already done?  */
 	    return -1;
-	  wpattern = (wchar_t *) alloca ((n + 1) * sizeof (wchar_t));
+	  if (__builtin_expect (n >= (size_t) -1 / sizeof (wchar_t), 0))
+	    {
+	      __set_errno (ENOMEM);
+	      return -2;
+	    }
+	  wpattern_malloc = wpattern
+	    = (wchar_t *) malloc ((n + 1) * sizeof (wchar_t));
 	  assert (mbsinit (&ps));
+	  if (wpattern == NULL)
+	    return -2;
 	  (void) mbsrtowcs (wpattern, &pattern, n + 1, &ps);
 	}
 
@@ -379,13 +395,18 @@ fnmatch (pattern, string, flags)
       p = string;
       if (__builtin_expect (n < 1024, 1))
 	{
-	  wstring = (wchar_t *) alloca ((n + 1) * sizeof (wchar_t));
+	  wstring = (wchar_t *) alloca_account ((n + 1) * sizeof (wchar_t),
+						alloca_used);
 	  n = mbsrtowcs (wstring, &p, n + 1, &ps);
 	  if (__builtin_expect (n == (size_t) -1, 0))
-	    /* Something wrong.
-	       XXX Do we have to set `errno' to something which mbsrtows hasn't
-	       already done?  */
-	    return -1;
+	    {
+	      /* Something wrong.
+		 XXX Do we have to set `errno' to something which
+		 mbsrtows hasn't already done?  */
+	    free_return:
+	      free (wpattern_malloc);
+	      return -1;
+	    }
 	  if (p)
 	    {
 	      memset (&ps, '\0', sizeof (ps));
@@ -400,19 +421,38 @@ fnmatch (pattern, string, flags)
 	    /* Something wrong.
 	       XXX Do we have to set `errno' to something which mbsrtows hasn't
 	       already done?  */
-	    return -1;
-	  wstring = (wchar_t *) alloca ((n + 1) * sizeof (wchar_t));
+	    goto free_return;
+	  if (__builtin_expect (n >= (size_t) -1 / sizeof (wchar_t), 0))
+	    {
+	      free (wpattern_malloc);
+	      __set_errno (ENOMEM);
+	      return -2;
+	    }
+
+	  wstring_malloc = wstring
+	    = (wchar_t *) malloc ((n + 1) * sizeof (wchar_t));
+	  if (wstring == NULL)
+	    {
+	      free (wpattern_malloc);
+	      return -2;
+	    }
 	  assert (mbsinit (&ps));
 	  (void) mbsrtowcs (wstring, &string, n + 1, &ps);
 	}
 
-      return internal_fnwmatch (wpattern, wstring, wstring + n,
-				flags & FNM_PERIOD, flags, NULL);
+      int res = internal_fnwmatch (wpattern, wstring, wstring + n,
+				   flags & FNM_PERIOD, flags, NULL,
+				   alloca_used);
+
+      free (wstring_malloc);
+      free (wpattern_malloc);
+
+      return res;
     }
 # endif  /* mbstate_t and mbsrtowcs or _LIBC.  */
 
   return internal_fnmatch (pattern, string, string + strlen (string),
-			   flags & FNM_PERIOD, flags, NULL);
+			   flags & FNM_PERIOD, flags, NULL, 0);
 }
 
 # ifdef _LIBC

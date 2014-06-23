@@ -18,21 +18,15 @@
 static char rcsid[] = "$NetBSD: $";
 #endif
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
-	float __nexttowardf(float x, long double y)
-#else
-	float __nexttowardf(x,y)
-	float x;
-	long double y;
-#endif
+float __nexttowardf(float x, long double y)
 {
 	int32_t hx,ix;
 	int64_t hy,iy;
 	u_int64_t ly;
-                                
+
 	GET_FLOAT_WORD(hx,x);
 	GET_LDOUBLE_WORDS64(hy,ly,y);
 	ix = hx&0x7fffffff;		/* |x| */
@@ -44,23 +38,21 @@ static char rcsid[] = "$NetBSD: $";
 	   return x+y;
 	if((long double) x==y) return y;	/* x=y, return y */
 	if(ix==0) {				/* x == 0 */
-	    float x2;
+	    float u;
 	    SET_FLOAT_WORD(x,(u_int32_t)((hy>>32)&0x80000000)|1);/* return +-minsub*/
-	    x2 = x*x;
-	    if(x2==x) return x2; else return x;	/* raise underflow flag */
+	    u = math_opt_barrier (x);
+	    u = u * u;
+	    math_force_eval (u);		/* raise underflow flag */
+	    return x;
 	}
 	if(hx>=0) {				/* x > 0 */
-	    if(hy<0||(ix>>23)>(iy>>48)-0x3f80
-	       || ((ix>>23)==(iy>>48)-0x3f80
-		   && (ix&0x7fffff)>((hy>>25)&0x7fffff))) {/* x > y, x -= ulp */
+	    if(x > y) {				/* x -= ulp */
 		hx -= 1;
 	    } else {				/* x < y, x += ulp */
 		hx += 1;
 	    }
 	} else {				/* x < 0 */
-	    if(hy>=0||(ix>>23)>(iy>>48)-0x3f80
-	       || ((ix>>23)==(iy>>48)-0x3f80
-		   && (ix&0x7fffff)>((hy>>25)&0x7fffff))) {/* x < y, x -= ulp */
+	    if(x < y) {				/* x < y, x -= ulp */
 		hx -= 1;
 	    } else {				/* x > y, x += ulp */
 		hx += 1;
@@ -68,12 +60,9 @@ static char rcsid[] = "$NetBSD: $";
 	}
 	hy = hx&0x7f800000;
 	if(hy>=0x7f800000) return x+x;	/* overflow  */
-	if(hy<0x00800000) {		/* underflow */
-	    float x2 = x*x;
-	    if(x2!=x) {		/* raise underflow flag */
-	        SET_FLOAT_WORD(x2,hx);
-		return x2;
-	    }
+	if(hy<0x00800000) {
+	    float u = x*x;		/* underflow */
+	    math_force_eval (u);	/* raise underflow flag */
 	}
 	SET_FLOAT_WORD(x,hx);
 	return x;

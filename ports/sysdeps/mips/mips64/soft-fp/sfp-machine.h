@@ -13,18 +13,37 @@
 #define _FP_MUL_MEAT_Q(R,X,Y)					\
   _FP_MUL_MEAT_2_wide_3mul(_FP_WFRACBITS_Q,R,X,Y,umul_ppmm)
 
+#define _FP_MUL_MEAT_DW_S(R,X,Y)				\
+  _FP_MUL_MEAT_DW_1_imm(_FP_WFRACBITS_S,R,X,Y)
+#define _FP_MUL_MEAT_DW_D(R,X,Y)				\
+  _FP_MUL_MEAT_DW_1_wide(_FP_WFRACBITS_D,R,X,Y,umul_ppmm)
+#define _FP_MUL_MEAT_DW_Q(R,X,Y)				\
+  _FP_MUL_MEAT_DW_2_wide_3mul(_FP_WFRACBITS_Q,R,X,Y,umul_ppmm)
+
 #define _FP_DIV_MEAT_S(R,X,Y)	_FP_DIV_MEAT_1_imm(S,R,X,Y,_FP_DIV_HELP_imm)
 #define _FP_DIV_MEAT_D(R,X,Y)	_FP_DIV_MEAT_1_udiv_norm(D,R,X,Y)
 #define _FP_DIV_MEAT_Q(R,X,Y)	_FP_DIV_MEAT_2_udiv(Q,R,X,Y)
 
-#define _FP_NANFRAC_S		((_FP_QNANBIT_S << 1) - 1)
-#define _FP_NANFRAC_D		((_FP_QNANBIT_D << 1) - 1)
-#define _FP_NANFRAC_Q		((_FP_QNANBIT_Q << 1) - 1), -1
+#ifdef __mips_nan2008
+# define _FP_NANFRAC_S		((_FP_QNANBIT_S << 1) - 1)
+# define _FP_NANFRAC_D		((_FP_QNANBIT_D << 1) - 1)
+# define _FP_NANFRAC_Q		((_FP_QNANBIT_Q << 1) - 1), -1
+#else
+# define _FP_NANFRAC_S		(_FP_QNANBIT_S - 1)
+# define _FP_NANFRAC_D		(_FP_QNANBIT_D - 1)
+# define _FP_NANFRAC_Q		(_FP_QNANBIT_Q - 1), -1
+#endif
 #define _FP_NANSIGN_S		0
 #define _FP_NANSIGN_D		0
 #define _FP_NANSIGN_Q		0
 
 #define _FP_KEEPNANFRACP 1
+#ifdef __mips_nan2008
+# define _FP_QNANNEGATEDP 0
+#else
+# define _FP_QNANNEGATEDP 1
+#endif
+
 /* From my experiments it seems X is chosen unless one of the
    NaNs is sNaN,  in which case the result is NANSIGN/NANFRAC.  */
 #define _FP_CHOOSENAN(fs, wc, R, X, Y, OP)			\
@@ -69,6 +88,7 @@ do {						\
   if (__builtin_expect (_fex, 0))		\
     _FPU_SETCW (_fcw | _fex | (_fex << 10));	\
 } while (0)
+#define FP_TRAPPING_EXCEPTIONS ((_fcw >> 5) & 0x7c)
 #else
 #define FP_INIT_ROUNDMODE	_fcw = FP_RND_NEAREST
 #endif

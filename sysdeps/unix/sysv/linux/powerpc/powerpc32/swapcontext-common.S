@@ -1,5 +1,5 @@
 /* Save current context and jump to a new context.
-   Copyright (C) 2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,18 +13,17 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-   02110-1301 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* This is the common implementation of setcontext for powerpc32.
-   It not complete in itself should be included in to a framework that 
+   It not complete in itself should be included in to a framework that
    defines:
      __CONTEXT_FUNC_NAME
    and if appropriate:
      __CONTEXT_ENABLE_FPRS
      __CONTEXT_ENABLE_VRS
-   Any archecture that implements the Vector unit is assumed to also 
+   Any architecture that implements the Vector unit is assumed to also
    implement the floating unit.  */
 
 /* Stack frame offsets.  */
@@ -51,7 +50,7 @@ ENTRY(__CONTEXT_FUNC_NAME)
 	stw	r0,_UC_GREGS+(PT_R0*4)(r3)
 	mflr	r0
 	stw	r2,_UC_GREGS+(PT_R2*4)(r3)
-	stw	r4,_UC_GREGS+(PT_R4*4)(r3)			
+	stw	r4,_UC_GREGS+(PT_R4*4)(r3)
 /* Set the callers LR_SAVE, and the ucontext LR and NIP to the callers
    return address.  */
 	stw	r0,_UC_GREGS+(PT_LNK*4)(r3)
@@ -85,7 +84,7 @@ ENTRY(__CONTEXT_FUNC_NAME)
 	stw	r29,_UC_GREGS+(PT_R29*4)(r3)
 	stw	r30,_UC_GREGS+(PT_R30*4)(r3)
 	stw	r31,_UC_GREGS+(PT_R31*4)(r3)
-	
+
 /* Save the value of R1.  We had to push the stack before we
    had the address of uc_reg_space.  So compute the address of
    the callers stack pointer and save it as R1.  */
@@ -143,40 +142,36 @@ ENTRY(__CONTEXT_FUNC_NAME)
 	stfd	fp30,_UC_FREGS+(30*8)(r3)
 	stfd	fp31,_UC_FREGS+(31*8)(r3)
 	stfd	fp0,_UC_FREGS+(32*8)(r3)
-	
-# ifdef __CONTEXT_ENABLE_VRS
-#  ifdef PIC
+
+# ifdef PIC
 	mflr    r8
-#   ifdef HAVE_ASM_PPC_REL16
-	bcl	20,31,1f
-1:	mflr	r7
-	addis	r7,r7,_GLOBAL_OFFSET_TABLE_-1b@ha
-	addi	r7,r7,_GLOBAL_OFFSET_TABLE_-1b@l
-#   else
-	bl      _GLOBAL_OFFSET_TABLE_@local-4
-	mflr    r7
-#   endif
-#   ifdef SHARED
+#  define got_label GENERATE_GOT_LABEL (__CONTEXT_FUNC_NAME)
+	SETUP_GOT_ACCESS(r7,got_label)
+	addis	r7,r7,_GLOBAL_OFFSET_TABLE_-got_label@ha
+	addi	r7,r7,_GLOBAL_OFFSET_TABLE_-got_label@l
+#  ifdef SHARED
 	lwz     r7,_rtld_global_ro@got(r7)
 	mtlr    r8
-	lwz     r7,RTLD_GLOBAL_RO_DL_HWCAP_OFFSET(r7)
-#   else
+	lwz     r7,RTLD_GLOBAL_RO_DL_HWCAP_OFFSET+LOWORD(r7)
+#  else
 	lwz     r7,_dl_hwcap@got(r7)
 	mtlr    r8
-	lwz     r7,0(r7)
-#   endif
-#  else
-	lis	r7,_dl_hwcap@ha
-	lwz     r7,_dl_hwcap@l(r7)
+	lwz     r7,LOWORD(r7)
 #  endif
-	andis.	r7,r7,(PPC_FEATURE_HAS_ALTIVEC >> 16)
+# else
+	lis	r7,(_dl_hwcap+LOWORD)@ha
+	lwz     r7,(_dl_hwcap+LOWORD)@l(r7)
+# endif
+
+# ifdef __CONTEXT_ENABLE_VRS
+	andis.	r6,r7,(PPC_FEATURE_HAS_ALTIVEC >> 16)
 
 	la	r10,(_UC_VREGS)(r3)
 	la	r9,(_UC_VREGS+16)(r3)
-	
+
 /*	beq	L(no_vec)*/
 	beq	2f
-/* address of the combined VSCR/VSAVE quadword.  */	
+/* address of the combined VSCR/VSAVE quadword.  */
 	la	r8,(_UC_VREGS+512)(r3)
 
 /* Save the vector registers */
@@ -193,7 +188,7 @@ ENTRY(__CONTEXT_FUNC_NAME)
 	stvx  v3,0,r9
 	addi  r10,r10,32
 	addi  r9,r9,32
-	
+
 	stvx	v0,0,r8
 
 	stvx  v4,0,r10
@@ -265,10 +260,14 @@ ENTRY(__CONTEXT_FUNC_NAME)
 	stvx  v30,0,r10
 	stvx  v31,0,r9
  	stw	r0,0(r8)
-	
+
 2: /*L(no_vec):*/
 # endif /* __CONTEXT_ENABLE_VRS */
 #endif /* __CONTEXT_ENABLE_FPRS */
+
+#ifdef __CONTEXT_ENABLE_E500
+	getcontext_e500
+#endif
 
 /* Restore ucontext (parm1) from stack.  */
 	lwz	r12,_FRAME_PARM_SAVE1(r1)
@@ -303,10 +302,9 @@ ENTRY(__CONTEXT_FUNC_NAME)
 #  ifdef PIC
 	mflr    r8
 #   ifdef HAVE_ASM_PPC_REL16
-	bcl	20,31,5f
-5:	mflr	r7
-	addis	r7,r7,_GLOBAL_OFFSET_TABLE_-1b@ha
-	addi	r7,r7,_GLOBAL_OFFSET_TABLE_-1b@l
+	SETUP_GOT_ACCESS(r7,got_label)
+	addis	r7,r7,_GLOBAL_OFFSET_TABLE_-got_label@ha
+	addi	r7,r7,_GLOBAL_OFFSET_TABLE_-got_label@l
 #   else
 	bl      _GLOBAL_OFFSET_TABLE_@local-4
 	mflr    r7
@@ -314,14 +312,14 @@ ENTRY(__CONTEXT_FUNC_NAME)
 	mtlr    r8
 #   ifdef SHARED
 	lwz     r7,_rtld_global_ro@got(r7)
-	lwz     r7,RTLD_GLOBAL_RO_DL_HWCAP_OFFSET(r7)
+	lwz     r7,RTLD_GLOBAL_RO_DL_HWCAP_OFFSET+LOWORD(r7)
 #   else
 	lwz     r7,_dl_hwcap@got(r7)
-	lwz     r7,0(r7)
+	lwz     r7,LOWORD(r7)
 #   endif
 #  else
-	lis	r7,_dl_hwcap@ha
-	lwz     r7,_dl_hwcap@l(r7)
+	lis	r7,(_dl_hwcap+LOWORD)@ha
+	lwz     r7,(_dl_hwcap+LOWORD)@l(r7)
 #  endif
 	andis.	r7,r7,(PPC_FEATURE_HAS_ALTIVEC >> 16)
 	la	r10,(_UC_VREGS)(r31)
@@ -425,7 +423,22 @@ ENTRY(__CONTEXT_FUNC_NAME)
 	/* Restore the floating-point registers */
 	lfd	fp31,_UC_FREGS+(32*8)(r31)
 	lfd	fp0,_UC_FREGS+(0*8)(r31)
-	mtfsf	0xff,fp31
+# ifdef _ARCH_PWR6
+	/* Use the extended four-operand version of the mtfsf insn.  */
+	mtfsf	0xff,fp31,1,0
+# else
+	.machine push
+	.machine "power6"
+	/* Availability of DFP indicates a 64-bit FPSCR.  */
+	andi.	r6,r7,PPC_FEATURE_HAS_DFP
+	beq	7f
+	/* Use the extended four-operand version of the mtfsf insn.  */
+	mtfsf	0xff,fp31,1,0
+	b	8f
+	/* Continue to operate on the FPSCR as if it were 32-bits.  */
+7:	mtfsf	0xff,fp31
+8:	.machine pop
+#endif /* _ARCH_PWR6 */
 	lfd	fp1,_UC_FREGS+(1*8)(r31)
 	lfd	fp2,_UC_FREGS+(2*8)(r31)
 	lfd	fp3,_UC_FREGS+(3*8)(r31)
@@ -458,6 +471,10 @@ ENTRY(__CONTEXT_FUNC_NAME)
 	lfd	fp30,_UC_FREGS+(30*8)(r31)
 	lfd	fp31,_UC_FREGS+(31*8)(r31)
 #endif /* __CONTEXT_ENABLE_FPRS */
+
+#ifdef __CONTEXT_ENABLE_E500
+	setcontext_e500
+#endif
 
 	/* Restore LR and CCR, and set CTR to the NIP value */
 	lwz	r3,_UC_GREGS+(PT_LNK*4)(r31)
@@ -500,13 +517,13 @@ ENTRY(__CONTEXT_FUNC_NAME)
 	lwz	r31,_UC_GREGS+(PT_R31*4)(r31)
 
 	bctr
-	
+
 3:/*L(error_exit):*/
 	lwz	r0,_FRAME_LR_SAVE+16(r1)
 	addi	r1,r1,16
 	mtlr	r0
 	blr
-	
+
 4:/*L(do_sigret):*/
 	addi	r1,r4,-0xd0
 	li	r0,SYS_ify(rt_sigreturn)
@@ -514,4 +531,3 @@ ENTRY(__CONTEXT_FUNC_NAME)
 	/* NOTREACHED */
 
 END(__CONTEXT_FUNC_NAME)
-

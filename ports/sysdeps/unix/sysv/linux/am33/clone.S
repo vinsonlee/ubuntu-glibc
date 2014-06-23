@@ -1,4 +1,4 @@
-/* Copyright 2001 Free Software Foundation, Inc.
+/* Copyright 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Alexandre Oliva <aoliva@redhat.com>.
    Based on ../i386/clone.S.
@@ -14,9 +14,8 @@
    Library General Public License for more details.
 
    You should have received a copy of the GNU Library General Public
-   License along with the GNU C Library; see the file COPYING.LIB.  If not,
-   write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* clone() is even more special than fork() as it mucks with stacks
    and invokes a function in the right context after its all over.  */
@@ -25,12 +24,11 @@
 #define _ERRNO_H	1
 #include <bits/errno.h>
 #include <asm-syntax.h>
-#include <bp-sym.h>
 
 /* int clone(int (*fn)(void *arg), void *child_stack, int flags, void *arg); */
 
         .text
-ENTRY (BP_SYM (__clone))
+ENTRY (__clone)
 	/* Sanity check arguments.  */
 	cmp	0,d0	/* no NULL function pointers */
 	beq	L(error_inval)
@@ -76,6 +74,6 @@ L(here):
 #endif
 	call	JUMPTARGET (_exit),[],0
 
-PSEUDO_END (BP_SYM (__clone))
+PSEUDO_END (__clone)
 
-weak_alias (BP_SYM (__clone), BP_SYM (clone))
+weak_alias (__clone, clone)

@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 1995, 2005 Free Software Foundation
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /*
    Copyright (C) 1983 Regents of the University of California.
@@ -166,7 +165,7 @@ __srandom_r (seed, buf)
   int type;
   int32_t *state;
   long int i;
-  long int word;
+  int32_t word;
   int32_t *dst;
   int kc;
 
@@ -228,7 +227,7 @@ weak_alias (__srandom_r, srandom_r)
    lose this information and will be able to restart with setstate.
    Note: The first thing we do is save the current state, if any, just like
    setstate so that it doesn't matter when initstate is called.
-   Returns a pointer to the old state.  */
+   Returns 0 on success, non-zero on failure.  */
 int
 __initstate_r (seed, arg_state, n, buf)
      unsigned int seed;
@@ -255,10 +254,8 @@ __initstate_r (seed, arg_state, n, buf)
   else if (n < BREAK_1)
     {
       if (n < BREAK_0)
-	{
-	  __set_errno (EINVAL);
-	  goto fail;
-	}
+	goto fail;
+
       type = TYPE_0;
     }
   else
@@ -298,7 +295,7 @@ weak_alias (__initstate_r, initstate_r)
    location into the zeroth word of the state information. Note that due
    to the order in which things are done, it is OK to call setstate with the
    same state as the current state
-   Returns a pointer to the old state information.  */
+   Returns 0 on success, non-zero on failure.  */
 int
 __setstate_r (arg_state, buf)
      char *arg_state;

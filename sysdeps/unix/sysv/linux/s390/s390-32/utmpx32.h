@@ -1,6 +1,5 @@
 /* The `struct utmp' type, describing entries in the utmp file.  GNU version.
-   Copyright (C) 1993, 1996, 1997, 1998, 1999, 2002, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _UTMPX32_H
 #define _UTMPX32_H 1
@@ -46,7 +44,16 @@ struct utmpx32
   } ut_tv;			/* Time entry was made.  */
 
   __int32_t ut_addr_v6[4];	/* Internet address of remote host.  */
-  char __unused[20];		/* Reserved for future use.  */
+  char __glibc_reserved[20];		/* Reserved for future use.  */
 };
+
+/* The internal interface needed by the compat wrapper functions.  */
+extern struct utmpx *__getutxent (void);
+extern struct utmpx *__getutxid (const struct utmpx *__id);
+extern struct utmpx *__getutxline (const struct utmpx *__line);
+extern struct utmpx *__pututxline (const struct utmpx *__utmpx);
+extern void __updwtmpx (const char *__wtmpx_file, const struct utmpx *__utmpx);
+extern void __getutmp (const struct utmpx *__utmpx, struct utmp *__utmp);
+extern void __getutmpx (const struct utmp *__utmp, struct utmpx *__utmpx);
 
 #endif /* utmpx32.h */

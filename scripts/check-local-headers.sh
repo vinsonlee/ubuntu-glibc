@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+# Copyright (C) 2005-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
 # Lesser General Public License for more details.
 
 # You should have received a copy of the GNU Lesser General Public
-# License along with the GNU C Library; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307 USA.
+# License along with the GNU C Library; if not, see
+# <http://www.gnu.org/licenses/>.
 #
 includedir="$1"
 objpfx="$2"
@@ -23,17 +22,26 @@ objpfx="$2"
 # To avoid long paths.
 cd "$objpfx"
 
+# OK if *.os is missing.
+shopt -s nullglob
 
 # Search all dependency files for file names in the include directory.
 # There are a few system headers we are known to use.
-if fgrep "$includedir" */*.{o,os,oS}.d |
-fgrep -v "$includedir/asm" |
-fgrep -v "$includedir/linux" |
-fgrep -v "$includedir/selinux" |
-fgrep -v "$includedir/sys/capability.h" |
-fgrep -v "$includedir/gd"; then
-  # If we found a match something is wrong.
-  exit 1
-fi
-
-exit 0
+# These include Linux kernel headers (asm*, arch, and linux),
+# and Mach kernel headers (mach).
+exec ${AWK} -v includedir="$includedir" '
+BEGIN {
+  status = 0
+  exclude = "^" includedir \
+    "/(.*-.*-.*/|)(asm[-/]|arch|linux/|selinux/|mach/|gd|nss3/|c\\+\\+/|sys/(capability|sdt(|-config))\\.h|libaudit\\.h)"
+}
+/^[^ ]/ && $1 ~ /.*:/ { obj = $1 }
+{
+  for (i = 1; i <= NF; ++i) {
+    if ($i ~ ("^" includedir) && $i !~ exclude) {
+      print "***", obj, "uses", $i
+      status = 1
+    }
+  }
+}
+END { exit status }' */*.{o,os,oS}.d

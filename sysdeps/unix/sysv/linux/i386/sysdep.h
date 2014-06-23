@@ -1,5 +1,4 @@
-/* Copyright (C) 1992,1993,1995-2000,2002-2006,2007
-   	Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper, <drepper@gnu.org>, August 1995.
 
@@ -14,17 +13,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _LINUX_I386_SYSDEP_H
 #define _LINUX_I386_SYSDEP_H 1
 
 /* There is some commonality.  */
 #include <sysdeps/unix/i386/sysdep.h>
-#include <bp-sym.h>
-#include <bp-asm.h>
 /* Defines RTLD_PRIVATE_ERRNO and USE_DL_SYSINFO.  */
 #include <dl-sysdep.h>
 #include <tls.h>
@@ -71,8 +67,7 @@
   ENTRY (name)								      \
     DO_CALL (syscall_name, args);					      \
     cmpl $-4095, %eax;							      \
-    jae SYSCALL_ERROR_LABEL;						      \
-  L(pseudo_end):
+    jae SYSCALL_ERROR_LABEL
 
 #undef	PSEUDO_END
 #define	PSEUDO_END(name)						      \
@@ -113,73 +108,44 @@
 #  define SYSCALL_ERROR_HANDLER						      \
 0:SETUP_PIC_REG(cx);							      \
   addl $_GLOBAL_OFFSET_TABLE_, %ecx;					      \
-  xorl %edx, %edx;							      \
-  subl %eax, %edx;							      \
-  movl %edx, rtld_errno@GOTOFF(%ecx);					      \
+  negl %eax;								      \
+  movl %eax, rtld_errno@GOTOFF(%ecx);					      \
   orl $-1, %eax;							      \
-  jmp L(pseudo_end);
+  ret;
 
 # elif defined _LIBC_REENTRANT
 
-#  if USE___THREAD
-#   ifndef NOT_IN_libc
-#    define SYSCALL_ERROR_ERRNO __libc_errno
-#   else
-#    define SYSCALL_ERROR_ERRNO errno
-#   endif
-#   define SYSCALL_ERROR_HANDLER					      \
+#  ifndef NOT_IN_libc
+#   define SYSCALL_ERROR_ERRNO __libc_errno
+#  else
+#   define SYSCALL_ERROR_ERRNO errno
+#  endif
+#  define SYSCALL_ERROR_HANDLER					      \
 0:SETUP_PIC_REG (cx);							      \
   addl $_GLOBAL_OFFSET_TABLE_, %ecx;					      \
   movl SYSCALL_ERROR_ERRNO@GOTNTPOFF(%ecx), %ecx;			      \
-  xorl %edx, %edx;							      \
-  subl %eax, %edx;							      \
-  SYSCALL_ERROR_HANDLER_TLS_STORE (%edx, %ecx);				      \
+  negl %eax;								      \
+  SYSCALL_ERROR_HANDLER_TLS_STORE (%eax, %ecx);				      \
   orl $-1, %eax;							      \
-  jmp L(pseudo_end);
-#   ifndef NO_TLS_DIRECT_SEG_REFS
-#    define SYSCALL_ERROR_HANDLER_TLS_STORE(src, destoff)		      \
+  ret;
+#  ifndef NO_TLS_DIRECT_SEG_REFS
+#   define SYSCALL_ERROR_HANDLER_TLS_STORE(src, destoff)		      \
   movl src, %gs:(destoff)
-#   else
-#    define SYSCALL_ERROR_HANDLER_TLS_STORE(src, destoff)		      \
+#  else
+#   define SYSCALL_ERROR_HANDLER_TLS_STORE(src, destoff)		      \
   addl %gs:0, destoff;							      \
   movl src, (destoff)
-#   endif
-#  else
-#   define SYSCALL_ERROR_HANDLER					      \
-0:pushl %ebx;								      \
-  cfi_adjust_cfa_offset (4);						      \
-  cfi_rel_offset (ebx, 0);						      \
-  SETUP_PIC_REG (bx);							      \
-  addl $_GLOBAL_OFFSET_TABLE_, %ebx;					      \
-  xorl %edx, %edx;							      \
-  subl %eax, %edx;							      \
-  pushl %edx;								      \
-  cfi_adjust_cfa_offset (4);						      \
-  PUSH_ERRNO_LOCATION_RETURN;						      \
-  call BP_SYM (__errno_location)@PLT;					      \
-  POP_ERRNO_LOCATION_RETURN;						      \
-  popl %ecx;								      \
-  cfi_adjust_cfa_offset (-4);						      \
-  popl %ebx;								      \
-  cfi_adjust_cfa_offset (-4);						      \
-  cfi_restore (ebx);							      \
-  movl %ecx, (%eax);							      \
-  orl $-1, %eax;							      \
-  jmp L(pseudo_end);
-/* A quick note: it is assumed that the call to `__errno_location' does
-   not modify the stack!  */
 #  endif
 # else
 /* Store (- %eax) into errno through the GOT.  */
 #  define SYSCALL_ERROR_HANDLER						      \
 0:SETUP_PIC_REG(cx);							      \
   addl $_GLOBAL_OFFSET_TABLE_, %ecx;					      \
-  xorl %edx, %edx;							      \
-  subl %eax, %edx;							      \
+  negl %eax;								      \
   movl errno@GOT(%ecx), %ecx;						      \
-  movl %edx, (%ecx);							      \
+  movl %eax, (%ecx);							      \
   orl $-1, %eax;							      \
-  jmp L(pseudo_end);
+  ret;
 # endif	/* _LIBC_REENTRANT */
 #endif	/* PIC */
 
@@ -204,9 +170,11 @@
 	arg 3		%edx	     call-clobbered
 	arg 4		%esi	     call-saved
 	arg 5		%edi	     call-saved
+	arg 6		%ebp	     call-saved
 
    The stack layout upon entering the function is:
 
+	24(%esp)	Arg# 6
 	20(%esp)	Arg# 5
 	16(%esp)	Arg# 4
 	12(%esp)	Arg# 3
@@ -215,7 +183,7 @@
 	  (%esp)	Return address
 
    (Of course a function with say 3 arguments does not have entries for
-   arguments 4 and 5.)
+   arguments 4, 5, and 6.)
 
    The following code tries hard to be optimal.  A general assumption
    (which is true according to the data books I have) is that
@@ -538,20 +506,11 @@ asm (".L__X'%ebx = 1\n\t"
 # define check_consistency()						      \
   ({ int __res;								      \
      __asm__ __volatile__						      \
-       ("call __i686.get_pc_thunk.cx;"					      \
-	"addl $_GLOBAL_OFFSET_TABLE_, %%ecx;"				      \
+       (LOAD_PIC_REG_STR (cx) ";"					      \
 	"subl %%ebx, %%ecx;"						      \
 	"je 1f;"							      \
 	"ud2;"								      \
 	"1:\n"								      \
-	".section .gnu.linkonce.t.__i686.get_pc_thunk.cx,\"ax\",@progbits;"   \
-	".globl __i686.get_pc_thunk.cx;"				      \
-	".hidden __i686.get_pc_thunk.cx;"				      \
-	".type __i686.get_pc_thunk.cx,@function;"			      \
-	"__i686.get_pc_thunk.cx:"					      \
-	"movl (%%esp), %%ecx;"						      \
-	"ret;"								      \
-	".previous"							      \
 	: "=c" (__res));						      \
      __res; })
 #endif

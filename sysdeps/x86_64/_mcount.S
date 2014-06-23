@@ -1,5 +1,5 @@
 /* Machine-specific calling sequence for `mcount' profiling function.  x86-64 version.
-   Copyright (C) 2002 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    Contributed by Andreas Jaeger <aj@suse.de>.
    This file is part of the GNU C Library.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* Assembly stub to invoke _mcount().  Compiler generated code calls
    this stub after executing a function's prologue and without saving any
@@ -25,8 +24,8 @@
 
 #include <sysdep.h>
 
-	ASM_GLOBAL_DIRECTIVE C_SYMBOL_NAME(_mcount)
-	ASM_TYPE_DIRECTIVE(C_SYMBOL_NAME(_mcount), @function)
+	.globl C_SYMBOL_NAME(_mcount)
+	.type C_SYMBOL_NAME(_mcount), @function
 	.align ALIGNARG(4)
 C_LABEL(_mcount)
 	/* Allocate space for 7 registers.  */
@@ -65,3 +64,41 @@ C_LABEL(_mcount)
 
 #undef mcount
 weak_alias (_mcount, mcount)
+
+	.globl C_SYMBOL_NAME(__fentry__)
+	.type C_SYMBOL_NAME(__fentry__), @function
+	.align ALIGNARG(4)
+C_LABEL(__fentry__)
+	/* Allocate space for 7 registers.  */
+	subq	$64,%rsp
+	movq	%rax,(%rsp)
+	movq	%rcx,8(%rsp)
+	movq	%rdx,16(%rsp)
+	movq	%rsi,24(%rsp)
+	movq	%rdi,32(%rsp)
+	movq	%r8,40(%rsp)
+	movq	%r9,48(%rsp)
+
+	/* Setup parameter for __mcount_internal.  */
+	/* selfpc is the return address on the stack.  */
+	movq	64(%rsp),%rsi
+	/* caller is the return address above it */
+	movq	72(%rsp),%rdi
+#ifdef PIC
+	call C_SYMBOL_NAME(__mcount_internal)@PLT
+#else
+	call C_SYMBOL_NAME(__mcount_internal)
+#endif
+	/* Pop the saved registers.  Please note that `__fentry__' has no
+	   return value.  */
+	movq	48(%rsp),%r9
+	movq	40(%rsp),%r8
+	movq	32(%rsp),%rdi
+	movq	24(%rsp),%rsi
+	movq	16(%rsp),%rdx
+	movq	8(%rsp),%rcx
+	movq	(%rsp),%rax
+	addq	$64,%rsp
+	ret
+
+	ASM_SIZE_DIRECTIVE(C_SYMBOL_NAME(__fentry__))

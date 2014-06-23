@@ -1,4 +1,4 @@
-/* Copyright (C) 2000 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,19 +12,18 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <dirent.h>
 
+/* scandir.c defines scandir64 as an alias if _DIRENT_MATCHES_DIRENT64.  */
+#ifndef _DIRENT_MATCHES_DIRENT64
+
 #define SCANDIR scandir64
-#define READDIR __readdir64
+#define SCANDIRAT scandirat64
 #define DIRENT_TYPE struct dirent64
 
-int scandir64 (__const char *__restrict __dir,
-	       struct dirent64 ***__restrict __namelist,
-	       int (*__selector) (__const struct dirent64 *),
-	       int (*__cmp) (__const void *, __const void *));
-
 #include <dirent/scandir.c>
+
+#endif

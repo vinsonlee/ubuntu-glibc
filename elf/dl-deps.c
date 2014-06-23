@@ -1,6 +1,5 @@
 /* Load the dependencies of a mapped object.
-   Copyright (C) 1996-2003, 2004, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <atomic.h>
 #include <assert.h>
@@ -62,7 +60,7 @@ openaux (void *a)
 {
   struct openaux_args *args = (struct openaux_args *) a;
 
-  args->aux = _dl_map_object (args->map, args->name, 0,
+  args->aux = _dl_map_object (args->map, args->name,
 			      (args->map->l_type == lt_executable
 			       ? lt_library : args->map->l_type),
 			      args->trace_mode, args->open_mode,
@@ -157,9 +155,7 @@ _dl_map_object_deps (struct link_map *map,
   const char *errstring;
   const char *objname;
 
-  auto inline void preload (struct link_map *map);
-
-  inline void preload (struct link_map *map)
+  void preload (struct link_map *map)
     {
       known[nlist].done = 0;
       known[nlist].map = map;
@@ -187,6 +183,10 @@ _dl_map_object_deps (struct link_map *map,
 
   /* Pointer to last unique object.  */
   tail = &known[nlist - 1];
+
+  /* No alloca'd space yet.  */
+  struct link_map **needed_space = NULL;
+  size_t needed_space_bytes = 0;
 
   /* Process each element of the search list, loading each of its
      auxiliary objects and immediate dependencies.  Auxiliary objects
@@ -216,8 +216,15 @@ _dl_map_object_deps (struct link_map *map,
 	 dependencies of this object.  */
       if (l->l_searchlist.r_list == NULL && l->l_initfini == NULL
 	  && l != map && l->l_ldnum > 0)
-	needed = (struct link_map **) alloca (l->l_ldnum
-					      * sizeof (struct link_map *));
+	{
+	  size_t new_size = l->l_ldnum * sizeof (struct link_map *);
+
+	  if (new_size > needed_space_bytes)
+	    needed_space
+	      = extend_alloca (needed_space, needed_space_bytes, new_size);
+
+	  needed = needed_space;
+	}
 
       if (l->l_info[DT_NEEDED] || l->l_info[AUXTAG] || l->l_info[FILTERTAG])
 	{
@@ -303,8 +310,7 @@ _dl_map_object_deps (struct link_map *map,
 		      _dl_debug_printf ("load auxiliary object=%s"
 					" requested by file=%s\n",
 					name,
-					l->l_name[0]
-					? l->l_name : rtld_progname);
+					DSO_FILENAME (l->l_name));
 
 		    /* We must be prepared that the addressed shared
 		       object is not available.  */
@@ -330,8 +336,7 @@ _dl_map_object_deps (struct link_map *map,
 		      _dl_debug_printf ("load filtered object=%s"
 					" requested by file=%s\n",
 					name,
-					l->l_name[0]
-					? l->l_name : rtld_progname);
+					DSO_FILENAME (l->l_name));
 
 		    /* For filter objects the dependency must be available.  */
 		    bool malloced;
@@ -478,6 +483,7 @@ _dl_map_object_deps (struct link_map *map,
 		  nneeded * sizeof needed[0]);
 	  atomic_write_barrier ();
 	  l->l_initfini = l_initfini;
+	  l->l_free_initfini = 1;
 	}
 
       /* If we have no auxiliary objects just go on to the next map.  */
@@ -554,7 +560,12 @@ Filters not supported with LD_TRACE_PRELINKING"));
 	  cnt = _dl_build_local_scope (l_initfini, l);
 	  assert (cnt <= nlist);
 	  for (j = 0; j < cnt; j++)
-	    l_initfini[j]->l_reserved = 0;
+	    {
+	      l_initfini[j]->l_reserved = 0;
+	      if (j && __builtin_expect (l_initfini[j]->l_info[DT_SYMBOLIC]
+					 != NULL, 0))
+		l->l_symbolic_in_local_scope = true;
+	    }
 
 	  l->l_local_scope[0] =
 	    (struct r_scope_elem *) malloc (sizeof (struct r_scope_elem)
@@ -584,9 +595,8 @@ Filters not supported with LD_TRACE_PRELINKING"));
 	if (list[i]->l_reserved)
 	  {
 	    /* Need to allocate new array of relocation dependencies.  */
-	    struct link_map_reldeps *l_reldeps;
 	    l_reldeps = malloc (sizeof (*l_reldeps)
-	    			+ map->l_reldepsmax
+				+ map->l_reldepsmax
 				  * sizeof (struct link_map *));
 	    if (l_reldeps == NULL)
 	      /* Bad luck, keep the reldeps duplicated between
@@ -608,55 +618,72 @@ Filters not supported with LD_TRACE_PRELINKING"));
 	map->l_searchlist.r_list[i]->l_reserved = 0;
     }
 
-  /* Now determine the order in which the initialization has to happen.  */
+  /* Sort the initializer list to take dependencies into account.  The binary
+     itself will always be initialize last.  */
   memcpy (l_initfini, map->l_searchlist.r_list,
 	  nlist * sizeof (struct link_map *));
-  /* We can skip looking for the binary itself which is at the front
-     of the search list.  Look through the list backward so that circular
-     dependencies are not changing the order.  */
-  for (i = 1; i < nlist; ++i)
+  if (__builtin_expect (nlist > 1, 1))
     {
-      struct link_map *l = map->l_searchlist.r_list[i];
-      unsigned int j;
-      unsigned int k;
-
-      /* Find the place in the initfini list where the map is currently
-	 located.  */
-      for (j = 1; l_initfini[j] != l; ++j)
-	;
-
-      /* Find all object for which the current one is a dependency and
-	 move the found object (if necessary) in front.  */
-      for (k = j + 1; k < nlist; ++k)
+      /* We can skip looking for the binary itself which is at the front
+	 of the search list.  */
+      i = 1;
+      uint16_t seen[nlist];
+      memset (seen, 0, nlist * sizeof (seen[0]));
+      while (1)
 	{
-	  struct link_map **runp;
+	  /* Keep track of which object we looked at this round.  */
+	  ++seen[i];
+	  struct link_map *thisp = l_initfini[i];
 
-	  runp = l_initfini[k]->l_initfini;
-	  if (runp != NULL)
+	  /* Find the last object in the list for which the current one is
+	     a dependency and move the current object behind the object
+	     with the dependency.  */
+	  unsigned int k = nlist - 1;
+	  while (k > i)
 	    {
-	      while (*runp != NULL)
-		if (__builtin_expect (*runp++ == l, 0))
-		  {
-		    struct link_map *here = l_initfini[k];
+	      struct link_map **runp = l_initfini[k]->l_initfini;
+	      if (runp != NULL)
+		/* Look through the dependencies of the object.  */
+		while (*runp != NULL)
+		  if (__builtin_expect (*runp++ == thisp, 0))
+		    {
+		      /* Move the current object to the back past the last
+			 object with it as the dependency.  */
+		      memmove (&l_initfini[i], &l_initfini[i + 1],
+			       (k - i) * sizeof (l_initfini[0]));
+		      l_initfini[k] = thisp;
 
-		    /* Move it now.  */
-		    memmove (&l_initfini[j] + 1, &l_initfini[j],
-			     (k - j) * sizeof (struct link_map *));
-		    l_initfini[j] = here;
+		      if (seen[i + 1] > nlist - i)
+			{
+			  ++i;
+			  goto next_clear;
+			}
 
-		    /* Don't insert further matches before the last
-		       entry moved to the front.  */
-		    ++j;
+		      uint16_t this_seen = seen[i];
+		      memmove (&seen[i], &seen[i + 1],
+			       (k - i) * sizeof (seen[0]));
+		      seen[k] = this_seen;
 
-		    break;
-		  }
+		      goto next;
+		    }
+
+	      --k;
 	    }
+
+	  if (++i == nlist)
+	    break;
+	next_clear:
+	  memset (&seen[i], 0, (nlist - i) * sizeof (seen[0]));
+
+	next:;
 	}
     }
+
   /* Terminate the list of dependencies.  */
   l_initfini[nlist] = NULL;
   atomic_write_barrier ();
   map->l_initfini = l_initfini;
+  map->l_free_initfini = 1;
   if (l_reldeps != NULL)
     {
       atomic_write_barrier ();

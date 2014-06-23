@@ -1,6 +1,5 @@
 /* getopt_long and getopt_long_only entry points for GNU getopt.
-   Copyright (C) 1987,88,89,90,91,92,93,94,96,97,98,2004
-     Free Software Foundation, Inc.
+   Copyright (C) 1987-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -64,7 +62,7 @@ int
 getopt_long (int argc, char *const *argv, const char *options,
 	     const struct option *long_options, int *opt_index)
 {
-  return _getopt_internal (argc, argv, options, long_options, opt_index, 0);
+  return _getopt_internal (argc, argv, options, long_options, opt_index, 0, 0);
 }
 
 int
@@ -73,7 +71,7 @@ _getopt_long_r (int argc, char *const *argv, const char *options,
 		struct _getopt_data *d)
 {
   return _getopt_internal_r (argc, argv, options, long_options, opt_index,
-			     0, d);
+			     0, d, 0);
 }
 
 /* Like getopt_long, but '-' as well as '--' can indicate a long option.
@@ -85,7 +83,7 @@ int
 getopt_long_only (int argc, char *const *argv, const char *options,
 		  const struct option *long_options, int *opt_index)
 {
-  return _getopt_internal (argc, argv, options, long_options, opt_index, 1);
+  return _getopt_internal (argc, argv, options, long_options, opt_index, 1, 0);
 }
 
 int
@@ -94,7 +92,7 @@ _getopt_long_only_r (int argc, char *const *argv, const char *options,
 		     struct _getopt_data *d)
 {
   return _getopt_internal_r (argc, argv, options, long_options, opt_index,
-			     1, d);
+			     1, d, 0);
 }
 
 #endif	/* Not ELIDE_CODE.  */

@@ -1,5 +1,5 @@
 /* Startup code compliant to the ELF MN10300 ABI.
-   Copyright (C) 1995,1996,1997,1998,2000,2001 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
    Based on ../../i386/elf/start.S.
    This file is part of the GNU C Library.
@@ -15,9 +15,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* This is the canonical entry point, usually the first thing in the text
    segment.  The SVR4/i386 ABI (pages 3-31, 3-32) says that when the entry
@@ -38,8 +37,6 @@
 					NULL
 */
 
-#include "bp-sym.h"
-
 	.text
 	.globl _start
 	.type _start,@function
@@ -49,8 +46,8 @@ _start:
 	   later in __libc_start_main.  */
 	mov sp,a3
 	add -32,sp
-	
-	mov a3,(28,sp)		/* stack_end.  */	
+
+	mov a3,(28,sp)		/* stack_end.  */
 	mov d0,(24,sp)		/* rtld_fini.  */
 	mov _fini, d3
 	mov d3,(20,sp)		/* fini.  */
@@ -58,19 +55,19 @@ _start:
 	mov d2,(16,sp)		/* init.  */
 	inc4 a3
 	mov a3,(12,sp)		/* argv.  */
-	
+
 	/* Set the initial frame pointer as 0, so that the bottom of
 	   the stack is clearly marked.  */
 	mov 0,a3
 
 	mov (32,sp), d1		/* argc.  */
-	mov BP_SYM (main), d0	/* main.  */
+	mov main, d0		/* main.  */
 
 	/* Call the user's main function, and exit with its value.
 	   But let the libc call main.    */
-	call BP_SYM (__libc_start_main),[],0
+	call __libc_start_main,[],0
 
-	call BP_SYM (abort),[],0 /* Crash if somehow `exit' does return.  */
+	call abort,[],0 /* Crash if somehow `exit' does return.  */
 
 /* Define a symbol for the first piece of initialized data.  */
 	.data

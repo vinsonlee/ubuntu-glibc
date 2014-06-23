@@ -1,11 +1,14 @@
-GLIBC_OVERLAYS ?= $(shell ls glibc-linuxthreads* glibc-ports* glibc-libidn*)
-MIN_KERNEL_SUPPORTED := 5.4.0
+# When changing this, make sure to update debian/debhelper.in/libc.preinst!
+MIN_KERNEL_SUPPORTED := 8.3.0
 libc = libc0.1
 
-# Linuxthreads Config
+# Build and expect pt_chown on this platform
+pt_chown = yes
+
+# NPTL Config
 threads = yes
-libc_add-ons = ports linuxthreads $(add-ons)
-libc_extra_config_options = $(extra_config_options) --disable-compatible-utmp
+libc_add-ons = ports fbtl $(add-ons)
+libc_extra_config_options = $(extra_config_options)
 
 ifndef KFREEBSD_SOURCE
   ifeq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
@@ -24,14 +27,11 @@ KERNEL_HEADER_DIR = $(stamp)mkincludedir
 $(stamp)mkincludedir:
 	rm -rf debian/include
 	mkdir debian/include
-	ln -s $(KFREEBSD_HEADERS)/bsm debian/include
-	ln -s $(KFREEBSD_HEADERS)/net debian/include
-	ln -s $(KFREEBSD_HEADERS)/netatalk debian/include
-	ln -s $(KFREEBSD_HEADERS)/netipx debian/include
-	ln -s $(KFREEBSD_HEADERS)/nfs debian/include
-	ln -s $(KFREEBSD_HEADERS)/osreldate.h debian/include
-	ln -s $(KFREEBSD_HEADERS)/sys debian/include
-	ln -s $(KFREEBSD_HEADERS)/vm debian/include
+	for file in bsm net netatalk netipx nfs osreldate.h sys x86 vm ; do \
+	    if test -e $(KFREEBSD_HEADERS)/$$file ; then \
+	        ln -s $(KFREEBSD_HEADERS)/$$file debian/include ; \
+	    fi ; \
+	done
 
         # Link all machine directories.  We can't just link machine
         # because of explicit references to <machine-amd64/*> and

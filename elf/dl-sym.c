@@ -1,5 +1,5 @@
 /* Look up a symbol in a shared object loaded by `dlopen'.
-   Copyright (C) 1999-2002,2004,2006,2007 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,13 +13,13 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <stddef.h>
 #include <setjmp.h>
+#include <stdlib.h>
 #include <libintl.h>
 
 #include <dlfcn.h>
@@ -27,6 +27,7 @@
 #include <dl-hash.h>
 #include <sysdep-cancel.h>
 #include <dl-tls.h>
+#include <dl-irel.h>
 
 
 #ifdef SHARED
@@ -90,20 +91,10 @@ do_sym (void *handle, const char *name, void *who,
   lookup_t result;
   ElfW(Addr) caller = (ElfW(Addr)) who;
 
+  struct link_map *l = _dl_find_dso_for_object (caller);
   /* If the address is not recognized the call comes from the main
      program (we hope).  */
-  struct link_map *match = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
-
-  /* Find the highest-addressed object that CALLER is not below.  */
-  for (Lmid_t ns = 0; ns < DL_NNS; ++ns)
-    for (struct link_map *l = GL(dl_ns)[ns]._ns_loaded; l != NULL;
-	 l = l->l_next)
-      if (caller >= l->l_map_start && caller < l->l_map_end
-	  && (l->l_contiguous || _dl_addr_inside_object (l, caller)))
-	{
-	  match = l;
-	  break;
-	}
+  struct link_map *match = l ? l : GL(dl_ns)[LM_ID_BASE]._ns_loaded;
 
   if (handle == RTLD_DEFAULT)
     {
@@ -190,6 +181,15 @@ RTLD_NEXT used in code not dynamically loaded"));
       else
 #endif
 	value = DL_SYMBOL_ADDRESS (result, ref);
+
+      /* Resolve indirect function address.  */
+      if (__builtin_expect (ELFW(ST_TYPE) (ref->st_info) == STT_GNU_IFUNC, 0))
+	{
+	  DL_FIXUP_VALUE_TYPE fixup
+	    = DL_FIXUP_MAKE_VALUE (result, (ElfW(Addr)) value);
+	  fixup = elf_ifunc_invoke (DL_FIXUP_VALUE_ADDR (fixup));
+	  value = (void *) DL_FIXUP_VALUE_CODE_ADDR (fixup);
+	}
 
 #ifdef SHARED
       /* Auditing checkpoint: we have a new binding.  Provide the

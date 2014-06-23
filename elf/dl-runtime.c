@@ -1,5 +1,5 @@
 /* On-demand PLT fixup for shared objects.
-   Copyright (C) 1995-2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #define IN_DL_RUNTIME 1		/* This can be tested in dl-machine.h.  */
 
@@ -27,6 +26,7 @@
 #include <sysdep-cancel.h>
 #include "dynamic-link.h"
 #include <tls.h>
+#include <dl-irel.h>
 
 
 #if (!defined ELF_MACHINE_NO_RELA && !defined ELF_MACHINE_PLT_REL) \
@@ -36,15 +36,17 @@
 # define PLTREL  ElfW(Rel)
 #endif
 
-#ifndef VERSYMIDX
-# define VERSYMIDX(sym)	(DT_NUM + DT_THISPROCNUM + DT_VERSIONTAGIDX (sym))
-#endif
-
 /* The fixup functions might have need special attributes.  If none
    are provided define the macro as empty.  */
 #ifndef ARCH_FIXUP_ATTRIBUTE
 # define ARCH_FIXUP_ATTRIBUTE
 #endif
+
+#ifndef reloc_offset
+# define reloc_offset reloc_arg
+# define reloc_index  reloc_arg / sizeof (PLTREL)
+#endif
+
 
 
 /* This function is called through a special trampoline from the PLT the
@@ -54,16 +56,13 @@
    to that address.  Future calls will bounce directly from the PLT to the
    function.  */
 
-#ifndef ELF_MACHINE_NO_PLT
 DL_FIXUP_VALUE_TYPE
 __attribute ((noinline)) ARCH_FIXUP_ATTRIBUTE
 _dl_fixup (
 # ifdef ELF_MACHINE_RUNTIME_FIXUP_ARGS
 	   ELF_MACHINE_RUNTIME_FIXUP_ARGS,
 # endif
-	   /* GKM FIXME: Fix trampoline to pass bounds so we can do
-	      without the `__unbounded' qualifier.  */
-	   struct link_map *__unbounded l, ElfW(Word) reloc_offset)
+	   struct link_map *l, ElfW(Word) reloc_arg)
 {
   const ElfW(Sym) *const symtab
     = (const void *) D_PTR (l, l_info[DT_SYMTAB]);
@@ -105,12 +104,20 @@ _dl_fixup (
 	  flags |= DL_LOOKUP_GSCOPE_LOCK;
 	}
 
+#ifdef RTLD_ENABLE_FOREIGN_CALL
+      RTLD_ENABLE_FOREIGN_CALL;
+#endif
+
       result = _dl_lookup_symbol_x (strtab + sym->st_name, l, &sym, l->l_scope,
 				    version, ELF_RTYPE_CLASS_PLT, flags, NULL);
 
       /* We are done with the global scope.  */
       if (!RTLD_SINGLE_THREAD_P)
 	THREAD_GSCOPE_RESET_FLAG ();
+
+#ifdef RTLD_FINALIZE_FOREIGN_CALL
+      RTLD_FINALIZE_FOREIGN_CALL;
+#endif
 
       /* Currently result contains the base load address (or link map)
 	 of the object that defines sym.  Now add in the symbol
@@ -130,31 +137,52 @@ _dl_fixup (
   /* And now perhaps the relocation addend.  */
   value = elf_machine_plt_value (l, reloc, value);
 
+  if (sym != NULL
+      && __builtin_expect (ELFW(ST_TYPE) (sym->st_info) == STT_GNU_IFUNC, 0))
+    value = elf_ifunc_invoke (DL_FIXUP_VALUE_ADDR (value));
+
   /* Finally, fix up the plt itself.  */
   if (__builtin_expect (GLRO(dl_bind_not), 0))
     return value;
 
   return elf_machine_fixup_plt (l, result, reloc, rel_addr, value);
 }
-#endif
 
-#if !defined PROF && !defined ELF_MACHINE_NO_PLT && !__BOUNDED_POINTERS__
-
+#ifndef PROF
 DL_FIXUP_VALUE_TYPE
 __attribute ((noinline)) ARCH_FIXUP_ATTRIBUTE
 _dl_profile_fixup (
 #ifdef ELF_MACHINE_RUNTIME_FIXUP_ARGS
 		   ELF_MACHINE_RUNTIME_FIXUP_ARGS,
 #endif
-		   struct link_map *l, ElfW(Word) reloc_offset,
+		   struct link_map *l, ElfW(Word) reloc_arg,
 		   ElfW(Addr) retaddr, void *regs, long int *framesizep)
 {
   void (*mcount_fct) (ElfW(Addr), ElfW(Addr)) = INTUSE(_dl_mcount);
 
+  if (l->l_reloc_result == NULL)
+    {
+      /* BZ #14843: ELF_DYNAMIC_RELOCATE is called before l_reloc_result
+	 is allocated.  We will get here if ELF_DYNAMIC_RELOCATE calls a
+	 resolver function to resolve an IRELATIVE relocation and that
+	 resolver calls a function that is not yet resolved (lazy).  For
+	 example, the resolver in x86-64 libm.so calls __get_cpu_features
+	 defined in libc.so.  Skip audit and resolve the external function
+	 in this case.  */
+      *framesizep = -1;
+      return _dl_fixup (
+# ifdef ELF_MACHINE_RUNTIME_FIXUP_ARGS
+#  ifndef ELF_MACHINE_RUNTIME_FIXUP_PARAMS
+#   error Please define ELF_MACHINE_RUNTIME_FIXUP_PARAMS.
+#  endif
+			ELF_MACHINE_RUNTIME_FIXUP_PARAMS,
+# endif
+			l, reloc_arg);
+    }
+
   /* This is the address in the array where we store the result of previous
      relocations.  */
-  struct reloc_result *reloc_result
-    = &l->l_reloc_result[reloc_offset / sizeof (PLTREL)];
+  struct reloc_result *reloc_result = &l->l_reloc_result[reloc_index];
   DL_FIXUP_VALUE_TYPE *resultp = &reloc_result->addr;
 
   DL_FIXUP_VALUE_TYPE value = *resultp;
@@ -215,12 +243,22 @@ _dl_profile_fixup (
 				       defsym != NULL
 				       ? LOOKUP_VALUE_ADDRESS (result)
 					 + defsym->st_value : 0);
+
+	  if (defsym != NULL
+	      && __builtin_expect (ELFW(ST_TYPE) (defsym->st_info)
+				   == STT_GNU_IFUNC, 0))
+	    value = elf_ifunc_invoke (DL_FIXUP_VALUE_ADDR (value));
 	}
       else
 	{
 	  /* We already found the symbol.  The module (and therefore its load
 	     address) is also known.  */
 	  value = DL_FIXUP_MAKE_VALUE (l, l->l_addr + refsym->st_value);
+
+	  if (__builtin_expect (ELFW(ST_TYPE) (refsym->st_info)
+				== STT_GNU_IFUNC, 0))
+	    value = elf_ifunc_invoke (DL_FIXUP_VALUE_ADDR (value));
+
 	  result = l;
 	}
       /* And now perhaps the relocation addend.  */
@@ -243,7 +281,7 @@ _dl_profile_fixup (
 	     interested in auditing.  */
 	  if ((l->l_audit_any_plt | result->l_audit_any_plt) != 0)
 	    {
-	      unsigned int altvalue = 0;
+	      unsigned int flags = 0;
 	      struct audit_ifaces *afct = GLRO(dl_audit);
 	      /* Synthesize a symbol record where the st_value field is
 		 the result.  */
@@ -266,7 +304,6 @@ _dl_profile_fixup (
 		  if ((l->l_audit[cnt].bindflags & LA_FLG_BINDFROM) != 0
 		      && (result->l_audit[cnt].bindflags & LA_FLG_BINDTO) != 0)
 		    {
-		      unsigned int flags = altvalue;
 		      if (afct->symbind != NULL)
 			{
 			  uintptr_t new_value
@@ -277,7 +314,7 @@ _dl_profile_fixup (
 					     strtab2 + defsym->st_name);
 			  if (new_value != (uintptr_t) sym.st_value)
 			    {
-			      altvalue = LA_SYMB_ALTVALUE;
+			      flags |= LA_SYMB_ALTVALUE;
 			      sym.st_value = new_value;
 			    }
 			}
@@ -300,7 +337,7 @@ _dl_profile_fixup (
 		  afct = afct->next;
 		}
 
-	      reloc_result->flags = altvalue;
+	      reloc_result->flags = flags;
 	      value = DL_FIXUP_ADDR_VALUE (sym.st_value);
 	    }
 	  else
@@ -338,16 +375,15 @@ _dl_profile_fixup (
       const char *symname = strtab + sym.st_name;
 
       /* Keep track of overwritten addresses.  */
-      unsigned int altvalue = reloc_result->flags;
+      unsigned int flags = reloc_result->flags;
 
       struct audit_ifaces *afct = GLRO(dl_audit);
       for (unsigned int cnt = 0; cnt < GLRO(dl_naudit); ++cnt)
 	{
- 	  if (afct->ARCH_LA_PLTENTER != NULL
+	  if (afct->ARCH_LA_PLTENTER != NULL
 	      && (reloc_result->enterexit
 		  & (LA_SYMB_NOPLTENTER << (2 * (cnt + 1)))) == 0)
 	    {
-	      unsigned int flags = altvalue;
 	      long int new_framesize = -1;
 	      uintptr_t new_value
 		= afct->ARCH_LA_PLTENTER (&sym, reloc_result->boundndx,
@@ -357,7 +393,7 @@ _dl_profile_fixup (
 					  &new_framesize);
 	      if (new_value != (uintptr_t) sym.st_value)
 		{
-		  altvalue = LA_SYMB_ALTVALUE;
+		  flags |= LA_SYMB_ALTVALUE;
 		  sym.st_value = new_value;
 		}
 
@@ -397,13 +433,13 @@ _dl_profile_fixup (
   return value;
 }
 
-#endif /* PROF && ELF_MACHINE_NO_PLT */
+#endif /* PROF */
 
 
 #include <stdio.h>
 void
 ARCH_FIXUP_ATTRIBUTE
-_dl_call_pltexit (struct link_map *l, ElfW(Word) reloc_offset,
+_dl_call_pltexit (struct link_map *l, ElfW(Word) reloc_arg,
 		  const void *inregs, void *outregs)
 {
 #ifdef SHARED
@@ -411,14 +447,14 @@ _dl_call_pltexit (struct link_map *l, ElfW(Word) reloc_offset,
      relocations.  */
   // XXX Maybe the bound information must be stored on the stack since
   // XXX with bind_not a new value could have been stored in the meantime.
-  struct reloc_result *reloc_result
-    = &l->l_reloc_result[reloc_offset / sizeof (PLTREL)];
+  struct reloc_result *reloc_result = &l->l_reloc_result[reloc_index];
   ElfW(Sym) *defsym = ((ElfW(Sym) *) D_PTR (reloc_result->bound,
 					    l_info[DT_SYMTAB])
 		       + reloc_result->boundndx);
 
   /* Set up the sym parameter.  */
   ElfW(Sym) sym = *defsym;
+  sym.st_value = DL_FIXUP_VALUE_ADDR (reloc_result->addr);
 
   /* Get the symbol name.  */
   const char *strtab = (const void *) D_PTR (reloc_result->bound,

@@ -1,5 +1,5 @@
 /* S/390-specific implemetation of profiling support.
-   Copyright (C) 2000, 2001 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com)
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 
@@ -48,13 +47,17 @@
  * _mcount may not modify any register.
  */
 
-	ASM_GLOBAL_DIRECTIVE C_SYMBOL_NAME(_mcount)
-	ASM_TYPE_DIRECTIVE(C_SYMBOL_NAME(_mcount), @function)
+	.globl C_SYMBOL_NAME(_mcount)
+	.type C_SYMBOL_NAME(_mcount), @function
+	cfi_startproc
 	.align ALIGNARG(4)
 C_LABEL(_mcount)
 	/* Save the caller-clobbered registers.  */
 	ahi   %r15,-128
+	cfi_adjust_cfa_offset (128)
 	stm   %r14,%r5,96(%r15)
+	cfi_offset (r14, 0)
+	cfi_offset (r15, 4)
 	l     %r2,132(%r15)       # callers address  = first parameter
 	la    %r2,0(%r2)          # clear bit 0
 	la    %r3,0(%r14)         # callees address  = second parameter
@@ -77,7 +80,9 @@ C_LABEL(_mcount)
 	 */
 	lm    %r14,%r5,96(%r15)
 	ahi   %r15,128
+	cfi_adjust_cfa_offset (-128)
 	br    %r14
+	cfi_endproc
 	ASM_SIZE_DIRECTIVE(C_SYMBOL_NAME(_mcount))
 
 #undef mcount

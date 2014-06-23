@@ -1,5 +1,5 @@
 /* Install given floating-point environment and raise exceptions.
-   Copyright (C) 1997,99,2000,01,07 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
 
@@ -36,7 +35,7 @@ __feupdateenv (const fenv_t *envp)
   /* Raise the saved exception.  Incidently for us the implementation
      defined format of the values in objects of type fexcept_t is the
      same as the ones specified using the FE_* constants.  */
-  feraiseexcept ((int) temp);
+  __feraiseexcept ((int) temp);
 
   /* Success.  */
   return 0;
@@ -48,4 +47,5 @@ strong_alias (__feupdateenv, __old_feupdateenv)
 compat_symbol (libm, __old_feupdateenv, feupdateenv, GLIBC_2_1);
 #endif
 
+libm_hidden_ver (__feupdateenv, feupdateenv)
 versioned_symbol (libm, __feupdateenv, feupdateenv, GLIBC_2_2);

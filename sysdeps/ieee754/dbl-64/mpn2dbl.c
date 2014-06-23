@@ -1,4 +1,4 @@
-/* Copyright (C) 1995,1996,1997,2002,2003 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -41,7 +40,7 @@ __mpn_construct_double (mp_srcptr frac_ptr, int expt, int negative)
   u.ieee.mantissa0 = (frac_ptr[0] >> 32) & (((mp_limb_t) 1
 					     << (DBL_MANT_DIG - 32)) - 1);
 #else
-  #error "mp_limb size " BITS_PER_MP_LIMB "not accounted for"
+  # error "mp_limb size " BITS_PER_MP_LIMB "not accounted for"
 #endif
 
   return u.d;

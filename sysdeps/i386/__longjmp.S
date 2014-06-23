@@ -1,5 +1,5 @@
 /* longjmp for i386.
-   Copyright (C) 1995-1998,2000,2002,2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,26 +13,18 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <jmpbuf-offsets.h>
 #include <asm-syntax.h>
-#include <bp-sym.h>
-#include <bp-asm.h>
+#include <stap-probe.h>
 
-#define PARMS	LINKAGE		/* no space for saved regs */
-#define JBUF	PARMS
-#define VAL	JBUF+PTR_SIZE
-
-ENTRY (BP_SYM (__longjmp))
-	ENTER
-
+	.text
+ENTRY (__longjmp)
 #ifdef PTR_DEMANGLE
-	movl JBUF(%esp), %eax	/* User's jmp_buf in %eax.  */
-	CHECK_BOUNDS_BOTH_WIDE (%eax, JBUF(%esp), $JB_SIZE)
+	movl 4(%esp), %eax	/* User's jmp_buf in %eax.  */
 
 	/* Save the return address now.  */
 	movl (JB_PC*4)(%eax), %edx
@@ -40,6 +32,7 @@ ENTRY (BP_SYM (__longjmp))
 	movl (JB_SP*4)(%eax), %ecx
 	PTR_DEMANGLE (%edx)
 	PTR_DEMANGLE (%ecx)
+	LIBC_PROBE (longjmp, 3, 4@%eax, -4@8(%esp), 4@%edx)
 	cfi_def_cfa(%eax, 0)
 	cfi_register(%eip, %edx)
 	cfi_register(%esp, %ecx)
@@ -47,7 +40,7 @@ ENTRY (BP_SYM (__longjmp))
 	cfi_offset(%esi, JB_SI*4)
 	cfi_offset(%edi, JB_DI*4)
 	cfi_offset(%ebp, JB_BP*4)
-     	/* Restore registers.  */
+	/* Restore registers.  */
 	movl (JB_BX*4)(%eax), %ebx
 	movl (JB_SI*4)(%eax), %esi
 	movl (JB_DI*4)(%eax), %edi
@@ -57,22 +50,23 @@ ENTRY (BP_SYM (__longjmp))
 	cfi_restore(%edi)
 	cfi_restore(%ebp)
 
-	movl VAL(%esp), %eax	/* Second argument is return value.  */
+	LIBC_PROBE (longjmp_target, 3, 4@%eax, -4@8(%esp), 4@%edx)
+	movl 8(%esp), %eax	/* Second argument is return value.  */
 	movl %ecx, %esp
 #else
-	movl JBUF(%esp), %ecx	/* User's jmp_buf in %ecx.  */
-	CHECK_BOUNDS_BOTH_WIDE (%ecx, JBUF(%esp), $JB_SIZE)
-
-	movl VAL(%esp), %eax	/* Second argument is return value.  */
+	movl 4(%esp), %ecx	/* User's jmp_buf in %ecx.  */
+	movl 8(%esp), %eax	/* Second argument is return value.  */
 	/* Save the return address now.  */
 	movl (JB_PC*4)(%ecx), %edx
-     	/* Restore registers.  */
+	LIBC_PROBE (longjmp, 3, 4@%ecx, -4@%eax, 4@%edx)
+	/* Restore registers.  */
 	movl (JB_BX*4)(%ecx), %ebx
 	movl (JB_SI*4)(%ecx), %esi
 	movl (JB_DI*4)(%ecx), %edi
 	movl (JB_BP*4)(%ecx), %ebp
 	movl (JB_SP*4)(%ecx), %esp
+	LIBC_PROBE (longjmp_target, 3, 4@%ecx, -4@%ecx, 4@%edx)
 #endif
 	/* Jump to saved PC.  */
-     	jmp *%edx
-END (BP_SYM (__longjmp))
+	jmp *%edx
+END (__longjmp)

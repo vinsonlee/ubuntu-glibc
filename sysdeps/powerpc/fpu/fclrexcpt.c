@@ -1,5 +1,5 @@
 /* Clear given exceptions in current floating-point environment.
-   Copyright (C) 1997,99,2000,01 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <fenv_libc.h>
 
@@ -29,8 +28,8 @@ __feclearexcept (int excepts)
   u.fenv = fegetenv_register ();
 
   /* Clear the relevant bits.  */
-  u.l[1] = u.l[1] & ~((-(excepts >> (31 - FPSCR_VX) & 1) & FE_ALL_INVALID)
-		      | (excepts & FPSCR_STICKY_BITS));
+  u.l = u.l & ~((-(excepts >> (31 - FPSCR_VX) & 1) & FE_ALL_INVALID)
+		| (excepts & FPSCR_STICKY_BITS));
 
   /* Put the new state in effect.  */
   fesetenv_register (u.fenv);
@@ -45,4 +44,5 @@ strong_alias (__feclearexcept, __old_feclearexcept)
 compat_symbol (libm, __old_feclearexcept, feclearexcept, GLIBC_2_1);
 #endif
 
+libm_hidden_ver (__feclearexcept, feclearexcept)
 versioned_symbol (libm, __feclearexcept, feclearexcept, GLIBC_2_2);

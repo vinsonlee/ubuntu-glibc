@@ -1,4 +1,4 @@
-/* Copyright (C) 2005 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2005.
 
@@ -13,15 +13,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <pthreadP.h>
 
 
 int
-pthread_mutexattr_getrobust_np (attr, robustness)
+pthread_mutexattr_getrobust (attr, robustness)
      const pthread_mutexattr_t *attr;
      int *robustness;
 {
@@ -34,3 +33,4 @@ pthread_mutexattr_getrobust_np (attr, robustness)
 
   return 0;
 }
+weak_alias (pthread_mutexattr_getrobust, pthread_mutexattr_getrobust_np)

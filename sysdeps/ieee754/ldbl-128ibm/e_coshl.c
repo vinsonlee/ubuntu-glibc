@@ -10,23 +10,19 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_cosh.c,v 1.7 1995/05/10 20:44:58 jtc Exp $";
-#endif
-
 /* __ieee754_cosh(x)
  * Method :
  * mathematically cosh(x) if defined to be (exp(x)+exp(-x))/2
  *	1. Replace x by |x| (cosh(x) = cosh(-x)).
  *	2.
- *		                                        [ exp(x) - 1 ]^2
+ *							[ exp(x) - 1 ]^2
  *	    0        <= x <= ln2/2  :  cosh(x) := 1 + -------------------
- *			       			           2*exp(x)
+ *							   2*exp(x)
  *
- *		                                  exp(x) +  1/exp(x)
- *	    ln2/2    <= x <= 22     :  cosh(x) := -------------------
- *			       			          2
- *	    22       <= x <= lnovft :  cosh(x) := exp(x)/2
+ *						  exp(x) +  1/exp(x)
+ *	    ln2/2    <= x <= 40     :  cosh(x) := -------------------
+ *							  2
+ *	    40       <= x <= lnovft :  cosh(x) := exp(x)/2
  *	    lnovft   <= x <= ln2ovft:  cosh(x) := exp(x/2)/2 * exp(x/2)
  *	    ln2ovft  <  x	    :  cosh(x) := huge*huge (overflow)
  *
@@ -35,27 +31,21 @@ static char rcsid[] = "$NetBSD: e_cosh.c,v 1.7 1995/05/10 20:44:58 jtc Exp $";
  *	only cosh(0)=1 is exact for finite x.
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
 static const long double one = 1.0L, half=0.5L, huge = 1.0e300L;
-#else
-static long double one = 1.0L, half=0.5L, huge = 1.0e300L;
-#endif
 
-#ifdef __STDC__
-	long double __ieee754_coshl(long double x)
-#else
-	long double __ieee754_coshl(x)
-	long double x;
-#endif
+long double
+__ieee754_coshl (long double x)
 {
 	long double t,w;
 	int64_t ix;
+	double xhi;
 
     /* High word of |x|. */
-	GET_LDOUBLE_MSW64(ix,x);
+	xhi = ldbl_high (x);
+	EXTRACT_WORDS64 (ix, xhi);
 	ix &= 0x7fffffffffffffffLL;
 
     /* x is INF or NaN */
@@ -69,17 +59,17 @@ static long double one = 1.0L, half=0.5L, huge = 1.0e300L;
 	    return one+(t*t)/(w+w);
 	}
 
-    /* |x| in [0.5*ln2,22], return (exp(|x|)+1/exp(|x|)/2; */
-	if (ix < 0x4036000000000000LL) {
+    /* |x| in [0.5*ln2,40], return (exp(|x|)+1/exp(|x|)/2; */
+	if (ix < 0x4044000000000000LL) {
 		t = __ieee754_expl(fabsl(x));
 		return half*t+half/t;
 	}
 
-    /* |x| in [22, log(maxdouble)] return half*exp(|x|) */
+    /* |x| in [40, log(maxdouble)] return half*exp(|x|) */
 	if (ix < 0x40862e42fefa39efLL)  return half*__ieee754_expl(fabsl(x));
 
     /* |x| in [log(maxdouble), overflowthresold] */
-        if (ix < 0x408633ce8fb9f87dLL) {
+	if (ix < 0x408633ce8fb9f87fLL) {
 	    w = __ieee754_expl(half*fabsl(x));
 	    t = half*w;
 	    return t*w;
@@ -88,3 +78,4 @@ static long double one = 1.0L, half=0.5L, huge = 1.0e300L;
     /* |x| > overflowthresold, cosh(x) overflow */
 	return huge*huge;
 }
+strong_alias (__ieee754_coshl, __coshl_finite)

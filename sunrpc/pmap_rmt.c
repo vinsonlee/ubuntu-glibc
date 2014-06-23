@@ -1,42 +1,36 @@
-/* @(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC */
-/*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-#if !defined(lint) && defined(SCCSIDS)
-static char sccsid[] = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
-#endif
-
 /*
  * pmap_rmt.c
  * Client interface to pmap rpc service.
  * remote call and broadcast service
  *
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <unistd.h>
@@ -85,7 +79,7 @@ pmap_rmtcall (addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_p
   enum clnt_stat stat;
 
   addr->sin_port = htons (PMAPPORT);
-  client = INTUSE(clntudp_create) (addr, PMAPPROG, PMAPVERS, timeout, &socket);
+  client = clntudp_create (addr, PMAPPROG, PMAPVERS, timeout, &socket);
   if (client != (CLIENT *) NULL)
     {
       a.prog = prog;
@@ -97,8 +91,8 @@ pmap_rmtcall (addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_p
       r.results_ptr = resp;
       r.xdr_results = xdrres;
       stat = CLNT_CALL (client, PMAPPROC_CALLIT,
-			(xdrproc_t)INTUSE(xdr_rmtcall_args),
-			(caddr_t)&a, (xdrproc_t)INTUSE(xdr_rmtcallres),
+			(xdrproc_t)xdr_rmtcall_args,
+			(caddr_t)&a, (xdrproc_t)xdr_rmtcallres,
 			(caddr_t)&r, tout);
       CLNT_DESTROY (client);
     }
@@ -110,6 +104,7 @@ pmap_rmtcall (addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_p
   addr->sin_port = 0;
   return stat;
 }
+libc_hidden_nolink_sunrpc (pmap_rmtcall, GLIBC_2_0)
 
 
 /*
@@ -121,13 +116,13 @@ xdr_rmtcall_args (XDR *xdrs, struct rmtcallargs *cap)
 {
   u_int lenposition, argposition, position;
 
-  if (INTUSE(xdr_u_long) (xdrs, &(cap->prog)) &&
-      INTUSE(xdr_u_long) (xdrs, &(cap->vers)) &&
-      INTUSE(xdr_u_long) (xdrs, &(cap->proc)))
+  if (xdr_u_long (xdrs, &(cap->prog)) &&
+      xdr_u_long (xdrs, &(cap->vers)) &&
+      xdr_u_long (xdrs, &(cap->proc)))
     {
       u_long dummy_arglen = 0;
       lenposition = XDR_GETPOS (xdrs);
-      if (!INTUSE(xdr_u_long) (xdrs, &dummy_arglen))
+      if (!xdr_u_long (xdrs, &dummy_arglen))
 	return FALSE;
       argposition = XDR_GETPOS (xdrs);
       if (!(*(cap->xdr_args)) (xdrs, cap->args_ptr))
@@ -135,14 +130,14 @@ xdr_rmtcall_args (XDR *xdrs, struct rmtcallargs *cap)
       position = XDR_GETPOS (xdrs);
       cap->arglen = (u_long) position - (u_long) argposition;
       XDR_SETPOS (xdrs, lenposition);
-      if (!INTUSE(xdr_u_long) (xdrs, &(cap->arglen)))
+      if (!xdr_u_long (xdrs, &(cap->arglen)))
 	return FALSE;
       XDR_SETPOS (xdrs, position);
       return TRUE;
     }
   return FALSE;
 }
-INTDEF(xdr_rmtcall_args)
+libc_hidden_nolink_sunrpc (xdr_rmtcall_args, GLIBC_2_0)
 
 /*
  * XDR remote call results
@@ -156,16 +151,16 @@ xdr_rmtcallres (xdrs, crp)
   caddr_t port_ptr;
 
   port_ptr = (caddr_t) crp->port_ptr;
-  if (INTUSE(xdr_reference) (xdrs, &port_ptr, sizeof (u_long),
-			     (xdrproc_t) INTUSE(xdr_u_long))
-      && INTUSE(xdr_u_long) (xdrs, &crp->resultslen))
+  if (xdr_reference (xdrs, &port_ptr, sizeof (u_long),
+		     (xdrproc_t) xdr_u_long)
+      && xdr_u_long (xdrs, &crp->resultslen))
     {
       crp->port_ptr = (u_long *) port_ptr;
       return (*(crp->xdr_results)) (xdrs, crp->results_ptr);
     }
   return FALSE;
 }
-INTDEF(xdr_rmtcallres)
+libc_hidden_nolink_sunrpc (xdr_rmtcallres, GLIBC_2_0)
 
 
 /*
@@ -218,7 +213,7 @@ clnt_broadcast (prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
      resultproc_t eachresult;	/* call with each result obtained */
 {
   enum clnt_stat stat = RPC_FAILED;
-  AUTH *unix_auth = INTUSE(authunix_create_default) ();
+  AUTH *unix_auth = authunix_create_default ();
   XDR xdr_stream;
   XDR *xdrs = &xdr_stream;
   struct timeval t;
@@ -282,9 +277,9 @@ clnt_broadcast (prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
   r.port_ptr = &port;
   r.xdr_results = xresults;
   r.results_ptr = resultsp;
-  INTUSE(xdrmem_create) (xdrs, outbuf, MAX_BROADCAST_SIZE, XDR_ENCODE);
-  if ((!INTUSE(xdr_callmsg) (xdrs, &msg))
-      || (!INTUSE(xdr_rmtcall_args) (xdrs, &a)))
+  xdrmem_create (xdrs, outbuf, MAX_BROADCAST_SIZE, XDR_ENCODE);
+  if ((!xdr_callmsg (xdrs, &msg))
+      || (!xdr_rmtcall_args (xdrs, &a)))
     {
       stat = RPC_CANTENCODEARGS;
       goto done_broad;
@@ -317,7 +312,7 @@ clnt_broadcast (prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
     recv_again:
       msg.acpted_rply.ar_verf = _null_auth;
       msg.acpted_rply.ar_results.where = (caddr_t) & r;
-      msg.acpted_rply.ar_results.proc = (xdrproc_t) INTUSE(xdr_rmtcallres);
+      msg.acpted_rply.ar_results.proc = (xdrproc_t) xdr_rmtcallres;
       milliseconds = t.tv_sec * 1000 + t.tv_usec / 1000;
       switch (__poll(&fd, 1, milliseconds))
 	{
@@ -352,8 +347,8 @@ clnt_broadcast (prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
        * see if reply transaction id matches sent id.
        * If so, decode the results.
        */
-      INTUSE(xdrmem_create) (xdrs, inbuf, (u_int) inlen, XDR_DECODE);
-      if (INTUSE(xdr_replymsg) (xdrs, &msg))
+      xdrmem_create (xdrs, inbuf, (u_int) inlen, XDR_DECODE);
+      if (xdr_replymsg (xdrs, &msg))
 	{
 	  if (((u_int32_t) msg.rm_xid == (u_int32_t) xid) &&
 	      (msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
@@ -374,8 +369,8 @@ clnt_broadcast (prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 #endif
 	}
       xdrs->x_op = XDR_FREE;
-      msg.acpted_rply.ar_results.proc = (xdrproc_t)INTUSE(xdr_void);
-      (void) INTUSE(xdr_replymsg) (xdrs, &msg);
+      msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_void;
+      (void) xdr_replymsg (xdrs, &msg);
       (void) (*xresults) (xdrs, resultsp);
       xdr_destroy (xdrs);
       if (done)
@@ -393,3 +388,4 @@ done_broad:
   AUTH_DESTROY (unix_auth);
   return stat;
 }
+libc_hidden_nolink_sunrpc (clnt_broadcast, GLIBC_2_0)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _LOWLEVELLOCK_H
 #define _LOWLEVELLOCK_H	1
@@ -41,12 +40,12 @@
 #define FUTEX_LOCK_PI		6
 #define FUTEX_UNLOCK_PI		7
 #define FUTEX_TRYLOCK_PI	8
+#define FUTEX_WAIT_BITSET	9
+#define FUTEX_WAKE_BITSET	10
 #define FUTEX_PRIVATE_FLAG	128
+#define FUTEX_CLOCK_REALTIME	256
 
-/* Bits used in robust mutex implementation.  */
-#define FUTEX_WAITERS		0x80000000
-#define FUTEX_OWNER_DIED	0x40000000
-#define FUTEX_TID_MASK		0x3fffffff
+#define FUTEX_BITSET_MATCH_ANY	0xffffffff
 
 /* Values for 'private' parameter of locking macros.  Yes, the
    definition seems to be backwards.  But it is not.  The bit will be
@@ -78,7 +77,7 @@
       : (fl))								      \
    : ((fl) | (((private) ^ FUTEX_PRIVATE_FLAG)				      \
 	      & THREAD_GETMEM (THREAD_SELF, header.private_futex))))
-# endif	      
+# endif
 #endif
 
 /* Type for lock object.  */
@@ -258,7 +257,7 @@ __lll_cond_lock (int *futex, int private)
 }
 #define lll_cond_lock(futex, private) __lll_cond_lock (&(futex), private)
 
-extern int __lll_timedlock_wait (lll_lock_t *futex, const struct timespec *, 
+extern int __lll_timedlock_wait (lll_lock_t *futex, const struct timespec *,
 				 int private) attribute_hidden;
 extern int __lll_robust_timedlock_wait (int *futex, const struct timespec *,
 				 int private) attribute_hidden;
@@ -318,9 +317,7 @@ __lll_robust_timedlock (int *futex, const struct timespec *abstime,
 #define THREAD_INIT_LOCK(PD, LOCK) \
   (PD)->LOCK = LLL_LOCK_INITIALIZER
 
-extern int lll_unlock_wake_cb (lll_lock_t *__futex) attribute_hidden;
-
-/* The kernel notifies a process which uses CLONE_CLEARTID via futex
+/* The kernel notifies a process which uses CLONE_CHILD_CLEARTID via futex
    wakeup when the clone terminates.  The memory location contains the
    thread ID while the clone is running and is reset to zero
    afterwards.	*/

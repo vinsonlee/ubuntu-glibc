@@ -1,4 +1,4 @@
-/* Copyright (C) 1997, 1999 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,12 +12,11 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
-#include "math_private.h"
+#include <math_private.h>
 #include "mathimpl.h"
 
 #ifndef SUFF
@@ -124,3 +123,4 @@ s(__ieee754_pow) (float_type x, float_type y)
     z = m81(__ieee754_exp) (y * m81(__ieee754_log) (x));
   return z;
 }
+strong_alias (s(__ieee754_pow), CONCATX (s(__pow), _finite))

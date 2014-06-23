@@ -1,4 +1,4 @@
-/* Copyright (C) 2001, 2006 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2001.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <netdb.h>
@@ -125,8 +124,8 @@ getaddrinfo_a (int mode, struct gaicb *list[], int ent, struct sigevent *sig)
       while (total > 0)
 	{
 #ifdef DONT_NEED_GAI_MISC_COND
-	  int result;
-	  GAI_MISC_WAIT (result, total, NULL, 1);
+	  int not_used __attribute__ ((unused));
+	  GAI_MISC_WAIT (not_used, total, NULL, 1);
 #else
 	  pthread_cond_wait (&cond, &__gai_requests_mutex);
 #endif
