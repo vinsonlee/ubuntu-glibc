@@ -5,12 +5,6 @@ asm-CPPFLAGS += -DGAS_SYNTAX
 # The i386 `long double' is a distinct type we support.
 long-double-fcts = yes
 
-ifeq ($(subdir),csu)
-# On i686 we must avoid generating the trampoline functions generated
-# to get the GOT pointer.
-CFLAGS-initfini.s += -march=i386 -mtune=i386
-endif
-
 ifeq ($(subdir),gmon)
 sysdep_routines += i386-mcount
 endif
@@ -30,13 +24,16 @@ endif
 # than 4 bytes.
 # Lots of routines in math will use FPU, so make math subdir an exception
 # here.
+# In gcc 4.6 (and maybe earlier?) giving -mpreferred-stack-boundary=2 is
+# an error, so don't try to reduce it here like we used to.  We still
+# explicit set -mpreferred-stack-boundary=4 the places where it matters,
+# in case an older compiler defaulted to 2.
 ifeq ($(subdir),math)
 sysdep-CFLAGS += -mpreferred-stack-boundary=4
 else
 ifeq ($(subdir),csu)
 sysdep-CFLAGS += -mpreferred-stack-boundary=4
 else
-sysdep-CFLAGS += -mpreferred-stack-boundary=2
 # Likewise, any function which calls user callbacks
 uses-callbacks += -mpreferred-stack-boundary=4
 # Likewise, any stack alignment tests
@@ -47,6 +44,7 @@ endif
 # And a couple of other routines
 ifeq ($(subdir),stdlib)
 CFLAGS-exit.c += -mpreferred-stack-boundary=4
+CFLAGS-cxa_finalize.c += -mpreferred-stack-boundary=4
 endif
 ifeq ($(subdir),elf)
 CFLAGS-dl-init.c += -mpreferred-stack-boundary=4

@@ -1,5 +1,5 @@
 /* Linux/ARM version of processor capability information handling macros.
-   Copyright (C) 2001, 2002, 2004, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Philip Blundell <philb@gnu.org>, 2001.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _DL_PROCINFO_H
 #define _DL_PROCINFO_H	1
@@ -24,7 +23,7 @@
 #include <ldsodefs.h>
 #include <sysdep.h>
 
-#define _DL_HWCAP_COUNT 10
+#define _DL_HWCAP_COUNT 19
 
 /* The kernel provides platform data but it is not interesting.  */
 #define _DL_HWCAP_PLATFORM 	0
@@ -32,9 +31,13 @@
 
 static inline int
 __attribute__ ((unused))
-_dl_procinfo (int word)
+_dl_procinfo (unsigned int type, unsigned long int word)
 {
   int i;
+
+  /* Fallback to unknown output mechanism.  */
+  if (type == AT_HWCAP2)
+    return -1;
 
   _dl_printf ("AT_HWCAP:   ");
 
@@ -54,7 +57,7 @@ _dl_hwcap_string (int idx)
   return GLRO(dl_arm_cap_flags)[idx];
 };
 
-#define HWCAP_IMPORTANT		(HWCAP_ARM_HALF | HWCAP_ARM_FAST_MULT)
+#define HWCAP_IMPORTANT		(HWCAP_ARM_VFP | HWCAP_ARM_NEON)
 
 static inline int
 __attribute__ ((unused))

@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2007.
 
@@ -13,14 +13,15 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
+#include <assert.h>
 #include <errno.h>
 #include <string.h>
 #include <not-cancel.h>
-#include <stdio-common/_itoa.h>
+#include <_itoa.h>
+#include <stdint.h>
 
 #include "nscd-client.h"
 #include "nscd_proto.h"
@@ -53,7 +54,7 @@ __nscd_getservbyport_r (int port, const char *proto,
   portstr[sizeof (portstr) - 1] = '\0';
   char *cp = _itoa_word (port, portstr + sizeof (portstr) - 1, 10, 0);
 
-  return nscd_getserv_r (cp, portstr + sizeof (portstr) - cp, proto,
+  return nscd_getserv_r (cp, portstr + sizeof (portstr) - 1 - cp, proto,
 			 GETSERVBYPORT, result_buf, buf, buflen, result);
 }
 
@@ -80,6 +81,7 @@ nscd_getserv_r (const char *crit, size_t critlen, const char *proto,
 {
   int gc_cycle;
   int nretries = 0;
+  size_t alloca_used = 0;
 
   /* If the mapping is available, try to search there instead of
      communicating with the nscd.  */
@@ -88,13 +90,23 @@ nscd_getserv_r (const char *crit, size_t critlen, const char *proto,
 			       &gc_cycle);
   size_t protolen = proto == NULL ? 0 : strlen (proto);
   size_t keylen = critlen + 1 + protolen + 1;
-  char *key = alloca (keylen);
+  int alloca_key = __libc_use_alloca (keylen);
+  char *key;
+  if (alloca_key)
+    key = alloca_account (keylen, alloca_used);
+  else
+    {
+      key = malloc (keylen);
+      if (key == NULL)
+	return -1;
+    }
   memcpy (__mempcpy (__mempcpy (key, crit, critlen),
 		     "/", 1), proto ?: "", protolen + 1);
 
  retry:;
   const char *s_name = NULL;
   const char *s_proto = NULL;
+  int alloca_aliases_len = 0;
   const uint32_t *aliases_len = NULL;
   const char *aliases_list = NULL;
   int retval = -1;
@@ -104,13 +116,15 @@ nscd_getserv_r (const char *crit, size_t critlen, const char *proto,
 
   if (mapped != NO_MAPPING)
     {
-      struct datahead *found = __nscd_cache_search (type, key, keylen, mapped);
+      struct datahead *found = __nscd_cache_search (type, key, keylen, mapped,
+						    sizeof serv_resp);
 
       if (found != NULL)
 	{
 	  s_name = (char *) (&found->data[0].servdata + 1);
 	  serv_resp = found->data[0].servdata;
 	  s_proto = s_name + serv_resp.s_name_len;
+	  alloca_aliases_len = 1;
 	  aliases_len = (uint32_t *) (s_proto + serv_resp.s_proto_len);
 	  aliases_list = ((char *) aliases_len
 			  + serv_resp.s_aliases_cnt * sizeof (uint32_t));
@@ -135,8 +149,24 @@ nscd_getserv_r (const char *crit, size_t critlen, const char *proto,
 	  if (((uintptr_t) aliases_len & (__alignof__ (*aliases_len) - 1))
 	      != 0)
 	    {
-	      uint32_t *tmp = alloca (serv_resp.s_aliases_cnt
-				      * sizeof (uint32_t));
+	      uint32_t *tmp;
+	      alloca_aliases_len
+		= __libc_use_alloca (alloca_used
+				     + (serv_resp.s_aliases_cnt
+					* sizeof (uint32_t)));
+	      if (alloca_aliases_len)
+		tmp = alloca_account (serv_resp.s_aliases_cnt
+				      * sizeof (uint32_t),
+				      alloca_used);
+	      else
+		{
+		  tmp = malloc (serv_resp.s_aliases_cnt * sizeof (uint32_t));
+		  if (tmp == NULL)
+		    {
+		      retval = ENOMEM;
+		      goto out;
+		    }
+		}
 	      aliases_len = memcpy (tmp, aliases_len,
 				    serv_resp.s_aliases_cnt
 				    * sizeof (uint32_t));
@@ -216,8 +246,25 @@ nscd_getserv_r (const char *crit, size_t critlen, const char *proto,
 
 	  if (serv_resp.s_aliases_cnt > 0)
 	    {
-	      aliases_len = alloca (serv_resp.s_aliases_cnt
-				    * sizeof (uint32_t));
+	      assert (alloca_aliases_len == 0);
+	      alloca_aliases_len
+		= __libc_use_alloca (alloca_used
+				     + (serv_resp.s_aliases_cnt
+					* sizeof (uint32_t)));
+	      if (alloca_aliases_len)
+		aliases_len = alloca_account (serv_resp.s_aliases_cnt
+					      * sizeof (uint32_t),
+					      alloca_used);
+	      else
+		{
+		  aliases_len = malloc (serv_resp.s_aliases_cnt
+					* sizeof (uint32_t));
+		  if (aliases_len == NULL)
+		    {
+		      retval = ENOMEM;
+		      goto out_close;
+		    }
+		}
 	      vec[n].iov_base = (void *) aliases_len;
 	      vec[n].iov_len = serv_resp.s_aliases_cnt * sizeof (uint32_t);
 
@@ -325,8 +372,17 @@ nscd_getserv_r (const char *crit, size_t critlen, const char *proto,
 	}
 
       if (retval != -1)
-	goto retry;
+	{
+	  if (!alloca_aliases_len)
+	    free ((void *) aliases_len);
+	  goto retry;
+	}
     }
+
+  if (!alloca_aliases_len)
+    free ((void *) aliases_len);
+  if (!alloca_key)
+    free (key);
 
   return retval;
 }

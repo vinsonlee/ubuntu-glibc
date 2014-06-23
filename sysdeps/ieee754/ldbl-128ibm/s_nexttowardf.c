@@ -18,31 +18,25 @@
 static char rcsid[] = "$NetBSD: $";
 #endif
 
-#include "math.h"
+#include <math.h>
 #include <math_private.h>
 #include <math_ldbl_opt.h>
 #include <float.h>
 
-#ifdef __STDC__
-	float __nexttowardf(float x, long double y)
-#else
-	float __nexttowardf(x,y)
-	float x;
-	long double y;
-#endif
+float __nexttowardf(float x, long double y)
 {
 	int32_t hx,ix;
 	int64_t hy,iy;
-	u_int64_t ly, uly;
+	double yhi;
 
 	GET_FLOAT_WORD(hx,x);
-	GET_LDOUBLE_WORDS64(hy,ly,y);
+	yhi = ldbl_high (y);
+	EXTRACT_WORDS64 (hy, yhi);
 	ix = hx&0x7fffffff;		/* |x| */
 	iy = hy&0x7fffffffffffffffLL;	/* |y| */
-	uly = ly&0x7fffffffffffffffLL;	/* |y| */
 
 	if((ix>0x7f800000) ||   /* x is nan */
-	   ((iy>=0x7ff0000000000000LL)&&((iy-0x7ff0000000000000LL)|uly)!=0))
+	   (iy>0x7ff0000000000000LL))
 				/* y is nan */
 	   return x+y;
 	if((long double) x==y) return y;	/* x=y, return y */
@@ -55,17 +49,13 @@ static char rcsid[] = "$NetBSD: $";
 	    return x;
 	}
 	if(hx>=0) {				/* x > 0 */
-	    if(hy<0||(ix>>23)>(iy>>52)-0x380
-	       || ((ix>>23)==(iy>>52)-0x380
-		   && (ix&0x7fffff)>((hy>>29)&0x7fffff))) {/* x > y, x -= ulp */
+	    if(x > y) {				/* x -= ulp */
 		hx -= 1;
 	    } else {				/* x < y, x += ulp */
 		hx += 1;
 	    }
 	} else {				/* x < 0 */
-	    if(hy>=0||(ix>>23)>(iy>>52)-0x380
-	       || ((ix>>23)==(iy>>52)-0x380
-		   && (ix&0x7fffff)>((hy>>29)&0x7fffff))) {/* x < y, x -= ulp */
+	    if(x < y) {				/* x -= ulp */
 		hx -= 1;
 	    } else {				/* x > y, x += ulp */
 		hx += 1;

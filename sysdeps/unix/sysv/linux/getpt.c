@@ -1,4 +1,4 @@
-/* Copyright (C) 1998, 1999, 2001 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Zack Weinberg <zack@rabi.phys.columbia.edu>, 1998.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <fcntl.h>
@@ -64,9 +63,10 @@ __posix_openpt (oflag)
 	    }
 
 	  /* If /dev/pts is not mounted then the UNIX98 pseudo terminals
-             are not usable.  */
+	     are not usable.  */
 	  __close (fd);
 	  have_no_dev_ptmx = 1;
+	  __set_errno (ENOENT);
 	}
       else
 	{
@@ -76,6 +76,8 @@ __posix_openpt (oflag)
 	    return -1;
 	}
     }
+  else
+    __set_errno (ENOENT);
 
   return -1;
 }

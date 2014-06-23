@@ -1,5 +1,4 @@
-/* Copyright (C) 1991, 1993, 1995, 1996, 1997, 1998, 2000, 2002, 2004
-   Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,45 +12,42 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
+#include <assert.h>
 #include <errno.h>
-#include <libintl.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/param.h>
-#include <stdio-common/_itoa.h>
 
-/* It is critical here that we always use the `dcgettext' function for
-   the message translation.  Since <libintl.h> only defines the macro
-   `dgettext' to use `dcgettext' for optimizing programs this is not
-   always guaranteed.  */
-#ifndef dgettext
-# include <locale.h>		/* We need LC_MESSAGES.  */
-# define dgettext(domainname, msgid) dcgettext (domainname, msgid, LC_MESSAGES)
-#endif
 
 /* Fill buf with a string describing the errno code in ERRNUM.  */
 int
 __xpg_strerror_r (int errnum, char *buf, size_t buflen)
 {
-  if (errnum < 0 || errnum >= _sys_nerr_internal
-      || _sys_errlist_internal[errnum] == NULL)
-    {
-      __set_errno (EINVAL);
-      return -1;
-    }
-  const char *estr = (const char *) _(_sys_errlist_internal[errnum]);
-  size_t estrlen = strlen (estr) + 1;
+  const char *estr = __strerror_r (errnum, buf, buflen);
 
-  if (buflen < estrlen)
+  /* We know that __strerror_r returns buf (with a dynamically computed
+     string) if errnum is invalid, otherwise it returns a string whose
+     storage has indefinite extent.  */
+  if (estr == buf)
     {
-      __set_errno (ERANGE);
-      return -1;
+      assert (errnum < 0 || errnum >= _sys_nerr_internal
+	      || _sys_errlist_internal[errnum] == NULL);
+      return EINVAL;
     }
+  else
+    {
+      assert (errnum >= 0 && errnum < _sys_nerr_internal
+	      && _sys_errlist_internal[errnum] != NULL);
 
-  memcpy (buf, estr, estrlen);
-  return 0;
+      size_t estrlen = strlen (estr);
+
+      /* Terminate the string in any case.  */
+      if (buflen > 0)
+	*((char *) __mempcpy (buf, estr, MIN (buflen - 1, estrlen))) = '\0';
+
+      return buflen <= estrlen ? ERANGE : 0;
+    }
 }

@@ -1,1 +1,1 @@
-#include <sysdeps/unix/sysv/linux/i386/semctl.c>
+#include <sysdeps/unix/sysv/linux/alpha/semctl.c>

@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2005, 2006, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -13,14 +13,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <resolv.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include <arpa/nameser.h>
 #include <not-cancel.h>
 
@@ -97,12 +97,60 @@ libc_freeres_fn (hst_map_free)
 }
 
 
+uint32_t
+__nscd_get_nl_timestamp (void)
+{
+  uint32_t retval;
+  if (__nss_not_use_nscd_hosts != 0)
+    return 0;
+
+  /* __nscd_get_mapping can change hst_map_handle.mapped to NO_MAPPING.
+   However, __nscd_get_mapping assumes the prior value was not NO_MAPPING.
+   Thus we have to acquire the lock to prevent this thread from changing
+   hst_map_handle.mapped to NO_MAPPING while another thread is inside
+    __nscd_get_mapping.  */
+  if (!__nscd_acquire_maplock (&__hst_map_handle))
+    return 0;
+
+  struct mapped_database *map = __hst_map_handle.mapped;
+
+  if (map == NULL
+      || (map != NO_MAPPING
+	  && map->head->nscd_certainly_running == 0
+	  && map->head->timestamp + MAPPING_TIMEOUT < time (NULL)))
+    map = __nscd_get_mapping (GETFDHST, "hosts", &__hst_map_handle.mapped);
+
+  if (map == NO_MAPPING)
+    retval = 0;
+  else
+    retval = map->head->extra_data[NSCD_HST_IDX_CONF_TIMESTAMP];
+
+  /* Release the lock.  */
+  __hst_map_handle.lock = 0;
+
+  return retval;
+}
+
+
+int __nss_have_localdomain attribute_hidden;
+
 static int
 internal_function
 nscd_gethst_r (const char *key, size_t keylen, request_type type,
 	       struct hostent *resultbuf, char *buffer, size_t buflen,
 	       struct hostent **result, int *h_errnop)
 {
+  if (__builtin_expect (__nss_have_localdomain >= 0, 0))
+    {
+      if (__nss_have_localdomain == 0)
+	__nss_have_localdomain = getenv ("LOCALDOMAIN") != NULL ? 1 : -1;
+      if (__nss_have_localdomain > 0)
+	{
+	  __nss_not_use_nscd_hosts = 1;
+	  return -1;
+	}
+    }
+
   int gc_cycle;
   int nretries = 0;
 
@@ -124,7 +172,8 @@ nscd_gethst_r (const char *key, size_t keylen, request_type type,
   if (mapped != NO_MAPPING)
     {
       /* No const qualifier, as it can change during garbage collection.  */
-      struct datahead *found = __nscd_cache_search (type, key, keylen, mapped);
+      struct datahead *found = __nscd_cache_search (type, key, keylen, mapped,
+						    sizeof hst_resp);
       if (found != NULL)
 	{
 	  h_name = (char *) (&found->data[0].hstdata + 1);

@@ -1,5 +1,5 @@
 /* Complex sine hyperbole function for long double.
-   Copyright (C) 1997 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -14,16 +14,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <complex.h>
 #include <fenv.h>
 #include <math.h>
-
-#include "math_private.h"
-
+#include <math_private.h>
+#include <float.h>
 
 __complex__ long double
 __csinhl (__complex__ long double x)
@@ -35,23 +33,74 @@ __csinhl (__complex__ long double x)
 
   __real__ x = fabsl (__real__ x);
 
-  if (rcls >= FP_ZERO)
+  if (__builtin_expect (rcls >= FP_ZERO, 1))
     {
       /* Real part is finite.  */
-      if (icls >= FP_ZERO)
+      if (__builtin_expect (icls >= FP_ZERO, 1))
 	{
 	  /* Imaginary part is finite.  */
-	  long double sinh_val = __ieee754_sinhl (__real__ x);
-	  long double cosh_val = __ieee754_coshl (__real__ x);
+	  const int t = (int) ((LDBL_MAX_EXP - 1) * M_LN2l);
 	  long double sinix, cosix;
 
-	  __sincosl (__imag__ x, &sinix, &cosix);
+	  if (__builtin_expect (icls != FP_SUBNORMAL, 1))
+	    {
+	      __sincosl (__imag__ x, &sinix, &cosix);
+	    }
+	  else
+	    {
+	      sinix = __imag__ x;
+	      cosix = 1.0;
+	    }
 
-	  __real__ retval = sinh_val * cosix;
-	  __imag__ retval = cosh_val * sinix;
+	  if (fabsl (__real__ x) > t)
+	    {
+	      long double exp_t = __ieee754_expl (t);
+	      long double rx = fabsl (__real__ x);
+	      if (signbit (__real__ x))
+		cosix = -cosix;
+	      rx -= t;
+	      sinix *= exp_t / 2.0L;
+	      cosix *= exp_t / 2.0L;
+	      if (rx > t)
+		{
+		  rx -= t;
+		  sinix *= exp_t;
+		  cosix *= exp_t;
+		}
+	      if (rx > t)
+		{
+		  /* Overflow (original real part of x > 3t).  */
+		  __real__ retval = LDBL_MAX * cosix;
+		  __imag__ retval = LDBL_MAX * sinix;
+		}
+	      else
+		{
+		  long double exp_val = __ieee754_expl (rx);
+		  __real__ retval = exp_val * cosix;
+		  __imag__ retval = exp_val * sinix;
+		}
+	    }
+	  else
+	    {
+	      __real__ retval = __ieee754_sinhl (__real__ x) * cosix;
+	      __imag__ retval = __ieee754_coshl (__real__ x) * sinix;
+	    }
 
 	  if (negate)
 	    __real__ retval = -__real__ retval;
+
+	  if (fabsl (__real__ retval) < LDBL_MIN)
+	    {
+	      volatile long double force_underflow
+		= __real__ retval * __real__ retval;
+	      (void) force_underflow;
+	    }
+	  if (fabsl (__imag__ retval) < LDBL_MIN)
+	    {
+	      volatile long double force_underflow
+		= __imag__ retval * __imag__ retval;
+	      (void) force_underflow;
+	    }
 	}
       else
 	{
@@ -61,43 +110,47 @@ __csinhl (__complex__ long double x)
 	      __real__ retval = __copysignl (0.0, negate ? -1.0 : 1.0);
 	      __imag__ retval = __nanl ("") + __nanl ("");
 
-#ifdef FE_INVALID
 	      if (icls == FP_INFINITE)
 		feraiseexcept (FE_INVALID);
-#endif
 	    }
 	  else
 	    {
 	      __real__ retval = __nanl ("");
 	      __imag__ retval = __nanl ("");
 
-#ifdef FE_INVALID
 	      feraiseexcept (FE_INVALID);
-#endif
 	    }
 	}
     }
-  else if (rcls == FP_INFINITE)
+  else if (__builtin_expect (rcls == FP_INFINITE, 1))
     {
       /* Real part is infinite.  */
-      if (icls == FP_ZERO)
-	{
-	  /* Imaginary part is 0.0.  */
-	  __real__ retval = negate ? -HUGE_VALL : HUGE_VALL;
-	  __imag__ retval = __imag__ x;
-	}
-      else if (icls > FP_ZERO)
+      if (__builtin_expect (icls > FP_ZERO, 1))
 	{
 	  /* Imaginary part is finite.  */
 	  long double sinix, cosix;
 
-	  __sincosl (__imag__ x, &sinix, &cosix);
+	  if (__builtin_expect (icls != FP_SUBNORMAL, 1))
+	    {
+	      __sincosl (__imag__ x, &sinix, &cosix);
+	    }
+	  else
+	    {
+	      sinix = __imag__ x;
+	      cosix = 1.0;
+	    }
 
 	  __real__ retval = __copysignl (HUGE_VALL, cosix);
 	  __imag__ retval = __copysignl (HUGE_VALL, sinix);
 
 	  if (negate)
 	    __real__ retval = -__real__ retval;
+	}
+      else if (icls == FP_ZERO)
+	{
+	  /* Imaginary part is 0.0.  */
+	  __real__ retval = negate ? -HUGE_VALL : HUGE_VALL;
+	  __imag__ retval = __imag__ x;
 	}
       else
 	{

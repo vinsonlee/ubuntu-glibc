@@ -1,5 +1,4 @@
-# Copyright (C) 1993,94,95,96,97,98,99,2000,2001,2002, 2003, 2004
-#	Free Software Foundation, Inc.
+# Copyright (C) 1993-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
 # Lesser General Public License for more details.
 
 # You should have received a copy of the GNU Lesser General Public
-# License along with the GNU C Library; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307 USA.
+# License along with the GNU C Library; if not, see
+# <http://www.gnu.org/licenses/>.
 
 ifdef in-Makerules
 
@@ -30,7 +28,7 @@ includes += -I$(..)hurd -I$(common-objpfx)hurd/
 # Do not use any assembly code from sysdeps/unix (and subdirectories).
 # This bypasses all the system call stubs and uses any existing posix or
 # generic C files instead.
-inhibit-sysdep-asm += unix*
+inhibit-sysdep-asm += unix.*
 inhibit-unix-syscalls = yes
 
 # Don't try to generate anything from the installed Unix system and its
@@ -94,10 +92,6 @@ $(common-objpfx)stamp-errnos: $(hurd)/errnos.awk $(errno.texinfo) \
 # Make it unwritable so noone will edit it by mistake.
 	-chmod a-w $(hurd)/bits/errno.h-tmp
 	$(move-if-change) $(hurd)/bits/errno.h-tmp $(hurd)/bits/errno.h
-ifeq ($(with-cvs),yes)
-	test ! -d $(hurd)/CVS || \
-	  (cd $(hurd) && cvs commit -m'Regenerated from $^' bits/errno.h)
-endif
 	touch $@
 
 common-generated += errnos.d stamp-errnos
@@ -139,6 +133,7 @@ rpcuserlibs := $(common-objpfx)mach/libmachuser.so \
 	       $(common-objpfx)hurd/libhurduser.so
 link-rpcuserlibs := $(rpcuserlibs:%user.so=%user-link.so)
 $(common-objpfx)libc.so: $(link-rpcuserlibs)
+$(common-objpfx)linkobj/libc.so: $(link-rpcuserlibs)
 rpath-dirs += mach hurd
 
 # Make sure the `lib' pass builds the dummy shared objects so
@@ -172,21 +167,15 @@ $(objpfx)librtld.map: $(rpcuserlibs:.so=_pic.a)
 CFLAGS-dl-load.c = -DEXTERNAL_MAP_FROM_FD
 endif
 
-# We need these libs to link static programs in the libc source tree, too.
-ifeq (yes,$(build-static))
-link-libc-static := -Wl,-\( \
+# Override the generic Makeconfig values so we link against the RPC libs.
+link-libc-static := -Wl,--start-group \
 		    $(patsubst %,$(common-objpfx)%.a,\
 			       libc mach/libmachuser hurd/libhurduser) \
-		    $(static-gnulib) -Wl,-\)
-else
-ifeq (yes,$(build-shared))
-# We can try to link the programs with lib*_pic.a...
-link-libc-static := $(link-libc) -Wl,-\( \
-		    $(patsubst %,$(common-objpfx)%_pic.a,\
+		    $(static-gnulib) -Wl,--end-group
+link-libc-static-tests := -Wl,--start-group \
+		    $(patsubst %,$(common-objpfx)%.a,\
 			       libc mach/libmachuser hurd/libhurduser) \
-		    $(static-gnulib) -Wl,-\)
-endif
-endif
+		    $(static-gnulib-tests) -Wl,--end-group
 
 ifeq ($(subdir),csu)
 
@@ -204,6 +193,11 @@ endif
 
 ifeq ($(subdir),sunrpc)
 sysdep_headers += nfs/nfs.h
+endif
+
+ifeq ($(subdir),socket)
+sysdep_headers += net/ethernet.h net/if_arp.h net/if_ether.h net/if_ppp.h \
+		  net/route.h
 endif
 
 endif	# in-Makerules

@@ -1,6 +1,5 @@
 /* termios type and macro definitions.  Linux/SPARC version.
-   Copyright (C) 1993, 1994, 1995, 1996, 1997, 2000, 2005
-       Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _TERMIOS_H
 # error "Never include <bits/termios.h> directly; use <termios.h> instead."
@@ -193,11 +191,14 @@ struct termios
 # define ECHOCTL	0x00000200
 # define ECHOPRT	0x00000400
 # define ECHOKE		0x00000800
-# define DEFECHO 	0x00001000	/* SUNOS thing, what is it? */
+# define DEFECHO	0x00001000	/* SUNOS thing, what is it? */
 # define FLUSHO		0x00002000
 # define PENDIN		0x00004000
 #endif
 #define IEXTEN	0x00008000
+#ifdef __USE_BSD
+# define EXTPROC 0x00010000
+#endif
 
 /* modem lines */
 #define TIOCM_LE	0x001

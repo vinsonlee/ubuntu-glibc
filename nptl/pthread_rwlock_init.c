@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,15 +13,15 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "pthreadP.h"
+#include <string.h>
 #include <kernel-features.h>
 
 
-static const struct pthread_rwlockattr default_attr =
+static const struct pthread_rwlockattr default_rwlockattr =
   {
     .lockkind = PTHREAD_RWLOCK_DEFAULT_NP,
     .pshared = PTHREAD_PROCESS_PRIVATE
@@ -35,15 +35,9 @@ __pthread_rwlock_init (rwlock, attr)
 {
   const struct pthread_rwlockattr *iattr;
 
-  iattr = ((const struct pthread_rwlockattr *) attr) ?: &default_attr;
+  iattr = ((const struct pthread_rwlockattr *) attr) ?: &default_rwlockattr;
 
-  rwlock->__data.__lock = 0;
-  rwlock->__data.__nr_readers = 0;
-  rwlock->__data.__readers_wakeup = 0;
-  rwlock->__data.__writer_wakeup = 0;
-  rwlock->__data.__nr_readers_queued = 0;
-  rwlock->__data.__nr_writers_queued = 0;
-  rwlock->__data.__writer = 0;
+  memset (rwlock, '\0', sizeof (*rwlock));
 
   rwlock->__data.__flags
     = iattr->lockkind == PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP;
@@ -56,8 +50,8 @@ __pthread_rwlock_init (rwlock, attr)
      0x80 in case private futexes are available and zero otherwise.
      This leads to the following table:
 
-                 |     pshared     |     result
-                 | shared  private | shared  private |
+		 |     pshared     |     result
+		 | shared  private | shared  private |
      ------------+-----------------+-----------------+
      !avail 0    |     0       0   |     0       0   |
       avail 0x80 |  0x80       0   |     0    0x80   |
@@ -73,9 +67,6 @@ __pthread_rwlock_init (rwlock, attr)
 			     : THREAD_GETMEM (THREAD_SELF,
 					      header.private_futex));
 #endif
-
-  rwlock->__data.__pad1 = 0;
-  rwlock->__data.__pad2 = 0;
 
   return 0;
 }

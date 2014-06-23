@@ -1,5 +1,5 @@
 /* Implementation of the locale program according to POSIX 9945-2.
-   Copyright (C) 1995-1997, 1999-2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1995.
 
@@ -14,8 +14,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -37,15 +36,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
 #include "localeinfo.h"
 #include "charmap-dir.h"
 #include "../locarchive.h"
-
-extern void *xmalloc (size_t __n);
-extern char *xstrdup (const char *__str);
+#include <programs/xmalloc.h>
 
 #define ARCHIVE_NAME LOCALEDIR "/locale-archive"
 
@@ -84,9 +82,7 @@ static const struct argp_option options[] =
 };
 
 /* Short description of program.  */
-static const char doc[] = N_("Get locale-specific information.\v\
-For bug reporting instructions, please see:\n\
-<http://www.gnu.org/software/libc/bugs.html>.\n");
+static const char doc[] = N_("Get locale-specific information.");
 
 /* Strings for arguments in help texts.  */
 static const char args_doc[] = N_("NAME\n[-a|-m]");
@@ -94,10 +90,13 @@ static const char args_doc[] = N_("NAME\n[-a|-m]");
 /* Prototype for option handler.  */
 static error_t parse_opt (int key, char *arg, struct argp_state *state);
 
+/* Function to print some extra text in the help message.  */
+static char *more_help (int key, const char *text, void *input);
+
 /* Data structure to communicate with argp functions.  */
 static struct argp argp =
 {
-  options, parse_opt, args_doc, doc
+  options, parse_opt, args_doc, doc, NULL, more_help
 };
 
 
@@ -143,7 +142,7 @@ struct category
 #define DEFINE_CATEGORY(category, name, items, postload) \
     static struct cat_item category##_desc[] =				      \
       {									      \
-        NO_PAREN items							      \
+	NO_PAREN items							      \
       };
 
 #include "categories.def"
@@ -267,16 +266,36 @@ parse_opt (int key, char *arg, struct argp_state *state)
 }
 
 
+static char *
+more_help (int key, const char *text, void *input)
+{
+  char *tp = NULL;
+  switch (key)
+    {
+    case ARGP_KEY_HELP_EXTRA:
+      /* We print some extra information.  */
+      if (asprintf (&tp, gettext ("\
+For bug reporting instructions, please see:\n\
+%s.\n"), REPORT_BUGS_TO) < 0)
+	return NULL;
+      return tp;
+    default:
+      break;
+    }
+  return (char *) text;
+}
+
+
 /* Print the version information.  */
 static void
 print_version (FILE *stream, struct argp_state *state)
 {
-  fprintf (stream, "locale (GNU %s) %s\n", PACKAGE, VERSION);
+  fprintf (stream, "locale %s%s\n", PKGVERSION, VERSION);
   fprintf (stream, gettext ("\
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
-"), "2008");
+"), "2014");
   fprintf (stream, gettext ("Written by %s.\n"), "Ulrich Drepper");
 }
 
@@ -521,7 +540,7 @@ write_locales (void)
 	     because
 	     a) we are only interested in the first two fields
 	     b) these fields must be usable as file names and so must
-	        not be that long  */
+		not be that long  */
 	  char buf[BUFSIZ];
 	  char *alias;
 	  char *value;
@@ -744,6 +763,29 @@ write_charmaps (void)
   twalk (all_data, print_names);
 }
 
+/* Print a properly quoted assignment of NAME with VAL, using double
+   quotes iff DQUOTE is true.  */
+static void
+print_assignment (const char *name, const char *val, bool dquote)
+{
+  printf ("%s=", name);
+  if (dquote)
+    putchar ('"');
+  while (*val != '\0')
+    {
+      size_t segment
+	= strcspn (val, dquote ? "$`\"\\" : "~|&;<>()$`\\\"' \t\n");
+      printf ("%.*s", (int) segment, val);
+      val += segment;
+      if (*val == '\0')
+	break;
+      putchar ('\\');
+      putchar (*val++);
+    }
+  if (dquote)
+    putchar ('"');
+  putchar ('\n');
+}
 
 /* We have to show the contents of the environments determining the
    locale.  */
@@ -751,7 +793,7 @@ static void
 show_locale_vars (void)
 {
   size_t cat_no;
-  const char *lcall = getenv ("LC_ALL");
+  const char *lcall = getenv ("LC_ALL") ? : "";
   const char *lang = getenv ("LANG") ? : "";
 
   auto void get_source (const char *name);
@@ -760,15 +802,15 @@ show_locale_vars (void)
     {
       char *val = getenv (name);
 
-      if ((lcall ?: "")[0] != '\0' || val == NULL)
-	printf ("%s=\"%s\"\n", name,
-		(lcall ?: "")[0] ? lcall : (lang ?: "")[0] ? lang : "POSIX");
+      if (lcall[0] != '\0' || val == NULL)
+	print_assignment (name, lcall[0] ? lcall : lang[0] ? lang : "POSIX",
+			  true);
       else
-	printf ("%s=%s\n", name, val);
+	print_assignment (name, val, false);
     }
 
   /* LANG has to be the first value.  */
-  printf ("LANG=%s\n", lang);
+  print_assignment ("LANG", lang, false);
 
   /* Now all categories in an unspecified order.  */
   for (cat_no = 0; cat_no < NCATEGORIES; ++cat_no)
@@ -776,7 +818,7 @@ show_locale_vars (void)
       get_source (category[cat_no].name);
 
   /* The last is the LC_ALL value.  */
-  printf ("LC_ALL=%s\n", lcall ? : "");
+  print_assignment ("LC_ALL", lcall, false);
 }
 
 
@@ -853,7 +895,7 @@ show_info (const char *name)
 	      printf ("%s=", item->name);
 
 	    if (val != NULL)
-	      printf ("%d", *val == '\177' ? -1 : *val);
+	      printf ("%d", *val == '\377' ? -1 : *val);
 	    putchar ('\n');
 	  }
 	  break;
@@ -868,7 +910,7 @@ show_info (const char *name)
 	    while (cnt > 1)
 	      {
 		printf ("%d;", *val == '\177' ? -1 : *val);
-                --cnt;
+		--cnt;
 		++val;
 	      }
 
@@ -883,6 +925,24 @@ show_info (const char *name)
 	      printf ("%s=", item->name);
 
 	    printf ("%d\n", val.word);
+	  }
+	  break;
+	case wordarray:
+	  {
+	    int first = 1;
+	    union { unsigned int *wordarray; char *string; } val;
+	    int cnt;
+
+	    val.string = nl_langinfo (item->item_id);
+	    if (show_keyword_name)
+	      printf ("%s=", item->name);
+
+	    for (cnt = 0; cnt < item->max; ++cnt)
+	      {
+		printf ("%s%d", first ? "" : ";", val.wordarray[cnt]);
+		first = 0;
+	      }
+	    putchar ('\n');
 	  }
 	  break;
 	case wstring:

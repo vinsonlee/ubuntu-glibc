@@ -1,5 +1,5 @@
 /* PLT trampolines.  i386 version.
-   Copyright (C) 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 
@@ -99,7 +98,7 @@ _dl_runtime_profile:
 	    +4      %edx
 	   %esp     free
 	*/
-	cfi_adjust_cfa_offset (12)
+	cfi_adjust_cfa_offset (8)
 1:	movl %ebx, (%esp)
 	cfi_rel_offset (ebx, 0)
 	movl %edx, %ebx		# This is the frame buffer size

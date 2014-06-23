@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2004, 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -124,11 +123,7 @@ extern char *tzname[];
 #endif
 
 #ifndef PTR
-# ifdef __STDC__
-#  define PTR void *
-# else
-#  define PTR char *
-# endif
+# define PTR void *
 #endif
 
 #ifndef CHAR_BIT
@@ -502,7 +497,7 @@ __strftime_internal (s, maxsize, format, tp, tzset_called ut_argument
       LOCALE_PARAM_DECL
 {
 #if defined _LIBC && defined USE_IN_EXTENDED_LOCALE_MODEL
-  struct locale_data *const current = loc->__locales[LC_TIME];
+  struct __locale_data *const current = loc->__locales[LC_TIME];
 #endif
 
   int hour12 = tp->tm_hour;
@@ -884,8 +879,6 @@ __strftime_internal (s, maxsize, format, tp, tzset_called ut_argument
 #endif
 
 	case L_('C'):
-	  if (modifier == L_('O'))
-	    goto bad_format;
 	  if (modifier == L_('E'))
 	    {
 #if HAVE_STRUCT_ERA_ENTRY

@@ -1,4 +1,4 @@
-/* Copyright (C) 1996, 1997, 1999, 2000 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SYS_PROCFS_H
 #define _SYS_PROCFS_H	1
@@ -56,7 +55,7 @@ typedef struct
 	unsigned long	pr_regs[32];
 	double		pr_dregs[16];
       }			pr_fr;
-    unsigned long	__unused;
+    unsigned long	__glibc_reserved;
     unsigned long	pr_fsr;
     unsigned char	pr_qcnt;
     unsigned char	pr_q_entrysize;
@@ -151,7 +150,7 @@ typedef struct
 	unsigned int	pr_regs[32];
 	double		pr_dregs[16];
       }			pr_fr;
-    unsigned int	__unused;
+    unsigned int	__glibc_reserved;
     unsigned int	pr_fsr;
     unsigned char	pr_qcnt;
     unsigned char	pr_q_entrysize;

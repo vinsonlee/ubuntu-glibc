@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_acosh.c,v 1.9 1995/05/12 04:57:18 jtc Exp $";
-#endif
-
 /* __ieee754_acosh(x)
  * Method :
  *	Based on
@@ -28,33 +24,29 @@ static char rcsid[] = "$NetBSD: e_acosh.c,v 1.9 1995/05/12 04:57:18 jtc Exp $";
  *	acosh(NaN) is NaN without signal.
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
 static const long double
-#else
-static long double
-#endif
 one	= 1.0L,
-ln2	= 6.93147180559945286227e-01L;  /* 0x3FE62E42, 0xFEFA39EF */
+ln2	= M_LN2l;
 
-#ifdef __STDC__
-	long double __ieee754_acoshl(long double x)
-#else
-	long double __ieee754_acoshl(x)
-	long double x;
-#endif
+long double
+__ieee754_acoshl(long double x)
 {
 	long double t;
 	int64_t hx;
-	u_int64_t lx;
-	GET_LDOUBLE_WORDS64(hx,lx,x);
+	uint64_t lx;
+	double xhi, xlo;
+
+	ldbl_unpack (x, &xhi, &xlo);
+	EXTRACT_WORDS64 (hx, xhi);
+	EXTRACT_WORDS64 (lx, xlo);
 	if(hx<0x3ff0000000000000LL) {		/* x < 1 */
 	    return (x-x)/(x-x);
 	} else if(hx >=0x41b0000000000000LL) {	/* x > 2**28 */
 	    if(hx >=0x7ff0000000000000LL) {	/* x is inf of NaN */
-	        return x+x;
+		return x+x;
 	    } else
 		return __ieee754_logl(x)+ln2;	/* acosh(huge)=log(2x) */
 	} else if (((hx-0x3ff0000000000000LL)|(lx&0x7fffffffffffffffLL))==0) {
@@ -64,6 +56,7 @@ ln2	= 6.93147180559945286227e-01L;  /* 0x3FE62E42, 0xFEFA39EF */
 	    return __ieee754_logl(2.0*x-one/(x+__ieee754_sqrtl(t-one)));
 	} else {			/* 1<x<2 */
 	    t = x-one;
-	    return __log1p(t+__sqrtl(2.0*t+t*t));
+	    return __log1pl(t+__ieee754_sqrtl(2.0*t+t*t));
 	}
 }
+strong_alias (__ieee754_acoshl, __acoshl_finite)

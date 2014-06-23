@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,23 +12,20 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <sys/shm.h>
 #include <ipc_priv.h>
 #include <sysdep.h>
 
-#include <bp-checks.h>
-
 int __shmctl (int shmid, int cmd, struct shmid_ds *buf);
 
 int
 __shmctl (int shmid, int cmd, struct shmid_ds *buf)
 {
-  return INLINE_SYSCALL (shmctl, 3, shmid, cmd | __IPC_64, CHECK_1 (buf));
+  return INLINE_SYSCALL (shmctl, 3, shmid, cmd | __IPC_64, buf);
 }
 
 #include <shlib-compat.h>

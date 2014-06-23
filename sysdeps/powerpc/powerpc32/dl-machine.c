@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation functions.  PowerPC version.
-   Copyright (C) 1995-2006, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <unistd.h>
 #include <string.h>
@@ -24,18 +23,11 @@
 #include <ldsodefs.h>
 #include <elf/dynamic-link.h>
 #include <dl-machine.h>
-#include <stdio-common/_itoa.h>
+#include <_itoa.h>
 
 /* The value __cache_line_size is defined in dl-sysdep.c and is initialised
    by _dl_sysdep_start via DL_PLATFORM_INIT.  */
 extern int __cache_line_size attribute_hidden;
-
-/* Because ld.so is now versioned, these functions can be in their own file;
-   no relocations need to be done to call them.
-   Of course, if ld.so is not versioned...  */
-#if defined SHARED && !(DO_VERSIONING - 0)
-#error This will not work with versioning turned off, sorry.
-#endif
 
 
 /* Stuff for the PLT.  */
@@ -114,7 +106,7 @@ __elf_preferred_address (struct link_map *loader, size_t maplength,
   /* Otherwise, quickly look for a suitable gap between 0x3FFFF and
      0x70000000.  0x3FFFF is so that references off NULL pointers will
      cause a segfault, 0x70000000 is just paranoia (it should always
-     be superceded by the program's load address).  */
+     be superseded by the program's load address).  */
   low =  0x0003FFFF;
   high = 0x70000000;
   for (nsid = 0; nsid < DL_NNS; ++nsid)
@@ -129,7 +121,7 @@ __elf_preferred_address (struct link_map *loader, size_t maplength,
 	   _dl_loaded does not work for static binaries loading
 	   e.g. libnss_*.so.  */
 	if ((mapend >= high || l->l_type == lt_executable)
-  	    && high >= mapstart)
+	    && high >= mapstart)
 	  high = mapstart;
 	else if (mapend >= low && low >= mapstart)
 	  low = mapend;
@@ -204,7 +196,7 @@ __elf_preferred_address (struct link_map *loader, size_t maplength,
    (1) and (3), this is obvious because only one instruction is
    changed and the PPC architecture guarantees that aligned stores are
    atomic.  For (5), this is more tricky.  When changing (4) to (5),
-   the `b' instruction is first changed to to `mtctr'; this is safe
+   the `b' instruction is first changed to `mtctr'; this is safe
    and is why the `lwzu' instruction is not just a simple `addi'.
    Once this is done, and is visible to all processors, the `lwzu' can
    safely be changed to a `lwz'.  */
@@ -236,16 +228,21 @@ __elf_machine_runtime_setup (struct link_map *map, int lazy, int profile)
       if (lazy)
 	{
 	  Elf32_Word *tramp = plt + PLT_TRAMPOLINE_ENTRY_WORDS;
-	  Elf32_Word dlrr = (Elf32_Word)(profile
-					 ? _dl_prof_resolve
-					 : _dl_runtime_resolve);
+	  Elf32_Word dlrr;
 	  Elf32_Word offset;
 
+#ifndef PROF
+	  dlrr = (Elf32_Word) (profile
+			       ? _dl_prof_resolve
+			       : _dl_runtime_resolve);
 	  if (profile && GLRO(dl_profile) != NULL
 	      && _dl_name_match_p (GLRO(dl_profile), map))
 	    /* This is the object we are looking for.  Say that we really
 	       want profiling and the timers are started.  */
 	    GL(dl_profile_map) = map;
+#else
+	  dlrr = (Elf32_Word) _dl_runtime_resolve;
+#endif
 
 	  /* For the long entries, subtract off data_words.  */
 	  tramp[0] = OPCODE_ADDIS_HI (11, 11, -data_words);
@@ -337,7 +334,7 @@ __elf_machine_runtime_setup (struct link_map *map, int lazy, int profile)
 }
 
 Elf32_Addr
-__elf_machine_fixup_plt (struct link_map *map, const Elf32_Rela *reloc,
+__elf_machine_fixup_plt (struct link_map *map,
 			 Elf32_Addr *reloc_addr, Elf32_Addr finaladdr)
 {
   Elf32_Sword delta = finaladdr - (Elf32_Word) reloc_addr;
@@ -419,6 +416,12 @@ __process_machine_rela (struct link_map *map,
 			Elf32_Addr const finaladdr,
 			int rinfo)
 {
+  union unaligned
+    {
+      uint16_t u2;
+      uint32_t u4;
+    } __attribute__((__packed__));
+
   switch (rinfo)
     {
     case R_PPC_NONE:
@@ -430,11 +433,12 @@ __process_machine_rela (struct link_map *map,
       *reloc_addr = finaladdr;
       return;
 
+    case R_PPC_IRELATIVE:
+      *reloc_addr = ((Elf32_Addr (*) (void)) finaladdr) ();
+      return;
+
     case R_PPC_UADDR32:
-      ((char *) reloc_addr)[0] = finaladdr >> 24;
-      ((char *) reloc_addr)[1] = finaladdr >> 16;
-      ((char *) reloc_addr)[2] = finaladdr >> 8;
-      ((char *) reloc_addr)[3] = finaladdr;
+      ((union unaligned *) reloc_addr)->u4 = finaladdr;
       break;
 
     case R_PPC_ADDR24:
@@ -452,8 +456,7 @@ __process_machine_rela (struct link_map *map,
     case R_PPC_UADDR16:
       if (__builtin_expect (finaladdr > 0x7fff && finaladdr < 0xffff8000, 0))
 	_dl_reloc_overflow (map,  "R_PPC_UADDR16", reloc_addr, refsym);
-      ((char *) reloc_addr)[0] = finaladdr >> 8;
-      ((char *) reloc_addr)[1] = finaladdr;
+      ((union unaligned *) reloc_addr)->u2 = finaladdr;
       break;
 
     case R_PPC_ADDR16_LO:
@@ -502,8 +505,7 @@ __process_machine_rela (struct link_map *map,
 	  strtab = (const void *) D_PTR (map, l_info[DT_STRTAB]);
 	  _dl_error_printf ("\
 %s: Symbol `%s' has different size in shared object, consider re-linking\n",
-			    rtld_progname ?: "<program name unknown>",
-			    strtab + refsym->st_name);
+			    RTLD_PROGNAME, strtab + refsym->st_name);
 	}
       memcpy (reloc_addr, (char *) finaladdr, MIN (sym->st_size,
 						   refsym->st_size));

@@ -1,5 +1,4 @@
-# Copyright (C) 1991,92,93,94,95,96,97,2000,01,02
-#	Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
 # Lesser General Public License for more details.
 
 # You should have received a copy of the GNU Lesser General Public
-# License along with the GNU C Library; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307 USA.
+# License along with the GNU C Library; if not, see
+# <http://www.gnu.org/licenses/>.
 
 # errno.texinfo contains lines like:
 # @comment errno.h
@@ -33,6 +31,14 @@ BEGIN {
     print "";
     print "#ifdef _ERRNO_H\n";
     print "enum __error_t_codes\n{";
+    print "\t/* The value zero always means success and it is perfectly fine for";
+    print "\t   code to use 0 explicitly (or implicitly, e.g. via Boolean coercion).";
+    print "\t   Having an enum entry for zero both makes the debugger print the name";
+    print "\t   for error_t-typed zero values, and prevents the compiler from";
+    print "\t   issuing warnings about 'case 0:' in a switch on an error_t-typed";
+    print "\t   value.  */";
+    print "\tESUCCESS = 0,"
+    print "";
     errnoh = 0;
     maxerrno = 0;
     in_mach_errors = "";

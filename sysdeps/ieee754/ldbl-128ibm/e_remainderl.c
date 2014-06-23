@@ -14,45 +14,41 @@
 
 /* __ieee754_remainderl(x,p)
  * Return :
- * 	returns  x REM p  =  x - [x/p]*p as if in infinite
- * 	precise arithmetic, where [x/p] is the (infinite bit)
+ *	returns  x REM p  =  x - [x/p]*p as if in infinite
+ *	precise arithmetic, where [x/p] is the (infinite bit)
  *	integer nearest x/p (in half way case choose the even one).
  * Method :
  *	Based on fmodl() return x-[x/p]chopped*p exactlp.
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
 static const long double zero = 0.0L;
-#else
-static long double zero = 0.0L;
-#endif
 
 
-#ifdef __STDC__
-	long double __ieee754_remainderl(long double x, long double p)
-#else
-	long double __ieee754_remainderl(x,p)
-	long double x,p;
-#endif
+long double
+__ieee754_remainderl(long double x, long double p)
 {
 	int64_t hx,hp;
 	u_int64_t sx,lx,lp;
 	long double p_half;
+	double xhi, xlo, phi, plo;
 
-	GET_LDOUBLE_WORDS64(hx,lx,x);
-	GET_LDOUBLE_WORDS64(hp,lp,p);
+	ldbl_unpack (x, &xhi, &xlo);
+	EXTRACT_WORDS64 (hx, xhi);
+	EXTRACT_WORDS64 (lx, xlo);
+	ldbl_unpack (p, &phi, &plo);
+	EXTRACT_WORDS64 (hp, phi);
+	EXTRACT_WORDS64 (lp, plo);
 	sx = hx&0x8000000000000000ULL;
 	hp &= 0x7fffffffffffffffLL;
 	hx &= 0x7fffffffffffffffLL;
 
     /* purge off exception values */
-	if((hp|(lp&0x7fffffffffffffff))==0) return (x*p)/(x*p); 	/* p = 0 */
+	if(hp==0) return (x*p)/(x*p);	/* p = 0 */
 	if((hx>=0x7ff0000000000000LL)||			/* x not finite */
-	  ((hp>=0x7ff0000000000000LL)&&			/* p is NaN */
-	  (((hp-0x7ff0000000000000LL)|lp)!=0)))
+	   (hp>0x7ff0000000000000LL))			/* p is NaN */
 	    return (x*p)/(x*p);
 
 
@@ -72,7 +68,8 @@ static long double zero = 0.0L;
 		if(x>=p_half) x -= p;
 	    }
 	}
-	GET_LDOUBLE_MSW64(hx,x);
-	SET_LDOUBLE_MSW64(x,hx^sx);
+	if (sx)
+	  x = -x;
 	return x;
 }
+strong_alias (__ieee754_remainderl, __remainderl_finite)

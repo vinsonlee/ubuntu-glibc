@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2003, 2004, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <string.h>
@@ -41,7 +40,7 @@ __pthread_getschedparam (threadid, policy, param)
   lll_lock (pd->lock, LLL_PRIVATE);
 
   /* The library is responsible for maintaining the values at all
-     times.  If the user uses a interface other than
+     times.  If the user uses an interface other than
      pthread_setschedparam to modify the scheduler setting it is not
      the library's problem.  In case the descriptor's values have
      not yet been retrieved do it now.  */

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997,1999,2000-2003,2005, 2006 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -13,19 +13,17 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <fmtmsg.h>
 #include <bits/libc-lock.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/syslog.h>
-#ifdef USE_IN_LIBIO
-# include <wchar.h>
-#endif
+#include <wchar.h>
 
 
 /* We have global data, protect the modification.  */
@@ -105,7 +103,6 @@ fmtmsg (long int classification, const char *label, int severity,
 	const char *text, const char *action, const char *tag)
 {
   __libc_once_define (static, once);
-  int result = MM_OK;
   struct severity_info *severity_rec;
 
   /* Make sure everything is initialized.  */
@@ -119,23 +116,12 @@ fmtmsg (long int classification, const char *label, int severity,
       if (cp == NULL)
 	return MM_NOTOK;
 
-      /* The first field must not contain more then 10 bytes.  */
+      /* The first field must not contain more than 10 bytes.  */
       if (cp - label > 10
-	  /* The second field must not have more then 14 bytes.  */
+	  /* The second field must not have more than 14 bytes.  */
 	  || strlen (cp + 1) > 14)
 	return MM_NOTOK;
     }
-
-  for (severity_rec = severity_list; severity_rec != NULL;
-       severity_rec = severity_rec->next)
-    if (severity == severity_rec->severity)
-      /* Bingo.  */
-      break;
-
-  /* If we don't know anything about the severity level return an error.  */
-  if (severity_rec == NULL)
-    return MM_NOTOK;
-
 
 #ifdef __libc_ptf_call
   /* We do not want this call to be cut short by a thread
@@ -145,53 +131,72 @@ fmtmsg (long int classification, const char *label, int severity,
 		   0);
 #endif
 
-  /* Now we can print.  */
-  if (classification & MM_PRINT)
-    {
-      int do_label = (print & label_mask) && label != MM_NULLLBL;
-      int do_severity = (print & severity_mask) && severity != MM_NULLSEV;
-      int do_text = (print & text_mask) && text != MM_NULLTXT;
-      int do_action = (print & action_mask) && action != MM_NULLACT;
-      int do_tag = (print & tag_mask) && tag != MM_NULLTAG;
+  __libc_lock_lock (lock);
 
-      if (__fxprintf (stderr, "%s%s%s%s%s%s%s%s%s%s\n",
-		      do_label ? label : "",
-		      do_label && (do_severity | do_text | do_action | do_tag)
-		      ? ": " : "",
-		      do_severity ? severity_rec->string : "",
-		      do_severity && (do_text | do_action | do_tag)
-		      ? ": " : "",
-		      do_text ? text : "",
-		      do_text && (do_action | do_tag) ? "\n" : "",
-		      do_action ? "TO FIX: " : "",
-		      do_action ? action : "",
-		      do_action && do_tag ? "  " : "",
-		      do_tag ? tag : "") < 0)
-	/* Oh, oh.  An error occurred during the output.  */
-	result = MM_NOMSG;
+  for (severity_rec = severity_list; severity_rec != NULL;
+       severity_rec = severity_rec->next)
+    if (severity == severity_rec->severity)
+      /* Bingo.  */
+      break;
+
+  /* If we don't know anything about the severity level return an error.  */
+  int result = MM_NOTOK;
+  if (severity_rec != NULL)
+    {
+      result = MM_OK;
+
+      /* Now we can print.  */
+      if (classification & MM_PRINT)
+	{
+	  int do_label = (print & label_mask) && label != MM_NULLLBL;
+	  int do_severity = (print & severity_mask) && severity != MM_NULLSEV;
+	  int do_text = (print & text_mask) && text != MM_NULLTXT;
+	  int do_action = (print & action_mask) && action != MM_NULLACT;
+	  int do_tag = (print & tag_mask) && tag != MM_NULLTAG;
+	  int need_colon = (do_label
+			    && (do_severity | do_text | do_action | do_tag));
+
+	  if (__fxprintf (stderr, "%s%s%s%s%s%s%s%s%s%s\n",
+			  do_label ? label : "",
+			  need_colon ? ": " : "",
+			  do_severity ? severity_rec->string : "",
+			  do_severity && (do_text | do_action | do_tag)
+			  ? ": " : "",
+			  do_text ? text : "",
+			  do_text && (do_action | do_tag) ? "\n" : "",
+			  do_action ? "TO FIX: " : "",
+			  do_action ? action : "",
+			  do_action && do_tag ? "  " : "",
+			  do_tag ? tag : "") < 0)
+	    /* Oh, oh.  An error occurred during the output.  */
+	    result = MM_NOMSG;
+	}
+
+      if (classification & MM_CONSOLE)
+	{
+	  int do_label = label != MM_NULLLBL;
+	  int do_severity = severity != MM_NULLSEV;
+	  int do_text = text != MM_NULLTXT;
+	  int do_action = action != MM_NULLACT;
+	  int do_tag = tag != MM_NULLTAG;
+	  int need_colon = (do_label
+			    && (do_severity | do_text | do_action | do_tag));
+
+	  syslog (LOG_ERR, "%s%s%s%s%s%s%s%s%s%s\n",
+		  do_label ? label : "",
+		  need_colon ? ": " : "",
+		  do_severity ? severity_rec->string : "",
+		  do_severity && (do_text | do_action | do_tag) ? ": " : "",
+		  do_text ? text : "",
+		  do_text && (do_action | do_tag) ? "\n" : "",
+		  do_action ? "TO FIX: " : "",
+		  do_action ? action : "",
+		  do_action && do_tag ? "  " : "",
+		  do_tag ? tag : "");
+	}
     }
 
-  if (classification & MM_CONSOLE)
-    {
-      int do_label = label != MM_NULLLBL;
-      int do_severity = severity != MM_NULLSEV;
-      int do_text = text != MM_NULLTXT;
-      int do_action = action != MM_NULLACT;
-      int do_tag = tag != MM_NULLTAG;
-
-      syslog (LOG_ERR, "%s%s%s%s%s%s%s%s%s%s\n",
-	      do_label ? label : "",
-	      do_label && (do_severity | do_text | do_action | do_tag)
-	      ? ": " : "",
-	      do_severity ? severity_rec->string : "",
-	      do_severity && (do_text | do_action | do_tag) ? ": " : "",
-	      do_text ? text : "",
-	      do_text && (do_action | do_tag) ? "\n" : "",
-	      do_action ? "TO FIX: " : "",
-	      do_action ? action : "",
-	      do_action && do_tag ? "  " : "",
-	      do_tag ? tag : "");
-    }
+  __libc_lock_unlock (lock);
 
 #ifdef __libc_ptf_call
   __libc_ptf_call (pthread_setcancelstate, (state, NULL), 0);
@@ -282,6 +287,8 @@ init (void)
 
 	  sevlevel_var = end + (*end == ':' ? 1 : 0);
 	}
+
+      __libc_lock_unlock (lock);
     }
 }
 

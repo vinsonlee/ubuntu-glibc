@@ -1,36 +1,51 @@
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-
-/*
  * svc_unix.c, Server side for TCP/IP based RPC.
  *
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ * Copyright (C) 2012-2014 Free Software Foundation, Inc.
+ * This file is part of the GNU C Library.
+ *
+ * The GNU C Library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * The GNU C Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with the GNU C Library; if not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Actually implements two flavors of transporter -
  * a unix rendezvouser (a listener and connection establisher)
@@ -48,10 +63,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <libintl.h>
-
-#ifdef USE_IN_LIBIO
-# include <wchar.h>
-#endif
+#include <wchar.h>
 
 /*
  * Ops vector for AF_UNIX based rpc service handle
@@ -189,6 +201,7 @@ svcunix_create (int sock, u_int sendsize, u_int recvsize, char *path)
   xprt_register (xprt);
   return xprt;
 }
+libc_hidden_nolink_sunrpc (svcunix_create, GLIBC_2_1)
 
 /*
  * Like svunix_create(), except the routine takes any *open* UNIX file
@@ -199,6 +212,7 @@ svcunixfd_create (int fd, u_int sendsize, u_int recvsize)
 {
   return makefd_xprt (fd, sendsize, recvsize);
 }
+libc_hidden_nolink_sunrpc (svcunixfd_create, GLIBC_2_1)
 
 static SVCXPRT *
 internal_function
@@ -218,8 +232,8 @@ makefd_xprt (int fd, u_int sendsize, u_int recvsize)
       return NULL;
     }
   cd->strm_stat = XPRT_IDLE;
-  INTUSE(xdrrec_create) (&(cd->xdrs), sendsize, recvsize,
-			 (caddr_t) xprt, readunix, writeunix);
+  xdrrec_create (&(cd->xdrs), sendsize, recvsize,
+		 (caddr_t) xprt, readunix, writeunix);
   xprt->xp_p2 = NULL;
   xprt->xp_p1 = (caddr_t) cd;
   xprt->xp_verf.oa_base = cd->verf_body;
@@ -247,6 +261,7 @@ again:
     {
       if (errno == EINTR)
 	goto again;
+      __svc_accept_failed ();
       return FALSE;
     }
   /*
@@ -334,9 +349,9 @@ __msgread (int sock, void *data, size_t cnt)
   if (len >= 0)
     {
       if (msg.msg_flags & MSG_CTRUNC || len == 0)
-        return 0;
+	return 0;
       else
-        return len;
+	return len;
     }
   if (errno == EINTR)
     goto restart;
@@ -462,7 +477,7 @@ svcunix_stat (SVCXPRT *xprt)
 
   if (cd->strm_stat == XPRT_DIED)
     return XPRT_DIED;
-  if (!INTUSE(xdrrec_eof) (&(cd->xdrs)))
+  if (!xdrrec_eof (&(cd->xdrs)))
     return XPRT_MOREREQS;
   return XPRT_IDLE;
 }
@@ -474,8 +489,8 @@ svcunix_recv (SVCXPRT *xprt, struct rpc_msg *msg)
   XDR *xdrs = &(cd->xdrs);
 
   xdrs->x_op = XDR_DECODE;
-  INTUSE(xdrrec_skiprecord) (xdrs);
-  if (INTUSE(xdr_callmsg) (xdrs, msg))
+  xdrrec_skiprecord (xdrs);
+  if (xdr_callmsg (xdrs, msg))
     {
       cd->x_id = msg->rm_xid;
       /* set up verifiers */
@@ -515,7 +530,7 @@ svcunix_reply (SVCXPRT *xprt, struct rpc_msg *msg)
 
   xdrs->x_op = XDR_ENCODE;
   msg->rm_xid = cd->x_id;
-  stat = INTUSE(xdr_replymsg) (xdrs, msg);
-  (void) INTUSE(xdrrec_endofrecord) (xdrs, TRUE);
+  stat = xdr_replymsg (xdrs, msg);
+  (void) xdrrec_endofrecord (xdrs, TRUE);
   return stat;
 }

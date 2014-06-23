@@ -1,4 +1,4 @@
-/* Copyright (C) 2005 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,28 +12,25 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <tcb-offsets.h>
 
 /* Save the PID value.  */
 #define SAVE_PID \
-	str	lr, [sp, #-4]!;		/* Save LR.  */			\
-	mov	r0, #0xffff0fff;	/* Point to the high page.  */	\
-	mov	lr, pc;			/* Save our return address.  */	\
-	sub	pc, r0, #31;		/* Jump to the TLS entry.  */	\
-	ldr	lr, [sp], #4;		/* Restore LR.  */		\
-	mov	r2, r0;			/* Save the TLS addr in r2.  */	\
-	ldr	r3, [r2, #PID_OFFSET];	/* Load the saved PID.  */	\
-	rsbs	r0, r3, #0;		/* Negate it.  */		\
-	moveq	r0, #0x80000000;	/* Use 0x80000000 if it was 0.  */ \
-	str	r0, [r2, #PID_OFFSET]	/* Store the temporary PID.  */
+	GET_TLS (r2);							\
+	NEGOFF_ADJ_BASE2 (r2, r0, PID_OFFSET); /* Save the TLS addr in r2.  */ \
+	ldr	r3, NEGOFF_OFF1 (r2, PID_OFFSET); /* Load the saved PID.  */   \
+	rsbs	r0, r3, #0;		/* Negate it.  */		      \
+	it	eq;							      \
+	moveq	r0, #0x80000000;	/* Use 0x80000000 if it was 0.  */    \
+	str	r0, NEGOFF_OFF1 (r2, PID_OFFSET); /* Store the temp PID.  */
 
 /* Restore the old PID value in the parent.  */
 #define RESTORE_PID \
 	cmp	r0, #0;		/* If we are the parent... */		\
-	strne	r3, [r2, #PID_OFFSET]	/* ... restore the saved PID.  */
+	it	ne;							\
+	strne	r3, NEGOFF_OFF1 (r2, PID_OFFSET); /* restore the saved PID.  */
 
 #include "../vfork.S"

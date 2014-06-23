@@ -1,4 +1,4 @@
-/* Copyright (C) 1999, 2004, 2005 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
 
@@ -35,11 +34,10 @@
 #define SET_MANTISSA(flt, mant) \
   do { union ieee854_long_double u;					      \
        u.d = (flt);							      \
-       if ((mant & 0x7fffffffffffffffULL) == 0)				      \
-	 mant = 0x4000000000000000ULL;					      \
-       u.ieee.mantissa0 = (((mant) >> 32) & 0x7fffffff) | 0x80000000;	      \
-       u.ieee.mantissa1 = (mant) & 0xffffffff;				      \
-       (flt) = u.d;							      \
+       u.ieee_nan.mantissa0 = (mant) >> 32;				      \
+       u.ieee_nan.mantissa1 = (mant);					      \
+       if ((u.ieee.mantissa0 | u.ieee.mantissa1) != 0)			      \
+	 (flt) = u.d;							      \
   } while (0)
 
 #include <stdlib/strtod_l.c>

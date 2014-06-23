@@ -1,7 +1,7 @@
 /* MIPS2 __mpn_add_n -- Add two limb vectors of the same length > 0 and
 store sum in a third limb vector.
 
-Copyright (C) 1995, 2000, 2002, 2003 Free Software Foundation, Inc.
+Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -16,9 +16,8 @@ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library; see the file COPYING.LIB.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-MA 02111-1307, USA.  */
+along with the GNU MP Library.  If not, see
+<http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 
@@ -119,4 +118,4 @@ L(end):	addu	$11,$11,$2
 	sw	$11,0($4)
 	j	$31
 	or	$2,$2,$8
-	.end __mpn_add_n
+END (__mpn_add_n)

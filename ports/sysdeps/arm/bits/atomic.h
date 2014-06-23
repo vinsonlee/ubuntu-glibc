@@ -1,4 +1,5 @@
-/* Copyright (C) 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+/* Atomic operations.  Pure ARM version.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,13 +13,10 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <stdint.h>
-#include <sysdep.h>
-
 
 typedef int8_t atomic8_t;
 typedef uint8_t uatomic8_t;
@@ -37,65 +35,125 @@ typedef uintmax_t uatomic_max_t;
 
 void __arm_link_error (void);
 
-#define atomic_exchange_acq(mem, newvalue)				      \
-  ({ __typeof (*mem) result;						      \
-     if (sizeof (*mem) == 1)						      \
-       __asm__ __volatile__ ("swpb %0, %1, [%2]"			      \
-			     : "=&r,&r" (result)			      \
-			     : "r,0" (newvalue), "r,r" (mem) : "memory");     \
-     else if (sizeof (*mem) == 4)					      \
-       __asm__ __volatile__ ("swp %0, %1, [%2]"				      \
-			     : "=&r,&r" (result)			      \
-			     : "r,0" (newvalue), "r,r" (mem) : "memory");     \
-     else								      \
-       {								      \
-	 result = 0;							      \
-	 abort ();							      \
-       }								      \
-     result; })
+#ifdef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
+# define atomic_full_barrier() __sync_synchronize ()
+#else
+# define atomic_full_barrier() __arm_assisted_full_barrier ()
+#endif
 
-/* Atomic compare and exchange.  These sequences are not actually atomic;
-   there is a race if *MEM != OLDVAL and we are preempted between the two
-   swaps.  However, they are very close to atomic, and are the best that a
-   pre-ARMv6 implementation can do without operating system support.
-   LinuxThreads has been using these sequences for many years.  */
+/* An OS-specific bits/atomic.h file will define this macro if
+   the OS can provide something.  If not, we'll fail to build
+   with a compiler that doesn't supply the operation.  */
+#ifndef __arm_assisted_full_barrier
+# define __arm_assisted_full_barrier()  __arm_link_error()
+#endif
 
-#define __arch_compare_and_exchange_val_8_acq(mem, newval, oldval) \
-  ({ __typeof (oldval) result, tmp;					      \
-     __asm__ ("\n"							      \
-	      "0:\tldr\t%1,[%2]\n\t"					      \
-	      "cmp\t%1,%4\n\t"						      \
-	      "movne\t%0,%1\n\t"					      \
-	      "bne\t1f\n\t"						      \
-	      "swpb\t%0,%3,[%2]\n\t"					      \
-	      "cmp\t%1,%0\n\t"						      \
-	      "swpbne\t%1,%0,[%2]\n\t"					      \
-	      "bne\t0b\n\t"						      \
-	      "1:"							      \
-	      : "=&r" (result), "=&r" (tmp)				      \
-	      : "r" (mem), "r" (newval), "r" (oldval)			      \
-	      : "cc", "memory");					      \
-     result; })
+/* Use the atomic builtins provided by GCC in case the backend provides
+   a pattern to do this efficiently.  */
+#if __GNUC_PREREQ (4, 7) && defined __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
 
-#define __arch_compare_and_exchange_val_16_acq(mem, newval, oldval) \
+# define atomic_exchange_acq(mem, value)                                \
+  __atomic_val_bysize (__arch_exchange, int, mem, value, __ATOMIC_ACQUIRE)
+
+# define atomic_exchange_rel(mem, value)                                \
+  __atomic_val_bysize (__arch_exchange, int, mem, value, __ATOMIC_RELEASE)
+
+/* Atomic exchange (without compare).  */
+
+# define __arch_exchange_8_int(mem, newval, model)      \
+  (__arm_link_error (), (typeof (*mem)) 0)
+
+# define __arch_exchange_16_int(mem, newval, model)     \
+  (__arm_link_error (), (typeof (*mem)) 0)
+
+# define __arch_exchange_32_int(mem, newval, model)     \
+  __atomic_exchange_n (mem, newval, model)
+
+# define __arch_exchange_64_int(mem, newval, model)     \
+  (__arm_link_error (), (typeof (*mem)) 0)
+
+/* Compare and exchange with "acquire" semantics, ie barrier after.  */
+
+# define atomic_compare_and_exchange_bool_acq(mem, new, old)    \
+  __atomic_bool_bysize (__arch_compare_and_exchange_bool, int,  \
+                        mem, new, old, __ATOMIC_ACQUIRE)
+
+# define atomic_compare_and_exchange_val_acq(mem, new, old)     \
+  __atomic_val_bysize (__arch_compare_and_exchange_val, int,    \
+                       mem, new, old, __ATOMIC_ACQUIRE)
+
+/* Compare and exchange with "release" semantics, ie barrier before.  */
+
+# define atomic_compare_and_exchange_bool_rel(mem, new, old)    \
+  __atomic_bool_bysize (__arch_compare_and_exchange_bool, int,  \
+                        mem, new, old, __ATOMIC_RELEASE)
+
+# define atomic_compare_and_exchange_val_rel(mem, new, old)      \
+  __atomic_val_bysize (__arch_compare_and_exchange_val, int,    \
+                       mem, new, old, __ATOMIC_RELEASE)
+
+/* Compare and exchange.
+   For all "bool" routines, we return FALSE if exchange succesful.  */
+
+# define __arch_compare_and_exchange_bool_8_int(mem, newval, oldval, model) \
+  ({__arm_link_error (); oldval; })
+
+# define __arch_compare_and_exchange_bool_16_int(mem, newval, oldval, model) \
+  ({__arm_link_error (); oldval; })
+
+# define __arch_compare_and_exchange_bool_32_int(mem, newval, oldval, model) \
+  ({                                                                    \
+    typeof (*mem) __oldval = (oldval);                                  \
+    !__atomic_compare_exchange_n (mem, (void *) &__oldval, newval, 0,   \
+                                  model, __ATOMIC_RELAXED);             \
+  })
+
+# define __arch_compare_and_exchange_bool_64_int(mem, newval, oldval, model) \
+  ({__arm_link_error (); oldval; })
+
+# define __arch_compare_and_exchange_val_8_int(mem, newval, oldval, model) \
+  ({__arm_link_error (); oldval; })
+
+# define __arch_compare_and_exchange_val_16_int(mem, newval, oldval, model) \
+  ({__arm_link_error (); oldval; })
+
+# define __arch_compare_and_exchange_val_32_int(mem, newval, oldval, model) \
+  ({                                                                    \
+    typeof (*mem) __oldval = (oldval);                                  \
+    __atomic_compare_exchange_n (mem, (void *) &__oldval, newval, 0,    \
+                                 model, __ATOMIC_RELAXED);              \
+    __oldval;                                                           \
+  })
+
+# define __arch_compare_and_exchange_val_64_int(mem, newval, oldval, model) \
+  ({__arm_link_error (); oldval; })
+
+#elif defined __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
+/* Atomic compare and exchange.  */
+# define __arch_compare_and_exchange_val_32_acq(mem, newval, oldval) \
+  __sync_val_compare_and_swap ((mem), (oldval), (newval))
+#else
+# define __arch_compare_and_exchange_val_32_acq(mem, newval, oldval) \
+  __arm_assisted_compare_and_exchange_val_32_acq ((mem), (newval), (oldval))
+#endif
+
+#if !__GNUC_PREREQ (4, 7) || !defined (__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4)
+/* We don't support atomic operations on any non-word types.
+   So make them link errors.  */
+# define __arch_compare_and_exchange_val_8_acq(mem, newval, oldval) \
   ({ __arm_link_error (); oldval; })
 
-#define __arch_compare_and_exchange_val_32_acq(mem, newval, oldval) \
-  ({ __typeof (oldval) result, tmp;					      \
-     __asm__ ("\n"							      \
-	      "0:\tldr\t%1,[%2]\n\t"					      \
-	      "cmp\t%1,%4\n\t"						      \
-	      "movne\t%0,%1\n\t"					      \
-	      "bne\t1f\n\t"						      \
-	      "swp\t%0,%3,[%2]\n\t"					      \
-	      "cmp\t%1,%0\n\t"						      \
-	      "swpne\t%1,%0,[%2]\n\t"					      \
-	      "bne\t0b\n\t"						      \
-	      "1:"							      \
-	      : "=&r" (result), "=&r" (tmp)				      \
-	      : "r" (mem), "r" (newval), "r" (oldval)			      \
-	      : "cc", "memory");					      \
-     result; })
-
-#define __arch_compare_and_exchange_val_64_acq(mem, newval, oldval) \
+# define __arch_compare_and_exchange_val_16_acq(mem, newval, oldval) \
   ({ __arm_link_error (); oldval; })
+
+# define __arch_compare_and_exchange_val_64_acq(mem, newval, oldval) \
+  ({ __arm_link_error (); oldval; })
+#endif
+
+/* An OS-specific bits/atomic.h file will define this macro if
+   the OS can provide something.  If not, we'll fail to build
+   with a compiler that doesn't supply the operation.  */
+#ifndef __arm_assisted_compare_and_exchange_val_32_acq
+# define __arm_assisted_compare_and_exchange_val_32_acq(mem, newval, oldval) \
+  ({ __arm_link_error (); oldval; })
+#endif

@@ -1,6 +1,5 @@
 /* Common code for file-based databases in nss_files module.
-   Copyright (C) 1996-1999,2001,2002,2004,2007,2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -77,7 +75,7 @@ internal_setent (int stayopen)
 
   if (stream == NULL)
     {
-      stream = fopen (DATAFILE, "re");
+      stream = fopen (DATAFILE, "rce");
 
       if (stream == NULL)
 	status = errno == EAGAIN ? NSS_STATUS_TRYAGAIN : NSS_STATUS_UNAVAIL;
@@ -181,8 +179,51 @@ CONCAT(_nss_files_end,ENTNAME) (void)
   return NSS_STATUS_SUCCESS;
 }
 
-/* Parsing the database file into `struct STRUCTURE' data structures.  */
 
+typedef enum
+{
+  gcr_ok = 0,
+  gcr_error = -1,
+  gcr_overflow = -2
+} get_contents_ret;
+
+/* Hack around the fact that fgets only accepts int sizes.  */
+static get_contents_ret
+get_contents (char *linebuf, size_t len, FILE *stream)
+{
+  size_t remaining_len = len;
+  char *curbuf = linebuf;
+
+  do
+    {
+      int curlen = ((remaining_len > (size_t) INT_MAX) ? INT_MAX
+		    : remaining_len);
+      char *p = fgets_unlocked (curbuf, curlen, stream);
+
+      ((unsigned char *) curbuf)[curlen - 1] = 0xff;
+
+      /* EOF or read error.  */
+      if (p == NULL)
+        return gcr_error;
+
+      /* Done reading in the line.  */
+      if (((unsigned char *) curbuf)[curlen - 1] == 0xff)
+        return gcr_ok;
+
+      /* Drop the terminating '\0'.  */
+      remaining_len -= curlen - 1;
+      curbuf += curlen - 1;
+    }
+  /* fgets copies one less than the input length.  Our last iteration is of
+     REMAINING_LEN and once that is done, REMAINING_LEN is decremented by
+     REMAINING_LEN - 1, leaving the result as 1.  */
+  while (remaining_len > 1);
+
+  /* This means that the current buffer was not large enough.  */
+  return gcr_overflow;
+}
+
+/* Parsing the database file into `struct STRUCTURE' data structures.  */
 static enum nss_status
 internal_getent (struct STRUCTURE *result,
 		 char *buffer, size_t buflen, int *errnop H_ERRNO_PROTO
@@ -190,7 +231,7 @@ internal_getent (struct STRUCTURE *result,
 {
   char *p;
   struct parser_data *data = (void *) buffer;
-  int linebuflen = buffer + buflen - data->linebuffer;
+  size_t linebuflen = buffer + buflen - data->linebuffer;
   int parse_result;
 
   if (buflen < sizeof *data + 2)
@@ -202,17 +243,16 @@ internal_getent (struct STRUCTURE *result,
 
   do
     {
-      /* Terminate the line so that we can test for overflow.  */
-      ((unsigned char *) data->linebuffer)[linebuflen - 1] = '\xff';
+      get_contents_ret r = get_contents (data->linebuffer, linebuflen, stream);
 
-      p = fgets_unlocked (data->linebuffer, linebuflen, stream);
-      if (p == NULL)
+      if (r == gcr_error)
 	{
 	  /* End of file or read error.  */
 	  H_ERRNO_SET (HOST_NOT_FOUND);
 	  return NSS_STATUS_NOTFOUND;
 	}
-      else if (((unsigned char *) data->linebuffer)[linebuflen - 1] != 0xff)
+
+      if (r == gcr_overflow)
 	{
 	  /* The line is too long.  Give the user the opportunity to
 	     enlarge the buffer.  */
@@ -221,7 +261,8 @@ internal_getent (struct STRUCTURE *result,
 	  return NSS_STATUS_TRYAGAIN;
 	}
 
-      /* Skip leading blanks.  */
+      /* Everything OK.  Now skip leading blanks.  */
+      p = data->linebuffer;
       while (isspace (*p))
 	++p;
     }
@@ -306,15 +347,15 @@ CONCAT(_nss_files_get,ENTNAME_r) (struct STRUCTURE *result, char *buffer,
 
    NAME is the name of the lookup; e.g. `hostbyname'.
 
-   KEYSIZE and KEYPATTERN are ignored here but used by ../nss_db/db-XXX.c.
+   DB_CHAR, KEYPATTERN, KEYSIZE are ignored here but used by db-XXX.c
+   e.g. `1 + sizeof (id) * 4'.
 
-   PROTO describes the arguments for the lookup key;
-   e.g. `const char *hostname'.
+   PROTO is the potentially empty list of other parameters.
 
    BREAK_IF_MATCH is a block of code which compares `struct STRUCTURE *result'
    to the lookup key arguments and does `break;' if they match.  */
 
-#define DB_LOOKUP(name, keysize, keypattern, break_if_match, proto...)	      \
+#define DB_LOOKUP(name, db_char, keysize, keypattern, break_if_match, proto...)\
 enum nss_status								      \
 _nss_files_get##name##_r (proto,					      \
 			  struct STRUCTURE *result, char *buffer,	      \

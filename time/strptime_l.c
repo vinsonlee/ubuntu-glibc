@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2004, 2005, 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -73,7 +72,7 @@ localtime_r (t, tp)
   do {									      \
     int __n = n;							      \
     val = 0;								      \
-    while (*rp == ' ')							      \
+    while (ISSPACE (*rp))						      \
       ++rp;								      \
     if (*rp < '0' || *rp > '9')						      \
       return NULL;							      \
@@ -119,7 +118,7 @@ localtime_r (t, tp)
 
 #ifdef _LIBC
 /* This is defined in locale/C-time.c in the GNU libc.  */
-extern const struct locale_data _nl_C_LC_TIME attribute_hidden;
+extern const struct __locale_data _nl_C_LC_TIME attribute_hidden;
 
 # define weekday_name (&_nl_C_LC_TIME.values[_NL_ITEM_INDEX (DAY_1)].string)
 # define ab_weekday_name \
@@ -213,7 +212,7 @@ static void
 day_of_the_week (struct tm *tm)
 {
   /* We know that January 1st 1970 was a Thursday (= 4).  Compute the
-     the difference between this data in the one on TM and so determine
+     difference between this data in the one on TM and so determine
      the weekday.  */
   int corr_year = 1900 + tm->tm_year - (tm->tm_mon < 2);
   int wday = (-473
@@ -249,7 +248,7 @@ __strptime_internal (rp, fmt, tmp, statep LOCALE_PARAM)
      LOCALE_PARAM_DECL
 {
 #ifdef _LIBC
-  struct locale_data *const current = locale->__locales[LC_TIME];
+  struct __locale_data *const current = locale->__locales[LC_TIME];
 #endif
 
   const char *rp_backup;
@@ -321,17 +320,14 @@ __strptime_internal (rp, fmt, tmp, statep LOCALE_PARAM)
 	}
 
       ++fmt;
-      if (statep != NULL)
-	{
-	  /* In recursive calls silently discard strftime modifiers.  */
-	  while (*fmt == '-' || *fmt == '_' || *fmt == '0'
-		 || *fmt == '^' || *fmt == '#')
-	    ++fmt;
+      /* We discard strftime modifiers.  */
+      while (*fmt == '-' || *fmt == '_' || *fmt == '0'
+	     || *fmt == '^' || *fmt == '#')
+	++fmt;
 
-	  /* And field width.  */
-	  while (*fmt >= '0' && *fmt <= '9')
-	    ++fmt;
-	}
+      /* And field width.  */
+      while (*fmt >= '0' && *fmt <= '9')
+	++fmt;
 
 #ifndef _NL_CURRENT
       /* We need this for handling the `E' modifier.  */
@@ -745,7 +741,11 @@ __strptime_internal (rp, fmt, tmp, statep LOCALE_PARAM)
 	  s.want_xday = 1;
 	  break;
 	case 'Z':
-	  /* XXX How to handle this?  */
+	  /* Read timezone but perform no conversion.  */
+	  while (ISSPACE (*rp))
+	    rp++;
+	  while (!ISSPACE (*rp) && *rp != '\0')
+	    rp++;
 	  break;
 	case 'z':
 	  /* We recognize two formats: if two digits are given, these
@@ -753,7 +753,7 @@ __strptime_internal (rp, fmt, tmp, statep LOCALE_PARAM)
 	     also specified.  */
 	  {
 	    val = 0;
-	    while (*rp == ' ')
+	    while (ISSPACE (*rp))
 	      ++rp;
 	    if (*rp != '+' && *rp != '-')
 	      return NULL;
@@ -1181,8 +1181,8 @@ __strptime_internal (rp, fmt, tmp, statep LOCALE_PARAM)
 
       if (!s.have_yday)
 	tm->tm_yday = ((7 - (tm->tm_wday - w_offset)) % 7
-		       + (s.week_no - 1) *7
-		       + save_wday - w_offset);
+		       + (s.week_no - 1) * 7
+		       + (save_wday - w_offset + 7) % 7);
 
       if (!s.have_mday || !s.have_mon)
 	{

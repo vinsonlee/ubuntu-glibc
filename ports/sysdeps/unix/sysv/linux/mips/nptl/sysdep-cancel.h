@@ -1,4 +1,4 @@
-/* Copyright (C) 2003, 2004, 2005 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <sysdeps/generic/sysdep.h>
@@ -40,6 +39,7 @@
 # undef PSEUDO
 # define PSEUDO(name, syscall_name, args)				      \
       .align 2;								      \
+      .set nomips16;							      \
   L(pseudo_start):							      \
       cfi_startproc;							      \
   99: PSEUDO_ERRJMP							      \
@@ -53,6 +53,7 @@
     .set reorder;							      \
     bne a3, zero, 99b;					       		      \
     ret;								      \
+    cfi_endproc;							      \
   .size __##syscall_name##_nocancel,.-__##syscall_name##_nocancel;	      \
   ENTRY (name)								      \
     .set noreorder;							      \

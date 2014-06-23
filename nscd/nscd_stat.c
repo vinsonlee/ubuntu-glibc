@@ -1,4 +1,4 @@
-/* Copyright (c) 1998, 2003, 2004, 2005 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1998.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <error.h>
@@ -80,6 +79,7 @@ struct statdata
   int max_nthreads;
   int paranoia;
   time_t restart_interval;
+  unsigned int reload_count;
   int ndbs;
   struct dbstat dbs[lastdb];
 #ifdef HAVE_SELINUX
@@ -102,6 +102,7 @@ send_stats (int fd, struct database_dyn dbs[lastdb])
   data.max_nthreads = max_nthreads;
   data.paranoia = paranoia;
   data.restart_interval = restart_interval;
+  data.reload_count = reload_count;
   data.ndbs = lastdb;
 
   for (cnt = 0; cnt < lastdb; ++cnt)
@@ -240,10 +241,11 @@ receive_print_stats (void)
 	    "%15d  maximum number of threads\n"
 	    "%15lu  number of times clients had to wait\n"
 	    "%15s  paranoia mode enabled\n"
-	    "%15lu  restart internal\n"),
+	    "%15lu  restart internal\n"
+	    "%15u  reload count\n"),
 	  data.nthreads, data.max_nthreads, data.client_queued,
 	  data.paranoia ? yesstr : nostr,
-	  (unsigned long int) data.restart_interval);
+	  (unsigned long int) data.restart_interval, data.reload_count);
 
   for (i = 0; i < lastdb; ++i)
     {

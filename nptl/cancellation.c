@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2003 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <setjmp.h>
 #include <stdlib.h>
@@ -70,14 +69,13 @@ __pthread_disable_asynccancel (int oldtype)
     return;
 
   struct pthread *self = THREAD_SELF;
+  int newval;
+
   int oldval = THREAD_GETMEM (self, cancelhandling);
 
   while (1)
     {
-      int newval = oldval & ~CANCELTYPE_BITMASK;
-
-      if (newval == oldval)
-	break;
+      newval = oldval & ~CANCELTYPE_BITMASK;
 
       int curval = THREAD_ATOMIC_CMPXCHG_VAL (self, cancelhandling, newval,
 					      oldval);
@@ -86,5 +84,16 @@ __pthread_disable_asynccancel (int oldtype)
 
       /* Prepare the next round.  */
       oldval = curval;
+    }
+
+  /* We cannot return when we are being canceled.  Upon return the
+     thread might be things which would have to be undone.  The
+     following loop should loop until the cancellation signal is
+     delivered.  */
+  while (__builtin_expect ((newval & (CANCELING_BITMASK | CANCELED_BITMASK))
+			   == CANCELING_BITMASK, 0))
+    {
+      lll_futex_wait (&self->cancelhandling, newval, LLL_PRIVATE);
+      newval = THREAD_GETMEM (self, cancelhandling);
     }
 }

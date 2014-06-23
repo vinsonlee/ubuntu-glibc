@@ -1,5 +1,5 @@
 /* Duplicate handle for selection of locales.
-   Copyright (C) 1997,2000,2001,2002,2005,2008 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <locale.h>
 #include <bits/libc-lock.h>
@@ -36,6 +35,10 @@ __duplocale (__locale_t dataset)
   /* This static object is returned for newlocale (LC_ALL_MASK, "C").  */
   if (dataset == _nl_C_locobj_ptr)
     return dataset;
+
+  /* Handle a special value.  */
+  if (dataset == LC_GLOBAL_LOCALE)
+    dataset = &_nl_global_locale;
 
   __locale_t result;
   int cnt;

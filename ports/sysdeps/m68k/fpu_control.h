@@ -1,5 +1,5 @@
 /* 68k FPU control word definitions.
-   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _FPU_CONTROL_H
 #define _FPU_CONTROL_H
@@ -54,54 +53,64 @@
 
 #include <features.h>
 
+#if defined (__mcoldfire__) && !defined (__mcffpu__)
+
+# define _FPU_RESERVED 0xffffffff
+# define _FPU_DEFAULT  0x00000000
+# define _FPU_GETCW(cw) ((cw) = 0)
+# define _FPU_SETCW(cw) ((void) (cw))
+
+#else
+
 /* masking of interrupts */
-#define _FPU_MASK_BSUN  0x8000
-#define _FPU_MASK_SNAN  0x4000
-#define _FPU_MASK_OPERR 0x2000
-#define _FPU_MASK_OVFL  0x1000
-#define _FPU_MASK_UNFL  0x0800
-#define _FPU_MASK_DZ    0x0400
-#define _FPU_MASK_INEX1 0x0200
-#define _FPU_MASK_INEX2 0x0100
+# define _FPU_MASK_BSUN  0x8000
+# define _FPU_MASK_SNAN  0x4000
+# define _FPU_MASK_OPERR 0x2000
+# define _FPU_MASK_OVFL  0x1000
+# define _FPU_MASK_UNFL  0x0800
+# define _FPU_MASK_DZ    0x0400
+# define _FPU_MASK_INEX1 0x0200
+# define _FPU_MASK_INEX2 0x0100
 
 /* precision control */
-#ifdef __mcoldfire__
-#define _FPU_DOUBLE   0x00
-#else
-#define _FPU_EXTENDED 0x00   /* RECOMMENDED */
-#define _FPU_DOUBLE   0x80
-#endif
-#define _FPU_SINGLE   0x40     /* DO NOT USE */
+# ifdef __mcoldfire__
+#  define _FPU_DOUBLE   0x00
+# else
+#  define _FPU_EXTENDED 0x00   /* RECOMMENDED */
+#  define _FPU_DOUBLE   0x80
+# endif
+# define _FPU_SINGLE   0x40     /* DO NOT USE */
 
 /* rounding control */
-#define _FPU_RC_NEAREST 0x00    /* RECOMMENDED */
-#define _FPU_RC_ZERO    0x10
-#define _FPU_RC_DOWN    0x20
-#define _FPU_RC_UP      0x30
+# define _FPU_RC_NEAREST 0x00    /* RECOMMENDED */
+# define _FPU_RC_ZERO    0x10
+# define _FPU_RC_DOWN    0x20
+# define _FPU_RC_UP      0x30
 
-#ifdef __mcoldfire__
-#define _FPU_RESERVED 0xFFFF800F
-#else
-#define _FPU_RESERVED 0xFFFF000F  /* Reserved bits in fpucr */
-#endif
+# ifdef __mcoldfire__
+#  define _FPU_RESERVED 0xFFFF800F
+# else
+#  define _FPU_RESERVED 0xFFFF000F  /* Reserved bits in fpucr */
+# endif
 
 
 /* Now two recommended fpucr */
 
 /* The fdlibm code requires no interrupts for exceptions.  Don't
    change the rounding mode, it would break long double I/O!  */
-#define _FPU_DEFAULT  0x00000000
+# define _FPU_DEFAULT  0x00000000
 
 /* IEEE:  same as above, but exceptions.  We must make it non-zero so
    that __setfpucw works.  This bit will be ignored.  */
-#define _FPU_IEEE     0x00000001
+# define _FPU_IEEE     0x00000001
+
+/* Macros for accessing the hardware control word.  */
+# define _FPU_GETCW(cw) __asm__ ("fmove%.l %!, %0" : "=dm" (cw))
+# define _FPU_SETCW(cw) __asm__ volatile ("fmove%.l %0, %!" : : "dm" (cw))
+#endif
 
 /* Type of the control word.  */
 typedef unsigned int fpu_control_t __attribute__ ((__mode__ (__SI__)));
-
-/* Macros for accessing the hardware control word.  */
-#define _FPU_GETCW(cw) __asm__ ("fmove%.l %!, %0" : "=dm" (cw))
-#define _FPU_SETCW(cw) __asm__ volatile ("fmove%.l %0, %!" : : "dm" (cw))
 
 /* Default control word set at startup.  */
 extern fpu_control_t __fpu_control;

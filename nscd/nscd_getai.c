@@ -1,4 +1,4 @@
-/* Copyright (C) 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2004.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <errno.h>
@@ -36,10 +35,24 @@ extern int __nss_not_use_nscd_hosts;
 /* We use the mapping from nscd_gethst.  */
 libc_locked_map_ptr (extern, __hst_map_handle) attribute_hidden;
 
+/* Defined in nscd_gethst_r.c.  */
+extern int __nss_have_localdomain attribute_hidden;
+
 
 int
 __nscd_getai (const char *key, struct nscd_ai_result **result, int *h_errnop)
 {
+  if (__builtin_expect (__nss_have_localdomain >= 0, 0))
+    {
+      if (__nss_have_localdomain == 0)
+	__nss_have_localdomain = getenv ("LOCALDOMAIN") != NULL ? 1 : -1;
+      if (__nss_have_localdomain > 0)
+	{
+	  __nss_not_use_nscd_hosts = 1;
+	  return -1;
+	}
+    }
+
   size_t keylen = strlen (key) + 1;
   int gc_cycle;
   int nretries = 0;
@@ -61,7 +74,7 @@ __nscd_getai (const char *key, struct nscd_ai_result **result, int *h_errnop)
   if (mapped != NO_MAPPING)
     {
       struct datahead *found = __nscd_cache_search (GETAI, key, keylen,
-						    mapped);
+						    mapped, sizeof ai_resp);
       if (found != NULL)
 	{
 	  respdata = (char *) (&found->data[0].aidata + 1);

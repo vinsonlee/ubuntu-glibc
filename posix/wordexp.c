@@ -1,5 +1,5 @@
 /* POSIX.2 wordexp implementation.
-   Copyright (C) 1997-2003, 2005, 2006, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Tim Waugh <tim@cyberelk.demon.co.uk>.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <alloca.h>
 #include <ctype.h>
@@ -28,6 +27,7 @@
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,14 +38,12 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#ifdef USE_IN_LIBIO
-# include <wchar.h>
-#endif
+#include <wchar.h>
 #include <wordexp.h>
 #include <kernel-features.h>
 
 #include <bits/libc-lock.h>
-#include <stdio-common/_itoa.h>
+#include <_itoa.h>
 
 /* Undefine the following line for the production version.  */
 /* #define NDEBUG 1 */
@@ -854,7 +852,7 @@ exec_comm_child (char *comm, int *fildes, int showerr, int noexec)
 	  __close (fd);
 	}
       /* Be paranoid.  Check that we actually opened the /dev/null
-         device.  */
+	 device.  */
       if (__builtin_expect (__fxstat64 (_STAT_VER, STDERR_FILENO, &st), 0) != 0
 	  || __builtin_expect (S_ISCHR (st.st_mode), 1) == 0
 #if defined DEV_NULL_MAJOR && defined DEV_NULL_MINOR
@@ -862,8 +860,8 @@ exec_comm_child (char *comm, int *fildes, int showerr, int noexec)
 #endif
 	  )
 	/* It's not the /dev/null device.  Stop right here.  The
-           problem is: how do we stop?  We use _exit() with an
-           hopefully unusual exit code.  */
+	   problem is: how do we stop?  We use _exit() with an
+	   hopefully unusual exit code.  */
 	_exit (90);
     }
 
@@ -955,7 +953,12 @@ exec_comm (char *comm, char **word, size_t *word_length, size_t *max_length,
 	  if ((buflen = TEMP_FAILURE_RETRY (__read (fildes[0], buffer,
 						    bufsize))) < 1)
 	    {
-	      if (TEMP_FAILURE_RETRY (__waitpid (pid, &status, WNOHANG)) == 0)
+	      /* If read returned 0 then the process has closed its
+		 stdout.  Don't use WNOHANG in that case to avoid busy
+		 looping until the process eventually exits.  */
+	      if (TEMP_FAILURE_RETRY (__waitpid (pid, &status,
+						 buflen == 0 ? 0 : WNOHANG))
+		  == 0)
 		continue;
 	      if ((buflen = TEMP_FAILURE_RETRY (__read (fildes[0], buffer,
 							bufsize))) < 1)
@@ -985,7 +988,12 @@ exec_comm (char *comm, char **word, size_t *word_length, size_t *max_length,
 	  if ((buflen = TEMP_FAILURE_RETRY (__read (fildes[0], buffer,
 						    bufsize))) < 1)
 	    {
-	      if (TEMP_FAILURE_RETRY (__waitpid (pid, &status, WNOHANG)) == 0)
+	      /* If read returned 0 then the process has closed its
+		 stdout.  Don't use WNOHANG in that case to avoid busy
+		 looping until the process eventually exits.  */
+	      if (TEMP_FAILURE_RETRY (__waitpid (pid, &status,
+						 buflen == 0 ? 0 : WNOHANG))
+		  == 0)
 		continue;
 	      if ((buflen = TEMP_FAILURE_RETRY (__read (fildes[0], buffer,
 							bufsize))) < 1)
@@ -1062,7 +1070,7 @@ exec_comm (char *comm, char **word, size_t *word_length, size_t *max_length,
 		  if (copying == 3)
 		    {
 		      /* Nothing but (IFS) newlines since the last field,
-		         so delimit it here before starting new word */
+			 so delimit it here before starting new word */
 		      if (w_addword (pwordexp, *word) == WRDE_NOSPACE)
 			goto no_space;
 
@@ -1089,7 +1097,7 @@ exec_comm (char *comm, char **word, size_t *word_length, size_t *max_length,
   /* Ensure we don't go back further than the beginning of the
      substitution (i.e. remove maxnewlines bytes at most) */
   while (maxnewlines-- != 0 &&
-         *word_length > 0 && (*word)[*word_length - 1] == '\n')
+	 *word_length > 0 && (*word)[*word_length - 1] == '\n')
     {
       (*word)[--*word_length] = '\0';
 
@@ -1577,7 +1585,7 @@ envsubst:
       if (expand_pattern)
 	{
 	  /* We need to perform tilde expansion, parameter expansion,
-             command substitution, and arithmetic expansion.  We also
+	     command substitution, and arithmetic expansion.  We also
 	     have to be a bit careful with wildcard characters, as
 	     pattern might be given to fnmatch soon.  To do this, we
 	     convert quotes to escapes. */
@@ -1982,7 +1990,7 @@ envsubst:
 	  field_end = field_begin + strcspn (field_begin, ifs);
 
 	  /* Set up pointer to the character after end of field and
-             skip whitespace IFS after it. */
+	     skip whitespace IFS after it. */
 	  next_field = field_end + strspn (field_end, ifs_white);
 
 	  /* Skip at most one non-whitespace IFS character after the field */

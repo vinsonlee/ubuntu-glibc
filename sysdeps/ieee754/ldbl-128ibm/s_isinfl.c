@@ -11,21 +11,26 @@ static char rcsid[] = "$NetBSD: $";
 /*
  * isinfl(x) returns 1 if x is inf, -1 if x is -inf, else 0;
  * no branching!
+ * slightly dodgy in relying on signed shift right copying sign bit
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 #include <math_ldbl_opt.h>
 
 int
 ___isinfl (long double x)
 {
-	int64_t hx,lx;
-	GET_LDOUBLE_WORDS64(hx,lx,x);
-	lx = (lx & 0x7fffffffffffffffLL);
-	lx |= (hx & 0x7fffffffffffffffLL) ^ 0x7ff0000000000000LL;
-	lx |= -lx;
-	return ~(lx >> 63) & (hx >> 62);
+  double xhi;
+  int64_t hx, mask;
+
+  xhi = ldbl_high (x);
+  EXTRACT_WORDS64 (hx, xhi);
+
+  mask = (hx & 0x7fffffffffffffffLL) ^ 0x7ff0000000000000LL;
+  mask |= -mask;
+  mask >>= 63;
+  return ~mask & (hx >> 62);
 }
 hidden_ver (___isinfl, __isinfl)
 #ifndef IS_IN_libm

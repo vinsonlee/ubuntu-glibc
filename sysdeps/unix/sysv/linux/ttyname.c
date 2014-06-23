@@ -1,4 +1,4 @@
-/* Copyright (C) 1991,92,93,1996-2002,2006 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <limits.h>
@@ -27,7 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <stdio-common/_itoa.h>
+#include <_itoa.h>
 #include <kernel-features.h>
 
 #if 0
@@ -58,6 +57,11 @@ getttyname (const char *dev, dev_t mydev, ino64_t myino, int save, int *dostat)
       *dostat = -1;
       return NULL;
     }
+
+  /* Prepare for the loop.  If we already have a buffer copy the directory
+     name we look at into it.  */
+  if (devlen < namelen)
+    *((char *) __mempcpy (getttyname_name, dev, devlen - 1)) = '/';
 
   while ((d = __readdir64 (dirstream)) != NULL)
     if ((d->d_fileno == myino || *dostat)
@@ -126,6 +130,9 @@ ttyname (int fd)
   if (__builtin_expect (__tcgetattr (fd, &term) < 0, 0))
     return NULL;
 
+  if (__fxstat64 (_STAT_VER, fd, &st) < 0)
+    return NULL;
+
   /* We try using the /proc filesystem.  */
   *_fitoa_word (fd, __stpcpy (procname, "/proc/self/fd/"), 10, 0) = '\0';
 
@@ -141,28 +148,36 @@ ttyname (int fd)
     }
 
   ssize_t len = __readlink (procname, ttyname_buf, buflen);
-  if (__builtin_expect (len == -1 && errno == ENOENT, 0))
-    {
-      __set_errno (EBADF);
-      return NULL;
-    }
-
-  if (__builtin_expect (len != -1
-#ifndef __ASSUME_PROC_SELF_FD_SYMLINK
-			/* This is for Linux 2.0.  */
-			&& ttyname_buf[0] != '['
-#endif
-			, 1))
+  if (__builtin_expect (len != -1, 1))
     {
       if ((size_t) len >= buflen)
 	return NULL;
+
+#define UNREACHABLE_LEN strlen ("(unreachable)")
+      if (len > UNREACHABLE_LEN
+	  && memcmp (ttyname_buf, "(unreachable)", UNREACHABLE_LEN) == 0)
+	{
+	  memmove (ttyname_buf, ttyname_buf + UNREACHABLE_LEN,
+		   len - UNREACHABLE_LEN);
+	  len -= UNREACHABLE_LEN;
+	}
+
       /* readlink need not terminate the string.  */
       ttyname_buf[len] = '\0';
-      return ttyname_buf;
-    }
 
-  if (__fxstat64 (_STAT_VER, fd, &st) < 0)
-    return NULL;
+      /* Verify readlink result, fall back on iterating through devices.  */
+      if (ttyname_buf[0] == '/'
+	  && __xstat64 (_STAT_VER, ttyname_buf, &st1) == 0
+#ifdef _STATBUF_ST_RDEV
+	  && S_ISCHR (st1.st_mode)
+	  && st1.st_rdev == st.st_rdev
+#else
+	  && st1.st_ino == st.st_ino
+	  && st1.st_dev == st.st_dev
+#endif
+	  )
+	return ttyname_buf;
+    }
 
   if (__xstat64 (_STAT_VER, "/dev/pts", &st1) == 0 && S_ISDIR (st1.st_mode))
     {

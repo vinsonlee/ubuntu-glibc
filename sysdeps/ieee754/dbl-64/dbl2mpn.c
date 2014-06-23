@@ -1,4 +1,4 @@
-/* Copyright (C) 1993,1994,1995,1996,1997,2003 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -41,14 +40,14 @@ __mpn_extract_double (mp_ptr res_ptr, mp_size_t size,
 #if BITS_PER_MP_LIMB == 32
   res_ptr[0] = u.ieee.mantissa1; /* Low-order 32 bits of fraction.  */
   res_ptr[1] = u.ieee.mantissa0; /* High-order 20 bits.  */
-  #define N 2
+  # define N 2
 #elif BITS_PER_MP_LIMB == 64
   /* Hopefully the compiler will combine the two bitfield extracts
      and this composition into just the original quadword extract.  */
   res_ptr[0] = ((mp_limb_t) u.ieee.mantissa0 << 32) | u.ieee.mantissa1;
-  #define N 1
+  # define N 1
 #else
-  #error "mp_limb size " BITS_PER_MP_LIMB "not accounted for"
+  # error "mp_limb size " BITS_PER_MP_LIMB "not accounted for"
 #endif
 /* The format does not fill the last limb.  There are some zeros.  */
 #define NUM_LEADING_ZEROS (BITS_PER_MP_LIMB \
@@ -74,7 +73,7 @@ __mpn_extract_double (mp_ptr res_ptr, mp_size_t size,
 #if N == 2
 	      res_ptr[N - 1] = res_ptr[1] << cnt
 			       | (N - 1)
-			         * (res_ptr[0] >> (BITS_PER_MP_LIMB - cnt));
+			       * (res_ptr[0] >> (BITS_PER_MP_LIMB - cnt));
 	      res_ptr[0] <<= cnt;
 #else
 	      res_ptr[N - 1] <<= cnt;

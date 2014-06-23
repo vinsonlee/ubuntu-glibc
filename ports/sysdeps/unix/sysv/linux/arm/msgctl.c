@@ -1,1 +1,1 @@
-#include <sysdeps/unix/sysv/linux/i386/msgctl.c>
+#include <sysdeps/unix/sysv/linux/alpha/msgctl.c>

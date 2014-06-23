@@ -1,5 +1,5 @@
 /* Single-precision floating point square root.
-   Copyright (C) 1997, 2003, 2004, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,15 +13,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
 #include <math_private.h>
 #include <fenv_libc.h>
 #include <inttypes.h>
-
+#include <stdint.h>
 #include <sysdep.h>
 #include <ldsodefs.h>
 
@@ -35,7 +34,7 @@ extern const float __t_sqrt[1024];
 /* The method is based on a description in
    Computation of elementary functions on the IBM RISC System/6000 processor,
    P. W. Markstein, IBM J. Res. Develop, 34(1) 1990.
-   Basically, it consists of two interleaved Newton-Rhapson approximations,
+   Basically, it consists of two interleaved Newton-Raphson approximations,
    one to find the actual square root, and one to find its reciprocal
    without the expense of a division operation.   The tricky bit here
    is the use of the POWER/PowerPC multiply-add operation to get the
@@ -44,16 +43,10 @@ extern const float __t_sqrt[1024];
    The argument reduction works by a combination of table lookup to
    obtain the initial guesses, and some careful modification of the
    generated guesses (which mostly runs on the integer unit, while the
-   Newton-Rhapson is running on the FPU).  */
+   Newton-Raphson is running on the FPU).  */
 
-#ifdef __STDC__
 float
 __slow_ieee754_sqrtf (float x)
-#else
-float
-__slow_ieee754_sqrtf (x)
-     float x;
-#endif
 {
   const float inf = a_inf.value;
 
@@ -90,7 +83,7 @@ __slow_ieee754_sqrtf (x)
 	  sg = t_sqrt[0];
 	  sy = t_sqrt[1];
 
-	  /* Here we have three Newton-Rhapson iterations each of a
+	  /* Here we have three Newton-Raphson iterations each of a
 	     division and a square root and the remainder of the
 	     argument reduction, all interleaved.   */
 	  sd = -(sg * sg - sx);
@@ -123,12 +116,12 @@ __slow_ieee754_sqrtf (x)
   else if (x < 0)
     {
       /* For some reason, some PowerPC32 processors don't implement
-         FE_INVALID_SQRT.  */
+	 FE_INVALID_SQRT.  */
 #ifdef FE_INVALID_SQRT
       feraiseexcept (FE_INVALID_SQRT);
 
       fenv_union_t u = { .fenv = fegetenv_register () };
-      if ((u.l[1] & FE_INVALID) == 0)
+      if ((u.l & FE_INVALID) == 0)
 #endif
 	feraiseexcept (FE_INVALID);
       x = a_nan.value;
@@ -136,15 +129,9 @@ __slow_ieee754_sqrtf (x)
   return f_washf (x);
 }
 
-
-#ifdef __STDC__
+#undef __ieee754_sqrtf
 float
 __ieee754_sqrtf (float x)
-#else
-float
-__ieee754_sqrtf (x)
-     float x;
-#endif
 {
   double z;
 
@@ -152,7 +139,7 @@ __ieee754_sqrtf (x)
   if (__CPU_HAS_FSQRT)
     {
       /* Volatile is required to prevent the compiler from moving the
-         fsqrt instruction above the branch.  */
+	 fsqrt instruction above the branch.  */
       __asm __volatile ("	fsqrts	%0,%1\n"
 				:"=f" (z):"f" (x));
     }
@@ -161,3 +148,4 @@ __ieee754_sqrtf (x)
 
   return z;
 }
+strong_alias (__ieee754_sqrtf, __sqrtf_finite)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2003, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky <schwidefsky@de.ibm.com>, 2003.
 
@@ -13,15 +13,15 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <sysdep.h>
 #include <lowlevellock.h>
 #include <pthread.h>
 #include <pthreadP.h>
+#include <stap-probe.h>
 
 
 /* Acquire write lock for RWLOCK.  */
@@ -31,7 +31,9 @@ __pthread_rwlock_wrlock (rwlock)
 {
   int result = 0;
 
-  /* Make sure we are along.  */
+  LIBC_PROBE (wrlock_entry, 1, rwlock);
+
+  /* Make sure we are alone.  */
   lll_lock (rwlock->__data.__lock, rwlock->__data.__shared);
 
   while (1)
@@ -41,6 +43,8 @@ __pthread_rwlock_wrlock (rwlock)
 	{
 	  /* Mark self as writer.  */
 	  rwlock->__data.__writer = THREAD_GETMEM (THREAD_SELF, tid);
+
+	  LIBC_PROBE (wrlock_acquire_write, 1, rwlock);
 	  break;
 	}
 
@@ -85,4 +89,4 @@ __pthread_rwlock_wrlock (rwlock)
 }
 
 weak_alias (__pthread_rwlock_wrlock, pthread_rwlock_wrlock)
-strong_alias (__pthread_rwlock_wrlock, __pthread_rwlock_wrlock_internal)
+hidden_def (__pthread_rwlock_wrlock)

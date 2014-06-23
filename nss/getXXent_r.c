@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2000,2002,2004,2007 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <bits/libc-lock.h>
@@ -170,10 +169,13 @@ INTERNAL (REENTRANT_GETNAME) (LOOKUP_TYPE *resbuf, char *buffer, size_t buflen,
 }
 
 
-#include <shlib-compat.h>
-#if SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_1_2)
-#define OLD(name) OLD1 (name)
-#define OLD1(name) __old_##name
+#ifdef NO_COMPAT_NEEDED
+strong_alias (INTERNAL (REENTRANT_GETNAME), REENTRANT_GETNAME);
+#else
+# include <shlib-compat.h>
+# if SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_1_2)
+#  define OLD(name) OLD1 (name)
+#  define OLD1(name) __old_##name
 
 int
 attribute_compat_text_section
@@ -189,21 +191,22 @@ OLD (REENTRANT_GETNAME) (LOOKUP_TYPE *resbuf, char *buffer, size_t buflen,
   return ret;
 }
 
-#define do_symbol_version(real, name, version) \
+#  define do_symbol_version(real, name, version) \
   compat_symbol (libc, real, name, version)
 do_symbol_version (OLD (REENTRANT_GETNAME), REENTRANT_GETNAME, GLIBC_2_0);
-#endif
+# endif
 
 /* As INTERNAL (REENTRANT_GETNAME) may be hidden, we need an alias
    in between so that the REENTRANT_GETNAME@@GLIBC_2.1.2 is not
    hidden too.  */
 strong_alias (INTERNAL (REENTRANT_GETNAME), NEW (REENTRANT_GETNAME));
 
-#define do_default_symbol_version(real, name, version) \
+# define do_default_symbol_version(real, name, version) \
   versioned_symbol (libc, real, name, version)
 do_default_symbol_version (NEW (REENTRANT_GETNAME),
 			   REENTRANT_GETNAME, GLIBC_2_1_2);
+#endif
 
-static_link_warning (SETFUNC_NAME)
-static_link_warning (ENDFUNC_NAME)
-static_link_warning (REENTRANT_GETNAME)
+nss_interface_function (SETFUNC_NAME)
+nss_interface_function (ENDFUNC_NAME)
+nss_interface_function (REENTRANT_GETNAME)

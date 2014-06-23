@@ -87,7 +87,7 @@ hesiod_init(void **context) {
 	ctx->classes[0] = C_IN;
 	ctx->classes[1] = C_HS;
 
-	configname = __secure_getenv("HESIOD_CONFIG");
+	configname = __libc_secure_getenv("HESIOD_CONFIG");
 	if (!configname)
 	  configname = _PATH_HESIOD_CONF;
 	if (parse_config_file(ctx, configname) < 0) {
@@ -109,7 +109,7 @@ hesiod_init(void **context) {
 	 * The default RHS can be overridden by an environment
 	 * variable.
 	 */
-	if ((cp = __secure_getenv("HES_DOMAIN")) != NULL) {
+	if ((cp = __libc_secure_getenv("HES_DOMAIN")) != NULL) {
 		free(ctx->RHS);
 		ctx->RHS = malloc(strlen(cp)+2);
 		if (!ctx->RHS)
@@ -278,7 +278,7 @@ parse_config_file(struct hesiod_p *ctx, const char *filename) {
 	/*
 	 * Now open and parse the file...
 	 */
-	if (!(fp = fopen(filename, "r")))
+	if (!(fp = fopen(filename, "rce")))
 		return (-1);
 
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
@@ -482,7 +482,7 @@ __hesiod_res_get(void *context) {
 
 void
 __hesiod_res_set(void *context, struct __res_state *res,
-	         void (*free_res)(void *)) {
+		 void (*free_res)(void *)) {
 	struct hesiod_p *ctx = context;
 
 	if (ctx->res && ctx->free_res) {

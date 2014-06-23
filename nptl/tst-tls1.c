@@ -1,4 +1,4 @@
-/* Copyright (C) 2003, 2004 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -13,16 +13,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 
-#if HAVE___THREAD
 struct test_s
 {
   int a;
@@ -52,19 +50,11 @@ tf (void *arg)
 
   return NULL;
 }
-#endif
 
 
 int
 do_test (void)
 {
-#if !HAVE___THREAD
-
-  puts ("No __thread support in compiler, test skipped.");
-
-  return 0;
-#else
-
   if (s.a != INIT_A || s.b != INIT_B)
     {
       puts ("initial value of s in main thread wrong");
@@ -114,7 +104,6 @@ do_test (void)
     }
 
   return 0;
-#endif
 }
 
 

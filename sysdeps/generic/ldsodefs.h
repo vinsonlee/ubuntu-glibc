@@ -1,5 +1,5 @@
 /* Run-time dynamic linker data structures for loaded ELF shared objects.
-   Copyright (C) 1995-2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef	_LDSODEFS_H
 #define	_LDSODEFS_H	1
@@ -27,6 +26,7 @@
 #define __need_NULL
 #include <stddef.h>
 #include <string.h>
+#include <stdint.h>
 
 #include <elf.h>
 #include <dlfcn.h>
@@ -41,6 +41,12 @@
 #include <kernel-features.h>
 
 __BEGIN_DECLS
+
+#define VERSYMIDX(sym)	(DT_NUM + DT_THISPROCNUM + DT_VERSIONTAGIDX (sym))
+#define VALIDX(tag)	(DT_NUM + DT_THISPROCNUM + DT_VERSIONTAGNUM \
+			 + DT_EXTRANUM + DT_VALTAGIDX (tag))
+#define ADDRIDX(tag)	(DT_NUM + DT_THISPROCNUM + DT_VERSIONTAGNUM \
+			 + DT_EXTRANUM + DT_VALNUM + DT_ADDRTAGIDX (tag))
 
 /* We use this macro to refer to ELF types independent of the native wordsize.
    `ElfW(TYPE)' is used in place of `Elf32_TYPE' or `Elf64_TYPE'.  */
@@ -70,8 +76,9 @@ typedef struct link_map *lookup_t;
 # define DL_SYMBOL_ADDRESS(map, ref) \
  (void *) (LOOKUP_VALUE_ADDRESS (map) + ref->st_value)
 # define DL_LOOKUP_ADDRESS(addr) ((ElfW(Addr)) (addr))
-# define DL_DT_INIT_ADDRESS(map, start) (start)
-# define DL_DT_FINI_ADDRESS(map, start) (start)
+# define DL_CALL_DT_INIT(map, start, argc, argv, env) \
+ ((init_t) (start)) (argc, argv, env)
+# define DL_CALL_DT_FINI(map, start) ((fini_t) (start)) ()
 #endif
 
 /* On some architectures dladdr can't use st_size of all symbols this way.  */
@@ -122,6 +129,11 @@ typedef struct link_map *lookup_t;
    | ((PROT_WRITE | PROT_EXEC) << (PF_W | PF_X) * 4)			      \
    | ((PROT_READ | PROT_WRITE | PROT_EXEC) << ((PF_R | PF_W | PF_X) * 4)))
 
+/* The filename itself, or the main program name, if available.  */
+#define DSO_FILENAME(name) ((name)[0] ? (name)				      \
+			    : (rtld_progname ?: "<main program>"))
+
+#define RTLD_PROGNAME (rtld_progname ?: "<program name unknown>")
 
 /* For the version handling we need an array with only names and their
    hash values.  */
@@ -183,30 +195,6 @@ enum allowmask
   };
 
 
-/* Type for list of auditing interfaces.  */
-struct La_i86_regs;
-struct La_i86_retval;
-struct La_x86_64_regs;
-struct La_x86_64_retval;
-struct La_ppc32_regs;
-struct La_ppc32_retval;
-struct La_ppc64_regs;
-struct La_ppc64_retval;
-struct La_sh_regs;
-struct La_sh_retval;
-struct La_alpha_regs;
-struct La_alpha_retval;
-struct La_s390_32_regs;
-struct La_s390_32_retval;
-struct La_s390_64_regs;
-struct La_s390_64_retval;
-struct La_ia64_regs;
-struct La_ia64_retval;
-struct La_sparc32_regs;
-struct La_sparc32_retval;
-struct La_sparc64_regs;
-struct La_sparc64_retval;
-
 struct audit_ifaces
 {
   void (*activity) (uintptr_t *, unsigned int);
@@ -222,105 +210,12 @@ struct audit_ifaces
   };
   union
   {
-    Elf32_Addr (*i86_gnu_pltenter) (Elf32_Sym *, unsigned int, uintptr_t *,
-				    uintptr_t *, struct La_i86_regs *,
-				    unsigned int *, const char *name,
-				    long int *framesizep);
-    Elf64_Addr (*x86_64_gnu_pltenter) (Elf64_Sym *, unsigned int, uintptr_t *,
-				       uintptr_t *, struct La_x86_64_regs *,
-				       unsigned int *, const char *name,
-				       long int *framesizep);
-    Elf32_Addr (*ppc32_gnu_pltenter) (Elf32_Sym *, unsigned int, uintptr_t *,
-				      uintptr_t *, struct La_ppc32_regs *,
-				      unsigned int *, const char *name,
-				      long int *framesizep);
-    Elf64_Addr (*ppc64_gnu_pltenter) (Elf64_Sym *, unsigned int, uintptr_t *,
-				      uintptr_t *, struct La_ppc64_regs *,
-				      unsigned int *, const char *name,
-				      long int *framesizep);
-    uintptr_t (*sh_gnu_pltenter) (Elf32_Sym *, unsigned int, uintptr_t *,
-				  uintptr_t *, const struct La_sh_regs *,
-				  unsigned int *, const char *name,
-				  long int *framesizep);
-    Elf64_Addr (*alpha_gnu_pltenter) (Elf64_Sym *, unsigned int, uintptr_t *,
-				      uintptr_t *, struct La_alpha_regs *,
-				      unsigned int *, const char *name,
-				      long int *framesizep);
-    Elf32_Addr (*s390_32_gnu_pltenter) (Elf32_Sym *, unsigned int, uintptr_t *,
-					uintptr_t *, struct La_s390_32_regs *,
-					unsigned int *, const char *name,
-					long int *framesizep);
-    Elf64_Addr (*s390_64_gnu_pltenter) (Elf64_Sym *, unsigned int, uintptr_t *,
-					uintptr_t *, struct La_s390_64_regs *,
-					unsigned int *, const char *name,
-					long int *framesizep);
-    Elf64_Addr (*ia64_gnu_pltenter) (Elf64_Sym *, unsigned int, uintptr_t *,
-				     uintptr_t *, struct La_ia64_regs *,
-				     unsigned int *, const char *name,
-				     long int *framesizep);
-    Elf32_Addr (*sparc32_gnu_pltenter) (Elf32_Sym *, unsigned int,
-					uintptr_t *, uintptr_t *,
-					const struct La_sparc32_regs *,
-					unsigned int *, const char *name,
-					long int *framesizep);
-    Elf64_Addr (*sparc64_gnu_pltenter) (Elf64_Sym *, unsigned int,
-					uintptr_t *, uintptr_t *,
-					const struct La_sparc64_regs *,
-					unsigned int *, const char *name,
-					long int *framesizep);
 #ifdef ARCH_PLTENTER_MEMBERS
     ARCH_PLTENTER_MEMBERS;
 #endif
   };
   union
   {
-    unsigned int (*i86_gnu_pltexit) (Elf32_Sym *, unsigned int, uintptr_t *,
-				     uintptr_t *, const struct La_i86_regs *,
-				     struct La_i86_retval *, const char *);
-    unsigned int (*x86_64_gnu_pltexit) (Elf64_Sym *, unsigned int, uintptr_t *,
-					uintptr_t *,
-					const struct La_x86_64_regs *,
-					struct La_x86_64_retval *,
-					const char *);
-    unsigned int (*ppc32_gnu_pltexit) (Elf32_Sym *, unsigned int, uintptr_t *,
-				       uintptr_t *,
-				       const struct La_ppc32_regs *,
-				       struct La_ppc32_retval *, const char *);
-    unsigned int (*ppc64_gnu_pltexit) (Elf64_Sym *, unsigned int, uintptr_t *,
-				       uintptr_t *,
-				       const struct La_ppc64_regs *,
-				       struct La_ppc64_retval *, const char *);
-    unsigned int (*sh_gnu_pltexit) (Elf32_Sym *, unsigned int, uintptr_t *,
-				    uintptr_t *, const struct La_sh_regs *,
-				    struct La_sh_retval *, const char *);
-    unsigned int (*alpha_gnu_pltexit) (Elf64_Sym *, unsigned int, uintptr_t *,
-				       uintptr_t *,
-				       const struct La_alpha_regs *,
-				       struct La_alpha_retval *, const char *);
-    unsigned int (*s390_32_gnu_pltexit) (Elf32_Sym *, unsigned int,
-					 uintptr_t *, uintptr_t *,
-					 const struct La_s390_32_regs *,
-					 struct La_s390_32_retval *,
-					 const char *);
-    unsigned int (*s390_64_gnu_pltexit) (Elf64_Sym *, unsigned int,
-					 uintptr_t *, uintptr_t *,
-					 const struct La_s390_64_regs *,
-					 struct La_s390_64_retval *,
-					 const char *);
-    unsigned int (*ia64_gnu_pltexit) (Elf64_Sym *, unsigned int, uintptr_t *,
-				      uintptr_t *,
-				      const struct La_ia64_regs *,
-				      struct La_ia64_retval *, const char *);
-    unsigned int (*sparc32_gnu_pltexit) (Elf32_Sym *, unsigned int,
-					 uintptr_t *, uintptr_t *,
-					 const struct La_sparc32_regs *,
-					 struct La_sparc32_retval *,
-					 const char *);
-    unsigned int (*sparc64_gnu_pltexit) (Elf64_Sym *, unsigned int,
-					 uintptr_t *, uintptr_t *,
-					 const struct La_sparc32_regs *,
-					 struct La_sparc32_retval *,
-					 const char *);
 #ifdef ARCH_PLTEXIT_MEMBERS
     ARCH_PLTEXIT_MEMBERS;
 #endif
@@ -333,6 +228,10 @@ struct audit_ifaces
 
 /* Test whether given NAME matches any of the names of the given object.  */
 extern int _dl_name_match_p (const char *__name, const struct link_map *__map)
+     internal_function;
+
+/* Compute next higher prime number.  */
+extern unsigned long int _dl_higher_prime_number (unsigned long int n)
      internal_function;
 
 /* Function used as argument for `_dl_receive_error' function.  The
@@ -383,9 +282,26 @@ struct rtld_global
        allocated by rtld.  Later it keeps the size of the map.  It might be
        reset if in _dl_close if the last global object is removed.  */
     size_t _ns_global_scope_alloc;
+    /* Search table for unique objects.  */
+    struct unique_sym_table
+    {
+      __rtld_lock_define_recursive (, lock)
+      struct unique_sym
+      {
+	uint32_t hashval;
+	const char *name;
+	const ElfW(Sym) *sym;
+	const struct link_map *map;
+      } *entries;
+      size_t size;
+      size_t n_elements;
+      void (*free) (void *);
+    } _ns_unique_sym_table;
     /* Keep track of changes to each namespace' list.  */
     struct r_debug _ns_debug;
   } _dl_ns[DL_NNS];
+  /* One higher than index of last used namespace.  */
+  EXTERN size_t _dl_nns;
 
   /* During the program run we must not modify the global data of
      loaded shared object simultanously in two threads.  Therefore we
@@ -395,14 +311,13 @@ struct rtld_global
      the loaded object might as well require a call to this function.
      At this time it is not anymore a problem to modify the tables.  */
   __rtld_lock_define_recursive (EXTERN, _dl_load_lock)
+  /* This lock is used to keep __dl_iterate_phdr from inspecting the
+     list of loaded objects while an object is added to or removed
+     from that list.  */
+  __rtld_lock_define_recursive (EXTERN, _dl_load_write_lock)
 
   /* Incremented whenever something may have been added to dl_loaded.  */
   EXTERN unsigned long long _dl_load_adds;
-
-#ifndef MAP_ANON
-  /* File descriptor referring to the zero-fill device.  */
-  EXTERN int _dl_zerofd;
-#endif
 
   /* The object to be initialized first.  */
   EXTERN struct link_map *_dl_initfirst;
@@ -536,9 +451,10 @@ struct rtld_global_ro
 #define DL_DEBUG_FILES      (1 << 6)
 #define DL_DEBUG_STATISTICS (1 << 7)
 #define DL_DEBUG_UNUSED	    (1 << 8)
+#define DL_DEBUG_SCOPES	    (1 << 9)
 /* These two are used only internally.  */
-#define DL_DEBUG_HELP       (1 << 9)
-#define DL_DEBUG_PRELINK    (1 << 10)
+#define DL_DEBUG_HELP       (1 << 10)
+#define DL_DEBUG_PRELINK    (1 << 11)
 
   /* OS version.  */
   EXTERN unsigned int _dl_osversion;
@@ -548,6 +464,9 @@ struct rtld_global_ro
 
   /* Cached value of `getpagesize ()'.  */
   EXTERN size_t _dl_pagesize;
+
+  /* Do we read from ld.so.cache?  */
+  EXTERN int _dl_inhibit_cache;
 
   /* Copy of the content of `_dl_main_searchlist' at startup time.  */
   EXTERN struct r_scope_elem _dl_initial_searchlist;
@@ -582,6 +501,9 @@ struct rtld_global_ro
 
   /* Mask for important hardware capabilities we honour. */
   EXTERN uint64_t _dl_hwcap_mask;
+
+  /* Pointer to the auxv list supplied to the program at startup.  */
+  EXTERN ElfW(auxv_t) *_dl_auxv;
 
   /* Get architecture specific definitions.  */
 #define PROCINFO_DECL
@@ -623,7 +545,7 @@ struct rtld_global_ro
   EXTERN uintptr_t _dl_sysinfo;
 #endif
 
-#if defined NEED_DL_SYSINFO || defined NEED_DL_SYSINFO_DSO
+#ifdef NEED_DL_SYSINFO_DSO
   /* The vsyscall page is a virtual DSO pre-mapped by the kernel.
      This points to its ELF header.  */
   EXTERN const ElfW(Ehdr) *_dl_sysinfo_dso;
@@ -632,6 +554,10 @@ struct rtld_global_ro
      and this points to it.  */
   EXTERN struct link_map *_dl_sysinfo_map;
 #endif
+
+  /* Mask for more hardware capabilities that are available on some
+     platforms.  */
+  EXTERN uint64_t _dl_hwcap2;
 
 #ifdef SHARED
   /* We add a function table to _rtld_global which is then used to
@@ -686,6 +612,12 @@ extern const struct rtld_global_ro _rtld_global_ro
 #endif
 #undef EXTERN
 
+#ifndef SHARED
+/* dl-support.c defines these and initializes them early on.  */
+extern const ElfW(Phdr) *_dl_phdr;
+extern size_t _dl_phnum;
+#endif
+
 #ifdef IS_IN_rtld
 /* This is the initial value of GL(dl_error_catch_tsd).
    A non-TLS libpthread will change it.  */
@@ -703,7 +635,11 @@ rtld_hidden_proto (_dl_make_stack_executable)
    might use the variable which results in copy relocations on some
    platforms.  But this does not matter, ld.so can always use the local
    copy.  */
-extern void *__libc_stack_end attribute_relro;
+extern void *__libc_stack_end
+#ifndef LIBC_STACK_END_NOT_RELRO
+     attribute_relro
+#endif
+     ;
 rtld_hidden_proto (__libc_stack_end)
 
 /* Parameters passed to the dynamic linker.  */
@@ -714,6 +650,16 @@ extern char **_dl_argv
 #endif
      ;
 #ifdef IS_IN_rtld
+extern unsigned int _dl_skip_args attribute_hidden
+# ifndef DL_ARGV_NOT_RELRO
+     attribute_relro
+# endif
+     ;
+extern unsigned int _dl_skip_args_internal attribute_hidden
+# ifndef DL_ARGV_NOT_RELRO
+     attribute_relro
+# endif
+     ;
 extern char **_dl_argv_internal attribute_hidden
 # ifndef DL_ARGV_NOT_RELRO
      attribute_relro
@@ -730,6 +676,9 @@ weak_extern (_dl_starting_up)
 #ifdef IS_IN_rtld
 extern int _dl_starting_up_internal attribute_hidden;
 #endif
+
+/* Random data provided by the kernel.  */
+extern void *_dl_random attribute_hidden attribute_relro;
 
 /* OS-dependent function to open the zero-fill device.  */
 extern int _dl_sysdep_open_zero_fill (void); /* dl-sysdep.c */
@@ -801,11 +750,9 @@ extern void _dl_receive_error (receiver_fct fct, void (*operate) (void *),
 
 /* Open the shared object NAME and map in its segments.
    LOADER's DT_RPATH is used in searching for NAME.
-   If the object is already opened, returns its existing map.
-   For preloaded shared objects PRELOADED is set to a non-zero
-   value to allow additional security checks.  */
+   If the object is already opened, returns its existing map.  */
 extern struct link_map *_dl_map_object (struct link_map *loader,
-					const char *name, int preloaded,
+					const char *name,
 					int type, int trace_mode, int mode,
 					Lmid_t nsid)
      internal_function attribute_hidden;
@@ -870,8 +817,11 @@ extern lookup_t _dl_lookup_symbol_x (const char *undef,
 extern ElfW(Addr) _dl_symbol_value (struct link_map *map, const char *name)
      internal_function;
 
-/* Allocate a `struct link_map' for a new object being loaded,
-   and enter it into the _dl_main_map list.  */
+/* Add the new link_map NEW to the end of the namespace list.  */
+extern void _dl_add_to_namespace_list (struct link_map *new, Lmid_t nsid)
+     internal_function attribute_hidden;
+
+/* Allocate a `struct link_map' for a new object being loaded.  */
 extern struct link_map *_dl_new_object (char *realname, const char *libname,
 					int type, struct link_map *loader,
 					int mode, Lmid_t nsid)
@@ -879,10 +829,10 @@ extern struct link_map *_dl_new_object (char *realname, const char *libname,
 
 /* Relocate the given object (if it hasn't already been).
    SCOPE is passed to _dl_lookup_symbol in symbol lookups.
-   If LAZY is nonzero, don't relocate its PLT.  */
+   If RTLD_LAZY is set in RELOC-MODE, don't relocate its PLT.  */
 extern void _dl_relocate_object (struct link_map *map,
 				 struct r_scope_elem *scope[],
-				 int lazy, int consider_profiling)
+				 int reloc_mode, int consider_profiling)
      attribute_hidden;
 
 /* Protect PT_GNU_RELRO area.  */
@@ -923,8 +873,8 @@ extern void _dl_init (struct link_map *main_map, int argc, char **argv,
 extern void _dl_fini (void) internal_function;
 
 /* Sort array MAPS according to dependencies of the contained objects.  */
-extern void _dl_sort_fini (struct link_map *l, struct link_map **maps,
-			   size_t nmaps, char *used, Lmid_t ns)
+extern void _dl_sort_fini (struct link_map **maps, size_t nmaps, char *used,
+			   Lmid_t ns)
      internal_function;
 
 /* The dynamic linker calls this function before and having changing
@@ -996,7 +946,8 @@ extern void *_dl_sysdep_read_whole_file (const char *file, size_t *sizep,
 extern ElfW(Addr) _dl_sysdep_start (void **start_argptr,
 				    void (*dl_main) (const ElfW(Phdr) *phdr,
 						     ElfW(Word) phnum,
-						     ElfW(Addr) *user_entry))
+						     ElfW(Addr) *user_entry,
+						     ElfW(auxv_t) *auxv))
      attribute_hidden;
 
 extern void _dl_sysdep_start_cleanup (void)
@@ -1078,6 +1029,20 @@ extern void *_dl_tls_get_addr_soft (struct link_map *l) attribute_hidden;
 
 extern int _dl_addr_inside_object (struct link_map *l, const ElfW(Addr) addr)
      internal_function attribute_hidden;
+
+/* Show show of an object.  */
+extern void _dl_show_scope (struct link_map *new, int from);
+
+extern struct link_map *_dl_find_dso_for_object (const ElfW(Addr) addr)
+     internal_function;
+rtld_hidden_proto (_dl_find_dso_for_object)
+
+/* Initialization which is normally done by the dynamic linker.  */
+extern void _dl_non_dynamic_init (void) internal_function;
+
+/* Used by static binaries to check the auxiliary vector.  */
+extern void _dl_aux_init (ElfW(auxv_t) *av) internal_function;
+
 
 __END_DECLS
 

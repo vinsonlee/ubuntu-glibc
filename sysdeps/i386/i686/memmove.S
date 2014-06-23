@@ -1,7 +1,7 @@
 /* Copy memory block and return pointer to beginning of destination block
    For Intel 80x86, x>=6.
    This file is part of the GNU C Library.
-   Copyright (C) 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2003.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -15,31 +15,36 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include "asm-syntax.h"
-#include "bp-sym.h"
-#include "bp-asm.h"
 
-#define PARMS	LINKAGE+4	/* one spilled register */
+#define PARMS	4+4	/* one spilled register */
 #define RTN	PARMS
-#define DEST	RTN+RTN_SIZE
-#define SRC	DEST+PTR_SIZE
-#define LEN	SRC+PTR_SIZE
 
 	.text
-#if defined PIC && !defined NOT_IN_libc
-ENTRY (__memmove_chk)
+
+#ifdef USE_AS_BCOPY
+# define SRC	RTN
+# define DEST	SRC+4
+# define LEN	DEST+4
+#else
+# define DEST	RTN
+# define SRC	DEST+4
+# define LEN	SRC+4
+
+# if defined PIC && !defined NOT_IN_libc
+ENTRY_CHK (__memmove_chk)
 	movl	12(%esp), %eax
 	cmpl	%eax, 16(%esp)
 	jb	HIDDEN_JUMPTARGET (__chk_fail)
-END (__memmove_chk)
+END_CHK (__memmove_chk)
+# endif
 #endif
-ENTRY (BP_SYM (memmove))
-	ENTER
+
+ENTRY (memmove)
 
 	pushl	%edi
 	cfi_adjust_cfa_offset (4)
@@ -50,13 +55,11 @@ ENTRY (BP_SYM (memmove))
 	movl	%esi, %edx
 	movl	SRC(%esp), %esi
 	cfi_register (esi, edx)
-	CHECK_BOUNDS_BOTH_WIDE (%edi, DEST(%esp), %ecx)
-	CHECK_BOUNDS_BOTH_WIDE (%esi, SRC(%esp), %ecx)
 
 	movl	%edi, %eax
 	subl	%esi, %eax
-	cmpl	%eax, %edi
-	jae	3f
+	cmpl	%eax, %ecx
+	ja	3f
 
 	cld
 	shrl	$1, %ecx
@@ -69,15 +72,15 @@ ENTRY (BP_SYM (memmove))
 	movsl
 	movl	%edx, %esi
 	cfi_restore (esi)
+#ifndef USE_AS_BCOPY
 	movl	DEST(%esp), %eax
-	RETURN_BOUNDED_POINTER (DEST(%esp))
+#endif
 
 	popl	%edi
 	cfi_adjust_cfa_offset (-4)
 	cfi_restore (edi)
 
-	LEAVE
-	RET_PTR
+	ret
 
 	cfi_adjust_cfa_offset (4)
 	cfi_rel_offset (edi, 0)
@@ -101,15 +104,17 @@ ENTRY (BP_SYM (memmove))
 	movsl
 	movl	%edx, %esi
 	cfi_restore (esi)
+#ifndef USE_AS_BCOPY
 	movl	DEST(%esp), %eax
-	RETURN_BOUNDED_POINTER (DEST(%esp))
+#endif
 
 	cld
 	popl	%edi
 	cfi_adjust_cfa_offset (-4)
 	cfi_restore (edi)
 
-	LEAVE
-	RET_PTR
-END (BP_SYM (memmove))
+	ret
+END (memmove)
+#ifndef USE_AS_BCOPY
 libc_hidden_builtin_def (memmove)
+#endif

@@ -1,5 +1,5 @@
 /* Mapping tables for SJIS handling.
-   Copyright (C) 1997-2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <dlfcn.h>
 #include <stdint.h>
@@ -4372,14 +4371,18 @@ static const char from_ucs4_extra[0x100][2] =
 									      \
 	ch2 = inptr[1];							      \
 	idx = ch * 256 + ch2;						      \
-	if (__builtin_expect (ch2 < 0x40, 0)				      \
-	    || (__builtin_expect (idx > 0x84be, 0) && idx < 0x889f)	      \
-	    || (__builtin_expect (idx > 0x88fc, 0) && idx < 0x8940)	      \
-	    || (__builtin_expect (idx > 0x9ffc, 0) && idx < 0xe040)	      \
-	    || __builtin_expect (idx > 0xeaa4, 0))			      \
+	if (__builtin_expect (ch2 < 0x40, 0))				      \
 	  {								      \
 	    /* This is illegal.  */					      \
 	    STANDARD_FROM_LOOP_ERR_HANDLER (1);				      \
+	  }								      \
+	else if ((__builtin_expect (idx > 0x84be && idx < 0x889f, 0))	      \
+		 || (__builtin_expect (idx > 0x88fc && idx < 0x8940, 0))      \
+		 || (__builtin_expect (idx > 0x9ffc && idx < 0xe040, 0))      \
+		 || __builtin_expect (idx > 0xeaa4, 0))			      \
+	  {								      \
+	    /* This is illegal.  */					      \
+	    STANDARD_FROM_LOOP_ERR_HANDLER (2);				      \
 	  }								      \
 	else								      \
 	  {								      \
@@ -4395,13 +4398,13 @@ static const char from_ucs4_extra[0x100][2] =
 	    else							      \
 	      ch = cjk_block4[(ch - 0xe0) * 192 + ch2 - 0x40];		      \
 									      \
-	    inptr += 2;							      \
-	  }								      \
+	    if (__builtin_expect (ch == 0, 0))				      \
+	      {								      \
+		/* This is an illegal character.  */			      \
+		STANDARD_FROM_LOOP_ERR_HANDLER (2);			      \
+	      }								      \
 									      \
-	if (__builtin_expect (ch == 0, 0))				      \
-	  {								      \
-	    /* This is an illegal character.  */			      \
-	    STANDARD_FROM_LOOP_ERR_HANDLER (2);				      \
+	    inptr += 2;							      \
 	  }								      \
       }									      \
 									      \

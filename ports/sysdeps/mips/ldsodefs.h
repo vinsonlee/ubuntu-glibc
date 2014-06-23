@@ -1,5 +1,5 @@
 /* Run-time dynamic linker data structures for loaded ELF shared objects.
-   Copyright (C) 2000, 2002, 2003, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _MIPS_LDSODEFS_H
 #define _MIPS_LDSODEFS_H 1
@@ -30,17 +29,17 @@ struct La_mips_64_retval;
 #define ARCH_PLTENTER_MEMBERS						    \
     Elf32_Addr (*mips_o32_gnu_pltenter) (Elf32_Sym *, unsigned int,	    \
 					 uintptr_t *, uintptr_t *,	    \
-					 const struct La_mips_32_regs *,    \
+					 struct La_mips_32_regs *,	    \
 					 unsigned int *, const char *name,  \
 					 long int *framesizep);		    \
     Elf32_Addr (*mips_n32_gnu_pltenter) (Elf32_Sym *, unsigned int,	    \
 					 uintptr_t *, uintptr_t *,	    \
-					 const struct La_mips_64_regs *,    \
+					 struct La_mips_64_regs *,	    \
 					 unsigned int *, const char *name,  \
 					 long int *framesizep);		    \
     Elf64_Addr (*mips_n64_gnu_pltenter) (Elf64_Sym *, unsigned int,	    \
 					 uintptr_t *, uintptr_t *,	    \
-					 const struct La_mips_64_regs *,    \
+					 struct La_mips_64_regs *,	    \
 					 unsigned int *, const char *name,  \
 					 long int *framesizep);
 

@@ -1,5 +1,5 @@
 /* Startup support for ELF initializers/finalizers in the main executable.
-   Copyright (C) 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,9 +30,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <stddef.h>
 
@@ -50,24 +49,28 @@ extern void (*__fini_array_start []) (void) attribute_hidden;
 extern void (*__fini_array_end []) (void) attribute_hidden;
 
 
+#ifndef NO_INITFINI
 /* These function symbols are provided for the .init/.fini section entry
    points automagically by the linker.  */
 extern void _init (void);
 extern void _fini (void);
+#endif
+
 
 /* These functions are passed to __libc_start_main by the startup code.
    These get statically linked into each program.  For dynamically linked
    programs, this module will come from libc_nonshared.a and differs from
    the libc.a module in that it doesn't call the preinit array.  */
 
+
 void
 __libc_csu_init (int argc, char **argv, char **envp)
 {
   /* For dynamically linked executables the preinit array is executed by
-     the dynamic linker (before initializing any shared object.  */
+     the dynamic linker (before initializing any shared object).  */
 
 #ifndef LIBC_NONSHARED
-  /* For static executables, preinit happens rights before init.  */
+  /* For static executables, preinit happens right before init.  */
   {
     const size_t size = __preinit_array_end - __preinit_array_start;
     size_t i;
@@ -76,7 +79,9 @@ __libc_csu_init (int argc, char **argv, char **envp)
   }
 #endif
 
+#ifndef NO_INITFINI
   _init ();
+#endif
 
   const size_t size = __init_array_end - __init_array_start;
   for (size_t i = 0; i < size; i++)
@@ -94,6 +99,8 @@ __libc_csu_fini (void)
   while (i-- > 0)
     (*__fini_array_start [i]) ();
 
+# ifndef NO_INITFINI
   _fini ();
+# endif
 #endif
 }

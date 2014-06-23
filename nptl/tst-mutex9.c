@@ -1,4 +1,4 @@
-/* Copyright (C) 2003, 2004, 2006 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -13,16 +13,18 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 
 
@@ -37,7 +39,6 @@ do_test (void)
   pthread_mutex_t *m;
   pthread_mutexattr_t a;
   pid_t pid;
-  char *p;
 
   fd = mkstemp (tmpfname);
   if (fd == -1)
@@ -68,7 +69,6 @@ do_test (void)
 
   m = (pthread_mutex_t *) (((uintptr_t) mem + __alignof (pthread_mutex_t))
 			   & ~(__alignof (pthread_mutex_t) - 1));
-  p = (char *) (m + 1);
 
   if (pthread_mutexattr_init (&a) != 0)
     {

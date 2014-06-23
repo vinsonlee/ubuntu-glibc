@@ -1,4 +1,4 @@
-/* Copyright (C) 2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2004.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <fcntl.h>
@@ -29,8 +28,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <wchar.h>
+#include <sys/poll.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+
 
 #define obstack_chunk_alloc malloc
 #define obstack_chunk_free free
@@ -107,11 +109,11 @@ int num2 = 987654;
       FAIL ();					\
     }
 #if __USE_FORTIFY_LEVEL >= 2 && (!defined __cplusplus || defined __va_arg_pack)
-#define CHK_FAIL2_START CHK_FAIL_START
-#define CHK_FAIL2_END CHK_FAIL_END
+# define CHK_FAIL2_START CHK_FAIL_START
+# define CHK_FAIL2_END CHK_FAIL_END
 #else
-#define CHK_FAIL2_START
-#define CHK_FAIL2_END
+# define CHK_FAIL2_START
+# define CHK_FAIL2_END
 #endif
 
 static int
@@ -146,7 +148,7 @@ do_test (void)
 #endif
 	  );
 
-#if defined __USE_FORTIFY_LEVEL && !defined __extern_always_inline
+#if defined __USE_FORTIFY_LEVEL && !defined __fortify_function
   printf ("Test skipped");
   if (l0 == 0)
     return 0;
@@ -1445,6 +1447,43 @@ do_test (void)
   char smallbuf[1];
   res = getdomainname (smallbuf, sizeof (domainnamelarge));
   asm volatile ("" : : "r" (res));
+  CHK_FAIL_END
+#endif
+
+  fd_set s;
+  FD_ZERO (&s);
+  FD_SET (FD_SETSIZE - 1, &s);
+#if __USE_FORTIFY_LEVEL >= 1
+  CHK_FAIL_START
+  FD_SET (FD_SETSIZE, &s);
+  CHK_FAIL_END
+#endif
+  FD_CLR (FD_SETSIZE - 1, &s);
+#if __USE_FORTIFY_LEVEL >= 1
+  CHK_FAIL_START
+  FD_CLR (FD_SETSIZE, &s);
+  CHK_FAIL_END
+#endif
+  FD_ISSET (FD_SETSIZE - 1, &s);
+#if __USE_FORTIFY_LEVEL >= 1
+  CHK_FAIL_START
+  FD_ISSET (FD_SETSIZE, &s);
+  CHK_FAIL_END
+#endif
+
+  struct pollfd fds[1];
+  fds[0].fd = STDOUT_FILENO;
+  fds[0].events = POLLOUT;
+  poll (fds, 1, 0);
+#if __USE_FORTIFY_LEVEL >= 1
+  CHK_FAIL_START
+  poll (fds, 2, 0);
+  CHK_FAIL_END
+#endif
+  ppoll (fds, 1, NULL, NULL);
+#if __USE_FORTIFY_LEVEL >= 1
+  CHK_FAIL_START
+  ppoll (fds, 2, NULL, NULL);
   CHK_FAIL_END
 #endif
 

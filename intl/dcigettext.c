@@ -1,6 +1,5 @@
 /* Implementation of the internal dcigettext function.
-   Copyright (C) 1995-2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* Tell glibc's <string.h> to provide a prototype for mempcpy().
    This must come before <config.h> because <config.h> may include
@@ -553,18 +551,7 @@ DCIGETTEXT (domainname, msgid1, msgid2, plural, n, category)
 	}
 
       if (ret == NULL)
-	{
-	  /* We cannot get the current working directory.  Don't signal an
-	     error but simply return the default string.  */
-	  FREE_BLOCKS (block_list);
-	  __libc_rwlock_unlock (__libc_setlocale_lock);
-	  __libc_rwlock_unlock (_nl_state_lock);
-	  __set_errno (saved_errno);
-	  return (plural == 0
-		  ? (char *) msgid1
-		  /* Use the Germanic plural rule.  */
-		  : n == 1 ? (char *) msgid1 : (char *) msgid2);
-	}
+	goto no_translation;
 
       stpcpy (stpcpy (strchr (dirname, '\0'), "/"), binding->dirname);
     }
@@ -650,6 +637,11 @@ DCIGETTEXT (domainname, msgid1, msgid2, plural, n, category)
 		{
 		  retval = _nl_find_msg (domain->successor[cnt], binding,
 					 msgid1, 1, &retlen);
+
+		  /* Resource problems are not fatal, instead we return no
+		     translation.  */
+		  if (__builtin_expect (retval == (char *) -1, 0))
+		    goto no_translation;
 
 		  if (retval != NULL)
 		    {
@@ -954,6 +946,11 @@ _nl_find_msg (domain_file, domainbinding, msgid, convert, lengthp)
 	    nullentry =
 	      _nl_find_msg (domain_file, domainbinding, "", 0, &nullentrylen);
 
+	    /* Resource problems are fatal.  If we continue onwards we will
+	       only attempt to calloc a new conv_tab and fail later.  */
+	    if (__builtin_expect (nullentry == (char *) -1, 0))
+	      return (char *) -1;
+
 	    if (nullentry != NULL)
 	      {
 		const char *charsetstr;
@@ -1167,7 +1164,7 @@ _nl_find_msg (domain_file, domainbinding, msgid, convert, lengthp)
 							     freemem_size);
 # ifdef _LIBC
 		      if (newmem != NULL)
-			transmem_list = transmem_list->next;
+			transmem_list = newmem;
 		      else
 			{
 			  struct transmem_list *old = transmem_list;
@@ -1182,6 +1179,16 @@ _nl_find_msg (domain_file, domainbinding, msgid, convert, lengthp)
 		      malloc_count = 1;
 		      freemem_size = INITIAL_BLOCK_SIZE;
 		      newmem = (transmem_block_t *) malloc (freemem_size);
+# ifdef _LIBC
+		      if (newmem != NULL)
+			{
+			  /* Add the block to the list of blocks we have to free
+			     at some point.  */
+			  newmem->next = transmem_list;
+			  transmem_list = newmem;
+			}
+		      /* Fall through and return -1.  */
+# endif
 		    }
 		  if (__builtin_expect (newmem == NULL, 0))
 		    {
@@ -1192,11 +1199,6 @@ _nl_find_msg (domain_file, domainbinding, msgid, convert, lengthp)
 		    }
 
 # ifdef _LIBC
-		  /* Add the block to the list of blocks we have to free
-		     at some point.  */
-		  newmem->next = transmem_list;
-		  transmem_list = newmem;
-
 		  freemem = (unsigned char *) newmem->data;
 		  freemem_size -= offsetof (struct transmem_list, data);
 # else
@@ -1413,7 +1415,7 @@ get_output_charset (domainbinding)
 	  return _NL_CURRENT (LC_CTYPE, CODESET);
 # else
 #  if HAVE_ICONV
-	  extern const char *locale_charset PARAMS ((void);
+	  extern const char *locale_charset PARAMS ((void));
 	  return locale_charset ();
 #  endif
 # endif

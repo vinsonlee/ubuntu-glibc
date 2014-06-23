@@ -112,7 +112,13 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 {
 	char paddr[INET6_ADDRSTRLEN];
 	struct addrinfo hints, *res, *ai;
-	struct sockaddr_storage from;
+	union
+	{
+	  struct sockaddr sa;
+	  struct sockaddr_storage ss;
+	  struct sockaddr_in sin;
+	  struct sockaddr_in6 sin6;
+	} from;
 	struct pollfd pfd[2];
 	int32_t oldmask;
 	pid_t pid;
@@ -143,7 +149,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 			__fxprintf(NULL, "rcmd: getaddrinfo: %s\n",
 				   gai_strerror(error));
 
-                return -1;
+		return -1;
 	}
 
 	pfd[0].events = POLLIN;
@@ -274,14 +280,13 @@ poll: protocol failure in circuit setup\n")) >= 0))
 			(void)__close(s2);
 			goto bad;
 		}
-		s3 = TEMP_FAILURE_RETRY (accept(s2, (struct sockaddr *)&from,
-						&len));
-		switch (from.ss_family) {
+		s3 = TEMP_FAILURE_RETRY (accept(s2, &from.sa, &len));
+		switch (from.sa.sa_family) {
 		case AF_INET:
-			rport = ntohs(((struct sockaddr_in *)&from)->sin_port);
+			rport = ntohs(from.sin.sin_port);
 			break;
 		case AF_INET6:
-			rport = ntohs(((struct sockaddr_in6 *)&from)->sin6_port);
+			rport = ntohs(from.sin6.sin6_port);
 			break;
 		default:
 			rport = 0;
@@ -483,7 +488,7 @@ iruserfopen (const char *file, uid_t okuser)
     cp = _("not regular file");
   else
     {
-      res = fopen (file, "rc");
+      res = fopen (file, "rce");
       if (!res)
 	cp = _("cannot open");
       else if (__fxstat64 (_STAT_VER, fileno (res), &st) < 0)
@@ -569,8 +574,8 @@ ruserok2_sa (ra, ralen, superuser, ruser, luser, rhost)
 
        if (hostf != NULL)
 	 {
-           isbad = __validuser2_sa (hostf, ra, ralen, luser, ruser, rhost);
-           fclose (hostf);
+	   isbad = __validuser2_sa (hostf, ra, ralen, luser, ruser, rhost);
+	   fclose (hostf);
 	 }
 
        seteuid (uid);
@@ -605,15 +610,15 @@ iruserok_af (raddr, superuser, ruser, luser, af)
   memset (&ra, '\0', sizeof(ra));
   switch (af){
   case AF_INET:
-    ((struct sockaddr_in *)&ra)->sin_family = AF_INET;
+    ra.ss_family = AF_INET;
     memcpy (&(((struct sockaddr_in *)&ra)->sin_addr), raddr,
 	    sizeof(struct in_addr));
     ralen = sizeof(struct sockaddr_in);
     break;
   case AF_INET6:
-    ((struct sockaddr_in6 *)&ra)->sin6_family = AF_INET6;
+    ra.ss_family = AF_INET6;
     memcpy (&(((struct sockaddr_in6 *)&ra)->sin6_addr), raddr,
-            sizeof(struct in6_addr));
+	    sizeof(struct in6_addr));
     ralen = sizeof(struct sockaddr_in6);
     break;
   default:
@@ -764,8 +769,8 @@ __validuser2_sa(hostf, ra, ralen, luser, ruser, rhost)
 	size_t ralen;
 	const char *luser, *ruser, *rhost;
 {
-    register const char *user;
-    register char *p;
+    const char *user;
+    char *p;
     int hcheck, ucheck;
     char *buf = NULL;
     size_t bufsize = 0;
@@ -773,7 +778,7 @@ __validuser2_sa(hostf, ra, ralen, luser, ruser, rhost)
 
     while (__getline (&buf, &bufsize, hostf) > 0) {
 	buf[bufsize - 1] = '\0'; /* Make sure it's terminated.  */
-        p = buf;
+	p = buf;
 
 	/* Skip empty or comment lines */
 	if (__isempty (p)) {

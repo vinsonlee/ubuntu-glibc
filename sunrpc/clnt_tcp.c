@@ -1,40 +1,34 @@
-/* @(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC */
-/*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-#if !defined(lint) && defined(SCCSIDS)
-static char sccsid[] = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
-#endif
-
 /*
  * clnt_tcp.c, Implements a TCP/IP based, client side RPC.
  *
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ * Copyright (c) 2010, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * TCP based RPC supports 'batched calls'.
  * A sequence of calls may be batched-up in a send buffer.  The rpc call
@@ -59,9 +53,7 @@ static char sccsid[] = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <rpc/pmap_clnt.h>
-#ifdef USE_IN_LIBIO
-# include <wchar.h>
-#endif
+#include <wchar.h>
 
 extern u_long _create_xid (void);
 
@@ -194,9 +186,8 @@ clnttcp_create (struct sockaddr_in *raddr, u_long prog, u_long vers,
   /*
    * pre-serialize the static part of the call msg and stash it away
    */
-  INTUSE(xdrmem_create) (&(ct->ct_xdrs), ct->ct_mcall, MCALL_MSG_SIZE,
-			 XDR_ENCODE);
-  if (!INTUSE(xdr_callhdr) (&(ct->ct_xdrs), &call_msg))
+  xdrmem_create (&(ct->ct_xdrs), ct->ct_mcall, MCALL_MSG_SIZE, XDR_ENCODE);
+  if (!xdr_callhdr (&(ct->ct_xdrs), &call_msg))
     {
       if (ct->ct_closeit)
 	{
@@ -211,11 +202,11 @@ clnttcp_create (struct sockaddr_in *raddr, u_long prog, u_long vers,
    * Create a client handle which uses xdrrec for serialization
    * and authnone for authentication.
    */
-  INTUSE(xdrrec_create) (&(ct->ct_xdrs), sendsz, recvsz,
-			 (caddr_t) ct, readtcp, writetcp);
+  xdrrec_create (&(ct->ct_xdrs), sendsz, recvsz,
+		 (caddr_t) ct, readtcp, writetcp);
   h->cl_ops = (struct clnt_ops *) &tcp_ops;
   h->cl_private = (caddr_t) ct;
-  h->cl_auth = INTUSE(authnone_create) ();
+  h->cl_auth = authnone_create ();
   return h;
 
 fooy:
@@ -226,7 +217,11 @@ fooy:
   mem_free ((caddr_t) h, sizeof (CLIENT));
   return ((CLIENT *) NULL);
 }
-INTDEF (clnttcp_create)
+#ifdef EXPORT_RPC_SYMBOLS
+libc_hidden_def (clnttcp_create)
+#else
+libc_hidden_nolink_sunrpc (clnttcp_create, GLIBC_2_0)
+#endif
 
 static enum clnt_stat
 clnttcp_call (h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
@@ -266,10 +261,10 @@ call_again:
     {
       if (ct->ct_error.re_status == RPC_SUCCESS)
 	ct->ct_error.re_status = RPC_CANTENCODEARGS;
-      (void) INTUSE(xdrrec_endofrecord) (xdrs, TRUE);
+      (void) xdrrec_endofrecord (xdrs, TRUE);
       return (ct->ct_error.re_status);
     }
-  if (!INTUSE(xdrrec_endofrecord) (xdrs, shipnow))
+  if (!xdrrec_endofrecord (xdrs, shipnow))
     return ct->ct_error.re_status = RPC_CANTSEND;
   if (!shipnow)
     return RPC_SUCCESS;
@@ -290,11 +285,11 @@ call_again:
     {
       reply_msg.acpted_rply.ar_verf = _null_auth;
       reply_msg.acpted_rply.ar_results.where = NULL;
-      reply_msg.acpted_rply.ar_results.proc = (xdrproc_t)INTUSE(xdr_void);
-      if (!INTUSE(xdrrec_skiprecord) (xdrs))
+      reply_msg.acpted_rply.ar_results.proc = (xdrproc_t)xdr_void;
+      if (!xdrrec_skiprecord (xdrs))
 	return (ct->ct_error.re_status);
       /* now decode and validate the response header */
-      if (!INTUSE(xdr_replymsg) (xdrs, &reply_msg))
+      if (!xdr_replymsg (xdrs, &reply_msg))
 	{
 	  if (ct->ct_error.re_status == RPC_SUCCESS)
 	    continue;
@@ -324,8 +319,7 @@ call_again:
       if (reply_msg.acpted_rply.ar_verf.oa_base != NULL)
 	{
 	  xdrs->x_op = XDR_FREE;
-	  (void) INTUSE(xdr_opaque_auth) (xdrs,
-					  &(reply_msg.acpted_rply.ar_verf));
+	  (void) xdr_opaque_auth (xdrs, &(reply_msg.acpted_rply.ar_verf));
 	}
     }				/* end successful completion */
   else
@@ -362,7 +356,7 @@ clnttcp_freeres (cl, xdr_res, res_ptr)
 }
 
 static void
-clnttcp_abort ()
+clnttcp_abort (void)
 {
 }
 
@@ -370,6 +364,8 @@ static bool_t
 clnttcp_control (CLIENT *cl, int request, char *info)
 {
   struct ct_data *ct = (struct ct_data *) cl->cl_private;
+  u_long ul;
+  u_int32_t ui32;
 
 
   switch (request)
@@ -399,39 +395,48 @@ clnttcp_control (CLIENT *cl, int request, char *info)
        * first element in the call structure *.
        * This will get the xid of the PREVIOUS call
        */
-      *(u_long *)info = ntohl (*(u_long *)ct->ct_mcall);
+      memcpy (&ui32, ct->ct_mcall, sizeof (ui32));
+      ul = ntohl (ui32);
+      memcpy (info, &ul, sizeof (ul));
       break;
     case CLSET_XID:
       /* This will set the xid of the NEXT call */
-      *(u_long *)ct->ct_mcall =  htonl (*(u_long *)info - 1);
+      memcpy (&ul, info, sizeof (ul));
+      ui32 = htonl (ul - 1);
+      memcpy (ct->ct_mcall, &ui32, sizeof (ui32));
       /* decrement by 1 as clnttcp_call() increments once */
+      break;
     case CLGET_VERS:
       /*
        * This RELIES on the information that, in the call body,
        * the version number field is the fifth field from the
-       * begining of the RPC header. MUST be changed if the
+       * beginning of the RPC header. MUST be changed if the
        * call_struct is changed
        */
-      *(u_long *)info = ntohl (*(u_long *)(ct->ct_mcall +
-					   4 * BYTES_PER_XDR_UNIT));
+      memcpy (&ui32, ct->ct_mcall + 4 * BYTES_PER_XDR_UNIT, sizeof (ui32));
+      ul = ntohl (ui32);
+      memcpy (info, &ul, sizeof (ul));
       break;
     case CLSET_VERS:
-      *(u_long *)(ct->ct_mcall + 4 * BYTES_PER_XDR_UNIT)
-	= htonl (*(u_long *)info);
+      memcpy (&ul, info, sizeof (ul));
+      ui32 = htonl (ul);
+      memcpy (ct->ct_mcall + 4 * BYTES_PER_XDR_UNIT, &ui32, sizeof (ui32));
       break;
     case CLGET_PROG:
       /*
        * This RELIES on the information that, in the call body,
        * the program number field is the  field from the
-       * begining of the RPC header. MUST be changed if the
+       * beginning of the RPC header. MUST be changed if the
        * call_struct is changed
        */
-      *(u_long *)info = ntohl(*(u_long *)(ct->ct_mcall +
-					  3 * BYTES_PER_XDR_UNIT));
+      memcpy (&ui32, ct->ct_mcall + 3 * BYTES_PER_XDR_UNIT, sizeof (ui32));
+      ul = ntohl (ui32);
+      memcpy (info, &ul, sizeof (ul));
       break;
     case CLSET_PROG:
-      *(u_long *)(ct->ct_mcall + 3 * BYTES_PER_XDR_UNIT)
-	= htonl(*(u_long *)info);
+      memcpy (&ul, info, sizeof (ul));
+      ui32 = htonl (ul);
+      memcpy (ct->ct_mcall + 3 * BYTES_PER_XDR_UNIT, &ui32, sizeof (ui32));
       break;
     /* The following are only possible with TI-RPC */
     case CLGET_RETRY_TIMEOUT:

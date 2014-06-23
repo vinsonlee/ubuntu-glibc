@@ -1,4 +1,4 @@
-/* Copyright (C) 1998,1999,2000,2001,2002,2005 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -13,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -23,6 +22,7 @@
 #include <error.h>
 #include <langinfo.h>
 #include <string.h>
+#include <stdint.h>
 #include <sys/uio.h>
 
 #include <assert.h>
@@ -175,50 +175,15 @@ telephone_output (struct localedef_t *locale, const struct charmap_t *charmap,
 {
   struct locale_telephone_t *telephone =
     locale->categories[LC_TELEPHONE].telephone;
-  struct iovec iov[2 + _NL_ITEM_INDEX (_NL_NUM_LC_TELEPHONE)];
-  struct locale_file data;
-  uint32_t idx[_NL_ITEM_INDEX (_NL_NUM_LC_TELEPHONE)];
-  size_t cnt = 0;
+  struct locale_file file;
 
-  data.magic = LIMAGIC (LC_TELEPHONE);
-  data.n = _NL_ITEM_INDEX (_NL_NUM_LC_TELEPHONE);
-  iov[cnt].iov_base = (void *) &data;
-  iov[cnt].iov_len = sizeof (data);
-  ++cnt;
-
-  iov[cnt].iov_base = (void *) idx;
-  iov[cnt].iov_len = sizeof (idx);
-  ++cnt;
-
-  idx[cnt - 2] = iov[0].iov_len + iov[1].iov_len;
-  iov[cnt].iov_base = (void *) telephone->tel_int_fmt;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 2] = idx[cnt - 3] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) telephone->tel_dom_fmt;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 2] = idx[cnt - 3] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) telephone->int_select;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 2] = idx[cnt - 3] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) telephone->int_prefix;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  idx[cnt - 2] = idx[cnt - 3] + iov[cnt - 1].iov_len;
-  iov[cnt].iov_base = (void *) charmap->code_set_name;;
-  iov[cnt].iov_len = strlen (iov[cnt].iov_base) + 1;
-  ++cnt;
-
-  assert (cnt == 2 + _NL_ITEM_INDEX (_NL_NUM_LC_TELEPHONE));
-
-  write_locale_data (output_path, LC_TELEPHONE, "LC_TELEPHONE",
-		     2 + _NL_ITEM_INDEX (_NL_NUM_LC_TELEPHONE), iov);
+  init_locale_data (&file, _NL_ITEM_INDEX (_NL_NUM_LC_TELEPHONE));
+  add_locale_string (&file, telephone->tel_int_fmt);
+  add_locale_string (&file, telephone->tel_dom_fmt);
+  add_locale_string (&file, telephone->int_select);
+  add_locale_string (&file, telephone->int_prefix);
+  add_locale_string (&file, charmap->code_set_name);
+  write_locale_data (output_path, LC_TELEPHONE, "LC_TELEPHONE", &file);
 }
 
 

@@ -1,5 +1,5 @@
 /* Bit values & structures for resource limits.  4.4 BSD/generic GNU version.
-   Copyright (C) 1994,1996,1997,1998,2006 Free Software Foundation, Inc.
+   Copyright (C) 1994-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SYS_RESOURCE_H
 # error "Never use <bits/resource.h> directly; include <sys/resource.h> instead."
@@ -185,6 +184,9 @@ struct rusage
 enum __priority_which
   {
     PRIO_PROCESS = 0,           /* WHO is a process ID.  */
+#define PRIO_PROCESS PRIO_PROCESS
     PRIO_PGRP = 1,              /* WHO is a process group ID.  */
+#define PRIO_PGRP PRIO_PGRP
     PRIO_USER = 2               /* WHO is a user ID.  */
+#define PRIO_USER PRIO_USER
   };

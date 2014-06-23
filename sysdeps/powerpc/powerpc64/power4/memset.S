@@ -1,6 +1,5 @@
 /* Optimized memset implementation for PowerPC64.
-   Copyright (C) 1997, 1999, 2000, 2002, 2003, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,13 +13,10 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
-#include <bp-sym.h>
-#include <bp-asm.h>
 
 /* __ptr_t [r3] memset (__ptr_t s [r3], int c [r4], size_t n [r5]));
    Returns 's'.
@@ -30,22 +26,15 @@
    to 0, to take advantage of the dcbz instruction.  */
 
 	.machine power4
-EALIGN (BP_SYM (memset), 5, 0)
+EALIGN (memset, 5, 0)
 	CALL_MCOUNT 3
 
 #define rTMP	r0
 #define rRTN	r3	/* Initial value of 1st argument.  */
-#if __BOUNDED_POINTERS__
-# define rMEMP0	r4	/* Original value of 1st arg.  */
-# define rCHR	r5	/* Char to set in each byte.  */
-# define rLEN	r6	/* Length of region to set.  */
-# define rMEMP	r10	/* Address at which we are storing.  */
-#else
-# define rMEMP0	r3	/* Original value of 1st arg.  */
-# define rCHR	r4	/* Char to set in each byte.  */
-# define rLEN	r5	/* Length of region to set.  */
-# define rMEMP	r6	/* Address at which we are storing.  */
-#endif
+#define rMEMP0	r3	/* Original value of 1st arg.  */
+#define rCHR	r4	/* Char to set in each byte.  */
+#define rLEN	r5	/* Length of region to set.  */
+#define rMEMP	r6	/* Address at which we are storing.  */
 #define rALIGN	r7	/* Number of bytes we are setting now (when aligning). */
 #define rMEMP2	r8
 
@@ -53,14 +42,6 @@ EALIGN (BP_SYM (memset), 5, 0)
 #define rCLS	r8	/* Cache line size obtained from static.  */
 #define rCLM	r9	/* Cache line size mask to check for cache alignment.  */
 L(_memset):
-#if __BOUNDED_POINTERS__
-	cmpldi	cr1, rRTN, 0
-	CHECK_BOUNDS_BOTH_WIDE (rMEMP0, rTMP, rTMP2, rLEN)
-	beq	cr1, L(b0)
-	STORE_RETURN_VALUE (rMEMP0)
-	STORE_RETURN_BOUNDS (rTMP, rTMP2)
-L(b0):
-#endif
 /* Take care of case for size <= 4.  */
 	cmpldi	cr1, rLEN, 8
 	andi.	rALIGN, rMEMP0, 7
@@ -69,14 +50,14 @@ L(b0):
 
 /* Align to doubleword boundary.  */
 	cmpldi	cr5, rLEN, 31
-	rlwimi	rCHR, rCHR, 8, 16, 23 /* Replicate byte to halfword.  */
+	insrdi	rCHR, rCHR, 8, 48	/* Replicate byte to halfword.  */
 	beq+	L(aligned2)
 	mtcrf	0x01, rMEMP0
 	subfic	rALIGN, rALIGN, 8
 	cror	28,30,31		/* Detect odd word aligned.  */
 	add	rMEMP, rMEMP, rALIGN
 	sub	rLEN, rLEN, rALIGN
-	rlwimi	rCHR, rCHR, 16, 0, 15 /* Replicate halfword to word.  */
+	insrdi	rCHR, rCHR, 16, 32	/* Replicate halfword to word.  */
 	bt	29, L(g4)
 /* Process the even word of doubleword.  */
 	bf+	31, L(g2)
@@ -98,14 +79,14 @@ L(g0):
 
 /* Handle the case of size < 31.  */
 L(aligned2):
-	rlwimi	rCHR, rCHR, 16, 0, 15 /* Replicate halfword to word.  */
+	insrdi	rCHR, rCHR, 16, 32	/* Replicate halfword to word.  */
 L(aligned):
 	mtcrf	0x01, rLEN
 	ble	cr5, L(medium)
 /* Align to 32-byte boundary.  */
 	andi.	rALIGN, rMEMP, 0x18
 	subfic	rALIGN, rALIGN, 0x20
-	insrdi	rCHR,rCHR,32,0 /* Replicate word to double word. */
+	insrdi	rCHR, rCHR, 32, 0	/* Replicate word to double word. */
 	beq	L(caligned)
 	mtcrf	0x01, rALIGN
 	add	rMEMP, rMEMP, rALIGN
@@ -165,24 +146,24 @@ L(zloopstart):
 L(getCacheAligned):
 	cmpldi	cr1,rLEN,32
 	andi.	rTMP,rMEMP,127
-	blt		cr1,L(handletail32)
-	beq		L(cacheAligned)
+	blt	cr1,L(handletail32)
+	beq	L(cacheAligned)
 	addi	rMEMP,rMEMP,32
 	addi	rLEN,rLEN,-32
-	std		rCHR,-32(rMEMP)
-	std		rCHR,-24(rMEMP)
-	std		rCHR,-16(rMEMP)
-	std		rCHR,-8(rMEMP)
-	b		L(getCacheAligned)
+	std	rCHR,-32(rMEMP)
+	std	rCHR,-24(rMEMP)
+	std	rCHR,-16(rMEMP)
+	std	rCHR,-8(rMEMP)
+	b	L(getCacheAligned)
 
 /* Now we are aligned to the cache line and can use dcbz.  */
 L(cacheAligned):
 	cmpld	cr1,rLEN,rCLS
-	blt		cr1,L(handletail32)
+	blt	cr1,L(handletail32)
 	dcbz	0,rMEMP
 	subf	rLEN,rCLS,rLEN
-	add		rMEMP,rMEMP,rCLS
-	b		L(cacheAligned)
+	add	rMEMP,rMEMP,rCLS
+	b	L(cacheAligned)
 
 /* We are here because the cache line size was set and was not 32-bytes
    and the remainder (rLEN) is less than the actual cache line size.
@@ -219,7 +200,7 @@ L(le4):
 /* Memset of 0-31 bytes.  */
 	.align 5
 L(medium):
-	insrdi	rCHR,rCHR,32,0 /* Replicate word to double word.  */
+	insrdi	rCHR, rCHR, 32, 0	/* Replicate word to double word.  */
 	cmpldi	cr1, rLEN, 16
 L(medium_tail2):
 	add	rMEMP, rMEMP, rLEN
@@ -251,25 +232,18 @@ L(medium_27f):
 L(medium_28t):
 	std	rCHR, -8(rMEMP)
 	blr
-END_GEN_TB (BP_SYM (memset),TB_TOCLESS)
+END_GEN_TB (memset,TB_TOCLESS)
 libc_hidden_builtin_def (memset)
 
+#ifndef NO_BZERO_IMPL
 /* Copied from bzero.S to prevent the linker from inserting a stub
    between bzero and memset.  */
-ENTRY (BP_SYM (__bzero))
+ENTRY (__bzero)
 	CALL_MCOUNT 3
-#if __BOUNDED_POINTERS__
-	mr	r6,r4
-	li	r5,0
-	mr	r4,r3
-	/* Tell memset that we don't want a return value.  */
-	li	r3,0
-	b	L(_memset)
-#else
 	mr	r5,r4
 	li	r4,0
 	b	L(_memset)
-#endif
-END_GEN_TB (BP_SYM (__bzero),TB_TOCLESS)
+END_GEN_TB (__bzero,TB_TOCLESS)
 
-weak_alias (BP_SYM (__bzero), BP_SYM (bzero))
+weak_alias (__bzero, bzero)
+#endif

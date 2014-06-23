@@ -1,4 +1,4 @@
-/* Copyright (C) 1996, 1997, 1998, 2005 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <ctype.h>
 #include <errno.h>
@@ -52,11 +51,11 @@ LINE_PARSER
  else
    {
      STRING_FIELD (result->sp_pwdp, ISCOLON, 0);
-     INT_FIELD_MAYBE_NULL (result->sp_lstchg, ISCOLON, 0, 10, (long int),
+     INT_FIELD_MAYBE_NULL (result->sp_lstchg, ISCOLON, 0, 10, (long int) (int),
 			   (long int) -1);
-     INT_FIELD_MAYBE_NULL (result->sp_min, ISCOLON, 0, 10, (long int),
+     INT_FIELD_MAYBE_NULL (result->sp_min, ISCOLON, 0, 10, (long int) (int),
 			   (long int) -1);
-     INT_FIELD_MAYBE_NULL (result->sp_max, ISCOLON, 0, 10, (long int),
+     INT_FIELD_MAYBE_NULL (result->sp_max, ISCOLON, 0, 10, (long int) (int),
 			   (long int) -1);
      while (isspace (*line))
        ++line;
@@ -70,12 +69,12 @@ LINE_PARSER
        }
      else
        {
-	 INT_FIELD_MAYBE_NULL (result->sp_warn, ISCOLON, 0, 10, (long int),
-			       (long int) -1);
-	 INT_FIELD_MAYBE_NULL (result->sp_inact, ISCOLON, 0, 10, (long int),
-			       (long int) -1);
-	 INT_FIELD_MAYBE_NULL (result->sp_expire, ISCOLON, 0, 10, (long int),
-			       (long int) -1);
+	 INT_FIELD_MAYBE_NULL (result->sp_warn, ISCOLON, 0, 10,
+			       (long int) (int), (long int) -1);
+	 INT_FIELD_MAYBE_NULL (result->sp_inact, ISCOLON, 0, 10,
+			       (long int) (int), (long int) -1);
+	 INT_FIELD_MAYBE_NULL (result->sp_expire, ISCOLON, 0, 10,
+			       (long int) (int), (long int) -1);
 	 if (*line != '\0')
 	   INT_FIELD_MAYBE_NULL (result->sp_flag, FALSEP, 0, 10,
 				 (unsigned long int), ~0ul)
@@ -91,8 +90,12 @@ int
 __sgetspent_r (const char *string, struct spwd *resbuf, char *buffer,
 	       size_t buflen, struct spwd **result)
 {
-  int parse_result = parse_line (strncpy (buffer, string, buflen),
-				 resbuf, NULL, 0, &errno);
+  buffer[buflen - 1] = '\0';
+  char *sp = strncpy (buffer, string, buflen);
+  if (buffer[buflen - 1] != '\0')
+    return ERANGE;
+
+  int parse_result = parse_line (sp, resbuf, NULL, 0, &errno);
   *result = parse_result > 0 ? resbuf : NULL;
 
   return *result == NULL ? errno : 0;

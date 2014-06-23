@@ -1,4 +1,0 @@
-# Those file are actually .o files not package in a ar archive, and
-# thus should not be stripped
-LIBC-dev-FLAVOR: unstripped-binary-or-object .LIBDIR/libieee.a
-LIBC-dev-FLAVOR: unstripped-binary-or-object .LIBDIR/libmcheck.a

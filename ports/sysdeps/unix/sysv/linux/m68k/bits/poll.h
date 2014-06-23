@@ -1,4 +1,4 @@
-/* Copyright (C) 1997, 2001, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SYS_POLL_H
 # error "Never use <bits/poll.h> directly; include <sys/poll.h> instead."
@@ -27,7 +26,7 @@
 #define POLLPRI		0x002		/* There is urgent data to read.  */
 #define POLLOUT		0x004		/* Writing now will not block.  */
 
-#ifdef __USE_XOPEN
+#if defined __USE_XOPEN || defined __USE_XOPEN2K8
 /* These values are defined in XPG4.2.  */
 # define POLLRDNORM	0x040		/* Normal data may be read.  */
 # define POLLRDBAND	0x080		/* Priority data may be read.  */

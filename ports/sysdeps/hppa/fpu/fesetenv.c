@@ -1,5 +1,5 @@
 /* Install given floating-point environment.
-   Copyright (C) 1997, 1999, 2000, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David Huggins-Daines <dhd@debian.org>, 2000
    Based on the m68k version by
@@ -16,9 +16,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
 
@@ -41,7 +40,7 @@ fesetenv (const fenv_t *envp)
 			    | (FE_ALL_EXCEPT << 27)
 			    | FE_DOWNWARD);
   if (envp == FE_DFL_ENV)
-    ;
+    temp.env.__status_word = 0;
   else if (envp == FE_NOMASK_ENV)
     temp.env.__status_word |= FE_ALL_EXCEPT;
   else
@@ -50,7 +49,7 @@ fesetenv (const fenv_t *envp)
 				  | FE_DOWNWARD
 				  | (FE_ALL_EXCEPT << 27)));
 
-  /* Load the new environment. We use bufptr again since the 
+  /* Load the new environment. We use bufptr again since the
      initial asm has modified the value of the register and here
      we take advantage of that to load in reverse order so fr0
      is loaded last and T-Bit is enabled. */

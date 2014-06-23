@@ -1,5 +1,5 @@
 /* Optimized memset implementation for PowerPC64.
-   Copyright (C) 1997,99, 2000,02,03, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,13 +13,10 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-   02110-1301 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
-#include <bp-sym.h>
-#include <bp-asm.h>
 
 /* __ptr_t [r3] memset (__ptr_t s [r3], int c [r4], size_t n [r5]));
    Returns 's'.
@@ -29,7 +26,7 @@
    to 0, to take advantage of the dcbz instruction.  */
 
 	.machine power4
-EALIGN (BP_SYM (memset), 5, 0)
+EALIGN (memset, 5, 0)
 	CALL_MCOUNT
 
 #define rTMP	r0
@@ -53,7 +50,7 @@ L(_memset):
 
 /* Align to word boundary.  */
 	cmplwi	cr5, rLEN, 31
-	rlwimi	rCHR, rCHR, 8, 16, 23 /* Replicate byte to halfword.  */
+	insrdi	rCHR, rCHR, 8, 48     /* Replicate byte to halfword.  */
 	beq+	L(aligned)
 	mtcrf	0x01, rMEMP0
 	subfic	rALIGN, rALIGN, 4
@@ -68,7 +65,7 @@ L(g0):
 /* Handle the case of size < 31.  */
 L(aligned):
 	mtcrf	0x01, rLEN
-	rlwimi	rCHR, rCHR, 16, 0, 15 /* Replicate halfword to word.  */
+	insrdi	rCHR, rCHR, 16, 32    /* Replicate halfword to word.  */
 	ble	cr5, L(medium)
 /* Align to 32-byte boundary.  */
 	andi.	rALIGN, rMEMP, 0x1C
@@ -165,7 +162,7 @@ L(cacheAligned):
 	add	rMEMP,rMEMP,rCLS
 	b	L(cacheAligned)
 
-/* We are here because the cache line size was set and the remainder 
+/* We are here because the cache line size was set and the remainder
   (rLEN) is less than the actual cache line size.
    So set up the preconditions for L(nondcbz) and go there.  */
 L(handletail32):
@@ -225,5 +222,5 @@ L(medium_28t):
         stw     rCHR, -4(rMEMP)
 	stw	rCHR, -8(rMEMP)
 	blr
-END (BP_SYM (memset))
+END (memset)
 libc_hidden_builtin_def (memset)

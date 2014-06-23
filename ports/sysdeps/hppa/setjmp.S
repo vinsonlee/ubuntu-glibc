@@ -1,5 +1,5 @@
 /* setjmp for HPPA.
-   Copyright (C) 1995, 1996, 1997, 1999 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #define _ASM
@@ -32,6 +31,8 @@
 	.callinfo
 __sigsetjmp:
 	stw	%r3, 0(%r26)
+	/* This padding exists for unknown historical reasons.  */
+	/* 4 - 4 bytes of padding.  */
 	stw	%r4, 8(%r26)
 	stw	%r5, 12(%r26)
 	stw	%r6, 16(%r26)
@@ -52,7 +53,8 @@ __sigsetjmp:
 	stw	%r30, 76(%r26)
 
 	stw	%rp, 80(%r26)
-
+	/* This padding exists to ensure double alignment for fprs.  */
+	/* 84 - 4 bytes of padding.  */
 	ldo	88(%r26),%r1
 	fstds,ma %fr12, 8(%r1) /* 88 */
 	fstds,ma %fr13, 8(%r1) /* 96 */
@@ -64,6 +66,7 @@ __sigsetjmp:
 	fstds,ma %fr19, 8(%r1) /* 144 */
 	fstds,ma %fr20, 8(%r1) /* 152 */
 	fstds	 %fr21, 0(%r1) /* 160 */
+	/* Total of 168 bytes.  */
 	b __sigjmp_save
 	nop
 	.procend

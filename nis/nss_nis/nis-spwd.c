@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-1998,2001,2002,2003,2006 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1996.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <nss.h>
 #include <ctype.h>
@@ -31,6 +30,7 @@
 #include <rpcsvc/ypclnt.h>
 
 #include "nss-nis.h"
+#include <libnsl.h>
 
 /* Get the declaration of the parser function.  */
 #define ENTNAME spent
@@ -41,7 +41,8 @@
 /* Protect global state against multiple changers */
 __libc_lock_define_initialized (static, lock)
 
-static bool_t new_start = 1;
+static bool new_start = true;
+static bool ent_adjunct_used;
 static char *oldkey;
 static int oldkeylen;
 
@@ -50,7 +51,8 @@ _nss_nis_setspent (int stayopen)
 {
   __libc_lock_lock (lock);
 
-  new_start = 1;
+  new_start = true;
+  ent_adjunct_used = false;
   free (oldkey);
   oldkey = NULL;
   oldkeylen = 0;
@@ -83,32 +85,50 @@ internal_nis_getspent_r (struct spwd *sp, char *buffer, size_t buflen,
       int yperr;
 
       if (new_start)
-        yperr = yp_first (domain, "shadow.byname", &outkey, &keylen, &result,
-			  &len);
+	{
+	  yperr = yp_first (domain, "shadow.byname", &outkey, &keylen, &result,
+			    &len);
+	  if (__builtin_expect (yperr == YPERR_MAP, 0)
+	      && (_nsl_default_nss () & NSS_FLAG_ADJUNCT_AS_SHADOW))
+	    {
+	      free (result);
+	      yperr = yp_first (domain, "passwd.adjunct.byname", &outkey,
+				&keylen, &result, &len);
+	      ent_adjunct_used = true;
+	    }
+	}
       else
-        yperr = yp_next (domain, "shadow.byname", oldkey, oldkeylen, &outkey,
-			 &keylen, &result, &len);
+	yperr = yp_next (domain, (ent_adjunct_used
+				  ? "passwd.adjunct.byname" : "shadow.byname"),
+			 oldkey, oldkeylen, &outkey, &keylen, &result, &len);
 
       if (__builtin_expect (yperr != YPERR_SUCCESS, 0))
-        {
+	{
 	  enum nss_status retval = yperr2nss (yperr);
 
 	  if (retval == NSS_STATUS_TRYAGAIN)
 	    *errnop = errno;
-          return retval;
-        }
+	  return retval;
+	}
 
-      if (__builtin_expect ((size_t) (len + 1) > buflen, 0))
-        {
-          free (result);
+      if (__builtin_expect ((size_t) (len + (ent_adjunct_used ? 3 : 1))
+			    > buflen, 0))
+	{
+	  free (result);
 	  *errnop = ERANGE;
-          return NSS_STATUS_TRYAGAIN;
-        }
+	  return NSS_STATUS_TRYAGAIN;
+	}
 
       char *p = strncpy (buffer, result, len);
-      buffer[len] = '\0';
+      if (ent_adjunct_used)
+	/* This is an ugly trick.  The format of passwd.adjunct.byname almost
+	   matches the shadow.byname format except that the last two fields
+	   are missing.  Synthesize them by marking them empty.  */
+	strcpy (&buffer[len], "::");
+      else
+	buffer[len] = '\0';
       while (isspace (*p))
-        ++p;
+	++p;
       free (result);
 
       parse_res = _nss_files_parse_spent (p, sp, (void *) buffer, buflen,
@@ -123,7 +143,7 @@ internal_nis_getspent_r (struct spwd *sp, char *buffer, size_t buflen,
       free (oldkey);
       oldkey = outkey;
       oldkeylen = keylen;
-      new_start = 0;
+      new_start = false;
     }
   while (!parse_res);
 
@@ -154,15 +174,25 @@ _nss_nis_getspnam_r (const char *name, struct spwd *sp,
       *errnop = EINVAL;
       return NSS_STATUS_UNAVAIL;
     }
+  const size_t name_len = strlen (name);
 
   char *domain;
   if (__builtin_expect (yp_get_default_domain (&domain), 0))
     return NSS_STATUS_UNAVAIL;
 
+  bool adjunct_used = false;
   char *result;
   int len;
-  int yperr = yp_match (domain, "shadow.byname", name, strlen (name), &result,
+  int yperr = yp_match (domain, "shadow.byname", name, name_len, &result,
 			&len);
+  if (__builtin_expect (yperr == YPERR_MAP, 0)
+      && (_nsl_default_nss () & NSS_FLAG_ADJUNCT_AS_SHADOW))
+    {
+      free (result);
+      yperr = yp_match (domain, "passwd.adjunct.byname", name, name_len,
+			&result, &len);
+      adjunct_used = true;
+    }
 
   if (__builtin_expect (yperr != YPERR_SUCCESS, 0))
     {
@@ -173,7 +203,7 @@ _nss_nis_getspnam_r (const char *name, struct spwd *sp,
       return retval;
     }
 
-  if (__builtin_expect ((size_t) (len + 1) > buflen, 0))
+  if (__builtin_expect ((size_t) (len + (adjunct_used ? 3 : 1)) > buflen, 0))
     {
       free (result);
       *errnop = ERANGE;
@@ -181,7 +211,13 @@ _nss_nis_getspnam_r (const char *name, struct spwd *sp,
     }
 
   char *p = strncpy (buffer, result, len);
-  buffer[len] = '\0';
+  if (__builtin_expect (adjunct_used, false))
+    /* This is an ugly trick.  The format of passwd.adjunct.byname almost
+       matches the shadow.byname format except that the last two fields
+       are missing.  Synthesize them by marking them empty.  */
+    strcpy (&buffer[len], "::");
+  else
+    buffer[len] = '\0';
   while (isspace (*p))
     ++p;
   free (result);

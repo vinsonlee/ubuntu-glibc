@@ -1,5 +1,5 @@
 /* Create new context.
-   Copyright (C) 2008 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David S. Miller <davem@davemloft.net>, 2008.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <stdarg.h>
@@ -29,7 +28,7 @@
    Returning to the correct parent context is pretty simple on
    Sparc.  We only need to link up the register windows correctly.
    Since global registers are clobbered by calls, we need not be
-   concernred about those, and thus is all could be worked out without
+   concerned about those, and thus is all could be worked out without
    using a trampoline.
 
    Except that we must deal with the signal mask, thus a trampoline
@@ -77,7 +76,7 @@ __makecontext (ucontext_t *ucp, void (*func) (void), int argc, ...)
       if (i < 6)
 	ucp->uc_mcontext.gregs[REG_O0 + i] = arg;
       else
-	sp[i + 23] = arg;
+	sp[i + 23 - 6] = arg;
     }
 
   va_end (ap);

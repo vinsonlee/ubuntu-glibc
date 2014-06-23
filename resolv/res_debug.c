@@ -189,7 +189,7 @@ do_section(const res_state statp,
 						buf = malloc(buflen += 1024);
 					if (buf == NULL) {
 						fprintf(file,
-				              ";; memory allocation failure\n");
+					      ";; memory allocation failure\n");
 					      return;
 					}
 					continue;
@@ -356,7 +356,7 @@ const struct res_sym __p_class_syms[] = {
 	{C_HS,		"HESIOD"},
 	{C_ANY,		"ANY"},
 	{C_NONE,	"NONE"},
-	{C_IN, 		(char *)0}
+	{C_IN,		(char *)0}
 };
 libresolv_hidden_data_def (__p_class_syms)
 
@@ -573,7 +573,7 @@ p_option(u_long option) {
 	case RES_INIT:		return "init";
 	case RES_DEBUG:		return "debug";
 	case RES_AAONLY:	return "aaonly(unimpl)";
-	case RES_USEVC:		return "usevc";
+	case RES_USEVC:		return "use-vc";
 	case RES_PRIMARY:	return "primry(unimpl)";
 	case RES_IGNTC:		return "igntc";
 	case RES_RECURSE:	return "recurs";
@@ -582,10 +582,19 @@ p_option(u_long option) {
 	case RES_DNSRCH:	return "dnsrch";
 	case RES_INSECURE1:	return "insecure1";
 	case RES_INSECURE2:	return "insecure2";
+	case RES_NOALIASES:	return "noaliases";
 	case RES_USE_INET6:	return "inet6";
 	case RES_ROTATE:	return "rotate";
-	case RES_NOCHECKNAME:	return "no-check-names";
-	case RES_USEBSTRING:	return "ip6-bytstring";
+	case RES_NOCHECKNAME:	return "no-check-names(unimpl)";
+	case RES_KEEPTSIG:	return "keeptsig(unimpl)";
+	case RES_BLAST:		return "blast";
+	case RES_USEBSTRING:	return "ip6-bytestring";
+	case RES_NOIP6DOTINT:	return "no-ip6-dotint";
+	case RES_USE_EDNS0:	return "edns0";
+	case RES_SNGLKUP:	return "single-request";
+	case RES_SNGLKUPREOP:	return "single-request-reopen";
+	case RES_USE_DNSSEC:	return "dnssec";
+	case RES_NOTLDQUERY:	return "no-tld-query";
 				/* XXX nonreentrant */
 	default:		sprintf(nbuf, "?0x%lx?", (u_long)option);
 				return (nbuf);

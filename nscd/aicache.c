@@ -1,5 +1,5 @@
 /* Cache handling for host lookup.
-   Copyright (C) 2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2004.
 
@@ -14,8 +14,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <errno.h>
@@ -26,6 +25,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <resolv/res_hconf.h>
 
 #include "dbg_log.h"
 #include "nscd.h"
@@ -58,9 +58,10 @@ static const ai_response_header notfound =
 };
 
 
-static void
+static time_t
 addhstaiX (struct database_dyn *db, int fd, request_header *req,
-	   void *key, uid_t uid, struct hashentry *he, struct datahead *dh)
+	   void *key, uid_t uid, struct hashentry *const he,
+	   struct datahead *dh)
 {
   /* Search for the entry matching the key.  Please note that we don't
      look again in the table whether the dataset is now available.  We
@@ -85,23 +86,25 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
     }
 
   static service_user *hosts_database;
-  service_user *nip = NULL;
+  service_user *nip;
   int no_more;
   int rc6 = 0;
   int rc4 = 0;
   int herrno = 0;
 
-  if (hosts_database != NULL)
-    {
-      nip = hosts_database;
-      no_more = 0;
-    }
-  else
+  if (hosts_database == NULL)
     no_more = __nss_database_lookup ("hosts", NULL,
-				     "dns [!UNAVAIL=return] files", &nip);
+				     "dns [!UNAVAIL=return] files",
+				     &hosts_database);
+  else
+    no_more = 0;
+  nip = hosts_database;
 
+  /* Initialize configurations.  */
+  if (__glibc_unlikely (!_res_hconf.initialized))
+    _res_hconf_init ();
   if (__res_maybe_init (&_res, 0) == -1)
-	    no_more = 1;
+    no_more = 1;
 
   /* If we are looking for both IPv4 and IPv6 address we don't want
      the lookup functions to automatically promote IPv4 addresses to
@@ -110,7 +113,7 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
   int old_res_options = _res.options;
   _res.options &= ~RES_USE_INET6;
 
-  size_t tmpbuf6len = 512;
+  size_t tmpbuf6len = 1024;
   char *tmpbuf6 = alloca (tmpbuf6len);
   size_t tmpbuf4len = 0;
   char *tmpbuf4 = NULL;
@@ -118,6 +121,7 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
   ssize_t total = 0;
   char *key_copy = NULL;
   bool alloca_used = false;
+  time_t timeout = MAX_TIMEOUT_VALUE;
 
   while (!no_more)
     {
@@ -132,9 +136,11 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
 							 "gethostbyname4_r");
       if (fct4 != NULL)
 	{
-	  struct gaih_addrtuple *at = NULL;
+	  struct gaih_addrtuple atmem;
+	  struct gaih_addrtuple *at;
 	  while (1)
 	    {
+	      at = &atmem;
 	      rc6 = 0;
 	      herrno = 0;
 	      status[1] = DL_CALL_FCT (fct4, (key, &at, tmpbuf6, tmpbuf6len,
@@ -152,7 +158,7 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
 	    goto next_nip;
 
 	  /* We found the data.  Count the addresses and the size.  */
-	  for (const struct gaih_addrtuple *at2 = at; at2 != NULL;
+	  for (const struct gaih_addrtuple *at2 = at = &atmem; at2 != NULL;
 	       at2 = at2->next)
 	    {
 	      ++naddrs;
@@ -172,13 +178,8 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
 	  /* Now we can allocate the data structure.  If the TTL of the
 	     entry is reported as zero do not cache the entry at all.  */
 	  if (ttl != 0 && he == NULL)
-	    {
-	      dataset = (struct dataset *) mempool_alloc (db, total
-							  + req->key_len,
-							  IDX_result_data);
-	      if (dataset == NULL)
-		++db->head->addfailed;
-	    }
+	    dataset = (struct dataset *) mempool_alloc (db, total
+							+ req->key_len, 1);
 
 	  if (dataset == NULL)
 	    {
@@ -300,9 +301,9 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
 		}
 	      else
 		{
-		  struct hostent *he = NULL;
+		  struct hostent *hstent = NULL;
 		  int herrno;
-		  struct hostent he_mem;
+		  struct hostent hstent_mem;
 		  void *addr;
 		  size_t addrlen;
 		  int addrfamily;
@@ -326,8 +327,8 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
 		  while (1)
 		    {
 		      rc = __gethostbyaddr2_r (addr, addrlen, addrfamily,
-					       &he_mem, tmpbuf, tmpbuflen,
-					       &he, &herrno, NULL);
+					       &hstent_mem, tmpbuf, tmpbuflen,
+					       &hstent, &herrno, NULL);
 		      if (rc != ERANGE || herrno != NETDB_INTERNAL)
 			break;
 		      tmpbuf = extend_alloca (tmpbuf, tmpbuflen,
@@ -336,8 +337,8 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
 
 		  if (rc == 0)
 		    {
-		      if (he != NULL)
-			canon = he->h_name;
+		      if (hstent != NULL)
+			canon = hstent->h_name;
 		      else
 			canon = key;
 		    }
@@ -352,13 +353,8 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
 	  /* Now we can allocate the data structure.  If the TTL of the
 	     entry is reported as zero do not cache the entry at all.  */
 	  if (ttl != 0 && he == NULL)
-	    {
-	      dataset = (struct dataset *) mempool_alloc (db, total
-							  + req->key_len,
-							  IDX_result_data);
-	      if (dataset == NULL)
-		++db->head->addfailed;
-	    }
+	    dataset = (struct dataset *) mempool_alloc (db, total
+							+ req->key_len, 1);
 
 	  if (dataset == NULL)
 	    {
@@ -395,8 +391,8 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
       dataset->head.usable = true;
 
       /* Compute the timeout time.  */
-      dataset->head.timeout = time (NULL) + (ttl == INT32_MAX
-					     ? db->postimeout : ttl);
+      dataset->head.ttl = ttl == INT32_MAX ? db->postimeout : ttl;
+      timeout = dataset->head.timeout = time (NULL) + dataset->head.ttl;
 
       dataset->resp.version = NSCD_VERSION;
       dataset->resp.found = 1;
@@ -428,6 +424,7 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
 		 timeout value.  Note that the new record has been
 		 allocated on the stack and need not be freed.  */
 	      dh->timeout = dataset->head.timeout;
+	      dh->ttl = dataset->head.ttl;
 	      ++dh->nreloads;
 	    }
 	  else
@@ -436,7 +433,7 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
 		 appropriate memory and copy it.  */
 	      struct dataset *newp
 		= (struct dataset *) mempool_alloc (db, total + req->key_len,
-						    IDX_result_data);
+						    1);
 	      if (__builtin_expect (newp != NULL, 1))
 		{
 		  /* Adjust pointer into the memory block.  */
@@ -445,8 +442,6 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
 		  dataset = memcpy (newp, dataset, total + req->key_len);
 		  alloca_used = false;
 		}
-	      else
-		++db->head->addfailed;
 
 	      /* Mark the old record as obsolete.  */
 	      dh->usable = false;
@@ -464,13 +459,16 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
 	    {
 	      assert (db->wr_fd != -1);
 	      assert ((char *) &dataset->resp > (char *) db->data);
-	      assert ((char *) &dataset->resp - (char *) db->head + total
+	      assert ((char *) dataset - (char *) db->head + total
 		      <= (sizeof (struct database_pers_head)
 			  + db->head->module * sizeof (ref_t)
 			  + db->head->data_size));
+# ifndef __ASSUME_SENDFILE
 	      ssize_t written;
-	      written = sendfileall (fd, db->wr_fd, (char *) &dataset->resp
-				     - (char *) db->head, total);
+	      written =
+# endif
+		sendfileall (fd, db->wr_fd, (char *) &dataset->resp
+			     - (char *) db->head, dataset->head.recsize);
 # ifndef __ASSUME_SENDFILE
 	      if (written == -1 && errno == ENOSYS)
 		goto use_write;
@@ -481,7 +479,7 @@ addhstaiX (struct database_dyn *db, int fd, request_header *req,
 	  use_write:
 # endif
 #endif
-	    writeall (fd, &dataset->resp, total);
+	    writeall (fd, &dataset->resp, dataset->head.recsize);
 	}
 
       goto out;
@@ -505,6 +503,9 @@ next_nip:
       if (reload_count != UINT_MAX && dh->nreloads == reload_count)
 	/* Do not reset the value if we never not reload the record.  */
 	dh->nreloads = reload_count - 1;
+
+      /* Reload with the same time-to-live value.  */
+      timeout = dh->timeout = time (NULL) + dh->ttl;
     }
   else
     {
@@ -515,10 +516,17 @@ next_nip:
       if (fd != -1)
 	TEMP_FAILURE_RETRY (send (fd, &notfound, total, MSG_NOSIGNAL));
 
-      dataset = mempool_alloc (db, sizeof (struct dataset) + req->key_len,
-			       IDX_result_data);
-      /* If we cannot permanently store the result, so be it.  */
-      if (dataset != NULL)
+      /* If we have a transient error or cannot permanently store the
+	 result, so be it.  */
+      if (rc4 == EAGAIN || __builtin_expect (db->negtimeout == 0, 0))
+	{
+	  /* Mark the old entry as obsolete.  */
+	  if (dh != NULL)
+	    dh->usable = false;
+	  dataset = NULL;
+	}
+      else if ((dataset = mempool_alloc (db, (sizeof (struct dataset)
+					      + req->key_len), 1)) != NULL)
 	{
 	  dataset->head.allocsize = sizeof (struct dataset) + req->key_len;
 	  dataset->head.recsize = total;
@@ -527,7 +535,8 @@ next_nip:
 	  dataset->head.usable = true;
 
 	  /* Compute the timeout time.  */
-	  dataset->head.timeout = time (NULL) + db->negtimeout;
+	  timeout = dataset->head.timeout = time (NULL) + db->negtimeout;
+	  dataset->head.ttl = db->negtimeout;
 
 	  /* This is the reply.  */
 	  memcpy (&dataset->resp, &notfound, total);
@@ -535,12 +544,10 @@ next_nip:
 	  /* Copy the key data.  */
 	  key_copy = memcpy (dataset->strdata, key, req->key_len);
 	}
-      else
-	++db->head->addfailed;
    }
 
  out:
-  _res.options = old_res_options;
+  _res.options |= old_res_options & RES_USE_INET6;
 
   if (dataset != NULL && !alloca_used)
     {
@@ -554,9 +561,6 @@ next_nip:
 		 MS_ASYNC);
 	}
 
-      /* Now get the lock to safely insert the records.  */
-      pthread_rwlock_rdlock (&db->lock);
-
       (void) cache_add (req->type, key_copy, req->key_len, &dataset->head,
 			true, db, uid, he == NULL);
 
@@ -566,6 +570,8 @@ next_nip:
       if (dh != NULL)
 	dh->usable = false;
     }
+
+  return timeout;
 }
 
 
@@ -577,7 +583,7 @@ addhstai (struct database_dyn *db, int fd, request_header *req, void *key,
 }
 
 
-void
+time_t
 readdhstai (struct database_dyn *db, struct hashentry *he, struct datahead *dh)
 {
   request_header req =
@@ -586,5 +592,5 @@ readdhstai (struct database_dyn *db, struct hashentry *he, struct datahead *dh)
       .key_len = he->len
     };
 
-  addhstaiX (db, -1, &req, db->data + he->key, he->owner, he, dh);
+  return addhstaiX (db, -1, &req, db->data + he->key, he->owner, he, dh);
 }

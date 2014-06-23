@@ -1,5 +1,5 @@
 /* Read and display shared object profiling data.
-   Copyright (C) 1997-2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <argp.h>
 #include <dlfcn.h>
@@ -33,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <ldsodefs.h>
 #include <sys/gmon.h>
 #include <sys/gmon_out.h>
@@ -86,9 +86,9 @@ static const struct argp_option options[] =
 };
 
 /* Short description of program.  */
-static const char doc[] = N_("Read and display shared object profiling data.\v\
-For bug reporting instructions, please see:\n\
-<http://www.gnu.org/software/libc/bugs.html>.\n");
+static const char doc[] = N_("Read and display shared object profiling data.");
+//For bug reporting instructions, please see:\n
+//<http://www.gnu.org/software/libc/bugs.html>.\n");
 
 /* Strings for arguments in help texts.  */
 static const char args_doc[] = N_("SHOBJ [PROFDATA]");
@@ -96,10 +96,13 @@ static const char args_doc[] = N_("SHOBJ [PROFDATA]");
 /* Prototype for option handler.  */
 static error_t parse_opt (int key, char *arg, struct argp_state *state);
 
+/* Function to print some extra text in the help message.  */
+static char *more_help (int key, const char *text, void *input);
+
 /* Data structure to communicate with argp functions.  */
 static struct argp argp =
 {
-  options, parse_opt, args_doc, doc
+  options, parse_opt, args_doc, doc, NULL, more_help
 };
 
 
@@ -192,13 +195,24 @@ struct shobj
 };
 
 
+struct real_gmon_hist_hdr
+{
+  char *low_pc;
+  char *high_pc;
+  int32_t hist_size;
+  int32_t prof_rate;
+  char dimen[15];
+  char dimen_abbrev;
+};
+
+
 struct profdata
 {
   void *addr;
   off_t size;
 
   char *hist;
-  struct gmon_hist_hdr *hist_hdr;
+  struct real_gmon_hist_hdr *hist_hdr;
   uint16_t *kcount;
   uint32_t narcs;		/* Number of arcs in toset.  */
   struct here_cg_arc_record *data;
@@ -247,7 +261,7 @@ main (int argc, char *argv[])
     {
       /* We need exactly two non-option parameter.  */
       argp_help (&argp, stdout, ARGP_HELP_SEE | ARGP_HELP_EXIT_ERR,
-                 program_invocation_short_name);
+		 program_invocation_short_name);
       exit (1);
     }
 
@@ -347,17 +361,37 @@ parse_opt (int key, char *arg, struct argp_state *state)
 }
 
 
+static char *
+more_help (int key, const char *text, void *input)
+{
+  char *tp = NULL;
+  switch (key)
+    {
+    case ARGP_KEY_HELP_EXTRA:
+      /* We print some extra information.  */
+      if (asprintf (&tp, gettext ("\
+For bug reporting instructions, please see:\n\
+%s.\n"), REPORT_BUGS_TO) < 0)
+	return NULL;
+      return tp;
+    default:
+      break;
+    }
+  return (char *) text;
+}
+
+
 /* Print the version information.  */
 static void
 print_version (FILE *stream, struct argp_state *state)
 {
-  fprintf (stream, "sprof (GNU %s) %s\n", PACKAGE, VERSION);
+  fprintf (stream, "sprof %s%s\n", PKGVERSION, VERSION);
   fprintf (stream, gettext ("\
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
 "),
-	   "2008");
+	   "2014");
   fprintf (stream, gettext ("Written by %s.\n"), "Ulrich Drepper");
 }
 
@@ -373,7 +407,6 @@ load_shobj (const char *name)
   ElfW(Addr) mapend = 0;
   const ElfW(Phdr) *ph;
   size_t textsize;
-  unsigned int log_hashfraction;
   ElfW(Ehdr) *ehdr;
   int fd;
   ElfW(Shdr) *shdr;
@@ -443,13 +476,6 @@ load_shobj (const char *name)
   textsize = result->highpc - result->lowpc;
   result->kcountsize = textsize / HISTFRACTION;
   result->hashfraction = HASHFRACTION;
-  if ((HASHFRACTION & (HASHFRACTION - 1)) == 0)
-    /* If HASHFRACTION is a power of two, mcount can use shifting
-       instead of integer division.  Precompute shift amount.  */
-    log_hashfraction = __builtin_ffs (result->hashfraction
-				      * sizeof (struct here_fromstruct)) - 1;
-  else
-    log_hashfraction = -1;
   if (do_test)
     printf ("hashfraction = %d\ndivider = %Zu\n",
 	    result->hashfraction,
@@ -573,10 +599,11 @@ load_shobj (const char *name)
       static const char procpath[] = "/proc/self/fd/%d";
       char origprocname[sizeof (procpath) + sizeof (int) * 3];
       snprintf (origprocname, sizeof (origprocname), procpath, fd);
-      char *origlink = (char *) alloca (PATH_MAX + 1);
-      origlink[PATH_MAX] = '\0';
-      if (readlink (origprocname, origlink, PATH_MAX) == -1)
+      char *origlink = (char *) alloca (PATH_MAX);
+      ssize_t n = readlink (origprocname, origlink, PATH_MAX - 1);
+      if (n == -1)
 	goto no_debuginfo;
+      origlink[n] = '\0';
 
       /* Try to find the actual file.  There are three places:
 	 1. the same directory the DSO is in
@@ -718,10 +745,8 @@ load_profdata (const char *name, struct shobj *shobj)
 {
   struct profdata *result;
   int fd;
-  struct stat st;
+  struct stat64 st;
   void *addr;
-  struct gmon_hdr gmon_hdr;
-  struct gmon_hist_hdr hist_hdr;
   uint32_t *narcsp;
   size_t fromlimit;
   struct here_cg_arc_record *data;
@@ -759,7 +784,7 @@ load_profdata (const char *name, struct shobj *shobj)
 
   /* We have found the file, now make sure it is the right one for the
      data file.  */
-  if (fstat (fd, &st) < 0)
+  if (fstat64 (fd, &st) < 0)
     {
       error (0, errno, _("while stat'ing profiling data file"));
       close (fd);
@@ -808,10 +833,10 @@ load_profdata (const char *name, struct shobj *shobj)
 
   /* Pointer to data after the header.  */
   result->hist = (char *) ((struct gmon_hdr *) addr + 1);
-  result->hist_hdr = (struct gmon_hist_hdr *) ((char *) result->hist
-					       + sizeof (uint32_t));
+  result->hist_hdr = (struct real_gmon_hist_hdr *) ((char *) result->hist
+						    + sizeof (uint32_t));
   result->kcount = (uint16_t *) ((char *) result->hist + sizeof (uint32_t)
-				 + sizeof (struct gmon_hist_hdr));
+				 + sizeof (struct real_gmon_hist_hdr));
 
   /* Compute pointer to array of the arc information.  */
   narcsp = (uint32_t *) ((char *) result->kcount + shobj->kcountsize
@@ -821,18 +846,46 @@ load_profdata (const char *name, struct shobj *shobj)
 						+ sizeof (uint32_t));
 
   /* Create the gmon_hdr we expect or write.  */
-  memset (&gmon_hdr, '\0', sizeof (struct gmon_hdr));
+  struct real_gmon_hdr
+  {
+    char cookie[4];
+    int32_t version;
+    char spare[3 * 4];
+  } gmon_hdr;
+  if (sizeof (gmon_hdr) != sizeof (struct gmon_hdr)
+      || (offsetof (struct real_gmon_hdr, cookie)
+	  != offsetof (struct gmon_hdr, cookie))
+      || (offsetof (struct real_gmon_hdr, version)
+	  != offsetof (struct gmon_hdr, version)))
+    abort ();
+
   memcpy (&gmon_hdr.cookie[0], GMON_MAGIC, sizeof (gmon_hdr.cookie));
-  *(int32_t *) gmon_hdr.version = GMON_SHOBJ_VERSION;
+  gmon_hdr.version = GMON_SHOBJ_VERSION;
+  memset (gmon_hdr.spare, '\0', sizeof (gmon_hdr.spare));
 
   /* Create the hist_hdr we expect or write.  */
-  *(char **) hist_hdr.low_pc = (char *) shobj->lowpc - shobj->map->l_addr;
-  *(char **) hist_hdr.high_pc = (char *) shobj->highpc - shobj->map->l_addr;
+  struct real_gmon_hist_hdr hist_hdr;
+  if (sizeof (hist_hdr) != sizeof (struct gmon_hist_hdr)
+      || (offsetof (struct real_gmon_hist_hdr, low_pc)
+	  != offsetof (struct gmon_hist_hdr, low_pc))
+      || (offsetof (struct real_gmon_hist_hdr, high_pc)
+	  != offsetof (struct gmon_hist_hdr, high_pc))
+      || (offsetof (struct real_gmon_hist_hdr, hist_size)
+	  != offsetof (struct gmon_hist_hdr, hist_size))
+      || (offsetof (struct real_gmon_hist_hdr, prof_rate)
+	  != offsetof (struct gmon_hist_hdr, prof_rate))
+      || (offsetof (struct real_gmon_hist_hdr, dimen)
+	  != offsetof (struct gmon_hist_hdr, dimen))
+      || (offsetof (struct real_gmon_hist_hdr, dimen_abbrev)
+	  != offsetof (struct gmon_hist_hdr, dimen_abbrev)))
+    abort ();
+
+  hist_hdr.low_pc = (char *) shobj->lowpc - shobj->map->l_addr;
+  hist_hdr.high_pc = (char *) shobj->highpc - shobj->map->l_addr;
   if (do_test)
-    printf ("low_pc = %p\nhigh_pc = %p\n",
-	    *(char **) hist_hdr.low_pc, *(char **) hist_hdr.high_pc);
-  *(int32_t *) hist_hdr.hist_size = shobj->kcountsize / sizeof (HISTCOUNTER);
-  *(int32_t *) hist_hdr.prof_rate = __profile_frequency ();
+    printf ("low_pc = %p\nhigh_pc = %p\n", hist_hdr.low_pc, hist_hdr.high_pc);
+  hist_hdr.hist_size = shobj->kcountsize / sizeof (HISTCOUNTER);
+  hist_hdr.prof_rate = __profile_frequency ();
   strncpy (hist_hdr.dimen, "seconds", sizeof (hist_hdr.dimen));
   hist_hdr.dimen_abbrev = 's';
 
@@ -1260,7 +1313,7 @@ generate_flat_profile (struct profdata *profdata)
   size_t n;
   void *data = NULL;
 
-  tick_unit = 1.0 / *(uint32_t *) profdata->hist_hdr->prof_rate;
+  tick_unit = 1.0 / profdata->hist_hdr->prof_rate;
 
   printf ("Flat profile:\n\n"
 	  "Each sample counts as %g %s.\n",
@@ -1311,7 +1364,7 @@ generate_call_graph (struct profdata *profdata)
 	    runp = runp->next;
 	  }
 
-	/* Info abount the function itself.  */
+	/* Info about the function itself.  */
 	n = printf ("[%Zu]", cnt);
 	printf ("%*s%5.1f%8.2f%8.2f%9" PRIdMAX "         %s [%Zd]\n",
 		(int) (7 - n), " ",

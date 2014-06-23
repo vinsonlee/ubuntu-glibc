@@ -12,9 +12,9 @@
 /*
   Long double expansions are
   Copyright (C) 2001 Stephen L. Moshier <moshier@na-net.ornl.gov>
-  and are incorporated herein by permission of the author.  The author 
-  reserves the right to distribute this material elsewhere under different 
-  copying permissions.  These modifications are distributed here under the 
+  and are incorporated herein by permission of the author.  The author
+  reserves the right to distribute this material elsewhere under different
+  copying permissions.  These modifications are distributed here under the
   following terms:
 
     This library is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
 /* __ieee754_asin(x)
  * Method :
@@ -59,15 +59,11 @@
  */
 
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 long double sqrtl (long double);
 
-#ifdef __STDC__
 static const long double
-#else
-static long double
-#endif
   one = 1.0L,
   huge = 1.0e+300L,
   pio2_hi = 1.5707963267948966192313216916397514420986L,
@@ -132,35 +128,23 @@ static long double
 
 
 
-#ifdef __STDC__
 long double
 __ieee754_asinl (long double x)
-#else
-double
-__ieee754_asinl (x)
-     long double x;
-#endif
 {
-  long double t, w, p, q, c, r, s;
-  int32_t ix, sign, flag;
-  ieee854_long_double_shape_type u;
+  long double a, t, w, p, q, c, r, s;
+  int flag;
 
+  if (__glibc_unlikely (__isnanl (x)))
+    return x + x;
   flag = 0;
-  u.value = x;
-  sign = u.parts32.w0;
-  ix = sign & 0x7fffffff;
-  u.parts32.w0 = ix;    /* |x| */
-  if (ix >= 0x3ff00000)	/* |x|>= 1 */
+  a = __builtin_fabsl (x);
+  if (a == 1.0L)	/* |x|>= 1 */
+    return x * pio2_hi + x * pio2_lo;	/* asin(1)=+-pi/2 with inexact */
+  else if (a >= 1.0L)
+    return (x - x) / (x - x);	/* asin(|x|>1) is NaN */
+  else if (a < 0.5L)
     {
-      if (ix == 0x3ff00000
-	  && (u.parts32.w1 | (u.parts32.w2 & 0x7fffffff) | u.parts32.w3) == 0)
-	/* asin(1)=+-pi/2 with inexact */
-	return x * pio2_hi + x * pio2_lo;
-      return (x - x) / (x - x);	/* asin(|x|>1) is NaN */
-    }
-  else if (ix < 0x3fe00000) /* |x| < 0.5 */
-    {
-      if (ix < 0x3c600000) /* |x| < 2**-57 */
+      if (a < 6.938893903907228e-18L) /* |x| < 2**-57 */
 	{
 	  if (huge + x > one)
 	    return x;		/* return x with inexact if x!=0 */
@@ -172,9 +156,9 @@ __ieee754_asinl (x)
 	  flag = 1;
 	}
     }
-  else if (ix < 0x3fe40000) /* 0.625 */
+  else if (a < 0.625L)
     {
-      t = u.value - 0.5625;
+      t = a - 0.5625;
       p = ((((((((((rS10 * t
 		    + rS9) * t
 		   + rS8) * t
@@ -199,7 +183,7 @@ __ieee754_asinl (x)
 	   + sS1) * t
 	+ sS0;
       t = asinr5625 + p / q;
-      if ((sign & 0x80000000) == 0)
+      if (x > 0.0L)
 	return t;
       else
 	return -t;
@@ -207,7 +191,7 @@ __ieee754_asinl (x)
   else
     {
       /* 1 > |x| >= 0.625 */
-      w = one - u.value;
+      w = one - a;
       t = w * 0.5;
     }
 
@@ -240,17 +224,14 @@ __ieee754_asinl (x)
     }
 
   s = __ieee754_sqrtl (t);
-  if (ix >= 0x3fef3333) /* |x| > 0.975 */
+  if (a > 0.975L)
     {
       w = p / q;
       t = pio2_hi - (2.0 * (s + s * w) - pio2_lo);
     }
   else
     {
-      u.value = s;
-      u.parts32.w3 = 0;
-      u.parts32.w2 = 0;
-      w = u.value;
+      w = ldbl_high (s);
       c = (t - w * w) / (s + w);
       r = p / q;
       p = 2.0 * s * r - (pio2_lo - 2.0 * c);
@@ -258,8 +239,9 @@ __ieee754_asinl (x)
       t = pio4_hi - (p - q);
     }
 
-  if ((sign & 0x80000000) == 0)
+  if (x > 0.0L)
     return t;
   else
     return -t;
 }
+strong_alias (__ieee754_asinl, __asinl_finite)

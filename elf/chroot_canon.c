@@ -1,6 +1,5 @@
 /* Return the canonical absolute name of a given file inside chroot.
-   Copyright (C) 1996,1997,1998,1999,2000,2001,2004,2005
-	Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This program is free software; you can redistribute it and/or modify
@@ -14,19 +13,18 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
 
+#include <eloop-threshold.h>
 #include <ldconfig.h>
 
 #ifndef PATH_MAX
@@ -58,9 +56,7 @@ chroot_canon (const char *chroot, const char *name)
       return NULL;
     }
 
-  rpath = malloc (chroot_len + PATH_MAX);
-  if (rpath == NULL)
-    return NULL;
+  rpath = xmalloc (chroot_len + PATH_MAX);
 
   rpath_limit = rpath + chroot_len + PATH_MAX;
 
@@ -72,7 +68,6 @@ chroot_canon (const char *chroot, const char *name)
   for (start = end = name; *start; start = end)
     {
       struct stat64 st;
-      int n;
 
       /* Skip sequence of multiple path-separators.  */
       while (*start == '/')
@@ -109,9 +104,7 @@ chroot_canon (const char *chroot, const char *name)
 		new_size += end - start + 1;
 	      else
 		new_size += PATH_MAX;
-	      new_rpath = (char *) realloc (rpath, new_size);
-	      if (new_rpath == NULL)
-		goto error;
+	      new_rpath = (char *) xrealloc (rpath, new_size);
 	      rpath = new_rpath;
 	      rpath_limit = rpath + new_size;
 
@@ -133,13 +126,13 @@ chroot_canon (const char *chroot, const char *name)
 	      char *buf = alloca (PATH_MAX);
 	      size_t len;
 
-	      if (++num_links > MAXSYMLINKS)
+	      if (++num_links > __eloop_threshold ())
 		{
 		  __set_errno (ELOOP);
 		  goto error;
 		}
 
-	      n = readlink (rpath, buf, PATH_MAX);
+	      ssize_t n = readlink (rpath, buf, PATH_MAX - 1);
 	      if (n < 0)
 		{
 		  if (*end == '\0')
@@ -152,7 +145,7 @@ chroot_canon (const char *chroot, const char *name)
 		extra_buf = alloca (PATH_MAX);
 
 	      len = strlen (end);
-	      if ((long int) (n + len) >= PATH_MAX)
+	      if (len >= PATH_MAX - n)
 		{
 		  __set_errno (ENAMETOOLONG);
 		  goto error;

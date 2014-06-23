@@ -22,22 +22,23 @@ static char rcsid[] = "$NetBSD: $";
  * fabsl(x) returns the absolute value of x.
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 #include <math_ldbl_opt.h>
 
-#ifdef __STDC__
-	long double __fabsl(long double x)
-#else
-	long double __fabsl(x)
-	long double x;
-#endif
+long double __fabsl(long double x)
 {
 	u_int64_t hx, lx;
-	GET_LDOUBLE_WORDS64(hx,lx,x);
+	double xhi, xlo;
+
+	ldbl_unpack (x, &xhi, &xlo);
+	EXTRACT_WORDS64 (hx, xhi);
+	EXTRACT_WORDS64 (lx, xlo);
 	lx = lx ^ ( hx & 0x8000000000000000LL );
 	hx = hx & 0x7fffffffffffffffLL;
-	SET_LDOUBLE_WORDS64(x,hx,lx);
+	INSERT_WORDS64 (xhi, hx);
+	INSERT_WORDS64 (xlo, lx);
+	x = ldbl_pack (xhi, xlo);
 	return x;
 }
 long_double_symbol (libm, __fabsl, fabsl);

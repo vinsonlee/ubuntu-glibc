@@ -28,8 +28,8 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
 /* __ieee754_acosl(x)
  * Method :
@@ -54,14 +54,10 @@
  * Functions needed: __ieee754_sqrtl.
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
 static const long double
-#else
-static long double
-#endif
   one = 1.0L,
   pio2_hi = 1.5707963267948966192313216916397514420986L,
   pio2_lo = 4.3359050650618905123985220130216759843812E-35L,
@@ -152,40 +148,30 @@ static long double
   qS8 = -4.175375777334867025769346564600396877176E1L;
   /* 1.000000000000000000000000000000000000000E0 */
 
-#ifdef __STDC__
 long double
 __ieee754_acosl (long double x)
-#else
-long double
-__ieee754_acosl (x)
-     long double x;
-#endif
 {
-  long double z, r, w, p, q, s, t, f2;
-  int32_t ix, sign;
-  ieee854_long_double_shape_type u;
+  long double a, z, r, w, p, q, s, t, f2;
 
-  u.value = x;
-  sign = u.parts32.w0;
-  ix = sign & 0x7fffffff;
-  u.parts32.w0 = ix;		/* |x| */
-  if (ix >= 0x3ff00000)		/* |x| >= 1 */
+  if (__glibc_unlikely (__isnanl (x)))
+    return x + x;
+  a = __builtin_fabsl (x);
+  if (a == 1.0L)
     {
-      if (ix == 0x3ff00000
-	  && (u.parts32.w1 | (u.parts32.w2&0x7fffffff) | u.parts32.w3) == 0)
-	{			/* |x| == 1 */
-	  if ((sign & 0x80000000) == 0)
-	    return 0.0;		/* acos(1) = 0  */
-	  else
-	    return (2.0 * pio2_hi) + (2.0 * pio2_lo);	/* acos(-1)= pi */
-	}
+      if (x > 0.0L)
+	return 0.0;		/* acos(1) = 0  */
+      else
+	return (2.0 * pio2_hi) + (2.0 * pio2_lo);	/* acos(-1)= pi */
+    }
+  else if (a > 1.0L)
+    {
       return (x - x) / (x - x);	/* acos(|x| > 1) is NaN */
     }
-  else if (ix < 0x3fe00000)	/* |x| < 0.5 */
+  if (a < 0.5L)
     {
-      if (ix < 0x3c600000)	/* |x| < 2**-57 */
+      if (a < 6.938893903907228e-18L)	/* |x| < 2**-57 */
 	return pio2_hi + pio2_lo;
-      if (ix < 0x3fde0000)	/* |x| < .4375 */
+      if (a < 0.4375L)
 	{
 	  /* Arcsine of x.  */
 	  z = x * x;
@@ -214,7 +200,7 @@ __ieee754_acosl (x)
 	  return z;
 	}
       /* .4375 <= |x| < .5 */
-      t = u.value - 0.4375L;
+      t = a - 0.4375L;
       p = ((((((((((P10 * t
 		    + P9) * t
 		   + P8) * t
@@ -239,15 +225,15 @@ __ieee754_acosl (x)
 	   + Q1) * t
 	+ Q0;
       r = p / q;
-      if (sign & 0x80000000)
+      if (x < 0.0L)
 	r = pimacosr4375 - r;
       else
 	r = acosr4375 + r;
       return r;
     }
-  else if (ix < 0x3fe40000)	/* |x| < 0.625 */
+  else if (a < 0.625L)
     {
-      t = u.value - 0.5625L;
+      t = a - 0.5625L;
       p = ((((((((((rS10 * t
 		    + rS9) * t
 		   + rS8) * t
@@ -271,7 +257,7 @@ __ieee754_acosl (x)
 	    + sS2) * t
 	   + sS1) * t
 	+ sS0;
-      if (sign & 0x80000000)
+      if (x < 0.0L)
 	r = pimacosr5625 - p / q;
       else
 	r = acosr5625 + p / q;
@@ -279,21 +265,22 @@ __ieee754_acosl (x)
     }
   else
     {				/* |x| >= .625 */
-      z = (one - u.value) * 0.5;
+      double shi, slo;
+
+      z = (one - a) * 0.5;
       s = __ieee754_sqrtl (z);
       /* Compute an extended precision square root from
 	 the Newton iteration  s -> 0.5 * (s + z / s).
-         The change w from s to the improved value is
+	 The change w from s to the improved value is
 	    w = 0.5 * (s + z / s) - s  = (s^2 + z)/2s - s = (z - s^2)/2s.
-          Express s = f1 + f2 where f1 * f1 is exactly representable.
+	  Express s = f1 + f2 where f1 * f1 is exactly representable.
 	  w = (z - s^2)/2s = (z - f1^2 - 2 f1 f2 - f2^2)/2s .
-          s + w has extended precision.  */
-      u.value = s;
-      u.parts32.w2 = 0;
-      u.parts32.w3 = 0;
-      f2 = s - u.value;
-      w = z - u.value * u.value;
-      w = w - 2.0 * u.value * f2;
+	  s + w has extended precision.  */
+      ldbl_unpack (s, &shi, &slo);
+      a = shi;
+      f2 = slo;
+      w = z - a * a;
+      w = w - 2.0 * a * f2;
       w = w - f2 * f2;
       w = w / (2.0 * s);
       /* Arcsine of s.  */
@@ -319,10 +306,11 @@ __ieee754_acosl (x)
 	+ qS0;
       r = s + (w + s * p / q);
 
-      if (sign & 0x80000000)
+      if (x < 0.0L)
 	w = pio2_hi + (pio2_lo - r);
       else
 	w = r;
       return 2.0 * w;
     }
 }
+strong_alias (__ieee754_acosl, __acosl_finite)

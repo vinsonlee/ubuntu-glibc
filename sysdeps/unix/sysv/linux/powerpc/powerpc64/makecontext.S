@@ -1,5 +1,5 @@
 /* Create new context.
-   Copyright (C) 2002, 2004, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-   02110-1301 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <kernel-features.h>
@@ -27,7 +26,6 @@
 
 ENTRY(__makecontext)
 	CALL_MCOUNT 3
-#ifdef __ASSUME_NEW_RT_SIGRETURN_SYSCALL
   /* Save parameters into the parameter save area of callers frame.  */
   std  r3,FRAME_PARM1_SAVE(r1) /* ucontext_t *ucp  */
   std  r4,FRAME_PARM2_SAVE(r1) /* void (*func)(void)  */
@@ -113,6 +111,7 @@ L(parmloop):
 
 L(noparms):
 
+#if _CALL_ELF != 2
   /* Load the function address and TOC from the function descriptor
      and store them in the ucontext as NIP and r2.  Store the 3rd
      field of the function descriptor into the ucontext as r11 in case
@@ -123,11 +122,23 @@ L(noparms):
   std   r0,(SIGCONTEXT_GP_REGS+(PT_NIP*8))(r3)
   std   r10,(SIGCONTEXT_GP_REGS+(PT_R2*8))(r3)
   std   r9,(SIGCONTEXT_GP_REGS+(PT_R11*8))(r3)
+#else
+  /* In the ELFv2 ABI, the function pointer is already the address.
+     Store it as NIP and r12 as required by the ABI.  */
+  std   r4,(SIGCONTEXT_GP_REGS+(PT_NIP*8))(r3)
+  std   r4,(SIGCONTEXT_GP_REGS+(PT_R12*8))(r3)
+#endif
 
   /* If the target function returns we need to do some cleanup.  We use a
      code trick to get the address of our cleanup function into the link
-     register.  Do not add any code between here and L(exitcode).  */
-  bl  L(gotexitcodeaddr);
+     register.  Do not add any code between here and L(exitcode).
+     Use this conditional form of branch and link to avoid destroying
+     the cpu link stack used to predict blr return addresses.  */
+  bcl	20,31,L(gotexitcodeaddr);
+
+  /* End FDE now, because while executing on the context's stack
+     the unwind info would be wrong otherwise.  */
+  cfi_endproc
 
 	/* This is the helper code which gets called if a function which
 	   is registered with 'makecontext' returns.  In this case we
@@ -136,25 +147,31 @@ L(noparms):
 	   'makecontext' call.  If the pointer is NULL the process must
 	   terminate.  */
 L(exitcode):
-   /* Recover the ucontext and TOC from the dummy frame.  */
-  ld    r1,FRAME_BACKCHAIN(r1)  /* Unstack the parameter save area frame.  */
-  ld    r3,FRAME_PARM1_SAVE(r1)
-  ld    r2,FRAME_TOC_SAVE(r1)
-  ld    r3,UCONTEXT_LINK(r3)  /* Load the resume context.  */
-  cmpdi r3,0
-  beq   L(BADSTATUS)
+	/* Recover the ucontext and TOC from the dummy frame.  */
+	ld    r1,FRAME_BACKCHAIN(r1)  /* Unstack the parameter save area frame.  */
+	ld    r3,FRAME_PARM1_SAVE(r1)
+	ld    r2,FRAME_TOC_SAVE(r1)
+	ld    r3,UCONTEXT_LINK(r3)  /* Load the resume context.  */
+	cmpdi r3,0
+	beq   L(do_exit)
 	bl    JUMPTARGET(__setcontext)
 	nop
-
-L(BADSTATUS):
-/* If setcontext returns (which can happen if the syscall fails) we will
-   exit the program with error status (-1).  */
-  li    r3,-1
+	/* If setcontext returns (which can happen if the syscall fails) we will
+	   exit the program with error status (-1).  */
+	li    r3,-1
+L(do_exit):
 #ifdef SHARED
-  b     JUMPTARGET(__GI_exit);
+	b     JUMPTARGET(__GI_exit);
 #else
-  b     JUMPTARGET(exit);
+	b     JUMPTARGET(exit);
+	nop
 #endif
+	b    L(do_exit)
+
+  /* Re-establish FDE for the rest of the actual makecontext routine.  */
+  cfi_startproc
+  cfi_offset (lr, FRAME_LR_SAVE)
+  cfi_adjust_cfa_offset (128)
 
   /* The address of the exit code is in the link register.  Store the lr
      in the ucontext as LNK so the target function will return to our
@@ -166,22 +183,6 @@ L(gotexitcodeaddr):
   addi  r1,r1,128
   mtlr  r0
   blr
-#else
-  /* If the kernel is not at least 2.4.21 then generate a ENOSYS stub.  */
-  mflr r0
-  std  r0,FRAME_LR_SAVE(r1)
-  cfi_offset (lr, FRAME_LR_SAVE)
-  stdu r1,-128(r1)
-  cfi_adjust_cfa_offset (128)
-  li   r3,ENOSYS
-  bl   JUMPTARGET(__syscall_error)
-  nop
-  li   r3,-1
-  ld   r0,128+FRAME_LR_SAVE(r1)
-  addi r1,r1,128
-  mtlr r0
-  blr
-#endif
 END(__makecontext)
 
 weak_alias (__makecontext, makecontext)

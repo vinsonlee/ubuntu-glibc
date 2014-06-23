@@ -14,7 +14,7 @@ Submitted upstream: BZ690
 
 --- a/locale/programs/ld-collate.c
 +++ b/locale/programs/ld-collate.c
-@@ -2894,14 +2894,23 @@
+@@ -2749,14 +2749,23 @@
        switch (nowtok)
  	{
  	case tok_copy:
@@ -42,7 +42,7 @@ Submitted upstream: BZ690
  
  	  lr_ignore_rest (ldfile, 1);
  	  break;
-@@ -2915,9 +2924,6 @@
+@@ -2770,9 +2779,6 @@
  	      break;
  	    }
  
@@ -52,7 +52,7 @@ Submitted upstream: BZ690
  	  arg = lr_token (ldfile, charmap, result, NULL, verbose);
  	  if (arg->tok != tok_number)
  	    goto err_label;
-@@ -2938,7 +2944,7 @@
+@@ -2793,7 +2799,7 @@
  	      break;
  	    }
  
@@ -61,7 +61,7 @@ Submitted upstream: BZ690
  	    goto err_label;
  
  	  arg = lr_token (ldfile, charmap, result, repertoire, verbose);
-@@ -2985,7 +2991,7 @@
+@@ -2840,7 +2846,7 @@
  	      break;
  	    }
  
@@ -70,7 +70,7 @@ Submitted upstream: BZ690
  	    goto err_label;
  
  	  arg = lr_token (ldfile, charmap, result, repertoire, verbose);
-@@ -3051,7 +3057,7 @@
+@@ -2906,7 +2912,7 @@
  	      break;
  	    }
  
@@ -79,7 +79,7 @@ Submitted upstream: BZ690
  	    goto err_label;
  
  	  arg = lr_token (ldfile, charmap, result, repertoire, verbose);
-@@ -3197,7 +3203,7 @@
+@@ -3052,7 +3058,7 @@
  	      break;
  	    }
  
@@ -88,7 +88,7 @@ Submitted upstream: BZ690
  	    goto err_label;
  
  	  arg = lr_token (ldfile, charmap, result, repertoire, verbose);
-@@ -3318,7 +3324,7 @@
+@@ -3173,7 +3179,7 @@
  	      break;
  	    }
  
@@ -97,7 +97,7 @@ Submitted upstream: BZ690
  	    goto err_label;
  	  state = 1;
  
-@@ -3628,8 +3634,6 @@
+@@ -3484,8 +3490,6 @@
  %s: missing `reorder-end' keyword"), "LC_COLLATE"));
  	      state = 4;
  	    }

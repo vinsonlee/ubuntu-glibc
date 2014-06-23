@@ -1,5 +1,5 @@
 /* isnanf().  PowerPC32 version.
-   Copyright (C) 2008 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <math_ldbl_opt.h>
@@ -39,8 +38,7 @@ EALIGN (__isnanf, 4, 0)
 L(NaN):
 	li	r3,1		/* else return 1 */
 	blr
-	END (__isnan)
+	END (__isnanf)
 
 hidden_def (__isnanf)
 weak_alias (__isnanf, isnanf)
-

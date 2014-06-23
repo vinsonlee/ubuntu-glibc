@@ -1,5 +1,5 @@
 /* SELinux access controls for nscd.
-   Copyright (C) 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Matthew Rickard <mjricka@epoch.ncsc.mil>, 2004.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
 #include <error.h>
@@ -46,7 +45,7 @@
 int selinux_enabled;
 
 /* Define mappings of access vector permissions to request types.  */
-static const int perms[LASTREQ] =
+static const access_vector_t perms[LASTREQ] =
 {
   [GETPWBYNAME] = NSCD__GETPWD,
   [GETPWBYUID] = NSCD__GETPWD,
@@ -68,6 +67,11 @@ static const int perms[LASTREQ] =
   [GETSERVBYNAME] = NSCD__GETSERV,
   [GETSERVBYPORT] = NSCD__GETSERV,
   [GETFDSERV] = NSCD__SHMEMSERV,
+#endif
+#ifdef NSCD__GETNETGRP
+  [GETNETGRENT] = NSCD__GETNETGRP,
+  [INNETGR] = NSCD__GETNETGRP,
+  [GETFDNETGR] = NSCD__SHMEMNETGRP,
 #endif
 };
 
@@ -416,17 +420,6 @@ nscd_avc_print_stats (struct avc_cache_stats *cstats)
 	  cstats->entry_lookups, cstats->entry_hits, cstats->entry_misses,
 	  cstats->entry_discards, cstats->cav_lookups, cstats->cav_hits,
 	  cstats->cav_probes, cstats->cav_misses);
-}
-
-
-/* Clean up the AVC before exiting.  */
-void
-nscd_avc_destroy (void)
-{
-  avc_destroy ();
-#ifdef HAVE_LIBAUDIT
-  audit_close (audit_fd);
-#endif
 }
 
 #endif /* HAVE_SELINUX */

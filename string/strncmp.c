@@ -1,4 +1,4 @@
-/* Copyright (C) 1991, 1996, 1997, 2003 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,27 +12,27 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <string.h>
 #include <memcopy.h>
 
 #undef strncmp
 
+#ifndef STRNCMP
+#define STRNCMP strncmp
+#endif
+
 /* Compare no more than N characters of S1 and S2,
    returning less than, equal to or greater than zero
    if S1 is lexicographically less than, equal to or
    greater than S2.  */
 int
-strncmp (s1, s2, n)
-     const char *s1;
-     const char *s2;
-     size_t n;
+STRNCMP (const char *s1, const char *s2, size_t n)
 {
-  unsigned reg_char c1 = '\0';
-  unsigned reg_char c2 = '\0';
+  unsigned char c1 = '\0';
+  unsigned char c2 = '\0';
 
   if (n >= 4)
     {
@@ -70,4 +70,5 @@ strncmp (s1, s2, n)
 
   return c1 - c2;
 }
-libc_hidden_builtin_def (strncmp)
+
+libc_hidden_builtin_def (STRNCMP)

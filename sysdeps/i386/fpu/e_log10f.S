@@ -8,29 +8,24 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: $")
+	.section .rodata.cst8,"aM",@progbits,8
 
-#ifdef __ELF__
-	.section .rodata
-#else
-	.text
-#endif
-	.align ALIGNARG(4)
-	ASM_TYPE_DIRECTIVE(one,@object)
+	.p2align 3
+	.type one,@object
 one:	.double 1.0
 	ASM_SIZE_DIRECTIVE(one)
 	/* It is not important that this constant is precise.  It is only
 	   a value which is known to be on the safe side for using the
 	   fyl2xp1 instruction.  */
-	ASM_TYPE_DIRECTIVE(limit,@object)
+	.type limit,@object
 limit:	.double 0.29
 	ASM_SIZE_DIRECTIVE(limit)
 
 
 #ifdef PIC
-#define MO(op) op##@GOTOFF(%edx)
+# define MO(op) op##@GOTOFF(%edx)
 #else
-#define MO(op) op
+# define MO(op) op
 #endif
 
 	.text
@@ -65,3 +60,4 @@ ENTRY(__ieee754_log10f)
 	fstp	%st(1)
 	ret
 END (__ieee754_log10f)
+strong_alias (__ieee754_log10f, __log10f_finite)

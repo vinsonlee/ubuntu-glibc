@@ -77,6 +77,7 @@ static const char rcsid[] = "$BINDId: res_init.c,v 8.16 2000/05/09 07:10:12 vixi
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 #include <net/if.h>
@@ -148,9 +149,9 @@ libc_hidden_def (__res_ninit)
 /* This function has to be reachable by res_data.c but not publically. */
 int
 __res_vinit(res_state statp, int preinit) {
-	register FILE *fp;
-	register char *cp, **pp;
-	register int n;
+	FILE *fp;
+	char *cp, **pp;
+	int n;
 	char buf[BUFSIZ];
 	int nserv = 0;    /* number of nameserver records read from file */
 #ifdef _LIBC
@@ -176,14 +177,7 @@ __res_vinit(res_state statp, int preinit) {
 		statp->id = res_randomid();
 	}
 
-#ifdef USELOOPBACK
-	statp->nsaddr.sin_addr = inet_makeaddr(IN_LOOPBACKNET, 1);
-#else
-	statp->nsaddr.sin_addr.s_addr = INADDR_ANY;
-#endif
-	statp->nsaddr.sin_family = AF_INET;
-	statp->nsaddr.sin_port = htons(NAMESERVER_PORT);
-	statp->nscount = 1;
+	statp->nscount = 0;
 	statp->ndots = 1;
 	statp->pfcode = 0;
 	statp->_vcsock = -1;
@@ -240,7 +234,7 @@ __res_vinit(res_state statp, int preinit) {
 	(line[sizeof(name) - 1] == ' ' || \
 	 line[sizeof(name) - 1] == '\t'))
 
-	if ((fp = fopen(_PATH_RESCONF, "rc")) != NULL) {
+	if ((fp = fopen(_PATH_RESCONF, "rce")) != NULL) {
 	    /* No threads use this stream.  */
 	    __fsetlocking (fp, FSETLOCKING_BYCALLER);
 	    /* read the config file */
@@ -314,31 +308,31 @@ __res_vinit(res_state statp, int preinit) {
 			cp++;
 		    if ((*cp != '\0') && (*cp != '\n')
 			&& __inet_aton(cp, &a)) {
-			statp->nsaddr_list[nserv].sin_addr = a;
-			statp->nsaddr_list[nserv].sin_family = AF_INET;
-			statp->nsaddr_list[nserv].sin_port =
+			statp->nsaddr_list[nservall].sin_addr = a;
+			statp->nsaddr_list[nservall].sin_family = AF_INET;
+			statp->nsaddr_list[nservall].sin_port =
 				htons(NAMESERVER_PORT);
 			nserv++;
 #ifdef _LIBC
 			nservall++;
-                    } else {
-                        struct in6_addr a6;
-                        char *el;
+		    } else {
+			struct in6_addr a6;
+			char *el;
 
-                        if ((el = strchr(cp, '\n')) != NULL)
-                            *el = '\0';
+			if ((el = strpbrk(cp, " \t\n")) != NULL)
+			    *el = '\0';
 			if ((el = strchr(cp, SCOPE_DELIMITER)) != NULL)
 			    *el = '\0';
-                        if ((*cp != '\0') &&
-                            (inet_pton(AF_INET6, cp, &a6) > 0)) {
-                            struct sockaddr_in6 *sa6;
+			if ((*cp != '\0') &&
+			    (inet_pton(AF_INET6, cp, &a6) > 0)) {
+			    struct sockaddr_in6 *sa6;
 
-                            sa6 = malloc(sizeof(*sa6));
-                            if (sa6 != NULL) {
-                                sa6->sin6_family = AF_INET6;
-                                sa6->sin6_port = htons(NAMESERVER_PORT);
+			    sa6 = malloc(sizeof(*sa6));
+			    if (sa6 != NULL) {
+				sa6->sin6_family = AF_INET6;
+				sa6->sin6_port = htons(NAMESERVER_PORT);
 				sa6->sin6_flowinfo = 0;
-                                sa6->sin6_addr = a6;
+				sa6->sin6_addr = a6;
 
 				if (__builtin_expect (el == NULL, 1))
 				    sa6->sin6_scope_id = 0;
@@ -365,9 +359,9 @@ __res_vinit(res_state statp, int preinit) {
 				statp->_u._ext.nsaddrs[nservall] = sa6;
 				statp->_u._ext.nssocks[nservall] = -1;
 				statp->_u._ext.nsmap[nservall] = MAXNS + 1;
-                                nservall++;
-                            }
-                        }
+				nservall++;
+			    }
+			}
 #endif
 		    }
 		    continue;
@@ -420,8 +414,7 @@ __res_vinit(res_state statp, int preinit) {
 		    continue;
 		}
 	    }
-	    if (nserv > 1)
-		statp->nscount = nserv;
+	    statp->nscount = nservall;
 #ifdef _LIBC
 	    if (nservall - nserv > 0) {
 		statp->_u._ext.nscount6 = nservall - nserv;
@@ -433,6 +426,12 @@ __res_vinit(res_state statp, int preinit) {
 	    statp->nsort = nsort;
 #endif
 	    (void) fclose(fp);
+	}
+	if (__builtin_expect(statp->nscount == 0, 0)) {
+	    statp->nsaddr.sin_addr = inet_makeaddr(IN_LOOPBACKNET, 1);
+	    statp->nsaddr.sin_family = AF_INET;
+	    statp->nsaddr.sin_port = htons(NAMESERVER_PORT);
+	    statp->nscount = 1;
 	}
 	if (statp->defdname[0] == 0 &&
 	    __gethostname(buf, sizeof(statp->defdname) - 1) == 0 &&
@@ -523,26 +522,42 @@ res_setoptions(res_state statp, const char *options, const char *source) {
 			}
 			printf(";;\tdebug\n");
 #endif
-		} else if (!strncmp(cp, "inet6", sizeof("inet6") - 1)) {
-			statp->options |= RES_USE_INET6;
-		} else if (!strncmp(cp, "ip6-bytestring",
-				    sizeof("ip6-bytestring") - 1)) {
-			statp->options |= RES_USEBSTRING;
-		} else if (!strncmp(cp, "no-ip6-dotint",
-				    sizeof("no-ip6-dotint") - 1)) {
-			statp->options |= RES_NOIP6DOTINT;
-		} else if (!strncmp(cp, "ip6-dotint",
-				    sizeof("ip6-dotint") - 1)) {
-			statp->options &= ~RES_NOIP6DOTINT;
-		} else if (!strncmp(cp, "rotate", sizeof("rotate") - 1)) {
-			statp->options |= RES_ROTATE;
-		} else if (!strncmp(cp, "no-check-names",
-				    sizeof("no-check-names") - 1)) {
-			statp->options |= RES_NOCHECKNAME;
-                } else if (!strncmp(cp, "edns0", sizeof("edns0") - 1)) {
-			statp->options |= RES_USE_EDNS0;
 		} else {
-			/* XXX - print a warning here? */
+		  static const struct
+		  {
+		    char str[22];
+		    uint8_t len;
+		    uint8_t clear;
+		    unsigned long int flag;
+		  } options[] = {
+#define STRnLEN(str) str, sizeof (str) - 1
+		    { STRnLEN ("inet6"), 0, RES_USE_INET6 },
+		    { STRnLEN ("ip6-bytestring"), 0, RES_USEBSTRING },
+		    { STRnLEN ("no-ip6-dotint"), 0, RES_NOIP6DOTINT },
+		    { STRnLEN ("ip6-dotint"), 1, ~RES_NOIP6DOTINT },
+		    { STRnLEN ("rotate"), 0, RES_ROTATE },
+		    { STRnLEN ("no-check-names"), 0, RES_NOCHECKNAME },
+		    { STRnLEN ("edns0"), 0, RES_USE_EDNS0 },
+		    { STRnLEN ("single-request-reopen"), 0, RES_SNGLKUPREOP },
+		    { STRnLEN ("single-request"), 0, RES_SNGLKUP },
+		    { STRnLEN ("no_tld_query"), 0, RES_NOTLDQUERY },
+		    { STRnLEN ("no-tld-query"), 0, RES_NOTLDQUERY },
+		    { STRnLEN ("use-vc"), 0, RES_USEVC }
+		  };
+#define noptions (sizeof (options) / sizeof (options[0]))
+		  int i;
+		  for (i = 0; i < noptions; ++i)
+		    if (strncmp (cp, options[i].str, options[i].len) == 0)
+		      {
+			if (options[i].clear)
+			  statp->options &= options[i].flag;
+			else
+			  statp->options |= options[i].flag;
+			break;
+		      }
+		  if (i == noptions) {
+		    /* XXX - print a warning here? */
+		  }
 		}
 		/* skip to next run of spaces */
 		while (*cp && *cp != ' ' && *cp != '\t')
@@ -556,7 +571,7 @@ static u_int32_t
 net_mask(in)		/* XXX - should really use system's version of this */
 	struct in_addr in;
 {
-	register u_int32_t i = ntohl(in.s_addr);
+	u_int32_t i = ntohl(in.s_addr);
 
 	if (IN_CLASSA(i))
 		return (htonl(IN_CLASSA_NET));

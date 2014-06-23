@@ -1,6 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  AM33 version.
-   Copyright (C) 1995,96,97,98,99,2000,2001, 2004
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Library General Public License for more details.
 
    You should have received a copy of the GNU Library General Public
-   License along with the GNU C Library; see the file COPYING.LIB.  If not,
-   write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef dl_machine_h
 #define dl_machine_h
@@ -57,16 +55,14 @@ elf_machine_load_address (void)
   return off + gotaddr - gotval;
 }
 
-#if !defined PROF && !__BOUNDED_POINTERS__
+#ifndef PROF
 /* We add a declaration of this function here so that in dl-runtime.c
    the ELF_MACHINE_RUNTIME_TRAMPOLINE macro really can pass the parameters
    in registers.
 
    We cannot use this scheme for profiling because the _mcount call
    destroys the passed register information.  */
-/* GKM FIXME: Fix trampoline to pass bounds so we can do
-   without the `__unbounded' qualifier.  */
-static ElfW(Addr) fixup (struct link_map *__unbounded l, ElfW(Word) reloc_offset)
+static ElfW(Addr) fixup (struct link_map *l, ElfW(Word) reloc_offset)
      __attribute__ ((unused));
 static ElfW(Addr) profile_fixup (struct link_map *l, ElfW(Word) reloc_offset,
 				 ElfW(Addr) retaddr)
@@ -118,7 +114,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 
 /* This code is used in dl-runtime.c to call the `fixup' function
    and then redirect to the address it returns.  */
-#if !defined PROF && !__BOUNDED_POINTERS__
+#ifndef PROF
 # define ELF_MACHINE_RUNTIME_TRAMPOLINE asm ("\
 	.text\n\
 	.globl _dl_runtime_resolve\n\
@@ -296,7 +292,7 @@ elf_machine_plt_value (struct link_map *map, const Elf32_Rela *reloc,
 static inline void
 elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 		  const Elf32_Sym *sym, const struct r_found_version *version,
-		  void *const reloc_addr_arg)
+		  void *const reloc_addr_arg, int skip_ifunc)
 {
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
   Elf32_Addr value, *reloc_addr;
@@ -457,7 +453,8 @@ elf_machine_rela_relative (Elf32_Addr l_addr, const Elf32_Rela *reloc,
 
 static inline void
 elf_machine_lazy_rel (struct link_map *map,
-		      Elf32_Addr l_addr, const Elf32_Rela *reloc)
+		      Elf32_Addr l_addr, const Elf32_Rela *reloc,
+		      int skip_ifunc)
 {
   unsigned long int const r_type = ELF32_R_TYPE (reloc->r_info);
 

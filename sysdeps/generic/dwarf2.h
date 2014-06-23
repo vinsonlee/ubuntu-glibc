@@ -1,7 +1,6 @@
 /* Declarations and definitions of codes relating to the DWARF2 symbolic
    debugging information format.
-   Copyright (C) 1992, 1993, 1995, 1996, 1997, 2000
-   	Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
    Contributed by Gary Funck (gary@intrepid.com).  Derived from the
    DWARF 1 implementation written by Ron Guilmette (rfg@monkeys.com).
 
@@ -18,9 +17,11 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
+
+#ifndef _DWARF2_H
+#define _DWARF2_H	1
 
 /* This file is derived from the DWARF specification (a public document)
    Revision 2.0.0 (July 27, 1993) developed by the UNIX International
@@ -31,6 +32,7 @@
 /* This file is shared between GCC and GDB, and should not contain
    prototypes.  */
 
+#ifndef __ASSEMBLER__
 /* Tag names and codes.  */
 
 enum dwarf_tag
@@ -560,6 +562,7 @@ enum dwarf_macinfo_record_type
     DW_MACINFO_vendor_ext = 255
   };
 
+#endif /* !ASSEMBLER */
 
 /* @@@ For use with GNU frame unwind information.  */
 
@@ -583,3 +586,5 @@ enum dwarf_macinfo_record_type
 #define DW_EH_PE_aligned	0x50
 
 #define DW_EH_PE_indirect	0x80
+
+#endif /* dwarf2.h */

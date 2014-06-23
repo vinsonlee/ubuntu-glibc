@@ -1,5 +1,4 @@
-/* Copyright (C) 1991,1993,1995,1997,1998,2003,2004
-   Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Torbjorn Granlund (tege@sics.se).
 
@@ -14,28 +13,25 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 
 #undef	__ptr_t
-#if defined __cplusplus || (defined __STDC__ && __STDC__)
-# define __ptr_t	void *
-#else /* Not C++ or ANSI C.  */
-# undef	const
-# define const
-# define __ptr_t	char *
-#endif /* C++ or ANSI C.  */
+#define __ptr_t	void *
 
 #if defined HAVE_STRING_H || defined _LIBC
 # include <string.h>
 #endif
 
 #undef memcmp
+
+#ifndef MEMCMP
+# define MEMCMP memcmp
+#endif
 
 #ifdef _LIBC
 
@@ -96,9 +92,6 @@ typedef unsigned char byte;
 
 static int memcmp_bytes (op_t, op_t) __THROW;
 
-# ifdef  __GNUC__
-__inline
-# endif
 static int
 memcmp_bytes (a, b)
      op_t a, b;
@@ -315,7 +308,7 @@ memcmp_not_common_alignment (srcp1, srcp2, len)
 }
 
 int
-memcmp (s1, s2, len)
+MEMCMP (s1, s2, len)
      const __ptr_t s1;
      const __ptr_t s2;
      size_t len;
