@@ -1,33 +1,3 @@
-glibc (2.19-7) unstable; urgency=high
-
-  * debian/patches/localedata/unsubmitted-tst-setlocale3-ENV.diff: Apply
-    correct environment for the tst-setlocale3 test to find its locales.
-
- -- Adam Conrad <adconrad@0c3.net>  Sat, 12 Jul 2014 17:29:20 -0600
-
-glibc (2.19-6) unstable; urgency=high
-
-  [ Aurelien Jarno ]
-  * debian/patches/any/cvs-CVE-2014-0475.diff: fix a directory traversal in
-    locale environment handling (CVE-2014-0475).
-  * debian/patches/any/cvs-setlocale-alloca.diff: Additional setlocale
-    hardening.
-  * debian/control.in/main, debian/sysdeps/linux.mk: drop systemtap support.
-    sdt.h has been moved to a different location in the latest upload, and
-    it's not really clear on which architectures systemtap support should
-    be enabled.
-
-  [ Helmut Grohne ]
-  * debian/rules.d/debhelper.mk: fix dh_strip call in stage1.  Closes: 
-    #754350.
-
-  [ Petr Salinger ]
-  * kfreebsd/local-sysdeps.diff: update to revision 5490 (from glibc-bsd).
-  * kfreebsd/local-fbtl.diff: likewise.
-  * update testsuite-checking/expected-results-*-kfreebsd-gnu-*
-
- -- Aurelien Jarno <aurel32@debian.org>  Sat, 12 Jul 2014 17:22:50 +0200
-
 glibc (2.19-5) unstable; urgency=medium
 
   [ Aurelien Jarno ]
