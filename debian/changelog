@@ -1,3 +1,32 @@
+glibc (2.19-5) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/sysdeps/mips*.mk: replace EGLIBC_PASSES into GLIBC_PASSES.
+  * debian/patches/alpha/cvs-__pointer_chk_guard.diff: new patch from
+    upstream to fix testsuite failures on alpha.
+  * debian/patches/alpha/local-string-functions.diff: disable strcmp
+    and strncmp as these functions behaves incorrectly when crossing
+    pages. This fixes badsalttest in the testsuite.
+  * debian/debhelper.in/libc.postinst: don't run "telinit u" under systemd
+    Closes: #753725.
+  * debian/testsuite-checking/expected-results-alpha-linux-gnu-libc: ignore
+    floating point failures, as alpha is not fully IEEE compliant.  Closes:
+    #753099.
+  * testsuite-checking/expected-results-*s390*: ignore tst-cancelx17.out
+    failure, it is due to a bug in the test (see BZ #12683).
+
+  [ Helmut Grohne ]
+  * Rename the bootstrap stage to DEB_BUILD_PROFILES=stage1 to conform
+    with https://wiki.debian.org/BuildProfileSpec. (Closes: #752480)
+  * Don't try to install xen headers in i386 bootstrap build, because
+    they are not built.  Closes: #743676.
+
+  [ Adam Conrad ]
+  * debian/patches/alpha/cvs-unwind-backtrace.diff: Backport upstream
+    fix to enable unwind tables when building the backtrace routines.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 06 Jul 2014 21:42:09 +0200
+
 glibc (2.19-4) unstable; urgency=medium
 
   [ Aurelien Jarno ]
