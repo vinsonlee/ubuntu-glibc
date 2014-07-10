@@ -1,3 +1,9 @@
+glibc (2.19-4ubuntu2) utopic; urgency=medium
+
+  * debian/sysdeps/linux.mk: Adjust for the change to sdt.h location.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Thu, 10 Jul 2014 10:08:36 -0600
+
 glibc (2.19-4ubuntu1) utopic; urgency=medium
 
   * Merge with Debian unstable, switching us to glibc and fixing bugs:

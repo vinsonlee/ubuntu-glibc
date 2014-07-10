@@ -48,7 +48,7 @@ $(stamp)mkincludedir:
 	ln -s $(LINUX_HEADERS)/linux debian/include
 
 	# Library headers
-	for h in libaudit.h selinux sys/capability.h sys/sdt.h ; do \
+	for h in libaudit.h selinux sys/capability.h ; do \
 	    mkdir -p debian/include/$$(dirname $$h) ; \
 	    if [ -d "/usr/include/$(DEB_HOST_MULTIARCH)/$$h" ]; then \
 	        ln -s /usr/include/$(DEB_HOST_MULTIARCH)/$$h debian/include/$$h ; \
@@ -56,6 +56,8 @@ $(stamp)mkincludedir:
 		ln -s /usr/include/$$h debian/include/$$h ; \
 	    fi ; \
 	done
+
+	ln -s /usr/include/$(DEB_HOST_MULTIARCH)/sys/sdt.h debian/include/sys/sdt.h
 
 	# To make configure happy if libc6-dev is not installed.
 	touch debian/include/assert.h
