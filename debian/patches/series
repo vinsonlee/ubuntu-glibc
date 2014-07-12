@@ -38,6 +38,7 @@ localedata/submitted-en_AU-date_fmt.diff
 localedata/submitted-es_MX-decimal_point.diff
 localedata/submitted-locale-bo.diff
 localedata/submitted-it_IT-thousands_sep.diff
+localedata/unsubmitted-tst-setlocale3-ENV.diff
 
 alpha/local-gcc4.1.diff
 alpha/submitted-dl-support.diff
@@ -45,6 +46,8 @@ alpha/submitted-rtld-fPIC.diff
 alpha/local-lowlevellock.diff
 alpha/local-string-functions.diff
 alpha/submitted-lll_futex_timed_wait_bitset.diff
+alpha/cvs-__pointer_chk_guard.diff
+alpha/cvs-unwind-backtrace.diff
 
 amd64/submitted-rwlock-stack-imbalance.diff
 
@@ -252,3 +255,5 @@ any/cvs-resolv-reuse-fd.diff
 any/submitted-argp-attribute.diff
 any/submitted-resolv-ipv6-nameservers.diff
 any/cvs-posix_spawn_file_actions_addopen.diff
+any/cvs-setlocale-alloca.diff
+any/cvs-CVE-2014-0475.diff
