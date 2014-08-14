@@ -1,3 +1,64 @@
+glibc (2.19-9) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/rules.d/control.mk: don't add libc6{,-dev}-{armel,armhf}
+    packages in debian/control as we don't build them in Debian. New dak
+    code checks for NEW packages directly in debian/control.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 14 Aug 2014 17:58:27 +0200
+
+glibc (2.19-8) unstable; urgency=medium
+
+  [ Helmut Grohne ]
+  * debian/patches/build stage2 without selinux.  Closes: #742640.
+  * Don't emit dependencies on libgcc when building stage2.  Closes: #755580.
+  * Add a "nobiarch" build profile that inhibits all multilib packages from
+    being built.  Closes: #745380.
+
+  [ Aurelien Jarno ]
+  * debian/patches/arm64/cvs-includes-cleanup.diff: new patch from upstream to
+    clean sys/user.h and sys/procfs.h.  Closes: #755169.
+  * debian/patches/s390/cvs-s390-abi-reversal.diff: new patch backported from
+    upstream to revert the S/390 jmp_buf/ucontext_t ABI change.
+  * Update Turkish debconf translation, by Mert Dirik.  Closes: #757495.
+  * Remove ia64 support.  Closes: #756095.
+  * Update debian/copyright with the libidn/punycode.{c,h} license.  Closes: 
+    #754731.
+  * debian/control/libc: drop Recommends on: gcc | c-compiler.  Closes:
+    #747933.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 14 Aug 2014 15:54:09 +0200
+
+glibc (2.19-7) unstable; urgency=high
+
+  * debian/patches/localedata/unsubmitted-tst-setlocale3-ENV.diff: Apply
+    correct environment for the tst-setlocale3 test to find its locales.
+
+ -- Adam Conrad <adconrad@0c3.net>  Sat, 12 Jul 2014 17:29:20 -0600
+
+glibc (2.19-6) unstable; urgency=high
+
+  [ Aurelien Jarno ]
+  * debian/patches/any/cvs-CVE-2014-0475.diff: fix a directory traversal in
+    locale environment handling (CVE-2014-0475).
+  * debian/patches/any/cvs-setlocale-alloca.diff: Additional setlocale
+    hardening.
+  * debian/control.in/main, debian/sysdeps/linux.mk: drop systemtap support.
+    sdt.h has been moved to a different location in the latest upload, and
+    it's not really clear on which architectures systemtap support should
+    be enabled.
+
+  [ Helmut Grohne ]
+  * debian/rules.d/debhelper.mk: fix dh_strip call in stage1.  Closes: 
+    #754350.
+
+  [ Petr Salinger ]
+  * kfreebsd/local-sysdeps.diff: update to revision 5490 (from glibc-bsd).
+  * kfreebsd/local-fbtl.diff: likewise.
+  * update testsuite-checking/expected-results-*-kfreebsd-gnu-*
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 12 Jul 2014 17:22:50 +0200
+
 glibc (2.19-5) unstable; urgency=medium
 
   [ Aurelien Jarno ]
