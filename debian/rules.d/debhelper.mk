@@ -8,6 +8,10 @@ debug-packages = $(filter %-dbg,$(DEB_ARCH_REGULAR_PACKAGES))
 non-debug-packages = $(filter-out %-dbg,$(DEB_ARCH_REGULAR_PACKAGES))
 $(patsubst %,$(stamp)binaryinst_%,$(debug-packages)):: $(patsubst %,$(stamp)binaryinst_%,$(non-debug-packages))
 
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+DH_STRIP_DEBUG_PACKAGE=--dbg-package=$(libc)-dbg
+endif
+
 $(patsubst %,$(stamp)binaryinst_%,$(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGULAR_PACKAGES)):: $(patsubst %,$(stamp)install_%,$(GLIBC_PASSES)) debhelper
 	@echo Running debhelper for $(curpass)
 	dh_testroot
@@ -49,7 +53,7 @@ ifeq ($(filter nostrip,$(DEB_BUILD_OPTIONS)),)
 	# strip *.o files as dh_strip does not (yet?) do it.
 	if test "$(NOSTRIP_$(curpass))" != 1; then				\
 	  if test "$(NODEBUG_$(curpass))" != 1; then				\
-	    dh_strip -p$(curpass) -Xlibpthread --dbg-package=$(libc)-dbg;	\
+	    dh_strip -p$(curpass) -Xlibpthread $(DH_STRIP_DEBUG_PACKAGE);	\
 	    (cd debian/$(curpass);						\
 	      find . -name libpthread-\*.so -exec objcopy			\
 	        --only-keep-debug '{}' ../$(libc)-dbg/usr/lib/debug/'{}'	\
@@ -176,6 +180,9 @@ $(stamp)debhelper-common:
 	# Generate common substvars files.
 	echo "locale:Depends=$(shell perl debian/debver2localesdep.pl $(LOCALES_DEP_VER))" > tmp.substvars
 	echo "locale-compat:Depends=$(shell perl debian/debver2localesdep.pl $(LOCALES_COMPAT_VER))" >> tmp.substvars
+ifeq ($(filter stage2,$(DEB_BUILD_PROFILES)),)
+	echo 'libgcc:Depends=libgcc1 [!hppa !m68k], libgcc2 [m68k], libgcc4 [hppa]' >> tmp.substvars
+endif
 
 	for pkg in $(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGULAR_PACKAGES) $(DEB_UDEB_PACKAGES); do \
 	  cp tmp.substvars debian/$$pkg.substvars; \
