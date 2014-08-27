@@ -1,3 +1,32 @@
+glibc (2.19-10) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/rules: drop the i486 to i586 GNU triplet conversion.
+  * debian/control.in/main: build-depends on dpkg-dev (>= 1.17.1) and
+    gcc-4.8 (>= 4.8.3-8) to make sure to get the new i586 GNU triplet on
+    i386, hurd-i386 and kfreebsd-i386.
+  * Remove iconv(1), iconvconfig(8), localedef(1) and sprof(1) manpages,
+    provided by the manpages packages starting with version 3.71.
+  * patches/any/cvs-CVE-2014-5119.diff: New patch from upstream to remove 
+    support for loadable gconv transliteration modules (CVE-2014-5119).
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/cvs-libpthread_guardsize.diff: Fix guard size computation.
+    Fixes the creation of thousands of threads, and thus pulseaudio testsuite.
+    Closes: #758671.
+  * patches/hurd-i386/cvs-libpthread_std_thread.diff: New patch to deal with
+    std::thread using __pthread_key_create to detect presence of libpthread.
+    Fixes build of webkitgtk and most probably other libstdc++-related
+    failures.
+  * patches/hurd-i386/submitted-bind_umask.diff: New patch to fix bind() when
+    umask is 0000, fixes clamav testsuite. Closes: #759218.
+
+  [ Adam Conrad ]
+  * debian/patches/series: Actually apply the submitted arm64 alignment and
+    setcontext patches mentioned in 2.19-0experimental0 (closes: #759042)
+
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 27 Aug 2014 07:13:10 +0200
+
 glibc (2.19-9) unstable; urgency=medium
 
   [ Aurelien Jarno ]
