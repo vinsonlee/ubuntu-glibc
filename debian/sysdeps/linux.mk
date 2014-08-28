@@ -1,9 +1,5 @@
 # When changing this, make sure to update debian/debhelper.in/libc.preinst!
-ifneq (,$(filter $(DEB_HOST_ARCH),powerpc ppc64 ppc64el armel armhf arm64 x32))
-  MIN_KERNEL_SUPPORTED := 2.6.32
-else
-  MIN_KERNEL_SUPPORTED := 2.6.24
-endif
+MIN_KERNEL_SUPPORTED := 2.6.32
 libc = libc6
 
 # Build and expect pt_chown on this platform
@@ -13,7 +9,7 @@ pt_chown = yes
 threads = yes
 libc_add-ons = nptl $(add-ons)
 
-ifeq ($(DEB_BUILD_PROFILE),bootstrap)
+ifneq ($(filter stage1 stage2,$(DEB_BUILD_PROFILES)),)
   libc_extra_config_options = $(extra_config_options)
 else
   libc_extra_config_options = --with-selinux --enable-systemtap $(extra_config_options)
