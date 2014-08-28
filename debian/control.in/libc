@@ -3,7 +3,7 @@ Architecture: @archs@
 Section: libs
 Priority: required
 Multi-Arch: same
-Depends: ${shlibs:Depends}, libgcc1 [!hppa !m68k], libgcc2 [m68k], libgcc4 [hppa]
+Depends: ${shlibs:Depends}, ${libgcc:Depends}
 Recommends: libc0.1-i686 [kfreebsd-i386], libc0.3-i686 [hurd-i386] 
 Suggests: glibc-doc, debconf | debconf-2.0, locales [!hurd-i386]
 Provides: ${locale-compat:Depends}, libc6-sparcv9b [sparc sparc64], libc6-i686 [i386], libc6-xen [i386], libc6-armel [armel], libc6-armhf [armhf]
@@ -22,6 +22,7 @@ Replaces: libc6-amd64 [amd64],
           libc6-mipsn32 [mipsn32 mipsn32el],
           libc6-mips32 [mips mipsel],
           hurd (<< 20120408-3) [hurd-i386]
+Build-Profiles: !stage1
 Description: GNU C Library: Shared libraries
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
@@ -34,9 +35,8 @@ Priority: optional
 Multi-Arch: same
 Depends: @libc@ (= ${binary:Version}), libc-dev-bin (= ${binary:Version}), ${misc:Depends}, linux-libc-dev [linux-any], kfreebsd-kernel-headers (>= 0.11) [kfreebsd-any], gnumach-dev [hurd-i386], hurd-dev (>= 20080607-3) [hurd-i386]
 Replaces: hurd-dev (<< 20120408-3) [hurd-i386]
-Recommends: gcc | c-compiler
 Suggests: glibc-doc, manpages-dev
-Provides: libc-dev, libc6-dev [alpha ia64 hurd-i386 kfreebsd-i386 kfreebsd-amd64], libc6-dev-armel [armel], libc6-dev-armhf [armhf]
+Provides: libc-dev, libc6-dev [alpha hurd-i386 kfreebsd-i386 kfreebsd-amd64], libc6-dev-armel [armel], libc6-dev-armhf [armhf]
 Breaks: binutils (<< 2.20.1-1), binutils-gold (<< 2.20.1-11), cmake (<< 2.8.4+dfsg.1-5), gcc-4.4 (<< 4.4.6-4), gcc-4.5 (<< 4.5.3-2), gcc-4.6 (<< 4.6.0-12), make (<< 3.81-8.1), pkg-config (<< 0.26-1), libjna-java (<< 3.2.7-4), liblouis-dev (<< 2.3.0-2), liblouisxml-dev (<< 2.4.0-2), libhwloc-dev (<< 1.2-3), check (<< 0.9.10-6.1+b1) [s390x]
 Conflicts: @libc-dev-conflict@
 Description: GNU C Library: Development Libraries and Header Files
@@ -50,6 +50,7 @@ Priority: extra
 Multi-Arch: same
 Provides: libc-dbg
 Depends: @libc@ (= ${binary:Version}), ${misc:Depends}
+Build-Profiles: !stage1
 Description: GNU C Library: detached debugging symbols
  This package contains the detached debugging symbols for the GNU C
  library.
@@ -60,6 +61,7 @@ Section: libdevel
 Priority: extra
 Multi-Arch: same
 Depends: @libc@ (= ${binary:Version}), ${misc:Depends}
+Build-Profiles: !stage1
 Description: GNU C Library: Profiling Libraries
  Static libraries compiled with profiling info (-pg) suitable for use
  with gprof.
@@ -72,6 +74,7 @@ Multi-Arch: same
 Conflicts: libc-pic
 Provides: libc-pic, glibc-pic
 Depends: @libc@ (= ${binary:Version}), ${misc:Depends}
+Build-Profiles: !stage1
 Description: GNU C Library: PIC archive library
  Contains an archive library (ar file) composed of individual shared objects.
  This is used for creating a library which is a smaller subset of the
@@ -84,6 +87,7 @@ Architecture: @archs@
 Section: debian-installer
 Priority: extra
 Provides: @libc@, libc-udeb, ${locale-compat:Depends}
+Build-Profiles: !stage1
 Description: GNU C Library: Shared libraries - udeb
  Contains the standard libraries that are used by nearly all programs on
  the system. This package includes shared versions of the standard C library
