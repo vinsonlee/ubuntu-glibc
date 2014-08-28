@@ -475,16 +475,11 @@ then
         # sanity checking for the appropriate kernel on each architecture.
         kernel_ver=`uname -r`
 
-        case $realarch in
-            ppc*)      vmin=2.6.32;; # keep minimum support at lucid/squeeze/RHEL6
-            arm)       vmin=2.6.32;; # keep minimum support at lucid/squeeze/RHEL6
-            *)         vmin=2.6.24;; # kernel version in hardy used on Xen-based ppa buildds
-        esac
-
-        if linux_compare_versions "$kernel_ver" lt ${vmin}
+        # The GNU libc requires a >= 2.6.32 kernel, found in squeeze/lucid/RHEL6
+        if linux_compare_versions "$kernel_ver" lt 2.6.32
         then
             echo WARNING: this version of the GNU libc requires kernel version
-            echo ${vmin} or later.  Please upgrade your kernel before installing
+            echo 2.6.32 or later.  Please upgrade your kernel before installing
             echo glibc.
             kernel26_help
 
