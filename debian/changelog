@@ -1,3 +1,131 @@
+glibc (2.19-10ubuntu1) utopic; urgency=medium
+
+  * Merge with Debian unstable, bringing in several CVE fixes (LP: #1362409)
+  * Enable systemtap support for Ubuntu which was dropped in Debian for now.
+  * Move MIN_KERNEL_SUPPORTED to 2.6.32 on x86 now that hardy PPAs are dead.
+  * libc-dev no longer Recommends 'gcc | c-compiler' (LP: #990982, #1005097)
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 27 Aug 2014 22:47:48 -0600
+
+glibc (2.19-10) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/rules: drop the i486 to i586 GNU triplet conversion.
+  * debian/control.in/main: build-depends on dpkg-dev (>= 1.17.1) and
+    gcc-4.8 (>= 4.8.3-8) to make sure to get the new i586 GNU triplet on
+    i386, hurd-i386 and kfreebsd-i386.
+  * Remove iconv(1), iconvconfig(8), localedef(1) and sprof(1) manpages,
+    provided by the manpages packages starting with version 3.71.
+  * patches/any/cvs-CVE-2014-5119.diff: New patch from upstream to remove 
+    support for loadable gconv transliteration modules (CVE-2014-5119).
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/cvs-libpthread_guardsize.diff: Fix guard size computation.
+    Fixes the creation of thousands of threads, and thus pulseaudio testsuite.
+    Closes: #758671.
+  * patches/hurd-i386/cvs-libpthread_std_thread.diff: New patch to deal with
+    std::thread using __pthread_key_create to detect presence of libpthread.
+    Fixes build of webkitgtk and most probably other libstdc++-related
+    failures.
+  * patches/hurd-i386/submitted-bind_umask.diff: New patch to fix bind() when
+    umask is 0000, fixes clamav testsuite. Closes: #759218.
+
+  [ Adam Conrad ]
+  * debian/patches/series: Actually apply the submitted arm64 alignment and
+    setcontext patches mentioned in 2.19-0experimental0 (closes: #759042)
+
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 27 Aug 2014 07:13:10 +0200
+
+glibc (2.19-9) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/rules.d/control.mk: don't add libc6{,-dev}-{armel,armhf}
+    packages in debian/control as we don't build them in Debian. New dak
+    code checks for NEW packages directly in debian/control.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 14 Aug 2014 17:58:27 +0200
+
+glibc (2.19-8) unstable; urgency=medium
+
+  [ Helmut Grohne ]
+  * debian/patches/build stage2 without selinux.  Closes: #742640.
+  * Don't emit dependencies on libgcc when building stage2.  Closes: #755580.
+  * Add a "nobiarch" build profile that inhibits all multilib packages from
+    being built.  Closes: #745380.
+
+  [ Aurelien Jarno ]
+  * debian/patches/arm64/cvs-includes-cleanup.diff: new patch from upstream to
+    clean sys/user.h and sys/procfs.h.  Closes: #755169.
+  * debian/patches/s390/cvs-s390-abi-reversal.diff: new patch backported from
+    upstream to revert the S/390 jmp_buf/ucontext_t ABI change.
+  * Update Turkish debconf translation, by Mert Dirik.  Closes: #757495.
+  * Remove ia64 support.  Closes: #756095.
+  * Update debian/copyright with the libidn/punycode.{c,h} license.  Closes: 
+    #754731.
+  * debian/control/libc: drop Recommends on: gcc | c-compiler.  Closes:
+    #747933.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 14 Aug 2014 15:54:09 +0200
+
+glibc (2.19-7) unstable; urgency=high
+
+  * debian/patches/localedata/unsubmitted-tst-setlocale3-ENV.diff: Apply
+    correct environment for the tst-setlocale3 test to find its locales.
+
+ -- Adam Conrad <adconrad@0c3.net>  Sat, 12 Jul 2014 17:29:20 -0600
+
+glibc (2.19-6) unstable; urgency=high
+
+  [ Aurelien Jarno ]
+  * debian/patches/any/cvs-CVE-2014-0475.diff: fix a directory traversal in
+    locale environment handling (CVE-2014-0475).
+  * debian/patches/any/cvs-setlocale-alloca.diff: Additional setlocale
+    hardening.
+  * debian/control.in/main, debian/sysdeps/linux.mk: drop systemtap support.
+    sdt.h has been moved to a different location in the latest upload, and
+    it's not really clear on which architectures systemtap support should
+    be enabled.
+
+  [ Helmut Grohne ]
+  * debian/rules.d/debhelper.mk: fix dh_strip call in stage1.  Closes: 
+    #754350.
+
+  [ Petr Salinger ]
+  * kfreebsd/local-sysdeps.diff: update to revision 5490 (from glibc-bsd).
+  * kfreebsd/local-fbtl.diff: likewise.
+  * update testsuite-checking/expected-results-*-kfreebsd-gnu-*
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 12 Jul 2014 17:22:50 +0200
+
+glibc (2.19-5) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/sysdeps/mips*.mk: replace EGLIBC_PASSES into GLIBC_PASSES.
+  * debian/patches/alpha/cvs-__pointer_chk_guard.diff: new patch from
+    upstream to fix testsuite failures on alpha.
+  * debian/patches/alpha/local-string-functions.diff: disable strcmp
+    and strncmp as these functions behaves incorrectly when crossing
+    pages. This fixes badsalttest in the testsuite.
+  * debian/debhelper.in/libc.postinst: don't run "telinit u" under systemd
+    Closes: #753725.
+  * debian/testsuite-checking/expected-results-alpha-linux-gnu-libc: ignore
+    floating point failures, as alpha is not fully IEEE compliant.  Closes:
+    #753099.
+  * testsuite-checking/expected-results-*s390*: ignore tst-cancelx17.out
+    failure, it is due to a bug in the test (see BZ #12683).
+
+  [ Helmut Grohne ]
+  * Rename the bootstrap stage to DEB_BUILD_PROFILES=stage1 to conform
+    with https://wiki.debian.org/BuildProfileSpec. (Closes: #752480)
+  * Don't try to install xen headers in i386 bootstrap build, because
+    they are not built.  Closes: #743676.
+
+  [ Adam Conrad ]
+  * debian/patches/alpha/cvs-unwind-backtrace.diff: Backport upstream
+    fix to enable unwind tables when building the backtrace routines.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 06 Jul 2014 21:42:09 +0200
+
 glibc (2.19-4ubuntu2) utopic; urgency=medium
 
   * debian/sysdeps/linux.mk: Adjust for the change to sdt.h location.
