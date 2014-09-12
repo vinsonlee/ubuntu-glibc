@@ -1,3 +1,3 @@
 
 .SH TRADUCTOR
-TraducciÃ³n de RubÃ©n Porras Campo <debian-l10n-spanish@lists.debian.org>
+Traducción de Rubén Porras Campo <debian-l10n-spanish@lists.debian.org>

@@ -11201,7 +11201,7 @@
 +weak_alias (__sigtimedwait, sigtimedwait)
 --- /dev/null
 +++ b/ports/sysdeps/unix/bsd/bsd4.4/kfreebsd/fbtl/sigwait.c
-@@ -0,0 +1,78 @@
+@@ -0,0 +1,73 @@
 +/* Copyright (C) 1997-2013 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
 +
@@ -11234,8 +11234,6 @@
 +static int
 +do_sigwait (const sigset_t *set, int *sig)
 +{
-+  int ret;
-+
 +#ifdef SIGCANCEL
 +  sigset_t tmpset;
 +  if (set != NULL
@@ -11254,11 +11252,8 @@
 +      set = &tmpset;
 +    }
 +#endif
-+  do {
-+      ret = INLINE_SYSCALL (sigwait, 2, set, sig);
-+  } while (ret == EINTR);
-+  
-+  return ret;
++
++  return INLINE_SYSCALL (sigwait, 2, set, sig);
 +}
 +
 +int
@@ -17405,7 +17400,7 @@
 +libc_hidden_def (if_freenameindex)
 --- /dev/null
 +++ b/ports/sysdeps/unix/bsd/bsd4.4/kfreebsd/ifaddrs.c
-@@ -0,0 +1,380 @@
+@@ -0,0 +1,362 @@
 +/*	$KAME: getifaddrs.c,v 1.9 2001/08/20 02:31:20 itojun Exp $	*/
 +
 +/*
@@ -17556,15 +17551,6 @@
 +				idx = ifm->ifm_index;
 +				++icnt;
 +				dl = (struct sockaddr_dl *)(void *)(ifm + 1);
-+				/* XXX: smooth over a kfreebsd 9.0->10.1 ABI break */
-+				if (rtm->rtm_msglen == 152) {
-+					/* on kfreebsd-i386 9.0, struct rt_msghdr is 96 bytes */
-+					dl = (struct sockaddr_dl *)((char *)ifm + 96);
-+				}
-+				if (rtm->rtm_msglen == 156) {
-+					/* on kfreebsd-i386 10.1, struct rt_msghdr is 100 bytes */
-+					dl = (struct sockaddr_dl *)((char *)ifm + 100);
-+				}
 +				dcnt += SA_RLEN((struct sockaddr *)(void*)dl) +
 +				    ALIGNBYTES;
 +#ifdef	HAVE_IFM_DATA
@@ -17652,15 +17638,6 @@
 +			if (ifm->ifm_addrs & RTA_IFP) {
 +				idx = ifm->ifm_index;
 +				dl = (struct sockaddr_dl *)(void *)(ifm + 1);
-+				/* XXX: smooth over a kfreebsd 9.0->10.1 ABI break */
-+				if (rtm->rtm_msglen == 152) {
-+					/* on kfreebsd-i386 9.0, struct rt_msghdr is 96 bytes */
-+					dl = (struct sockaddr_dl *)((char *)ifm + 96);
-+				}
-+				if (rtm->rtm_msglen == 156) {
-+					/* on kfreebsd-i386 10.1, struct rt_msghdr is 100 bytes */
-+					dl = (struct sockaddr_dl *)((char *)ifm + 100);
-+				}
 +
 +				cif = ift;
 +				ift->ifa_name = names;

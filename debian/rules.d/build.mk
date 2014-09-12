@@ -84,6 +84,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		--host=$(call xx,configure_target) \
 		--build=$$configure_build --prefix=/usr --without-cvs \
 		--enable-add-ons=$(standard-add-ons)"$(call xx,add-ons)" \
+		--enable-profile \
 		--without-selinux \
 		--enable-stackguard-randomization \
 		--enable-obsolete-rpc \

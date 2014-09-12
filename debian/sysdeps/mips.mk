@@ -13,7 +13,7 @@ libc6-mipsn32_shlib_dep = libc6-mipsn32 (>= $(shlib_dep_ver))
 mipsn32_rtlddir = /lib32
 mipsn32_slibdir = /lib32
 mipsn32_libdir = /usr/lib32
-mipsn32_extra_config_options := $(extra_config_options)
+mipsn32_extra_config_options := $(extra_config_options) --disable-profile
 
 # build 64-bit alternative library
 GLIBC_MULTILIB_PASSES += mips64
@@ -27,7 +27,7 @@ libc6-mips64_shlib_dep = libc6-mips64 (>= $(shlib_dep_ver))
 mips64_rtlddir = /lib64
 mips64_slibdir = /lib64
 mips64_libdir = /usr/lib64
-mips64_extra_config_options := $(extra_config_options)
+mips64_extra_config_options := $(extra_config_options) --disable-profile
 
 define libc6-dev-mips64_extra_pkg_install
 
