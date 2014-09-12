@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,9 +27,11 @@ int
 posix_spawn_file_actions_addclose (posix_spawn_file_actions_t *file_actions,
 				   int fd)
 {
+  int maxfd = __sysconf (_SC_OPEN_MAX);
   struct __spawn_action *rec;
 
-  if (!__spawn_valid_fd (fd))
+  /* Test for the validity of the file descriptor.  */
+  if (fd < 0 || fd >= maxfd)
     return EBADF;
 
   /* Allocate more memory if needed.  */

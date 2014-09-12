@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -195,10 +195,6 @@ extern char *alloca ();
 #ifndef __GNU_LIBRARY__
 # define __lstat64	stat64
 #endif
-
-#ifndef _LIBC
-# define __rewinddir	rewinddir
-#endif
 
 #ifndef _LIBC
 # define __getcwd getcwd
@@ -210,7 +206,7 @@ extern char *alloca ();
 
 #ifdef __ASSUME_ATFCTS
 # define __have_atfcts 1
-#elif IS_IN (rtld)
+#elif defined NOT_IN_libc && defined IS_IN_rtld
 static int __rtld_have_atfcts;
 # define __have_atfcts __rtld_have_atfcts
 #endif
@@ -222,7 +218,9 @@ static int __rtld_have_atfcts;
    unless SIZE == 0, in which case it is as big as necessary.  */
 
 GETCWD_RETURN_TYPE
-__getcwd (char *buf, size_t size)
+__getcwd (buf, size)
+     char *buf;
+     size_t size;
 {
 #ifndef __ASSUME_ATFCTS
   static const char dots[]
@@ -392,7 +390,7 @@ __getcwd (char *buf, size_t size)
 		  if (use_d_ino)
 		    {
 		      use_d_ino = false;
-		      __rewinddir (dirstream);
+		      rewinddir (dirstream);
 		      continue;
 		    }
 

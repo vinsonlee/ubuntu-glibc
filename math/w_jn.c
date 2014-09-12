@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -33,7 +33,7 @@ jn (int n, double x)
   return __ieee754_jn (n, x);
 }
 #ifdef NO_LONG_DOUBLE
-weak_alias (jn, jnl)
+strong_alias (jn, jnl)
 #endif
 
 
@@ -47,13 +47,13 @@ yn (int n, double x)
       if (x < 0.0)
 	{
 	  /* d = zero/(x-x) */
-	  __feraiseexcept (FE_INVALID);
+	  feraiseexcept (FE_INVALID);
 	  return __kernel_standard (n, x, 13);
 	}
       else if (x == 0.0)
 	{
 	  /* d = -one/(x-x) */
-	  __feraiseexcept (FE_DIVBYZERO);
+	  feraiseexcept (FE_DIVBYZERO);
 	  return __kernel_standard (n, x, 12);
 	}
       else if (_LIB_VERSION != _POSIX_)
@@ -64,5 +64,5 @@ yn (int n, double x)
   return __ieee754_yn (n, x);
 }
 #ifdef NO_LONG_DOUBLE
-weak_alias (yn, ynl)
+strong_alias (yn, ynl)
 #endif

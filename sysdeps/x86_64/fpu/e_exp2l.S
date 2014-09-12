@@ -6,17 +6,7 @@
  */
 
 #include <machine/asm.h>
-#include <x86_64-math-asm.h>
 
-DEFINE_LDBL_MIN
-
-#ifdef PIC
-# define MO(op) op##(%rip)
-#else
-# define MO(op) op
-#endif
-
-	.text
 ENTRY(__ieee754_exp2l)
 	fldt	8(%rsp)
 /* I added the following ugly construct because exp(+-Inf) resulted
@@ -29,15 +19,7 @@ ENTRY(__ieee754_exp2l)
 	andb	%ah, %dh
 	cmpb	$0x05, %dh
 	je	1f			/* Is +-Inf, jump.  */
-	movzwl	8+8(%rsp), %eax
-	andl	$0x7fff, %eax
-	cmpl	$0x3fbe, %eax
-	jge	3f
-	/* Argument's exponent below -65, result rounds to 1.  */
-	fld1
-	faddp
-	ret
-3:	fld	%st
+	fld	%st
 	frndint				/* int(x) */
 	fsubr	%st,%st(1)		/* fract(x) */
 	fxch
@@ -46,7 +28,6 @@ ENTRY(__ieee754_exp2l)
 	faddp				/* 2^(fract(x)) */
 	fscale				/* e^x */
 	fstp	%st(1)
-	LDBL_CHECK_FORCE_UFLOW_NONNEG_NAN
 	ret
 
 1:	testl	$0x200, %eax		/* Test sign.  */

@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,8 +21,9 @@
 #include <sysdep.h>
 #define _ERRNO_H	1
 #include <bits/errno.h>
+#ifdef RESET_PID
 #include <tcb-offsets.h>
-
+#endif
 /* int clone(int (*fn)(void *arg), void *child_stack, int flags, void *arg,
 	     pid_t *ptid, void *tls, pid_t *ctid); */
 
@@ -66,12 +67,17 @@ ENTRY(__clone)
 2:
 	/* terminate the stack frame */
 	mov	#0, r14
+#ifdef RESET_PID
 	mov	r4, r0
-	shlr8	r0
-	tst	#1, r0			// CLONE_VM = (1 << 8)
+	shlr16	r0
+	tst	#1, r0			// CLONE_THREAD = (1 << 16)
 	bf/s	4f
 	 mov	r4, r0
 	/* new pid */
+	shlr8	r0
+	tst	#1, r0			// CLONE_VM = (1 << 8)
+	bf/s	3f
+	 mov	#-1, r0
 	mov	#+SYS_ify(getpid), r3
 	trapa	#0x15
 3:
@@ -83,6 +89,7 @@ ENTRY(__clone)
 	add	r1, r2
 	mov.l	r0, @r2
 4:
+#endif
 	/* thread starts */
 	mov.l	@r15, r1
 	jsr	@r1
@@ -113,11 +120,12 @@ ENTRY(__clone)
 	.long	_GLOBAL_OFFSET_TABLE_
 .L3:
 	.long	PLTJMP(C_SYMBOL_NAME(_exit))
+#ifdef RESET_PID
 .Lpidoff:
 	.word	PID - TLS_PRE_TCB_SIZE
 .Ltidoff:
 	.word	TID - TLS_PRE_TCB_SIZE
+#endif
 PSEUDO_END (__clone)
 
-libc_hidden_def (__clone)
 weak_alias (__clone, clone)

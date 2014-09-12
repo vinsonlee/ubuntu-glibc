@@ -33,9 +33,9 @@ __ieee754_coshf (float x)
 	if (ix < 0x41b00000) {
 	    /* |x| in [0,0.5*ln2], return 1+expm1(|x|)^2/(2*exp(|x|)) */
 		if(ix<0x3eb17218) {
-		    if (ix<0x24000000) return one;	/* cosh(tiny) = 1 */
 		    t = __expm1f(fabsf(x));
 		    w = one+t;
+		    if (ix<0x24000000) return w;	/* cosh(tiny) = 1 */
 		    return one+(t*t)/(w+w);
 		}
 
@@ -58,6 +58,6 @@ __ieee754_coshf (float x)
 	if(ix>=0x7f800000) return x*x;
 
     /* |x| > overflowthresold, cosh(x) overflow */
-	return math_narrow_eval (huge*huge);
+	return huge*huge;
 }
 strong_alias (__ieee754_coshf, __coshf_finite)

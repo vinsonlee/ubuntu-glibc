@@ -1,5 +1,5 @@
 /* Convert a 'struct tm' to a time_t value.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Paul Eggert <eggert@twinsun.com>.
 
@@ -19,7 +19,7 @@
 
 /* Define this to have a standalone program to test this implementation of
    mktime.  */
-/* #define DEBUG_MKTIME 1 */
+/* #define DEBUG 1 */
 
 #ifndef _LIBC
 # include <config.h>
@@ -38,13 +38,13 @@
 
 #include <string.h>		/* For the real memcpy prototype.  */
 
-#if defined DEBUG_MKTIME && DEBUG_MKTIME
+#if DEBUG
 # include <stdio.h>
 # include <stdlib.h>
 /* Make it work even if the system's libc has its own mktime routine.  */
 # undef mktime
 # define mktime my_mktime
-#endif /* DEBUG_MKTIME */
+#endif /* DEBUG */
 
 /* Some of the code in this file assumes that signed integer overflow
    silently wraps around.  This assumption can't easily be programmed
@@ -142,7 +142,7 @@ verify (twos_complement_arithmetic,
 verify (base_year_is_a_multiple_of_100, TM_YEAR_BASE % 100 == 0);
 
 /* Return 1 if YEAR + TM_YEAR_BASE is a leap year.  */
-static int
+static inline int
 leapyear (long_int year)
 {
   /* Don't add YEAR to TM_YEAR_BASE, as that might overflow.
@@ -600,7 +600,7 @@ libc_hidden_def (mktime)
 libc_hidden_weak (timelocal)
 #endif
 
-#if defined DEBUG_MKTIME && DEBUG_MKTIME
+#if DEBUG
 
 static int
 not_equal_tm (const struct tm *a, const struct tm *b)
@@ -732,10 +732,10 @@ main (int argc, char **argv)
   return status;
 }
 
-#endif /* DEBUG_MKTIME */
+#endif /* DEBUG */
 
 /*
 Local Variables:
-compile-command: "gcc -DDEBUG_MKTIME -I. -Wall -W -O2 -g mktime.c -o mktime"
+compile-command: "gcc -DDEBUG -I. -Wall -W -O2 -g mktime.c -o mktime"
 End:
 */

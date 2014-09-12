@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Geoffrey Keating <Geoff.Keating@anu.edu.au>, 1997.
 
@@ -61,7 +61,7 @@ exp_mpn (mp1 ex, mp1 x)
    unsigned n;
    mp1 xp;
    mp2 tmp;
-   mp_limb_t chk __attribute__ ((unused));
+   mp_limb_t chk;
    mp1 tol;
 
    memset (xp, 0, sizeof (mp1));
@@ -102,8 +102,8 @@ mpn_bitsize(const mp_limb_t *SRC_PTR, mp_size_t SIZE)
    return i * mpbpl + j;
 }
 
-static int
-do_test (void)
+int
+main (void)
 {
    mp1 ex, x, xt, e2, e3;
    int i;
@@ -190,7 +190,3 @@ do_test (void)
 
    return failures == 0 ? 0 : 1;
 }
-
-#define TIMEOUT 200
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

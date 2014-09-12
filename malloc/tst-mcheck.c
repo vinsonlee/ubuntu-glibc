@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2005.
 
@@ -29,8 +29,8 @@ merror (const char *msg)
   printf ("Error: %s\n", msg);
 }
 
-static int
-do_test (void)
+int
+main (void)
 {
   void *p, *q;
 
@@ -88,6 +88,3 @@ do_test (void)
 
   return errors != 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

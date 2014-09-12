@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,13 +18,6 @@
 #if HAVE_CONFIG_H
 # include <config.h>
 #endif
-
-/* Pacify GCC; see the commentary about VALLEN below.  This is needed
-   at least through GCC 4.9.2.  Pacify GCC for the entire file, as
-   there seems to be no way to pacify GCC selectively, only for the
-   place where it's needed.  Do not use DIAG_IGNORE_NEEDS_COMMENT
-   here, as it's not defined yet.  */
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
 #include <errno.h>
 #if !_LIBC
@@ -53,7 +46,7 @@ extern char **environ;
 
 #if _LIBC
 /* This lock protects against simultaneous modifications of `environ'.  */
-# include <libc-lock.h>
+# include <bits/libc-lock.h>
 __libc_lock_define_initialized (static, envlock)
 # define LOCK	__libc_lock_lock (envlock)
 # define UNLOCK	__libc_lock_unlock (envlock)
@@ -113,22 +106,16 @@ static char **last_environ;
    to reuse values once generated for a `setenv' call since we can never
    free the strings.  */
 int
-__add_to_environ (const char *name, const char *value, const char *combined,
-		  int replace)
+__add_to_environ (name, value, combined, replace)
+     const char *name;
+     const char *value;
+     const char *combined;
+     int replace;
 {
   char **ep;
   size_t size;
-
-  /* Compute lengths before locking, so that the critical section is
-     less of a performance bottleneck.  VALLEN is needed only if
-     COMBINED is null (unfortunately GCC is not smart enough to deduce
-     this; see the #pragma at the start of this file).  Testing
-     COMBINED instead of VALUE causes setenv (..., NULL, ...)  to dump
-     core now instead of corrupting memory later.  */
   const size_t namelen = strlen (name);
-  size_t vallen;
-  if (combined == NULL)
-    vallen = strlen (value) + 1;
+  const size_t vallen = value != NULL ? strlen (value) + 1 : 0;
 
   LOCK;
 
@@ -148,6 +135,7 @@ __add_to_environ (const char *name, const char *value, const char *combined,
 
   if (ep == NULL || __builtin_expect (*ep == NULL, 1))
     {
+      const size_t varlen = namelen + 1 + vallen;
       char **new_environ;
 
       /* We allocated this space; we can extend it.  */
@@ -159,17 +147,81 @@ __add_to_environ (const char *name, const char *value, const char *combined,
 	  return -1;
 	}
 
+      /* If the whole entry is given add it.  */
+      if (combined != NULL)
+	/* We must not add the string to the search tree since it belongs
+	   to the user.  */
+	new_environ[size] = (char *) combined;
+      else
+	{
+	  /* See whether the value is already known.  */
+#ifdef USE_TSEARCH
+	  char *new_value;
+	  int use_alloca = __libc_use_alloca (varlen);
+	  if (__builtin_expect (use_alloca, 1))
+	    new_value = (char *) alloca (varlen);
+	  else
+	    {
+	      new_value = malloc (varlen);
+	      if (new_value == NULL)
+		{
+		  UNLOCK;
+		  if (last_environ == NULL)
+		    free (new_environ);
+		  return -1;
+		}
+	    }
+# ifdef _LIBC
+	  __mempcpy (__mempcpy (__mempcpy (new_value, name, namelen), "=", 1),
+		     value, vallen);
+# else
+	  memcpy (new_value, name, namelen);
+	  new_value[namelen] = '=';
+	  memcpy (&new_value[namelen + 1], value, vallen);
+# endif
+
+	  new_environ[size] = KNOWN_VALUE (new_value);
+	  if (__builtin_expect (new_environ[size] == NULL, 1))
+#endif
+	    {
+#ifdef USE_TSEARCH
+	      if (__builtin_expect (! use_alloca, 0))
+		new_environ[size] = new_value;
+	      else
+#endif
+		{
+		  new_environ[size] = (char *) malloc (varlen);
+		  if (__builtin_expect (new_environ[size] == NULL, 0))
+		    {
+		      UNLOCK;
+		      return -1;
+		    }
+
+#ifdef USE_TSEARCH
+		  memcpy (new_environ[size], new_value, varlen);
+#else
+		  memcpy (new_environ[size], name, namelen);
+		  new_environ[size][namelen] = '=';
+		  memcpy (&new_environ[size][namelen + 1], value, vallen);
+#endif
+		}
+
+	      /* And save the value now.  We cannot do this when we remove
+		 the string since then we cannot decide whether it is a
+		 user string or not.  */
+	      STORE_VALUE (new_environ[size]);
+	    }
+	}
+
       if (__environ != last_environ)
 	memcpy ((char *) new_environ, (char *) __environ,
 		size * sizeof (char *));
 
-      new_environ[size] = NULL;
       new_environ[size + 1] = NULL;
-      ep = new_environ + size;
 
       last_environ = __environ = new_environ;
     }
-  if (*ep == NULL || replace)
+  else if (replace)
     {
       char *np;
 
@@ -203,17 +255,17 @@ __add_to_environ (const char *name, const char *value, const char *combined,
 # endif
 
 	  np = KNOWN_VALUE (new_value);
-	  if (__glibc_likely (np == NULL))
+	  if (__builtin_expect (np == NULL, 1))
 #endif
 	    {
 #ifdef USE_TSEARCH
-	      if (__glibc_unlikely (! use_alloca))
+	      if (__builtin_expect (! use_alloca, 0))
 		np = new_value;
 	      else
 #endif
 		{
 		  np = malloc (varlen);
-		  if (__glibc_unlikely (np == NULL))
+		  if (__builtin_expect (np == NULL, 0))
 		    {
 		      UNLOCK;
 		      return -1;
@@ -230,13 +282,6 @@ __add_to_environ (const char *name, const char *value, const char *combined,
 	      /* And remember the value.  */
 	      STORE_VALUE (np);
 	    }
-#ifdef USE_TSEARCH
-	  else
-	    {
-	      if (__glibc_unlikely (! use_alloca))
-		free (new_value);
-	    }
-#endif
 	}
 
       *ep = np;
@@ -248,7 +293,10 @@ __add_to_environ (const char *name, const char *value, const char *combined,
 }
 
 int
-setenv (const char *name, const char *value, int replace)
+setenv (name, value, replace)
+     const char *name;
+     const char *value;
+     int replace;
 {
   if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
     {
@@ -260,7 +308,8 @@ setenv (const char *name, const char *value, int replace)
 }
 
 int
-unsetenv (const char *name)
+unsetenv (name)
+     const char *name;
 {
   size_t len;
   char **ep;
@@ -278,20 +327,18 @@ unsetenv (const char *name)
   ep = __environ;
   if (ep != NULL)
     while (*ep != NULL)
-      {
-	if (!strncmp (*ep, name, len) && (*ep)[len] == '=')
-	  {
-	    /* Found it.  Remove this pointer by moving later ones back.  */
-	    char **dp = ep;
+      if (!strncmp (*ep, name, len) && (*ep)[len] == '=')
+	{
+	  /* Found it.  Remove this pointer by moving later ones back.  */
+	  char **dp = ep;
 
-	    do
-		dp[0] = dp[1];
-	    while (*dp++);
-	    /* Continue the loop in case NAME appears again.  */
-	  }
-	else
-	  ++ep;
-      }
+	  do
+	    dp[0] = dp[1];
+	  while (*dp++);
+	  /* Continue the loop in case NAME appears again.  */
+	}
+      else
+	++ep;
 
   UNLOCK;
 

@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2016 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,6 @@
 #	Makefile for stdlib routines
 #
 subdir	:= stdlib
-
-include ../Makeconfig
 
 headers	:= stdlib.h bits/stdlib.h bits/stdlib-ldbl.h bits/stdlib-float.h      \
 	   monetary.h bits/monetary-ldbl.h				      \
@@ -50,7 +48,6 @@ routines	:=							      \
 	strtol_l strtoul_l strtoll_l strtoull_l				      \
 	strtof strtod strtold						      \
 	strtof_l strtod_l strtold_l					      \
-	strtof_nan strtod_nan strtold_nan				      \
 	system canonicalize						      \
 	a64l l64a							      \
 	rpmatch strfmon strfmon_l getsubopt xpg_basename fmtmsg		      \
@@ -67,30 +64,19 @@ test-srcs	:= tst-fmtmsg
 tests		:= tst-strtol tst-strtod testmb testrand testsort testdiv   \
 		   test-canon test-canon2 tst-strtoll tst-environ	    \
 		   tst-xpg-basename tst-random tst-random2 tst-bsearch	    \
-		   tst-limits tst-rand48 bug-strtod tst-setcontext          \
-		   tst-setcontext2 test-a64l tst-qsort tst-system testmb2   \
-		   bug-strtod2 tst-atof1 tst-atof2 tst-strtod2 tst-strtod3  \
-		   tst-rand48-2 tst-makecontext tst-strtod4 tst-strtod5     \
-		   tst-qsort2 tst-makecontext2 tst-strtod6 tst-unsetenv1    \
+		   tst-limits tst-rand48 bug-strtod tst-setcontext	    \
+		   test-a64l tst-qsort tst-system testmb2 bug-strtod2	    \
+		   tst-atof1 tst-atof2 tst-strtod2 tst-strtod3 tst-rand48-2 \
+		   tst-makecontext tst-strtod4 tst-strtod5 tst-qsort2	    \
+		   tst-makecontext2 tst-strtod6 tst-unsetenv1		    \
 		   tst-makecontext3 bug-getcontext bug-fmtmsg1		    \
 		   tst-secure-getenv tst-strtod-overflow tst-strtod-round   \
-		   tst-tininess tst-strtod-underflow tst-tls-atexit	    \
-		   tst-setcontext3 tst-tls-atexit-nodelete		    \
-		   tst-strtol-locale tst-strtod-nan-locale tst-strfmon_l    \
-		   tst-quick_exit tst-thread-quick_exit
+		   tst-tininess tst-strtod-underflow tst-tls-atexit
 tests-static	:= tst-secure-getenv
-ifeq ($(have-cxx-thread_local),yes)
-CFLAGS-tst-quick_exit.o = -std=c++11
-LDLIBS-tst-quick_exit = -lstdc++
-CFLAGS-tst-thread-quick_exit.o = -std=c++11
-LDLIBS-tst-thread-quick_exit = -lstdc++
-$(objpfx)tst-thread-quick_exit: $(shared-thread-library)
-else
-tests-unsupported += tst-quick_exit tst-thread-quick_exit
-endif
 
 modules-names	= tst-tls-atexit-lib
-extra-test-objs += $(addsuffix .os, $(modules-names))
+
+include ../Makeconfig
 
 ifeq ($(build-shared),yes)
 tests		+= tst-putenv
@@ -123,81 +109,58 @@ CFLAGS-strfmon_l.c = $(libio-mtsafe)
 
 CFLAGS-tst-bsearch.c = $(stack-align-test-flags)
 CFLAGS-tst-qsort.c = $(stack-align-test-flags)
-CFLAGS-tst-makecontext.c += -funwind-tables
 CFLAGS-tst-makecontext2.c = $(stack-align-test-flags)
 
-# Run a test on the header files we use.
-tests-special += $(objpfx)isomac.out
-
-ifeq ($(run-built-tests),yes)
-tests-special += $(objpfx)tst-fmtmsg.out
-endif
-
 include ../Rules
-
-ifeq ($(run-built-tests),yes)
-LOCALES := cs_CZ.UTF-8 de_DE.UTF-8 en_US.ISO-8859-1 tr_TR.UTF-8 \
-	   tr_TR.ISO-8859-9 tg_TJ.UTF-8 te_IN.UTF-8 bn_IN.UTF-8 \
-	   el_GR.UTF-8
-include ../gen-locales.mk
-
-$(objpfx)bug-strtod2.out: $(gen-locales)
-$(objpfx)testmb2.out: $(gen-locales)
-$(objpfx)tst-strtod.out: $(gen-locales)
-$(objpfx)tst-strtod3.out: $(gen-locales)
-$(objpfx)tst-strtod4.out: $(gen-locales)
-$(objpfx)tst-strtod5.out: $(gen-locales)
-$(objpfx)tst-strtol-locale.out: $(gen-locales)
-$(objpfx)tst-strtod-nan-locale.out: $(gen-locales)
-$(objpfx)tst-strfmon_l.out: $(gen-locales)
-endif
 
 # Testdir has to be named stdlib and needs to be writable
 test-canon-ARGS = --test-dir=${common-objpfx}stdlib
 
+tst-strtod-ENV = LOCPATH=$(common-objpfx)localedata
+tst-strtod3-ENV = LOCPATH=$(common-objpfx)localedata
+tst-strtod4-ENV = LOCPATH=$(common-objpfx)localedata
+tst-strtod5-ENV = LOCPATH=$(common-objpfx)localedata
+testmb2-ENV = LOCPATH=$(common-objpfx)localedata
 bug-fmtmsg1-ENV = SEV_LEVEL=foo,11,newsev
+
+# Run a test on the header files we use.
+tests: $(objpfx)isomac.out
+
+ifeq ($(run-built-tests),yes)
+tests: $(objpfx)tst-fmtmsg.out
+endif
 
 $(objpfx)isomac.out: $(objpfx)isomac
 	$(dir $<)$(notdir $<) '$(CC)'  \
-	'-I../include $(+sysdep-includes) $(sysincludes) -I..' > $<.out; \
-	$(evaluate-test)
+	'-I../include $(+sysdep-includes) $(sysincludes) -I..' > $<.out
 
 isomac-CFLAGS = -O
 $(objpfx)isomac: isomac.c
 	$(native-compile)
 
 $(objpfx)tst-fmtmsg.out: tst-fmtmsg.sh $(objpfx)tst-fmtmsg
-	$(SHELL) $< $(common-objpfx) '$(test-program-prefix-before-env)' \
-		 '$(run-program-env)' '$(test-program-prefix-after-env)' \
-		 $(common-objpfx)stdlib/; \
-	$(evaluate-test)
+	$(SHELL) $< $(common-objpfx) '$(test-program-prefix)' $(common-objpfx)stdlib/
 
 $(objpfx)tst-putenv: $(objpfx)tst-putenvmod.so
 LDFLAGS-tst-putenv = $(no-as-needed)
 
 $(objpfx)tst-putenvmod.so: $(objpfx)tst-putenvmod.os $(link-libc-deps)
 	$(build-module)
-libof-tst-putenvmod = extramodules
+CFLAGS-tst-putenvmod.c = -DNOT_IN_libc=1
 
-$(objpfx)bug-getcontext: $(libm)
-$(objpfx)tst-strtod-round: $(libm)
-$(objpfx)tst-tininess: $(libm)
-$(objpfx)tst-strtod-underflow: $(libm)
-$(objpfx)tst-strtod6: $(libm)
-$(objpfx)tst-strtod-nan-locale: $(libm)
+ifeq ($(build-shared),yes)
+link-libm = $(common-objpfx)math/libm.so
+else
+link-libm = $(common-objpfx)math/libm.a
+endif
+$(objpfx)bug-getcontext: $(link-libm)
+$(objpfx)tst-strtod-round: $(link-libm)
+$(objpfx)tst-tininess: $(link-libm)
+$(objpfx)tst-strtod-underflow: $(link-libm)
+$(objpfx)tst-strtod6: $(link-libm)
 
 tst-tls-atexit-lib.so-no-z-defs = yes
 
-$(objpfx)tst-tls-atexit: $(shared-thread-library) $(libdl)
+$(objpfx)tst-tls-atexit: $(common-objpfx)nptl/libpthread.so \
+			 $(common-objpfx)dlfcn/libdl.so
 $(objpfx)tst-tls-atexit.out: $(objpfx)tst-tls-atexit-lib.so
-
-$(objpfx)tst-tls-atexit-nodelete: $(shared-thread-library) $(libdl)
-$(objpfx)tst-tls-atexit-nodelete.out: $(objpfx)tst-tls-atexit-lib.so
-
-$(objpfx)tst-setcontext3.out: tst-setcontext3.sh $(objpfx)tst-setcontext3
-	$(SHELL) $< $(common-objpfx) '$(test-program-prefix-before-env)' \
-		 '$(run-program-env)' '$(test-program-prefix-after-env)' \
-		 $(common-objpfx)stdlib/; \
-	$(evaluate-test)
-
-$(objpfx)tst-makecontext: $(libdl)

@@ -9,6 +9,7 @@ libc.so.0.3 #PACKAGE# #MINVER#
 libBrokenLocale.so.1 #PACKAGE# #MINVER#
 #include "symbols.wildcards"
 libSegFault.so #PACKAGE# #MINVER#
+ __invoke_dynamic_linker__@Base 2.3.6
 #include "symbols.wildcards"
 libcidn.so.1 #PACKAGE# #MINVER#
 #include "symbols.wildcards"
@@ -19,6 +20,7 @@ libdl.so.2 #PACKAGE# #MINVER#
 libm.so.6 #PACKAGE# #MINVER#
 #include "symbols.wildcards"
 libmemusage.so #PACKAGE# #MINVER#
+ __invoke_dynamic_linker__@Base 2.3.6
  calloc@Base 2.3.6
  free@Base 2.3.6
  malloc@Base 2.3.6
@@ -45,6 +47,7 @@ libnss_nisplus.so.2 #PACKAGE# #MINVER#
 libpcprofile.so #PACKAGE# #MINVER#
  __cyg_profile_func_enter@Base 2.3.6
  __cyg_profile_func_exit@Base 2.3.6
+ __invoke_dynamic_linker__@Base 2.3.6
 #include "symbols.wildcards"
 libresolv.so.2 #PACKAGE# #MINVER#
 #include "symbols.wildcards"
@@ -64,15 +67,11 @@ libanl.so.1 #PACKAGE# #MINVER#
 ###
 libhurduser.so.0.3 #PACKAGE# #MINVER#
  _S_msg_server@Base 2.11
- _S_msg_server_routines@Base 2.19-14~
+ _S_msg_server_routine@Base 2.11
  __auth_getids@Base 2.11
  __auth_makeauth@Base 2.11
  __auth_server_authenticate@Base 2.11
- __auth_server_authenticate_reply@Base 2.23-4
- __auth_server_authenticate_request@Base 2.23-4
  __auth_user_authenticate@Base 2.11
- __auth_user_authenticate_reply@Base 2.23-4
- __auth_user_authenticate_request@Base 2.23-4
  __crash_dump_task@Base 2.11
  __dir_link@Base 2.11
  __dir_lookup@Base 2.11
@@ -126,6 +125,7 @@ libhurduser.so.0.3 #PACKAGE# #MINVER#
  __fsys_syncfs@Base 2.11
  __ifsock_getsockaddr@Base 2.11
  __interrupt_operation@Base 2.11
+ __invoke_dynamic_linker__@Base 2.11
  __io_async@Base 2.11
  __io_async_reply@Base 2.17-6~
  __io_async_request@Base 2.17-6~
@@ -309,8 +309,6 @@ libhurduser.so.0.3 #PACKAGE# #MINVER#
  __proc_is_important_request@Base 2.17-93~
  __proc_make_login_coll@Base 2.11
  __proc_make_login_coll_request@Base 2.11
- __proc_make_task_namespace@Base 2.23-4
- __proc_make_task_namespace_request@Base 2.23-4
  __proc_mark_cont@Base 2.11
  __proc_mark_cont_request@Base 2.11
  __proc_mark_exec@Base 2.11
@@ -429,15 +427,11 @@ libhurduser.so.0.3 #PACKAGE# #MINVER#
  __tioctl_tiocswinsz@Base 2.11
  __tioctl_tiocucntl@Base 2.11
  _hurdsig_fault_exc_server@Base 2.11
- _hurdsig_fault_exc_server_routines@Base 2.19-14~
+ _hurdsig_fault_exc_server_routine@Base 2.11
  auth_getids@Base 2.11
  auth_makeauth@Base 2.11
  auth_server_authenticate@Base 2.11
- auth_server_authenticate_reply@Base 2.23-4
- auth_server_authenticate_request@Base 2.23-4
  auth_user_authenticate@Base 2.11
- auth_user_authenticate_reply@Base 2.23-4
- auth_user_authenticate_request@Base 2.23-4
  crash_dump_task@Base 2.11
  dir_link@Base 2.11
  dir_lookup@Base 2.11
@@ -674,8 +668,6 @@ libhurduser.so.0.3 #PACKAGE# #MINVER#
  proc_is_important_request@Base 2.17-93~
  proc_make_login_coll@Base 2.11
  proc_make_login_coll_request@Base 2.11
- proc_make_task_namespace@Base 2.23-4
- proc_make_task_namespace_request@Base 2.23-4
  proc_mark_cont@Base 2.11
  proc_mark_cont_request@Base 2.11
  proc_mark_exec@Base 2.11
@@ -795,7 +787,7 @@ libhurduser.so.0.3 #PACKAGE# #MINVER#
  tioctl_tiocucntl@Base 2.11
 libmachuser.so.1 #PACKAGE# #MINVER#
  _S_exc_server@Base 2.11
- _S_exc_server_routines@Base 2.19-14~
+ _S_exc_server_routine@Base 2.11
  __default_pager_info@Base 2.11
  __default_pager_object_create@Base 2.11
  __default_pager_object_pages@Base 2.11
@@ -818,9 +810,6 @@ libmachuser.so.1 #PACKAGE# #MINVER#
  __device_write_request@Base 2.11
  __device_write_request_inband@Base 2.11
  __exception_raise@Base 2.11
- __gsync_requeue@Base 2.23-4
- __gsync_wait@Base 2.23-4
- __gsync_wake@Base 2.23-4
  __host_adjust_time@Base 2.11
  __host_get_boot_info@Base 2.11
  __host_get_time@Base 2.11
@@ -837,10 +826,9 @@ libmachuser.so.1 #PACKAGE# #MINVER#
  __i386_io_perm_modify@Base 2.11
  __i386_set_gdt@Base 2.11
  __i386_set_ldt@Base 2.11
- __mach_notify_new_task@Base 2.21
+ __invoke_dynamic_linker__@Base 2.11
  __mach_port_allocate_name_rpc@Base 2.11
  __mach_port_allocate_rpc@Base 2.11
- __mach_port_clear_protected_payload@Base 2.19-14~
  __mach_port_deallocate_rpc@Base 2.11
  __mach_port_destroy@Base 2.11
  __mach_port_extract_right@Base 2.11
@@ -854,7 +842,6 @@ libmachuser.so.1 #PACKAGE# #MINVER#
  __mach_port_rename@Base 2.11
  __mach_port_request_notification@Base 2.11
  __mach_port_set_mscount@Base 2.11
- __mach_port_set_protected_payload@Base 2.19-14~
  __mach_port_set_qlimit@Base 2.11
  __mach_port_set_seqno@Base 2.11
  __mach_port_type@Base 2.11
@@ -867,19 +854,23 @@ libmachuser.so.1 #PACKAGE# #MINVER#
  __memory_object_create_proxy@Base 2.11
  __memory_object_data_error@Base 2.11
  __memory_object_data_initialize@Base 2.11
+ __memory_object_data_provided@Base 2.11
  __memory_object_data_request@Base 2.11
  __memory_object_data_return@Base 2.11
  __memory_object_data_supply@Base 2.11
  __memory_object_data_unavailable@Base 2.11
  __memory_object_data_unlock@Base 2.11
+ __memory_object_data_write@Base 2.11
  __memory_object_destroy@Base 2.11
  __memory_object_get_attributes@Base 2.11
  __memory_object_init@Base 2.11
  __memory_object_lock_completed@Base 2.11
  __memory_object_lock_request@Base 2.11
  __memory_object_ready@Base 2.11
+ __memory_object_set_attributes@Base 2.11
  __memory_object_supply_completed@Base 2.11
  __memory_object_terminate@Base 2.11
+ __old_mach_port_get_receive_status@Base 2.11
  __processor_assign@Base 2.11
  __processor_control@Base 2.11
  __processor_exit@Base 2.11
@@ -895,7 +886,6 @@ libmachuser.so.1 #PACKAGE# #MINVER#
  __processor_set_tasks@Base 2.11
  __processor_set_threads@Base 2.11
  __processor_start@Base 2.11
- __register_new_task_notification@Base 2.19-14~
  __task_assign@Base 2.11
  __task_assign_default@Base 2.11
  __task_create_rpc@Base 2.11
@@ -951,7 +941,6 @@ libmachuser.so.1 #PACKAGE# #MINVER#
  __vm_set_default_memory_manager@Base 2.11
  __vm_statistics@Base 2.11
  __vm_wire@Base 2.11
- __vm_wire_all@Base 2.24-9~
  __vm_write@Base 2.11
  default_pager_info@Base 2.11
  default_pager_object_create@Base 2.11
@@ -975,9 +964,6 @@ libmachuser.so.1 #PACKAGE# #MINVER#
  device_write_request@Base 2.11
  device_write_request_inband@Base 2.11
  exception_raise@Base 2.11
- gsync_requeue@Base 2.23-4
- gsync_wait@Base 2.23-4
- gsync_wake@Base 2.23-4
  host_adjust_time@Base 2.11
  host_get_boot_info@Base 2.11
  host_get_time@Base 2.11
@@ -994,10 +980,8 @@ libmachuser.so.1 #PACKAGE# #MINVER#
  i386_io_perm_modify@Base 2.11
  i386_set_gdt@Base 2.11
  i386_set_ldt@Base 2.11
- mach_notify_new_task@Base 2.21
  mach_port_allocate_name_rpc@Base 2.11
  mach_port_allocate_rpc@Base 2.11
- mach_port_clear_protected_payload@Base 2.19-14~
  mach_port_deallocate_rpc@Base 2.11
  mach_port_destroy@Base 2.11
  mach_port_extract_right@Base 2.11
@@ -1011,7 +995,6 @@ libmachuser.so.1 #PACKAGE# #MINVER#
  mach_port_rename@Base 2.11
  mach_port_request_notification@Base 2.11
  mach_port_set_mscount@Base 2.11
- mach_port_set_protected_payload@Base 2.19-14~
  mach_port_set_qlimit@Base 2.11
  mach_port_set_seqno@Base 2.11
  mach_port_type@Base 2.11
@@ -1024,19 +1007,23 @@ libmachuser.so.1 #PACKAGE# #MINVER#
  memory_object_create_proxy@Base 2.11
  memory_object_data_error@Base 2.11
  memory_object_data_initialize@Base 2.11
+ memory_object_data_provided@Base 2.11
  memory_object_data_request@Base 2.11
  memory_object_data_return@Base 2.11
  memory_object_data_supply@Base 2.11
  memory_object_data_unavailable@Base 2.11
  memory_object_data_unlock@Base 2.11
+ memory_object_data_write@Base 2.11
  memory_object_destroy@Base 2.11
  memory_object_get_attributes@Base 2.11
  memory_object_init@Base 2.11
  memory_object_lock_completed@Base 2.11
  memory_object_lock_request@Base 2.11
  memory_object_ready@Base 2.11
+ memory_object_set_attributes@Base 2.11
  memory_object_supply_completed@Base 2.11
  memory_object_terminate@Base 2.11
+ old_mach_port_get_receive_status@Base 2.11
  processor_assign@Base 2.11
  processor_control@Base 2.11
  processor_exit@Base 2.11
@@ -1052,7 +1039,6 @@ libmachuser.so.1 #PACKAGE# #MINVER#
  processor_set_tasks@Base 2.11
  processor_set_threads@Base 2.11
  processor_start@Base 2.11
- register_new_task_notification@Base 2.19-14~
  task_assign@Base 2.11
  task_assign_default@Base 2.11
  task_create_rpc@Base 2.11
@@ -1108,7 +1094,6 @@ libmachuser.so.1 #PACKAGE# #MINVER#
  vm_set_default_memory_manager@Base 2.11
  vm_statistics@Base 2.11
  vm_wire@Base 2.11
- vm_wire_all@Base 2.24-9~
  vm_write@Base 2.11
 libpthread.so.0.3 #PACKAGE# #MINVER#
 #include "symbols.wildcards"

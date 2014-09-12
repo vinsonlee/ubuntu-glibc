@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -28,8 +28,10 @@
 
 
 int
-__pthread_attr_setstack (pthread_attr_t *attr, void *stackaddr,
-			 size_t stacksize)
+__pthread_attr_setstack (attr, stackaddr, stacksize)
+     pthread_attr_t *attr;
+     void *stackaddr;
+     size_t stacksize;
 {
   struct pthread_attr *iattr;
 
@@ -46,11 +48,7 @@ __pthread_attr_setstack (pthread_attr_t *attr, void *stackaddr,
 #endif
 
   iattr->stacksize = stacksize;
-#if _STACK_GROWS_DOWN
   iattr->stackaddr = (char *) stackaddr + stacksize;
-#else
-  iattr->stackaddr = (char *) stackaddr;
-#endif
   iattr->flags |= ATTR_FLAG_STACKADDR;
 
   return 0;
@@ -83,11 +81,7 @@ __old_pthread_attr_setstack (pthread_attr_t *attr, void *stackaddr,
 #  endif
 
   iattr->stacksize = stacksize;
-#if _STACK_GROWS_DOWN
   iattr->stackaddr = (char *) stackaddr + stacksize;
-#else
-  iattr->stackaddr = (char *) stackaddr;
-#endif
   iattr->flags |= ATTR_FLAG_STACKADDR;
 
   return 0;

@@ -1,5 +1,5 @@
 /* Assembler macros for i386.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,9 +30,17 @@
 #endif
 
 #ifdef	__ASSEMBLER__
-# define GET_PC_THUNK(reg) __x86.get_pc_thunk.reg
+# if __GNUC_PREREQ (4, 7)
+#  define GET_PC_THUNK(reg) __x86.get_pc_thunk.reg
+# else
+#  define GET_PC_THUNK(reg) __i686.get_pc_thunk.reg
+# endif
 #else
-# define GET_PC_THUNK_STR(reg) "__x86.get_pc_thunk." #reg
+# if __GNUC_PREREQ (4, 7)
+#  define GET_PC_THUNK_STR(reg) "__x86.get_pc_thunk." #reg
+# else
+#  define GET_PC_THUNK_STR(reg) "__i686.get_pc_thunk." #reg
+# endif
 #endif
 
 #ifdef	__ASSEMBLER__

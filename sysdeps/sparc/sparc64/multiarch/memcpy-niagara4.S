@@ -1,5 +1,5 @@
 /* Copy SIZE bytes from SRC to DEST.  For SUN4V Niagara-4.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David S. Miller (davem@davemloft.net)
 
@@ -46,7 +46,7 @@
 #define STORE(type,src,addr)	type src, [addr]
 #define STORE_INIT(src,addr)	stxa src, [addr] STORE_ASI
 
-#if IS_IN (libc)
+#if !defined NOT_IN_libc
 
 	.register	%g2,#scratch
 	.register	%g3,#scratch

@@ -1,5 +1,5 @@
 /* memcopy.h -- definitions for memory copy functions.  Generic C version.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Torbjorn Granlund (tege@sics.se).
 
@@ -110,7 +110,3 @@
 	  ((byte *) dst_ep)[0] = __x;					      \
 	}								      \
     } while (0)
-
-/* The powerpc memcpy implementation is safe to use for memmove.  */
-#undef MEMCPY_OK_FOR_FWD_MEMMOVE
-#define MEMCPY_OK_FOR_FWD_MEMMOVE 1

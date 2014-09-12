@@ -1,50 +1,27 @@
-From: Samuel Thibault <samuel.thibault@ens-lyon.org>
-Subject: [PATCH] hurd: take __USE_EXTERN_INLINES into account
+From: Thomas Schwinge <thomas@schwinge.name>
+Subject: [PATCH] extern_inline
 
-* hurd/hurd.h (__hurd_fail): Always declare function, and provide inline
-version only if __USE_EXTERN_INLINES is defined.
-* hurd/hurd/fd.h (_hurd_fd_get, _hurd_fd_error_signal, _hurd_fd_error,
-__hurd_dfail, __hurd_sockfail): Likewise.
-* mach/lock-intern.h (__spin_lock_init, __spin_lock, __mutex_lock,
-__mutex_unlock, __mutex_trylock): Likewise.
-* mach/mach/mig_support.h (__mig_strncpy): Likewise.
-* sysdeps/generic/machine-lock.h (__spin_unlock, __spin_try_lock,
-__spin_lock_locked): Likewise.
-* sysdeps/generic/machine-sp.h (__thread_stack_pointer): Likewise.
-* sysdeps/mach/i386/machine-lock.h (__spin_unlock, __spin_try_lock,
-__spin_lock_locked): Likewise.
+Fix some ``extern inline'' stuff.
 
-* hurd/hurd/port.h (_hurd_port_init, _hurd_port_locked_get,
-_hurd_port_get, _hurd_port_free, _hurd_port_locked_set,
-_hurd_port_set): Always declare functions, and provide inline version
-only if __USE_EXTERN_INLINES is defined and _LIBC is defined and
-NOT_IN_libc is not defined.
-* hurd/hurd/signal.h (_hurd_self_sigstate, _hurd_critical_section_lock,
-_hurd_critical_section_unlock): Likewise.
-* hurd/hurd/threadvar.h (__hurd_threadvar_location_from_sp,
-* __hurd_threadvar_location): Likewise.
-* hurd/hurd/userlink.h (_hurd_userlink_link, _hurd_userlink_unlink,
-_hurd_userlink_clear): Likewise.
+glibc-2.8/debian/patches/hurd-i386/submitted-extern_inline.diff 3057
 
-* mach/spin-lock.c (__USE_EXTERN_INLINES): Define to 1.
+2008-01-08  Samuel Thibault  <samuel.thibault@ens-lyon.org>
 
 ---
  hurd/hurd.h                         |    4 ++++
- hurd/hurd/fd.h                   | 26 ++++++++++++++++++++++++
- hurd/hurd/port.h                 | 43 ++++++++++++++++++++++++++++++++++++++++
- hurd/hurd/signal.h               | 16 +++++++++++++++
- hurd/hurd/threadvar.h            |  9 +++++++++
- hurd/hurd/userlink.h             | 20 +++++++++++++++++++
- mach/lock-intern.h               | 20 +++++++++++++++++++
+ hurd/hurd/fd.h                      |   20 ++++++++++++++++++++
+ hurd/hurd/port.h                    |   31 +++++++++++++++++++++++++++++++
+ hurd/hurd/signal.h                  |   16 +++++++++++++---
+ hurd/hurd/threadvar.h               |    5 +++++
+ hurd/hurd/userlink.h                |   14 ++++++++++++++
+ mach/lock-intern.h                  |   20 ++++++++++++++++++++
  mach/mach/mig_support.h             |    3 +++
  mach/spin-lock.c                    |    1 +
- sysdeps/generic/machine-lock.h   | 12 +++++++++++
+ sysdeps/generic/machine-lock.h      |   12 ++++++++++++
  sysdeps/generic/machine-sp.h        |    4 ++++
- sysdeps/mach/i386/machine-lock.h | 12 +++++++++++
- 13 files changed, 178 insertions(+)
+ sysdeps/mach/i386/machine-lock.h    |   12 ++++++++++++
+ 12 files changed, 139 insertions(+), 3 deletions(-)
 
-diff --git a/hurd/hurd.h b/hurd/hurd.h
-index ec07827..2cd0fdb 100644
 --- a/hurd/hurd.h
 +++ b/hurd/hurd.h
 @@ -46,6 +46,9 @@
@@ -65,31 +42,27 @@ index ec07827..2cd0fdb 100644
  
  /* Basic ports and info, initialized by startup.  */
  
-diff --git a/hurd/hurd/fd.h b/hurd/hurd/fd.h
-index 6c67b25..e75cb14 100644
 --- a/hurd/hurd/fd.h
 +++ b/hurd/hurd/fd.h
-@@ -59,6 +59,10 @@ extern struct mutex _hurd_dtable_lock; /* Locks those two variables.  */
+@@ -58,6 +58,9 @@ extern struct mutex _hurd_dtable_lock; /
     NULL.  The cell is unlocked; when ready to use it, lock it and check for
     it being unused.  */
  
 +struct hurd_fd *_hurd_fd_get (int fd);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_FD_H_EXTERN_INLINE struct hurd_fd *
  _hurd_fd_get (int fd)
  {
-@@ -91,6 +95,8 @@ _hurd_fd_get (int fd)
+@@ -90,6 +93,7 @@ _hurd_fd_get (int fd)
  
    return descriptor;
  }
-+#  endif
 +#endif
  
  
  /* Evaluate EXPR with the variable `descriptor' bound to a pointer to the
-@@ -138,6 +144,9 @@ _hurd_fd_get (int fd)
+@@ -137,6 +141,9 @@ _hurd_fd_get (int fd)
  /* Check if ERR should generate a signal.
     Returns the signal to take, or zero if none.  */
  
@@ -99,7 +72,7 @@ index 6c67b25..e75cb14 100644
  _HURD_FD_H_EXTERN_INLINE int
  _hurd_fd_error_signal (error_t err)
  {
-@@ -154,11 +163,15 @@ _hurd_fd_error_signal (error_t err)
+@@ -153,11 +160,15 @@ _hurd_fd_error_signal (error_t err)
        return 0;
      }
  }
@@ -115,7 +88,7 @@ index 6c67b25..e75cb14 100644
  _HURD_FD_H_EXTERN_INLINE error_t
  _hurd_fd_error (int fd, error_t err)
  {
-@@ -171,20 +184,28 @@ _hurd_fd_error (int fd, error_t err)
+@@ -170,20 +181,28 @@ _hurd_fd_error (int fd, error_t err)
      }
    return err;
  }
@@ -144,7 +117,7 @@ index 6c67b25..e75cb14 100644
  _HURD_FD_H_EXTERN_INLINE int
  __hurd_sockfail (int fd, int flags, error_t err)
  {
-@@ -193,6 +214,7 @@ __hurd_sockfail (int fd, int flags, error_t err)
+@@ -192,6 +211,7 @@ __hurd_sockfail (int fd, int flags, erro
    errno = err;
    return -1;
  }
@@ -152,49 +125,27 @@ index 6c67b25..e75cb14 100644
  
  /* Set up *FD to have PORT its server port, doing appropriate ctty magic.
     Does no locking or unlocking.  */
-@@ -258,6 +280,8 @@ extern int _hurd_select (int nfds, struct pollfd *pollfds,
- /* Apply AT_FLAGS on FLAGS, in preparation for calling
-    __hurd_file_name_lookup.  */
- 
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
- _HURD_FD_H_EXTERN_INLINE error_t
- __hurd_at_flags (int *at_flags, int *flags)
- {
-@@ -274,6 +298,8 @@ __hurd_at_flags (int *at_flags, int *flags)
- 
-   return 0;
- }
-+#  endif
-+#endif
- 
- /* Variant of file_name_lookup used in *at function implementations.
-    AT_FLAGS may only contain AT_SYMLINK_FOLLOW or AT_SYMLINK_NOFOLLOW,
-diff --git a/hurd/hurd/port.h b/hurd/hurd/port.h
-index 4fea1aa..8afee90 100644
 --- a/hurd/hurd/port.h
 +++ b/hurd/hurd/port.h
-@@ -60,6 +60,10 @@ struct hurd_port
+@@ -60,6 +60,9 @@ struct hurd_port
  
  /* Initialize *PORT to INIT.  */
  
 +void _hurd_port_init (struct hurd_port *port, mach_port_t init);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_PORT_H_EXTERN_INLINE void
  _hurd_port_init (struct hurd_port *port, mach_port_t init)
  {
-@@ -67,6 +71,8 @@ _hurd_port_init (struct hurd_port *port, mach_port_t init)
+@@ -67,6 +70,7 @@ _hurd_port_init (struct hurd_port *port,
    port->users = NULL;
    port->port = init;
  }
-+#  endif
 +#endif
  
  
  /* Cleanup function for non-local exits.  */
-@@ -75,6 +81,12 @@ extern void _hurd_port_cleanup (void *, jmp_buf, int);
+@@ -75,6 +79,11 @@ extern void _hurd_port_cleanup (void *,
  /* Get a reference to *PORT, which is locked.
     Pass return value and LINK to _hurd_port_free when done.  */
  
@@ -202,16 +153,14 @@ index 4fea1aa..8afee90 100644
 +_hurd_port_locked_get (struct hurd_port *port,
 +		       struct hurd_userlink *link);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_PORT_H_EXTERN_INLINE mach_port_t
  _hurd_port_locked_get (struct hurd_port *port,
  		       struct hurd_userlink *link)
-@@ -90,9 +102,17 @@ _hurd_port_locked_get (struct hurd_port *port,
+@@ -90,9 +99,15 @@ _hurd_port_locked_get (struct hurd_port
    __spin_unlock (&port->lock);
    return result;
  }
-+#  endif
 +#endif
  
  /* Same, but locks PORT first.  */
@@ -220,16 +169,14 @@ index 4fea1aa..8afee90 100644
 +_hurd_port_get (struct hurd_port *port,
 +		struct hurd_userlink *link);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_PORT_H_EXTERN_INLINE mach_port_t
  _hurd_port_get (struct hurd_port *port,
  		struct hurd_userlink *link)
-@@ -104,10 +124,19 @@ _hurd_port_get (struct hurd_port *port,
+@@ -104,10 +119,17 @@ _hurd_port_get (struct hurd_port *port,
    HURD_CRITICAL_END;
    return result;
  }
-+#  endif
 +#endif
  
  
@@ -240,16 +187,14 @@ index 4fea1aa..8afee90 100644
 +		 struct hurd_userlink *link,
 +		 mach_port_t used_port);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_PORT_H_EXTERN_INLINE void
  _hurd_port_free (struct hurd_port *port,
  		 struct hurd_userlink *link,
-@@ -127,11 +156,17 @@ _hurd_port_free (struct hurd_port *port,
+@@ -127,11 +149,15 @@ _hurd_port_free (struct hurd_port *port,
    if (dealloc)
      __mach_port_deallocate (__mach_task_self (), used_port);
  }
-+#  endif
 +#endif
  
  
@@ -258,97 +203,92 @@ index 4fea1aa..8afee90 100644
  
 +void _hurd_port_locked_set (struct hurd_port *port, mach_port_t newport);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_PORT_H_EXTERN_INLINE void
  _hurd_port_locked_set (struct hurd_port *port, mach_port_t newport)
  {
-@@ -142,9 +177,15 @@ _hurd_port_locked_set (struct hurd_port *port, mach_port_t newport)
+@@ -142,9 +168,13 @@ _hurd_port_locked_set (struct hurd_port
    if (old != MACH_PORT_NULL)
      __mach_port_deallocate (__mach_task_self (), old);
  }
-+#  endif
 +#endif
  
  /* Same, but locks PORT first.  */
  
 +void _hurd_port_set (struct hurd_port *port, mach_port_t newport);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_PORT_H_EXTERN_INLINE void
  _hurd_port_set (struct hurd_port *port, mach_port_t newport)
  {
-@@ -153,6 +194,8 @@ _hurd_port_set (struct hurd_port *port, mach_port_t newport)
+@@ -153,6 +183,7 @@ _hurd_port_set (struct hurd_port *port,
    _hurd_port_locked_set (port, newport);
    HURD_CRITICAL_END;
  }
-+#  endif
 +#endif
  
  
  #endif	/* hurd/port.h */
-diff --git a/hurd/hurd/signal.h b/hurd/hurd/signal.h
-index 85e5152..09fb827 100644
 --- a/hurd/hurd/signal.h
 +++ b/hurd/hurd/signal.h
-@@ -129,6 +129,8 @@ extern struct hurd_sigstate *_hurd_self_sigstate (void)
+@@ -129,13 +129,15 @@ extern struct hurd_sigstate *_hurd_self_
  #define _HURD_SIGNAL_H_EXTERN_INLINE __extern_inline
  #endif
  
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_SIGNAL_H_EXTERN_INLINE struct hurd_sigstate *
  _hurd_self_sigstate (void)
  {
-@@ -138,6 +140,8 @@ _hurd_self_sigstate (void)
-     }
+   if (THREAD_SELF->_hurd_sigstate == NULL)
+     THREAD_SELF->_hurd_sigstate = _hurd_thread_sigstate (__mach_thread_self ());
    return THREAD_SELF->_hurd_sigstate;
  }
-+#  endif
 +#endif
  
  /* Thread listening on our message port; also called the "signal thread".  */
  
-@@ -164,6 +168,10 @@ extern int _hurd_core_limit;
+@@ -162,6 +164,9 @@ extern int _hurd_core_limit;
     interrupted lest the signal handler try to take the same lock and
     deadlock result.  */
  
 +void *_hurd_critical_section_lock (void);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_SIGNAL_H_EXTERN_INLINE void *
  _hurd_critical_section_lock (void)
  {
-@@ -188,7 +196,13 @@ _hurd_critical_section_lock (void)
+@@ -193,7 +198,11 @@ _hurd_critical_section_lock (void)
       _hurd_critical_section_unlock to unlock it.  */
    return ss;
  }
-+#  endif
 +#endif
  
 +void _hurd_critical_section_unlock (void *our_lock);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_SIGNAL_H_EXTERN_INLINE void
  _hurd_critical_section_unlock (void *our_lock)
  {
-@@ -211,6 +225,8 @@ _hurd_critical_section_unlock (void *our_lock)
+@@ -203,7 +212,7 @@ _hurd_critical_section_unlock (void *our
+   else
+     {
+       /* It was us who acquired the critical section lock.  Unlock it.  */
+-      struct hurd_sigstate *ss = our_lock;
++      struct hurd_sigstate *ss = (struct hurd_sigstate *) our_lock;
+       sigset_t pending;
+       __spin_lock (&ss->lock);
+       __spin_unlock (&ss->critical_section_lock);
+@@ -216,6 +225,7 @@ _hurd_critical_section_unlock (void *our
  	__msg_sig_post (_hurd_msgport, 0, 0, __mach_task_self ());
      }
  }
-+#  endif
 +#endif
  
  /* Convenient macros for simple uses of critical sections.
     These two must be used as a pair at the same C scoping level.  */
-diff --git a/hurd/hurd/userlink.h b/hurd/hurd/userlink.h
-index 275ce0c..d2610d7 100644
 --- a/hurd/hurd/userlink.h
 +++ b/hurd/hurd/userlink.h
-@@ -76,6 +76,12 @@ struct hurd_userlink
+@@ -76,6 +76,11 @@ struct hurd_userlink
  
  /* Attach LINK to the chain of users at *CHAINP.  */
  
@@ -356,16 +296,14 @@ index 275ce0c..d2610d7 100644
 +_hurd_userlink_link (struct hurd_userlink **chainp,
 +		     struct hurd_userlink *link);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_USERLINK_H_EXTERN_INLINE void
  _hurd_userlink_link (struct hurd_userlink **chainp,
  		     struct hurd_userlink *link)
-@@ -96,11 +102,17 @@ _hurd_userlink_link (struct hurd_userlink **chainp,
+@@ -96,11 +101,15 @@ _hurd_userlink_link (struct hurd_userlin
    link->thread.prevp = thread_chainp;
    *thread_chainp = link;
  }
-+#  endif
 +#endif
  
  
@@ -374,41 +312,35 @@ index 275ce0c..d2610d7 100644
  
 +int _hurd_userlink_unlink (struct hurd_userlink *link);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_USERLINK_H_EXTERN_INLINE int
  _hurd_userlink_unlink (struct hurd_userlink *link)
  {
-@@ -123,6 +135,8 @@ _hurd_userlink_unlink (struct hurd_userlink *link)
+@@ -123,6 +132,7 @@ _hurd_userlink_unlink (struct hurd_userl
  
    return dealloc;
  }
-+#  endif
 +#endif
  
  
  /* Clear all users from *CHAINP.  Call this when the resource *CHAINP
-@@ -131,6 +145,10 @@ _hurd_userlink_unlink (struct hurd_userlink *link)
+@@ -131,6 +141,9 @@ _hurd_userlink_unlink (struct hurd_userl
     value is zero, someone is still using the resource and they will
     deallocate it when they are finished.  */
  
 +int _hurd_userlink_clear (struct hurd_userlink **chainp);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
-+#  if IS_IN (libc)
++#if defined __USE_EXTERN_INLINES && defined _LIBC && !defined NOT_IN_libc
  _HURD_USERLINK_H_EXTERN_INLINE int
  _hurd_userlink_clear (struct hurd_userlink **chainp)
  {
-@@ -143,5 +161,7 @@ _hurd_userlink_clear (struct hurd_userlink **chainp)
+@@ -143,5 +156,6 @@ _hurd_userlink_clear (struct hurd_userli
    *chainp = NULL;
    return 0;
  }
-+#  endif
 +#endif
  
  #endif	/* hurd/userlink.h */
-diff --git a/mach/lock-intern.h b/mach/lock-intern.h
-index 426628b..02f4b7a 100644
 --- a/mach/lock-intern.h
 +++ b/mach/lock-intern.h
 @@ -28,11 +28,15 @@
@@ -417,7 +349,7 @@ index 426628b..02f4b7a 100644
  
 +void __spin_lock_init (__spin_lock_t *__lock);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
++#ifdef __USE_EXTERN_INLINES
  _EXTERN_INLINE void
  __spin_lock_init (__spin_lock_t *__lock)
  {
@@ -427,13 +359,13 @@ index 426628b..02f4b7a 100644
  
  
  /* Lock LOCK, blocking if we can't get it.  */
-@@ -40,12 +44,16 @@ extern void __spin_lock_solid (__spin_lock_t *__lock);
+@@ -40,12 +44,16 @@ extern void __spin_lock_solid (__spin_lo
  
  /* Lock the spin lock LOCK.  */
  
 +void __spin_lock (__spin_lock_t *__lock);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
++#ifdef __USE_EXTERN_INLINES
  _EXTERN_INLINE void
  __spin_lock (__spin_lock_t *__lock)
  {
@@ -444,13 +376,13 @@ index 426628b..02f4b7a 100644
  
  /* Name space-clean internal interface to mutex locks.
  
-@@ -70,27 +78,39 @@ extern void __mutex_unlock_solid (void *__lock);
+@@ -70,27 +78,39 @@ extern void __mutex_unlock_solid (void *
  
  /* Lock the mutex lock LOCK.  */
  
 +void __mutex_lock (void *__lock);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
++#ifdef __USE_EXTERN_INLINES
  _EXTERN_INLINE void
  __mutex_lock (void *__lock)
  {
@@ -463,7 +395,7 @@ index 426628b..02f4b7a 100644
  
 +void __mutex_unlock (void *__lock);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
++#ifdef __USE_EXTERN_INLINES
  _EXTERN_INLINE void
  __mutex_unlock (void *__lock)
  {
@@ -471,11 +403,11 @@ index 426628b..02f4b7a 100644
    __mutex_unlock_solid (__lock);
  }
 +#endif
- 
++
  
 +int __mutex_trylock (void *__lock);
-+
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
+ 
++#ifdef __USE_EXTERN_INLINES
  _EXTERN_INLINE int
  __mutex_trylock (void *__lock)
  {
@@ -484,20 +416,18 @@ index 426628b..02f4b7a 100644
 +#endif
  
  #endif /* lock-intern.h */
-diff --git a/mach/mach/mig_support.h b/mach/mach/mig_support.h
-index b83b1d0..01c452a 100644
 --- a/mach/mach/mig_support.h
 +++ b/mach/mach/mig_support.h
-@@ -66,6 +66,8 @@ extern void mig_reply_setup (const mach_msg_header_t *__request,
+@@ -66,6 +66,8 @@ extern void mig_reply_setup (const mach_
  /* Idiocy support function.  */
  extern vm_size_t mig_strncpy (char *__dst, const char *__src, vm_size_t __len);
  extern vm_size_t __mig_strncpy (char *__dst, const char *__src, vm_size_t);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
++#ifdef __USE_EXTERN_INLINES
  __extern_inline vm_size_t
  __mig_strncpy (char *__dst, const char *__src, vm_size_t __len)
  {
-@@ -76,6 +78,7 @@ mig_strncpy (char *__dst, const char *__src, vm_size_t __len)
+@@ -76,6 +78,7 @@ mig_strncpy (char *__dst, const char *__
  {
    return __mig_strncpy (__dst, __src, __len);
  }
@@ -505,8 +435,6 @@ index b83b1d0..01c452a 100644
  
  
  
-diff --git a/mach/spin-lock.c b/mach/spin-lock.c
-index aaebc55..1b1e69c 100644
 --- a/mach/spin-lock.c
 +++ b/mach/spin-lock.c
 @@ -1,3 +1,4 @@
@@ -514,8 +442,6 @@ index aaebc55..1b1e69c 100644
  #define _EXTERN_INLINE /* Empty to define the real functions.  */
  #include "spin-lock.h"
  
-diff --git a/sysdeps/generic/machine-lock.h b/sysdeps/generic/machine-lock.h
-index 8497a72..883b63b 100644
 --- a/sysdeps/generic/machine-lock.h
 +++ b/sysdeps/generic/machine-lock.h
 @@ -34,14 +34,21 @@ typedef volatile int __spin_lock_t;
@@ -524,7 +450,7 @@ index 8497a72..883b63b 100644
  
 +void __spin_unlock (__spin_lock_t *__lock);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
++#ifdef __USE_EXTERN_INLINES
  _EXTERN_INLINE void
  __spin_unlock (__spin_lock_t *__lock)
  {
@@ -536,7 +462,7 @@ index 8497a72..883b63b 100644
  
 +int __spin_try_lock (__spin_lock_t *__lock);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
++#ifdef __USE_EXTERN_INLINES
  _EXTERN_INLINE int
  __spin_try_lock (__spin_lock_t *__lock)
  {
@@ -550,7 +476,7 @@ index 8497a72..883b63b 100644
  
 +int __spin_lock_locked (__spin_lock_t *__lock);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
++#ifdef __USE_EXTERN_INLINES
  _EXTERN_INLINE int
  __spin_lock_locked (__spin_lock_t *__lock)
  {
@@ -560,8 +486,6 @@ index 8497a72..883b63b 100644
  
  
  #endif /* machine-lock.h */
-diff --git a/sysdeps/generic/machine-sp.h b/sysdeps/generic/machine-sp.h
-index f7d8449..f9beec4 100644
 --- a/sysdeps/generic/machine-sp.h
 +++ b/sysdeps/generic/machine-sp.h
 @@ -25,11 +25,15 @@
@@ -570,7 +494,7 @@ index f7d8449..f9beec4 100644
  
 +void * __thread_stack_pointer (void);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
++#ifdef __USE_EXTERN_INLINES
  _EXTERN_INLINE void *
  __thread_stack_pointer (void)
  {
@@ -580,8 +504,6 @@ index f7d8449..f9beec4 100644
 +#endif
  
  #endif	/* machine-sp.h */
-diff --git a/sysdeps/mach/i386/machine-lock.h b/sysdeps/mach/i386/machine-lock.h
-index 966f128..12f06b5 100644
 --- a/sysdeps/mach/i386/machine-lock.h
 +++ b/sysdeps/mach/i386/machine-lock.h
 @@ -34,6 +34,9 @@ typedef volatile int __spin_lock_t;
@@ -590,7 +512,7 @@ index 966f128..12f06b5 100644
  
 +void __spin_unlock (__spin_lock_t *__lock);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
++#ifdef __USE_EXTERN_INLINES
  _EXTERN_INLINE void
  __spin_unlock (__spin_lock_t *__lock)
  {
@@ -604,7 +526,7 @@ index 966f128..12f06b5 100644
  
 +int __spin_try_lock (__spin_lock_t *__lock);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
++#ifdef __USE_EXTERN_INLINES
  _EXTERN_INLINE int
  __spin_try_lock (__spin_lock_t *__lock)
  {
@@ -618,7 +540,7 @@ index 966f128..12f06b5 100644
  
 +int __spin_lock_locked (__spin_lock_t *__lock);
 +
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
++#ifdef __USE_EXTERN_INLINES
  _EXTERN_INLINE int
  __spin_lock_locked (__spin_lock_t *__lock)
  {
@@ -628,5 +550,3 @@ index 966f128..12f06b5 100644
  
  
  #endif /* machine-lock.h */
--- 
-tg: (258b100..) t/extern_inline (depends on: t/faccessat)

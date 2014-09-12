@@ -1,17 +1,13 @@
 #ifndef _CTYPE_H
 
-#include <ctype/ctype.h>
-
 #ifndef _ISOMAC
 /* Initialize ctype locale data.  */
 extern void __ctype_init (void);
 libc_hidden_proto (__ctype_init)
 
-/* ctype/ctype.h defined this as a macro and we don't want to #undef it.
-   So defeat macro expansion with parens for this declaration.  */
-extern int (__isctype) (int __c, int __mask);
+extern int __isctype (int __c, int __mask);
 
-# if IS_IN (libc)
+# ifndef NOT_IN_libc
 
 /* These accessors are used by the optimized macros to find the
    thread-local cache of ctype information from the current thread's
@@ -21,7 +17,7 @@ extern int (__isctype) (int __c, int __mask);
    NL_CURRENT_INDIRECT.  */
 
 #  include "../locale/localeinfo.h"
-#  include <libc-tsd.h>
+#  include <bits/libc-tsd.h>
 
 #  ifndef CTYPE_EXTERN_INLINE	/* Used by ctype/ctype-info.c, which see.  */
 #   define CTYPE_EXTERN_INLINE extern inline
@@ -50,18 +46,22 @@ __ctype_tolower_loc (void)
   return __libc_tsd_address (const int32_t *, CTYPE_TOLOWER);
 }
 
-#  ifndef __NO_CTYPE
+# endif	/* Not NOT_IN_libc.  */
+#endif
+
+#include <ctype/ctype.h>
+
+#ifndef _ISOMAC
+# if !defined __NO_CTYPE && !defined NOT_IN_libc
 /* The spec says that isdigit must only match the decimal digits.  We
    can check this without a memory access.  */
-#   undef isdigit
-#   define isdigit(c) ({ int __c = (c); __c >= '0' && __c <= '9'; })
-#   undef isdigit_l
-#   define isdigit_l(c, l) ({ int __c = (c); __c >= '0' && __c <= '9'; })
-#   undef __isdigit_l
-#   define __isdigit_l(c, l) ({ int __c = (c); __c >= '0' && __c <= '9'; })
-#  endif  /* Not __NO_CTYPE.  */
-
-# endif	/* IS_IN (libc).  */
-#endif  /* Not _ISOMAC.  */
+#  undef isdigit
+#  define isdigit(c) ({ int __c = (c); __c >= '0' && __c <= '9'; })
+#  undef isdigit_l
+#  define isdigit_l(c, l) ({ int __c = (c); __c >= '0' && __c <= '9'; })
+#  undef __isdigit_l
+#  define __isdigit_l(c, l) ({ int __c = (c); __c >= '0' && __c <= '9'; })
+# endif
+#endif
 
 #endif /* ctype.h */

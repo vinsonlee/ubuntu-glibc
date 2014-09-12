@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 2000.
 
@@ -111,8 +111,8 @@ static struct wprintf_int_test
   (sizeof (wprintf_int_tests) / sizeof (wprintf_int_tests[0]))
 
 
-static int
-do_test (void)
+int
+main (void)
 {
   int cnt;
   int failures;
@@ -246,6 +246,3 @@ do_test (void)
 
   return status;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

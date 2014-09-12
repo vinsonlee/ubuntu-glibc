@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -18,13 +18,13 @@
 
 #include <wchar.h>
 
-#ifndef WCSNCAT
-# define WCSNCAT wcsncat
-#endif
 
 /* Append no more than N wide-character of SRC onto DEST.  */
 wchar_t *
-WCSNCAT (wchar_t *dest, const wchar_t *src, size_t n)
+wcsncat (dest, src, n)
+     wchar_t *dest;
+     const wchar_t *src;
+     size_t n;
 {
   wchar_t c;
   wchar_t * const s = dest;

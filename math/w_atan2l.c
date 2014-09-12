@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -20,7 +20,6 @@
  * wrapper atan2l(y,x)
  */
 
-#include <errno.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -28,14 +27,9 @@
 long double
 __atan2l (long double y, long double x)
 {
-  long double z;
-
   if (__builtin_expect (x == 0.0L && y == 0.0L, 0) && _LIB_VERSION == _SVID_)
     return __kernel_standard_l (y, x, 203); /* atan2(+-0,+-0) */
 
-  z = __ieee754_atan2l (y, x);
-  if (__glibc_unlikely (z == 0.0L && y != 0.0L && isfinite (x)))
-    __set_errno (ERANGE);
-  return z;
+  return __ieee754_atan2l (y, x);
 }
 weak_alias (__atan2l, atan2l)

@@ -1,5 +1,5 @@
 /* Catastrophic failure reports.  Generic POSIX.1 version.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -178,7 +178,8 @@ __libc_message (int do_abort, const char *fmt, ...)
 
 
 void
-__libc_fatal (const char *message)
+__libc_fatal (message)
+     const char *message;
 {
   /* The loop is added only to keep gcc happy.  */
   while (1)

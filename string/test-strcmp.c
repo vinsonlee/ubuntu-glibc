@@ -1,5 +1,5 @@
 /* Test and measure strcmp and wcscmp functions.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Jakub Jelinek <jakub@redhat.com>, 1999.
    Added wcscmp support by Liubov Dmitrieva <liubov.dmitrieva@gmail.com>, 2011.
@@ -329,34 +329,6 @@ check (void)
 		FOR_EACH_IMPL (impl, 0)
 		check_result (impl, s1 + i1, s2 + i2, exp_result);
       }
-
-  /* Test cases where there are multiple zero bytes after the first.  */
-
-  for (size_t i = 0; i < 16 + 1; i++)
-    {
-      s1[i] = 0x00;
-      s2[i] = 0x00;
-    }
-
-  for (size_t i = 0; i < 16; i++)
-    {
-      int exp_result;
-
-      for (int val = 0x01; val < 0x100; val++)
-	{
-	  for (size_t j = 0; j < i; j++)
-	    {
-	      s1[j] = val;
-	      s2[j] = val;
-	    }
-
-	  s2[i] = val;
-
-	  exp_result = SIMPLE_STRCMP (s1, s2);
-	  FOR_EACH_IMPL (impl, 0)
-	    check_result (impl, s1, s2, exp_result);
-	}
-    }
 }
 
 

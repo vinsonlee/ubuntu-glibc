@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -29,9 +29,12 @@
 
 
 int
-__sigaction (int sig, const struct sigaction *act, struct sigaction *oact)
+__sigaction (sig, act, oact)
+     int sig;
+     const struct sigaction *act;
+     struct sigaction *oact;
 {
-  if (__glibc_unlikely (sig == SIGCANCEL || sig == SIGSETXID))
+  if (__builtin_expect (sig == SIGCANCEL || sig == SIGSETXID, 0))
     {
       __set_errno (EINVAL);
       return -1;

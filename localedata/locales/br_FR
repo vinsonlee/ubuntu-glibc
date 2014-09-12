@@ -1,13 +1,6 @@
 comment_char %
-escape_char /
-
-% This file is part of the GNU C Library and contains locale data.
-% The Free Software Foundation does not claim any copyright interest
-% in the locale data contained in this file.  The foregoing does not
-% affect the license of the GNU C Library as a whole.  It does not
-% exempt you from the conditions of the license if your use would
-% otherwise be governed by that license.
-
+escape_char  /
+%
 % Breton Language Locale for France
 % Source: thanks to Denise.Peden@enst-bretagne.fr (Denise Derrien-Peden)
 % Address:
@@ -21,6 +14,8 @@ escape_char /
 % Date: 2001-01-28
 % Users: general
 % Charset: ISO-8859-1
+% Distribution and use is free, also
+% for commercial purposes.
 
 LC_IDENTIFICATION
 title "Breton language locale for France"
@@ -35,17 +30,18 @@ territory "France"
 revision "0.54"
 date "2001-01-28"
 
-category "i18n:2012";LC_IDENTIFICATION
-category "i18n:2012";LC_CTYPE
-category "i18n:2012";LC_COLLATE
-category "i18n:2012";LC_TIME
-category "i18n:2012";LC_NUMERIC
-category "i18n:2012";LC_PAPER
-category "i18n:2012";LC_TELEPHONE
-category "i18n:2012";LC_MEASUREMENT
-category "i18n:2012";LC_ADDRESS
-category "i18n:2012";LC_MONETARY
-category "i18n:2012";LC_MESSAGES
+category br_FR:2000;LC_IDENTIFICATION
+category br_FR:2000;LC_CTYPE
+category br_FR:2000;LC_COLLATE
+category br_FR:2000;LC_TIME
+category br_FR:2000;LC_NUMERIC
+category br_FR:2000;LC_PAPER
+category br_FR:2000;LC_TELEPHONE
+category br_FR:2000;LC_MEASUREMENT
+category br_FR:2000;LC_ADDRESS
+category br_FR:2000;LC_MONETARY
+category br_FR:2000;LC_MESSAGES
+
 END LC_IDENTIFICATION
 
 
@@ -97,8 +93,8 @@ copy "en_DK"
 END LC_CTYPE
 
 LC_MESSAGES
-yesexpr "<U005E><U005B><U002B><U0031><U006F><U004F><U0079><U0059><U005D>"
-noexpr  "<U005E><U005B><U002D><U0030><U006E><U004E><U005D>"
+yesexpr "<U005E><U005B><U006F><U004F><U0079><U0059><U005D><U002E><U002A>"
+noexpr  "<U005E><U005B><U006E><U004E><U005D><U002E><U002A>"
 END LC_MESSAGES
 
 LC_MONETARY
@@ -145,7 +141,7 @@ d_fmt   "<U0025><U0064><U002E><U0025><U006D><U002E><U0025><U0059>"
 t_fmt   "<U0025><U0054>"
 am_pm   "<U0020>";"<U0020>"
 t_fmt_ampm "<U0025><U0049><U0065><U0025><U004D><U003A><U0025><U0053><U0020><U0025><U0070>"
-week 7;19971130;4
+first_workday 2
 first_weekday 2
 END LC_TIME
 
@@ -154,7 +150,8 @@ copy "fr_FR"
 END LC_PAPER
 
 LC_MEASUREMENT
-copy "fr_FR"
+% metric
+measurement 1
 END LC_MEASUREMENT
 
 LC_NAME
@@ -169,7 +166,6 @@ postal_fmt    "<U0025><U0066><U0025><U004E><U0025><U0061><U0025><U004E>/
 <U0020><U0025><U0068><U0020><U0025><U0065><U0020><U0025><U0072><U0025>/
 <U004E><U0025><U007A><U0020><U0025><U0054><U0025>/
 <U004E><U0025><U0063><U0025><U004E>"
-country_name "<U0046><U0072><U0061><U00F1><U0073>"
 country_ab2 "<U0046><U0052>"
 country_ab3 "<U0046><U0052><U0041>"
 country_num 250

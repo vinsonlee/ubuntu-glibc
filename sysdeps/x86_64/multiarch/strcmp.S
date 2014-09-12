@@ -1,5 +1,5 @@
 /* Multiple versions of strcmp
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -80,24 +80,28 @@
 /* Define multiple versions only for the definition in libc.  Don't
    define multiple versions for strncmp in static library since we
    need strncmp before the initialization happened.  */
-#if (defined SHARED || !defined USE_AS_STRNCMP) && IS_IN (libc)
+#if (defined SHARED || !defined USE_AS_STRNCMP) && !defined NOT_IN_libc
 	.text
 ENTRY(STRCMP)
 	.type	STRCMP, @gnu_indirect_function
-	LOAD_RTLD_GLOBAL_RO_RDX
+	/* Manually inlined call to __get_cpu_features.  */
+	cmpl	$0, __cpu_features+KIND_OFFSET(%rip)
+	jne	1f
+	call	__init_cpu_features
+1:
 #ifdef USE_AS_STRCMP
 	leaq	__strcmp_sse2_unaligned(%rip), %rax
-	HAS_ARCH_FEATURE (Fast_Unaligned_Load)
+	testl   $bit_Fast_Unaligned_Load, __cpu_features+CPUID_OFFSET+index_Fast_Unaligned_Load(%rip)
 	jnz     3f
 #else
-	HAS_ARCH_FEATURE (Slow_SSE4_2)
+	testl	$bit_Slow_SSE4_2, __cpu_features+CPUID_OFFSET+index_Slow_SSE4_2(%rip)
 	jnz	2f
 	leaq	STRCMP_SSE42(%rip), %rax
-	HAS_CPU_FEATURE (SSE4_2)
+	testl	$bit_SSE4_2, __cpu_features+CPUID_OFFSET+index_SSE4_2(%rip)
 	jnz	3f
 #endif
 2:	leaq	STRCMP_SSSE3(%rip), %rax
-	HAS_CPU_FEATURE (SSSE3)
+	testl	$bit_SSSE3, __cpu_features+CPUID_OFFSET+index_SSSE3(%rip)
 	jnz	3f
 	leaq	STRCMP_SSE2(%rip), %rax
 3:	ret
@@ -106,17 +110,23 @@ END(STRCMP)
 # ifdef USE_AS_STRCASECMP_L
 ENTRY(__strcasecmp)
 	.type	__strcasecmp, @gnu_indirect_function
-	LOAD_RTLD_GLOBAL_RO_RDX
+	/* Manually inlined call to __get_cpu_features.  */
+	cmpl	$0, __cpu_features+KIND_OFFSET(%rip)
+	jne	1f
+	call	__init_cpu_features
+1:
+#  ifdef HAVE_AVX_SUPPORT
 	leaq	__strcasecmp_avx(%rip), %rax
-	HAS_ARCH_FEATURE (AVX_Usable)
+	testl	$bit_AVX_Usable, __cpu_features+FEATURE_OFFSET+index_AVX_Usable(%rip)
 	jnz	3f
-	HAS_ARCH_FEATURE (Slow_SSE4_2)
+#  endif
+	testl	$bit_Slow_SSE4_2, __cpu_features+CPUID_OFFSET+index_Slow_SSE4_2(%rip)
 	jnz	2f
 	leaq	__strcasecmp_sse42(%rip), %rax
-	HAS_CPU_FEATURE (SSE4_2)
+	testl	$bit_SSE4_2, __cpu_features+CPUID_OFFSET+index_SSE4_2(%rip)
 	jnz	3f
 2:	leaq	__strcasecmp_ssse3(%rip), %rax
-	HAS_CPU_FEATURE (SSSE3)
+	testl	$bit_SSSE3, __cpu_features+CPUID_OFFSET+index_SSSE3(%rip)
 	jnz	3f
 	leaq	__strcasecmp_sse2(%rip), %rax
 3:	ret
@@ -126,17 +136,23 @@ weak_alias (__strcasecmp, strcasecmp)
 # ifdef USE_AS_STRNCASECMP_L
 ENTRY(__strncasecmp)
 	.type	__strncasecmp, @gnu_indirect_function
-	LOAD_RTLD_GLOBAL_RO_RDX
+	/* Manually inlined call to __get_cpu_features.  */
+	cmpl	$0, __cpu_features+KIND_OFFSET(%rip)
+	jne	1f
+	call	__init_cpu_features
+1:
+#  ifdef HAVE_AVX_SUPPORT
 	leaq	__strncasecmp_avx(%rip), %rax
-	HAS_ARCH_FEATURE (AVX_Usable)
+	testl	$bit_AVX_Usable, __cpu_features+FEATURE_OFFSET+index_AVX_Usable(%rip)
 	jnz	3f
-	HAS_ARCH_FEATURE (Slow_SSE4_2)
+#  endif
+	testl	$bit_Slow_SSE4_2, __cpu_features+CPUID_OFFSET+index_Slow_SSE4_2(%rip)
 	jnz	2f
 	leaq	__strncasecmp_sse42(%rip), %rax
-	HAS_CPU_FEATURE (SSE4_2)
+	testl	$bit_SSE4_2, __cpu_features+CPUID_OFFSET+index_SSE4_2(%rip)
 	jnz	3f
 2:	leaq	__strncasecmp_ssse3(%rip), %rax
-	HAS_CPU_FEATURE (SSSE3)
+	testl	$bit_SSSE3, __cpu_features+CPUID_OFFSET+index_SSSE3(%rip)
 	jnz	3f
 	leaq	__strncasecmp_sse2(%rip), %rax
 3:	ret
@@ -151,14 +167,16 @@ weak_alias (__strncasecmp, strncasecmp)
 # include "strcmp-sse42.S"
 
 
-# if defined USE_AS_STRCASECMP_L || defined USE_AS_STRNCASECMP_L
-#  define LABEL(l) .L##l##_avx
-#  define GLABEL(l) l##_avx
-#  define USE_AVX 1
-#  undef STRCMP_SSE42
-#  define STRCMP_SSE42 STRCMP_AVX
-#  define SECTION avx
-#  include "strcmp-sse42.S"
+# ifdef HAVE_AVX_SUPPORT
+#  if defined USE_AS_STRCASECMP_L || defined USE_AS_STRNCASECMP_L
+#   define LABEL(l) .L##l##_avx
+#   define GLABEL(l) l##_avx
+#   define USE_AVX 1
+#   undef STRCMP_SSE42
+#   define STRCMP_SSE42 STRCMP_AVX
+#   define SECTION avx
+#   include "strcmp-sse42.S"
+#  endif
 # endif
 
 

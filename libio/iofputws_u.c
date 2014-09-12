@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,7 +29,9 @@
 #include <wchar.h>
 
 int
-fputws_unlocked (const wchar_t *str, _IO_FILE *fp)
+fputws_unlocked (str, fp)
+      const wchar_t *str;
+      _IO_FILE *fp;
 {
   _IO_size_t len = __wcslen (str);
   int result = EOF;

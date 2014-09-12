@@ -1,5 +1,5 @@
 /* Print output of stream to given obstack.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -35,7 +35,7 @@ struct _IO_obstack_file
   struct obstack *obstack;
 };
 
-extern const struct _IO_jump_t _IO_obstack_jumps libio_vtable attribute_hidden;
+extern const struct _IO_jump_t _IO_obstack_jumps attribute_hidden;
 
 int
 __obstack_vprintf_chk (struct obstack *obstack, int flags, const char *format,

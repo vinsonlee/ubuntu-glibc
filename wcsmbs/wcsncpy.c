@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -18,13 +18,13 @@
 
 #include <wchar.h>
 
-#ifdef WCSNCPY
-# define __wcsncpy WCSNCPY
-#endif
 
 /* Copy no more than N wide-characters of SRC to DEST.	*/
 wchar_t *
-__wcsncpy (wchar_t *dest, const wchar_t *src, size_t n)
+__wcsncpy (dest, src, n)
+     wchar_t *dest;
+     const wchar_t *src;
+     size_t n;
 {
   wint_t c;
   wchar_t *const s = dest;
@@ -83,6 +83,4 @@ __wcsncpy (wchar_t *dest, const wchar_t *src, size_t n)
 
   return s;
 }
-#ifndef WCSNCPY
 weak_alias (__wcsncpy, wcsncpy)
-#endif

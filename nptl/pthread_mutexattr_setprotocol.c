@@ -1,5 +1,5 @@
 /* Change priority protocol setting in pthread_mutexattr_t.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2006.
 
@@ -22,7 +22,9 @@
 
 
 int
-pthread_mutexattr_setprotocol (pthread_mutexattr_t *attr, int protocol)
+pthread_mutexattr_setprotocol (attr, protocol)
+     pthread_mutexattr_t *attr;
+     int protocol;
 {
   if (protocol != PTHREAD_PRIO_NONE
       && protocol != PTHREAD_PRIO_INHERIT

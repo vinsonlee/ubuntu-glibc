@@ -1,5 +1,5 @@
 /* Test of the ngettext functions.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
@@ -25,8 +25,8 @@
 #include <string.h>
 
 
-static int
-do_test (void)
+int
+main (void)
 {
   const char *strs[2] = { "singular", "plural" };
   unsigned long int i;
@@ -63,6 +63,3 @@ do_test (void)
 
   return res;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

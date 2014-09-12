@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 2002.
 
@@ -31,12 +31,12 @@ ENTRY(__start_context)
 	   on the stack pointer for the next context.  */
 	movq	%rbx, %rsp
 
-	/* Don't use pop here so that stack is aligned to 16 bytes.  */
-	movq	(%rsp), %rdi		/* This is the next context.  */
+	popq	%rdi			/* This is the next context.  */
+	cfi_adjust_cfa_offset(-8)
 	testq	%rdi, %rdi
 	je	2f			/* If it is zero exit.  */
 
-	call	__setcontext
+	call	JUMPTARGET(__setcontext)
 	/* If this returns (which can happen if the syscall fails) we'll
 	   exit the program with the return error value (-1).  */
 	movq	%rax,%rdi

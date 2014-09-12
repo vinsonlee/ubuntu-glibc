@@ -1,5 +1,5 @@
 /* *printf* family compatibility routines for IEEE double as long double
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@cygnus.com>, 2006.
 
@@ -25,7 +25,7 @@
 #include <monetary.h>
 #include <locale/localeinfo.h>
 #include <sys/syslog.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 
 #include "nldbl-compat.h"
 

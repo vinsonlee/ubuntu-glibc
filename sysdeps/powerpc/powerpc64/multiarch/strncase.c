@@ -1,5 +1,5 @@
 /* Multiple versions of strncasecmp
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,21 +16,26 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <string.h>
-#include <shlib-compat.h>
-#include "init-arch.h"
-
-extern __typeof (__strncasecmp) __libc_strncasecmp;
-
+#ifndef NOT_IN_libc
+# include <string.h>
+# define strncasecmp __strncasecmp_ppc
 extern __typeof (__strncasecmp) __strncasecmp_ppc attribute_hidden;
 extern __typeof (__strncasecmp) __strncasecmp_power7 attribute_hidden;
-extern __typeof (__strncasecmp) __strncasecmp_power8 attribute_hidden;
+#endif
 
+#include <string/strncase.c>
+#undef strncasecmp
+
+#ifndef NOT_IN_libc
+# include <shlib-compat.h>
+# include "init-arch.h"
+
+/* Avoid DWARF definition DIE on ifunc symbol so that GDB can handle
+   ifunc symbol properly.  */
+extern __typeof (__strncasecmp) __libc_strncasecmp;
 libc_ifunc (__libc_strncasecmp,
-	     (hwcap2 & PPC_FEATURE2_ARCH_2_07)
-             ? __strncasecmp_power8:
 	     (hwcap & PPC_FEATURE_HAS_VSX)
              ? __strncasecmp_power7
              : __strncasecmp_ppc);
-
 weak_alias (__libc_strncasecmp, strncasecmp)
+#endif

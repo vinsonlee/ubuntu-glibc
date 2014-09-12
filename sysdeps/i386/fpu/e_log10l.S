@@ -48,13 +48,7 @@ ENTRY(__ieee754_log10l)
 	fnstsw			// x-1 : x : log10(2)
 	andb	$0x45, %ah
 	jz	2f
-	fxam
-	fnstsw
-	andb	$0x45, %ah
-	cmpb	$0x40, %ah
-	jne	5f
-	fabs			// log10(1) is +0 in all rounding modes.
-5:	fstp	%st(1)		// x-1 : log10(2)
+	fstp	%st(1)		// x-1 : log10(2)
 	fyl2xp1			// log10(x)
 	ret
 
@@ -65,7 +59,6 @@ ENTRY(__ieee754_log10l)
 3:	jp	4b		// in case x is ±Inf
 	fstp	%st(1)
 	fstp	%st(1)
-	fadd	%st(0)
 	ret
 END(__ieee754_log10l)
 strong_alias (__ieee754_log10l, __log10l_finite)

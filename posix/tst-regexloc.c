@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
 #include <locale.h>
 #include <stdio.h>
 
-static int
-do_test (void)
+int
+main (int argc, char *argv[])
 {
   regex_t re;
   regmatch_t mat[1];
@@ -44,6 +44,3 @@ do_test (void)
 
   return res;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2016 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -51,15 +51,14 @@ endif # $(AUTOCONF) = no
 # These are the targets that are made by making them in each subdirectory.
 +subdir_targets	:= subdir_lib objects objs others subdir_mostlyclean	\
 		   subdir_clean subdir_distclean subdir_realclean	\
-		   tests xtests						\
+		   tests xtests subdir_lint.out				\
 		   subdir_update-abi subdir_check-abi			\
-		   subdir_update-all-abi				\
 		   subdir_echo-headers					\
 		   subdir_install					\
 		   subdir_objs subdir_stubs subdir_testclean		\
 		   $(addprefix install-, no-libc.a bin lib data headers others)
 
-headers := limits.h values.h features.h gnu-versions.h \
+headers := limits.h values.h features.h gnu-versions.h bits/libc-lock.h \
 	   bits/xopen_lim.h gnu/libc-version.h stdc-predef.h
 
 echo-headers: subdir_echo-headers
@@ -106,9 +105,9 @@ install-symbolic-link: subdir_install
 	rm -f $(symbolic-link-list)
 
 install:
-	-test ! -x $(elf-objpfx)ldconfig || LC_ALL=C \
-	  $(elf-objpfx)ldconfig $(addprefix -r ,$(install_root)) \
-				$(slibdir) $(libdir)
+	-test ! -x $(common-objpfx)elf/ldconfig || LC_ALL=C LANGUAGE=C \
+	  $(common-objpfx)elf/ldconfig $(addprefix -r ,$(install_root)) \
+				       $(slibdir) $(libdir)
 ifneq (no,$(PERL))
 ifeq (/usr,$(prefix))
 ifeq (,$(install_root))
@@ -251,20 +250,18 @@ mostlyclean: parent-mostlyclean
 tests-clean:
 	@$(MAKE) subdir_testclean no_deps=t
 
-ifneq (,$(CXX))
+tests: $(objpfx)c++-types-check.out $(objpfx)check-local-headers.out
+ifneq ($(CXX),no)
+
 vpath c++-types.data $(+sysdep_dirs)
 
-tests-special += $(objpfx)c++-types-check.out
 $(objpfx)c++-types-check.out: c++-types.data scripts/check-c++-types.sh
-	scripts/check-c++-types.sh $< $(CXX) $(filter-out -std=gnu11 $(+gccwarn-c),$(CFLAGS)) $(CPPFLAGS) > $@; \
-	$(evaluate-test)
+	scripts/check-c++-types.sh $< $(CXX) $(filter-out -std=gnu99 -Wstrict-prototypes,$(CFLAGS)) $(CPPFLAGS) > $@
 endif
 
-tests-special += $(objpfx)check-local-headers.out
 $(objpfx)check-local-headers.out: scripts/check-local-headers.sh
 	AWK='$(AWK)' scripts/check-local-headers.sh \
-	  "$(includedir)" "$(objpfx)" < /dev/null > $@; \
-	$(evaluate-test)
+	  "$(includedir)" "$(objpfx)" > $@
 
 ifneq ($(PERL),no)
 installed-headers = argp/argp.h assert/assert.h catgets/nl_types.h \
@@ -285,7 +282,7 @@ installed-headers = argp/argp.h assert/assert.h catgets/nl_types.h \
 		    malloc/obstack.h malloc/mcheck.h math/math.h \
 		    math/complex.h math/fenv.h math/tgmath.h misc/sys/uio.h \
 		    $(wildcard nis/rpcsvc/*.h) nptl_db/thread_db.h \
-		    sysdeps/nptl/pthread.h sysdeps/pthread/semaphore.h \
+		    nptl/sysdeps/pthread/pthread.h nptl/semaphore.h \
 		    nss/nss.h posix/sys/utsname.h posix/sys/times.h \
 		    posix/sys/wait.h posix/sys/types.h posix/unistd.h \
 		    posix/glob.h posix/regex.h posix/wordexp.h posix/fnmatch.h\
@@ -311,33 +308,10 @@ installed-headers = argp/argp.h assert/assert.h catgets/nl_types.h \
 		    time/sys/time.h time/sys/timeb.h wcsmbs/wchar.h \
 		    wctype/wctype.h
 
-tests-special += $(objpfx)begin-end-check.out
+tests: $(objpfx)begin-end-check.out
 $(objpfx)begin-end-check.out: scripts/begin-end-check.pl
-	$(PERL) scripts/begin-end-check.pl $(installed-headers) > $@; \
-	$(evaluate-test)
+	$(PERL) scripts/begin-end-check.pl $(installed-headers) > $@
 endif
-
-define summarize-tests
-@egrep -v '^(PASS|XFAIL):' $(objpfx)$1 || true
-@echo "Summary of test results$2:"
-@sed 's/:.*//' < $(objpfx)$1 | sort | uniq -c
-@! egrep -q -v '^(X?PASS|XFAIL|UNSUPPORTED):' $(objpfx)$1
-endef
-
-tests-special-notdir = $(patsubst $(objpfx)%, %, $(tests-special))
-tests: $(tests-special)
-	$(..)scripts/merge-test-results.sh -s $(objpfx) "" \
-	  $(sort $(tests-special-notdir:.out=)) \
-	  > $(objpfx)subdir-tests.sum
-	$(..)scripts/merge-test-results.sh -t $(objpfx) subdir-tests.sum \
-	  $(sort $(subdirs) .) \
-	  > $(objpfx)tests.sum
-	$(call summarize-tests,tests.sum)
-xtests:
-	$(..)scripts/merge-test-results.sh -t $(objpfx) subdir-xtests.sum \
-	  $(sort $(subdirs)) \
-	  > $(objpfx)xtests.sum
-	$(call summarize-tests,xtests.sum, for extra tests)
 
 # The realclean target is just like distclean for the parent, but we want
 # the subdirs to know the difference in case they care.
@@ -419,3 +393,30 @@ FORCE:
 
 iconvdata/% localedata/% po/%: FORCE
 	$(MAKE) $(PARALLELMFLAGS) -C $(@D) $(@F)
+
+# glibc 2.0 contains some header files which aren't used with glibc 2.1
+# anymore.
+# These rules should remove those headers
+ifeq (,$(install_root))
+ifeq ($(old-glibc-headers),yes)
+install: remove-old-headers
+endif
+endif
+
+headers2_0 :=	__math.h bytesex.h confname.h direntry.h elfclass.h	\
+		errnos.h fcntlbits.h huge_val.h ioctl-types.h		\
+		ioctls.h iovec.h jmp_buf.h libc-lock.h local_lim.h	\
+		mathcalls.h mpool.h nan.h ndbm.h posix1_lim.h		\
+		posix2_lim.h posix_opt.h resourcebits.h schedbits.h	\
+		selectbits.h semaphorebits.h sigaction.h sigcontext.h	\
+		signum.h sigset.h sockaddrcom.h socketbits.h stab.def	\
+		statbuf.h statfsbuf.h stdio-lock.h stdio_lim.h		\
+		syscall-list.h termbits.h timebits.h ustatbits.h	\
+		utmpbits.h utsnamelen.h waitflags.h waitstatus.h	\
+		xopen_lim.h gnu/types.h sys/ipc_buf.h			\
+		sys/kernel_termios.h sys/msq_buf.h sys/sem_buf.h	\
+		sys/shm_buf.h sys/socketcall.h sigstack.h
+
+.PHONY: remove-old-headers
+remove-old-headers:
+	rm -f $(addprefix $(inst_includedir)/, $(headers2_0))

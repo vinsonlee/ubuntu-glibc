@@ -53,17 +53,13 @@
  * xdr procedure to call to handle each element of the array.
  */
 bool_t
-xdr_array (XDR *xdrs,
-	   /* array pointer */
-	   caddr_t *addrp,
-	   /* number of elements */
-	   u_int *sizep,
-	   /* max numberof elements */
-	   u_int maxsize,
-	   /* size in bytes of each element */
-	   u_int elsize,
-	   /* xdr routine to handle each element */
-	   xdrproc_t elproc)
+xdr_array (xdrs, addrp, sizep, maxsize, elsize, elproc)
+     XDR *xdrs;
+     caddr_t *addrp;		/* array pointer */
+     u_int *sizep;		/* number of elements */
+     u_int maxsize;		/* max numberof elements */
+     u_int elsize;		/* size in bytes of each element */
+     xdrproc_t elproc;		/* xdr routine to handle each element */
 {
   u_int i;
   caddr_t target = *addrp;
@@ -145,8 +141,12 @@ libc_hidden_nolink_sunrpc (xdr_array, GLIBC_2_0)
  * > xdr_elem: routine to XDR each element
  */
 bool_t
-xdr_vector (XDR *xdrs, char *basep, u_int nelem, u_int elemsize,
-	    xdrproc_t xdr_elem)
+xdr_vector (xdrs, basep, nelem, elemsize, xdr_elem)
+     XDR *xdrs;
+     char *basep;
+     u_int nelem;
+     u_int elemsize;
+     xdrproc_t xdr_elem;
 {
   u_int i;
   char *elptr;

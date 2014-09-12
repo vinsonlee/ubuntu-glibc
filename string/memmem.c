@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 
 #ifndef _LIBC
 # define __builtin_expect(expr, val)   (expr)
-# define __memmem	memmem
 #endif
 
 #define RETURN_TYPE void *
@@ -39,8 +38,8 @@
    if NEEDLE_LEN is 0, otherwise NULL if NEEDLE is not found in
    HAYSTACK.  */
 void *
-__memmem (const void *haystack_start, size_t haystack_len,
-	  const void *needle_start, size_t needle_len)
+memmem (const void *haystack_start, size_t haystack_len,
+	const void *needle_start, size_t needle_len)
 {
   /* Abstract memory is considered to be an array of 'unsigned char' values,
      not an array of 'char' values.  See ISO C 99 section 6.2.6.1.  */
@@ -54,7 +53,7 @@ __memmem (const void *haystack_start, size_t haystack_len,
 
   /* Sanity check, otherwise the loop might search through the whole
      memory.  */
-  if (__glibc_unlikely (haystack_len < needle_len))
+  if (__builtin_expect (haystack_len < needle_len, 0))
     return NULL;
 
   /* Use optimizations in memchr when possible, to reduce the search
@@ -74,8 +73,6 @@ __memmem (const void *haystack_start, size_t haystack_len,
   else
     return two_way_long_needle (haystack, haystack_len, needle, needle_len);
 }
-libc_hidden_def (__memmem)
-weak_alias (__memmem, memmem)
-libc_hidden_weak (memmem)
+libc_hidden_def (memmem)
 
 #undef LONG_NEEDLE_THRESHOLD

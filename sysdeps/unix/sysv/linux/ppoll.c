@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2006.
 
@@ -20,7 +20,16 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/poll.h>
+#include <kernel-features.h>
 #include <sysdep-cancel.h>
+
+
+#ifdef __NR_ppoll
+# ifndef __ASSUME_PPOLL
+static int __generic_ppoll (struct pollfd *fds, nfds_t nfds,
+			    const struct timespec *timeout,
+			    const sigset_t *sigmask);
+# endif
 
 
 int
@@ -36,6 +45,34 @@ ppoll (struct pollfd *fds, nfds_t nfds, const struct timespec *timeout,
       timeout = &tval;
     }
 
-  return SYSCALL_CANCEL (ppoll, fds, nfds, timeout, sigmask, _NSIG / 8);
+  int result;
+
+  if (SINGLE_THREAD_P)
+    result = INLINE_SYSCALL (ppoll, 5, fds, nfds, timeout, sigmask, _NSIG / 8);
+  else
+    {
+      int oldtype = LIBC_CANCEL_ASYNC ();
+
+      result = INLINE_SYSCALL (ppoll, 5, fds, nfds, timeout, sigmask,
+			       _NSIG / 8);
+
+      LIBC_CANCEL_RESET (oldtype);
+    }
+
+# ifndef __ASSUME_PPOLL
+  if (result == -1 && errno == ENOSYS)
+    result = __generic_ppoll (fds, nfds, timeout, sigmask);
+# endif
+
+  return result;
 }
 libc_hidden_def (ppoll)
+
+# ifndef __ASSUME_PPOLL
+#  define ppoll static __generic_ppoll
+# endif
+#endif
+
+#ifndef __ASSUME_PPOLL
+# include <io/ppoll.c>
+#endif

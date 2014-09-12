@@ -1,5 +1,5 @@
 /* Determine whether interfaces use native transport.  Linux version.
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,7 +35,6 @@
 
 #include <not-cancel.h>
 
-#include "netlinkaccess.h"
 
 void
 __check_native (uint32_t a1_index, int *a1_native,
@@ -111,17 +110,13 @@ __check_native (uint32_t a1_index, int *a1_native,
     {
       struct msghdr msg =
 	{
-	  .msg_name = (void *) &nladdr,
-	  .msg_namelen =  sizeof (nladdr),
-	  .msg_iov = &iov,
-	  .msg_iovlen = 1,
-	  .msg_control = NULL,
-	  .msg_controllen = 0,
-	  .msg_flags = 0
+	  (void *) &nladdr, sizeof (nladdr),
+	  &iov, 1,
+	  NULL, 0,
+	  0
 	};
 
       ssize_t read_len = TEMP_FAILURE_RETRY (__recvmsg (fd, &msg, 0));
-      __netlink_assert_response (fd, read_len);
       if (read_len < 0)
 	goto out_fail;
 

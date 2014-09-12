@@ -104,6 +104,18 @@ TST_WCSCOLL tst_wcscoll_loc [] = {
 			 { 0x0041,0x0041,0x0043,0x0000 }, },  /* #4 */
 	    /*expect*/ { 0,0,0, -1,			  },
 	  },
+#ifdef SHOJI_IS_RIGHT
+	  /* <WAIVER> */ /* assume ascii */
+	  { /*input.*/ { { 0x0041,0x0042,0x0043,0x0000 },
+			 { 0x0041,0x0061,0x0043,0x0000 }, },  /* #5 */
+	    /*expect*/ { 0,0,0, -1,			  },
+	  },
+	  /* <WAIVER> */ /* assume ascii */
+	  { /*input.*/ { { 0x0041,0x0061,0x0043,0x0000 },
+			 { 0x0041,0x0042,0x0043,0x0000 }, },  /* #6 */
+	    /*expect*/ { 0,0,0, +1,			  },
+	  },
+#else
 	  /* XXX Correct order is lowercase before uppercase.  */
 	  { /*input.*/ { { 0x0041,0x0042,0x0043,0x0000 },
 			 { 0x0041,0x0061,0x0043,0x0000 }, },  /* #5 */
@@ -113,6 +125,7 @@ TST_WCSCOLL tst_wcscoll_loc [] = {
 			 { 0x0041,0x0042,0x0043,0x0000 }, },  /* #6 */
 	    /*expect*/ { 0,0,0, -1,			  },
 	  },
+#endif
 	  { /*input.*/ { { 0x0041,0x0042,0x0000	       },
 			 { 0x0041,0x0042,0x0049,0x0000 }, },  /* #7 */
 	    /*expect*/ { 0,0,0, -1,			  },
@@ -121,6 +134,16 @@ TST_WCSCOLL tst_wcscoll_loc [] = {
 			 { 0x0041,0x0042,0x0000	       }, },  /* #8 */
 	    /*expect*/ { 0,0,0, +1,			  },
 	  },
+#ifdef SHOJI_IS_RIGHT
+	  { /*input.*/ { { 0x0041,0x0092,0x0049,0x0000 },
+			 { 0x0041,0x008E,0x0049,0x0000 }, },  /* #9 */
+	    /*expect*/ { 0,0,0, +1,		       },
+	  },
+	  { /*input.*/ { { 0x0041,0x008E,0x0049,0x0000 },
+			 { 0x0041,0x0092,0x0049,0x0000 }, },  /* #10 */
+	    /*expect*/ { 0,0,0, -1,		       },
+	  },
+#else
 	  /* Do not assume position of character out of range.  */
 	  { /*input.*/ { { 0x0041,0x0092,0x0049,0x0000 },
 			 { 0x0041,0x008E,0x0049,0x0000 }, },  /* #9 */
@@ -130,6 +153,7 @@ TST_WCSCOLL tst_wcscoll_loc [] = {
 			 { 0x0041,0x0092,0x0049,0x0000 }, },  /* #10 */
 	    /*expect*/ { 0,0,0, 0,		       },
 	  },
+#endif
 	  { .is_last = 1 }
 	}
     },

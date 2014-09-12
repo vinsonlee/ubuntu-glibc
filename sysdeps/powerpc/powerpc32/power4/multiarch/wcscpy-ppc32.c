@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
 
 #include <wchar.h>
 
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 # define WCSCPY  __wcscpy_ppc
 #endif
 

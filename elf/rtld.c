@@ -1,5 +1,5 @@
 /* Run time dynamic linker.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include <entry.h>
 #include <fpu_control.h>
 #include <hp-timing.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include "dynamic-link.h"
 #include <dl-librecon.h>
 #include <unsecvars.h>
@@ -83,7 +83,7 @@ int _dl_argc attribute_relro attribute_hidden;
 char **_dl_argv attribute_relro = NULL;
 unsigned int _dl_skip_args attribute_relro attribute_hidden;
 #endif
-rtld_hidden_data_def (_dl_argv)
+INTDEF(_dl_argv)
 
 #ifndef THREAD_SET_STACK_GUARD
 /* Only exported for architectures that don't store the stack guard canary
@@ -116,7 +116,7 @@ static struct audit_list
    and will be since that dynamic linker's _dl_start and dl_main will
    never be called.  */
 int _dl_starting_up = 0;
-rtld_hidden_def (_dl_starting_up)
+INTVARDEF(_dl_starting_up)
 #endif
 
 /* This is the structure which defines all variables global to ld.so
@@ -162,6 +162,7 @@ struct rtld_global_ro _rtld_global_ro attribute_relro =
     ._dl_hwcap_mask = HWCAP_IMPORTANT,
     ._dl_lazy = 1,
     ._dl_fpu_control = _FPU_DEFAULT,
+    ._dl_pointer_guard = 1,
     ._dl_pagesize = EXEC_PAGESIZE,
     ._dl_inhibit_cache = 0,
 
@@ -169,7 +170,7 @@ struct rtld_global_ro _rtld_global_ro attribute_relro =
     ._dl_debug_printf = _dl_debug_printf,
     ._dl_catch_error = _dl_catch_error,
     ._dl_signal_error = _dl_signal_error,
-    ._dl_mcount = _dl_mcount,
+    ._dl_mcount = _dl_mcount_internal,
     ._dl_lookup_symbol_x = _dl_lookup_symbol_x,
     ._dl_check_caller = _dl_check_caller,
     ._dl_open = _dl_open,
@@ -193,6 +194,12 @@ static void dl_main (const ElfW(Phdr) *phdr, ElfW(Word) phnum,
 /* These two variables cannot be moved into .data.rel.ro.  */
 static struct libname_list _dl_rtld_libname;
 static struct libname_list _dl_rtld_libname2;
+
+/* We expect less than a second for relocation.  */
+#ifdef HP_SMALL_TIMING_AVAIL
+# undef HP_TIMING_AVAIL
+# define HP_TIMING_AVAIL HP_SMALL_TIMING_AVAIL
+#endif
 
 /* Variable for statistics.  */
 #ifndef HP_TIMING_NONAVAIL
@@ -263,7 +270,7 @@ _dl_start_final (void *arg, struct dl_start_final_info *info)
 {
   ElfW(Addr) start_addr;
 
-  if (HP_SMALL_TIMING_AVAIL)
+  if (HP_TIMING_AVAIL)
     {
       /* If it hasn't happen yet record the startup time.  */
       if (! HP_TIMING_INLINE)
@@ -272,6 +279,9 @@ _dl_start_final (void *arg, struct dl_start_final_info *info)
       else
 	start_time = info->start_time;
 #endif
+
+      /* Initialize the timing functions.  */
+      HP_TIMING_DIFF_INIT ();
     }
 
   /* Transfer data about ourselves to the permanent link_map structure.  */
@@ -290,12 +300,26 @@ _dl_start_final (void *arg, struct dl_start_final_info *info)
   GL(dl_rtld_map).l_text_end = (ElfW(Addr)) _etext;
   /* Copy the TLS related data if necessary.  */
 #ifndef DONT_USE_BOOTSTRAP_MAP
-# if NO_TLS_OFFSET != 0
+# if USE___THREAD
+  assert (info->l.l_tls_modid != 0);
+  GL(dl_rtld_map).l_tls_blocksize = info->l.l_tls_blocksize;
+  GL(dl_rtld_map).l_tls_align = info->l.l_tls_align;
+  GL(dl_rtld_map).l_tls_firstbyte_offset = info->l.l_tls_firstbyte_offset;
+  GL(dl_rtld_map).l_tls_initimage_size = info->l.l_tls_initimage_size;
+  GL(dl_rtld_map).l_tls_initimage = info->l.l_tls_initimage;
+  GL(dl_rtld_map).l_tls_offset = info->l.l_tls_offset;
+  GL(dl_rtld_map).l_tls_modid = 1;
+# else
+#  if NO_TLS_OFFSET != 0
   GL(dl_rtld_map).l_tls_offset = NO_TLS_OFFSET;
+#  endif
 # endif
+
 #endif
 
+#if HP_TIMING_AVAIL
   HP_TIMING_NOW (GL(dl_cpuclock_offset));
+#endif
 
   /* Initialize the stack end variable.  */
   __libc_stack_end = __builtin_frame_address (0);
@@ -308,7 +332,7 @@ _dl_start_final (void *arg, struct dl_start_final_info *info)
 
 #ifndef HP_TIMING_NONAVAIL
   hp_timing_t rtld_total_time;
-  if (HP_SMALL_TIMING_AVAIL)
+  if (HP_TIMING_AVAIL)
     {
       hp_timing_t end_time;
 
@@ -320,7 +344,7 @@ _dl_start_final (void *arg, struct dl_start_final_info *info)
     }
 #endif
 
-  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_STATISTICS))
+  if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_STATISTICS, 0))
     {
 #ifndef HP_TIMING_NONAVAIL
       print_statistics (&rtld_total_time);
@@ -350,7 +374,7 @@ _dl_start (void *arg)
 #define RESOLVE_MAP(sym, version, flags) (&bootstrap_map)
 #include "dynamic-link.h"
 
-  if (HP_TIMING_INLINE && HP_SMALL_TIMING_AVAIL)
+  if (HP_TIMING_INLINE && HP_TIMING_AVAIL)
 #ifdef DONT_USE_BOOTSTRAP_MAP
     HP_TIMING_NOW (start_time);
 #else
@@ -372,6 +396,9 @@ _dl_start (void *arg)
        ++cnt)
     bootstrap_map.l_info[cnt] = 0;
 # endif
+# if USE___THREAD
+  bootstrap_map.l_tls_modid = 0;
+# endif
 #endif
 
   /* Figure out the run-time load address of the dynamic linker itself.  */
@@ -384,6 +411,123 @@ _dl_start (void *arg)
 #if NO_TLS_OFFSET != 0
   bootstrap_map.l_tls_offset = NO_TLS_OFFSET;
 #endif
+
+  /* Get the dynamic linker's own program header.  First we need the ELF
+     file header.  The `_begin' symbol created by the linker script points
+     to it.  When we have something like GOTOFF relocs, we can use a plain
+     reference to find the runtime address.  Without that, we have to rely
+     on the `l_addr' value, which is not the value we want when prelinked.  */
+#if USE___THREAD
+  dtv_t initdtv[3];
+  ElfW(Ehdr) *ehdr
+# ifdef DONT_USE_BOOTSTRAP_MAP
+    = (ElfW(Ehdr) *) &_begin;
+# else
+#  error This will not work with prelink.
+    = (ElfW(Ehdr) *) bootstrap_map.l_addr;
+# endif
+  ElfW(Phdr) *phdr = (ElfW(Phdr) *) ((void *) ehdr + ehdr->e_phoff);
+  size_t cnt = ehdr->e_phnum;	/* PT_TLS is usually the last phdr.  */
+  while (cnt-- > 0)
+    if (phdr[cnt].p_type == PT_TLS)
+      {
+	void *tlsblock;
+	size_t max_align = MAX (TLS_INIT_TCB_ALIGN, phdr[cnt].p_align);
+	char *p;
+
+	bootstrap_map.l_tls_blocksize = phdr[cnt].p_memsz;
+	bootstrap_map.l_tls_align = phdr[cnt].p_align;
+	if (phdr[cnt].p_align == 0)
+	  bootstrap_map.l_tls_firstbyte_offset = 0;
+	else
+	  bootstrap_map.l_tls_firstbyte_offset = (phdr[cnt].p_vaddr
+						  & (phdr[cnt].p_align - 1));
+	assert (bootstrap_map.l_tls_blocksize != 0);
+	bootstrap_map.l_tls_initimage_size = phdr[cnt].p_filesz;
+	bootstrap_map.l_tls_initimage = (void *) (bootstrap_map.l_addr
+						  + phdr[cnt].p_vaddr);
+
+	/* We can now allocate the initial TLS block.  This can happen
+	   on the stack.  We'll get the final memory later when we
+	   know all about the various objects loaded at startup
+	   time.  */
+# if TLS_TCB_AT_TP
+	tlsblock = alloca (roundup (bootstrap_map.l_tls_blocksize,
+				    TLS_INIT_TCB_ALIGN)
+			   + TLS_INIT_TCB_SIZE
+			   + max_align);
+# elif TLS_DTV_AT_TP
+	tlsblock = alloca (roundup (TLS_INIT_TCB_SIZE,
+				    bootstrap_map.l_tls_align)
+			   + bootstrap_map.l_tls_blocksize
+			   + max_align);
+# else
+	/* In case a model with a different layout for the TCB and DTV
+	   is defined add another #elif here and in the following #ifs.  */
+#  error "Either TLS_TCB_AT_TP or TLS_DTV_AT_TP must be defined"
+# endif
+	/* Align the TLS block.  */
+	tlsblock = (void *) (((uintptr_t) tlsblock + max_align - 1)
+			     & ~(max_align - 1));
+
+	/* Initialize the dtv.  [0] is the length, [1] the generation
+	   counter.  */
+	initdtv[0].counter = 1;
+	initdtv[1].counter = 0;
+
+	/* Initialize the TLS block.  */
+# if TLS_TCB_AT_TP
+	initdtv[2].pointer = tlsblock;
+# elif TLS_DTV_AT_TP
+	bootstrap_map.l_tls_offset = roundup (TLS_INIT_TCB_SIZE,
+					      bootstrap_map.l_tls_align);
+	initdtv[2].pointer = (char *) tlsblock + bootstrap_map.l_tls_offset;
+# else
+#  error "Either TLS_TCB_AT_TP or TLS_DTV_AT_TP must be defined"
+# endif
+	p = __mempcpy (initdtv[2].pointer, bootstrap_map.l_tls_initimage,
+		       bootstrap_map.l_tls_initimage_size);
+# ifdef HAVE_BUILTIN_MEMSET
+	__builtin_memset (p, '\0', (bootstrap_map.l_tls_blocksize
+				    - bootstrap_map.l_tls_initimage_size));
+# else
+	{
+	  size_t remaining = (bootstrap_map.l_tls_blocksize
+			      - bootstrap_map.l_tls_initimage_size);
+	  while (remaining-- > 0)
+	    *p++ = '\0';
+	}
+# endif
+
+	/* Install the pointer to the dtv.  */
+
+	/* Initialize the thread pointer.  */
+# if TLS_TCB_AT_TP
+	bootstrap_map.l_tls_offset
+	  = roundup (bootstrap_map.l_tls_blocksize, TLS_INIT_TCB_ALIGN);
+
+	INSTALL_DTV ((char *) tlsblock + bootstrap_map.l_tls_offset,
+		     initdtv);
+
+	const char *lossage = TLS_INIT_TP ((char *) tlsblock
+					   + bootstrap_map.l_tls_offset, 0);
+# elif TLS_DTV_AT_TP
+	INSTALL_DTV (tlsblock, initdtv);
+	const char *lossage = TLS_INIT_TP (tlsblock, 0);
+# else
+#  error "Either TLS_TCB_AT_TP or TLS_DTV_AT_TP must be defined"
+# endif
+	if (__builtin_expect (lossage != NULL, 0))
+	  _dl_fatal_printf ("cannot set up thread-local storage: %s\n",
+			    lossage);
+
+	/* So far this is module number one.  */
+	bootstrap_map.l_tls_modid = 1;
+
+	/* There can only be one PT_TLS entry.  */
+	break;
+      }
+#endif	/* USE___THREAD */
 
 #ifdef ELF_MACHINE_BEFORE_RTLD_RELOC
   ELF_MACHINE_BEFORE_RTLD_RELOC (bootstrap_map.l_info);
@@ -440,7 +584,7 @@ struct relocate_args
 struct map_args
 {
   /* Argument to map_doit.  */
-  const char *str;
+  char *str;
   struct link_map *loader;
   int mode;
   /* Return value of map_doit.  */
@@ -479,8 +623,7 @@ static void
 map_doit (void *a)
 {
   struct map_args *args = (struct map_args *) a;
-  int type = (args->mode == __RTLD_OPENEXEC) ? lt_executable : lt_library;
-  args->map = _dl_map_object (args->loader, args->str, type, 0,
+  args->map = _dl_map_object (args->loader, args->str, lt_library, 0,
 			      args->mode, LM_ID_BASE);
 }
 
@@ -491,7 +634,7 @@ dlmopen_doit (void *a)
   args->map = _dl_open (args->fname,
 			(RTLD_LAZY | __RTLD_DLOPEN | __RTLD_AUDIT
 			 | __RTLD_SECURE),
-			dl_main, LM_ID_NEWLM, _dl_argc, _dl_argv,
+			dl_main, LM_ID_NEWLM, _dl_argc, INTUSE(_dl_argv),
 			__environ);
 }
 
@@ -628,9 +771,15 @@ cannot allocate TLS data structures for initial thread");
      so it knows not to pass this dtv to the normal realloc.  */
   GL(dl_initial_dtv) = GET_DTV (tcbp);
 
-  /* And finally install it for the main thread.  */
-  const char *lossage = TLS_INIT_TP (tcbp);
-  if (__glibc_unlikely (lossage != NULL))
+  /* And finally install it for the main thread.  If ld.so itself uses
+     TLS we know the thread pointer was initialized earlier.  */
+  const char *lossage
+#ifdef USE___THREAD
+    = TLS_INIT_TP (tcbp, USE___THREAD);
+#else
+    = TLS_INIT_TP (tcbp, 0);
+#endif
+  if (__builtin_expect (lossage != NULL, 0))
     _dl_fatal_printf ("cannot set up thread-local storage: %s\n", lossage);
   tls_init_tp_called = true;
 
@@ -650,7 +799,7 @@ _dl_initial_error_catch_tsd (void)
 
 
 static unsigned int
-do_preload (const char *fname, struct link_map *main_map, const char *where)
+do_preload (char *fname, struct link_map *main_map, const char *where)
 {
   const char *objname;
   const char *err_str = NULL;
@@ -664,7 +813,7 @@ do_preload (const char *fname, struct link_map *main_map, const char *where)
   unsigned int old_nloaded = GL(dl_ns)[LM_ID_BASE]._ns_nloaded;
 
   (void) _dl_catch_error (&objname, &err_str, &malloced, map_doit, &args);
-  if (__glibc_unlikely (err_str != NULL))
+  if (__builtin_expect (err_str != NULL, 0))
     {
       _dl_error_printf ("\
 ERROR: ld.so: object '%s' from %s cannot be preloaded (%s): ignored.\n",
@@ -708,12 +857,15 @@ security_init (void)
 #endif
 
   /* Set up the pointer guard as well, if necessary.  */
-  uintptr_t pointer_chk_guard
-    = _dl_setup_pointer_guard (_dl_random, stack_chk_guard);
+  if (GLRO(dl_pointer_guard))
+    {
+      uintptr_t pointer_chk_guard = _dl_setup_pointer_guard (_dl_random,
+							     stack_chk_guard);
 #ifdef THREAD_SET_POINTER_GUARD
-  THREAD_SET_POINTER_GUARD (pointer_chk_guard);
+      THREAD_SET_POINTER_GUARD (pointer_chk_guard);
 #endif
-  __pointer_chk_guard_local = pointer_chk_guard;
+      __pointer_chk_guard_local = pointer_chk_guard;
+    }
 
   /* We do not need the _dl_random value anymore.  The less
      information we leave behind, the better, so clear the
@@ -774,7 +926,7 @@ dl_main (const ElfW(Phdr) *phdr,
 
 #ifndef HAVE_INLINED_SYSCALLS
   /* Set up a flag which tells we are just starting.  */
-  _dl_starting_up = 1;
+  INTUSE(_dl_starting_up) = 1;
 #endif
 
   if (*user_entry == (ElfW(Addr)) ENTRY_POINT)
@@ -800,55 +952,55 @@ dl_main (const ElfW(Phdr) *phdr,
       GL(dl_rtld_map).l_name = rtld_progname;
 
       while (_dl_argc > 1)
-	if (! strcmp (_dl_argv[1], "--list"))
+	if (! strcmp (INTUSE(_dl_argv)[1], "--list"))
 	  {
 	    mode = list;
 	    GLRO(dl_lazy) = -1;	/* This means do no dependency analysis.  */
 
 	    ++_dl_skip_args;
 	    --_dl_argc;
-	    ++_dl_argv;
+	    ++INTUSE(_dl_argv);
 	  }
-	else if (! strcmp (_dl_argv[1], "--verify"))
+	else if (! strcmp (INTUSE(_dl_argv)[1], "--verify"))
 	  {
 	    mode = verify;
 
 	    ++_dl_skip_args;
 	    --_dl_argc;
-	    ++_dl_argv;
+	    ++INTUSE(_dl_argv);
 	  }
-	else if (! strcmp (_dl_argv[1], "--inhibit-cache"))
+	else if (! strcmp (INTUSE(_dl_argv)[1], "--inhibit-cache"))
 	  {
 	    GLRO(dl_inhibit_cache) = 1;
 	    ++_dl_skip_args;
 	    --_dl_argc;
-	    ++_dl_argv;
+	    ++INTUSE(_dl_argv);
 	  }
-	else if (! strcmp (_dl_argv[1], "--library-path")
+	else if (! strcmp (INTUSE(_dl_argv)[1], "--library-path")
 		 && _dl_argc > 2)
 	  {
-	    library_path = _dl_argv[2];
+	    library_path = INTUSE(_dl_argv)[2];
 
 	    _dl_skip_args += 2;
 	    _dl_argc -= 2;
-	    _dl_argv += 2;
+	    INTUSE(_dl_argv) += 2;
 	  }
-	else if (! strcmp (_dl_argv[1], "--inhibit-rpath")
+	else if (! strcmp (INTUSE(_dl_argv)[1], "--inhibit-rpath")
 		 && _dl_argc > 2)
 	  {
-	    GLRO(dl_inhibit_rpath) = _dl_argv[2];
+	    GLRO(dl_inhibit_rpath) = INTUSE(_dl_argv)[2];
 
 	    _dl_skip_args += 2;
 	    _dl_argc -= 2;
-	    _dl_argv += 2;
+	    INTUSE(_dl_argv) += 2;
 	  }
-	else if (! strcmp (_dl_argv[1], "--audit") && _dl_argc > 2)
+	else if (! strcmp (INTUSE(_dl_argv)[1], "--audit") && _dl_argc > 2)
 	  {
-	    process_dl_audit (_dl_argv[2]);
+	    process_dl_audit (INTUSE(_dl_argv)[2]);
 
 	    _dl_skip_args += 2;
 	    _dl_argc -= 2;
-	    _dl_argv += 2;
+	    INTUSE(_dl_argv) += 2;
 	  }
 	else
 	  break;
@@ -882,7 +1034,7 @@ of this helper program; chances are you did not intend to run this program.\n\
 
       ++_dl_skip_args;
       --_dl_argc;
-      ++_dl_argv;
+      ++INTUSE(_dl_argv);
 
       /* The initialization of _dl_stack_flags done below assumes the
 	 executable's PT_GNU_STACK may have been honored by the kernel, and
@@ -915,7 +1067,7 @@ of this helper program; chances are you did not intend to run this program.\n\
 	  args.mode = __RTLD_OPENEXEC;
 	  (void) _dl_catch_error (&objname, &err_str, &malloced, map_doit,
 				  &args);
-	  if (__glibc_unlikely (err_str != NULL))
+	  if (__builtin_expect (err_str != NULL, 0))
 	    /* We don't free the returned string, the programs stops
 	       anyway.  */
 	    _exit (EXIT_FAILURE);
@@ -923,7 +1075,7 @@ of this helper program; chances are you did not intend to run this program.\n\
       else
 	{
 	  HP_TIMING_NOW (start);
-	  _dl_map_object (NULL, rtld_progname, lt_executable, 0,
+	  _dl_map_object (NULL, rtld_progname, lt_library, 0,
 			  __RTLD_OPENEXEC, LM_ID_BASE);
 	  HP_TIMING_NOW (stop);
 
@@ -1218,25 +1370,10 @@ of this helper program; chances are you did not intend to run this program.\n\
     GLRO(dl_use_load_bias) = main_map->l_addr == 0 ? -1 : 0;
 
   /* Set up the program header information for the dynamic linker
-     itself.  It is needed in the dl_iterate_phdr callbacks.  */
-  const ElfW(Ehdr) *rtld_ehdr;
-
-  /* Starting from binutils-2.23, the linker will define the magic symbol
-     __ehdr_start to point to our own ELF header if it is visible in a
-     segment that also includes the phdrs.  If that's not available, we use
-     the old method that assumes the beginning of the file is part of the
-     lowest-addressed PT_LOAD segment.  */
-#ifdef HAVE_EHDR_START
-  extern const ElfW(Ehdr) __ehdr_start __attribute__ ((visibility ("hidden")));
-  rtld_ehdr = &__ehdr_start;
-#else
-  rtld_ehdr = (void *) GL(dl_rtld_map).l_map_start;
-#endif
-  assert (rtld_ehdr->e_ehsize == sizeof *rtld_ehdr);
-  assert (rtld_ehdr->e_phentsize == sizeof (ElfW(Phdr)));
-
-  const ElfW(Phdr) *rtld_phdr = (const void *) rtld_ehdr + rtld_ehdr->e_phoff;
-
+     itself.  It is needed in the dl_iterate_phdr() callbacks.  */
+  ElfW(Ehdr) *rtld_ehdr = (ElfW(Ehdr) *) GL(dl_rtld_map).l_map_start;
+  ElfW(Phdr) *rtld_phdr = (ElfW(Phdr) *) (GL(dl_rtld_map).l_map_start
+					  + rtld_ehdr->e_phoff);
   GL(dl_rtld_map).l_phdr = rtld_phdr;
   GL(dl_rtld_map).l_phnum = rtld_ehdr->e_phnum;
 
@@ -1257,7 +1394,7 @@ of this helper program; chances are you did not intend to run this program.\n\
     GL(dl_rtld_map).l_tls_modid = _dl_next_tls_modid ();
 
   /* If we have auditing DSOs to load, do it now.  */
-  if (__glibc_unlikely (audit_list != NULL))
+  if (__builtin_expect (audit_list != NULL, 0))
     {
       /* Iterate over all entries in the list.  The order is important.  */
       struct audit_ifaces *last_audit = NULL;
@@ -1291,7 +1428,7 @@ of this helper program; chances are you did not intend to run this program.\n\
 	  bool malloced;
 	  (void) _dl_catch_error (&objname, &err_str, &malloced, dlmopen_doit,
 				  &dlmargs);
-	  if (__glibc_unlikely (err_str != NULL))
+	  if (__builtin_expect (err_str != NULL, 0))
 	    {
 	    not_loaded:
 	      _dl_error_printf ("\
@@ -1407,7 +1544,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 
       /* If we have any auditing modules, announce that we already
 	 have two objects loaded.  */
-      if (__glibc_unlikely (GLRO(dl_naudit) > 0))
+      if (__builtin_expect (GLRO(dl_naudit) > 0, 0))
 	{
 	  struct link_map *ls[2] = { main_map, &GL(dl_rtld_map) };
 
@@ -1431,10 +1568,6 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 	    }
 	}
     }
-
-  /* Keep track of the currently loaded modules to count how many
-     non-audit modules which use TLS are loaded.  */
-  size_t count_modids = _dl_count_modids ();
 
   /* Set up debugging before the debugger is notified for the first time.  */
 #ifdef ELF_MACHINE_DEBUG_SETUP
@@ -1460,7 +1593,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 
   /* Auditing checkpoint: we are ready to signal that the initial map
      is being constructed.  */
-  if (__glibc_unlikely (GLRO(dl_naudit) > 0))
+  if (__builtin_expect (GLRO(dl_naudit) > 0, 0))
     {
       struct audit_ifaces *afct = GLRO(dl_audit);
       for (unsigned int cnt = 0; cnt < GLRO(dl_naudit); ++cnt)
@@ -1479,7 +1612,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
   struct link_map **preloads = NULL;
   unsigned int npreloads = 0;
 
-  if (__glibc_unlikely (preloadlist != NULL))
+  if (__builtin_expect (preloadlist != NULL, 0))
     {
       /* The LD_PRELOAD environment variable gives list of libraries
 	 separated by white space or colons that are loaded before the
@@ -1494,7 +1627,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
       /* Prevent optimizing strsep.  Speed is not important here.  */
       while ((p = (strsep) (&list, " :")) != NULL)
 	if (p[0] != '\0'
-	    && (__builtin_expect (! __libc_enable_secure, 1)
+	    && (__builtin_expect (! INTUSE(__libc_enable_secure), 1)
 		|| strchr (p, '/') == NULL))
 	  npreloads += do_preload (p, main_map, "LD_PRELOAD");
 
@@ -1510,12 +1643,12 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
      the work but this does not matter, since it is not for production
      use.  */
   static const char preload_file[] = "/etc/ld.so.preload";
-  if (__glibc_unlikely (__access (preload_file, R_OK) == 0))
+  if (__builtin_expect (__access (preload_file, R_OK) == 0, 0))
     {
       /* Read the contents of the file.  */
       file = _dl_sysdep_read_whole_file (preload_file, &file_size,
 					 PROT_READ | PROT_WRITE);
-      if (__glibc_unlikely (file != MAP_FAILED))
+      if (__builtin_expect (file != MAP_FAILED, 0))
 	{
 	  /* Parse the file.  It contains names of libraries to be loaded,
 	     separated by white spaces or `:'.  It may also contain
@@ -1587,7 +1720,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 	}
     }
 
-  if (__glibc_unlikely (*first_preload != NULL))
+  if (__builtin_expect (*first_preload != NULL, 0))
     {
       /* Set up PRELOADS with a vector of the preloaded libraries.  */
       struct link_map *l = *first_preload;
@@ -1624,7 +1757,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
       break;
 
   bool rtld_multiple_ref = false;
-  if (__glibc_likely (i < main_map->l_searchlist.r_nlist))
+  if (__builtin_expect (i < main_map->l_searchlist.r_nlist, 1))
     {
       /* Some DT_NEEDED entry referred to the interpreter object itself, so
 	 put it back in the list of visible objects.  We insert it into the
@@ -1682,7 +1815,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
   if (tcbp == NULL)
     tcbp = init_tls ();
 
-  if (__glibc_likely (audit_list == NULL))
+  if (__builtin_expect (audit_list == NULL, 1))
     /* Initialize security features.  But only if we have not done it
        earlier.  */
     security_init ();
@@ -1796,7 +1929,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 	    ElfW(Addr) loadbase;
 	    lookup_t result;
 
-	    result = _dl_lookup_symbol_x (_dl_argv[i], main_map,
+	    result = _dl_lookup_symbol_x (INTUSE(_dl_argv)[i], main_map,
 					  &ref, main_map->l_scope,
 					  NULL, ELF_RTYPE_CLASS_PLT,
 					  DL_LOOKUP_ADD_DEPENDENCY, NULL);
@@ -1804,7 +1937,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 	    loadbase = LOOKUP_VALUE_ADDRESS (result);
 
 	    _dl_printf ("%s found at 0x%0*Zd in object at 0x%0*Zd\n",
-			_dl_argv[i],
+			INTUSE(_dl_argv)[i],
 			(int) sizeof ref->st_value * 2,
 			(size_t) ref->st_value,
 			(int) sizeof loadbase * 2, (size_t) loadbase);
@@ -1966,7 +2099,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
       if (r_list == r_listend && liblist == liblistend)
 	prelinked = true;
 
-      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+      if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_LIBS, 0))
 	_dl_debug_printf ("\nprelink checking: %s\n",
 			  prelinked ? "ok" : "failed");
     }
@@ -1984,7 +2117,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
   GLRO(dl_init_all_dirs) = GL(dl_all_dirs);
 
   /* Print scope information.  */
-  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_SCOPES))
+  if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_SCOPES, 0))
     {
       _dl_debug_printf ("\nInitial object scopes\n");
 
@@ -2082,13 +2215,12 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 	 this has to go here because the calls it makes should use the
 	 rtld versions of the functions (particularly calloc()), but it
 	 needs to have _dl_profile_map set up by the relocator.  */
-      if (__glibc_unlikely (GL(dl_profile_map) != NULL))
+      if (__builtin_expect (GL(dl_profile_map) != NULL, 0))
 	/* We must prepare the profiling.  */
 	_dl_start_profile ();
     }
 
-  if ((!was_tls_init_tp_called && GL(dl_tls_max_dtv_idx) > 0)
-      || count_modids != _dl_count_modids ())
+  if (!was_tls_init_tp_called && GL(dl_tls_max_dtv_idx) > 0)
     ++GL(dl_tls_generation);
 
   /* Now that we have completed relocation, the initializer data
@@ -2096,11 +2228,17 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
      into the main thread's TLS area, which we allocated above.  */
   _dl_allocate_tls_init (tcbp);
 
-  /* And finally install it for the main thread.  */
+  /* And finally install it for the main thread.  If ld.so itself uses
+     TLS we know the thread pointer was initialized earlier.  */
   if (! tls_init_tp_called)
     {
-      const char *lossage = TLS_INIT_TP (tcbp);
-      if (__glibc_unlikely (lossage != NULL))
+      const char *lossage
+#ifdef USE___THREAD
+	= TLS_INIT_TP (tcbp, USE___THREAD);
+#else
+	= TLS_INIT_TP (tcbp, 0);
+#endif
+      if (__builtin_expect (lossage != NULL, 0))
 	_dl_fatal_printf ("cannot set up thread-local storage: %s\n",
 			  lossage);
     }
@@ -2141,7 +2279,7 @@ ERROR: ld.so: object '%s' cannot be loaded as audit interface: %s; ignored.\n",
 
 #ifdef SHARED
   /* Auditing checkpoint: we have added all objects.  */
-  if (__glibc_unlikely (GLRO(dl_naudit) > 0))
+  if (__builtin_expect (GLRO(dl_naudit) > 0, 0))
     {
       struct link_map *head = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
       /* Do not call the functions for any auditing object.  */
@@ -2314,7 +2452,7 @@ process_dl_audit (char *str)
 
   while ((p = (strsep) (&str, ":")) != NULL)
     if (p[0] != '\0'
-	&& (__builtin_expect (! __libc_enable_secure, 1)
+	&& (__builtin_expect (! INTUSE(__libc_enable_secure), 1)
 	    || strchr (p, '/') == NULL))
       {
 	/* This is using the local malloc, not the system malloc.  The
@@ -2348,7 +2486,7 @@ process_envvars (enum mode *modep)
 
   /* This is the default place for profiling data file.  */
   GLRO(dl_profile_output)
-    = &"/var/tmp\0/var/profile"[__libc_enable_secure ? 9 : 0];
+    = &"/var/tmp\0/var/profile"[INTUSE(__libc_enable_secure) ? 9 : 0];
 
   while ((envline = _dl_next_ld_env_entry (&runp)) != NULL)
     {
@@ -2416,7 +2554,7 @@ process_envvars (enum mode *modep)
 	case 9:
 	  /* Test whether we want to see the content of the auxiliary
 	     array passed up from the kernel.  */
-	  if (!__libc_enable_secure
+	  if (!INTUSE(__libc_enable_secure)
 	      && memcmp (envline, "SHOW_AUXV", 9) == 0)
 	    _dl_show_auxv ();
 	  break;
@@ -2430,7 +2568,7 @@ process_envvars (enum mode *modep)
 
 	case 11:
 	  /* Path where the binary is found.  */
-	  if (!__libc_enable_secure
+	  if (!INTUSE(__libc_enable_secure)
 	      && memcmp (envline, "ORIGIN_PATH", 11) == 0)
 	    GLRO(dl_origin_path) = &envline[12];
 	  break;
@@ -2450,7 +2588,7 @@ process_envvars (enum mode *modep)
 	      break;
 	    }
 
-	  if (!__libc_enable_secure
+	  if (!INTUSE(__libc_enable_secure)
 	      && memcmp (envline, "DYNAMIC_WEAK", 12) == 0)
 	    GLRO(dl_dynamic_weak) = 1;
 	  break;
@@ -2461,17 +2599,20 @@ process_envvars (enum mode *modep)
 #ifdef EXTRA_LD_ENVVARS_13
 	  EXTRA_LD_ENVVARS_13
 #endif
-	  if (!__libc_enable_secure
+	  if (!INTUSE(__libc_enable_secure)
 	      && memcmp (envline, "USE_LOAD_BIAS", 13) == 0)
 	    {
 	      GLRO(dl_use_load_bias) = envline[14] == '1' ? -1 : 0;
 	      break;
 	    }
+
+	  if (memcmp (envline, "POINTER_GUARD", 13) == 0)
+	    GLRO(dl_pointer_guard) = envline[14] != '0';
 	  break;
 
 	case 14:
 	  /* Where to place the profiling data file.  */
-	  if (!__libc_enable_secure
+	  if (!INTUSE(__libc_enable_secure)
 	      && memcmp (envline, "PROFILE_OUTPUT", 14) == 0
 	      && envline[15] != '\0')
 	    GLRO(dl_profile_output) = &envline[15];
@@ -2509,7 +2650,7 @@ process_envvars (enum mode *modep)
 
   /* Extra security for SUID binaries.  Remove all dangerous environment
      variables.  */
-  if (__builtin_expect (__libc_enable_secure, 0))
+  if (__builtin_expect (INTUSE(__libc_enable_secure), 0))
     {
       static const char unsecure_envvars[] =
 #ifdef EXTRA_UNSECURE_ENVVARS
@@ -2574,7 +2715,7 @@ print_statistics (hp_timing_t *rtld_total_timep)
   char *wp;
 
   /* Total time rtld used.  */
-  if (HP_SMALL_TIMING_AVAIL)
+  if (HP_TIMING_AVAIL)
     {
       HP_TIMING_PRINT (buf, sizeof (buf), *rtld_total_timep);
       _dl_debug_printf ("\nruntime linker statistics:\n"
@@ -2642,7 +2783,7 @@ print_statistics (hp_timing_t *rtld_total_timep)
 
 #ifndef HP_TIMING_NONAVAIL
   /* Time spend while loading the object and the dependencies.  */
-  if (HP_SMALL_TIMING_AVAIL)
+  if (HP_TIMING_AVAIL)
     {
       char pbuf[30];
       HP_TIMING_PRINT (buf, sizeof (buf), load_time);

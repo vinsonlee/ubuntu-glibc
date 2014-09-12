@@ -1,5 +1,5 @@
 /* Provide kernel hint to read ahead.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,7 +38,8 @@ __readahead (int fd, off64_t offset, size_t count)
 ssize_t
 __readahead (int fd, off64_t offset, size_t count)
 {
-  return INLINE_SYSCALL_ERROR_RETURN_VALUE (ENOSYS);
+  __set_errno (ENOSYS);
+  return -1;
 }
 stub_warning (readahead)
 #endif

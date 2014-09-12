@@ -70,7 +70,7 @@ __ieee754_hypot (double x, double y)
       return a + b;
     }                                       /* x/y > 2**60 */
   k = 0;
-  if (__glibc_unlikely (ha > 0x5f300000))                  /* a>2**500 */
+  if (__builtin_expect (ha > 0x5f300000, 0))            /* a>2**500 */
     {
       if (ha >= 0x7ff00000)             /* Inf or NaN */
 	{
@@ -149,9 +149,7 @@ __ieee754_hypot (double x, double y)
       t1 = 1.0;
       GET_HIGH_WORD (high, t1);
       SET_HIGH_WORD (t1, high + (k << 20));
-      w *= t1;
-      math_check_force_underflow_nonneg (w);
-      return w;
+      return t1 * w;
     }
   else
     return w;

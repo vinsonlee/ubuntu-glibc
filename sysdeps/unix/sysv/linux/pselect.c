@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2006.
 
@@ -63,11 +63,22 @@ __pselect (int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 
 #ifndef CALL_PSELECT6
 # define CALL_PSELECT6(nfds, readfds, writefds, exceptfds, timeout, data) \
-  SYSCALL_CANCEL (pselect6, nfds, readfds, writefds, exceptfds,	timeout, data)
+  INLINE_SYSCALL (pselect6, 6, nfds, readfds, writefds, exceptfds,	      \
+		  timeout, data)
 #endif
 
-  result = CALL_PSELECT6 (nfds, readfds, writefds, exceptfds, timeout,
-			  &data);
+  if (SINGLE_THREAD_P)
+    result = CALL_PSELECT6 (nfds, readfds, writefds, exceptfds, timeout,
+			    &data);
+  else
+    {
+      int oldtype = LIBC_CANCEL_ASYNC ();
+
+      result = CALL_PSELECT6 (nfds, readfds, writefds, exceptfds, timeout,
+			      &data);
+
+      LIBC_CANCEL_RESET (oldtype);
+    }
 
 # ifndef __ASSUME_PSELECT
   if (result == -1 && errno == ENOSYS)
@@ -78,6 +89,7 @@ __pselect (int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
   return result;
 }
 weak_alias (__pselect, pselect)
+strong_alias (__pselect, __libc_pselect)
 
 # ifndef __ASSUME_PSELECT
 #  define __pselect static __generic_pselect

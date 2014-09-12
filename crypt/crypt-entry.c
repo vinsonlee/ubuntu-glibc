@@ -1,7 +1,7 @@
 /*
  * UFC-crypt: ultra fast crypt(3) implementation
  *
- * Copyright (C) 1991-2016 Free Software Foundation, Inc.
+ * Copyright (C) 1991-2014 Free Software Foundation, Inc.
  *
  * The GNU C Library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,16 @@
 #define STATIC static
 #endif
 
+#ifndef DOS
+#include "ufc-crypt.h"
+#else
+/*
+ * Thanks to greg%wind@plains.NoDak.edu (Greg W. Wettstein)
+ * for DOS patches
+ */
+#include "ufc.h"
+#endif
+#include "crypt.h"
 #include "crypt-private.h"
 
 /* Prototypes for local functions.  */
@@ -71,8 +81,10 @@ extern struct crypt_data _ufc_foobar;
  */
 
 char *
-__crypt_r (const char *key, const char *salt,
-	   struct crypt_data * __restrict data)
+__crypt_r (key, salt, data)
+     const char *key;
+     const char *salt;
+     struct crypt_data * __restrict data;
 {
   ufc_long res[4];
   char ktab[9];
@@ -146,7 +158,9 @@ __crypt_r (const char *key, const char *salt,
 weak_alias (__crypt_r, crypt_r)
 
 char *
-crypt (const char *key, const char *salt)
+crypt (key, salt)
+     const char *key;
+     const char *salt;
 {
 #ifdef _LIBC
   /* Try to find out whether we have to use MD5 encryption replacement.  */
@@ -176,7 +190,9 @@ crypt (const char *key, const char *salt)
 weak_alias (crypt, fcrypt)
 #else
 char *
-__fcrypt (const char *key, const char *salt)
+__fcrypt (key, salt)
+     const char *key;
+     const char *salt;
 {
   return crypt (key, salt);
 }

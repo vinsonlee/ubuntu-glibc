@@ -76,7 +76,9 @@
  * this sounds like a job for xdr_reference!
  */
 bool_t
-xdr_pmaplist (XDR *xdrs, struct pmaplist **rp)
+xdr_pmaplist (xdrs, rp)
+     XDR *xdrs;
+     struct pmaplist **rp;
 {
   /*
    * more_elements is pre-computed in case the direction is

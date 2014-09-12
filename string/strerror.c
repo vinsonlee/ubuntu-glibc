@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,12 +26,13 @@
 libc_freeres_ptr (static char *buf);
 
 char *
-strerror (int errnum)
+strerror (errnum)
+     int errnum;
 {
   char *ret = __strerror_r (errnum, NULL, 0);
   int saved_errno;
 
-  if (__glibc_likely (ret != NULL))
+  if (__builtin_expect (ret != NULL, 1))
     return ret;
   saved_errno = errno;
   if (buf == NULL)

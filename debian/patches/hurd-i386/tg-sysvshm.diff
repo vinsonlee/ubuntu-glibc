@@ -39,7 +39,7 @@ Subject: [PATCH] Implement SysV shared memory for GNU/Hurd.
  	  trampoline longjmp-ts catch-exc exc2signal hurdkill sigunwind \
 --- /dev/null
 +++ b/hurd/sysvshm.c
-@@ -0,0 +1,97 @@
+@@ -0,0 +1,96 @@
 +/* Copyright (C) 2005 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
 +
@@ -128,7 +128,6 @@ Subject: [PATCH] Implement SysV shared memory for GNU/Hurd.
 +	  *pshm = shm->next;
 +	  *size = shm->size;
 +	  __mutex_unlock (&sysvshm_lock);
-+	  free (shm);
 +	  return 0;
 +	}
 +      pshm = &shm->next;
@@ -166,7 +165,7 @@ Subject: [PATCH] Implement SysV shared memory for GNU/Hurd.
 +#define SHM_PRIV_KEY_START INT_MAX
 +#define SHM_PRIV_KEY_END ((INT_MAX / 2) + 1)
 +
-+#define SHM_PREFIX		"sysvshm-"
++#define SHM_PREFIX "shm-"
 +#define SHM_DIR _PATH_DEV "shm/"
 +
 +/* The maximum number of characters in a shared memory segment file name.
@@ -235,7 +234,7 @@ Subject: [PATCH] Implement SysV shared memory for GNU/Hurd.
 +}
 --- /dev/null
 +++ b/sysdeps/mach/hurd/shmat.c
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,78 @@
 +/* Copyright (C) 2005 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
 +
@@ -257,7 +256,6 @@ Subject: [PATCH] Implement SysV shared memory for GNU/Hurd.
 +#include <errno.h>
 +#include <utime.h>
 +#include <stdio.h>
-+#include <unistd.h>
 +#include <assert.h>
 +#include <sys/mman.h>
 +#include <sys/ipc.h>

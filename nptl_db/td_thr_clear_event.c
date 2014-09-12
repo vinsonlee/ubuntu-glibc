@@ -1,5 +1,5 @@
 /* Disable specific event for thread.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 1999.
 
@@ -24,7 +24,9 @@
 
 
 td_err_e
-td_thr_clear_event (const td_thrhandle_t *th, td_thr_events_t *event)
+td_thr_clear_event (th, event)
+     const td_thrhandle_t *th;
+     td_thr_events_t *event;
 {
   td_err_e err;
   psaddr_t eventmask;
