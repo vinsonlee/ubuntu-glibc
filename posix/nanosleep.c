@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,13 +21,14 @@
 
 /* Pause execution for a number of nanoseconds.  */
 int
-__nanosleep (const struct timespec *requested_time,
-	     struct timespec *remaining)
+__libc_nanosleep (const struct timespec *requested_time,
+		  struct timespec *remaining)
 {
   __set_errno (ENOSYS);
   return -1;
 }
 stub_warning (nanosleep)
 
+weak_alias (__libc_nanosleep, __nanosleep)
 libc_hidden_def (__nanosleep)
-weak_alias (__nanosleep, nanosleep)
+weak_alias (__libc_nanosleep, nanosleep)

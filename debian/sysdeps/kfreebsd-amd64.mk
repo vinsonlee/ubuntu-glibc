@@ -9,9 +9,9 @@ libc0.1-i386_shlib_dep = libc0.1-i386 (>= $(shlib_dep_ver))
 i386_configure_target = i686-kfreebsd-gnu
 i386_CC = $(CC) -m32
 i386_CXX = $(CXX) -m32
-i386_add-ons = fbtl $(add-ons)
+i386_add-ons = ports fbtl $(add-ons)
 i386_extra_cflags = -march=pentium4 -mtune=generic
-i386_extra_config_options = $(extra_config_options)
+i386_extra_config_options = $(extra_config_options) --disable-profile
 i386_slibdir = /lib32
 i386_libdir = /usr/lib32
 

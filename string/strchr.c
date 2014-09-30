@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Based on strlen implementation by Torbjorn Granlund (tege@sics.se),
    with help from Dan Sahlin (dan@sics.se) and
@@ -21,13 +21,16 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <string.h>
+#include <memcopy.h>
 #include <stdlib.h>
 
 #undef strchr
 
 /* Find the first occurrence of C in S.  */
 char *
-strchr (const char *s, int c_in)
+strchr (s, c_in)
+     const char *s;
+     int c_in;
 {
   const unsigned char *char_ptr;
   const unsigned long int *longword_ptr;

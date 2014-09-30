@@ -84,6 +84,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		--host=$(call xx,configure_target) \
 		--build=$$configure_build --prefix=/usr --without-cvs \
 		--enable-add-ons=$(standard-add-ons)"$(call xx,add-ons)" \
+		--enable-profile \
 		--without-selinux \
 		--enable-stackguard-randomization \
 		--enable-obsolete-rpc \
@@ -137,17 +138,19 @@ $(stamp)check_%: $(stamp)build_%
 	  chmod +x debian/testsuite-checking/convertlog.sh ; \
 	  debian/testsuite-checking/convertlog.sh $(log_test) | tee $(log_results) ; \
 	  if test -f $(log_expected) ; then \
+	    echo "***************" ; \
 	    chmod +x debian/testsuite-checking/compare.sh ; \
 	    debian/testsuite-checking/compare.sh $(log_expected) $(log_results) $(DEB_BUILDDIR) ; \
+	    echo "***************" ; \
 	  else \
-	    echo "*************************** WARNING ***************************" ; \
+	    echo "*** WARNING ***" ; \
 	    echo "Please generate expected testsuite results for this arch ($(log_expected))!" ; \
-	    echo "*************************** WARNING ***************************" ; \
+	    echo "*** WARNING ***" ; \
 	  fi ; \
 	fi
-	@n=$$(grep '^FAIL: ' $(log_test) | wc -l || true); \
+	@n=$$(grep '^make.* Error' $(log_test) | wc -l || true); \
 	  echo "TEST SUMMARY $(log_test) ($$n matching lines)"; \
-	  grep '^FAIL: ' $(log_test) || true; \
+	  grep '^make.* Error' $(log_test) || true; \
 	  echo "END TEST SUMMARY $(log_test)"
 	touch $@
 

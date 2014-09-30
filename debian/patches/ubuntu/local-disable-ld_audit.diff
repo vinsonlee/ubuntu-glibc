@@ -11,7 +11,7 @@ Index: eglibc-2.15/elf/rtld.c
 @@ -2529,7 +2529,7 @@
    while ((p = (strsep) (&str, ":")) != NULL)
      if (p[0] != '\0'
- 	&& (__builtin_expect (! __libc_enable_secure, 1)
+ 	&& (__builtin_expect (! INTUSE(__libc_enable_secure), 1)
 -	    || strchr (p, '/') == NULL))
 +	))
        {

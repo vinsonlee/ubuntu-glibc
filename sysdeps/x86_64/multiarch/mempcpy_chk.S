@@ -1,6 +1,6 @@
 /* Multiple versions of __mempcpy_chk
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -24,7 +24,7 @@
 /* Define multiple versions only for the definition in lib and for
    DSO.  There are no multiarch mempcpy functions for static binaries.
  */
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 # ifdef SHARED
 	.text
 ENTRY(__mempcpy_chk)
@@ -39,9 +39,6 @@ ENTRY(__mempcpy_chk)
 	testl	$bit_Fast_Copy_Backward, __cpu_features+FEATURE_OFFSET+index_Fast_Copy_Backward(%rip)
 	jz	2f
 	leaq	__mempcpy_chk_ssse3_back(%rip), %rax
-	testl	$bit_AVX_Fast_Unaligned_Load, __cpu_features+FEATURE_OFFSET+index_AVX_Fast_Unaligned_Load(%rip)
-	jz	2f
-	leaq	__mempcpy_chk_avx_unaligned(%rip), %rax
 2:	ret
 END(__mempcpy_chk)
 # else

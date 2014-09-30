@@ -22,7 +22,4 @@ libc {
     # s*
     setrlimit64;
   }
-  GLIBC_PRIVATE {
-    __getrlimit;
-  }
 }

@@ -1,5 +1,5 @@
 /* This file is part of the GNU C Library.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
    the dl_hwcap field. The assembly is to make the compiler not optimize the
    test (&_rtld_global_ro != NULL), which is always true in ISO C (but not
    in that case since _rtld_global_ro might not been realocated yet).  */
-#if defined(SHARED) && !IS_IN (rtld)
+#if defined(SHARED) && !defined(IS_IN_rtld)
 # define __GLRO(value) \
   ({ volatile void **__p = (volatile void**)(&_rtld_global_ro);	\
     unsigned long int __ret;					\
@@ -36,7 +36,6 @@
    and fills the previous ones.  */
 #define INIT_ARCH() \
   unsigned long int hwcap = __GLRO(dl_hwcap); 			\
-  unsigned long int __attribute__((unused)) hwcap2 = __GLRO(dl_hwcap2); \
   if (hwcap & PPC_FEATURE_ARCH_2_06)				\
     hwcap |= PPC_FEATURE_ARCH_2_05 |				\
 	     PPC_FEATURE_POWER5_PLUS |				\

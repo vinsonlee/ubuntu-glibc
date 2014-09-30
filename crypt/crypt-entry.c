@@ -1,7 +1,7 @@
 /*
  * UFC-crypt: ultra fast crypt(3) implementation
  *
- * Copyright (C) 1991-2015 Free Software Foundation, Inc.
+ * Copyright (C) 1991-2014 Free Software Foundation, Inc.
  *
  * The GNU C Library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,16 @@
 #define STATIC static
 #endif
 
+#ifndef DOS
+#include "ufc-crypt.h"
+#else
+/*
+ * Thanks to greg%wind@plains.NoDak.edu (Greg W. Wettstein)
+ * for DOS patches
+ */
+#include "ufc.h"
+#endif
+#include "crypt.h"
 #include "crypt-private.h"
 
 /* Prototypes for local functions.  */

@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2015 Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -21,8 +21,6 @@
 
 subdir	:= login
 
-include ../Makeconfig
-
 headers	:= utmp.h bits/utmp.h lastlog.h pty.h
 
 routines := getlogin getlogin_r setlogin getlogin_r_chk \
@@ -34,6 +32,8 @@ CFLAGS-grantpt.c = -DLIBEXECDIR='"$(libexecdir)"'
 
 others = utmpdump
 
+include ../Makeconfig
+
 ifeq (yes,$(build-pt-chown))
 others += pt_chown
 others-pie = pt_chown
@@ -43,7 +43,7 @@ endif
 subdir-dirs = programs
 vpath %.c programs
 
-tests := tst-utmp tst-utmpx tst-grantpt tst-ptsname
+tests := tst-utmp tst-utmpx tst-grantpt
 
 # Build the -lutil library with these extra functions.
 extra-libs      := libutil

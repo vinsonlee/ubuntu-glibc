@@ -178,7 +178,8 @@ $(stamp)debhelper-common:
 	perl -i -pe 'BEGIN {undef $$/; open(IN, "debian/tmp-libc/usr/share/i18n/SUPPORTED"); $$j=<IN>;} s/__PROVIDED_LOCALES__/$$j/g;' debian/locales.config debian/locales.postinst
 
 	# Generate common substvars files.
-	: > tmp.substvars
+	echo "locale:Depends=$(shell perl debian/debver2localesdep.pl $(LOCALES_DEP_VER))" > tmp.substvars
+	echo "locale-compat:Depends=$(shell perl debian/debver2localesdep.pl $(LOCALES_COMPAT_VER))" >> tmp.substvars
 ifeq ($(filter stage2,$(DEB_BUILD_PROFILES)),)
 	echo 'libgcc:Depends=libgcc1 [!hppa !m68k], libgcc2 [m68k], libgcc4 [hppa]' >> tmp.substvars
 endif
@@ -209,11 +210,10 @@ $(stamp)debhelper_%: $(stamp)debhelper-common $(stamp)install_%
 	    sed -e "s#TMPDIR#debian/tmp-$$curpass#g" -i $$t; \
 	    sed -e "s#RTLDDIR#$$rtlddir#g" -i $$t; \
 	    sed -e "s#SLIBDIR#$$slibdir#g" -i $$t; \
-	    sed -e "s#LIBDIR#$$libdir#g" -i $$t; \
 	  done ; \
 	done
 
-	sed -e "/$$libdir.*.a /d" -i debian/$(libc)-dev.install
+	sed -e "/LIBDIR.*.a /d" -e "s#LIBDIR#lib#g" -i debian/$(libc)-dev.install
 else
 $(patsubst %,debhelper_%,$(GLIBC_PASSES)) :: debhelper_% : $(stamp)debhelper_%
 $(stamp)debhelper_%: $(stamp)debhelper-common $(stamp)install_%
@@ -224,7 +224,7 @@ $(stamp)debhelper_%: $(stamp)debhelper-common $(stamp)install_%
 	rtld_so=`LANG=C LC_ALL=C readelf -l debian/tmp-$$curpass/usr/bin/iconv | grep "interpreter" | sed -e 's/.*interpreter: \(.*\)]/\1/g'`; \
 	case "$$curpass:$$slibdir" in \
 	  libc:*) \
-	    templates="libc libc-dev libc-pic libc-udeb libnss-dns-udeb libnss-files-udeb" \
+	    templates="libc libc-dev libc-pic libc-prof libc-udeb libnss-dns-udeb libnss-files-udeb" \
 	    pass="" \
 	    suffix="" \
 	    ;; \

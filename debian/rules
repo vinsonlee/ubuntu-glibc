@@ -36,6 +36,9 @@ DUMMY := $(shell mkdir -p $(stamp))
 include debian/shlibver
 shlib_dep = $(libc) (>= $(shlib_dep_ver))
 
+# The version of the C library that locales needs for its format.
+include debian/locales-depver
+
 # Beyond here you shouldn't need to customise anything:
 export SHELL          = /bin/bash -e
 
@@ -101,7 +104,7 @@ libdir=/usr/lib/$(DEB_HOST_MULTIARCH)
 
 BASE_CC = gcc
 BASE_CXX = g++
-DEB_GCC_VERSION ?= -4.9
+DEB_GCC_VERSION ?= -4.8
 
 RUN_TESTSUITE = yes
 
@@ -131,6 +134,9 @@ log_expected = debian/testsuite-checking/expected-results-$(call xx,configure_ta
 # Which build pass are we on?
 curpass = $(filter-out %_,$(subst _,_ ,$@))
 
+# Some architectures don't get libc-profile ported right away:
+no_libc_profile :=
+
 # Provide backward compatibility for the old DEB_STAGE and DEB_BUILD_PROFILE for now
 ifeq ($(DEB_STAGE),stage1)
   DEB_BUILD_PROFILES+=stage1
@@ -146,6 +152,9 @@ ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
   DEB_UDEB_PACKAGES = 
 else
   DEB_ARCH_REGULAR_PACKAGES = $(libc) $(libc)-dev $(libc)-dbg $(libc)-pic libc-bin libc-dev-bin multiarch-support
+  ifeq (,$(filter $(DEB_HOST_ARCH),$(no_libc_profile)))
+    DEB_ARCH_REGULAR_PACKAGES += $(libc)-prof
+  endif
   DEB_INDEP_REGULAR_PACKAGES = glibc-doc glibc-source
   DEB_UDEB_PACKAGES = $(libc)-udeb libnss-dns-udeb libnss-files-udeb
 endif

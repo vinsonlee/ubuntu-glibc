@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -202,7 +202,7 @@ typedef struct fpu
   {
     union {				/* FPU floating point regs */
       unsigned		fpu_regs[32];	/* 32 singles */
-      double            fpu_dregs[32];	/* 32 doubles */
+      double            fpu_dregs[16];	/* 32 doubles */
       long double	fpu_qregs[16];  /* 16 quads */
     } fpu_fr;
     struct fq       *fpu_q;		/* ptr to array of FQ entries */

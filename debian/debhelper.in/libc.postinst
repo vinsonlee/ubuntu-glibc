@@ -84,7 +84,7 @@ then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions "$preversion" lt 2.21; then
+	if dpkg --compare-versions "$preversion" lt 2.19; then
 	    # LP #504198; purge locales between major versions
 	    if which locale-gen >/dev/null; then
 		locale-gen --purge
@@ -185,7 +185,7 @@ then
 	    else
 		echo "Nothing to restart."
 	    fi
-	fi # end upgrading and $preversion lt 2.21
+	fi # end upgrading and $preversion lt 2.19
     fi # Upgrading
 
     # Restart init.  Currently handles chroots, systemd and upstart, and
@@ -216,15 +216,14 @@ fi
 # configuration file, in order to keep a stable path. Remove the old file.
 case ${DPKG_MAINTSCRIPT_ARCH:-$(dpkg --print-architecture)} in
     hurd-i386)
-        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-gnu.conf 2.19-11~ libc0.3:hurd-i386 -- "$@"
-        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-gnu-gnu.conf 2.19-11~ libc0.3:hurd-i386 -- "$@"
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-gnu.conf 2.19-4~ libc6:hurd-i386 -- "$@"
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-gnu-gnu.conf 2.19-4~ libc6:hurd-i386 -- "$@"
         ;;
     i386)
         dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-linux-gnu.conf 2.19-4~ libc6:i386 -- "$@"
-        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i686-linux-gnu.conf 2.19-13~ libc6:i386 -- "$@"
         ;;
     kfreebsd-i386)
-        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-kfreebsd-gnu.conf 2.19-11~ libc0.1:kfreebsd-i386 -- "$@"
+        dpkg-maintscript-helper rm_conffile /etc/ld.so.conf.d/i486-kfreebsd-gnu.conf 2.19-4~ libc6:kfreebsd-i386 -- "$@"
         ;;
 esac
 

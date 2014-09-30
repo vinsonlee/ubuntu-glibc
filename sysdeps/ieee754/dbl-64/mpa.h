@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * Written by International Business Machines Corp.
- * Copyright (C) 2001-2015 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2014 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -71,8 +71,8 @@ typedef union
   double d;
 } number;
 
-extern const mp_no __mpone;
-extern const mp_no __mptwo;
+extern const mp_no mpone;
+extern const mp_no mptwo;
 
 #define  X   x->d
 #define  Y   y->d

@@ -1,6 +1,6 @@
 /* Multiple versions of strcmp
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -50,7 +50,7 @@
 /* Define multiple versions only for the definition in libc.  Don't
    define multiple versions for strncmp in static library since we
    need strncmp before the initialization happened.  */
-#if (defined SHARED || !defined USE_AS_STRNCMP) && IS_IN (libc)
+#if (defined SHARED || !defined USE_AS_STRNCMP) && !defined NOT_IN_libc
 # ifdef SHARED
 	.text
 ENTRY(STRCMP)
@@ -68,7 +68,7 @@ ENTRY(STRCMP)
 	leal	__STRCMP_SSSE3@GOTOFF(%ebx), %eax
 	testl	$bit_SSE4_2, CPUID_OFFSET+index_SSE4_2+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	testl	$bit_Slow_SSE4_2, FEATURE_OFFSET+index_Slow_SSE4_2+__cpu_features@GOTOFF(%ebx)
+	testl	$bit_Slow_SSE4_2, CPUID_OFFSET+index_Slow_SSE4_2+__cpu_features@GOTOFF(%ebx)
 	jnz	2f
 	leal	__STRCMP_SSE4_2@GOTOFF(%ebx), %eax
 2:	popl	%ebx
@@ -89,7 +89,7 @@ ENTRY(STRCMP)
 	leal	__STRCMP_SSSE3, %eax
 	testl	$bit_SSE4_2, CPUID_OFFSET+index_SSE4_2+__cpu_features
 	jz	2f
-	testl	$bit_Slow_SSE4_2, FEATURE_OFFSET+index_Slow_SSE4_2+__cpu_features
+	testl	$bit_Slow_SSE4_2, CPUID_OFFSET+index_Slow_SSE4_2+__cpu_features
 	jnz	2f
 	leal	__STRCMP_SSE4_2, %eax
 2:	ret

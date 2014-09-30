@@ -13,43 +13,33 @@ grep -Ev '^ *$|^#' $2 | sort > $results
 
 builddir=${3:-.}
 
-echo "+--------------------------- BEGIN COMPARE ---------------------------+"
-echo "Comparing against $1"
 REGRESSIONS=$(diff -wBI '^#.*' $expected $results | sed -e '/^>/!d;s/^> //g')
 PROGRESSIONS=$(diff -wBI '^#.*' $expected $results | sed -e '/^</!d;s/^< //g')
 if [ -n "$REGRESSIONS" ] ; then
-  echo "+---------------------------------------------------------------------+"
-  echo "|     Encountered regressions that don't match expected failures:     |"
-  echo "+---------------------------------------------------------------------+"
+  echo "Encountered regressions that don't match expected failures ($1):"
   echo "$REGRESSIONS"
-  echo "+---------------------------------------------------------------------+"
-  for test in $REGRESSIONS
+  for test in $(echo "$REGRESSIONS" | sed -e's/, Error.*//')
   do
     echo TEST $test:
-    cat $builddir/$test.out
+    find $builddir -name "$test" | xargs -r cat
   done
   rv=1
 else
-  echo "+---------------------------------------------------------------------+"
-  echo "| Passed regression testing.  Give yourself a hearty pat on the back. |"
-  echo "+---------------------------------------------------------------------+"
-  for test in $(cat $results)
+  echo "Passed regression testing. No new failures, no changed error values."
+  for test in $(sed -n '/^[^#]/s/, Error.*//p' $results)
   do
     echo TEST $test:
-    cat $builddir/$test.out
+    find $builddir -name "$test" | xargs -r cat
   done
   rv=0
 fi
 
 if [ -n "$PROGRESSIONS" ] ; then
-  echo "+---------------------------------------------------------------------+"
-  echo "|    Encountered progressions that don't match expected failures:     |"
-  echo "+---------------------------------------------------------------------+"
+  echo "Encountered progressions that don't match expected failures:"
   echo "$PROGRESSIONS"
 fi
-echo "+---------------------------- END COMPARE ----------------------------+"
 
 rm -f $expected $results
 # This would be a lovely place to exit 0 if you wanted to disable hard failures
-#exit 0 # This line should be disabled after the Jessie release.
+#exit 0
 exit $rv

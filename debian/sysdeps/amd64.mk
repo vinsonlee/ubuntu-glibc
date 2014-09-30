@@ -6,12 +6,12 @@ extra_config_options = --enable-multi-arch --enable-lock-elision
 GLIBC_MULTILIB_PASSES += i386
 DEB_ARCH_MULTILIB_PACKAGES += libc6-i386 libc6-dev-i386
 libc6-i386_shlib_dep = libc6-i386 (>= $(shlib_dep_ver))
-i386_add-ons = $(add-ons)
+i386_add-ons = nptl $(add-ons)
 i386_configure_target = i686-linux-gnu
 i386_CC = $(CC) -m32
 i386_CXX = $(CXX) -m32
 i386_extra_cflags = -march=pentium4 -mtune=generic -fno-regmove
-i386_extra_config_options = $(extra_config_options)
+i386_extra_config_options = $(extra_config_options) --disable-profile
 i386_slibdir = /lib32
 i386_libdir = /usr/lib32
 
@@ -42,11 +42,11 @@ endef
 GLIBC_MULTILIB_PASSES += x32
 DEB_ARCH_MULTILIB_PACKAGES += libc6-x32 libc6-dev-x32
 libc6-x32_shlib_dep = libc6-x32 (>= $(shlib_dep_ver))
-x32_add-ons = $(add-ons)
+x32_add-ons = nptl $(add-ons)
 x32_configure_target = x86_64-linux-gnux32
 x32_CC = $(CC) -mx32
 x32_CXX = $(CXX) -mx32
-x32_extra_config_options = $(extra_config_options)
+x32_extra_config_options = $(extra_config_options) --disable-profile
 x32_rtlddir = /libx32
 x32_slibdir = /libx32
 x32_libdir = /usr/libx32
