@@ -1,3 +1,10 @@
+glibc (2.19-10ubuntu2) utopic; urgency=medium
+
+  * Add patches/ubuntu/unsubmitted-increase-dtv-surplus.diff from Fedora to
+    allow up to 32 dlopened modules to use static TLS (LP: #1375555).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 30 Sep 2014 14:33:02 +0100
+
 glibc (2.19-10ubuntu1) utopic; urgency=medium
 
   * Merge with Debian unstable, bringing in several CVE fixes (LP: #1362409)
