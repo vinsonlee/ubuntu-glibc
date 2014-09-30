@@ -272,3 +272,4 @@ ubuntu/local-disable-ld_audit.diff
 ubuntu/local-disable-nscd-netgroup-caching.diff
 ubuntu/submitted-no-sprintf-pre-truncate.diff
 ubuntu/submitted-no-stack-backtrace.diff
+ubuntu/unsubmitted-increase-dtv-surplus.diff
