@@ -1,3 +1,49 @@
+glibc (2.19-12) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/tg-thread-cancel.diff: Update patch from upstream, fixes
+    a rare deadlock.
+  * patches/hurd-i386/local-libpthread-stacksize.diff: New patch to make
+    libpthread stacks size default to 8MiB like on Linux, to avoid surprises
+    with packages which assume the Linuxish default.
+  * patches/hurd-i386/tg-poll_errors_fixes.diff: Update patch, fixes
+    select returned value in case of errors. Closes: #764840.
+
+  [ Petr Salinger ]
+  * update testsuite-checking/expected-results-*-kfreebsd-gnu-*
+    under 10.x kernels, provided by Steven Chamberlain. Closes: #762404.
+
+  [ Aurelien Jarno ]
+  * Remove mtrace(1) and pldd(1) manpages, provided by the manpages package
+    starting with version 3.74.
+  * debian/control.in/*: update the syntax of the Build-Profiles field and
+    build depends on dpkg-dev (>= 1.17.14) to get the new feature. Closes:
+    #764274.
+  * Remove libc6-prof package as it's broken for years and there are better
+    way to profile code nowadays. Closes: #760450.
+  * patches/amd64/local-blacklist-on-TSX-Haswell.diff: new patch from 
+    Henrique de Moraes Holschuh to disable TSX on processors which might get
+    it disable through a microcode update. Closes: #762195.
+  * Install French, German, Polish and Spanish version of validlocale(8)
+    manpage. Add a Replaces: manpages-fr-extra (<= 20141008).
+  * Update French manpages translations, by David Prévot. Closes: #715289.
+  * Update German manpages translations, by Helge Kreutzmann. Closes: #717979.
+  * kfreebsd/local-fbtl.diff: update to revision 5651 (from glibc-bsd).
+    Workarounds a kfreebsd 9.0 to 10.1 ABI break. Closes: #740509.
+  * patches/any/cvs-CVE-2014-6040.diff: new patch from upstream to fix crashes
+    on invalid input in IBM gconv modules (CVE-2014-6040).
+  * patches/any/cvs-check_pf-infinite-loop.diff: new patch from upstream to
+    fix an infinite loop in infinite loop in check_pf.
+  * patches/any/local-static-dlopen-search-path.diff: new patch to re-enable
+    default search path for dlopen() in static libraries. Closes: #754813,
+    #757941.
+
+  [ Helmut Grohne ]
+  * debian/patches/any/local-bootstrap-headers.diff: Update to handle
+    stubs-$abi.h which is required for multilib bootstraps. Closes: #756473
+
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 22 Oct 2014 20:01:11 +0200
+
 glibc (2.19-11) unstable; urgency=medium
 
   [ Samuel Thibault ]
