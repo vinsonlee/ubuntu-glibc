@@ -50,6 +50,7 @@ alpha/cvs-__pointer_chk_guard.diff
 alpha/cvs-unwind-backtrace.diff
 
 amd64/submitted-rwlock-stack-imbalance.diff
+amd64/local-blacklist-on-TSX-Haswell.diff
 
 arm/local-ioperm.diff
 arm/local-lowlevellock.diff
@@ -152,6 +153,7 @@ hurd-i386/cvs-libpthread_std_thread.diff
 hurd-i386/cvs-bind_umask.diff
 hurd-i386/submitted-bind_umask2.diff
 hurd-i386/cvs-fork_ss_hang.diff
+hurd-i386/local-libpthread-stacksize.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
@@ -264,3 +266,6 @@ any/cvs-posix_spawn_file_actions_addopen.diff
 any/cvs-setlocale-alloca.diff
 any/cvs-CVE-2014-0475.diff
 any/cvs-CVE-2014-5119.diff
+any/cvs-CVE-2014-6040.diff
+any/cvs-check_pf-infinite-loop.diff
+any/local-static-dlopen-search-path.diff
