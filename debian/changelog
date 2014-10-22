@@ -1,32 +1,3 @@
-glibc (2.19-13) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * kfreebsd/local-fbtl.diff: update to revision 5677 (from glibc-bsd).
-    Workarounds a kfreebsd 9.0 to 10.1 ABI break. Closes: #740509.
-  * patches/hppa/cvs-sigrtmin.diff: backport patch from upstream to change
-    __SIGRTMIN to match other architectures. Closes: #766605.
-  * patches/amd64/cvs-slow-sse42.diff: backport patch from upstream to fix
-    a performance issue with strcmp and friends functions on some machines.
-  * patches/any/cvs-regex-alloca.diff: new patch from upstream to fix a 
-    segmentation fault in regex in case of heap allocation failure. Closes:
-    #767225.
-  * Don't fail to build in case of testsuite regressions, so that changes
-    in the environment (e.g.: kernel) do not prevent security or stable 
-    versions to be built. It will be re-enabled after the Jessie release.
-  * debian/control.in/main: build-depends on debhelper (>= 9.20141010) to
-    get Build-Profiles features. This fixes the following lintian warning:
-    restriction-formula-with-debhelper-without-debhelper-version.
-
-  [ Samuel Thibault ]
-  * hurd-i386/cvs-libpthread.diff: Update to Sun Nov 2.
-  * hurd-i386/libpthread_clean.diff: Refresh, most of it merged into
-    cvs-libpthread.diff.
-  * hurd-i386/cvs-libpthread-pthread_condattr_setclock.diff,
-    cvs-libpthread_guardsize.diff, cvs-libpthread_std_thread.diff: Remove,
-    merged into cvs-libpthread.diff.
-
- -- Aurelien Jarno <aurel32@debian.org>  Thu, 06 Nov 2014 20:28:41 +0100
-
 glibc (2.19-12) unstable; urgency=medium
 
   [ Samuel Thibault ]
