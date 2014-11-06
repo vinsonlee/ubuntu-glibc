@@ -51,6 +51,7 @@ alpha/cvs-unwind-backtrace.diff
 
 amd64/submitted-rwlock-stack-imbalance.diff
 amd64/local-blacklist-on-TSX-Haswell.diff
+amd64/cvs-slow-sse42.diff
 
 arm/local-ioperm.diff
 arm/local-lowlevellock.diff
@@ -79,6 +80,7 @@ hppa/local-atomic.diff
 hppa/local-fpu.diff
 hppa/local-shmlba.diff
 hppa/local-pthread_spin_unlock.diff
+hppa/cvs-sigrtmin.diff
 
 hurd-i386/cvs-tcbhead_t.diff
 hurd-i386/local-enable-ldconfig.diff
@@ -114,7 +116,6 @@ hurd-i386/libpthread_build.diff
 hurd-i386/libpthread_sigmask.diff
 hurd-i386/libpthread_clean.diff
 hurd-i386/tg-libpthread_depends.diff
-hurd-i386/cvs-libpthread-pthread_condattr_setclock.diff
 hurd-i386/libpthread_version.diff
 hurd-i386/tg-chflags.diff
 hurd-i386/submitted-exec_filename.diff
@@ -148,8 +149,6 @@ hurd-i386/tg-sigstate_thread_reference.diff
 hurd-i386/tg-tls_thread_leak.diff
 hurd-i386/tg-mmap_file_prot_none_fix.diff
 hurd-i386/cvs-munmap-0.diff
-hurd-i386/cvs-libpthread_guardsize.diff
-hurd-i386/cvs-libpthread_std_thread.diff
 hurd-i386/cvs-bind_umask.diff
 hurd-i386/submitted-bind_umask2.diff
 hurd-i386/cvs-fork_ss_hang.diff
@@ -269,3 +268,4 @@ any/cvs-CVE-2014-5119.diff
 any/cvs-CVE-2014-6040.diff
 any/cvs-check_pf-infinite-loop.diff
 any/local-static-dlopen-search-path.diff
+any/cvs-regex-alloca.diff
