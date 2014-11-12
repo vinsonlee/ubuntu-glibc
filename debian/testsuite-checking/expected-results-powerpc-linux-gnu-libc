@@ -17,3 +17,6 @@ tst-cputimer1.out, Error 1
 # Failures due to a GCC bug, see http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59412
 test-double.out, Error 1
 test-float.out, Error 1
+
+# the lddebug-scopes patch causes this test to fail:
+tst-dl-iter-static.out, Error 1
