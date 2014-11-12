@@ -1,5 +1,5 @@
 /* File tree walker functions.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -66,7 +66,9 @@ char *alloca ();
 #include <string.h>
 #include <unistd.h>
 #include <not-cancel.h>
-#include <sys/param.h>
+#if HAVE_SYS_PARAM_H || defined _LIBC
+# include <sys/param.h>
+#endif
 #ifdef _LIBC
 # include <include/sys/stat.h>
 #else

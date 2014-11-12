@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -32,7 +32,7 @@ __pthread_mutexattr_settype (attr, kind)
 
   /* Cannot distinguish between DEFAULT and NORMAL. So any settype
      call disables elision for now.  */
-  if (kind == PTHREAD_MUTEX_NORMAL)
+  if (kind == PTHREAD_MUTEX_DEFAULT)
     kind |= PTHREAD_MUTEX_NO_ELISION_NP;
 
   iattr = (struct pthread_mutexattr *) attr;

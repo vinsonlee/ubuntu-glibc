@@ -13,3 +13,7 @@ endif
 ifeq ($(subdir),misc)
 gen-as-const-headers += sigaltstack-offsets.sym
 endif
+
+ifeq ($(subdir),elf)
+sysdep_routines += dl-vdso
+endif

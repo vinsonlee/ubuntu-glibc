@@ -1,5 +1,5 @@
 /* Defines for bits in AT_HWCAP and AT_HWCAP2.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,7 +16,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#if !defined(_SYS_AUXV_H) && !defined(_SYSDEPS_SYSDEP_H)
+#ifndef _SYS_AUXV_H
 # error "Never include <bits/hwcap.h> directly; use <sys/auxv.h> instead."
 #endif
 
@@ -62,5 +62,3 @@
 #define PPC_FEATURE2_HAS_EBB       0x10000000 /* Event Base Branching */
 #define PPC_FEATURE2_HAS_ISEL      0x08000000 /* Integer Select */
 #define PPC_FEATURE2_HAS_TAR       0x04000000 /* Target Address Register */
-#define PPC_FEATURE2_HAS_VEC_CRYPTO  0x02000000  /* Target supports vector
-						    instruction.  */

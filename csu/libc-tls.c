@@ -1,5 +1,5 @@
 /* Initialization code for TLS in statically linked application.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -182,10 +182,10 @@ __libc_setup_tls (size_t tcbsize, size_t tcbalign)
 #if TLS_TCB_AT_TP
   INSTALL_DTV ((char *) tlsblock + tcb_offset, _dl_static_dtv);
 
-  const char *lossage = TLS_INIT_TP ((char *) tlsblock + tcb_offset);
+  const char *lossage = TLS_INIT_TP ((char *) tlsblock + tcb_offset, 0);
 #elif TLS_DTV_AT_TP
   INSTALL_DTV (tlsblock, _dl_static_dtv);
-  const char *lossage = TLS_INIT_TP (tlsblock);
+  const char *lossage = TLS_INIT_TP (tlsblock, 0);
 #else
 # error "Either TLS_TCB_AT_TP or TLS_DTV_AT_TP must be defined"
 #endif

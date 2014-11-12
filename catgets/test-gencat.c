@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static int
-do_test (void)
+int
+main (void)
 {
   nl_catd catalog;
   setlocale (LC_ALL, "");
@@ -29,6 +29,3 @@ do_test (void)
 
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

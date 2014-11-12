@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1996.
 
@@ -528,7 +528,7 @@ getpwent_next_file (struct passwd *result, ent_t *ent,
       do
 	{
 	  /* We need at least 3 characters for one line.  */
-	  if (__glibc_unlikely (buflen < 3))
+	  if (__builtin_expect (buflen < 3, 0))
 	    {
 	    erange:
 	      *errnop = ERANGE;
@@ -561,7 +561,7 @@ getpwent_next_file (struct passwd *result, ent_t *ent,
 	     !(parse_res = _nss_files_parse_pwent (p, result, data, buflen,
 						   errnop)));
 
-      if (__glibc_unlikely (parse_res == -1))
+      if (__builtin_expect (parse_res == -1, 0))
 	/* The parser ran out of space.  */
 	goto erange_reset;
 
@@ -578,7 +578,7 @@ getpwent_next_file (struct passwd *result, ent_t *ent,
 	  char *user, *host, *domain;
 	  struct __netgrent netgrdata;
 
-	  memset (&netgrdata, 0, sizeof (struct __netgrent));
+	  bzero (&netgrdata, sizeof (struct __netgrent));
 	  __internal_setnetgrent (&result->pw_name[2], &netgrdata);
 	  while (__internal_getnetgrent_r (&host, &user, &domain, &netgrdata,
 					   buf2, sizeof (buf2), errnop))
@@ -727,7 +727,7 @@ internal_getpwnam_r (const char *name, struct passwd *result, ent_t *ent,
       do
 	{
 	  /* We need at least 3 characters for one line.  */
-	  if (__glibc_unlikely (buflen < 3))
+	  if (__builtin_expect (buflen < 3, 0))
 	    {
 	    erange:
 	      *errnop = ERANGE;
@@ -761,7 +761,7 @@ internal_getpwnam_r (const char *name, struct passwd *result, ent_t *ent,
 	     !(parse_res = _nss_files_parse_pwent (p, result, data, buflen,
 						   errnop)));
 
-      if (__glibc_unlikely (parse_res == -1))
+      if (__builtin_expect (parse_res == -1, 0))
 	/* The parser ran out of space.  */
 	goto erange_reset;
 
@@ -934,7 +934,7 @@ internal_getpwuid_r (uid_t uid, struct passwd *result, ent_t *ent,
       do
 	{
 	  /* We need at least 3 characters for one line.  */
-	  if (__glibc_unlikely (buflen < 3))
+	  if (__builtin_expect (buflen < 3, 0))
 	    {
 	    erange:
 	      *errnop = ERANGE;
@@ -967,7 +967,7 @@ internal_getpwuid_r (uid_t uid, struct passwd *result, ent_t *ent,
 	     !(parse_res = _nss_files_parse_pwent (p, result, data, buflen,
 						   errnop)));
 
-      if (__glibc_unlikely (parse_res == -1))
+      if (__builtin_expect (parse_res == -1, 0))
 	/* The parser ran out of space.  */
 	goto erange_reset;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Ulrich Drepper <drepper@cygnus.com>, 1995.
 
@@ -29,7 +29,9 @@
 
 
 int
-STRCOLL (const STRING_TYPE *s1, const STRING_TYPE *s2)
+STRCOLL (s1, s2)
+     const STRING_TYPE *s1;
+     const STRING_TYPE *s2;
 {
   return STRCOLL_L (s1, s2, _NL_CURRENT_LOCALE);
 }

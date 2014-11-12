@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2014 Free Software Foundation, Inc.
    Contributed by Andreas Krebbel <Andreas.Krebbel@de.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -21,12 +21,8 @@
 #include "utmp-compat.h"
 #include "utmp-private.h"
 
-#if defined SHARED
-# undef weak_alias
-# define weak_alias(n,a)
-#endif
+#undef weak_alias
+#define weak_alias(n,a)
 #include "sysdeps/gnu/updwtmp.c"
 
-#if defined SHARED
 default_symbol_version (__updwtmp, updwtmp, UTMP_COMPAT_BASE);
-#endif

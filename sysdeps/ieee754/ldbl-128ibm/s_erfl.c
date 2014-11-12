@@ -102,7 +102,6 @@
  */
 
 #include <errno.h>
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 #include <math_ldbl_opt.h>
@@ -150,7 +149,9 @@ tiny = 1e-300L,
   one = 1.0L,
   two = 2.0L,
   /* 2/sqrt(pi) - 1 */
-  efx = 1.2837916709551257389615890312154517168810E-1L;
+  efx = 1.2837916709551257389615890312154517168810E-1L,
+  /* 8 * (2/sqrt(pi) - 1) */
+  efx8 = 1.0270333367641005911692712249723613735048E0L;
 
 
 /* erf(x)  = x  + x R(x^2)
@@ -800,17 +801,10 @@ __erfl (long double x)
 	  if (ix < 0x00800000)
 	    {
 	      /* erf (-0) = -0.  Unfortunately, for IBM extended double
-		 0.0625 * (16.0 * x + (16.0 * efx) * x) for x = -0
-		 evaluates to 0.  */
+		 0.125 * (8.0 * x + efx8 * x) for x = -0 evaluates to 0.  */
 	      if (x == 0)
 		return x;
-	      long double ret = 0.0625 * (16.0 * x + (16.0 * efx) * x);
-	      if (fabsl (ret) < LDBL_MIN)
-		{
-		  long double force_underflow = ret * ret;
-		  math_force_eval (force_underflow);
-		}
-	      return ret;
+	      return 0.125 * (8.0 * x + efx8 * x);	/*avoid underflow */
 	    }
 	  return x + efx * x;
 	}

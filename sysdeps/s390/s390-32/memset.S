@@ -1,5 +1,5 @@
 /* Set a block of memory to some byte value.  For IBM S390
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
        .text
 
 #ifdef USE_MULTIARCH
-ENTRY(__memset_g5)
+ENTRY(memset_g5)
 #else
 ENTRY(memset)
 #endif
@@ -58,7 +58,7 @@ ENTRY(memset)
 .L_G5_20:
         mvc     1(1,%r1),0(%r1)
 #ifdef USE_MULTIARCH
-END(__memset_g5)
+END(memset_g5)
 #else
 END(memset)
 libc_hidden_builtin_def (memset)

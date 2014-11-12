@@ -1,5 +1,5 @@
 /* Complex sine hyperbole function for double.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -33,16 +33,16 @@ __csinh (__complex__ double x)
 
   __real__ x = fabs (__real__ x);
 
-  if (__glibc_likely (rcls >= FP_ZERO))
+  if (__builtin_expect (rcls >= FP_ZERO, 1))
     {
       /* Real part is finite.  */
-      if (__glibc_likely (icls >= FP_ZERO))
+      if (__builtin_expect (icls >= FP_ZERO, 1))
 	{
 	  /* Imaginary part is finite.  */
 	  const int t = (int) ((DBL_MAX_EXP - 1) * M_LN2);
 	  double sinix, cosix;
 
-	  if (__glibc_likely (icls != FP_SUBNORMAL))
+	  if (__builtin_expect (icls != FP_SUBNORMAL, 1))
 	    {
 	      __sincos (__imag__ x, &sinix, &cosix);
 	    }
@@ -125,12 +125,12 @@ __csinh (__complex__ double x)
   else if (rcls == FP_INFINITE)
     {
       /* Real part is infinite.  */
-      if (__glibc_likely (icls > FP_ZERO))
+      if (__builtin_expect (icls > FP_ZERO, 1))
 	{
 	  /* Imaginary part is finite.  */
 	  double sinix, cosix;
 
-	  if (__glibc_likely (icls != FP_SUBNORMAL))
+	  if (__builtin_expect (icls != FP_SUBNORMAL, 1))
 	    {
 	      __sincos (__imag__ x, &sinix, &cosix);
 	    }

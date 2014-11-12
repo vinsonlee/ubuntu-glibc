@@ -22,13 +22,3 @@ Index: eglibc-2.17/elf/setup-vdso.h
  	}
  
        /* Add the vDSO to the object list.  */
---- glibc-2.21.orig/elf/Makefile
-+++ glibc-2.21/elf/Makefile
-@@ -126,6 +126,6 @@ tests = tst-tls1 tst-tls2 tst-tls9 tst-l
- tests-static = tst-tls1-static tst-tls2-static tst-stackguard1-static \
- 	       tst-leaks1-static tst-array1-static tst-array5-static \
--	       tst-ptrguard1-static tst-dl-iter-static
-+	       tst-ptrguard1-static
- ifeq (yes,$(build-shared))
- tests-static += tst-tls9-static
- tst-tls9-static-ENV = \
