@@ -87,8 +87,8 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		--without-selinux \
 		--enable-stackguard-randomization \
 		--enable-obsolete-rpc \
-		--with-pkgversion="Debian GLIBC $(DEB_VERSION)" \
-		--with-bugurl="http://www.debian.org/Bugs/" \
+		--with-pkgversion="Ubuntu GLIBC $(DEB_VERSION)" \
+		--with-bugurl="https://bugs.launchpad.net/ubuntu/+source/glibc/+bugs" \
 		$(if $(filter $(pt_chown),yes),--enable-pt_chown) \
 		$(if $(filter $(threads),no),--disable-nscd) \
 		$(call xx,with_headers) $(call xx,extra_config_options))

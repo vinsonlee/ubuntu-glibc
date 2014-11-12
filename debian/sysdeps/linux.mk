@@ -12,7 +12,7 @@ libc_add-ons = nptl $(add-ons)
 ifneq ($(filter stage1 stage2,$(DEB_BUILD_PROFILES)),)
   libc_extra_config_options = $(extra_config_options)
 else
-  libc_extra_config_options = --with-selinux $(extra_config_options)
+  libc_extra_config_options = --with-selinux --enable-systemtap $(extra_config_options)
 endif
 
 ifndef LINUX_SOURCE
@@ -52,6 +52,8 @@ $(stamp)mkincludedir:
 		ln -s /usr/include/$$h debian/include/$$h ; \
 	    fi ; \
 	done
+
+	ln -s /usr/include/$(DEB_HOST_MULTIARCH)/sys/sdt.h debian/include/sys/sdt.h
 
 	# To make configure happy if libc6-dev is not installed.
 	touch debian/include/assert.h
