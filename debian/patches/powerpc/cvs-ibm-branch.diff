@@ -4,6 +4,148 @@ git diff 55e71ccf31c29a7839344f03e0a7437ea0f5f211 origin/ibm/2.19/master > cvs-i
 
 And then edited for ChangeLog and NEWS conflicts.
 
++2013-07-29  Adhemerval Zanella  <azanella@linux.vnet.ibm.com>
++
++	[BZ #17213]
++	* sysdeps/powerpc/powerpc64/entry.h: Fix TEXT_START definition for
++	powerpc64le.
++
++2014-07-14  Alan Modra  <amodra@gmail.com>
++
++	[BZ #17153]
++	* elf/elf.h (DT_PPC64_NUM): Correct value.
++	* NEWS: Add to fixed bug list.
++
++2014-07-08  Adhemerval Zanella  <azanella@linux.vnet.ibm.com>
++
++	* sysdeps/powerpc/memmove.c: Remove file.
++	* sysdeps/powerpc/powerpc32/power4/memcopy.h
++	[MEMCPY_OK_FOR_FWD_MEMMOVE]: Define it to 1.
++	* sysdeps/powerpc/powerpc32/power4/multiarch/memmove-power7.c
++	[MEMCPY_OK_FOR_FWD_MEMMOVE]: Remove define.
++	* sysdeps/powerpc/powerpc32/power4/multiarch/memmove-ppc.c:
++	[MEMCPY_OK_FOR_FWD_MEMMOVE]: Likewise.
++	* sysdeps/powerpc/powerpc64/multiarch/memmove-ppc64.c: Include default
++	string memmove instead of removed powerpc one.
++
++	* sysdeps/powerpc/powerpc32/power4/multiarch/strcasecmp_l-power7.S:
++	[weak_alias]: Fix compiler warning due trailing data.
++	* sysdeps/powerpc/powerpc32/power4/multiarch/strcasecmp-power7.S:
++	[weak_alias]: Likewise.
++	* sysdeps/powerpc/powerpc64/multiarch/strcat-power7.c: Fix compile
++	warnigs due missing definition of __strcpy_power7 and __strlen_power7.
++
++	* sysdeps/powerpc/powerpc32/power4/multiarch/ifunc-impl-list.c
++	(__libc_ifunc_impl_list): Add memmove functions.
++
++2014-07-07  Adhemerval Zanella  <azanella@linux.vnet.ibm.com>
++
++	* sysdeps/powerpc/powerpc64/power7/memcpy.S: Align VSX copies to 16B
++	to avoid alignment traps in non-cacheable memory.
++	* sysdeps/powerpc/powerpc32/power7/memcpy.S: Likewise.
++
++	* sysdeps/powerpc/powerpc32/power4/multiarch/Makefile: Add memmove
++	multiarch objects.
++	* sysdeps/powerpc/powerpc32/power4/multiarch/memmove-power7.c: New
++	file: multiarch power7 memmove.
++	* sysdeps/powerpc/powerpc32/power4/multiarch/memmove-ppc.c: New file:
++	multiarch default memmove.
++	* sysdeps/powerpc/powerpc32/power4/multiarch/memmove.c: New file:
++	multiarch memove for powerpc32/power4.
++
++	* string/bcopy.c: Use full path to include memmove.c.
++	* sysdeps/powerpc/powerpc64/multiarch/Makefile: Add memmove and bcopy
++	multiarch objects.
++	* sysdeps/powerpc/powerpc64/multiarch/bcopy-ppc64.c: New file: default
++	bcopy for powerpc64.
++	* sysdeps/powerpc/powerpc64/multiarch/bcopy.c: New file: multiarch
++	bcopy for powerpc64.
++	* sysdeps/powerpc/powerpc64/multiarch/ifunc-impl-list.c: Add bcopy
++	and memmove implementations.
++	* sysdeps/powerpc/powerpc64/multiarch/memmove-power7.S: New file:
++	optimized multiarch memmove for POWER7/powerpc64.
++	* sysdeps/powerpc/powerpc64/multiarch/memmove-ppc64.c: New file:
++	default multiarch memmove for powerpc64.
++	* sysdeps/powerpc/powerpc64/multiarch/memmove.c: New file: memmove
++	multiarch for powerpc64.
++	* sysdeps/powerpc/powerpc64/power7/bcopy.c: New file: optimized bcopy
++	for POWER7/powerpc64.
++	* sysdeps/powerpc/powerpc64/power7/memmove.S: New file: optimized
++	memmove for POWER7/powerpc64.
++
++	* sysdeps/powerpc/memmove.c (memmove): Cleanup impplementation to use
++	glibc default one.
++
++2014-07-02  Vidya Ranganathan  <vidya@linux.vnet.ibm.com>
++	    Adhemerval Zanella  <azanella@linux.vnet.ibm.com>
++
++	* sysdeps/powerpc/strcat.c: Using macro to redefine symbol name.
++	* sysdeps/powerpc/powerpc64/multiarch/Makefile: Add strcat multiarch
++	optimizations.
++	* sysdeps/powerpc/powerpc64/multiarch/ifunc-impl-list.c:
++	(__libc_ifunc_impl_list): Likewise.
++	* sysdeps/powerpc/powerpc64/multiarch/strcat.c: New file:
++	multiarch strcat for PPC64.
++	* sysdeps/powerpc/powerpc64/multiarch/strcat-ppc64.c: New file/
++	* sysdeps/powerpc/powerpc64/multiarch/strcat-power7.c: New file.
++
++2014-06-23  Adhemerval Zanella  <azanella@linux.vnet.ibm.com>
++
++	* sysdeps/powerpc/bits/hwcap.h [PPC_FEATURE2_HAS_VEC_CRYPTO]: New
++	macro: hardware supports Vector Crypto instructions.
++
++2014-16-17  Rajalakshmi Srinivasaraghavan <raji@linux.vnet.ibm.com>
++
++	[BZ #17031]
++	* sysdeps/ieee754/ldbl-128ibm/s_nearbyintl.c: Consider the low
++	double, adjusted for any remainder from the high double.
++	* math/libm-test.inc (nearbyint): Add tests.
++	(rint): Likewise.
++
++2014-06-11  Vidya Ranganathan  <vidya@linux.vnet.ibm.com>
++
++	* sysdeps/powerpc/powerpc64/power7/strcmp.S: New file: Optimization.
++	* sysdeps/powerpc/powerpc64/multiarch/strcmp.c: New file:
++	multiarch strcmp for PPC64.
++	* sysdeps/powerpc/powerpc64/multiarch/strcmp-ppc64.S: New file.
++	* sysdeps/powerpc/powerpc64/multiarch/strcmp-power7.S: New file.
++	* sysdeps/powerpc/powerpc64/multiarch/Makefile: Add strcmp
++	multiarch optimizations.
++	* sysdeps/powerpc/powerpc64/multiarch/ifunc-impl-list.c:
++	(__libc_ifunc_impl_list): Likewise.
++
++2014-06-06  Adhemerval Zanella  <azanella@linux.vnet.ibm.com>
++
++	* sysdeps/powerpc/powerpc64/power7/strncat.S [STRLEN]: Define it as
++	strlen for non SHARED builds.
++
++	* sysdeps/powerpc/powerpc32/power6x/fpu/Implies: New file.
++	* sysdeps/powerpc/powerpc64/power6x/fpu/Implies: new file.
++	* sysdeps/powerpc/powerpc64/power6x/multiarch/Implies: New file.
++	* sysdeps/powerpc/powerpc64/power5+/fpu/Implies: Remove multiarch
++	imply folder.
++	* sysdeps/powerpc/powerpc64/power5/fpu/Implies: Likewise.
++	* sysdeps/powerpc/powerpc64/power7/fpu/Implies: Likewise.
++	* sysdeps/powerpc/powerpc64/power8/fpu/Implies: Likewise.
++	* sysdeps/powerpc/powerpc64/power6x/fpu/multiarch/Implies: Adjust
++	correct imply path.
++	* sysdeps/powerpc/powerpc64/power7/strncat.S (STRLEN): Define correct
++	strlen symbol for non multi-arch builds.
++	* sysdeps/powerpc/powerpc64/power8/fpu/s_isnan.S (__isnan): Add
++	missing hidden_def and weak_alias.
++
++2014-05-26  Adhemerval Zanella  <azanella@linux.vnet.ibm.com>
++
++	* sysdeps/powerpc/powerpc32/power4/memset.S (memset): Replace insrdi
++	by insrwi.
++	* sysdeps/powerpc/powerpc32/power6/memset.S (memset): Likewise.
++	* sysdeps/powerpc/powerpc32/power7/memset.S (memset): Likewise.
++	* sysdeps/powerpc/powerpc32/power7/memchr.S (memchr): Likewise.
++	* sysdeps/powerpc/powerpc32/power7/memrchr.S (memrchr): Likewise.
++	* sysdeps/powerpc/powerpc32/power7/rawmemchr.S (rawmemchr): Likewise.
++	* sysdeps/powerpc/powerpc32/power7/strchr.S (strchr): Likewise.
++	* sysdeps/powerpc/powerpc32/power7/strchrnul.S (strchrnul): Likewise.
++
 +2014-05-22  Adhemerval Zanella  <azanella@linux.vnet.ibm.com>
 +
 +	* sysdeps/powerpc/powerpc32/power4/multiarch/memchr.c (memchr): Remove
@@ -284,8 +426,21 @@ And then edited for ChangeLog and NEWS conflicts.
 +	POWER8 isnan implementation.
 +	* sysdeps/powerpc/powerpc64/power8/fpu/s_isnanf.S: New file.
 +
+diff --git a/elf/elf.h b/elf/elf.h
+index 40e87b2..78815e8 100644
+--- a/elf/elf.h
++++ b/elf/elf.h
+@@ -2283,7 +2283,7 @@ typedef Elf32_Addr Elf32_Conflict;
+ #define DT_PPC64_OPD	(DT_LOPROC + 1)
+ #define DT_PPC64_OPDSZ	(DT_LOPROC + 2)
+ #define DT_PPC64_OPT	(DT_LOPROC + 3)
+-#define DT_PPC64_NUM    3
++#define DT_PPC64_NUM    4
+ 
+ /* PowerPC64 specific values for the DT_PPC64_OPT Dyn entry.  */
+ #define PPC64_OPT_TLS		1
 diff --git a/math/libm-test.inc b/math/libm-test.inc
-index 027dfb9..1c5c022 100644
+index 027dfb9..848b89e 100644
 --- a/math/libm-test.inc
 +++ b/math/libm-test.inc
 @@ -6000,6 +6000,15 @@ static const struct test_f_f_data ceil_test_data[] =
@@ -320,7 +475,7 @@ index 027dfb9..1c5c022 100644
    };
  
  static void
-@@ -10495,6 +10513,16 @@ static const struct test_f_f_data nearbyint_test_data[] =
+@@ -10495,6 +10513,20 @@ static const struct test_f_f_data nearbyint_test_data[] =
      TEST_f_f (nearbyint, -562949953421312.75, -562949953421313.0, NO_INEXACT_EXCEPTION),
      TEST_f_f (nearbyint, -1125899906842624.75, -1125899906842625.0, NO_INEXACT_EXCEPTION),
  #endif
@@ -330,6 +485,10 @@ index 027dfb9..1c5c022 100644
 +    TEST_f_f (nearbyint,  34503599627370498.515625L, 34503599627370499.0L),
 +    TEST_f_f (nearbyint, -34503599627370498.515625L, -34503599627370499.0L),
 +# if LDBL_MANT_DIG >= 106
++    TEST_f_f (nearbyint, 1024.5000000000001L, 1025.0L, NO_INEXACT_EXCEPTION),
++    TEST_f_f (nearbyint, 1025.5000000000001L, 1026.0L, NO_INEXACT_EXCEPTION),
++    TEST_f_f (nearbyint, -1024.5000000000001L, -1025.0L, NO_INEXACT_EXCEPTION),
++    TEST_f_f (nearbyint, -1025.5000000000001L, -1026.0L, NO_INEXACT_EXCEPTION),
 +    TEST_f_f (nearbyint,  1192568192774434123539907640624.484375L, 1192568192774434123539907640624.0L),
 +    TEST_f_f (nearbyint, -1192568192774434123539907640624.484375L, -1192568192774434123539907640624.0L),
 +# endif
@@ -337,7 +496,7 @@ index 027dfb9..1c5c022 100644
    };
  
  static void
-@@ -10528,6 +10556,14 @@ static const struct test_ff_f_data nextafter_test_data[] =
+@@ -10528,6 +10560,14 @@ static const struct test_ff_f_data nextafter_test_data[] =
      // XXX Enable once gcc is fixed.
      //TEST_ff_f (nextafter, 0x0.00000040000000000000p-16385L, -0.1L, 0x0.0000003ffffffff00000p-16385L),
  #endif
@@ -352,7 +511,18 @@ index 027dfb9..1c5c022 100644
  
      /* XXX We need the hexadecimal FP number representation here for further
         tests.  */
-@@ -11784,6 +11820,15 @@ static const struct test_f_f_data round_test_data[] =
+@@ -11299,6 +11339,10 @@ static const struct test_f_f_data rint_test_data[] =
+     TEST_f_f (rint, 4503599627370497.5L, 4503599627370498.0L, INEXACT_EXCEPTION),
+ 
+ # if LDBL_MANT_DIG > 100
++    TEST_f_f (rint, 1024.5000000000001L, 1025.0L, INEXACT_EXCEPTION),
++    TEST_f_f (rint, 1025.5000000000001L, 1026.0L, INEXACT_EXCEPTION),
++    TEST_f_f (rint, -1024.5000000000001L, -1025.0L, INEXACT_EXCEPTION),
++    TEST_f_f (rint, -1025.5000000000001L, -1026.0L, INEXACT_EXCEPTION),
+     TEST_f_f (rint, 4503599627370494.5000000000001L, 4503599627370495.0L, INEXACT_EXCEPTION),
+     TEST_f_f (rint, 4503599627370495.5000000000001L, 4503599627370496.0L, INEXACT_EXCEPTION),
+     TEST_f_f (rint, 4503599627370496.5000000000001L, 4503599627370497.0L, INEXACT_EXCEPTION),
+@@ -11784,6 +11828,15 @@ static const struct test_f_f_data round_test_data[] =
      TEST_f_f (round, -72057594037927936.75L, -72057594037927937.0L),
      TEST_f_f (round, -72057594037927937.5L, -72057594037927938.0L),
  
@@ -368,7 +538,7 @@ index 027dfb9..1c5c022 100644
      TEST_f_f (round, 10141204801825835211973625643007.5L, 10141204801825835211973625643008.0L),
      TEST_f_f (round, 10141204801825835211973625643008.25L, 10141204801825835211973625643008.0L),
      TEST_f_f (round, 10141204801825835211973625643008.5L, 10141204801825835211973625643009.0L),
-@@ -12461,6 +12506,15 @@ static const struct test_f_f_data trunc_test_data[] =
+@@ -12461,6 +12514,15 @@ static const struct test_f_f_data trunc_test_data[] =
      TEST_f_f (trunc, -72057594037927936.75L, -72057594037927936.0L),
      TEST_f_f (trunc, -72057594037927937.5L, -72057594037927937.0L),
  
@@ -384,6 +554,16 @@ index 027dfb9..1c5c022 100644
      TEST_f_f (trunc, 10141204801825835211973625643007.5L, 10141204801825835211973625643007.0L),
      TEST_f_f (trunc, 10141204801825835211973625643008.25L, 10141204801825835211973625643008.0L),
      TEST_f_f (trunc, 10141204801825835211973625643008.5L, 10141204801825835211973625643008.0L),
+diff --git a/string/bcopy.c b/string/bcopy.c
+index 7c1225c..f497b5d 100644
+--- a/string/bcopy.c
++++ b/string/bcopy.c
+@@ -25,4 +25,4 @@
+ #define	a2		dest
+ #define	a2const
+ 
+-#include <memmove.c>
++#include <string/memmove.c>
 diff --git a/string/strcspn.c b/string/strcspn.c
 index 7c39f79..4316205 100644
 --- a/string/strcspn.c
@@ -659,6 +839,29 @@ index 7e40663..a644f92 100644
  }
  #ifdef IS_IN_libm
  long_double_symbol (libm, __frexpl, frexpl);
+diff --git a/sysdeps/ieee754/ldbl-128ibm/s_nearbyintl.c b/sysdeps/ieee754/ldbl-128ibm/s_nearbyintl.c
+index 4e997a6..8f34604 100644
+--- a/sysdeps/ieee754/ldbl-128ibm/s_nearbyintl.c
++++ b/sysdeps/ieee754/ldbl-128ibm/s_nearbyintl.c
+@@ -38,6 +38,7 @@ __nearbyintl (long double x)
+ 
+   if (fabs (u.d[0].d) < TWO52)
+     {
++      double xh = u.d[0].d;
+       double high = u.d[0].d;
+       feholdexcept (&env);
+       if (high > 0.0)
+@@ -52,6 +53,10 @@ __nearbyintl (long double x)
+ 	  high += TWO52;
+           if (high == 0.0) high = -0.0;
+ 	}
++      if (u.d[1].d > 0.0 && (xh - high == 0.5))
++        high += 1.0;
++      else if (u.d[1].d < 0.0 && (-(xh - high) == 0.5))
++        high -= 1.0;
+       u.d[0].d = high;
+       u.d[1].d = 0.0;
+       math_force_eval (u.d[0]);
 diff --git a/sysdeps/ieee754/ldbl-128ibm/s_nextafterl.c b/sysdeps/ieee754/ldbl-128ibm/s_nextafterl.c
 index c050944..7b09927 100644
 --- a/sysdeps/ieee754/ldbl-128ibm/s_nextafterl.c
@@ -747,6 +950,140 @@ index c050944..7b09927 100644
  	      u = yhi;
  	    }
  	    return x + u;
+diff --git a/sysdeps/powerpc/bits/hwcap.h b/sysdeps/powerpc/bits/hwcap.h
+index 1af8c82..dab1a58 100644
+--- a/sysdeps/powerpc/bits/hwcap.h
++++ b/sysdeps/powerpc/bits/hwcap.h
+@@ -62,3 +62,5 @@
+ #define PPC_FEATURE2_HAS_EBB       0x10000000 /* Event Base Branching */
+ #define PPC_FEATURE2_HAS_ISEL      0x08000000 /* Integer Select */
+ #define PPC_FEATURE2_HAS_TAR       0x04000000 /* Target Address Register */
++#define PPC_FEATURE2_HAS_VEC_CRYPTO  0x02000000  /* Target supports vector
++						    instruction.  */
+diff --git a/sysdeps/powerpc/memmove.c b/sysdeps/powerpc/memmove.c
+deleted file mode 100644
+index 3859da8..0000000
+--- a/sysdeps/powerpc/memmove.c
++++ /dev/null
+@@ -1,118 +0,0 @@
+-/* Copy memory to memory until the specified number of bytes
+-   has been copied.  Overlap is handled correctly.
+-   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by Torbjorn Granlund (tege@sics.se).
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; see the file COPYING.LIB.  If
+-   not, see <http://www.gnu.org/licenses/>.  */
+-
+-#include <string.h>
+-#include <memcopy.h>
+-#include <pagecopy.h>
+-
+-/* All this is so that bcopy.c can #include
+-   this file after defining some things.  */
+-#ifndef        a1
+-#define        a1      dest    /* First arg is DEST.  */
+-#define        a1const
+-#define        a2      src     /* Second arg is SRC.  */
+-#define        a2const const
+-#undef memmove
+-#endif
+-#if    !defined(RETURN) || !defined(rettype)
+-#define        RETURN(s)       return (s)      /* Return DEST.  */
+-#define        rettype         void *
+-#endif
+-
+-#ifndef MEMMOVE
+-#define MEMMOVE memmove
+-#endif
+-
+-rettype
+-MEMMOVE (a1, a2, len)
+-     a1const void *a1;
+-     a2const void *a2;
+-     size_t len;
+-{
+-  unsigned long int dstp = (long int) dest;
+-  unsigned long int srcp = (long int) src;
+-
+-  /* If there is no overlap between ranges, call the builtin memcpy.  */
+-  if (dstp >= srcp + len || srcp > dstp + len)
+-    __builtin_memcpy (dest, src, len);
+-
+-  /* This test makes the forward copying code be used whenever possible.
+-     Reduces the working set.  */
+-  else if (dstp - srcp >= len)      /* *Unsigned* compare!  */
+-    {
+-      /* Copy from the beginning to the end.  */
+-
+-      /* If there not too few bytes to copy, use word copy.  */
+-      if (len >= OP_T_THRES)
+-       {
+-         /* Copy just a few bytes to make DSTP aligned.  */
+-         len -= (-dstp) % OPSIZ;
+-         BYTE_COPY_FWD (dstp, srcp, (-dstp) % OPSIZ);
+-
+-         /* Copy whole pages from SRCP to DSTP by virtual address
+-            manipulation, as much as possible.  */
+-
+-         PAGE_COPY_FWD_MAYBE (dstp, srcp, len, len);
+-
+-         /* Copy from SRCP to DSTP taking advantage of the known
+-            alignment of DSTP.  Number of bytes remaining is put
+-            in the third argument, i.e. in LEN.  This number may
+-            vary from machine to machine.  */
+-
+-         WORD_COPY_FWD (dstp, srcp, len, len);
+-
+-         /* Fall out and copy the tail.  */
+-       }
+-
+-      /* There are just a few bytes to copy.  Use byte memory operations.  */
+-      BYTE_COPY_FWD (dstp, srcp, len);
+-    }
+-  else
+-    {
+-      /* Copy from the end to the beginning.  */
+-      srcp += len;
+-      dstp += len;
+-
+-      /* If there not too few bytes to copy, use word copy.  */
+-      if (len >= OP_T_THRES)
+-       {
+-         /* Copy just a few bytes to make DSTP aligned.  */
+-         len -= dstp % OPSIZ;
+-         BYTE_COPY_BWD (dstp, srcp, dstp % OPSIZ);
+-
+-         /* Copy from SRCP to DSTP taking advantage of the known
+-            alignment of DSTP.  Number of bytes remaining is put
+-            in the third argument, i.e. in LEN.  This number may
+-            vary from machine to machine.  */
+-
+-         WORD_COPY_BWD (dstp, srcp, len, len);
+-
+-         /* Fall out and copy the tail.  */
+-       }
+-
+-      /* There are just a few bytes to copy.  Use byte memory operations.  */
+-      BYTE_COPY_BWD (dstp, srcp, len);
+-    }
+-
+-  RETURN (dest);
+-}
+-#ifndef memmove
+-libc_hidden_builtin_def (memmove)
+-#endif
 diff --git a/sysdeps/powerpc/powerpc32/fpu/s_nearbyint.S b/sysdeps/powerpc/powerpc32/fpu/s_nearbyint.S
 index 2734738..05ab40e 100644
 --- a/sysdeps/powerpc/powerpc32/fpu/s_nearbyint.S
@@ -801,6 +1138,53 @@ index 11bdc77..7449a5f 100644
  	mtfsb0	4*cr1+eq		/* Clear any FE_INEXACT exception */
  	blr
  END (__nearbyintf)
+diff --git a/sysdeps/powerpc/powerpc32/power4/memcopy.h b/sysdeps/powerpc/powerpc32/power4/memcopy.h
+index d3752dc..3431084 100644
+--- a/sysdeps/powerpc/powerpc32/power4/memcopy.h
++++ b/sysdeps/powerpc/powerpc32/power4/memcopy.h
+@@ -110,3 +110,7 @@
+ 	  ((byte *) dst_ep)[0] = __x;					      \
+ 	}								      \
+     } while (0)
++
++/* The powerpc memcpy implementation is safe to use for memmove.  */
++#undef MEMCPY_OK_FOR_FWD_MEMMOVE
++#define MEMCPY_OK_FOR_FWD_MEMMOVE 1
+diff --git a/sysdeps/powerpc/powerpc32/power4/memset.S b/sysdeps/powerpc/powerpc32/power4/memset.S
+index 88110e3..8b746a6 100644
+--- a/sysdeps/powerpc/powerpc32/power4/memset.S
++++ b/sysdeps/powerpc/powerpc32/power4/memset.S
+@@ -50,7 +50,7 @@ L(_memset):
+ 
+ /* Align to word boundary.  */
+ 	cmplwi	cr5, rLEN, 31
+-	insrdi	rCHR, rCHR, 8, 48     /* Replicate byte to halfword.  */
++	insrwi	rCHR, rCHR, 8, 16     /* Replicate byte to halfword.  */
+ 	beq+	L(aligned)
+ 	mtcrf	0x01, rMEMP0
+ 	subfic	rALIGN, rALIGN, 4
+@@ -65,7 +65,7 @@ L(g0):
+ /* Handle the case of size < 31.  */
+ L(aligned):
+ 	mtcrf	0x01, rLEN
+-	insrdi	rCHR, rCHR, 16, 32    /* Replicate halfword to word.  */
++	insrwi	rCHR, rCHR, 16, 0    /* Replicate halfword to word.  */
+ 	ble	cr5, L(medium)
+ /* Align to 32-byte boundary.  */
+ 	andi.	rALIGN, rMEMP, 0x1C
+diff --git a/sysdeps/powerpc/powerpc32/power4/multiarch/Makefile b/sysdeps/powerpc/powerpc32/power4/multiarch/Makefile
+index a465685..a7d33b9 100644
+--- a/sysdeps/powerpc/powerpc32/power4/multiarch/Makefile
++++ b/sysdeps/powerpc/powerpc32/power4/multiarch/Makefile
+@@ -11,7 +11,7 @@ sysdep_routines += memcpy-power7 memcpy-a2 memcpy-power6 memcpy-cell \
+ 		   strchr-power7 strchr-ppc32 wcschr-power7 wcschr-power6 \
+ 		   wcschr-ppc32 wcsrchr-power7 wcsrchr-power6 wcsrchr-ppc32 \
+ 		   wcscpy-power7 wcscpy-power6 wcscpy-ppc32 wordcopy-power7 \
+-		   wordcopy-power6 wordcopy-ppc32
++		   wordcopy-power6 wordcopy-ppc32 memmove-power7 memmove-ppc
+ 
+ CFLAGS-strncase-power7.c += -mcpu=power7 -funroll-loops
+ CFLAGS-strncase_l-power7.c += -mcpu=power7 -funroll-loops
 diff --git a/sysdeps/powerpc/powerpc32/power4/multiarch/bzero-ppc32.S b/sysdeps/powerpc/powerpc32/power4/multiarch/bzero-ppc32.S
 index 7a7cca9..80a2dc5 100644
 --- a/sysdeps/powerpc/powerpc32/power4/multiarch/bzero-ppc32.S
@@ -837,6 +1221,23 @@ index 2a6298a..baaa6b4 100644
  # include <string.h>
  # include <strings.h>
  # include "init-arch.h"
+diff --git a/sysdeps/powerpc/powerpc32/power4/multiarch/ifunc-impl-list.c b/sysdeps/powerpc/powerpc32/power4/multiarch/ifunc-impl-list.c
+index 8ba6a80..38bf28e 100644
+--- a/sysdeps/powerpc/powerpc32/power4/multiarch/ifunc-impl-list.c
++++ b/sysdeps/powerpc/powerpc32/power4/multiarch/ifunc-impl-list.c
+@@ -59,6 +59,12 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
+ 			      __memcpy_cell)
+ 	      IFUNC_IMPL_ADD (array, i, memcpy, 1, __memcpy_ppc))
+ 
++  /* Support sysdeps/powerpc/powerpc32/power4/multiarch/memmove.c.  */
++  IFUNC_IMPL (i, name, memmove,
++	      IFUNC_IMPL_ADD (array, i, memmove, hwcap & PPC_FEATURE_HAS_VSX,
++			      __memmove_power7)
++	      IFUNC_IMPL_ADD (array, i, memmove, 1, __memmove_ppc))
++
+   /* Support sysdeps/powerpc/powerpc32/power4/multiarch/memset.c.  */
+   IFUNC_IMPL (i, name, memset,
+ 	      IFUNC_IMPL_ADD (array, i, memset, hwcap & PPC_FEATURE_HAS_VSX,
 diff --git a/sysdeps/powerpc/powerpc32/power4/multiarch/init-arch.h b/sysdeps/powerpc/powerpc32/power4/multiarch/init-arch.h
 index 51a34f2..72d720d 100644
 --- a/sysdeps/powerpc/powerpc32/power4/multiarch/init-arch.h
@@ -903,6 +1304,299 @@ index ca0f714..94c22ef 100644
  #else
  #include <string/memchr.c>
  #endif
+diff --git a/sysdeps/powerpc/powerpc32/power4/multiarch/memmove-power7.c b/sysdeps/powerpc/powerpc32/power4/multiarch/memmove-power7.c
+new file mode 100644
+index 0000000..b14c3b1
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc32/power4/multiarch/memmove-power7.c
+@@ -0,0 +1,30 @@
++/* Power7 multiarch memmove.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; see the file COPYING.LIB.  If
++   not, see <http://www.gnu.org/licenses/>.  */
++
++#include <string.h>
++
++extern __typeof (memcpy) __memcpy_power7;
++#define memcpy __memcpy_power7
++
++extern __typeof (memmove) __memmove_power7;
++#define MEMMOVE __memmove_power7
++
++#undef libc_hidden_builtin_def
++#define libc_hidden_builtin_def(name)
++
++#include <string/memmove.c>
+diff --git a/sysdeps/powerpc/powerpc32/power4/multiarch/memmove-ppc.c b/sysdeps/powerpc/powerpc32/power4/multiarch/memmove-ppc.c
+new file mode 100644
+index 0000000..d56b77a
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc32/power4/multiarch/memmove-ppc.c
+@@ -0,0 +1,33 @@
++/* Power7 multiarch memmove.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; see the file COPYING.LIB.  If
++   not, see <http://www.gnu.org/licenses/>.  */
++
++#include <string.h>
++
++extern __typeof (memcpy) __memcpy_ppc;
++#define memcpy __memcpy_ppc
++
++extern __typeof (memmove) __memmove_ppc;
++#define MEMMOVE __memmove_ppc
++
++#if defined SHARED
++# undef libc_hidden_builtin_def
++# define libc_hidden_builtin_def(name)  \
++  __hidden_ver1 (__memmove_ppc, __GI_memmove, __memmove_ppc);
++#endif
++
++#include <string/memmove.c>
+diff --git a/sysdeps/powerpc/powerpc32/power4/multiarch/memmove.c b/sysdeps/powerpc/powerpc32/power4/multiarch/memmove.c
+new file mode 100644
+index 0000000..1070148
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc32/power4/multiarch/memmove.c
+@@ -0,0 +1,34 @@
++/* Multiple versions of memmove. PowerPC32 version.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#if defined SHARED && !defined NOT_IN_libc
++/* Redefine memmove so that the compiler won't complain about the type
++   mismatch with the IFUNC selector in strong_alias, below.  */
++# include <string.h>
++# include "init-arch.h"
++
++extern __typeof (memmove) __memmove_ppc attribute_hidden;
++extern __typeof (memmove) __memmove_power7 attribute_hidden;
++
++libc_ifunc (memmove,
++            (hwcap & PPC_FEATURE_HAS_VSX)
++            ? __memmove_power7
++            : __memmove_ppc);
++#else
++# include <string/memmove.c>
++#endif
+diff --git a/sysdeps/powerpc/powerpc32/power4/multiarch/strcasecmp-power7.S b/sysdeps/powerpc/powerpc32/power4/multiarch/strcasecmp-power7.S
+index 930564c..0b00011 100644
+--- a/sysdeps/powerpc/powerpc32/power4/multiarch/strcasecmp-power7.S
++++ b/sysdeps/powerpc/powerpc32/power4/multiarch/strcasecmp-power7.S
+@@ -30,7 +30,7 @@
+  cfi_endproc;							\
+  ASM_SIZE_DIRECTIVE(__strcasecmp_power7)
+ 
+-#undef weak_alias(name, alias)
++#undef weak_alias
+ #define weak_alias(name, alias)
+ 
+ #undef libc_hidden_builtin_def
+diff --git a/sysdeps/powerpc/powerpc32/power4/multiarch/strcasecmp_l-power7.S b/sysdeps/powerpc/powerpc32/power4/multiarch/strcasecmp_l-power7.S
+index 46733f5..4b3ce51 100644
+--- a/sysdeps/powerpc/powerpc32/power4/multiarch/strcasecmp_l-power7.S
++++ b/sysdeps/powerpc/powerpc32/power4/multiarch/strcasecmp_l-power7.S
+@@ -30,7 +30,7 @@
+  cfi_endproc;							\
+  ASM_SIZE_DIRECTIVE(__strcasecmp_l_power7)
+ 
+-#undef weak_alias(name, alias)
++#undef weak_alias
+ #define weak_alias(name, alias)
+ 
+ #undef libc_hidden_builtin_def
+diff --git a/sysdeps/powerpc/powerpc32/power6/memset.S b/sysdeps/powerpc/powerpc32/power6/memset.S
+index 4b18fa7..445fa44 100644
+--- a/sysdeps/powerpc/powerpc32/power6/memset.S
++++ b/sysdeps/powerpc/powerpc32/power6/memset.S
+@@ -48,7 +48,7 @@ L(_memset):
+ 	ble-	cr1, L(small)
+ /* Align to word boundary.  */
+ 	cmplwi	cr5, rLEN, 31
+-	insrdi	rCHR, rCHR, 8, 48	/* Replicate byte to halfword.  */
++	insrwi	rCHR, rCHR, 8, 16	/* Replicate byte to halfword.  */
+ 	beq+	L(aligned)
+ 	mtcrf	0x01, rMEMP0
+ 	subfic	rALIGN, rALIGN, 4
+@@ -64,7 +64,7 @@ L(g0):
+ /* Handle the case of size < 31.  */
+ L(aligned):
+ 	mtcrf	0x01, rLEN
+-	insrdi	rCHR, rCHR, 16, 32	/* Replicate halfword to word.  */
++	insrwi	rCHR, rCHR, 16, 0	/* Replicate halfword to word.  */
+ 	ble	cr5, L(medium)
+ /* Align to 32-byte boundary.  */
+ 	andi.	rALIGN, rMEMP, 0x1C
+diff --git a/sysdeps/powerpc/powerpc32/power6x/fpu/Implies b/sysdeps/powerpc/powerpc32/power6x/fpu/Implies
+new file mode 100644
+index 0000000..d53ce25
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc32/power6x/fpu/Implies
+@@ -0,0 +1 @@
++powerpc/powerpc32/power6/fpu
+diff --git a/sysdeps/powerpc/powerpc32/power7/memchr.S b/sysdeps/powerpc/powerpc32/power7/memchr.S
+index 1d6a0d6..ccdd7cf 100644
+--- a/sysdeps/powerpc/powerpc32/power7/memchr.S
++++ b/sysdeps/powerpc/powerpc32/power7/memchr.S
+@@ -25,9 +25,9 @@ ENTRY (__memchr)
+ 	CALL_MCOUNT
+ 	dcbt	0,r3
+ 	clrrwi  r8,r3,2
+-	insrdi	r4,r4,8,48
++	insrwi	r4,r4,8,16    /* Replicate byte to word.  */
+ 	add	r7,r3,r5      /* Calculate the last acceptable address.  */
+-	insrdi	r4,r4,16,32
++	insrwi	r4,r4,16,0
+ 	cmplwi	r5,16
+ 	li	r9, -1
+ 	rlwinm	r6,r3,3,27,28 /* Calculate padding.  */
+diff --git a/sysdeps/powerpc/powerpc32/power7/memcpy.S b/sysdeps/powerpc/powerpc32/power7/memcpy.S
+index 52c2a6b..e540fea 100644
+--- a/sysdeps/powerpc/powerpc32/power7/memcpy.S
++++ b/sysdeps/powerpc/powerpc32/power7/memcpy.S
+@@ -38,8 +38,8 @@ EALIGN (memcpy, 5, 0)
+ 	ble	cr1, L(copy_LT_32)  /* If move < 32 bytes use short move
+ 				    code.  */
+ 
+-	andi.   11,3,7	      /* Check alignment of DST.  */
+-	clrlwi  10,4,29	      /* Check alignment of SRC.  */
++	andi.   11,3,15	      /* Check alignment of DST.  */
++	clrlwi  10,4,28	      /* Check alignment of SRC.  */
+ 	cmplw   cr6,10,11     /* SRC and DST alignments match?  */
+ 	mr	12,4
+ 	mr	31,5
+diff --git a/sysdeps/powerpc/powerpc32/power7/memrchr.S b/sysdeps/powerpc/powerpc32/power7/memrchr.S
+index ebfd540..b05bf32 100644
+--- a/sysdeps/powerpc/powerpc32/power7/memrchr.S
++++ b/sysdeps/powerpc/powerpc32/power7/memrchr.S
+@@ -32,8 +32,8 @@ ENTRY (__memrchr)
+ 	dcbt	r9,r6,16      /* Stream hint, decreasing addresses.  */
+ 
+ 	/* Replicate BYTE to word.  */
+-	rldimi	r4,r4,8,48
+-	rldimi	r4,r4,16,32
++	insrwi	r4,r4,8,16
++	insrwi	r4,r4,16,0
+ 	li	r6,-4
+ 	li	r9,-1
+ 	rlwinm	r0,r0,3,27,28 /* Calculate padding.  */
+diff --git a/sysdeps/powerpc/powerpc32/power7/memset.S b/sysdeps/powerpc/powerpc32/power7/memset.S
+index ae18761..34fc1ad 100644
+--- a/sysdeps/powerpc/powerpc32/power7/memset.S
++++ b/sysdeps/powerpc/powerpc32/power7/memset.S
+@@ -35,8 +35,8 @@ L(_memset):
+ 	cfi_offset(31,-8)
+ 
+ 	/* Replicate byte to word.  */
+-	insrdi	4,4,8,48
+-	insrdi	4,4,16,32
++	insrwi	4,4,8,16
++	insrwi	4,4,16,0
+ 
+ 	ble	cr6,L(small)	/* If length <= 8, use short copy code.  */
+ 
+diff --git a/sysdeps/powerpc/powerpc32/power7/rawmemchr.S b/sysdeps/powerpc/powerpc32/power7/rawmemchr.S
+index dec4db0..8ccf186 100644
+--- a/sysdeps/powerpc/powerpc32/power7/rawmemchr.S
++++ b/sysdeps/powerpc/powerpc32/power7/rawmemchr.S
+@@ -27,8 +27,8 @@ ENTRY (__rawmemchr)
+ 	clrrwi	r8,r3,2	      /* Align the address to word boundary.  */
+ 
+ 	/* Replicate byte to word.  */
+-	rldimi	r4,r4,8,48
+-	rldimi	r4,r4,16,32
++	insrwi	r4,r4,8,16
++	insrwi	r4,r4,16,0
+ 
+ 	/* Now r4 has a word of c bytes.  */
+ 
+diff --git a/sysdeps/powerpc/powerpc32/power7/strchr.S b/sysdeps/powerpc/powerpc32/power7/strchr.S
+index f7ecb72..d795833 100644
+--- a/sysdeps/powerpc/powerpc32/power7/strchr.S
++++ b/sysdeps/powerpc/powerpc32/power7/strchr.S
+@@ -35,8 +35,8 @@ ENTRY (strchr)
+ 	beq	cr7,L(null_match)
+ 
+ 	/* Replicate byte to word.  */
+-	insrdi	r4,r4,8,48
+-	insrdi	r4,r4,16,32
++	insrwi	r4,r4,8,16
++	insrwi	r4,r4,16,0
+ 
+ 	/* Now r4 has a word of c bytes and r0 has
+ 	   a word of null bytes.  */
+diff --git a/sysdeps/powerpc/powerpc32/power7/strchrnul.S b/sysdeps/powerpc/powerpc32/power7/strchrnul.S
+index ece8237..dcc7620 100644
+--- a/sysdeps/powerpc/powerpc32/power7/strchrnul.S
++++ b/sysdeps/powerpc/powerpc32/power7/strchrnul.S
+@@ -27,8 +27,8 @@ ENTRY (__strchrnul)
+ 	clrrwi	r8,r3,2	      /* Align the address to word boundary.  */
+ 
+ 	/* Replicate byte to word.  */
+-	insrdi	r4,r4,8,48
+-	insrdi	r4,r4,16,32
++	insrwi  r4,r4,8,16
++	insrwi  r4,r4,16,0
+ 
+ 	rlwinm	r6,r3,3,27,28 /* Calculate padding.  */
+ 	lwz	r12,0(r8)     /* Load word from memory.  */
+diff --git a/sysdeps/powerpc/powerpc64/entry.h b/sysdeps/powerpc/powerpc64/entry.h
+index 76ead1d..30553c1 100644
+--- a/sysdeps/powerpc/powerpc64/entry.h
++++ b/sysdeps/powerpc/powerpc64/entry.h
+@@ -23,6 +23,7 @@ extern void _start (void);
+ 
+ #define ENTRY_POINT _start
+ 
++#if _CALL_ELF != 2
+ /* We have to provide a special declaration.  */
+ #define ENTRY_POINT_DECL(class) class void _start (void);
+ 
+@@ -33,3 +34,4 @@ extern void _start (void);
+ #define TEXT_START \
+   ({ extern unsigned long int _start_as_data[] asm ("_start");  \
+      _start_as_data[0]; })
++#endif
 diff --git a/sysdeps/powerpc/powerpc64/fpu/multiarch/Makefile b/sysdeps/powerpc/powerpc64/fpu/multiarch/Makefile
 index ebf957e..0e3eac7 100644
 --- a/sysdeps/powerpc/powerpc64/fpu/multiarch/Makefile
@@ -1796,10 +2490,10 @@ index 5362da8..0000000
 -
 -long_double_symbol (libm, __roundl, roundl)
 diff --git a/sysdeps/powerpc/powerpc64/multiarch/Makefile b/sysdeps/powerpc/powerpc64/multiarch/Makefile
-index 3c47316..35020a7 100644
+index 3c47316..82722fb 100644
 --- a/sysdeps/powerpc/powerpc64/multiarch/Makefile
 +++ b/sysdeps/powerpc/powerpc64/multiarch/Makefile
-@@ -13,7 +13,11 @@ sysdep_routines += memcpy-power7 memcpy-a2 memcpy-power6 memcpy-cell \
+@@ -13,7 +13,13 @@ sysdep_routines += memcpy-power7 memcpy-a2 memcpy-power6 memcpy-cell \
  		   wcschr-power6 wcschr-ppc64 wcsrchr-power7 wcsrchr-power6 \
  		   wcsrchr-ppc64 wcscpy-power7 wcscpy-power6 wcscpy-ppc64 \
  		   wordcopy-power7 wordcopy-power6 wordcopy-ppc64 \
@@ -1808,15 +2502,109 @@ index 3c47316..35020a7 100644
 +		   strrchr-power7 strrchr-ppc64 strncat-power7 strncat-ppc64 \
 +		   strspn-power7 strspn-ppc64 strcspn-power7 strcspn-ppc64 \
 +		   strpbrk-power7 strpbrk-ppc64 strncpy-power7 strncpy-ppc64 \
-+		   stpncpy-power7 stpncpy-ppc64
++		   stpncpy-power7 stpncpy-ppc64 strcmp-power7 strcmp-ppc64 \
++		   strcat-power7 strcat-ppc64 memmove-power7 memmove-ppc64 \
++		   bcopy-ppc64
  
  CFLAGS-strncase-power7.c += -mcpu=power7 -funroll-loops
  CFLAGS-strncase_l-power7.c += -mcpu=power7 -funroll-loops
+diff --git a/sysdeps/powerpc/powerpc64/multiarch/bcopy-ppc64.c b/sysdeps/powerpc/powerpc64/multiarch/bcopy-ppc64.c
+new file mode 100644
+index 0000000..f8d5aa5
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/multiarch/bcopy-ppc64.c
+@@ -0,0 +1,25 @@
++/* PowerPC64 default bcopy.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#include <string.h>
++
++extern __typeof (bcopy) __bcopy_ppc attribute_hidden;
++
++#define bcopy __bcopy_ppc
++
++#include <string/bcopy.c>
+diff --git a/sysdeps/powerpc/powerpc64/multiarch/bcopy.c b/sysdeps/powerpc/powerpc64/multiarch/bcopy.c
+new file mode 100644
+index 0000000..0688907
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/multiarch/bcopy.c
+@@ -0,0 +1,29 @@
++/* PowerPC64 multiarch bcopy.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#include <string.h>
++#include "init-arch.h"
++
++extern __typeof (bcopy) __bcopy_ppc attribute_hidden;
++/* __bcopy_power7 symbol is implemented at memmove-power7.S  */
++extern __typeof (bcopy) __bcopy_power7 attribute_hidden;
++
++libc_ifunc (bcopy,
++            (hwcap & PPC_FEATURE_HAS_VSX)
++            ? __bcopy_power7
++            : __bcopy_ppc);
 diff --git a/sysdeps/powerpc/powerpc64/multiarch/ifunc-impl-list.c b/sysdeps/powerpc/powerpc64/multiarch/ifunc-impl-list.c
-index 6bbdd4e..d8578fb 100644
+index 6bbdd4e..a574487 100644
 --- a/sysdeps/powerpc/powerpc64/multiarch/ifunc-impl-list.c
 +++ b/sysdeps/powerpc/powerpc64/multiarch/ifunc-impl-list.c
-@@ -238,5 +238,61 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
+@@ -61,6 +61,12 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
+ 			      __memcpy_power4)
+ 	      IFUNC_IMPL_ADD (array, i, memcpy, 1, __memcpy_ppc))
+ 
++  /* Support sysdeps/powerpc/powerpc64/multiarch/memmove.c.  */
++  IFUNC_IMPL (i, name, memmove,
++	      IFUNC_IMPL_ADD (array, i, memmove, hwcap & PPC_FEATURE_HAS_VSX,
++			      __memmove_power7)
++	      IFUNC_IMPL_ADD (array, i, memmove, 1, __memmove_ppc))
++
+   /* Support sysdeps/powerpc/powerpc64/multiarch/memset.c.  */
+   IFUNC_IMPL (i, name, memset,
+ 	      IFUNC_IMPL_ADD (array, i, memset, hwcap & PPC_FEATURE_HAS_VSX,
+@@ -136,6 +142,12 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
+ 			      __bzero_power4)
+ 	      IFUNC_IMPL_ADD (array, i, bzero, 1, __bzero_ppc))
+ 
++  /* Support sysdeps/powerpc/powerpc64/multiarch/bcopy.c.  */
++  IFUNC_IMPL (i, name, bcopy,
++	      IFUNC_IMPL_ADD (array, i, bcopy, hwcap & PPC_FEATURE_HAS_VSX,
++			      __bcopy_power7)
++	      IFUNC_IMPL_ADD (array, i, bcopy, 1, __bcopy_ppc))
++
+   /* Support sysdeps/powerpc/powerpc64/multiarch/mempcpy.c.  */
+   IFUNC_IMPL (i, name, mempcpy,
+ 	      IFUNC_IMPL_ADD (array, i, mempcpy,
+@@ -238,5 +250,77 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
  	      IFUNC_IMPL_ADD (array, i, wcscpy, 1,
  			      __wcscpy_ppc))
  
@@ -1875,6 +2663,22 @@ index 6bbdd4e..d8578fb 100644
 +			      __stpncpy_power7)
 +	      IFUNC_IMPL_ADD (array, i, stpncpy, 1,
 +			     __stpncpy_ppc))
++
++  /* Support sysdeps/powerpc/powerpc64/multiarch/strcmp.c.  */
++  IFUNC_IMPL (i, name, strcmp,
++	      IFUNC_IMPL_ADD (array, i, strcmp,
++			      hwcap & PPC_FEATURE_HAS_VSX,
++			      __strcmp_power7)
++	      IFUNC_IMPL_ADD (array, i, strcmp, 1,
++			     __strcmp_ppc))
++
++  /* Support sysdeps/powerpc/powerpc64/multiarch/strcat.c.  */
++  IFUNC_IMPL (i, name, strcat,
++	      IFUNC_IMPL_ADD (array, i, strcat,
++			      hwcap & PPC_FEATURE_HAS_VSX,
++			      __strcat_power7)
++	      IFUNC_IMPL_ADD (array, i, strcat, 1,
++			     __strcat_ppc))
 +
    return i;
  }
@@ -1939,6 +2743,140 @@ index 6a91630..305e963 100644
 +strong_alias (__libc_memcpy, memcpy);
 +libc_hidden_ver (__libc_memcpy, memcpy);
  #endif
+diff --git a/sysdeps/powerpc/powerpc64/multiarch/memmove-power7.S b/sysdeps/powerpc/powerpc64/multiarch/memmove-power7.S
+new file mode 100644
+index 0000000..667e7bc
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/multiarch/memmove-power7.S
+@@ -0,0 +1,43 @@
++/* Optimized memmove implementation for PowerPC64/POWER7.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#include <sysdep.h>
++
++#undef EALIGN
++#define EALIGN(name, alignt, words)				\
++  .section ".text";						\
++  ENTRY_2(__memmove_power7)					\
++  .align ALIGNARG(alignt);					\
++  EALIGN_W_##words;						\
++  BODY_LABEL(__memmove_power7):					\
++  cfi_startproc;						\
++  LOCALENTRY(__memmove_power7)
++
++#undef END_GEN_TB
++#define END_GEN_TB(name, mask)					\
++  cfi_endproc;							\
++  TRACEBACK_MASK(__memmove_power7,mask)				\
++  END_2(__memmove_power7)
++
++#undef libc_hidden_builtin_def
++#define libc_hidden_builtin_def(name)
++
++#undef bcopy
++#define bcopy __bcopy_power7
++
++#include <sysdeps/powerpc/powerpc64/power7/memmove.S>
+diff --git a/sysdeps/powerpc/powerpc64/multiarch/memmove-ppc64.c b/sysdeps/powerpc/powerpc64/multiarch/memmove-ppc64.c
+new file mode 100644
+index 0000000..ff78fe6
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/multiarch/memmove-ppc64.c
+@@ -0,0 +1,28 @@
++/* Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#include <string.h>
++
++#define MEMMOVE __memmove_ppc
++#if !defined(NOT_IN_libc) && defined(SHARED)
++# undef libc_hidden_builtin_def
++# define libc_hidden_builtin_def(name)
++#endif
++
++extern __typeof (memmove) __memmove_ppc attribute_hidden;
++
++#include <string/memmove.c>
+diff --git a/sysdeps/powerpc/powerpc64/multiarch/memmove.c b/sysdeps/powerpc/powerpc64/multiarch/memmove.c
+new file mode 100644
+index 0000000..9a1ce8f
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/multiarch/memmove.c
+@@ -0,0 +1,45 @@
++/* Multiple versions of memmove. PowerPC64 version.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++/* Define multiple versions only for the definition in lib and for
++   DSO.  In static binaries we need memmove before the initialization
++   happened.  */
++#if defined SHARED && !defined NOT_IN_libc
++/* Redefine memmove so that the compiler won't complain about the type
++   mismatch with the IFUNC selector in strong_alias, below.  */
++# undef memmove
++# define memmove __redirect_memmove
++# include <string.h>
++# include "init-arch.h"
++
++extern __typeof (__redirect_memmove) __libc_memmove;
++
++extern __typeof (__redirect_memmove) __memmove_ppc attribute_hidden;
++extern __typeof (__redirect_memmove) __memmove_power7 attribute_hidden;
++
++libc_ifunc (__libc_memmove,
++            (hwcap & PPC_FEATURE_HAS_VSX)
++            ? __memmove_power7
++            : __memmove_ppc);
++
++#undef memmove
++strong_alias (__libc_memmove, memmove);
++libc_hidden_ver (__libc_memmove, memmove);
++#else
++# include <string/memmove.c>
++#endif
 diff --git a/sysdeps/powerpc/powerpc64/multiarch/memset-ppc64.S b/sysdeps/powerpc/powerpc64/multiarch/memset-ppc64.S
 index 5b234d9e..3601a77 100644
 --- a/sysdeps/powerpc/powerpc64/multiarch/memset-ppc64.S
@@ -2143,6 +3081,246 @@ index 0000000..dbf8521
 +            : __stpncpy_ppc);
 +
 +weak_alias (__stpncpy, stpncpy)
++#endif
+diff --git a/sysdeps/powerpc/powerpc64/multiarch/strcat-power7.c b/sysdeps/powerpc/powerpc64/multiarch/strcat-power7.c
+new file mode 100644
+index 0000000..628f8bd
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/multiarch/strcat-power7.c
+@@ -0,0 +1,30 @@
++/* Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/ >.  */
++
++#include <string.h>
++
++#define STRCAT __strcat_power7
++
++#undef libc_hidden_def
++#define libc_hidden_def(name)
++
++extern typeof (strcpy) __strcpy_power7;
++extern typeof (strlen) __strlen_power7;
++
++#define strcpy __strcpy_power7
++#define strlen __strlen_power7
++#include <sysdeps/powerpc/strcat.c>
+diff --git a/sysdeps/powerpc/powerpc64/multiarch/strcat-ppc64.c b/sysdeps/powerpc/powerpc64/multiarch/strcat-ppc64.c
+new file mode 100644
+index 0000000..1245764
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/multiarch/strcat-ppc64.c
+@@ -0,0 +1,29 @@
++/* Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/ >.  */
++
++#include <string.h>
++
++#define STRCAT __strcat_ppc
++#ifdef SHARED
++# undef libc_hidden_builtin_def
++# define libc_hidden_builtin_def(name) \
++  __hidden_ver1 (__strcat_ppc, __GI_strcat, __strcat_ppc);
++#endif
++
++extern __typeof (strcat) __strcat_ppc attribute_hidden;
++
++#include <sysdeps/powerpc/strcat.c>
+diff --git a/sysdeps/powerpc/powerpc64/multiarch/strcat.c b/sysdeps/powerpc/powerpc64/multiarch/strcat.c
+new file mode 100644
+index 0000000..847a62d
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/multiarch/strcat.c
+@@ -0,0 +1,31 @@
++/* Multiple versions of strcat. PowerPC64 version.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#ifndef NOT_IN_libc
++# include <string.h>
++# include <shlib-compat.h>
++# include "init-arch.h"
++
++extern __typeof (strcat) __strcat_ppc attribute_hidden;
++extern __typeof (strcat) __strcat_power7 attribute_hidden;
++
++libc_ifunc (strcat,
++            (hwcap & PPC_FEATURE_HAS_VSX)
++            ? __strcat_power7
++            : __strcat_ppc);
++#endif
+diff --git a/sysdeps/powerpc/powerpc64/multiarch/strcmp-power7.S b/sysdeps/powerpc/powerpc64/multiarch/strcmp-power7.S
+new file mode 100644
+index 0000000..790ce8d
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/multiarch/strcmp-power7.S
+@@ -0,0 +1,40 @@
++/* Optimized strcmp implementation for POWER7.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#include <sysdep.h>
++
++#undef EALIGN
++#define EALIGN(name, alignt, words)				\
++  .section ".text";						\
++  ENTRY_2(__strcmp_power7)					\
++  .align ALIGNARG(alignt);					\
++  EALIGN_W_##words;						\
++  BODY_LABEL(__strcmp_power7):					\
++  cfi_startproc;						\
++  LOCALENTRY(__strcmp_power7)
++
++#undef END
++#define END(name)						\
++  cfi_endproc;							\
++  TRACEBACK(__strcmp_power7)					\
++  END_2(__strcmp_power7)
++
++#undef libc_hidden_builtin_def
++#define libc_hidden_builtin_def(name)
++
++#include <sysdeps/powerpc/powerpc64/power7/strcmp.S>
+diff --git a/sysdeps/powerpc/powerpc64/multiarch/strcmp-ppc64.S b/sysdeps/powerpc/powerpc64/multiarch/strcmp-ppc64.S
+new file mode 100644
+index 0000000..93d1277
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/multiarch/strcmp-ppc64.S
+@@ -0,0 +1,43 @@
++/* Default strcmp implementation for PowerPC64.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#include <sysdep.h>
++
++#if defined SHARED && !defined NOT_IN_libc
++# undef EALIGN
++# define EALIGN(name, alignt, words)				\
++  .section ".text";						\
++  ENTRY_2(__strcmp_ppc)						\
++  .align ALIGNARG(alignt);					\
++  EALIGN_W_##words;						\
++  BODY_LABEL(__strcmp_ppc):					\
++  cfi_startproc;						\
++  LOCALENTRY(__strcmp_ppc)
++
++# undef END
++# define END(name)						\
++  cfi_endproc;							\
++  TRACEBACK(__strcmp_ppc)					\
++  END_2(__strcmp_ppc)
++
++# undef libc_hidden_builtin_def
++# define libc_hidden_builtin_def(name)				\
++    .globl __GI_strcmp; __GI_strcmp = __strcmp_ppc
++#endif
++
++#include <sysdeps/powerpc/powerpc64/strcmp.S>
+diff --git a/sysdeps/powerpc/powerpc64/multiarch/strcmp.c b/sysdeps/powerpc/powerpc64/multiarch/strcmp.c
+new file mode 100644
+index 0000000..2013301
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/multiarch/strcmp.c
+@@ -0,0 +1,31 @@
++/* Multiple versions of strcmp. PowerPC64 version.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#if defined SHARED && !defined NOT_IN_libc
++# include <string.h>
++# include <shlib-compat.h>
++# include "init-arch.h"
++
++extern __typeof (strcmp) __strcmp_ppc attribute_hidden;
++extern __typeof (strcmp) __strcmp_power7 attribute_hidden;
++
++libc_ifunc (strcmp,
++            (hwcap & PPC_FEATURE_HAS_VSX)
++            ? __strcmp_power7
++            : __strcmp_ppc);
 +#endif
 diff --git a/sysdeps/powerpc/powerpc64/multiarch/strcspn-power7.S b/sysdeps/powerpc/powerpc64/multiarch/strcspn-power7.S
 new file mode 100644
@@ -2924,6 +4102,956 @@ index 0000000..bf8c877
 +            ? __strspn_power7
 +            : __strspn_ppc);
 +#endif
+diff --git a/sysdeps/powerpc/powerpc64/power5+/fpu/Implies b/sysdeps/powerpc/powerpc64/power5+/fpu/Implies
+index c0e6784..f00c50f 100644
+--- a/sysdeps/powerpc/powerpc64/power5+/fpu/Implies
++++ b/sysdeps/powerpc/powerpc64/power5+/fpu/Implies
+@@ -1 +1 @@
+-powerpc/powerpc64/power5/fpu/multiarch
++powerpc/powerpc64/power5/fpu
+diff --git a/sysdeps/powerpc/powerpc64/power5/fpu/Implies b/sysdeps/powerpc/powerpc64/power5/fpu/Implies
+index 3740d05..6b8c23e 100644
+--- a/sysdeps/powerpc/powerpc64/power5/fpu/Implies
++++ b/sysdeps/powerpc/powerpc64/power5/fpu/Implies
+@@ -1 +1 @@
+-powerpc/powerpc64/power4/fpu/multiarch
++powerpc/powerpc64/power4/fpu/
+diff --git a/sysdeps/powerpc/powerpc64/power6x/fpu/Implies b/sysdeps/powerpc/powerpc64/power6x/fpu/Implies
+new file mode 100644
+index 0000000..30fa176
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/power6x/fpu/Implies
+@@ -0,0 +1 @@
++powerpc/powerpc64/power6/fpu
+diff --git a/sysdeps/powerpc/powerpc64/power6x/fpu/multiarch/Implies b/sysdeps/powerpc/powerpc64/power6x/fpu/multiarch/Implies
+index f54ff23..410d289 100644
+--- a/sysdeps/powerpc/powerpc64/power6x/fpu/multiarch/Implies
++++ b/sysdeps/powerpc/powerpc64/power6x/fpu/multiarch/Implies
+@@ -1 +1 @@
+-sysdeps/powerpc/powerpc64/power6/fpu/multiarch
++powerpc/powerpc64/power6/fpu/multiarch
+diff --git a/sysdeps/powerpc/powerpc64/power6x/multiarch/Implies b/sysdeps/powerpc/powerpc64/power6x/multiarch/Implies
+new file mode 100644
+index 0000000..bf5d617
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/power6x/multiarch/Implies
+@@ -0,0 +1 @@
++powerpc/powerpc64/power6/multiarch
+diff --git a/sysdeps/powerpc/powerpc64/power7/bcopy.c b/sysdeps/powerpc/powerpc64/power7/bcopy.c
+new file mode 100644
+index 0000000..4a6a400
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/power7/bcopy.c
+@@ -0,0 +1 @@
++/* Implemented at memmove.S  */
+diff --git a/sysdeps/powerpc/powerpc64/power7/fpu/Implies b/sysdeps/powerpc/powerpc64/power7/fpu/Implies
+index 410d289..30fa176 100644
+--- a/sysdeps/powerpc/powerpc64/power7/fpu/Implies
++++ b/sysdeps/powerpc/powerpc64/power7/fpu/Implies
+@@ -1 +1 @@
+-powerpc/powerpc64/power6/fpu/multiarch
++powerpc/powerpc64/power6/fpu
+diff --git a/sysdeps/powerpc/powerpc64/power7/memcpy.S b/sysdeps/powerpc/powerpc64/power7/memcpy.S
+index bbfd381..58d9b12 100644
+--- a/sysdeps/powerpc/powerpc64/power7/memcpy.S
++++ b/sysdeps/powerpc/powerpc64/power7/memcpy.S
+@@ -36,16 +36,11 @@ EALIGN (memcpy, 5, 0)
+ 	ble	cr1, L(copy_LT_32)  /* If move < 32 bytes use short move
+ 				    code.  */
+ 
+-#ifdef __LITTLE_ENDIAN__
+-/* In little-endian mode, power7 takes an alignment trap on any lxvd2x
+-   or stxvd2x crossing a 32-byte boundary, so ensure the aligned_copy
+-   loop is only used for quadword aligned copies.  */
++/* Align copies using VSX instructions to quadword. It is to avoid alignment
++   traps when memcpy is used on non-cacheable memory (for instance, memory
++   mapped I/O).  */
+ 	andi.	10,3,15
+ 	clrldi	11,4,60
+-#else
+-	andi.	10,3,7		/* Check alignment of DST.  */
+-	clrldi	11,4,61		/* Check alignment of SRC.  */
+-#endif
+ 	cmpld	cr6,10,11	/* SRC and DST alignments match?  */
+ 
+ 	mr	dst,3
+@@ -53,13 +48,9 @@ EALIGN (memcpy, 5, 0)
+ 	beq	L(aligned_copy)
+ 
+ 	mtocrf	0x01,0
+-#ifdef __LITTLE_ENDIAN__
+ 	clrldi	0,0,60
+-#else
+-	clrldi	0,0,61
+-#endif
+ 
+-/* Get the DST and SRC aligned to 8 bytes (16 for little-endian).  */
++/* Get the DST and SRC aligned to 16 bytes.  */
+ 1:
+ 	bf	31,2f
+ 	lbz	6,0(src)
+@@ -79,14 +70,12 @@ EALIGN (memcpy, 5, 0)
+ 	stw	6,0(dst)
+ 	addi	dst,dst,4
+ 8:
+-#ifdef __LITTLE_ENDIAN__
+ 	bf	28,16f
+ 	ld	6,0(src)
+ 	addi	src,src,8
+ 	std	6,0(dst)
+ 	addi	dst,dst,8
+ 16:
+-#endif
+ 	subf	cnt,0,cnt
+ 
+ /* Main aligned copy loop. Copies 128 bytes at a time. */
+@@ -298,9 +287,6 @@ L(copy_LE_8):
+ 	.align	4
+ L(copy_GE_32_unaligned):
+ 	clrldi	0,0,60	      /* Number of bytes until the 1st dst quadword.  */
+-#ifndef __LITTLE_ENDIAN__
+-	andi.	10,3,15	      /* Check alignment of DST (against quadwords).  */
+-#endif
+ 	srdi	9,cnt,4	      /* Number of full quadwords remaining.  */
+ 
+ 	beq	L(copy_GE_32_unaligned_cont)
+diff --git a/sysdeps/powerpc/powerpc64/power7/memmove.S b/sysdeps/powerpc/powerpc64/power7/memmove.S
+new file mode 100644
+index 0000000..8663dfb
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/power7/memmove.S
+@@ -0,0 +1,831 @@
++/* Optimized memmove implementation for PowerPC64/POWER7.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#include <sysdep.h>
++
++
++/* void* [r3] memmove (void *dest [r3], const void *src [r4], size_t len [r5])
++
++   This optimization check if memory 'dest'  overlaps with 'src'. If it does
++   not then it calls an optimized memcpy call (similar to memcpy for POWER7,
++   embedded here to gain some cycles).
++   If source and destiny overlaps, a optimized backwards memcpy is used
++   instead.  */
++
++	.machine power7
++EALIGN (memmove, 5, 0)
++	CALL_MCOUNT 3
++
++L(_memmove):
++	subf    r9,r4,r3
++	cmpld   cr7,r9,r5
++	blt	cr7,L(memmove_bwd)
++
++	cmpldi	cr1,r5,31
++	neg	0,3
++	ble	cr1, L(copy_LT_32)  /* If move < 32 bytes use short move
++				       code.  */
++
++	andi.	10,3,15
++	clrldi	11,4,60
++	cmpld	cr6,10,11	/* SRC and DST alignments match?  */
++
++	mr	r11,3
++	bne	cr6,L(copy_GE_32_unaligned)
++	beq	L(aligned_copy)
++
++	mtocrf	0x01,0
++	clrldi	0,0,60
++
++/* Get the DST and SRC aligned to 8 bytes (16 for little-endian).  */
++1:
++	bf	31,2f
++	lbz	6,0(r4)
++	addi	r4,r4,1
++	stb	6,0(r11)
++	addi	r11,r11,1
++2:
++	bf	30,4f
++	lhz	6,0(r4)
++	addi	r4,r4,2
++	sth	6,0(r11)
++	addi	r11,r11,2
++4:
++	bf	29,8f
++	lwz	6,0(r4)
++	addi	r4,r4,4
++	stw	6,0(r11)
++	addi	r11,r11,4
++8:
++	bf	28,16f
++	ld	6,0(r4)
++	addi	r4,r4,8
++	std	6,0(r11)
++	addi	r11,r11,8
++16:
++	subf	r5,0,r5
++
++/* Main aligned copy loop. Copies 128 bytes at a time. */
++L(aligned_copy):
++	li	6,16
++	li	7,32
++	li	8,48
++	mtocrf	0x02,r5
++	srdi	12,r5,7
++	cmpdi	12,0
++	beq	L(aligned_tail)
++	lxvd2x	6,0,r4
++	lxvd2x	7,r4,6
++	mtctr	12
++	b	L(aligned_128loop)
++
++	.align  4
++L(aligned_128head):
++	/* for the 2nd + iteration of this loop. */
++	lxvd2x	6,0,r4
++	lxvd2x	7,r4,6
++L(aligned_128loop):
++	lxvd2x	8,r4,7
++	lxvd2x	9,r4,8
++	stxvd2x	6,0,r11
++	addi	r4,r4,64
++	stxvd2x	7,r11,6
++	stxvd2x	8,r11,7
++	stxvd2x	9,r11,8
++	lxvd2x	6,0,r4
++	lxvd2x	7,r4,6
++	addi	r11,r11,64
++	lxvd2x	8,r4,7
++	lxvd2x	9,r4,8
++	addi	r4,r4,64
++	stxvd2x	6,0,r11
++	stxvd2x	7,r11,6
++	stxvd2x	8,r11,7
++	stxvd2x	9,r11,8
++	addi	r11,r11,64
++	bdnz	L(aligned_128head)
++
++L(aligned_tail):
++	mtocrf	0x01,r5
++	bf	25,32f
++	lxvd2x	6,0,r4
++	lxvd2x	7,r4,6
++	lxvd2x	8,r4,7
++	lxvd2x	9,r4,8
++	addi	r4,r4,64
++	stxvd2x	6,0,r11
++	stxvd2x	7,r11,6
++	stxvd2x	8,r11,7
++	stxvd2x	9,r11,8
++	addi	r11,r11,64
++32:
++	bf	26,16f
++	lxvd2x	6,0,r4
++	lxvd2x	7,r4,6
++	addi	r4,r4,32
++	stxvd2x	6,0,r11
++	stxvd2x	7,r11,6
++	addi	r11,r11,32
++16:
++	bf	27,8f
++	lxvd2x	6,0,r4
++	addi	r4,r4,16
++	stxvd2x	6,0,r11
++	addi	r11,r11,16
++8:
++	bf	28,4f
++	ld	6,0(r4)
++	addi	r4,r4,8
++	std     6,0(r11)
++	addi	r11,r11,8
++4:	/* Copies 4~7 bytes.  */
++	bf	29,L(tail2)
++	lwz	6,0(r4)
++	stw     6,0(r11)
++	bf      30,L(tail5)
++	lhz     7,4(r4)
++	sth     7,4(r11)
++	bflr	31
++	lbz     8,6(r4)
++	stb     8,6(r11)
++	/* Return original DST pointer.  */
++	blr
++
++/* Handle copies of 0~31 bytes.  */
++	.align	4
++L(copy_LT_32):
++	mr	r11,3
++	cmpldi	cr6,r5,8
++	mtocrf	0x01,r5
++	ble	cr6,L(copy_LE_8)
++
++	/* At least 9 bytes to go.  */
++	neg	8,4
++	andi.	0,8,3
++	cmpldi	cr1,r5,16
++	beq	L(copy_LT_32_aligned)
++
++	/* Force 4-byte alignment for SRC.  */
++	mtocrf	0x01,0
++	subf	r5,0,r5
++2:
++	bf	30,1f
++	lhz	6,0(r4)
++	addi	r4,r4,2
++	sth	6,0(r11)
++	addi	r11,r11,2
++1:
++	bf	31,L(end_4bytes_alignment)
++	lbz	6,0(r4)
++	addi	r4,r4,1
++	stb	6,0(r11)
++	addi	r11,r11,1
++
++	.align	4
++L(end_4bytes_alignment):
++	cmpldi	cr1,r5,16
++	mtocrf	0x01,r5
++
++L(copy_LT_32_aligned):
++	/* At least 6 bytes to go, and SRC is word-aligned.  */
++	blt	cr1,8f
++
++	/* Copy 16 bytes.  */
++	lwz	6,0(r4)
++	lwz	7,4(r4)
++	stw	6,0(r11)
++	lwz	8,8(r4)
++	stw	7,4(r11)
++	lwz	6,12(r4)
++	addi	r4,r4,16
++	stw	8,8(r11)
++	stw	6,12(r11)
++	addi	r11,r11,16
++8:	/* Copy 8 bytes.  */
++	bf	28,L(tail4)
++	lwz	6,0(r4)
++	lwz	7,4(r4)
++	addi	r4,r4,8
++	stw	6,0(r11)
++	stw	7,4(r11)
++	addi	r11,r11,8
++
++	.align	4
++/* Copies 4~7 bytes.  */
++L(tail4):
++	bf	29,L(tail2)
++	lwz	6,0(r4)
++	stw	6,0(r11)
++	bf	30,L(tail5)
++	lhz	7,4(r4)
++	sth	7,4(r11)
++	bflr	31
++	lbz	8,6(r4)
++	stb	8,6(r11)
++	/* Return original DST pointer.  */
++	blr
++
++	.align	4
++/* Copies 2~3 bytes.  */
++L(tail2):
++	bf	30,1f
++	lhz	6,0(r4)
++	sth	6,0(r11)
++	bflr	31
++	lbz	7,2(r4)
++	stb	7,2(r11)
++	blr
++
++	.align	4
++L(tail5):
++	bflr	31
++	lbz	6,4(r4)
++	stb	6,4(r11)
++	blr
++
++	.align	4
++1:
++	bflr	31
++	lbz	6,0(r4)
++	stb	6,0(r11)
++	/* Return original DST pointer.  */
++	blr
++
++/* Handles copies of 0~8 bytes.  */
++	.align	4
++L(copy_LE_8):
++	bne	cr6,L(tail4)
++
++	/* Though we could've used ld/std here, they are still
++	slow for unaligned cases.  */
++
++	lwz	6,0(r4)
++	lwz	7,4(r4)
++	stw	6,0(r11)
++	stw	7,4(r11)
++	blr
++
++
++/* Handle copies of 32+ bytes where DST is aligned (to quadword) but
++   SRC is not.	Use aligned quadword loads from SRC, shifted to realign
++   the data, allowing for aligned DST stores.  */
++	.align	4
++L(copy_GE_32_unaligned):
++	clrldi	0,0,60	      /* Number of bytes until the 1st r11 quadword.  */
++	srdi	9,r5,4	      /* Number of full quadwords remaining.  */
++
++	beq	L(copy_GE_32_unaligned_cont)
++
++	/* DST is not quadword aligned, get it aligned.  */
++
++	mtocrf	0x01,0
++	subf	r5,0,r5
++
++	/* Vector instructions work best when proper alignment (16-bytes)
++	is present.  Move 0~15 bytes as needed to get DST quadword-aligned.  */
++1:
++	bf	31,2f
++	lbz	6,0(r4)
++	addi	r4,r4,1
++	stb	6,0(r11)
++	addi	r11,r11,1
++2:
++	bf	30,4f
++	lhz	6,0(r4)
++	addi	r4,r4,2
++	sth	6,0(r11)
++	addi	r11,r11,2
++4:
++	bf	29,8f
++	lwz	6,0(r4)
++	addi	r4,r4,4
++	stw	6,0(r11)
++	addi	r11,r11,4
++8:
++	bf	28,0f
++	ld	6,0(r4)
++	addi	r4,r4,8
++	std	6,0(r11)
++	addi	r11,r11,8
++0:
++	srdi	9,r5,4	      /* Number of full quadwords remaining.  */
++
++	/* The proper alignment is present, it is OK to copy the bytes now.  */
++L(copy_GE_32_unaligned_cont):
++
++	/* Setup two indexes to speed up the indexed vector operations.  */
++	clrldi	10,r5,60
++	li	6,16	      /* Index for 16-bytes offsets.  */
++	li	7,32	      /* Index for 32-bytes offsets.  */
++	cmpldi	cr1,10,0
++	srdi	8,r5,5	      /* Setup the loop counter.  */
++	mtocrf	0x01,9
++	cmpldi	cr6,9,1
++#ifdef __LITTLE_ENDIAN__
++	lvsr	5,0,r4
++#else
++	lvsl	5,0,r4
++#endif
++	lvx	3,0,r4
++	li	0,0
++	bf	31,L(setup_unaligned_loop)
++
++	/* Copy another 16 bytes to align to 32-bytes due to the loop.  */
++	lvx	4,r4,6
++#ifdef __LITTLE_ENDIAN__
++	vperm	6,4,3,5
++#else
++	vperm	6,3,4,5
++#endif
++	addi	r4,r4,16
++	stvx	6,0,r11
++	addi	r11,r11,16
++	vor	3,4,4
++	clrrdi	0,r4,60
++
++L(setup_unaligned_loop):
++	mtctr	8
++	ble	cr6,L(end_unaligned_loop)
++
++	/* Copy 32 bytes at a time using vector instructions.  */
++	.align	4
++L(unaligned_loop):
++
++	/* Note: vr6/vr10 may contain data that was already copied,
++	but in order to get proper alignment, we may have to copy
++	some portions again. This is faster than having unaligned
++	vector instructions though.  */
++
++	lvx	4,r4,6
++#ifdef __LITTLE_ENDIAN__
++	vperm	6,4,3,5
++#else
++	vperm	6,3,4,5
++#endif
++	lvx	3,r4,7
++#ifdef __LITTLE_ENDIAN__
++	vperm	10,3,4,5
++#else
++	vperm	10,4,3,5
++#endif
++	addi	r4,r4,32
++	stvx	6,0,r11
++	stvx	10,r11,6
++	addi	r11,r11,32
++	bdnz	L(unaligned_loop)
++
++	clrrdi	0,r4,60
++
++	.align	4
++L(end_unaligned_loop):
++
++	/* Check for tail bytes.  */
++	mtocrf	0x01,r5
++	beqlr	cr1
++
++	add	r4,r4,0
++
++	/*  We have 1~15 tail bytes to copy, and DST is quadword aligned.  */
++	/* Copy 8 bytes.  */
++	bf	28,4f
++	lwz	6,0(r4)
++	lwz	7,4(r4)
++	addi	r4,r4,8
++	stw	6,0(r11)
++	stw	7,4(r11)
++	addi	r11,r11,8
++4:	/* Copy 4~7 bytes.  */
++	bf	29,L(tail2)
++	lwz	6,0(r4)
++	stw	6,0(r11)
++	bf	30,L(tail5)
++	lhz	7,4(r4)
++	sth	7,4(r11)
++	bflr	31
++	lbz	8,6(r4)
++	stb	8,6(r11)
++	/* Return original DST pointer.  */
++	blr
++
++	/* Start to memcpy backward implementation: the algorith first check if
++	   src and dest have the same alignment and if it does align both to 16
++	   bytes and copy using VSX instructions.
++	   If does not, align dest to 16 bytes and use VMX (altivec) instruction
++	   to read two 16 bytes at time, shift/permute the bytes read and write
++	   aligned to dest.  */
++L(memmove_bwd):
++	cmpldi	cr1,r5,31
++	/* Copy is done backwards: update the pointers and check alignment.  */
++	add	r11,r3,r5
++	add	r4,r4,r5
++	mr	r0,r11
++	ble	cr1, L(copy_LT_32_bwd)  /* If move < 32 bytes use short move
++				           code.  */
++
++	andi.	r10,r11,15	    /* Check if r11 is aligned to 16 bytes  */
++	clrldi	r9,r4,60	    /* Check if r4 is aligned to 16 bytes  */
++	cmpld	cr6,r10,r9	    /* SRC and DST alignments match?  */
++
++	bne     cr6,L(copy_GE_32_unaligned_bwd)
++	beq     L(aligned_copy_bwd)
++
++	mtocrf	0x01,r0
++	clrldi	r0,r0,60
++
++/* Get the DST and SRC aligned to 16 bytes.  */
++1:
++	bf	31,2f
++	lbz	r6,-1(r4)
++	subi	r4,r4,1
++	stb	r6,-1(r11)
++	subi	r11,r11,1
++2:
++	bf	30,4f
++	lhz	r6,-2(r4)
++	subi	r4,r4,2
++	sth	r6,-2(r11)
++	subi	r11,r11,2
++4:
++	bf	29,8f
++	lwz	r6,-4(r4)
++	subi	r4,r4,4
++	stw	r6,-4(r11)
++	subi	r11,r11,4
++8:
++	bf	28,16f
++	ld	r6,-8(r4)
++	subi	r4,r4,8
++	std	r6,-8(r11)
++	subi	r11,r11,8
++16:
++	subf	r5,0,r5
++
++/* Main aligned copy loop. Copies 128 bytes at a time. */
++L(aligned_copy_bwd):
++	li	r6,-16
++	li	r7,-32
++	li	r8,-48
++	li	r9,-64
++	mtocrf	0x02,r5
++	srdi	r12,r5,7
++	cmpdi	r12,0
++	beq	L(aligned_tail_bwd)
++	lxvd2x	v6,r4,r6
++	lxvd2x	v7,r4,r7
++	mtctr	12
++	b	L(aligned_128loop_bwd)
++
++	.align  4
++L(aligned_128head_bwd):
++	/* for the 2nd + iteration of this loop. */
++	lxvd2x	v6,r4,r6
++	lxvd2x	v7,r4,r7
++L(aligned_128loop_bwd):
++	lxvd2x	v8,r4,r8
++	lxvd2x	v9,r4,r9
++	stxvd2x	v6,r11,r6
++	subi	r4,r4,64
++	stxvd2x	v7,r11,r7
++	stxvd2x	v8,r11,r8
++	stxvd2x	v9,r11,r9
++	lxvd2x	v6,r4,r6
++	lxvd2x	v7,r4,7
++	subi	r11,r11,64
++	lxvd2x	v8,r4,r8
++	lxvd2x	v9,r4,r9
++	subi	r4,r4,64
++	stxvd2x	v6,r11,r6
++	stxvd2x	v7,r11,r7
++	stxvd2x	v8,r11,r8
++	stxvd2x	v9,r11,r9
++	subi	r11,r11,64
++	bdnz	L(aligned_128head_bwd)
++
++L(aligned_tail_bwd):
++	mtocrf	0x01,r5
++	bf	25,32f
++	lxvd2x	v6,r4,r6
++	lxvd2x	v7,r4,r7
++	lxvd2x	v8,r4,r8
++	lxvd2x	v9,r4,r9
++	subi	r4,r4,64
++	stxvd2x	v6,r11,r6
++	stxvd2x	v7,r11,r7
++	stxvd2x	v8,r11,r8
++	stxvd2x	v9,r11,r9
++	subi	r11,r11,64
++32:
++	bf	26,16f
++	lxvd2x	v6,r4,r6
++	lxvd2x	v7,r4,r7
++	subi	r4,r4,32
++	stxvd2x	v6,r11,r6
++	stxvd2x	v7,r11,r7
++	subi	r11,r11,32
++16:
++	bf	27,8f
++	lxvd2x	v6,r4,r6
++	subi	r4,r4,16
++	stxvd2x	v6,r11,r6
++	subi	r11,r11,16
++8:
++	bf	28,4f
++	ld	r6,-8(r4)
++	subi	r4,r4,8
++	std     r6,-8(r11)
++	subi	r11,r11,8
++4:	/* Copies 4~7 bytes.  */
++	bf	29,L(tail2_bwd)
++	lwz	r6,-4(r4)
++	stw     r6,-4(r11)
++	bf      30,L(tail5_bwd)
++	lhz     r7,-6(r4)
++	sth     r7,-6(r11)
++	bflr	31
++	lbz     r8,-7(r4)
++	stb     r8,-7(r11)
++	/* Return original DST pointer.  */
++	blr
++
++/* Handle copies of 0~31 bytes.  */
++	.align	4
++L(copy_LT_32_bwd):
++	cmpldi	cr6,r5,8
++	mtocrf	0x01,r5
++	ble	cr6,L(copy_LE_8_bwd)
++
++	/* At least 9 bytes to go.  */
++	neg	r8,r4
++	andi.	r0,r8,3
++	cmpldi	cr1,r5,16
++	beq	L(copy_LT_32_aligned_bwd)
++
++	/* Force 4-byte alignment for SRC.  */
++	mtocrf	0x01,0
++	subf	r5,0,r5
++2:
++	bf	30,1f
++	lhz	r6,-2(r4)
++	subi	r4,r4,2
++	sth	r6,-2(r11)
++	subi	r11,r11,2
++1:
++	bf	31,L(end_4bytes_alignment_bwd)
++	lbz	6,-1(r4)
++	subi	r4,r4,1
++	stb	6,-1(r11)
++	subi	r11,r11,1
++
++	.align	4
++L(end_4bytes_alignment_bwd):
++	cmpldi	cr1,r5,16
++	mtocrf	0x01,r5
++
++L(copy_LT_32_aligned_bwd):
++	/* At least 6 bytes to go, and SRC is word-aligned.  */
++	blt	cr1,8f
++
++	/* Copy 16 bytes.  */
++	lwz	r6,-4(r4)
++	lwz	r7,-8(r4)
++	stw	r6,-4(r11)
++	lwz	r8,-12(r4)
++	stw	r7,-8(r11)
++	lwz	r6,-16(r4)
++	subi	r4,r4,16
++	stw	r8,-12(r11)
++	stw	r6,-16(r11)
++	subi	r11,r11,16
++8:	/* Copy 8 bytes.  */
++	bf	28,L(tail4_bwd)
++	lwz	r6,-4(r4)
++	lwz	r7,-8(r4)
++	subi	r4,r4,8
++	stw	r6,-4(r11)
++	stw	r7,-8(r11)
++	subi	r11,r11,8
++
++	.align	4
++/* Copies 4~7 bytes.  */
++L(tail4_bwd):
++	bf	29,L(tail2_bwd)
++	lwz	6,-4(r4)
++	stw	6,-4(r11)
++	bf	30,L(tail5_bwd)
++	lhz	7,-6(r4)
++	sth	7,-6(r11)
++	bflr	31
++	lbz	8,-7(r4)
++	stb	8,-7(r11)
++	/* Return original DST pointer.  */
++	blr
++
++	.align	4
++/* Copies 2~3 bytes.  */
++L(tail2_bwd):
++	bf	30,1f
++	lhz	6,-2(r4)
++	sth	6,-2(r11)
++	bflr	31
++	lbz	7,-3(r4)
++	stb	7,-3(r11)
++	blr
++
++	.align	4
++L(tail5_bwd):
++	bflr	31
++	lbz	6,-5(r4)
++	stb	6,-5(r11)
++	blr
++
++	.align	4
++1:
++	bflr	31
++	lbz	6,-1(r4)
++	stb	6,-1(r11)
++	/* Return original DST pointer.  */
++	blr
++
++
++/* Handles copies of 0~8 bytes.  */
++	.align	4
++L(copy_LE_8_bwd):
++	bne	cr6,L(tail4_bwd)
++
++	/* Though we could've used ld/std here, they are still
++	   slow for unaligned cases.  */
++	lwz	6,-8(r4)
++	lwz	7,-4(r4)
++	stw	6,-8(r11)
++	stw	7,-4(r11)
++	blr
++
++
++/* Handle copies of 32+ bytes where DST is aligned (to quadword) but
++   SRC is not.	Use aligned quadword loads from SRC, shifted to realign
++   the data, allowing for aligned DST stores.  */
++	.align	4
++L(copy_GE_32_unaligned_bwd):
++	andi.	r10,r11,15      /* Check alignment of DST against 16 bytes..  */
++	srdi	r9,r5,4		/* Number of full quadwords remaining.  */
++
++	beq	L(copy_GE_32_unaligned_cont_bwd)
++
++	/* DST is not quadword aligned and r10 holds the address masked to
++           compare alignments.  */
++	mtocrf	0x01,r10
++	subf	r5,r10,r5
++
++	/* Vector instructions work best when proper alignment (16-bytes)
++	is present.  Move 0~15 bytes as needed to get DST quadword-aligned.  */
++1:
++	bf	31,2f
++	lbz	r6,-1(r4)
++	subi	r4,r4,1
++	stb	r6,-1(r11)
++	subi	r11,r11,1
++2:
++	bf	30,4f
++	lhz	r6,-2(r4)
++	subi	r4,r4,2
++	sth	r6,-2(r11)
++	subi	r11,r11,2
++4:
++	bf	29,8f
++	lwz	r6,-4(r4)
++	subi	r4,r4,4
++	stw	r6,-4(r11)
++	subi	r11,r11,4
++8:
++	bf	28,0f
++	ld	r6,-8(r4)
++	subi	r4,r4,8
++	std	r6,-8(r11)
++	subi	r11,r11,8
++0:
++	srdi	r9,r5,4	      /* Number of full quadwords remaining.  */
++
++	/* The proper alignment is present, it is OK to copy the bytes now.  */
++L(copy_GE_32_unaligned_cont_bwd):
++
++	/* Setup two indexes to speed up the indexed vector operations.  */
++	clrldi	r10,r5,60
++	li	r6,-16	      /* Index for 16-bytes offsets.  */
++	li	r7,-32	      /* Index for 32-bytes offsets.  */
++	cmpldi	cr1,10,0
++	srdi	r8,r5,5	      /* Setup the loop counter.  */
++	mtocrf	0x01,9
++	cmpldi	cr6,r9,1
++#ifdef __LITTLE_ENDIAN__
++	lvsr	v5,r0,r4
++#else
++	lvsl	v5,r0,r4
++#endif
++	lvx	v3,0,r4
++	li	r0,0
++	bf	31,L(setup_unaligned_loop_bwd)
++
++	/* Copy another 16 bytes to align to 32-bytes due to the loop.  */
++	lvx	v4,r4,r6
++#ifdef __LITTLE_ENDIAN__
++	vperm	v6,v3,v4,v5
++#else
++	vperm	v6,v4,v3,v5
++#endif
++	subi	r4,r4,16
++	stvx	v6,r11,r6
++	subi	r11,r11,16
++	vor	v3,v4,v4
++	clrrdi	r0,r4,60
++
++L(setup_unaligned_loop_bwd):
++	mtctr	r8
++	ble	cr6,L(end_unaligned_loop_bwd)
++
++	/* Copy 32 bytes at a time using vector instructions.  */
++	.align	4
++L(unaligned_loop_bwd):
++
++	/* Note: vr6/vr10 may contain data that was already copied,
++	but in order to get proper alignment, we may have to copy
++	some portions again. This is faster than having unaligned
++	vector instructions though.  */
++
++	lvx	v4,r4,r6
++#ifdef __LITTLE_ENDIAN__
++	vperm	v6,v3,v4,v5
++#else
++	vperm	v6,v4,v3,v5
++#endif
++	lvx	v3,r4,r7
++#ifdef __LITTLE_ENDIAN__
++	vperm	v10,v4,v3,v5
++#else
++	vperm	v10,v3,v4,v5
++#endif
++	subi	r4,r4,32
++	stvx	v6,r11,r6
++	stvx	v10,r11,r7
++	subi	r11,r11,32
++	bdnz	L(unaligned_loop_bwd)
++
++	clrrdi	r0,r4,60
++
++	.align	4
++L(end_unaligned_loop_bwd):
++
++	/* Check for tail bytes.  */
++	mtocrf	0x01,r5
++	beqlr	cr1
++
++	add	r4,r4,0
++
++	/*  We have 1~15 tail bytes to copy, and DST is quadword aligned.  */
++	/* Copy 8 bytes.  */
++	bf	28,4f
++	lwz	r6,-4(r4)
++	lwz	r7,-8(r4)
++	subi	r4,r4,8
++	stw	r6,-4(r11)
++	stw	r7,-8(r11)
++	subi	r11,r11,8
++4:	/* Copy 4~7 bytes.  */
++	bf	29,L(tail2_bwd)
++	lwz	r6,-4(r4)
++	stw	r6,-4(r11)
++	bf	30,L(tail5_bwd)
++	lhz	r7,-6(r4)
++	sth	r7,-6(r11)
++	bflr	31
++	lbz	r8,-7(r4)
++	stb	r8,-7(r11)
++	/* Return original DST pointer.  */
++	blr
++END_GEN_TB (memmove, TB_TOCLESS)
++libc_hidden_builtin_def (memmove)
++
++
++/* void bcopy(const void *src [r3], void *dest [r4], size_t n [r5])
++   Implemented in this file to avoid linker create a stub function call
++   in the branch to '_memmove'.  */
++ENTRY (bcopy)
++	mr	r6,r3
++	mr	r3,r4
++	mr	r4,r6
++	b	L(_memmove)
++END (bcopy)
 diff --git a/sysdeps/powerpc/powerpc64/power7/memrchr.S b/sysdeps/powerpc/powerpc64/power7/memrchr.S
 index 40e436f..0c01ca2 100644
 --- a/sysdeps/powerpc/powerpc64/power7/memrchr.S
@@ -2967,6 +5095,207 @@ index 0000000..a539093
 +weak_alias (__stpncpy, stpncpy)
 +libc_hidden_def (__stpncpy)
 +libc_hidden_builtin_def (stpncpy)
+diff --git a/sysdeps/powerpc/powerpc64/power7/strcmp.S b/sysdeps/powerpc/powerpc64/power7/strcmp.S
+new file mode 100644
+index 0000000..f16a9d8
+--- /dev/null
++++ b/sysdeps/powerpc/powerpc64/power7/strcmp.S
+@@ -0,0 +1,195 @@
++/* Optimized strcmp implementation for Power7 using 'cmpb' instruction
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++/* The optimization is achieved here through cmpb instruction.
++   8byte aligned strings are processed with double word comparision
++   and unaligned strings are handled effectively with loop unrolling
++   technique  */
++
++#include <sysdep.h>
++
++/* int [r3] strcmp (const char *s1 [r3], const char *s2 [r4])  */
++
++EALIGN (strcmp, 4, 0)
++	CALL_MCOUNT 2
++
++	or r9, r3, r4
++	rldicl. r10, r9, 0, 61	/* are s1 and s2 8 byte aligned..?  */
++	bne cr0, L(process_unaligned_bytes)
++
++/* process input parameters on double word aligned boundary  */
++	ld r9, 0(r4)		/* load s2 at offset=0  */
++	li r10, 0		/* load mask=0  */
++	cmpb r10, r9, r10	/* compare bytes at s2 with mask  */
++	cmpdi cr7, r10, 0	/* is NULL found ..? is end of string HIT  */
++	bne cr7, L(process_unaligned_bytes)	/* process byte by byte  */
++
++	ld r10, 0(r3)		/* load s1 at offset=0  */
++	li r8, 0		/* load mask=0  */
++	cmpb r8, r10, r8	/* compare bytes at s1 with mask  */
++	cmpdi cr7, r8, 0	/* is NULL found ..? is end of string HIT  */
++	bne cr7, L(process_unaligned_bytes)	/* process byte by byte  */
++
++/*s1 and s2 does not contain NULL now , so compare all 8 bytes in a GO  */
++	cmpb r9, r10, r9	/* compare s1 and s2  */
++	cmpdi cr7, r9, -1	/* compare result with 0xFFFFFFFFFFFFFFFF  */
++	bne cr7, L(process_unaligned_bytes)	/* s1,s2 mismatch found  */
++
++	addi r5, r3, 8		/* save next offset of s2  */
++	addi r11, r4, 8		/* save next offset of s1  */
++	ld r8, 8(r4)		/* load s2 at offset=8  */
++	li r9, 0		/* load mask=0  */
++	cmpb r9, r8, r9		/* compare bytes at s2 with mask  */
++	cmpdi cr7, r9, 0	/* NULL found ..?  */
++	bne cr7, L(processBytes)/* update input and process bytes one by one  */
++
++	mr r9, r4		/* save s2  */
++	li r10, 0		/* load mask=0  */
++
++	ld r7, 8(r3)		/* load s1 at offset=8  */
++	cmpb r6, r7, r10	/* compare bytes at s1 with mask  */
++	cmpdi cr7, r6, 0	/* is NULL found  */
++	bne cr7, L(processBytes)/* mismatch, so process one by one  */
++
++L(unrollDword):
++	cmpb r8, r7, r8		/* compare s1 and s2  */
++	cmpdi cr7, r8, -1	/* compare result with 0xFFFFFFFFFFFFFFFF  */
++	bne cr7, L(processBytes)/* mismatch with s1 and s2  */
++
++	addi r5, r3, 16		/* save offset=16 of s1  */
++	addi r4, r9, 16		/* save offset=16 of s2  */
++	ld r8, 16(r9)		/* load s2 at offset=16  */
++	cmpb r7, r8, r10	/* compare bytes at s2 with mask  */
++	cmpdi cr7, r7, 0	/* NULL found  ..?  */
++	bne cr7, L(update2processBytes)
++
++	ld r7, 16(r3)		/* load s1 at offset=16  */
++	cmpb r6, r7, r10	/* check s1 for end of string  */
++	cmpdi cr7, r6, 0	/* end of s1 ?,then handle byte by byte  */
++	bne 7,L(update2processBytes)
++
++	cmpb r8, r7, r8		/* compare s1 and s2 double words  */
++	cmpdi cr7, r8, -1	/* compare results with 0xFFFFFFFFFFFFFFFF  */
++	bne cr7,L(update2processBytes)
++
++	addi r5, r3, 24		/* update s1 to offset=24  */
++	addi r4, r9, 24		/* update s2 to offset=24  */
++
++	ld r8, 24(r9)		/* load s2  */
++	cmpb r7, r8, r10	/* compare s2 for NULL  */
++	cmpdi cr7, r7, 0	/* verify if s2 is ending now  */
++	bne cr7,L(update2processBytes)
++
++	ld r7, 24(r3)		/* load s1 at offset=24  */
++	cmpb r6, r7, r10	/* verify for NULL  */
++	cmpdi cr7, r6, 0	/* is NULL found  */
++	bne cr7, L(update2processBytes)
++
++	cmpb r8, r7, r8		/* compare s1 and s2  */
++	cmpdi cr7, r8, -1	/* are s1 and s2 same ..?  */
++	bne cr7, L(update2processBytes)
++
++	addi r7, r9, 32		/* update s2 to next double word  */
++	addi r3, r3, 32		/* update s1 to next double word  */
++
++	ld r8, 32(r9)		/* load s2  */
++	mr r4, r7		/* save s2  */
++	cmpb r6, r8, r10	/* compare s2 with NULL  */
++	cmpdi cr7, r6, 0	/* end of s2 ..? */
++	bne cr7, L(process_unaligned_bytes)
++
++	ld r6, 0(r3)		/* load and compare s1 for NULL  */
++	cmpb r5, r6, r10
++	cmpdi cr7, r5, 0
++	bne cr7, L(process_unaligned_bytes)
++
++	cmpb r8, r6, r8		/* compare s1 and s2  */
++	cmpdi cr7, r8, -1
++	bne cr7, L(process_unaligned_bytes)
++
++	addi r5, r3, 8		/* increment s1 and d2 here  */
++	addi r11, r9, 40
++
++	ld r8, 40(r9)		/* process s2 now  */
++	cmpb r9, r8, r10
++	cmpdi cr7, r9, 0
++	bne cr7, L(processBytes)
++
++	mr r9, r7
++	ld r7, 8(r3)		/* process s1 now  */
++	cmpb r6, r7, r10
++	cmpdi cr7, r6, 0
++	beq cr7, L(unrollDword)	/* unroll to compare s1 and s2  */
++
++L(processBytes):
++	mr r4, r11		/* update input params  */
++	mr r3, r5
++
++	.p2align 4
++L(process_unaligned_bytes):
++	lbz r9, 0(r3)		/* load byte from s1  */
++	lbz r10, 0(r4)		/* load byte from s2  */
++	cmpdi cr7, r9, 0	/* compare *s1 with NULL  */
++	beq cr7, L(diffOfNULL)	/* if *s1 is NULL , return *s1 - *s2  */
++	cmplw cr7, r9, r10	/* compare *s1 and *s2  */
++	bne cr7, L(ComputeDiff)	/* branch to compute difference and return  */
++
++	lbz r9, 1(r3)		/* load next byte from s1  */
++	lbz r10, 1(r4)		/* load next byte from s2  */
++	cmpdi cr7, r9, 0	/* compare *s1 with NULL  */
++	beq cr7, L(diffOfNULL)	/* if *s1 is NULL , return *s1 - *s2  */
++	cmplw cr7, r9, r10	/* compare *s1 and *s2  */
++	bne cr7, L(ComputeDiff)	/* branch to compute difference and return  */
++
++	lbz r9, 2(r3)		/* unroll 3rd byte here  */
++	lbz r10, 2(r4)
++	cmpdi cr7, r9, 0
++	beq cr7, L(diffOfNULL)
++	cmplw cr7, r9, r10
++	bne 7, L(ComputeDiff)
++
++	lbz r9, 3(r3)		/* unroll 4th byte now  */
++	lbz r10, 3(r4)
++	addi r3, r3, 4		/* increment s1 by unroll factor  */
++	cmpdi cr7, r9, 0
++	cmplw cr6, 9, r10
++	beq cr7, L(diffOfNULL)
++	addi r4, r4, 4		/* increment s2 by unroll factor  */
++	beq cr6, L(process_unaligned_bytes)	/* unroll byte processing  */
++
++	.p2align 4
++L(ComputeDiff):
++	extsw r9, r9
++	subf r10, r10, r9	/* compute s1 - s2  */
++	extsw r3, r10
++	blr			/* return  */
++
++	.p2align 4
++L(diffOfNULL):
++	li r9, 0
++	subf r10, r10, r9	/* compute s1 - s2  */
++	extsw r3, r10		/* sign extend result  */
++	blr			/* return  */
++
++	.p2align 4
++L(update2processBytes):
++	mr r3, r5		/* update and proceed  */
++	b L(process_unaligned_bytes)
++
++END (strcmp)
++libc_hidden_builtin_def (strcmp)
 diff --git a/sysdeps/powerpc/powerpc64/power7/strcspn.S b/sysdeps/powerpc/powerpc64/power7/strcspn.S
 new file mode 100644
 index 0000000..3f6aa0a
@@ -3114,10 +5443,10 @@ index 0000000..3f6aa0a
 +libc_hidden_builtin_def (strcspn)
 diff --git a/sysdeps/powerpc/powerpc64/power7/strncat.S b/sysdeps/powerpc/powerpc64/power7/strncat.S
 new file mode 100644
-index 0000000..1a1a95e
+index 0000000..f5ea52d
 --- /dev/null
 +++ b/sysdeps/powerpc/powerpc64/power7/strncat.S
-@@ -0,0 +1,222 @@
+@@ -0,0 +1,228 @@
 +/* Optimized strncat implementation for PowerPC64/POWER7.
 +
 +   Copyright (C) 2014 Free Software Foundation, Inc.
@@ -3158,7 +5487,13 @@ index 0000000..1a1a95e
 +#endif
 +
 +#ifndef STRLEN
-+# define STRLEN   __strlen_ppc
++/* For builds with no IFUNC support, local calls should be made to internal
++   GLIBC symbol (created by libc_hidden_builtin_def).  */
++# ifdef SHARED
++#  define STRLEN   __GI_strlen
++# else
++#  define STRLEN   strlen
++# endif
 +#endif
 +
 +#define	FRAMESIZE	(FRAME_MIN_SIZE+32)
@@ -4270,6 +6605,13 @@ index 0000000..d587a67
 +	blr			/* done  */
 +END(strspn)
 +libc_hidden_builtin_def (strspn)
+diff --git a/sysdeps/powerpc/powerpc64/power8/fpu/Implies b/sysdeps/powerpc/powerpc64/power8/fpu/Implies
+index 7fd86fd..1187cdf 100644
+--- a/sysdeps/powerpc/powerpc64/power8/fpu/Implies
++++ b/sysdeps/powerpc/powerpc64/power8/fpu/Implies
+@@ -1 +1 @@
+-powerpc/powerpc64/power7/fpu/multiarch
++powerpc/powerpc64/power7/fpu/
 diff --git a/sysdeps/powerpc/powerpc64/power8/fpu/s_finite.S b/sysdeps/powerpc/powerpc64/power8/fpu/s_finite.S
 new file mode 100644
 index 0000000..2b27e7b
@@ -4425,10 +6767,10 @@ index 0000000..be759e0
 +/* This function uses the same code as s_isinf.S.  */
 diff --git a/sysdeps/powerpc/powerpc64/power8/fpu/s_isnan.S b/sysdeps/powerpc/powerpc64/power8/fpu/s_isnan.S
 new file mode 100644
-index 0000000..b03c896
+index 0000000..cf119e5
 --- /dev/null
 +++ b/sysdeps/powerpc/powerpc64/power8/fpu/s_isnan.S
-@@ -0,0 +1,58 @@
+@@ -0,0 +1,61 @@
 +/* isnan().  PowerPC64/POWER8 version.
 +   Copyright (C) 2014 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -4469,6 +6811,9 @@ index 0000000..b03c896
 +	rldicl  r3,r3,1,63
 +	blr
 +END (__isnan)
++
++hidden_def (__isnan)
++weak_alias (__isnan, isnan)
 +
 +/* It turns out that the 'double' version will also always work for
 +   single-precision.  */
@@ -4621,3 +6966,27 @@ index 15e29d9..934c558 100644
  
   /* and continue in libc-start, in glibc.  */
  	b	JUMPTARGET(__libc_start_main)
+diff --git a/sysdeps/powerpc/strcat.c b/sysdeps/powerpc/strcat.c
+index 06ceca7..4ff37ea 100644
+--- a/sysdeps/powerpc/strcat.c
++++ b/sysdeps/powerpc/strcat.c
+@@ -18,13 +18,16 @@
+ 
+ #include <string.h>
+ 
+-#undef strcat
++#ifndef STRCAT
++# undef strcat
++# define STRCAT  strcat
++#endif
+ 
+ /* Append SRC on the end of DEST.  */
+ char *
+-strcat (char *dest, const char *src)
++STRCAT(char *dest, const char *src)
+ {
+   strcpy (dest + strlen (dest), src);
+   return dest;
+ }
+-libc_hidden_builtin_def (strcat)
++libc_hidden_builtin_def (STRCAT)
