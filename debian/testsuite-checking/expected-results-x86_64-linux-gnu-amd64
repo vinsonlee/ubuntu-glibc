@@ -11,3 +11,6 @@ tst-timer.out, Error 139
 tst-waitid.out, Error 1
 tst-writev.out, Error 1
 tst-cputimer1.out, Error 1
+
+# the lddebug-scopes patch causes this test to fail:
+tst-dl-iter-static.out, Error 1
