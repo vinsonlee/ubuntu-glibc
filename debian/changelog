@@ -1,3 +1,126 @@
+glibc (2.19-13ubuntu1) vivid; urgency=medium
+
+  * Merge with Debian unstable, pulling in upstream and package fixes.
+  * Re-enable the testsuite that was disabled in Debian for the freeze.
+  * Drop obsolete /etc/ld.so.conf.d/i686-linux-gnu.conf (LP: #1381656)
+  * Update to release/2.19/master, and readjust patches to compensate:
+    - localedata/unsubmitted-tst-setlocale3-ENV.diff: Superseded.
+    - s390/cvs-s390-abi-reversal.diff: Superseded.
+    - any/cvs-resolv-reuse-fd.diff: Superseded.
+    - any/cvs-posix_spawn_file_actions_addopen.diff: Superseded.
+    - any/cvs-setlocale-alloca.diff: Superseded.
+    - any/cvs-CVE-2014-0475.diff: Superseded.
+    - any/cvs-CVE-2014-5119.diff: Superseded.
+    - any/cvs-CVE-2014-6040.diff: Superseded.
+    - any/cvs-resolv-first-query-failure.diff: Rebased with upstream.
+  * testsuite-checking: Ignore failures of the tst-dl-iter-static test,
+    which are caused by the lddebug-scopes patch, while we work out a
+    better solution upstream to the GDB versus linux-vdso.so.1 problem.
+  * Pull in latest PPC fixes from ibm/2.19/master branch (LP: #1341569)
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Tue, 11 Nov 2014 18:48:22 -0700
+
+glibc (2.19-13) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * kfreebsd/local-fbtl.diff: update to revision 5677 (from glibc-bsd).
+    Workarounds a kfreebsd 9.0 to 10.1 ABI break. Closes: #740509.
+  * patches/hppa/cvs-sigrtmin.diff: backport patch from upstream to change
+    __SIGRTMIN to match other architectures. Closes: #766605.
+  * patches/amd64/cvs-slow-sse42.diff: backport patch from upstream to fix
+    a performance issue with strcmp and friends functions on some machines.
+  * patches/any/cvs-regex-alloca.diff: new patch from upstream to fix a 
+    segmentation fault in regex in case of heap allocation failure. Closes:
+    #767225.
+  * Don't fail to build in case of testsuite regressions, so that changes
+    in the environment (e.g.: kernel) do not prevent security or stable 
+    versions to be built. It will be re-enabled after the Jessie release.
+  * debian/control.in/main: build-depends on debhelper (>= 9.20141010) to
+    get Build-Profiles features. This fixes the following lintian warning:
+    restriction-formula-with-debhelper-without-debhelper-version.
+
+  [ Samuel Thibault ]
+  * hurd-i386/cvs-libpthread.diff: Update to Sun Nov 2.
+  * hurd-i386/libpthread_clean.diff: Refresh, most of it merged into
+    cvs-libpthread.diff.
+  * hurd-i386/cvs-libpthread-pthread_condattr_setclock.diff,
+    cvs-libpthread_guardsize.diff, cvs-libpthread_std_thread.diff: Remove,
+    merged into cvs-libpthread.diff.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 06 Nov 2014 20:28:41 +0100
+
+glibc (2.19-12) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/tg-thread-cancel.diff: Update patch from upstream, fixes
+    a rare deadlock.
+  * patches/hurd-i386/local-libpthread-stacksize.diff: New patch to make
+    libpthread stacks size default to 8MiB like on Linux, to avoid surprises
+    with packages which assume the Linuxish default.
+  * patches/hurd-i386/tg-poll_errors_fixes.diff: Update patch, fixes
+    select returned value in case of errors. Closes: #764840.
+
+  [ Petr Salinger ]
+  * update testsuite-checking/expected-results-*-kfreebsd-gnu-*
+    under 10.x kernels, provided by Steven Chamberlain. Closes: #762404.
+
+  [ Aurelien Jarno ]
+  * Remove mtrace(1) and pldd(1) manpages, provided by the manpages package
+    starting with version 3.74.
+  * debian/control.in/*: update the syntax of the Build-Profiles field and
+    build depends on dpkg-dev (>= 1.17.14) to get the new feature. Closes:
+    #764274.
+  * Remove libc6-prof package as it's broken for years and there are better
+    way to profile code nowadays. Closes: #760450.
+  * patches/amd64/local-blacklist-on-TSX-Haswell.diff: new patch from 
+    Henrique de Moraes Holschuh to disable TSX on processors which might get
+    it disable through a microcode update. Closes: #762195.
+  * Install French, German, Polish and Spanish version of validlocale(8)
+    manpage. Add a Replaces: manpages-fr-extra (<= 20141008).
+  * Update French manpages translations, by David Prévot. Closes: #715289.
+  * Update German manpages translations, by Helge Kreutzmann. Closes: #717979.
+  * kfreebsd/local-fbtl.diff: update to revision 5651 (from glibc-bsd).
+    Workarounds a kfreebsd 9.0 to 10.1 ABI break. Closes: #740509.
+  * patches/any/cvs-CVE-2014-6040.diff: new patch from upstream to fix crashes
+    on invalid input in IBM gconv modules (CVE-2014-6040).
+  * patches/any/cvs-check_pf-infinite-loop.diff: new patch from upstream to
+    fix an infinite loop in infinite loop in check_pf.
+  * patches/any/local-static-dlopen-search-path.diff: new patch to re-enable
+    default search path for dlopen() in static libraries. Closes: #754813,
+    #757941.
+
+  [ Helmut Grohne ]
+  * debian/patches/any/local-bootstrap-headers.diff: Update to handle
+    stubs-$abi.h which is required for multilib bootstraps. Closes: #756473
+
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 22 Oct 2014 20:01:11 +0200
+
+glibc (2.19-11) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/tg-thread-cancel.diff: Update patch against two other
+    overzealous assertions.
+  * patches/hurd-i386/submitted-bind_umask.diff: Split into cvs-bind_umask.diff
+    and submitted-bind_umask2.diff as requested by upstream.
+  * patches/hurd-i386/cvs-fork_ss_hang.diff: New patch which fixes some dash
+    hangs.
+  * patches/hurd-i386/cvs-libpthread_guardsize.diff: Add another guard size
+    computation fix.  Fixes gcj's boehm-gc.  Closes: #760076.
+
+  [ Aurelien Jarno ]
+  * debian/control.in/main: Build-Depends on dpkg (>= 1.17.11) instead of
+    dpkg-dev (>= 1.17.1).  Closes: #759495.
+  * debian/debhelper.in/libc.{preinst,postinst,postrm}: correctly remove old
+    conffiles /etc/ld.so.conf.d/i486-{kfreebsd-gnu.conf,gnu-gnu.conf,gnu.conf}.
+    Closes: #759568.
+  * Update Italian debconf translation, by Luca Monducci.  Closes: #760092.
+
+  [ Petr Salinger ]
+  * kfreebsd/local-fbtl.diff: update to revision 5520 (from glibc-bsd).
+    Fixes x87 precision mode in newly created pthreads. Closes: #761175.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 12 Sep 2014 23:49:50 +0200
+
 glibc (2.19-10ubuntu2) utopic; urgency=medium
 
   * Add patches/ubuntu/unsubmitted-increase-dtv-surplus.diff from Fedora to

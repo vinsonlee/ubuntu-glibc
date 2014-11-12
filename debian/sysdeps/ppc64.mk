@@ -11,7 +11,7 @@ powerpc_configure_target = powerpc-linux-gnu
 powerpc_CC = $(CC) -m32
 powerpc_CXX = $(CXX) -m32
 powerpc_extra_cflags = -O3 -fno-tree-vectorize
-powerpc_extra_config_options := $(extra_config_options) --disable-profile
+powerpc_extra_config_options := $(extra_config_options)
 powerpc_slibdir = /lib32
 powerpc_libdir = /usr/lib32
 

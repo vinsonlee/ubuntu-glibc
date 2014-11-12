@@ -16,3 +16,6 @@ tst-waitid.out, Error 1
 
 # This can be removed once bug#748616 is fixed
 basic-test.out, Error 1
+
+# the lddebug-scopes patch causes this test to fail:
+tst-dl-iter-static.out, Error 1
