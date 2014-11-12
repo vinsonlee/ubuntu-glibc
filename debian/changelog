@@ -1,3 +1,9 @@
+glibc (2.19-13ubuntu2) vivid; urgency=medium
+
+  * No, really, remove obsolete /etc/ld.so.conf.d/i686-linux-gnu.conf.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Tue, 11 Nov 2014 20:35:28 -0700
+
 glibc (2.19-13ubuntu1) vivid; urgency=medium
 
   * Merge with Debian unstable, pulling in upstream and package fixes.
