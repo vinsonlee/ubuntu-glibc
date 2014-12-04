@@ -262,6 +262,7 @@ any/submitted-resolv-ipv6-nameservers.diff
 any/cvs-check_pf-infinite-loop.diff
 any/local-static-dlopen-search-path.diff
 any/cvs-regex-alloca.diff
+any/cvs-CVE-2014-7817.diff
 
 # Ubuntu patches live in their own little world, to maintain sanity
 ubuntu/lddebug-scopes.diff

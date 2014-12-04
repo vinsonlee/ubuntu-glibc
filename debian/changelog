@@ -1,3 +1,11 @@
+glibc (2.19-13ubuntu3) vivid; urgency=medium
+
+  * any/cvs-CVE-2014-7817.diff: Backport fix from trunk for wordexp,
+    making it honour the WRDE_NOCMD flag in all cases (LP: #1396471)
+  * Update to release/2.19/master, fixing arm64 frame bug in _start.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Thu, 04 Dec 2014 16:56:41 -0700
+
 glibc (2.19-13ubuntu2) vivid; urgency=medium
 
   * No, really, remove obsolete /etc/ld.so.conf.d/i686-linux-gnu.conf.
