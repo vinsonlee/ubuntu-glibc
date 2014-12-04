@@ -1,3 +1,11 @@
+glibc (2.19-10ubuntu2.2) utopic; urgency=medium
+
+  * patches/amd64/local-blacklist-on-TSX-Haswell.diff: new patch from 
+    Henrique de Moraes Holschuh to disable TSX on processors which might get
+    it disabled through a microcode update. (LP: #1398975)
+
+ -- Chris J Arges <chris.j.arges@canonical.com>  Thu, 04 Dec 2014 10:13:13 -0600
+
 glibc (2.19-10ubuntu2.1) utopic-security; urgency=medium
 
   * SECURITY UPDATE: denial of service in IBM gconv modules
