@@ -1,3 +1,24 @@
+glibc (2.19-10ubuntu2.2) utopic; urgency=medium
+
+  * patches/amd64/local-blacklist-on-TSX-Haswell.diff: new patch from 
+    Henrique de Moraes Holschuh to disable TSX on processors which might get
+    it disabled through a microcode update. (LP: #1398975)
+
+ -- Chris J Arges <chris.j.arges@canonical.com>  Thu, 04 Dec 2014 10:13:13 -0600
+
+glibc (2.19-10ubuntu2.1) utopic-security; urgency=medium
+
+  * SECURITY UPDATE: denial of service in IBM gconv modules
+    - debian/patches/any/cvs-CVE-2014-6040.diff: fix checks in
+      iconvdata/ibm*.c.
+    - CVE-2014-6040
+  * SECURITY UPDATE: arbitrary command execution via wordexp (LP: #1396471)
+    - debian/patches/any/CVE-2014-7817.diff: properly handle WRDE_NOCMD in
+      posix/wordexp.c, added tests to posix/wordexp-test.c.
+    - CVE-2014-7817
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Fri, 28 Nov 2014 10:48:58 -0500
+
 glibc (2.19-10ubuntu2) utopic; urgency=medium
 
   * Add patches/ubuntu/unsubmitted-increase-dtv-surplus.diff from Fedora to
