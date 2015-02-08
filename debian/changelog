@@ -1,3 +1,61 @@
+glibc (2.19-15) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/patches/any/cvs-wscanf.diff: new patch from upstream to fix a
+    heap buffer overflow in wscanf (CVE-2015-1472, CVE-2015-1473). Closes:
+    #777197.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 08 Feb 2015 15:54:37 +0100
+
+glibc (2.19-14) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/libpthread_spin-lock.diff: New patch to fix spin-lock.h
+    inclusion order.
+  * patches/hurd-i386/tg-WRLCK-upgrade.diff: New patch to fix atomicity of
+    changing between rd locks and wr locks.
+  * patches/hurd-i386/cvs-static-dlopen.diff: New patch to fix dlopen from
+    static binaries, busybox notably.
+  * control.in/main: Bump mig dependency to get _routines@ symbols, bump
+    gnumach-dev dependency to get protected payload symbols.
+  * libc0.3.symbols.hurd-i386: Update symbols.
+  * patches/hurd-i386/submitted-startup-pid2.diff: Remove, replaced by...
+  * patches/hurd-i386/tg-reboot-startup.diff: ... new patch to make reboot
+    lookup startup through /servers/startup instead of guessing its pid and
+    using its message port.
+
+  [ Adam Conrad ]
+  * debian/rules.d/tarball.mk: Fix update-from-upstream manual/* filter rule.
+
+  [ Petr Salinger ]
+  * kfreebsd/local-sysdeps.diff: update to revision 5688 (from glibc-bsd).
+    Do not return EINTR from sigwait. Closes: #763705.
+
+  [ Aurelien Jarno ]
+  * debian/patches/any/cvs-wordexp.diff: new patch from upstream to fix a
+    command execution in wordexp() with WRDE_NOCMD specified (CVS-2014-7817).
+  * debian/patches/any/cvs-getnetbyname.diff: new patch from upstream to fix
+    an infinite loop in getnetbyname (CVE-2014-9402). Closes: #775572.
+  * debian/patches/any/cvs-vfprintf.diff: new patch from ustream to fix a
+    stack overflow in vfprintf (CVE-2012-3406). Closes: #681888.
+  * debian/patches/git-updates.diff: update to the latest commit of the 2.19
+    branch to fix a few buffer overflow, unbounded stack allocation or memory
+    leaks that have not been (yet ?) tagged as security issue. This branch
+    includes a few patches already applied manually:
+    - drop patches/localedata/unsubmitted-tst-setlocale3-ENV.diff (merged
+      upstream).
+    - drop patches/s390/cvs-s390-abi-reversal.diff (merged upstream).
+    - update patches/any/cvs-resolv-first-query-failure.diff
+    - drop patches/any/cvs-resolv-reuse-fd.diff (merged upstream).
+    - drop patches/any/cvs-posix_spawn_file_actions_addopen.diff (merged
+      upstream).
+    - drop patches/any/cvs-setlocale-alloca.diff (merged upstream).
+    - drop patches/any/cvs-CVE-2014-0475.diff (merged upstream).
+    - drop patches/any/cvs-CVE-2014-5119.diff (merged upstream).
+    - drop patches/any/cvs-CVE-2014-6040.diff (merged upstream).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 01 Feb 2015 00:32:31 +0100
+
 glibc (2.19-13) unstable; urgency=medium
 
   [ Aurelien Jarno ]
