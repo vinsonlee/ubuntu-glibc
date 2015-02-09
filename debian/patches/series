@@ -110,6 +110,7 @@ hurd-i386/tg-hurdsig-SA_SIGINFO.diff
 hurd-i386/tg-hurdsig-fixes-2.diff
 hurd-i386/tg-hooks.diff
 hurd-i386/cvs-libpthread.diff
+hurd-i386/libpthread_spin-lock.diff
 hurd-i386/tg-aio_misc.diff
 hurd-i386/libpthread_build.diff
 hurd-i386/libpthread_sigmask.diff
@@ -134,7 +135,6 @@ hurd-i386/tg-EIEIO-fr.diff
 hurd-i386/tg-io_select_timeout.diff
 hurd-i386/tg-poll_errors_fixes.diff
 hurd-i386/unsubmitted-clock_t_centiseconds.diff
-hurd-i386/submitted-startup-pid2.diff
 hurd-i386/submitted-path_mounted.diff
 hurd-i386/unsubmitted-NO_HIDDEN.diff
 hurd-i386/tg-socket_flags.diff
@@ -152,6 +152,9 @@ hurd-i386/cvs-bind_umask.diff
 hurd-i386/submitted-bind_umask2.diff
 hurd-i386/cvs-fork_ss_hang.diff
 hurd-i386/local-libpthread-stacksize.diff
+hurd-i386/tg-WRLCK-upgrade.diff
+hurd-i386/cvs-static-dlopen.diff
+hurd-i386/tg-reboot-startup.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
@@ -262,12 +265,14 @@ any/submitted-resolv-ipv6-nameservers.diff
 any/cvs-check_pf-infinite-loop.diff
 any/local-static-dlopen-search-path.diff
 any/cvs-regex-alloca.diff
-any/cvs-CVE-2014-7817.diff
+any/cvs-wordexp.diff
+any/cvs-getnetbyname.diff
+any/cvs-vfprintf.diff
+any/cvs-wscanf.diff
 
 # Ubuntu patches live in their own little world, to maintain sanity
 ubuntu/lddebug-scopes.diff
 ubuntu/local-altlocaledir.diff
-ubuntu/local-CVE-2012-3406.diff
 ubuntu/local-disable-ld_audit.diff
 ubuntu/local-disable-nscd-netgroup-caching.diff
 ubuntu/submitted-no-sprintf-pre-truncate.diff
