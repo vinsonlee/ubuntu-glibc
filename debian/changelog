@@ -1,3 +1,17 @@
+glibc (2.19-10ubuntu2.3) utopic-security; urgency=medium
+
+  * SECURITY UPDATE: denial of service via endless loop in getaddr_r
+    - debian/patches/any/cvs-getnetbyname.diff: iterate over alias names in
+      resolv/nss_dns/dns-network.c.
+    - CVE-2014-9402
+  * SECURITY UPDATE: buffer overflow in wscanf
+    - debian/patches/any/cvs-wscanf.diff: calculate correct size in
+      stdio-common/vfscanf.c, added test to stdio-common/tst-sscanf.c.
+    - CVE-2015-1472
+    - CVE-2015-1473
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 25 Feb 2015 08:57:22 -0500
+
 glibc (2.19-10ubuntu2.2) utopic; urgency=medium
 
   * patches/amd64/local-blacklist-on-TSX-Haswell.diff: new patch from 
