@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -92,7 +92,6 @@ L(thread_start):
 	   the outermost frame obviously.  */
 	xorl	%ebp, %ebp
 
-#ifdef RESET_PID
 	testq	$CLONE_THREAD, %rdi
 	jne	1f
 	testq	$CLONE_VM, %rdi
@@ -103,7 +102,6 @@ L(thread_start):
 2:	movl	%eax, %fs:PID
 	movl	%eax, %fs:TID
 1:
-#endif
 
 	/* Set up arguments for the function call.  */
 	popq	%rax		/* Function to call.  */
