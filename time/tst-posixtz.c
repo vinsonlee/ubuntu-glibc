@@ -28,8 +28,8 @@ struct
     "1999/02/25 15:18:12 dst=0 zone=EST" },
 };
 
-int
-main (void)
+static int
+do_test (void)
 {
   int result = 0;
   size_t cnt;
@@ -39,7 +39,8 @@ main (void)
       char buf[100];
       struct tm *tmp;
 
-      printf ("TZ = \"%s\", time = %ld => ", tests[cnt].tz, tests[cnt].when);
+      printf ("TZ = \"%s\", time = %jd => ", tests[cnt].tz,
+	      (intmax_t) tests[cnt].when);
       fflush (stdout);
 
       setenv ("TZ", tests[cnt].tz, 1);
@@ -116,3 +117,6 @@ main (void)
 
   return result;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

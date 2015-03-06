@@ -1,5 +1,5 @@
 /* Test of the gettext functions.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de> and
    Andreas Jaeger <aj@suse.de>, 2000.
@@ -40,8 +40,8 @@ struct data_t strings[] =
 const int lang_cnt = 3;
 const char *lang[] = {"lang1", "lang2", "lang3"};
 
-int
-main (void)
+static int
+do_test (void)
 {
   int i;
 
@@ -70,3 +70,6 @@ main (void)
 
   return 0;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

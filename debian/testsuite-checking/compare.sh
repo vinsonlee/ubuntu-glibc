@@ -13,31 +13,41 @@ grep -Ev '^ *$|^#' $2 | sort > $results
 
 builddir=${3:-.}
 
+echo "+--------------------------- BEGIN COMPARE ---------------------------+"
+echo "Comparing against $1"
 REGRESSIONS=$(diff -wBI '^#.*' $expected $results | sed -e '/^>/!d;s/^> //g')
 PROGRESSIONS=$(diff -wBI '^#.*' $expected $results | sed -e '/^</!d;s/^< //g')
 if [ -n "$REGRESSIONS" ] ; then
-  echo "Encountered regressions that don't match expected failures ($1):"
+  echo "+---------------------------------------------------------------------+"
+  echo "|     Encountered regressions that don't match expected failures:     |"
+  echo "+---------------------------------------------------------------------+"
   echo "$REGRESSIONS"
-  for test in $(echo "$REGRESSIONS" | sed -e's/, Error.*//')
+  echo "+---------------------------------------------------------------------+"
+  for test in $REGRESSIONS
   do
     echo TEST $test:
-    find $builddir -name "$test" | xargs -r cat
+    cat $builddir/$test.out
   done
   rv=1
 else
-  echo "Passed regression testing. No new failures, no changed error values."
-  for test in $(sed -n '/^[^#]/s/, Error.*//p' $results)
+  echo "+---------------------------------------------------------------------+"
+  echo "| Passed regression testing.  Give yourself a hearty pat on the back. |"
+  echo "+---------------------------------------------------------------------+"
+  for test in $(cat $results)
   do
     echo TEST $test:
-    find $builddir -name "$test" | xargs -r cat
+    cat $builddir/$test.out
   done
   rv=0
 fi
 
 if [ -n "$PROGRESSIONS" ] ; then
-  echo "Encountered progressions that don't match expected failures:"
+  echo "+---------------------------------------------------------------------+"
+  echo "|    Encountered progressions that don't match expected failures:     |"
+  echo "+---------------------------------------------------------------------+"
   echo "$PROGRESSIONS"
 fi
+echo "+---------------------------- END COMPARE ----------------------------+"
 
 rm -f $expected $results
 # This would be a lovely place to exit 0 if you wanted to disable hard failures

@@ -1,25 +1,21 @@
 GLIBC_PROVIDES dnl See aclocal.m4 in the top level source directory.
 # Local configure fragment for sysdeps/unix/sysv/linux.
 
-# Don't bother trying to generate any glue code to be compatible with the
-# existing system library, because we are the only system library.
-inhibit_glue=yes
-
-define([LIBC_LINUX_VERSION],[2.6.19])dnl
+define([LIBC_LINUX_VERSION],[2.6.32])dnl
 if test -n "$sysheaders"; then
   OLD_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="$CPPFLAGS $SYSINCLUDES"
 fi
 define([libc_cv_linuxVER], [libc_cv_linux]patsubst(LIBC_LINUX_VERSION,[\.]))dnl
 AC_CACHE_CHECK(installed Linux kernel header files, libc_cv_linuxVER, [dnl
-AC_EGREP_CPP([eat flaming death], [#include <linux/version.h>
+AC_TRY_COMPILE([#include <linux/version.h>
 #if !defined LINUX_VERSION_CODE || LINUX_VERSION_CODE < ]dnl
 patsubst(LIBC_LINUX_VERSION,[^\([^.]*\)\.\([^.]*\)\.\([^.]*\)$],dnl
 [ (\1 *65536+ \2 *256+ \3) /* \1.\2.\3 */])[
-eat flaming death
-#endif],
-	     libc_cv_linuxVER='TOO OLD!',
-	     libc_cv_linuxVER='LIBC_LINUX_VERSION or later')])
+# error kernel headers missing or too old
+#endif], [],
+	       [libc_cv_linuxVER='LIBC_LINUX_VERSION or later'],
+	       [libc_cv_linuxVER='missing or too old!'])])
 if test "$libc_cv_linuxVER" != 'LIBC_LINUX_VERSION or later'; then
   AC_MSG_ERROR([GNU libc requires kernel header files from
 Linux LIBC_LINUX_VERSION or later to be installed before configuring.
@@ -37,43 +33,7 @@ fi
 # set arch_minimum_kernel already, let that override our defaults here.
 # Note that we presume such a fragment has set libc_cv_gcc_unwind_find_fde
 # if appropriate too.
-test -n "$arch_minimum_kernel" ||
-case "$machine" in
-  i386*)
-    libc_cv_gcc_unwind_find_fde=yes
-    arch_minimum_kernel=2.6.16
-    ;;
-  x86_64/x32)
-    arch_minimum_kernel=3.4.0
-    ;;
-  powerpc/powerpc32*)
-    libc_cv_gcc_unwind_find_fde=yes
-    arch_minimum_kernel=2.6.16
-    ;;
-  s390/s390-32)
-    libc_cv_gcc_unwind_find_fde=yes
-    arch_minimum_kernel=2.6.16
-    ;;
-  s390/s390-64)
-    libc_cv_gcc_unwind_find_fde=yes
-    arch_minimum_kernel=2.6.16
-    ;;
-  sh*)
-    arch_minimum_kernel=2.6.16
-    libc_cv_gcc_unwind_find_fde=yes
-    ;;
-  sparc/sparc64*)
-    libc_cv_gcc_unwind_find_fde=yes
-    arch_minimum_kernel=2.6.16
-    ;;
-  sparc*)
-    libc_cv_gcc_unwind_find_fde=yes
-    arch_minimum_kernel=2.6.16
-    ;;
-  *)
-    arch_minimum_kernel=2.6.16
-    ;;
-esac
+test -n "$arch_minimum_kernel" || arch_minimum_kernel=2.6.32
 if test -n "$minimum_kernel"; then
   changequote(,)
   user_version=$((`echo "$minimum_kernel.0.0.0" | sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\1 \* 65536 + \2 \* 256 + \3/'`))
@@ -92,10 +52,10 @@ changequote(,)dnl
 decnum=`echo "$minimum_kernel.0.0.0" | sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/(\1 * 65536 + \2 * 256 + \3)/'`;
 abinum=`echo "$minimum_kernel.0.0.0" | sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\1,\2,\3/'`;
 changequote([,])dnl
-AC_EGREP_CPP([eat flaming death], [#include <linux/version.h>
+AC_TRY_COMPILE([#include <linux/version.h>
 #if LINUX_VERSION_CODE < $decnum
-eat flaming death
-#endif], libc_minimum_kernel='too old!', libc_minimum_kernel=ok)
+# error kernel headers too old
+#endif], [], [libc_minimum_kernel=ok], [libc_minimum_kernel='too old!'])
 AC_MSG_RESULT($libc_minimum_kernel)
 if test "$libc_minimum_kernel" = ok; then
   AC_DEFINE_UNQUOTED(__LINUX_KERNEL_VERSION, $decnum)
@@ -111,41 +71,8 @@ AC_CHECK_HEADER(linux/fanotify.h,
   [AC_DEFINE(HAVE_LINUX_FANOTIFY_H)], ,
   [/* No default includes.  */])
 
-# The result of the above test for the use of the FDE code is invalid if
-# the user overrides the decision about the minimum ABI.
-if test "$oldest_abi" != default && test "2.2.4" \< "$oldest_abi"; then
-  libc_cv_gcc_unwind_find_fde=no
-fi
-
 if test -n "$sysheaders"; then
   CPPFLAGS=$OLD_CPPFLAGS
-fi
-
-# Under Linux the NPTL add-on should be available.
-case $add_ons in
-  # It is available.  Good.
-  *nptl*)
-    nptl_missing=
-    ;;
-  *)
-    nptl_missing=yes
-    ;;
-esac
-
-if test "$nptl_missing"; then
-  if test $enable_sanity = yes; then
-    echo "\
-*** On GNU/Linux systems it is normal to compile GNU libc with the
-*** \`nptl' add-on.  Without that, the library will be
-*** incompatible with normal GNU/Linux systems.
-*** If you really mean to not use this add-on, run configure again
-*** using the extra parameter \`--disable-sanity-checks'."
-    exit 1
-  else
-    echo "\
-*** WARNING: Are you sure you do not want to use the \`nptl'
-*** add-on?"
-  fi
 fi
 
 if test "$prefix" = "/usr/local" -o "$prefix" = "/usr/local/" -o "$prefix" = "NONE"; then
@@ -167,29 +94,6 @@ fi
 
 # One Linux we use ldconfig.
 use_ldconfig=yes
-
-# We need some extensions to the `ldd' script.
-changequote(,)
-case "$machine" in
-  i[3456]86*)
-    ldd_rewrite_script=sysdeps/unix/sysv/linux/ldd-rewrite.sed
-    ;;
-  s390*)
-    ldd_rewrite_script=sysdeps/unix/sysv/linux/s390/ldd-rewrite.sed
-    ;;
-  sparc*)
-    ldd_rewrite_script=sysdeps/unix/sysv/linux/sparc/ldd-rewrite.sed
-    ;;
-  x86_64*)
-    ldd_rewrite_script=sysdeps/unix/sysv/linux/x86_64/ldd-rewrite.sed
-    ;;
-  powerpc*)
-    ldd_rewrite_script=sysdeps/unix/sysv/linux/powerpc/ldd-rewrite.sed
-    ;;
-  *)
-    ;;
-esac
-changequote([,])
 
 if test $host = $build; then
   # If $prefix/include/{net,scsi} are symlinks, make install will

@@ -1,5 +1,5 @@
 /* Test restarting behaviour of mbsnrtowcs.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Bruno Haible <haible@ilog.fr>.
 
@@ -24,19 +24,19 @@
 
 #define show(expr, nexp, wcexp, end) \
   n = expr;								\
-  printf (#expr " -> %Zd", n);						\
-  printf (", wc = %lu, src = buf+%d", (unsigned long int) wc,		\
+  printf (#expr " -> %zu", n);						\
+  printf (", wc = %lu, src = buf+%td", (unsigned long int) wc,		\
 	  src - (const char *) buf);					\
   if (n != (size_t) nexp || wc != wcexp || src != (const char *) (end))	\
     {									\
-      printf (", expected %Zd and %lu and buf+%d", nexp,		\
+      printf (", expected %zu and %lu and buf+%td", (size_t) nexp,	\
 	      (unsigned long int) wcexp, (end) - buf);			\
       result = 1;							\
     }									\
   putc ('\n', stdout)
 
-int
-main (void)
+static int
+do_test (void)
 {
   unsigned char buf[6] = { 0x25,  0xe2, 0x82, 0xac,  0xce, 0xbb };
   mbstate_t state;
@@ -62,3 +62,6 @@ main (void)
 
   return result;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"
