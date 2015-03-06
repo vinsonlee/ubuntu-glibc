@@ -1,3 +1,156 @@
+glibc (2.21-0experimental0) experimental; urgency=medium
+
+  * New upstream release: version 2.21, with git updates up to 2015-02-10:
+    - debian/patches/git-updates.diff: Updated.
+    - debian/patches/all/submitted-po-fr-fixes.diff: Rebased.
+    - debian/patches/alpha/cvs-__pointer_chk_guard.diff: Merged.
+    - debian/patches/alpha/cvs-unwind-backtrace.diff: Merged.
+    - debian/patches/alpha/local-gcc4.1.diff: Rebased.
+    - debian/patches/alpha/local-lowlevellock.diff: Dropped.
+    - debian/patches/alpha/local-string-functions.diff: Rebased.
+    - debian/patches/alpha/submitted-PTR_MANGLE.diff: Rebased.
+    - debian/patches/alpha/submitted-dl-support.diff: Rebased.
+    - debian/patches/alpha/submitted-lll_futex_timed_wait_bitset.diff: Dropped.
+    - debian/patches/alpha/submitted-rtld-fPIC.diff: Rebased.
+    - debian/patches/amd64/cvs-slow-sse42.diff: Merged.
+    - debian/patches/amd64/local-blacklist-on-TSX-Haswell.diff: Rebased.
+    - debian/patches/amd64/submitted-rwlock-stack-imbalance.diff: Dropped.
+    - debian/patches/any/cvs-check_pf-infinite-loop.diff: Merged.
+    - debian/patches/any/cvs-getnetbyname.diff: Merged.
+    - debian/patches/any/cvs-regex-alloca.diff: Merged.
+    - debian/patches/any/cvs-resolv-first-query-failure.diff: Merged.
+    - debian/patches/any/cvs-socketcall-syscall.diff: Merged.
+    - debian/patches/any/cvs-strtod.diff: Merged.
+    - debian/patches/any/cvs-vfprintf.diff: Merged.
+    - debian/patches/any/cvs-wordexp.diff: Merged.
+    - debian/patches/any/cvs-wprintf.diff: Merged.
+    - debian/patches/any/cvs-wscanf.diff: Merged.
+    - debian/patches/any/local-disable-libnss-db.diff: Rebased.
+    - debian/patches/any/local-disable-test-tgmath2.diff: Rebased.
+    - debian/patches/any/local-libgcc-compat-ports.diff: Rebased.
+    - debian/patches/any/local-libpic.diff: Rebased.
+    - debian/patches/any/local-no-SOCK_NONBLOCK.diff: Rebased.
+    - debian/patches/any/local-no-pagesize.diff: Rebased.
+    - debian/patches/any/local-rtlddir-cross.diff: Rebased.
+    - debian/patches/any/local-stdio-lock.diff: Rebased.
+    - debian/patches/any/local-sysctl.diff: Rebased.
+    - debian/patches/any/submitted-argp-attribute.diff: Rebased.
+    - debian/patches/any/submitted-bits-fcntl_h-at.diff: Rebased.
+    - debian/patches/any/submitted-longdouble.diff: Rebased.
+    - debian/patches/any/submitted-nl_langinfo-static.diff: Merged.
+    - debian/patches/any/submitted-ptsname_r-uninitialized-memory.diff: Merged.
+    - debian/patches/any/submitted-resolv-ipv6-nameservers.diff: Rebased.
+    - debian/patches/any/submitted-sysdeps-auxv.diff: Merged.
+    - debian/patches/any/unsubmitted-scanf-includes.diff: Rebased.
+    - debian/patches/any/unsubmitted-tst-ftell-locale.diff: Dropped.
+    - debian/patches/any/unsubmitted-tst-tlsmod-as-needed.diff: Merged.
+    - debian/patches/arm/local-ioperm.diff: Rebased.
+    - debian/patches/arm/local-lowlevellock.diff: Dropped.
+    - debian/patches/arm/local-sigaction.diff: Rebased.
+    - debian/patches/arm/local-vfp-sysdeps.diff: Rebased.
+    - debian/patches/arm/unsubmitted-ldconfig-cache-abi.diff: Rebased.
+    - debian/patches/arm64/cvs-includes-cleanup.diff: Merged.
+    - debian/patches/arm64/submitted-align.diff: Merged.
+    - debian/patches/arm64/submitted-setcontext.diff: Merged.
+    - debian/patches/arm64/submitted-tst-setcontext.diff: Merged.
+    - debian/patches/hppa/cvs-sigrtmin.diff: Merged.
+    - debian/patches/hppa/local-atomic.diff: Dropped.
+    - debian/patches/hppa/local-elf-make-cflags.diff: Rebased.
+    - debian/patches/hppa/local-fcntl-osync.diff: Rebased.
+    - debian/patches/hppa/local-fpu.diff: Rebased.
+    - debian/patches/hppa/local-inlining.diff: Rebased.
+    - debian/patches/hppa/local-lowlevellock.diff: Dropped.
+    - debian/patches/hppa/local-pthread_spin_unlock.diff: Rebased.
+    - debian/patches/hppa/local-setjmp-namespace.diff: Dropped.
+    - debian/patches/hppa/local-shmlba.diff: Rebased.
+    - debian/patches/hppa/local-stack-grows-up.diff: Rebased.
+    - debian/patches/hurd-i386/tg-libpthread_depends.diff: Rebased.
+    - debian/patches/i386/submitted-i686-timing.diff: Rebased.
+    - debian/patches/kfreebsd/local-fbtl-depends.diff: Rebased.
+    - debian/patches/kfreebsd/local-fbtl.diff: Rebased.
+    - debian/patches/kfreebsd/local-scripts.diff: Rebased.
+    - debian/patches/kfreebsd/local-sysdeps.diff: Rebased.
+    - debian/patches/kfreebsd/submitted-waitid.diff: Rebased.
+    - debian/patches/locale/locale-print-LANGUAGE.diff: Rebased.
+    - debian/patches/locale/submitted-XDR-revert.diff: Merged.
+    - debian/patches/localedata/sort-UTF8-first.diff: Rebased.
+    - debian/patches/localedata/supported.diff: Rebased.
+    - debian/patches/m68k/local-fpic.diff: Rebased.
+    - debian/patches/m68k/local-mathinline_h.diff: Rebased.
+    - debian/patches/m68k/local-reloc.diff: Rebased.
+    - debian/patches/mips/local-lowlevellock.diff: Dropped.
+    - debian/patches/mips/local-r10k.diff: Rebased.
+    - debian/patches/mips/submitted-rld_map.diff: Rebased.
+    - debian/patches/powerpc/cvs-ibm-branch.diff: Dropped.
+    - debian/patches/sparc/local-fork.diff: Dropped.
+    - debian/patches/sparc/local-sparcv9-target.diff: Rebased.
+  * Drop some hppa patches that Carlos O'Donell claims are no longer needed:
+    - debian/patches/hppa/local-EAGAIN.diff: Dropped.
+    - debian/patches/hppa/local-fanotify_mark-5i.diff: Dropped.
+    - debian/patches/hppa/submitted-fadvise64_64.diff: Dropped.
+    - debian/patches/hppa/submitted-nptl-carlos.diff: Dropped.
+  * debian/*: Update occurences of 2.19 to 2.21 and update symbols to match.
+  * debian/patches/any/cvs-vismain-pie.diff: Compile vismain with -fPIE
+    and link with -pie to fix testsuite failure with the new binutils.
+  * debian/patches/any/local-libgcc-compat-abilists.diff: Fix the ablists
+    to match the symbols added in local-libgcc-compat* for the testsuite.
+  * debian/patches/sh4/local-fpscr_values.diff: Make the sh abilist match.
+  * debian/{control.in/main,rules}: Switch to gcc-4.9 on all architectures.
+  * debian/patches/any/local-tester-gcc-4.9.diff: Fix gcc-4.9 regression.
+  * debian/patches/any/local-xfail-stdlib-linkns.diff: XFAIL this test due
+    to building with pt_chown, which we should revisit very, very soon.
+  * debian/sysdeps/*: --enable-lock-elision on PPC targets (LP: #1414819)
+  * debian/libc*.symbols*: Remove local __invoke_dynamic_linker__ symbol,
+    which no longer shows up in random support libraries' symbol tables.
+  * debian/sysdeps/*: Neither ports nor nptl are considered add-ons anymore.
+  * debian/{rules.d/build.mk,testsuite-checking/*}: Adjust for upstream's
+    new testsuite, and convert old expected-results-* to match new output.
+  * debian/testsuite-checking/*: Let arm64 fail the tests indicated by the
+    upstream port maintainer as broken, and let i386 fail tst-cleanupx4.
+  * debian/debhelper.in/glibc-doc.install: Install changelogs that exist.
+  * debian/patches/i386/submitted-i686-timing.diff: Fix -Wundef warnings.
+  * debian/patches/arm/unsubmitted-ldso-abi-check.diff: Fix build failures
+    from format mismatches, uninitialised variables, and const conversions.
+  * debian/rules.d/debhelper.mk: Fix bootstrap libdirs (Closes: #715059)
+  * debian/patches/arm/unsubmitted-ldconfig-cache-abi.diff: Same as above.
+  * Other than two hurd-i386 patches required as scaffolding for others,
+    all the hurd-i386 patches are disabled, so this build *will* fail there.
+  * kfreebsd's sysdeps patches almost certainly need updating for 2.21 too.
+  * Failing on testsuite failures is disabled to attempt to get full builds.
+
+ -- Adam Conrad <adconrad@0c3.net>  Fri, 06 Mar 2015 13:47:43 -0700
+
+glibc (2.19-17) unstable; urgency=medium
+
+  [ Adam Conrad ]
+  * debian/rules.d/debhelper.mk: Unconditionally create tmp.substvars.
+    Closes: #780431.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 14 Mar 2015 10:17:56 +0100
+
+glibc (2.19-16) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/cvs-libpthread-dlopen.diff: New patch to allow
+    libpthread.so to be dynamically loaded from a dlopened library.
+  * patches/hurd-i386/cvs-libpthread-libc-lockP{,2}.diff: New patch to
+    dynamically call pthread functions from libc.
+
+  [ Aurelien Jarno ]
+  * We have a transition mechanism for the locales, as the Debian archive
+    used to expose arch:all packages on all architectures even when the
+    corresponding arch:any package is not available yet. This has been
+    fixed long time ago, the transition mechanism has not been used
+    correctly for a lot of time and has been broken by the split out of
+    libc-bin. The breakage has been partially fixed by the "Breaks: locales 
+    (<< 2.19)" added to libc6. It's now time to add the missing "Depends:
+    libc-bin (>> 2.19)" to locales and remove the transition mechanism.
+    Closes: #583088, #779442 
+  * patches/any/cvs-ldconfig-aux-cache.diff: new patch from upstream to
+    ignore corrupted aux-cache instead of segfaulting. Closes: #759530.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 12 Mar 2015 22:00:40 +0100
+
 glibc (2.19-15) unstable; urgency=medium
 
   [ Aurelien Jarno ]

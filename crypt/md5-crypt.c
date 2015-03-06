@@ -1,6 +1,6 @@
 /* One way encryption based on MD5 sum.
    Compatible with the behavior of MD5 crypt introduced in FreeBSD 2.0.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -25,6 +25,7 @@
 #include <sys/param.h>
 
 #include "md5.h"
+#include "crypt-private.h"
 
 
 #ifdef USE_NSS
@@ -35,7 +36,7 @@ typedef int PRBool;
 # define md5_init_ctx(ctxp, nss_ctxp) \
   do									      \
     {									      \
-      if (((nss_ctxp = NSSLOWHASH_NewContext (nss_ictx, HASH_AlgMD5))         \
+      if (((nss_ctxp = NSSLOWHASH_NewContext (nss_ictx, HASH_AlgMD5))	      \
 	   == NULL))							      \
 	{								      \
 	  if (nss_ctx != NULL)						      \
@@ -77,10 +78,6 @@ typedef int PRBool;
    replacement.  This is meant to be the same as for other MD5 based
    encryption implementations.  */
 static const char md5_salt_prefix[] = "$1$";
-
-/* Table with characters for base64 transformation.  */
-static const char b64t[64] =
-"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 
 /* Prototypes for local functions.  */
@@ -268,24 +265,18 @@ __md5_crypt_r (key, salt, buffer, buflen)
       --buflen;
     }
 
-  void b64_from_24bit (unsigned int b2, unsigned int b1, unsigned int b0,
-		       int n)
-  {
-    unsigned int w = (b2 << 16) | (b1 << 8) | b0;
-    while (n-- > 0 && buflen > 0)
-      {
-	*cp++ = b64t[w & 0x3f];
-	--buflen;
-	w >>= 6;
-      }
-  }
-
-  b64_from_24bit (alt_result[0], alt_result[6], alt_result[12], 4);
-  b64_from_24bit (alt_result[1], alt_result[7], alt_result[13], 4);
-  b64_from_24bit (alt_result[2], alt_result[8], alt_result[14], 4);
-  b64_from_24bit (alt_result[3], alt_result[9], alt_result[15], 4);
-  b64_from_24bit (alt_result[4], alt_result[10], alt_result[5], 4);
-  b64_from_24bit (0, 0, alt_result[11], 2);
+  __b64_from_24bit (&cp, &buflen,
+		    alt_result[0], alt_result[6], alt_result[12], 4);
+  __b64_from_24bit (&cp, &buflen,
+		    alt_result[1], alt_result[7], alt_result[13], 4);
+  __b64_from_24bit (&cp, &buflen,
+		    alt_result[2], alt_result[8], alt_result[14], 4);
+  __b64_from_24bit (&cp, &buflen,
+		    alt_result[3], alt_result[9], alt_result[15], 4);
+  __b64_from_24bit (&cp, &buflen,
+		    alt_result[4], alt_result[10], alt_result[5], 4);
+  __b64_from_24bit (&cp, &buflen,
+		    0, 0, alt_result[11], 2);
   if (buflen <= 0)
     {
       __set_errno (ERANGE);

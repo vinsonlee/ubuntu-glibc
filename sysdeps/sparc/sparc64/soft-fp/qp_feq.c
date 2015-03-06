@@ -1,6 +1,6 @@
 /* Software floating-point emulation.
    Return 1 if (*a) == (*b)
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson (rth@cygnus.com) and
 		  Jakub Jelinek (jj@ultra.linux.cz).
@@ -31,9 +31,7 @@ int _Qp_feq(const long double *a, const long double *b)
   FP_INIT_ROUNDMODE;
   FP_UNPACK_RAW_QP(A, a);
   FP_UNPACK_RAW_QP(B, b);
-  FP_CMP_EQ_Q(r, A, B);
-  if (r && (FP_ISSIGNAN_Q(A) || FP_ISSIGNAN_Q(B)))
-    FP_SET_EXCEPTION(FP_EX_INVALID);
+  FP_CMP_EQ_Q(r, A, B, 1);
 
   QP_HANDLE_EXCEPTIONS(
 	__asm (

@@ -1,5 +1,5 @@
 /* Conversion to and from TCVN5712-1.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2001.
 
@@ -29,6 +29,7 @@
 #define TO_LOOP			to_tcvn5712_1
 #define DEFINE_INIT		1
 #define DEFINE_FINI		1
+#define ONE_DIRECTION		0
 #define FROM_LOOP_MIN_NEEDED_FROM	1
 #define FROM_LOOP_MAX_NEEDED_FROM	1
 #define FROM_LOOP_MIN_NEEDED_TO		4
@@ -64,7 +65,7 @@
     {									      \
       if (FROM_DIRECTION)						      \
 	{								      \
-	  if (__builtin_expect (outbuf + 4 <= outend, 1))		      \
+	  if (__glibc_likely (outbuf + 4 <= outend))			      \
 	    {								      \
 	      /* Write out the last character.  */			      \
 	      *((uint32_t *) outbuf) = data->__statep->__count >> 3;	      \
@@ -652,7 +653,7 @@ static const struct
 	    res = 0;							      \
 	  }								      \
 									      \
-	if (__builtin_expect (res != 0, 1))				      \
+	if (__glibc_likely (res != 0))					      \
 	  {								      \
 	    *outptr++ = res;						      \
 	    inptr += 4;							      \
@@ -696,7 +697,7 @@ static const struct
 		  }							      \
 									      \
 		/* See whether we have room for two bytes.  */		      \
-		if (__builtin_expect (outptr + 1 >= outend, 0))		      \
+		if (__glibc_unlikely (outptr + 1 >= outend))		      \
 		  {							      \
 		    result = __GCONV_FULL_OUTPUT;			      \
 		    break;						      \

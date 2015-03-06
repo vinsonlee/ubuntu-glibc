@@ -1,5 +1,5 @@
 /* Initialization code run first thing by the ELF startup code.  Linux/x32.
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
 
 #ifdef SHARED
 # include <dl-vdso.h>
-# include <bits/libc-vdso.h>
+# include <libc-vdso.h>
 
 long int (*__vdso_clock_gettime) (clockid_t, struct timespec *)
   __attribute__ ((nocommon));
