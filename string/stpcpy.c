@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
 # include <config.h>
 #endif
 
-#define NO_MEMPCPY_STPCPY_REDIRECT
 #include <string.h>
 
 #undef __stpcpy
@@ -35,8 +34,14 @@ __stpcpy (dest, src)
      char *dest;
      const char *src;
 {
-  size_t len = strlen (src);
-  return memcpy (dest, src, len + 1) + len;
+  char *d = dest;
+  const char *s = src;
+
+  do
+    *d++ = *s;
+  while (*s++ != '\0');
+
+  return d - 1;
 }
 #ifdef libc_hidden_def
 libc_hidden_def (__stpcpy)

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright (C) 1999-2015 Free Software Foundation, Inc.
+# Copyright (C) 1999-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 # Contributed by Andreas Jaeger <aj@suse.de>, 1999.
 
@@ -21,6 +21,8 @@
 # Note that functions and tests share the same namespace.
 
 # Information about tests are stored in: %results
+# $results{$test}{"kind"} is either "fct" or "test" and flags whether this
+# is a maximal error of a function or a single test.
 # $results{$test}{"type"} is the result type, e.g. normal or complex.
 # $results{$test}{"has_ulps"} is set if deltas exist.
 # In the following description $type and $float are:
@@ -154,14 +156,10 @@ sub show_exceptions {
 sub parse_args {
   my ($file, $descr, $args) = @_;
   my (@args, $descr_args, $descr_res, @descr);
-  my ($current_arg, $cline, $cline_res, $i);
+  my ($current_arg, $cline, $i);
   my (@special);
   my ($call_args);
   my ($ignore_result_any, $ignore_result_all);
-  my ($num_res, @args_res, @start_rm, $rm);
-  my (@plus_oflow, @minus_oflow, @plus_uflow, @minus_uflow);
-  my (@errno_plus_oflow, @errno_minus_oflow);
-  my (@errno_plus_uflow, @errno_minus_uflow);
 
   ($descr_args, $descr_res) = split /_/,$descr, 2;
 
@@ -198,38 +196,31 @@ sub parse_args {
   }
 
   # Result
-  @args_res = @args[$current_arg .. $#args];
-  $num_res = 0;
   @descr = split //,$descr_res;
   foreach (@descr) {
     if ($_ =~ /f|i|l|L/) {
-      ++$num_res;
+      ++$current_arg;
     } elsif ($_ eq 'c') {
-      $num_res += 2;
+      $current_arg += 2;
     } elsif ($_ eq 'b') {
       # boolean
-      ++$num_res;
+      ++$current_arg;
     } elsif ($_ eq '1') {
-      ++$num_res;
+      ++$current_arg;
     } else {
       die ("$_ is unknown");
     }
   }
   # consistency check
-  if ($#args_res == $num_res - 1) {
-    # One set of results for all rounding modes, no flags.
-    @start_rm = ( 0, 0, 0, 0 );
-  } elsif ($#args_res == $num_res) {
-    # One set of results for all rounding modes, with flags.
+  if ($current_arg == $#args) {
     die ("wrong number of arguments")
-      unless ($args_res[$#args_res] =~ /EXCEPTION|ERRNO|IGNORE_ZERO_INF_SIGN|TEST_NAN_SIGN|NO_TEST_INLINE|XFAIL_TEST/);
-    @start_rm = ( 0, 0, 0, 0 );
-  } elsif ($#args_res == 4 * $num_res + 3) {
-    # One set of results per rounding mode, with flags.
-    @start_rm = ( 0, $num_res + 1, 2 * $num_res + 2, 3 * $num_res + 3 );
-  } else {
+      unless ($args[$current_arg] =~ /EXCEPTION|ERRNO|IGNORE_ZERO_INF_SIGN|TEST_NAN_SIGN|NO_TEST_INLINE|XFAIL_TEST/);
+  } elsif ($current_arg < $#args) {
+    die ("wrong number of arguments");
+  } elsif ($current_arg > ($#args+1)) {
     die ("wrong number of arguments");
   }
+
 
   # Put the C program line together
   # Reset some variables to start again
@@ -256,83 +247,60 @@ sub parse_args {
   }
 
   @descr = split //,$descr_res;
-  @plus_oflow = qw(max_value plus_infty max_value plus_infty);
-  @minus_oflow = qw(minus_infty minus_infty -max_value -max_value);
-  @plus_uflow = qw(plus_zero plus_zero plus_zero min_subnorm_value);
-  @minus_uflow = qw(-min_subnorm_value minus_zero minus_zero minus_zero);
-  @errno_plus_oflow = qw(0 ERRNO_ERANGE 0 ERRNO_ERANGE);
-  @errno_minus_oflow = qw(ERRNO_ERANGE ERRNO_ERANGE 0 0);
-  @errno_plus_uflow = qw(ERRNO_ERANGE ERRNO_ERANGE ERRNO_ERANGE 0);
-  @errno_minus_uflow = qw(0 ERRNO_ERANGE ERRNO_ERANGE ERRNO_ERANGE);
-  for ($rm = 0; $rm <= 3; $rm++) {
-    $current_arg = $start_rm[$rm];
-    $ignore_result_any = 0;
-    $ignore_result_all = 1;
-    $cline_res = "";
-    @special = ();
-    foreach (@descr) {
-      if ($_ =~ /b|f|i|l|L/ ) {
-	my ($result) = $args_res[$current_arg];
-	if ($result eq "IGNORE") {
-	  $ignore_result_any = 1;
-	  $result = "0";
-	} else {
-	  $ignore_result_all = 0;
-	}
-	$cline_res .= ", $result";
-	$current_arg++;
-      } elsif ($_ eq 'c') {
-	my ($result1) = $args_res[$current_arg];
-	if ($result1 eq "IGNORE") {
-	  $ignore_result_any = 1;
-	  $result1 = "0";
-	} else {
-	  $ignore_result_all = 0;
-	}
-	my ($result2) = $args_res[$current_arg + 1];
-	if ($result2 eq "IGNORE") {
-	  $ignore_result_any = 1;
-	  $result2 = "0";
-	} else {
-	  $ignore_result_all = 0;
-	}
-	$cline_res .= ", $result1, $result2";
-	$current_arg += 2;
-      } elsif ($_ eq '1') {
-	push @special, $args_res[$current_arg];
-	++$current_arg;
+  $ignore_result_any = 0;
+  $ignore_result_all = 1;
+  foreach (@descr) {
+    if ($_ =~ /b|f|i|l|L/ ) {
+      my ($result) = $args[$current_arg];
+      if ($result eq "IGNORE") {
+	$ignore_result_any = 1;
+	$result = "0";
+      } else {
+	$ignore_result_all = 0;
       }
+      $cline .= ", $result";
+      $current_arg++;
+    } elsif ($_ eq 'c') {
+      my ($result1) = $args[$current_arg];
+      if ($result1 eq "IGNORE") {
+	$ignore_result_any = 1;
+	$result1 = "0";
+      } else {
+	$ignore_result_all = 0;
+      }
+      my ($result2) = $args[$current_arg + 1];
+      if ($result2 eq "IGNORE") {
+	$ignore_result_any = 1;
+	$result2 = "0";
+      } else {
+	$ignore_result_all = 0;
+      }
+      $cline .= ", $result1, $result2";
+      $current_arg += 2;
+    } elsif ($_ eq '1') {
+      push @special, $args[$current_arg];
+      ++$current_arg;
     }
-    if ($ignore_result_any && !$ignore_result_all) {
-      die ("some but not all function results ignored\n");
-    }
-    # Add exceptions.
-    $cline_res .= show_exceptions ($ignore_result_any,
-				   ($current_arg <= $#args_res)
-				   ? $args_res[$current_arg]
-				   : undef);
+  }
+  if ($ignore_result_any && !$ignore_result_all) {
+    die ("some but not all function results ignored\n");
+  }
+  # Add exceptions.
+  $cline .= show_exceptions ($ignore_result_any,
+			     ($current_arg <= $#args)
+			     ? $args[$current_arg]
+			     : undef);
 
-    # special treatment for some functions
-    $i = 0;
-    foreach (@special) {
-      ++$i;
-      my ($extra_expected) = $_;
-      my ($run_extra) = ($extra_expected ne "IGNORE" ? 1 : 0);
-      if (!$run_extra) {
-	$extra_expected = "0";
-      }
-      $cline_res .= ", $run_extra, $extra_expected";
+  # special treatment for some functions
+  $i = 0;
+  foreach (@special) {
+    ++$i;
+    my ($extra_expected) = $_;
+    my ($run_extra) = ($extra_expected ne "IGNORE" ? 1 : 0);
+    if (!$run_extra) {
+      $extra_expected = "0";
     }
-    $cline_res =~ s/^, //;
-    $cline_res =~ s/plus_oflow/$plus_oflow[$rm]/g;
-    $cline_res =~ s/minus_oflow/$minus_oflow[$rm]/g;
-    $cline_res =~ s/plus_uflow/$plus_uflow[$rm]/g;
-    $cline_res =~ s/minus_uflow/$minus_uflow[$rm]/g;
-    $cline_res =~ s/ERRNO_PLUS_OFLOW/$errno_plus_oflow[$rm]/g;
-    $cline_res =~ s/ERRNO_MINUS_OFLOW/$errno_minus_oflow[$rm]/g;
-    $cline_res =~ s/ERRNO_PLUS_UFLOW/$errno_plus_uflow[$rm]/g;
-    $cline_res =~ s/ERRNO_MINUS_UFLOW/$errno_minus_uflow[$rm]/g;
-    $cline .= ", { $cline_res }";
+    $cline .= ", $run_extra, $extra_expected";
   }
   print $file "    $cline },\n";
 }
@@ -360,23 +328,17 @@ sub or_value {
   }
 }
 
-# Return a conditional expression between two values.
-sub cond_value {
-  my ($cond, $if, $else) = @_;
-  if ($cond eq "1") {
-    return $if;
-  } elsif ($cond eq "0") {
-    return $else;
-  } else {
-    return "($cond ? $if : $else)";
-  }
-}
-
 # Return text to OR a conditional expression between two values into
 # an accumulated flags string.
 sub or_cond_value {
   my ($cond, $if, $else) = @_;
-  return or_value (cond_value ($cond, $if, $else));
+  if ($cond eq "1") {
+    return or_value ($if);
+  } elsif ($cond eq "0") {
+    return or_value ($else);
+  } else {
+    return or_value ("($cond ? $if : $else)");
+  }
 }
 
 # Generate libm-test.c
@@ -388,140 +350,117 @@ sub generate_testfile {
 
   # Replace the special macros
   while (<INPUT>) {
-    # AUTO_TESTS (function),
+    # AUTO_TESTS (function, mode),
     if (/^\s*AUTO_TESTS_/) {
-      my ($descr, $func, @modes, $auto_test, $num_auto_tests);
-      my (@rm_tests, $rm, $i);
-      @modes = qw(downward tonearest towardzero upward);
-      ($descr, $func) = ($_ =~ /AUTO_TESTS_(\w+)\s*\((\w+)\)/);
-      for ($rm = 0; $rm <= 3; $rm++) {
-	$rm_tests[$rm] = [sort keys %{$auto_tests{$func}{$modes[$rm]}}];
-      }
-      $num_auto_tests = scalar @{$rm_tests[0]};
-      for ($rm = 1; $rm <= 3; $rm++) {
-	if ($num_auto_tests != scalar @{$rm_tests[$rm]}) {
-	  die ("inconsistent numbers of tests for $func\n");
-	}
-	for ($i = 0; $i < $num_auto_tests; $i++) {
-	  if ($rm_tests[0][$i] ne $rm_tests[$rm][$i]) {
-	    die ("inconsistent list of tests of $func\n");
-	  }
-	}
-      }
-      if ($num_auto_tests == 0) {
-	die ("no automatic tests for $func\n");
-      }
-      foreach $auto_test (@{$rm_tests[0]}) {
-	my ($format, $inputs, $format_conv, $args_str);
-	($format, $inputs) = split / /, $auto_test, 2;
+      my ($descr, $func, $mode, $auto_test, $num_auto_tests);
+      ($descr, $func, $mode) = ($_ =~ /AUTO_TESTS_(\w+)\s*\((\w+),\s*(\w+)\)/);
+      $num_auto_tests = 0;
+      foreach $auto_test (sort keys %{$auto_tests{$func}{$mode}}) {
+	my ($finputs, $format, $inputs, $outputs, $flags);
+	my ($format_conv, $flags_conv, @flags, %flag_cond);
+	$num_auto_tests++;
+	($finputs, $outputs, $flags) = split / : */, $auto_test;
+	($format, $inputs) = split / /, $finputs, 2;
 	$inputs =~ s/ /, /g;
+	$outputs =~ s/ /, /g;
 	$format_conv = convert_condition ($format);
 	print OUTPUT "#if $format_conv\n";
-	$args_str = "$func, $inputs";
-	for ($rm = 0; $rm <= 3; $rm++) {
-	  my ($auto_test_out, $outputs, $flags);
-	  my ($flags_conv, @flags, %flag_cond);
-	  $auto_test_out = $auto_tests{$func}{$modes[$rm]}{$auto_test};
-	  ($outputs, $flags) = split / : */, $auto_test_out;
-	  $outputs =~ s/ /, /g;
-	  @flags = split / /, $flags;
-	  foreach (@flags) {
-	    if (/^([^:]*):(.*)$/) {
-	      my ($flag, $cond);
-	      $flag = $1;
-	      $cond = convert_condition ($2);
-	      if (defined ($flag_cond{$flag})) {
-		if ($flag_cond{$flag} ne "1") {
-		  $flag_cond{$flag} .= " || $cond";
-		}
-	      } else {
-		$flag_cond{$flag} = $cond;
+	@flags = split / /, $flags;
+	foreach (@flags) {
+	  if (/^([^:]*):(.*)$/) {
+	    my ($flag, $cond);
+	    $flag = $1;
+	    $cond = convert_condition ($2);
+	    if (defined ($flag_cond{$flag})) {
+	      if ($flag_cond{$flag} ne "1") {
+		$flag_cond{$flag} .= " || $cond";
 	      }
 	    } else {
-	      $flag_cond{$_} = "1";
+	      $flag_cond{$flag} = $cond;
 	    }
+	  } else {
+	    $flag_cond{$_} = "1";
 	  }
-	  $flags_conv = "";
-	  if (defined ($flag_cond{"ignore-zero-inf-sign"})) {
-	    $flags_conv .= or_cond_value ($flag_cond{"ignore-zero-inf-sign"},
-					  "IGNORE_ZERO_INF_SIGN", "0");
+	}
+	$flags_conv = "";
+	if (defined ($flag_cond{"no-test-inline"})) {
+	  $flags_conv .= or_cond_value ($flag_cond{"no-test-inline"},
+					"NO_TEST_INLINE", "0");
+	}
+	if (defined ($flag_cond{"xfail"})) {
+	  $flags_conv .= or_cond_value ($flag_cond{"xfail"},
+					"XFAIL_TEST", "0");
+	}
+	my (@exc_list) = qw(divbyzero inexact invalid overflow underflow);
+	my ($exc);
+	foreach $exc (@exc_list) {
+	  my ($exc_expected, $exc_ok, $no_exc);
+	  $exc_expected = "\U$exc\E_EXCEPTION";
+	  $exc_ok = "\U$exc\E_EXCEPTION_OK";
+	  $no_exc = "0";
+	  if ($exc eq "inexact") {
+	    $exc_ok = "0";
+	    $no_exc = "NO_INEXACT_EXCEPTION";
 	  }
-	  if (defined ($flag_cond{"no-test-inline"})) {
-	    $flags_conv .= or_cond_value ($flag_cond{"no-test-inline"},
-					  "NO_TEST_INLINE", "0");
-	  }
-	  if (defined ($flag_cond{"xfail"})) {
-	    $flags_conv .= or_cond_value ($flag_cond{"xfail"},
-					  "XFAIL_TEST", "0");
-	  }
-	  my (@exc_list) = qw(divbyzero inexact invalid overflow underflow);
-	  my ($exc);
-	  foreach $exc (@exc_list) {
-	    my ($exc_expected, $exc_ok, $no_exc, $exc_cond, $exc_ok_cond);
-	    $exc_expected = "\U$exc\E_EXCEPTION";
-	    $exc_ok = "\U$exc\E_EXCEPTION_OK";
-	    $no_exc = "0";
-	    if ($exc eq "inexact") {
-	      $exc_ok = "0";
-	      $no_exc = "NO_INEXACT_EXCEPTION";
-	    }
-	    if (defined ($flag_cond{$exc})) {
-	      $exc_cond = $flag_cond{$exc};
-	    } else {
-	      $exc_cond = "0";
+	  if (defined ($flag_cond{$exc})) {
+	    if ($flag_cond{$exc} ne "1") {
+	      die ("unexpected condition for $exc\n");
 	    }
 	    if (defined ($flag_cond{"$exc-ok"})) {
-	      $exc_ok_cond = $flag_cond{"$exc-ok"};
+	      $flags_conv .= or_cond_value ($flag_cond{"$exc-ok"},
+					    $exc_ok, $exc_expected);
 	    } else {
-	      $exc_ok_cond = "0";
+	      $flags_conv .= or_value ($exc_expected);
 	    }
-	    $flags_conv .= or_cond_value ($exc_cond,
-					  cond_value ($exc_ok_cond,
-						      $exc_ok, $exc_expected),
-					  cond_value ($exc_ok_cond,
-						      $exc_ok, $no_exc));
-	  }
-	  my ($errno_expected, $errno_unknown_cond);
-	  if (defined ($flag_cond{"errno-edom"})) {
-	    if ($flag_cond{"errno-edom"} ne "1") {
-	      die ("unexpected condition for errno-edom");
-	    }
-	    if (defined ($flag_cond{"errno-erange"})) {
-	      die ("multiple errno values expected");
-	    }
-	    $errno_expected = "ERRNO_EDOM";
-	  } elsif (defined ($flag_cond{"errno-erange"})) {
-	    if ($flag_cond{"errno-erange"} ne "1") {
-	      die ("unexpected condition for errno-erange");
-	    }
-	    $errno_expected = "ERRNO_ERANGE";
 	  } else {
-	    $errno_expected = "ERRNO_UNCHANGED";
-	  }
-	  if (defined ($flag_cond{"errno-edom-ok"})) {
-	    if (defined ($flag_cond{"errno-erange-ok"})
-		&& ($flag_cond{"errno-erange-ok"}
-		    ne $flag_cond{"errno-edom-ok"})) {
-	      $errno_unknown_cond = "($flag_cond{\"errno-edom-ok\"} || $flag_cond{\"errno-erange-ok\"})";
+	    if (defined ($flag_cond{"$exc-ok"})) {
+	      $flags_conv .= or_cond_value ($flag_cond{"$exc-ok"},
+					    $exc_ok, $no_exc);
 	    } else {
-	      $errno_unknown_cond = $flag_cond{"errno-edom-ok"};
+	      $flags_conv .= or_value ($no_exc);
 	    }
-	  } elsif (defined ($flag_cond{"errno-erange-ok"})) {
-	    $errno_unknown_cond = $flag_cond{"errno-erange-ok"};
-	  } else {
-	    $errno_unknown_cond = "0";
 	  }
-	  $flags_conv .= or_cond_value ($errno_unknown_cond,
-					"0", $errno_expected);
-	  if ($flags_conv eq "") {
-	    $flags_conv = ", NO_EXCEPTION";
-	  } else {
-	    $flags_conv =~ s/^ \|/,/;
-	  }
-	  $args_str .= ", $outputs$flags_conv";
 	}
-	&parse_args (\*OUTPUT, $descr, $args_str);
+	my ($errno_expected, $errno_unknown_cond);
+	if (defined ($flag_cond{"errno-edom"})) {
+	  if ($flag_cond{"errno-edom"} ne "1") {
+	    die ("unexpected condition for errno-edom");
+	  }
+	  if (defined ($flag_cond{"errno-erange"})) {
+	    die ("multiple errno values expected");
+	  }
+	  $errno_expected = "ERRNO_EDOM";
+	} elsif (defined ($flag_cond{"errno-erange"})) {
+	  if ($flag_cond{"errno-erange"} ne "1") {
+	    die ("unexpected condition for errno-erange");
+	  }
+	  $errno_expected = "ERRNO_ERANGE";
+	} else {
+	  $errno_expected = "ERRNO_UNCHANGED";
+	}
+	if (defined ($flag_cond{"errno-edom-ok"})) {
+	  if (defined ($flag_cond{"errno-erange-ok"})
+	      && $flag_cond{"errno-erange-ok"} ne $flag_cond{"errno-edom-ok"}) {
+	    $errno_unknown_cond = "($flag_cond{\"errno-edom-ok\"} || $flag_cond{\"errno-erange-ok\"})";
+	  } else {
+	    $errno_unknown_cond = $flag_cond{"errno-edom-ok"};
+	  }
+	} elsif (defined ($flag_cond{"errno-erange-ok"})) {
+	  $errno_unknown_cond = $flag_cond{"errno-erange-ok"};
+	} else {
+	  $errno_unknown_cond = "0";
+	}
+	$flags_conv .= or_cond_value ($errno_unknown_cond,
+				      "0", $errno_expected);
+	if ($flags_conv ne "") {
+	  $flags_conv =~ s/^ \|/,/;
+	}
+	&parse_args (\*OUTPUT, $descr,
+		     "$func, $inputs, $outputs$flags_conv");
 	print OUTPUT "#endif\n";
+      }
+      if ($num_auto_tests == 0) {
+	die ("no automatic tests for $func, $mode\n");
       }
       next;
     }
@@ -545,7 +484,7 @@ sub generate_testfile {
 # Parse ulps file
 sub parse_ulps {
   my ($file) = @_;
-  my ($test, $type, $float, $eps);
+  my ($test, $type, $float, $eps, $kind);
 
   # $type has the following values:
   # "normal": No complex variable
@@ -557,6 +496,21 @@ sub parse_ulps {
     # ignore comments and empty lines
     next if /^#/;
     next if /^\s*$/;
+    if (/^Test/) {
+      if (/Real part of:/) {
+	s/Real part of: //;
+	$type = 'real';
+      } elsif (/Imaginary part of:/) {
+	s/Imaginary part of: //;
+	$type = 'imag';
+      } else {
+	$type = 'normal';
+      }
+      s/^.+\"(.*)\".*$/$1/;
+      $test = $_;
+      $kind = 'test';
+      next;
+    }
     if (/^Function: /) {
       if (/Real part of/) {
 	s/Real part of //;
@@ -568,6 +522,7 @@ sub parse_ulps {
 	$type = 'normal';
       }
       ($test) = ($_ =~ /^Function:\s*\"([a-zA-Z0-9_]+)\"/);
+      $kind = 'fct';
       next;
     }
     if (/^i?(float|double|ldouble):/) {
@@ -585,6 +540,7 @@ sub parse_ulps {
       } elsif ($type eq 'normal') {
 	$results{$test}{'type'} = 'normal';
       }
+      $results{$test}{'kind'} = $kind;
       next;
     }
     print "Skipping unknown entry: `$_'\n";
@@ -613,9 +569,39 @@ sub print_ulps_file {
   $last_fct = '';
   open NEWULP, ">$file" or die ("Can't open $file: $!");
   print NEWULP "# Begin of automatic generation\n";
+  # first the function calls
+  foreach $test (sort keys %results) {
+    next if ($results{$test}{'kind'} ne 'test');
+    foreach $type ('real', 'imag', 'normal') {
+      if (exists $results{$test}{$type}) {
+	if (defined $results{$test}) {
+	  ($fct) = ($test =~ /^(\w+)\s/);
+	  if ($fct ne $last_fct) {
+	    $last_fct = $fct;
+	    print NEWULP "\n# $fct\n";
+	  }
+	}
+	if ($type eq 'normal') {
+	  print NEWULP "Test \"$test\":\n";
+	} elsif ($type eq 'real') {
+	  print NEWULP "Test \"Real part of: $test\":\n";
+	} elsif ($type eq 'imag') {
+	  print NEWULP "Test \"Imaginary part of: $test\":\n";
+	}
+	foreach $float (@all_floats) {
+	  if (exists $results{$test}{$type}{'ulp'}{$float}) {
+	    print NEWULP "$float: ",
+	    &clean_up_number ($results{$test}{$type}{'ulp'}{$float}),
+	    "\n";
+	  }
+	}
+      }
+    }
+  }
   print NEWULP "\n# Maximal error of functions:\n";
 
   foreach $fct (sort keys %results) {
+    next if ($results{$fct}{'kind'} ne 'fct');
     foreach $type ('real', 'imag', 'normal') {
       if (exists $results{$fct}{$type}) {
 	if ($type eq 'normal') {
@@ -670,7 +656,7 @@ sub get_all_ulps_for_test {
 sub output_ulps {
   my ($file, $ulps_filename) = @_;
   my ($i, $fct, $type, $ulp, $ulp_real, $ulp_imag);
-  my (%func_ulps, %func_real_ulps, %func_imag_ulps);
+  my (%test_ulps, %func_ulps, %func_real_ulps, %func_imag_ulps);
 
   open ULP, ">$file" or die ("Can't open $file: $!");
 
@@ -688,11 +674,22 @@ sub output_ulps {
     } else {
       die "unknown results ($fct) type $type\n";
     }
-    if ($type eq 'normal') {
-      $func_ulps{$fct} = $ulp;
+    if ($results{$fct}{'kind'} eq 'fct') {
+      if ($type eq 'normal') {
+	$func_ulps{$fct} = $ulp;
+      } else {
+	$func_real_ulps{$fct} = $ulp_real;
+	$func_imag_ulps{$fct} = $ulp_imag;
+      }
+    } elsif ($results{$fct}{'kind'} eq 'test') {
+      if ($type eq 'normal') {
+	$test_ulps{$fct} = $ulp;
+      } else {
+	$test_ulps{"Real part of: $fct"} = $ulp_real;
+	$test_ulps{"Imaginary part of: $fct"} = $ulp_imag;
+      }
     } else {
-      $func_real_ulps{$fct} = $ulp_real;
-      $func_imag_ulps{$fct} = $ulp_imag;
+      die "unknown results ($fct) kind $results{$fct}{'kind'}\n";
     }
   }
   print ULP "\n/* Maximal error of functions.  */\n";
@@ -711,6 +708,13 @@ sub output_ulps {
     print ULP "    { \"$fct\", $func_imag_ulps{$fct} },\n";
   }
   print ULP "  };\n";
+
+  print ULP "\n/* Error of single function calls.  */\n";
+  print ULP "static const struct ulp_data test_ulps[] =\n  {\n";
+  foreach $fct (sort keys %test_ulps) {
+    print ULP "    { \"$fct\", $test_ulps{$fct} },\n";
+  }
+  print ULP "  };\n";
   close ULP;
 }
 
@@ -722,8 +726,8 @@ sub parse_auto_input {
     chop;
     next if !/^= /;
     s/^= //;
-    if (/^(\S+) (\S+) ([^:]*) : (.*)$/) {
-      $auto_tests{$1}{$2}{$3} = $4;
+    if (/^(\S+) (\S+) (.*)$/) {
+      $auto_tests{$1}{$2}{$3} = 1;
     } else {
       die ("bad automatic test line: $_\n");
     }

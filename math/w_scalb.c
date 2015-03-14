@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -27,7 +27,7 @@ sysv_scalb (double x, double fn)
 {
   double z = __ieee754_scalb (x, fn);
 
-  if (__glibc_unlikely (__isinf (z)))
+  if (__builtin_expect (__isinf (z), 0))
     {
       if (__finite (x))
 	return __kernel_standard (x, fn, 32); /* scalb overflow */
@@ -45,33 +45,9 @@ sysv_scalb (double x, double fn)
 double
 __scalb (double x, double fn)
 {
-  if (__glibc_unlikely (_LIB_VERSION == _SVID_))
-    return sysv_scalb (x, fn);
-  else
-    {
-      double z = __ieee754_scalb (x, fn);
-
-      if (__glibc_unlikely (!__finite (z) || z == 0.0))
-	{
-	  if (__isnan (z))
-	    {
-	      if (!__isnan (x) && !__isnan (fn))
-		__set_errno (EDOM);
-	    }
-	  else if (__isinf_ns (z))
-	    {
-	      if (!__isinf_ns (x) && !__isinf_ns (fn))
-		__set_errno (ERANGE);
-	    }
-	  else
-	    {
-	      /* z == 0.  */
-	      if (x != 0.0 && !__isinf_ns (fn))
-		__set_errno (ERANGE);
-	    }
-	}
-      return z;
-    }
+  return (__builtin_expect (_LIB_VERSION == _SVID_, 0)
+	  ? sysv_scalb (x, fn)
+	  : __ieee754_scalb (x, fn));
 }
 weak_alias (__scalb, scalb)
 #ifdef NO_LONG_DOUBLE

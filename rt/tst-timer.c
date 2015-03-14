@@ -1,5 +1,5 @@
 /* Tests for POSIX timer implementation.  Dummy version.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,8 +20,8 @@
 
 /* This file is only used if there is no other implementation and it should
    means that there is no implementation of POSIX timers.  */
-static int
-do_test (void)
+int
+main (void)
 {
 #ifdef _POSIX_TIMERS
   /* There should be a test.  */
@@ -30,6 +30,3 @@ do_test (void)
   return 0;
 #endif
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

@@ -1,3 +1,4 @@
 ChangeLog*		/usr/share/doc/glibc-doc
-libidn/ChangeLog*	/usr/share/doc/glibc-doc/libidn
-localedata/ChangeLog*	/usr/share/doc/glibc-doc/localedata
+nptl/ChangeLog*		/usr/share/doc/glibc-doc/nptl
+nptl_db/ChangeLog*	/usr/share/doc/glibc-doc/nptl_db
+ports/ChangeLog*	/usr/share/doc/glibc-doc/ports

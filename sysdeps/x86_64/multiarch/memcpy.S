@@ -1,6 +1,6 @@
 /* Multiple versions of memcpy
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -25,17 +25,13 @@
 /* Define multiple versions only for the definition in lib and for
    DSO.  In static binaries we need memcpy before the initialization
    happened.  */
-#if defined SHARED && IS_IN (libc)
+#if defined SHARED && !defined NOT_IN_libc
 	.text
 ENTRY(__new_memcpy)
 	.type	__new_memcpy, @gnu_indirect_function
 	cmpl	$0, KIND_OFFSET+__cpu_features(%rip)
 	jne	1f
 	call	__init_cpu_features
-1:	leaq	__memcpy_avx_unaligned(%rip), %rax
-	testl	$bit_AVX_Fast_Unaligned_Load, __cpu_features+FEATURE_OFFSET+index_AVX_Fast_Unaligned_Load(%rip)
-	jz 1f
-	ret
 1:	leaq	__memcpy_sse2(%rip), %rax
 	testl	$bit_Slow_BSF, __cpu_features+FEATURE_OFFSET+index_Slow_BSF(%rip)
 	jnz	2f

@@ -1,5 +1,5 @@
 /* Double-precision floating point square root.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 #include <sysdep.h>
 #include <ldsodefs.h>
 
-#ifndef _ARCH_PPCSQ
 static const double almost_half = 0.5000000000000001;	/* 0.5 + 2^-53 */
 static const ieee_float_shape_type a_nan = {.word = 0x7fc00000 };
 static const ieee_float_shape_type a_inf = {.word = 0x7f800000 };
@@ -143,17 +142,16 @@ __slow_ieee754_sqrt (double x)
       /* For some reason, some PowerPC32 processors don't implement
 	 FE_INVALID_SQRT.  */
 #ifdef FE_INVALID_SQRT
-      __feraiseexcept (FE_INVALID_SQRT);
+      feraiseexcept (FE_INVALID_SQRT);
 
       fenv_union_t u = { .fenv = fegetenv_register () };
       if ((u.l & FE_INVALID) == 0)
 #endif
-	__feraiseexcept (FE_INVALID);
+	feraiseexcept (FE_INVALID);
       x = a_nan.value;
     }
   return f_wash (x);
 }
-#endif /* _ARCH_PPCSQ  */
 
 #undef __ieee754_sqrt
 double
@@ -161,11 +159,16 @@ __ieee754_sqrt (double x)
 {
   double z;
 
-#ifdef _ARCH_PPCSQ
-  asm ("fsqrt %0,%1\n" :"=f" (z):"f" (x));
-#else
-  z = __slow_ieee754_sqrt (x);
-#endif
+  /* If the CPU is 64-bit we can use the optional FP instructions.  */
+  if (__CPU_HAS_FSQRT)
+    {
+      /* Volatile is required to prevent the compiler from moving the
+	 fsqrt instruction above the branch.  */
+      __asm __volatile ("	fsqrt	%0,%1\n"
+				:"=f" (z):"f" (x));
+    }
+  else
+    z = __slow_ieee754_sqrt (x);
 
   return z;
 }

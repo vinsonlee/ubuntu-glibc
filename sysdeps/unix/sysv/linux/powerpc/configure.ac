@@ -35,5 +35,3 @@ long double foobar (long double x) { return x; }],
     AC_MSG_ERROR([this configuration requires -mlong-double-128 IBM extended format support])
   fi
 fi
-
-ldd_rewrite_script=sysdeps/unix/sysv/linux/powerpc/ldd-rewrite.sed
