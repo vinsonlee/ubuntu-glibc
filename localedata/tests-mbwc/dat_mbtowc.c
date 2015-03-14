@@ -248,8 +248,12 @@ TST_MBTOWC tst_mbtowc_loc [] = {
 	},
 	{
 	  {
+#ifdef SHOJI_IS_RIGHT
+	    { EILSEQ,  1, -1,   0x0000 },
+#else
 	    /* XXX EILSEQ was introduced in ISO C99.  */
 	    { 0,	  1, -1,   0x0000 },
+#endif
 	    { 0,       1,  2,   0x3042 },
 	    { 0,       1,  2,   0x3042 },
 	  }
@@ -266,7 +270,11 @@ TST_MBTOWC tst_mbtowc_loc [] = {
 	{
 	  {
 	    { 0,  1, +1,   0x007F },
+#ifdef SHOJI_IS_RIGHT
+	    { EILSEQ,  1, -1,   0x0000 },
+#else
 	    { 0,  1, -1,   0x0000 },
+#endif
 	    { 0,  1, +1,   0x0081 },
 	  }
 	}
@@ -282,8 +290,12 @@ TST_MBTOWC tst_mbtowc_loc [] = {
 	{
 	  {
 	    { 0,  1,  0,   0x0000 },
+#ifdef SHOJI_IS_RIGHT
+	    { EILSEQ,  1, -1,   0x0000 },
+#else
 	    /* XXX EILSEQ was introduced in ISO C99.  */
 	    { 0,       1, -1,   0x0000 },
+#endif
 	    { 0,  1,  2,   0x0000 },
 	  }
 	}

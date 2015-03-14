@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 #include <sysdeps/unix/x86_64/sysdep.h>
 #include <tls.h>
 
-#if IS_IN (rtld)
+#ifdef IS_IN_rtld
 # include <dl-sysdep.h>		/* Defines RTLD_PRIVATE_ERRNO.  */
 #endif
 
@@ -115,7 +115,7 @@
   neg %eax;					\
   movl %eax, (%rcx)
 # else
-#  if IS_IN (libc)
+#  ifndef NOT_IN_libc
 #   define SYSCALL_ERROR_ERRNO __libc_errno
 #  else
 #   define SYSCALL_ERROR_ERRNO errno
@@ -193,7 +193,7 @@
 # define INLINE_SYSCALL(name, nr, args...) \
   ({									      \
     unsigned long int resultvar = INTERNAL_SYSCALL (name, , nr, args);	      \
-    if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (resultvar, )))	      \
+    if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (resultvar, ), 0))	      \
       {									      \
 	__set_errno (INTERNAL_SYSCALL_ERRNO (resultvar, ));		      \
 	resultvar = (unsigned long int) -1;				      \
@@ -207,7 +207,7 @@
 # define INLINE_SYSCALL_TYPES(name, nr, args...) \
   ({									      \
     unsigned long int resultvar = INTERNAL_SYSCALL_TYPES (name, , nr, args);  \
-    if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (resultvar, )))	      \
+    if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (resultvar, ), 0))	      \
       {									      \
 	__set_errno (INTERNAL_SYSCALL_ERRNO (resultvar, ));		      \
 	resultvar = (unsigned long int) -1;				      \
@@ -393,7 +393,7 @@
 
 
 /* Pointer mangling support.  */
-#if IS_IN (rtld)
+#if defined NOT_IN_libc && defined IS_IN_rtld
 /* We cannot use the thread descriptor because in ld.so we use setjmp
    earlier than the descriptor is initialized.  */
 # ifdef __ASSEMBLER__

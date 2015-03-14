@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2015 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -52,7 +52,6 @@ BEGIN {
     print "#ifdef ERR_MAX";
     print "# define ERRLIST_SIZE ERR_MAX + 1";
     print "#else"
-    print "# define ERR_MAX 0";
     print "# define ERRLIST_SIZE";
     print "#endif";
 
@@ -110,7 +109,7 @@ END {
   print "  (sizeof _sys_errlist_internal / sizeof _sys_errlist_internal [0])";
   print "const int _sys_nerr_internal = NERR;"
   print "";
-  print "#if IS_IN (libc) && !defined ERRLIST_NO_COMPAT";
+  print "#if !defined NOT_IN_libc && !ERRLIST_NO_COMPAT";
   print "# include <errlist-compat.c>";
   print "#endif";
   print "";

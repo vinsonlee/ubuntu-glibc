@@ -1,5 +1,5 @@
 /* Machine-dependent ELF startup code.  PowerPC version.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ _dl_start_user:
 /*  &_dl_argc in 29, &_dl_argv in 27, and _dl_loaded in 28.  */
 	lwz	r28,_rtld_local@got(r31)
 	lwz	r29,_dl_argc@got(r31)
-	lwz	r27,__GI__dl_argv@got(r31)
+	lwz	r27,INTUSE(_dl_argv)@got(r31)
 
 /* Call _dl_init (_dl_loaded, _dl_argc, _dl_argv, _dl_argv+_dl_argc+1). */
 	lwz	r3,0(r28)
@@ -63,7 +63,7 @@ _dl_start_user:
 	slwi	r6,r4,2
 	add	r6,r5,r6
 	addi	r6,r6,4
-	bl	_dl_init@local
+	bl	_dl_init_internal@local
 
 /* Now, to conform to the ELF ABI, we have to: */
 /* Pass argc (actually _dl_argc) in r3; */

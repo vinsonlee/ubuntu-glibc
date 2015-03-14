@@ -153,9 +153,9 @@ __res_vinit(res_state statp, int preinit) {
 	char *cp, **pp;
 	int n;
 	char buf[BUFSIZ];
-	int nserv = 0;    /* number of IPv4 nameservers read from file */
+	int nserv = 0;    /* number of nameserver records read from file */
 #ifdef _LIBC
-	int nservall = 0; /* number of (IPv4 + IPV6) nameservers read from file */
+	int nservall = 0; /* number of NS records read, nserv IPv4 only */
 #endif
 	int haveenv = 0;
 	int havesearch = 0;
@@ -238,7 +238,7 @@ __res_vinit(res_state statp, int preinit) {
 	    /* No threads use this stream.  */
 	    __fsetlocking (fp, FSETLOCKING_BYCALLER);
 	    /* read the config file */
-	    while (__fgets_unlocked(buf, sizeof(buf), fp) != NULL) {
+	    while (fgets_unlocked(buf, sizeof(buf), fp) != NULL) {
 		/* skip comments */
 		if (*buf == ';' || *buf == '#')
 			continue;
@@ -324,7 +324,7 @@ __res_vinit(res_state statp, int preinit) {
 			if ((el = strchr(cp, SCOPE_DELIMITER)) != NULL)
 			    *el = '\0';
 			if ((*cp != '\0') &&
-			    (__inet_pton(AF_INET6, cp, &a6) > 0)) {
+			    (inet_pton(AF_INET6, cp, &a6) > 0)) {
 			    struct sockaddr_in6 *sa6;
 
 			    sa6 = malloc(sizeof(*sa6));
@@ -334,14 +334,14 @@ __res_vinit(res_state statp, int preinit) {
 				sa6->sin6_flowinfo = 0;
 				sa6->sin6_addr = a6;
 
-				if (__glibc_likely (el == NULL))
+				if (__builtin_expect (el == NULL, 1))
 				    sa6->sin6_scope_id = 0;
 				else {
 				    int try_numericscope = 1;
 				    if (IN6_IS_ADDR_LINKLOCAL (&a6)
 					|| IN6_IS_ADDR_MC_LINKLOCAL (&a6)) {
 					sa6->sin6_scope_id
-					  = __if_nametoindex (el + 1);
+					  = if_nametoindex (el + 1);
 					if (sa6->sin6_scope_id != 0)
 					    try_numericscope = 0;
 				    }
@@ -428,7 +428,7 @@ __res_vinit(res_state statp, int preinit) {
 	    (void) fclose(fp);
 	}
 	if (__builtin_expect(statp->nscount == 0, 0)) {
-	    statp->nsaddr.sin_addr = __inet_makeaddr(IN_LOOPBACKNET, 1);
+	    statp->nsaddr.sin_addr = inet_makeaddr(IN_LOOPBACKNET, 1);
 	    statp->nsaddr.sin_family = AF_INET;
 	    statp->nsaddr.sin_port = htons(NAMESERVER_PORT);
 	    statp->nscount = 1;
@@ -621,8 +621,7 @@ __res_iclose(res_state statp, bool free_addr) {
 				statp->_u._ext.nsaddrs[ns] = NULL;
 			}
 		}
-	if (free_addr)
-		statp->_u._ext.nsinit = 0;
+	statp->_u._ext.nsinit = 0;
 }
 libc_hidden_def (__res_iclose)
 

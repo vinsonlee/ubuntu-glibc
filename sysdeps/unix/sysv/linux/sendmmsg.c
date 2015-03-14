@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -23,14 +23,6 @@
 #include <sys/syscall.h>
 #include <kernel-features.h>
 
-/* Do not use the sendmmsg syscall on socketcall architectures unless
-   it was added at the same time as the socketcall support or can be
-   assumed to be present.  */
-#if defined __ASSUME_SOCKETCALL \
-    && !defined __ASSUME_SENDMMSG_SYSCALL_WITH_SOCKETCALL \
-    && !defined __ASSUME_SENDMMSG_SYSCALL
-# undef __NR_sendmmsg
-#endif
 
 #ifdef __NR_sendmmsg
 int
@@ -50,7 +42,7 @@ __sendmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags)
 libc_hidden_def (__sendmmsg)
 weak_alias (__sendmmsg, sendmmsg)
 #elif defined __NR_socketcall
-# ifndef __ASSUME_SENDMMSG_SOCKETCALL
+# ifndef __ASSUME_SENDMMSG
 extern int __internal_sendmmsg (int fd, struct mmsghdr *vmessages,
 				unsigned int vlen, int flags)
      attribute_hidden;
@@ -60,7 +52,7 @@ static int have_sendmmsg;
 int
 __sendmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags)
 {
-  if (__glibc_likely (have_sendmmsg >= 0))
+  if (__builtin_expect (have_sendmmsg >= 0, 1))
     {
       int ret = __internal_sendmmsg (fd, vmessages, vlen, flags);
       /* The kernel returns -EINVAL for unknown socket operations.
@@ -94,8 +86,7 @@ __sendmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags)
 libc_hidden_def (__sendmmsg)
 weak_alias (__sendmmsg, sendmmsg)
 # else
-/* When __ASSUME_SENDMMSG_SOCKETCALL sendmmsg is defined in
-   internal_sendmmsg.S.  */
+/* When __ASSUME_SENDMMSG sendmmsg is defined in internal_sendmmsg.S.  */
 # endif
 #else
 # include <socket/sendmmsg.c>

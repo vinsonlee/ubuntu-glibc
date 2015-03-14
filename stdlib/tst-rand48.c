@@ -8,8 +8,8 @@
 #endif
 
 
-static int
-do_test (void)
+int
+main (void)
 {
   unsigned short int xs[3] = { 0x0001, 0x0012, 0x0123 };
   unsigned short int lxs[7];
@@ -388,6 +388,3 @@ drand48() and erand48 in lines %d and %d produce different results\n",
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

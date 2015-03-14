@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 2002.
 
@@ -56,6 +56,7 @@ __mbsrtowcs_l (dst, src, len, ps, l)
   data.__internal_use = 1;
   data.__flags = __GCONV_IS_LAST;
   data.__statep = ps;
+  data.__trans = NULL;
 
   /* Get the conversion functions.  */
   fcts = get_gconv_fcts (l->__locales[LC_CTYPE]);

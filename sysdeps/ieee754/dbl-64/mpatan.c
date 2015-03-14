@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2015 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2014 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -83,10 +83,10 @@ __mpatan (mp_no *x, mp_no *y, int p)
     {
       for (i = 0; i < m; i++)
 	{
-	  __add (&__mpone, &mpsm, &mpt1, p);
+	  __add (&mpone, &mpsm, &mpt1, p);
 	  __mpsqrt (&mpt1, &mpt2, p);
 	  __add (&mpt2, &mpt2, &mpt1, p);
-	  __add (&__mptwo, &mpsm, &mpt2, p);
+	  __add (&mptwo, &mpsm, &mpt2, p);
 	  __add (&mpt1, &mpt2, &mpt3, p);
 	  __dvd (&mpsm, &mpt3, &mpt1, p);
 	  __cpy (&mpt1, &mpsm, p);

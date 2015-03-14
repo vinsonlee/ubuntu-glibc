@@ -1,5 +1,5 @@
 /* Check __ppc_get_timebase() for architecture changes
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ do_test (void)
   if (t1 != t2 && t1 != t3 && t2 != t3)
     return 0;
 
-  printf ("Fail: timebase reads should always be different.\n");
+  printf ("Fail: timebase reads should always be different.");
   return 1;
 }
 

@@ -1,5 +1,5 @@
 /* Set current rounding direction.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -21,13 +21,11 @@
 
 #undef fesetround
 int
-__fesetround (int round)
+fesetround (int round)
 {
   if ((unsigned int) round > 3)
     return 1;
   else
-    return __fesetround_inline(round);
+    return __fesetround(round);
 }
-libm_hidden_def (__fesetround)
-weak_alias (__fesetround, fesetround)
-libm_hidden_weak (fesetround)
+libm_hidden_def (fesetround)

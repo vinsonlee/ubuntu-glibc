@@ -1,5 +1,5 @@
 /* Quad-precision floating point e^x.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jj@ultra.linux.cz>
    Partly based on double-precision code
@@ -181,7 +181,7 @@ __ieee754_expl (long double x)
 		* __expl_table[T_EXPL_RES2 + tval2];
       n_i = (int)n;
       /* 'unsafe' is 1 iff n_1 != 0.  */
-      unsafe = abs(n_i) >= 15000;
+      unsafe = abs(n_i) >= -LDBL_MIN_EXP - 1;
       ex2_u.ieee.exponent += n_i >> unsafe;
 
       /* Compute scale = 2^n_1.  */
