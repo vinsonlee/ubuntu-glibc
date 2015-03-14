@@ -1,5 +1,5 @@
-/* Uncancelable versions of cancelable interfaces.  Linux/NPTL version.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+/* Uncancelable versions of cancelable interfaces.  Linux version.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -17,38 +17,28 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#include <sys/types.h>
 #include <sysdep.h>
 
-#if IS_IN (libc) || IS_IN (libpthread) || IS_IN (librt)
-extern int __open_nocancel (const char *, int, ...) attribute_hidden;
-extern int __close_nocancel (int) attribute_hidden;
-extern int __read_nocancel (int, void *, size_t) attribute_hidden;
-extern int __write_nocancel (int, const void *, size_t) attribute_hidden;
-extern pid_t __waitpid_nocancel (pid_t, int *, int) attribute_hidden;
+/* Uncancelable open.  */
+#define open_not_cancel(name, flags, mode) \
+   INLINE_SYSCALL (open, 3, (const char *) (name), (flags), (mode))
+#define open_not_cancel_2(name, flags) \
+   INLINE_SYSCALL (open, 2, (const char *) (name), (flags))
+
+/* Uncancelable openat.  */
+#if !defined NOT_IN_libc || defined IS_IN_libpthread || defined IS_IN_librt
 extern int __openat_nocancel (int fd, const char *fname, int oflag,
-				mode_t mode) attribute_hidden;
+			      mode_t mode) attribute_hidden;
 extern int __openat64_nocancel (int fd, const char *fname, int oflag,
-				  mode_t mode) attribute_hidden;
+				mode_t mode) attribute_hidden;
 #else
-# define __open_nocancel(name, ...) __open (name, __VA_ARGS__)
-# define __close_nocancel(fd) __close (fd)
-# define __read_nocancel(fd, buf, len) __read (fd, buf, len)
-# define __write_nocancel(fd, buf, len) __write (fd, buf, len)
-# define __waitpid_nocancel(pid, stat_loc, options) \
-  __waitpid (pid, stat_loc, options)
 # define __openat_nocancel(fd, fname, oflag, mode) \
   openat (fd, fname, oflag, mode)
 # define __openat64_nocancel(fd, fname, oflag, mode) \
   openat64 (fd, fname, oflag, mode)
 #endif
 
-/* Uncancelable open.  */
-#define open_not_cancel(name, flags, mode) \
-   __open_nocancel (name, flags, mode)
-#define open_not_cancel_2(name, flags) \
-   __open_nocancel (name, flags)
-
-/* Uncancelable openat.  */
 #define openat_not_cancel(fd, fname, oflag, mode) \
   __openat_nocancel (fd, fname, oflag, mode)
 #define openat_not_cancel_3(fd, fname, oflag) \
@@ -60,18 +50,18 @@ extern int __openat64_nocancel (int fd, const char *fname, int oflag,
 
 /* Uncancelable close.  */
 #define close_not_cancel(fd) \
-  __close_nocancel (fd)
+  INLINE_SYSCALL (close, 1, fd)
 #define close_not_cancel_no_status(fd) \
   (void) ({ INTERNAL_SYSCALL_DECL (err);				      \
 	    INTERNAL_SYSCALL (close, err, 1, (fd)); })
 
 /* Uncancelable read.  */
 #define read_not_cancel(fd, buf, n) \
-  __read_nocancel (fd, buf, n)
+  INLINE_SYSCALL (read, 3, (fd), (buf), (n))
 
 /* Uncancelable write.  */
 #define write_not_cancel(fd, buf, n) \
-  __write_nocancel (fd, buf, n)
+  INLINE_SYSCALL (write, 3, (fd), (buf), (n))
 
 /* Uncancelable writev.  */
 #define writev_not_cancel_no_status(fd, iov, n) \
@@ -83,16 +73,31 @@ extern int __openat64_nocancel (int fd, const char *fname, int oflag,
   __fcntl_nocancel (fd, cmd, val)
 
 /* Uncancelable waitpid.  */
-#define waitpid_not_cancel(pid, stat_loc, options) \
+#ifdef __NR_waitpid
+# define waitpid_not_cancel(pid, stat_loc, options) \
+  INLINE_SYSCALL (waitpid, 3, pid, stat_loc, options)
+#else
+# define waitpid_not_cancel(pid, stat_loc, options) \
   INLINE_SYSCALL (wait4, 4, pid, stat_loc, options, NULL)
+#endif
 
 /* Uncancelable pause.  */
-#define pause_not_cancel() \
+#ifdef __NR_pause
+# define pause_not_cancel() \
+  INLINE_SYSCALL (pause, 0)
+#else
+# define pause_not_cancel() \
   __pause_nocancel ()
+#endif
 
 /* Uncancelable nanosleep.  */
-#define nanosleep_not_cancel(requested_time, remaining) \
+#ifdef __NR_nanosleep
+# define nanosleep_not_cancel(requested_time, remaining) \
+  INLINE_SYSCALL (nanosleep, 2, requested_time, remaining)
+#else
+# define nanosleep_not_cancel(requested_time, remaining) \
   __nanosleep_nocancel (requested_time, remaining)
+#endif
 
 /* Uncancelable sigsuspend.  */
 #define sigsuspend_not_cancel(set) \

@@ -1,5 +1,5 @@
 /* Test for a tricky E2BIG situation.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Bruno Haible <bruno@clisp.org>, 2002.
 
@@ -95,13 +95,10 @@ test_tscii (void)
   test ("TSCII", inbuf, sizeof (inbuf), 9);
 }
 
-static int
-do_test (void)
+int
+main (void)
 {
   test_euc_jisx0213 ();
   test_tscii ();
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

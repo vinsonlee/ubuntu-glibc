@@ -1,8 +1,8 @@
 #include <dlfcn.h>
 #include <stdio.h>
 
-static int
-do_test (void)
+int
+main (void)
 {
   void *h1 = dlopen ("$ORIGIN/testobj6.so", RTLD_GLOBAL|RTLD_LAZY);
   if (h1 == NULL)
@@ -34,6 +34,3 @@ do_test (void)
 
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

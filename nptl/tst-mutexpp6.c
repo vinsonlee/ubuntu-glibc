@@ -42,5 +42,4 @@ do_test_wrapper (void)
 #define TEST_FUNCTION do_test_wrapper ()
 
 #define ATTR &a
-#define ATTR_NULL false
 #include "tst-mutex6.c"

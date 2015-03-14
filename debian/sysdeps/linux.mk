@@ -7,7 +7,7 @@ pt_chown = yes
 
 # NPTL Config
 threads = yes
-libc_add-ons = $(add-ons)
+libc_add-ons = nptl $(add-ons)
 
 ifneq ($(filter stage1 stage2,$(DEB_BUILD_PROFILES)),)
   libc_extra_config_options = $(extra_config_options)

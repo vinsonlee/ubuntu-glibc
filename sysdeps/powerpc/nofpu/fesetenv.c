@@ -1,5 +1,5 @@
 /* Set floating point environment (soft-float edition).
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez <aldyh@redhat.com>, 2002.
    This file is part of the GNU C Library.
 
@@ -42,6 +42,5 @@ strong_alias (__fesetenv, __old_fesetenv)
 compat_symbol (libm, __old_fesetenv, fesetenv, GLIBC_2_1);
 #endif
 
-libm_hidden_def (__fesetenv)
 libm_hidden_ver (__fesetenv, fesetenv)
 versioned_symbol (libm, __fesetenv, fesetenv, GLIBC_2_2);

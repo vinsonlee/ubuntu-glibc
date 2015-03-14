@@ -1,5 +1,5 @@
 /* Mapping tables for Big5-HKSCS handling.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
    Modified for Big5-HKSCS by Roger So <spacehunt@e-fever.org>, 2000.
@@ -17738,7 +17738,6 @@ static struct
 #define TO_LOOP			to_big5hkscs
 #define DEFINE_INIT		1
 #define DEFINE_FINI		1
-#define ONE_DIRECTION		0
 #define FROM_LOOP_MIN_NEEDED_FROM	1
 #define FROM_LOOP_MAX_NEEDED_FROM	2
 #define FROM_LOOP_MIN_NEEDED_TO		4
@@ -17775,7 +17774,7 @@ static struct
     {									      \
       if (FROM_DIRECTION)						      \
 	{								      \
-	  if (__glibc_likely (outbuf + 4 <= outend))			      \
+	  if (__builtin_expect (outbuf + 4 <= outend, 1))		      \
 	    {								      \
 	      /* Write out the last character.  */			      \
 	      *((uint32_t *) outbuf) = data->__statep->__count >> 3;	      \
@@ -17788,7 +17787,7 @@ static struct
 	}								      \
       else								      \
 	{								      \
-	  if (__glibc_likely (outbuf + 2 <= outend))			      \
+	  if (__builtin_expect (outbuf + 2 <= outend, 1))		      \
 	    {								      \
 	      /* Write out the last character.  */			      \
 	      uint32_t lasttwo = data->__statep->__count >> 3;		      \
@@ -17815,7 +17814,7 @@ static struct
 									      \
     /* Determine whether there is a buffered character pending.  */	      \
     ch = *statep >> 3;							      \
-    if (__glibc_likely (ch == 0))					      \
+    if (__builtin_expect (ch == 0, 1))					      \
       {									      \
 	/* No - so look at the next input byte.  */			      \
 	ch = *inptr;							      \
@@ -17827,7 +17826,7 @@ static struct
 	    uint32_t ch2;						      \
 	    int idx;							      \
 									      \
-	    if (__glibc_unlikely (inptr + 1 >= inend))			      \
+	    if (__builtin_expect (inptr + 1 >= inend, 0))		      \
 	      {								      \
 		/* The second character is not available.  */		      \
 		result = __GCONV_INCOMPLETE_INPUT;			      \
@@ -17888,7 +17887,7 @@ static struct
 									      \
 	    inptr += 2;							      \
 	  }								      \
-	else if (__glibc_unlikely (ch == 0xff))				      \
+	else if (__builtin_expect (ch == 0xff, 0))			      \
 	  {								      \
 	    STANDARD_FROM_LOOP_ERR_HANDLER (1);				      \
 	  }								      \
@@ -17938,7 +17937,7 @@ static struct
 	  goto not_combining;						      \
 									      \
 	/* Output the combined character.  */				      \
-	if (__glibc_unlikely (outptr + 1 >= outend))			      \
+	if (__builtin_expect (outptr + 1 >= outend, 0))			      \
 	  {								      \
 	    result = __GCONV_FULL_OUTPUT;				      \
 	    break;							      \
@@ -17951,7 +17950,7 @@ static struct
 									      \
       not_combining:							      \
 	/* Output the buffered character.  */				      \
-	if (__glibc_unlikely (outptr + 1 >= outend))			      \
+	if (__builtin_expect (outptr + 1 >= outend, 0))			      \
 	  {								      \
 	    result = __GCONV_FULL_OUTPUT;				      \
 	    break;							      \
@@ -17993,7 +17992,7 @@ static struct
 	else								      \
 	  {								      \
 	   /* Check for possible combining character.  */		      \
-	    if (__glibc_unlikely (ch == 0xca || ch == 0xea))		      \
+	    if (__builtin_expect (ch == 0xca || ch == 0xea, 0))		      \
 	      {								      \
 		*statep = ((cp[0] << 8) | cp[1]) << 3;			      \
 		inptr += 4;						      \
@@ -18010,7 +18009,7 @@ static struct
 	      }								      \
 									      \
 	    *outptr++ = cp[0];						      \
-	    if (__glibc_likely (cp[1] != '\0'))				      \
+	    if (__builtin_expect (cp[1] != '\0', 1))			      \
 	      *outptr++ = cp[1];					      \
 	  }								      \
       }									      \

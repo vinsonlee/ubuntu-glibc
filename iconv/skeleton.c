@@ -1,5 +1,5 @@
 /* Skeleton for a conversion module.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -163,6 +163,7 @@
 # endif
 #endif
 
+
 /* How many bytes are needed at most for the from-charset.  */
 #ifndef MAX_NEEDED_FROM
 # define MAX_NEEDED_FROM	MIN_NEEDED_FROM
@@ -203,7 +204,7 @@
 /* Define macros which can access unaligned buffers.  These macros are
    supposed to be used only in code outside the inner loops.  For the inner
    loops we have other definitions which allow optimized access.  */
-#if _STRING_ARCH_unaligned
+#ifdef _STRING_ARCH_unaligned
 /* We can handle unaligned memory access.  */
 # define get16u(addr) *((const uint16_t *) (addr))
 # define get32u(addr) *((const uint32_t *) (addr))
@@ -409,7 +410,7 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
   /* If the function is called with no input this means we have to reset
      to the initial state.  The possibly partly converted input is
      dropped.  */
-  if (__glibc_unlikely (do_flush))
+  if (__builtin_expect (do_flush, 0))
     {
       /* This should never happen during error handling.  */
       assert (outbufstart == NULL);
@@ -460,7 +461,7 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 
 		      if (result != __GCONV_EMPTY_INPUT)
 			{
-			  if (__glibc_unlikely (outerr != outbuf))
+			  if (__builtin_expect (outerr != outbuf, 0))
 			    {
 			      /* We have a problem.  Undo the conversion.  */
 			      outbuf = outstart;
@@ -501,9 +502,8 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
     }
   else
     {
-      /* We preserve the initial values of the pointer variables,
-	 but only some conversion modules need it.  */
-      const unsigned char *inptr __attribute__ ((__unused__)) = *inptrp;
+      /* We preserve the initial values of the pointer variables.  */
+      const unsigned char *inptr = *inptrp;
       unsigned char *outbuf = (__builtin_expect (outbufstart == NULL, 1)
 			       ? data->__outbuf : *outbufstart);
       unsigned char *outend = data->__outbufend;
@@ -523,7 +523,7 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 	 INTERNAL, for which the subexpression evaluates to 1, but INTERNAL
 	 buffers are always aligned correctly.  */
 #define POSSIBLY_UNALIGNED \
-  (!_STRING_ARCH_unaligned					              \
+  (!defined _STRING_ARCH_unaligned					      \
    && (((FROM_LOOP_MIN_NEEDED_FROM != 1					      \
 	 && FROM_LOOP_MAX_NEEDED_FROM % FROM_LOOP_MIN_NEEDED_FROM == 0)	      \
 	&& (FROM_LOOP_MIN_NEEDED_TO != 1				      \
@@ -593,6 +593,8 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 
       while (1)
 	{
+	  struct __gconv_trans_data *trans;
+
 	  /* Remember the start value for this round.  */
 	  inptr = *inptrp;
 	  /* The outbuf buffer is empty.  */
@@ -602,7 +604,7 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 	  SAVE_RESET_STATE (1);
 #endif
 
-	  if (__glibc_likely (!unaligned))
+	  if (__builtin_expect (!unaligned, 1))
 	    {
 	      if (FROM_DIRECTION)
 		/* Run the conversion loop.  */
@@ -633,18 +635,25 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 
 	  /* If we were called as part of an error handling module we
 	     don't do anything else here.  */
-	  if (__glibc_unlikely (outbufstart != NULL))
+	  if (__builtin_expect (outbufstart != NULL, 0))
 	    {
 	      *outbufstart = outbuf;
 	      return status;
 	    }
+
+	  /* Give the transliteration module the chance to store the
+	     original text and the result in case it needs a context.  */
+	  for (trans = data->__trans; trans != NULL; trans = trans->__next)
+	    if (trans->__trans_context_fct != NULL)
+	      DL_CALL_FCT (trans->__trans_context_fct,
+			   (trans->__data, inptr, *inptrp, outstart, outbuf));
 
 	  /* We finished one use of the loops.  */
 	  ++data->__invocation_counter;
 
 	  /* If this is the last step leave the loop, there is nothing
 	     we can do.  */
-	  if (__glibc_unlikely (data->__flags & __GCONV_IS_LAST))
+	  if (__builtin_expect (data->__flags & __GCONV_IS_LAST, 0))
 	    {
 	      /* Store information about how many bytes are available.  */
 	      data->__outbuf = outbuf;
@@ -657,7 +666,7 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 	    }
 
 	  /* Write out all output which was produced.  */
-	  if (__glibc_likely (outbuf > outstart))
+	  if (__builtin_expect (outbuf > outstart, 1))
 	    {
 	      const unsigned char *outerr = data->__outbuf;
 	      int result;
@@ -668,7 +677,7 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 
 	      if (result != __GCONV_EMPTY_INPUT)
 		{
-		  if (__glibc_unlikely (outerr != outbuf))
+		  if (__builtin_expect (outerr != outbuf, 0))
 		    {
 #ifdef RESET_INPUT_BUFFER
 		      RESET_INPUT_BUFFER;
@@ -686,7 +695,7 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 		      SAVE_RESET_STATE (0);
 # endif
 
-		      if (__glibc_likely (!unaligned))
+		      if (__builtin_expect (!unaligned, 1))
 			{
 			  if (FROM_DIRECTION)
 			    /* Run the conversion loop.  */
@@ -729,7 +738,7 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 
 		      /* If we haven't consumed a single byte decrement
 			 the invocation counter.  */
-		      if (__glibc_unlikely (outbuf == outstart))
+		      if (__builtin_expect (outbuf == outstart, 0))
 			--data->__invocation_counter;
 #endif	/* reset input buffer */
 		    }

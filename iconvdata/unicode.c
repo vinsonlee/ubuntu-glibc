@@ -1,5 +1,5 @@
 /* Conversion module for Unicode
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1999.
 
@@ -38,7 +38,6 @@
 #define DEFINE_FINI		0
 #define MIN_NEEDED_FROM		2
 #define MIN_NEEDED_TO		4
-#define ONE_DIRECTION		0
 #define FROM_DIRECTION		(dir == from_unicode)
 #define PREPARE_LOOP \
   enum direction dir = ((struct unicode_data *) step->__data)->dir;	      \
@@ -65,7 +64,7 @@
   else if (!data->__internal_use && data->__invocation_counter == 0)	      \
     {									      \
       /* Emit the Byte Order Mark.  */					      \
-      if (__glibc_unlikely (outbuf + 2 > outend))			      \
+      if (__builtin_expect (outbuf + 2 > outend, 0))			      \
 	return __GCONV_FULL_OUTPUT;					      \
 									      \
       put16u (outbuf, BOM);						      \
@@ -151,12 +150,12 @@ gconv_end (struct __gconv_step *data)
   {									      \
     uint32_t c = get32 (inptr);						      \
 									      \
-    if (__glibc_unlikely (c >= 0x10000))				      \
+    if (__builtin_expect (c >= 0x10000, 0))				      \
       {									      \
 	UNICODE_TAG_HANDLER (c, 4);					      \
 	STANDARD_TO_LOOP_ERR_HANDLER (4);				      \
       }									      \
-    else if (__glibc_unlikely (c >= 0xd800 && c < 0xe000))		      \
+    else if (__builtin_expect (c >= 0xd800 && c < 0xe000, 0))		      \
       {									      \
 	/* Surrogate characters in UCS-4 input are not valid.		      \
 	   We must catch this, because the UCS-2 output might be	      \
@@ -196,7 +195,7 @@ gconv_end (struct __gconv_step *data)
     if (swap)								      \
       u1 = bswap_16 (u1);						      \
 									      \
-    if (__glibc_unlikely (u1 >= 0xd800 && u1 < 0xe000))			      \
+    if (__builtin_expect (u1 >= 0xd800 && u1 < 0xe000, 0))		      \
       {									      \
 	/* Surrogate characters in UCS-2 input are not valid.  Reject	      \
 	   them.  (Catching this here is not security relevant.)  */	      \

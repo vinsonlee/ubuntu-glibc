@@ -1,5 +1,5 @@
 /* Thread-local storage handling in the ELF dynamic linker.  Generic version.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/param.h>
-#include <atomic.h>
 
 #include <tls.h>
 #include <dl-tls.h>
@@ -35,12 +34,14 @@
 
 
 /* Out-of-memory handler.  */
+#ifdef SHARED
 static void
 __attribute__ ((__noreturn__))
 oom (void)
 {
   _dl_fatal_printf ("cannot allocate memory for thread-local data: ABORT\n");
 }
+#endif
 
 
 size_t
@@ -101,33 +102,6 @@ _dl_next_tls_modid (void)
     }
 
   return result;
-}
-
-
-size_t
-internal_function
-_dl_count_modids (void)
-{
-  /* It is rare that we have gaps; see elf/dl-open.c (_dl_open) where
-     we fail to load a module and unload it leaving a gap.  If we don't
-     have gaps then the number of modids is the current maximum so
-     return that.  */
-  if (__glibc_likely (!GL(dl_tls_dtv_gaps)))
-    return GL(dl_tls_max_dtv_idx);
-
-  /* We have gaps and are forced to count the non-NULL entries.  */
-  size_t n = 0;
-  struct dtv_slotinfo_list *runp = GL(dl_tls_dtv_slotinfo_list);
-  while (runp != NULL)
-    {
-      for (size_t i = 0; i < runp->len; ++i)
-	if (runp->slotinfo[i].map != NULL)
-	  ++n;
-
-      runp = runp->next;
-    }
-
-  return n;
 }
 
 
@@ -396,53 +370,6 @@ _dl_allocate_tls_storage (void)
 }
 
 
-#ifndef SHARED
-extern dtv_t _dl_static_dtv[];
-# define _dl_initial_dtv (&_dl_static_dtv[1])
-#endif
-
-static dtv_t *
-_dl_resize_dtv (dtv_t *dtv)
-{
-  /* Resize the dtv.  */
-  dtv_t *newp;
-  /* Load GL(dl_tls_max_dtv_idx) atomically since it may be written to by
-     other threads concurrently.  */
-  size_t newsize
-    = atomic_load_acquire (&GL(dl_tls_max_dtv_idx)) + DTV_SURPLUS;
-  size_t oldsize = dtv[-1].counter;
-
-  if (dtv == GL(dl_initial_dtv))
-    {
-      /* This is the initial dtv that was either statically allocated in
-	 __libc_setup_tls or allocated during rtld startup using the
-	 dl-minimal.c malloc instead of the real malloc.  We can't free
-	 it, we have to abandon the old storage.  */
-
-      newp = malloc ((2 + newsize) * sizeof (dtv_t));
-      if (newp == NULL)
-	oom ();
-      memcpy (newp, &dtv[-1], (2 + oldsize) * sizeof (dtv_t));
-    }
-  else
-    {
-      newp = realloc (&dtv[-1],
-		      (2 + newsize) * sizeof (dtv_t));
-      if (newp == NULL)
-	oom ();
-    }
-
-  newp[0].counter = newsize;
-
-  /* Clear the newly allocated part.  */
-  memset (newp + 2 + oldsize, '\0',
-	  (newsize - oldsize) * sizeof (dtv_t));
-
-  /* Return the generation counter.  */
-  return &newp[1];
-}
-
-
 void *
 internal_function
 _dl_allocate_tls_init (void *result)
@@ -455,16 +382,6 @@ _dl_allocate_tls_init (void *result)
   struct dtv_slotinfo_list *listp;
   size_t total = 0;
   size_t maxgen = 0;
-
-  /* Check if the current dtv is big enough.   */
-  if (dtv[-1].counter < GL(dl_tls_max_dtv_idx))
-    {
-      /* Resize the dtv.  */
-      dtv = _dl_resize_dtv (dtv);
-
-      /* Install this new dtv in the thread data structures.  */
-      INSTALL_DTV (result, &dtv[-1]);
-    }
 
   /* We have to prepare the dtv for all currently loaded modules using
      TLS.  For those which are dynamically loaded we add the values
@@ -490,7 +407,6 @@ _dl_allocate_tls_init (void *result)
 
 	  /* Keep track of the maximum generation number.  This might
 	     not be the generation counter.  */
-	  assert (listp->slotinfo[cnt].gen <= GL(dl_tls_generation));
 	  maxgen = MAX (maxgen, listp->slotinfo[cnt].gen);
 
 	  if (map->l_tls_offset == NO_TLS_OFFSET
@@ -547,6 +463,11 @@ _dl_allocate_tls (void *mem)
 }
 rtld_hidden_def (_dl_allocate_tls)
 
+
+#ifndef SHARED
+extern dtv_t _dl_static_dtv[];
+# define _dl_initial_dtv (&_dl_static_dtv[1])
+#endif
 
 void
 internal_function
@@ -696,10 +617,41 @@ _dl_update_slotinfo (unsigned long int req_modid)
 	      assert (total + cnt == modid);
 	      if (dtv[-1].counter < modid)
 		{
-		  /* Resize the dtv.  */
-		  dtv = _dl_resize_dtv (dtv);
+		  /* Reallocate the dtv.  */
+		  dtv_t *newp;
+		  size_t newsize = GL(dl_tls_max_dtv_idx) + DTV_SURPLUS;
+		  size_t oldsize = dtv[-1].counter;
 
-		  assert (modid <= dtv[-1].counter);
+		  assert (map->l_tls_modid <= newsize);
+
+		  if (dtv == GL(dl_initial_dtv))
+		    {
+		      /* This is the initial dtv that was allocated
+			 during rtld startup using the dl-minimal.c
+			 malloc instead of the real malloc.  We can't
+			 free it, we have to abandon the old storage.  */
+
+		      newp = malloc ((2 + newsize) * sizeof (dtv_t));
+		      if (newp == NULL)
+			oom ();
+		      memcpy (newp, &dtv[-1], (2 + oldsize) * sizeof (dtv_t));
+		    }
+		  else
+		    {
+		      newp = realloc (&dtv[-1],
+				      (2 + newsize) * sizeof (dtv_t));
+		      if (newp == NULL)
+			oom ();
+		    }
+
+		  newp[0].counter = newsize;
+
+		  /* Clear the newly allocated part.  */
+		  memset (newp + 2 + oldsize, '\0',
+			  (newsize - oldsize) * sizeof (dtv_t));
+
+		  /* Point dtv to the generation counter.  */
+		  dtv = &newp[1];
 
 		  /* Install this new dtv in the thread data
 		     structures.  */
@@ -768,7 +720,7 @@ tls_get_addr_tail (GET_ADDR_ARGS, dtv_t *dtv, struct link_map *the_map)
 			!= FORCED_DYNAMIC_TLS_OFFSET, 0))
     {
       __rtld_lock_lock_recursive (GL(dl_load_lock));
-      if (__glibc_likely (the_map->l_tls_offset == NO_TLS_OFFSET))
+      if (__builtin_expect (the_map->l_tls_offset == NO_TLS_OFFSET, 1))
 	{
 	  the_map->l_tls_offset = FORCED_DYNAMIC_TLS_OFFSET;
 	  __rtld_lock_unlock_recursive (GL(dl_load_lock));
@@ -780,7 +732,7 @@ tls_get_addr_tail (GET_ADDR_ARGS, dtv_t *dtv, struct link_map *the_map)
 				!= FORCED_DYNAMIC_TLS_OFFSET, 1))
 	    {
 	      void *p = dtv[GET_ADDR_MODULE].pointer.val;
-	      if (__glibc_unlikely (p == TLS_DTV_UNALLOCATED))
+	      if (__builtin_expect (p == TLS_DTV_UNALLOCATED, 0))
 		goto again;
 
 	      return (char *) p + GET_ADDR_OFFSET;
@@ -803,22 +755,12 @@ update_get_addr (GET_ADDR_ARGS)
 
   void *p = dtv[GET_ADDR_MODULE].pointer.val;
 
-  if (__glibc_unlikely (p == TLS_DTV_UNALLOCATED))
+  if (__builtin_expect (p == TLS_DTV_UNALLOCATED, 0))
     return tls_get_addr_tail (GET_ADDR_PARAM, dtv, the_map);
 
   return (void *) p + GET_ADDR_OFFSET;
 }
 
-/* For all machines that have a non-macro version of __tls_get_addr, we
-   want to use rtld_hidden_proto/rtld_hidden_def in order to call the
-   internal alias for __tls_get_addr from ld.so. This avoids a PLT entry
-   in ld.so for __tls_get_addr.  */
-
-#ifndef __tls_get_addr
-extern void * __tls_get_addr (GET_ADDR_ARGS);
-rtld_hidden_proto (__tls_get_addr)
-rtld_hidden_def (__tls_get_addr)
-#endif
 
 /* The generic dynamic and local dynamic model cannot be used in
    statically linked applications.  */
@@ -827,12 +769,12 @@ __tls_get_addr (GET_ADDR_ARGS)
 {
   dtv_t *dtv = THREAD_DTV ();
 
-  if (__glibc_unlikely (dtv[0].counter != GL(dl_tls_generation)))
+  if (__builtin_expect (dtv[0].counter != GL(dl_tls_generation), 0))
     return update_get_addr (GET_ADDR_PARAM);
 
   void *p = dtv[GET_ADDR_MODULE].pointer.val;
 
-  if (__glibc_unlikely (p == TLS_DTV_UNALLOCATED))
+  if (__builtin_expect (p == TLS_DTV_UNALLOCATED, 0))
     return tls_get_addr_tail (GET_ADDR_PARAM, dtv, NULL);
 
   return (char *) p + GET_ADDR_OFFSET;
@@ -845,12 +787,12 @@ __tls_get_addr (GET_ADDR_ARGS)
 void *
 _dl_tls_get_addr_soft (struct link_map *l)
 {
-  if (__glibc_unlikely (l->l_tls_modid == 0))
+  if (__builtin_expect (l->l_tls_modid == 0, 0))
     /* This module has no TLS segment.  */
     return NULL;
 
   dtv_t *dtv = THREAD_DTV ();
-  if (__glibc_unlikely (dtv[0].counter != GL(dl_tls_generation)))
+  if (__builtin_expect (dtv[0].counter != GL(dl_tls_generation), 0))
     {
       /* This thread's DTV is not completely current,
 	 but it might already cover this module.  */
@@ -875,7 +817,7 @@ _dl_tls_get_addr_soft (struct link_map *l)
     }
 
   void *data = dtv[l->l_tls_modid].pointer.val;
-  if (__glibc_unlikely (data == TLS_DTV_UNALLOCATED))
+  if (__builtin_expect (data == TLS_DTV_UNALLOCATED, 0))
     /* The DTV is current, but this thread has not yet needed
        to allocate this module's segment.  */
     data = NULL;

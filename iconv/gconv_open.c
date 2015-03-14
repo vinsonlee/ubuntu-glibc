@@ -1,5 +1,5 @@
 /* Find matching transformation algorithms and initialize steps.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -39,13 +39,13 @@ __gconv_open (const char *toset, const char *fromset, __gconv_t *handle,
   int conv_flags = 0;
   const char *errhand;
   const char *ignore;
-  bool translit = false;
+  struct trans_struct *trans = NULL;
 
   /* Find out whether any error handling method is specified.  */
   errhand = strchr (toset, '/');
   if (errhand != NULL)
     errhand = strchr (errhand + 1, '/');
-  if (__glibc_likely (errhand != NULL))
+  if (__builtin_expect (errhand != NULL, 1))
     {
       if (*++errhand == '\0')
 	errhand = NULL;
@@ -66,10 +66,72 @@ __gconv_open (const char *toset, const char *fromset, __gconv_t *handle,
 	  while (tok != NULL)
 	    {
 	      if (__strcasecmp_l (tok, "TRANSLIT", _nl_C_locobj_ptr) == 0)
-		translit = true;
+		{
+		  /* It's the builtin transliteration handling.  We only
+		     support it for working on the internal encoding.  */
+		  static const char *const internal_trans_names[1]
+		    = { "INTERNAL" };
+		  struct trans_struct *lastp = NULL;
+		  struct trans_struct *runp;
+
+		  for (runp = trans; runp != NULL; runp = runp->next)
+		    if (runp->trans_fct == __gconv_transliterate)
+		      break;
+		    else
+		      lastp = runp;
+
+		  if (runp == NULL)
+		    {
+		      struct trans_struct *newp;
+
+		      newp = (struct trans_struct *) alloca (sizeof (*newp));
+		      memset (newp, '\0', sizeof (*newp));
+
+		      /* We leave the `name' field zero to signal that
+			 this is an internal transliteration step.  */
+		      newp->csnames = (const char **) internal_trans_names;
+		      newp->ncsnames = 1;
+		      newp->trans_fct = __gconv_transliterate;
+
+		      if (lastp == NULL)
+			trans = newp;
+		      else
+			lastp->next = newp;
+		    }
+		}
 	      else if (__strcasecmp_l (tok, "IGNORE", _nl_C_locobj_ptr) == 0)
 		/* Set the flag to ignore all errors.  */
 		conv_flags |= __GCONV_IGNORE_ERRORS;
+	      else
+		{
+		  /* `tok' is possibly a module name.  We'll see later
+		     whether we can find it.  But first see that we do
+		     not already a module of this name.  */
+		  struct trans_struct *lastp = NULL;
+		  struct trans_struct *runp;
+
+		  for (runp = trans; runp != NULL; runp = runp->next)
+		    if (runp->name != NULL
+			&& __strcasecmp_l (tok, runp->name,
+					   _nl_C_locobj_ptr) == 0)
+		      break;
+		    else
+		      lastp = runp;
+
+		  if (runp == NULL)
+		    {
+		      struct trans_struct *newp;
+
+		      newp = (struct trans_struct *) alloca (sizeof (*newp));
+		      memset (newp, '\0', sizeof (*newp));
+		      newp->name = tok;
+
+		      if (lastp == NULL)
+			trans = newp;
+		      else
+			lastp->next = newp;
+		    }
+		}
 
 	      tok = __strtok_r (NULL, ",", &ptr);
 	    }
@@ -110,6 +172,25 @@ __gconv_open (const char *toset, const char *fromset, __gconv_t *handle,
   res = __gconv_find_transform (toset, fromset, &steps, &nsteps, flags);
   if (res == __GCONV_OK)
     {
+      /* Find the modules.  */
+      struct trans_struct *lastp = NULL;
+      struct trans_struct *runp;
+
+      for (runp = trans; runp != NULL; runp = runp->next)
+	{
+	  if (runp->name == NULL
+	      || __builtin_expect (__gconv_translit_find (runp), 0) == 0)
+	    lastp = runp;
+	  else
+	    {
+	      /* This means we haven't found the module.  Remove it.  */
+	      if (lastp == NULL)
+		trans  = runp->next;
+	      else
+		lastp->next  = runp->next;
+	    }
+	}
+
       /* Allocate room for handle.  */
       result = (__gconv_t) malloc (sizeof (struct __gconv_info)
 				   + (nsteps
@@ -118,6 +199,8 @@ __gconv_open (const char *toset, const char *fromset, __gconv_t *handle,
 	res = __GCONV_NOMEM;
       else
 	{
+	  size_t n;
+
 	  /* Remember the list of steps.  */
 	  result->__steps = steps;
 	  result->__nsteps = nsteps;
@@ -145,12 +228,47 @@ __gconv_open (const char *toset, const char *fromset, __gconv_t *handle,
 	      /* We use the `mbstate_t' member in DATA.  */
 	      result->__data[cnt].__statep = &result->__data[cnt].__state;
 
-	      /* The builtin transliteration handling only
-		 supports the internal encoding.  */
-	      if (translit
-		  && __strcasecmp_l (steps[cnt].__from_name,
-				     "INTERNAL", _nl_C_locobj_ptr) == 0)
-		conv_flags |= __GCONV_TRANSLIT;
+	      /* Now see whether we can use any of the transliteration
+		 modules for this step.  */
+	      for (runp = trans; runp != NULL; runp = runp->next)
+		for (n = 0; n < runp->ncsnames; ++n)
+		  if (__strcasecmp_l (steps[cnt].__from_name,
+				      runp->csnames[n], _nl_C_locobj_ptr) == 0)
+		    {
+		      void *data = NULL;
+
+		      /* Match!  Now try the initializer.  */
+		      if (runp->trans_init_fct == NULL
+			  || (runp->trans_init_fct (&data,
+						    steps[cnt].__to_name)
+			      == __GCONV_OK))
+			{
+			  /* Append at the end of the list.  */
+			  struct __gconv_trans_data *newp;
+			  struct __gconv_trans_data **lastp;
+
+			  newp = (struct __gconv_trans_data *)
+			    malloc (sizeof (struct __gconv_trans_data));
+			  if (newp == NULL)
+			    {
+			      res = __GCONV_NOMEM;
+			      goto bail;
+			    }
+
+			  newp->__trans_fct = runp->trans_fct;
+			  newp->__trans_context_fct = runp->trans_context_fct;
+			  newp->__trans_end_fct = runp->trans_end_fct;
+			  newp->__data = data;
+			  newp->__next = NULL;
+
+			  lastp = &result->__data[cnt].__trans;
+			  while (*lastp != NULL)
+			    lastp = &(*lastp)->__next;
+
+			  *lastp = newp;
+			}
+		      break;
+		    }
 
 	      /* If this is the last step we must not allocate an
 		 output buffer.  */
@@ -191,7 +309,23 @@ __gconv_open (const char *toset, const char *fromset, __gconv_t *handle,
 	  if (result != NULL)
 	    {
 	      while (cnt-- > 0)
-		free (result->__data[cnt].__outbuf);
+		{
+		  struct __gconv_trans_data *transp;
+
+		  transp = result->__data[cnt].__trans;
+		  while (transp != NULL)
+		    {
+		      struct __gconv_trans_data *curp = transp;
+		      transp = transp->__next;
+
+		      if (__builtin_expect (curp->__trans_end_fct != NULL, 0))
+			curp->__trans_end_fct (curp->__data);
+
+		      free (curp);
+		    }
+
+		  free (result->__data[cnt].__outbuf);
+		}
 
 	      free (result);
 	      result = NULL;

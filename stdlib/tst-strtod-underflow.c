@@ -1,6 +1,6 @@
 /* Test for strtod handling of arguments that may cause floating-point
    underflow.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -171,7 +171,7 @@ test_in_one_mode (const char *s, enum underflow_case c, int rm,
 static int
 do_test (void)
 {
-  int save_round_mode __attribute__ ((unused)) = fegetround ();
+  int save_round_mode = fegetround ();
   int result = 0;
 #ifdef FE_TONEAREST
   const int fe_tonearest = FE_TONEAREST;

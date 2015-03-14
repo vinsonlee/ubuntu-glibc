@@ -12,28 +12,28 @@
 --- a/configure
 +++ b/configure
 @@ -3856,6 +3856,11 @@
- 
- submachine=
+   machine="powerpc"
+ fi
  
 +# Force v9
 +if test "$machine" = sparc; then
 +   machine="sparcv9"
 +fi
 +
- # Check whether --with-cpu was given.
- if test "${with_cpu+set}" = set; then :
-   withval=$with_cpu;   case "$withval" in
+ # Braindead PowerPC box with absolutely no FPU.
+ case "$machine-$host_os" in
+   powerpc*-*soft)
 --- a/configure.ac
 +++ b/configure.ac
 @@ -336,6 +336,11 @@
- base_os=''
+   machine="powerpc"
+ fi
  
- submachine=
 +# Force v9
 +if test "$machine" = sparc; then
 +   machine="sparcv9"
 +fi
 +
- AC_ARG_WITH([cpu],
- 	    AS_HELP_STRING([--with-cpu=CPU], [select code for CPU variant]),
- 	    [dnl
+ # Braindead PowerPC box with absolutely no FPU.
+ case "$machine-$host_os" in
+   powerpc*-*soft)

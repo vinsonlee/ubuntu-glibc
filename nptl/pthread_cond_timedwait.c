@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky <schwidefsky@de.ibm.com>, 2003.
 
@@ -22,7 +22,6 @@
 #include <lowlevellock.h>
 #include <pthread.h>
 #include <pthreadP.h>
-#include <sys/time.h>
 #include <kernel-features.h>
 
 #include <shlib-compat.h>
@@ -49,8 +48,10 @@ struct _condvar_cleanup_buffer
 };
 
 int
-__pthread_cond_timedwait (pthread_cond_t *cond, pthread_mutex_t *mutex,
-			  const struct timespec *abstime)
+__pthread_cond_timedwait (cond, mutex, abstime)
+     pthread_cond_t *cond;
+     pthread_mutex_t *mutex;
+     const struct timespec *abstime;
 {
   struct _pthread_cleanup_buffer buffer;
   struct _condvar_cleanup_buffer cbuffer;
@@ -86,7 +87,7 @@ __pthread_cond_timedwait (pthread_cond_t *cond, pthread_mutex_t *mutex,
 
   /* Work around the fact that the kernel rejects negative timeout values
      despite them being valid.  */
-  if (__glibc_unlikely (abstime->tv_sec < 0))
+  if (__builtin_expect (abstime->tv_sec < 0, 0))
     goto timeout;
 
   /* Remember the mutex we are using here.  If there is already a
@@ -129,7 +130,7 @@ __pthread_cond_timedwait (pthread_cond_t *cond, pthread_mutex_t *mutex,
 # else
 	/* Get the current time.  So far we support only one clock.  */
 	struct timeval tv;
-	(void) __gettimeofday (&tv, NULL);
+	(void) gettimeofday (&tv, NULL);
 
 	/* Convert the absolute timeout value to a relative timeout.  */
 	rt.tv_sec = abstime->tv_sec - tv.tv_sec;
@@ -142,7 +143,7 @@ __pthread_cond_timedwait (pthread_cond_t *cond, pthread_mutex_t *mutex,
 	  --rt.tv_sec;
 	}
       /* Did we already time out?  */
-      if (__glibc_unlikely (rt.tv_sec < 0))
+      if (__builtin_expect (rt.tv_sec < 0, 0))
 	{
 	  if (cbuffer.bc_seq != cond->__data.__broadcast_seq)
 	    goto bc_out;
@@ -216,7 +217,7 @@ __pthread_cond_timedwait (pthread_cond_t *cond, pthread_mutex_t *mutex,
 	break;
 
       /* Not woken yet.  Maybe the time expired?  */
-      if (__glibc_unlikely (err == -ETIMEDOUT))
+      if (__builtin_expect (err == -ETIMEDOUT, 0))
 	{
 	timeout:
 	  /* Yep.  Adjust the counters.  */

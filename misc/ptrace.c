@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <stdarg.h>
-#include <libc-internal.h>
 
 /* Perform process tracing functions.  REQUEST is one of the values
    in <sys/ptrace.h>, and determines the action to be taken.
@@ -31,7 +30,8 @@
      pid_t PID, void *ADDR, int DATA, void *ADDR2
    after PID.  */
 int
-ptrace (enum __ptrace_request request, ...)
+ptrace (request)
+     enum __ptrace_request request;
 {
   pid_t pid;
   void *addr;
@@ -60,41 +60,32 @@ ptrace (enum __ptrace_request request, ...)
     case PTRACE_SETFPREGS:
     case PTRACE_GETFPAREGS:
     case PTRACE_SETFPAREGS:
-      va_start (ap, request);
-      pid = va_arg (ap, pid_t);
-      addr = va_arg (ap, void *);
-      va_end (ap);
-      ignore_value (pid);
-      ignore_value (addr);
+      va_start(ap, request);
+      pid = va_arg(ap, pid_t);
+      addr = va_arg(ap, void *);
+      va_end(ap);
       break;
 
     case PTRACE_POKETEXT:
     case PTRACE_POKEDATA:
     case PTRACE_POKEUSER:
-      va_start (ap, request);
-      pid = va_arg (ap, pid_t);
-      addr = va_arg (ap, void *);
-      data = va_arg (ap, int);
-      va_end (ap);
-      ignore_value (pid);
-      ignore_value (addr);
-      ignore_value (data);
+      va_start(ap, request);
+      pid = va_arg(ap, pid_t);
+      addr = va_arg(ap, void *);
+      data = va_arg(ap, int);
+      va_end(ap);
       break;
 
     case PTRACE_READDATA:
     case PTRACE_WRITEDATA:
     case PTRACE_READTEXT:
     case PTRACE_WRITETEXT:
-      va_start (ap, request);
-      pid = va_arg (ap, pid_t);
-      addr = va_arg (ap, void *);
-      data = va_arg (ap, int);
-      addr2 = va_arg (ap, void *);
-      va_end (ap);
-      ignore_value (pid);
-      ignore_value (addr);
-      ignore_value (data);
-      ignore_value (addr2);
+      va_start(ap, request);
+      pid = va_arg(ap, pid_t);
+      addr = va_arg(ap, void *);
+      data = va_arg(ap, int);
+      addr2 = va_arg(ap, void *);
+      va_end(ap);
       break;
 
     default:
@@ -105,5 +96,6 @@ ptrace (enum __ptrace_request request, ...)
   __set_errno (ENOSYS);
   return -1;
 }
+
 
 stub_warning (ptrace)

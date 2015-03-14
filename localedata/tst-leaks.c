@@ -1,8 +1,8 @@
 #include <locale.h>
 #include <mcheck.h>
 
-static int
-do_test (void)
+int
+main (void)
 {
   int cnt;
 
@@ -16,6 +16,3 @@ do_test (void)
 
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

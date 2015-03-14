@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 1997.
 
@@ -127,16 +127,16 @@
 #include <tininess.h>
 #include <math-tests.h>
 
-/* Structure for ulp data for a function, or the real or imaginary
-   part of a function.  */
+/* Structure for ulp data for a test, a function, or the real or
+   imaginary part of a function.  */
 struct ulp_data
 {
   const char *name;
   FLOAT max_ulp;
 };
 
-/* This header defines func_ulps, func_real_ulps and func_imag_ulps
-   arrays.  */
+/* This header defines test_ulps, func_ulps, func_real_ulps and
+   func_imag_ulps arrays.  */
 #include "libm-test-ulps.h"
 
 /* Allow platforms without all rounding modes to test properly,
@@ -324,9 +324,6 @@ static int ignore_max_ulp;	/* Should we ignore max_ulp?  */
 
 static FLOAT max_error, real_max_error, imag_max_error;
 
-static FLOAT prev_max_error, prev_real_max_error, prev_imag_max_error;
-
-static FLOAT max_valid_error;
 
 #define BUILD_COMPLEX(real, imag) \
   ({ __complex__ FLOAT __retval;					      \
@@ -339,9 +336,9 @@ static FLOAT max_valid_error;
 #define MIN_EXP CHOOSE ((LDBL_MIN_EXP-1), (DBL_MIN_EXP-1), (FLT_MIN_EXP-1),	\
 			(LDBL_MIN_EXP-1), (DBL_MIN_EXP-1), (FLT_MIN_EXP-1))
 
-/* Compare KEY (a string, with the name of a function) with ULP (a
-   pointer to a struct ulp_data structure), returning a value less
-   than, equal to or greater than zero for use in bsearch.  */
+/* Compare KEY (a string, with the name of a test or a function) with
+   ULP (a pointer to a struct ulp_data structure), returning a value
+   less than, equal to or greater than zero for use in bsearch.  */
 
 static int
 compare_ulp_data (const void *key, const void *ulp)
@@ -365,38 +362,44 @@ find_ulps (const char *name, const struct ulp_data *data, size_t nmemb)
     return entry->max_ulp;
 }
 
+/* Return the ulps for test NAME.  */
+
+static FLOAT
+find_test_ulps (const char *name)
+{
+  return find_ulps (name, test_ulps,
+		    sizeof (test_ulps) / sizeof (test_ulps[0]));
+}
+
+/* Return the ulps for real function NAME.  */
+
+static FLOAT
+find_function_ulps (const char *name)
+{
+  return find_ulps (name, func_ulps,
+		    sizeof (func_ulps) / sizeof (func_ulps[0]));
+}
+
+/* Return the ulps for complex function NAME.  */
+
+static __complex__ FLOAT
+find_complex_function_ulps (const char *name)
+{
+  FLOAT ulp_real = find_ulps (name, func_real_ulps,
+			      (sizeof (func_real_ulps)
+			       / sizeof (func_real_ulps[0])));
+  FLOAT ulp_imag = find_ulps (name, func_imag_ulps,
+			      (sizeof (func_imag_ulps)
+			       / sizeof (func_imag_ulps[0])));
+  return BUILD_COMPLEX (ulp_real, ulp_imag);
+}
+
 static void
-init_max_error (const char *name, int exact)
+init_max_error (void)
 {
   max_error = 0;
   real_max_error = 0;
   imag_max_error = 0;
-  prev_max_error = find_ulps (name, func_ulps,
-			      sizeof (func_ulps) / sizeof (func_ulps[0]));
-  prev_real_max_error = find_ulps (name, func_real_ulps,
-				   (sizeof (func_real_ulps)
-				    / sizeof (func_real_ulps[0])));
-  prev_imag_max_error = find_ulps (name, func_imag_ulps,
-				   (sizeof (func_imag_ulps)
-				    / sizeof (func_imag_ulps[0])));
-#if TEST_COND_ldbl_128ibm
-  /* The documented accuracy of IBM long double division is 3ulp (see
-     libgcc/config/rs6000/ibm-ldouble-format), so do not require
-     better accuracy for libm functions that are exactly defined for
-     other formats.  */
-  max_valid_error = exact ? 3 : 14;
-#else
-  max_valid_error = exact ? 0 : 9;
-#endif
-  prev_max_error = (prev_max_error <= max_valid_error
-		    ? prev_max_error
-		    : max_valid_error);
-  prev_real_max_error = (prev_real_max_error <= max_valid_error
-			 ? prev_real_max_error
-			 : max_valid_error);
-  prev_imag_max_error = (prev_imag_max_error <= max_valid_error
-			 ? prev_imag_max_error
-			 : max_valid_error);
   feclearexcept (FE_ALL_EXCEPT);
   errno = 0;
 }
@@ -404,7 +407,7 @@ init_max_error (const char *name, int exact)
 static void
 set_max_error (FLOAT current, FLOAT *curr_max_error)
 {
-  if (current > *curr_max_error && current <= max_valid_error)
+  if (current > *curr_max_error)
     *curr_max_error = current;
 }
 
@@ -454,6 +457,19 @@ update_stats (int ok)
   ++noTests;
   if (!ok)
     ++noErrors;
+}
+
+static void
+print_ulps (const char *test_name, FLOAT ulp)
+{
+  if (output_ulps)
+    {
+      fprintf (ulps_file, "Test \"%s\":\n", test_name);
+      fprintf (ulps_file, "%s: %.0" PRINTF_NEXPR "\n",
+	       CHOOSE("ldouble", "double", "float",
+		      "ildouble", "idouble", "ifloat"),
+	       FUNC(ceil) (ulp));
+    }
 }
 
 static void
@@ -525,9 +541,10 @@ fpstack_test (const char *test_name)
 static void
 print_max_error (const char *func_name)
 {
+  FLOAT allowed = find_function_ulps (func_name);
   int ok = 0;
 
-  if (max_error == 0.0 || (max_error <= prev_max_error && !ignore_max_ulp))
+  if (max_error == 0.0 || (max_error <= allowed && !ignore_max_ulp))
     {
       ok = 1;
     }
@@ -540,8 +557,7 @@ print_max_error (const char *func_name)
     {
       printf ("Maximal error of `%s'\n", func_name);
       printf (" is      : %.0" PRINTF_NEXPR " ulp\n", FUNC(ceil) (max_error));
-      printf (" accepted: %.0" PRINTF_NEXPR " ulp\n",
-	      FUNC(ceil) (prev_max_error));
+      printf (" accepted: %.0" PRINTF_NEXPR " ulp\n", FUNC(ceil) (allowed));
     }
 
   update_stats (ok);
@@ -551,26 +567,20 @@ print_max_error (const char *func_name)
 static void
 print_complex_max_error (const char *func_name)
 {
-  int real_ok = 0, imag_ok = 0, ok;
+  __complex__ FLOAT allowed = find_complex_function_ulps (func_name);
+  int ok = 0;
 
-  if (real_max_error == 0
-      || (real_max_error <= prev_real_max_error && !ignore_max_ulp))
+  if ((real_max_error == 0 && imag_max_error == 0)
+      || (real_max_error <= __real__ allowed
+	  && imag_max_error <= __imag__ allowed
+	  && !ignore_max_ulp))
     {
-      real_ok = 1;
+      ok = 1;
     }
-
-  if (imag_max_error == 0
-      || (imag_max_error <= prev_imag_max_error && !ignore_max_ulp))
-    {
-      imag_ok = 1;
-    }
-
-  ok = real_ok && imag_ok;
 
   if (!ok)
-    print_complex_function_ulps (func_name,
-				 real_ok ? 0 : real_max_error,
-				 imag_ok ? 0 : imag_max_error);
+    print_complex_function_ulps (func_name, real_max_error, imag_max_error);
+
 
   if (print_screen_max_error (ok))
     {
@@ -578,19 +588,18 @@ print_complex_max_error (const char *func_name)
       printf (" is      : %.0" PRINTF_NEXPR " ulp\n",
 	      FUNC(ceil) (real_max_error));
       printf (" accepted: %.0" PRINTF_NEXPR " ulp\n",
-	      FUNC(ceil) (prev_real_max_error));
+	      FUNC(ceil) (__real__ allowed));
       printf ("Maximal error of imaginary part of: %s\n", func_name);
       printf (" is      : %.0" PRINTF_NEXPR " ulp\n",
 	      FUNC(ceil) (imag_max_error));
       printf (" accepted: %.0" PRINTF_NEXPR " ulp\n",
-	      FUNC(ceil) (prev_imag_max_error));
+	      FUNC(ceil) (__imag__ allowed));
     }
 
   update_stats (ok);
 }
 
 
-#if FE_ALL_EXCEPT
 /* Test whether a given exception was raised.  */
 static void
 test_single_exception (const char *test_name,
@@ -599,7 +608,7 @@ test_single_exception (const char *test_name,
 		       int fe_flag,
 		       const char *flag_name)
 {
-# ifndef TEST_INLINE
+#ifndef TEST_INLINE
   int ok = 1;
   if (exception & exc_flag)
     {
@@ -635,9 +644,9 @@ test_single_exception (const char *test_name,
   if (!ok)
     ++noErrors;
 
-# endif
-}
 #endif
+}
+
 
 /* Test whether exceptions given by EXCEPTION are raised.  Ignore thereby
    allowed but not required exceptions.
@@ -757,7 +766,7 @@ ulp (FLOAT value)
 static void
 check_float_internal (const char *test_name, FLOAT computed, FLOAT expected,
 		      int exceptions,
-		      FLOAT *curr_max_error, FLOAT max_ulp)
+		      FLOAT *curr_max_error)
 {
   int ok = 0;
   int print_diff = 0;
@@ -769,6 +778,7 @@ check_float_internal (const char *test_name, FLOAT computed, FLOAT expected,
   test_errno (test_name, errno_value, exceptions);
   if (exceptions & IGNORE_RESULT)
     goto out;
+  FLOAT max_ulp = find_test_ulps (test_name);
   if (issignaling (computed) && issignaling (expected))
     {
       if ((exceptions & TEST_NAN_SIGN) != 0
@@ -819,11 +829,14 @@ check_float_internal (const char *test_name, FLOAT computed, FLOAT expected,
 	  && computed == 0.0 && expected == 0.0
 	  && signbit(computed) != signbit (expected))
 	ok = 0;
-      else if ((ulps <= 0.5 && ulps <= max_valid_error)
-	       || (ulps <= max_ulp && !ignore_max_ulp))
+      else if (ulps <= 0.5 || (ulps <= max_ulp && !ignore_max_ulp))
 	ok = 1;
       else
-	ok = 0;
+	{
+	  ok = 0;
+	  print_ulps (test_name, ulps);
+	}
+
     }
   if (print_screen (ok))
     {
@@ -856,7 +869,7 @@ check_float (const char *test_name, FLOAT computed, FLOAT expected,
 	     int exceptions)
 {
   check_float_internal (test_name, computed, expected,
-			exceptions, &max_error, prev_max_error);
+			exceptions, &max_error);
 }
 
 
@@ -875,7 +888,7 @@ check_complex (const char *test_name, __complex__ FLOAT computed,
   part_exp = __real__ expected;
 
   check_float_internal (str, part_comp, part_exp,
-			exception, &real_max_error, prev_real_max_error);
+			exception, &real_max_error);
   free (str);
 
   if (asprintf (&str, "Imaginary part of: %s", test_name) == -1)
@@ -890,7 +903,7 @@ check_complex (const char *test_name, __complex__ FLOAT computed,
 			exception & (IGNORE_ZERO_INF_SIGN
 				     | TEST_NAN_SIGN
 				     | IGNORE_RESULT),
-			&imag_max_error, prev_imag_max_error);
+			&imag_max_error);
   free (str);
 }
 
@@ -1045,142 +1058,103 @@ struct test_f_f_data
 {
   const char *arg_str;
   FLOAT arg;
-  struct
-  {
-    FLOAT expected;
-    int exceptions;
-  } rd, rn, rz, ru;
+  FLOAT expected;
+  int exceptions;
 };
 struct test_ff_f_data
 {
   const char *arg_str;
   FLOAT arg1, arg2;
-  struct
-  {
-    FLOAT expected;
-    int exceptions;
-  } rd, rn, rz, ru;
+  FLOAT expected;
+  int exceptions;
 };
 struct test_ff_f_data_nexttoward
 {
   const char *arg_str;
   FLOAT arg1;
   long double arg2;
-  struct
-  {
-    FLOAT expected;
-    int exceptions;
-  } rd, rn, rz, ru;
+  FLOAT expected;
+  int exceptions;
 };
 struct test_fi_f_data
 {
   const char *arg_str;
   FLOAT arg1;
   int arg2;
-  struct
-  {
-    FLOAT expected;
-    int exceptions;
-  } rd, rn, rz, ru;
+  FLOAT expected;
+  int exceptions;
 };
 struct test_fl_f_data
 {
   const char *arg_str;
   FLOAT arg1;
   long int arg2;
-  struct
-  {
-    FLOAT expected;
-    int exceptions;
-  } rd, rn, rz, ru;
+  FLOAT expected;
+  int exceptions;
 };
 struct test_if_f_data
 {
   const char *arg_str;
   int arg1;
   FLOAT arg2;
-  struct
-  {
-    FLOAT expected;
-    int exceptions;
-  } rd, rn, rz, ru;
+  FLOAT expected;
+  int exceptions;
 };
 struct test_fff_f_data
 {
   const char *arg_str;
   FLOAT arg1, arg2, arg3;
-  struct
-  {
-    FLOAT expected;
-    int exceptions;
-  } rd, rn, rz, ru;
+  FLOAT expected;
+  int exceptions;
 };
 struct test_c_f_data
 {
   const char *arg_str;
   FLOAT argr, argc;
-  struct
-  {
-    FLOAT expected;
-    int exceptions;
-  } rd, rn, rz, ru;
+  FLOAT expected;
+  int exceptions;
 };
 /* Used for both RUN_TEST_LOOP_f_f1 and RUN_TEST_LOOP_fI_f1.  */
 struct test_f_f1_data
 {
   const char *arg_str;
   FLOAT arg;
-  struct
-  {
-    FLOAT expected;
-    int exceptions;
-    int extra_test;
-    int extra_expected;
-  } rd, rn, rz, ru;
+  FLOAT expected;
+  int exceptions;
+  int extra_test;
+  int extra_expected;
 };
 struct test_fF_f1_data
 {
   const char *arg_str;
   FLOAT arg;
-  struct
-  {
-    FLOAT expected;
-    int exceptions;
-    int extra_test;
-    FLOAT extra_expected;
-  } rd, rn, rz, ru;
+  FLOAT expected;
+  int exceptions;
+  int extra_test;
+  FLOAT extra_expected;
 };
 struct test_ffI_f1_data
 {
   const char *arg_str;
   FLOAT arg1, arg2;
-  struct
-  {
-    FLOAT expected;
-    int exceptions;
-    int extra_test;
-    int extra_expected;
-  } rd, rn, rz, ru;
+  FLOAT expected;
+  int exceptions;
+  int extra_test;
+  int extra_expected;
 };
 struct test_c_c_data
 {
   const char *arg_str;
   FLOAT argr, argc;
-  struct
-  {
-    FLOAT expr, expc;
-    int exceptions;
-  } rd, rn, rz, ru;
+  FLOAT expr, expc;
+  int exceptions;
 };
 struct test_cc_c_data
 {
   const char *arg_str;
   FLOAT arg1r, arg1c, arg2r, arg2c;
-  struct
-  {
-    FLOAT expr, expc;
-    int exceptions;
-  } rd, rn, rz, ru;
+  FLOAT expr, expc;
+  int exceptions;
 };
 /* Used for all of RUN_TEST_LOOP_f_i, RUN_TEST_LOOP_f_i_tg,
    RUN_TEST_LOOP_f_b and RUN_TEST_LOOP_f_b_tg.  */
@@ -1188,54 +1162,39 @@ struct test_f_i_data
 {
   const char *arg_str;
   FLOAT arg;
-  struct
-  {
-    int expected;
-    int exceptions;
-  } rd, rn, rz, ru;
+  int expected;
+  int exceptions;
 };
 struct test_ff_i_data
 {
   const char *arg_str;
   FLOAT arg1, arg2;
-  struct
-  {
-    int expected;
-    int exceptions;
-  } rd, rn, rz, ru;
+  int expected;
+  int exceptions;
 };
 struct test_f_l_data
 {
   const char *arg_str;
   FLOAT arg;
-  struct
-  {
-    long int expected;
-    int exceptions;
-  } rd, rn, rz, ru;
+  long int expected;
+  int exceptions;
 };
 struct test_f_L_data
 {
   const char *arg_str;
   FLOAT arg;
-  struct
-  {
-    long long int expected;
-    int exceptions;
-  } rd, rn, rz, ru;
+  long long int expected;
+  int exceptions;
 };
 struct test_fFF_11_data
 {
   const char *arg_str;
   FLOAT arg;
-  struct
-  {
-    int exceptions;
-    int extra1_test;
-    FLOAT extra1_expected;
-    int extra2_test;
-    FLOAT extra2_expected;
-  } rd, rn, rz, ru;
+  int exceptions;
+  int extra1_test;
+  FLOAT extra1_expected;
+  int extra2_test;
+  FLOAT extra2_expected;
 };
 
 /* Set the rounding mode, or restore the saved value.  */
@@ -1265,13 +1224,6 @@ struct test_fFF_11_data
   fesetround (save_round_mode)
 #define ROUND_RESTORE_FE_UPWARD			\
   fesetround (save_round_mode)
-
-/* Field name to use for a given rounding mode.  */
-#define RM_			rn
-#define RM_FE_DOWNWARD		rd
-#define RM_FE_TONEAREST		rn
-#define RM_FE_TOWARDZERO	rz
-#define RM_FE_UPWARD		ru
 
 /* Common setup for an individual test.  */
 #define COMMON_TEST_SETUP(ARG_STR)					\
@@ -1311,8 +1263,7 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_f_f ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg,	\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.exceptions);		\
+		    (ARRAY)[i].expected, (ARRAY)[i].exceptions);	\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_2_f(ARG_STR, FUNC_NAME, ARG1, ARG2, EXPECTED,	\
 		     EXCEPTIONS)				\
@@ -1329,9 +1280,8 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_2_f ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg1,	\
-		    (ARRAY)[i].arg2,					\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.exceptions);		\
+		    (ARRAY)[i].arg2, (ARRAY)[i].expected,		\
+		    (ARRAY)[i].exceptions);				\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_ff_f RUN_TEST_2_f
 #define RUN_TEST_LOOP_ff_f RUN_TEST_LOOP_2_f
@@ -1357,8 +1307,7 @@ struct test_fFF_11_data
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_fff_f ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg1,	\
 		      (ARRAY)[i].arg2, (ARRAY)[i].arg3,			\
-		      (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		      (ARRAY)[i].RM_##ROUNDING_MODE.exceptions);	\
+		      (ARRAY)[i].expected, (ARRAY)[i].exceptions);	\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_c_f(ARG_STR, FUNC_NAME, ARG1, ARG2, EXPECTED,		\
 		     EXCEPTIONS)					\
@@ -1376,9 +1325,8 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_c_f ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].argr,	\
-		    (ARRAY)[i].argc,					\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.exceptions);		\
+		    (ARRAY)[i].argc, (ARRAY)[i].expected,		\
+		    (ARRAY)[i].exceptions);				\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_f_f1(ARG_STR, FUNC_NAME, ARG, EXPECTED,		\
 		      EXCEPTIONS, EXTRA_VAR, EXTRA_TEST,		\
@@ -1401,11 +1349,9 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_f_f1 ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg,	\
-		     (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		     (ARRAY)[i].RM_##ROUNDING_MODE.exceptions,		\
-		     EXTRA_VAR,						\
-		     (ARRAY)[i].RM_##ROUNDING_MODE.extra_test,		\
-		     (ARRAY)[i].RM_##ROUNDING_MODE.extra_expected);	\
+		     (ARRAY)[i].expected, (ARRAY)[i].exceptions,	\
+		     EXTRA_VAR, (ARRAY)[i].extra_test,			\
+		     (ARRAY)[i].extra_expected);			\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_fF_f1(ARG_STR, FUNC_NAME, ARG, EXPECTED,		\
 		       EXCEPTIONS, EXTRA_VAR, EXTRA_TEST,		\
@@ -1428,11 +1374,9 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_fF_f1 ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg,	\
-		      (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		      (ARRAY)[i].RM_##ROUNDING_MODE.exceptions,		\
-		      EXTRA_VAR,					\
-		      (ARRAY)[i].RM_##ROUNDING_MODE.extra_test,		\
-		      (ARRAY)[i].RM_##ROUNDING_MODE.extra_expected);	\
+		      (ARRAY)[i].expected, (ARRAY)[i].exceptions,	\
+		      EXTRA_VAR, (ARRAY)[i].extra_test,			\
+		      (ARRAY)[i].extra_expected);			\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_fI_f1(ARG_STR, FUNC_NAME, ARG, EXPECTED,		\
 		       EXCEPTIONS, EXTRA_VAR, EXTRA_TEST,		\
@@ -1455,11 +1399,9 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_fI_f1 ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg,	\
-		      (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		      (ARRAY)[i].RM_##ROUNDING_MODE.exceptions,		\
-		      EXTRA_VAR,					\
-		      (ARRAY)[i].RM_##ROUNDING_MODE.extra_test,		\
-		      (ARRAY)[i].RM_##ROUNDING_MODE.extra_expected);	\
+		      (ARRAY)[i].expected, (ARRAY)[i].exceptions,	\
+		      EXTRA_VAR, (ARRAY)[i].extra_test,			\
+		      (ARRAY)[i].extra_expected);			\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_ffI_f1(ARG_STR, FUNC_NAME, ARG1, ARG2, EXPECTED,	\
 			EXCEPTIONS, EXTRA_VAR, EXTRA_TEST,		\
@@ -1485,11 +1427,9 @@ struct test_fFF_11_data
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_ffI_f1 ((ARRAY)[i].arg_str, FUNC_NAME,			\
 		       (ARRAY)[i].arg1, (ARRAY)[i].arg2,		\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.exceptions,	\
-		       EXTRA_VAR,					\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.extra_test,	\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.extra_expected);	\
+		       (ARRAY)[i].expected, (ARRAY)[i].exceptions,	\
+		       EXTRA_VAR, (ARRAY)[i].extra_test,		\
+		       (ARRAY)[i].extra_expected);			\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_c_c(ARG_STR, FUNC_NAME, ARGR, ARGC, EXPR, EXPC,	\
 		     EXCEPTIONS)					\
@@ -1507,10 +1447,8 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_c_c ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].argr,	\
-		    (ARRAY)[i].argc,					\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.expr,			\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.expc,			\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.exceptions);		\
+		    (ARRAY)[i].argc, (ARRAY)[i].expr, (ARRAY)[i].expc,	\
+		    (ARRAY)[i].exceptions);				\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_cc_c(ARG_STR, FUNC_NAME, ARG1R, ARG1C, ARG2R, ARG2C,	\
 		      EXPR, EXPC, EXCEPTIONS)				\
@@ -1530,10 +1468,8 @@ struct test_fFF_11_data
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_cc_c ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg1r,	\
 		     (ARRAY)[i].arg1c, (ARRAY)[i].arg2r,		\
-		     (ARRAY)[i].arg2c,					\
-		     (ARRAY)[i].RM_##ROUNDING_MODE.expr,		\
-		     (ARRAY)[i].RM_##ROUNDING_MODE.expc,		\
-		     (ARRAY)[i].RM_##ROUNDING_MODE.exceptions);		\
+		     (ARRAY)[i].arg2c, (ARRAY)[i].expr,			\
+		     (ARRAY)[i].expc, (ARRAY)[i].exceptions);		\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_f_i(ARG_STR, FUNC_NAME, ARG, EXPECTED, EXCEPTIONS)	\
   do									\
@@ -1549,8 +1485,7 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_f_i ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg,	\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.exceptions);		\
+		    (ARRAY)[i].expected, (ARRAY)[i].exceptions);	\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_f_i_tg(ARG_STR, FUNC_NAME, ARG, EXPECTED,		\
 			EXCEPTIONS)					\
@@ -1566,8 +1501,7 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_f_i_tg ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg,	\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.exceptions);	\
+		       (ARRAY)[i].expected, (ARRAY)[i].exceptions);	\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_ff_i_tg(ARG_STR, FUNC_NAME, ARG1, ARG2, EXPECTED,	\
 			 EXCEPTIONS)					\
@@ -1583,10 +1517,9 @@ struct test_fFF_11_data
 #define RUN_TEST_LOOP_ff_i_tg(FUNC_NAME, ARRAY, ROUNDING_MODE)		\
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
-      RUN_TEST_ff_i_tg ((ARRAY)[i].arg_str, FUNC_NAME,			\
+      RUN_TEST_ff_i_tg ((ARRAY)[i].arg_str, FUNC_NAME,		\
 			(ARRAY)[i].arg1, (ARRAY)[i].arg2,		\
-			(ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-			(ARRAY)[i].RM_##ROUNDING_MODE.exceptions);	\
+			(ARRAY)[i].expected, (ARRAY)[i].exceptions);	\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_f_b(ARG_STR, FUNC_NAME, ARG, EXPECTED, EXCEPTIONS)	\
   do									\
@@ -1602,8 +1535,7 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_f_b ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg,	\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.exceptions);		\
+		    (ARRAY)[i].expected, (ARRAY)[i].exceptions);	\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_f_b_tg(ARG_STR, FUNC_NAME, ARG, EXPECTED,		\
 			EXCEPTIONS)					\
@@ -1619,8 +1551,7 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_f_b_tg ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg,	\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.exceptions);	\
+		       (ARRAY)[i].expected, (ARRAY)[i].exceptions);	\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_f_l(ARG_STR, FUNC_NAME, ARG, EXPECTED, EXCEPTIONS)	\
   do									\
@@ -1636,8 +1567,7 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_f_l ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg,	\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.exceptions);		\
+		    (ARRAY)[i].expected, (ARRAY)[i].exceptions);	\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_f_L(ARG_STR, FUNC_NAME, ARG, EXPECTED, EXCEPTIONS)	\
   do									\
@@ -1653,8 +1583,7 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_f_L ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg,	\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.expected,		\
-		    (ARRAY)[i].RM_##ROUNDING_MODE.exceptions);		\
+		    (ARRAY)[i].expected, (ARRAY)[i].exceptions);	\
   ROUND_RESTORE_ ## ROUNDING_MODE
 #define RUN_TEST_fFF_11(ARG_STR, FUNC_NAME, ARG, EXCEPTIONS,		\
 			EXTRA1_VAR, EXTRA1_TEST,			\
@@ -1682,58 +1611,22 @@ struct test_fFF_11_data
   IF_ROUND_INIT_ ## ROUNDING_MODE					\
     for (size_t i = 0; i < sizeof (ARRAY) / sizeof (ARRAY)[0]; i++)	\
       RUN_TEST_fFF_11 ((ARRAY)[i].arg_str, FUNC_NAME, (ARRAY)[i].arg,	\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.exceptions,	\
-		       EXTRA1_VAR,					\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.extra1_test,	\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.extra1_expected,	\
+		       (ARRAY)[i].exceptions,				\
+		       EXTRA1_VAR, (ARRAY)[i].extra1_test,		\
+		       (ARRAY)[i].extra1_expected,			\
 		       EXTRA2_VAR,					\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.extra2_test,	\
-		       (ARRAY)[i].RM_##ROUNDING_MODE.extra2_expected);	\
+		       (ARRAY)[i].extra2_test,				\
+		       (ARRAY)[i].extra2_expected);			\
   ROUND_RESTORE_ ## ROUNDING_MODE
 
 /* Start and end the tests for a given function.  */
-#define START(FUNC, EXACT)			\
+#define START(FUNC)				\
   const char *this_func = #FUNC;		\
-  init_max_error (this_func, EXACT)
+  init_max_error ()
 #define END					\
   print_max_error (this_func)
 #define END_COMPLEX				\
   print_complex_max_error (this_func)
-
-/* Run tests for a given function in all rounding modes.  */
-#define ALL_RM_TEST(FUNC, EXACT, ARRAY, LOOP_MACRO, END_MACRO, ...)	\
-  do									\
-    {									\
-      do								\
-	{								\
-	  START (FUNC, EXACT);						\
-	  LOOP_MACRO (FUNC, ARRAY, , ## __VA_ARGS__);			\
-	  END_MACRO;							\
-	}								\
-      while (0);							\
-      do								\
-	{								\
-	  START (FUNC ## _downward, EXACT);				\
-	  LOOP_MACRO (FUNC, ARRAY, FE_DOWNWARD, ## __VA_ARGS__);	\
-	  END_MACRO;							\
-	}								\
-      while (0);							\
-      do								\
-	{								\
-	  START (FUNC ## _towardzero, EXACT);				\
-	  LOOP_MACRO (FUNC, ARRAY, FE_TOWARDZERO, ## __VA_ARGS__);	\
-	  END_MACRO;							\
-	}								\
-      while (0);							\
-      do								\
-	{								\
-	  START (FUNC ## _upward, EXACT);				\
-	  LOOP_MACRO (FUNC, ARRAY, FE_UPWARD, ## __VA_ARGS__);		\
-	  END_MACRO;							\
-	}								\
-      while (0);							\
-    }									\
-  while (0);
 
 /* This is to prevent messages from the SVID libm emulation.  */
 int
@@ -1760,15 +1653,72 @@ static const struct test_f_f_data acos_test_data[] =
     TEST_f_f (acos, max_value, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_f_f (acos, -max_value, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
 
-    AUTO_TESTS_f_f (acos),
+    AUTO_TESTS_f_f (acos, tonearest),
   };
 
 static void
 acos_test (void)
 {
-  ALL_RM_TEST (acos, 0, acos_test_data, RUN_TEST_LOOP_f_f, END);
+  START (acos);
+  RUN_TEST_LOOP_f_f (acos, acos_test_data, );
+  END;
 }
 
+
+static const struct test_f_f_data acos_tonearest_test_data[] =
+  {
+    AUTO_TESTS_f_f (acos, tonearest),
+  };
+
+static void
+acos_test_tonearest (void)
+{
+  START (acos_tonearest);
+  RUN_TEST_LOOP_f_f (acos, acos_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_f_f_data acos_towardzero_test_data[] =
+  {
+    AUTO_TESTS_f_f (acos, towardzero),
+  };
+
+static void
+acos_test_towardzero (void)
+{
+  START (acos_towardzero);
+  RUN_TEST_LOOP_f_f (acos, acos_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_f_f_data acos_downward_test_data[] =
+  {
+    AUTO_TESTS_f_f (acos, downward),
+  };
+
+static void
+acos_test_downward (void)
+{
+  START (acos_downward);
+  RUN_TEST_LOOP_f_f (acos, acos_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_f_f_data acos_upward_test_data[] =
+  {
+    AUTO_TESTS_f_f (acos, upward),
+  };
+
+static void
+acos_test_upward (void)
+{
+  START (acos_upward);
+  RUN_TEST_LOOP_f_f (acos, acos_upward_test_data, FE_UPWARD);
+  END;
+}
 
 static const struct test_f_f_data acosh_test_data[] =
   {
@@ -1787,13 +1737,15 @@ static const struct test_f_f_data acosh_test_data[] =
     TEST_f_f (acosh, -1.125L, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_f_f (acosh, -max_value, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
 
-    AUTO_TESTS_f_f (acosh),
+    AUTO_TESTS_f_f (acosh, tonearest),
   };
 
 static void
 acosh_test (void)
 {
-  ALL_RM_TEST (acosh, 0, acosh_test_data, RUN_TEST_LOOP_f_f, END);
+  START (acosh);
+  RUN_TEST_LOOP_f_f (acosh, acosh_test_data, );
+  END;
 }
 
 static const struct test_f_f_data asin_test_data[] =
@@ -1808,28 +1760,87 @@ static const struct test_f_f_data asin_test_data[] =
     TEST_f_f (asin, max_value, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_f_f (asin, -max_value, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
 
-    AUTO_TESTS_f_f (asin),
+    AUTO_TESTS_f_f (asin, tonearest),
   };
 
 static void
 asin_test (void)
 {
-  ALL_RM_TEST (asin, 0, asin_test_data, RUN_TEST_LOOP_f_f, END);
+  START (asin);
+  RUN_TEST_LOOP_f_f (asin, asin_test_data, );
+  END;
 }
 
+
+static const struct test_f_f_data asin_tonearest_test_data[] =
+  {
+    AUTO_TESTS_f_f (asin, tonearest),
+  };
+
+static void
+asin_test_tonearest (void)
+{
+  START (asin_tonearest);
+  RUN_TEST_LOOP_f_f (asin, asin_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_f_f_data asin_towardzero_test_data[] =
+  {
+    AUTO_TESTS_f_f (asin, towardzero),
+  };
+
+static void
+asin_test_towardzero (void)
+{
+  START (asin_towardzero);
+  RUN_TEST_LOOP_f_f (asin, asin_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_f_f_data asin_downward_test_data[] =
+  {
+    AUTO_TESTS_f_f (asin, downward),
+  };
+
+static void
+asin_test_downward (void)
+{
+  START (asin_downward);
+  RUN_TEST_LOOP_f_f (asin, asin_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_f_f_data asin_upward_test_data[] =
+  {
+    AUTO_TESTS_f_f (asin, upward),
+  };
+
+static void
+asin_test_upward (void)
+{
+  START (asin_upward);
+  RUN_TEST_LOOP_f_f (asin, asin_upward_test_data, FE_UPWARD);
+  END;
+}
 
 static const struct test_f_f_data asinh_test_data[] =
   {
     TEST_f_f (asinh, plus_infty, plus_infty, NO_TEST_INLINE),
     TEST_f_f (asinh, minus_infty, minus_infty, NO_TEST_INLINE),
     TEST_f_f (asinh, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
-    AUTO_TESTS_f_f (asinh),
+    AUTO_TESTS_f_f (asinh, tonearest),
   };
 
 static void
 asinh_test (void)
 {
-  ALL_RM_TEST (asinh, 0, asinh_test_data, RUN_TEST_LOOP_f_f, END);
+  START (asinh);
+  RUN_TEST_LOOP_f_f (asinh, asinh_test_data, );
+  END;
 }
 
 static const struct test_f_f_data atan_test_data[] =
@@ -1838,13 +1849,15 @@ static const struct test_f_f_data atan_test_data[] =
     TEST_f_f (atan, minus_infty, -M_PI_2l),
     TEST_f_f (atan, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (atan),
+    AUTO_TESTS_f_f (atan, tonearest),
   };
 
 static void
 atan_test (void)
 {
-  ALL_RM_TEST (atan, 0, atan_test_data, RUN_TEST_LOOP_f_f, END);
+  START (atan);
+  RUN_TEST_LOOP_f_f (atan, atan_test_data, );
+  END;
 }
 
 
@@ -1858,18 +1871,20 @@ static const struct test_f_f_data atanh_test_data[] =
     /* atanh (x) == qNaN plus invalid exception if |x| > 1.  */
     TEST_f_f (atanh, 1.125L, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_f_f (atanh, -1.125L, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
-    TEST_f_f (atanh, max_value, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM|NO_TEST_INLINE),
-    TEST_f_f (atanh, -max_value, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM|NO_TEST_INLINE),
+    TEST_f_f (atanh, max_value, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_f_f (atanh, -max_value, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_f_f (atanh, plus_infty, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_f_f (atanh, minus_infty, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
 
-    AUTO_TESTS_f_f (atanh),
+    AUTO_TESTS_f_f (atanh, tonearest),
   };
 
 static void
 atanh_test (void)
 {
-  ALL_RM_TEST (atanh, 0, atanh_test_data, RUN_TEST_LOOP_f_f, END);
+  START (atanh);
+  RUN_TEST_LOOP_f_f (atanh, atanh_test_data, );
+  END;
 }
 
 static const struct test_ff_f_data atan2_test_data[] =
@@ -1898,13 +1913,15 @@ static const struct test_ff_f_data atan2_test_data[] =
     TEST_ff_f (atan2, minus_infty, minus_infty, -M_PI_34l),
     TEST_ff_f (atan2, qnan_value, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_ff_f (atan2),
+    AUTO_TESTS_ff_f (atan2, tonearest),
   };
 
 static void
 atan2_test (void)
 {
-  ALL_RM_TEST (atan2, 0, atan2_test_data, RUN_TEST_LOOP_ff_f, END);
+  START (atan2);
+  RUN_TEST_LOOP_ff_f (atan2, atan2_test_data, );
+  END;
 }
 
 static const struct test_c_f_data cabs_test_data[] =
@@ -1921,13 +1938,15 @@ static const struct test_c_f_data cabs_test_data[] =
 
     TEST_c_f (cabs, qnan_value, qnan_value, qnan_value),
 
-    AUTO_TESTS_c_f (cabs),
+    AUTO_TESTS_c_f (cabs, tonearest),
   };
 
 static void
 cabs_test (void)
 {
-  ALL_RM_TEST (cabs, 0, cabs_test_data, RUN_TEST_LOOP_c_f, END);
+  START (cabs);
+  RUN_TEST_LOOP_c_f (cabs, cabs_test_data, );
+  END;
 }
 
 
@@ -2616,7 +2635,9 @@ static const struct test_c_c_data cacos_test_data[] =
 static void
 cacos_test (void)
 {
-  ALL_RM_TEST (cacos, 0, cacos_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (cacos);
+  RUN_TEST_LOOP_c_c (cacos, cacos_test_data, );
+  END_COMPLEX;
 }
 
 static const struct test_c_c_data cacosh_test_data[] =
@@ -3298,7 +3319,9 @@ static const struct test_c_c_data cacosh_test_data[] =
 static void
 cacosh_test (void)
 {
-  ALL_RM_TEST (cacosh, 0, cacosh_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (cacosh);
+  RUN_TEST_LOOP_c_c (cacosh, cacosh_test_data, );
+  END_COMPLEX;
 }
 
 
@@ -3334,13 +3357,15 @@ static const struct test_c_f_data carg_test_data[] =
 
     TEST_c_f (carg, qnan_value, qnan_value, qnan_value),
 
-    AUTO_TESTS_c_f (carg),
+    AUTO_TESTS_c_f (carg, tonearest),
   };
 
 static void
 carg_test (void)
 {
-  ALL_RM_TEST (carg, 0, carg_test_data, RUN_TEST_LOOP_c_f, END);
+  START (carg);
+  RUN_TEST_LOOP_c_f (carg, carg_test_data, );
+  END;
 }
 
 static const struct test_c_c_data casin_test_data[] =
@@ -4034,7 +4059,9 @@ static const struct test_c_c_data casin_test_data[] =
 static void
 casin_test (void)
 {
-  ALL_RM_TEST (casin, 0, casin_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (casin);
+  RUN_TEST_LOOP_c_c (casin, casin_test_data, );
+  END_COMPLEX;
 }
 
 
@@ -4729,7 +4756,9 @@ static const struct test_c_c_data casinh_test_data[] =
 static void
 casinh_test (void)
 {
-  ALL_RM_TEST (casinh, 0, casinh_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (casinh);
+  RUN_TEST_LOOP_c_c (casinh, casinh_test_data, );
+  END_COMPLEX;
 }
 
 
@@ -5236,7 +5265,9 @@ static const struct test_c_c_data catan_test_data[] =
 static void
 catan_test (void)
 {
-  ALL_RM_TEST (catan, 0, catan_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (catan);
+  RUN_TEST_LOOP_c_c (catan, catan_test_data, );
+  END_COMPLEX;
 }
 
 static const struct test_c_c_data catanh_test_data[] =
@@ -5741,7 +5772,9 @@ static const struct test_c_c_data catanh_test_data[] =
 static void
 catanh_test (void)
 {
-  ALL_RM_TEST (catanh, 0, catanh_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (catanh);
+  RUN_TEST_LOOP_c_c (catanh, catanh_test_data, );
+  END_COMPLEX;
 }
 
 static const struct test_f_f_data cbrt_test_data[] =
@@ -5750,13 +5783,15 @@ static const struct test_f_f_data cbrt_test_data[] =
     TEST_f_f (cbrt, minus_infty, minus_infty),
     TEST_f_f (cbrt, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (cbrt),
+    AUTO_TESTS_f_f (cbrt, tonearest),
   };
 
 static void
 cbrt_test (void)
 {
-  ALL_RM_TEST (cbrt, 0, cbrt_test_data, RUN_TEST_LOOP_f_f, END);
+  START (cbrt);
+  RUN_TEST_LOOP_f_f (cbrt, cbrt_test_data, );
+  END;
 }
 
 
@@ -5807,13 +5842,15 @@ static const struct test_c_c_data ccos_test_data[] =
 
     TEST_c_c (ccos, qnan_value, qnan_value, qnan_value, qnan_value),
 
-    AUTO_TESTS_c_c (ccos),
+    AUTO_TESTS_c_c (ccos, tonearest),
   };
 
 static void
 ccos_test (void)
 {
-  ALL_RM_TEST (ccos, 0, ccos_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (ccos);
+  RUN_TEST_LOOP_c_c (ccos, ccos_test_data, );
+  END_COMPLEX;
 }
 
 
@@ -5864,13 +5901,15 @@ static const struct test_c_c_data ccosh_test_data[] =
 
     TEST_c_c (ccosh, qnan_value, qnan_value, qnan_value, qnan_value),
 
-    AUTO_TESTS_c_c (ccosh),
+    AUTO_TESTS_c_c (ccosh, tonearest),
   };
 
 static void
 ccosh_test (void)
 {
-  ALL_RM_TEST (ccosh, 0, ccosh_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (ccosh);
+  RUN_TEST_LOOP_c_c (ccosh, ccosh_test_data, );
+  END_COMPLEX;
 }
 
 
@@ -5961,15 +6000,6 @@ static const struct test_f_f_data ceil_test_data[] =
     TEST_f_f (ceil, -72057594037927936.75L, -72057594037927936.0L),
     TEST_f_f (ceil, -72057594037927937.5L, -72057594037927937.0L),
 
-    /* Check cases where first double is a exact integer higher than 2^52 and
-       the precision is determined by second long double for IBM long double.  */
-    TEST_f_f (ceil,  34503599627370498.515625L, 34503599627370499.0L),
-    TEST_f_f (ceil, -34503599627370498.515625L, -34503599627370498.0L),
-# if LDBL_MANT_DIG >= 106
-    TEST_f_f (ceil,  1192568192774434123539907640624.484375L, 1192568192774434123539907640625.0L),
-    TEST_f_f (ceil, -1192568192774434123539907640624.484375L, -1192568192774434123539907640624.0L),
-# endif
-
     TEST_f_f (ceil, 10141204801825835211973625643007.5L, 10141204801825835211973625643008.0L),
     TEST_f_f (ceil, 10141204801825835211973625643008.25L, 10141204801825835211973625643009.0L),
     TEST_f_f (ceil, 10141204801825835211973625643008.5L, 10141204801825835211973625643009.0L),
@@ -5981,7 +6011,9 @@ static const struct test_f_f_data ceil_test_data[] =
 static void
 ceil_test (void)
 {
-  ALL_RM_TEST (ceil, 1, ceil_test_data, RUN_TEST_LOOP_f_f, END);
+  START (ceil);
+  RUN_TEST_LOOP_f_f (ceil, ceil_test_data, );
+  END;
 }
 
 
@@ -6029,13 +6061,13 @@ static const struct test_c_c_data cexp_test_data[] =
     TEST_c_c (cexp, 1, qnan_value, qnan_value, qnan_value, INVALID_EXCEPTION_OK),
     TEST_c_c (cexp, qnan_value, qnan_value, qnan_value, qnan_value),
 
-    AUTO_TESTS_c_c (cexp),
+    AUTO_TESTS_c_c (cexp, tonearest),
   };
 
 static void
 cexp_test (void)
 {
-  START (cexp, 0);
+  START (cexp);
   RUN_TEST_LOOP_c_c (cexp, cexp_test_data, );
   END_COMPLEX;
 }
@@ -6055,7 +6087,9 @@ static const struct test_c_f_data cimag_test_data[] =
 static void
 cimag_test (void)
 {
-  ALL_RM_TEST (cimag, 1, cimag_test_data, RUN_TEST_LOOP_c_f, END);
+  START (cimag);
+  RUN_TEST_LOOP_c_f (cimag, cimag_test_data, );
+  END;
 }
 
 static const struct test_c_c_data clog_test_data[] =
@@ -6109,20 +6143,22 @@ static const struct test_c_c_data clog_test_data[] =
 
     TEST_c_c (clog, qnan_value, qnan_value, qnan_value, qnan_value),
 
-    AUTO_TESTS_c_c (clog),
+    AUTO_TESTS_c_c (clog, tonearest),
   };
 
 static void
 clog_test (void)
 {
-  ALL_RM_TEST (clog, 0, clog_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (clog);
+  RUN_TEST_LOOP_c_c (clog, clog_test_data, );
+  END_COMPLEX;
 }
 
 
 static const struct test_c_c_data clog10_test_data[] =
   {
-    TEST_c_c (clog10, minus_zero, 0, minus_infty, M_PI_LOG10El, DIVIDE_BY_ZERO_EXCEPTION),
-    TEST_c_c (clog10, minus_zero, minus_zero, minus_infty, -M_PI_LOG10El, DIVIDE_BY_ZERO_EXCEPTION),
+    TEST_c_c (clog10, minus_zero, 0, minus_infty, M_PIl, DIVIDE_BY_ZERO_EXCEPTION),
+    TEST_c_c (clog10, minus_zero, minus_zero, minus_infty, -M_PIl, DIVIDE_BY_ZERO_EXCEPTION),
 
     TEST_c_c (clog10, 0, 0, minus_infty, 0.0, DIVIDE_BY_ZERO_EXCEPTION),
     TEST_c_c (clog10, 0, minus_zero, minus_infty, minus_zero, DIVIDE_BY_ZERO_EXCEPTION),
@@ -6169,13 +6205,170 @@ static const struct test_c_c_data clog10_test_data[] =
 
     TEST_c_c (clog10, qnan_value, qnan_value, qnan_value, qnan_value),
 
-    AUTO_TESTS_c_c (clog10),
+    TEST_c_c (clog10, 0.75L, 1.25L, 0.163679467193165171449476605077428975L, 0.447486970040493067069984724340855636L),
+    TEST_c_c (clog10, -2, -3, 0.556971676153418384603252578971164214L, -0.937554462986374708541507952140189646L),
+
+    TEST_c_c (clog10, 0x1.fffffep+127L, 0x1.fffffep+127L, 38.68235441693561449174780668781319348761L, M_PI4_LOG10El),
+    TEST_c_c (clog10, 0x1.fffffep+127L, 1.0L, 38.53183941910362389414093724045094697423L, 1.276276851248440096917018665609900318458e-39L, UNDERFLOW_EXCEPTION_FLOAT),
+    TEST_c_c (clog10, 0x1p-149L, 0x1p-149L, -44.70295435610120748924022586658721447508L, M_PI4_LOG10El),
+    TEST_c_c (clog10, 0x1p-147L, 0x1p-147L, -44.10089436477324509881274807713822842154L, M_PI4_LOG10El),
+
+#ifndef TEST_FLOAT
+    TEST_c_c (clog10, 0x1.fffffffffffffp+1023L, 0x1.fffffffffffffp+1023L, 308.4052305577487344482591243175787477115L, M_PI4_LOG10El),
+    TEST_c_c (clog10, 0x1.fffffffffffffp+1023L, 0x1p+1023L, 308.3031705664207720674749211936626341569L, 0.2013595981366865903254995612594728746470L),
+    TEST_c_c (clog10, 0x1p-1074L, 0x1p-1074L, -323.1557003452838130619487034867432642357L, M_PI4_LOG10El),
+    TEST_c_c (clog10, 0x1p-1073L, 0x1p-1073L, -322.8546703496198318667349645920187712089L, M_PI4_LOG10El),
+#endif
+
+#if defined TEST_LDOUBLE && LDBL_MAX_EXP >= 16384
+    TEST_c_c (clog10, 0x1.fp+16383L, 0x1.fp+16383L, 4932.212175672014259683102930239951947672L, M_PI4_LOG10El),
+    TEST_c_c (clog10, 0x1.fp+16383L, 0x1p+16383L, 4932.112944269463028900262609694408579449L, 0.2069271710841128115912940666587802677383L),
+    TEST_c_c (clog10, 0x1p-16440L, 0x1p-16441L, -4948.884673709346821106688037612752099609L, 0.2013595981366865710389502301937289472543L),
+#endif
+
+    TEST_c_c (clog10, 0x1p-149L, 0x1.fp+127L, 38.51805116050395969095658815123105801479L, 0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, -0x1p-149L, 0x1.fp+127L, 38.51805116050395969095658815123105801479L, 0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, 0x1p-149L, -0x1.fp+127L, 38.51805116050395969095658815123105801479L, -0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, -0x1p-149L, -0x1.fp+127L, 38.51805116050395969095658815123105801479L, -0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, -0x1.fp+127L, 0x1p-149L, 38.51805116050395969095658815123105801479L, 1.364376353841841347485783625431355770210L),
+    TEST_c_c (clog10, -0x1.fp+127L, -0x1p-149L, 38.51805116050395969095658815123105801479L, -1.364376353841841347485783625431355770210L),
+#ifdef TEST_FLOAT
+    TEST_c_c (clog10, 0x1.fp+127L, 0x1p-149L, 38.51805116050395969095658815123105801479L, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_c_c (clog10, 0x1.fp+127L, -0x1p-149L, 38.51805116050395969095658815123105801479L, minus_zero, UNDERFLOW_EXCEPTION),
+#endif
+
+#ifndef TEST_FLOAT
+    TEST_c_c (clog10, 0x1p-1074L, 0x1.fp+1023L, 308.2409272754311106024666378243768099991L, 0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, -0x1p-1074L, 0x1.fp+1023L, 308.2409272754311106024666378243768099991L, 0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, 0x1p-1074L, -0x1.fp+1023L, 308.2409272754311106024666378243768099991L, -0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, -0x1p-1074L, -0x1.fp+1023L, 308.2409272754311106024666378243768099991L, -0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, -0x1.fp+1023L, 0x1p-1074L, 308.2409272754311106024666378243768099991L, 1.364376353841841347485783625431355770210L),
+    TEST_c_c (clog10, -0x1.fp+1023L, -0x1p-1074L, 308.2409272754311106024666378243768099991L, -1.364376353841841347485783625431355770210L),
+#endif
+#if defined TEST_DOUBLE || (defined TEST_LDOUBLE && LDBL_MAX_EXP == 1024)
+    TEST_c_c (clog10, 0x1.fp+1023L, 0x1p-1074L, 308.2409272754311106024666378243768099991L, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_c_c (clog10, 0x1.fp+1023L, -0x1p-1074L, 308.2409272754311106024666378243768099991L, minus_zero, UNDERFLOW_EXCEPTION),
+#endif
+
+#if defined TEST_LDOUBLE && LDBL_MAX_EXP >= 16384
+    TEST_c_c (clog10, 0x1p-16445L, 0x1.fp+16383L, 4932.061660674182269085496060792589701158L, 0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, -0x1p-16445L, 0x1.fp+16383L, 4932.061660674182269085496060792589701158L, 0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, 0x1p-16445L, -0x1.fp+16383L, 4932.061660674182269085496060792589701158L, -0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, -0x1p-16445L, -0x1.fp+16383L, 4932.061660674182269085496060792589701158L, -0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, -0x1.fp+16383L, 0x1p-16445L, 4932.061660674182269085496060792589701158L, 1.364376353841841347485783625431355770210L),
+    TEST_c_c (clog10, -0x1.fp+16383L, -0x1p-16445L, 4932.061660674182269085496060792589701158L, -1.364376353841841347485783625431355770210L),
+    TEST_c_c (clog10, 0x1.fp+16383L, 0x1p-16445L, 4932.061660674182269085496060792589701158L, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_c_c (clog10, 0x1.fp+16383L, -0x1p-16445L, 4932.061660674182269085496060792589701158L, minus_zero, UNDERFLOW_EXCEPTION),
+# if LDBL_MANT_DIG >= 113
+    TEST_c_c (clog10, 0x1p-16494L, 0x1.fp+16383L, 4932.061660674182269085496060792589701158L, 0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, -0x1p-16494L, 0x1.fp+16383L, 4932.061660674182269085496060792589701158L, 0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, 0x1p-16494L, -0x1.fp+16383L, 4932.061660674182269085496060792589701158L, -0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, -0x1p-16494L, -0x1.fp+16383L, 4932.061660674182269085496060792589701158L, -0.6821881769209206737428918127156778851051L),
+    TEST_c_c (clog10, -0x1.fp+16383L, 0x1p-16494L, 4932.061660674182269085496060792589701158L, 1.364376353841841347485783625431355770210L),
+    TEST_c_c (clog10, -0x1.fp+16383L, -0x1p-16494L, 4932.061660674182269085496060792589701158L, -1.364376353841841347485783625431355770210L),
+    TEST_c_c (clog10, 0x1.fp+16383L, 0x1p-16494L, 4932.061660674182269085496060792589701158L, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_c_c (clog10, 0x1.fp+16383L, -0x1p-16494L, 4932.061660674182269085496060792589701158L, minus_zero, UNDERFLOW_EXCEPTION),
+# endif
+#endif
+
+    TEST_c_c (clog10, 1.0L, 0x1.234566p-10L, 2.680828048441605163181684680300513080769e-7L, 4.825491868832381486767558728169977751564e-4L),
+    TEST_c_c (clog10, -1.0L, 0x1.234566p-20L, 2.556638434669064077889576526006849923281e-13L, 1.364375882602207106407956770293808181427L),
+    TEST_c_c (clog10, 0x1.234566p-30L, 1.0L, 2.438200411482400072282924063740535840474e-19L, 6.821881764607257184291586401763604544928e-1L),
+    TEST_c_c (clog10, -0x1.234566p-40L, -1.0L, 2.325249110681915353442924915876654139373e-25L, -6.821881769213700828789403802671540158935e-1L),
+    TEST_c_c (clog10, 0x1.234566p-50L, 1.0L, 2.217530356103816369479108963807448194409e-31L, 6.821881769209202348667823902864283966959e-1L),
+    TEST_c_c (clog10, 0x1.234566p-60L, 1.0L, 2.114801746467415208319767917450504756866e-37L, 6.821881769209206733143018621078368211515e-1L),
+    TEST_c_c (clog10, 0x1p-61L, 1.0L, 4.084085680564517578238994467153626207224e-38L, 6.821881769209206735545466044044889962925e-1L),
+    TEST_c_c (clog10, 0x1p-62L, 1.0L, 1.021021420141129394559748616788406551878e-38L, 6.821881769209206736487192085600834406988e-1L, UNDERFLOW_EXCEPTION_FLOAT),
+    TEST_c_c (clog10, 0x1p-63L, 1.0L, 2.552553550352823486399371541971016379740e-39L, 6.821881769209206736958055106378806629019e-1L, UNDERFLOW_EXCEPTION_FLOAT),
+#ifndef TEST_FLOAT
+    TEST_c_c (clog10, 0x1p-509L, 1.0L, 7.730698388614835910296270976605350994446e-308L, 6.821881769209206737428918127156778851051e-1L, UNDERFLOW_EXCEPTION_LDOUBLE_IBM),
+    TEST_c_c (clog10, 0x1p-510L, 1.0L, 1.932674597153708977574067744151337748612e-308L, 6.821881769209206737428918127156778851051e-1L, UNDERFLOW_EXCEPTION_DOUBLE),
+    TEST_c_c (clog10, 0x1p-511L, 1.0L, 4.831686492884272443935169360378344371529e-309L, 6.821881769209206737428918127156778851051e-1L, UNDERFLOW_EXCEPTION_DOUBLE),
+#endif
+#if defined TEST_LDOUBLE && LDBL_MAX_EXP >= 16384
+    TEST_c_c (clog10, 0x1p-8189L, 1.0L, 1.168114274114528946314738738025008370069e-4931L, 6.821881769209206737428918127156778851051e-1L),
+    TEST_c_c (clog10, 0x1p-8190L, 1.0L, 2.920285685286322365786846845062520925172e-4932L, 6.821881769209206737428918127156778851051e-1L, UNDERFLOW_EXCEPTION),
+    TEST_c_c (clog10, 0x1p-8191L, 1.0L, 7.300714213215805914467117112656302312931e-4933L, 6.821881769209206737428918127156778851051e-1L, UNDERFLOW_EXCEPTION),
+#endif
+
+    TEST_c_c (clog10, 0x1.000566p0L, 0x1.234p-10L, 3.604093470239754109961125085078190708674e-5L, 4.824745078422174667425851670822596859720e-4L),
+    TEST_c_c (clog10, 0x1.000566p0L, 0x1.234p-100L, 3.577293486783822178310971763308187385546e-5L, 3.897399639875661463735636919790792140598e-31L),
+#ifndef TEST_FLOAT
+    TEST_c_c (clog10, -0x1.0000000123456p0L, 0x1.2345678p-30L, 1.150487028947346337782682105935961875822e-10L, 1.364376353381646356131680448946397884147L),
+    TEST_c_c (clog10, -0x1.0000000123456p0L, 0x1.2345678p-1000L, 1.150487026509145544402795327729455391948e-10L, 1.364376353841841347485783625431355770210L),
+#endif
+#if defined TEST_LDOUBLE && LDBL_MANT_DIG >= 106
+    TEST_c_c (clog10, 0x1.00000000000000123456789abcp0L, 0x1.23456789p-60L, 4.285899851347756188767674032946882584784e-19L, 4.285899850759344225805480528847018395861e-19L),
+    TEST_c_c (clog10, 0x1.00000000000000123456789abcp0L, 0x1.23456789p-1000L, 4.285899851347756186652871946325962330640e-19L, 4.611541215247321502041995872887317363241e-302L, UNDERFLOW_EXCEPTION_LDOUBLE_IBM),
+#endif
+
+    TEST_c_c (clog10, 0x0.ffffffp0L, 0x0.ffffffp-100L, -2.588596909321764128428416045209904492216e-8L, 3.425979381266895667295625489912064603415e-31L),
+#ifndef TEST_FLOAT
+    TEST_c_c (clog10, 0x0.fffffffffffff8p0L, 0x0.fffffffffffff8p-1000L, -4.821637332766435821255375046554377090472e-17L, 4.053112396770095089737411317782466262176e-302L, UNDERFLOW_EXCEPTION_LDOUBLE_IBM),
+#endif
+#if defined TEST_LDOUBLE && LDBL_MIN_EXP <= -16381
+    TEST_c_c (clog10, 0x0.ffffffffffffffffp0L, 0x0.ffffffffffffffffp-15000L, -2.354315103889861110220423157644627849164e-20L, 1.541165759405643564697852372112893034397e-4516L),
+#endif
+
+    TEST_c_c (clog10, 0x1a6p-10L, 0x3a5p-10L, -6.2126412844802358329771948751248003038444e-07L, 0.4977135139537443711784513409096950995985L),
+    TEST_c_c (clog10, 0xf2p-10L, 0x3e3p-10L, 2.6921240173351112953324592659528481616879e-06L, 0.5785726025799636431142862788413361783862L),
+    TEST_c_c (clog10, 0x4d4ep-15L, 0x6605p-15L, -7.0781945783414996953799915941870192015212e-09L, 0.4005747524909781155537088181659175147564L),
+    TEST_c_c (clog10, 0x2818p-15L, 0x798fp-15L, 6.6737261053986614395049481326819059203910e-09L, 0.5438241985991753781478398141908629586460L),
+    TEST_c_c (clog10, 0x9b57bp-20L, 0xcb7b4p-20L, -1.7182001068739620267773842120965071561416e-11L, 0.3990121149225253562859800593935899629087L),
+    TEST_c_c (clog10, 0x2731p-20L, 0xfffd0p-20L, 1.9156943718715958194239364991329064049438e-11L, 0.6780326907904082601285090019969008967595L),
+    TEST_c_c (clog10, 0x2ede88p-23L, 0x771c3fp-23L, -1.9440841725722970687903291200493082253766e-13L, 0.5193774116724956222518530053006822210323L),
+    TEST_c_c (clog10, 0x11682p-23L, 0x7ffed1p-23L, 5.0916490233953865181284669870035717560498e-13L, 0.6784968969384861816694467029319146542069L),
+    TEST_c_c (clog10, 0xa1f2c1p-24L, 0xc643aep-24L, -4.5516256421319921959681423447271490869664e-14L, 0.3847315790697197749315054516562206543710L),
+    TEST_c_c (clog10, 0x659feap-24L, 0xeaf6f9p-24L, 1.6200701438094619117335617123525612051457e-14L, 0.5049027913635038013499728086604870749732L),
+#ifndef TEST_FLOAT
+    TEST_c_c (clog10, 0x4447d7175p-35L, 0x6c445e00ap-35L, -6.4375803621988389731799033530075237868110e-21L, 0.4378257977686804492768642780897650927167L),
+    TEST_c_c (clog10, 0x2dd46725bp-35L, 0x7783a1284p-35L, 1.9312741086596516918394613098872836703188e-20L, 0.5231613813514771042838490538484014771862L),
+    TEST_c_c (clog10, 0x164c74eea876p-45L, 0x16f393482f77p-45L, -1.3155760824064879362415202279780039150764e-26L, 0.3473590599762514228227328130640352044313L),
+    TEST_c_c (clog10, 0xfe961079616p-45L, 0x1bc37e09e6d1p-45L, 2.3329549194675052736016290082882121135546e-26L, 0.4561756099441139182878993697611751382976L),
+    TEST_c_c (clog10, 0xa4722f19346cp-51L, 0x7f9631c5e7f07p-51L, -2.6979587627476803379953050733225113494503e-30L, 0.6472785229986997177606324374555347813105L),
+    TEST_c_c (clog10, 0x10673dd0f2481p-51L, 0x7ef1d17cefbd2p-51L, 1.3918041236396763648388478552321724382899e-29L, 0.6263795733790237053262025311642907438291L),
+    TEST_c_c (clog10, 0x8ecbf810c4ae6p-52L, 0xd479468b09a37p-52L, -4.2289432987513243393180377141513840878196e-30L, 0.4252020027092323591068799049905597805296L),
+    TEST_c_c (clog10, 0x5b06b680ea2ccp-52L, 0xef452b965da9fp-52L, 3.6079845358966994996207055940336690133424e-30L, 0.5243112258263349992771652393178033846555L),
+    TEST_c_c (clog10, 0x659b70ab7971bp-53L, 0x1f5d111e08abecp-53L, -1.0893543813872082317104059174982092534059e-30L, 0.5954257879188711495921161433751775633232L),
+    TEST_c_c (clog10, 0x15cfbd1990d1ffp-53L, 0x176a3973e09a9ap-53L, 4.4163015461643576961232672330852798804976e-31L, 0.3564851427422832755956993418877523303529L),
+    TEST_c_c (clog10, 0x1367a310575591p-54L, 0x3cfcc0a0541f60p-54L, 2.2081507730821788480616336165447731164865e-32L, 0.5484039935757001196548030312819898864760L),
+    TEST_c_c (clog10, 0x55cb6d0c83af5p-55L, 0x7fe33c0c7c4e90p-55L, -2.2583360179249556400630343805573865814771e-32L, 0.6639894257763289307423302343317622430835L),
+#endif
+#if defined TEST_LDOUBLE && LDBL_MANT_DIG >= 64
+    TEST_c_c (clog10, 0x298c62cb546588a7p-63L, 0x7911b1dfcc4ecdaep-63L, -5.1816837072162316773907242302011632570857e-37L, 0.5386167838952956925896424154370364458140L),
+    TEST_c_c (clog10, 0x4d9c37e2b5cb4533p-63L, 0x65c98be2385a042ep-63L, 2.7822833698845776001753149807484078521508e-37L, 0.3992725998539071066769046272515417679815L),
+    TEST_c_c (clog10, 0x602fd5037c4792efp-64L, 0xed3e2086dcca80b8p-64L, -1.0146400362652473358437501879334790111898e-37L, 0.5149047982335273098246594109614460842099L),
+    TEST_c_c (clog10, 0x6b10b4f3520217b6p-64L, 0xe8893cbb449253a1p-64L, 1.0529283395205396881397407610630442563938e-37L, 0.4947949395762683446121140513971996916447L),
+    TEST_c_c (clog10, 0x81b7efa81fc35ad1p-65L, 0x1ef4b835f1c79d812p-65L, -4.3074341162203896332989394770760901408798e-39L, 0.5709443672155660428417571212549720987784L),
+#endif
+#if defined TEST_LDOUBLE && LDBL_MANT_DIG >= 106
+    TEST_c_c (clog10, 0x3f96469050f650869c2p-75L, 0x6f16b2c9c8b05988335p-75L, -4.5643214291682663316715446865040356750881e-46L, 0.4564083863660793840592614609053162690362L),
+    TEST_c_c (clog10, 0x3157fc1d73233e580c8p-75L, 0x761b52ccd435d7c7f5fp-75L, 5.8575458340992751256451490143468457830297e-44L, 0.5103174273246635294300470585396890237265L),
+    TEST_c_c (clog10, 0x155f8afc4c48685bf63610p-85L, 0x17d0cf2652cdbeb1294e19p-85L, -2.0748709499710785084693619097712106753591e-50L, 0.3645447681189598740620098186365764884771L),
+    TEST_c_c (clog10, 0x13836d58a13448d750b4b9p-85L, 0x195ca7bc3ab4f9161edbe6p-85L, 1.2333149003324592532859843519619084433953e-50L, 0.3973779298829931059309198145608711073016L),
+    TEST_c_c (clog10, 0x1df515eb171a808b9e400266p-95L, 0x7c71eb0cd4688dfe98581c77p-95L, -1.5221162575729652613635150540947625639689e-57L, 0.5795934880811949230121092882659698986043L),
+    TEST_c_c (clog10, 0xe33f66c9542ca25cc43c867p-95L, 0x7f35a68ebd3704a43c465864p-95L, 1.7850272475173865337808494725293124613817e-56L, 0.6338990862456906754888183278564382516852L),
+    TEST_c_c (clog10, 0x6771f22c64ed551b857c128b4cp-105L, 0x1f570e7a13cc3cf2f44fd793ea1p-105L, -6.2023045024810589256360494043570293518879e-63L, 0.5938345819561308555003145899438513900776L),
+    TEST_c_c (clog10, 0x15d8ab6ed05ca514086ac3a1e84p-105L, 0x1761e480aa094c0b10b34b09ce9p-105L, 4.3548095442952115860848857519953610343042e-63L, 0.3558376234889641500775150477035448866763L),
+    TEST_c_c (clog10, 0x187190c1a334497bdbde5a95f48p-106L, 0x3b25f08062d0a095c4cfbbc338dp-106L, -7.5879257211204444302994221436282805900756e-64L, 0.5119945461708707332160859198685423099187L),
+    TEST_c_c (clog10, 0x6241ef0da53f539f02fad67dabp-106L, 0x3fb46641182f7efd9caa769dac0p-106L, 1.8804859395820231849002915747252695375405e-63L, 0.6404513901551516189871978418046651877394L),
+#endif
+#if defined TEST_LDOUBLE && LDBL_MANT_DIG >= 113
+    TEST_c_c (clog10, 0x3e1d0a105ac4ebeacd9c6952d34cp-112L, 0xf859b3d1b06d005dcbb5516d5479p-112L, -5.0742964549782184008668435276046798273476e-67L, 0.5757527761596220360985719127090110408283L),
+    TEST_c_c (clog10, 0x47017a2e36807acb1e5214b209dep-112L, 0xf5f4a550c9d75e3bb1839d865f0dp-112L, 6.5482587585671294601662599808612773010057e-66L, 0.5601289501766423782280643144987875760229L),
+    TEST_c_c (clog10, 0x148f818cb7a9258fca942ade2a0cap-113L, 0x18854a34780b8333ec53310ad7001p-113L, -3.1210950417524756037077807411854181477733e-67L, 0.3791463562379872585396164879981280044658L),
+    TEST_c_c (clog10, 0xfd95243681c055c2632286921092p-113L, 0x1bccabcd29ca2152860ec29e34ef7p-113L, 2.8774482675253468630312378575186855052697e-66L, 0.4571561610046221605554903008571429975493L),
+    TEST_c_c (clog10, 0xdb85c467ee2aadd5f425fe0f4b8dp-114L, 0x3e83162a0f95f1dcbf97dddf410eap-114L, 1.9985076315737626043096596036300177494613e-67L, 0.5883569274304683249184005177865521205198L),
+    TEST_c_c (clog10, 0x1415bcaf2105940d49a636e98ae59p-115L, 0x7e6a150adfcd1b0921d44b31f40f4p-115L, 1.1288799405048268615023706955013387413519e-67L, 0.6137587762850841972073301550420510507903L),
+#endif
   };
 
 static void
 clog10_test (void)
 {
-  ALL_RM_TEST (clog10, 0, clog10_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (clog10);
+  RUN_TEST_LOOP_c_c (clog10, clog10_test_data, );
+  END_COMPLEX;
 }
 
 
@@ -6193,7 +6386,9 @@ static const struct test_c_c_data conj_test_data[] =
 static void
 conj_test (void)
 {
-  ALL_RM_TEST (conj, 1, conj_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (conj);
+  RUN_TEST_LOOP_c_c (conj, conj_test_data, );
+  END_COMPLEX;
 }
 
 
@@ -6243,7 +6438,9 @@ static const struct test_ff_f_data copysign_test_data[] =
 static void
 copysign_test (void)
 {
-  ALL_RM_TEST (copysign, 1, copysign_test_data, RUN_TEST_LOOP_ff_f, END);
+  START (copysign);
+  RUN_TEST_LOOP_ff_f (copysign, copysign_test_data, );
+  END;
 }
 
 
@@ -6253,13 +6450,71 @@ static const struct test_f_f_data cos_test_data[] =
     TEST_f_f (cos, minus_infty, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_f_f (cos, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
 
-    AUTO_TESTS_f_f (cos),
+    AUTO_TESTS_f_f (cos, tonearest),
   };
 
 static void
 cos_test (void)
 {
-  ALL_RM_TEST (cos, 0, cos_test_data, RUN_TEST_LOOP_f_f, END);
+  START (cos);
+  RUN_TEST_LOOP_f_f (cos, cos_test_data, );
+  END;
+}
+
+
+static const struct test_f_f_data cos_tonearest_test_data[] =
+  {
+    AUTO_TESTS_f_f (cos, tonearest),
+  };
+
+static void
+cos_test_tonearest (void)
+{
+  START (cos_tonearest);
+  RUN_TEST_LOOP_f_f (cos, cos_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_f_f_data cos_towardzero_test_data[] =
+  {
+    AUTO_TESTS_f_f (cos, towardzero),
+  };
+
+static void
+cos_test_towardzero (void)
+{
+  START (cos_towardzero);
+  RUN_TEST_LOOP_f_f (cos, cos_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_f_f_data cos_downward_test_data[] =
+  {
+    AUTO_TESTS_f_f (cos, downward),
+  };
+
+static void
+cos_test_downward (void)
+{
+  START (cos_downward);
+  RUN_TEST_LOOP_f_f (cos, cos_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_f_f_data cos_upward_test_data[] =
+  {
+    AUTO_TESTS_f_f (cos, upward),
+  };
+
+static void
+cos_test_upward (void)
+{
+  START (cos_upward);
+  RUN_TEST_LOOP_f_f (cos, cos_upward_test_data, FE_UPWARD);
+  END;
 }
 
 
@@ -6269,13 +6524,71 @@ static const struct test_f_f_data cosh_test_data[] =
     TEST_f_f (cosh, minus_infty, plus_infty, NO_TEST_INLINE),
     TEST_f_f (cosh, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (cosh),
+    AUTO_TESTS_f_f (cosh, tonearest),
   };
 
 static void
 cosh_test (void)
 {
-  ALL_RM_TEST (cosh, 0, cosh_test_data, RUN_TEST_LOOP_f_f, END);
+  START (cosh);
+  RUN_TEST_LOOP_f_f (cosh, cosh_test_data, );
+  END;
+}
+
+
+static const struct test_f_f_data cosh_tonearest_test_data[] =
+  {
+    AUTO_TESTS_f_f (cosh, tonearest),
+  };
+
+static void
+cosh_test_tonearest (void)
+{
+  START (cosh_tonearest);
+  RUN_TEST_LOOP_f_f (cosh, cosh_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_f_f_data cosh_towardzero_test_data[] =
+  {
+    AUTO_TESTS_f_f (cosh, towardzero),
+  };
+
+static void
+cosh_test_towardzero (void)
+{
+  START (cosh_towardzero);
+  RUN_TEST_LOOP_f_f (cosh, cosh_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_f_f_data cosh_downward_test_data[] =
+  {
+    AUTO_TESTS_f_f (cosh, downward),
+  };
+
+static void
+cosh_test_downward (void)
+{
+  START (cosh_downward);
+  RUN_TEST_LOOP_f_f (cosh, cosh_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_f_f_data cosh_upward_test_data[] =
+  {
+    AUTO_TESTS_f_f (cosh, upward),
+  };
+
+static void
+cosh_test_upward (void)
+{
+  START (cosh_upward);
+  RUN_TEST_LOOP_f_f (cosh, cosh_upward_test_data, FE_UPWARD);
+  END;
 }
 
 
@@ -6283,13 +6596,15 @@ static const struct test_cc_c_data cpow_test_data[] =
   {
     TEST_cc_c (cpow, qnan_value, qnan_value, qnan_value, qnan_value, qnan_value, qnan_value),
 
-    AUTO_TESTS_cc_c (cpow),
+    AUTO_TESTS_cc_c (cpow, tonearest),
   };
 
 static void
 cpow_test (void)
 {
-  ALL_RM_TEST (cpow, 0, cpow_test_data, RUN_TEST_LOOP_cc_c, END_COMPLEX);
+  START (cpow);
+  RUN_TEST_LOOP_cc_c (cpow, cpow_test_data, );
+  END_COMPLEX;
 }
 
 
@@ -6354,7 +6669,9 @@ static const struct test_c_c_data cproj_test_data[] =
 static void
 cproj_test (void)
 {
-  ALL_RM_TEST (cproj, 1, cproj_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (cproj);
+  RUN_TEST_LOOP_c_c (cproj, cproj_test_data, );
+  END_COMPLEX;
 }
 
 
@@ -6372,7 +6689,9 @@ static const struct test_c_f_data creal_test_data[] =
 static void
 creal_test (void)
 {
-  ALL_RM_TEST (creal, 1, creal_test_data, RUN_TEST_LOOP_c_f, END);
+  START (creal);
+  RUN_TEST_LOOP_c_f (creal, creal_test_data, );
+  END;
 }
 
 static const struct test_c_c_data csin_test_data[] =
@@ -6450,15 +6769,15 @@ static const struct test_c_c_data csin_test_data[] =
 #endif
 
 #ifdef TEST_FLOAT
-    TEST_c_c (csin, 0x1p-149, 180, 1.043535896672617552965983803453927655332e33L, plus_oflow, OVERFLOW_EXCEPTION),
+    TEST_c_c (csin, 0x1p-149, 180, 1.043535896672617552965983803453927655332e33L, plus_infty, OVERFLOW_EXCEPTION),
 #endif
 
 #if defined TEST_DOUBLE || (defined TEST_LDOUBLE && LDBL_MAX_EXP == 1024)
-    TEST_c_c (csin, 0x1p-1074, 1440, 5.981479269486130556466515778180916082415e301L, plus_oflow, OVERFLOW_EXCEPTION),
+    TEST_c_c (csin, 0x1p-1074, 1440, 5.981479269486130556466515778180916082415e301L, plus_infty, OVERFLOW_EXCEPTION),
 #endif
 
 #if defined TEST_LDOUBLE && LDBL_MAX_EXP >= 16384
-    TEST_c_c (csin, 0x1p-16434L, 22730, 1.217853148905605987081057582351152052687e4924L, plus_oflow, OVERFLOW_EXCEPTION),
+    TEST_c_c (csin, 0x1p-16434L, 22730, 1.217853148905605987081057582351152052687e4924L, plus_infty, OVERFLOW_EXCEPTION),
 #endif
 
     TEST_c_c (csin, min_subnorm_value, min_value, min_subnorm_value, min_value, UNDERFLOW_EXCEPTION),
@@ -6468,7 +6787,9 @@ static const struct test_c_c_data csin_test_data[] =
 static void
 csin_test (void)
 {
-  ALL_RM_TEST (csin, 0, csin_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (csin);
+  RUN_TEST_LOOP_c_c (csin, csin_test_data, );
+  END_COMPLEX;
 }
 
 
@@ -6547,15 +6868,15 @@ static const struct test_c_c_data csinh_test_data[] =
 #endif
 
 #ifdef TEST_FLOAT
-    TEST_c_c (csinh, 180, 0x1p-149, plus_oflow, 1.043535896672617552965983803453927655332e33L, OVERFLOW_EXCEPTION),
+    TEST_c_c (csinh, 180, 0x1p-149, plus_infty, 1.043535896672617552965983803453927655332e33L, OVERFLOW_EXCEPTION),
 #endif
 
 #if defined TEST_DOUBLE || (defined TEST_LDOUBLE && LDBL_MAX_EXP == 1024)
-    TEST_c_c (csinh, 1440, 0x1p-1074, plus_oflow, 5.981479269486130556466515778180916082415e301L, OVERFLOW_EXCEPTION),
+    TEST_c_c (csinh, 1440, 0x1p-1074, plus_infty, 5.981479269486130556466515778180916082415e301L, OVERFLOW_EXCEPTION),
 #endif
 
 #if defined TEST_LDOUBLE && LDBL_MAX_EXP >= 16384
-    TEST_c_c (csinh, 22730, 0x1p-16434L, plus_oflow, 1.217853148905605987081057582351152052687e4924L, OVERFLOW_EXCEPTION),
+    TEST_c_c (csinh, 22730, 0x1p-16434L, plus_infty, 1.217853148905605987081057582351152052687e4924L, OVERFLOW_EXCEPTION),
 #endif
 
     TEST_c_c (csinh, min_subnorm_value, min_value, min_subnorm_value, min_value, UNDERFLOW_EXCEPTION),
@@ -6565,7 +6886,9 @@ static const struct test_c_c_data csinh_test_data[] =
 static void
 csinh_test (void)
 {
-  ALL_RM_TEST (csinh, 0, csinh_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (csinh);
+  RUN_TEST_LOOP_c_c (csinh, csinh_test_data, );
+  END_COMPLEX;
 }
 
 
@@ -6610,13 +6933,15 @@ static const struct test_c_c_data csqrt_test_data[] =
 
     TEST_c_c (csqrt, qnan_value, qnan_value, qnan_value, qnan_value),
 
-    AUTO_TESTS_c_c (csqrt),
+    AUTO_TESTS_c_c (csqrt, tonearest),
   };
 
 static void
 csqrt_test (void)
 {
-  ALL_RM_TEST (csqrt, 0, csqrt_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (csqrt);
+  RUN_TEST_LOOP_c_c (csqrt, csqrt_test_data, );
+  END_COMPLEX;
 }
 
 static const struct test_c_c_data ctan_test_data[] =
@@ -6656,13 +6981,71 @@ static const struct test_c_c_data ctan_test_data[] =
 
     TEST_c_c (ctan, qnan_value, qnan_value, qnan_value, qnan_value),
 
-    AUTO_TESTS_c_c (ctan),
+    AUTO_TESTS_c_c (ctan, tonearest),
   };
 
 static void
 ctan_test (void)
 {
-  ALL_RM_TEST (ctan, 0, ctan_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (ctan);
+  RUN_TEST_LOOP_c_c (ctan, ctan_test_data, );
+  END_COMPLEX;
+}
+
+
+static const struct test_c_c_data ctan_tonearest_test_data[] =
+  {
+    AUTO_TESTS_c_c (ctan, tonearest),
+  };
+
+static void
+ctan_test_tonearest (void)
+{
+  START (ctan_tonearest);
+  RUN_TEST_LOOP_c_c (ctan, ctan_tonearest_test_data, FE_TONEAREST);
+  END_COMPLEX;
+}
+
+
+static const struct test_c_c_data ctan_towardzero_test_data[] =
+  {
+    AUTO_TESTS_c_c (ctan, towardzero),
+  };
+
+static void
+ctan_test_towardzero (void)
+{
+  START (ctan_towardzero);
+  RUN_TEST_LOOP_c_c (ctan, ctan_towardzero_test_data, FE_TOWARDZERO);
+  END_COMPLEX;
+}
+
+
+static const struct test_c_c_data ctan_downward_test_data[] =
+  {
+    AUTO_TESTS_c_c (ctan, downward),
+  };
+
+static void
+ctan_test_downward (void)
+{
+  START (ctan_downward);
+  RUN_TEST_LOOP_c_c (ctan, ctan_downward_test_data, FE_DOWNWARD);
+  END_COMPLEX;
+}
+
+
+static const struct test_c_c_data ctan_upward_test_data[] =
+  {
+    AUTO_TESTS_c_c (ctan, upward),
+  };
+
+static void
+ctan_test_upward (void)
+{
+  START (ctan_upward);
+  RUN_TEST_LOOP_c_c (ctan, ctan_upward_test_data, FE_UPWARD);
+  END_COMPLEX;
 }
 
 
@@ -6702,13 +7085,71 @@ static const struct test_c_c_data ctanh_test_data[] =
 
     TEST_c_c (ctanh, qnan_value, qnan_value, qnan_value, qnan_value),
 
-    AUTO_TESTS_c_c (ctanh),
+    AUTO_TESTS_c_c (ctanh, tonearest),
   };
 
 static void
 ctanh_test (void)
 {
-  ALL_RM_TEST (ctanh, 0, ctanh_test_data, RUN_TEST_LOOP_c_c, END_COMPLEX);
+  START (ctanh);
+  RUN_TEST_LOOP_c_c (ctanh, ctanh_test_data, );
+  END_COMPLEX;
+}
+
+
+static const struct test_c_c_data ctanh_tonearest_test_data[] =
+  {
+    AUTO_TESTS_c_c (ctanh, tonearest),
+  };
+
+static void
+ctanh_test_tonearest (void)
+{
+  START (ctanh_tonearest);
+  RUN_TEST_LOOP_c_c (ctanh, ctanh_tonearest_test_data, FE_TONEAREST);
+  END_COMPLEX;
+}
+
+
+static const struct test_c_c_data ctanh_towardzero_test_data[] =
+  {
+    AUTO_TESTS_c_c (ctanh, towardzero),
+  };
+
+static void
+ctanh_test_towardzero (void)
+{
+  START (ctanh_towardzero);
+  RUN_TEST_LOOP_c_c (ctanh, ctanh_towardzero_test_data, FE_TOWARDZERO);
+  END_COMPLEX;
+}
+
+
+static const struct test_c_c_data ctanh_downward_test_data[] =
+  {
+    AUTO_TESTS_c_c (ctanh, downward),
+  };
+
+static void
+ctanh_test_downward (void)
+{
+  START (ctanh_downward);
+  RUN_TEST_LOOP_c_c (ctanh, ctanh_downward_test_data, FE_DOWNWARD);
+  END_COMPLEX;
+}
+
+
+static const struct test_c_c_data ctanh_upward_test_data[] =
+  {
+    AUTO_TESTS_c_c (ctanh, upward),
+  };
+
+static void
+ctanh_test_upward (void)
+{
+  START (ctanh_upward);
+  RUN_TEST_LOOP_c_c (ctanh, ctanh_upward_test_data, FE_UPWARD);
+  END_COMPLEX;
 }
 
 
@@ -6718,13 +7159,15 @@ static const struct test_f_f_data erf_test_data[] =
     TEST_f_f (erf, minus_infty, -1),
     TEST_f_f (erf, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (erf),
+    AUTO_TESTS_f_f (erf, tonearest),
   };
 
 static void
 erf_test (void)
 {
-  ALL_RM_TEST (erf, 0, erf_test_data, RUN_TEST_LOOP_f_f, END);
+  START (erf);
+  RUN_TEST_LOOP_f_f (erf, erf_test_data, );
+  END;
 }
 
 
@@ -6734,13 +7177,15 @@ static const struct test_f_f_data erfc_test_data[] =
     TEST_f_f (erfc, minus_infty, 2.0),
     TEST_f_f (erfc, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (erfc),
+    AUTO_TESTS_f_f (erfc, tonearest),
   };
 
 static void
 erfc_test (void)
 {
-  ALL_RM_TEST (erfc, 0, erfc_test_data, RUN_TEST_LOOP_f_f, END);
+  START (erfc);
+  RUN_TEST_LOOP_f_f (erfc, erfc_test_data, );
+  END;
 }
 
 
@@ -6750,13 +7195,71 @@ static const struct test_f_f_data exp_test_data[] =
     TEST_f_f (exp, minus_infty, 0, NO_TEST_INLINE),
     TEST_f_f (exp, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (exp),
+    AUTO_TESTS_f_f (exp, tonearest),
   };
 
 static void
 exp_test (void)
 {
-  ALL_RM_TEST (exp, 0, exp_test_data, RUN_TEST_LOOP_f_f, END);
+  START (exp);
+  RUN_TEST_LOOP_f_f (exp, exp_test_data, );
+  END;
+}
+
+
+static const struct test_f_f_data exp_tonearest_test_data[] =
+  {
+    AUTO_TESTS_f_f (exp, tonearest),
+  };
+
+static void
+exp_test_tonearest (void)
+{
+  START (exp_tonearest);
+  RUN_TEST_LOOP_f_f (exp, exp_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_f_f_data exp_towardzero_test_data[] =
+  {
+    AUTO_TESTS_f_f (exp, towardzero),
+  };
+
+static void
+exp_test_towardzero (void)
+{
+  START (exp_towardzero);
+  RUN_TEST_LOOP_f_f (exp, exp_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_f_f_data exp_downward_test_data[] =
+  {
+    AUTO_TESTS_f_f (exp, downward),
+  };
+
+static void
+exp_test_downward (void)
+{
+  START (exp_downward);
+  RUN_TEST_LOOP_f_f (exp, exp_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_f_f_data exp_upward_test_data[] =
+  {
+    AUTO_TESTS_f_f (exp, upward),
+  };
+
+static void
+exp_test_upward (void)
+{
+  START (exp_upward);
+  RUN_TEST_LOOP_f_f (exp, exp_upward_test_data, FE_UPWARD);
+  END;
 }
 
 
@@ -6766,20 +7269,80 @@ static const struct test_f_f_data exp10_test_data[] =
     TEST_f_f (exp10, minus_infty, 0),
     TEST_f_f (exp10, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (exp10),
+    AUTO_TESTS_f_f (exp10, tonearest),
   };
 
 static void
 exp10_test (void)
 {
-  ALL_RM_TEST (exp10, 0, exp10_test_data, RUN_TEST_LOOP_f_f, END);
+  START (exp10);
+  RUN_TEST_LOOP_f_f (exp10, exp10_test_data, );
+  END;
+}
+
+
+static const struct test_f_f_data exp10_tonearest_test_data[] =
+  {
+    AUTO_TESTS_f_f (exp10, tonearest),
+  };
+
+static void
+exp10_test_tonearest (void)
+{
+  START (exp10_tonearest);
+  RUN_TEST_LOOP_f_f (exp10, exp10_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_f_f_data exp10_towardzero_test_data[] =
+  {
+    AUTO_TESTS_f_f (exp10, towardzero),
+  };
+
+static void
+exp10_test_towardzero (void)
+{
+  START (exp10_towardzero);
+  RUN_TEST_LOOP_f_f (exp10, exp10_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_f_f_data exp10_downward_test_data[] =
+  {
+    AUTO_TESTS_f_f (exp10, downward),
+  };
+
+static void
+exp10_test_downward (void)
+{
+  START (exp10_downward);
+  RUN_TEST_LOOP_f_f (exp10, exp10_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_f_f_data exp10_upward_test_data[] =
+  {
+    AUTO_TESTS_f_f (exp10, upward),
+  };
+
+static void
+exp10_test_upward (void)
+{
+  START (exp10_upward);
+  RUN_TEST_LOOP_f_f (exp10, exp10_upward_test_data, FE_UPWARD);
+  END;
 }
 
 static void
 pow10_test (void)
 {
+  START (pow10);
   /* pow10 uses the same test data as exp10.  */
-  ALL_RM_TEST (pow10, 0, exp10_test_data, RUN_TEST_LOOP_f_f, END);
+  RUN_TEST_LOOP_f_f (pow10, exp10_test_data, );
+  END;
 }
 
 
@@ -6789,13 +7352,15 @@ static const struct test_f_f_data exp2_test_data[] =
     TEST_f_f (exp2, minus_infty, 0),
     TEST_f_f (exp2, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (exp2),
+    AUTO_TESTS_f_f (exp2, tonearest),
   };
 
 static void
 exp2_test (void)
 {
-  ALL_RM_TEST (exp2, 0, exp2_test_data, RUN_TEST_LOOP_f_f, END);
+  START (exp2);
+  RUN_TEST_LOOP_f_f (exp2, exp2_test_data, );
+  END;
 }
 
 
@@ -6805,13 +7370,71 @@ static const struct test_f_f_data expm1_test_data[] =
     TEST_f_f (expm1, minus_infty, -1, NO_TEST_INLINE),
     TEST_f_f (expm1, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (expm1),
+    AUTO_TESTS_f_f (expm1, tonearest),
   };
 
 static void
 expm1_test (void)
 {
-  ALL_RM_TEST (expm1, 0, expm1_test_data, RUN_TEST_LOOP_f_f, END);
+  START (expm1);
+  RUN_TEST_LOOP_f_f (expm1, expm1_test_data, );
+  END;
+}
+
+
+static const struct test_f_f_data expm1_tonearest_test_data[] =
+  {
+    AUTO_TESTS_f_f (expm1, tonearest),
+  };
+
+static void
+expm1_test_tonearest (void)
+{
+  START (expm1_tonearest);
+  RUN_TEST_LOOP_f_f (expm1, expm1_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_f_f_data expm1_towardzero_test_data[] =
+  {
+    AUTO_TESTS_f_f (expm1, towardzero),
+  };
+
+static void
+expm1_test_towardzero (void)
+{
+  START (expm1_towardzero);
+  RUN_TEST_LOOP_f_f (expm1, expm1_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_f_f_data expm1_downward_test_data[] =
+  {
+    AUTO_TESTS_f_f (expm1, downward),
+  };
+
+static void
+expm1_test_downward (void)
+{
+  START (expm1_downward);
+  RUN_TEST_LOOP_f_f (expm1, expm1_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_f_f_data expm1_upward_test_data[] =
+  {
+    AUTO_TESTS_f_f (expm1, upward),
+  };
+
+static void
+expm1_test_upward (void)
+{
+  START (expm1_upward);
+  RUN_TEST_LOOP_f_f (expm1, expm1_upward_test_data, FE_UPWARD);
+  END;
 }
 
 
@@ -6832,7 +7455,9 @@ static const struct test_f_f_data fabs_test_data[] =
 static void
 fabs_test (void)
 {
-  ALL_RM_TEST (fabs, 1, fabs_test_data, RUN_TEST_LOOP_f_f, END);
+  START (fabs);
+  RUN_TEST_LOOP_f_f (fabs, fabs_test_data, );
+  END;
 }
 
 
@@ -6874,7 +7499,9 @@ static const struct test_ff_f_data fdim_test_data[] =
 static void
 fdim_test (void)
 {
-  ALL_RM_TEST (fdim, 1, fdim_test_data, RUN_TEST_LOOP_ff_f, END);
+  START (fdim);
+  RUN_TEST_LOOP_ff_f (fdim, fdim_test_data, );
+  END;
 }
 
 
@@ -6977,12 +7604,15 @@ static const struct test_f_f_data floor_test_data[] =
 static void
 floor_test (void)
 {
-  ALL_RM_TEST (floor, 1, floor_test_data, RUN_TEST_LOOP_f_f, END);
+  START (floor);
+  RUN_TEST_LOOP_f_f (floor, floor_test_data, );
+  END;
 }
 
 
 static const struct test_fff_f_data fma_test_data[] =
   {
+    TEST_fff_f (fma, 1.0, 2.0, 3.0, 5.0),
     TEST_fff_f (fma, qnan_value, 2.0, 3.0, qnan_value),
     TEST_fff_f (fma, 1.0, qnan_value, 3.0, qnan_value),
     TEST_fff_f (fma, 1.0, 2.0, qnan_value, qnan_value, INVALID_EXCEPTION_OK),
@@ -7004,6 +7634,8 @@ static const struct test_fff_f_data fma_test_data[] =
     TEST_fff_f (fma, -13.5L, plus_infty, plus_infty, qnan_value, INVALID_EXCEPTION),
     TEST_fff_f (fma, minus_infty, 7.5L, plus_infty, qnan_value, INVALID_EXCEPTION),
 
+    TEST_fff_f (fma, 1.25L, 0.75L, 0.0625L, 1.0L),
+
     TEST_fff_f (fma, -max_value, -max_value, minus_infty, minus_infty),
     TEST_fff_f (fma, max_value / 2, max_value / 2, minus_infty, minus_infty),
     TEST_fff_f (fma, -max_value, max_value, plus_infty, plus_infty),
@@ -7013,13 +7645,906 @@ static const struct test_fff_f_data fma_test_data[] =
     TEST_fff_f (fma, minus_infty, minus_infty, plus_infty, plus_infty),
     TEST_fff_f (fma, plus_infty, minus_infty, minus_infty, minus_infty),
 
-    AUTO_TESTS_fff_f (fma),
+    TEST_fff_f (fma, plus_zero, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, plus_zero, minus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, minus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, plus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, minus_zero, minus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, plus_zero, minus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, minus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, -1.0, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, -1.0, plus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, -1.0, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, -1.0, minus_zero, minus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, 1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, 1.0, minus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, -1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, -1.0, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, 1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, 1.0, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, -1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, -1.0, minus_zero, plus_zero),
+
+    TEST_fff_f (fma, 1.0, 1.0, -1.0, plus_zero),
+    TEST_fff_f (fma, 1.0, -1.0, 1.0, plus_zero),
+    TEST_fff_f (fma, -1.0, 1.0, 1.0, plus_zero),
+    TEST_fff_f (fma, -1.0, -1.0, -1.0, plus_zero),
+
+    TEST_fff_f (fma, min_value, min_value, plus_zero, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, min_value, min_value, minus_zero, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, min_value, -min_value, plus_zero, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, min_value, -min_value, minus_zero, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, min_value, plus_zero, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, min_value, minus_zero, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, -min_value, plus_zero, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, -min_value, minus_zero, plus_zero, UNDERFLOW_EXCEPTION),
+
+    TEST_fff_f (fma, max_value, max_value, min_value, plus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, max_value, max_value, -min_value, plus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, max_value, -max_value, min_value, minus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, max_value, -max_value, -min_value, minus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, max_value, min_value, minus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, max_value, -min_value, minus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, -max_value, min_value, plus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, -max_value, -min_value, plus_infty, OVERFLOW_EXCEPTION),
+
+#if defined (TEST_FLOAT) && FLT_MANT_DIG == 24
+    TEST_fff_f (fma, 0x1.7ff8p+13, 0x1.000002p+0, 0x1.ffffp-24, 0x1.7ff802p+13),
+    TEST_fff_f (fma, 0x1.fffp+0, 0x1.00001p+0, -0x1.fffp+0, 0x1.fffp-20),
+    TEST_fff_f (fma, 0x1.9abcdep+127, 0x0.9abcdep-126, -0x1.f08948p+0, 0x1.bb421p-25),
+    TEST_fff_f (fma, 0x1.9abcdep+100, 0x0.9abcdep-126, -0x1.f08948p-27, 0x1.bb421p-52),
+    TEST_fff_f (fma, 0x1.fffffep+127, 0x1.001p+0, -0x1.fffffep+127, 0x1.fffffep+115),
+    TEST_fff_f (fma, -0x1.fffffep+127, 0x1.fffffep+0, 0x1.fffffep+127, -0x1.fffffap+127),
+    TEST_fff_f (fma, 0x1.fffffep+127, 2.0, -0x1.fffffep+127, 0x1.fffffep+127),
+    TEST_fff_f (fma, 0x1.4p-126, 0x1.000004p-1, 0x1p-128, 0x1.c00004p-127, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-126, 0x1.000004p-1, -0x1p-128, -0x1.c00004p-127, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.fffff8p-126, 0x1.000002p-1, 0x1p-149, 0x1p-126, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, -0x1.fffff8p-126, 0x1.000002p-1, -0x1p-149, -0x1p-126, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-1, 0x0.fffffep-126, 0x1p-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-149, 0x1p-1, -0x0.fffffep-126, -0x1p-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1.1p-1, 0x0.fffffep-126, 0x1p-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-149, 0x1.1p-1, -0x0.fffffep-126, -0x1p-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x1p127, 0x1p127),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x1p127, 0x1p127),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x1p127, -0x1p127),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x1p127, -0x1p127),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x1p-126, 0x1p-126),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x1p-126, 0x1p-126, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x1p-126, -0x1p-126, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x1p-126, -0x1p-126),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x0.fffffep-126, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x0.fffffep-126, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x0.fffffep-126, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x0.fffffep-126, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x1p-149, 0x1p-149, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x1p-149, 0x1p-149, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x1p-149, -0x1p-149, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x1p-149, -0x1p-149, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.fffp0, 0x0.fffp0, -0x0.ffep0, 0x1p-24),
+    TEST_fff_f (fma, 0x0.fffp0, -0x0.fffp0, 0x0.ffep0, -0x1p-24),
+    TEST_fff_f (fma, -0x0.fffp0, 0x0.fffp0, 0x0.ffep0, -0x1p-24),
+    TEST_fff_f (fma, -0x0.fffp0, -0x0.fffp0, -0x0.ffep0, 0x1p-24),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, 0x1p127, 0x1p127),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, 0x1p127, 0x1p127),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, -0x1p127, -0x1p127),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, -0x1p127, -0x1p127),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, 0x1p103, 0x1p103),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, 0x1p103, 0x1p103),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, -0x1p103, -0x1p103),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, -0x1p103, -0x1p103),
+#endif
+#if defined (TEST_DOUBLE) && DBL_MANT_DIG == 53
+    TEST_fff_f (fma, 0x1.7fp+13, 0x1.0000000000001p+0, 0x1.ffep-48, 0x1.7f00000000001p+13),
+    TEST_fff_f (fma, 0x1.fffp+0, 0x1.0000000000001p+0, -0x1.fffp+0, 0x1.fffp-52),
+    TEST_fff_f (fma, 0x1.0000002p+0, 0x1.ffffffcp-1, 0x1p-300, 1.0),
+    TEST_fff_f (fma, 0x1.0000002p+0, 0x1.ffffffcp-1, -0x1p-300, 0x1.fffffffffffffp-1),
+    TEST_fff_f (fma, 0x1.deadbeef2feedp+1023, 0x0.deadbeef2feedp-1022, -0x1.a05f8c01a4bfbp+1, 0x1.0989687bc9da4p-53),
+    TEST_fff_f (fma, 0x1.deadbeef2feedp+900, 0x0.deadbeef2feedp-1022, -0x1.a05f8c01a4bfbp-122, 0x1.0989687bc9da4p-176),
+    TEST_fff_f (fma, 0x1.fffffffffffffp+1023, 0x1.001p+0, -0x1.fffffffffffffp+1023, 0x1.fffffffffffffp+1011),
+    TEST_fff_f (fma, -0x1.fffffffffffffp+1023, 0x1.fffffffffffffp+0, 0x1.fffffffffffffp+1023, -0x1.ffffffffffffdp+1023),
+    TEST_fff_f (fma, 0x1.fffffffffffffp+1023, 2.0, -0x1.fffffffffffffp+1023, 0x1.fffffffffffffp+1023),
+    TEST_fff_f (fma, 0x1.6a09e667f3bccp-538, 0x1.6a09e667f3bccp-538, 0.0, 0.0, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.deadbeef2feedp-495, 0x1.deadbeef2feedp-495, -0x1.bf86a5786a574p-989, 0x0.0000042625a1fp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.deadbeef2feedp-503, 0x1.deadbeef2feedp-503, -0x1.bf86a5786a574p-1005, 0x0.0000000004262p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-537, 0x1p-538, 0x1p-1074, 0x0.0000000000002p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.7fffff8p-968, 0x1p-106, 0x0.000001p-1022, 0x0.0000010000001p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.4000004p-967, 0x1p-106, 0x0.000001p-1022, 0x0.0000010000003p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.4p-967, -0x1p-106, -0x0.000001p-1022, -0x0.0000010000002p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.19cab66d73e17p-959, 0x1.c7108a8c5ff51p-107, -0x0.80b0ad65d9b64p-1022, -0x0.80b0ad65d9d59p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.d2eaed6e8e9d3p-979, -0x1.4e066c62ac9ddp-63, -0x0.9245e6b003454p-1022, -0x0.9245c09c5fb5dp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.153d650bb9f06p-907, 0x1.2d01230d48407p-125, -0x0.b278d5acfc3cp-1022, -0x0.b22757123bbe9p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.fffffffffffffp-711, 0x1.fffffffffffffp-275, 0x1.fffffe00007ffp-983, 0x1.7ffffe00007ffp-983),
+    TEST_fff_f (fma, 0x1.4p-1022, 0x1.0000000000002p-1, 0x1p-1024, 0x1.c000000000002p-1023, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-1022, 0x1.0000000000002p-1, -0x1p-1024, -0x1.c000000000002p-1023, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.ffffffffffffcp-1022, 0x1.0000000000001p-1, 0x1p-1074, 0x1p-1022, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, -0x1.ffffffffffffcp-1022, 0x1.0000000000001p-1, -0x1p-1074, -0x1p-1022, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1, 0x0.fffffffffffffp-1022, 0x1p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-1074, 0x1p-1, -0x0.fffffffffffffp-1022, -0x1p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1.1p-1, 0x0.fffffffffffffp-1022, 0x1p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-1074, 0x1.1p-1, -0x0.fffffffffffffp-1022, -0x1p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x1p1023, 0x1p1023),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x1p1023, 0x1p1023),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x1p1023, -0x1p1023),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x1p1023, -0x1p1023),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x1p-1022, 0x1p-1022),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x1p-1022, 0x1p-1022, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x1p-1022, -0x1p-1022, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x1p-1022, -0x1p-1022),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x0.fffffffffffffp-1022, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x0.fffffffffffffp-1022, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x0.fffffffffffffp-1022, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x0.fffffffffffffp-1022, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x1p-1074, 0x1p-1074, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x1p-1074, 0x1p-1074, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x1p-1074, -0x1p-1074, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x1p-1074, -0x1p-1074, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.fffffffffffff8p0, 0x0.fffffffffffff8p0, -0x0.fffffffffffffp0, 0x1p-106),
+    TEST_fff_f (fma, 0x0.fffffffffffff8p0, -0x0.fffffffffffff8p0, 0x0.fffffffffffffp0, -0x1p-106),
+    TEST_fff_f (fma, -0x0.fffffffffffff8p0, 0x0.fffffffffffff8p0, 0x0.fffffffffffffp0, -0x1p-106),
+    TEST_fff_f (fma, -0x0.fffffffffffff8p0, -0x0.fffffffffffff8p0, -0x0.fffffffffffffp0, 0x1p-106),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, 0x1p1023, 0x1p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, 0x1p1023, 0x1p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, -0x1p1023, -0x1p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, -0x1p1023, -0x1p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, 0x1p970, 0x1p970),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, 0x1p970, 0x1p970),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, -0x1p970, -0x1p970),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, -0x1p970, -0x1p970),
+#endif
+#if defined (TEST_LDOUBLE) && LDBL_MANT_DIG == 64
+    TEST_fff_f (fma, -0x8.03fcp+3696L, 0xf.fffffffffffffffp-6140L, 0x8.3ffffffffffffffp-2450L, -0x8.01ecp-2440L),
+    TEST_fff_f (fma, 0x9.fcp+2033L, -0x8.000e1f000ff800fp-3613L, -0xf.fffffffffffc0ffp-1579L, -0xd.fc119fb093ed092p-1577L),
+    TEST_fff_f (fma, 0xc.7fc000003ffffffp-1194L, 0x8.1e0003fffffffffp+15327L, -0x8.fffep+14072L, 0xc.ae9f164020effffp+14136L),
+    TEST_fff_f (fma, -0x8.0001fc000000003p+1798L, 0xcp-2230L, 0x8.f7e000000000007p-468L, -0xc.0002f9ffee10404p-429L),
+    TEST_fff_f (fma, 0xc.0000000000007ffp+10130L, -0x8.000000000000001p+4430L, 0xc.07000000001ffffp+14513L, -0xb.fffffffffffd7e4p+14563L),
+    TEST_fff_f (fma, 0xb.ffffp-4777L, 0x8.000000fffffffffp-11612L, -0x0.3800fff8p-16385L, 0x5.c7fe80c7ffeffffp-16385L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.4p-16382L, 0x1.0000000000000004p-1L, 0x1p-16384L, 0x1.c000000000000004p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-16382L, 0x1.0000000000000004p-1L, -0x1p-16384L, -0x1.c000000000000004p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.fffffffffffffff8p-16382L, 0x1.0000000000000002p-1L, 0x1p-16445L, 0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, -0x1.fffffffffffffff8p-16382L, 0x1.0000000000000002p-1L, -0x1p-16445L, -0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-1L, 0x0.fffffffffffffffep-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16445L, 0x1p-1L, -0x0.fffffffffffffffep-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1.1p-1L, 0x0.fffffffffffffffep-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16445L, 0x1.1p-1L, -0x0.fffffffffffffffep-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x1p-16382L, 0x1p-16382L),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x1p-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x1p-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x1p-16382L, -0x1p-16382L),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x0.fffffffffffffffep-16382L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x0.fffffffffffffffep-16382L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x0.fffffffffffffffep-16382L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x0.fffffffffffffffep-16382L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x1p-16445L, 0x1p-16445L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x1p-16445L, 0x1p-16445L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x1p-16445L, -0x1p-16445L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x1p-16445L, -0x1p-16445L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffp0L, 0x0.ffffffffffffffffp0L, -0x0.fffffffffffffffep0L, 0x1p-128L),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffp0L, -0x0.ffffffffffffffffp0L, 0x0.fffffffffffffffep0L, -0x1p-128L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffp0L, 0x0.ffffffffffffffffp0L, 0x0.fffffffffffffffep0L, -0x1p-128L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffp0L, -0x0.ffffffffffffffffp0L, -0x0.fffffffffffffffep0L, 0x1p-128L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, 0x1p16319L, 0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, 0x1p16319L, 0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, -0x1p16319L, -0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, -0x1p16319L, -0x1p16319L),
+#endif
+#if defined (TEST_LDOUBLE) && LDBL_MANT_DIG == 113
+    TEST_fff_f (fma, 0x1.bb2de33e02ccbbfa6e245a7c1f71p-2584L, -0x1.6b500daf0580d987f1bc0cadfcddp-13777L, 0x1.613cd91d9fed34b33820e5ab9d8dp-16378L, -0x1.3a79fb50eb9ce887cffa0f09bd9fp-16360L),
+    TEST_fff_f (fma, -0x1.f949b880cacb0f0c61540105321dp-5954L, -0x1.3876cec84b4140f3bd6198731b7ep-10525L, -0x0.a5dc1c6cfbc498c54fb0b504bf19p-16382L, -0x0.a5dc1c6cfbc498c54fb0b5038abbp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.0000fffffffffp-16221L, 0x1.0000001fffff8007fep-239L, 0x0.ff87ffffffffffffe000003fffffp-16382L, 0x0.ff87ffffffffffffdffc003bff7fp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.ac79c9376ef447f3827c9e9de008p-2228L, -0x1.5ba830022b6139e21fbe7270cad8p-6314L, 0x1.e8282b6a26bb6a9daf5c8e73e9f9p-8616L, 0x1.22f14a0253878a730cd1aee373adp-8541L),
+    TEST_fff_f (fma, -0x1.c69749ec574caaa2ab8e97ddb9f3p+2652L, 0x1.f34235ff9d095449c29b4831b62dp+3311L, 0x1.fbe4302df23354dbd0c4d3cfe606p+5879L, -0x1.bb473bfdfb7a6e18886ce6e57eafp+5964L),
+    TEST_fff_f (fma, -0x1.ca8835fc6ecfb5398625fc891be5p-1686L, 0x1.621e1972bbe2180e5be9dd7d8df5p-7671L, -0x1.7d2d21b73b52cf20dec2a83902a4p-9395L, -0x1.3d2322191c9c88bc68a62ab8042cp-9356L),
+    TEST_fff_f (fma, -0x1.55cff679ec49c2541fab41fc843ep-11819L, 0x1.e60e9f464f9e8df0509647c7c971p+12325L, 0x1.eaa2a7649d765c2f564f7a5beca7p+454L, -0x1.447e29fa7e406a285f4e350fcf86p+507L),
+    TEST_fff_f (fma, 0x1.f0e7b1454908576f2537d863cf9bp+11432L, 0x1.cdce52f09d4ca76e68706f34b5d5p-1417L, -0x1.2e986187c70f146235ea2066e486p+9979L, 0x1.c030dad3cc5643f3dd0f5619f661p+10016L),
+    TEST_fff_f (fma, 0x1.f102f7da4a57a3a4aab620e29452p-3098L, -0x1.cc06a4ff40248f9e2dcc4b6afd84p-11727L, 0x1.d512a11126b5ac8ed8973b8580c8p-14849L, -0x1.be8f1cf737ab4d1c31c54f5ec23bp-14824L),
+    TEST_fff_f (fma, -0x1.fc47ac7434b993cd8dcb2b431f25p-3816L, 0x1.fbc9750da8468852d84558e1db6dp-5773L, -0x1.00a98abf783f75c40fe5b7a37d86p-9607L, -0x1.f81917b166f45e763cfcc057e2adp-9588L),
+    TEST_fff_f (fma, 0x1.00000000000007ffffffffffffffp-9045L, -0x1.ffffffffffff80000001ffffffffp+4773L, -0x1.f8p-4316L, -0x1.00000000000f88000000fffffdffp-4271L),
+    TEST_fff_f (fma, 0x1.4e922764c90701d4a2f21d01893dp-8683L, -0x1.955a12e2d7c9447c27fa022fc865p+212L, -0x1.e9634462eaef96528b90b6944578p-8521L, -0x1.08e1783184a371943d3598e10865p-8470L),
+    TEST_fff_f (fma, 0x1.801181509c03bdbef10d6165588cp-15131L, 0x1.ad86f8e57d3d40bfa8007780af63p-368L, -0x1.6e9df0dab1c9f1d7a6043c390741p-15507L, 0x1.417c9b2b15e2ad57dc9e0e920844p-15498L),
+    TEST_fff_f (fma, 0x1.ffffffffffffffp0L, 0x1.000000000000008p0L, -0x1p-1000L, 0x1.ffffffffffffffffffffffffffffp0L),
+    TEST_fff_f (fma, 0x1.4p-16382L, 0x1.0000000000000000000000000002p-1L, 0x1p-16384L, 0x1.c000000000000000000000000002p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-16382L, 0x1.0000000000000000000000000002p-1L, -0x1p-16384L, -0x1.c000000000000000000000000002p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.fffffffffffffffffffffffffffcp-16382L, 0x1.0000000000000000000000000001p-1L, 0x1p-16494L, 0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, -0x1.fffffffffffffffffffffffffffcp-16382L, 0x1.0000000000000000000000000001p-1L, -0x1p-16494L, -0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-1L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16494L, 0x1p-1L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1.1p-1L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16494L, 0x1.1p-1L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x1p-16382L, 0x1p-16382L),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x1p-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x1p-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x1p-16382L, -0x1p-16382L),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x1p-16494L, 0x1p-16494L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x1p-16494L, 0x1p-16494L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x1p-16494L, -0x1p-16494L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x1p-16494L, -0x1p-16494L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffffp0L, 0x1p-226L),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffffp0L, -0x1p-226L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffffp0L, -0x1p-226L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffffp0L, 0x1p-226L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, 0x1p16319L, 0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, 0x1p16319L, 0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, -0x1p16319L, -0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, -0x1p16319L, -0x1p16319L),
+#endif
   };
 
 static void
 fma_test (void)
 {
-  ALL_RM_TEST (fma, 1, fma_test_data, RUN_TEST_LOOP_fff_f, END);
+  START (fma);
+  RUN_TEST_LOOP_fff_f (fma, fma_test_data, );
+  END;
+}
+
+
+static const struct test_fff_f_data fma_towardzero_test_data[] =
+  {
+    TEST_fff_f (fma, plus_zero, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, plus_zero, minus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, minus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, plus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, minus_zero, minus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, plus_zero, minus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, minus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, -1.0, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, -1.0, plus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, -1.0, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, -1.0, minus_zero, minus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, 1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, 1.0, minus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, -1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, -1.0, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, 1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, 1.0, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, -1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, -1.0, minus_zero, plus_zero),
+
+    TEST_fff_f (fma, 1.0, 1.0, -1.0, plus_zero),
+    TEST_fff_f (fma, 1.0, -1.0, 1.0, plus_zero),
+    TEST_fff_f (fma, -1.0, 1.0, 1.0, plus_zero),
+    TEST_fff_f (fma, -1.0, -1.0, -1.0, plus_zero),
+
+    TEST_fff_f (fma, min_value, min_value, plus_zero, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, min_value, min_value, minus_zero, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, min_value, -min_value, plus_zero, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, min_value, -min_value, minus_zero, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, min_value, plus_zero, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, min_value, minus_zero, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, -min_value, plus_zero, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, -min_value, minus_zero, plus_zero, UNDERFLOW_EXCEPTION),
+
+#if !(defined TEST_LDOUBLE && LDBL_MANT_DIG == 106) /* Bug 13304.  */
+    TEST_fff_f (fma, max_value, max_value, min_value, max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, max_value, max_value, -min_value, max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, max_value, -max_value, min_value, -max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, max_value, -max_value, -min_value, -max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, max_value, min_value, -max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, max_value, -min_value, -max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, -max_value, min_value, max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, -max_value, -min_value, max_value, OVERFLOW_EXCEPTION),
+#endif
+
+#if defined (TEST_FLOAT) && FLT_MANT_DIG == 24
+    TEST_fff_f (fma, 0x1.4p-126, 0x1.000004p-1, 0x1p-128, 0x1.c00004p-127, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-126, 0x1.000004p-1, -0x1p-128, -0x1.c00004p-127, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.fffff8p-126, 0x1.000002p-1, 0x1p-149, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.fffff8p-126, 0x1.000002p-1, -0x1p-149, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-1, 0x0.fffffep-126, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-149, 0x1p-1, -0x0.fffffep-126, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1.1p-1, 0x0.fffffep-126, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-149, 0x1.1p-1, -0x0.fffffep-126, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x1p127, 0x1p127),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x1p127, 0x0.ffffffp127),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x1p127, -0x0.ffffffp127),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x1p127, -0x1p127),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x1p-126, 0x1p-126),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x1p-126, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x1p-126, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x1p-126, -0x1p-126),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x0.fffffep-126, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x0.fffffep-126, 0x0.fffffcp-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x0.fffffep-126, -0x0.fffffcp-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x0.fffffep-126, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x1p-149, 0x1p-149, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x1p-149, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x1p-149, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x1p-149, -0x1p-149, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.fffp0, 0x0.fffp0, -0x0.ffep0, 0x1p-24),
+    TEST_fff_f (fma, 0x0.fffp0, -0x0.fffp0, 0x0.ffep0, -0x1p-24),
+    TEST_fff_f (fma, -0x0.fffp0, 0x0.fffp0, 0x0.ffep0, -0x1p-24),
+    TEST_fff_f (fma, -0x0.fffp0, -0x0.fffp0, -0x0.ffep0, 0x1p-24),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, 0x1p127, 0x1p127),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, 0x1p127, 0x0.ffffffp127),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, -0x1p127, -0x0.ffffffp127),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, -0x1p127, -0x1p127),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, 0x1p103, 0x1p103),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, 0x1p103, 0x0.ffffffp103),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, -0x1p103, -0x0.ffffffp103),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, -0x1p103, -0x1p103),
+#endif
+#if defined (TEST_DOUBLE) && DBL_MANT_DIG == 53
+    TEST_fff_f (fma, 0x1.4p-1022, 0x1.0000000000002p-1, 0x1p-1024, 0x1.c000000000002p-1023, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-1022, 0x1.0000000000002p-1, -0x1p-1024, -0x1.c000000000002p-1023, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.ffffffffffffcp-1022, 0x1.0000000000001p-1, 0x1p-1074, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.ffffffffffffcp-1022, 0x1.0000000000001p-1, -0x1p-1074, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1, 0x0.fffffffffffffp-1022, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-1074, 0x1p-1, -0x0.fffffffffffffp-1022, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1.1p-1, 0x0.fffffffffffffp-1022, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-1074, 0x1.1p-1, -0x0.fffffffffffffp-1022, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x1p1023, 0x1p1023),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x1p1023, 0x0.fffffffffffff8p1023),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x1p1023, -0x0.fffffffffffff8p1023),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x1p1023, -0x1p1023),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x1p-1022, 0x1p-1022),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x1p-1022, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x1p-1022, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x1p-1022, -0x1p-1022),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x0.fffffffffffffp-1022, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x0.fffffffffffffp-1022, 0x0.ffffffffffffep-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x0.fffffffffffffp-1022, -0x0.ffffffffffffep-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x0.fffffffffffffp-1022, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x1p-1074, 0x1p-1074, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x1p-1074, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x1p-1074, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x1p-1074, -0x1p-1074, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.fffffffffffff8p0, 0x0.fffffffffffff8p0, -0x0.fffffffffffffp0, 0x1p-106),
+    TEST_fff_f (fma, 0x0.fffffffffffff8p0, -0x0.fffffffffffff8p0, 0x0.fffffffffffffp0, -0x1p-106),
+    TEST_fff_f (fma, -0x0.fffffffffffff8p0, 0x0.fffffffffffff8p0, 0x0.fffffffffffffp0, -0x1p-106),
+    TEST_fff_f (fma, -0x0.fffffffffffff8p0, -0x0.fffffffffffff8p0, -0x0.fffffffffffffp0, 0x1p-106),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, 0x1p1023, 0x1p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, 0x1p1023, 0x0.fffffffffffff8p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, -0x1p1023, -0x0.fffffffffffff8p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, -0x1p1023, -0x1p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, 0x1p970, 0x1p970),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, 0x1p970, 0x0.fffffffffffff8p970),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, -0x1p970, -0x0.fffffffffffff8p970),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, -0x1p970, -0x1p970),
+#endif
+#if defined (TEST_LDOUBLE) && LDBL_MANT_DIG == 64
+    TEST_fff_f (fma, 0x1.4p-16382L, 0x1.0000000000000004p-1L, 0x1p-16384L, 0x1.c000000000000004p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-16382L, 0x1.0000000000000004p-1L, -0x1p-16384L, -0x1.c000000000000004p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.fffffffffffffff8p-16382L, 0x1.0000000000000002p-1L, 0x1p-16445L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.fffffffffffffff8p-16382L, 0x1.0000000000000002p-1L, -0x1p-16445L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-1L, 0x0.fffffffffffffffep-16382L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16445L, 0x1p-1L, -0x0.fffffffffffffffep-16382L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1.1p-1L, 0x0.fffffffffffffffep-16382L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16445L, 0x1.1p-1L, -0x0.fffffffffffffffep-16382L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x1p16383L, 0x0.ffffffffffffffffp16383L),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x1p16383L, -0x0.ffffffffffffffffp16383L),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x1p-16382L, 0x1p-16382L),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x1p-16382L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x1p-16382L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x1p-16382L, -0x1p-16382L),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x0.fffffffffffffffep-16382L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x0.fffffffffffffffep-16382L, 0x0.fffffffffffffffcp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x0.fffffffffffffffep-16382L, -0x0.fffffffffffffffcp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x0.fffffffffffffffep-16382L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x1p-16445L, 0x1p-16445L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x1p-16445L, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x1p-16445L, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x1p-16445L, -0x1p-16445L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffp0L, 0x0.ffffffffffffffffp0L, -0x0.fffffffffffffffep0L, 0x1p-128L),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffp0L, -0x0.ffffffffffffffffp0L, 0x0.fffffffffffffffep0L, -0x1p-128L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffp0L, 0x0.ffffffffffffffffp0L, 0x0.fffffffffffffffep0L, -0x1p-128L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffp0L, -0x0.ffffffffffffffffp0L, -0x0.fffffffffffffffep0L, 0x1p-128L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, 0x1p16383L, 0x0.ffffffffffffffffp16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, -0x1p16383L, -0x0.ffffffffffffffffp16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, 0x1p16319L, 0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, 0x1p16319L, 0x0.ffffffffffffffffp16319L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, -0x1p16319L, -0x0.ffffffffffffffffp16319L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, -0x1p16319L, -0x1p16319L),
+#endif
+#if defined (TEST_LDOUBLE) && LDBL_MANT_DIG == 113
+    TEST_fff_f (fma, 0x1.4p-16382L, 0x1.0000000000000000000000000002p-1L, 0x1p-16384L, 0x1.c000000000000000000000000002p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-16382L, 0x1.0000000000000000000000000002p-1L, -0x1p-16384L, -0x1.c000000000000000000000000002p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.fffffffffffffffffffffffffffcp-16382L, 0x1.0000000000000000000000000001p-1L, 0x1p-16494L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.fffffffffffffffffffffffffffcp-16382L, 0x1.0000000000000000000000000001p-1L, -0x1p-16494L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-1L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16494L, 0x1p-1L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1.1p-1L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16494L, 0x1.1p-1L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x1p16383L, 0x0.ffffffffffffffffffffffffffff8p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x1p16383L, -0x0.ffffffffffffffffffffffffffff8p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x1p-16382L, 0x1p-16382L),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x1p-16382L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x1p-16382L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x1p-16382L, -0x1p-16382L),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x0.fffffffffffffffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x0.fffffffffffffffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x1p-16494L, 0x1p-16494L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x1p-16494L, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x1p-16494L, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x1p-16494L, -0x1p-16494L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffffp0L, 0x1p-226L),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffffp0L, -0x1p-226L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffffp0L, -0x1p-226L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffffp0L, 0x1p-226L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, 0x1p16383L, 0x0.ffffffffffffffffffffffffffff8p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, -0x1p16383L, -0x0.ffffffffffffffffffffffffffff8p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, 0x1p16319L, 0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, 0x1p16319L, 0x0.ffffffffffffffffffffffffffff8p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, -0x1p16319L, -0x0.ffffffffffffffffffffffffffff8p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, -0x1p16319L, -0x1p16319L),
+#endif
+  };
+
+static void
+fma_test_towardzero (void)
+{
+  START (fma_towardzero);
+  RUN_TEST_LOOP_fff_f (fma, fma_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_fff_f_data fma_downward_test_data[] =
+  {
+    TEST_fff_f (fma, plus_zero, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, plus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, plus_zero, minus_zero, plus_zero, minus_zero),
+    TEST_fff_f (fma, plus_zero, minus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, plus_zero, plus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, plus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, minus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, 1.0, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, plus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, 1.0, minus_zero, plus_zero, minus_zero),
+    TEST_fff_f (fma, 1.0, minus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, -1.0, plus_zero, plus_zero, minus_zero),
+    TEST_fff_f (fma, -1.0, plus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, -1.0, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, -1.0, minus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, plus_zero, 1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, 1.0, minus_zero, minus_zero),
+    TEST_fff_f (fma, plus_zero, -1.0, plus_zero, minus_zero),
+    TEST_fff_f (fma, plus_zero, -1.0, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, 1.0, plus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, 1.0, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, -1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, -1.0, minus_zero, minus_zero),
+
+    TEST_fff_f (fma, 1.0, 1.0, -1.0, minus_zero),
+    TEST_fff_f (fma, 1.0, -1.0, 1.0, minus_zero),
+    TEST_fff_f (fma, -1.0, 1.0, 1.0, minus_zero),
+    TEST_fff_f (fma, -1.0, -1.0, -1.0, minus_zero),
+
+    TEST_fff_f (fma, min_value, min_value, plus_zero, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, min_value, min_value, minus_zero, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, min_value, -min_value, plus_zero, -min_subnorm_value, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, min_value, -min_value, minus_zero, -min_subnorm_value, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, min_value, plus_zero, -min_subnorm_value, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, min_value, minus_zero, -min_subnorm_value, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, -min_value, plus_zero, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, -min_value, minus_zero, plus_zero, UNDERFLOW_EXCEPTION),
+
+#if !(defined TEST_LDOUBLE && LDBL_MANT_DIG == 106) /* Bug 13304.  */
+    TEST_fff_f (fma, max_value, max_value, min_value, max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, max_value, max_value, -min_value, max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, max_value, -max_value, min_value, minus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, max_value, -max_value, -min_value, minus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, max_value, min_value, minus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, max_value, -min_value, minus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, -max_value, min_value, max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, -max_value, -min_value, max_value, OVERFLOW_EXCEPTION),
+#endif
+
+#if defined (TEST_FLOAT) && FLT_MANT_DIG == 24
+    TEST_fff_f (fma, 0x1.4p-126, 0x1.000004p-1, 0x1p-128, 0x1.c00004p-127, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-126, 0x1.000004p-1, -0x1p-128, -0x1.c00008p-127, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.fffff8p-126, 0x1.000002p-1, 0x1p-149, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.fffff8p-126, 0x1.000002p-1, -0x1p-149, -0x1p-126, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-1, 0x0.fffffep-126, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-149, 0x1p-1, -0x0.fffffep-126, -0x1p-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1.1p-1, 0x0.fffffep-126, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-149, 0x1.1p-1, -0x0.fffffep-126, -0x1p-126, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x1p127, 0x1p127),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x1p127, 0x0.ffffffp127),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x1p127, -0x1p127),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x1p127, -0x1.000002p127),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x1p-126, 0x1p-126),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x1p-126, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x1p-126, -0x1p-126, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x1p-126, -0x1.000002p-126),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x0.fffffep-126, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x0.fffffep-126, 0x0.fffffcp-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x0.fffffep-126, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x0.fffffep-126, -0x1p-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x1p-149, 0x1p-149, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x1p-149, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x1p-149, -0x1p-149, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x1p-149, -0x1p-148, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.fffp0, 0x0.fffp0, -0x0.ffep0, 0x1p-24),
+    TEST_fff_f (fma, 0x0.fffp0, -0x0.fffp0, 0x0.ffep0, -0x1p-24),
+    TEST_fff_f (fma, -0x0.fffp0, 0x0.fffp0, 0x0.ffep0, -0x1p-24),
+    TEST_fff_f (fma, -0x0.fffp0, -0x0.fffp0, -0x0.ffep0, 0x1p-24),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, 0x1p127, 0x1p127),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, 0x1p127, 0x0.ffffffp127),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, -0x1p127, -0x1p127),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, -0x1p127, -0x1.000002p127),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, 0x1p103, 0x1p103),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, 0x1p103, 0x0.ffffffp103),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, -0x1p103, -0x1p103),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, -0x1p103, -0x1.000002p103),
+#endif
+#if defined (TEST_DOUBLE) && DBL_MANT_DIG == 53
+    TEST_fff_f (fma, 0x1.4p-1022, 0x1.0000000000002p-1, 0x1p-1024, 0x1.c000000000002p-1023, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-1022, 0x1.0000000000002p-1, -0x1p-1024, -0x1.c000000000004p-1023, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.ffffffffffffcp-1022, 0x1.0000000000001p-1, 0x1p-1074, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.ffffffffffffcp-1022, 0x1.0000000000001p-1, -0x1p-1074, -0x1p-1022, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1, 0x0.fffffffffffffp-1022, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-1074, 0x1p-1, -0x0.fffffffffffffp-1022, -0x1p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1.1p-1, 0x0.fffffffffffffp-1022, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-1074, 0x1.1p-1, -0x0.fffffffffffffp-1022, -0x1p-1022, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x1p1023, 0x1p1023),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x1p1023, 0x0.fffffffffffff8p1023),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x1p1023, -0x1p1023),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x1p1023, -0x1.0000000000001p1023),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x1p-1022, 0x1p-1022),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x1p-1022, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x1p-1022, -0x1p-1022, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x1p-1022, -0x1.0000000000001p-1022),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x0.fffffffffffffp-1022, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x0.fffffffffffffp-1022, 0x0.ffffffffffffep-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x0.fffffffffffffp-1022, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x0.fffffffffffffp-1022, -0x1p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x1p-1074, 0x1p-1074, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x1p-1074, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x1p-1074, -0x1p-1074, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x1p-1074, -0x1p-1073, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.fffffffffffff8p0, 0x0.fffffffffffff8p0, -0x0.fffffffffffffp0, 0x1p-106),
+    TEST_fff_f (fma, 0x0.fffffffffffff8p0, -0x0.fffffffffffff8p0, 0x0.fffffffffffffp0, -0x1p-106),
+    TEST_fff_f (fma, -0x0.fffffffffffff8p0, 0x0.fffffffffffff8p0, 0x0.fffffffffffffp0, -0x1p-106),
+    TEST_fff_f (fma, -0x0.fffffffffffff8p0, -0x0.fffffffffffff8p0, -0x0.fffffffffffffp0, 0x1p-106),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, 0x1p1023, 0x1p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, 0x1p1023, 0x0.fffffffffffff8p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, -0x1p1023, -0x1p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, -0x1p1023, -0x1.0000000000001p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, 0x1p970, 0x1p970),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, 0x1p970, 0x0.fffffffffffff8p970),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, -0x1p970, -0x1p970),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, -0x1p970, -0x1.0000000000001p970),
+#endif
+#if defined (TEST_LDOUBLE) && LDBL_MANT_DIG == 64
+    TEST_fff_f (fma, 0x1.4p-16382L, 0x1.0000000000000004p-1L, 0x1p-16384L, 0x1.c000000000000004p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-16382L, 0x1.0000000000000004p-1L, -0x1p-16384L, -0x1.c000000000000008p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.fffffffffffffff8p-16382L, 0x1.0000000000000002p-1L, 0x1p-16445L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.fffffffffffffff8p-16382L, 0x1.0000000000000002p-1L, -0x1p-16445L, -0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-1L, 0x0.fffffffffffffffep-16382L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16445L, 0x1p-1L, -0x0.fffffffffffffffep-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1.1p-1L, 0x0.fffffffffffffffep-16382L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16445L, 0x1.1p-1L, -0x0.fffffffffffffffep-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x1p16383L, 0x0.ffffffffffffffffp16383L),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x1p16383L, -0x1.0000000000000002p16383L),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x1p-16382L, 0x1p-16382L),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x1p-16382L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x1p-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x1p-16382L, -0x1.0000000000000002p-16382L),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x0.fffffffffffffffep-16382L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x0.fffffffffffffffep-16382L, 0x0.fffffffffffffffcp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x0.fffffffffffffffep-16382L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x0.fffffffffffffffep-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x1p-16445L, 0x1p-16445L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x1p-16445L, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x1p-16445L, -0x1p-16445L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x1p-16445L, -0x1p-16444L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffp0L, 0x0.ffffffffffffffffp0L, -0x0.fffffffffffffffep0L, 0x1p-128L),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffp0L, -0x0.ffffffffffffffffp0L, 0x0.fffffffffffffffep0L, -0x1p-128L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffp0L, 0x0.ffffffffffffffffp0L, 0x0.fffffffffffffffep0L, -0x1p-128L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffp0L, -0x0.ffffffffffffffffp0L, -0x0.fffffffffffffffep0L, 0x1p-128L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, 0x1p16383L, 0x0.ffffffffffffffffp16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, -0x1p16383L, -0x1.0000000000000002p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, 0x1p16319L, 0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, 0x1p16319L, 0x0.ffffffffffffffffp16319L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, -0x1p16319L, -0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, -0x1p16319L, -0x1.0000000000000002p16319L),
+#endif
+#if defined (TEST_LDOUBLE) && LDBL_MANT_DIG == 113
+    TEST_fff_f (fma, 0x1.4p-16382L, 0x1.0000000000000000000000000002p-1L, 0x1p-16384L, 0x1.c000000000000000000000000002p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-16382L, 0x1.0000000000000000000000000002p-1L, -0x1p-16384L, -0x1.c000000000000000000000000004p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.fffffffffffffffffffffffffffcp-16382L, 0x1.0000000000000000000000000001p-1L, 0x1p-16494L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.fffffffffffffffffffffffffffcp-16382L, 0x1.0000000000000000000000000001p-1L, -0x1p-16494L, -0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-1L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16494L, 0x1p-1L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1.1p-1L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16494L, 0x1.1p-1L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x1p16383L, 0x0.ffffffffffffffffffffffffffff8p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x1p16383L, -0x1.0000000000000000000000000001p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x1p-16382L, 0x1p-16382L),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x1p-16382L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x1p-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x1p-16382L, -0x1.0000000000000000000000000001p-16382L),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x0.fffffffffffffffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x1p-16494L, 0x1p-16494L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x1p-16494L, plus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x1p-16494L, -0x1p-16494L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x1p-16494L, -0x1p-16493L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffffp0L, 0x1p-226L),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffffp0L, -0x1p-226L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffffp0L, -0x1p-226L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffffp0L, 0x1p-226L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, 0x1p16383L, 0x0.ffffffffffffffffffffffffffff8p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, -0x1p16383L, -0x1.0000000000000000000000000001p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, 0x1p16319L, 0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, 0x1p16319L, 0x0.ffffffffffffffffffffffffffff8p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, -0x1p16319L, -0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, -0x1p16319L, -0x1.0000000000000000000000000001p16319L),
+#endif
+  };
+
+static void
+fma_test_downward (void)
+{
+  START (fma_downward);
+  RUN_TEST_LOOP_fff_f (fma, fma_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_fff_f_data fma_upward_test_data[] =
+  {
+    TEST_fff_f (fma, plus_zero, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, plus_zero, minus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, minus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, plus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, minus_zero, minus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, plus_zero, minus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, 1.0, minus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, -1.0, plus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, -1.0, plus_zero, minus_zero, minus_zero),
+    TEST_fff_f (fma, -1.0, minus_zero, plus_zero, plus_zero),
+    TEST_fff_f (fma, -1.0, minus_zero, minus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, 1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, 1.0, minus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, -1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, plus_zero, -1.0, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, 1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, 1.0, minus_zero, minus_zero),
+    TEST_fff_f (fma, minus_zero, -1.0, plus_zero, plus_zero),
+    TEST_fff_f (fma, minus_zero, -1.0, minus_zero, plus_zero),
+
+    TEST_fff_f (fma, 1.0, 1.0, -1.0, plus_zero),
+    TEST_fff_f (fma, 1.0, -1.0, 1.0, plus_zero),
+    TEST_fff_f (fma, -1.0, 1.0, 1.0, plus_zero),
+    TEST_fff_f (fma, -1.0, -1.0, -1.0, plus_zero),
+
+    TEST_fff_f (fma, min_value, min_value, plus_zero, min_subnorm_value, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, min_value, min_value, minus_zero, min_subnorm_value, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, min_value, -min_value, plus_zero, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, min_value, -min_value, minus_zero, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, min_value, plus_zero, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, min_value, minus_zero, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, -min_value, plus_zero, min_subnorm_value, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -min_value, -min_value, minus_zero, min_subnorm_value, UNDERFLOW_EXCEPTION),
+
+#if !(defined TEST_LDOUBLE && LDBL_MANT_DIG == 106) /* Bug 13304.  */
+    TEST_fff_f (fma, max_value, max_value, min_value, plus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, max_value, max_value, -min_value, plus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, max_value, -max_value, min_value, -max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, max_value, -max_value, -min_value, -max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, max_value, min_value, -max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, max_value, -min_value, -max_value, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, -max_value, min_value, plus_infty, OVERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -max_value, -max_value, -min_value, plus_infty, OVERFLOW_EXCEPTION),
+#endif
+
+#if defined (TEST_FLOAT) && FLT_MANT_DIG == 24
+    TEST_fff_f (fma, 0x1.4p-126, 0x1.000004p-1, 0x1p-128, 0x1.c00008p-127, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-126, 0x1.000004p-1, -0x1p-128, -0x1.c00004p-127, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.fffff8p-126, 0x1.000002p-1, 0x1p-149, 0x1p-126, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, -0x1.fffff8p-126, 0x1.000002p-1, -0x1p-149, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-1, 0x0.fffffep-126, 0x1p-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-149, 0x1p-1, -0x0.fffffep-126, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1.1p-1, 0x0.fffffep-126, 0x1p-126, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, -0x1p-149, 0x1.1p-1, -0x0.fffffep-126, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x1p127, 0x1.000002p127),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x1p127, 0x1p127),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x1p127, -0x0.ffffffp127),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x1p127, -0x1p127),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x1p-126, 0x1.000002p-126),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x1p-126, 0x1p-126, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x1p-126, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x1p-126, -0x1p-126),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x0.fffffep-126, 0x1p-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x0.fffffep-126, 0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x0.fffffep-126, -0x0.fffffcp-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x0.fffffep-126, -0x0.fffffep-126, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, 0x1p-149, 0x1p-148, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, 0x1p-149, 0x1p-149, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, 0x1p-149, -0x1p-149, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-149, -0x1p-149, -0x1p-149, -0x1p-149, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.fffp0, 0x0.fffp0, -0x0.ffep0, 0x1p-24),
+    TEST_fff_f (fma, 0x0.fffp0, -0x0.fffp0, 0x0.ffep0, -0x1p-24),
+    TEST_fff_f (fma, -0x0.fffp0, 0x0.fffp0, 0x0.ffep0, -0x1p-24),
+    TEST_fff_f (fma, -0x0.fffp0, -0x0.fffp0, -0x0.ffep0, 0x1p-24),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, 0x1p127, 0x1.000002p127),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, 0x1p127, 0x1p127),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, -0x1p127, -0x0.ffffffp127),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, -0x1p127, -0x1p127),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, 0x1p103, 0x1.000002p103),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, 0x1p103, 0x1p103),
+    TEST_fff_f (fma, 0x1.000002p-126, 0x1.000002p-26, -0x1p103, -0x0.ffffffp103),
+    TEST_fff_f (fma, 0x1.000002p-126, -0x1.000002p-26, -0x1p103, -0x1p103),
+#endif
+#if defined (TEST_DOUBLE) && DBL_MANT_DIG == 53
+    TEST_fff_f (fma, 0x1.4p-1022, 0x1.0000000000002p-1, 0x1p-1024, 0x1.c000000000004p-1023, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-1022, 0x1.0000000000002p-1, -0x1p-1024, -0x1.c000000000002p-1023, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.ffffffffffffcp-1022, 0x1.0000000000001p-1, 0x1p-1074, 0x1p-1022, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, -0x1.ffffffffffffcp-1022, 0x1.0000000000001p-1, -0x1p-1074, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1, 0x0.fffffffffffffp-1022, 0x1p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-1074, 0x1p-1, -0x0.fffffffffffffp-1022, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1.1p-1, 0x0.fffffffffffffp-1022, 0x1p-1022, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, -0x1p-1074, 0x1.1p-1, -0x0.fffffffffffffp-1022, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x1p1023, 0x1.0000000000001p1023),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x1p1023, 0x1p1023),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x1p1023, -0x0.fffffffffffff8p1023),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x1p1023, -0x1p1023),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x1p-1022, 0x1.0000000000001p-1022),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x1p-1022, 0x1p-1022, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x1p-1022, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x1p-1022, -0x1p-1022),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x0.fffffffffffffp-1022, 0x1p-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x0.fffffffffffffp-1022, 0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x0.fffffffffffffp-1022, -0x0.ffffffffffffep-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x0.fffffffffffffp-1022, -0x0.fffffffffffffp-1022, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, 0x1p-1074, 0x1p-1073, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, 0x1p-1074, 0x1p-1074, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, 0x1p-1074, -0x1p-1074, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-1074, -0x1p-1074, -0x1p-1074, -0x1p-1074, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.fffffffffffff8p0, 0x0.fffffffffffff8p0, -0x0.fffffffffffffp0, 0x1p-106),
+    TEST_fff_f (fma, 0x0.fffffffffffff8p0, -0x0.fffffffffffff8p0, 0x0.fffffffffffffp0, -0x1p-106),
+    TEST_fff_f (fma, -0x0.fffffffffffff8p0, 0x0.fffffffffffff8p0, 0x0.fffffffffffffp0, -0x1p-106),
+    TEST_fff_f (fma, -0x0.fffffffffffff8p0, -0x0.fffffffffffff8p0, -0x0.fffffffffffffp0, 0x1p-106),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, 0x1p1023, 0x1.0000000000001p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, 0x1p1023, 0x1p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, -0x1p1023, -0x0.fffffffffffff8p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, -0x1p1023, -0x1p1023),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, 0x1p970, 0x1.0000000000001p970),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, 0x1p970, 0x1p970),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, 0x1.0000000000001p-55, -0x1p970, -0x0.fffffffffffff8p970),
+    TEST_fff_f (fma, 0x1.0000000000001p-1022, -0x1.0000000000001p-55, -0x1p970, -0x1p970),
+#endif
+#if defined (TEST_LDOUBLE) && LDBL_MANT_DIG == 64
+    TEST_fff_f (fma, 0x1.4p-16382L, 0x1.0000000000000004p-1L, 0x1p-16384L, 0x1.c000000000000008p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-16382L, 0x1.0000000000000004p-1L, -0x1p-16384L, -0x1.c000000000000004p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.fffffffffffffff8p-16382L, 0x1.0000000000000002p-1L, 0x1p-16445L, 0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, -0x1.fffffffffffffff8p-16382L, 0x1.0000000000000002p-1L, -0x1p-16445L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-1L, 0x0.fffffffffffffffep-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16445L, 0x1p-1L, -0x0.fffffffffffffffep-16382L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1.1p-1L, 0x0.fffffffffffffffep-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, -0x1p-16445L, 0x1.1p-1L, -0x0.fffffffffffffffep-16382L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x1p16383L, 0x1.0000000000000002p16383L),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x1p16383L, -0x0.ffffffffffffffffp16383L),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x1p-16382L, 0x1.0000000000000002p-16382L),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x1p-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x1p-16382L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x1p-16382L, -0x1p-16382L),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x0.fffffffffffffffep-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x0.fffffffffffffffep-16382L, 0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x0.fffffffffffffffep-16382L, -0x0.fffffffffffffffcp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x0.fffffffffffffffep-16382L, -0x0.fffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, 0x1p-16445L, 0x1p-16444L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, 0x1p-16445L, 0x1p-16445L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, 0x1p-16445L, -0x1p-16445L, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16445L, -0x1p-16445L, -0x1p-16445L, -0x1p-16445L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffp0L, 0x0.ffffffffffffffffp0L, -0x0.fffffffffffffffep0L, 0x1p-128L),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffp0L, -0x0.ffffffffffffffffp0L, 0x0.fffffffffffffffep0L, -0x1p-128L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffp0L, 0x0.ffffffffffffffffp0L, 0x0.fffffffffffffffep0L, -0x1p-128L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffp0L, -0x0.ffffffffffffffffp0L, -0x0.fffffffffffffffep0L, 0x1p-128L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, 0x1p16383L, 0x1.0000000000000002p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, -0x1p16383L, -0x0.ffffffffffffffffp16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, 0x1p16319L, 0x1.0000000000000002p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, 0x1p16319L, 0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, 0x1.0000000000000002p-66L, -0x1p16319L, -0x0.ffffffffffffffffp16319L),
+    TEST_fff_f (fma, 0x1.0000000000000002p-16382L, -0x1.0000000000000002p-66L, -0x1p16319L, -0x1p16319L),
+#endif
+#if defined (TEST_LDOUBLE) && LDBL_MANT_DIG == 113
+    TEST_fff_f (fma, 0x1.4p-16382L, 0x1.0000000000000000000000000002p-1L, 0x1p-16384L, 0x1.c000000000000000000000000004p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1.4p-16382L, 0x1.0000000000000000000000000002p-1L, -0x1p-16384L, -0x1.c000000000000000000000000002p-16383L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1.fffffffffffffffffffffffffffcp-16382L, 0x1.0000000000000000000000000001p-1L, 0x1p-16494L, 0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, -0x1.fffffffffffffffffffffffffffcp-16382L, 0x1.0000000000000000000000000001p-1L, -0x1p-16494L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-1L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, -0x1p-16494L, 0x1p-1L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1.1p-1L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, -0x1p-16494L, 0x1.1p-1L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x1p16383L, 0x1.0000000000000000000000000001p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x1p16383L, -0x0.ffffffffffffffffffffffffffff8p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x1p-16382L, 0x1.0000000000000000000000000001p-16382L),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x1p-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION_BEFORE_ROUNDING),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x1p-16382L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x1p-16382L, -0x1p-16382L),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x1p-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x0.ffffffffffffffffffffffffffffp-16382L, 0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x0.fffffffffffffffffffffffffffep-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x0.ffffffffffffffffffffffffffffp-16382L, -0x0.ffffffffffffffffffffffffffffp-16382L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, 0x1p-16494L, 0x1p-16493L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, 0x1p-16494L, 0x1p-16494L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, 0x1p-16494L, -0x1p-16494L, minus_zero, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x1p-16494L, -0x1p-16494L, -0x1p-16494L, -0x1p-16494L, UNDERFLOW_EXCEPTION),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffffp0L, 0x1p-226L),
+    TEST_fff_f (fma, 0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffffp0L, -0x1p-226L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffff8p0L, 0x0.ffffffffffffffffffffffffffffp0L, -0x1p-226L),
+    TEST_fff_f (fma, -0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffff8p0L, -0x0.ffffffffffffffffffffffffffffp0L, 0x1p-226L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, 0x1p16383L, 0x1.0000000000000000000000000001p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, 0x1p16383L, 0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, -0x1p16383L, -0x0.ffffffffffffffffffffffffffff8p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, -0x1p16383L, -0x1p16383L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, 0x1p16319L, 0x1.0000000000000000000000000001p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, 0x1p16319L, 0x1p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, 0x1.0000000000000000000000000001p-66L, -0x1p16319L, -0x0.ffffffffffffffffffffffffffff8p16319L),
+    TEST_fff_f (fma, 0x1.0000000000000000000000000001p-16382L, -0x1.0000000000000000000000000001p-66L, -0x1p16319L, -0x1p16319L),
+#endif
+  };
+
+static void
+fma_test_upward (void)
+{
+  START (fma_upward);
+  RUN_TEST_LOOP_fff_f (fma, fma_upward_test_data, FE_UPWARD);
+  END;
 }
 
 
@@ -7058,7 +8583,9 @@ static const struct test_ff_f_data fmax_test_data[] =
 static void
 fmax_test (void)
 {
-  ALL_RM_TEST (fmax, 1, fmax_test_data, RUN_TEST_LOOP_ff_f, END);
+  START (fmax);
+  RUN_TEST_LOOP_ff_f (fmax, fmax_test_data, );
+  END;
 }
 
 
@@ -7096,7 +8623,9 @@ static const struct test_ff_f_data fmin_test_data[] =
 static void
 fmin_test (void)
 {
-  ALL_RM_TEST (fmin, 1, fmin_test_data, RUN_TEST_LOOP_ff_f, END);
+  START (fmin);
+  RUN_TEST_LOOP_ff_f (fmin, fmin_test_data, );
+  END;
 }
 
 
@@ -7148,7 +8677,9 @@ static const struct test_ff_f_data fmod_test_data[] =
 static void
 fmod_test (void)
 {
-  ALL_RM_TEST (fmod, 1, fmod_test_data, RUN_TEST_LOOP_ff_f, END);
+  START (fmod);
+  RUN_TEST_LOOP_ff_f (fmod, fmod_test_data, );
+  END;
 }
 
 
@@ -7166,7 +8697,9 @@ static const struct test_f_i_data fpclassify_test_data[] =
 static void
 fpclassify_test (void)
 {
-  ALL_RM_TEST (fpclassify, 1, fpclassify_test_data, RUN_TEST_LOOP_f_i_tg, END);
+  START (fpclassify);
+  RUN_TEST_LOOP_f_i_tg (fpclassify, fpclassify_test_data, );
+  END;
 }
 
 
@@ -7181,15 +8714,6 @@ static const struct test_f_f1_data frexp_test_data[] =
 
     TEST_fI_f1 (frexp, 12.8L, 0.8L, 4, NO_INEXACT_EXCEPTION),
     TEST_fI_f1 (frexp, -27.34L, -0.854375L, 5, NO_INEXACT_EXCEPTION),
-
-#if defined TEST_LDOUBLE && LDBL_MANT_DIG >= 106
-    TEST_fI_f1 (frexp, 1.0L-0x1p-106L, 1.0L-0x1p-106L, 0, NO_INEXACT_EXCEPTION),
-    TEST_fI_f1 (frexp, 1.0L, 0.5L, 1, NO_INEXACT_EXCEPTION),
-    TEST_fI_f1 (frexp, 1.0L+0x1p-105L, 0.5L+0x1p-106L, 1, NO_INEXACT_EXCEPTION),
-    TEST_fI_f1 (frexp, -1.0L+0x1p-106L, -1.0L+0x1p-106L, 0, NO_INEXACT_EXCEPTION),
-    TEST_fI_f1 (frexp, -1.0L, -0.5L, 1, NO_INEXACT_EXCEPTION),
-    TEST_fI_f1 (frexp, -1.0L-0x1p-105L, -0.5L-0x1p-106L, 1, NO_INEXACT_EXCEPTION),
-#endif
   };
 
 static void
@@ -7197,7 +8721,9 @@ frexp_test (void)
 {
   int x;
 
-  ALL_RM_TEST (frexp, 1, frexp_test_data, RUN_TEST_LOOP_fI_f1, END, x);
+  START (frexp);
+  RUN_TEST_LOOP_fI_f1 (frexp, frexp_test_data, , x);
+  END;
 }
 
 static const struct test_ff_f_data hypot_test_data[] =
@@ -7212,13 +8738,15 @@ static const struct test_ff_f_data hypot_test_data[] =
 
     TEST_ff_f (hypot, qnan_value, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_ff_f (hypot),
+    AUTO_TESTS_ff_f (hypot, tonearest),
   };
 
 static void
 hypot_test (void)
 {
-  ALL_RM_TEST (hypot, 0, hypot_test_data, RUN_TEST_LOOP_ff_f, END);
+  START (hypot);
+  RUN_TEST_LOOP_ff_f (hypot, hypot_test_data, );
+  END;
 }
 
 
@@ -7242,7 +8770,9 @@ static const struct test_f_i_data ilogb_test_data[] =
 static void
 ilogb_test (void)
 {
-  ALL_RM_TEST (ilogb, 1, ilogb_test_data, RUN_TEST_LOOP_f_i, END);
+  START (ilogb);
+  RUN_TEST_LOOP_f_i (ilogb, ilogb_test_data, );
+  END;
 }
 
 static const struct test_f_i_data isfinite_test_data[] =
@@ -7259,14 +8789,18 @@ static const struct test_f_i_data isfinite_test_data[] =
 static void
 isfinite_test (void)
 {
-  ALL_RM_TEST (isfinite, 1, isfinite_test_data, RUN_TEST_LOOP_f_b_tg, END);
+  START (isfinite);
+  RUN_TEST_LOOP_f_b_tg (isfinite, isfinite_test_data, );
+  END;
 }
 
 static void
 finite_test (void)
 {
+  START (finite);
   /* finite uses the same test data as isfinite.  */
-  ALL_RM_TEST (finite, 1, isfinite_test_data, RUN_TEST_LOOP_f_b, END);
+  RUN_TEST_LOOP_f_b (finite, isfinite_test_data, );
+  END;
 }
 
 static const struct test_ff_i_data isgreater_test_data[] =
@@ -7292,7 +8826,9 @@ static const struct test_ff_i_data isgreater_test_data[] =
 static void
 isgreater_test (void)
 {
-  ALL_RM_TEST (isgreater, 1, isgreater_test_data, RUN_TEST_LOOP_ff_i_tg, END);
+  START (isgreater);
+  RUN_TEST_LOOP_ff_i_tg (isgreater, isgreater_test_data, );
+  END;
 }
 
 static const struct test_ff_i_data isgreaterequal_test_data[] =
@@ -7318,7 +8854,9 @@ static const struct test_ff_i_data isgreaterequal_test_data[] =
 static void
 isgreaterequal_test (void)
 {
-  ALL_RM_TEST (isgreaterequal, 1, isgreaterequal_test_data, RUN_TEST_LOOP_ff_i_tg, END);
+  START (isgreaterequal);
+  RUN_TEST_LOOP_ff_i_tg (isgreaterequal, isgreaterequal_test_data, );
+  END;
 }
 
 static const struct test_f_i_data isinf_test_data[] =
@@ -7335,7 +8873,9 @@ static const struct test_f_i_data isinf_test_data[] =
 static void
 isinf_test (void)
 {
-  ALL_RM_TEST (isinf, 1, isinf_test_data, RUN_TEST_LOOP_f_b_tg, END);
+  START (isinf);
+  RUN_TEST_LOOP_f_b_tg (isinf, isinf_test_data, );
+  END;
 }
 
 static const struct test_ff_i_data isless_test_data[] =
@@ -7361,7 +8901,9 @@ static const struct test_ff_i_data isless_test_data[] =
 static void
 isless_test (void)
 {
-  ALL_RM_TEST (isless, 1, isless_test_data, RUN_TEST_LOOP_ff_i_tg, END);
+  START (isless);
+  RUN_TEST_LOOP_ff_i_tg (isless, isless_test_data, );
+  END;
 }
 
 static const struct test_ff_i_data islessequal_test_data[] =
@@ -7387,7 +8929,9 @@ static const struct test_ff_i_data islessequal_test_data[] =
 static void
 islessequal_test (void)
 {
-  ALL_RM_TEST (islessequal, 1, islessequal_test_data, RUN_TEST_LOOP_ff_i_tg, END);
+  START (islessequal);
+  RUN_TEST_LOOP_ff_i_tg (islessequal, islessequal_test_data, );
+  END;
 }
 
 static const struct test_ff_i_data islessgreater_test_data[] =
@@ -7413,7 +8957,9 @@ static const struct test_ff_i_data islessgreater_test_data[] =
 static void
 islessgreater_test (void)
 {
-  ALL_RM_TEST (islessgreater, 1, islessgreater_test_data, RUN_TEST_LOOP_ff_i_tg, END);
+  START (islessgreater);
+  RUN_TEST_LOOP_ff_i_tg (islessgreater, islessgreater_test_data, );
+  END;
 }
 
 static const struct test_f_i_data isnan_test_data[] =
@@ -7430,7 +8976,9 @@ static const struct test_f_i_data isnan_test_data[] =
 static void
 isnan_test (void)
 {
-  ALL_RM_TEST (isnan, 1, isnan_test_data, RUN_TEST_LOOP_f_b_tg, END);
+  START (isnan);
+  RUN_TEST_LOOP_f_b_tg (isnan, isnan_test_data, );
+  END;
 }
 
 static const struct test_f_i_data isnormal_test_data[] =
@@ -7447,7 +8995,9 @@ static const struct test_f_i_data isnormal_test_data[] =
 static void
 isnormal_test (void)
 {
-  ALL_RM_TEST (isnormal, 1, isnormal_test_data, RUN_TEST_LOOP_f_b_tg, END);
+  START (isnormal);
+  RUN_TEST_LOOP_f_b_tg (isnormal, isnormal_test_data, );
+  END;
 }
 
 static const struct test_f_i_data issignaling_test_data[] =
@@ -7464,7 +9014,9 @@ static const struct test_f_i_data issignaling_test_data[] =
 static void
 issignaling_test (void)
 {
-  ALL_RM_TEST (issignaling, 1, issignaling_test_data, RUN_TEST_LOOP_f_b_tg, END);
+  START (issignaling);
+  RUN_TEST_LOOP_f_b_tg (issignaling, issignaling_test_data, );
+  END;
 }
 
 static const struct test_ff_i_data isunordered_test_data[] =
@@ -7490,7 +9042,9 @@ static const struct test_ff_i_data isunordered_test_data[] =
 static void
 isunordered_test (void)
 {
-  ALL_RM_TEST (isunordered, 1, isunordered_test_data, RUN_TEST_LOOP_ff_i_tg, END);
+  START (isunordered);
+  RUN_TEST_LOOP_ff_i_tg (isunordered, isunordered_test_data, );
+  END;
 }
 
 static const struct test_f_f_data j0_test_data[] =
@@ -7499,13 +9053,15 @@ static const struct test_f_f_data j0_test_data[] =
     TEST_f_f (j0, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
     TEST_f_f (j0, plus_infty, 0),
 
-    AUTO_TESTS_f_f (j0),
+    AUTO_TESTS_f_f (j0, tonearest),
   };
 
 static void
 j0_test (void)
 {
-  ALL_RM_TEST (j0, 0, j0_test_data, RUN_TEST_LOOP_f_f, END);
+  START (j0);
+  RUN_TEST_LOOP_f_f (j0, j0_test_data, );
+  END;
 }
 
 
@@ -7515,13 +9071,15 @@ static const struct test_f_f_data j1_test_data[] =
     TEST_f_f (j1, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
     TEST_f_f (j1, plus_infty, 0),
 
-    AUTO_TESTS_f_f (j1),
+    AUTO_TESTS_f_f (j1, tonearest),
   };
 
 static void
 j1_test (void)
 {
-  ALL_RM_TEST (j1, 0, j1_test_data, RUN_TEST_LOOP_f_f, END);
+  START (j1);
+  RUN_TEST_LOOP_f_f (j1, j1_test_data, );
+  END;
 }
 
 static const struct test_if_f_data jn_test_data[] =
@@ -7543,14 +9101,39 @@ static const struct test_if_f_data jn_test_data[] =
     TEST_if_f (jn, 10, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
     TEST_if_f (jn, 10, plus_infty, 0),
 
-    AUTO_TESTS_if_f (jn),
+    AUTO_TESTS_if_f (jn, tonearest),
   };
 
 static void
 jn_test (void)
 {
-  START (jn, 0);
+  START (jn);
   RUN_TEST_LOOP_if_f (jn, jn_test_data, );
+  END;
+}
+
+
+static const struct test_fi_f_data ldexp_test_data[] =
+  {
+    TEST_fi_f (ldexp, 0, 0, 0, NO_INEXACT_EXCEPTION),
+    TEST_fi_f (ldexp, minus_zero, 0, minus_zero, NO_INEXACT_EXCEPTION),
+
+    TEST_fi_f (ldexp, plus_infty, 1, plus_infty, NO_INEXACT_EXCEPTION),
+    TEST_fi_f (ldexp, minus_infty, 1, minus_infty, NO_INEXACT_EXCEPTION),
+    TEST_fi_f (ldexp, qnan_value, 1, qnan_value, NO_INEXACT_EXCEPTION),
+
+    TEST_fi_f (ldexp, 0.8L, 4, 12.8L, NO_INEXACT_EXCEPTION),
+    TEST_fi_f (ldexp, -0.854375L, 5, -27.34L, NO_INEXACT_EXCEPTION),
+
+    /* ldexp (x, 0) == x.  */
+    TEST_fi_f (ldexp, 1.0L, 0L, 1.0L, NO_INEXACT_EXCEPTION),
+  };
+
+static void
+ldexp_test (void)
+{
+  START (ldexp);
+  RUN_TEST_LOOP_fi_f (ldexp, ldexp_test_data, );
   END;
 }
 
@@ -7567,48 +9150,51 @@ static const struct test_f_f1_data lgamma_test_data[] =
     TEST_f_f1 (lgamma, minus_infty, plus_infty, IGNORE),
     TEST_f_f1 (lgamma, -max_value, plus_infty, IGNORE, DIVIDE_BY_ZERO_EXCEPTION|ERRNO_ERANGE),
 
-    AUTO_TESTS_f_f1 (lgamma),
+    AUTO_TESTS_f_f1 (lgamma, tonearest),
   };
 
 static void
 lgamma_test (void)
 {
-  ALL_RM_TEST (lgamma, 0, lgamma_test_data, RUN_TEST_LOOP_f_f1, END, signgam);
+  START (lgamma);
+  RUN_TEST_LOOP_f_f1 (lgamma, lgamma_test_data, , signgam);
+  END;
 }
 
 static void
 gamma_test (void)
 {
+  START (gamma);
   /* gamma uses the same test data as lgamma.  */
-  ALL_RM_TEST (gamma, 0, lgamma_test_data, RUN_TEST_LOOP_f_f1, END, signgam);
+  RUN_TEST_LOOP_f_f1 (gamma, lgamma_test_data, , signgam);
+  END;
 }
 
 
 static const struct test_f_l_data lrint_test_data[] =
   {
+    /* XXX this test is incomplete.  We need to have a way to specifiy
+       the rounding method and test the critical cases.  So far, only
+       unproblematic numbers are tested.  */
     TEST_f_l (lrint, plus_infty, IGNORE, INVALID_EXCEPTION),
     TEST_f_l (lrint, minus_infty, IGNORE, INVALID_EXCEPTION),
     TEST_f_l (lrint, qnan_value, IGNORE, INVALID_EXCEPTION),
     TEST_f_l (lrint, 0.0, 0, NO_INEXACT_EXCEPTION),
     TEST_f_l (lrint, minus_zero, 0, NO_INEXACT_EXCEPTION),
-    TEST_f_l (lrint, 0.2L, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 1, INEXACT_EXCEPTION),
-    TEST_f_l (lrint, -0.2L, -1, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION),
-    TEST_f_l (lrint, 0.5L, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 1, INEXACT_EXCEPTION),
-    TEST_f_l (lrint, -0.5L, -1, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION),
-    TEST_f_l (lrint, 0.8L, 0, INEXACT_EXCEPTION, 1, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 1, INEXACT_EXCEPTION),
-    TEST_f_l (lrint, -0.8L, -1, INEXACT_EXCEPTION, -1, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.2L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.2L, 0, INEXACT_EXCEPTION),
 
-    TEST_f_l (lrint, 1.4L, 1, INEXACT_EXCEPTION, 1, INEXACT_EXCEPTION, 1, INEXACT_EXCEPTION, 2, INEXACT_EXCEPTION),
-    TEST_f_l (lrint, -1.4L, -2, INEXACT_EXCEPTION, -1, INEXACT_EXCEPTION, -1, INEXACT_EXCEPTION, -1, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 1.4L, 1, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -1.4L, -1, INEXACT_EXCEPTION),
 
-    TEST_f_l (lrint, 8388600.3L, 8388600, INEXACT_EXCEPTION, 8388600, INEXACT_EXCEPTION, 8388600, INEXACT_EXCEPTION, 8388601, INEXACT_EXCEPTION),
-    TEST_f_l (lrint, -8388600.3L, -8388601, INEXACT_EXCEPTION, -8388600, INEXACT_EXCEPTION, -8388600, INEXACT_EXCEPTION, -8388600, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 8388600.3L, 8388600, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -8388600.3L, -8388600, INEXACT_EXCEPTION),
 
 #ifndef TEST_FLOAT
-    TEST_f_l (lrint, 1071930.0008, 1071930, INEXACT_EXCEPTION, 1071930, INEXACT_EXCEPTION, 1071930, INEXACT_EXCEPTION, 1071931, INEXACT_EXCEPTION),
-    TEST_f_l (lrint, 1073741824.01, 1073741824, INEXACT_EXCEPTION, 1073741824, INEXACT_EXCEPTION, 1073741824, INEXACT_EXCEPTION, 1073741825, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 1071930.0008, 1071930, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 1073741824.01, 1073741824, INEXACT_EXCEPTION),
 # if LONG_MAX > 281474976710656 && defined TEST_LDOUBLE
-    TEST_f_l (lrint, 281474976710656.025L, 281474976710656, INEXACT_EXCEPTION, 281474976710656, INEXACT_EXCEPTION, 281474976710656, INEXACT_EXCEPTION, 281474976710657, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 281474976710656.025L, 281474976710656, INEXACT_EXCEPTION),
 # endif
 #endif
   };
@@ -7616,28 +9202,185 @@ static const struct test_f_l_data lrint_test_data[] =
 static void
 lrint_test (void)
 {
-  ALL_RM_TEST (lrint, 1, lrint_test_data, RUN_TEST_LOOP_f_l, END);
+  START (lrint);
+  RUN_TEST_LOOP_f_l (lrint, lrint_test_data, );
+  END;
+}
+
+
+static const struct test_f_l_data lrint_tonearest_test_data[] =
+  {
+    TEST_f_l (lrint, plus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_l (lrint, minus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_l (lrint, qnan_value, IGNORE, INVALID_EXCEPTION),
+    TEST_f_l (lrint, 0.0, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_l (lrint, minus_zero, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.2L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.2L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.5L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.5L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.8L, 1, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.8L, -1, INEXACT_EXCEPTION),
+
+    TEST_f_l (lrint, 1.4L, 1, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -1.4L, -1, INEXACT_EXCEPTION),
+
+    TEST_f_l (lrint, 8388600.3L, 8388600, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -8388600.3L, -8388600, INEXACT_EXCEPTION),
+
+#ifndef TEST_FLOAT
+    TEST_f_l (lrint, 1071930.0008, 1071930, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 1073741824.01, 1073741824, INEXACT_EXCEPTION),
+# if LONG_MAX > 281474976710656 && defined TEST_LDOUBLE
+    TEST_f_l (lrint, 281474976710656.025L, 281474976710656, INEXACT_EXCEPTION),
+# endif
+#endif
+  };
+
+static void
+lrint_test_tonearest (void)
+{
+  START (lrint_tonearest);
+  RUN_TEST_LOOP_f_l (lrint, lrint_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_f_l_data lrint_towardzero_test_data[] =
+  {
+    TEST_f_l (lrint, plus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_l (lrint, minus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_l (lrint, qnan_value, IGNORE, INVALID_EXCEPTION),
+    TEST_f_l (lrint, 0.0, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_l (lrint, minus_zero, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.2L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.2L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.5L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.5L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.8L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.8L, 0, INEXACT_EXCEPTION),
+
+    TEST_f_l (lrint, 1.4L, 1, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -1.4L, -1, INEXACT_EXCEPTION),
+
+    TEST_f_l (lrint, 8388600.3L, 8388600, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -8388600.3L, -8388600, INEXACT_EXCEPTION),
+
+#ifndef TEST_FLOAT
+    TEST_f_l (lrint, 1071930.0008, 1071930, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 1073741824.01, 1073741824, INEXACT_EXCEPTION),
+# if LONG_MAX > 281474976710656 && defined TEST_LDOUBLE
+    TEST_f_l (lrint, 281474976710656.025L, 281474976710656, INEXACT_EXCEPTION),
+# endif
+#endif
+  };
+
+static void
+lrint_test_towardzero (void)
+{
+  START (lrint_towardzero);
+  RUN_TEST_LOOP_f_l (lrint, lrint_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_f_l_data lrint_downward_test_data[] =
+  {
+    TEST_f_l (lrint, plus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_l (lrint, minus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_l (lrint, qnan_value, IGNORE, INVALID_EXCEPTION),
+    TEST_f_l (lrint, 0.0, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_l (lrint, minus_zero, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.2L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.2L, -1, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.5L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.5L, -1, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.8L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.8L, -1, INEXACT_EXCEPTION),
+
+    TEST_f_l (lrint, 1.4L, 1, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -1.4L, -2, INEXACT_EXCEPTION),
+
+    TEST_f_l (lrint, 8388600.3L, 8388600, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -8388600.3L, -8388601, INEXACT_EXCEPTION),
+
+#ifndef TEST_FLOAT
+    TEST_f_l (lrint, 1071930.0008, 1071930, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 1073741824.01, 1073741824, INEXACT_EXCEPTION),
+# if LONG_MAX > 281474976710656 && defined TEST_LDOUBLE
+    TEST_f_l (lrint, 281474976710656.025L, 281474976710656, INEXACT_EXCEPTION),
+# endif
+#endif
+  };
+
+static void
+lrint_test_downward (void)
+{
+  START (lrint_downward);
+  RUN_TEST_LOOP_f_l (lrint, lrint_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_f_l_data lrint_upward_test_data[] =
+  {
+    TEST_f_l (lrint, plus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_l (lrint, minus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_l (lrint, qnan_value, IGNORE, INVALID_EXCEPTION),
+    TEST_f_l (lrint, 0.0, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_l (lrint, minus_zero, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.2L, 1, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.2L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.5L, 1, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.5L, 0, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 0.8L, 1, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -0.8L, 0, INEXACT_EXCEPTION),
+
+    TEST_f_l (lrint, 1.4L, 2, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -1.4L, -1, INEXACT_EXCEPTION),
+
+    TEST_f_l (lrint, 8388600.3L, 8388601, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, -8388600.3L, -8388600, INEXACT_EXCEPTION),
+
+#ifndef TEST_FLOAT
+    TEST_f_l (lrint, 1071930.0008, 1071931, INEXACT_EXCEPTION),
+    TEST_f_l (lrint, 1073741824.01, 1073741825, INEXACT_EXCEPTION),
+# if LONG_MAX > 281474976710656 && defined (TEST_LDOUBLE)
+    TEST_f_l (lrint, 281474976710656.025L, 281474976710657, INEXACT_EXCEPTION),
+# endif
+#endif
+  };
+
+static void
+lrint_test_upward (void)
+{
+  START (lrint_upward);
+  RUN_TEST_LOOP_f_l (lrint, lrint_upward_test_data, FE_UPWARD);
+  END;
 }
 
 
 static const struct test_f_L_data llrint_test_data[] =
   {
+    /* XXX this test is incomplete.  We need to have a way to specifiy
+       the rounding method and test the critical cases.  So far, only
+       unproblematic numbers are tested.  */
     TEST_f_L (llrint, plus_infty, IGNORE, INVALID_EXCEPTION),
     TEST_f_L (llrint, minus_infty, IGNORE, INVALID_EXCEPTION),
     TEST_f_L (llrint, qnan_value, IGNORE, INVALID_EXCEPTION),
     TEST_f_L (llrint, 0.0, 0, NO_INEXACT_EXCEPTION),
     TEST_f_L (llrint, minus_zero, 0, NO_INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 0.2L, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 1, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -0.2L, -1, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION, 0, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 0.2L, 0, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -0.2L, 0, INEXACT_EXCEPTION),
 
-    TEST_f_L (llrint, 1.4L, 1, INEXACT_EXCEPTION, 1, INEXACT_EXCEPTION, 1, INEXACT_EXCEPTION, 2, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -1.4L, -2, INEXACT_EXCEPTION, -1, INEXACT_EXCEPTION, -1, INEXACT_EXCEPTION, -1, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 1.4L, 1, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -1.4L, -1, INEXACT_EXCEPTION),
 
-    TEST_f_L (llrint, 8388600.3L, 8388600, INEXACT_EXCEPTION, 8388600, INEXACT_EXCEPTION, 8388600, INEXACT_EXCEPTION, 8388601, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -8388600.3L, -8388601, INEXACT_EXCEPTION, -8388600, INEXACT_EXCEPTION, -8388600, INEXACT_EXCEPTION, -8388600, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 8388600.3L, 8388600, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -8388600.3L, -8388600, INEXACT_EXCEPTION),
 
 #ifndef TEST_FLOAT
-    TEST_f_L (llrint, 1071930.0008, 1071930, INEXACT_EXCEPTION, 1071930, INEXACT_EXCEPTION, 1071930, INEXACT_EXCEPTION, 1071931, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 1071930.0008, 1071930, INEXACT_EXCEPTION),
 #endif
 
     /* Test boundary conditions.  */
@@ -7665,85 +9408,85 @@ static const struct test_f_L_data llrint_test_data[] =
     TEST_f_L (llrint, 72057594037927936.0, 72057594037927936LL, NO_INEXACT_EXCEPTION),
 #ifdef TEST_LDOUBLE
     /* The input can only be represented in long double.  */
-    TEST_f_L (llrint, 4503599627370495.5L, 4503599627370495LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370495LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 4503599627370496.25L, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370497LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 4503599627370496.5L, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370497LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 4503599627370496.75L, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370497LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370497LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 4503599627370497.5L, 4503599627370497LL, INEXACT_EXCEPTION, 4503599627370498LL, INEXACT_EXCEPTION, 4503599627370497LL, INEXACT_EXCEPTION, 4503599627370498LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370495.5L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.25L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.5L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.75L, 4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370497.5L, 4503599627370498LL, INEXACT_EXCEPTION),
 
-    TEST_f_L (llrint, -4503599627370495.5L, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370495LL, INEXACT_EXCEPTION, -4503599627370495LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -4503599627370496.25L, -4503599627370497LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -4503599627370496.5L, -4503599627370497LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -4503599627370496.75L, -4503599627370497LL, INEXACT_EXCEPTION, -4503599627370497LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -4503599627370497.5L, -4503599627370498LL, INEXACT_EXCEPTION, -4503599627370498LL, INEXACT_EXCEPTION, -4503599627370497LL, INEXACT_EXCEPTION, -4503599627370497LL, INEXACT_EXCEPTION),
-
-# if LDBL_MANT_DIG > 100
-    TEST_f_L (llrint, 4503599627370495.4999999999999L, 4503599627370495LL, INEXACT_EXCEPTION, 4503599627370495LL, INEXACT_EXCEPTION, 4503599627370495LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 4503599627370496.4999999999999L, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370497LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 4503599627370497.4999999999999L, 4503599627370497LL, INEXACT_EXCEPTION, 4503599627370497LL, INEXACT_EXCEPTION, 4503599627370497LL, INEXACT_EXCEPTION, 4503599627370498LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 4503599627370494.5000000000001L, 4503599627370494LL, INEXACT_EXCEPTION, 4503599627370495LL, INEXACT_EXCEPTION, 4503599627370494LL, INEXACT_EXCEPTION, 4503599627370495LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 4503599627370495.5000000000001L, 4503599627370495LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370495LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 4503599627370496.5000000000001L, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370497LL, INEXACT_EXCEPTION, 4503599627370496LL, INEXACT_EXCEPTION, 4503599627370497LL, INEXACT_EXCEPTION),
-
-    TEST_f_L (llrint, -4503599627370495.4999999999999L, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370495LL, INEXACT_EXCEPTION, -4503599627370495LL, INEXACT_EXCEPTION, -4503599627370495LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -4503599627370496.4999999999999L, -4503599627370497LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -4503599627370497.4999999999999L, -4503599627370498LL, INEXACT_EXCEPTION, -4503599627370497LL, INEXACT_EXCEPTION, -4503599627370497LL, INEXACT_EXCEPTION, -4503599627370497LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -4503599627370494.5000000000001L, -4503599627370495LL, INEXACT_EXCEPTION, -4503599627370495LL, INEXACT_EXCEPTION, -4503599627370494LL, INEXACT_EXCEPTION, -4503599627370494LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -4503599627370495.5000000000001L, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370495LL, INEXACT_EXCEPTION, -4503599627370495LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -4503599627370496.5000000000001L, -4503599627370497LL, INEXACT_EXCEPTION, -4503599627370497LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION, -4503599627370496LL, INEXACT_EXCEPTION),
-# endif
-
-    TEST_f_L (llrint, 9007199254740991.5L, 9007199254740991LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740991LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 9007199254740992.25L, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740993LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 9007199254740992.5L, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740993LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 9007199254740992.75L, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740993LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740993LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 9007199254740993.5L, 9007199254740993LL, INEXACT_EXCEPTION, 9007199254740994LL, INEXACT_EXCEPTION, 9007199254740993LL, INEXACT_EXCEPTION, 9007199254740994LL, INEXACT_EXCEPTION),
-
-    TEST_f_L (llrint, -9007199254740991.5L, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740991LL, INEXACT_EXCEPTION, -9007199254740991LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9007199254740992.25L, -9007199254740993LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9007199254740992.5L, -9007199254740993LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9007199254740992.75L, -9007199254740993LL, INEXACT_EXCEPTION, -9007199254740993LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9007199254740993.5L, -9007199254740994LL, INEXACT_EXCEPTION, -9007199254740994LL, INEXACT_EXCEPTION, -9007199254740993LL, INEXACT_EXCEPTION, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370495.5L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.25L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.5L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.75L, -4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370497.5L, -4503599627370498LL, INEXACT_EXCEPTION),
 
 # if LDBL_MANT_DIG > 100
-    TEST_f_L (llrint, 9007199254740991.4999999999999L, 9007199254740991LL, INEXACT_EXCEPTION, 9007199254740991LL, INEXACT_EXCEPTION, 9007199254740991LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 9007199254740992.4999999999999L, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740993LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 9007199254740993.4999999999999L, 9007199254740993LL, INEXACT_EXCEPTION, 9007199254740993LL, INEXACT_EXCEPTION, 9007199254740993LL, INEXACT_EXCEPTION, 9007199254740994LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 9007199254740991.5000000000001L, 9007199254740991LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740991LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 9007199254740992.5000000000001L, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740993LL, INEXACT_EXCEPTION, 9007199254740992LL, INEXACT_EXCEPTION, 9007199254740993LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 9007199254740993.5000000000001L, 9007199254740993LL, INEXACT_EXCEPTION, 9007199254740994LL, INEXACT_EXCEPTION, 9007199254740993LL, INEXACT_EXCEPTION, 9007199254740994LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370495.4999999999999L, 4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.4999999999999L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370497.4999999999999L, 4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370494.5000000000001L, 4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370495.5000000000001L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.5000000000001L, 4503599627370497LL, INEXACT_EXCEPTION),
 
-    TEST_f_L (llrint, -9007199254740991.4999999999999L, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740991LL, INEXACT_EXCEPTION, -9007199254740991LL, INEXACT_EXCEPTION, -9007199254740991LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9007199254740992.4999999999999L, -9007199254740993LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9007199254740993.4999999999999L, -9007199254740994LL, INEXACT_EXCEPTION, -9007199254740993LL, INEXACT_EXCEPTION, -9007199254740993LL, INEXACT_EXCEPTION, -9007199254740993LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9007199254740991.5000000000001L, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740991LL, INEXACT_EXCEPTION, -9007199254740991LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9007199254740992.5000000000001L, -9007199254740993LL, INEXACT_EXCEPTION, -9007199254740993LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION, -9007199254740992LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9007199254740993.5000000000001L, -9007199254740994LL, INEXACT_EXCEPTION, -9007199254740994LL, INEXACT_EXCEPTION, -9007199254740993LL, INEXACT_EXCEPTION, -9007199254740993LL, INEXACT_EXCEPTION),
-# endif
+    TEST_f_L (llrint, -4503599627370495.4999999999999L, -4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.4999999999999L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370497.4999999999999L, -4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370494.5000000000001L, -4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370495.5000000000001L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.5000000000001L, -4503599627370497LL, INEXACT_EXCEPTION),
+#endif
 
-    TEST_f_L (llrint, 72057594037927935.5L, 72057594037927935LL, INEXACT_EXCEPTION, 72057594037927936LL, INEXACT_EXCEPTION, 72057594037927935LL, INEXACT_EXCEPTION, 72057594037927936LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 72057594037927936.25L, 72057594037927936LL, INEXACT_EXCEPTION, 72057594037927936LL, INEXACT_EXCEPTION, 72057594037927936LL, INEXACT_EXCEPTION, 72057594037927937LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 72057594037927936.5L, 72057594037927936LL, INEXACT_EXCEPTION, 72057594037927936LL, INEXACT_EXCEPTION, 72057594037927936LL, INEXACT_EXCEPTION, 72057594037927937LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 72057594037927936.75L, 72057594037927936LL, INEXACT_EXCEPTION, 72057594037927937LL, INEXACT_EXCEPTION, 72057594037927936LL, INEXACT_EXCEPTION, 72057594037927937LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 72057594037927937.5L, 72057594037927937LL, INEXACT_EXCEPTION, 72057594037927938LL, INEXACT_EXCEPTION, 72057594037927937LL, INEXACT_EXCEPTION, 72057594037927938LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740991.5L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.25L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.5L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.75L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.5L, 9007199254740994LL, INEXACT_EXCEPTION),
 
-    TEST_f_L (llrint, -72057594037927935.5L, -72057594037927936LL, INEXACT_EXCEPTION, -72057594037927936LL, INEXACT_EXCEPTION, -72057594037927935LL, INEXACT_EXCEPTION, -72057594037927935LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -72057594037927936.25L, -72057594037927937LL, INEXACT_EXCEPTION, -72057594037927936LL, INEXACT_EXCEPTION, -72057594037927936LL, INEXACT_EXCEPTION, -72057594037927936LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -72057594037927936.5L, -72057594037927937LL, INEXACT_EXCEPTION, -72057594037927936LL, INEXACT_EXCEPTION, -72057594037927936LL, INEXACT_EXCEPTION, -72057594037927936LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -72057594037927936.75L, -72057594037927937LL, INEXACT_EXCEPTION, -72057594037927937LL, INEXACT_EXCEPTION, -72057594037927936LL, INEXACT_EXCEPTION, -72057594037927936LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -72057594037927937.5L, -72057594037927938LL, INEXACT_EXCEPTION, -72057594037927938LL, INEXACT_EXCEPTION, -72057594037927937LL, INEXACT_EXCEPTION, -72057594037927937LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740991.5L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.25L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.5L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.75L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.5L, -9007199254740994LL, INEXACT_EXCEPTION),
 
 # if LDBL_MANT_DIG > 100
-    TEST_f_L (llrint, 9223372036854775805.5L, 9223372036854775805LL, INEXACT_EXCEPTION, 9223372036854775806LL, INEXACT_EXCEPTION, 9223372036854775805LL, INEXACT_EXCEPTION, 9223372036854775806LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9223372036854775805.5L, -9223372036854775806LL, INEXACT_EXCEPTION, -9223372036854775806LL, INEXACT_EXCEPTION, -9223372036854775805LL, INEXACT_EXCEPTION, -9223372036854775805LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740991.4999999999999L, 9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.4999999999999L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.4999999999999L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740991.5000000000001L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.5000000000001L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.5000000000001L, 9007199254740994LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -9007199254740991.4999999999999L, -9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.4999999999999L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.4999999999999L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740991.5000000000001L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.5000000000001L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.5000000000001L, -9007199254740994LL, INEXACT_EXCEPTION),
+#endif
+
+    TEST_f_L (llrint, 72057594037927935.5L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.25L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.5L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.75L, 72057594037927937LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927937.5L, 72057594037927938LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -72057594037927935.5L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.25L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.5L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.75L, -72057594037927937LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927937.5L, -72057594037927938LL, INEXACT_EXCEPTION),
+
+# if LDBL_MANT_DIG > 100
+    TEST_f_L (llrint, 9223372036854775805.5L, 9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775805.5L, -9223372036854775806LL, INEXACT_EXCEPTION),
     TEST_f_L (llrint, 9223372036854775806.0L, 9223372036854775806LL, NO_INEXACT_EXCEPTION),
     TEST_f_L (llrint, -9223372036854775806.0L, -9223372036854775806LL, NO_INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 9223372036854775806.25L, 9223372036854775806LL, INEXACT_EXCEPTION, 9223372036854775806LL, INEXACT_EXCEPTION, 9223372036854775806LL, INEXACT_EXCEPTION, 9223372036854775807LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9223372036854775806.25L, -9223372036854775807LL, INEXACT_EXCEPTION, -9223372036854775806LL, INEXACT_EXCEPTION, -9223372036854775806LL, INEXACT_EXCEPTION, -9223372036854775806LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 9223372036854775806.5L, 9223372036854775806L, INEXACT_EXCEPTION, 9223372036854775806L, INEXACT_EXCEPTION, 9223372036854775806L, INEXACT_EXCEPTION, 9223372036854775807L, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9223372036854775806.5L, -9223372036854775807LL, INEXACT_EXCEPTION, -9223372036854775806LL, INEXACT_EXCEPTION, -9223372036854775806LL, INEXACT_EXCEPTION, -9223372036854775806LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, 9223372036854775806.75L, 9223372036854775806LL, INEXACT_EXCEPTION, 9223372036854775807LL, INEXACT_EXCEPTION, 9223372036854775806LL, INEXACT_EXCEPTION, 9223372036854775807LL, INEXACT_EXCEPTION),
-    TEST_f_L (llrint, -9223372036854775806.75L, -9223372036854775807LL, INEXACT_EXCEPTION, -9223372036854775807LL, INEXACT_EXCEPTION, -9223372036854775806LL, INEXACT_EXCEPTION, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.25L, 9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.25L, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.5L, 9223372036854775806L, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.5L, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.75L, 9223372036854775807LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.75L, -9223372036854775807LL, INEXACT_EXCEPTION),
     TEST_f_L (llrint, 9223372036854775807.0L, 9223372036854775807LL, NO_INEXACT_EXCEPTION),
     TEST_f_L (llrint, -9223372036854775807.0L, -9223372036854775807LL, NO_INEXACT_EXCEPTION),
 # endif
@@ -7753,7 +9496,551 @@ static const struct test_f_L_data llrint_test_data[] =
 static void
 llrint_test (void)
 {
-  ALL_RM_TEST (llrint, 1, llrint_test_data, RUN_TEST_LOOP_f_L, END);
+  START (llrint);
+  RUN_TEST_LOOP_f_L (llrint, llrint_test_data, );
+  END;
+}
+
+static const struct test_f_L_data llrint_tonearest_test_data[] =
+  {
+    TEST_f_L (llrint, plus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_L (llrint, minus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_L (llrint, qnan_value, IGNORE, INVALID_EXCEPTION),
+    TEST_f_L (llrint, 0.0, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, minus_zero, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 0.2L, 0, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -0.2L, 0, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 1.4L, 1, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -1.4L, -1, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 8388600.3L, 8388600, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -8388600.3L, -8388600, INEXACT_EXCEPTION),
+
+#ifndef TEST_FLOAT
+    TEST_f_L (llrint, 1071930.0008, 1071930, INEXACT_EXCEPTION),
+#endif
+
+    /* Test boundary conditions.  */
+    /* 0x1FFFFF */
+    TEST_f_L (llrint, 2097151.0,2097151LL, NO_INEXACT_EXCEPTION),
+    /* 0x800000 */
+    TEST_f_L (llrint, 8388608.0, 8388608LL, NO_INEXACT_EXCEPTION),
+    /* 0x1000000 */
+    TEST_f_L (llrint, 16777216.0, 16777216LL, NO_INEXACT_EXCEPTION),
+    /* 0x20000000000 */
+    TEST_f_L (llrint, 2199023255552.0, 2199023255552LL, NO_INEXACT_EXCEPTION),
+    /* 0x40000000000 */
+    TEST_f_L (llrint, 4398046511104.0, 4398046511104LL, NO_INEXACT_EXCEPTION),
+    /* 0x1000000000000 */
+    TEST_f_L (llrint, 281474976710656.0, 281474976710656LL, NO_INEXACT_EXCEPTION),
+    /* 0x10000000000000 */
+    TEST_f_L (llrint, 4503599627370496.0, 4503599627370496LL, NO_INEXACT_EXCEPTION),
+    /* 0x10000080000000 */
+    TEST_f_L (llrint, 4503601774854144.0, 4503601774854144LL, NO_INEXACT_EXCEPTION),
+    /* 0x20000000000000 */
+    TEST_f_L (llrint, 9007199254740992.0, 9007199254740992LL, NO_INEXACT_EXCEPTION),
+    /* 0x80000000000000 */
+    TEST_f_L (llrint, 36028797018963968.0, 36028797018963968LL, NO_INEXACT_EXCEPTION),
+    /* 0x100000000000000 */
+    TEST_f_L (llrint, 72057594037927936.0, 72057594037927936LL, NO_INEXACT_EXCEPTION),
+#ifdef TEST_LDOUBLE
+    /* The input can only be represented in long double.  */
+    TEST_f_L (llrint, 4503599627370495.5L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.25L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.5L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.75L, 4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370497.5L, 4503599627370498LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -4503599627370495.5L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.25L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.5L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.75L, -4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370497.5L, -4503599627370498LL, INEXACT_EXCEPTION),
+
+# if LDBL_MANT_DIG > 100
+    TEST_f_L (llrint, 4503599627370495.4999999999999L, 4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.4999999999999L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370497.4999999999999L, 4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370494.5000000000001L, 4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370495.5000000000001L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.5000000000001L, 4503599627370497LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -4503599627370495.4999999999999L, -4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.4999999999999L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370497.4999999999999L, -4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370494.5000000000001L, -4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370495.5000000000001L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.5000000000001L, -4503599627370497LL, INEXACT_EXCEPTION),
+#endif
+
+    TEST_f_L (llrint, 9007199254740991.5L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.25L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.5L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.75L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.5L, 9007199254740994LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -9007199254740991.5L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.25L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.5L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.75L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.5L, -9007199254740994LL, INEXACT_EXCEPTION),
+
+# if LDBL_MANT_DIG > 100
+    TEST_f_L (llrint, 9007199254740991.4999999999999L, 9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.4999999999999L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.4999999999999L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740991.5000000000001L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.5000000000001L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.5000000000001L, 9007199254740994LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -9007199254740991.4999999999999L, -9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.4999999999999L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.4999999999999L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740991.5000000000001L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.5000000000001L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.5000000000001L, -9007199254740994LL, INEXACT_EXCEPTION),
+#endif
+
+    TEST_f_L (llrint, 72057594037927935.5L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.25L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.5L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.75L, 72057594037927937LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927937.5L, 72057594037927938LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -72057594037927935.5L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.25L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.5L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.75L, -72057594037927937LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927937.5L, -72057594037927938LL, INEXACT_EXCEPTION),
+
+# if LDBL_MANT_DIG > 100
+    TEST_f_L (llrint, 9223372036854775805.5L, 9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775805.5L, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.0L, 9223372036854775806LL, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.0L, -9223372036854775806LL, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.25L, 9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.25L, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.5L, 9223372036854775806L, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.5L, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.75L, 9223372036854775807LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.75L, -9223372036854775807LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775807.0L, 9223372036854775807LL, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775807.0L, -9223372036854775807LL, NO_INEXACT_EXCEPTION),
+# endif
+#endif
+  };
+
+static void
+llrint_test_tonearest (void)
+{
+  START (llrint_tonearest);
+  RUN_TEST_LOOP_f_L (llrint, llrint_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+static const struct test_f_L_data llrint_towardzero_test_data[] =
+  {
+    TEST_f_L (llrint, plus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_L (llrint, minus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_L (llrint, qnan_value, IGNORE, INVALID_EXCEPTION),
+    TEST_f_L (llrint, 0.0, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, minus_zero, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 0.2L, 0, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -0.2L, 0, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 1.4L, 1, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -1.4L, -1, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 8388600.3L, 8388600, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -8388600.3L, -8388600, INEXACT_EXCEPTION),
+
+#ifndef TEST_FLOAT
+    TEST_f_L (llrint, 1071930.0008, 1071930, INEXACT_EXCEPTION),
+#endif
+
+    /* Test boundary conditions.  */
+    /* 0x1FFFFF */
+    TEST_f_L (llrint, 2097151.0,2097151LL, NO_INEXACT_EXCEPTION),
+    /* 0x800000 */
+    TEST_f_L (llrint, 8388608.0, 8388608LL, NO_INEXACT_EXCEPTION),
+    /* 0x1000000 */
+    TEST_f_L (llrint, 16777216.0, 16777216LL, NO_INEXACT_EXCEPTION),
+    /* 0x20000000000 */
+    TEST_f_L (llrint, 2199023255552.0, 2199023255552LL, NO_INEXACT_EXCEPTION),
+    /* 0x40000000000 */
+    TEST_f_L (llrint, 4398046511104.0, 4398046511104LL, NO_INEXACT_EXCEPTION),
+    /* 0x1000000000000 */
+    TEST_f_L (llrint, 281474976710656.0, 281474976710656LL, NO_INEXACT_EXCEPTION),
+    /* 0x10000000000000 */
+    TEST_f_L (llrint, 4503599627370496.0, 4503599627370496LL, NO_INEXACT_EXCEPTION),
+    /* 0x10000080000000 */
+    TEST_f_L (llrint, 4503601774854144.0, 4503601774854144LL, NO_INEXACT_EXCEPTION),
+    /* 0x20000000000000 */
+    TEST_f_L (llrint, 9007199254740992.0, 9007199254740992LL, NO_INEXACT_EXCEPTION),
+    /* 0x80000000000000 */
+    TEST_f_L (llrint, 36028797018963968.0, 36028797018963968LL, NO_INEXACT_EXCEPTION),
+    /* 0x100000000000000 */
+    TEST_f_L (llrint, 72057594037927936.0, 72057594037927936LL, NO_INEXACT_EXCEPTION),
+#ifdef TEST_LDOUBLE
+    /* The input can only be represented in long double.  */
+    TEST_f_L (llrint, 4503599627370495.5L, 4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.25L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.5L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.75L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370497.5L, 4503599627370497LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -4503599627370495.5L, -4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.25L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.5L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.75L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370497.5L, -4503599627370497LL, INEXACT_EXCEPTION),
+
+# if LDBL_MANT_DIG > 100
+    TEST_f_L (llrint, 4503599627370495.4999999999999L, 4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.4999999999999L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370497.4999999999999L, 4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370494.5000000000001L, 4503599627370494LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370495.5000000000001L, 4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.5000000000001L, 4503599627370496LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -4503599627370495.4999999999999L, -4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.4999999999999L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370497.4999999999999L, -4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370494.5000000000001L, -4503599627370494LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370495.5000000000001L, -4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.5000000000001L, -4503599627370496LL, INEXACT_EXCEPTION),
+#endif
+
+    TEST_f_L (llrint, 9007199254740991.5L, 9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.25L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.5L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.75L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.5L, 9007199254740993LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -9007199254740991.5L, -9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.25L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.5L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.75L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.5L, -9007199254740993LL, INEXACT_EXCEPTION),
+
+# if LDBL_MANT_DIG > 100
+    TEST_f_L (llrint, 9007199254740991.4999999999999L, 9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.4999999999999L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.4999999999999L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740991.5000000000001L, 9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.5000000000001L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.5000000000001L, 9007199254740993LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -9007199254740991.4999999999999L, -9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.4999999999999L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.4999999999999L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740991.5000000000001L, -9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.5000000000001L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.5000000000001L, -9007199254740993LL, INEXACT_EXCEPTION),
+#endif
+
+    TEST_f_L (llrint, 72057594037927935.5L, 72057594037927935LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.25L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.5L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.75L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927937.5L, 72057594037927937LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -72057594037927935.5L, -72057594037927935LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.25L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.5L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.75L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927937.5L, -72057594037927937LL, INEXACT_EXCEPTION),
+
+# if LDBL_MANT_DIG > 100
+    TEST_f_L (llrint, 9223372036854775805.5L, 9223372036854775805LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775805.5L, -9223372036854775805LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.0L, 9223372036854775806LL, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.0L, -9223372036854775806LL, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.25L, 9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.25L, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.5L, 9223372036854775806L, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.5L, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.75L, 9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.75L, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775807.0L, 9223372036854775807LL, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775807.0L, -9223372036854775807LL, NO_INEXACT_EXCEPTION),
+# endif
+#endif
+  };
+
+static void
+llrint_test_towardzero (void)
+{
+  START (llrint_towardzero);
+  RUN_TEST_LOOP_f_L (llrint, llrint_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+static const struct test_f_L_data llrint_downward_test_data[] =
+  {
+    TEST_f_L (llrint, plus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_L (llrint, minus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_L (llrint, qnan_value, IGNORE, INVALID_EXCEPTION),
+    TEST_f_L (llrint, 0.0, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, minus_zero, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 0.2L, 0, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -0.2L, -1, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 1.4L, 1, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -1.4L, -2, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 8388600.3L, 8388600, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -8388600.3L, -8388601, INEXACT_EXCEPTION),
+
+#ifndef TEST_FLOAT
+    TEST_f_L (llrint, 1071930.0008, 1071930, INEXACT_EXCEPTION),
+#endif
+
+    /* Test boundary conditions.  */
+    /* 0x1FFFFF */
+    TEST_f_L (llrint, 2097151.0,2097151LL, NO_INEXACT_EXCEPTION),
+    /* 0x800000 */
+    TEST_f_L (llrint, 8388608.0, 8388608LL, NO_INEXACT_EXCEPTION),
+    /* 0x1000000 */
+    TEST_f_L (llrint, 16777216.0, 16777216LL, NO_INEXACT_EXCEPTION),
+    /* 0x20000000000 */
+    TEST_f_L (llrint, 2199023255552.0, 2199023255552LL, NO_INEXACT_EXCEPTION),
+    /* 0x40000000000 */
+    TEST_f_L (llrint, 4398046511104.0, 4398046511104LL, NO_INEXACT_EXCEPTION),
+    /* 0x1000000000000 */
+    TEST_f_L (llrint, 281474976710656.0, 281474976710656LL, NO_INEXACT_EXCEPTION),
+    /* 0x10000000000000 */
+    TEST_f_L (llrint, 4503599627370496.0, 4503599627370496LL, NO_INEXACT_EXCEPTION),
+    /* 0x10000080000000 */
+    TEST_f_L (llrint, 4503601774854144.0, 4503601774854144LL, NO_INEXACT_EXCEPTION),
+    /* 0x20000000000000 */
+    TEST_f_L (llrint, 9007199254740992.0, 9007199254740992LL, NO_INEXACT_EXCEPTION),
+    /* 0x80000000000000 */
+    TEST_f_L (llrint, 36028797018963968.0, 36028797018963968LL, NO_INEXACT_EXCEPTION),
+    /* 0x100000000000000 */
+    TEST_f_L (llrint, 72057594037927936.0, 72057594037927936LL, NO_INEXACT_EXCEPTION),
+#ifdef TEST_LDOUBLE
+    /* The input can only be represented in long double.  */
+    TEST_f_L (llrint, 4503599627370495.5L, 4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.25L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.5L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.75L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370497.5L, 4503599627370497LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 4503599627370495.4999999999999L, 4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.4999999999999L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370497.4999999999999L, 4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370494.5000000000001L, 4503599627370494LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370495.5000000000001L, 4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.5000000000001L, 4503599627370496LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -4503599627370495.5L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.25L, -4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.5L, -4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.75L, -4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370497.5L, -4503599627370498LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -4503599627370495.4999999999999L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.4999999999999L, -4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370497.4999999999999L, -4503599627370498LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370494.5000000000001L, -4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370495.5000000000001L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.5000000000001L, -4503599627370497LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 9007199254740991.5L, 9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.25L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.5L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.75L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.5L, 9007199254740993LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 9007199254740991.4999999999999L, 9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.4999999999999L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.4999999999999L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740991.5000000000001L, 9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.5000000000001L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.5000000000001L, 9007199254740993LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -9007199254740991.5L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.25L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.5L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.75L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.5L, -9007199254740994LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -9007199254740991.4999999999999L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.4999999999999L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.4999999999999L, -9007199254740994LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740991.5000000000001L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.5000000000001L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.5000000000001L, -9007199254740994LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 72057594037927935.5L, 72057594037927935LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.25L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.5L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.75L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927937.5L, 72057594037927937LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -72057594037927935.5L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.25L, -72057594037927937LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.5L, -72057594037927937LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.75L, -72057594037927937LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927937.5L, -72057594037927938LL, INEXACT_EXCEPTION),
+
+# if LDBL_MANT_DIG > 100
+    TEST_f_L (llrint, 9223372036854775805.5L, 9223372036854775805LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775805.5L, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.0L, 9223372036854775806LL, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.0L, -9223372036854775806LL, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.25L, 9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.25L, -9223372036854775807LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.5L, 9223372036854775806L, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.5L, -9223372036854775807LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.75L, 9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.75L, -9223372036854775807LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775807.0L, 9223372036854775807LL, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775807.0L, -9223372036854775807LL, NO_INEXACT_EXCEPTION),
+# endif
+#endif
+  };
+
+static void
+llrint_test_downward (void)
+{
+  START (llrint_downward);
+  RUN_TEST_LOOP_f_L (llrint, llrint_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+static const struct test_f_L_data llrint_upward_test_data[] =
+  {
+    TEST_f_L (llrint, plus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_L (llrint, minus_infty, IGNORE, INVALID_EXCEPTION),
+    TEST_f_L (llrint, qnan_value, IGNORE, INVALID_EXCEPTION),
+    TEST_f_L (llrint, 0.0, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, minus_zero, 0, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 0.2L, 1, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -0.2L, 0, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 1.4L, 2, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -1.4L, -1, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 8388600.3L, 8388601, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -8388600.3L, -8388600, INEXACT_EXCEPTION),
+#ifndef TEST_FLOAT
+    TEST_f_L (llrint, 1071930.0008, 1071931, INEXACT_EXCEPTION),
+#endif
+    /* Test boundary conditions.  */
+    /* 0x1FFFFF */
+    TEST_f_L (llrint, 2097151.0,2097151LL, NO_INEXACT_EXCEPTION),
+    /* 0x800000 */
+    TEST_f_L (llrint, 8388608.0, 8388608LL, NO_INEXACT_EXCEPTION),
+    /* 0x1000000 */
+    TEST_f_L (llrint, 16777216.0, 16777216LL, NO_INEXACT_EXCEPTION),
+    /* 0x20000000000 */
+    TEST_f_L (llrint, 2199023255552.0, 2199023255552LL, NO_INEXACT_EXCEPTION),
+    /* 0x40000000000 */
+    TEST_f_L (llrint, 4398046511104.0, 4398046511104LL, NO_INEXACT_EXCEPTION),
+    /* 0x1000000000000 */
+    TEST_f_L (llrint, 281474976710656.0, 281474976710656LL, NO_INEXACT_EXCEPTION),
+    /* 0x10000000000000 */
+    TEST_f_L (llrint, 4503599627370496.0, 4503599627370496LL, NO_INEXACT_EXCEPTION),
+    /* 0x10000080000000 */
+    TEST_f_L (llrint, 4503601774854144.0, 4503601774854144LL, NO_INEXACT_EXCEPTION),
+    /* 0x20000000000000 */
+    TEST_f_L (llrint, 9007199254740992.0, 9007199254740992LL, NO_INEXACT_EXCEPTION),
+    /* 0x80000000000000 */
+    TEST_f_L (llrint, 36028797018963968.0, 36028797018963968LL, NO_INEXACT_EXCEPTION),
+    /* 0x100000000000000 */
+    TEST_f_L (llrint, 72057594037927936.0, 72057594037927936LL, NO_INEXACT_EXCEPTION),
+#ifdef TEST_LDOUBLE
+    /* The input can only be represented in long double.  */
+    TEST_f_L (llrint, 4503599627370495.5L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.25L, 4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.5L, 4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.75L, 4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370497.5L, 4503599627370498LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 4503599627370495.4999999999999L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.4999999999999L, 4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370497.4999999999999L, 4503599627370498LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370494.5000000000001L, 4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370495.5000000000001L, 4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 4503599627370496.5000000000001L, 4503599627370497LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -4503599627370495.5L, -4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.25L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.5L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.75L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370497.5L, -4503599627370497LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -4503599627370495.4999999999999L, -4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.4999999999999L, -4503599627370496LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370497.4999999999999L, -4503599627370497LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370494.5000000000001L, -4503599627370494LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370495.5000000000001L, -4503599627370495LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -4503599627370496.5000000000001L, -4503599627370496LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 9007199254740991.5L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.25L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.5L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.75L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.5L, 9007199254740994LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 9007199254740991.4999999999999L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.4999999999999L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.4999999999999L, 9007199254740994LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740991.5000000000001L, 9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740992.5000000000001L, 9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9007199254740993.5000000000001L, 9007199254740994LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -9007199254740991.5L, -9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.25L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.5L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.75L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.5L, -9007199254740993LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -9007199254740991.4999999999999L, -9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.4999999999999L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.4999999999999L, -9007199254740993LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740991.5000000000001L, -9007199254740991LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740992.5000000000001L, -9007199254740992LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9007199254740993.5000000000001L, -9007199254740993LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, 72057594037927935.5L, 72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.25L, 72057594037927937LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.5L, 72057594037927937LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927936.75L, 72057594037927937LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 72057594037927937.5L, 72057594037927938LL, INEXACT_EXCEPTION),
+
+    TEST_f_L (llrint, -72057594037927935.5L, -72057594037927935LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.25L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.5L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927936.75L, -72057594037927936LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -72057594037927937.5L, -72057594037927937LL, INEXACT_EXCEPTION),
+
+# if LDBL_MANT_DIG > 100
+    TEST_f_L (llrint, 9223372036854775805.5L, 9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775805.5L, -9223372036854775805LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.0L, 9223372036854775806LL, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.0L, -9223372036854775806LL, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.25L, 9223372036854775807LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.25L, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.5L, 9223372036854775807L, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.5L, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775806.75L, 9223372036854775807LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775806.75L, -9223372036854775806LL, INEXACT_EXCEPTION),
+    TEST_f_L (llrint, 9223372036854775807.0L, 9223372036854775807LL, NO_INEXACT_EXCEPTION),
+    TEST_f_L (llrint, -9223372036854775807.0L, -9223372036854775807LL, NO_INEXACT_EXCEPTION),
+# endif
+#endif
+  };
+
+static void
+llrint_test_upward (void)
+{
+  START (llrint_upward);
+  RUN_TEST_LOOP_f_L (llrint, llrint_upward_test_data, FE_UPWARD);
+  END;
 }
 
 
@@ -7768,13 +10055,15 @@ static const struct test_f_f_data log_test_data[] =
     TEST_f_f (log, plus_infty, plus_infty),
     TEST_f_f (log, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (log),
+    AUTO_TESTS_f_f (log, tonearest),
   };
 
 static void
 log_test (void)
 {
-  ALL_RM_TEST (log, 0, log_test_data, RUN_TEST_LOOP_f_f, END);
+  START (log);
+  RUN_TEST_LOOP_f_f (log, log_test_data, );
+  END;
 }
 
 
@@ -7791,13 +10080,15 @@ static const struct test_f_f_data log10_test_data[] =
     TEST_f_f (log10, plus_infty, plus_infty),
     TEST_f_f (log10, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (log10),
+    AUTO_TESTS_f_f (log10, tonearest),
   };
 
 static void
 log10_test (void)
 {
-  ALL_RM_TEST (log10, 0, log10_test_data, RUN_TEST_LOOP_f_f, END);
+  START (log10);
+  RUN_TEST_LOOP_f_f (log10, log10_test_data, );
+  END;
 }
 
 
@@ -7811,13 +10102,15 @@ static const struct test_f_f_data log1p_test_data[] =
     TEST_f_f (log1p, plus_infty, plus_infty),
     TEST_f_f (log1p, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (log1p),
+    AUTO_TESTS_f_f (log1p, tonearest),
   };
 
 static void
 log1p_test (void)
 {
-  ALL_RM_TEST (log1p, 0, log1p_test_data, RUN_TEST_LOOP_f_f, END);
+  START (log1p);
+  RUN_TEST_LOOP_f_f (log1p, log1p_test_data, );
+  END;
 }
 
 
@@ -7833,13 +10126,15 @@ static const struct test_f_f_data log2_test_data[] =
     TEST_f_f (log2, plus_infty, plus_infty),
     TEST_f_f (log2, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (log2),
+    AUTO_TESTS_f_f (log2, tonearest),
   };
 
 static void
 log2_test (void)
 {
-  ALL_RM_TEST (log2, 0, log2_test_data, RUN_TEST_LOOP_f_f, END);
+  START (log2);
+  RUN_TEST_LOOP_f_f (log2, log2_test_data, );
+  END;
 }
 
 
@@ -7878,7 +10173,31 @@ static const struct test_f_f_data logb_test_data[] =
 static void
 logb_test (void)
 {
-  ALL_RM_TEST (logb, 1, logb_test_data, RUN_TEST_LOOP_f_f, END);
+  START (logb);
+  RUN_TEST_LOOP_f_f (logb, logb_test_data, );
+  END;
+}
+
+static const struct test_f_f_data logb_downward_test_data[] =
+  {
+    /* IEEE 754-2008 says (section 5.3.3) that "logB(1) is +0.".  Libm
+       should not return -0 from logb in any rounding mode.  PowerPC32 has
+       failed with this test for power4 logb (and logbl on all PowerPC
+       platforms) in the past due to instruction selection.  GCC PR 52775
+       provides the availability of the fcfid insn in 32-bit mode which
+       eliminates the use of fsub in this instance and prevents the negative
+       signed 0.0.  */
+
+    /* BZ #887  */
+    TEST_f_f (logb, 1.000e+0, plus_zero, NO_INEXACT_EXCEPTION),
+  };
+
+static void
+logb_test_downward (void)
+{
+  START (logb_downward);
+  RUN_TEST_LOOP_f_f (logb, logb_downward_test_data, FE_DOWNWARD);
+  END;
 }
 
 static const struct test_f_l_data lround_test_data[] =
@@ -7924,7 +10243,9 @@ static const struct test_f_l_data lround_test_data[] =
 static void
 lround_test (void)
 {
-  ALL_RM_TEST (lround, 1, lround_test_data, RUN_TEST_LOOP_f_l, END);
+  START (lround);
+  RUN_TEST_LOOP_f_l (lround, lround_test_data, );
+  END;
 }
 
 
@@ -8099,7 +10420,9 @@ static const struct test_f_L_data llround_test_data[] =
 static void
 llround_test (void)
 {
-  ALL_RM_TEST (llround, 1, llround_test_data, RUN_TEST_LOOP_f_L, END);
+  START (llround);
+  RUN_TEST_LOOP_f_L (llround, llround_test_data, );
+  END;
 }
 
 static const struct test_fF_f1_data modf_test_data[] =
@@ -8121,158 +10444,65 @@ modf_test (void)
 {
   FLOAT x;
 
-  ALL_RM_TEST (modf, 1, modf_test_data, RUN_TEST_LOOP_fF_f1, END, x);
+  START (modf);
+  RUN_TEST_LOOP_fF_f1 (modf, modf_test_data, , x);
+  END;
 }
 
 
 static const struct test_f_f_data nearbyint_test_data[] =
   {
-    TEST_f_f (nearbyint, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, plus_infty, plus_infty, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, minus_infty, minus_infty, NO_INEXACT_EXCEPTION),
-
-    TEST_f_f (nearbyint, 4.5, 4.0, NO_INEXACT_EXCEPTION, 4.0, NO_INEXACT_EXCEPTION, 4.0, NO_INEXACT_EXCEPTION, 5.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 3.5, 3.0, NO_INEXACT_EXCEPTION, 4.0, NO_INEXACT_EXCEPTION, 3.0, NO_INEXACT_EXCEPTION, 4.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 2.5, 2.0, NO_INEXACT_EXCEPTION, 2.0, NO_INEXACT_EXCEPTION, 2.0, NO_INEXACT_EXCEPTION, 3.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 2.0, 2.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 1.5, 1.0, NO_INEXACT_EXCEPTION, 2.0, NO_INEXACT_EXCEPTION, 1.0, NO_INEXACT_EXCEPTION, 2.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 1.0, 1.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 0.5, 0.0, NO_INEXACT_EXCEPTION, 0.0, NO_INEXACT_EXCEPTION, 0.0, NO_INEXACT_EXCEPTION, 1.0, NO_INEXACT_EXCEPTION),
     TEST_f_f (nearbyint, 0.0, 0.0, NO_INEXACT_EXCEPTION),
     TEST_f_f (nearbyint, minus_zero, minus_zero, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -0.5, -1.0, NO_INEXACT_EXCEPTION, -0.0, NO_INEXACT_EXCEPTION, -0.0, NO_INEXACT_EXCEPTION, -0.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -1.0, -1.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -1.5, -2.0, NO_INEXACT_EXCEPTION, -2.0, NO_INEXACT_EXCEPTION, -1.0, NO_INEXACT_EXCEPTION, -1.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -2.0, -2.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -2.5, -3.0, NO_INEXACT_EXCEPTION, -2.0, NO_INEXACT_EXCEPTION, -2.0, NO_INEXACT_EXCEPTION, -2.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -3.5, -4.0, NO_INEXACT_EXCEPTION, -4.0, NO_INEXACT_EXCEPTION, -3.0, NO_INEXACT_EXCEPTION, -3.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -4.5, -5.0, NO_INEXACT_EXCEPTION, -4.0, NO_INEXACT_EXCEPTION, -4.0, NO_INEXACT_EXCEPTION, -4.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 0.1, 0.0, NO_INEXACT_EXCEPTION, 0.0, NO_INEXACT_EXCEPTION, 0.0, NO_INEXACT_EXCEPTION, 1.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 0.25, 0.0, NO_INEXACT_EXCEPTION, 0.0, NO_INEXACT_EXCEPTION, 0.0, NO_INEXACT_EXCEPTION, 1.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 0.625, 0.0, NO_INEXACT_EXCEPTION, 1.0, NO_INEXACT_EXCEPTION, 0.0, NO_INEXACT_EXCEPTION, 1.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -0.1, -1.0, NO_INEXACT_EXCEPTION, -0.0, NO_INEXACT_EXCEPTION, -0.0, NO_INEXACT_EXCEPTION, -0.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -0.25, -1.0, NO_INEXACT_EXCEPTION, -0.0, NO_INEXACT_EXCEPTION, -0.0, NO_INEXACT_EXCEPTION, -0.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -0.625, -1.0, NO_INEXACT_EXCEPTION, -1.0, NO_INEXACT_EXCEPTION, -0.0, NO_INEXACT_EXCEPTION, -0.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 262144.75, 262144.0, NO_INEXACT_EXCEPTION, 262145.0, NO_INEXACT_EXCEPTION, 262144.0, NO_INEXACT_EXCEPTION, 262145.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 262142.75, 262142.0, NO_INEXACT_EXCEPTION, 262143.0, NO_INEXACT_EXCEPTION, 262142.0, NO_INEXACT_EXCEPTION, 262143.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 524286.75, 524286.0, NO_INEXACT_EXCEPTION, 524287.0, NO_INEXACT_EXCEPTION, 524286.0, NO_INEXACT_EXCEPTION, 524287.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 524288.75, 524288.0, NO_INEXACT_EXCEPTION, 524289.0, NO_INEXACT_EXCEPTION, 524288.0, NO_INEXACT_EXCEPTION, 524289.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 1048576.75, 1048576.0, NO_INEXACT_EXCEPTION, 1048577.0, NO_INEXACT_EXCEPTION, 1048576.0, NO_INEXACT_EXCEPTION, 1048577.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 2097152.75, 2097152.0, NO_INEXACT_EXCEPTION, 2097153.0, NO_INEXACT_EXCEPTION, 2097152.0, NO_INEXACT_EXCEPTION, 2097153.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 2492472.75, 2492472.0, NO_INEXACT_EXCEPTION, 2492473.0, NO_INEXACT_EXCEPTION, 2492472.0, NO_INEXACT_EXCEPTION, 2492473.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 2886220.75, 2886220.0, NO_INEXACT_EXCEPTION, 2886221.0, NO_INEXACT_EXCEPTION, 2886220.0, NO_INEXACT_EXCEPTION, 2886221.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 3058792.75, 3058792.0, NO_INEXACT_EXCEPTION, 3058793.0, NO_INEXACT_EXCEPTION, 3058792.0, NO_INEXACT_EXCEPTION, 3058793.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -1048576.75, -1048577.0, NO_INEXACT_EXCEPTION, -1048577.0, NO_INEXACT_EXCEPTION, -1048576.0, NO_INEXACT_EXCEPTION, -1048576.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -2097152.75, -2097153.0, NO_INEXACT_EXCEPTION, -2097153.0, NO_INEXACT_EXCEPTION, -2097152.0, NO_INEXACT_EXCEPTION, -2097152.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -2492472.75, -2492473.0, NO_INEXACT_EXCEPTION, -2492473.0, NO_INEXACT_EXCEPTION, -2492472.0, NO_INEXACT_EXCEPTION, -2492472.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -2886220.75, -2886221.0, NO_INEXACT_EXCEPTION, -2886221.0, NO_INEXACT_EXCEPTION, -2886220.0, NO_INEXACT_EXCEPTION, -2886220.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -3058792.75, -3058793.0, NO_INEXACT_EXCEPTION, -3058793.0, NO_INEXACT_EXCEPTION, -3058792.0, NO_INEXACT_EXCEPTION, -3058792.0, NO_INEXACT_EXCEPTION),
-#ifndef TEST_FLOAT
-    TEST_f_f (nearbyint, 70368744177664.75, 70368744177664.0, NO_INEXACT_EXCEPTION, 70368744177665.0, NO_INEXACT_EXCEPTION, 70368744177664.0, NO_INEXACT_EXCEPTION, 70368744177665.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 140737488355328.75, 140737488355328.0, NO_INEXACT_EXCEPTION, 140737488355329.0, NO_INEXACT_EXCEPTION, 140737488355328.0, NO_INEXACT_EXCEPTION, 140737488355329.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 281474976710656.75, 281474976710656.0, NO_INEXACT_EXCEPTION, 281474976710657.0, NO_INEXACT_EXCEPTION, 281474976710656.0, NO_INEXACT_EXCEPTION, 281474976710657.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 562949953421312.75, 562949953421312.0, NO_INEXACT_EXCEPTION, 562949953421313.0, NO_INEXACT_EXCEPTION, 562949953421312.0, NO_INEXACT_EXCEPTION, 562949953421313.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 1125899906842624.75, 1125899906842624.0, NO_INEXACT_EXCEPTION, 1125899906842625.0, NO_INEXACT_EXCEPTION, 1125899906842624.0, NO_INEXACT_EXCEPTION, 1125899906842625.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -70368744177664.75, -70368744177665.0, NO_INEXACT_EXCEPTION, -70368744177665.0, NO_INEXACT_EXCEPTION, -70368744177664.0, NO_INEXACT_EXCEPTION, -70368744177664.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -140737488355328.75, -140737488355329.0, NO_INEXACT_EXCEPTION, -140737488355329.0, NO_INEXACT_EXCEPTION, -140737488355328.0, NO_INEXACT_EXCEPTION, -140737488355328.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -281474976710656.75, -281474976710657.0, NO_INEXACT_EXCEPTION, -281474976710657.0, NO_INEXACT_EXCEPTION, -281474976710656.0, NO_INEXACT_EXCEPTION, -281474976710656.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -562949953421312.75, -562949953421313.0, NO_INEXACT_EXCEPTION, -562949953421313.0, NO_INEXACT_EXCEPTION, -562949953421312.0, NO_INEXACT_EXCEPTION, -562949953421312.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -1125899906842624.75, -1125899906842625.0, NO_INEXACT_EXCEPTION, -1125899906842625.0, NO_INEXACT_EXCEPTION, -1125899906842624.0, NO_INEXACT_EXCEPTION, -1125899906842624.0, NO_INEXACT_EXCEPTION),
-#endif
-#ifdef TEST_LDOUBLE
-    /* The result can only be represented in long double.  */
-    TEST_f_f (nearbyint, 4503599627370495.5L, 4503599627370495.0L, NO_INEXACT_EXCEPTION, 4503599627370496.0L, NO_INEXACT_EXCEPTION, 4503599627370495.0L, NO_INEXACT_EXCEPTION, 4503599627370496.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 4503599627370496.25L, 4503599627370496.0L, NO_INEXACT_EXCEPTION, 4503599627370496.0L, NO_INEXACT_EXCEPTION, 4503599627370496.0L, NO_INEXACT_EXCEPTION, 4503599627370497.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 4503599627370496.5L, 4503599627370496.0L, NO_INEXACT_EXCEPTION, 4503599627370496.0L, NO_INEXACT_EXCEPTION, 4503599627370496.0L, NO_INEXACT_EXCEPTION, 4503599627370497.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 4503599627370496.75L, 4503599627370496.0L, NO_INEXACT_EXCEPTION, 4503599627370497.0L, NO_INEXACT_EXCEPTION, 4503599627370496.0L, NO_INEXACT_EXCEPTION, 4503599627370497.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 4503599627370497.5L, 4503599627370497.0L, NO_INEXACT_EXCEPTION, 4503599627370498.0L, NO_INEXACT_EXCEPTION, 4503599627370497.0L, NO_INEXACT_EXCEPTION, 4503599627370498.0L, NO_INEXACT_EXCEPTION),
-# if LDBL_MANT_DIG > 100
-    TEST_f_f (nearbyint, 1024.5000000000001L, 1024.0L, NO_INEXACT_EXCEPTION, 1025.0L, NO_INEXACT_EXCEPTION, 1024.0L, NO_INEXACT_EXCEPTION, 1025.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 1025.5000000000001L, 1025.0L, NO_INEXACT_EXCEPTION, 1026.0L, NO_INEXACT_EXCEPTION, 1025.0L, NO_INEXACT_EXCEPTION, 1026.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -1024.5000000000001L, -1025.0L, NO_INEXACT_EXCEPTION, -1025.0L, NO_INEXACT_EXCEPTION, -1024.0L, NO_INEXACT_EXCEPTION, -1024.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -1025.5000000000001L, -1026.0L, NO_INEXACT_EXCEPTION, -1026.0L, NO_INEXACT_EXCEPTION, -1025.0L, NO_INEXACT_EXCEPTION, -1025.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 4503599627370494.5000000000001L, 4503599627370494.0L, NO_INEXACT_EXCEPTION, 4503599627370495.0L, NO_INEXACT_EXCEPTION, 4503599627370494.0L, NO_INEXACT_EXCEPTION, 4503599627370495.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 4503599627370495.5000000000001L, 4503599627370495.0L, NO_INEXACT_EXCEPTION, 4503599627370496.0L, NO_INEXACT_EXCEPTION, 4503599627370495.0L, NO_INEXACT_EXCEPTION, 4503599627370496.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 4503599627370496.5000000000001L, 4503599627370496.0L, NO_INEXACT_EXCEPTION, 4503599627370497.0L, NO_INEXACT_EXCEPTION, 4503599627370496.0L, NO_INEXACT_EXCEPTION, 4503599627370497.0L, NO_INEXACT_EXCEPTION),
-# endif
-    TEST_f_f (nearbyint, -4503599627370495.5L, -4503599627370496.0L, NO_INEXACT_EXCEPTION, -4503599627370496.0L, NO_INEXACT_EXCEPTION, -4503599627370495.0L, NO_INEXACT_EXCEPTION, -4503599627370495.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -4503599627370496.25L, -4503599627370497.0L, NO_INEXACT_EXCEPTION, -4503599627370496.0L, NO_INEXACT_EXCEPTION, -4503599627370496.0L, NO_INEXACT_EXCEPTION, -4503599627370496.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -4503599627370496.5L, -4503599627370497.0L, NO_INEXACT_EXCEPTION, -4503599627370496.0L, NO_INEXACT_EXCEPTION, -4503599627370496.0L, NO_INEXACT_EXCEPTION, -4503599627370496.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -4503599627370496.75L, -4503599627370497.0L, NO_INEXACT_EXCEPTION, -4503599627370497.0L, NO_INEXACT_EXCEPTION, -4503599627370496.0L, NO_INEXACT_EXCEPTION, -4503599627370496.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -4503599627370497.5L, -4503599627370498.0L, NO_INEXACT_EXCEPTION, -4503599627370498.0L, NO_INEXACT_EXCEPTION, -4503599627370497.0L, NO_INEXACT_EXCEPTION, -4503599627370497.0L, NO_INEXACT_EXCEPTION),
-# if LDBL_MANT_DIG > 100
-    TEST_f_f (nearbyint, -4503599627370494.5000000000001L, -4503599627370495.0L, NO_INEXACT_EXCEPTION, -4503599627370495.0L, NO_INEXACT_EXCEPTION, -4503599627370494.0L, NO_INEXACT_EXCEPTION, -4503599627370494.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -4503599627370495.5000000000001L, -4503599627370496.0L, NO_INEXACT_EXCEPTION, -4503599627370496.0L, NO_INEXACT_EXCEPTION, -4503599627370495.0L, NO_INEXACT_EXCEPTION, -4503599627370495.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -4503599627370496.5000000000001L, -4503599627370497.0L, NO_INEXACT_EXCEPTION, -4503599627370497.0L, NO_INEXACT_EXCEPTION, -4503599627370496.0L, NO_INEXACT_EXCEPTION, -4503599627370496.0L, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, plus_infty, plus_infty, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, minus_infty, minus_infty, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    TEST_f_f (nearbyint, 9007199254740991.0000000000001L, 9007199254740991.0L, NO_INEXACT_EXCEPTION, 9007199254740991.0L, NO_INEXACT_EXCEPTION, 9007199254740991.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 9007199254740992.0000000000001L, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740993.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 9007199254740993.0000000000001L, 9007199254740993.0L, NO_INEXACT_EXCEPTION, 9007199254740993.0L, NO_INEXACT_EXCEPTION, 9007199254740993.0L, NO_INEXACT_EXCEPTION, 9007199254740994.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 9007199254740991.5000000000001L, 9007199254740991.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740991.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 9007199254740992.5000000000001L, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740993.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740993.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 9007199254740993.5000000000001L, 9007199254740993.0L, NO_INEXACT_EXCEPTION, 9007199254740994.0L, NO_INEXACT_EXCEPTION, 9007199254740993.0L, NO_INEXACT_EXCEPTION, 9007199254740994.0L, NO_INEXACT_EXCEPTION),
-
-    TEST_f_f (nearbyint, -9007199254740991.0000000000001L, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740991.0L, NO_INEXACT_EXCEPTION, -9007199254740991.0L, NO_INEXACT_EXCEPTION, -9007199254740991.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -9007199254740992.0000000000001L, -9007199254740993.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -9007199254740993.0000000000001L, -9007199254740994.0L, NO_INEXACT_EXCEPTION, -9007199254740993.0L, NO_INEXACT_EXCEPTION, -9007199254740993.0L, NO_INEXACT_EXCEPTION, -9007199254740993.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -9007199254740991.5000000000001L, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740991.0L, NO_INEXACT_EXCEPTION, -9007199254740991.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -9007199254740992.5000000000001L, -9007199254740993.0L, NO_INEXACT_EXCEPTION, -9007199254740993.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -9007199254740993.5000000000001L, -9007199254740994.0L, NO_INEXACT_EXCEPTION, -9007199254740994.0L, NO_INEXACT_EXCEPTION, -9007199254740993.0L, NO_INEXACT_EXCEPTION, -9007199254740993.0L, NO_INEXACT_EXCEPTION),
-# endif
-
-    TEST_f_f (nearbyint, 9007199254740991.5L, 9007199254740991.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740991.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 9007199254740992.25L, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740993.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 9007199254740992.5L, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740993.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 9007199254740992.75L, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740993.0L, NO_INEXACT_EXCEPTION, 9007199254740992.0L, NO_INEXACT_EXCEPTION, 9007199254740993.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 9007199254740993.5L, 9007199254740993.0L, NO_INEXACT_EXCEPTION, 9007199254740994.0L, NO_INEXACT_EXCEPTION, 9007199254740993.0L, NO_INEXACT_EXCEPTION, 9007199254740994.0L, NO_INEXACT_EXCEPTION),
-
-    TEST_f_f (nearbyint, -9007199254740991.5L, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740991.0L, NO_INEXACT_EXCEPTION, -9007199254740991.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -9007199254740992.25L, -9007199254740993.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -9007199254740992.5L, -9007199254740993.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -9007199254740992.75L, -9007199254740993.0L, NO_INEXACT_EXCEPTION, -9007199254740993.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION, -9007199254740992.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -9007199254740993.5L, -9007199254740994.0L, NO_INEXACT_EXCEPTION, -9007199254740994.0L, NO_INEXACT_EXCEPTION, -9007199254740993.0L, NO_INEXACT_EXCEPTION, -9007199254740993.0L, NO_INEXACT_EXCEPTION),
-
-    TEST_f_f (nearbyint, 72057594037927935.5L, 72057594037927935.0L, NO_INEXACT_EXCEPTION, 72057594037927936.0L, NO_INEXACT_EXCEPTION, 72057594037927935.0L, NO_INEXACT_EXCEPTION, 72057594037927936.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 72057594037927936.25L, 72057594037927936.0L, NO_INEXACT_EXCEPTION, 72057594037927936.0L, NO_INEXACT_EXCEPTION, 72057594037927936.0L, NO_INEXACT_EXCEPTION, 72057594037927937.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 72057594037927936.5L, 72057594037927936.0L, NO_INEXACT_EXCEPTION, 72057594037927936.0L, NO_INEXACT_EXCEPTION, 72057594037927936.0L, NO_INEXACT_EXCEPTION, 72057594037927937.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 72057594037927936.75L, 72057594037927936.0L, NO_INEXACT_EXCEPTION, 72057594037927937.0L, NO_INEXACT_EXCEPTION, 72057594037927936.0L, NO_INEXACT_EXCEPTION, 72057594037927937.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 72057594037927937.5L, 72057594037927937.0L, NO_INEXACT_EXCEPTION, 72057594037927938.0L, NO_INEXACT_EXCEPTION, 72057594037927937.0L, NO_INEXACT_EXCEPTION, 72057594037927938.0L, NO_INEXACT_EXCEPTION),
-
-    TEST_f_f (nearbyint, -72057594037927935.5L, -72057594037927936.0L, NO_INEXACT_EXCEPTION, -72057594037927936.0L, NO_INEXACT_EXCEPTION, -72057594037927935.0L, NO_INEXACT_EXCEPTION, -72057594037927935.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -72057594037927936.25L, -72057594037927937.0L, NO_INEXACT_EXCEPTION, -72057594037927936.0L, NO_INEXACT_EXCEPTION, -72057594037927936.0L, NO_INEXACT_EXCEPTION, -72057594037927936.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -72057594037927936.5L, -72057594037927937.0L, NO_INEXACT_EXCEPTION, -72057594037927936.0L, NO_INEXACT_EXCEPTION, -72057594037927936.0L, NO_INEXACT_EXCEPTION, -72057594037927936.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -72057594037927936.75L, -72057594037927937.0L, NO_INEXACT_EXCEPTION, -72057594037927937.0L, NO_INEXACT_EXCEPTION, -72057594037927936.0L, NO_INEXACT_EXCEPTION, -72057594037927936.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -72057594037927937.5L, -72057594037927938.0L, NO_INEXACT_EXCEPTION, -72057594037927938.0L, NO_INEXACT_EXCEPTION, -72057594037927937.0L, NO_INEXACT_EXCEPTION, -72057594037927937.0L, NO_INEXACT_EXCEPTION),
-
-# if LDBL_MANT_DIG > 100
-    TEST_f_f (nearbyint, 10141204801825835211973625643007.5L, 10141204801825835211973625643007.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643007.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 10141204801825835211973625643008.25L, 10141204801825835211973625643008.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643009.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 10141204801825835211973625643008.5L, 10141204801825835211973625643008.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643009.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 10141204801825835211973625643008.75L, 10141204801825835211973625643008.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643009.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643009.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, 10141204801825835211973625643009.5L, 10141204801825835211973625643009.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643010.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643009.0L, NO_INEXACT_EXCEPTION, 10141204801825835211973625643010.0L, NO_INEXACT_EXCEPTION),
-# endif
-
-    /* Check cases where first double is a exact integer higher than
-       2^52 and the precision is determined by second long double for
-       IBM long double.  */
-    TEST_f_f (nearbyint,  34503599627370498.515625L, 34503599627370498.0L, NO_INEXACT_EXCEPTION, 34503599627370499.0L, NO_INEXACT_EXCEPTION, 34503599627370498.0L, NO_INEXACT_EXCEPTION, 34503599627370499.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -34503599627370498.515625L, -34503599627370499.0L, NO_INEXACT_EXCEPTION, -34503599627370499.0L, NO_INEXACT_EXCEPTION, -34503599627370498.0L, NO_INEXACT_EXCEPTION, -34503599627370498.0L, NO_INEXACT_EXCEPTION),
-# if LDBL_MANT_DIG >= 106
-    TEST_f_f (nearbyint,  1192568192774434123539907640624.484375L, 1192568192774434123539907640624.0L, NO_INEXACT_EXCEPTION, 1192568192774434123539907640624.0L, NO_INEXACT_EXCEPTION, 1192568192774434123539907640624.0L, NO_INEXACT_EXCEPTION, 1192568192774434123539907640625.0L, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -1192568192774434123539907640624.484375L, -1192568192774434123539907640625.0L, NO_INEXACT_EXCEPTION, -1192568192774434123539907640624.0L, NO_INEXACT_EXCEPTION, -1192568192774434123539907640624.0L, NO_INEXACT_EXCEPTION, -1192568192774434123539907640624.0L, NO_INEXACT_EXCEPTION),
-# endif
-#endif
-
-#ifndef TEST_FLOAT
+    /* Subnormal values */
     TEST_f_f (nearbyint, -8.98847e+307, -8.98847e+307, NO_INEXACT_EXCEPTION),
-    TEST_f_f (nearbyint, -4.45015e-308, -1.0, NO_INEXACT_EXCEPTION, minus_zero, NO_INEXACT_EXCEPTION, minus_zero, NO_INEXACT_EXCEPTION, minus_zero, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -4.45015e-308, minus_zero, NO_INEXACT_EXCEPTION),
+
+    /* Default rounding mode is round to nearest.  */
+    TEST_f_f (nearbyint, 0.5, 0.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, 1.5, 2.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -0.5, minus_zero, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -1.5, -2.0, NO_INEXACT_EXCEPTION),
+
+    TEST_f_f (nearbyint, 262144.75, 262145.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, 262142.75, 262143.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, 524286.75, 524287.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, 524288.75, 524289.0, NO_INEXACT_EXCEPTION),
+
+    TEST_f_f (nearbyint, 1048576.75, 1048577.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, 2097152.75, 2097153.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, 2492472.75, 2492473.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, 2886220.75, 2886221.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, 3058792.75, 3058793.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -1048576.75, -1048577.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -2097152.75, -2097153.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -2492472.75, -2492473.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -2886220.75, -2886221.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -3058792.75, -3058793.0, NO_INEXACT_EXCEPTION),
+#ifndef TEST_FLOAT
+    TEST_f_f (nearbyint, 70368744177664.75, 70368744177665.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, 140737488355328.75, 140737488355329.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, 281474976710656.75, 281474976710657.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, 562949953421312.75, 562949953421313.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, 1125899906842624.75, 1125899906842625.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -70368744177664.75, -70368744177665.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -140737488355328.75, -140737488355329.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -281474976710656.75, -281474976710657.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -562949953421312.75, -562949953421313.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (nearbyint, -1125899906842624.75, -1125899906842625.0, NO_INEXACT_EXCEPTION),
 #endif
   };
 
 static void
 nearbyint_test (void)
 {
-  ALL_RM_TEST (nearbyint, 1, nearbyint_test_data, RUN_TEST_LOOP_f_f, END);
+  START (nearbyint);
+  RUN_TEST_LOOP_f_f (nearbyint, nearbyint_test_data, );
+  END;
 }
 
 static const struct test_ff_f_data nextafter_test_data[] =
@@ -8298,14 +10528,6 @@ static const struct test_ff_f_data nextafter_test_data[] =
     // XXX Enable once gcc is fixed.
     //TEST_ff_f (nextafter, 0x0.00000040000000000000p-16385L, -0.1L, 0x0.0000003ffffffff00000p-16385L),
 #endif
-#if defined TEST_LDOUBLE && LDBL_MANT_DIG == 106
-    TEST_ff_f (nextafter, 1.0L, -10.0L, 1.0L-0x1p-106L, NO_EXCEPTION),
-    TEST_ff_f (nextafter, 1.0L, 10.0L, 1.0L+0x1p-105L, NO_EXCEPTION),
-    TEST_ff_f (nextafter, 1.0L-0x1p-106L, 10.0L, 1.0L, NO_EXCEPTION),
-    TEST_ff_f (nextafter, -1.0L, -10.0L, -1.0L-0x1p-105L, NO_EXCEPTION),
-    TEST_ff_f (nextafter, -1.0L, 10.0L, -1.0L+0x1p-106L, NO_EXCEPTION),
-    TEST_ff_f (nextafter, -1.0L+0x1p-106L, -10.0L, -1.0L, NO_EXCEPTION),
-#endif
 
     /* XXX We need the hexadecimal FP number representation here for further
        tests.  */
@@ -8314,7 +10536,10 @@ static const struct test_ff_f_data nextafter_test_data[] =
 static void
 nextafter_test (void)
 {
-  ALL_RM_TEST (nextafter, 1, nextafter_test_data, RUN_TEST_LOOP_ff_f, END);
+
+  START (nextafter);
+  RUN_TEST_LOOP_ff_f (nextafter, nextafter_test_data, );
+  END;
 }
 
 
@@ -8406,7 +10631,9 @@ static const struct test_ff_f_data_nexttoward nexttoward_test_data[] =
 static void
 nexttoward_test (void)
 {
-  ALL_RM_TEST (nexttoward, 1, nexttoward_test_data, RUN_TEST_LOOP_ff_f, END);
+  START (nexttoward);
+  RUN_TEST_LOOP_ff_f (nexttoward, nexttoward_test_data, );
+  END;
 }
 
 
@@ -8690,13 +10917,75 @@ static const struct test_ff_f_data pow_test_data[] =
     TEST_ff_f (pow, -min_value, 0.5, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_ff_f (pow, -min_value, 1.5, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_ff_f (pow, -min_value, 1000.5, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
-    AUTO_TESTS_ff_f (pow),
+    AUTO_TESTS_ff_f (pow, tonearest),
   };
 
 static void
 pow_test (void)
 {
-  ALL_RM_TEST (pow, 0, pow_test_data, RUN_TEST_LOOP_ff_f, END);
+
+  START (pow);
+  RUN_TEST_LOOP_ff_f (pow, pow_test_data, );
+  END;
+}
+
+
+static const struct test_ff_f_data pow_tonearest_test_data[] =
+  {
+    AUTO_TESTS_ff_f (pow, tonearest),
+  };
+
+static void
+pow_test_tonearest (void)
+{
+  START (pow_tonearest);
+  RUN_TEST_LOOP_ff_f (pow, pow_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_ff_f_data pow_towardzero_test_data[] =
+  {
+    TEST_ff_f (pow, 1.0625L, 1.125L, 1.070582293028761362162622578677070098674L),
+    TEST_ff_f (pow, 1.5L, 1.03125L, 1.519127098714743184071644334163037684948L),
+  };
+
+static void
+pow_test_towardzero (void)
+{
+  START (pow_towardzero);
+  RUN_TEST_LOOP_ff_f (pow, pow_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_ff_f_data pow_downward_test_data[] =
+  {
+    TEST_ff_f (pow, 1.0625L, 1.125L, 1.070582293028761362162622578677070098674L),
+    TEST_ff_f (pow, 1.5L, 1.03125L, 1.519127098714743184071644334163037684948L),
+  };
+
+static void
+pow_test_downward (void)
+{
+  START (pow_downward);
+  RUN_TEST_LOOP_ff_f (pow, pow_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_ff_f_data pow_upward_test_data[] =
+  {
+    TEST_ff_f (pow, 1.0625L, 1.125L, 1.070582293028761362162622578677070098674L),
+    TEST_ff_f (pow, 1.5L, 1.03125L, 1.519127098714743184071644334163037684948L),
+  };
+
+static void
+pow_test_upward (void)
+{
+  START (pow_upward);
+  RUN_TEST_LOOP_ff_f (pow, pow_upward_test_data, FE_UPWARD);
+  END;
 }
 
 
@@ -8733,16 +11022,199 @@ static const struct test_ff_f_data remainder_test_data[] =
 static void
 remainder_test (void)
 {
-  ALL_RM_TEST (remainder, 1, remainder_test_data, RUN_TEST_LOOP_ff_f, END);
+  START (remainder);
+  RUN_TEST_LOOP_ff_f (remainder, remainder_test_data, );
+  END;
 }
 
 static void
 drem_test (void)
 {
+  START (drem);
   /* drem uses the same test data as remainder.  */
-  ALL_RM_TEST (drem, 1, remainder_test_data, RUN_TEST_LOOP_ff_f, END);
+  RUN_TEST_LOOP_ff_f (drem, remainder_test_data, );
+  END;
 }
 
+
+static const struct test_ff_f_data remainder_tonearest_test_data[] =
+  {
+    TEST_ff_f (remainder, 1, 0, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, 1, minus_zero, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, minus_zero, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, 0, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, 1, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, 2, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, minus_zero, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, 0, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, 1, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, 2, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, qnan_value, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (remainder, 0, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (remainder, qnan_value, 0, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+
+    TEST_ff_f (remainder, 7.0, plus_infty, 7.0, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (remainder, 7.0, minus_infty, 7.0, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+
+    TEST_ff_f (remainder, 1.625, 1.0, -0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, -1.625, 1.0, 0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, 1.625, -1.0, -0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, -1.625, -1.0, 0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, 5.0, 2.0, 1.0, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, 3.0, 2.0, -1.0, NO_INEXACT_EXCEPTION),
+  };
+
+static void
+remainder_test_tonearest (void)
+{
+  START (remainder_tonearest);
+  RUN_TEST_LOOP_ff_f (remainder, remainder_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+static void
+drem_test_tonearest (void)
+{
+  START (drem_tonearest);
+  /* drem uses the same test data as remainder.  */
+  RUN_TEST_LOOP_ff_f (drem, remainder_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_ff_f_data remainder_towardzero_test_data[] =
+  {
+    TEST_ff_f (remainder, 1, 0, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, 1, minus_zero, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, minus_zero, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, 0, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, 1, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, 2, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, minus_zero, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, 0, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, 1, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, 2, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, qnan_value, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (remainder, 0, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (remainder, qnan_value, 0, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+
+    TEST_ff_f (remainder, 7.0, plus_infty, 7.0, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (remainder, 7.0, minus_infty, 7.0, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+
+    TEST_ff_f (remainder, 1.625, 1.0, -0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, -1.625, 1.0, 0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, 1.625, -1.0, -0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, -1.625, -1.0, 0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, 5.0, 2.0, 1.0, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, 3.0, 2.0, -1.0, NO_INEXACT_EXCEPTION),
+  };
+
+static void
+remainder_test_towardzero (void)
+{
+  START (remainder_towardzero);
+  RUN_TEST_LOOP_ff_f (remainder, remainder_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+static void
+drem_test_towardzero (void)
+{
+  START (drem_towardzero);
+  /* drem uses the same test data as remainder.  */
+  RUN_TEST_LOOP_ff_f (drem, remainder_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_ff_f_data remainder_downward_test_data[] =
+  {
+    TEST_ff_f (remainder, 1, 0, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, 1, minus_zero, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, minus_zero, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, 0, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, 1, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, 2, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, minus_zero, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, 0, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, 1, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, 2, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, qnan_value, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (remainder, 0, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (remainder, qnan_value, 0, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+
+    TEST_ff_f (remainder, 7.0, plus_infty, 7.0, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (remainder, 7.0, minus_infty, 7.0, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+
+    TEST_ff_f (remainder, 1.625, 1.0, -0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, -1.625, 1.0, 0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, 1.625, -1.0, -0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, -1.625, -1.0, 0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, 5.0, 2.0, 1.0, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, 3.0, 2.0, -1.0, NO_INEXACT_EXCEPTION),
+  };
+
+static void
+remainder_test_downward (void)
+{
+  START (remainder_downward);
+  RUN_TEST_LOOP_ff_f (remainder, remainder_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+static void
+drem_test_downward (void)
+{
+  START (drem_downward);
+  /* drem uses the same test data as remainder.  */
+  RUN_TEST_LOOP_ff_f (drem, remainder_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_ff_f_data remainder_upward_test_data[] =
+  {
+    TEST_ff_f (remainder, 1, 0, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, 1, minus_zero, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, minus_zero, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, 0, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, 1, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, plus_infty, 2, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, minus_zero, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, 0, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, 1, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, minus_infty, 2, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (remainder, qnan_value, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (remainder, 0, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (remainder, qnan_value, 0, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+
+    TEST_ff_f (remainder, 7.0, plus_infty, 7.0, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (remainder, 7.0, minus_infty, 7.0, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+
+    TEST_ff_f (remainder, 1.625, 1.0, -0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, -1.625, 1.0, 0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, 1.625, -1.0, -0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, -1.625, -1.0, 0.375, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, 5.0, 2.0, 1.0, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (remainder, 3.0, 2.0, -1.0, NO_INEXACT_EXCEPTION),
+  };
+
+static void
+remainder_test_upward (void)
+{
+  START (remainder_upward);
+  RUN_TEST_LOOP_ff_f (remainder, remainder_upward_test_data, FE_UPWARD);
+  END;
+}
+
+static void
+drem_test_upward (void)
+{
+  START (drem_upward);
+  /* drem uses the same test data as remainder.  */
+  RUN_TEST_LOOP_ff_f (drem, remainder_upward_test_data, FE_UPWARD);
+  END;
+}
 
 static const struct test_ffI_f1_data remquo_test_data[] =
   {
@@ -8764,159 +11236,464 @@ static const struct test_ffI_f1_data remquo_test_data[] =
 static void
 remquo_test (void)
 {
+  /* x is needed.  */
   int x;
 
-  ALL_RM_TEST (remquo, 1, remquo_test_data, RUN_TEST_LOOP_ffI_f1, END, x);
+  START (remquo);
+  RUN_TEST_LOOP_ffI_f1 (remquo, remquo_test_data, , x);
+  END;
 }
 
 static const struct test_f_f_data rint_test_data[] =
   {
-    TEST_f_f (rint, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
+    /* TODO: missing qNaN tests.  */
+
+    TEST_f_f (rint, 0.0, 0.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, minus_zero, minus_zero, NO_INEXACT_EXCEPTION),
     TEST_f_f (rint, plus_infty, plus_infty, NO_INEXACT_EXCEPTION),
     TEST_f_f (rint, minus_infty, minus_infty, NO_INEXACT_EXCEPTION),
 
-    TEST_f_f (rint, 4.5, 4.0, INEXACT_EXCEPTION, 4.0, INEXACT_EXCEPTION, 4.0, INEXACT_EXCEPTION, 5.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 3.5, 3.0, INEXACT_EXCEPTION, 4.0, INEXACT_EXCEPTION, 3.0, INEXACT_EXCEPTION, 4.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 2.5, 2.0, INEXACT_EXCEPTION, 2.0, INEXACT_EXCEPTION, 2.0, INEXACT_EXCEPTION, 3.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 2.0, 2.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (rint, 1.5, 1.0, INEXACT_EXCEPTION, 2.0, INEXACT_EXCEPTION, 1.0, INEXACT_EXCEPTION, 2.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 1.0, 1.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (rint, 0.5, 0.0, INEXACT_EXCEPTION, 0.0, INEXACT_EXCEPTION, 0.0, INEXACT_EXCEPTION, 1.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 0.0, 0.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (rint, minus_zero, minus_zero, NO_INEXACT_EXCEPTION),
-    TEST_f_f (rint, -0.5, -1.0, INEXACT_EXCEPTION, -0.0, INEXACT_EXCEPTION, -0.0, INEXACT_EXCEPTION, -0.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -1.0, -1.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (rint, -1.5, -2.0, INEXACT_EXCEPTION, -2.0, INEXACT_EXCEPTION, -1.0, INEXACT_EXCEPTION, -1.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -2.0, -2.0, NO_INEXACT_EXCEPTION),
-    TEST_f_f (rint, -2.5, -3.0, INEXACT_EXCEPTION, -2.0, INEXACT_EXCEPTION, -2.0, INEXACT_EXCEPTION, -2.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -3.5, -4.0, INEXACT_EXCEPTION, -4.0, INEXACT_EXCEPTION, -3.0, INEXACT_EXCEPTION, -3.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -4.5, -5.0, INEXACT_EXCEPTION, -4.0, INEXACT_EXCEPTION, -4.0, INEXACT_EXCEPTION, -4.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 0.1, 0.0, INEXACT_EXCEPTION, 0.0, INEXACT_EXCEPTION, 0.0, INEXACT_EXCEPTION, 1.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 0.25, 0.0, INEXACT_EXCEPTION, 0.0, INEXACT_EXCEPTION, 0.0, INEXACT_EXCEPTION, 1.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 0.625, 0.0, INEXACT_EXCEPTION, 1.0, INEXACT_EXCEPTION, 0.0, INEXACT_EXCEPTION, 1.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -0.1, -1.0, INEXACT_EXCEPTION, -0.0, INEXACT_EXCEPTION, -0.0, INEXACT_EXCEPTION, -0.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -0.25, -1.0, INEXACT_EXCEPTION, -0.0, INEXACT_EXCEPTION, -0.0, INEXACT_EXCEPTION, -0.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -0.625, -1.0, INEXACT_EXCEPTION, -1.0, INEXACT_EXCEPTION, -0.0, INEXACT_EXCEPTION, -0.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 262144.75, 262144.0, INEXACT_EXCEPTION, 262145.0, INEXACT_EXCEPTION, 262144.0, INEXACT_EXCEPTION, 262145.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 262142.75, 262142.0, INEXACT_EXCEPTION, 262143.0, INEXACT_EXCEPTION, 262142.0, INEXACT_EXCEPTION, 262143.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 524286.75, 524286.0, INEXACT_EXCEPTION, 524287.0, INEXACT_EXCEPTION, 524286.0, INEXACT_EXCEPTION, 524287.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 524288.75, 524288.0, INEXACT_EXCEPTION, 524289.0, INEXACT_EXCEPTION, 524288.0, INEXACT_EXCEPTION, 524289.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 1048576.75, 1048576.0, INEXACT_EXCEPTION, 1048577.0, INEXACT_EXCEPTION, 1048576.0, INEXACT_EXCEPTION, 1048577.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 2097152.75, 2097152.0, INEXACT_EXCEPTION, 2097153.0, INEXACT_EXCEPTION, 2097152.0, INEXACT_EXCEPTION, 2097153.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 2492472.75, 2492472.0, INEXACT_EXCEPTION, 2492473.0, INEXACT_EXCEPTION, 2492472.0, INEXACT_EXCEPTION, 2492473.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 2886220.75, 2886220.0, INEXACT_EXCEPTION, 2886221.0, INEXACT_EXCEPTION, 2886220.0, INEXACT_EXCEPTION, 2886221.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 3058792.75, 3058792.0, INEXACT_EXCEPTION, 3058793.0, INEXACT_EXCEPTION, 3058792.0, INEXACT_EXCEPTION, 3058793.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -1048576.75, -1048577.0, INEXACT_EXCEPTION, -1048577.0, INEXACT_EXCEPTION, -1048576.0, INEXACT_EXCEPTION, -1048576.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -2097152.75, -2097153.0, INEXACT_EXCEPTION, -2097153.0, INEXACT_EXCEPTION, -2097152.0, INEXACT_EXCEPTION, -2097152.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -2492472.75, -2492473.0, INEXACT_EXCEPTION, -2492473.0, INEXACT_EXCEPTION, -2492472.0, INEXACT_EXCEPTION, -2492472.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -2886220.75, -2886221.0, INEXACT_EXCEPTION, -2886221.0, INEXACT_EXCEPTION, -2886220.0, INEXACT_EXCEPTION, -2886220.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -3058792.75, -3058793.0, INEXACT_EXCEPTION, -3058793.0, INEXACT_EXCEPTION, -3058792.0, INEXACT_EXCEPTION, -3058792.0, INEXACT_EXCEPTION),
+    /* Default rounding mode is round to even.  */
+    TEST_f_f (rint, 0.5, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1.5, 2.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 2.5, 2.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 3.5, 4.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4.5, 4.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.5, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1.5, -2.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -2.5, -2.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -3.5, -4.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4.5, -4.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.1, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.25, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.625, 1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.1, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.25, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.625, -1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 262144.75, 262145.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 262142.75, 262143.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 524286.75, 524287.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 524288.75, 524289.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1048576.75, 1048577.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 2097152.75, 2097153.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1048576.75, -1048577.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -2097152.75, -2097153.0, INEXACT_EXCEPTION),
 #ifndef TEST_FLOAT
-    TEST_f_f (rint, 70368744177664.75, 70368744177664.0, INEXACT_EXCEPTION, 70368744177665.0, INEXACT_EXCEPTION, 70368744177664.0, INEXACT_EXCEPTION, 70368744177665.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 140737488355328.75, 140737488355328.0, INEXACT_EXCEPTION, 140737488355329.0, INEXACT_EXCEPTION, 140737488355328.0, INEXACT_EXCEPTION, 140737488355329.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 281474976710656.75, 281474976710656.0, INEXACT_EXCEPTION, 281474976710657.0, INEXACT_EXCEPTION, 281474976710656.0, INEXACT_EXCEPTION, 281474976710657.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 562949953421312.75, 562949953421312.0, INEXACT_EXCEPTION, 562949953421313.0, INEXACT_EXCEPTION, 562949953421312.0, INEXACT_EXCEPTION, 562949953421313.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 1125899906842624.75, 1125899906842624.0, INEXACT_EXCEPTION, 1125899906842625.0, INEXACT_EXCEPTION, 1125899906842624.0, INEXACT_EXCEPTION, 1125899906842625.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -70368744177664.75, -70368744177665.0, INEXACT_EXCEPTION, -70368744177665.0, INEXACT_EXCEPTION, -70368744177664.0, INEXACT_EXCEPTION, -70368744177664.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -140737488355328.75, -140737488355329.0, INEXACT_EXCEPTION, -140737488355329.0, INEXACT_EXCEPTION, -140737488355328.0, INEXACT_EXCEPTION, -140737488355328.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -281474976710656.75, -281474976710657.0, INEXACT_EXCEPTION, -281474976710657.0, INEXACT_EXCEPTION, -281474976710656.0, INEXACT_EXCEPTION, -281474976710656.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -562949953421312.75, -562949953421313.0, INEXACT_EXCEPTION, -562949953421313.0, INEXACT_EXCEPTION, -562949953421312.0, INEXACT_EXCEPTION, -562949953421312.0, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -1125899906842624.75, -1125899906842625.0, INEXACT_EXCEPTION, -1125899906842625.0, INEXACT_EXCEPTION, -1125899906842624.0, INEXACT_EXCEPTION, -1125899906842624.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 70368744177664.75, 70368744177665.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 140737488355328.75, 140737488355329.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 281474976710656.75, 281474976710657.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 562949953421312.75, 562949953421313.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1125899906842624.75, 1125899906842625.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -70368744177664.75, -70368744177665.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -140737488355328.75, -140737488355329.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -281474976710656.75, -281474976710657.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -562949953421312.75, -562949953421313.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1125899906842624.75, -1125899906842625.0, INEXACT_EXCEPTION),
 #endif
 #ifdef TEST_LDOUBLE
     /* The result can only be represented in long double.  */
-    TEST_f_f (rint, 4503599627370495.5L, 4503599627370495.0L, INEXACT_EXCEPTION, 4503599627370496.0L, INEXACT_EXCEPTION, 4503599627370495.0L, INEXACT_EXCEPTION, 4503599627370496.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 4503599627370496.25L, 4503599627370496.0L, INEXACT_EXCEPTION, 4503599627370496.0L, INEXACT_EXCEPTION, 4503599627370496.0L, INEXACT_EXCEPTION, 4503599627370497.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 4503599627370496.5L, 4503599627370496.0L, INEXACT_EXCEPTION, 4503599627370496.0L, INEXACT_EXCEPTION, 4503599627370496.0L, INEXACT_EXCEPTION, 4503599627370497.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 4503599627370496.75L, 4503599627370496.0L, INEXACT_EXCEPTION, 4503599627370497.0L, INEXACT_EXCEPTION, 4503599627370496.0L, INEXACT_EXCEPTION, 4503599627370497.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 4503599627370497.5L, 4503599627370497.0L, INEXACT_EXCEPTION, 4503599627370498.0L, INEXACT_EXCEPTION, 4503599627370497.0L, INEXACT_EXCEPTION, 4503599627370498.0L, INEXACT_EXCEPTION),
-# if LDBL_MANT_DIG > 100
-    TEST_f_f (rint, 1024.5000000000001L, 1024.0L, INEXACT_EXCEPTION, 1025.0L, INEXACT_EXCEPTION, 1024.0L, INEXACT_EXCEPTION, 1025.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 1025.5000000000001L, 1025.0L, INEXACT_EXCEPTION, 1026.0L, INEXACT_EXCEPTION, 1025.0L, INEXACT_EXCEPTION, 1026.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -1024.5000000000001L, -1025.0L, INEXACT_EXCEPTION, -1025.0L, INEXACT_EXCEPTION, -1024.0L, INEXACT_EXCEPTION, -1024.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -1025.5000000000001L, -1026.0L, INEXACT_EXCEPTION, -1026.0L, INEXACT_EXCEPTION, -1025.0L, INEXACT_EXCEPTION, -1025.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 4503599627370494.5000000000001L, 4503599627370494.0L, INEXACT_EXCEPTION, 4503599627370495.0L, INEXACT_EXCEPTION, 4503599627370494.0L, INEXACT_EXCEPTION, 4503599627370495.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 4503599627370495.5000000000001L, 4503599627370495.0L, INEXACT_EXCEPTION, 4503599627370496.0L, INEXACT_EXCEPTION, 4503599627370495.0L, INEXACT_EXCEPTION, 4503599627370496.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 4503599627370496.5000000000001L, 4503599627370496.0L, INEXACT_EXCEPTION, 4503599627370497.0L, INEXACT_EXCEPTION, 4503599627370496.0L, INEXACT_EXCEPTION, 4503599627370497.0L, INEXACT_EXCEPTION),
-# endif
-    TEST_f_f (rint, -4503599627370495.5L, -4503599627370496.0L, INEXACT_EXCEPTION, -4503599627370496.0L, INEXACT_EXCEPTION, -4503599627370495.0L, INEXACT_EXCEPTION, -4503599627370495.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -4503599627370496.25L, -4503599627370497.0L, INEXACT_EXCEPTION, -4503599627370496.0L, INEXACT_EXCEPTION, -4503599627370496.0L, INEXACT_EXCEPTION, -4503599627370496.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -4503599627370496.5L, -4503599627370497.0L, INEXACT_EXCEPTION, -4503599627370496.0L, INEXACT_EXCEPTION, -4503599627370496.0L, INEXACT_EXCEPTION, -4503599627370496.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -4503599627370496.75L, -4503599627370497.0L, INEXACT_EXCEPTION, -4503599627370497.0L, INEXACT_EXCEPTION, -4503599627370496.0L, INEXACT_EXCEPTION, -4503599627370496.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -4503599627370497.5L, -4503599627370498.0L, INEXACT_EXCEPTION, -4503599627370498.0L, INEXACT_EXCEPTION, -4503599627370497.0L, INEXACT_EXCEPTION, -4503599627370497.0L, INEXACT_EXCEPTION),
-# if LDBL_MANT_DIG > 100
-    TEST_f_f (rint, -4503599627370494.5000000000001L, -4503599627370495.0L, INEXACT_EXCEPTION, -4503599627370495.0L, INEXACT_EXCEPTION, -4503599627370494.0L, INEXACT_EXCEPTION, -4503599627370494.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -4503599627370495.5000000000001L, -4503599627370496.0L, INEXACT_EXCEPTION, -4503599627370496.0L, INEXACT_EXCEPTION, -4503599627370495.0L, INEXACT_EXCEPTION, -4503599627370495.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -4503599627370496.5000000000001L, -4503599627370497.0L, INEXACT_EXCEPTION, -4503599627370497.0L, INEXACT_EXCEPTION, -4503599627370496.0L, INEXACT_EXCEPTION, -4503599627370496.0L, INEXACT_EXCEPTION),
-
-    TEST_f_f (rint, 9007199254740991.0000000000001L, 9007199254740991.0L, INEXACT_EXCEPTION, 9007199254740991.0L, INEXACT_EXCEPTION, 9007199254740991.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 9007199254740992.0000000000001L, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740993.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 9007199254740993.0000000000001L, 9007199254740993.0L, INEXACT_EXCEPTION, 9007199254740993.0L, INEXACT_EXCEPTION, 9007199254740993.0L, INEXACT_EXCEPTION, 9007199254740994.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 9007199254740991.5000000000001L, 9007199254740991.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740991.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 9007199254740992.5000000000001L, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740993.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740993.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 9007199254740993.5000000000001L, 9007199254740993.0L, INEXACT_EXCEPTION, 9007199254740994.0L, INEXACT_EXCEPTION, 9007199254740993.0L, INEXACT_EXCEPTION, 9007199254740994.0L, INEXACT_EXCEPTION),
-
-    TEST_f_f (rint, -9007199254740991.0000000000001L, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740991.0L, INEXACT_EXCEPTION, -9007199254740991.0L, INEXACT_EXCEPTION, -9007199254740991.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -9007199254740992.0000000000001L, -9007199254740993.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -9007199254740993.0000000000001L, -9007199254740994.0L, INEXACT_EXCEPTION, -9007199254740993.0L, INEXACT_EXCEPTION, -9007199254740993.0L, INEXACT_EXCEPTION, -9007199254740993.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -9007199254740991.5000000000001L, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740991.0L, INEXACT_EXCEPTION, -9007199254740991.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -9007199254740992.5000000000001L, -9007199254740993.0L, INEXACT_EXCEPTION, -9007199254740993.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -9007199254740993.5000000000001L, -9007199254740994.0L, INEXACT_EXCEPTION, -9007199254740994.0L, INEXACT_EXCEPTION, -9007199254740993.0L, INEXACT_EXCEPTION, -9007199254740993.0L, INEXACT_EXCEPTION),
-# endif
-
-    TEST_f_f (rint, 9007199254740991.5L, 9007199254740991.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740991.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 9007199254740992.25L, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740993.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 9007199254740992.5L, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740993.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 9007199254740992.75L, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740993.0L, INEXACT_EXCEPTION, 9007199254740992.0L, INEXACT_EXCEPTION, 9007199254740993.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 9007199254740993.5L, 9007199254740993.0L, INEXACT_EXCEPTION, 9007199254740994.0L, INEXACT_EXCEPTION, 9007199254740993.0L, INEXACT_EXCEPTION, 9007199254740994.0L, INEXACT_EXCEPTION),
-
-    TEST_f_f (rint, -9007199254740991.5L, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740991.0L, INEXACT_EXCEPTION, -9007199254740991.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -9007199254740992.25L, -9007199254740993.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -9007199254740992.5L, -9007199254740993.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -9007199254740992.75L, -9007199254740993.0L, INEXACT_EXCEPTION, -9007199254740993.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION, -9007199254740992.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -9007199254740993.5L, -9007199254740994.0L, INEXACT_EXCEPTION, -9007199254740994.0L, INEXACT_EXCEPTION, -9007199254740993.0L, INEXACT_EXCEPTION, -9007199254740993.0L, INEXACT_EXCEPTION),
-
-    TEST_f_f (rint, 72057594037927935.5L, 72057594037927935.0L, INEXACT_EXCEPTION, 72057594037927936.0L, INEXACT_EXCEPTION, 72057594037927935.0L, INEXACT_EXCEPTION, 72057594037927936.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 72057594037927936.25L, 72057594037927936.0L, INEXACT_EXCEPTION, 72057594037927936.0L, INEXACT_EXCEPTION, 72057594037927936.0L, INEXACT_EXCEPTION, 72057594037927937.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 72057594037927936.5L, 72057594037927936.0L, INEXACT_EXCEPTION, 72057594037927936.0L, INEXACT_EXCEPTION, 72057594037927936.0L, INEXACT_EXCEPTION, 72057594037927937.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 72057594037927936.75L, 72057594037927936.0L, INEXACT_EXCEPTION, 72057594037927937.0L, INEXACT_EXCEPTION, 72057594037927936.0L, INEXACT_EXCEPTION, 72057594037927937.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 72057594037927937.5L, 72057594037927937.0L, INEXACT_EXCEPTION, 72057594037927938.0L, INEXACT_EXCEPTION, 72057594037927937.0L, INEXACT_EXCEPTION, 72057594037927938.0L, INEXACT_EXCEPTION),
-
-    TEST_f_f (rint, -72057594037927935.5L, -72057594037927936.0L, INEXACT_EXCEPTION, -72057594037927936.0L, INEXACT_EXCEPTION, -72057594037927935.0L, INEXACT_EXCEPTION, -72057594037927935.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -72057594037927936.25L, -72057594037927937.0L, INEXACT_EXCEPTION, -72057594037927936.0L, INEXACT_EXCEPTION, -72057594037927936.0L, INEXACT_EXCEPTION, -72057594037927936.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -72057594037927936.5L, -72057594037927937.0L, INEXACT_EXCEPTION, -72057594037927936.0L, INEXACT_EXCEPTION, -72057594037927936.0L, INEXACT_EXCEPTION, -72057594037927936.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -72057594037927936.75L, -72057594037927937.0L, INEXACT_EXCEPTION, -72057594037927937.0L, INEXACT_EXCEPTION, -72057594037927936.0L, INEXACT_EXCEPTION, -72057594037927936.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -72057594037927937.5L, -72057594037927938.0L, INEXACT_EXCEPTION, -72057594037927938.0L, INEXACT_EXCEPTION, -72057594037927937.0L, INEXACT_EXCEPTION, -72057594037927937.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370495.5L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.25L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.5L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.75L, 4503599627370497.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370497.5L, 4503599627370498.0L, INEXACT_EXCEPTION),
 
 # if LDBL_MANT_DIG > 100
-    TEST_f_f (rint, 10141204801825835211973625643007.5L, 10141204801825835211973625643007.0L, INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION, 10141204801825835211973625643007.0L, INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 10141204801825835211973625643008.25L, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION, 10141204801825835211973625643009.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 10141204801825835211973625643008.5L, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION, 10141204801825835211973625643009.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 10141204801825835211973625643008.75L, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION, 10141204801825835211973625643009.0L, INEXACT_EXCEPTION, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION, 10141204801825835211973625643009.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, 10141204801825835211973625643009.5L, 10141204801825835211973625643009.0L, INEXACT_EXCEPTION, 10141204801825835211973625643010.0L, INEXACT_EXCEPTION, 10141204801825835211973625643009.0L, INEXACT_EXCEPTION, 10141204801825835211973625643010.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370494.5000000000001L, 4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370495.5000000000001L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.5000000000001L, 4503599627370497.0L, INEXACT_EXCEPTION),
 # endif
 
-    /* Check cases where first double is a exact integer higher than
-       2^52 and the precision is determined by second long double for
-       IBM long double.  */
-    TEST_f_f (rint,  34503599627370498.515625L, 34503599627370498.0L, INEXACT_EXCEPTION, 34503599627370499.0L, INEXACT_EXCEPTION, 34503599627370498.0L, INEXACT_EXCEPTION, 34503599627370499.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -34503599627370498.515625L, -34503599627370499.0L, INEXACT_EXCEPTION, -34503599627370499.0L, INEXACT_EXCEPTION, -34503599627370498.0L, INEXACT_EXCEPTION, -34503599627370498.0L, INEXACT_EXCEPTION),
-# if LDBL_MANT_DIG >= 106
-    TEST_f_f (rint,  1192568192774434123539907640624.484375L, 1192568192774434123539907640624.0L, INEXACT_EXCEPTION, 1192568192774434123539907640624.0L, INEXACT_EXCEPTION, 1192568192774434123539907640624.0L, INEXACT_EXCEPTION, 1192568192774434123539907640625.0L, INEXACT_EXCEPTION),
-    TEST_f_f (rint, -1192568192774434123539907640624.484375L, -1192568192774434123539907640625.0L, INEXACT_EXCEPTION, -1192568192774434123539907640624.0L, INEXACT_EXCEPTION, -1192568192774434123539907640624.0L, INEXACT_EXCEPTION, -1192568192774434123539907640624.0L, INEXACT_EXCEPTION),
-# endif
-#endif
+    TEST_f_f (rint, -4503599627370495.5L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.25L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.5L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.75L, -4503599627370497.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370497.5L, -4503599627370498.0L, INEXACT_EXCEPTION),
 
-#ifndef TEST_FLOAT
-    TEST_f_f (rint, -8.98847e+307, -8.98847e+307, NO_INEXACT_EXCEPTION),
-    TEST_f_f (rint, -4.45015e-308, -1.0, INEXACT_EXCEPTION, minus_zero, INEXACT_EXCEPTION, minus_zero, INEXACT_EXCEPTION, minus_zero, INEXACT_EXCEPTION),
+# if LDBL_MANT_DIG > 100
+    TEST_f_f (rint, -4503599627370494.5000000000001L, -4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370495.5000000000001L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.5000000000001L, -4503599627370497.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, 9007199254740991.0000000000001L, 9007199254740991.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.0000000000001L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740993.0000000000001L, 9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740991.5000000000001L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.5000000000001L, 9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740993.5000000000001L, 9007199254740994.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, -9007199254740991.0000000000001L, -9007199254740991.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.0000000000001L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740993.0000000000001L, -9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740991.5000000000001L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.5000000000001L, -9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740993.5000000000001L, -9007199254740994.0L, INEXACT_EXCEPTION),
+# endif
+
+    TEST_f_f (rint, 9007199254740991.5L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.25L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.5L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.75L, 9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740993.5L, 9007199254740994.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, -9007199254740991.5L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.25L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.5L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.75L, -9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740993.5L, -9007199254740994.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, 72057594037927935.5L, 72057594037927936.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 72057594037927936.25L, 72057594037927936.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 72057594037927936.5L, 72057594037927936.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 72057594037927936.75L, 72057594037927937.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 72057594037927937.5L, 72057594037927938.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, -72057594037927935.5L, -72057594037927936.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -72057594037927936.25L, -72057594037927936.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -72057594037927936.5L, -72057594037927936.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -72057594037927936.75L, -72057594037927937.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -72057594037927937.5L, -72057594037927938.0L, INEXACT_EXCEPTION),
+
+# if LDBL_MANT_DIG > 100
+    TEST_f_f (rint, 10141204801825835211973625643007.5L, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 10141204801825835211973625643008.25L, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 10141204801825835211973625643008.5L, 10141204801825835211973625643008.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 10141204801825835211973625643008.75L, 10141204801825835211973625643009.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 10141204801825835211973625643009.5L, 10141204801825835211973625643010.0L, INEXACT_EXCEPTION),
+# endif
 #endif
   };
 
 static void
 rint_test (void)
 {
-  ALL_RM_TEST (rint, 1, rint_test_data, RUN_TEST_LOOP_f_f, END);
+  START (rint);
+  RUN_TEST_LOOP_f_f (rint, rint_test_data, );
+  END;
+}
+
+static const struct test_f_f_data rint_tonearest_test_data[] =
+  {
+    TEST_f_f (rint, 2.0, 2.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1.5, 2.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1.0, 1.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.5, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.0, 0.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, minus_zero, minus_zero, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.5, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1.0, -1.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1.5, -2.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -2.0, -2.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.1, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.25, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.625, 1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.1, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.25, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.625, -1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1048576.75, 1048577.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 2097152.75, 2097153.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1048576.75, -1048577.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -2097152.75, -2097153.0, INEXACT_EXCEPTION),
+#ifndef TEST_FLOAT
+    TEST_f_f (rint, 70368744177664.75, 70368744177665.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 140737488355328.75, 140737488355329.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 281474976710656.75, 281474976710657.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 562949953421312.75, 562949953421313.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1125899906842624.75, 1125899906842625.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -70368744177664.75, -70368744177665.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -140737488355328.75, -140737488355329.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -281474976710656.75, -281474976710657.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -562949953421312.75, -562949953421313.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1125899906842624.75, -1125899906842625.0, INEXACT_EXCEPTION),
+#endif
+#ifdef TEST_LDOUBLE
+    /* The result can only be represented in long double.  */
+    TEST_f_f (rint, 4503599627370495.5L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.25L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.5L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.75L, 4503599627370497.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370497.5L, 4503599627370498.0L, INEXACT_EXCEPTION),
+# if LDBL_MANT_DIG > 100
+    TEST_f_f (rint, 4503599627370494.5000000000001L, 4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370495.5000000000001L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.5000000000001L, 4503599627370497.0L, INEXACT_EXCEPTION),
+# endif
+    TEST_f_f (rint, -4503599627370495.5L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.25L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.5L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.75L, -4503599627370497.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370497.5L, -4503599627370498.0L, INEXACT_EXCEPTION),
+# if LDBL_MANT_DIG > 100
+    TEST_f_f (rint, -4503599627370494.5000000000001L, -4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370495.5000000000001L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.5000000000001L, -4503599627370497.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, 9007199254740991.0000000000001L, 9007199254740991.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.0000000000001L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740993.0000000000001L, 9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740991.5000000000001L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.5000000000001L, 9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740993.5000000000001L, 9007199254740994.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, -9007199254740991.0000000000001L, -9007199254740991.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.0000000000001L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740993.0000000000001L, -9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740991.5000000000001L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.5000000000001L, -9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740993.5000000000001L, -9007199254740994.0L, INEXACT_EXCEPTION),
+# endif
+#endif
+  };
+
+static void
+rint_test_tonearest (void)
+{
+  START (rint_tonearest);
+  RUN_TEST_LOOP_f_f (rint, rint_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+static const struct test_f_f_data rint_towardzero_test_data[] =
+  {
+    TEST_f_f (rint, 2.0, 2.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1.5, 1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1.0, 1.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.5, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.0, 0.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, minus_zero, minus_zero, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.5, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1.0, -1.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1.5, -1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -2.0, -2.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.1, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.25, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.625, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.1, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.25, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.625, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1048576.75, 1048576.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 2097152.75, 2097152.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1048576.75, -1048576.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -2097152.75, -2097152.0, INEXACT_EXCEPTION),
+#ifndef TEST_FLOAT
+    TEST_f_f (rint, 70368744177664.75, 70368744177664.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 140737488355328.75, 140737488355328.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 281474976710656.75, 281474976710656.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 562949953421312.75, 562949953421312.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1125899906842624.75, 1125899906842624.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -70368744177664.75, -70368744177664.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -140737488355328.75, -140737488355328.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -281474976710656.75, -281474976710656.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -562949953421312.75, -562949953421312.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1125899906842624.75, -1125899906842624.0, INEXACT_EXCEPTION),
+#endif
+#ifdef TEST_LDOUBLE
+    /* The result can only be represented in long double.  */
+    TEST_f_f (rint, 4503599627370495.5L, 4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.25L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.5L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.75L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370497.5L, 4503599627370497.0L, INEXACT_EXCEPTION),
+# if LDBL_MANT_DIG > 100
+    TEST_f_f (rint, 4503599627370494.5000000000001L, 4503599627370494.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370495.5000000000001L, 4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.5000000000001L, 4503599627370496.0L, INEXACT_EXCEPTION),
+# endif
+    TEST_f_f (rint, -4503599627370495.5L, -4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.25L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.5L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.75L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370497.5L, -4503599627370497.0L, INEXACT_EXCEPTION),
+# if LDBL_MANT_DIG > 100
+    TEST_f_f (rint, -4503599627370494.5000000000001L, -4503599627370494.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370495.5000000000001L, -4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.5000000000001L, -4503599627370496.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, 9007199254740991.0000000000001L, 9007199254740991.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.0000000000001L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740993.0000000000001L, 9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740991.5000000000001L, 9007199254740991.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.5000000000001L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740993.5000000000001L, 9007199254740993.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, -9007199254740991.0000000000001L, -9007199254740991.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.0000000000001L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740993.0000000000001L, -9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740991.5000000000001L, -9007199254740991.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.5000000000001L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740993.5000000000001L, -9007199254740993.0L, INEXACT_EXCEPTION),
+# endif
+#endif
+  };
+
+static void
+rint_test_towardzero (void)
+{
+  START (rint_towardzero);
+  RUN_TEST_LOOP_f_f (rint, rint_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+static const struct test_f_f_data rint_downward_test_data[] =
+  {
+    TEST_f_f (rint, 2.0, 2.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1.5, 1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1.0, 1.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.5, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.0, 0.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, minus_zero, minus_zero, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.5, -1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1.0, -1.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1.5, -2.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -2.0, -2.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.1, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.25, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.625, 0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.1, -1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.25, -1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.625, -1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1048576.75, 1048576.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 2097152.75, 2097152.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1048576.75, -1048577.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -2097152.75, -2097153.0, INEXACT_EXCEPTION),
+#ifndef TEST_FLOAT
+    TEST_f_f (rint, 70368744177664.75, 70368744177664.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 140737488355328.75, 140737488355328.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 281474976710656.75, 281474976710656.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 562949953421312.75, 562949953421312.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1125899906842624.75, 1125899906842624.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -70368744177664.75, -70368744177665.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -140737488355328.75, -140737488355329.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -281474976710656.75, -281474976710657.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -562949953421312.75, -562949953421313.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1125899906842624.75, -1125899906842625.0, INEXACT_EXCEPTION),
+#endif
+#ifdef TEST_LDOUBLE
+    /* The result can only be represented in long double.  */
+    TEST_f_f (rint, 4503599627370495.5L, 4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.25L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.5L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.75L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370497.5L, 4503599627370497.0L, INEXACT_EXCEPTION),
+# if LDBL_MANT_DIG > 100
+    TEST_f_f (rint, 4503599627370494.5000000000001L, 4503599627370494.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370495.5000000000001L, 4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.5000000000001L, 4503599627370496.0L, INEXACT_EXCEPTION),
+# endif
+    TEST_f_f (rint, -4503599627370495.5L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.25L, -4503599627370497.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.5L, -4503599627370497.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.75L, -4503599627370497.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370497.5L, -4503599627370498.0L, INEXACT_EXCEPTION),
+# if LDBL_MANT_DIG > 100
+    TEST_f_f (rint, -4503599627370494.5000000000001L, -4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370495.5000000000001L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.5000000000001L, -4503599627370497.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, 9007199254740991.0000000000001L, 9007199254740991.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.0000000000001L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740993.0000000000001L, 9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740991.5000000000001L, 9007199254740991.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.5000000000001L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740993.5000000000001L, 9007199254740993.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, -9007199254740991.0000000000001L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.0000000000001L, -9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740993.0000000000001L, -9007199254740994.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740991.5000000000001L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.5000000000001L, -9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740993.5000000000001L, -9007199254740994.0L, INEXACT_EXCEPTION),
+# endif
+#endif
+  };
+
+static void
+rint_test_downward (void)
+{
+  START (rint_downward);
+  RUN_TEST_LOOP_f_f (rint, rint_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+static const struct test_f_f_data rint_upward_test_data[] =
+  {
+    TEST_f_f (rint, 2.0, 2.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1.5, 2.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1.0, 1.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.5, 1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.0, 0.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, minus_zero, minus_zero, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.5, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1.0, -1.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1.5, -1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -2.0, -2.0, NO_INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.1, 1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.25, 1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 0.625, 1.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.1, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.25, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -0.625, -0.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1048576.75, 1048577.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 2097152.75, 2097153.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1048576.75, -1048576.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -2097152.75, -2097152.0, INEXACT_EXCEPTION),
+#ifndef TEST_FLOAT
+    TEST_f_f (rint, 70368744177664.75, 70368744177665.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 140737488355328.75, 140737488355329.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 281474976710656.75, 281474976710657.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 562949953421312.75, 562949953421313.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 1125899906842624.75, 1125899906842625.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -70368744177664.75, -70368744177664.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -140737488355328.75, -140737488355328.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -281474976710656.75, -281474976710656.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -562949953421312.75, -562949953421312.0, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -1125899906842624.75, -1125899906842624.0, INEXACT_EXCEPTION),
+#endif
+#ifdef TEST_LDOUBLE
+    /* The result can only be represented in long double.  */
+    TEST_f_f (rint, 4503599627370495.5L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.25L, 4503599627370497.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.5L, 4503599627370497.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.75L, 4503599627370497.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370497.5L, 4503599627370498.0L, INEXACT_EXCEPTION),
+# if LDBL_MANT_DIG > 100
+    TEST_f_f (rint, 4503599627370494.5000000000001L, 4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370495.5000000000001L, 4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 4503599627370496.5000000000001L, 4503599627370497.0L, INEXACT_EXCEPTION),
+# endif
+    TEST_f_f (rint, -4503599627370495.5L, -4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.25L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.5L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.75L, -4503599627370496.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370497.5L, -4503599627370497.0L, INEXACT_EXCEPTION),
+# if LDBL_MANT_DIG > 100
+    TEST_f_f (rint, -4503599627370494.5000000000001L, -4503599627370494.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370495.5000000000001L, -4503599627370495.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -4503599627370496.5000000000001L, -4503599627370496.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, 9007199254740991.0000000000001L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.0000000000001L, 9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740993.0000000000001L, 9007199254740994.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740991.5000000000001L, 9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740992.5000000000001L, 9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, 9007199254740993.5000000000001L, 9007199254740994.0L, INEXACT_EXCEPTION),
+
+    TEST_f_f (rint, -9007199254740991.0000000000001L, -9007199254740991.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.0000000000001L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740993.0000000000001L, -9007199254740993.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740991.5000000000001L, -9007199254740991.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740992.5000000000001L, -9007199254740992.0L, INEXACT_EXCEPTION),
+    TEST_f_f (rint, -9007199254740993.5000000000001L, -9007199254740993.0L, INEXACT_EXCEPTION),
+# endif
+#endif
+  };
+
+static void
+rint_test_upward (void)
+{
+  START (rint_upward);
+  RUN_TEST_LOOP_f_f (rint, rint_upward_test_data, FE_UPWARD);
+  END;
 }
 
 static const struct test_f_f_data round_test_data[] =
@@ -9007,15 +11784,6 @@ static const struct test_f_f_data round_test_data[] =
     TEST_f_f (round, -72057594037927936.75L, -72057594037927937.0L),
     TEST_f_f (round, -72057594037927937.5L, -72057594037927938.0L),
 
-    /* Check cases where first double is a exact integer higher than 2^52 and
-       the precision is determined by second long double for IBM long double.  */
-    TEST_f_f (round,  34503599627370498.515625L, 34503599627370499.0L),
-    TEST_f_f (round, -34503599627370498.515625L, -34503599627370499.0L),
-# if LDBL_MANT_DIG >= 106
-    TEST_f_f (round,  1192568192774434123539907640624.484375L, 1192568192774434123539907640624.0L),
-    TEST_f_f (round, -1192568192774434123539907640624.484375L, -1192568192774434123539907640624.0L),
-# endif
-
     TEST_f_f (round, 10141204801825835211973625643007.5L, 10141204801825835211973625643008.0L),
     TEST_f_f (round, 10141204801825835211973625643008.25L, 10141204801825835211973625643008.0L),
     TEST_f_f (round, 10141204801825835211973625643008.5L, 10141204801825835211973625643009.0L),
@@ -9027,86 +11795,72 @@ static const struct test_f_f_data round_test_data[] =
 static void
 round_test (void)
 {
-  ALL_RM_TEST (round, 1, round_test_data, RUN_TEST_LOOP_f_f, END);
+  START (round);
+  RUN_TEST_LOOP_f_f (round, round_test_data, );
+  END;
 }
 
 
 static const struct test_ff_f_data scalb_test_data[] =
   {
-    TEST_ff_f (scalb, 2.0, 0.5, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
-    TEST_ff_f (scalb, 3.0, -2.5, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (scalb, 2.0, 0.5, qnan_value, INVALID_EXCEPTION),
+    TEST_ff_f (scalb, 3.0, -2.5, qnan_value, INVALID_EXCEPTION),
 
-    TEST_ff_f (scalb, 0, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, 1, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (scalb, 0, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (scalb, 1, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    TEST_ff_f (scalb, 1, 0, 1, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, -1, 0, -1, ERRNO_UNCHANGED),
+    TEST_ff_f (scalb, 1, 0, 1),
+    TEST_ff_f (scalb, -1, 0, -1),
 
-    TEST_ff_f (scalb, 0, plus_infty, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
-    TEST_ff_f (scalb, minus_zero, plus_infty, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (scalb, 0, plus_infty, qnan_value, INVALID_EXCEPTION),
+    TEST_ff_f (scalb, minus_zero, plus_infty, qnan_value, INVALID_EXCEPTION),
 
-    TEST_ff_f (scalb, 0, 2, 0, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, minus_zero, -4, minus_zero, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, 0, 0, 0, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, minus_zero, 0, minus_zero, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, 0, -1, 0, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, minus_zero, -10, minus_zero, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, 0, minus_infty, 0, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, minus_zero, minus_infty, minus_zero, ERRNO_UNCHANGED),
+    TEST_ff_f (scalb, 0, 2, 0),
+    TEST_ff_f (scalb, minus_zero, -4, minus_zero),
+    TEST_ff_f (scalb, 0, 0, 0),
+    TEST_ff_f (scalb, minus_zero, 0, minus_zero),
+    TEST_ff_f (scalb, 0, -1, 0),
+    TEST_ff_f (scalb, minus_zero, -10, minus_zero),
+    TEST_ff_f (scalb, 0, minus_infty, 0),
+    TEST_ff_f (scalb, minus_zero, minus_infty, minus_zero),
 
-    TEST_ff_f (scalb, plus_infty, -1, plus_infty, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, minus_infty, -10, minus_infty, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, plus_infty, 0, plus_infty, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, minus_infty, 0, minus_infty, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, plus_infty, 2, plus_infty, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, minus_infty, 100, minus_infty, ERRNO_UNCHANGED),
+    TEST_ff_f (scalb, plus_infty, -1, plus_infty),
+    TEST_ff_f (scalb, minus_infty, -10, minus_infty),
+    TEST_ff_f (scalb, plus_infty, 0, plus_infty),
+    TEST_ff_f (scalb, minus_infty, 0, minus_infty),
+    TEST_ff_f (scalb, plus_infty, 2, plus_infty),
+    TEST_ff_f (scalb, minus_infty, 100, minus_infty),
 
-    TEST_ff_f (scalb, 0.1L, minus_infty, 0.0, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, -0.1L, minus_infty, minus_zero, ERRNO_UNCHANGED),
+    TEST_ff_f (scalb, 0.1L, minus_infty, 0.0),
+    TEST_ff_f (scalb, -0.1L, minus_infty, minus_zero),
 
-    TEST_ff_f (scalb, 1, plus_infty, plus_infty, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, -1, plus_infty, minus_infty, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, plus_infty, plus_infty, plus_infty, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, minus_infty, plus_infty, minus_infty, ERRNO_UNCHANGED),
+    TEST_ff_f (scalb, 1, plus_infty, plus_infty),
+    TEST_ff_f (scalb, -1, plus_infty, minus_infty),
+    TEST_ff_f (scalb, plus_infty, plus_infty, plus_infty),
+    TEST_ff_f (scalb, minus_infty, plus_infty, minus_infty),
 
-    TEST_ff_f (scalb, plus_infty, minus_infty, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
-    TEST_ff_f (scalb, minus_infty, minus_infty, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_ff_f (scalb, plus_infty, minus_infty, qnan_value, INVALID_EXCEPTION),
+    TEST_ff_f (scalb, minus_infty, minus_infty, qnan_value, INVALID_EXCEPTION),
 
-    TEST_ff_f (scalb, qnan_value, 1, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, 1, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, qnan_value, 0.5, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, 0.5, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, qnan_value, 0, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, 0, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, qnan_value, plus_infty, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, plus_infty, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, qnan_value, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_ff_f (scalb, qnan_value, 1, qnan_value, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (scalb, 1, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (scalb, qnan_value, 0, qnan_value, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (scalb, 0, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (scalb, qnan_value, plus_infty, qnan_value, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (scalb, plus_infty, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
+    TEST_ff_f (scalb, qnan_value, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    TEST_ff_f (scalb, max_value, max_value, plus_oflow, OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_ff_f (scalb, max_value, -max_value, plus_uflow, UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_ff_f (scalb, 1, max_value, plus_oflow, OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_ff_f (scalb, 1, -max_value, plus_uflow, UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_ff_f (scalb, min_value, max_value, plus_oflow, OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_ff_f (scalb, min_value, -max_value, plus_uflow, UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_ff_f (scalb, min_subnorm_value, max_value, plus_oflow, OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_ff_f (scalb, min_subnorm_value, -max_value, plus_uflow, UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_ff_f (scalb, -max_value, max_value, minus_oflow, OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_ff_f (scalb, -max_value, -max_value, minus_uflow, UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-    TEST_ff_f (scalb, -1, max_value, minus_oflow, OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_ff_f (scalb, -1, -max_value, minus_uflow, UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-    TEST_ff_f (scalb, -min_value, max_value, minus_oflow, OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_ff_f (scalb, -min_value, -max_value, minus_uflow, UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-    TEST_ff_f (scalb, -min_subnorm_value, max_value, minus_oflow, OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_ff_f (scalb, -min_subnorm_value, -max_value, minus_uflow, UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-
-    TEST_ff_f (scalb, 0.8L, 4, 12.8L, ERRNO_UNCHANGED),
-    TEST_ff_f (scalb, -0.854375L, 5, -27.34L, ERRNO_UNCHANGED),
+    TEST_ff_f (scalb, 0.8L, 4, 12.8L),
+    TEST_ff_f (scalb, -0.854375L, 5, -27.34L),
   };
 
 static void
 scalb_test (void)
 {
-  ALL_RM_TEST (scalb, 1, scalb_test_data, RUN_TEST_LOOP_ff_f, END);
+
+  START (scalb);
+  RUN_TEST_LOOP_ff_f (scalb, scalb_test_data, );
+  END;
 }
 
 
@@ -9124,174 +11878,77 @@ static const struct test_fi_f_data scalbn_test_data[] =
 
     TEST_fi_f (scalbn, 1, 0L, 1, NO_INEXACT_EXCEPTION),
 
-    TEST_fi_f (scalbn, min_value / 2, 0, min_value / 2, NO_INEXACT_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value / 2, 0, -min_value / 2, NO_INEXACT_EXCEPTION),
-    TEST_fi_f (scalbn, min_value / 2, 1, min_value, NO_INEXACT_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value / 2, 1, -min_value, NO_INEXACT_EXCEPTION),
-    TEST_fi_f (scalbn, min_value * 0x0.ffffp0, 0, min_value * 0x0.ffffp0, NO_INEXACT_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value * 0x0.ffffp0, 0, -min_value * 0x0.ffffp0, NO_INEXACT_EXCEPTION),
-    TEST_fi_f (scalbn, min_subnorm_value, 0, min_subnorm_value, NO_INEXACT_EXCEPTION),
-    TEST_fi_f (scalbn, -min_subnorm_value, 0, -min_subnorm_value, NO_INEXACT_EXCEPTION),
-    TEST_fi_f (scalbn, min_subnorm_value, MANT_DIG, min_value, NO_INEXACT_EXCEPTION),
-    TEST_fi_f (scalbn, -min_subnorm_value, MANT_DIG, -min_value, NO_INEXACT_EXCEPTION),
-
-    TEST_fi_f (scalbn, min_value, -MANT_DIG, min_subnorm_value, NO_INEXACT_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value, -MANT_DIG, -min_subnorm_value, NO_INEXACT_EXCEPTION),
-    TEST_fi_f (scalbn, min_value, -MANT_DIG-1, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value, -MANT_DIG-1, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, min_value, -MANT_DIG-2, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value, -MANT_DIG-2, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, min_value * 1.5, -MANT_DIG, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value * 2, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value * 2, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value * 1.5, -MANT_DIG, -min_subnorm_value * 2, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value * 2, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, min_value * 1.5, -MANT_DIG-1, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value * 1.5, -MANT_DIG-1, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, minus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, minus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, min_value * 1.5, -MANT_DIG-2, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value * 1.5, -MANT_DIG-2, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, min_value * 1.25, -MANT_DIG, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value * 2, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value * 1.25, -MANT_DIG, -min_subnorm_value * 2, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, min_value * 1.25, -MANT_DIG-1, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value * 1.25, -MANT_DIG-1, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, minus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, minus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, min_value * 1.25, -MANT_DIG-2, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value * 1.25, -MANT_DIG-2, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-
-    TEST_fi_f (scalbn, 1, INT_MAX, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, 1, INT_MIN, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, max_value, INT_MAX, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, max_value, INT_MIN, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, min_value, INT_MAX, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, min_value, INT_MIN, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, min_value / 4, INT_MAX, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, min_value / 4, INT_MIN, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-
-    TEST_fi_f (scalbn, -1, INT_MAX, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -1, INT_MIN, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -max_value, INT_MAX, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -max_value, INT_MIN, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value, INT_MAX, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value, INT_MIN, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value / 4, INT_MAX, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
-    TEST_fi_f (scalbn, -min_value / 4, INT_MIN, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fi_f (scalbn, 1, INT_MAX, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fi_f (scalbn, 1, INT_MIN, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fi_f (scalbn, max_value, INT_MAX, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fi_f (scalbn, max_value, INT_MIN, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fi_f (scalbn, min_value, INT_MAX, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fi_f (scalbn, min_value, INT_MIN, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fi_f (scalbn, min_value / 4, INT_MAX, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fi_f (scalbn, min_value / 4, INT_MIN, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
   };
 
 static void
 scalbn_test (void)
 {
-  ALL_RM_TEST (scalbn, 1, scalbn_test_data, RUN_TEST_LOOP_fi_f, END);
-}
 
-static void
-ldexp_test (void)
-{
-  /* ldexp uses the same test data as scalbn.  */
-  ALL_RM_TEST (ldexp, 1, scalbn_test_data, RUN_TEST_LOOP_fi_f, END);
+  START (scalbn);
+  RUN_TEST_LOOP_fi_f (scalbn, scalbn_test_data, );
+  END;
 }
 
 
 static const struct test_fl_f_data scalbln_test_data[] =
   {
-    TEST_fl_f (scalbln, 0, 0, 0, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_fl_f (scalbln, minus_zero, 0, minus_zero, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_fl_f (scalbln, 0, 0, 0, NO_INEXACT_EXCEPTION),
+    TEST_fl_f (scalbln, minus_zero, 0, minus_zero, NO_INEXACT_EXCEPTION),
 
-    TEST_fl_f (scalbln, plus_infty, 1, plus_infty, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_fl_f (scalbln, minus_infty, 1, minus_infty, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_fl_f (scalbln, qnan_value, 1, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_fl_f (scalbln, plus_infty, 1, plus_infty, NO_INEXACT_EXCEPTION),
+    TEST_fl_f (scalbln, minus_infty, 1, minus_infty, NO_INEXACT_EXCEPTION),
+    TEST_fl_f (scalbln, qnan_value, 1, qnan_value, NO_INEXACT_EXCEPTION),
 
-    TEST_fl_f (scalbln, 0.8L, 4, 12.8L, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
-    TEST_fl_f (scalbln, -0.854375L, 5, -27.34L, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_fl_f (scalbln, 0.8L, 4, 12.8L, NO_INEXACT_EXCEPTION),
+    TEST_fl_f (scalbln, -0.854375L, 5, -27.34L, NO_INEXACT_EXCEPTION),
 
-    TEST_fl_f (scalbln, 1, 0L, 1, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
+    TEST_fl_f (scalbln, 1, 0L, 1, NO_INEXACT_EXCEPTION),
 
-    TEST_fl_f (scalbln, min_value / 2, 0, min_value / 2, NO_INEXACT_EXCEPTION),
-    TEST_fl_f (scalbln, -min_value / 2, 0, -min_value / 2, NO_INEXACT_EXCEPTION),
-    TEST_fl_f (scalbln, min_value / 2, 1, min_value, NO_INEXACT_EXCEPTION),
-    TEST_fl_f (scalbln, -min_value / 2, 1, -min_value, NO_INEXACT_EXCEPTION),
-    TEST_fl_f (scalbln, min_value * 0x0.ffffp0, 0, min_value * 0x0.ffffp0, NO_INEXACT_EXCEPTION),
-    TEST_fl_f (scalbln, -min_value * 0x0.ffffp0, 0, -min_value * 0x0.ffffp0, NO_INEXACT_EXCEPTION),
-    TEST_fl_f (scalbln, min_subnorm_value, 0, min_subnorm_value, NO_INEXACT_EXCEPTION),
-    TEST_fl_f (scalbln, -min_subnorm_value, 0, -min_subnorm_value, NO_INEXACT_EXCEPTION),
-    TEST_fl_f (scalbln, min_subnorm_value, MANT_DIG, min_value, NO_INEXACT_EXCEPTION),
-    TEST_fl_f (scalbln, -min_subnorm_value, MANT_DIG, -min_value, NO_INEXACT_EXCEPTION),
+    TEST_fl_f (scalbln, 1, INT_MAX, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, 1, INT_MIN, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, max_value, INT_MAX, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, max_value, INT_MIN, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, min_value, INT_MAX, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, min_value, INT_MIN, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, min_value / 4, INT_MAX, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, min_value / 4, INT_MIN, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
 
-    TEST_fl_f (scalbln, min_value, -MANT_DIG, min_subnorm_value, NO_INEXACT_EXCEPTION),
-    TEST_fl_f (scalbln, -min_value, -MANT_DIG, -min_subnorm_value, NO_INEXACT_EXCEPTION),
-    TEST_fl_f (scalbln, min_value, -MANT_DIG-1, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, -min_value, -MANT_DIG-1, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, min_value, -MANT_DIG-2, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, -min_value, -MANT_DIG-2, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, min_value * 1.5, -MANT_DIG, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value * 2, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value * 2, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, -min_value * 1.5, -MANT_DIG, -min_subnorm_value * 2, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value * 2, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, min_value * 1.5, -MANT_DIG-1, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, -min_value * 1.5, -MANT_DIG-1, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, minus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, minus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, min_value * 1.5, -MANT_DIG-2, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, -min_value * 1.5, -MANT_DIG-2, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, min_value * 1.25, -MANT_DIG, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value * 2, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, -min_value * 1.25, -MANT_DIG, -min_subnorm_value * 2, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, min_value * 1.25, -MANT_DIG-1, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, -min_value * 1.25, -MANT_DIG-1, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, -min_subnorm_value, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, minus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION, minus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, min_value * 1.25, -MANT_DIG-2, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-    TEST_fl_f (scalbln, -min_value * 1.25, -MANT_DIG-2, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
-
-    TEST_fl_f (scalbln, 1, INT_MAX, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_fl_f (scalbln, 1, INT_MIN, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_fl_f (scalbln, max_value, INT_MAX, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_fl_f (scalbln, max_value, INT_MIN, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_fl_f (scalbln, min_value, INT_MAX, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_fl_f (scalbln, min_value, INT_MIN, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_fl_f (scalbln, min_value / 4, INT_MAX, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_fl_f (scalbln, min_value / 4, INT_MIN, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-
-    TEST_fl_f (scalbln, -1, INT_MAX, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_fl_f (scalbln, -1, INT_MIN, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-    TEST_fl_f (scalbln, -max_value, INT_MAX, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_fl_f (scalbln, -max_value, INT_MIN, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-    TEST_fl_f (scalbln, -min_value, INT_MAX, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_fl_f (scalbln, -min_value, INT_MIN, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-    TEST_fl_f (scalbln, -min_value / 4, INT_MAX, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_fl_f (scalbln, -min_value / 4, INT_MIN, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-
-    TEST_fl_f (scalbln, 1, LONG_MAX, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_fl_f (scalbln, 1, LONG_MIN, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_fl_f (scalbln, max_value, LONG_MAX, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_fl_f (scalbln, max_value, LONG_MIN, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_fl_f (scalbln, min_value, LONG_MAX, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_fl_f (scalbln, min_value, LONG_MIN, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_fl_f (scalbln, min_value / 4, LONG_MAX, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_fl_f (scalbln, min_value / 4, LONG_MIN, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-
-    TEST_fl_f (scalbln, -1, LONG_MAX, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_fl_f (scalbln, -1, LONG_MIN, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-    TEST_fl_f (scalbln, -max_value, LONG_MAX, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_fl_f (scalbln, -max_value, LONG_MIN, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-    TEST_fl_f (scalbln, -min_value, LONG_MAX, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_fl_f (scalbln, -min_value, LONG_MIN, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-    TEST_fl_f (scalbln, -min_value / 4, LONG_MAX, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_fl_f (scalbln, -min_value / 4, LONG_MIN, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
+    TEST_fl_f (scalbln, 1, LONG_MAX, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, 1, LONG_MIN, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, max_value, LONG_MAX, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, max_value, LONG_MIN, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, min_value, LONG_MAX, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, min_value, LONG_MIN, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, min_value / 4, LONG_MAX, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, min_value / 4, LONG_MIN, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
 
 #if LONG_MAX >= 0x100000000
-    TEST_fl_f (scalbln, 1, 0x88000000L, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_fl_f (scalbln, 1, -0x88000000L, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_fl_f (scalbln, max_value, 0x88000000L, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_fl_f (scalbln, max_value, -0x88000000L, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_fl_f (scalbln, min_value, 0x88000000L, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_fl_f (scalbln, min_value, -0x88000000L, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-    TEST_fl_f (scalbln, min_value / 4, 0x88000000L, plus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_PLUS_OFLOW),
-    TEST_fl_f (scalbln, min_value / 4, -0x88000000L, plus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_PLUS_UFLOW),
-
-    TEST_fl_f (scalbln, -1, 0x88000000L, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_fl_f (scalbln, -1, -0x88000000L, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-    TEST_fl_f (scalbln, -max_value, 0x88000000L, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_fl_f (scalbln, -max_value, -0x88000000L, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-    TEST_fl_f (scalbln, -min_value, 0x88000000L, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_fl_f (scalbln, -min_value, -0x88000000L, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
-    TEST_fl_f (scalbln, -min_value / 4, 0x88000000L, minus_oflow, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION|ERRNO_MINUS_OFLOW),
-    TEST_fl_f (scalbln, -min_value / 4, -0x88000000L, minus_uflow, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION|ERRNO_MINUS_UFLOW),
+    TEST_fl_f (scalbln, 1, 0x88000000L, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, 1, -0x88000000L, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, max_value, 0x88000000L, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, max_value, -0x88000000L, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, min_value, 0x88000000L, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, min_value, -0x88000000L, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, min_value / 4, 0x88000000L, plus_infty, INEXACT_EXCEPTION|OVERFLOW_EXCEPTION),
+    TEST_fl_f (scalbln, min_value / 4, -0x88000000L, plus_zero, INEXACT_EXCEPTION|UNDERFLOW_EXCEPTION),
 #endif
   };
 
 static void
 scalbln_test (void)
 {
-  ALL_RM_TEST (scalbln, 1, scalbln_test_data, RUN_TEST_LOOP_fl_f, END);
+
+  START (scalbln);
+  RUN_TEST_LOOP_fl_f (scalbln, scalbln_test_data, );
+  END;
 }
 
 
@@ -9313,7 +11970,9 @@ static const struct test_f_i_data signbit_test_data[] =
 static void
 signbit_test (void)
 {
-  ALL_RM_TEST (signbit, 1, signbit_test_data, RUN_TEST_LOOP_f_b_tg, END);
+  START (signbit);
+  RUN_TEST_LOOP_f_b_tg (signbit, signbit_test_data, );
+  END;
 }
 
 
@@ -9323,13 +11982,71 @@ static const struct test_f_f_data sin_test_data[] =
     TEST_f_f (sin, minus_infty, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_f_f (sin, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
 
-    AUTO_TESTS_f_f (sin),
+    AUTO_TESTS_f_f (sin, tonearest),
   };
 
 static void
 sin_test (void)
 {
-  ALL_RM_TEST (sin, 0, sin_test_data, RUN_TEST_LOOP_f_f, END);
+  START (sin);
+  RUN_TEST_LOOP_f_f (sin, sin_test_data, );
+  END;
+}
+
+
+static const struct test_f_f_data sin_tonearest_test_data[] =
+  {
+    AUTO_TESTS_f_f (sin, tonearest),
+  };
+
+static void
+sin_test_tonearest (void)
+{
+  START (sin_tonearest);
+  RUN_TEST_LOOP_f_f (sin, sin_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_f_f_data sin_towardzero_test_data[] =
+  {
+    AUTO_TESTS_f_f (sin, towardzero),
+  };
+
+static void
+sin_test_towardzero (void)
+{
+  START (sin_towardzero);
+  RUN_TEST_LOOP_f_f (sin, sin_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_f_f_data sin_downward_test_data[] =
+  {
+    AUTO_TESTS_f_f (sin, downward),
+  };
+
+static void
+sin_test_downward (void)
+{
+  START (sin_downward);
+  RUN_TEST_LOOP_f_f (sin, sin_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_f_f_data sin_upward_test_data[] =
+  {
+    AUTO_TESTS_f_f (sin, upward),
+  };
+
+static void
+sin_test_upward (void)
+{
+  START (sin_upward);
+  RUN_TEST_LOOP_f_f (sin, sin_upward_test_data, FE_UPWARD);
+  END;
 }
 
 
@@ -9339,7 +12056,7 @@ static const struct test_fFF_11_data sincos_test_data[] =
     TEST_fFF_11 (sincos, minus_infty, qnan_value, qnan_value, INVALID_EXCEPTION),
     TEST_fFF_11 (sincos, qnan_value, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_fFF_11 (sincos),
+    AUTO_TESTS_fFF_11 (sincos, tonearest),
   };
 
 static void
@@ -9347,7 +12064,9 @@ sincos_test (void)
 {
   FLOAT sin_res, cos_res;
 
-  ALL_RM_TEST (sincos, 0, sincos_test_data, RUN_TEST_LOOP_fFF_11, END, sin_res, cos_res);
+  START (sincos);
+  RUN_TEST_LOOP_fFF_11 (sincos, sincos_test_data, , sin_res, cos_res);
+  END;
 }
 
 static const struct test_f_f_data sinh_test_data[] =
@@ -9356,13 +12075,71 @@ static const struct test_f_f_data sinh_test_data[] =
     TEST_f_f (sinh, minus_infty, minus_infty, NO_TEST_INLINE),
     TEST_f_f (sinh, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (sinh),
+    AUTO_TESTS_f_f (sinh, tonearest),
   };
 
 static void
 sinh_test (void)
 {
-  ALL_RM_TEST (sinh, 0, sinh_test_data, RUN_TEST_LOOP_f_f, END);
+  START (sinh);
+  RUN_TEST_LOOP_f_f (sinh, sinh_test_data, );
+  END;
+}
+
+
+static const struct test_f_f_data sinh_tonearest_test_data[] =
+  {
+    AUTO_TESTS_f_f (sinh, tonearest),
+  };
+
+static void
+sinh_test_tonearest (void)
+{
+  START (sinh_tonearest);
+  RUN_TEST_LOOP_f_f (sinh, sinh_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_f_f_data sinh_towardzero_test_data[] =
+  {
+    AUTO_TESTS_f_f (sinh, towardzero),
+  };
+
+static void
+sinh_test_towardzero (void)
+{
+  START (sinh_towardzero);
+  RUN_TEST_LOOP_f_f (sinh, sinh_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_f_f_data sinh_downward_test_data[] =
+  {
+    AUTO_TESTS_f_f (sinh, downward),
+  };
+
+static void
+sinh_test_downward (void)
+{
+  START (sinh_downward);
+  RUN_TEST_LOOP_f_f (sinh, sinh_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_f_f_data sinh_upward_test_data[] =
+  {
+    AUTO_TESTS_f_f (sinh, upward),
+  };
+
+static void
+sinh_test_upward (void)
+{
+  START (sinh_upward);
+  RUN_TEST_LOOP_f_f (sinh, sinh_upward_test_data, FE_UPWARD);
+  END;
 }
 
 
@@ -9376,13 +12153,99 @@ static const struct test_f_f_data sqrt_test_data[] =
     TEST_f_f (sqrt, -max_value, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_f_f (sqrt, minus_infty, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
 
-    AUTO_TESTS_f_f (sqrt),
+    AUTO_TESTS_f_f (sqrt, tonearest),
   };
 
 static void
 sqrt_test (void)
 {
-  ALL_RM_TEST (sqrt, 1, sqrt_test_data, RUN_TEST_LOOP_f_f, END);
+  START (sqrt);
+  RUN_TEST_LOOP_f_f (sqrt, sqrt_test_data, );
+  END;
+}
+
+static const struct test_f_f_data sqrt_tonearest_test_data[] =
+  {
+    TEST_f_f (sqrt, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
+    TEST_f_f (sqrt, plus_infty, plus_infty, NO_INEXACT_EXCEPTION),
+
+    /* sqrt (x) == qNaN plus invalid exception for x < 0.  */
+    TEST_f_f (sqrt, -1, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_f_f (sqrt, -max_value, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_f_f (sqrt, minus_infty, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+
+    AUTO_TESTS_f_f (sqrt, tonearest),
+  };
+
+static void
+sqrt_test_tonearest (void)
+{
+  START (sqrt_tonearest);
+  RUN_TEST_LOOP_f_f (sqrt, sqrt_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+static const struct test_f_f_data sqrt_towardzero_test_data[] =
+  {
+    TEST_f_f (sqrt, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
+    TEST_f_f (sqrt, plus_infty, plus_infty, NO_INEXACT_EXCEPTION),
+
+    /* sqrt (x) == qNaN plus invalid exception for x < 0.  */
+    TEST_f_f (sqrt, -1, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_f_f (sqrt, -max_value, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_f_f (sqrt, minus_infty, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+
+    AUTO_TESTS_f_f (sqrt, towardzero),
+  };
+
+static void
+sqrt_test_towardzero (void)
+{
+  START (sqrt_towardzero);
+  RUN_TEST_LOOP_f_f (sqrt, sqrt_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+static const struct test_f_f_data sqrt_downward_test_data[] =
+  {
+    TEST_f_f (sqrt, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
+    TEST_f_f (sqrt, plus_infty, plus_infty, NO_INEXACT_EXCEPTION),
+
+    /* sqrt (x) == qNaN plus invalid exception for x < 0.  */
+    TEST_f_f (sqrt, -1, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_f_f (sqrt, -max_value, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_f_f (sqrt, minus_infty, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+
+    AUTO_TESTS_f_f (sqrt, downward),
+  };
+
+static void
+sqrt_test_downward (void)
+{
+  START (sqrt_downward);
+  RUN_TEST_LOOP_f_f (sqrt, sqrt_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+static const struct test_f_f_data sqrt_upward_test_data[] =
+  {
+    TEST_f_f (sqrt, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
+    TEST_f_f (sqrt, plus_infty, plus_infty, NO_INEXACT_EXCEPTION),
+
+    /* sqrt (x) == qNaN plus invalid exception for x < 0.  */
+    TEST_f_f (sqrt, -1, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_f_f (sqrt, -max_value, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+    TEST_f_f (sqrt, minus_infty, qnan_value, NO_INEXACT_EXCEPTION|INVALID_EXCEPTION|ERRNO_EDOM),
+
+    AUTO_TESTS_f_f (sqrt, upward),
+  };
+
+static void
+sqrt_test_upward (void)
+{
+  START (sqrt_upward);
+  RUN_TEST_LOOP_f_f (sqrt, sqrt_upward_test_data, FE_UPWARD);
+  END;
 }
 
 
@@ -9392,13 +12255,71 @@ static const struct test_f_f_data tan_test_data[] =
     TEST_f_f (tan, minus_infty, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_f_f (tan, qnan_value, qnan_value, NO_INEXACT_EXCEPTION|ERRNO_UNCHANGED),
 
-    AUTO_TESTS_f_f (tan),
+    AUTO_TESTS_f_f (tan, tonearest),
   };
 
 static void
 tan_test (void)
 {
-  ALL_RM_TEST (tan, 0, tan_test_data, RUN_TEST_LOOP_f_f, END);
+  START (tan);
+  RUN_TEST_LOOP_f_f (tan, tan_test_data, );
+  END;
+}
+
+
+static const struct test_f_f_data tan_tonearest_test_data[] =
+  {
+    AUTO_TESTS_f_f (tan, tonearest),
+  };
+
+static void
+tan_test_tonearest (void)
+{
+  START (tan_tonearest);
+  RUN_TEST_LOOP_f_f (tan, tan_tonearest_test_data, FE_TONEAREST);
+  END;
+}
+
+
+static const struct test_f_f_data tan_towardzero_test_data[] =
+  {
+    AUTO_TESTS_f_f (tan, towardzero),
+  };
+
+static void
+tan_test_towardzero (void)
+{
+  START (tan_towardzero);
+  RUN_TEST_LOOP_f_f (tan, tan_towardzero_test_data, FE_TOWARDZERO);
+  END;
+}
+
+
+static const struct test_f_f_data tan_downward_test_data[] =
+  {
+    AUTO_TESTS_f_f (tan, downward),
+  };
+
+static void
+tan_test_downward (void)
+{
+  START (tan_downward);
+  RUN_TEST_LOOP_f_f (tan, tan_downward_test_data, FE_DOWNWARD);
+  END;
+}
+
+
+static const struct test_f_f_data tan_upward_test_data[] =
+  {
+    AUTO_TESTS_f_f (tan, upward),
+  };
+
+static void
+tan_test_upward (void)
+{
+  START (tan_upward);
+  RUN_TEST_LOOP_f_f (tan, tan_upward_test_data, FE_UPWARD);
+  END;
 }
 
 
@@ -9408,13 +12329,15 @@ static const struct test_f_f_data tanh_test_data[] =
     TEST_f_f (tanh, minus_infty, -1, NO_TEST_INLINE),
     TEST_f_f (tanh, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (tanh),
+    AUTO_TESTS_f_f (tanh, tonearest),
   };
 
 static void
 tanh_test (void)
 {
-  ALL_RM_TEST (tanh, 0, tanh_test_data, RUN_TEST_LOOP_f_f, END);
+  START (tanh);
+  RUN_TEST_LOOP_f_f (tanh, tanh_test_data, );
+  END;
 }
 
 static const struct test_f_f_data tgamma_test_data[] =
@@ -9429,13 +12352,13 @@ static const struct test_f_f_data tgamma_test_data[] =
     TEST_f_f (tgamma, minus_infty, qnan_value, INVALID_EXCEPTION|ERRNO_EDOM),
     TEST_f_f (tgamma, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (tgamma),
+    AUTO_TESTS_f_f (tgamma, tonearest),
   };
 
 static void
 tgamma_test (void)
 {
-  START (tgamma, 0);
+  START (tgamma);
   RUN_TEST_LOOP_f_f (tgamma, tgamma_test_data, );
   END;
 }
@@ -9538,15 +12461,6 @@ static const struct test_f_f_data trunc_test_data[] =
     TEST_f_f (trunc, -72057594037927936.75L, -72057594037927936.0L),
     TEST_f_f (trunc, -72057594037927937.5L, -72057594037927937.0L),
 
-    /* Check cases where first double is a exact integer higher than 2^52 and
-       the precision is determined by second long double for IBM long double.  */
-    TEST_f_f (trunc,  34503599627370498.515625L, 34503599627370498.0L),
-    TEST_f_f (trunc, -34503599627370498.515625L, -34503599627370498.0L),
-# if LDBL_MANT_DIG >= 106
-    TEST_f_f (trunc,  1192568192774434123539907640624.484375L, 1192568192774434123539907640624.0L),
-    TEST_f_f (trunc, -1192568192774434123539907640624.484375L, -1192568192774434123539907640624.0L),
-# endif
-
     TEST_f_f (trunc, 10141204801825835211973625643007.5L, 10141204801825835211973625643007.0L),
     TEST_f_f (trunc, 10141204801825835211973625643008.25L, 10141204801825835211973625643008.0L),
     TEST_f_f (trunc, 10141204801825835211973625643008.5L, 10141204801825835211973625643008.0L),
@@ -9558,7 +12472,9 @@ static const struct test_f_f_data trunc_test_data[] =
 static void
 trunc_test (void)
 {
-  ALL_RM_TEST (trunc, 1, trunc_test_data, RUN_TEST_LOOP_f_f, END);
+  START (trunc);
+  RUN_TEST_LOOP_f_f (trunc, trunc_test_data, );
+  END;
 }
 
 static const struct test_f_f_data y0_test_data[] =
@@ -9572,13 +12488,15 @@ static const struct test_f_f_data y0_test_data[] =
     TEST_f_f (y0, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
     TEST_f_f (y0, plus_infty, 0),
 
-    AUTO_TESTS_f_f (y0),
+    AUTO_TESTS_f_f (y0, tonearest),
   };
 
 static void
 y0_test (void)
 {
-  ALL_RM_TEST (y0, 0, y0_test_data, RUN_TEST_LOOP_f_f, END);
+  START (y0);
+  RUN_TEST_LOOP_f_f (y0, y0_test_data, );
+  END;
 }
 
 
@@ -9593,13 +12511,15 @@ static const struct test_f_f_data y1_test_data[] =
     TEST_f_f (y1, plus_infty, 0),
     TEST_f_f (y1, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_f_f (y1),
+    AUTO_TESTS_f_f (y1, tonearest),
   };
 
 static void
 y1_test (void)
 {
-  ALL_RM_TEST (y1, 0, y1_test_data, RUN_TEST_LOOP_f_f, END);
+  START (y1);
+  RUN_TEST_LOOP_f_f (y1, y1_test_data, );
+  END;
 }
 
 
@@ -9664,13 +12584,15 @@ static const struct test_if_f_data yn_test_data[] =
     TEST_if_f (yn, 10, plus_infty, 0),
     TEST_if_f (yn, 10, qnan_value, qnan_value, NO_INEXACT_EXCEPTION),
 
-    AUTO_TESTS_if_f (yn),
+    AUTO_TESTS_if_f (yn, tonearest),
   };
 
 static void
 yn_test (void)
 {
-  ALL_RM_TEST (yn, 0, yn_test_data, RUN_TEST_LOOP_if_f, END);
+  START (yn);
+  RUN_TEST_LOOP_if_f (yn, yn_test_data, );
+  END;
 }
 
 
@@ -9686,7 +12608,9 @@ static const struct test_f_f_data significand_test_data[] =
 static void
 significand_test (void)
 {
-  ALL_RM_TEST (significand, 1, significand_test_data, RUN_TEST_LOOP_f_f, END);
+  START (significand);
+  RUN_TEST_LOOP_f_f (significand, significand_test_data, );
+  END;
 }
 
 
@@ -9900,27 +12824,67 @@ main (int argc, char **argv)
 
   /* Trigonometric functions:  */
   acos_test ();
+  acos_test_tonearest ();
+  acos_test_towardzero ();
+  acos_test_downward ();
+  acos_test_upward ();
   asin_test ();
+  asin_test_tonearest ();
+  asin_test_towardzero ();
+  asin_test_downward ();
+  asin_test_upward ();
   atan_test ();
   atan2_test ();
   cos_test ();
+  cos_test_tonearest ();
+  cos_test_towardzero ();
+  cos_test_downward ();
+  cos_test_upward ();
   sin_test ();
+  sin_test_tonearest ();
+  sin_test_towardzero ();
+  sin_test_downward ();
+  sin_test_upward ();
   sincos_test ();
   tan_test ();
+  tan_test_tonearest ();
+  tan_test_towardzero ();
+  tan_test_downward ();
+  tan_test_upward ();
 
   /* Hyperbolic functions:  */
   acosh_test ();
   asinh_test ();
   atanh_test ();
   cosh_test ();
+  cosh_test_tonearest ();
+  cosh_test_towardzero ();
+  cosh_test_downward ();
+  cosh_test_upward ();
   sinh_test ();
+  sinh_test_tonearest ();
+  sinh_test_towardzero ();
+  sinh_test_downward ();
+  sinh_test_upward ();
   tanh_test ();
 
   /* Exponential and logarithmic functions:  */
   exp_test ();
+  exp_test_tonearest ();
+  exp_test_towardzero ();
+  exp_test_downward ();
+  exp_test_upward ();
   exp10_test ();
+  exp10_test_tonearest ();
+  exp10_test_towardzero ();
+  exp10_test_downward ();
+  exp10_test_upward ();
   exp2_test ();
   expm1_test ();
+  expm1_test_tonearest ();
+  expm1_test_towardzero ();
+  expm1_test_downward ();
+  expm1_test_upward ();
   frexp_test ();
   ldexp_test ();
   log_test ();
@@ -9928,6 +12892,7 @@ main (int argc, char **argv)
   log1p_test ();
   log2_test ();
   logb_test ();
+  logb_test_downward ();
   modf_test ();
   pow10_test ();
   ilogb_test ();
@@ -9941,7 +12906,15 @@ main (int argc, char **argv)
   fabs_test ();
   hypot_test ();
   pow_test ();
+  pow_test_tonearest ();
+  pow_test_towardzero ();
+  pow_test_downward ();
+  pow_test_upward ();
   sqrt_test ();
+  sqrt_test_tonearest ();
+  sqrt_test_towardzero ();
+  sqrt_test_downward ();
+  sqrt_test_upward ();
 
   /* Error and gamma functions:  */
   erf_test ();
@@ -9955,8 +12928,20 @@ main (int argc, char **argv)
   floor_test ();
   nearbyint_test ();
   rint_test ();
+  rint_test_tonearest ();
+  rint_test_towardzero ();
+  rint_test_downward ();
+  rint_test_upward ();
   lrint_test ();
+  lrint_test_tonearest ();
+  lrint_test_towardzero ();
+  lrint_test_downward ();
+  lrint_test_upward ();
   llrint_test ();
+  llrint_test_tonearest ();
+  llrint_test_towardzero ();
+  llrint_test_downward ();
+  llrint_test_upward ();
   round_test ();
   lround_test ();
   llround_test ();
@@ -9964,8 +12949,16 @@ main (int argc, char **argv)
 
   /* Remainder functions:  */
   drem_test ();
+  drem_test_tonearest ();
+  drem_test_towardzero ();
+  drem_test_downward ();
+  drem_test_upward ();
   fmod_test ();
   remainder_test ();
+  remainder_test_tonearest ();
+  remainder_test_towardzero ();
+  remainder_test_downward ();
+  remainder_test_upward ();
   remquo_test ();
 
   /* Manipulation functions:  */
@@ -9980,6 +12973,9 @@ main (int argc, char **argv)
 
   /* Multiply and add:  */
   fma_test ();
+  fma_test_towardzero ();
+  fma_test_downward ();
+  fma_test_upward ();
 
   /* Comparison macros:  */
   isgreater_test ();
@@ -10012,7 +13008,15 @@ main (int argc, char **argv)
   csinh_test ();
   csqrt_test ();
   ctan_test ();
+  ctan_test_tonearest ();
+  ctan_test_towardzero ();
+  ctan_test_downward ();
+  ctan_test_upward ();
   ctanh_test ();
+  ctanh_test_tonearest ();
+  ctanh_test_towardzero ();
+  ctanh_test_downward ();
+  ctanh_test_upward ();
 
   /* Bessel functions:  */
   j0_test ();

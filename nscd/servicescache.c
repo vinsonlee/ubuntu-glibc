@@ -1,5 +1,5 @@
 /* Cache handling for services lookup.
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@drepper.com>, 2007.
 
@@ -120,10 +120,14 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 	  else if ((dataset = mempool_alloc (db, (sizeof (struct dataset)
 						  + req->key_len), 1)) != NULL)
 	    {
-	      timeout = datahead_init_neg (&dataset->head,
-					   (sizeof (struct dataset)
-					    + req->key_len), total,
-					   db->negtimeout);
+	      dataset->head.allocsize = sizeof (struct dataset) + req->key_len;
+	      dataset->head.recsize = total;
+	      dataset->head.notfound = true;
+	      dataset->head.nreloads = 0;
+	      dataset->head.usable = true;
+
+	      /* Compute the timeout time.  */
+	      timeout = dataset->head.timeout = t + db->negtimeout;
 
 	      /* This is the reply.  */
 	      memcpy (&dataset->resp, &notfound, total);
@@ -203,10 +207,14 @@ cache_addserv (struct database_dyn *db, int fd, request_header *req,
 	  alloca_used = true;
 	}
 
-      timeout = datahead_init_pos (&dataset->head, total + req->key_len,
-				   total - offsetof (struct dataset, resp),
-				   he == NULL ? 0 : dh->nreloads + 1,
-				   db->postimeout);
+      dataset->head.allocsize = total + req->key_len;
+      dataset->head.recsize = total - offsetof (struct dataset, resp);
+      dataset->head.notfound = false;
+      dataset->head.nreloads = he == NULL ? 0 : (dh->nreloads + 1);
+      dataset->head.usable = true;
+
+      /* Compute the timeout time.  */
+      timeout = dataset->head.timeout = t + db->postimeout;
 
       dataset->resp.version = NSCD_VERSION;
       dataset->resp.found = 1;
@@ -381,7 +389,7 @@ addservbyX (struct database_dyn *db, int fd, request_header *req,
   bool use_malloc = false;
   int errval = 0;
 
-  if (__glibc_unlikely (debug_level > 0))
+  if (__builtin_expect (debug_level > 0, 0))
     {
       if (he == NULL)
 	dbg_log (_("Haven't found \"%s\" in services cache!"), key);
@@ -394,7 +402,7 @@ addservbyX (struct database_dyn *db, int fd, request_header *req,
     {
       errno = 0;
 
-      if (__glibc_unlikely (buflen > 32768))
+      if (__builtin_expect (buflen > 32768, 0))
 	{
 	  char *old_buffer = buffer;
 	  buflen *= 2;

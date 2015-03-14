@@ -1,5 +1,5 @@
 /* Declarations for math functions.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ __BEGIN_DECLS
 #undef _Mdouble_END_NAMESPACE
 #undef	__MATH_PRECNAME
 
-#ifdef __USE_ISOC99
+#if defined __USE_MISC || defined __USE_ISOC99
 
 
 /* Include the file of declarations again, this time using `float'
@@ -92,8 +92,7 @@ __BEGIN_DECLS
 # undef	__MATH_PRECNAME
 
 # if !(defined __NO_LONG_DOUBLE_MATH && defined _LIBC) \
-     || defined __LDBL_COMPAT \
-     || defined _LIBC_TEST
+     || defined __LDBL_COMPAT
 #  ifdef __LDBL_COMPAT
 
 #   ifdef __USE_ISOC99
@@ -138,7 +137,7 @@ extern long double __REDIRECT_NTH (nexttowardl,
 
 # endif /* !(__NO_LONG_DOUBLE_MATH && _LIBC) || __LDBL_COMPAT */
 
-#endif	/* Use ISO C99.  */
+#endif	/* Use misc or ISO C99.  */
 #undef	__MATHDECL_1
 #undef	__MATHDECL
 #undef	__MATHCALL
@@ -315,7 +314,7 @@ extern _LIB_VERSION_TYPE _LIB_VERSION;
 #endif
 
 
-#ifdef __USE_MISC
+#ifdef __USE_SVID
 /* In SVID error handling, `matherr' is called with this description
    of the exceptional condition.
 
@@ -353,18 +352,18 @@ extern int matherr (struct exception *__exc);
 /* SVID mode specifies returning this large value instead of infinity.  */
 # define HUGE		3.40282347e+38F
 
-#else	/* !Misc.  */
+#else	/* !SVID */
 
 # ifdef __USE_XOPEN
 /* X/Open wants another strange constant.  */
 #  define MAXFLOAT	3.40282347e+38F
 # endif
 
-#endif	/* Misc.  */
+#endif	/* SVID */
 
 
 /* Some useful constants.  */
-#if defined __USE_MISC || defined __USE_XOPEN
+#if defined __USE_BSD || defined __USE_XOPEN
 # define M_E		2.7182818284590452354	/* e */
 # define M_LOG2E	1.4426950408889634074	/* log_2 e */
 # define M_LOG10E	0.43429448190325182765	/* log_10 e */

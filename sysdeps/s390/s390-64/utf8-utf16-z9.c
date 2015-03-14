@@ -2,7 +2,7 @@
 
    This module uses the Z9-109 variants of the Convert Unicode
    instructions.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
    Author: Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
    Based on the work by Ulrich Drepper  <drepper@cygnus.com>, 1997.
@@ -42,7 +42,6 @@
 #define FROM_LOOP		from_utf8_loop
 #define TO_LOOP			to_utf8_loop
 #define FROM_DIRECTION		(dir == from_utf8)
-#define ONE_DIRECTION           0
 #define PREPARE_LOOP							\
   enum direction dir = ((struct utf8_data *) step->__data)->dir;	\
   int emit_bom = ((struct utf8_data *) step->__data)->emit_bom;		\
@@ -51,7 +50,7 @@
       && data->__invocation_counter == 0)				\
     {									\
       /* Emit the UTF-16 Byte Order Mark.  */				\
-      if (__glibc_unlikely (outbuf + 2 > outend))			      \
+      if (__builtin_expect (outbuf + 2 > outend, 0))			\
 	return __GCONV_FULL_OUTPUT;					\
 									\
       put16u (outbuf, BOM_UTF16);					\
@@ -198,7 +197,7 @@ gconv_end (struct __gconv_step *data)
 	      if ((inptr[i] & 0xc0) != 0x80)				\
 		break;							\
 								\
-	    if (__glibc_likely (inptr + i == inend))			      \
+	    if (__builtin_expect (inptr + i == inend, 1))		\
 	      {								\
 		result = __GCONV_INCOMPLETE_INPUT;			\
 		break;							\
@@ -211,7 +210,7 @@ gconv_end (struct __gconv_step *data)
     /* Next input byte.  */						\
     uint16_t ch = *inptr;						\
 									\
-    if (__glibc_likely (ch < 0x80))					      \
+    if (__builtin_expect (ch < 0x80, 1))				\
       {									\
 	/* One byte sequence.  */					\
 	++inptr;							\
@@ -229,13 +228,13 @@ gconv_end (struct __gconv_step *data)
 	    cnt = 2;							\
 	    ch &= 0x1f;							\
 	  }								\
-        else if (__glibc_likely ((ch & 0xf0) == 0xe0))			      \
+        else if (__builtin_expect ((ch & 0xf0) == 0xe0, 1))		\
 	  {								\
 	    /* We expect three bytes.  */				\
 	    cnt = 3;							\
 	    ch &= 0x0f;							\
 	  }								\
-	else if (__glibc_likely ((ch & 0xf8) == 0xf0))			      \
+	else if (__builtin_expect ((ch & 0xf8) == 0xf0, 1))		\
 	  {								\
 	    /* We expect four bytes.  */				\
 	    cnt = 4;							\
@@ -256,7 +255,7 @@ gconv_end (struct __gconv_step *data)
 	    STANDARD_FROM_LOOP_ERR_HANDLER (i);				\
 	  }								\
 									\
-	if (__glibc_unlikely (inptr + cnt > inend))			      \
+	if (__builtin_expect (inptr + cnt > inend, 0))			\
 	  {								\
 	    /* We don't have enough input.  But before we report	\
 	       that check that all the bytes are correct.  */		\
@@ -264,7 +263,7 @@ gconv_end (struct __gconv_step *data)
 	      if ((inptr[i] & 0xc0) != 0x80)				\
 		break;							\
 									\
-	    if (__glibc_likely (inptr + i == inend))			      \
+	    if (__builtin_expect (inptr + i == inend, 1))		\
 	      {								\
 		result = __GCONV_INCOMPLETE_INPUT;			\
 		break;							\
@@ -279,7 +278,7 @@ gconv_end (struct __gconv_step *data)
 	       low) are needed.  */					\
 	    uint16_t zabcd, high, low;					\
 									\
-	    if (__glibc_unlikely (outptr + 4 > outend))			      \
+	    if (__builtin_expect (outptr + 4 > outend, 0))		\
 	      {								\
 		/* Overflow in the output buffer.  */			\
 		result = __GCONV_FULL_OUTPUT;				\
@@ -369,7 +368,7 @@ gconv_end (struct __gconv_step *data)
 									\
     uint16_t c = get16 (inptr);						\
 									\
-    if (__glibc_likely (c <= 0x007f))					      \
+    if (__builtin_expect (c <= 0x007f, 1))				\
       {									\
 	/* Single byte UTF-8 char.  */					\
 	*outptr = c & 0xff;						\
@@ -379,7 +378,7 @@ gconv_end (struct __gconv_step *data)
       {									\
         /* Two byte UTF-8 char.  */					\
 									\
-	if (__glibc_unlikely (outptr + 2 > outend))			      \
+	if (__builtin_expect (outptr + 2 > outend, 0))			\
 	  {								\
 	    /* Overflow in the output buffer.  */			\
 	    result = __GCONV_FULL_OUTPUT;				\
@@ -398,7 +397,7 @@ gconv_end (struct __gconv_step *data)
       {									\
 	/* Three byte UTF-8 char.  */					\
 									\
-	if (__glibc_unlikely (outptr + 3 > outend))			      \
+	if (__builtin_expect (outptr + 3 > outend, 0))			\
 	  {								\
 	    /* Overflow in the output buffer.  */			\
 	    result = __GCONV_FULL_OUTPUT;				\
@@ -420,14 +419,14 @@ gconv_end (struct __gconv_step *data)
         /* Four byte UTF-8 char.  */					\
 	uint16_t low, uvwxy;						\
 									\
-	if (__glibc_unlikely (outptr + 4 > outend))			      \
+	if (__builtin_expect (outptr + 4 > outend, 0))			\
 	  {								\
 	    /* Overflow in the output buffer.  */			\
 	    result = __GCONV_FULL_OUTPUT;				\
 	    break;							\
 	  }								\
 	inptr += 2;							\
-	if (__glibc_unlikely (inptr + 2 > inend))			      \
+	if (__builtin_expect (inptr + 2 > inend, 0))			\
 	  {								\
 	    result = __GCONV_INCOMPLETE_INPUT;				\
 	    break;							\

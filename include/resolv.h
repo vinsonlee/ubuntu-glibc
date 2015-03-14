@@ -13,7 +13,7 @@
 
 #ifdef _RESOLV_H_
 
-# if IS_IN (libc)
+# ifndef NOT_IN_libc
 #  define __resp __libc_resp
 # endif
 extern __thread struct __res_state *__resp attribute_tls_model_ie;
@@ -48,11 +48,11 @@ libc_hidden_proto (__res_randomid)
 libc_hidden_proto (__res_state)
 
 int __libc_res_nquery (res_state, const char *, int, int, u_char *, int,
-		       u_char **, u_char **, int *, int *, int *);
+		       u_char **, u_char **, int *, int *);
 int __libc_res_nsearch (res_state, const char *, int, int, u_char *, int,
-			u_char **, u_char **, int *, int *, int *);
+			u_char **, u_char **, int *, int *);
 int __libc_res_nsend (res_state, const u_char *, int, const u_char *, int,
-		      u_char *, int, u_char **, u_char **, int *, int *, int *)
+		      u_char *, int, u_char **, u_char **, int *, int *)
   attribute_hidden;
 
 libresolv_hidden_proto (_sethtent)

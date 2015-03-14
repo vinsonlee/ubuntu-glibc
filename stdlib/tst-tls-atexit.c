@@ -1,5 +1,5 @@
 /* Verify that DSO is unloaded only if its TLS objects are destroyed.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -60,8 +60,8 @@ load (void *u)
   return NULL;
 }
 
-static int
-do_test (void)
+int
+main (void)
 {
   pthread_t t;
   int ret;
@@ -109,6 +109,3 @@ do_test (void)
 
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"
