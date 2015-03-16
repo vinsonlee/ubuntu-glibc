@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,6 @@
 #include <limits.h>
 #include <sys/time.h>
 #include <sys/timex.h>
-
-#include <kernel-features.h>
 
 #define MAX_SEC	(INT_MAX / 1000000L - 2)
 #define MIN_SEC	(INT_MIN / 1000000L + 2)
@@ -43,8 +41,7 @@
 
 #ifndef ADJTIMEX
 #define NO_LOCAL_ADJTIME
-#define ADJTIMEX(x) INTUSE(__adjtimex) (x)
-extern int INTUSE(__adjtimex) (struct timex *__ntx);
+#define ADJTIMEX(x) __adjtimex (x)
 #endif
 
 #ifndef LINKAGE
@@ -72,28 +69,10 @@ ADJTIME (const struct TIMEVAL *itv, struct TIMEVAL *otv)
       tntx.modes = ADJ_OFFSET_SINGLESHOT;
     }
   else
-    {
-#ifdef ADJ_OFFSET_SS_READ
-      tntx.modes = ADJ_OFFSET_SS_READ;
-#else
-      tntx.modes = 0;
-#endif
-    }
+    tntx.modes = ADJ_OFFSET_SS_READ;
 
-#if defined ADJ_OFFSET_SS_READ && !defined __ASSUME_ADJ_OFFSET_SS_READ
- again:
-#endif
-  if (__builtin_expect (ADJTIMEX (&tntx) < 0, 0))
-    {
-#if defined ADJ_OFFSET_SS_READ && !defined __ASSUME_ADJ_OFFSET_SS_READ
-      if (itv && errno == EINVAL && tntx.modes == ADJ_OFFSET_SS_READ)
-	{
-	  tntx.modes = ADJ_OFFSET_SINGLESHOT;
-	  goto again;
-	}
-#endif
-      return -1;
-    }
+  if (__glibc_unlikely (ADJTIMEX (&tntx) < 0))
+    return -1;
 
   if (otv)
     {
