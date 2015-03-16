@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2014 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2015 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -66,7 +66,7 @@ __ieee754_sqrt (double x)
   /*----------------- 2^-1022  <= | x |< 2^1024  -----------------*/
   if (k > 0x000fffff && k < 0x7ff00000)
     {
-      int rm = fegetround ();
+      int rm = __fegetround ();
       fenv_t env;
       libc_feholdexcept_setround (&env, FE_TONEAREST);
       double ret;

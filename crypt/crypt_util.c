@@ -1,7 +1,7 @@
 /*
  * UFC-crypt: ultra fast crypt(3) implementation
  *
- * Copyright (C) 1991-2014 Free Software Foundation, Inc.
+ * Copyright (C) 1991-2015 Free Software Foundation, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,17 +33,6 @@
 #define STATIC static
 #endif
 
-#ifndef DOS
-#include "ufc-crypt.h"
-#else
-/*
- * Thanks to greg%wind@plains.NoDak.edu (Greg W. Wettstein)
- * for DOS patches
- */
-#include "pl.h"
-#include "ufc.h"
-#endif
-#include "crypt.h"
 #include "crypt-private.h"
 
 /* Prototypes for local functions.  */
@@ -252,6 +241,10 @@ static ufc_long eperm32tab[4][256][2];
  *      giving two 32 bit longs.
  */
 static ufc_long efp[16][64][2];
+
+/* Table with characters for base64 transformation.  */
+static const char b64t[64] =
+"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 /*
  * For use by the old, non-reentrant routines
@@ -955,4 +948,18 @@ setkey(__key)
      const char *__key;
 {
   __setkey_r(__key, &_ufc_foobar);
+}
+
+void
+__b64_from_24bit (char **cp, int *buflen,
+		  unsigned int b2, unsigned int b1, unsigned int b0,
+		  int n)
+{
+  unsigned int w = (b2 << 16) | (b1 << 8) | b0;
+  while (n-- > 0 && (*buflen) > 0)
+    {
+      *(*cp)++ = b64t[w & 0x3f];
+      --(*buflen);
+      w >>= 6;
+    }
 }

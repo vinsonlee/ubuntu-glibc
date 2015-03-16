@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2014 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2015 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -447,19 +447,21 @@ __sin (double x)
 	    }
 	  else
 	    {
+	      double t;
 	      if (a > 0)
 		{
 		  m = 1;
+		  t = a;
 		  db = da;
 		}
 	      else
 		{
 		  m = 0;
-		  a = -a;
+		  t = -a;
 		  db = -da;
 		}
-	      u.x = big + a;
-	      y = a - (u.x - big);
+	      u.x = big + t;
+	      y = t - (u.x - big);
 	      res = do_sin (u, y, db, &cor);
 	      cor = (cor > 0) ? 1.035 * cor + eps : 1.035 * cor - eps;
 	      retval = ((res == res + cor) ? ((m) ? res : -res)
@@ -671,19 +673,21 @@ __cos (double x)
 	    }
 	  else
 	    {
+	      double t;
 	      if (a > 0)
 		{
 		  m = 1;
+		  t = a;
 		  db = da;
 		}
 	      else
 		{
 		  m = 0;
-		  a = -a;
+		  t = -a;
 		  db = -da;
 		}
-	      u.x = big + a;
-	      y = a - (u.x - big);
+	      u.x = big + t;
+	      y = t - (u.x - big);
 	      res = do_sin (u, y, db, &cor);
 	      cor = (cor > 0) ? 1.035 * cor + eps : 1.035 * cor - eps;
 	      retval = ((res == res + cor) ? ((m) ? res : -res)

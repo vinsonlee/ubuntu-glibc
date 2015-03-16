@@ -1,5 +1,5 @@
 /* Multiple versions of memcmp.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 /* Define multiple versions only for definition in libc.  */
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 # include <string.h>
 # include <shlib-compat.h>
 # include "init-arch.h"
