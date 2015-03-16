@@ -1,6 +1,6 @@
 /* memset/bzero -- set memory area to CH/0
    Optimized version for x86-64.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 #include <sysdep.h>
 
 	.text
-#if !defined NOT_IN_libc
+#if IS_IN (libc)
 ENTRY(__bzero)
 	movq	%rdi, %rax /* Set return value.  */
 	movq	%rsi, %rdx /* Set n.  */
@@ -42,7 +42,7 @@ ENTRY(__memset_tail)
 END(__memset_tail)
 #endif
 
-#if defined PIC && !defined NOT_IN_libc
+#if defined PIC && IS_IN (libc)
 ENTRY_CHK (__memset_chk)
 	cmpq	%rdx, %rcx
 	jb	HIDDEN_JUMPTARGET (__chk_fail)
@@ -125,7 +125,7 @@ L(between8_16bytes):
 END (memset)
 libc_hidden_builtin_def (memset)
 
-#if defined PIC && !defined NOT_IN_libc && !defined USE_MULTIARCH
+#if defined PIC && IS_IN (libc) && !defined USE_MULTIARCH
 strong_alias (__memset_chk, __memset_zero_constant_len_parameter)
 	.section .gnu.warning.__memset_zero_constant_len_parameter
 	.string "memset used with constant zero length parameter; this could be due to transposed parameters"
