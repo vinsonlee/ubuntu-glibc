@@ -1,5 +1,5 @@
 /* Helper functions used by strftime/strptime to handle locale-specific "eras".
-   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -122,11 +122,11 @@ _nl_init_era_entries (struct __locale_data *current)
 
 		  /* Set and skip wide era name.  */
 		  new_eras[cnt].era_wname = (wchar_t *) ptr;
-		  ptr = (char *) (wcschr ((wchar_t *) ptr, L'\0') + 1);
+		  ptr = (char *) (__wcschr ((wchar_t *) ptr, L'\0') + 1);
 
 		  /* Set and skip wide era format.  */
 		  new_eras[cnt].era_wformat = (wchar_t *) ptr;
-		  ptr = (char *) (wcschr ((wchar_t *) ptr, L'\0') + 1);
+		  ptr = (char *) (__wcschr ((wchar_t *) ptr, L'\0') + 1);
 		}
 	    }
 	}

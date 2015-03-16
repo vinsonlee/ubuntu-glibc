@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 
 
 off_t
-ftello (fp)
+__ftello (fp)
      _IO_FILE *fp;
 {
   _IO_off64_t pos;
@@ -61,8 +61,9 @@ ftello (fp)
     }
   return pos;
 }
-libc_hidden_def (ftello)
+libc_hidden_def (__ftello)
+weak_alias (__ftello, ftello)
 
 #ifdef __OFF_T_MATCHES_OFF64_T
-weak_alias (ftello, ftello64)
+weak_alias (__ftello, ftello64)
 #endif
