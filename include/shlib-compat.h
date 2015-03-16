@@ -1,5 +1,5 @@
 /* Macros for managing ABI-compatibility definitions using ELF symbol versions.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -41,13 +41,9 @@
 # define SHLIB_COMPAT(lib, introduced, obsoleted)			      \
   _SHLIB_COMPAT (lib, introduced, obsoleted)
 # define _SHLIB_COMPAT(lib, introduced, obsoleted)			      \
-  ((IS_IN_##lib - 0)							      \
+  (IS_IN (lib)								      \
    && (!(ABI_##lib##_##obsoleted - 0)					      \
        || ((ABI_##lib##_##introduced - 0) < (ABI_##lib##_##obsoleted - 0))))
-
-# ifndef NOT_IN_libc
-#  define IS_IN_libc 1
-# endif
 
 /* That header also defines symbols like `VERSION_libm_GLIBC_2_1' to
    the version set name to use for e.g. symbols first introduced into

@@ -1,5 +1,5 @@
 /* Common code for file-based databases in nss_files module.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -198,9 +198,11 @@ get_contents (char *linebuf, size_t len, FILE *stream)
     {
       int curlen = ((remaining_len > (size_t) INT_MAX) ? INT_MAX
 		    : remaining_len);
-      char *p = fgets_unlocked (curbuf, curlen, stream);
 
+      /* Terminate the line so that we can test for overflow.  */
       ((unsigned char *) curbuf)[curlen - 1] = 0xff;
+
+      char *p = fgets_unlocked (curbuf, curlen, stream);
 
       /* EOF or read error.  */
       if (p == NULL)
@@ -272,7 +274,7 @@ internal_getent (struct STRUCTURE *result,
 	 || ! (parse_result = parse_line (p, result, data, buflen, errnop
 					  EXTRA_ARGS)));
 
-  if (__builtin_expect (parse_result == -1, 0))
+  if (__glibc_unlikely (parse_result == -1))
     {
       H_ERRNO_SET (NETDB_INTERNAL);
       return NSS_STATUS_TRYAGAIN;

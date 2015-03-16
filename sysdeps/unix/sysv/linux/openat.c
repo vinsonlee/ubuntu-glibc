@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,46 +22,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <kernel-features.h>
 #include <sysdep-cancel.h>
 #include <not-cancel.h>
 
 
 #ifndef OPENAT
 # define OPENAT openat
-
-# ifndef __ASSUME_ATFCTS
-/* Set errno after a failed call.  If BUF is not null,
-   it is a /proc/self/fd/ path name we just tried to use.  */
-void
-attribute_hidden
-__atfct_seterrno (int errval, int fd, const char *buf)
-{
-  if (buf != NULL)
-    {
-      struct stat64 st;
-
-      if (errval == ENOTDIR || errval == ENOENT)
-	{
-	  /* This can mean either the file descriptor is invalid or
-	     /proc is not mounted.  */
-	  if (__fxstat64 (_STAT_VER, fd, &st) != 0)
-	    /* errno is already set correctly.  */
-	    return;
-
-	  /* If /proc is not mounted there is nothing we can do.  */
-	  if ((errval != ENOTDIR || S_ISDIR (st.st_mode))
-	      && (__xstat64 (_STAT_VER, "/proc/self/fd", &st) != 0
-		  || !S_ISDIR (st.st_mode)))
-	    errval = ENOSYS;
-	}
-    }
-
-  __set_errno (errval);
-}
-
-int __have_atfcts;
-# endif
 #endif
 
 
@@ -71,11 +37,7 @@ int __have_atfcts;
 
 
 int
-OPENAT_NOT_CANCEL (fd, file, oflag, mode)
-     int fd;
-     const char *file;
-     int oflag;
-     mode_t mode;
+OPENAT_NOT_CANCEL (int fd, const char *file, int oflag, mode_t mode)
 {
 
   /* We have to add the O_LARGEFILE flag for openat64.  */
@@ -83,63 +45,7 @@ OPENAT_NOT_CANCEL (fd, file, oflag, mode)
   oflag |= MORE_OFLAGS;
 #endif
 
-  int res;
-
-#ifdef __NR_openat
-# ifndef __ASSUME_ATFCTS
-  if (__have_atfcts >= 0)
-# endif
-    {
-      res = INLINE_SYSCALL (openat, 4, fd, file, oflag, mode);
-
-# ifndef __ASSUME_ATFCTS
-      if (res == -1 && errno == ENOSYS)
-	__have_atfcts = -1;
-      else
-# endif
-	return res;
-    }
-#endif
-
-#ifndef __ASSUME_ATFCTS
-  INTERNAL_SYSCALL_DECL (err);
-  char *buf = NULL;
-
-  if (fd != AT_FDCWD && file[0] != '/')
-    {
-      size_t filelen = strlen (file);
-      if (__builtin_expect (filelen == 0, 0))
-	{
-	  __set_errno (ENOENT);
-	  return -1;
-	}
-
-      static const char procfd[] = "/proc/self/fd/%d/%s";
-      /* Buffer for the path name we are going to use.  It consists of
-	 - the string /proc/self/fd/
-	 - the file descriptor number
-	 - the file name provided.
-	 The final NUL is included in the sizeof.   A bit of overhead
-	 due to the format elements compensates for possible negative
-	 numbers.  */
-      size_t buflen = sizeof (procfd) + sizeof (int) * 3 + filelen;
-      buf = alloca (buflen);
-
-      /* Note: snprintf cannot be canceled.  */
-      __snprintf (buf, buflen, procfd, fd, file);
-      file = buf;
-    }
-
-  res = INTERNAL_SYSCALL (open, err, 3, file, oflag, mode);
-
-  if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (res, err), 0))
-    {
-      __atfct_seterrno (INTERNAL_SYSCALL_ERRNO (res, err), fd, buf);
-      res = -1;
-    }
-
-  return res;
-#endif
+  return INLINE_SYSCALL (openat, 4, fd, file, oflag, mode);
 }
 
 #define UNDERIZE(name) UNDERIZE_1 (name)
@@ -151,10 +57,7 @@ OPENAT_NOT_CANCEL (fd, file, oflag, mode)
    the directory associated with FD.  If OFLAG includes O_CREAT, a
    third argument is the file protection.  */
 int
-__OPENAT (fd, file, oflag)
-     int fd;
-     const char *file;
-     int oflag;
+__OPENAT (int fd, const char *file, int oflag, ...)
 {
   mode_t mode = 0;
   if (oflag & O_CREAT)

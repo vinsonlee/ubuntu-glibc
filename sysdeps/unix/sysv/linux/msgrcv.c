@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -33,12 +33,8 @@ struct ipc_kludge
 
 
 ssize_t
-__libc_msgrcv (msqid, msgp, msgsz, msgtyp, msgflg)
-     int msqid;
-     void *msgp;
-     size_t msgsz;
-     long int msgtyp;
-     int msgflg;
+__libc_msgrcv (int msqid, void *msgp, size_t msgsz, long int msgtyp,
+	       int msgflg)
 {
   /* The problem here is that Linux' calling convention only allows up to
      fives parameters to a system call.  */

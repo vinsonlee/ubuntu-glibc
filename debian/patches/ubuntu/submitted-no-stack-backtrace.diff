@@ -8,6 +8,14 @@ Index: eglibc-2.15/debug/fortify_fail.c
 ===================================================================
 --- eglibc-2.15.orig/debug/fortify_fail.c	2007-09-25 08:22:16.000000000 -0700
 +++ eglibc-2.15/debug/fortify_fail.c	2012-05-07 11:46:38.845693697 -0700
+@@ -17,6 +17,7 @@
+
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <string.h>
+
+
+ extern char **__libc_argv attribute_hidden;
 @@ -27,9 +27,15 @@
  __fortify_fail (msg)
       const char *msg;
