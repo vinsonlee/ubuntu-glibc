@@ -1,4 +1,4 @@
-glibc (2.21-0ubuntu2~ppa4) vivid; urgency=medium
+glibc (2.21-0ubuntu2) vivid; urgency=medium
 
   * debian/patches/powerpc/cvs-ppc-sqrt.diff: Fix sqrt() on powerpc.
   * debian/patches/powerpc/cvs-ppc-sqrtf.diff: Likewise for sqrtf().
