@@ -1,5 +1,5 @@
 /* Convert string representing a number to float value, using given locale.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -243,9 +243,14 @@ round_and_return (mp_limb_t *retval, intmax_t exponent, int negative,
 	  more_bits |= ((round_limb & ((((mp_limb_t) 1) << round_bit) - 1))
 			!= 0);
 
-	  (void) __mpn_rshift (retval, &retval[shift / BITS_PER_MP_LIMB],
-			       RETURN_LIMB_SIZE - (shift / BITS_PER_MP_LIMB),
-			       shift % BITS_PER_MP_LIMB);
+	  /* __mpn_rshift requires 0 < shift < BITS_PER_MP_LIMB.  */
+	  if ((shift % BITS_PER_MP_LIMB) != 0)
+	    (void) __mpn_rshift (retval, &retval[shift / BITS_PER_MP_LIMB],
+			         RETURN_LIMB_SIZE - (shift / BITS_PER_MP_LIMB),
+			         shift % BITS_PER_MP_LIMB);
+	  else
+	    for (i = 0; i < RETURN_LIMB_SIZE - (shift / BITS_PER_MP_LIMB); i++)
+	      retval[i] = retval[i + (shift / BITS_PER_MP_LIMB)];
 	  MPN_ZERO (&retval[RETURN_LIMB_SIZE - (shift / BITS_PER_MP_LIMB)],
 		    shift / BITS_PER_MP_LIMB);
 	}
@@ -545,7 +550,7 @@ ____STRTOF_INTERNAL (nptr, endptr, group, loc)
 
   struct __locale_data *current = loc->__locales[LC_NUMERIC];
 
-  if (__builtin_expect (group, 0))
+  if (__glibc_unlikely (group))
     {
       grouping = _NL_CURRENT (LC_NUMERIC, GROUPING);
       if (*grouping <= 0 || *grouping == CHAR_MAX)
@@ -709,7 +714,7 @@ ____STRTOF_INTERNAL (nptr, endptr, group, loc)
   while (c == L'0' || ((wint_t) thousands != L'\0' && c == (wint_t) thousands))
     c = *++cp;
 #else
-  if (__builtin_expect (thousands == NULL, 1))
+  if (__glibc_likely (thousands == NULL))
     while (c == '0')
       c = *++cp;
   else
@@ -789,7 +794,7 @@ ____STRTOF_INTERNAL (nptr, endptr, group, loc)
 	    /* Not a digit or separator: end of the integer part.  */
 	    break;
 #else
-	  if (__builtin_expect (thousands == NULL, 1))
+	  if (__glibc_likely (thousands == NULL))
 	    break;
 	  else
 	    {
@@ -1181,10 +1186,10 @@ ____STRTOF_INTERNAL (nptr, endptr, group, loc)
     exponent -= incr;
   }
 
-  if (__builtin_expect (exponent > MAX_10_EXP + 1 - (intmax_t) int_no, 0))
+  if (__glibc_unlikely (exponent > MAX_10_EXP + 1 - (intmax_t) int_no))
     return overflow_value (negative);
 
-  if (__builtin_expect (exponent < MIN_10_EXP - (DIG + 1), 0))
+  if (__glibc_unlikely (exponent < MIN_10_EXP - (DIG + 1)))
     return underflow_value (negative);
 
   if (int_no > 0)
@@ -1245,7 +1250,7 @@ ____STRTOF_INTERNAL (nptr, endptr, group, loc)
 
       /* Now we know the exponent of the number in base two.
 	 Check it against the maximum possible exponent.  */
-      if (__builtin_expect (bits > MAX_EXP, 0))
+      if (__glibc_unlikely (bits > MAX_EXP))
 	return overflow_value (negative);
 
       /* We have already the first BITS bits of the result.  Together with

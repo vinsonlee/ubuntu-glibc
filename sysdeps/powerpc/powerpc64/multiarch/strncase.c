@@ -1,5 +1,5 @@
 /* Multiple versions of strncasecmp
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,7 +16,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 # include <string.h>
 # define strncasecmp __strncasecmp_ppc
 extern __typeof (__strncasecmp) __strncasecmp_ppc attribute_hidden;
@@ -26,7 +26,7 @@ extern __typeof (__strncasecmp) __strncasecmp_power7 attribute_hidden;
 #include <string/strncase.c>
 #undef strncasecmp
 
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 # include <shlib-compat.h>
 # include "init-arch.h"
 

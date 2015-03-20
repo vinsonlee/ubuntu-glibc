@@ -1,5 +1,5 @@
 /* Return the time used by the program so far (user time + system time).
-   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,14 +20,13 @@
 #include <time.h>
 #include <unistd.h>
 
-#if CLOCKS_PER_SEC != 1000000l
-# error "CLOCKS_PER_SEC should be 1000000"
-#endif
-
 clock_t
 clock (void)
 {
   struct timespec ts;
+
+  _Static_assert (CLOCKS_PER_SEC == 1000000,
+		  "CLOCKS_PER_SEC should be 1000000");
 
   /* clock_gettime shouldn't fail here since CLOCK_PROCESS_CPUTIME_ID is
      supported since 2.6.12.  Check the return value anyway in case the kernel
