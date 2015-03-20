@@ -1,5 +1,5 @@
 /* Compute complex natural logarithm.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -29,7 +29,7 @@ __clogf (__complex__ float x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (__builtin_expect (rcls == FP_ZERO && icls == FP_ZERO, 0))
+  if (__glibc_unlikely (rcls == FP_ZERO && icls == FP_ZERO))
     {
       /* Real and imaginary part are 0.0.  */
       __imag__ result = signbit (__real__ x) ? M_PI : 0.0;
@@ -37,7 +37,7 @@ __clogf (__complex__ float x)
       /* Yes, the following line raises an exception.  */
       __real__ result = -1.0 / fabsf (__real__ x);
     }
-  else if (__builtin_expect (rcls != FP_NAN && icls != FP_NAN, 1))
+  else if (__glibc_likely (rcls != FP_NAN && icls != FP_NAN))
     {
       /* Neither real nor imaginary part is NaN.  */
       float absx = fabsf (__real__ x), absy = fabsf (__imag__ x);
@@ -68,12 +68,9 @@ __clogf (__complex__ float x)
 	  float absy2 = absy * absy;
 	  if (absy2 <= FLT_MIN * 2.0f)
 	    {
-#if __FLT_EVAL_METHOD__ == 0
-	      __real__ result = absy2 / 2.0f - absy2 * absy2 / 4.0f;
-#else
-	      volatile float force_underflow = absy2 * absy2 / 4.0f;
-	      __real__ result = absy2 / 2.0f - force_underflow;
-#endif
+	      float force_underflow = absy2 * absy2;
+	      __real__ result = absy2 / 2.0f;
+	      math_force_eval (force_underflow);
 	    }
 	  else
 	    __real__ result = __log1pf (absy2) / 2.0f;

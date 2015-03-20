@@ -1,5 +1,5 @@
 /* Internal function for converting integers to ASCII.
-   Copyright (C) 1994-2014 Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -46,12 +46,12 @@ extern char *_itoa (unsigned long long int value, char *buflim,
 
 extern const char _itoa_upper_digits[];
 extern const char _itoa_lower_digits[];
-#if !defined NOT_IN_libc || defined IS_IN_rtld
+#if IS_IN (libc) || IS_IN (rtld)
 hidden_proto (_itoa_upper_digits)
 hidden_proto (_itoa_lower_digits)
 #endif
 
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 extern char *_itoa_word (_ITOA_WORD_TYPE value, char *buflim,
 			 unsigned int base, int upper_case);
 #else

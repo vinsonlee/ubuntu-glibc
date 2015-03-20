@@ -84,7 +84,7 @@ then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions "$preversion" lt 2.19; then
+	if dpkg --compare-versions "$preversion" lt 2.21; then
 	    # LP #504198; purge locales between major versions
 	    if which locale-gen >/dev/null; then
 		locale-gen --purge
@@ -185,7 +185,7 @@ then
 	    else
 		echo "Nothing to restart."
 	    fi
-	fi # end upgrading and $preversion lt 2.19
+	fi # end upgrading and $preversion lt 2.21
     fi # Upgrading
 
     # Restart init.  Currently handles chroots, systemd and upstart, and
