@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -81,14 +81,6 @@ const struct _IO_codecvt __libio_codecvt =
 };
 
 
-#ifdef _LIBC
-const struct __gconv_trans_data __libio_translit attribute_hidden =
-{
-  .__trans_fct = __gconv_transliterate
-};
-#endif
-
-
 /* Return orientation of stream.  If mode is nonzero try to change
    the orientation first.  */
 #undef _IO_fwide
@@ -146,20 +138,14 @@ _IO_fwide (fp, mode)
 	cc->__cd_in.__cd.__data[0].__flags = __GCONV_IS_LAST;
 	cc->__cd_in.__cd.__data[0].__statep = &fp->_wide_data->_IO_state;
 
-	/* XXX For now no transliteration.  */
-	cc->__cd_in.__cd.__data[0].__trans = NULL;
-
 	cc->__cd_out.__cd.__nsteps = fcts.tomb_nsteps;
 	cc->__cd_out.__cd.__steps = fcts.tomb;
 
 	cc->__cd_out.__cd.__data[0].__invocation_counter = 0;
 	cc->__cd_out.__cd.__data[0].__internal_use = 1;
-	cc->__cd_out.__cd.__data[0].__flags = __GCONV_IS_LAST;
+	cc->__cd_out.__cd.__data[0].__flags
+	  = __GCONV_IS_LAST | __GCONV_TRANSLIT;
 	cc->__cd_out.__cd.__data[0].__statep = &fp->_wide_data->_IO_state;
-
-	/* And now the transliteration.  */
-	cc->__cd_out.__cd.__data[0].__trans
-	  = (struct __gconv_trans_data  *) &__libio_translit;
       }
 #else
 # ifdef _GLIBCPP_USE_WCHAR_T
@@ -199,12 +185,6 @@ _IO_fwide (fp, mode)
 
       /* From now on use the wide character callback functions.  */
       ((struct _IO_FILE_plus *) fp)->vtable = fp->_wide_data->_wide_vtable;
-
-      /* One last twist: we get the current stream position.  The wide
-	 char streams have much more problems with not knowing the
-	 current position and so we should disable the optimization
-	 which allows the functions without knowing the position.  */
-      fp->_offset = _IO_SYSSEEK (fp, 0, _IO_seek_cur);
     }
 
   /* Set the mode now.  */
