@@ -529,7 +529,7 @@ case $type in
 esac
 
 if [ -n "$preversion" ]; then
-    if dpkg --compare-versions "$preversion" lt 2.16; then
+    if dpkg --compare-versions "$preversion" lt 2.21-0ubuntu4; then
        # upgrading from a pre-multiarch libc to a multiarch libc; we have
        # to blow away /etc/ld.so.cache, otherwise the old unpacked libc
        # is still first in the cache and segfaults when combined with
