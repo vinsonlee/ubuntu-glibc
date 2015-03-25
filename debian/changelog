@@ -1,3 +1,12 @@
+glibc (2.21-0ubuntu4) vivid; urgency=medium
+
+  * debian/patches/arm/local-arm-futex.diff: Lie about the minimum
+    kernel support for futex_atomic_cmpxchg_inatomic to restore the
+    previous state and make pulsesink happier on ARM (LP: #1436162)
+  * debian/debhelper.in/libc.preinst: Wipe ld.so.cache on upgrades.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 25 Mar 2015 14:31:51 -0600
+
 glibc (2.21-0ubuntu3) vivid; urgency=medium
 
   * debian/patches/ubuntu/local-warn-bsd-source.diff: Don't warn on
