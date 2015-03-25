@@ -1,5 +1,5 @@
 /* Store current floating-point environment and clear exceptions.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David Huggins-Daines <dhd@debian.org>, 2000
 
@@ -29,8 +29,8 @@ __feholdexcept (fenv_t *envp)
   /* Store the environment.  */
   bufptr = clear.buf;
   __asm__ (
-	   "fstd %%fr0,0(%1)\n"
-	   : "=m" (clear) : "r" (bufptr) : "%r0");
+	   "fstd,ma %%fr0,8(%1)\n"
+	   : "=m" (clear), "+r" (bufptr) : : "%r0");
   memcpy (envp, &clear.env, sizeof (fenv_t));
 
   /* Clear exception queues */
@@ -40,9 +40,11 @@ __feholdexcept (fenv_t *envp)
   /* Now clear all flags  */
   clear.env.__status_word &= ~(FE_ALL_EXCEPT << 27);
 
-  /* Load the new environment. Note: fr0 must load last to enable T-bit.  */
+  /* Load the new environment. Note: fr0 must load last to enable T-bit
+     Thus we start bufptr at the end and work backwards */
+  bufptr = (unsigned long long *)((unsigned int)(clear.buf) + sizeof(unsigned int)*4);
   __asm__ (
-	   "fldd 0(%0),%%fr0\n"
+	   "fldd,mb -8(%0),%%fr0\n"
 	   : : "r" (bufptr), "m" (clear) : "%r0");
 
   return 0;

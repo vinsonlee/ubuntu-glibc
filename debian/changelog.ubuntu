@@ -1,3 +1,223 @@
+eglibc (2.15-0ubuntu20) quantal; urgency=low
+
+  * Backport fixes for dbl-64 and ldbl-128 issues (LP: #1000498)
+  * Backport another FMA support patch from glibc master branch.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 03 Oct 2012 15:58:02 -0600
+
+eglibc (2.15-0ubuntu19) quantal-proposed; urgency=low
+
+  * SECURITY UPDATE: stack buffer overflow in vfprintf handling
+    (LP: #1031301)
+    - debian/patches/any/CVE-2012-3406.patch: switch to malloc when
+      array grows too large to handle via alloca extension
+    - CVE-2012-3406
+  * SECURITY UPDATE: stdlib strtod integer/buffer overflows
+    - debian/patches/any/CVE-2012-3480.patch: rearrange calculations
+      and modify types to void integer overflows
+    - CVE-2012-3480
+
+ -- Steve Beattie <sbeattie@ubuntu.com>  Tue, 02 Oct 2012 10:57:21 -0700
+
+eglibc (2.15-0ubuntu18) quantal; urgency=low
+
+  * Version Breaks on libhwloc0 so that it doesn't catch recent libhwloc5
+    packages which provide libhwloc0 (LP: #1048566).
+
+ -- Colin Watson <cjwatson@ubuntu.com>  Tue, 11 Sep 2012 16:38:52 +0100
+
+eglibc (2.15-0ubuntu17) quantal; urgency=low
+
+  * Backport fix from 2.16 for sscanf/realloc deadlock (LP: #1028038)
+  * Backport for bogus FPE on underflow for exp(double) (LP: #1007457)
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Thu, 09 Aug 2012 20:25:35 -0600
+
+eglibc (2.15-0ubuntu16) quantal; urgency=low
+
+  * Backport fix from 2.16 to fix htons() conversion errors on non-x86
+    architectures, by correctly casting to uint16_t (LP: #1016349)
+  * Restore missing AT_EMPTY_PATH definition in fnctl.h (LP: #1010069)
+  * Backport FMA4/AVX detection from glibc 2.16 (LP: #956051, #979003)
+  * Backport fixups to AVX-using code to match the detection backport.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Thu, 09 Aug 2012 15:15:53 -0600
+
+eglibc (2.15-0ubuntu15) quantal; urgency=low
+
+  * debian/patches/any/unsubmitted-no-stack-backstrace.patch: disable
+    backtraces when triggering __stack_chk_fail.
+  * debian/patches/series: reorder and rename patches that should be in
+    Debian as well as Ubuntu, for easier upstreaming.
+
+ -- Kees Cook <kees@ubuntu.com>  Fri, 22 Jun 2012 11:55:45 -0700
+
+eglibc (2.15-0ubuntu14) quantal; urgency=low
+
+  * Cherry-pick my patch from Debian (r5185:5191) to make use of
+    dpkg's DPKG_MAINTSCRIPT_ARCH variable, so our maintainer scripts
+    don't explode with the new dpkg, and guard that same usage with
+    dpkg --assert-multi-arch, so we don't fail with old dpkg.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Tue, 19 Jun 2012 14:13:26 -0600
+
+eglibc (2.15-0ubuntu13) quantal; urgency=low
+
+  * arm/local-linaro-cortex-strings.diff: instead of sysdeps/arm, apply
+    to sysdeps/arm/eabi/armv6t2, as it implements routines that aren't
+    supported on old CPUs, and drop memchr.S half of the patch, in
+    favour of the version that's been submitted and accepted upstream.
+  * Make the strchr.S implementation above stop forcing armv7-a, since
+    it works on armv6t2, and moving the path enforces this during build.
+  * Force the libc6-armhf build on armel to be armv7-a with vfpv3-d16.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Tue, 29 May 2012 12:55:39 +0800
+
+eglibc (2.15-0ubuntu12) quantal; urgency=low
+
+  [ Steve Langasek ]
+  * Per Adam's suggestion, comment the NSS_CHECK substitution so it's
+    clearer what's going on here.
+
+  [ Adam Conrad ]
+  * Back out the march=armv5t from the libc6-armel build on armhf, as
+    this seems to cause a bit of an odd toolchain hiccup, and it's
+    impossible to run armhf on a less-than-v7 system anyway.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 23 May 2012 15:46:11 -0600
+
+eglibc (2.15-0ubuntu11) quantal; urgency=low
+
+  * Rebuild to pick up the armv5t defaults on armel.
+  * Build the soft float pass on armhf using -march=armv5t -mfloat-abi=soft.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 02 May 2012 23:41:18 +0200
+
+eglibc (2.15-0ubuntu10) precise-proposed; urgency=low
+
+  * kdm is not meant to be restarted, only warned about; moving the restart
+    code to the preinst is causing kdm restarts that will break the desktop
+    in the middle of the upgrade.  Zero out our list of services between the
+    two uses of the variable.  LP: #985735.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 19 Apr 2012 15:50:02 -0700
+
+eglibc (2.15-0ubuntu9) precise; urgency=low
+
+  * debian/debhelper.in/libc.preinst: Brown paper bag fix; when we
+    upgrade from older versions, we don't have our linker in place
+    before unpacking, however the preisnt wants one, so create a
+    temporary linker symlink in the new location for one-time use
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Sun, 15 Apr 2012 14:46:48 -0600
+
+eglibc (2.15-0ubuntu8) precise; urgency=low
+
+  * debian/patches/arm/unsubmitted-armhf-linker.diff: Add the new armhf
+    linker to the triplet/LDSO table in ports/sysdeps/arm/shlib-versions
+  * debian/sysdeps/arm{el,hf}.mk: Stop installing armhf linker to its
+    multiarch path, the new standard path is /lib/ld-linux-armhf.so.3
+  * debian/sysdeps/arm{el,hf}.mk: Define configure targets for alt libs
+  * debian/sysdeps/arm{el,hf}.mk: Provide compat symlinks in armhf builds
+    so that old binaries continue to work without needing rebuilding
+  * debian/rules.d/build.mk: Change ldd to use the new armhf linker path
+  * debian/libc6.symbols.armhf: ld-linux-armhf.so.3 depends on having a
+    new enough version of libc6 installed to make the linker available
+  * debian/patches/arm/unsubmitted-soname-hack.diff: Apply unfortunate
+    hack to elf/dl-load.c to allow our old binaries keep running with the
+    new linker, by spoofing the SONAME of the new as if it were the old
+  * debian/debhelper.in/libc-udeb.install.armhf: No longer required
+  * debian/sysdeps/armhf.mk: Create symlink in the udeb for legacy linker
+  * debian/debhelper.in/libc{,-alt}.postrm: If we remove libc6:i386 before
+    libc6-i386:amd64, maintain sanity of /lib/ld-linux.so.2 (LP: #852101)
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Fri, 13 Apr 2012 19:09:11 -0600
+
+eglibc (2.15-0ubuntu7) precise; urgency=low
+
+  [ James Hunt ]
+  * debian/debhelper.in/libc.preinst: Moved logic from postinst to
+    prompt user for services to restart. We ask here to allow the
+    problematic cron to be stopped in the preinst, but defer the restart of
+    remaining services until postinst time (LP: #508083).
+
+  [ Steve Langasek ]
+  * debian/debhelper.in/libc.{pre,post}inst: drop special casing of upstart
+    jobs when restarting, since the check was completely wrong anyway,
+    depending on the no-longer-existent /lib/init/readlink.
+  * Drop obsolete gdm upgrade handling code that only applies for upgrades
+    from hardy to lucid.
+  * Remove the /etc/ld.so.conf.d/i486-linux-gnu.conf conffile on upgrade on
+    i386, since it's no longer shipped and we should give consistent results
+    on upgrade and install; and add a Breaks on the three library packages
+    in lucid that used this path.
+
+  [ Adam Conrad ]
+  * debian/patches/any/local-nscd-NO_MAPPING.diff: Apply patch from Jeff Law
+    to clean up thread handling in __nscd_get_nl_timestamp and resolve a few
+    random crashing issues with chromium-browser and ktorrent (LP: #929219)
+  * debian/rules.d/debhelper.mk: Fix RTLD_SO replacement regex for sanity.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Thu, 12 Apr 2012 00:18:08 -0600
+
+eglibc (2.15-0ubuntu6) precise; urgency=low
+
+  * SECURITY UPDATE: denial of service  in RPC implementation (LP: #901716)
+    - debian/patches/any/local-CVE-2011-4609.patch: nanosleep when too
+      many open fds are detected
+    - CVE-2011-4609
+  * SECURITY UPDATE: vfprintf nargs overflow leading to FORTIFY
+    check bypass (LP: #953171)
+    - debian/patches/any/cvs-CVE-2012-0864.patch: check for integer
+      overflow
+    - CVE-2012-0864
+
+ -- Steve Beattie <sbeattie@ubuntu.com>  Mon, 12 Mar 2012 09:20:41 -0700
+
+eglibc (2.15-0ubuntu5) precise; urgency=low
+
+  * Backport ARM makecontext() routines. LP: #696794
+
+ -- Michael Hope <michael.hope@linaro.org>  Wed, 07 Mar 2012 09:32:39 +1300
+
+eglibc (2.15-0ubuntu4) precise; urgency=low
+
+  * Merge from Debian (r5173, 2.13-27).
+  * Don't include the non-default multilib debug files in the libc6-dbg
+    package for any architecture.
+
+ -- Matthias Klose <doko@ubuntu.com>  Fri, 02 Mar 2012 19:41:37 +0100
+
+eglibc (2.15-0ubuntu3) precise; urgency=low
+
+  [ Matthias Klose ]
+  * debian/debhelper.in/libc.postinst: Call notify-reboot-required for
+    updates to 2.15.
+  * Expect same test failures on armhf as on armel.
+  * Only restart gdm if it is running. LP: #931745.
+  * Don't include the non-default multilib debug files in the libc6-dbg
+    package on ARM. Install the multiarch package instead.
+
+  [ Steve Langasek ]
+  * Synchronize the kernel version checks in
+    debian/debhelper.in/libc6.preinst with the values actually set in
+    debian/sysdeps/linux.mk.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 23 Feb 2012 20:04:15 +0100
+
+eglibc (2.15-0ubuntu2) precise; urgency=low
+
+  * Revert commit c5a0802a. LP: #929713.
+  * Fix nvidia libgl crashes. LP: #929384.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 09 Feb 2012 20:33:14 +0100
+
+eglibc (2.15-0ubuntu1) precise; urgency=low
+
+  * Build upstream tarball from r16526.
+
+ -- Matthias Klose <doko@ubuntu.com>  Wed, 08 Feb 2012 01:58:09 +0100
+
 eglibc (2.15~pre6-0ubuntu10) precise; urgency=low
 
   * Merge from Debian (r5151, 2.13-26).

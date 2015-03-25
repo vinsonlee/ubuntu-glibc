@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 	Contribute by David Mosberger-Tang <davidm@hpl.hp.com>
 
@@ -20,7 +20,7 @@
 #error "Never use <bits/msq.h> directly; include <sys/msg.h> instead."
 #endif
 
-#include <bits/types.h>
+#include <sys/types.h>
 
 /* Define options for message queue functions.  */
 #define MSG_NOERROR	010000	/* no error if message is too big */
@@ -29,13 +29,8 @@
 # define MSG_COPY	040000	/* copy (not remove) all queue messages */
 #endif
 
-/* Types used in the structure definition.  */
-typedef unsigned long int msgqnum_t;
-typedef unsigned long int msglen_t;
-
-
 /* Structure of record for one message inside the kernel.
-   The type `struct msg' is opaque.  */
+   The type `struct __msg' is opaque.  */
 struct msqid_ds
 {
   struct ipc_perm msg_perm;	/* structure describing operation permission */
@@ -43,8 +38,8 @@ struct msqid_ds
   __time_t msg_rtime;		/* time of last msgrcv command */
   __time_t msg_ctime;		/* time of last change */
   unsigned long int __msg_cbytes;	/* current number of bytes on queue */
-  msgqnum_t msg_qnum;		/* number of messages currently on queue */
-  msglen_t msg_qbytes;		/* max number of bytes allowed on queue */
+  unsigned long int msg_qnum;	/* number of messages currently on queue */
+  unsigned long int msg_qbytes;	/* max number of bytes allowed on queue */
   __pid_t msg_lspid;		/* pid of last msgsnd() */
   __pid_t msg_lrpid;		/* pid of last msgrcv() */
   unsigned long int __glibc_reserved1;

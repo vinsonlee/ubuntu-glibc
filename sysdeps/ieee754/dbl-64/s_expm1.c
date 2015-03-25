@@ -109,7 +109,6 @@
  */
 
 #include <errno.h>
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 #define one Q[0]
@@ -195,7 +194,6 @@ __expm1 (double x)
     }
   else if (hx < 0x3c900000)             /* when |x|<2**-54, return x */
     {
-      math_check_force_underflow (x);
       t = huge + x;     /* return x with inexact flags when x!=0 */
       return x - (t - (huge + x));
     }

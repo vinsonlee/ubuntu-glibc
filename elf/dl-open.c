@@ -1,5 +1,5 @@
 /* Load a shared object at runtime, relocate it, and run its initializer.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <sys/mman.h>		/* Check whether MAP_COPY is defined.  */
 #include <sys/param.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <ldsodefs.h>
 #include <caller.h>
 #include <sysdep-cancel.h>
@@ -211,7 +211,7 @@ dl_open_worker (void *a)
       struct link_map *l = _dl_find_dso_for_object ((ElfW(Addr)) caller_dlopen);
 
       if (l)
-	call_map = l;
+        call_map = l;
 
       if (args->nsid == __LM_ID_CALLER)
 	args->nsid = call_map->l_ns;
@@ -225,12 +225,6 @@ dl_open_worker (void *a)
   struct link_map *new;
   args->map = new = _dl_map_object (call_map, file, lt_loaded, 0,
 				    mode | __RTLD_CALLMAP, args->nsid);
-
-  /* Mark the object as not deletable if the RTLD_NODELETE flags was passed.
-     Do this early so that we don't skip marking the object if it was
-     already loaded.  */
-  if (__glibc_unlikely (mode & RTLD_NODELETE))
-    new->l_flags_1 |= DF_1_NODELETE;
 
   /* If the pointer returned is NULL this means the RTLD_NOLOAD flag is
      set and the object is not already loaded.  */
@@ -539,7 +533,17 @@ TLS generation counter wrapped!  Please report this."));
 	  && imap->l_tls_blocksize > 0)
 	{
 	  /* For static TLS we have to allocate the memory here and
-	     now, but we can delay updating the DTV.  */
+	     now.  This includes allocating memory in the DTV.  But we
+	     cannot change any DTV other than our own.  So, if we
+	     cannot guarantee that there is room in the DTV we don't
+	     even try it and fail the load.
+
+	     XXX We could track the minimum DTV slots allocated in
+	     all threads.  */
+	  if (! RTLD_SINGLE_THREAD_P && imap->l_tls_modid > DTV_SURPLUS)
+	    _dl_signal_error (0, "dlopen", NULL, N_("\
+cannot load any more object with static TLS"));
+
 	  imap->l_need_tls_init = 0;
 #ifdef SHARED
 	  /* Update the slot information data for at least the
@@ -569,6 +573,11 @@ TLS generation counter wrapped!  Please report this."));
     if (add_to_global (new) != 0)
       /* It failed.  */
       return;
+
+  /* Mark the object as not deletable if the RTLD_NODELETE flags was
+     passed.  */
+  if (__glibc_unlikely (mode & RTLD_NODELETE))
+    new->l_flags_1 |= DF_1_NODELETE;
 
 #ifndef SHARED
   /* We must be the static _dl_open in libc.a.  A static program that
@@ -620,14 +629,8 @@ no more namespaces available for dlmopen()"));
   /* Never allow loading a DSO in a namespace which is empty.  Such
      direct placements is only causing problems.  Also don't allow
      loading into a namespace used for auditing.  */
-  else if (__glibc_unlikely (nsid != LM_ID_BASE && nsid != __LM_ID_CALLER)
-	   && (__glibc_unlikely (nsid < 0 || nsid >= GL(dl_nns))
-	       /* This prevents the [NSID] index expressions from being
-		  evaluated, so the compiler won't think that we are
-		  accessing an invalid index here in the !SHARED case where
-		  DL_NNS is 1 and so any NSID != 0 is invalid.  */
-	       || DL_NNS == 1
-	       || GL(dl_ns)[nsid]._ns_nloaded == 0
+  else if (__builtin_expect (nsid != LM_ID_BASE && nsid != __LM_ID_CALLER, 0)
+	   && (GL(dl_ns)[nsid]._ns_nloaded == 0
 	       || GL(dl_ns)[nsid]._ns_loaded->l_auditing))
     _dl_signal_error (EINVAL, file, NULL,
 		      N_("invalid target namespace in dlmopen()"));
@@ -671,7 +674,7 @@ no more namespaces available for dlmopen()"));
 	  if ((mode & __RTLD_AUDIT) == 0)
 	    GL(dl_tls_dtv_gaps) = true;
 
-	  _dl_close_worker (args.map, true);
+	  _dl_close_worker (args.map);
 	}
 
       assert (_dl_debug_initialize (0, args.nsid)->r_state == RT_CONSISTENT);

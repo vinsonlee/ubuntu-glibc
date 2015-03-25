@@ -1,5 +1,5 @@
 /* Initialization code for TLS in statically linked application.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -138,10 +138,7 @@ __libc_setup_tls (size_t tcbsize, size_t tcbalign)
      to request some surplus that permits dynamic loading of modules with
      IE-model TLS.  */
 #if TLS_TCB_AT_TP
-  /* Align the TCB offset to the maximum alignment, as
-     _dl_allocate_tls_storage (in elf/dl-tls.c) does using __libc_memalign
-     and dl_tls_static_align.  */
-  tcb_offset = roundup (memsz + GL(dl_tls_static_size), max_align);
+  tcb_offset = roundup (memsz + GL(dl_tls_static_size), tcbalign);
   tlsblock = __sbrk (tcb_offset + tcbsize + max_align);
 #elif TLS_DTV_AT_TP
   tcb_offset = roundup (tcbsize, align ?: 1);

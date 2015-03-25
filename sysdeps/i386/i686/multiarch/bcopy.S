@@ -1,6 +1,6 @@
 /* Multiple versions of bcopy
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -23,24 +23,51 @@
 
 /* Define multiple versions only for the definition in lib.  */
 #if IS_IN (libc)
+# ifdef SHARED
 	.text
 ENTRY(bcopy)
 	.type	bcopy, @gnu_indirect_function
-	LOAD_GOT_AND_RTLD_GLOBAL_RO
-	LOAD_FUNC_GOT_EAX (__bcopy_ia32)
-	HAS_CPU_FEATURE (SSE2)
+	pushl	%ebx
+	cfi_adjust_cfa_offset (4)
+	cfi_rel_offset (ebx, 0)
+	LOAD_PIC_REG(bx)
+	cmpl	$0, KIND_OFFSET+__cpu_features@GOTOFF(%ebx)
+	jne	1f
+	call	__init_cpu_features
+1:	leal	__bcopy_ia32@GOTOFF(%ebx), %eax
+	testl	$bit_SSE2, CPUID_OFFSET+index_SSE2+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	LOAD_FUNC_GOT_EAX (__bcopy_sse2_unaligned)
-	HAS_ARCH_FEATURE (Fast_Unaligned_Load)
+	leal	__bcopy_sse2_unaligned@GOTOFF(%ebx), %eax
+	testl	$bit_Fast_Unaligned_Load, FEATURE_OFFSET+index_Fast_Unaligned_Load+__cpu_features@GOTOFF(%ebx)
 	jnz	2f
-	HAS_CPU_FEATURE (SSSE3)
+	testl	$bit_SSSE3, CPUID_OFFSET+index_SSSE3+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	LOAD_FUNC_GOT_EAX (__bcopy_ssse3)
-	HAS_CPU_FEATURE (Fast_Rep_String)
+	leal	__bcopy_ssse3@GOTOFF(%ebx), %eax
+	testl	$bit_Fast_Rep_String, FEATURE_OFFSET+index_Fast_Rep_String+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	LOAD_FUNC_GOT_EAX (__bcopy_ssse3_rep)
+	leal	__bcopy_ssse3_rep@GOTOFF(%ebx), %eax
+2:	popl	%ebx
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (ebx)
+	ret
+END(bcopy)
+# else
+	.text
+ENTRY(bcopy)
+	.type	bcopy, @gnu_indirect_function
+	cmpl	$0, KIND_OFFSET+__cpu_features
+	jne	1f
+	call	__init_cpu_features
+1:	leal	__bcopy_ia32, %eax
+	testl	$bit_SSSE3, CPUID_OFFSET+index_SSSE3+__cpu_features
+	jz	2f
+	leal	__bcopy_ssse3, %eax
+	testl	$bit_Fast_Rep_String, FEATURE_OFFSET+index_Fast_Rep_String+__cpu_features
+	jz	2f
+	leal	__bcopy_ssse3_rep, %eax
 2:	ret
 END(bcopy)
+# endif
 
 # undef ENTRY
 # define ENTRY(name) \

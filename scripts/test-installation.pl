@@ -1,5 +1,5 @@
-#!/usr/bin/perl -w
-# Copyright (C) 1997-2016 Free Software Foundation, Inc.
+#! /usr/bin/perl -w
+# Copyright (C) 1997-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 # Contributed by Andreas Jaeger <aj@arthur.rhein-neckar.de>, 1997.
 
@@ -59,7 +59,7 @@ arglist: while (@ARGV) {
       $ARGV[0] eq "--vers" || $ARGV[0] eq "--versi" ||
       $ARGV[0] eq "--versio" || $ARGV[0] eq "--version") {
     print "test-installation (GNU $PACKAGE)\n";
-    print "Copyright (C) 2016 Free Software Foundation, Inc.\n";
+    print "Copyright (C) 2015 Free Software Foundation, Inc.\n";
     print "This is free software; see the source for copying conditions.  There is NO\n";
     print "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n";
     print "Written by Andreas Jaeger <aj\@arthur.rhein-neckar.de>\n";
@@ -80,25 +80,16 @@ arglist: while (@ARGV) {
 # We expect none or one argument.
 if ($#ARGV == -1) {
     $soversions="soversions.mk";
-    $config="config.make";
 } elsif ($#ARGV == 0) {
     if (-d $ARGV[0]) {
       $soversions = "$ARGV[0]/soversions.mk";
-      $config = "$ARGV[0]/config.make";
     } else {
-      $soversions = $dir = $ARGV[0];
-      $dir =~ s!/?[^/]*/*$!!;
-      $config = $dir . "/config.make";
+      $soversions = $ARGV[0];
     }
 } else {
     die "Wrong number of arguments.";
 }
 
-if (system ("grep -q \"build-mathvec = yes\" $config") == 0) {
-    $build_mathvec = 1;
-} else {
-    $build_mathvec = 0;
-}
 
 # Read names and versions of all shared libraries that are part of
 # glibc
@@ -120,8 +111,6 @@ while (<SOVERSIONS>) {
     # - libthread_db since it contains unresolved references
     # - it's just a test NSS module
     # - We don't provide the libgcc so we don't test it
-    # - libmvec if it wasn't built
-    next if ($build_mathvec == 0 && $name eq "mvec");
     if ($name ne "nss_ldap" && $name ne "db1"
 	&& !($name =~/^nss1_/) && $name ne "thread_db"
 	&& $name ne "nss_test1" && $name ne "libgcc_s") {

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 #include <sysdep.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 
 /* We have to and actually can handle cancelable system().  The big
    problem: we have to kill the child process if necessary.  To do

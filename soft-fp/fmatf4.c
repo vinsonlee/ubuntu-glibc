@@ -1,5 +1,5 @@
 /* Implement fmal using soft-fp.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,16 +25,6 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <libc-internal.h>
-#include <sys/cdefs.h>
-/* R_e is not set in cases where it is not used in packing, but the
-   compiler does not see that it is set in all cases where it is
-   used, resulting in warnings that it may be used uninitialized.
-   The location of the warning differs in different versions of GCC,
-   it may be where R is defined using a macro or it may be where the
-   macro is defined.  */
-DIAG_PUSH_NEEDS_COMMENT;
-DIAG_IGNORE_NEEDS_COMMENT (4.9, "-Wmaybe-uninitialized");
 #include <math.h>
 #include "soft-fp.h"
 #include "quad.h"
@@ -59,6 +49,4 @@ __fmal (long double a, long double b, long double c)
 
   return r;
 }
-DIAG_POP_NEEDS_COMMENT;
-
 weak_alias (__fmal, fmal)

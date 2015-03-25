@@ -1,5 +1,5 @@
 /* Test for access to file, relative to open directory.  Linux version.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,10 +28,17 @@
 
 
 int
-faccessat (int fd, const char *file, int mode, int flag)
+faccessat (fd, file, mode, flag)
+     int fd;
+     const char *file;
+     int mode;
+     int flag;
 {
   if (flag & ~(AT_SYMLINK_NOFOLLOW | AT_EACCESS))
-    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+    {
+      __set_errno (EINVAL);
+      return -1;
+    }
 
   if ((flag == 0 || ((flag & ~AT_EACCESS) == 0 && ! __libc_enable_secure)))
     return INLINE_SYSCALL (faccessat, 3, fd, file, mode);
@@ -67,5 +74,6 @@ faccessat (int fd, const char *file, int mode, int flag)
   if (granted == mode)
     return 0;
 
-  return INLINE_SYSCALL_ERROR_RETURN_VALUE (EACCES);
+  __set_errno (EACCES);
+  return -1;
 }

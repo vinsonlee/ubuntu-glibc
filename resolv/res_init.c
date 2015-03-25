@@ -153,8 +153,10 @@ __res_vinit(res_state statp, int preinit) {
 	char *cp, **pp;
 	int n;
 	char buf[BUFSIZ];
-	int nserv = 0;    /* number of nameservers read from file */
-	int have_serv6 = 0;
+	int nserv = 0;    /* number of IPv4 nameservers read from file */
+#ifdef _LIBC
+	int nservall = 0; /* number of (IPv4 + IPV6) nameservers read from file */
+#endif
 	int haveenv = 0;
 	int havesearch = 0;
 #ifdef RESOLVSORT
@@ -176,16 +178,21 @@ __res_vinit(res_state statp, int preinit) {
 	}
 
 	statp->nscount = 0;
-	statp->defdname[0] = '\0';
 	statp->ndots = 1;
 	statp->pfcode = 0;
 	statp->_vcsock = -1;
 	statp->_flags = 0;
 	statp->qhook = NULL;
 	statp->rhook = NULL;
+	statp->_u._ext.nsinit = 0;
 	statp->_u._ext.nscount = 0;
-	for (n = 0; n < MAXNS; n++)
-	    statp->_u._ext.nsaddrs[n] = NULL;
+#ifdef _LIBC
+	statp->_u._ext.nscount6 = 0;
+	for (n = 0; n < MAXNS; n++) {
+		statp->_u._ext.nsaddrs[n] = NULL;
+		statp->_u._ext.nsmap[n] = MAXNS;
+	}
+#endif
 
 	/* Allow user to override the local domain definition */
 	if ((cp = getenv("LOCALDOMAIN")) != NULL) {
@@ -289,7 +296,11 @@ __res_vinit(res_state statp, int preinit) {
 		    continue;
 		}
 		/* read nameservers to query */
+#ifdef _LIBC
+		if (MATCH(buf, "nameserver") && nservall < MAXNS) {
+#else
 		if (MATCH(buf, "nameserver") && nserv < MAXNS) {
+#endif
 		    struct in_addr a;
 
 		    cp = buf + sizeof("nameserver") - 1;
@@ -297,12 +308,13 @@ __res_vinit(res_state statp, int preinit) {
 			cp++;
 		    if ((*cp != '\0') && (*cp != '\n')
 			&& __inet_aton(cp, &a)) {
-			statp->nsaddr_list[nserv].sin_addr = a;
-			statp->nsaddr_list[nserv].sin_family = AF_INET;
-			statp->nsaddr_list[nserv].sin_port =
+			statp->nsaddr_list[nservall].sin_addr = a;
+			statp->nsaddr_list[nservall].sin_family = AF_INET;
+			statp->nsaddr_list[nservall].sin_port =
 				htons(NAMESERVER_PORT);
 			nserv++;
 #ifdef _LIBC
+			nservall++;
 		    } else {
 			struct in6_addr a6;
 			char *el;
@@ -344,11 +356,10 @@ __res_vinit(res_state statp, int preinit) {
 				    }
 				}
 
-				statp->nsaddr_list[nserv].sin_family = 0;
-				statp->_u._ext.nsaddrs[nserv] = sa6;
-				statp->_u._ext.nssocks[nserv] = -1;
-				have_serv6 = 1;
-				nserv++;
+				statp->_u._ext.nsaddrs[nservall] = sa6;
+				statp->_u._ext.nssocks[nservall] = -1;
+				statp->_u._ext.nsmap[nservall] = MAXNS + 1;
+				nservall++;
 			    }
 			}
 #endif
@@ -403,9 +414,10 @@ __res_vinit(res_state statp, int preinit) {
 		    continue;
 		}
 	    }
-	    statp->nscount = nserv;
+	    statp->nscount = nservall;
 #ifdef _LIBC
-	    if (have_serv6) {
+	    if (nservall - nserv > 0) {
+		statp->_u._ext.nscount6 = nservall - nserv;
 		/* We try IPv6 servers again.  */
 		statp->ipv6_unavail = false;
 	    }
@@ -555,9 +567,9 @@ res_setoptions(res_state statp, const char *options, const char *source) {
 
 #ifdef RESOLVSORT
 /* XXX - should really support CIDR which means explicit masks always. */
-/* XXX - should really use system's version of this */
 static u_int32_t
-net_mask (struct in_addr in)
+net_mask(in)		/* XXX - should really use system's version of this */
+	struct in_addr in;
 {
 	u_int32_t i = ntohl(in.s_addr);
 
@@ -594,7 +606,11 @@ __res_iclose(res_state statp, bool free_addr) {
 		statp->_vcsock = -1;
 		statp->_flags &= ~(RES_F_VC | RES_F_CONN);
 	}
+#ifdef _LIBC
+	for (ns = 0; ns < MAXNS; ns++)
+#else
 	for (ns = 0; ns < statp->_u._ext.nscount; ns++)
+#endif
 		if (statp->_u._ext.nsaddrs[ns]) {
 			if (statp->_u._ext.nssocks[ns] != -1) {
 				close_not_cancel_no_status(statp->_u._ext.nssocks[ns]);
@@ -605,6 +621,8 @@ __res_iclose(res_state statp, bool free_addr) {
 				statp->_u._ext.nsaddrs[ns] = NULL;
 			}
 		}
+	if (free_addr)
+		statp->_u._ext.nsinit = 0;
 }
 libc_hidden_def (__res_iclose)
 

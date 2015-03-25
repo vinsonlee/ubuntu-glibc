@@ -1,5 +1,5 @@
 /* Test for access to FILE using effective UID and GID.  Stub version.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,9 @@
 #include <unistd.h>
 
 int
-__euidaccess (const char *file, int type)
+__euidaccess (file, type)
+     const char *file;
+     int type;
 {
   if (file == NULL || (type & ~(R_OK|W_OK|X_OK|F_OK)) != 0)
     {

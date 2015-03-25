@@ -1,5 +1,5 @@
 /* Private floating point rounding and exceptions handling.  AArch64 version.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,27 +21,6 @@
 
 #include <fenv.h>
 #include <fpu_control.h>
-
-#define math_opt_barrier(x) \
-({ __typeof (x) __x = (x); __asm ("" : "+w" (__x)); __x; })
-#define math_force_eval(x) \
-({ __typeof (x) __x = (x); __asm __volatile__ ("" : : "w" (__x)); })
-
-extern __always_inline double
-__ieee754_sqrt (double d)
-{
-  double res;
-  asm __volatile__ ("fsqrt   %d0, %d1" : "=w" (res) : "w" (d));
-  return res;
-}
-
-extern __always_inline float
-__ieee754_sqrtf (float s)
-{
-  float res;
-  asm __volatile__ ("fsqrt   %s0, %s1" : "=w" (res) : "w" (s));
-  return res;
-}
 
 static __always_inline void
 libc_feholdexcept_aarch64 (fenv_t *envp)
@@ -252,7 +231,6 @@ libc_feholdsetround_aarch64_ctx (struct rm_ctx *ctx, int r)
   int round;
 
   _FPU_GETCW (fpcr);
-  ctx->env.__fpcr = fpcr;
 
   /* Check whether rounding modes are different.  */
   round = (fpcr ^ r) & _FPU_FPCR_RM_MASK;
@@ -260,7 +238,10 @@ libc_feholdsetround_aarch64_ctx (struct rm_ctx *ctx, int r)
 
   /* Set the rounding mode if changed.  */
   if (__glibc_unlikely (round != 0))
-    _FPU_SETCW (fpcr ^ round);
+    {
+      ctx->env.__fpcr = fpcr;
+      _FPU_SETCW (fpcr ^ round);
+    }
 }
 
 #define libc_feholdsetround_ctx		libc_feholdsetround_aarch64_ctx
@@ -288,7 +269,6 @@ libc_feholdsetround_noex_aarch64_ctx (struct rm_ctx *ctx, int r)
 
   _FPU_GETCW (fpcr);
   _FPU_GETFPSR (fpsr);
-  ctx->env.__fpcr = fpcr;
   ctx->env.__fpsr = fpsr;
 
   /* Check whether rounding modes are different.  */
@@ -297,7 +277,10 @@ libc_feholdsetround_noex_aarch64_ctx (struct rm_ctx *ctx, int r)
 
   /* Set the rounding mode if changed.  */
   if (__glibc_unlikely (round != 0))
-    _FPU_SETCW (fpcr ^ round);
+    {
+      ctx->env.__fpcr = fpcr;
+      _FPU_SETCW (fpcr ^ round);
+    }
 }
 
 #define libc_feholdsetround_noex_ctx	libc_feholdsetround_noex_aarch64_ctx

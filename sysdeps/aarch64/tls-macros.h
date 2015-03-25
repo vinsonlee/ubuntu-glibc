@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -29,7 +29,7 @@
 	  : "x1", "x2", "x3", "x4", "x5", "x6",		\
 	    "x7", "x8", "x9", "x10", "x11", "x12",	\
 	    "x13", "x14", "x15", "x16", "x17", "x18",	\
-	    "x30", "memory", "cc");			\
+	    "x30", "memory");				\
      (int *) (__result); })
 
 #define TLS_IE(x)					\

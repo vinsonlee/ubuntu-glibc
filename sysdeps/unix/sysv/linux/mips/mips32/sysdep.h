@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
 #define _LINUX_MIPS_MIPS32_SYSDEP_H 1
 
 /* There is some commonality.  */
-#include <sysdeps/unix/sysv/linux/sysdep.h>
 #include <sysdeps/unix/mips/mips32/sysdep.h>
 
 #include <tls.h>
@@ -50,11 +49,11 @@
    call.  */
 #undef INLINE_SYSCALL
 #define INLINE_SYSCALL(name, nr, args...)                               \
-  ({ INTERNAL_SYSCALL_DECL (_sc_err);					\
-     long result_var = INTERNAL_SYSCALL (name, _sc_err, nr, args);	\
-     if ( INTERNAL_SYSCALL_ERROR_P (result_var, _sc_err) )		\
+  ({ INTERNAL_SYSCALL_DECL(err);					\
+     long result_var = INTERNAL_SYSCALL (name, err, nr, args);		\
+     if ( INTERNAL_SYSCALL_ERROR_P (result_var, err) )			\
        {								\
-	 __set_errno (INTERNAL_SYSCALL_ERRNO (result_var, _sc_err));	\
+	 __set_errno (INTERNAL_SYSCALL_ERRNO (result_var, err));	\
 	 result_var = -1L;						\
        }								\
      result_var; })
@@ -112,10 +111,10 @@
 
 # define INTERNAL_SYSCALL_NCS(number, err, nr, args...)			\
 ({									\
-	union __mips16_syscall_return _sc_ret;				\
-	_sc_ret.val = __mips16_syscall##nr (args, number);		\
-	err = _sc_ret.reg.v1;						\
-	_sc_ret.reg.v0;							\
+	union __mips16_syscall_return ret;				\
+	ret.val = __mips16_syscall##nr (args, number);			\
+	err = ret.reg.v1;						\
+	ret.reg.v0;							\
 })
 
 # define INTERNAL_SYSCALL_MIPS16(number, err, nr, args...)		\

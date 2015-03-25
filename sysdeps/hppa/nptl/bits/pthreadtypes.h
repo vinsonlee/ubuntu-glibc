@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ typedef union
 {
   struct __pthread_mutex_s
   {
-    int __lock __attribute__ ((__aligned__(16)));
+    int __lock __attribute__ ((aligned(16)));
     unsigned int __count;
     int __owner;
     /* KIND must stay at this position in the structure to maintain
@@ -119,7 +119,7 @@ typedef union
        start of the 4-word lock structure, the next four words
        are set all to 1 by the Linuxthreads
        PTHREAD_COND_INITIALIZER.  */
-    int __lock __attribute__ ((__aligned__(16)));
+    int __lock __attribute__ ((aligned(16)));
     /* Tracks the initialization of this structure:
        0  initialized with NPTL PTHREAD_COND_INITIALIZER.
        1  initialized with Linuxthreads PTHREAD_COND_INITIALIZER.
@@ -167,7 +167,7 @@ typedef union
        start of the 4-word 16-byte aligned lock structure. The
        next four words are all set to 1 by the Linuxthreads
        PTHREAD_RWLOCK_INITIALIZER. We ignore them in NPTL.  */
-    int __compat_padding[4] __attribute__ ((__aligned__(16)));
+    int __compat_padding[4] __attribute__ ((aligned(16)));
     int __lock;
     unsigned int __nr_readers;
     unsigned int __readers_wakeup;

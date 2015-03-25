@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 /* Put the soft and hard limits for RESOURCE in *RLIMITS.
    Returns 0 if successful, -1 if not (and sets errno).  */
 int
-__getrlimit64 (enum __rlimit_resource resource, struct rlimit64 *rlimits)
+getrlimit64 (enum __rlimit_resource resource, struct rlimit64 *rlimits)
 {
   struct rlimit rlimits32;
 
@@ -40,6 +40,4 @@ __getrlimit64 (enum __rlimit_resource resource, struct rlimit64 *rlimits)
 
   return 0;
 }
-libc_hidden_def (__getrlimit64)
-weak_alias (__getrlimit64, getrlimit64)
-libc_hidden_weak (getrlimit64)
+libc_hidden_def (getrlimit64)

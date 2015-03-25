@@ -1,5 +1,5 @@
 /* Optimized memmove implementation for PowerPC64/POWER7.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -823,10 +823,9 @@ libc_hidden_builtin_def (memmove)
 /* void bcopy(const void *src [r3], void *dest [r4], size_t n [r5])
    Implemented in this file to avoid linker create a stub function call
    in the branch to '_memmove'.  */
-ENTRY (__bcopy)
+ENTRY (bcopy)
 	mr	r6,r3
 	mr	r3,r4
 	mr	r4,r6
 	b	L(_memmove)
-END (__bcopy)
-weak_alias (__bcopy, bcopy)
+END (bcopy)

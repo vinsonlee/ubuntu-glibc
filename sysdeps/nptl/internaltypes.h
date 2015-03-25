@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -92,18 +92,15 @@ struct pthread_rwlockattr
 };
 
 
-/* Barrier data structure.  See pthread_barrier_wait for a description
-   of how these fields are used.  */
+/* Barrier data structure.  */
 struct pthread_barrier
 {
-  unsigned int in;
-  unsigned int current_round;
-  unsigned int count;
-  int shared;
-  unsigned int out;
+  unsigned int curr_event;
+  int lock;
+  unsigned int left;
+  unsigned int init_count;
+  int private;
 };
-/* See pthread_barrier_wait for a description.  */
-#define BARRIER_IN_THRESHOLD (UINT_MAX/2)
 
 
 /* Barrier variable attribute data structure.  */

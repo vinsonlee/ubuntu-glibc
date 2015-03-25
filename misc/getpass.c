@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 #include <wchar.h>
 #define flockfile(s) _IO_flockfile (s)
 #define funlockfile(s) _IO_funlockfile (s)
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 
 /* It is desirable to use this bit on systems that have it.
    The only bit of terminal state we want to twiddle is echoing, which is
@@ -43,7 +43,8 @@ call_fclose (void *arg)
 }
 
 char *
-getpass (const char *prompt)
+getpass (prompt)
+     const char *prompt;
 {
   FILE *in, *out;
   struct termios s, t;
@@ -90,7 +91,7 @@ getpass (const char *prompt)
 
   /* Write the prompt.  */
   __fxprintf (out, "%s", prompt);
-  __fflush_unlocked (out);
+  fflush_unlocked (out);
 
   /* Read the password.  */
   nread = __getline (&buf, &bufsize, in);

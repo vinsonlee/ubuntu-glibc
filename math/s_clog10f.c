@@ -1,5 +1,5 @@
 /* Compute complex base 10 logarithm.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -71,8 +71,15 @@ __clog10f (__complex__ float x)
 
       if (absx == 1.0f && scale == 0)
 	{
-	  __real__ result = __log1pf (absy * absy) * ((float) M_LOG10E / 2.0f);
-	  math_check_force_underflow_nonneg (__real__ result);
+	  float absy2 = absy * absy;
+	  if (absy2 <= FLT_MIN * 2.0f * (float) M_LN10)
+	    {
+	      float force_underflow = absy2 * absy2;
+	      __real__ result = absy2 * ((float) M_LOG10E / 2.0f);
+	      math_force_eval (force_underflow);
+	    }
+	  else
+	    __real__ result = __log1pf (absy2) * ((float) M_LOG10E / 2.0f);
 	}
       else if (absx > 1.0f && absx < 2.0f && absy < 1.0f && scale == 0)
 	{
@@ -82,17 +89,14 @@ __clog10f (__complex__ float x)
 	  __real__ result = __log1pf (d2m1) * ((float) M_LOG10E / 2.0f);
 	}
       else if (absx < 1.0f
-	       && absx >= 0.5f
+	       && absx >= 0.75f
 	       && absy < FLT_EPSILON / 2.0f
 	       && scale == 0)
 	{
 	  float d2m1 = (absx - 1.0f) * (absx + 1.0f);
 	  __real__ result = __log1pf (d2m1) * ((float) M_LOG10E / 2.0f);
 	}
-      else if (absx < 1.0f
-	       && absx >= 0.5f
-	       && scale == 0
-	       && absx * absx + absy * absy >= 0.5f)
+      else if (absx < 1.0f && (absx >= 0.75f || absy >= 0.5f) && scale == 0)
 	{
 	  float d2m1 = __x2y2m1f (absx, absy);
 	  __real__ result = __log1pf (d2m1) * ((float) M_LOG10E / 2.0f);

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,6 +35,5 @@ __dprintf (int d, const char *format, ...)
 
   return done;
 }
-libc_hidden_def (__dprintf)
 ldbl_hidden_def (__dprintf, dprintf)
-ldbl_weak_alias (__dprintf, dprintf)
+ldbl_strong_alias (__dprintf, dprintf)

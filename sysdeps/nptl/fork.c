@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -25,12 +25,11 @@
 #include <tls.h>
 #include <hp-timing.h>
 #include <ldsodefs.h>
-#include <stdio-lock.h>
+#include <bits/stdio-lock.h>
 #include <atomic.h>
 #include <nptl/pthreadP.h>
 #include <fork.h>
 #include <arch-fork.h>
-#include <futex-internal.h>
 
 
 static void
@@ -220,7 +219,7 @@ __libc_fork (void)
 
 	  if (atomic_decrement_and_test (&allp->handler->refcntr)
 	      && allp->handler->need_signal)
-	    futex_wake (&allp->handler->refcntr, 1, FUTEX_PRIVATE);
+	    lll_futex_wake (&allp->handler->refcntr, 1, LLL_PRIVATE);
 
 	  allp = allp->next;
 	}

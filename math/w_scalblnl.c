@@ -1,5 +1,5 @@
 /* Wrapper for __scalblnl handles setting errno.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,12 +23,12 @@
 long double
 __w_scalblnl (long double x, long int n)
 {
-  if (!isfinite (x) || x == 0.0L)
+  if (!__finitel (x) || x == 0.0L)
     return x;
 
   x = __scalblnl (x, n);
 
-  if (!isfinite (x) || x == 0.0L)
+  if (!__finitel (x) || x == 0.0L)
     __set_errno (ERANGE);
 
   return x;

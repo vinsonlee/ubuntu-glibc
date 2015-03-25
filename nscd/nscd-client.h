@@ -1,4 +1,4 @@
-/* Copyright (c) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1998.
 
@@ -25,7 +25,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-#include <time.h>
 #include <sys/types.h>
 #include <atomic.h>
 #include <nscd-types.h>
@@ -378,7 +377,7 @@ __nscd_acquire_maplock (volatile struct locked_map_ptr *mapptr)
       if (__glibc_unlikely (++cnt > 5))
 	return false;
 
-      atomic_spin_nop ();
+      atomic_delay ();
     }
 
   return true;

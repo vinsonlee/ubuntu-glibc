@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ __ieee754_exp10 (double arg)
   double arg_high, arg_low;
   double exp_high, exp_low;
 
-  if (!isfinite (arg))
+  if (!__finite (arg))
     return __ieee754_exp (arg);
   if (arg < DBL_MIN_10_EXP - DBL_DIG - 10)
     return DBL_MIN * DBL_MIN;

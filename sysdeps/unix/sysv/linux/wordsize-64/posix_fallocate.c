@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,8 +23,6 @@
 #include <sysdeps/posix/posix_fallocate.c>
 #undef posix_fallocate
 
-/* The alpha architecture introduced the fallocate system call in
-   2.6.33-rc1, so we still need the fallback code.  */
 #if !defined __ASSUME_FALLOCATE && defined __NR_fallocate
 static int __have_fallocate;
 #endif

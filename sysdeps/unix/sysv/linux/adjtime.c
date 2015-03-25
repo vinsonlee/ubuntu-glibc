@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -61,7 +61,10 @@ ADJTIME (const struct TIMEVAL *itv, struct TIMEVAL *otv)
       tmp.tv_sec = itv->tv_sec + itv->tv_usec / 1000000L;
       tmp.tv_usec = itv->tv_usec % 1000000L;
       if (tmp.tv_sec > MAX_SEC || tmp.tv_sec < MIN_SEC)
-	return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+	{
+	  __set_errno (EINVAL);
+	  return -1;
+	}
       tntx.offset = tmp.tv_usec + tmp.tv_sec * 1000000L;
       tntx.modes = ADJ_OFFSET_SINGLESHOT;
     }

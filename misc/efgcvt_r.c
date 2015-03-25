@@ -1,5 +1,5 @@
 /* Compatibility functions for floating point formatting, reentrant versions.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -71,8 +71,11 @@
 
 
 int
-__APPEND (FUNC_PREFIX, fcvt_r) (FLOAT_TYPE value, int ndigit, int *decpt,
-				int *sign, char *buf, size_t len)
+__APPEND (FUNC_PREFIX, fcvt_r) (value, ndigit, decpt, sign, buf, len)
+     FLOAT_TYPE value;
+     int ndigit, *decpt, *sign;
+     char *buf;
+     size_t len;
 {
   ssize_t n;
   ssize_t i;
@@ -166,8 +169,11 @@ __APPEND (FUNC_PREFIX, fcvt_r) (FLOAT_TYPE value, int ndigit, int *decpt,
 }
 
 int
-__APPEND (FUNC_PREFIX, ecvt_r) (FLOAT_TYPE value, int ndigit, int *decpt,
-				int *sign, char *buf, size_t len)
+__APPEND (FUNC_PREFIX, ecvt_r) (value, ndigit, decpt, sign, buf, len)
+     FLOAT_TYPE value;
+     int ndigit, *decpt, *sign;
+     char *buf;
+     size_t len;
 {
   int exponent = 0;
 
@@ -245,13 +251,13 @@ __APPEND (FUNC_PREFIX, ecvt_r) (FLOAT_TYPE value, int ndigit, int *decpt,
 #  define cvt_symbol(symbol) \
   cvt_symbol_1 (libc, __APPEND (FUNC_PREFIX, symbol), \
 	      APPEND (q, symbol), GLIBC_2_0); \
-  weak_alias (__APPEND (FUNC_PREFIX, symbol), APPEND (FUNC_PREFIX, symbol))
+  strong_alias (__APPEND (FUNC_PREFIX, symbol), APPEND (FUNC_PREFIX, symbol))
 #  define cvt_symbol_1(lib, local, symbol, version) \
   compat_symbol (lib, local, symbol, version)
 # endif
 #else
 # define cvt_symbol(symbol) \
-  weak_alias (__APPEND (FUNC_PREFIX, symbol), APPEND (FUNC_PREFIX, symbol))
+  strong_alias (__APPEND (FUNC_PREFIX, symbol), APPEND (FUNC_PREFIX, symbol))
 #endif
 cvt_symbol(fcvt_r);
 cvt_symbol(ecvt_r);

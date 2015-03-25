@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2015 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -32,7 +32,6 @@
 
 #include "endian.h"
 #include "mpa.h"
-#include <math.h>
 
 #ifndef SECTION
 # define SECTION
@@ -66,7 +65,7 @@ __mpatan (mp_no *x, mp_no *y, int p)
   else
     {
       __mp_dbl (x, &dx, p);
-      dx = fabs (dx);
+      dx = ABS (dx);
       for (m = 6; m > 0; m--)
 	{
 	  if (dx > __atan_xm[m].d)

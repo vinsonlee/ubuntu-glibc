@@ -1,5 +1,5 @@
 /* Verify that DSO is unloaded only if its TLS objects are destroyed - the DSO.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ void A_dtor (void *obj)
   ((A *)obj)->val = obj;
 }
 
-void reg_dtor (void)
+void do_foo (void)
 {
   static __thread A b;
   __cxa_thread_atexit_impl (A_dtor, &b, __dso_handle);

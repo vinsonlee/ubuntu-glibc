@@ -1,5 +1,5 @@
 /* Compute projection of complex double value to Riemann sphere.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -19,13 +19,12 @@
 
 #include <complex.h>
 #include <math.h>
-#include <math_private.h>
 
 
 __complex__ double
 __cproj (__complex__ double x)
 {
-  if (isinf (__real__ x) || isinf (__imag__ x))
+  if (__isinf_ns (__real__ x) || __isinf_ns (__imag__ x))
     {
       __complex__ double res;
 

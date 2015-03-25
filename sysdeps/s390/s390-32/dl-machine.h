@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  S390 Version.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Carl Pederson & Martin Schwidefsky.
    This file is part of the GNU C Library.
 
@@ -55,10 +55,10 @@ elf_machine_dynamic (void)
 {
   register Elf32_Addr *got;
 
-  __asm__( "        bras   %0,2f\n"
-	   "1:      .long  _GLOBAL_OFFSET_TABLE_-1b\n"
-	   "2:      al     %0,0(%0)"
-	   : "=&a" (got) : : "0" );
+  asm( "        bras   %0,2f\n"
+       "1:      .long  _GLOBAL_OFFSET_TABLE_-1b\n"
+       "2:      al     %0,0(%0)"
+       : "=&a" (got) : : "0" );
 
   return *got;
 }
@@ -70,14 +70,14 @@ elf_machine_load_address (void)
 {
   Elf32_Addr addr;
 
-  __asm__( "   bras  1,2f\n"
-	   "1: .long _GLOBAL_OFFSET_TABLE_ - 1b\n"
-	   "   .long (_dl_start - 1b - 0x80000000) & 0x00000000ffffffff\n"
-	   "2: l     %0,4(1)\n"
-	   "   ar    %0,1\n"
-	   "   al    1,0(1)\n"
-	   "   sl    %0,_dl_start@GOT(1)"
-	   : "=&d" (addr) : : "1" );
+  asm( "   bras  1,2f\n"
+       "1: .long _GLOBAL_OFFSET_TABLE_ - 1b\n"
+       "   .long (_dl_start - 1b - 0x80000000) & 0x00000000ffffffff\n"
+       "2: l     %0,4(1)\n"
+       "   ar    %0,1\n"
+       "   al    1,0(1)\n"
+       "   sl    %0,_dl_start@GOT(1)"
+       : "=&d" (addr) : : "1" );
   return addr;
 }
 
@@ -141,7 +141,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
    The C function `_dl_start' is the real entry point;
    its return value is the user program's entry point.  */
 
-#define RTLD_START __asm__ ("\n\
+#define RTLD_START asm ("\n\
 .text\n\
 .align 4\n\
 .globl _start\n\
@@ -244,7 +244,7 @@ _dl_start_user:\n\
 /* ELF_RTYPE_CLASS_PLT iff TYPE describes relocation of a PLT entry or
    TLS variable, so undefined references should not be allowed to
    define the value.
-   ELF_RTYPE_CLASS_COPY iff TYPE should not be allowed to resolve to one
+   ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
    of the main executable's symbols, as for a COPY reloc.  */
 #define elf_machine_type_class(type) \
   ((((type) == R_390_JMP_SLOT || (type) == R_390_TLS_DTPMOD		      \

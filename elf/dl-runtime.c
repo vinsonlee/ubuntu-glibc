@@ -1,5 +1,5 @@
 /* On-demand PLT fixup for shared objects.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@
    function.  */
 
 DL_FIXUP_VALUE_TYPE
-attribute_hidden __attribute ((noinline)) ARCH_FIXUP_ATTRIBUTE
+__attribute ((noinline)) ARCH_FIXUP_ATTRIBUTE
 _dl_fixup (
 # ifdef ELF_MACHINE_RUNTIME_FIXUP_ARGS
 	   ELF_MACHINE_RUNTIME_FIXUP_ARGS,

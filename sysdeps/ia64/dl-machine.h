@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  IA-64 version.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -306,7 +306,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 /* ELF_RTYPE_CLASS_PLT iff TYPE describes relocation of a PLT entry or TLS
    variable, so undefined references should not be allowed to define the
    value.
-   ELF_RTYPE_CLASS_COPY iff TYPE should not be allowed to resolve to one
+   ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
    of the main executable's symbols, as for a COPY reloc, which we don't
    use.  */
 /* ??? Ignore *MSB for now.  */

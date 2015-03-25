@@ -1,5 +1,5 @@
 /* sem_post -- post to a POSIX semaphore.  Generic futex-using version.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2003.
 
@@ -23,9 +23,33 @@
 #include <lowlevellock.h>
 #include <internaltypes.h>
 #include <semaphore.h>
-#include <futex-internal.h>
 
 #include <shlib-compat.h>
+
+/* Wrapper for lll_futex_wake, with error checking.
+   TODO Remove when cleaning up the futex API throughout glibc.  */
+static __always_inline void
+futex_wake (unsigned int* futex, int processes_to_wake, int private)
+{
+  int res = lll_futex_wake (futex, processes_to_wake, private);
+  /* No error.  Ignore the number of woken processes.  */
+  if (res >= 0)
+    return;
+  switch (res)
+    {
+    case -EFAULT: /* Could have happened due to memory reuse.  */
+    case -EINVAL: /* Could be either due to incorrect alignment (a bug in
+		     glibc or in the application) or due to memory being
+		     reused for a PI futex.  We cannot distinguish between the
+		     two causes, and one of them is correct use, so we do not
+		     act in this case.  */
+      return;
+    case -ENOSYS: /* Must have been caused by a glibc bug.  */
+    /* No other errors are documented at this time.  */
+    default:
+      abort ();
+    }
+}
 
 
 /* See sem_wait for an explanation of the algorithm.  */
@@ -36,19 +60,19 @@ __new_sem_post (sem_t *sem)
   int private = isem->private;
   unsigned int v;
 
-  __sparc32_atomic_do_lock24 (&isem->pad);
+  __sparc32_atomic_do_lock24(&isem->pad);
 
   v = isem->value;
-  if ((v >> SEM_VALUE_SHIFT) == SEM_VALUE_MAX)
+  if ((v << SEM_VALUE_SHIFT) == SEM_VALUE_MAX)
     {
-      __sparc32_atomic_do_unlock24 (&isem->pad);
+      __sparc32_atomic_do_unlock24(&isem->pad);
 
       __set_errno (EOVERFLOW);
       return -1;
     }
   isem->value = v + (1 << SEM_VALUE_SHIFT);
 
-  __sparc32_atomic_do_unlock24 (&isem->pad);
+  __sparc32_atomic_do_unlock24(&isem->pad);
 
   if ((v & SEM_NWAITERS_MASK) != 0)
     futex_wake (&isem->value, 1, private);

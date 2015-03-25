@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,17 @@ ssize_t
 __libc_msgrcv (int msqid, void *msgp, size_t msgsz, long int msgtyp,
 	       int msgflg)
 {
-  return SYSCALL_CANCEL (ipc, IPCOP_msgrcv, msqid, msgsz, msgflg,
-			 msgp, msgtyp);
+  if (SINGLE_THREAD_P)
+    return INLINE_SYSCALL (ipc, 6, IPCOP_msgrcv, msqid, msgsz, msgflg,
+			   msgp, msgtyp);
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  ssize_t result = INLINE_SYSCALL (ipc, 6, IPCOP_msgrcv, msqid, msgsz, msgflg,
+				   msgp, msgtyp);
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
 weak_alias (__libc_msgrcv, msgrcv)

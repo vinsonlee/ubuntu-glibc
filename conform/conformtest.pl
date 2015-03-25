@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#! /usr/bin/perl
 
 use GlibcConform;
 use Getopt::Long;
@@ -75,17 +75,6 @@ $verbose = 1;
 $total = 0;
 $skipped = 0;
 $errors = 0;
-$xerrors = 0;
-
-sub note_error {
-  my($xfail) = @_;
-  if ($xfail) {
-    $xerrors++;
-    printf ("Ignoring this failure.\n");
-  } else {
-    $errors++;
-  }
-}
 
 
 sub poorfnmatch {
@@ -118,7 +107,7 @@ sub poorfnmatch {
 
 sub compiletest
 {
-  my($fnamebase, $msg, $errmsg, $skip, $optional, $xfail) = @_;
+  my($fnamebase, $msg, $errmsg, $skip, $optional) = @_;
   my($result) = $skip;
   my($printlog) = 0;
 
@@ -140,7 +129,7 @@ sub compiletest
 	  printf ("    $errmsg  Compiler message:\n");
 	  $printlog = 1;
 	}
-	note_error($xfail);
+	++$errors;
 	$result = 1;
       }
     } else {
@@ -170,7 +159,7 @@ sub compiletest
 
 sub runtest
 {
-  my($fnamebase, $msg, $errmsg, $skip, $xfail) = @_;
+  my($fnamebase, $msg, $errmsg, $skip) = @_;
   my($result) = $skip;
   my($printlog) = 0;
 
@@ -188,7 +177,7 @@ sub runtest
 	printf ("    $errmsg  Compiler message:\n");
 	$printlog = 1;
       }
-      note_error($xfail);
+      ++$errors;
       $result = 1;
     } else {
       # Now run the program.  If the exit code is not zero something is wrong.
@@ -202,7 +191,7 @@ sub runtest
 	}
       } else {
 	printf (" FAIL\n");
-	note_error($xfail);
+	++$errors;
 	$printlog = 1;
 	unlink "$fnamebase.out";
 	rename "$fnamebase.out2", "$fnamebase.out";
@@ -275,8 +264,9 @@ sub checknamespace {
     } else {
       # We have to tokenize the line.
       my($str) = $_;
+      my($index) = 0;
+      my($len) = length ($str);
 
-      $str =~ s/"[^"]*"//g;
       foreach $token (split(/[^a-zA-Z0-9_]/, $str)) {
 	if ($token ne "") {
 	  newtoken ($token, @allow);
@@ -338,16 +328,11 @@ while ($#headers >= 0) {
       close (TESTFILE);
 
       $missing = compiletest ($fnamebase, "Checking whether <$h> is available",
-			      "Header <$h> not available", 0, 0, 0);
+			      "Header <$h> not available", 0, 0);
       printf ("\n");
       last control if ($missing);
     }
 
-    my($xfail) = 0;
-    if (/^xfail-/) {
-      s/^xfail-//;
-      $xfail = 1;
-    }
     my($optional) = 0;
     if (/^optional-/) {
       s/^optional-//;
@@ -379,7 +364,7 @@ while ($#headers >= 0) {
 			  ($optional
 			   ? "NOT AVAILABLE."
 			   : "Member \"$member\" not available."), $res,
-			  $optional, $xfail);
+			  $optional);
 
       if ($res == 0 || $missing != 0 || !$optional) {
 	# Test the types of the members.
@@ -393,7 +378,7 @@ while ($#headers >= 0) {
 
 	compiletest ($fnamebase, "Testing for type of member $member",
 		     "Member \"$member\" does not have the correct type.",
-		     $res, 0, $xfail);
+		     $res, 0);
       }
     } elsif (/^(macro|constant|macro-constant|macro-int-constant) +([a-zA-Z0-9_]*) *(?:{([^}]*)} *)?(?:([>=<!]+) ([A-Za-z0-9_\\'-]*))?/) {
       my($symbol_type) = $1;
@@ -422,7 +407,7 @@ while ($#headers >= 0) {
 			     ($optional
 			      ? "NOT PRESENT"
 			      : "Macro \"$symbol\" is not available."), $res,
-			     $optional, $xfail);
+			     $optional);
       }
 
       if ($symbol_type =~ /constant/) {
@@ -437,7 +422,7 @@ while ($#headers >= 0) {
 			     ($optional
 			      ? "NOT PRESENT"
 			      : "Constant \"$symbol\" not available."), $res,
-			     $optional, $xfail);
+			     $optional);
       }
 
       $res = $res || $mres || $cres;
@@ -476,7 +461,7 @@ while ($#headers >= 0) {
 	close (TESTFILE);
 
 	runtest ($fnamebase, "Testing for #if usability of symbol $symbol",
-		 "Symbol \"$symbol\" not usable in #if.", $res, $xfail);
+		 "Symbol \"$symbol\" not usable in #if.", $res);
       }
 
       if (defined ($type) && ($res == 0 || !$optional)) {
@@ -495,7 +480,7 @@ while ($#headers >= 0) {
 
 	compiletest ($fnamebase, "Testing for type of symbol $symbol",
 		     "Symbol \"$symbol\" does not have the correct type.",
-		     $res, 0, $xfail);
+		     $res, 0);
       }
 
       if (defined ($op) && ($res == 0 || !$optional)) {
@@ -508,8 +493,7 @@ while ($#headers >= 0) {
 	close (TESTFILE);
 
 	$res = runtest ($fnamebase, "Testing for value of symbol $symbol",
-			"Symbol \"$symbol\" has not the right value.", $res,
-			$xfail);
+			"Symbol \"$symbol\" has not the right value.", $res);
       }
     } elsif (/^symbol *([a-zA-Z0-9_]*) *([A-Za-z0-9_-]*)?/) {
       my($symbol) = $1;
@@ -529,7 +513,7 @@ while ($#headers >= 0) {
       close (TESTFILE);
 
       $res = compiletest ($fnamebase, "Testing for symbol $symbol",
-			  "Symbol \"$symbol\" not available.", $res, 0, $xfail);
+			  "Symbol \"$symbol\" not available.", $res, 0);
 
       if ($value ne "") {
 	# Generate a program to test for the value of this constant.
@@ -540,8 +524,7 @@ while ($#headers >= 0) {
 	close (TESTFILE);
 
 	$res = runtest ($fnamebase, "Testing for value of symbol $symbol",
-			"Symbol \"$symbol\" has not the right value.", $res,
-			$xfail);
+			"Symbol \"$symbol\" has not the right value.", $res);
       }
     } elsif (/^type *({([^}]*)|([a-zA-Z0-9_]*))/) {
       my($type) = "$2$3";
@@ -571,8 +554,7 @@ while ($#headers >= 0) {
       compiletest ($fnamebase, "Testing for type $type",
 		   ($optional
 		    ? "NOT AVAILABLE"
-		    : "Type \"$type\" not available."), $missing, $optional,
-		   $xfail);
+		    : "Type \"$type\" not available."), $missing, $optional);
     } elsif (/^tag *({([^}]*)|([a-zA-Z0-9_]*))/) {
       my($type) = "$2$3";
 
@@ -593,7 +575,7 @@ while ($#headers >= 0) {
       close (TESTFILE);
 
       compiletest ($fnamebase, "Testing for type $type",
-		   "Type \"$type\" not available.", $missing, 0, $xfail);
+		   "Type \"$type\" not available.", $missing, 0);
     } elsif (/^function *({([^}]*)}|([a-zA-Z0-9_]*)) [(][*]([a-zA-Z0-9_]*) ([(].*[)])/) {
       my($rettype) = "$2$3";
       my($fname) = "$4";
@@ -615,7 +597,7 @@ while ($#headers >= 0) {
 			  ($optional
 			   ? "NOT AVAILABLE"
 			   : "Function \"$fname\" is not available."), $res,
-			  $optional, $xfail);
+			  $optional);
 
       if ($res == 0 || $missing == 1 || !$optional) {
 	# Generate a program to test for the type of this function.
@@ -628,8 +610,7 @@ while ($#headers >= 0) {
 	close (TESTFILE);
 
 	compiletest ($fnamebase, "Test for type of function $fname",
-		     "Function \"$fname\" has incorrect type.", $res, 0,
-		     $xfail);
+		     "Function \"$fname\" has incorrect type.", $res, 0);
       }
     } elsif (/^function *({([^}]*)}|([a-zA-Z0-9_]*)) ([a-zA-Z0-9_]*) ([(].*[)])/) {
       my($rettype) = "$2$3";
@@ -652,7 +633,7 @@ while ($#headers >= 0) {
 			  ($optional
 			   ? "NOT AVAILABLE"
 			   : "Function \"$fname\" is not available."), $res,
-			  $optional, $xfail);
+			  $optional);
 
       if ($res == 0 || $missing != 0 || !$optional) {
 	# Generate a program to test for the type of this function.
@@ -665,8 +646,7 @@ while ($#headers >= 0) {
 	close (TESTFILE);
 
 	compiletest ($fnamebase, "Test for type of function $fname",
-		     "Function \"$fname\" has incorrect type.", $res, 0,
-		     $xfail);
+		     "Function \"$fname\" has incorrect type.", $res, 0);
       }
     } elsif (/^variable *({([^}]*)}|([a-zA-Z0-9_]*)) ([a-zA-Z0-9_]*) *(.*)/) {
       my($type) = "$2$3";
@@ -687,8 +667,7 @@ while ($#headers >= 0) {
       close (TESTFILE);
 
       $res = compiletest ($fnamebase, "Test availability of variable $vname",
-			  "Variable \"$vname\" is not available.", $res, 0,
-			  $xfail);
+			  "Variable \"$vname\" is not available.", $res, 0);
 
       # Generate a program to test for the type of this function.
       open (TESTFILE, ">$fnamebase.c");
@@ -699,7 +678,7 @@ while ($#headers >= 0) {
       close (TESTFILE);
 
       compiletest ($fnamebase, "Test for type of variable $fname",
-		   "Variable \"$vname\" has incorrect type.", $res, 0, $xfail);
+		   "Variable \"$vname\" has incorrect type.", $res, 0);
     } elsif (/^macro-function *({([^}]*)}|([a-zA-Z0-9_]*)) ([a-zA-Z0-9_]*) ([(].*[)])/) {
       my($rettype) = "$2$3";
       my($fname) = "$4";
@@ -719,8 +698,7 @@ while ($#headers >= 0) {
       close (TESTFILE);
 
       $res = compiletest ($fnamebase, "Test availability of macro $fname",
-			  "Function \"$fname\" is not available.", $res, 0,
-			  $xfail);
+			  "Function \"$fname\" is not available.", $res, 0);
 
       # Generate a program to test for the type of this function.
       open (TESTFILE, ">$fnamebase.c");
@@ -733,7 +711,7 @@ while ($#headers >= 0) {
       close (TESTFILE);
 
       compiletest ($fnamebase, "Test for type of macro $fname",
-		   "Function \"$fname\" has incorrect type.", $res, 0, $xfail);
+		   "Function \"$fname\" has incorrect type.", $res, 0);
     } elsif (/^macro-str *([^	 ]*) *(\".*\")/) {
       # The above regex doesn't handle a \" in a string.
       my($macro) = "$1";
@@ -753,7 +731,7 @@ while ($#headers >= 0) {
       close (TESTFILE);
 
       compiletest ($fnamebase, "Test availability of macro $macro",
-		   "Macro \"$macro\" is not available.", $missing, 0, $xfail);
+		   "Macro \"$macro\" is not available.", $missing, 0);
 
       # Generate a program to test for the value of this macro.
       open (TESTFILE, ">$fnamebase.c");
@@ -765,8 +743,7 @@ while ($#headers >= 0) {
       close (TESTFILE);
 
       $res = runtest ($fnamebase, "Testing for value of macro $macro",
-		      "Macro \"$macro\" has not the right value.", $res,
-		      $xfail);
+		      "Macro \"$macro\" has not the right value.", $res);
     } elsif (/^allow-header *(.*)/) {
       my($pattern) = $1;
       if ($seenheader{$pattern} != 1) {
@@ -797,8 +774,6 @@ while ($#headers >= 0) {
       next acontrol if (/^#/);
       next acontrol if (/^[	]*$/);
 
-      s/^xfail-//;
-      s/^optional-//;
       if (/^element *({([^}]*)}|([^ ]*)) *({([^}]*)}|([^ ]*)) *([A-Za-z0-9_]*) *(.*)/) {
 	push @allow, $7;
       } elsif (/^(macro|constant|macro-constant|macro-int-constant) +([a-zA-Z0-9_]*) *(?:{([^}]*)} *)?(?:([>=<!]+) ([A-Za-z0-9_-]*))?/) {
@@ -858,14 +833,6 @@ printf ("  Total number of tests   : %4d\n", $total);
 printf ("  Number of failed tests  : %4d (", $errors);
 $percent = ($errors * 100) / $total;
 if ($errors > 0 && $percent < 1.0) {
-  printf (" <1%%)\n");
-} else {
-  printf ("%3d%%)\n", $percent);
-}
-
-printf ("  Number of xfailed tests : %4d (", $xerrors);
-$percent = ($xerrors * 100) / $total;
-if ($xerrors > 0 && $percent < 1.0) {
   printf (" <1%%)\n");
 } else {
   printf ("%3d%%)\n", $percent);

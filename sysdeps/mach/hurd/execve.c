@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,10 @@
 /* Replace the current process, executing FILE_NAME with arguments ARGV and
    environment ENVP.  ARGV and ENVP are terminated by NULL pointers.  */
 int
-__execve (const char *file_name, char *const argv[], char *const envp[])
+__execve (file_name, argv, envp)
+     const char *file_name;
+     char *const argv[];
+     char *const envp[];
 {
   error_t err;
   file_t file = __file_name_lookup (file_name, O_EXEC, 0);

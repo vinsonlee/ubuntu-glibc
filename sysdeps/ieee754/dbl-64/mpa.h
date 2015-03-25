@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * Written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2015 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -80,6 +80,8 @@ extern const mp_no __mptwo;
 #define  EX  x->e
 #define  EY  y->e
 #define  EZ  z->e
+
+#define ABS(x)   ((x) <  0  ? -(x) : (x))
 
 #ifndef RADIXI
 # define  RADIXI    0x1.0p-24		/* 2^-24   */

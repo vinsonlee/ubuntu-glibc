@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2015 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -200,7 +200,10 @@ __ieee754_exp (double x)
       check_uflow_ret:
 	if (retval < DBL_MIN)
 	  {
-	    double force_underflow = tiny * tiny;
+#if FLT_EVAL_METHOD != 0
+	    volatile
+#endif
+	      double force_underflow = tiny * tiny;
 	    math_force_eval (force_underflow);
 	  }
 	if (retval == 0)
@@ -214,7 +217,7 @@ __ieee754_exp (double x)
 	  retval = res * binexp.x * t256.x;
 	else
 	  retval = __slowexp (x);
-	if (isinf (retval))
+	if (__isinf (retval))
 	  goto ret_huge;
 	else
 	  goto ret;

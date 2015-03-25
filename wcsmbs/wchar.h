@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -145,29 +145,26 @@ __USING_NAMESPACE_STD(tm)
 __BEGIN_NAMESPACE_STD
 /* Copy SRC to DEST.  */
 extern wchar_t *wcscpy (wchar_t *__restrict __dest,
-			const wchar_t *__restrict __src)
-     __THROW __nonnull ((1, 2));
-
+			const wchar_t *__restrict __src) __THROW;
 /* Copy no more than N wide-characters of SRC to DEST.  */
 extern wchar_t *wcsncpy (wchar_t *__restrict __dest,
 			 const wchar_t *__restrict __src, size_t __n)
-     __THROW __nonnull ((1, 2));
+     __THROW;
 
 /* Append SRC onto DEST.  */
 extern wchar_t *wcscat (wchar_t *__restrict __dest,
-			const wchar_t *__restrict __src)
-     __THROW __nonnull ((1, 2));
+			const wchar_t *__restrict __src) __THROW;
 /* Append no more than N wide-characters of SRC onto DEST.  */
 extern wchar_t *wcsncat (wchar_t *__restrict __dest,
 			 const wchar_t *__restrict __src, size_t __n)
-     __THROW __nonnull ((1, 2));
+     __THROW;
 
 /* Compare S1 and S2.  */
 extern int wcscmp (const wchar_t *__s1, const wchar_t *__s2)
-     __THROW __attribute_pure__ __nonnull ((1, 2));
+     __THROW __attribute_pure__;
 /* Compare N wide-characters of S1 and S2.  */
 extern int wcsncmp (const wchar_t *__s1, const wchar_t *__s2, size_t __n)
-     __THROW __attribute_pure__ __nonnull ((1, 2));
+     __THROW __attribute_pure__;
 __END_NAMESPACE_STD
 
 #ifdef __USE_XOPEN2K8

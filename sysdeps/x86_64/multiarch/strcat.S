@@ -1,6 +1,6 @@
 /* Multiple versions of strcat
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -47,12 +47,14 @@
 	.text
 ENTRY(STRCAT)
 	.type	STRCAT, @gnu_indirect_function
-	LOAD_RTLD_GLOBAL_RO_RDX
-	leaq	STRCAT_SSE2_UNALIGNED(%rip), %rax
-	HAS_ARCH_FEATURE (Fast_Unaligned_Load)
+	cmpl	$0, __cpu_features+KIND_OFFSET(%rip)
+	jne	1f
+	call	__init_cpu_features
+1:	leaq	STRCAT_SSE2_UNALIGNED(%rip), %rax
+	testl	$bit_Fast_Unaligned_Load, __cpu_features+FEATURE_OFFSET+index_Fast_Unaligned_Load(%rip)
 	jnz	2f
 	leaq	STRCAT_SSE2(%rip), %rax
-	HAS_CPU_FEATURE (SSSE3)
+	testl	$bit_SSSE3, __cpu_features+CPUID_OFFSET+index_SSSE3(%rip)
 	jz	2f
 	leaq	STRCAT_SSSE3(%rip), %rax
 2:	ret

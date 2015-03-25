@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 # include <regdef.h>
 # include <sys/asm.h>
 # define PREFETCH_STORE_HINT PREFETCH_HINT_PREPAREFORSTORE
-#elif defined _COMPILING_NEWLIB
+#elif _COMPILING_NEWLIB
 # include "machine/asm.h"
 # include "machine/regdef.h"
 # define PREFETCH_STORE_HINT PREFETCH_HINT_PREPAREFORSTORE
@@ -54,6 +54,13 @@
 # endif
 #endif
 
+#if __mips_isa_rev > 5
+# if (PREFETCH_STORE_HINT == PREFETCH_HINT_PREPAREFORSTORE)
+#  undef PREFETCH_STORE_HINT
+#  define PREFETCH_STORE_HINT PREFETCH_HINT_STORE_STREAMED
+# endif
+# define R6_CODE
+#endif
 
 /* Some asm.h files do not have the L macro definition.  */
 #ifndef L
@@ -152,14 +159,6 @@
 # define PREFETCH_FOR_STORE(offset, reg)
 #endif
 
-#if __mips_isa_rev > 5
-# if (PREFETCH_STORE_HINT == PREFETCH_HINT_PREPAREFORSTORE)
-#  undef PREFETCH_STORE_HINT
-#  define PREFETCH_STORE_HINT PREFETCH_HINT_STORE_STREAMED
-# endif
-# define R6_CODE
-#endif
-
 /* Allow the routine to be named something else if desired.  */
 #ifndef MEMSET_NAME
 # define MEMSET_NAME memset
@@ -171,14 +170,14 @@
 
 #ifdef USE_DOUBLE
 # define C_ST	sd
-# ifdef __MIPSEB
+# if __MIPSEB
 #  define C_STHI	sdl	/* high part is left in big-endian	*/
 # else
 #  define C_STHI	sdr	/* high part is right in little-endian	*/
 # endif
 #else
 # define C_ST	sw
-# ifdef __MIPSEB
+# if __MIPSEB
 #  define C_STHI	swl	/* high part is left in big-endian	*/
 # else
 #  define C_STHI	swr	/* high part is right in little-endian	*/

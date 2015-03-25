@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -149,7 +149,7 @@ _dl_start_user:\n\
 /* ELF_RTYPE_CLASS_PLT iff TYPE describes relocation of a PLT entry or
    TLS variable, so undefined references should not be allowed to
    define the value.
-   ELF_RTYPE_CLASS_COPY iff TYPE should not be allowed to resolve to one
+   ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
    of the main executable's symbols, as for a COPY reloc.  */
 #ifndef RTLD_BOOTSTRAP
 # define elf_machine_type_class(type) \

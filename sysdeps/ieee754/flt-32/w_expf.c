@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -24,9 +24,9 @@ float
 __expf (float x)
 {
   float z = __ieee754_expf (x);
-  if (__builtin_expect (!isfinite (z) || z == 0, 0)
-      && isfinite (x) && _LIB_VERSION != _IEEE_)
-    return __kernel_standard_f (x, x, 106 + !!signbit (x));
+  if (__builtin_expect (!__finitef (z) || z == 0, 0)
+      && __finitef (x) && _LIB_VERSION != _IEEE_)
+    return __kernel_standard_f (x, x, 106 + !!__signbitf (x));
 
   return z;
 }

@@ -1,5 +1,5 @@
 /* Double-precision floating point 2^x.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Geoffrey Keating <geoffk@ozemail.com.au>
 
@@ -48,7 +48,7 @@ __ieee754_exp2 (double x)
       /* Exceptional cases:  */
       if (__glibc_unlikely (!isgreaterequal (x, lomark)))
 	{
-	  if (isinf (x))
+	  if (__isinf (x))
 	    /* e^-inf == 0, with no error.  */
 	    return 0;
 	  else
@@ -60,9 +60,6 @@ __ieee754_exp2 (double x)
       int tval, unsafe;
       double rx, x22, result;
       union ieee754_double ex2_u, scale_u;
-
-      if (fabs (x) < DBL_EPSILON / 4.0)
-	return 1.0 + x;
 
       {
 	SET_RESTORE_ROUND_NOEX (FE_TONEAREST);
@@ -96,9 +93,7 @@ __ieee754_exp2 (double x)
 	/* 3. Compute ex2 = 2^(t/512+e+ex).  */
 	ex2_u.d = exp2_accuratetable[tval & 511];
 	tval >>= 9;
-	/* x2 is an integer multiple of 2^-54; avoid intermediate
-	   underflow from the calculation of x22 * x.  */
-	unsafe = abs (tval) >= -DBL_MIN_EXP - 56;
+	unsafe = abs (tval) >= -DBL_MIN_EXP - 1;
 	ex2_u.ieee.exponent += tval >> unsafe;
 	scale_u.d = 1.0;
 	scale_u.ieee.exponent += tval - (tval >> unsafe);
@@ -120,11 +115,7 @@ __ieee754_exp2 (double x)
       if (!unsafe)
 	return result;
       else
-	{
-	  result *= scale_u.d;
-	  math_check_force_underflow_nonneg (result);
-	  return result;
-	}
+	return result * scale_u.d;
     }
   else
     /* Return x, if x is a NaN or Inf; or overflow, otherwise.  */

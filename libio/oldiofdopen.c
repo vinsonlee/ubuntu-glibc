@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,7 +38,9 @@
 
 _IO_FILE *
 attribute_compat_text_section
-_IO_old_fdopen (int fd, const char *mode)
+_IO_old_fdopen (fd, mode)
+     int fd;
+     const char *mode;
 {
   int read_write;
   int posix_mode = 0;
@@ -111,7 +113,7 @@ _IO_old_fdopen (int fd, const char *mode)
   new_f->fp.file._file._lock = &new_f->lock;
 #endif
   _IO_old_init (&new_f->fp.file._file, 0);
-  _IO_JUMPS_FILE_plus (&new_f->fp) = &_IO_old_file_jumps;
+  _IO_JUMPS ((struct _IO_FILE_plus *) &new_f->fp) = &_IO_old_file_jumps;
   _IO_old_file_init ((struct _IO_FILE_plus *) &new_f->fp);
 #if  !_IO_UNIFIED_JUMPTABLES
   new_f->fp.vtable = NULL;

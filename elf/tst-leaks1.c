@@ -3,8 +3,8 @@
 #include <mcheck.h>
 #include <stdlib.h>
 
-static int
-do_test (void)
+int
+main (void)
 {
   mtrace ();
 
@@ -23,6 +23,3 @@ do_test (void)
 
   return ret;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

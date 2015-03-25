@@ -58,7 +58,6 @@
  */
 
 
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -112,7 +111,6 @@ __ieee754_asinl (long double x)
     {				/* |x|<0.5 */
       if (ix < 0x3fde8000)
 	{			/* if |x| < 2**-33 */
-	  math_check_force_underflow (x);
 	  if (huge + x > one)
 	    return x;		/* return x with inexact if x!=0 */
 	}

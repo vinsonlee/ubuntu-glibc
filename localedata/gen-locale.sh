@@ -1,6 +1,6 @@
-#!/bin/sh
+#! /bin/sh
 # Generate test locale files.
-# Copyright (C) 2000-2016 Free Software Foundation, Inc.
+# Copyright (C) 2000-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ generate_locale ()
   charmap=$1
   input=$2
   out=$3
-  if ${localedef_before_env} ${run_program_env} I18NPATH=../localedata \
+  if ${localedef_before_env} ${run_program_env} I18NPATH=. \
      ${localedef_after_env} --quiet -c -f $charmap -i $input \
 			    ${common_objpfx}localedata/$out
   then

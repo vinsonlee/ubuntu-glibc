@@ -1,5 +1,5 @@
 /* Initialization in nss_db module.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,25 +22,35 @@
 #include <nscd/nscd.h>
 #include <string.h>
 
-#define PWD_FILENAME (_PATH_VARDB "passwd.db")
-define_traced_file (pwd, PWD_FILENAME);
+static union
+{
+  struct traced_file file;
+  char buf[sizeof (struct traced_file) + sizeof (_PATH_VARDB "passwd.db")];
+} pwd_traced_file;
 
-#define GRP_FILENAME (_PATH_VARDB "group.db")
-define_traced_file (grp, GRP_FILENAME);
+static union
+{
+  struct traced_file file;
+  char buf[sizeof (struct traced_file) + sizeof (_PATH_VARDB "group.db")];
+} grp_traced_file;
 
-#define SERV_FILENAME (_PATH_VARDB "services.db")
-define_traced_file (serv, SERV_FILENAME);
+static union
+{
+  struct traced_file file;
+  char buf[sizeof (struct traced_file) + sizeof (_PATH_VARDB "services.db")];
+} serv_traced_file;
+
 
 void
 _nss_db_init (void (*cb) (size_t, struct traced_file *))
 {
-  init_traced_file (&pwd_traced_file.file, PWD_FILENAME, 0);
+  strcpy (pwd_traced_file.file.fname,_PATH_VARDB  "passwd.db");
   cb (pwddb, &pwd_traced_file.file);
 
-  init_traced_file (&grp_traced_file.file, GRP_FILENAME, 0);
+  strcpy (grp_traced_file.file.fname, _PATH_VARDB "group.db");
   cb (grpdb, &grp_traced_file.file);
 
-  init_traced_file (&serv_traced_file.file, SERV_FILENAME, 0);
+  strcpy (serv_traced_file.file.fname, _PATH_VARDB "services.db");
   cb (servdb, &serv_traced_file.file);
 }
 

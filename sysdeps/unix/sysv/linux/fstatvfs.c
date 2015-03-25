@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -26,7 +26,7 @@ extern void __internal_statvfs (const char *name, struct statvfs *buf,
 
 
 int
-__fstatvfs (int fd, struct statvfs *buf)
+fstatvfs (int fd, struct statvfs *buf)
 {
   struct statfs fsbuf;
 
@@ -40,5 +40,4 @@ __fstatvfs (int fd, struct statvfs *buf)
   /* We signal success if the statfs call succeeded.  */
   return 0;
 }
-weak_alias (__fstatvfs, fstatvfs)
-libc_hidden_weak (fstatvfs)
+libc_hidden_def (fstatvfs)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -40,7 +40,10 @@ static _IO_off64_t _IO_cookie_seekoff (_IO_FILE *fp, _IO_off64_t offset,
 static int _IO_cookie_close (_IO_FILE* fp);
 
 static _IO_ssize_t
-_IO_cookie_read (_IO_FILE *fp, void *buf, _IO_ssize_t size)
+_IO_cookie_read (fp, buf, size)
+     _IO_FILE *fp;
+     void *buf;
+     _IO_ssize_t size;
 {
   struct _IO_cookie_file *cfile = (struct _IO_cookie_file *) fp;
 
@@ -51,7 +54,10 @@ _IO_cookie_read (_IO_FILE *fp, void *buf, _IO_ssize_t size)
 }
 
 static _IO_ssize_t
-_IO_cookie_write (_IO_FILE *fp, const void *buf, _IO_ssize_t size)
+_IO_cookie_write (fp, buf, size)
+     _IO_FILE *fp;
+     const void *buf;
+     _IO_ssize_t size;
 {
   struct _IO_cookie_file *cfile = (struct _IO_cookie_file *) fp;
 
@@ -69,7 +75,10 @@ _IO_cookie_write (_IO_FILE *fp, const void *buf, _IO_ssize_t size)
 }
 
 static _IO_off64_t
-_IO_cookie_seek (_IO_FILE *fp, _IO_off64_t offset, int dir)
+_IO_cookie_seek (fp, offset, dir)
+     _IO_FILE *fp;
+     _IO_off64_t offset;
+     int dir;
 {
   struct _IO_cookie_file *cfile = (struct _IO_cookie_file *) fp;
 
@@ -81,7 +90,8 @@ _IO_cookie_seek (_IO_FILE *fp, _IO_off64_t offset, int dir)
 }
 
 static int
-_IO_cookie_close (_IO_FILE *fp)
+_IO_cookie_close (fp)
+     _IO_FILE *fp;
 {
   struct _IO_cookie_file *cfile = (struct _IO_cookie_file *) fp;
 
@@ -93,7 +103,11 @@ _IO_cookie_close (_IO_FILE *fp)
 
 
 static _IO_off64_t
-_IO_cookie_seekoff (_IO_FILE *fp, _IO_off64_t offset, int dir, int mode)
+_IO_cookie_seekoff (fp, offset, dir, mode)
+     _IO_FILE *fp;
+     _IO_off64_t offset;
+     int dir;
+     int mode;
 {
   /* We must force the fileops code to always use seek to determine
      the position.  */
@@ -149,8 +163,10 @@ _IO_cookie_init (struct _IO_cookie_file *cfile, int read_write,
 
 
 _IO_FILE *
-_IO_fopencookie (void *cookie, const char *mode,
-		 _IO_cookie_io_functions_t io_functions)
+_IO_fopencookie (cookie, mode, io_functions)
+     void *cookie;
+     const char *mode;
+     _IO_cookie_io_functions_t io_functions;
 {
   int read_write;
   struct locked_FILE
@@ -173,7 +189,6 @@ _IO_fopencookie (void *cookie, const char *mode,
       read_write = _IO_NO_READS|_IO_IS_APPENDING;
       break;
     default:
-      __set_errno (EINVAL);
       return NULL;
   }
   if (mode[0] == '+' || (mode[0] == 'b' && mode[1] == '+'))
@@ -202,7 +217,10 @@ _IO_FILE * _IO_old_fopencookie (void *cookie, const char *mode,
 
 static _IO_off64_t
 attribute_compat_text_section
-_IO_old_cookie_seek (_IO_FILE *fp, _IO_off64_t offset, int dir)
+_IO_old_cookie_seek (fp, offset, dir)
+     _IO_FILE *fp;
+     _IO_off64_t offset;
+     int dir;
 {
   struct _IO_cookie_file *cfile = (struct _IO_cookie_file *) fp;
   int (*seek) (_IO_FILE *, _IO_off_t, int);
@@ -242,14 +260,16 @@ static const struct _IO_jump_t _IO_old_cookie_jumps = {
 
 _IO_FILE *
 attribute_compat_text_section
-_IO_old_fopencookie (void *cookie, const char *mode,
-		     _IO_cookie_io_functions_t io_functions)
+_IO_old_fopencookie (cookie, mode, io_functions)
+     void *cookie;
+     const char *mode;
+     _IO_cookie_io_functions_t io_functions;
 {
   _IO_FILE *ret;
 
   ret = _IO_fopencookie (cookie, mode, io_functions);
   if (ret != NULL)
-    _IO_JUMPS_FILE_plus (ret) = &_IO_old_cookie_jumps;
+    _IO_JUMPS ((struct _IO_FILE_plus *) ret) = &_IO_old_cookie_jumps;
 
   return ret;
 }

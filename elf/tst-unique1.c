@@ -6,6 +6,7 @@
 static int
 do_test (void)
 {
+#ifdef HAVE_ASM_UNIQUE_OBJECT
   void *h1 = dlopen ("tst-unique1mod1.so", RTLD_LAZY);
   if (h1 == NULL)
     {
@@ -67,6 +68,7 @@ do_test (void)
       puts ("f from tst-unique1mod2 failed");
       return 1;
     }
+#endif
   return 0;
 }
 

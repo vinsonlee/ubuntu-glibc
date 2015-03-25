@@ -11,13 +11,16 @@ ifeq ($(subdir),malloc)
 CFLAGS-malloc.c += -DMORECORE_CLEARS=2
 endif
 
+ifeq ($(subdir),socket)
+sysdep_routines += internal_accept4 internal_recvmmsg internal_sendmmsg
+endif
+
 ifeq ($(subdir),misc)
 include $(firstword $(wildcard $(sysdirs:=/sysctl.mk)))
 
 sysdep_routines += clone llseek umount umount2 readahead \
 		   setfsuid setfsgid makedev epoll_pwait signalfd \
-		   eventfd eventfd_read eventfd_write prlimit \
-		   personality
+		   eventfd eventfd_read eventfd_write prlimit
 
 CFLAGS-gethostid.c = -fexceptions
 CFLAGS-tst-writev.c += "-DARTIFICIAL_LIMIT=0x80000000-__getpagesize()"
@@ -30,7 +33,7 @@ CFLAGS-tst-writev.c += "-DARTIFICIAL_LIMIT=0x80000000-__getpagesize()"
 # here and in any non-Linux configuration that uses it; other
 # configurations will not install the file.
 sysdep_headers += sys/mount.h sys/acct.h sys/sysctl.h \
-		  sys/klog.h \
+		  sys/klog.h sys/kdaemon.h \
 		  sys/user.h sys/prctl.h \
 		  sys/kd.h sys/soundcard.h sys/vt.h \
 		  sys/quota.h sys/fsuid.h \
@@ -42,7 +45,7 @@ sysdep_headers += sys/mount.h sys/acct.h sys/sysctl.h \
 		  bits/socket_type.h bits/syscall.h bits/sysctl.h \
 		  bits/mman-linux.h
 
-tests += tst-clone tst-fanotify tst-personality
+tests += tst-clone tst-fanotify
 
 # Generate the list of SYS_* macros for the system calls (__NR_* macros).
 
@@ -140,7 +143,7 @@ sysdep_headers += bits/initspin.h
 
 sysdep_routines += sched_getcpu
 
-tests += tst-affinity tst-affinity-pid
+tests += tst-getcpu
 
 CFLAGS-fork.c = $(libio-mtsafe)
 CFLAGS-getpid.o = -fomit-frame-pointer
@@ -152,7 +155,6 @@ sysdep_headers += netinet/if_fddi.h netinet/if_tr.h \
 		  netipx/ipx.h netash/ash.h netax25/ax25.h netatalk/at.h \
 		  netrom/netrom.h netpacket/packet.h netrose/rose.h \
 		  neteconet/ec.h netiucv/iucv.h
-sysdep_routines += netlink_assert_response
 endif
 
 # Don't compile the ctype glue code, since there is no old non-GNU C library.
@@ -194,7 +196,5 @@ CFLAGS-gai.c += -DNEED_NETLINK
 endif
 
 ifeq ($(subdir),nptl)
-tests += tst-setgetname tst-align-clone tst-getpid1 tst-getpid2 \
-	tst-thread-affinity-pthread tst-thread-affinity-pthread2 \
-	tst-thread-affinity-sched
+tests += tst-setgetname
 endif

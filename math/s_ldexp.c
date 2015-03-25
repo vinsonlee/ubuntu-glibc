@@ -20,15 +20,13 @@ static char rcsid[] = "$NetBSD: s_ldexp.c,v 1.6 1995/05/10 20:47:40 jtc Exp $";
 
 double __ldexp(double value, int exp)
 {
-	if(!isfinite(value)||value==0.0) return value;
+	if(!__finite(value)||value==0.0) return value;
 	value = __scalbn(value,exp);
-	if(!isfinite(value)||value==0.0) __set_errno (ERANGE);
+	if(!__finite(value)||value==0.0) __set_errno (ERANGE);
 	return value;
 }
 weak_alias (__ldexp, ldexp)
-weak_alias (__ldexp, scalbn)
 #ifdef NO_LONG_DOUBLE
 strong_alias (__ldexp, __ldexpl)
 weak_alias (__ldexp, ldexpl)
-weak_alias (__ldexp, scalbnl)
 #endif

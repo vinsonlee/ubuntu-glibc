@@ -11,7 +11,6 @@
 
 #include <math.h>
 #include <math_private.h>
-#include <shlib-compat.h>
 
 int
 __isinf (double x)
@@ -26,8 +25,6 @@ __isinf (double x)
 hidden_def (__isinf)
 weak_alias (__isinf, isinf)
 #ifdef NO_LONG_DOUBLE
-# if defined LDBL_CLASSIFY_COMPAT && SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_23)
-compat_symbol (libc, __isinf, __isinfl, GLIBC_2_0);
-# endif
+strong_alias (__isinf, __isinfl)
 weak_alias (__isinf, isinfl)
 #endif

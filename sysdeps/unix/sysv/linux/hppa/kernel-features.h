@@ -1,6 +1,6 @@
 /* Set flags signalling availability of kernel features based on given
    kernel version number.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,6 +17,9 @@
    License along with the GNU C Library.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
+
+/* PA-RISC 2.6.9 kernels had the first LWS CAS support */
+#define __ASSUME_LWS_CAS		1
 
 /* Support for the accept4 and recvmmsg syscalls was added in 2.6.34.  */
 #if __LINUX_KERNEL_VERSION >= 0x020622
@@ -35,8 +38,3 @@
 #endif
 
 #include_next <kernel-features.h>
-
-/* The prlimit64 syscall was added for PA in 2.6.37.  */
-#if __LINUX_KERNEL_VERSION < 0x020625
-# undef __ASSUME_PRLIMIT64
-#endif

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,13 +22,13 @@
    terminate program execution, using the low-order 8 bits of the
    given integer as status.  */
 void
-_exit (int status)
+_exit (status)
+     int status;
 {
   status &= 0xff;
   abort ();
 }
 libc_hidden_def (_exit)
-rtld_hidden_def (_exit)
 weak_alias (_exit, _Exit)
 
 stub_warning (_exit)

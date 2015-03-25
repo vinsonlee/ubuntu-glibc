@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  x86-64 version.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>.
 
@@ -26,7 +26,6 @@
 #include <sysdep.h>
 #include <tls.h>
 #include <dl-tlsdesc.h>
-#include <cpu-features.c>
 
 /* Return nonzero iff ELF header is compatible with the running host.  */
 static inline int __attribute__ ((unused))
@@ -66,12 +65,8 @@ static inline int __attribute__ ((unused, always_inline))
 elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 {
   Elf64_Addr *got;
-  extern void _dl_runtime_resolve_sse (ElfW(Word)) attribute_hidden;
-  extern void _dl_runtime_resolve_avx (ElfW(Word)) attribute_hidden;
-  extern void _dl_runtime_resolve_avx512 (ElfW(Word)) attribute_hidden;
-  extern void _dl_runtime_profile_sse (ElfW(Word)) attribute_hidden;
-  extern void _dl_runtime_profile_avx (ElfW(Word)) attribute_hidden;
-  extern void _dl_runtime_profile_avx512 (ElfW(Word)) attribute_hidden;
+  extern void _dl_runtime_resolve (ElfW(Word)) attribute_hidden;
+  extern void _dl_runtime_profile (ElfW(Word)) attribute_hidden;
 
   if (l->l_info[DT_JMPREL] && lazy)
     {
@@ -99,12 +94,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 	 end in this function.  */
       if (__glibc_unlikely (profile))
 	{
-	  if (HAS_ARCH_FEATURE (AVX512F_Usable))
-	    *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_profile_avx512;
-	  else if (HAS_ARCH_FEATURE (AVX_Usable))
-	    *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_profile_avx;
-	  else
-	    *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_profile_sse;
+	  *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_profile;
 
 	  if (GLRO(dl_profile) != NULL
 	      && _dl_name_match_p (GLRO(dl_profile), l))
@@ -113,17 +103,9 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 	    GL(dl_profile_map) = l;
 	}
       else
-	{
-	  /* This function will get called to fix up the GOT entry
-	     indicated by the offset on the stack, and then jump to
-	     the resolved address.  */
-	  if (HAS_ARCH_FEATURE (AVX512F_Usable))
-	    *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_resolve_avx512;
-	  else if (HAS_ARCH_FEATURE (AVX_Usable))
-	    *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_resolve_avx;
-	  else
-	    *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_resolve_sse;
-	}
+	/* This function will get called to fix up the GOT entry indicated by
+	   the offset on the stack, and then jump to the resolved address.  */
+	*(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_resolve;
     }
 
   if (l->l_info[ADDRIDX (DT_TLSDESC_GOT)] && lazy)
@@ -187,11 +169,8 @@ _dl_start_user:\n\
 /* ELF_RTYPE_CLASS_PLT iff TYPE describes relocation of a PLT entry or
    TLS variable, so undefined references should not be allowed to
    define the value.
-   ELF_RTYPE_CLASS_COPY iff TYPE should not be allowed to resolve to one
-   of the main executable's symbols, as for a COPY reloc.
-   ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA iff TYPE describes relocation may
-   against protected data whose address be external due to copy relocation.
- */
+   ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
+   of the main executable's symbols, as for a COPY reloc.  */
 #define elf_machine_type_class(type)					      \
   ((((type) == R_X86_64_JUMP_SLOT					      \
      || (type) == R_X86_64_DTPMOD64					      \
@@ -199,8 +178,7 @@ _dl_start_user:\n\
      || (type) == R_X86_64_TPOFF64					      \
      || (type) == R_X86_64_TLSDESC)					      \
     * ELF_RTYPE_CLASS_PLT)						      \
-   | (((type) == R_X86_64_COPY) * ELF_RTYPE_CLASS_COPY)			      \
-   | (((type) == R_X86_64_GLOB_DAT) * ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA))
+   | (((type) == R_X86_64_COPY) * ELF_RTYPE_CLASS_COPY))
 
 /* A reloc type used for ld.so cmdline arg lookups to reject PLT entries.  */
 #define ELF_MACHINE_JMP_SLOT	R_X86_64_JUMP_SLOT
@@ -223,8 +201,6 @@ dl_platform_init (void)
   if (GLRO(dl_platform) != NULL && *GLRO(dl_platform) == '\0')
     /* Avoid an empty string which would disturb us.  */
     GLRO(dl_platform) = NULL;
-
-  init_cpu_features (&GLRO(dl_x86_cpu_features));
 }
 
 static inline ElfW(Addr)

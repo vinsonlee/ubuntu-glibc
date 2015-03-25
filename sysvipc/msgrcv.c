@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -26,7 +26,12 @@
    in buffer overflow or queue underflow.  */
 
 ssize_t
-msgrcv (int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg)
+msgrcv (msqid, msgp, msgsz, msgtyp, msgflg)
+     int msqid;
+     void *msgp;
+     size_t msgsz;
+     long msgtyp;
+     int msgflg;
 {
   __set_errno (ENOSYS);
   return -1;

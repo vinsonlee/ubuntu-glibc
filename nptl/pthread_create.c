@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -31,7 +31,6 @@
 #include <kernel-features.h>
 #include <exit-thread.h>
 #include <default-sched.h>
-#include <futex-internal.h>
 
 #include <shlib-compat.h>
 
@@ -80,7 +79,8 @@ static int create_thread (struct pthread *pd, const struct pthread_attr *attr,
 
 struct pthread *
 internal_function
-__find_in_stack_list (struct pthread *pd)
+__find_in_stack_list (pd)
+     struct pthread *pd;
 {
   list_t *entry;
   struct pthread *result = NULL;
@@ -269,7 +269,7 @@ START_THREAD_DEFN
 
   /* Allow setxid from now onwards.  */
   if (__glibc_unlikely (atomic_exchange_acq (&pd->setxid_futex, 0) == -2))
-    futex_wake (&pd->setxid_futex, 1, FUTEX_PRIVATE);
+    lll_futex_wake (&pd->setxid_futex, 1, LLL_PRIVATE);
 
 #ifdef __NR_set_robust_list
 # ifndef __ASSUME_SET_ROBUST_LIST
@@ -414,8 +414,7 @@ START_THREAD_DEFN
 	  this->__list.__next = NULL;
 
 	  atomic_or (&this->__lock, FUTEX_OWNER_DIED);
-	  futex_wake ((unsigned int *) &this->__lock, 1,
-		      /* XYZ */ FUTEX_SHARED);
+	  lll_futex_wake (&this->__lock, 1, /* XYZ */ LLL_SHARED);
 	}
       while (robust != (void *) &pd->robust_head);
     }
@@ -443,11 +442,7 @@ START_THREAD_DEFN
       /* Some other thread might call any of the setXid functions and expect
 	 us to reply.  In this case wait until we did that.  */
       do
-	/* XXX This differs from the typical futex_wait_simple pattern in that
-	   the futex_wait condition (setxid_futex) is different from the
-	   condition used in the surrounding loop (cancelhandling).  We need
-	   to check and document why this is correct.  */
-	futex_wait_simple (&pd->setxid_futex, 0, FUTEX_PRIVATE);
+	lll_futex_wait (&pd->setxid_futex, 0, LLL_PRIVATE);
       while (pd->cancelhandling & SETXID_BITMASK);
 
       /* Reset the value so that the stack can be reused.  */
@@ -487,8 +482,11 @@ report_thread_creation (struct pthread *pd)
 
 
 int
-__pthread_create_2_1 (pthread_t *newthread, const pthread_attr_t *attr,
-		      void *(*start_routine) (void *), void *arg)
+__pthread_create_2_1 (newthread, attr, start_routine, arg)
+     pthread_t *newthread;
+     const pthread_attr_t *attr;
+     void *(*start_routine) (void *);
+     void *arg;
 {
   STACK_VARIABLES;
 
@@ -685,7 +683,7 @@ __pthread_create_2_1 (pthread_t *newthread, const pthread_attr_t *attr,
 	     stillborn thread.  */
 	  if (__glibc_unlikely (atomic_exchange_acq (&pd->setxid_futex, 0)
 				== -2))
-	    futex_wake (&pd->setxid_futex, 1, FUTEX_PRIVATE);
+	    lll_futex_wake (&pd->setxid_futex, 1, LLL_PRIVATE);
 
 	  /* Free the resources.  */
 	  __deallocate_stack (pd);
@@ -720,8 +718,11 @@ versioned_symbol (libpthread, __pthread_create_2_1, pthread_create, GLIBC_2_1);
 
 #if SHLIB_COMPAT(libpthread, GLIBC_2_0, GLIBC_2_1)
 int
-__pthread_create_2_0 (pthread_t *newthread, const pthread_attr_t *attr,
-		      void *(*start_routine) (void *), void *arg)
+__pthread_create_2_0 (newthread, attr, start_routine, arg)
+     pthread_t *newthread;
+     const pthread_attr_t *attr;
+     void *(*start_routine) (void *);
+     void *arg;
 {
   /* The ATTR attribute is not really of type `pthread_attr_t *'.  It has
      the old size and access to the new members might crash the program.

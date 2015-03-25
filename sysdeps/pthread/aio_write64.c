@@ -1,5 +1,5 @@
 /* Asynchronous write, 64bit offset version.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -23,7 +23,8 @@
 
 
 int
-aio_write64 (struct aiocb64 *aiocbp)
+aio_write64 (aiocbp)
+     struct aiocb64 *aiocbp;
 {
   return (__aio_enqueue_request ((aiocb_union *) aiocbp, LIO_WRITE64) == NULL
 	  ? -1 : 0);

@@ -1,5 +1,5 @@
 /* termios type and macro definitions.  4.4 BSD/generic GNU version.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -230,9 +230,7 @@ struct termios
 #endif
 #define	_IEXTEN	(1 << 10)	/* Enable DISCARD and LNEXT.  */
 #define	IEXTEN	_IEXTEN
-#ifdef	__USE_MISC
-# define EXTPROC	(1 << 11)	/* External processing.  */
-#endif
+#define	EXTPROC	(1 << 11)	/* External processing.  */
 #define	_TOSTOP	(1 << 22)	/* Send SIGTTOU for background output.  */
 #define	TOSTOP	_TOSTOP
 #ifdef	__USE_MISC

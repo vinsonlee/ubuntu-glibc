@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2016 Free Software Foundation, Inc.
+# Copyright (C) 1995-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ subdir		:= elf
 include ../Makeconfig
 
 headers		= elf.h bits/elfclass.h link.h bits/link.h
-routines	= $(all-dl-routines) dl-support dl-iteratephdr \
+routines	= $(dl-routines) dl-support dl-iteratephdr \
 		  dl-addr enbl-secure dl-profstub \
 		  dl-origin dl-libc dl-sym dl-tsd dl-sysdep
 
@@ -43,7 +43,7 @@ shared-only-routines += dl-caller
 
 # ld.so uses those routines, plus some special stuff for being the program
 # interpreter and operating independent of libc.
-rtld-routines	= rtld $(all-dl-routines) dl-sysdep dl-environ dl-minimal
+rtld-routines	:= rtld $(dl-routines) dl-sysdep dl-environ dl-minimal
 all-rtld-routines = $(rtld-routines) $(sysdep-rtld-routines)
 
 CFLAGS-dl-runtime.c = -fexceptions -fasynchronous-unwind-tables
@@ -121,8 +121,7 @@ tests = tst-tls1 tst-tls2 tst-tls9 tst-leaks1 \
 	tst-auxv
 tests-static = tst-tls1-static tst-tls2-static tst-stackguard1-static \
 	       tst-leaks1-static tst-array1-static tst-array5-static \
-	       tst-ptrguard1-static tst-dl-iter-static \
-	       tst-tlsalign-static tst-tlsalign-extern-static
+	       tst-ptrguard1-static tst-dl-iter-static
 ifeq (yes,$(build-shared))
 tests-static += tst-tls9-static
 tst-tls9-static-ENV = \
@@ -131,7 +130,7 @@ endif
 tests += $(tests-static)
 ifeq (yes,$(build-shared))
 tests += loadtest restest1 preloadtest loadfail multiload origtest resolvfail \
-	 constload1 order noload filter unload \
+	 constload1 order vismain noload filter unload \
 	 reldep reldep2 reldep3 reldep4 nodelete nodelete2 \
 	 nodlopen nodlopen2 neededtest neededtest2 \
 	 neededtest3 neededtest4 unload2 lateglobal initfirst global \
@@ -145,15 +144,12 @@ tests += loadtest restest1 preloadtest loadfail multiload origtest resolvfail \
 	 unload3 unload4 unload5 unload6 unload7 unload8 tst-global1 order2 \
 	 tst-audit1 tst-audit2 tst-audit8 tst-audit9 \
 	 tst-stackguard1 tst-addr1 tst-thrlock \
-	 tst-unique1 tst-unique2 $(if $(CXX),tst-unique3 tst-unique4 \
-	 tst-nodelete) \
+	 tst-unique1 tst-unique2 tst-unique3 tst-unique4 \
 	 tst-initorder tst-initorder2 tst-relsort1 tst-null-argv \
-	 tst-ptrguard1 tst-tlsalign tst-tlsalign-extern tst-nodelete-opened \
-	 tst-nodelete2 tst-audit11 tst-audit12
+	 tst-ptrguard1
 #	 reldep9
 ifeq ($(build-hardcoded-path-in-tests),yes)
 tests += tst-dlopen-aout
-LDFLAGS-tst-dlopen-aout = $(no-pie-ldflag)
 endif
 test-srcs = tst-pathopt
 selinux-enabled := $(shell cat /selinux/enforce 2> /dev/null)
@@ -209,40 +205,19 @@ modules-names = testobj1 testobj2 testobj3 testobj4 testobj5 testobj6 \
 		tst-unique1mod1 tst-unique1mod2 \
 		tst-unique2mod1 tst-unique2mod2 \
 		tst-auditmod9a tst-auditmod9b \
-		$(if $(CXX),tst-unique3lib tst-unique3lib2 tst-unique4lib \
-		  tst-nodelete-uniquemod tst-nodelete-rtldmod \
-		  tst-nodelete-zmod) \
+		tst-unique3lib tst-unique3lib2 \
+		tst-unique4lib \
 		tst-initordera1 tst-initorderb1 \
 		tst-initordera2 tst-initorderb2 \
 		tst-initordera3 tst-initordera4 \
 		tst-initorder2a tst-initorder2b tst-initorder2c \
 		tst-initorder2d \
 		tst-relsort1mod1 tst-relsort1mod2 tst-array2dep \
-		tst-array5dep tst-null-argv-lib \
-		tst-tlsalign-lib tst-nodelete-opened-lib tst-nodelete2mod \
-		tst-audit11mod1 tst-audit11mod2 tst-auditmod11 \
-		tst-audit12mod1 tst-audit12mod2 tst-audit12mod3 tst-auditmod12
-ifeq (yes,$(have-protected-data))
-modules-names += tst-protected1moda tst-protected1modb
-tests += tst-protected1a tst-protected1b
-$(objpfx)tst-protected1a: $(addprefix $(objpfx),tst-protected1moda.so tst-protected1modb.so)
-$(objpfx)tst-protected1b: $(addprefix $(objpfx),tst-protected1modb.so tst-protected1moda.so)
-tst-protected1modb.so-no-z-defs = yes
-# These tests fail with GCC versions prior to 5.1 and with some versions
-# of binutils.  See https://sourceware.org/bugzilla/show_bug.cgi?id=17709
-# and https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65248 for details.
-# Perhaps in future we can make these XFAILs conditional on some detection
-# of compiler/linker behavior/version.
-test-xfail-tst-protected1a = yes
-test-xfail-tst-protected1b = yes
-endif
+		tst-array5dep tst-null-argv-lib
 ifeq (yesyes,$(have-fpie)$(build-shared))
 modules-names += tst-piemod1
 tests += tst-pie1 tst-pie2
 tests-pie += tst-pie1 tst-pie2
-tests += vismain
-tests-pie += vismain
-CFLAGS-vismain.c = $(PIE-ccflag)
 endif
 modules-execstack-yes = tst-execstack-mod
 extra-test-objs += $(addsuffix .os,$(strip $(modules-names)))
@@ -301,14 +276,6 @@ endif
 check-abi: $(objpfx)check-abi-ld.out
 tests-special += $(objpfx)check-abi-ld.out
 update-abi: update-abi-ld
-update-all-abi: update-all-abi-ld
-
-ifeq ($(have-glob-dat-reloc),yes)
-tests += tst-prelink
-ifeq ($(run-built-tests),yes)
-tests-special += $(objpfx)tst-prelink-cmp.out
-endif
-endif
 
 include ../Rules
 
@@ -382,21 +349,27 @@ $(objpfx)ld.so: $(objpfx)librtld.os $(ld-map)
 		  $(filter-out $(map-file),$^) $(load-map-file)		\
 		  -Wl,-soname=$(rtld-installed-name)			\
 		  -Wl,-defsym=_begin=0
-	$(call after-link,$@.new)
 	$(READELF) -s $@.new \
 	  | $(AWK) '($$7 ~ /^UND(|EF)$$/ && $$1 != "0:" && $$4 != "REGISTER") { print; p=1 } END { exit p != 0 }'
 	mv -f $@.new $@
 
-ifeq (yes,$(build-shared))
 # interp.c exists just to get the runtime linker path into libc.so.
-$(objpfx)interp.os: $(common-objpfx)runtime-linker.h
-endif
+$(objpfx)interp.os: $(elf-objpfx)runtime-linker.h
+
+$(elf-objpfx)runtime-linker.h: $(elf-objpfx)runtime-linker.st; @:
+$(elf-objpfx)runtime-linker.st: $(common-objpfx)config.make
+	$(name-target-directory)
+	echo '#define RUNTIME_LINKER "$(rtlddir)/$(rtld-installed-name)"' \
+		> ${@:st=T}
+	$(move-if-change) ${@:st=T} ${@:st=h}
+	touch $@
 
 ifneq (ld.so,$(rtld-installed-name))
 # Make sure ld.so.1 exists in the build directory so we can link
 # against it.
 $(objpfx)$(rtld-installed-name): $(objpfx)ld.so
-	$(make-link)
+	rm -f $@
+	ln -s $(<F) $@
 generated += $(rtld-installed-name)
 endif
 
@@ -542,12 +515,6 @@ $(objpfx)tst-initordera3.so: $(objpfx)tst-initorderb2.so $(objpfx)tst-initorderb
 $(objpfx)tst-initordera4.so: $(objpfx)tst-initordera3.so
 $(objpfx)tst-initorder: $(objpfx)tst-initordera4.so $(objpfx)tst-initordera1.so $(objpfx)tst-initorderb2.so
 $(objpfx)tst-null-argv: $(objpfx)tst-null-argv-lib.so
-$(objpfx)tst-tlsalign: $(objpfx)tst-tlsalign-lib.so
-$(objpfx)tst-nodelete-opened.out: $(objpfx)tst-nodelete-opened-lib.so
-$(objpfx)tst-nodelete-opened: $(libdl)
-
-$(objpfx)tst-tlsalign-extern: $(objpfx)tst-tlsalign-vars.o
-$(objpfx)tst-tlsalign-extern-static: $(objpfx)tst-tlsalign-vars.o
 
 tst-null-argv-ENV = LD_DEBUG=all LD_DEBUG_OUTPUT=$(objpfx)tst-null-argv.debug.out
 LDFLAGS-nodel2mod3.so = $(no-as-needed)
@@ -609,10 +576,6 @@ ifuncmod5.so-no-z-defs = yes
 ifuncmod6.so-no-z-defs = yes
 tst-auditmod9a.so-no-z-defs = yes
 tst-auditmod9b.so-no-z-defs = yes
-tst-nodelete-uniquemod.so-no-z-defs = yes
-tst-nodelete-rtldmod.so-no-z-defs = yes
-tst-nodelete-zmod.so-no-z-defs = yes
-tst-nodelete2mod.so-no-z-defs = yes
 
 ifeq ($(build-shared),yes)
 # Build all the modules even when not actually running test programs.
@@ -891,7 +854,6 @@ endif
 ifeq ($(have-z-execstack),yes)
 $(objpfx)tst-execstack: $(libdl)
 $(objpfx)tst-execstack.out: $(objpfx)tst-execstack-mod.so
-CPPFLAGS-tst-execstack.c = -DUSE_PTHREADS=0
 LDFLAGS-tst-execstack = -Wl,-z,noexecstack
 LDFLAGS-tst-execstack-mod = -Wl,-z,execstack
 
@@ -1012,9 +974,6 @@ localplt-built-dso := $(addprefix $(common-objpfx),\
 				  resolv/libresolv.so \
 				  crypt/libcrypt.so \
 		       )
-ifeq ($(build-mathvec),yes)
-localplt-built-dso += $(addprefix $(common-objpfx), mathvec/libmvec.so)
-endif
 ifeq ($(have-thread-library),yes)
 localplt-built-dso += $(filter-out %_nonshared.a, $(shared-thread-library))
 endif
@@ -1056,10 +1015,7 @@ $(objpfx)tst-dlmopen3.out: $(objpfx)tst-dlmopen1mod.so
 $(objpfx)tst-audit1.out: $(objpfx)tst-auditmod1.so
 tst-audit1-ENV = LD_AUDIT=$(objpfx)tst-auditmod1.so
 
-$(objpfx)tst-audit2: $(libdl)
-$(objpfx)tst-audit2.out: $(objpfx)tst-auditmod1.so $(objpfx)tst-auditmod9b.so
-# Prevent GCC-5 from translating a malloc/memset pair into calloc
-CFLAGS-tst-audit2.c += -fno-builtin
+$(objpfx)tst-audit2.out: $(objpfx)tst-auditmod1.so
 tst-audit2-ENV = LD_AUDIT=$(objpfx)tst-auditmod1.so
 
 $(objpfx)tst-audit9: $(libdl)
@@ -1176,19 +1132,6 @@ $(objpfx)tst-unique3.out: $(objpfx)tst-unique3lib2.so
 
 $(objpfx)tst-unique4: $(objpfx)tst-unique4lib.so
 
-$(objpfx)tst-nodelete: $(libdl)
-$(objpfx)tst-nodelete.out: $(objpfx)tst-nodelete-uniquemod.so \
-			   $(objpfx)tst-nodelete-rtldmod.so \
-			   $(objpfx)tst-nodelete-zmod.so
-
-LDFLAGS-tst-nodelete = -rdynamic
-LDFLAGS-tst-nodelete-zmod.so = -Wl,--enable-new-dtags,-z,nodelete
-
-$(objpfx)tst-nodelete2: $(libdl)
-$(objpfx)tst-nodelete2.out: $(objpfx)tst-nodelete2mod.so
-
-LDFLAGS-tst-nodelete2 = -rdynamic
-
 $(objpfx)tst-initorder-cmp.out: tst-initorder.exp $(objpfx)tst-initorder.out
 	cmp $^ > $@; \
 	$(evaluate-test)
@@ -1229,26 +1172,4 @@ $(objpfx)tst-unused-dep.out: $(objpfx)testobj1.so
 
 $(objpfx)tst-unused-dep-cmp.out: $(objpfx)tst-unused-dep.out
 	cmp $< /dev/null > $@; \
-	$(evaluate-test)
-
-$(objpfx)tst-audit11.out: $(objpfx)tst-auditmod11.so $(objpfx)tst-audit11mod1.so
-$(objpfx)tst-audit11: $(libdl)
-tst-audit11-ENV = LD_AUDIT=$(objpfx)tst-auditmod11.so
-$(objpfx)tst-audit11mod1.so: $(objpfx)tst-audit11mod2.so
-LDFLAGS-tst-audit11mod2.so = -Wl,--version-script=tst-audit11mod2.map,-soname,tst-audit11mod2.so
-
-$(objpfx)tst-audit12.out: $(objpfx)tst-auditmod12.so $(objpfx)tst-audit12mod1.so $(objpfx)tst-audit12mod3.so
-$(objpfx)tst-audit12: $(libdl)
-tst-audit12-ENV = LD_AUDIT=$(objpfx)tst-auditmod12.so
-$(objpfx)tst-audit12mod1.so: $(objpfx)tst-audit12mod2.so
-LDFLAGS-tst-audit12mod2.so = -Wl,--version-script=tst-audit12mod2.map
-
-tst-prelink-ENV = LD_TRACE_PRELINKING=1
-
-$(objpfx)tst-prelink-conflict.out: $(objpfx)tst-prelink.out
-	grep stdout $< | grep conflict | $(AWK) '{ print $$10, $$11 }' > $@
-
-$(objpfx)tst-prelink-cmp.out: tst-prelink.exp \
-			      $(objpfx)tst-prelink-conflict.out
-	cmp $^ > $@; \
 	$(evaluate-test)

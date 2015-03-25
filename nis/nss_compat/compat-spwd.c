@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1996.
 
@@ -27,7 +27,7 @@
 #include <string.h>
 #include <rpc/types.h>
 #include <rpcsvc/ypclnt.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <kernel-features.h>
 
 #include "netgroup.h"
@@ -169,7 +169,7 @@ copy_spwd_changes (struct spwd *dest, struct spwd *src,
 }
 
 static enum nss_status
-internal_setspent (ent_t *ent, int stayopen, int needent)
+internal_setspent (ent_t *ent, int stayopen)
 {
   enum nss_status status = NSS_STATUS_SUCCESS;
 
@@ -239,7 +239,7 @@ internal_setspent (ent_t *ent, int stayopen, int needent)
 
   give_spwd_free (&ent->pwd);
 
-  if (needent && status == NSS_STATUS_SUCCESS && nss_setspent)
+  if (status == NSS_STATUS_SUCCESS && nss_setspent)
     ent->setent_status = nss_setspent (stayopen);
 
   return status;
@@ -256,7 +256,7 @@ _nss_compat_setspent (int stayopen)
   if (ni == NULL)
     init_nss_interface ();
 
-  result = internal_setspent (&ext_ent, stayopen, 1);
+  result = internal_setspent (&ext_ent, stayopen);
 
   __libc_lock_unlock (lock);
 
@@ -267,6 +267,9 @@ _nss_compat_setspent (int stayopen)
 static enum nss_status
 internal_endspent (ent_t *ent)
 {
+  if (nss_endspent)
+    nss_endspent ();
+
   if (ent->stream != NULL)
     {
       fclose (ent->stream);
@@ -299,9 +302,6 @@ _nss_compat_endspent (void)
   enum nss_status result;
 
   __libc_lock_lock (lock);
-
-  if (nss_endspent)
-    nss_endspent ();
 
   result = internal_endspent (&ext_ent);
 
@@ -658,7 +658,7 @@ _nss_compat_getspent_r (struct spwd *pwd, char *buffer, size_t buflen,
     init_nss_interface ();
 
   if (ext_ent.stream == NULL)
-    result = internal_setspent (&ext_ent, 1, 1);
+    result = internal_setspent (&ext_ent, 1);
 
   if (result == NSS_STATUS_SUCCESS)
     result = internal_getspent_r (pwd, &ext_ent, buffer, buflen, errnop);
@@ -830,7 +830,7 @@ _nss_compat_getspnam_r (const char *name, struct spwd *pwd,
 
   __libc_lock_unlock (lock);
 
-  result = internal_setspent (&ent, 0, 0);
+  result = internal_setspent (&ent, 0);
 
   if (result == NSS_STATUS_SUCCESS)
     result = internal_getspnam_r (name, pwd, &ent, buffer, buflen, errnop);

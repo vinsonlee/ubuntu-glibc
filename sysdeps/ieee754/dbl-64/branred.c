@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * Written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2015 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -35,7 +35,6 @@
 #include "endian.h"
 #include "mydefs.h"
 #include "branred.h"
-#include <math.h>
 #include <math_private.h>
 
 #ifndef SECTION
@@ -124,7 +123,7 @@ __branred(double x, double *a, double *aa)
 
  sum=sum1+sum2;
  b=b1+b2;
- bb = (fabs(b1)>fabs(b2))? (b1-b)+b2 : (b2-b)+b1;
+ bb = (ABS(b1)>ABS(b2))? (b1-b)+b2 : (b2-b)+b1;
  if (b > 0.5)
    {b-=1.0; sum+=1.0;}
  else if (b < -0.5)

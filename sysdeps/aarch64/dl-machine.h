@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -195,8 +195,7 @@ _dl_start_user:							\n\
      (type) == R_AARCH64_TLS_DTPREL ||					\
      (type) == R_AARCH64_TLS_TPREL ||					\
      (type) == R_AARCH64_TLSDESC) * ELF_RTYPE_CLASS_PLT)		\
-   | (((type) == R_AARCH64_COPY) * ELF_RTYPE_CLASS_COPY)		\
-   | (((type) == R_AARCH64_GLOB_DAT) * ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA))
+   | (((type) == R_AARCH64_COPY) * ELF_RTYPE_CLASS_COPY))
 
 #define ELF_MACHINE_JMP_SLOT	R_AARCH64_JUMP_SLOT
 

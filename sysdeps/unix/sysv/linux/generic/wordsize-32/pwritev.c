@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
    Based on work contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
@@ -26,12 +26,29 @@
 #include <sysdep-cancel.h>
 #include <sys/syscall.h>
 
+static ssize_t
+do_pwritev (int fd, const struct iovec *vector, int count, off_t offset)
+{
+  assert (sizeof (offset) == 4);
+  return INLINE_SYSCALL (pwritev, __ALIGNMENT_COUNT (5, 6), fd,
+                         vector, count, __ALIGNMENT_ARG
+                         __LONG_LONG_PAIR (offset >> 31, offset));
+}
+
+
 ssize_t
 __libc_pwritev (int fd, const struct iovec *vector, int count, off_t offset)
 {
-  assert (sizeof (offset) == 4);
-  return SYSCALL_CANCEL (pwritev, fd, vector, count, __ALIGNMENT_ARG
-                         __LONG_LONG_PAIR (offset >> 31, offset));
+  if (SINGLE_THREAD_P)
+    return do_pwritev (fd, vector, count, offset);
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  ssize_t result = do_pwritev (fd, vector, count, offset);
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
 strong_alias (__libc_pwritev, __pwritev)
 weak_alias (__libc_pwritev, pwritev)

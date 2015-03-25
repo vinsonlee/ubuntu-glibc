@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -34,7 +34,7 @@ __atan2f (float y, float x)
     return __kernel_standard_f (y, x, 103); /* atan2(+-0,+-0) */
 
   z = __ieee754_atan2f (y, x);
-  if (__glibc_unlikely (z == 0.0f && y != 0.0f && isfinite (x)))
+  if (__glibc_unlikely (z == 0.0f && y != 0.0f && __finitef (x)))
     __set_errno (ERANGE);
   return z;
 }

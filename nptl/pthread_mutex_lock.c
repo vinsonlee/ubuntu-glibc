@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -23,7 +23,6 @@
 #include <sys/param.h>
 #include <not-cancel.h>
 #include "pthreadP.h"
-#include <atomic.h>
 #include <lowlevellock.h>
 #include <stap-probe.h>
 
@@ -60,7 +59,8 @@ static int __pthread_mutex_lock_full (pthread_mutex_t *mutex)
      __attribute_noinline__;
 
 int
-__pthread_mutex_lock (pthread_mutex_t *mutex)
+__pthread_mutex_lock (mutex)
+     pthread_mutex_t *mutex;
 {
   assert (sizeof (mutex->__size) >= sizeof (mutex->__data));
 
@@ -135,7 +135,10 @@ __pthread_mutex_lock (pthread_mutex_t *mutex)
 		  LLL_MUTEX_LOCK (mutex);
 		  break;
 		}
-	      atomic_spin_nop ();
+
+#ifdef BUSY_WAIT_NOP
+	      BUSY_WAIT_NOP;
+#endif
 	    }
 	  while (LLL_MUTEX_TRYLOCK (mutex) != 0);
 
@@ -520,8 +523,8 @@ hidden_def (__pthread_mutex_lock)
 
 #ifdef NO_INCR
 void
-internal_function
-__pthread_mutex_cond_lock_adjust (pthread_mutex_t *mutex)
+__pthread_mutex_cond_lock_adjust (mutex)
+     pthread_mutex_t *mutex;
 {
   assert ((mutex->__data.__kind & PTHREAD_MUTEX_PRIO_INHERIT_NP) != 0);
   assert ((mutex->__data.__kind & PTHREAD_MUTEX_ROBUST_NORMAL_NP) == 0);

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,12 +24,11 @@
 #include <string.h>
 #include <errno.h>
 #include <wchar.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <sys/param.h>
 #include <_itoa.h>
 #include <locale/localeinfo.h>
 #include <stdio.h>
-#include <scratch_buffer.h>
 
 /* This code is shared between the standard stdio implementation found
    in GNU C library and the libio implementation originally found in
@@ -82,7 +81,6 @@
 # define CHAR_T		char
 # define UCHAR_T	unsigned char
 # define INT_T		int
-typedef const char *THOUSANDS_SEP_T;
 # define L_(Str)	Str
 # define ISDIGIT(Ch)	((unsigned int) ((Ch) - '0') < 10)
 # define STR_LEN(Str)	strlen (Str)
@@ -110,7 +108,6 @@ typedef const char *THOUSANDS_SEP_T;
 /* This is a hack!!!  There should be a type uwchar_t.  */
 # define UCHAR_T	unsigned int /* uwchar_t */
 # define INT_T		wint_t
-typedef wchar_t THOUSANDS_SEP_T;
 # define L_(Str)	L##Str
 # define ISDIGIT(Ch)	((unsigned int) ((Ch) - L'0') < 10)
 # define STR_LEN(Str)	__wcslen (Str)
@@ -197,15 +194,85 @@ typedef wchar_t THOUSANDS_SEP_T;
 #endif
 
 
-/* Global constants.  */
+/* Global variables.  */
 static const CHAR_T null[] = L_("(null)");
 
-/* Size of the work_buffer variable (in characters, not bytes.  */
-enum { WORK_BUFFER_SIZE = 1000 };
 
-/* This table maps a character into a number representing a class.  In
-   each step there is a destination label for each class.  */
-static const uint8_t jump_table[] =
+/* Helper function to provide temporary buffering for unbuffered streams.  */
+static int buffered_vfprintf (FILE *stream, const CHAR_T *fmt, va_list)
+     __THROW __attribute__ ((noinline)) internal_function;
+
+/* Handle unknown format specifier.  */
+static int printf_unknown (FILE *, const struct printf_info *,
+			   const void *const *) __THROW;
+
+/* Group digits of number string.  */
+#ifdef COMPILE_WPRINTF
+static CHAR_T *group_number (CHAR_T *, CHAR_T *, const char *, wchar_t)
+     __THROW internal_function;
+#else
+static CHAR_T *group_number (CHAR_T *, CHAR_T *, const char *, const char *)
+     __THROW internal_function;
+#endif
+
+
+/* The function itself.  */
+int
+vfprintf (FILE *s, const CHAR_T *format, va_list ap)
+{
+  /* The character used as thousands separator.  */
+#ifdef COMPILE_WPRINTF
+  wchar_t thousands_sep = L'\0';
+#else
+  const char *thousands_sep = NULL;
+#endif
+
+  /* The string describing the size of groups of digits.  */
+  const char *grouping;
+
+  /* Place to accumulate the result.  */
+  int done;
+
+  /* Current character in format string.  */
+  const UCHAR_T *f;
+
+  /* End of leading constant string.  */
+  const UCHAR_T *lead_str_end;
+
+  /* Points to next format specifier.  */
+  const UCHAR_T *end_of_spec;
+
+  /* Buffer intermediate results.  */
+  CHAR_T work_buffer[1000];
+  CHAR_T *workstart = NULL;
+  CHAR_T *workend;
+
+  /* We have to save the original argument pointer.  */
+  va_list ap_save;
+
+  /* Count number of specifiers we already processed.  */
+  int nspecs_done;
+
+  /* For the %m format we may need the current `errno' value.  */
+  int save_errno = errno;
+
+  /* 1 if format is in read-only memory, -1 if it is in writable memory,
+     0 if unknown.  */
+  int readonly_format = 0;
+
+  /* For the argument descriptions, which may be allocated on the heap.  */
+  void *args_malloced = NULL;
+
+  /* For positional argument handling.  */
+  struct printf_spec *specs;
+
+  /* Track if we malloced the SPECS array and thus must free it.  */
+  bool specs_malloced = false;
+
+  /* This table maps a character into a number representing a
+     class.  In each step there is a destination label for each
+     class.  */
+  static const uint8_t jump_table[] =
   {
     /* ' ' */  1,            0,            0, /* '#' */  4,
 	       0, /* '%' */ 14,            0, /* '\''*/  6,
@@ -234,12 +301,9 @@ static const uint8_t jump_table[] =
 
 #define NOT_IN_JUMP_RANGE(Ch) ((Ch) < L_(' ') || (Ch) > L_('z'))
 #define CHAR_CLASS(Ch) (jump_table[(INT_T) (Ch) - L_(' ')])
-#define LABEL(Name) do_##Name
 #ifdef SHARED
   /* 'int' is enough and it saves some space on 64 bit systems.  */
 # define JUMP_TABLE_TYPE const int
-# define JUMP_TABLE_BASE_LABEL do_form_unknown
-# define REF(Name) &&do_##Name - &&JUMP_TABLE_BASE_LABEL
 # define JUMP(ChExpr, table)						      \
       do								      \
 	{								      \
@@ -248,13 +312,12 @@ static const uint8_t jump_table[] =
 	  spec = (ChExpr);						      \
 	  offset = NOT_IN_JUMP_RANGE (spec) ? REF (form_unknown)	      \
 	    : table[CHAR_CLASS (spec)];					      \
-	  ptr = &&JUMP_TABLE_BASE_LABEL + offset;			      \
+	  ptr = &&do_form_unknown + offset;				      \
 	  goto *ptr;							      \
 	}								      \
       while (0)
 #else
 # define JUMP_TABLE_TYPE const void *const
-# define REF(Name) &&do_##Name
 # define JUMP(ChExpr, table)						      \
       do								      \
 	{								      \
@@ -931,7 +994,7 @@ static const uint8_t jump_table[] =
       /* Print description of error ERRNO.  */				      \
       string =								      \
 	(CHAR_T *) __strerror_r (save_errno, (char *) work_buffer,	      \
-				 WORK_BUFFER_SIZE * sizeof (CHAR_T));	      \
+				 sizeof work_buffer);			      \
       is_long = 0;		/* This is no wide-char string.  */	      \
       goto LABEL (print_string)
 
@@ -1210,66 +1273,6 @@ static const uint8_t jump_table[] =
       break;
 #endif
 
-/* Helper function to provide temporary buffering for unbuffered streams.  */
-static int buffered_vfprintf (FILE *stream, const CHAR_T *fmt, va_list)
-     __THROW __attribute__ ((noinline)) internal_function;
-
-/* Handle positional format specifiers.  */
-static int printf_positional (_IO_FILE *s,
-			      const CHAR_T *format, int readonly_format,
-			      va_list ap, va_list *ap_savep, int done,
-			      int nspecs_done, const UCHAR_T *lead_str_end,
-			      CHAR_T *work_buffer, int save_errno,
-			      const char *grouping, THOUSANDS_SEP_T);
-
-/* Handle unknown format specifier.  */
-static int printf_unknown (FILE *, const struct printf_info *,
-			   const void *const *) __THROW;
-
-/* Group digits of number string.  */
-static CHAR_T *group_number (CHAR_T *, CHAR_T *, const char *, THOUSANDS_SEP_T)
-     __THROW internal_function;
-
-/* The function itself.  */
-int
-vfprintf (FILE *s, const CHAR_T *format, va_list ap)
-{
-  /* The character used as thousands separator.  */
-  THOUSANDS_SEP_T thousands_sep = 0;
-
-  /* The string describing the size of groups of digits.  */
-  const char *grouping;
-
-  /* Place to accumulate the result.  */
-  int done;
-
-  /* Current character in format string.  */
-  const UCHAR_T *f;
-
-  /* End of leading constant string.  */
-  const UCHAR_T *lead_str_end;
-
-  /* Points to next format specifier.  */
-  const UCHAR_T *end_of_spec;
-
-  /* Buffer intermediate results.  */
-  CHAR_T work_buffer[WORK_BUFFER_SIZE];
-  CHAR_T *workstart = NULL;
-  CHAR_T *workend;
-
-  /* We have to save the original argument pointer.  */
-  va_list ap_save;
-
-  /* Count number of specifiers we already processed.  */
-  int nspecs_done;
-
-  /* For the %m format we may need the current `errno' value.  */
-  int save_errno = errno;
-
-  /* 1 if format is in read-only memory, -1 if it is in writable memory,
-     0 if unknown.  */
-  int readonly_format = 0;
-
   /* Orient the stream.  */
 #ifdef ORIENT
   ORIENT;
@@ -1333,6 +1336,12 @@ vfprintf (FILE *s, const CHAR_T *format, va_list ap)
   /* Process whole format string.  */
   do
     {
+#ifdef SHARED
+# define REF(Name) &&do_##Name - &&do_form_unknown
+#else
+# define REF(Name) &&do_##Name
+#endif
+#define LABEL(Name) do_##Name
       STEP0_3_TABLE;
       STEP4_TABLE;
 
@@ -1364,7 +1373,7 @@ vfprintf (FILE *s, const CHAR_T *format, va_list ap)
       CHAR_T spec;
 
       workstart = NULL;
-      workend = work_buffer + WORK_BUFFER_SIZE;
+      workend = &work_buffer[sizeof (work_buffer) / sizeof (CHAR_T)];
 
       /* Get current character in format string.  */
       JUMP (*++f, step0_jumps);
@@ -1463,7 +1472,7 @@ vfprintf (FILE *s, const CHAR_T *format, va_list ap)
 	    goto all_done;
 	  }
 
-	if (width >= WORK_BUFFER_SIZE - 32)
+	if (width >= sizeof (work_buffer) / sizeof (work_buffer[0]) - 32)
 	  {
 	    /* We have to use a special buffer.  The "32" is just a safe
 	       bet for all the output which is not counted in the width.  */
@@ -1496,7 +1505,7 @@ vfprintf (FILE *s, const CHAR_T *format, va_list ap)
 	  goto all_done;
 	}
 
-      if (width >= WORK_BUFFER_SIZE - 32)
+      if (width >= sizeof (work_buffer) / sizeof (work_buffer[0]) - 32)
 	{
 	  /* We have to use a special buffer.  The "32" is just a safe
 	     bet for all the output which is not counted in the width.  */
@@ -1562,7 +1571,8 @@ vfprintf (FILE *s, const CHAR_T *format, va_list ap)
 	}
       else
 	prec = 0;
-      if (prec > width && prec > WORK_BUFFER_SIZE - 32)
+      if (prec > width
+	  && prec > sizeof (work_buffer) / sizeof (work_buffer[0]) - 32)
 	{
 	  if (__glibc_unlikely (prec >= INT_MAX / sizeof (CHAR_T) - 32))
 	    {
@@ -1667,406 +1677,419 @@ vfprintf (FILE *s, const CHAR_T *format, va_list ap)
   /* Unlock stream and return.  */
   goto all_done;
 
-  /* Hand off processing for positional parameters.  */
+  /* Here starts the more complex loop to handle positional parameters.  */
 do_positional:
-  if (__glibc_unlikely (workstart != NULL))
-    {
-      free (workstart);
-      workstart = NULL;
-    }
-  done = printf_positional (s, format, readonly_format, ap, &ap_save,
-			    done, nspecs_done, lead_str_end, work_buffer,
-			    save_errno, grouping, thousands_sep);
+  {
+    /* Array with information about the needed arguments.  This has to
+       be dynamically extensible.  */
+    size_t nspecs = 0;
+    /* A more or less arbitrary start value.  */
+    size_t nspecs_size = 32 * sizeof (struct printf_spec);
 
- all_done:
+    specs = alloca (nspecs_size);
+    /* The number of arguments the format string requests.  This will
+       determine the size of the array needed to store the argument
+       attributes.  */
+    size_t nargs = 0;
+    size_t bytes_per_arg;
+    union printf_arg *args_value;
+    int *args_size;
+    int *args_type;
+
+    /* Positional parameters refer to arguments directly.  This could
+       also determine the maximum number of arguments.  Track the
+       maximum number.  */
+    size_t max_ref_arg = 0;
+
+    /* Just a counter.  */
+    size_t cnt;
+
+    if (__glibc_unlikely (workstart != NULL))
+      free (workstart);
+    workstart = NULL;
+
+    if (grouping == (const char *) -1)
+      {
+#ifdef COMPILE_WPRINTF
+	thousands_sep = _NL_CURRENT_WORD (LC_NUMERIC,
+					  _NL_NUMERIC_THOUSANDS_SEP_WC);
+#else
+	thousands_sep = _NL_CURRENT (LC_NUMERIC, THOUSANDS_SEP);
+#endif
+
+	grouping = _NL_CURRENT (LC_NUMERIC, GROUPING);
+	if (*grouping == '\0' || *grouping == CHAR_MAX)
+	  grouping = NULL;
+      }
+
+    for (f = lead_str_end; *f != L_('\0'); f = specs[nspecs++].next_fmt)
+      {
+	if (nspecs * sizeof (*specs) >= nspecs_size)
+	  {
+	    /* Extend the array of format specifiers.  */
+	    if (nspecs_size * 2 < nspecs_size)
+	      {
+		__set_errno (ENOMEM);
+		done = -1;
+		goto all_done;
+	      }
+	    struct printf_spec *old = specs;
+	    if (__libc_use_alloca (2 * nspecs_size))
+	      specs = extend_alloca (specs, nspecs_size, 2 * nspecs_size);
+	    else
+	      {
+		nspecs_size *= 2;
+		specs = malloc (nspecs_size);
+		if (specs == NULL)
+		  {
+		    __set_errno (ENOMEM);
+		    specs = old;
+		    done = -1;
+		    goto all_done;
+		  }
+	      }
+
+	    /* Copy the old array's elements to the new space.  */
+	    memmove (specs, old, nspecs * sizeof (*specs));
+
+	    /* If we had previously malloc'd space for SPECS, then
+	       release it after the copy is complete.  */
+	    if (specs_malloced)
+	      free (old);
+
+	    /* Now set SPECS_MALLOCED if needed.  */
+	    if (!__libc_use_alloca (nspecs_size))
+	      specs_malloced = true;
+	  }
+
+	/* Parse the format specifier.  */
+#ifdef COMPILE_WPRINTF
+	nargs += __parse_one_specwc (f, nargs, &specs[nspecs], &max_ref_arg);
+#else
+	nargs += __parse_one_specmb (f, nargs, &specs[nspecs], &max_ref_arg);
+#endif
+      }
+
+    /* Determine the number of arguments the format string consumes.  */
+    nargs = MAX (nargs, max_ref_arg);
+    /* Calculate total size needed to represent a single argument across
+       all three argument-related arrays.  */
+    bytes_per_arg = (sizeof (*args_value) + sizeof (*args_size)
+		     + sizeof (*args_type));
+
+    /* Check for potential integer overflow.  */
+    if (__glibc_unlikely (nargs > INT_MAX / bytes_per_arg))
+      {
+	 __set_errno (EOVERFLOW);
+	 done = -1;
+	 goto all_done;
+      }
+
+    /* Allocate memory for all three argument arrays.  */
+    if (__libc_use_alloca (nargs * bytes_per_arg))
+	args_value = alloca (nargs * bytes_per_arg);
+    else
+      {
+	args_value = args_malloced = malloc (nargs * bytes_per_arg);
+	if (args_value == NULL)
+	  {
+	    done = -1;
+	    goto all_done;
+	  }
+      }
+
+    /* Set up the remaining two arrays to each point past the end of the
+       prior array, since space for all three has been allocated now.  */
+    args_size = &args_value[nargs].pa_int;
+    args_type = &args_size[nargs];
+    memset (args_type, s->_flags2 & _IO_FLAGS2_FORTIFY ? '\xff' : '\0',
+	    nargs * sizeof (*args_type));
+
+    /* XXX Could do sanity check here: If any element in ARGS_TYPE is
+       still zero after this loop, format is invalid.  For now we
+       simply use 0 as the value.  */
+
+    /* Fill in the types of all the arguments.  */
+    for (cnt = 0; cnt < nspecs; ++cnt)
+      {
+	/* If the width is determined by an argument this is an int.  */
+	if (specs[cnt].width_arg != -1)
+	  args_type[specs[cnt].width_arg] = PA_INT;
+
+	/* If the precision is determined by an argument this is an int.  */
+	if (specs[cnt].prec_arg != -1)
+	  args_type[specs[cnt].prec_arg] = PA_INT;
+
+	switch (specs[cnt].ndata_args)
+	  {
+	  case 0:		/* No arguments.  */
+	    break;
+	  case 1:		/* One argument; we already have the
+				   type and size.  */
+	    args_type[specs[cnt].data_arg] = specs[cnt].data_arg_type;
+	    args_size[specs[cnt].data_arg] = specs[cnt].size;
+	    break;
+	  default:
+	    /* We have more than one argument for this format spec.
+	       We must call the arginfo function again to determine
+	       all the types.  */
+	    (void) (*__printf_arginfo_table[specs[cnt].info.spec])
+	      (&specs[cnt].info,
+	       specs[cnt].ndata_args, &args_type[specs[cnt].data_arg],
+	       &args_size[specs[cnt].data_arg]);
+	    break;
+	  }
+      }
+
+    /* Now we know all the types and the order.  Fill in the argument
+       values.  */
+    for (cnt = 0; cnt < nargs; ++cnt)
+      switch (args_type[cnt])
+	{
+#define T(tag, mem, type)						      \
+	case tag:							      \
+	  args_value[cnt].mem = va_arg (ap_save, type);			      \
+	  break
+
+	T (PA_WCHAR, pa_wchar, wint_t);
+	case PA_CHAR:				/* Promoted.  */
+	case PA_INT|PA_FLAG_SHORT:		/* Promoted.  */
+#if LONG_MAX == INT_MAX
+	case PA_INT|PA_FLAG_LONG:
+#endif
+	T (PA_INT, pa_int, int);
+#if LONG_MAX == LONG_LONG_MAX
+	case PA_INT|PA_FLAG_LONG:
+#endif
+	T (PA_INT|PA_FLAG_LONG_LONG, pa_long_long_int, long long int);
+#if LONG_MAX != INT_MAX && LONG_MAX != LONG_LONG_MAX
+# error "he?"
+#endif
+	case PA_FLOAT:				/* Promoted.  */
+	T (PA_DOUBLE, pa_double, double);
+	case PA_DOUBLE|PA_FLAG_LONG_DOUBLE:
+	  if (__ldbl_is_dbl)
+	    {
+	      args_value[cnt].pa_double = va_arg (ap_save, double);
+	      args_type[cnt] &= ~PA_FLAG_LONG_DOUBLE;
+	    }
+	  else
+	    args_value[cnt].pa_long_double = va_arg (ap_save, long double);
+	  break;
+	case PA_STRING:				/* All pointers are the same */
+	case PA_WSTRING:			/* All pointers are the same */
+	T (PA_POINTER, pa_pointer, void *);
+#undef T
+	default:
+	  if ((args_type[cnt] & PA_FLAG_PTR) != 0)
+	    args_value[cnt].pa_pointer = va_arg (ap_save, void *);
+	  else if (__glibc_unlikely (__printf_va_arg_table != NULL)
+		   && __printf_va_arg_table[args_type[cnt] - PA_LAST] != NULL)
+	    {
+	      args_value[cnt].pa_user = alloca (args_size[cnt]);
+	      (*__printf_va_arg_table[args_type[cnt] - PA_LAST])
+		(args_value[cnt].pa_user, &ap_save);
+	    }
+	  else
+	    args_value[cnt].pa_long_double = 0.0;
+	  break;
+	case -1:
+	  /* Error case.  Not all parameters appear in N$ format
+	     strings.  We have no way to determine their type.  */
+	  assert (s->_flags2 & _IO_FLAGS2_FORTIFY);
+	  __libc_fatal ("*** invalid %N$ use detected ***\n");
+	}
+
+    /* Now walk through all format specifiers and process them.  */
+    for (; (size_t) nspecs_done < nspecs; ++nspecs_done)
+      {
+#undef REF
+#ifdef SHARED
+# define REF(Name) &&do2_##Name - &&do_form_unknown
+#else
+# define REF(Name) &&do2_##Name
+#endif
+#undef LABEL
+#define LABEL(Name) do2_##Name
+	STEP4_TABLE;
+
+	int is_negative;
+	union
+	{
+	  unsigned long long int longlong;
+	  unsigned long int word;
+	} number;
+	int base;
+	union printf_arg the_arg;
+	CHAR_T *string;		/* Pointer to argument string.  */
+
+	/* Fill variables from values in struct.  */
+	int alt = specs[nspecs_done].info.alt;
+	int space = specs[nspecs_done].info.space;
+	int left = specs[nspecs_done].info.left;
+	int showsign = specs[nspecs_done].info.showsign;
+	int group = specs[nspecs_done].info.group;
+	int is_long_double = specs[nspecs_done].info.is_long_double;
+	int is_short = specs[nspecs_done].info.is_short;
+	int is_char = specs[nspecs_done].info.is_char;
+	int is_long = specs[nspecs_done].info.is_long;
+	int width = specs[nspecs_done].info.width;
+	int prec = specs[nspecs_done].info.prec;
+	int use_outdigits = specs[nspecs_done].info.i18n;
+	char pad = specs[nspecs_done].info.pad;
+	CHAR_T spec = specs[nspecs_done].info.spec;
+
+	workstart = NULL;
+	workend = &work_buffer[sizeof (work_buffer) / sizeof (CHAR_T)];
+
+	/* Fill in last information.  */
+	if (specs[nspecs_done].width_arg != -1)
+	  {
+	    /* Extract the field width from an argument.  */
+	    specs[nspecs_done].info.width =
+	      args_value[specs[nspecs_done].width_arg].pa_int;
+
+	    if (specs[nspecs_done].info.width < 0)
+	      /* If the width value is negative left justification is
+		 selected and the value is taken as being positive.  */
+	      {
+		specs[nspecs_done].info.width *= -1;
+		left = specs[nspecs_done].info.left = 1;
+	      }
+	    width = specs[nspecs_done].info.width;
+	  }
+
+	if (specs[nspecs_done].prec_arg != -1)
+	  {
+	    /* Extract the precision from an argument.  */
+	    specs[nspecs_done].info.prec =
+	      args_value[specs[nspecs_done].prec_arg].pa_int;
+
+	    if (specs[nspecs_done].info.prec < 0)
+	      /* If the precision is negative the precision is
+		 omitted.  */
+	      specs[nspecs_done].info.prec = -1;
+
+	    prec = specs[nspecs_done].info.prec;
+	  }
+
+	/* Maybe the buffer is too small.  */
+	if (MAX (prec, width) + 32 > (int) (sizeof (work_buffer)
+					    / sizeof (CHAR_T)))
+	  {
+	    if (__libc_use_alloca ((MAX (prec, width) + 32)
+				   * sizeof (CHAR_T)))
+	      workend = ((CHAR_T *) alloca ((MAX (prec, width) + 32)
+					    * sizeof (CHAR_T))
+			 + (MAX (prec, width) + 32));
+	    else
+	      {
+		workstart = (CHAR_T *) malloc ((MAX (prec, width) + 32)
+					       * sizeof (CHAR_T));
+		if (workstart == NULL)
+		  {
+		    done = -1;
+		    goto all_done;
+		  }
+		workend = workstart + (MAX (prec, width) + 32);
+	      }
+	  }
+
+	/* Process format specifiers.  */
+	while (1)
+	  {
+	    extern printf_function **__printf_function_table;
+	    int function_done;
+
+	    if (spec <= UCHAR_MAX
+		&& __printf_function_table != NULL
+		&& __printf_function_table[(size_t) spec] != NULL)
+	      {
+		const void **ptr = alloca (specs[nspecs_done].ndata_args
+					   * sizeof (const void *));
+
+		/* Fill in an array of pointers to the argument values.  */
+		for (unsigned int i = 0; i < specs[nspecs_done].ndata_args;
+		     ++i)
+		  ptr[i] = &args_value[specs[nspecs_done].data_arg + i];
+
+		/* Call the function.  */
+		function_done = __printf_function_table[(size_t) spec]
+		  (s, &specs[nspecs_done].info, ptr);
+
+		if (function_done != -2)
+		  {
+		    /* If an error occurred we don't have information
+		       about # of chars.  */
+		    if (function_done < 0)
+		      {
+			/* Function has set errno.  */
+			done = -1;
+			goto all_done;
+		      }
+
+		    done_add (function_done);
+		    break;
+		  }
+	      }
+
+	    JUMP (spec, step4_jumps);
+
+	    process_arg ((&specs[nspecs_done]));
+	    process_string_arg ((&specs[nspecs_done]));
+
+	  LABEL (form_unknown):
+	    {
+	      unsigned int i;
+	      const void **ptr;
+
+	      ptr = alloca (specs[nspecs_done].ndata_args
+			    * sizeof (const void *));
+
+	      /* Fill in an array of pointers to the argument values.  */
+	      for (i = 0; i < specs[nspecs_done].ndata_args; ++i)
+		ptr[i] = &args_value[specs[nspecs_done].data_arg + i];
+
+	      /* Call the function.  */
+	      function_done = printf_unknown (s, &specs[nspecs_done].info,
+					      ptr);
+
+	      /* If an error occurred we don't have information about #
+		 of chars.  */
+	      if (function_done < 0)
+		{
+		  /* Function has set errno.  */
+		  done = -1;
+		  goto all_done;
+		}
+
+	      done_add (function_done);
+	    }
+	    break;
+	  }
+
+	if (__glibc_unlikely (workstart != NULL))
+	  free (workstart);
+	workstart = NULL;
+
+	/* Write the following constant string.  */
+	outstring (specs[nspecs_done].end_of_fmt,
+		   specs[nspecs_done].next_fmt
+		   - specs[nspecs_done].end_of_fmt);
+      }
+  }
+
+all_done:
+  if (specs_malloced)
+    free (specs);
+  if (__glibc_unlikely (args_malloced != NULL))
+    free (args_malloced);
   if (__glibc_unlikely (workstart != NULL))
     free (workstart);
   /* Unlock the stream.  */
   _IO_funlockfile (s);
   _IO_cleanup_region_end (0);
 
-  return done;
-}
-
-static int
-printf_positional (_IO_FILE *s, const CHAR_T *format, int readonly_format,
-		   va_list ap, va_list *ap_savep, int done, int nspecs_done,
-		   const UCHAR_T *lead_str_end,
-		   CHAR_T *work_buffer, int save_errno,
-		   const char *grouping, THOUSANDS_SEP_T thousands_sep)
-{
-  /* For the argument descriptions, which may be allocated on the heap.  */
-  void *args_malloced = NULL;
-
-  /* For positional argument handling.  */
-  struct scratch_buffer specsbuf;
-  scratch_buffer_init (&specsbuf);
-  struct printf_spec *specs = specsbuf.data;
-  size_t specs_limit = specsbuf.length / sizeof (specs[0]);
-
-  /* Array with information about the needed arguments.  This has to
-     be dynamically extensible.  */
-  size_t nspecs = 0;
-
-  /* The number of arguments the format string requests.  This will
-     determine the size of the array needed to store the argument
-     attributes.  */
-  size_t nargs = 0;
-  size_t bytes_per_arg;
-  union printf_arg *args_value;
-  int *args_size;
-  int *args_type;
-
-  /* Positional parameters refer to arguments directly.  This could
-     also determine the maximum number of arguments.  Track the
-     maximum number.  */
-  size_t max_ref_arg = 0;
-
-  /* Just a counter.  */
-  size_t cnt;
-
-  CHAR_T *workstart = NULL;
-
-  if (grouping == (const char *) -1)
-    {
-#ifdef COMPILE_WPRINTF
-      thousands_sep = _NL_CURRENT_WORD (LC_NUMERIC,
-					_NL_NUMERIC_THOUSANDS_SEP_WC);
-#else
-      thousands_sep = _NL_CURRENT (LC_NUMERIC, THOUSANDS_SEP);
-#endif
-
-      grouping = _NL_CURRENT (LC_NUMERIC, GROUPING);
-      if (*grouping == '\0' || *grouping == CHAR_MAX)
-	grouping = NULL;
-    }
-
-  for (const UCHAR_T *f = lead_str_end; *f != L_('\0');
-       f = specs[nspecs++].next_fmt)
-    {
-      if (nspecs == specs_limit)
-	{
-	  if (!scratch_buffer_grow_preserve (&specsbuf))
-	    {
-	      done = -1;
-	      goto all_done;
-	    }
-	  specs = specsbuf.data;
-	  specs_limit = specsbuf.length / sizeof (specs[0]);
-	}
-
-      /* Parse the format specifier.  */
-#ifdef COMPILE_WPRINTF
-      nargs += __parse_one_specwc (f, nargs, &specs[nspecs], &max_ref_arg);
-#else
-      nargs += __parse_one_specmb (f, nargs, &specs[nspecs], &max_ref_arg);
-#endif
-    }
-
-  /* Determine the number of arguments the format string consumes.  */
-  nargs = MAX (nargs, max_ref_arg);
-  /* Calculate total size needed to represent a single argument across
-     all three argument-related arrays.  */
-  bytes_per_arg = (sizeof (*args_value) + sizeof (*args_size)
-		   + sizeof (*args_type));
-
-  /* Check for potential integer overflow.  */
-  if (__glibc_unlikely (nargs > INT_MAX / bytes_per_arg))
-    {
-      __set_errno (EOVERFLOW);
-      done = -1;
-      goto all_done;
-    }
-
-  /* Allocate memory for all three argument arrays.  */
-  if (__libc_use_alloca (nargs * bytes_per_arg))
-    args_value = alloca (nargs * bytes_per_arg);
-  else
-    {
-      args_value = args_malloced = malloc (nargs * bytes_per_arg);
-      if (args_value == NULL)
-	{
-	  done = -1;
-	  goto all_done;
-	}
-    }
-
-  /* Set up the remaining two arrays to each point past the end of the
-     prior array, since space for all three has been allocated now.  */
-  args_size = &args_value[nargs].pa_int;
-  args_type = &args_size[nargs];
-  memset (args_type, s->_flags2 & _IO_FLAGS2_FORTIFY ? '\xff' : '\0',
-	  nargs * sizeof (*args_type));
-
-  /* XXX Could do sanity check here: If any element in ARGS_TYPE is
-     still zero after this loop, format is invalid.  For now we
-     simply use 0 as the value.  */
-
-  /* Fill in the types of all the arguments.  */
-  for (cnt = 0; cnt < nspecs; ++cnt)
-    {
-      /* If the width is determined by an argument this is an int.  */
-      if (specs[cnt].width_arg != -1)
-	args_type[specs[cnt].width_arg] = PA_INT;
-
-      /* If the precision is determined by an argument this is an int.  */
-      if (specs[cnt].prec_arg != -1)
-	args_type[specs[cnt].prec_arg] = PA_INT;
-
-      switch (specs[cnt].ndata_args)
-	{
-	case 0:		/* No arguments.  */
-	  break;
-	case 1:		/* One argument; we already have the
-			   type and size.  */
-	  args_type[specs[cnt].data_arg] = specs[cnt].data_arg_type;
-	  args_size[specs[cnt].data_arg] = specs[cnt].size;
-	  break;
-	default:
-	  /* We have more than one argument for this format spec.
-	     We must call the arginfo function again to determine
-	     all the types.  */
-	  (void) (*__printf_arginfo_table[specs[cnt].info.spec])
-	    (&specs[cnt].info,
-	     specs[cnt].ndata_args, &args_type[specs[cnt].data_arg],
-	     &args_size[specs[cnt].data_arg]);
-	  break;
-	}
-    }
-
-  /* Now we know all the types and the order.  Fill in the argument
-     values.  */
-  for (cnt = 0; cnt < nargs; ++cnt)
-    switch (args_type[cnt])
-      {
-#define T(tag, mem, type)				\
-	case tag:					\
-	  args_value[cnt].mem = va_arg (*ap_savep, type); \
-	  break
-
-	T (PA_WCHAR, pa_wchar, wint_t);
-      case PA_CHAR:				/* Promoted.  */
-      case PA_INT|PA_FLAG_SHORT:		/* Promoted.  */
-#if LONG_MAX == INT_MAX
-      case PA_INT|PA_FLAG_LONG:
-#endif
-	T (PA_INT, pa_int, int);
-#if LONG_MAX == LONG_LONG_MAX
-      case PA_INT|PA_FLAG_LONG:
-#endif
-	T (PA_INT|PA_FLAG_LONG_LONG, pa_long_long_int, long long int);
-#if LONG_MAX != INT_MAX && LONG_MAX != LONG_LONG_MAX
-# error "he?"
-#endif
-      case PA_FLOAT:				/* Promoted.  */
-	T (PA_DOUBLE, pa_double, double);
-      case PA_DOUBLE|PA_FLAG_LONG_DOUBLE:
-	if (__ldbl_is_dbl)
-	  {
-	    args_value[cnt].pa_double = va_arg (*ap_savep, double);
-	    args_type[cnt] &= ~PA_FLAG_LONG_DOUBLE;
-	  }
-	else
-	  args_value[cnt].pa_long_double = va_arg (*ap_savep, long double);
-	break;
-      case PA_STRING:				/* All pointers are the same */
-      case PA_WSTRING:			/* All pointers are the same */
-	T (PA_POINTER, pa_pointer, void *);
-#undef T
-      default:
-	if ((args_type[cnt] & PA_FLAG_PTR) != 0)
-	  args_value[cnt].pa_pointer = va_arg (*ap_savep, void *);
-	else if (__glibc_unlikely (__printf_va_arg_table != NULL)
-		 && __printf_va_arg_table[args_type[cnt] - PA_LAST] != NULL)
-	  {
-	    args_value[cnt].pa_user = alloca (args_size[cnt]);
-	    (*__printf_va_arg_table[args_type[cnt] - PA_LAST])
-	      (args_value[cnt].pa_user, ap_savep);
-	  }
-	else
-	  args_value[cnt].pa_long_double = 0.0;
-	break;
-      case -1:
-	/* Error case.  Not all parameters appear in N$ format
-	   strings.  We have no way to determine their type.  */
-	assert (s->_flags2 & _IO_FLAGS2_FORTIFY);
-	__libc_fatal ("*** invalid %N$ use detected ***\n");
-      }
-
-  /* Now walk through all format specifiers and process them.  */
-  for (; (size_t) nspecs_done < nspecs; ++nspecs_done)
-    {
-      STEP4_TABLE;
-
-      int is_negative;
-      union
-      {
-	unsigned long long int longlong;
-	unsigned long int word;
-      } number;
-      int base;
-      union printf_arg the_arg;
-      CHAR_T *string;		/* Pointer to argument string.  */
-
-      /* Fill variables from values in struct.  */
-      int alt = specs[nspecs_done].info.alt;
-      int space = specs[nspecs_done].info.space;
-      int left = specs[nspecs_done].info.left;
-      int showsign = specs[nspecs_done].info.showsign;
-      int group = specs[nspecs_done].info.group;
-      int is_long_double = specs[nspecs_done].info.is_long_double;
-      int is_short = specs[nspecs_done].info.is_short;
-      int is_char = specs[nspecs_done].info.is_char;
-      int is_long = specs[nspecs_done].info.is_long;
-      int width = specs[nspecs_done].info.width;
-      int prec = specs[nspecs_done].info.prec;
-      int use_outdigits = specs[nspecs_done].info.i18n;
-      char pad = specs[nspecs_done].info.pad;
-      CHAR_T spec = specs[nspecs_done].info.spec;
-
-      workstart = NULL;
-      CHAR_T *workend = work_buffer + WORK_BUFFER_SIZE;
-
-      /* Fill in last information.  */
-      if (specs[nspecs_done].width_arg != -1)
-	{
-	  /* Extract the field width from an argument.  */
-	  specs[nspecs_done].info.width =
-	    args_value[specs[nspecs_done].width_arg].pa_int;
-
-	  if (specs[nspecs_done].info.width < 0)
-	    /* If the width value is negative left justification is
-	       selected and the value is taken as being positive.  */
-	    {
-	      specs[nspecs_done].info.width *= -1;
-	      left = specs[nspecs_done].info.left = 1;
-	    }
-	  width = specs[nspecs_done].info.width;
-	}
-
-      if (specs[nspecs_done].prec_arg != -1)
-	{
-	  /* Extract the precision from an argument.  */
-	  specs[nspecs_done].info.prec =
-	    args_value[specs[nspecs_done].prec_arg].pa_int;
-
-	  if (specs[nspecs_done].info.prec < 0)
-	    /* If the precision is negative the precision is
-	       omitted.  */
-	    specs[nspecs_done].info.prec = -1;
-
-	  prec = specs[nspecs_done].info.prec;
-	}
-
-      /* Maybe the buffer is too small.  */
-      if (MAX (prec, width) + 32 > WORK_BUFFER_SIZE)
-	{
-	  if (__libc_use_alloca ((MAX (prec, width) + 32)
-				 * sizeof (CHAR_T)))
-	    workend = ((CHAR_T *) alloca ((MAX (prec, width) + 32)
-					  * sizeof (CHAR_T))
-		       + (MAX (prec, width) + 32));
-	  else
-	    {
-	      workstart = (CHAR_T *) malloc ((MAX (prec, width) + 32)
-					     * sizeof (CHAR_T));
-	      if (workstart == NULL)
-		{
-		  done = -1;
-		  goto all_done;
-		}
-	      workend = workstart + (MAX (prec, width) + 32);
-	    }
-	}
-
-      /* Process format specifiers.  */
-      while (1)
-	{
-	  extern printf_function **__printf_function_table;
-	  int function_done;
-
-	  if (spec <= UCHAR_MAX
-	      && __printf_function_table != NULL
-	      && __printf_function_table[(size_t) spec] != NULL)
-	    {
-	      const void **ptr = alloca (specs[nspecs_done].ndata_args
-					 * sizeof (const void *));
-
-	      /* Fill in an array of pointers to the argument values.  */
-	      for (unsigned int i = 0; i < specs[nspecs_done].ndata_args;
-		   ++i)
-		ptr[i] = &args_value[specs[nspecs_done].data_arg + i];
-
-	      /* Call the function.  */
-	      function_done = __printf_function_table[(size_t) spec]
-		(s, &specs[nspecs_done].info, ptr);
-
-	      if (function_done != -2)
-		{
-		  /* If an error occurred we don't have information
-		     about # of chars.  */
-		  if (function_done < 0)
-		    {
-		      /* Function has set errno.  */
-		      done = -1;
-		      goto all_done;
-		    }
-
-		  done_add (function_done);
-		  break;
-		}
-	    }
-
-	  JUMP (spec, step4_jumps);
-
-	  process_arg ((&specs[nspecs_done]));
-	  process_string_arg ((&specs[nspecs_done]));
-
-	  LABEL (form_unknown):
-	  {
-	    unsigned int i;
-	    const void **ptr;
-
-	    ptr = alloca (specs[nspecs_done].ndata_args
-			  * sizeof (const void *));
-
-	    /* Fill in an array of pointers to the argument values.  */
-	    for (i = 0; i < specs[nspecs_done].ndata_args; ++i)
-	      ptr[i] = &args_value[specs[nspecs_done].data_arg + i];
-
-	    /* Call the function.  */
-	    function_done = printf_unknown (s, &specs[nspecs_done].info,
-					    ptr);
-
-	    /* If an error occurred we don't have information about #
-	       of chars.  */
-	    if (function_done < 0)
-	      {
-		/* Function has set errno.  */
-		done = -1;
-		goto all_done;
-	      }
-
-	    done_add (function_done);
-	  }
-	  break;
-	}
-
-      if (__glibc_unlikely (workstart != NULL))
-	free (workstart);
-      workstart = NULL;
-
-      /* Write the following constant string.  */
-      outstring (specs[nspecs_done].end_of_fmt,
-		 specs[nspecs_done].next_fmt
-		 - specs[nspecs_done].end_of_fmt);
-    }
- all_done:
-  if (__glibc_unlikely (args_malloced != NULL))
-    free (args_malloced);
-  if (__glibc_unlikely (workstart != NULL))
-    free (workstart);
-  scratch_buffer_free (&specsbuf);
   return done;
 }
 
@@ -2127,7 +2150,12 @@ printf_unknown (FILE *s, const struct printf_info *info,
 static CHAR_T *
 internal_function
 group_number (CHAR_T *w, CHAR_T *rear_ptr, const char *grouping,
-	      THOUSANDS_SEP_T thousands_sep)
+#ifdef COMPILE_WPRINTF
+	      wchar_t thousands_sep
+#else
+	      const char *thousands_sep
+#endif
+	      )
 {
   int len;
   CHAR_T *src, *s;

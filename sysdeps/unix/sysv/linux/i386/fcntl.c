@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -49,10 +49,16 @@ __libc_fcntl (int fd, int cmd, ...)
   arg = va_arg (ap, void *);
   va_end (ap);
 
-  if ((cmd != F_SETLKW) && (cmd != F_SETLKW64))
+  if (SINGLE_THREAD_P || (cmd != F_SETLKW && cmd != F_SETLKW64))
     return INLINE_SYSCALL (fcntl64, 3, fd, cmd, arg);
 
-  return SYSCALL_CANCEL (fcntl64, fd, cmd, arg);
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  int result = INLINE_SYSCALL (fcntl64, 3, fd, cmd, arg);
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
 libc_hidden_def (__libc_fcntl)
 

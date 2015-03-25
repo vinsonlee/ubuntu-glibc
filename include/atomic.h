@@ -1,5 +1,5 @@
 /* Internal macros for atomic operations for GNU C Library.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -47,7 +47,7 @@
 
 #include <stdlib.h>
 
-#include <atomic-machine.h>
+#include <bits/atomic.h>
 
 /* Wrapper macros to call pre_NN_post (mem, ...) where NN is the
    bit width of *MEM.  The calling macro puts parens around MEM
@@ -754,10 +754,9 @@ void __atomic_link_error (void);
 
 #endif /* !USE_ATOMIC_COMPILER_BUILTINS  */
 
-/* This operation does not affect synchronization semantics but can be used
-   in the body of a spin loop to potentially improve its efficiency.  */
-#ifndef atomic_spin_nop
-# define atomic_spin_nop() do { /* nothing */ } while (0)
+
+#ifndef atomic_delay
+# define atomic_delay() do { /* nothing */ } while (0)
 #endif
 
 #endif	/* atomic.h */
