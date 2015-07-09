@@ -1,18 +1,20 @@
 /* Handle aliases for locale names.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Lesser General Public License as published by
-   the Free Software Foundation; either version 2.1 of the License, or
-   (at your option) any later version.
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   The GNU C Library is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Lesser General Public License for more details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
 
-   You should have received a copy of the GNU Lesser General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* Tell glibc's <string.h> to provide a prototype for mempcpy().
    This must come before <config.h> because <config.h> may include
@@ -37,19 +39,14 @@
 # define alloca __builtin_alloca
 # define HAVE_ALLOCA 1
 #else
-# ifdef _MSC_VER
-#  include <malloc.h>
-#  define alloca _alloca
+# if defined HAVE_ALLOCA_H || defined _LIBC
+#  include <alloca.h>
 # else
-#  if defined HAVE_ALLOCA_H || defined _LIBC
-#   include <alloca.h>
-#  else
-#   ifdef _AIX
+#  ifdef _AIX
  #pragma alloca
-#   else
-#    ifndef alloca
+#  else
+#   ifndef alloca
 char *alloca ();
-#    endif
 #   endif
 #  endif
 # endif
@@ -59,12 +56,6 @@ char *alloca ();
 #include <string.h>
 
 #include "gettextP.h"
-
-#ifdef ENABLE_RELOCATABLE
-# include "relocatable.h"
-#else
-# define relocate(pathname) (pathname)
-#endif
 
 /* @@ end of prolog @@ */
 
@@ -79,13 +70,11 @@ char *alloca ();
 # endif
 # define HAVE_MEMPCPY	1
 # define HAVE___FSETLOCKING	1
-#endif
 
-/* Handle multi-threaded applications.  */
-#ifdef _LIBC
+/* We need locking here since we can be called from different places.  */
 # include <bits/libc-lock.h>
-#else
-# include "lock.h"
+
+__libc_lock_define_initialized (static, lock);
 #endif
 
 #ifndef internal_function
@@ -95,7 +84,7 @@ char *alloca ();
 /* Some optimizations for glibc.  */
 #ifdef _LIBC
 # define FEOF(fp)		feof_unlocked (fp)
-# define FGETS(buf, n, fp)	__fgets_unlocked (buf, n, fp)
+# define FGETS(buf, n, fp)	fgets_unlocked (buf, n, fp)
 #else
 # define FEOF(fp)		feof (fp)
 # define FGETS(buf, n, fp)	fgets (buf, n, fp)
@@ -110,17 +99,14 @@ char *alloca ();
 # define freea(p) free (p)
 #endif
 
-#if defined _LIBC_REENTRANT || defined HAVE_DECL_FGETS_UNLOCKED
+#if defined _LIBC_REENTRANT || defined HAVE_FGETS_UNLOCKED
 # undef fgets
 # define fgets(buf, len, s) fgets_unlocked (buf, len, s)
 #endif
-#if defined _LIBC_REENTRANT || defined HAVE_DECL_FEOF_UNLOCKED
+#if defined _LIBC_REENTRANT || defined HAVE_FEOF_UNLOCKED
 # undef feof
 # define feof(s) feof_unlocked (s)
 #endif
-
-
-__libc_lock_define_initialized (static, lock)
 
 
 struct alias_map
@@ -143,25 +129,25 @@ static size_t maxmap;
 
 
 /* Prototypes for local functions.  */
-static size_t read_alias_file (const char *fname, int fname_len)
+static size_t read_alias_file PARAMS ((const char *fname, int fname_len))
      internal_function;
-static int extend_alias_table (void);
-static int alias_compare (const struct alias_map *map1,
-			  const struct alias_map *map2);
+static int extend_alias_table PARAMS ((void));
+static int alias_compare PARAMS ((const struct alias_map *map1,
+				  const struct alias_map *map2));
 
 
 const char *
-_nl_expand_alias (const char *name)
+_nl_expand_alias (name)
+    const char *name;
 {
-  static const char *locale_alias_path;
+  static const char *locale_alias_path = LOCALE_ALIAS_PATH;
   struct alias_map *retval;
   const char *result = NULL;
   size_t added;
 
+#ifdef _LIBC
   __libc_lock_lock (lock);
-
-  if (locale_alias_path == NULL)
-    locale_alias_path = LOCALE_ALIAS_PATH;
+#endif
 
   do
     {
@@ -172,8 +158,8 @@ _nl_expand_alias (const char *name)
       if (nmap > 0)
 	retval = (struct alias_map *) bsearch (&item, map, nmap,
 					       sizeof (struct alias_map),
-					       (int (*) (const void *,
-							 const void *)
+					       (int (*) PARAMS ((const void *,
+								 const void *))
 						) alias_compare);
       else
 	retval = NULL;
@@ -191,12 +177,11 @@ _nl_expand_alias (const char *name)
 	{
 	  const char *start;
 
-	  while (locale_alias_path[0] == PATH_SEPARATOR)
+	  while (locale_alias_path[0] == ':')
 	    ++locale_alias_path;
 	  start = locale_alias_path;
 
-	  while (locale_alias_path[0] != '\0'
-		 && locale_alias_path[0] != PATH_SEPARATOR)
+	  while (locale_alias_path[0] != '\0' && locale_alias_path[0] != ':')
 	    ++locale_alias_path;
 
 	  if (start < locale_alias_path)
@@ -205,7 +190,9 @@ _nl_expand_alias (const char *name)
     }
   while (added != 0);
 
+#ifdef _LIBC
   __libc_lock_unlock (lock);
+#endif
 
   return result;
 }
@@ -213,7 +200,9 @@ _nl_expand_alias (const char *name)
 
 static size_t
 internal_function
-read_alias_file (const char *fname, int fname_len)
+read_alias_file (fname, fname_len)
+     const char *fname;
+     int fname_len;
 {
   FILE *fp;
   char *full_fname;
@@ -229,13 +218,9 @@ read_alias_file (const char *fname, int fname_len)
   memcpy (&full_fname[fname_len], aliasfile, sizeof aliasfile);
 #endif
 
-#ifdef _LIBC
   /* Note the file is opened with cancellation in the I/O functions
      disabled.  */
-  fp = fopen (relocate (full_fname), "rce");
-#else
-  fp = fopen (relocate (full_fname), "r");
-#endif
+  fp = fopen (full_fname, "rce");
   freea (full_fname);
   if (fp == NULL)
     return 0;
@@ -289,6 +274,9 @@ read_alias_file (const char *fname, int fname_len)
 
 	  if (cp[0] != '\0')
 	    {
+	      size_t alias_len;
+	      size_t value_len;
+
 	      value = cp++;
 	      while (cp[0] != '\0' && !isspace ((unsigned char) cp[0]))
 		++cp;
@@ -304,62 +292,48 @@ read_alias_file (const char *fname, int fname_len)
 	      else if (cp[0] != '\0')
 		*cp++ = '\0';
 
-#ifdef IN_LIBGLOCALE
-	      /* glibc's locale.alias contains entries for ja_JP and ko_KR
-		 that make it impossible to use a Japanese or Korean UTF-8
-		 locale under the name "ja_JP" or "ko_KR".  Ignore these
-		 entries.  */
-	      if (strchr (alias, '_') == NULL)
-#endif
+	      if (nmap >= maxmap)
+		if (__builtin_expect (extend_alias_table (), 0))
+		  goto out;
+
+	      alias_len = strlen (alias) + 1;
+	      value_len = strlen (value) + 1;
+
+	      if (string_space_act + alias_len + value_len > string_space_max)
 		{
-		  size_t alias_len;
-		  size_t value_len;
+		  /* Increase size of memory pool.  */
+		  size_t new_size = (string_space_max
+				     + (alias_len + value_len > 1024
+					? alias_len + value_len : 1024));
+		  char *new_pool = (char *) realloc (string_space, new_size);
+		  if (new_pool == NULL)
+		    goto out;
 
-		  if (nmap >= maxmap)
-		    if (__builtin_expect (extend_alias_table (), 0))
-		      goto out;
-
-		  alias_len = strlen (alias) + 1;
-		  value_len = strlen (value) + 1;
-
-		  if (string_space_act + alias_len + value_len > string_space_max)
+		  if (__builtin_expect (string_space != new_pool, 0))
 		    {
-		      /* Increase size of memory pool.  */
-		      size_t new_size = (string_space_max
-					 + (alias_len + value_len > 1024
-					    ? alias_len + value_len : 1024));
-		      char *new_pool = (char *) realloc (string_space, new_size);
-		      if (new_pool == NULL)
-			goto out;
+		      size_t i;
 
-		      if (__builtin_expect (string_space != new_pool, 0))
+		      for (i = 0; i < nmap; i++)
 			{
-			  size_t i;
-
-			  for (i = 0; i < nmap; i++)
-			    {
-			      map[i].alias += new_pool - string_space;
-			      map[i].value += new_pool - string_space;
-			    }
+			  map[i].alias += new_pool - string_space;
+			  map[i].value += new_pool - string_space;
 			}
-
-		      string_space = new_pool;
-		      string_space_max = new_size;
 		    }
 
-		  map[nmap].alias =
-		    (const char *) memcpy (&string_space[string_space_act],
-					   alias, alias_len);
-		  string_space_act += alias_len;
-
-		  map[nmap].value =
-		    (const char *) memcpy (&string_space[string_space_act],
-					   value, value_len);
-		  string_space_act += value_len;
-
-		  ++nmap;
-		  ++added;
+		  string_space = new_pool;
+		  string_space_max = new_size;
 		}
+
+	      map[nmap].alias = memcpy (&string_space[string_space_act],
+					alias, alias_len);
+	      string_space_act += alias_len;
+
+	      map[nmap].value = memcpy (&string_space[string_space_act],
+					value, value_len);
+	      string_space_act += value_len;
+
+	      ++nmap;
+	      ++added;
 	    }
 	}
 
@@ -374,14 +348,14 @@ read_alias_file (const char *fname, int fname_len)
 	while (strchr (buf, '\n') == NULL);
     }
 
- out:
+out:
   /* Should we test for ferror()?  I think we have to silently ignore
      errors.  --drepper  */
   fclose (fp);
 
   if (added > 0)
     qsort (map, nmap, sizeof (struct alias_map),
-	   (int (*) (const void *, const void *)) alias_compare);
+	   (int (*) PARAMS ((const void *, const void *))) alias_compare);
 
   return added;
 }
@@ -407,7 +381,9 @@ extend_alias_table (void)
 
 
 static int
-alias_compare (const struct alias_map *map1, const struct alias_map *map2)
+alias_compare (map1, map2)
+     const struct alias_map *map1;
+     const struct alias_map *map2;
 {
 #if defined _LIBC || defined HAVE_STRCASECMP
   return strcasecmp (map1->alias, map2->alias);

@@ -1,6 +1,6 @@
 /* Multiple versions of strcspn
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -41,7 +41,7 @@
 /* Define multiple versions only for the definition in libc.  Don't
    define multiple versions for strpbrk in static library since we
    need strpbrk before the initialization happened.  */
-#if (defined SHARED || !defined USE_AS_STRPBRK) && IS_IN (libc)
+#if (defined SHARED || !defined USE_AS_STRPBRK) && !defined NOT_IN_libc
 	.text
 ENTRY(STRCSPN)
 	.type	STRCSPN, @gnu_indirect_function

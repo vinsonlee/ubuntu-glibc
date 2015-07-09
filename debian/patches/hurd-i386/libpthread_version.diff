@@ -1,9 +1,7 @@
 This dates when libpthread was moved to glibc and some features were added.
 
-Index: glibc-2.21/libpthread/Versions
-===================================================================
---- glibc-2.21.orig/libpthread/Versions
-+++ glibc-2.21/libpthread/Versions
+--- a/libpthread/Versions
++++ b/libpthread/Versions
 @@ -1,5 +1,5 @@
  libc {
 -  GLIBC_2.13 {
@@ -11,7 +9,7 @@ Index: glibc-2.21/libpthread/Versions
      pthread_attr_destroy; pthread_attr_getdetachstate;
      pthread_attr_getinheritsched; pthread_attr_getschedparam;
      pthread_attr_getschedpolicy; pthread_attr_getscope; pthread_attr_init;
-@@ -132,8 +132,10 @@ libpthread {
+@@ -131,8 +131,10 @@ libpthread {
      __pthread_spin_lock; __pthread_spin_trylock; __pthread_spin_unlock;
      _pthread_spin_lock;
    }
@@ -22,4 +20,32 @@ Index: glibc-2.21/libpthread/Versions
 +  GLIBC_2.13_DEBIAN_39 {
      pthread_hurd_cond_timedwait_np;
    }
-   GLIBC_PRIVATE {
+ }
+--- a/Versions.def
++++ b/Versions.def
+@@ -30,6 +30,8 @@ libc {
+   GLIBC_2.11
+   GLIBC_2.12
+   GLIBC_2.13
++  GLIBC_2.13_DEBIAN_38
++  GLIBC_2.13_DEBIAN_39
+   GLIBC_2.14
+   GLIBC_2.15
+   GLIBC_2.16
+@@ -42,6 +44,7 @@ libc {
+ %endif
+   GLIBC_PRIVATE
+   GLIBC_2.13_DEBIAN_19
++  GLIBC_2.13_DEBIAN_31
+ }
+ libcrypt {
+   GLIBC_2.0
+@@ -106,6 +109,8 @@ libpthread {
+   GLIBC_2.6
+   GLIBC_2.11
+   GLIBC_2.12
++  GLIBC_2.13_DEBIAN_38
++  GLIBC_2.13_DEBIAN_39
+   GLIBC_2.18
+   GLIBC_2.19
+   GLIBC_PRIVATE

@@ -49,11 +49,6 @@
  * --Copyright--
  */
 
-/* XXX This file is not used by any of the resolver functions implemented by
-   glibc (i.e. get*info and gethostby*).  It cannot be removed however because
-   it exports symbols in the libresolv ABI.  The file is not maintained any
-   more, nor are these functions.  */
-
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
@@ -626,7 +621,7 @@ gethostbyname2(name, af)
 	buf.buf = origbuf = (querybuf *) alloca (1024);
 
 	if ((n = __libc_res_nsearch(&_res, name, C_IN, type, buf.buf->buf, 1024,
-				    &buf.ptr, NULL, NULL, NULL, NULL)) < 0) {
+				    &buf.ptr, NULL, NULL, NULL)) < 0) {
 		if (buf.buf != origbuf)
 			free (buf.buf);
 		Dprintf("res_nsearch failed (%d)\n", n);
@@ -672,8 +667,8 @@ gethostbyaddr(addr, len, af)
 		return (NULL);
 	}
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
-	    (!memcmp(uaddr, mapped, sizeof mapped) ||
-	     !memcmp(uaddr, tunnelled, sizeof tunnelled))) {
+	    (!bcmp(uaddr, mapped, sizeof mapped) ||
+	     !bcmp(uaddr, tunnelled, sizeof tunnelled))) {
 		/* Unmap. */
 		addr += sizeof mapped;
 		uaddr += sizeof mapped;
@@ -721,12 +716,12 @@ gethostbyaddr(addr, len, af)
 	buf.buf = orig_buf = (querybuf *) alloca (1024);
 
 	n = __libc_res_nquery(&_res, qbuf, C_IN, T_PTR, buf.buf->buf, 1024,
-			      &buf.ptr, NULL, NULL, NULL, NULL);
+			      &buf.ptr, NULL, NULL, NULL);
 	if (n < 0 && af == AF_INET6 && (_res.options & RES_NOIP6DOTINT) == 0) {
 		strcpy(qp, "ip6.int");
 		n = __libc_res_nquery(&_res, qbuf, C_IN, T_PTR, buf.buf->buf,
 				      buf.buf != orig_buf ? MAXPACKET : 1024,
-				      &buf.ptr, NULL, NULL, NULL, NULL);
+				      &buf.ptr, NULL, NULL, NULL);
 	}
 	if (n < 0) {
 		if (buf.buf != orig_buf)
@@ -922,7 +917,7 @@ _gethtbyaddr(addr, len, af)
 
 	_sethtent(0);
 	while ((p = _gethtent()))
-		if (p->h_addrtype == af && !memcmp(p->h_addr, addr, len))
+		if (p->h_addrtype == af && !bcmp(p->h_addr, addr, len))
 			break;
 	_endhtent();
 	return (p);

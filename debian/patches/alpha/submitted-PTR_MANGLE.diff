@@ -5,11 +5,11 @@
 	(PTR_DEMANGLE): Likewise.
 
 ---
- sysdeps/unix/alpha/sysdep.h |    7 ++++---
+ ports/sysdeps/unix/alpha/sysdep.h |    7 ++++---
  1 file changed, 4 insertions(+), 3 deletions(-)
 
---- a/sysdeps/unix/alpha/sysdep.h
-+++ b/sysdeps/unix/alpha/sysdep.h
+--- a/ports/sysdeps/unix/alpha/sysdep.h
++++ b/ports/sysdeps/unix/alpha/sysdep.h
 @@ -154,6 +154,8 @@
  
  #else /* !ASSEMBLER */
@@ -30,7 +30,7 @@
  
 -#include <stdint.h>
 -
- #if !IS_IN (libc) && IS_IN (rtld)
+ #if defined NOT_IN_libc && defined IS_IN_rtld
  # ifdef __ASSEMBLER__
  #  define PTR_MANGLE(dst, src, tmp)				\
 @@ -382,4 +384,3 @@

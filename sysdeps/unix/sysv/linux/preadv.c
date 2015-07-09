@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -48,7 +48,11 @@ static ssize_t PREADV_REPLACEMENT (int, const struct iovec *,
 
 
 ssize_t
-PREADV (int fd, const struct iovec *vector, int count, OFF_T offset)
+PREADV (fd, vector, count, offset)
+     int fd;
+     const struct iovec *vector;
+     int count;
+     OFF_T offset;
 {
 #ifdef __NR_preadv
   ssize_t result;

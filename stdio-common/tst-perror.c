@@ -24,8 +24,8 @@
 #define WC_EXP_LEN (sizeof (WC_EXP) - 1)
 
 
-static int
-do_test (void)
+int
+main (void)
 {
   int fd;
   char fname[] = "/tmp/tst-perror.XXXXXX";
@@ -152,6 +152,3 @@ do_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

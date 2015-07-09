@@ -1,5 +1,5 @@
 # libm test inputs for gen-auto-libm-tests.c.
-# Copyright (C) 1997-2015 Free Software Foundation, Inc.
+# Copyright (C) 1997-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 #
 # The GNU C Library is free software; you can redistribute it and/or
@@ -157,12 +157,13 @@ atan2 -min -max
 atan2 min_subnorm -max
 atan2 -min_subnorm -max
 # Bug 15319: underflow exception may be missing.
+# Bug 16349: errno setting may be missing.
 atan2 1 max missing-underflow
 atan2 -1 max missing-underflow
-atan2 min max missing-underflow
-atan2 -min max missing-underflow
-atan2 min_subnorm max missing-underflow
-atan2 -min_subnorm max missing-underflow
+atan2 min max missing-underflow missing-errno
+atan2 -min max missing-underflow missing-errno
+atan2 min_subnorm max missing-underflow missing-errno
+atan2 -min_subnorm max missing-underflow missing-errno
 
 atanh 0
 atanh -0
@@ -173,8 +174,9 @@ atanh 0x1p-5
 atanh 0x1p-10
 atanh 0x1.2345p-20
 # Bug 16352: underflow exception may be missing.
-atanh min missing-underflow
-atanh -min missing-underflow
+# Bug 16357: spurious underflow may occur.
+atanh min missing-underflow spurious-underflow:ldbl-96-intel:x86
+atanh -min missing-underflow spurious-underflow:ldbl-96-intel:x86
 atanh min_subnorm missing-underflow
 atanh -min_subnorm missing-underflow
 
@@ -448,125 +450,6 @@ clog 0xfd95243681c055c2632286921092p-113 0x1bccabcd29ca2152860ec29e34ef7p-113
 clog 0xdb85c467ee2aadd5f425fe0f4b8dp-114 0x3e83162a0f95f1dcbf97dddf410eap-114
 clog 0x1415bcaf2105940d49a636e98ae59p-115 0x7e6a150adfcd1b0921d44b31f40f4p-115
 
-clog10 0.75 1.25
-clog10 -2 -3
-
-clog10 0x1.fffffep+127 0x1.fffffep+127
-clog10 0x1.fffffep+127 1.0
-clog10 0x1p-149 0x1p-149
-clog10 0x1p-147 0x1p-147
-clog10 0x1.fffffffffffffp+1023 0x1.fffffffffffffp+1023
-clog10 0x1.fffffffffffffp+1023 0x1p+1023
-clog10 0x1p-1074 0x1p-1074
-clog10 0x1p-1073 0x1p-1073
-clog10 0x1.fp+16383 0x1.fp+16383
-clog10 0x1.fp+16383 0x1p+16383
-clog10 0x1p-16440 0x1p-16441
-
-clog10 0x1p-149 0x1.fp+127
-clog10 -0x1p-149 0x1.fp+127
-clog10 0x1p-149 -0x1.fp+127
-clog10 -0x1p-149 -0x1.fp+127
-clog10 -0x1.fp+127 0x1p-149
-clog10 -0x1.fp+127 -0x1p-149
-clog10 0x1.fp+127 0x1p-149
-clog10 0x1.fp+127 -0x1p-149
-clog10 0x1p-1074 0x1.fp+1023
-clog10 -0x1p-1074 0x1.fp+1023
-clog10 0x1p-1074 -0x1.fp+1023
-clog10 -0x1p-1074 -0x1.fp+1023
-clog10 -0x1.fp+1023 0x1p-1074
-clog10 -0x1.fp+1023 -0x1p-1074
-clog10 0x1.fp+1023 0x1p-1074
-clog10 0x1.fp+1023 -0x1p-1074
-clog10 0x1p-16445 0x1.fp+16383
-clog10 -0x1p-16445 0x1.fp+16383
-clog10 0x1p-16445 -0x1.fp+16383
-clog10 -0x1p-16445 -0x1.fp+16383
-clog10 -0x1.fp+16383 0x1p-16445
-clog10 -0x1.fp+16383 -0x1p-16445
-clog10 0x1.fp+16383 0x1p-16445
-clog10 0x1.fp+16383 -0x1p-16445
-clog10 0x1p-16494 0x1.fp+16383
-clog10 -0x1p-16494 0x1.fp+16383
-clog10 0x1p-16494 -0x1.fp+16383
-clog10 -0x1p-16494 -0x1.fp+16383
-clog10 -0x1.fp+16383 0x1p-16494
-clog10 -0x1.fp+16383 -0x1p-16494
-clog10 0x1.fp+16383 0x1p-16494
-clog10 0x1.fp+16383 -0x1p-16494
-
-clog10 1.0 0x1.234566p-10
-clog10 -1.0 0x1.234566p-20
-clog10 0x1.234566p-30 1.0
-clog10 -0x1.234566p-40 -1.0
-clog10 0x1.234566p-50 1.0
-clog10 0x1.234566p-60 1.0
-clog10 0x1p-61 1.0
-clog10 0x1p-62 1.0
-clog10 0x1p-63 1.0
-clog10 0x1p-509 1.0
-clog10 0x1p-510 1.0
-clog10 0x1p-511 1.0
-clog10 0x1p-8189 1.0
-clog10 0x1p-8190 1.0
-clog10 0x1p-8191 1.0
-
-clog10 0x1.000566p0 0x1.234p-10
-clog10 0x1.000566p0 0x1.234p-100
-clog10 -0x1.0000000123456p0 0x1.2345678p-30
-clog10 -0x1.0000000123456p0 0x1.2345678p-1000
-clog10 0x1.00000000000000123456789abcp0 0x1.23456789p-60
-clog10 0x1.00000000000000123456789abcp0 0x1.23456789p-1000
-
-clog10 0x0.ffffffp0 0x0.ffffffp-100
-clog10 0x0.fffffffffffff8p0 0x0.fffffffffffff8p-1000
-clog10 0x0.ffffffffffffffffp0 0x0.ffffffffffffffffp-15000
-
-clog10 0x1a6p-10 0x3a5p-10
-clog10 0xf2p-10 0x3e3p-10
-clog10 0x4d4ep-15 0x6605p-15
-clog10 0x2818p-15 0x798fp-15
-clog10 0x9b57bp-20 0xcb7b4p-20
-clog10 0x2731p-20 0xfffd0p-20
-clog10 0x2ede88p-23 0x771c3fp-23
-clog10 0x11682p-23 0x7ffed1p-23
-clog10 0xa1f2c1p-24 0xc643aep-24
-clog10 0x659feap-24 0xeaf6f9p-24
-clog10 0x4447d7175p-35 0x6c445e00ap-35
-clog10 0x2dd46725bp-35 0x7783a1284p-35
-clog10 0x164c74eea876p-45 0x16f393482f77p-45
-clog10 0xfe961079616p-45 0x1bc37e09e6d1p-45
-clog10 0xa4722f19346cp-51 0x7f9631c5e7f07p-51
-clog10 0x10673dd0f2481p-51 0x7ef1d17cefbd2p-51
-clog10 0x8ecbf810c4ae6p-52 0xd479468b09a37p-52
-clog10 0x5b06b680ea2ccp-52 0xef452b965da9fp-52
-clog10 0x659b70ab7971bp-53 0x1f5d111e08abecp-53
-clog10 0x15cfbd1990d1ffp-53 0x176a3973e09a9ap-53
-clog10 0x1367a310575591p-54 0x3cfcc0a0541f60p-54
-clog10 0x55cb6d0c83af5p-55 0x7fe33c0c7c4e90p-55
-clog10 0x298c62cb546588a7p-63 0x7911b1dfcc4ecdaep-63
-clog10 0x4d9c37e2b5cb4533p-63 0x65c98be2385a042ep-63
-clog10 0x602fd5037c4792efp-64 0xed3e2086dcca80b8p-64
-clog10 0x6b10b4f3520217b6p-64 0xe8893cbb449253a1p-64
-clog10 0x81b7efa81fc35ad1p-65 0x1ef4b835f1c79d812p-65
-clog10 0x3f96469050f650869c2p-75 0x6f16b2c9c8b05988335p-75
-clog10 0x3157fc1d73233e580c8p-75 0x761b52ccd435d7c7f5fp-75
-clog10 0x155f8afc4c48685bf63610p-85 0x17d0cf2652cdbeb1294e19p-85
-clog10 0x13836d58a13448d750b4b9p-85 0x195ca7bc3ab4f9161edbe6p-85
-clog10 0x1df515eb171a808b9e400266p-95 0x7c71eb0cd4688dfe98581c77p-95
-clog10 0xe33f66c9542ca25cc43c867p-95 0x7f35a68ebd3704a43c465864p-95
-clog10 0x6771f22c64ed551b857c128b4cp-105 0x1f570e7a13cc3cf2f44fd793ea1p-105
-clog10 0x15d8ab6ed05ca514086ac3a1e84p-105 0x1761e480aa094c0b10b34b09ce9p-105
-clog10 0x187190c1a334497bdbde5a95f48p-106 0x3b25f08062d0a095c4cfbbc338dp-106
-clog10 0x6241ef0da53f539f02fad67dabp-106 0x3fb46641182f7efd9caa769dac0p-106
-clog10 0x3e1d0a105ac4ebeacd9c6952d34cp-112 0xf859b3d1b06d005dcbb5516d5479p-112
-clog10 0x47017a2e36807acb1e5214b209dep-112 0xf5f4a550c9d75e3bb1839d865f0dp-112
-clog10 0x148f818cb7a9258fca942ade2a0cap-113 0x18854a34780b8333ec53310ad7001p-113
-clog10 0xfd95243681c055c2632286921092p-113 0x1bccabcd29ca2152860ec29e34ef7p-113
-clog10 0xdb85c467ee2aadd5f425fe0f4b8dp-114 0x3e83162a0f95f1dcbf97dddf410eap-114
-clog10 0x1415bcaf2105940d49a636e98ae59p-115 0x7e6a150adfcd1b0921d44b31f40f4p-115
-
 cos 0
 cos -0
 cos pi/3
@@ -591,7 +474,6 @@ cos 0x1.0000010b239a9p0
 cos 0x1.00000162a932bp0
 cos 0x1.000002d452a10p0
 cos 0x1.000005bc7d86dp0
-cos 0x1.200145a975ce6p32
 cos 1
 cos 2
 cos 3
@@ -624,14 +506,11 @@ cosh 50
 # GCC bug 59666: results on directed rounding may be incorrect.
 cosh max no-test-inline xfail-rounding:ldbl-128ibm
 cosh -max no-test-inline xfail-rounding:ldbl-128ibm
-cosh min
-cosh -min
-cosh min_subnorm
-cosh -min_subnorm
-cosh 0x1p-56
-cosh -0x1p-56
-cosh 0x1p-72
-cosh -0x1p-72
+# Bug 16354: spurious underflow may occur.
+cosh min spurious-underflow
+cosh -min spurious-underflow
+cosh min_subnorm spurious-underflow
+cosh -min_subnorm spurious-underflow
 # Test values either side of overflow for each floating-point format.
 cosh 0x5.96a7ep+4
 cosh 0x5.96a7e8p+4
@@ -655,14 +534,14 @@ cosh 0x2.c5d37700c6bb03a6c24b6c9b494ep+12 no-test-inline xfail-rounding:ldbl-128
 cosh -0x2.c5d37700c6bb03a6c24b6c9b494cp+12 no-test-inline xfail-rounding:ldbl-128ibm
 cosh -0x2.c5d37700c6bb03a6c24b6c9b494ep+12 no-test-inline xfail-rounding:ldbl-128ibm
 
-cpow 1 0 0 0 ignore-zero-inf-sign
-cpow 2 0 10 0 ignore-zero-inf-sign
+cpow 1 0 0 0
+cpow 2 0 10 0
 # Bug 14473: cpow results inaccurate.
 cpow e 0 0 2pi xfail
-cpow 2 3 4 0 xfail-rounding
+cpow 2 3 4 0
 
-cpow 0.75 1.25 0.75 1.25 xfail-rounding
-cpow 0.75 1.25 1.0 1.0 xfail-rounding
+cpow 0.75 1.25 0.75 1.25
+cpow 0.75 1.25 1.0 1.0
 cpow 0.75 1.25 1.0 0.0
 cpow 0.75 1.25 0.0 1.0
 
@@ -799,20 +678,6 @@ erf 4.125
 erf 27.0
 erf -27.0
 erf -0x1.fffffffffffff8p-2
-erf 0x1.c5bf94p-127
-erf 0x3.8b7fa8p-128
-erf -0x3.8b7f12369ded8p-1024
-erf 0x3.8b7f12369ded5518p-16384
-erf 26.0
-erf 28.0
-erf 100
-erf 106
-erf 106.5
-erf 106.625
-erf 107
-erf 108
-erf 1000
-erf max
 
 erfc 0.0
 erfc -0
@@ -847,36 +712,19 @@ exp 0.75
 exp 50.0
 exp 88.72269439697265625
 exp 709.75
+# Bug 16284: results on directed rounding may be incorrect.
 # GCC bug 59666: results on directed rounding may be incorrect.
-exp 1000.0 xfail-rounding:ldbl-128ibm
-exp 710 xfail-rounding:ldbl-128ibm
+exp 1000.0 xfail-rounding:dbl-64 xfail-rounding:ldbl-128ibm
+exp 710 xfail-rounding:dbl-64 xfail-rounding:ldbl-128ibm
 exp -1234
+# Bug 16284: results on directed rounding may be incorrect.
 # GCC bug 59666: results on directed rounding may be incorrect.
-exp 0x2.c679d1f73f0fb628p+8 xfail-rounding:ldbl-128ibm
-exp 1e5 xfail-rounding:ldbl-128ibm
-exp max xfail-rounding:ldbl-128ibm
+exp 0x2.c679d1f73f0fb628p+8 xfail-rounding:dbl-64 xfail-rounding:ldbl-128ibm
+exp 1e5 xfail-rounding:dbl-64 xfail-rounding:ldbl-128ibm
+exp max xfail-rounding:dbl-64 xfail-rounding:ldbl-128ibm
 exp -7.4444006192138124e+02
 exp -0x1.75f113c30b1c8p+9
 exp -max
-exp -11342.8125
-exp 0x1p-10
-exp -0x1p-10
-exp 0x1p-20
-exp -0x1p-20
-exp 0x1p-30
-exp -0x1p-30
-exp 0x1p-40
-exp -0x1p-40
-exp 0x1p-50
-exp -0x1p-50
-exp 0x1p-60
-exp -0x1p-60
-exp 0x1p-100
-exp -0x1p-100
-exp min
-exp -min
-exp min_subnorm
-exp -min_subnorm
 
 exp10 0
 exp10 -0
@@ -886,40 +734,27 @@ exp10 36
 exp10 -36
 exp10 305
 exp10 -305
+# Bug 16284: results on directed rounding may be incorrect.
 # GCC bug 59666: results on directed rounding may be incorrect.
-exp10 4932 xfail-rounding:ldbl-128ibm
+exp10 4932 xfail-rounding:flt-32 xfail-rounding:ldbl-128ibm
 # Bug 16361: underflow exception may be misssing
 exp10 -4932 missing-underflow:ldbl-96-intel:x86 missing-underflow:ldbl-96-intel:x86_64
+# Bug 16284: results on directed rounding may be incorrect.
 # GCC bug 59666: results on directed rounding may be incorrect.
-exp10 1e5 xfail-rounding:ldbl-128ibm
+exp10 1e5 xfail-rounding:flt-32 xfail-rounding:ldbl-128ibm
 exp10 -1e5
+# Bug 16284: results on directed rounding may be incorrect.
 # GCC bug 59666: results on directed rounding may be incorrect.
-exp10 1e6 xfail-rounding:ldbl-128ibm
+exp10 1e6 xfail-rounding:flt-32 xfail-rounding:ldbl-128ibm
 exp10 -1e6
+# Bug 16284: results on directed rounding may be incorrect.
 # GCC bug 59666: results on directed rounding may be incorrect.
-exp10 max xfail-rounding:ldbl-128ibm
+exp10 max xfail-rounding:flt-32 xfail-rounding:ldbl-128ibm
 exp10 -max
 exp10 0.75
+# Bug 16284: results on directed rounding may be incorrect.
 # GCC bug 59666: results on directed rounding may be incorrect.
-exp10 0x1.348e45573a1dd72cp+8 xfail-rounding:ldbl-128ibm
-exp10 0x1p-10
-exp10 -0x1p-10
-exp10 0x1p-20
-exp10 -0x1p-20
-exp10 0x1p-30
-exp10 -0x1p-30
-exp10 0x1p-40
-exp10 -0x1p-40
-exp10 0x1p-50
-exp10 -0x1p-50
-exp10 0x1p-60
-exp10 -0x1p-60
-exp10 0x1p-100
-exp10 -0x1p-100
-exp10 min
-exp10 -min
-exp10 min_subnorm
-exp10 -min_subnorm
+exp10 0x1.348e45573a1dd72cp+8 xfail-rounding:flt-32 xfail-rounding:dbl-64 xfail-rounding:ldbl-128ibm
 
 exp2 0
 exp2 -0
@@ -988,262 +823,6 @@ expm1 0x1p-64
 expm1 -0x1p-64
 expm1 0x1p-100
 expm1 -0x1p-100
-# Bug 16353: underflow exception may be missing
-expm1 0x4.0000000000000028p-16384 missing-underflow
-
-fma 1.0 2.0 3.0
-fma 1.25 0.75 0.0625
-
-fma 0 0 0
-fma 0 0 -0
-fma 0 -0 0
-fma 0 -0 -0
-fma -0 0 0
-fma -0 0 -0
-fma -0 -0 0
-fma -0 -0 -0
-fma 1.0 0 0
-fma 1.0 0 -0
-fma 1.0 -0 0
-fma 1.0 -0 -0
-fma -1.0 0 0
-fma -1.0 0 -0
-fma -1.0 -0 0
-fma -1.0 -0 -0
-fma 0 1.0 0
-fma 0 1.0 -0
-fma 0 -1.0 0
-fma 0 -1.0 -0
-fma -0 1.0 0
-fma -0 1.0 -0
-fma -0 -1.0 0
-fma -0 -1.0 -0
-
-fma 1.0 1.0 -1.0
-fma 1.0 -1.0 1.0
-fma -1.0 1.0 1.0
-fma -1.0 -1.0 -1.0
-
-# Bug 6801: errno setting may be missing.
-fma min min 0 missing-errno
-fma min min -0 missing-errno
-fma min -min 0 missing-errno
-fma min -min -0 missing-errno
-fma -min min 0 missing-errno
-fma -min min -0 missing-errno
-fma -min -min 0 missing-errno
-fma -min -min -0 missing-errno
-
-# Bug 6801: errno setting may be missing.
-# Bug 13304: results on directed rounding may be incorrect.
-fma max max min missing-errno xfail-rounding:ldbl-128ibm
-fma max max -min missing-errno xfail-rounding:ldbl-128ibm
-fma max -max min missing-errno xfail-rounding:ldbl-128ibm
-fma max -max -min missing-errno xfail-rounding:ldbl-128ibm
-fma -max max min missing-errno xfail-rounding:ldbl-128ibm
-fma -max max -min missing-errno xfail-rounding:ldbl-128ibm
-fma -max -max min missing-errno xfail-rounding:ldbl-128ibm
-fma -max -max -min missing-errno xfail-rounding:ldbl-128ibm
-
-fma 0x1.7ff8p+13 0x1.000002p+0 0x1.ffffp-24
-fma 0x1.fffp+0 0x1.00001p+0 -0x1.fffp+0
-fma 0x1.9abcdep+127 0x0.9abcdep-126 -0x1.f08948p+0
-fma 0x1.9abcdep+100 0x0.9abcdep-126 -0x1.f08948p-27
-fma 0x1.fffffep+127 0x1.001p+0 -0x1.fffffep+127
-fma -0x1.fffffep+127 0x1.fffffep+0 0x1.fffffep+127
-fma 0x1.fffffep+127 2.0 -0x1.fffffep+127
-fma 0x1.4p-126 0x1.000004p-1 0x1p-128
-fma -0x1.4p-126 0x1.000004p-1 -0x1p-128
-fma 0x1.fffff8p-126 0x1.000002p-1 0x1p-149
-fma -0x1.fffff8p-126 0x1.000002p-1 -0x1p-149
-fma 0x1p-149 0x1p-1 0x0.fffffep-126
-fma -0x1p-149 0x1p-1 -0x0.fffffep-126
-fma 0x1p-149 0x1.1p-1 0x0.fffffep-126
-fma -0x1p-149 0x1.1p-1 -0x0.fffffep-126
-fma 0x1p-149 0x1p-149 0x1p127
-fma 0x1p-149 -0x1p-149 0x1p127
-fma 0x1p-149 0x1p-149 -0x1p127
-fma 0x1p-149 -0x1p-149 -0x1p127
-fma 0x1p-149 0x1p-149 0x1p-126
-fma 0x1p-149 -0x1p-149 0x1p-126
-fma 0x1p-149 0x1p-149 -0x1p-126
-fma 0x1p-149 -0x1p-149 -0x1p-126
-fma 0x1p-149 0x1p-149 0x0.fffffep-126
-fma 0x1p-149 -0x1p-149 0x0.fffffep-126
-fma 0x1p-149 0x1p-149 -0x0.fffffep-126
-fma 0x1p-149 -0x1p-149 -0x0.fffffep-126
-fma 0x1p-149 0x1p-149 0x1p-149
-# Bug 6801: errno setting may be missing.
-fma 0x1p-149 -0x1p-149 0x1p-149 missing-errno
-fma 0x1p-149 0x1p-149 -0x1p-149 missing-errno
-fma 0x1p-149 -0x1p-149 -0x1p-149
-fma 0x0.fffp0 0x0.fffp0 -0x0.ffep0
-fma 0x0.fffp0 -0x0.fffp0 0x0.ffep0
-fma -0x0.fffp0 0x0.fffp0 0x0.ffep0
-fma -0x0.fffp0 -0x0.fffp0 -0x0.ffep0
-fma 0x1.000002p-126 0x1.000002p-26 0x1p127
-fma 0x1.000002p-126 -0x1.000002p-26 0x1p127
-fma 0x1.000002p-126 0x1.000002p-26 -0x1p127
-fma 0x1.000002p-126 -0x1.000002p-26 -0x1p127
-fma 0x1.000002p-126 0x1.000002p-26 0x1p103
-fma 0x1.000002p-126 -0x1.000002p-26 0x1p103
-fma 0x1.000002p-126 0x1.000002p-26 -0x1p103
-fma 0x1.000002p-126 -0x1.000002p-26 -0x1p103
-
-fma 0x1.7fp+13 0x1.0000000000001p+0 0x1.ffep-48
-fma 0x1.fffp+0 0x1.0000000000001p+0 -0x1.fffp+0
-fma 0x1.0000002p+0 0x1.ffffffcp-1 0x1p-300
-fma 0x1.0000002p+0 0x1.ffffffcp-1 -0x1p-300
-fma 0x1.deadbeef2feedp+1023 0x0.deadbeef2feedp-1022 -0x1.a05f8c01a4bfbp+1
-fma 0x1.deadbeef2feedp+900 0x0.deadbeef2feedp-1022 -0x1.a05f8c01a4bfbp-122
-fma 0x1.fffffffffffffp+1023 0x1.001p+0 -0x1.fffffffffffffp+1023
-fma -0x1.fffffffffffffp+1023 0x1.fffffffffffffp+0 0x1.fffffffffffffp+1023
-fma 0x1.fffffffffffffp+1023 2.0 -0x1.fffffffffffffp+1023
-# Bug 6801: errno setting may be missing.
-fma 0x1.6a09e667f3bccp-538 0x1.6a09e667f3bccp-538 0.0 missing-errno
-fma 0x1.deadbeef2feedp-495 0x1.deadbeef2feedp-495 -0x1.bf86a5786a574p-989
-fma 0x1.deadbeef2feedp-503 0x1.deadbeef2feedp-503 -0x1.bf86a5786a574p-1005
-fma 0x1p-537 0x1p-538 0x1p-1074
-fma 0x1.7fffff8p-968 0x1p-106 0x0.000001p-1022
-fma 0x1.4000004p-967 0x1p-106 0x0.000001p-1022
-fma 0x1.4p-967 -0x1p-106 -0x0.000001p-1022
-fma -0x1.19cab66d73e17p-959 0x1.c7108a8c5ff51p-107 -0x0.80b0ad65d9b64p-1022
-fma -0x1.d2eaed6e8e9d3p-979 -0x1.4e066c62ac9ddp-63 -0x0.9245e6b003454p-1022
-fma 0x1.153d650bb9f06p-907 0x1.2d01230d48407p-125 -0x0.b278d5acfc3cp-1022
-fma -0x1.fffffffffffffp-711 0x1.fffffffffffffp-275 0x1.fffffe00007ffp-983
-fma 0x1.4p-1022 0x1.0000000000002p-1 0x1p-1024
-fma -0x1.4p-1022 0x1.0000000000002p-1 -0x1p-1024
-fma 0x1.ffffffffffffcp-1022 0x1.0000000000001p-1 0x1p-1074
-fma -0x1.ffffffffffffcp-1022 0x1.0000000000001p-1 -0x1p-1074
-fma 0x1p-1074 0x1p-1 0x0.fffffffffffffp-1022
-fma -0x1p-1074 0x1p-1 -0x0.fffffffffffffp-1022
-fma 0x1p-1074 0x1.1p-1 0x0.fffffffffffffp-1022
-fma -0x1p-1074 0x1.1p-1 -0x0.fffffffffffffp-1022
-fma 0x1p-1074 0x1p-1074 0x1p1023
-fma 0x1p-1074 -0x1p-1074 0x1p1023
-fma 0x1p-1074 0x1p-1074 -0x1p1023
-fma 0x1p-1074 -0x1p-1074 -0x1p1023
-fma 0x1p-1074 0x1p-1074 0x1p-1022
-fma 0x1p-1074 -0x1p-1074 0x1p-1022
-fma 0x1p-1074 0x1p-1074 -0x1p-1022
-fma 0x1p-1074 -0x1p-1074 -0x1p-1022
-fma 0x1p-1074 0x1p-1074 0x0.fffffffffffffp-1022
-fma 0x1p-1074 -0x1p-1074 0x0.fffffffffffffp-1022
-fma 0x1p-1074 0x1p-1074 -0x0.fffffffffffffp-1022
-fma 0x1p-1074 -0x1p-1074 -0x0.fffffffffffffp-1022
-fma 0x1p-1074 0x1p-1074 0x1p-1074
-# Bug 6801: errno setting may be missing.
-fma 0x1p-1074 -0x1p-1074 0x1p-1074 missing-errno
-fma 0x1p-1074 0x1p-1074 -0x1p-1074 missing-errno
-fma 0x1p-1074 -0x1p-1074 -0x1p-1074
-fma 0x0.fffffffffffff8p0 0x0.fffffffffffff8p0 -0x0.fffffffffffffp0
-fma 0x0.fffffffffffff8p0 -0x0.fffffffffffff8p0 0x0.fffffffffffffp0
-fma -0x0.fffffffffffff8p0 0x0.fffffffffffff8p0 0x0.fffffffffffffp0
-fma -0x0.fffffffffffff8p0 -0x0.fffffffffffff8p0 -0x0.fffffffffffffp0
-fma 0x1.0000000000001p-1022 0x1.0000000000001p-55 0x1p1023
-fma 0x1.0000000000001p-1022 -0x1.0000000000001p-55 0x1p1023
-fma 0x1.0000000000001p-1022 0x1.0000000000001p-55 -0x1p1023
-fma 0x1.0000000000001p-1022 -0x1.0000000000001p-55 -0x1p1023
-fma 0x1.0000000000001p-1022 0x1.0000000000001p-55 0x1p970
-fma 0x1.0000000000001p-1022 -0x1.0000000000001p-55 0x1p970
-fma 0x1.0000000000001p-1022 0x1.0000000000001p-55 -0x1p970
-fma 0x1.0000000000001p-1022 -0x1.0000000000001p-55 -0x1p970
-
-fma -0x8.03fcp+3696 0xf.fffffffffffffffp-6140 0x8.3ffffffffffffffp-2450
-fma 0x9.fcp+2033 -0x8.000e1f000ff800fp-3613 -0xf.fffffffffffc0ffp-1579
-fma 0xc.7fc000003ffffffp-1194 0x8.1e0003fffffffffp+15327 -0x8.fffep+14072
-fma -0x8.0001fc000000003p+1798 0xcp-2230 0x8.f7e000000000007p-468
-fma 0xc.0000000000007ffp+10130 -0x8.000000000000001p+4430 0xc.07000000001ffffp+14513
-fma 0xb.ffffp-4777 0x8.000000fffffffffp-11612 -0x0.3800fff8p-16385
-fma 0x1.4p-16382 0x1.0000000000000004p-1 0x1p-16384
-fma -0x1.4p-16382 0x1.0000000000000004p-1 -0x1p-16384
-fma 0x1.fffffffffffffff8p-16382 0x1.0000000000000002p-1 0x1p-16445
-fma -0x1.fffffffffffffff8p-16382 0x1.0000000000000002p-1 -0x1p-16445
-fma 0x1p-16445 0x1p-1 0x0.fffffffffffffffep-16382
-fma -0x1p-16445 0x1p-1 -0x0.fffffffffffffffep-16382
-fma 0x1p-16445 0x1.1p-1 0x0.fffffffffffffffep-16382
-fma -0x1p-16445 0x1.1p-1 -0x0.fffffffffffffffep-16382
-fma 0x1p-16445 0x1p-16445 0x1p16383
-fma 0x1p-16445 -0x1p-16445 0x1p16383
-fma 0x1p-16445 0x1p-16445 -0x1p16383
-fma 0x1p-16445 -0x1p-16445 -0x1p16383
-fma 0x1p-16445 0x1p-16445 0x1p-16382
-fma 0x1p-16445 -0x1p-16445 0x1p-16382
-fma 0x1p-16445 0x1p-16445 -0x1p-16382
-fma 0x1p-16445 -0x1p-16445 -0x1p-16382
-fma 0x1p-16445 0x1p-16445 0x0.fffffffffffffffep-16382
-fma 0x1p-16445 -0x1p-16445 0x0.fffffffffffffffep-16382
-fma 0x1p-16445 0x1p-16445 -0x0.fffffffffffffffep-16382
-fma 0x1p-16445 -0x1p-16445 -0x0.fffffffffffffffep-16382
-fma 0x1p-16445 0x1p-16445 0x1p-16445
-# Bug 6801: errno setting may be missing.
-fma 0x1p-16445 -0x1p-16445 0x1p-16445 missing-errno
-fma 0x1p-16445 0x1p-16445 -0x1p-16445 missing-errno
-fma 0x1p-16445 -0x1p-16445 -0x1p-16445
-fma 0x0.ffffffffffffffffp0 0x0.ffffffffffffffffp0 -0x0.fffffffffffffffep0
-fma 0x0.ffffffffffffffffp0 -0x0.ffffffffffffffffp0 0x0.fffffffffffffffep0
-fma -0x0.ffffffffffffffffp0 0x0.ffffffffffffffffp0 0x0.fffffffffffffffep0
-fma -0x0.ffffffffffffffffp0 -0x0.ffffffffffffffffp0 -0x0.fffffffffffffffep0
-fma 0x1.0000000000000002p-16382 0x1.0000000000000002p-66 0x1p16383
-fma 0x1.0000000000000002p-16382 -0x1.0000000000000002p-66 0x1p16383
-fma 0x1.0000000000000002p-16382 0x1.0000000000000002p-66 -0x1p16383
-fma 0x1.0000000000000002p-16382 -0x1.0000000000000002p-66 -0x1p16383
-fma 0x1.0000000000000002p-16382 0x1.0000000000000002p-66 0x1p16319
-fma 0x1.0000000000000002p-16382 -0x1.0000000000000002p-66 0x1p16319
-fma 0x1.0000000000000002p-16382 0x1.0000000000000002p-66 -0x1p16319
-fma 0x1.0000000000000002p-16382 -0x1.0000000000000002p-66 -0x1p16319
-
-fma 0x1.bb2de33e02ccbbfa6e245a7c1f71p-2584 -0x1.6b500daf0580d987f1bc0cadfcddp-13777 0x1.613cd91d9fed34b33820e5ab9d8dp-16378
-fma -0x1.f949b880cacb0f0c61540105321dp-5954 -0x1.3876cec84b4140f3bd6198731b7ep-10525 -0x0.a5dc1c6cfbc498c54fb0b504bf19p-16382
-fma -0x1.0000fffffffffp-16221 0x1.0000001fffff8007fep-239 0x0.ff87ffffffffffffe000003fffffp-16382
-fma -0x1.ac79c9376ef447f3827c9e9de008p-2228 -0x1.5ba830022b6139e21fbe7270cad8p-6314 0x1.e8282b6a26bb6a9daf5c8e73e9f9p-8616
-fma -0x1.c69749ec574caaa2ab8e97ddb9f3p+2652 0x1.f34235ff9d095449c29b4831b62dp+3311 0x1.fbe4302df23354dbd0c4d3cfe606p+5879
-fma -0x1.ca8835fc6ecfb5398625fc891be5p-1686 0x1.621e1972bbe2180e5be9dd7d8df5p-7671 -0x1.7d2d21b73b52cf20dec2a83902a4p-9395
-fma -0x1.55cff679ec49c2541fab41fc843ep-11819 0x1.e60e9f464f9e8df0509647c7c971p+12325 0x1.eaa2a7649d765c2f564f7a5beca7p+454
-fma 0x1.f0e7b1454908576f2537d863cf9bp+11432 0x1.cdce52f09d4ca76e68706f34b5d5p-1417 -0x1.2e986187c70f146235ea2066e486p+9979
-fma 0x1.f102f7da4a57a3a4aab620e29452p-3098 -0x1.cc06a4ff40248f9e2dcc4b6afd84p-11727 0x1.d512a11126b5ac8ed8973b8580c8p-14849
-fma -0x1.fc47ac7434b993cd8dcb2b431f25p-3816 0x1.fbc9750da8468852d84558e1db6dp-5773 -0x1.00a98abf783f75c40fe5b7a37d86p-9607
-fma 0x1.00000000000007ffffffffffffffp-9045 -0x1.ffffffffffff80000001ffffffffp+4773 -0x1.f8p-4316
-fma 0x1.4e922764c90701d4a2f21d01893dp-8683 -0x1.955a12e2d7c9447c27fa022fc865p+212 -0x1.e9634462eaef96528b90b6944578p-8521
-fma 0x1.801181509c03bdbef10d6165588cp-15131 0x1.ad86f8e57d3d40bfa8007780af63p-368 -0x1.6e9df0dab1c9f1d7a6043c390741p-15507
-fma 0x1.ffffffffffffffp0 0x1.000000000000008p0 -0x1p-1000
-fma 0x1.4p-16382 0x1.0000000000000000000000000002p-1 0x1p-16384
-fma -0x1.4p-16382 0x1.0000000000000000000000000002p-1 -0x1p-16384
-fma 0x1.fffffffffffffffffffffffffffcp-16382 0x1.0000000000000000000000000001p-1 0x1p-16494
-fma -0x1.fffffffffffffffffffffffffffcp-16382 0x1.0000000000000000000000000001p-1 -0x1p-16494
-fma 0x1p-16494 0x1p-1 0x0.ffffffffffffffffffffffffffffp-16382
-fma -0x1p-16494 0x1p-1 -0x0.ffffffffffffffffffffffffffffp-16382
-fma 0x1p-16494 0x1.1p-1 0x0.ffffffffffffffffffffffffffffp-16382
-fma -0x1p-16494 0x1.1p-1 -0x0.ffffffffffffffffffffffffffffp-16382
-fma 0x1p-16494 0x1p-16494 0x1p16383
-fma 0x1p-16494 -0x1p-16494 0x1p16383
-fma 0x1p-16494 0x1p-16494 -0x1p16383
-fma 0x1p-16494 -0x1p-16494 -0x1p16383
-fma 0x1p-16494 0x1p-16494 0x1p-16382
-fma 0x1p-16494 -0x1p-16494 0x1p-16382
-fma 0x1p-16494 0x1p-16494 -0x1p-16382
-fma 0x1p-16494 -0x1p-16494 -0x1p-16382
-fma 0x1p-16494 0x1p-16494 0x0.ffffffffffffffffffffffffffffp-16382
-fma 0x1p-16494 -0x1p-16494 0x0.ffffffffffffffffffffffffffffp-16382
-fma 0x1p-16494 0x1p-16494 -0x0.ffffffffffffffffffffffffffffp-16382
-fma 0x1p-16494 -0x1p-16494 -0x0.ffffffffffffffffffffffffffffp-16382
-fma 0x1p-16494 0x1p-16494 0x1p-16494
-# Bug 6801: errno setting may be missing.
-fma 0x1p-16494 -0x1p-16494 0x1p-16494 missing-errno
-fma 0x1p-16494 0x1p-16494 -0x1p-16494 missing-errno
-fma 0x1p-16494 -0x1p-16494 -0x1p-16494
-fma 0x0.ffffffffffffffffffffffffffff8p0 0x0.ffffffffffffffffffffffffffff8p0 -0x0.ffffffffffffffffffffffffffffp0
-fma 0x0.ffffffffffffffffffffffffffff8p0 -0x0.ffffffffffffffffffffffffffff8p0 0x0.ffffffffffffffffffffffffffffp0
-fma -0x0.ffffffffffffffffffffffffffff8p0 0x0.ffffffffffffffffffffffffffff8p0 0x0.ffffffffffffffffffffffffffffp0
-fma -0x0.ffffffffffffffffffffffffffff8p0 -0x0.ffffffffffffffffffffffffffff8p0 -0x0.ffffffffffffffffffffffffffffp0
-fma 0x1.0000000000000000000000000001p-16382 0x1.0000000000000000000000000001p-66 0x1p16383
-fma 0x1.0000000000000000000000000001p-16382 -0x1.0000000000000000000000000001p-66 0x1p16383
-fma 0x1.0000000000000000000000000001p-16382 0x1.0000000000000000000000000001p-66 -0x1p16383
-fma 0x1.0000000000000000000000000001p-16382 -0x1.0000000000000000000000000001p-66 -0x1p16383
-fma 0x1.0000000000000000000000000001p-16382 0x1.0000000000000000000000000001p-66 0x1p16319
-fma 0x1.0000000000000000000000000001p-16382 -0x1.0000000000000000000000000001p-66 0x1p16319
-fma 0x1.0000000000000000000000000001p-16382 0x1.0000000000000000000000000001p-66 -0x1p16319
-fma 0x1.0000000000000000000000000001p-16382 -0x1.0000000000000000000000000001p-66 -0x1p16319
 
 hypot 0 0
 hypot 0 -0
@@ -1454,14 +1033,6 @@ log1p min missing-underflow
 log1p min_subnorm missing-underflow
 log1p -min missing-underflow
 log1p -min_subnorm missing-underflow
-log1p 0x1p10
-log1p 0x1p20
-log1p 0x1p30
-log1p 0x1p50
-log1p 0x1p60
-log1p 0x1p100
-log1p 0x1p1000
-log1p max
 
 log2 1
 log2 e
@@ -1646,71 +1217,6 @@ pow -max 0x1.ffffffffffffffffffffffffffffp+112
 pow -max 0x1.ffffffffffffffffffffffffffffp+113
 pow -max max
 
-pow -0x1p65 2
-pow -0x1p65 3
-pow -0x1p65 4
-pow -0x1p65 5
-pow -0x1p43 3
-pow -0x1p43 4
-pow -0x1p43 5
-pow -0x1p33 4
-pow -0x1p33 5
-pow -0x1p26 5
-pow -0x1p-65 -2
-pow -0x1p-65 -3
-pow -0x1p-65 -4
-pow -0x1p-65 -5
-pow -0x1p-43 -3
-pow -0x1p-43 -4
-pow -0x1p-43 -5
-pow -0x1p-33 -4
-pow -0x1p-33 -5
-pow -0x1p-26 -5
-
-pow -0x1p513 2
-pow -0x1p513 3
-pow -0x1p513 4
-pow -0x1p513 5
-pow -0x1p342 3
-pow -0x1p342 4
-pow -0x1p342 5
-pow -0x1p257 4
-pow -0x1p257 5
-pow -0x1p205 5
-pow -0x1p-513 -2
-pow -0x1p-513 -3
-pow -0x1p-513 -4
-pow -0x1p-513 -5
-pow -0x1p-342 -3
-pow -0x1p-342 -4
-pow -0x1p-342 -5
-pow -0x1p-257 -4
-pow -0x1p-257 -5
-pow -0x1p-205 -5
-
-pow -0x1p8192 2
-pow -0x1p8192 3
-pow -0x1p8192 4
-pow -0x1p8192 5
-pow -0x1p5462 3
-pow -0x1p5462 4
-pow -0x1p5462 5
-pow -0x1p4097 4
-pow -0x1p4097 5
-pow -0x1p3277 5
-pow -0x1p64 257
-pow -0x1p-8192 -2
-pow -0x1p-8192 -3
-pow -0x1p-8192 -4
-pow -0x1p-8192 -5
-pow -0x1p-5462 -3
-pow -0x1p-5462 -4
-pow -0x1p-5462 -5
-pow -0x1p-4097 -4
-pow -0x1p-4097 -5
-pow -0x1p-3277 -5
-pow -0x1p-64 -257
-
 pow -0.5 126
 pow -0.5 127
 pow -0.5 -126
@@ -1867,7 +1373,6 @@ sin 7
 sin 8
 sin 9
 sin 10
-sin 0x1.2001469775ce6p32
 
 sincos 0
 sincos -0
@@ -2491,8 +1996,6 @@ y0 0x1p-80
 y0 0x1p-90
 y0 0x1p-100
 y0 0x1p-110
-y0 min
-y0 min_subnorm
 
 y1 0.125
 y1 0.75
@@ -2517,8 +2020,6 @@ y1 0x1p-80
 y1 0x1p-90
 y1 0x1p-100
 y1 0x1p-110
-y1 min
-y1 min_subnorm
 
 # yn (0, x) == y0 (x).
 yn 0 0.125
@@ -2563,22 +2064,3 @@ yn 2 0x1.ffff62p+99
 yn 2 0x1p127
 yn 2 0x1p1023
 yn 2 0x1p16383
-
-yn 0 min
-yn 0 min_subnorm
-yn 1 min
-yn 1 min_subnorm
-yn -1 min
-yn -1 min_subnorm
-yn 2 min
-yn 2 min_subnorm
-yn -2 min
-yn -2 min_subnorm
-yn 17 min
-yn 17 min_subnorm
-yn -17 min
-yn -17 min_subnorm
-yn 42 min
-yn 42 min_subnorm
-yn -42 min
-yn -42 min_subnorm

@@ -1,6 +1,6 @@
 /* bcopy -- copy a block from source to destination.  S/390 version.
    This file is part of the GNU C Library.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ ENTRY(__bcopy)
 #ifdef PIC
         al     %r1,.L9-.L8(%r1)     # get address of global offset table
                                     # load address of memmove
-        l      %r1,memmove@GOT(%r1)
+        l      %r1,memmove@GOT12(%r1)
         br     %r1
 .L9:    .long  _GLOBAL_OFFSET_TABLE_-.L8
 #else

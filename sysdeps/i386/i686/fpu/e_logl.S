@@ -39,23 +39,14 @@ ENTRY(__ieee754_logl)
 	LOAD_PIC_REG (dx)
 #endif
 	fld	%st		// x : x : log(2)
-	movzwl	4+8(%esp), %eax
-	cmpl	$0xc000, %eax
-	jae	5f		// x <= -2, avoid overflow from -LDBL_MAX - 1.
 	fsubl	MO(one)		// x-1 : x : log(2)
-5:	fld	%st		// x-1 : x-1 : x : log(2)
+	fld	%st		// x-1 : x-1 : x : log(2)
 	fabs			// |x-1| : x-1 : x : log(2)
 	fld	MO(limit)	// 0.29 : |x-1| : x-1 : x : log(2)
 	fcomip	%st(1)		// |x-1| : x-1 : x : log(2)
 	fstp	%st(0)		// x-1 : x : log(2)
 	jc	2f
-	fxam
-	fnstsw
-	andb	$0x45, %ah
-	cmpb	$0x40, %ah
-	jne	4f
-	fabs			// log(1) is +0 in all rounding modes.
-4:	fstp	%st(1)		// x-1 : log(2)
+	fstp	%st(1)		// x-1 : log(2)
 	fyl2xp1			// log(x)
 	ret
 

@@ -4,12 +4,10 @@ libc = libc0.1
 
 # Build and expect pt_chown on this platform
 pt_chown = yes
-# Expect pldd on this platform
-pldd = no
 
 # NPTL Config
 threads = yes
-libc_add-ons = fbtl $(add-ons)
+libc_add-ons = ports fbtl $(add-ons)
 libc_extra_config_options = $(extra_config_options)
 
 ifndef KFREEBSD_SOURCE
