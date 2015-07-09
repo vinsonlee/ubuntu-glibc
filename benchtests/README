@@ -8,9 +8,7 @@ basic performance properties of the function.
 Running the benchmark:
 =====================
 
-The benchmark needs python 2.7 or later in addition to the
-dependencies required to build the GNU C Library.  One may run the
-benchmark by invoking make as follows:
+The benchmark can be executed by invoking make as follows:
 
   $ make bench
 
@@ -60,9 +58,6 @@ one to add `foo' to the bench tests:
   - include-sources: This should be assigned a comma-separated list of source
     files that need to be included to provide definitions of global variables
     and functions (specifically, this includes using "#include "source").
-    See pthread_once-inputs and pthreads_once-source.c for an example of how
-    to use this to benchmark a function that needs state across several calls.
-  - init: Name of an initializer function to call to initialize the benchtest.
   - name: See following section for instructions on how to use this directive.
 
   Lines beginning with a single hash '#' are treated as comments.  See

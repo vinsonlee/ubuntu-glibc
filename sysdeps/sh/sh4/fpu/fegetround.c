@@ -1,5 +1,5 @@
 /* Return current rounding direction.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@arthur.rhein-neckar.de>, 1998.
 
@@ -21,7 +21,7 @@
 #include <fpu_control.h>
 
 int
-__fegetround (void)
+fegetround (void)
 {
   fpu_control_t cw;
 
@@ -30,6 +30,4 @@ __fegetround (void)
 
   return cw & 0x1;
 }
-libm_hidden_def (__fegetround)
-weak_alias (__fegetround, fegetround)
-libm_hidden_weak (fegetround)
+libm_hidden_def (fegetround)

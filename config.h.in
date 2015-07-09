@@ -24,6 +24,9 @@
 /* Define if weak symbols are available via the `.weakext' directive.  */
 #undef	HAVE_ASM_WEAKEXT_DIRECTIVE
 
+/* Define if CFI directives are available.  */
+#undef	HAVE_ASM_CFI_DIRECTIVES
+
 /* Define to the assembler line separator character for multiple
    assembler instructions per line.  Default is `;'  */
 #undef ASM_LINE_SEP
@@ -54,6 +57,9 @@
    directive.  */
 #undef	HAVE_ASM_POPSECTION_DIRECTIVE
 
+/* Defined to the oldest ABI we support, like 2.1.  */
+#undef GLIBC_OLDEST_ABI
+
 /* Define if static NSS modules are wanted.  */
 #undef	DO_STATIC_NSS
 
@@ -66,6 +72,10 @@
 /* Define if the regparm attribute shall be used for local functions
    (gcc on ix86 only).  */
 #undef	USE_REGPARMS
+
+/* Defined on PowerPC if the GCC being used has a problem with clobbering
+   certain registers (CR0, MQ, CTR, LR) in asm statements.  */
+#undef	BROKEN_PPC_ASM_CR0
 
 /* Defined on SPARC if GCC emits GOTDATA relocations.  */
 #undef  HAVE_GCC_GOTDATA
@@ -88,20 +98,8 @@
 /* Define if gcc supports VEX encoding.  */
 #undef	HAVE_SSE2AVX_SUPPORT
 
-/* Define if compiler supports AVX512.  */
-#undef  HAVE_AVX512_SUPPORT
-
-/* Define if assembler supports AVX512.  */
-#undef  HAVE_AVX512_ASM_SUPPORT
-
-/* Define if assembler supports Intel MPX.  */
-#undef  HAVE_MPX_SUPPORT
-
 /* Define if gcc supports FMA4.  */
 #undef	HAVE_FMA4_SUPPORT
-
-/* Define if gcc supports AVX2.  */
-#undef	HAVE_AVX2_SUPPORT
 
 /* Define if the compiler\'s exception support is based on libunwind.  */
 #undef	HAVE_CC_WITH_LIBUNWIND
@@ -191,14 +189,11 @@
 /* Define if the dynamic linker should consult an ld.so.cache file.  */
 #undef USE_LDCONFIG
 
-/* Define to 1 if STT_GNU_IFUNC support actually works.  */
-#define HAVE_IFUNC 0
+/* Define if STT_GNU_IFUNC support actually works.  */
+#undef HAVE_IFUNC
 
 /* Define if linux/fanotify.h is available.  */
 #undef HAVE_LINUX_FANOTIFY_H
-
-/* Define if the linker defines __ehdr_start.  */
-#undef HAVE_EHDR_START
 
 /*
  */
@@ -243,21 +238,11 @@
 /* The ARM hard-float ABI is being used.  */
 #undef HAVE_ARM_PCS_VFP
 
-/* The ARM movw/movt instructions using PC-relative relocs work right.  */
-#define ARM_PCREL_MOVW_OK 0
-
 /* The pt_chown binary is being built and used by grantpt.  */
-#define HAVE_PT_CHOWN 0
-
-/* Define if the compiler supports __builtin_trap without
-   any external dependencies such as making a function call.  */
-#define HAVE_BUILTIN_TRAP 0
+#undef HAVE_PT_CHOWN
 
 /* ports/sysdeps/mips/configure.in  */
 /* Define if using the IEEE 754-2008 NaN encoding on the MIPS target.  */
 #undef HAVE_MIPS_NAN2008
-
-/* The PowerPC64 ELFv2 ABI is being used.  */
-#undef HAVE_ELFV2_ABI
 
 #endif

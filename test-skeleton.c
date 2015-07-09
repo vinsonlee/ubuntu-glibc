@@ -1,5 +1,5 @@
 /* Skeleton for test programs.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -17,12 +17,9 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <getopt.h>
 #include <malloc.h>
-#include <paths.h>
 #include <search.h>
 #include <signal.h>
 #include <stdio.h>
@@ -139,10 +136,7 @@ signal_handler (int sig __attribute__ ((unused)))
   int killed;
   int status;
 
-  assert (pid > 1);
-  /* Kill the whole process group.  */
-  kill (-pid, SIGKILL);
-  /* In case setpgid failed in the child, kill it individually too.  */
+  /* Send signal.  */
   kill (pid, SIGKILL);
 
   /* Wait for it to terminate.  */
@@ -164,7 +158,7 @@ signal_handler (int sig __attribute__ ((unused)))
     }
   if (killed != 0 && killed != pid)
     {
-      printf ("Failed to kill test process: %m\n");
+      perror ("Failed to kill test process");
       exit (1);
     }
 
@@ -185,45 +179,19 @@ signal_handler (int sig __attribute__ ((unused)))
 #endif
 
   if (killed == 0 || (WIFSIGNALED (status) && WTERMSIG (status) == SIGKILL))
-    puts ("Timed out: killed the child process");
+    fputs ("Timed out: killed the child process\n", stderr);
   else if (WIFSTOPPED (status))
-    printf ("Timed out: the child process was %s\n",
-	    strsignal (WSTOPSIG (status)));
+    fprintf (stderr, "Timed out: the child process was %s\n",
+	     strsignal (WSTOPSIG (status)));
   else if (WIFSIGNALED (status))
-    printf ("Timed out: the child process got signal %s\n",
-	    strsignal (WTERMSIG (status)));
+    fprintf (stderr, "Timed out: the child process got signal %s\n",
+	     strsignal (WTERMSIG (status)));
   else
-    printf ("Timed out: killed the child process but it exited %d\n",
-	    WEXITSTATUS (status));
+    fprintf (stderr, "Timed out: killed the child process but it exited %d\n",
+	     WEXITSTATUS (status));
 
   /* Exit with an error.  */
   exit (1);
-}
-
-/* Set fortification error handler.  Used when tests want to verify that bad
-   code is caught by the library.  */
-static void
-__attribute__ ((unused))
-set_fortify_handler (void (*handler) (int sig))
-{
-  struct sigaction sa;
-
-  sa.sa_handler = handler;
-  sa.sa_flags = 0;
-  sigemptyset (&sa.sa_mask);
-
-  sigaction (SIGABRT, &sa, NULL);
-
-  /* Avoid all the buffer overflow messages on stderr.  */
-  int fd = open (_PATH_DEVNULL, O_WRONLY);
-  if (fd == -1)
-    close (STDERR_FILENO);
-  else
-    {
-      dup2 (fd, STDERR_FILENO);
-      close (fd);
-    }
-  setenv ("LIBC_FATAL_STDERR_", "1", 1);
 }
 
 /* We provide the entry point here.  */
@@ -279,7 +247,7 @@ main (int argc, char *argv[])
 
       if (chdir (test_dir) < 0)
 	{
-	  printf ("chdir: %m\n");
+	  perror ("chdir");
 	  exit (1);
 	}
     }
@@ -338,23 +306,22 @@ main (int argc, char *argv[])
 	    data_limit.rlim_cur = MIN ((rlim_t) TEST_DATA_LIMIT,
 				       data_limit.rlim_max);
 	  if (setrlimit (RLIMIT_DATA, &data_limit) < 0)
-	    printf ("setrlimit: RLIMIT_DATA: %m\n");
+	    perror ("setrlimit: RLIMIT_DATA");
 	}
       else
-	printf ("getrlimit: RLIMIT_DATA: %m\n");
+	perror ("getrlimit: RLIMIT_DATA");
 #endif
 
       /* We put the test process in its own pgrp so that if it bogusly
 	 generates any job control signals, they won't hit the whole build.  */
-      if (setpgid (0, 0) != 0)
-	printf ("Failed to set the process group ID: %m\n");
+      setpgid (0, 0);
 
       /* Execute the test function and exit with the return value.   */
       exit (TEST_FUNCTION);
     }
   else if (pid < 0)
     {
-      printf ("Cannot fork test program: %m\n");
+      perror ("Cannot fork test program");
       exit (1);
     }
 
@@ -383,46 +350,41 @@ main (int argc, char *argv[])
       exit (1);
     }
 
-  /* Process terminated normaly without timeout etc.  */
-  if (WIFEXITED (status))
-    {
-#ifndef EXPECTED_STATUS
-# ifndef EXPECTED_SIGNAL
-      /* Simply exit with the return value of the test.  */
-      return WEXITSTATUS (status);
-# else
-      printf ("Expected signal '%s' from child, got none\n",
-	      strsignal (EXPECTED_SIGNAL));
-      exit (1);
-# endif
-#else
-      if (WEXITSTATUS (status) != EXPECTED_STATUS)
-        {
-          printf ("Expected status %d, got %d\n",
-	          EXPECTED_STATUS, WEXITSTATUS (status));
-          exit (1);
-        }
-
-      return 0;
-#endif
-    }
-  /* Process was killed by timer or other signal.  */
-  else
-    {
 #ifndef EXPECTED_SIGNAL
-      printf ("Didn't expect signal from child: got `%s'\n",
-	      strsignal (WTERMSIG (status)));
-      exit (1);
-#else
-      if (WTERMSIG (status) != EXPECTED_SIGNAL)
-	{
-	  printf ("Incorrect signal from child: got `%s', need `%s'\n",
-		  strsignal (WTERMSIG (status)),
-		  strsignal (EXPECTED_SIGNAL));
-	  exit (1);
-	}
-
-      return 0;
+  /* We don't expect any signal.  */
+# define EXPECTED_SIGNAL 0
 #endif
+  if (WTERMSIG (status) != EXPECTED_SIGNAL)
+    {
+      if (EXPECTED_SIGNAL != 0)
+	{
+	  if (WTERMSIG (status) == 0)
+	    fprintf (stderr,
+		     "Expected signal '%s' from child, got none\n",
+		     strsignal (EXPECTED_SIGNAL));
+	  else
+	    fprintf (stderr,
+		     "Incorrect signal from child: got `%s', need `%s'\n",
+		     strsignal (WTERMSIG (status)),
+		     strsignal (EXPECTED_SIGNAL));
+	}
+      else
+	fprintf (stderr, "Didn't expect signal from child: got `%s'\n",
+		 strsignal (WTERMSIG (status)));
+      exit (1);
     }
+
+  /* Simply exit with the return value of the test.  */
+#ifndef EXPECTED_STATUS
+  return WEXITSTATUS (status);
+#else
+  if (WEXITSTATUS (status) != EXPECTED_STATUS)
+    {
+      fprintf (stderr, "Expected status %d, got %d\n",
+	       EXPECTED_STATUS, WEXITSTATUS (status));
+      exit (1);
+    }
+
+  return 0;
+#endif
 }

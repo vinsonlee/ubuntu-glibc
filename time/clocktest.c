@@ -28,9 +28,9 @@ main (int argc, char ** argv)
   while (!gotit);
   stop = clock ();
 
-  printf ("%jd clock ticks per second (start=%jd,stop=%jd)\n",
-	  (intmax_t) (stop - start), (intmax_t) start, (intmax_t) stop);
-  printf ("CLOCKS_PER_SEC=%jd, sysconf(_SC_CLK_TCK)=%ld\n",
-	  (intmax_t) CLOCKS_PER_SEC, sysconf(_SC_CLK_TCK));
+  printf ("%ld clock ticks per second (start=%ld,stop=%ld)\n",
+	  stop - start, start, stop);
+  printf ("CLOCKS_PER_SEC=%ld, sysconf(_SC_CLK_TCK)=%ld\n",
+	  CLOCKS_PER_SEC, sysconf(_SC_CLK_TCK));
   return 0;
 }

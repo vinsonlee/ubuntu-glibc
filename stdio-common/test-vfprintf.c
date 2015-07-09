@@ -1,5 +1,5 @@
 /* Tests of *printf for very large strings.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2000.
 
@@ -25,7 +25,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <libc-internal.h>
 
 
 const char *locs[] =
@@ -37,8 +36,8 @@ const char *locs[] =
 
 char large[50000];
 
-static int
-do_test (void)
+int
+main (void)
 {
   char buf[25];
   size_t i;
@@ -93,13 +92,7 @@ do_test (void)
       fprintf (fp, "%s", large);
       fprintf (fp, "%.*s", 30000, large);
       large[20000] = '\0';
-      /* We're testing a large format string here and need to generate it
-         to avoid this source file being ridiculous.  So disable the warning
-         about a generated format string.  */
-      DIAG_PUSH_NEEDS_COMMENT;
-      DIAG_IGNORE_NEEDS_COMMENT (4.9, "-Wformat-security");
       fprintf (fp, large);
-      DIAG_POP_NEEDS_COMMENT;
       fprintf (fp, "%-1.300000000s", "hello");
 
       if (fflush (fp) != 0 || ferror (fp) != 0 || fclose (fp) != 0)
@@ -131,6 +124,3 @@ do_test (void)
 
   return res;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

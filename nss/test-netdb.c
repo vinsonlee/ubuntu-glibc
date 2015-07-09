@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 1998.
 
@@ -356,8 +356,8 @@ setdb (const char *dbname)
 }
 
 
-static int
-do_test (void)
+int
+main (void)
 {
   /*
     setdb ("db");
@@ -376,6 +376,3 @@ do_test (void)
 
   return (error_count != 0);
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

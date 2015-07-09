@@ -1,5 +1,5 @@
 /* Double-precision floating point 2^x.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Geoffrey Keating <geoffk@ozemail.com.au>
 
@@ -43,10 +43,10 @@ __ieee754_exp2 (double x)
   static const double lomark = (double) (DBL_MIN_EXP - DBL_MANT_DIG - 1);
 
   /* Check for usual case.  */
-  if (__glibc_likely (isless (x, himark)))
+  if (__builtin_expect (isless (x, himark), 1))
     {
       /* Exceptional cases:  */
-      if (__glibc_unlikely (!isgreaterequal (x, lomark)))
+      if (__builtin_expect (!isgreaterequal (x, lomark), 0))
 	{
 	  if (__isinf (x))
 	    /* e^-inf == 0, with no error.  */

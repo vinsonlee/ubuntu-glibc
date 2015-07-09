@@ -1,6 +1,6 @@
 /* Functions to compute SHA256 message digest of files or memory blocks.
    according to the definition of SHA256 in FIPS 180-2.
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -125,7 +125,7 @@ __sha256_finish_ctx (ctx, resbuf)
   memcpy (&ctx->buffer[bytes], fillbuf, pad);
 
   /* Put the 64-bit file length in *bits* at the end of the buffer.  */
-#if _STRING_ARCH_unaligned
+#ifdef _STRING_ARCH_unaligned
   ctx->buffer64[(bytes + pad) / 8] = SWAP64 (ctx->total64 << 3);
 #else
   ctx->buffer32[(bytes + pad + 4) / 4] = SWAP (ctx->total[TOTAL64_low] << 3);

@@ -1,6 +1,6 @@
 /* Multiple versions of strcat
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -43,7 +43,7 @@
 /* Define multiple versions only for the definition in libc.  Don't
    define multiple versions for strncat in static library since we
    need strncat before the initialization happened.  */
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 
 # ifdef SHARED
 	.text
