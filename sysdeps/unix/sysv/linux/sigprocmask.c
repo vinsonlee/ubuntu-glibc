@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,13 +17,13 @@
 
 #include <errno.h>
 #include <signal.h>
-#include <string.h>  /* Needed for string function builtin redirection.  */
+#include <string.h>	/* Neede for string function builtin redirection.  */
 #include <unistd.h>
 
 #include <sysdep.h>
 #include <sys/syscall.h>
 
-#include <nptl/pthreadP.h>              /* SIGCANCEL, SIGSETXID */
+#include <kernel-features.h>
 
 
 /* Get and/or change the set of blocked signals.  */

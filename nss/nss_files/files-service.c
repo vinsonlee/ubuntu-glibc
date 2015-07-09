@@ -1,5 +1,5 @@
 /* Services file parser in nss_files module.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -44,11 +44,8 @@ DB_LOOKUP (servbyname, ':',
 	   {
 	     /* Must match both protocol (if specified) and name.  */
 	     if (proto != NULL && strcmp (result->s_proto, proto))
-	       /* A continue statement here breaks nss_db, because it
-		bypasses advancing to the next db entry, and it
-		doesn't make nss_files any more efficient.  */;
-	     else
-	       LOOKUP_NAME (s_name, s_aliases)
+	       continue;
+	     LOOKUP_NAME (s_name, s_aliases)
 	   },
 	   const char *name, const char *proto)
 

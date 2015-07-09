@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ __memset_chk (dstpp, c, len, dstlen)
      size_t len;
      size_t dstlen;
 {
-  if (__glibc_unlikely (dstlen < len))
+  if (__builtin_expect (dstlen < len, 0))
     __chk_fail ();
 
   return memset (dstpp, c, len);

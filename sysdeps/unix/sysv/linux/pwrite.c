@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -23,6 +23,8 @@
 
 #include <sysdep-cancel.h>
 #include <sys/syscall.h>
+
+#include <kernel-features.h>
 
 #ifdef __NR_pwrite64		/* Newer kernels renamed but it's the same.  */
 # ifdef __NR_pwrite
@@ -49,7 +51,11 @@ do_pwrite (int fd, const void *buf, size_t count, off_t offset)
 
 
 ssize_t
-__libc_pwrite (int fd, const void *buf, size_t count, off_t offset)
+__libc_pwrite (fd, buf, count, offset)
+     int fd;
+     const void *buf;
+     size_t count;
+     off_t offset;
 {
   if (SINGLE_THREAD_P)
     return do_pwrite (fd, buf, count, offset);

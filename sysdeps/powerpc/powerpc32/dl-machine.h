@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  PowerPC version.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -148,7 +148,6 @@ __elf_preferred_address(struct link_map *loader, size_t maplength,
 
 /* The PowerPC never uses REL relocations.  */
 #define ELF_MACHINE_NO_REL 1
-#define ELF_MACHINE_NO_RELA 0
 
 /* Set up the loaded object described by MAP so its unrelocated PLT
    entries will jump to the on-demand fixup code in dl-runtime.c.
@@ -178,7 +177,7 @@ elf_machine_runtime_setup (struct link_map *map,
       extern void _dl_runtime_resolve (void);
       extern void _dl_prof_resolve (void);
 
-      if (__glibc_likely (!profile))
+      if (__builtin_expect (!profile, 1))
 	dlrr = _dl_runtime_resolve;
       else
 	{
@@ -288,7 +287,7 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
       return;
     }
 
-  if (__glibc_unlikely (r_type == R_PPC_NONE))
+  if (__builtin_expect (r_type == R_PPC_NONE, 0))
     return;
 
   /* binutils on ppc32 includes st_value in r_addend for relocations

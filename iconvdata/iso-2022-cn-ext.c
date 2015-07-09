@@ -1,5 +1,5 @@
 /* Conversion module for ISO-2022-CN-EXT.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
@@ -47,7 +47,6 @@
 #define CHARSET_NAME		"ISO-2022-CN-EXT//"
 #define DEFINE_INIT		1
 #define DEFINE_FINI		1
-#define ONE_DIRECTION		0
 #define FROM_LOOP		from_iso2022cn_ext_loop
 #define TO_LOOP			to_iso2022cn_ext_loop
 #define FROM_LOOP_MIN_NEEDED_FROM	1
@@ -138,7 +137,7 @@ enum
 	{								      \
 	  /* We are not in the initial state.  To switch back we have	      \
 	     to emit `SI'.  */						      \
-	  if (__glibc_unlikely (outbuf == outend))			      \
+	  if (__builtin_expect (outbuf == outend, 0))			      \
 	    /* We don't have enough room in the output buffer.  */	      \
 	    status = __GCONV_FULL_OUTPUT;				      \
 	  else								      \

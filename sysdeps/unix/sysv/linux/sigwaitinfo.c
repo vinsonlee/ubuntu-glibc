@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <nptl/pthreadP.h>
 #include <sysdep-cancel.h>
 #include <sys/syscall.h>
 
@@ -68,7 +67,9 @@ do_sigwaitinfo (const sigset_t *set, siginfo_t *info)
 
 /* Return any pending signal or wait for one for the given time.  */
 int
-__sigwaitinfo (const sigset_t *set, siginfo_t *info)
+__sigwaitinfo (set, info)
+     const sigset_t *set;
+     siginfo_t *info;
 {
   if (SINGLE_THREAD_P)
     return do_sigwaitinfo (set, info);

@@ -24,5 +24,4 @@ prepare (void)
 
 
 #define ATTR &a
-#define ATTR_NULL false
 #include "tst-mutex1.c"

@@ -2,7 +2,7 @@
 
    This module uses the Z9-109 variants of the Convert Unicode
    instructions.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
    Author: Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
    Based on the work by Ulrich Drepper  <drepper@cygnus.com>, 1997.
@@ -44,7 +44,6 @@
 #define FROM_LOOP		from_utf16_loop
 #define TO_LOOP			to_utf16_loop
 #define FROM_DIRECTION		(dir == from_utf16)
-#define ONE_DIRECTION           0
 #define PREPARE_LOOP							\
   enum direction dir = ((struct utf16_data *) step->__data)->dir;	\
   int emit_bom = ((struct utf16_data *) step->__data)->emit_bom;	\
@@ -55,7 +54,7 @@
       if (dir == to_utf16)						\
 	{								\
           /* Emit the UTF-16 Byte Order Mark.  */			\
-          if (__glibc_unlikely (outbuf + 2 > outend))			      \
+          if (__builtin_expect (outbuf + 2 > outend, 0))		\
 	    return __GCONV_FULL_OUTPUT;					\
 									\
 	  put16u (outbuf, BOM_UTF16);					\
@@ -64,7 +63,7 @@
       else								\
 	{								\
           /* Emit the UTF-32 Byte Order Mark.  */			\
-	  if (__glibc_unlikely (outbuf + 4 > outend))			      \
+	  if (__builtin_expect (outbuf + 4 > outend, 0))		\
 	    return __GCONV_FULL_OUTPUT;					\
 									\
 	  put32u (outbuf, BOM_UTF32);					\
@@ -237,13 +236,13 @@ gconv_end (struct __gconv_step *data)
       {									\
         /* An isolated low-surrogate was found.  This has to be         \
 	   considered ill-formed.  */					\
-        if (__glibc_unlikely (u1 >= 0xdc00))				      \
+        if (__builtin_expect (u1 >= 0xdc00, 0))				\
 	  {								\
 	    STANDARD_FROM_LOOP_ERR_HANDLER (2);				\
 	  }								\
 	/* It's a surrogate character.  At least the first word says	\
 	   it is.  */							\
-	if (__glibc_unlikely (inptr + 4 > inend))			      \
+	if (__builtin_expect (inptr + 4 > inend, 0))			\
 	  {								\
 	    /* We don't have enough input for another complete input	\
 	       character.  */						\
@@ -307,7 +306,7 @@ gconv_end (struct __gconv_step *data)
 	uint16_t out;							\
 									\
 	/* Generate a surrogate character.  */				\
-	if (__glibc_unlikely (outptr + 4 > outend))			      \
+	if (__builtin_expect (outptr + 4 > outend, 0))			\
 	  {								\
 	    /* Overflow in the output buffer.  */			\
 	    result = __GCONV_FULL_OUTPUT;				\

@@ -471,7 +471,7 @@ gaih_inet (const char *name, const struct gaih_service *service,
 	    bool malloc_namebuf = false;
 	    char *namebuf = (char *) name;
 
-	    if (__glibc_unlikely (scope_delim != NULL))
+	    if (__builtin_expect (scope_delim != NULL, 0))
 	      {
 		if (malloc_name)
 		  *scope_delim = '\0';
@@ -712,18 +712,6 @@ gaih_inet (const char *name, const struct gaih_service *service,
 		    {
 		      socklen_t size = (air->family[i] == AF_INET
 					? INADDRSZ : IN6ADDRSZ);
-
-		      if (!((air->family[i] == AF_INET
-			     && req->ai_family == AF_INET6
-			     && (req->ai_flags & AI_V4MAPPED) != 0)
-			    || req->ai_family == AF_UNSPEC
-			    || air->family[i] == req->ai_family))
-			{
-			  /* Skip over non-matching result.  */
-			  addrs += size;
-			  continue;
-			}
-
 		      if (*pat == NULL)
 			{
 			  *pat = addrfree++;
@@ -867,7 +855,8 @@ gaih_inet (const char *name, const struct gaih_service *service,
 		      if (status != NSS_STATUS_TRYAGAIN
 			  || rc != ERANGE || herrno != NETDB_INTERNAL)
 			{
-			  if (herrno == TRY_AGAIN)
+			  if (status == NSS_STATUS_TRYAGAIN
+			      && herrno == TRY_AGAIN)
 			    no_data = EAI_AGAIN;
 			  else
 			    no_data = herrno == NO_DATA;
@@ -2619,18 +2608,18 @@ getaddrinfo (const char *name, const char *service,
 	 the information.  */
       struct sort_result_combo src
 	= { .results = results, .nresults = nresults };
-      if (__glibc_unlikely (gaiconf_reload_flag_ever_set))
+      if (__builtin_expect (gaiconf_reload_flag_ever_set, 0))
 	{
 	  __libc_lock_define_initialized (static, lock);
 
 	  __libc_lock_lock (lock);
 	  if (__libc_once_get (old_once) && gaiconf_reload_flag)
 	    gaiconf_reload ();
-	  __qsort_r (order, nresults, sizeof (order[0]), rfc3484_sort, &src);
+	  qsort_r (order, nresults, sizeof (order[0]), rfc3484_sort, &src);
 	  __libc_lock_unlock (lock);
 	}
       else
-	__qsort_r (order, nresults, sizeof (order[0]), rfc3484_sort, &src);
+	qsort_r (order, nresults, sizeof (order[0]), rfc3484_sort, &src);
 
       /* Queue the results up as they come out of sorting.  */
       q = p = results[order[0]].dest_addr;

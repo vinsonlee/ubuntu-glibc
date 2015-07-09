@@ -1,5 +1,5 @@
 /* Dump registers.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -144,7 +144,7 @@ register_dump (int fd, struct sigcontext *ctx)
   ADD_STRING ("\n");
 
 #ifdef __SH_FPU_ANY__
-  if (ctx->sc_ownedfp != 0)
+  if (ctx->sc_ownedfp != NULL)
     {
       hexvalue (ctx->sc_fpregs[0], fpregs[0], 8);
       hexvalue (ctx->sc_fpregs[1], fpregs[1], 8);
