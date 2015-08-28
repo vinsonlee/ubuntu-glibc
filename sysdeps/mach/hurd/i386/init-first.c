@@ -1,5 +1,5 @@
 /* Initialization code run first thing by the ELF startup code.  For i386/Hurd.
-   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -71,6 +71,11 @@ posixland_init (int argc, char **argv, char **envp)
     {
       /* Set the FPU control word to the proper default value.  */
       __setfpucw (__fpu_control);
+    }
+  else
+    {
+      /* Initialize data structures so the additional libc can do RPCs.  */
+      __mach_init ();
     }
 
   /* Save the command-line arguments.  */

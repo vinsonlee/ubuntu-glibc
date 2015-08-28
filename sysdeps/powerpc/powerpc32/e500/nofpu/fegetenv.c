@@ -1,5 +1,5 @@
 /* Store current floating-point environment.  e500 version.
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -43,5 +43,7 @@ __fegetenv (fenv_t *envp)
 strong_alias (__fegetenv, __old_fegetenv)
 compat_symbol (libm, __old_fegetenv, fegetenv, GLIBC_2_1);
 #endif
+libm_hidden_def (__fegetenv)
+libm_hidden_ver (__fegetenv, fegetenv)
 
 versioned_symbol (libm, __fegetenv, fegetenv, GLIBC_2_2);

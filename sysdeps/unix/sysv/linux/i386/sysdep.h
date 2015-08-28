@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper, <drepper@gnu.org>, August 1995.
 
@@ -34,7 +34,7 @@
 #define SYS_ify(syscall_name)	__NR_##syscall_name
 
 #if defined USE_DL_SYSINFO \
-    && (!defined NOT_IN_libc || defined IS_IN_libpthread)
+    && (IS_IN (libc) || IS_IN (libpthread))
 # define I386_USE_SYSENTER	1
 #else
 # undef I386_USE_SYSENTER
@@ -115,7 +115,7 @@
 
 # elif defined _LIBC_REENTRANT
 
-#  ifndef NOT_IN_libc
+#  if IS_IN (libc)
 #   define SYSCALL_ERROR_ERRNO __libc_errno
 #  else
 #   define SYSCALL_ERROR_ERRNO errno
@@ -310,7 +310,7 @@ asm (".L__X'%ebx = 1\n\t"
 #define INLINE_SYSCALL(name, nr, args...) \
   ({									      \
     unsigned int resultvar = INTERNAL_SYSCALL (name, , nr, args);	      \
-    if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (resultvar, ), 0))	      \
+    if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (resultvar, )))	      \
       {									      \
 	__set_errno (INTERNAL_SYSCALL_ERRNO (resultvar, ));		      \
 	resultvar = 0xffffffff;						      \
@@ -502,7 +502,7 @@ asm (".L__X'%ebx = 1\n\t"
 #endif
 
 /* Consistency check for position-independent code.  */
-#ifdef __PIC__
+#if defined __PIC__ && !__GNUC_PREREQ (5,0)
 # define check_consistency()						      \
   ({ int __res;								      \
      __asm__ __volatile__						      \
@@ -519,7 +519,7 @@ asm (".L__X'%ebx = 1\n\t"
 
 
 /* Pointer mangling support.  */
-#if defined NOT_IN_libc && defined IS_IN_rtld
+#if IS_IN (rtld)
 /* We cannot use the thread descriptor because in ld.so we use setjmp
    earlier than the descriptor is initialized.  Using a global variable
    is too complicated here since we have no PC-relative addressing mode.  */
