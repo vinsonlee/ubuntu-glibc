@@ -1,6 +1,6 @@
 /* Multiple versions of memmove.
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 # define MEMMOVE __memmove_sse2
 # ifdef SHARED
 #  undef libc_hidden_builtin_def
@@ -35,11 +35,13 @@
 extern __typeof (__redirect_memmove) __memmove_sse2 attribute_hidden;
 extern __typeof (__redirect_memmove) __memmove_ssse3 attribute_hidden;
 extern __typeof (__redirect_memmove) __memmove_ssse3_back attribute_hidden;
+extern __typeof (__redirect_memmove) __memmove_avx_unaligned attribute_hidden;
+
 #endif
 
 #include "string/memmove.c"
 
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 # include <shlib-compat.h>
 # include "init-arch.h"
 
@@ -47,10 +49,12 @@ extern __typeof (__redirect_memmove) __memmove_ssse3_back attribute_hidden;
    ifunc symbol properly.  */
 extern __typeof (__redirect_memmove) __libc_memmove;
 libc_ifunc (__libc_memmove,
-	    HAS_SSSE3
-	    ? (HAS_FAST_COPY_BACKWARD
-	       ? __memmove_ssse3_back : __memmove_ssse3)
-	    : __memmove_sse2)
+	    HAS_AVX_FAST_UNALIGNED_LOAD
+	    ? __memmove_avx_unaligned
+	    : (HAS_SSSE3
+	       ? (HAS_FAST_COPY_BACKWARD
+	          ? __memmove_ssse3_back : __memmove_ssse3)
+	       : __memmove_sse2));
 
 strong_alias (__libc_memmove, memmove)
 

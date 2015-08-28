@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  i386 version.
-   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -34,8 +34,6 @@ elf_machine_matches_host (const Elf32_Ehdr *ehdr)
 }
 
 
-#ifdef PI_STATIC_AND_HIDDEN
-
 /* Return the link-time address of _DYNAMIC.  Conveniently, this is the
    first element of the GOT, a special entry that is never relocated.  */
 static inline Elf32_Addr __attribute__ ((unused, const))
@@ -58,37 +56,6 @@ elf_machine_load_address (void)
   extern Elf32_Dyn bygotoff[] asm ("_DYNAMIC") attribute_hidden;
   return (Elf32_Addr) &bygotoff - elf_machine_dynamic ();
 }
-
-#else  /* Without .hidden support, we can't compile the code above.  */
-
-/* Return the link-time address of _DYNAMIC.  Conveniently, this is the
-   first element of the GOT.  This must be inlined in a function which
-   uses global data.  */
-static inline Elf32_Addr __attribute__ ((unused))
-elf_machine_dynamic (void)
-{
-  register Elf32_Addr *got asm ("%ebx");
-  return *got;
-}
-
-
-/* Return the run-time load address of the shared object.  */
-static inline Elf32_Addr __attribute__ ((unused))
-elf_machine_load_address (void)
-{
-  /* It doesn't matter what variable this is, the reference never makes
-     it to assembly.  We need a dummy reference to some global variable
-     via the GOT to make sure the compiler initialized %ebx in time.  */
-  extern int _dl_argc;
-  Elf32_Addr addr;
-  asm ("leal _dl_start@GOTOFF(%%ebx), %0\n"
-       "subl _dl_start@GOT(%%ebx), %0"
-       : "=r" (addr) : "m" (_dl_argc) : "cc");
-  return addr;
-}
-
-#endif
-
 
 /* Set up the loaded object described by L so its unrelocated PLT
    entries will jump to the on-demand fixup code in dl-runtime.c.  */
@@ -123,7 +90,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 	 to intercept the calls to collect information.  In this case we
 	 don't store the address in the GOT so that all future calls also
 	 end in this function.  */
-      if (__builtin_expect (profile, 0))
+      if (__glibc_unlikely (profile))
 	{
 	  got[2] = (Elf32_Addr) &_dl_runtime_profile;
 
@@ -221,7 +188,7 @@ _dl_start_user:\n\
 	# Clear %ebp, so that even constructors have terminated backchain.\n\
 	xorl %ebp, %ebp\n\
 	# Call the function to run the initializers.\n\
-	call _dl_init_internal@PLT\n\
+	call _dl_init\n\
 	# Pass our finalizer function to the user in %edx, as per ELF ABI.\n\
 	leal _dl_fini@GOTOFF(%ebx), %edx\n\
 	# Restore %esp _start expects.\n\
@@ -292,6 +259,7 @@ elf_machine_plt_value (struct link_map *map, const Elf32_Rel *reloc,
 /* The i386 never uses Elf32_Rela relocations for the dynamic linker.
    Prelinked libraries may use Elf32_Rela though.  */
 #define ELF_MACHINE_NO_RELA defined RTLD_BOOTSTRAP
+#define ELF_MACHINE_NO_REL 0
 
 #ifdef RESOLVE_MAP
 
@@ -308,7 +276,7 @@ elf_machine_rel (struct link_map *map, const Elf32_Rel *reloc,
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
 
 # if !defined RTLD_BOOTSTRAP || !defined HAVE_Z_COMBRELOC
-  if (__builtin_expect (r_type == R_386_RELATIVE, 0))
+  if (__glibc_unlikely (r_type == R_386_RELATIVE))
     {
 #  if !defined RTLD_BOOTSTRAP && !defined HAVE_Z_COMBRELOC
       /* This is defined in rtld.c, but nowhere in the static libc.a;
@@ -325,7 +293,7 @@ elf_machine_rel (struct link_map *map, const Elf32_Rel *reloc,
 	*reloc_addr += map->l_addr;
     }
 #  ifndef RTLD_BOOTSTRAP
-  else if (__builtin_expect (r_type == R_386_NONE, 0))
+  else if (__glibc_unlikely (r_type == R_386_NONE))
     return;
 #  endif
   else
@@ -660,7 +628,7 @@ elf_machine_lazy_rel (struct link_map *map,
   Elf32_Addr *const reloc_addr = (void *) (l_addr + reloc->r_offset);
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
   /* Check for unexpected PLT reloc type.  */
-  if (__builtin_expect (r_type == R_386_JMP_SLOT, 1))
+  if (__glibc_likely (r_type == R_386_JMP_SLOT))
     {
       if (__builtin_expect (map->l_mach.plt, 0) == 0)
 	*reloc_addr += l_addr;
@@ -668,7 +636,7 @@ elf_machine_lazy_rel (struct link_map *map,
 	*reloc_addr = (map->l_mach.plt
 		       + (((Elf32_Addr) reloc_addr) - map->l_mach.gotplt) * 4);
     }
-  else if (__builtin_expect (r_type == R_386_TLS_DESC, 1))
+  else if (__glibc_likely (r_type == R_386_TLS_DESC))
     {
       struct tlsdesc volatile * __attribute__((__unused__)) td =
 	(struct tlsdesc volatile *)reloc_addr;
@@ -715,10 +683,10 @@ elf_machine_lazy_rel (struct link_map *map,
 # endif
 	}
     }
-  else if (__builtin_expect (r_type == R_386_IRELATIVE, 0))
+  else if (__glibc_unlikely (r_type == R_386_IRELATIVE))
     {
       Elf32_Addr value = map->l_addr + *reloc_addr;
-      if (__builtin_expect (!skip_ifunc, 1))
+      if (__glibc_likely (!skip_ifunc))
 	value = ((Elf32_Addr (*) (void)) value) ();
       *reloc_addr = value;
     }
@@ -736,9 +704,9 @@ elf_machine_lazy_rela (struct link_map *map,
 {
   Elf32_Addr *const reloc_addr = (void *) (l_addr + reloc->r_offset);
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
-  if (__builtin_expect (r_type == R_386_JMP_SLOT, 1))
+  if (__glibc_likely (r_type == R_386_JMP_SLOT))
     ;
-  else if (__builtin_expect (r_type == R_386_TLS_DESC, 1))
+  else if (__glibc_likely (r_type == R_386_TLS_DESC))
     {
       struct tlsdesc volatile * __attribute__((__unused__)) td =
 	(struct tlsdesc volatile *)reloc_addr;
@@ -746,10 +714,10 @@ elf_machine_lazy_rela (struct link_map *map,
       td->arg = (void*)reloc;
       td->entry = _dl_tlsdesc_resolve_rela;
     }
-  else if (__builtin_expect (r_type == R_386_IRELATIVE, 0))
+  else if (__glibc_unlikely (r_type == R_386_IRELATIVE))
     {
       Elf32_Addr value = map->l_addr + reloc->r_addend;
-      if (__builtin_expect (!skip_ifunc, 1))
+      if (__glibc_likely (!skip_ifunc))
 	value = ((Elf32_Addr (*) (void)) value) ();
       *reloc_addr = value;
     }

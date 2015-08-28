@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -18,9 +18,11 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <string.h>
 #include <kernel-features.h>
 #include "pthreadP.h"
+#include <atomic.h>
 
 #include <stap-probe.h>
 
@@ -31,10 +33,26 @@ static const struct pthread_mutexattr default_mutexattr =
   };
 
 
-#ifndef __ASSUME_FUTEX_LOCK_PI
-static int tpi_supported;
+static bool
+prio_inherit_missing (void)
+{
+#ifdef __NR_futex
+# ifndef __ASSUME_FUTEX_LOCK_PI
+  static int tpi_supported;
+  if (__glibc_unlikely (tpi_supported == 0))
+    {
+      int lock = 0;
+      INTERNAL_SYSCALL_DECL (err);
+      int ret = INTERNAL_SYSCALL (futex, err, 4, &lock, FUTEX_UNLOCK_PI, 0, 0);
+      assert (INTERNAL_SYSCALL_ERROR_P (ret, err));
+      tpi_supported = INTERNAL_SYSCALL_ERRNO (ret, err) == ENOSYS ? -1 : 1;
+    }
+  return __glibc_unlikely (tpi_supported < 0);
+# endif
+  return false;
 #endif
-
+  return true;
+}
 
 int
 __pthread_mutex_init (mutex, mutexattr)
@@ -58,19 +76,8 @@ __pthread_mutex_init (mutex, mutexattr)
       break;
 
     case PTHREAD_PRIO_INHERIT << PTHREAD_MUTEXATTR_PROTOCOL_SHIFT:
-#ifndef __ASSUME_FUTEX_LOCK_PI
-      if (__builtin_expect (tpi_supported == 0, 0))
-	{
-	  int lock = 0;
-	  INTERNAL_SYSCALL_DECL (err);
-	  int ret = INTERNAL_SYSCALL (futex, err, 4, &lock, FUTEX_UNLOCK_PI,
-				      0, 0);
-	  assert (INTERNAL_SYSCALL_ERROR_P (ret, err));
-	  tpi_supported = INTERNAL_SYSCALL_ERRNO (ret, err) == ENOSYS ? -1 : 1;
-	}
-      if (__builtin_expect (tpi_supported < 0, 0))
+      if (__glibc_unlikely (prio_inherit_missing ()))
 	return ENOTSUP;
-#endif
       break;
 
     default:
@@ -111,10 +118,11 @@ __pthread_mutex_init (mutex, mutexattr)
 		    >> PTHREAD_MUTEXATTR_PRIO_CEILING_SHIFT;
       if (! ceiling)
 	{
-	  if (__sched_fifo_min_prio == -1)
+	  /* See __init_sched_fifo_prio.  */
+	  if (atomic_load_relaxed (&__sched_fifo_min_prio) == -1)
 	    __init_sched_fifo_prio ();
-	  if (ceiling < __sched_fifo_min_prio)
-	    ceiling = __sched_fifo_min_prio;
+	  if (ceiling < atomic_load_relaxed (&__sched_fifo_min_prio))
+	    ceiling = atomic_load_relaxed (&__sched_fifo_min_prio);
 	}
       mutex->__data.__lock = ceiling << PTHREAD_MUTEX_PRIO_CEILING_SHIFT;
       break;
