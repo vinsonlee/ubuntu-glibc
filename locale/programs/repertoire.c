@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -96,7 +96,7 @@ repertoire_read (const char *filename)
 
 		  if (repfile == NULL)
 		    {
-		      stpcpy (stpcpy (path, next), filename);
+		      stpcpy (stpcpy (stpcpy (path, next), "/"), filename);
 
 		      repfile = lr_open (path, repertoiremap_hash);
 		    }

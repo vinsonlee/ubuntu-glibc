@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,6 +20,8 @@
 /* Find the first occurrence of WC in WCS.  */
 #ifdef WCSCHR
 # define wcschr WCSCHR
+#else
+# define wcschr __wcschr
 #endif
 
 wchar_t *
@@ -35,3 +37,8 @@ wcschr (wcs, wc)
   return NULL;
 }
 libc_hidden_def (wcschr)
+#ifndef WCSCHR
+# undef wcschr
+weak_alias (__wcschr, wcschr)
+libc_hidden_weak (wcschr)
+#endif
