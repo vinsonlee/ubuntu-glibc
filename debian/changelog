@@ -1,9 +1,14 @@
-glibc (2.19-19) unstable; urgency=medium
+glibc (2.19-18+deb8u1) stable; urgency=medium
 
-  * patches/hurd-i386/cvs-mlock.diff: New patch to permit to use mlock from
-    non-root process.
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+    - Fix pthread_mutex_trylock with lock elision.  Closes: #759197,
+      #788999.
+    - Fix gprof entry point on ppc64el.  Closes: #794222.
+    - Fix a buffer overflow in getanswer_r (CVE-2015-1781).
+      Closes: #796105.
 
- -- Samuel Thibault <sthibault@debian.org>  Thu, 09 Jul 2015 14:28:56 +0200
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 29 Aug 2015 10:56:31 +0200
 
 glibc (2.19-18) unstable; urgency=medium
 
