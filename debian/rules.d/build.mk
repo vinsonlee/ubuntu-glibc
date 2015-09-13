@@ -32,6 +32,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	rm -f $(DEB_BUILDDIR)/configparms
 	echo "CC = $(call xx,CC)"                 >> $(DEB_BUILDDIR)/configparms
 	echo "CXX = $(call xx,CXX)"               >> $(DEB_BUILDDIR)/configparms
+	echo "MIG = $(call xx,MIG)"               >> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CC = $(BUILD_CC)"             >> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CXX = $(BUILD_CXX)"           >> $(DEB_BUILDDIR)/configparms
 	echo "CFLAGS = $(HOST_CFLAGS)"            >> $(DEB_BUILDDIR)/configparms
@@ -78,6 +79,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		cd $(DEB_BUILDDIR) && \
 		CC="$(call xx,CC)" \
 		CXX="$(call xx,CXX)" \
+		MIG="$(call xx,MIG)" \
 		AUTOCONF=false \
 		MAKEINFO=: \
 		$(CURDIR)/configure \
@@ -163,7 +165,7 @@ ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	    install-bootstrap-headers=yes install-headers )
 
 	install -d $(CURDIR)/debian/tmp-$(curpass)/lib
-	install -m 644 $(DEB_BUILDDIR)/csu/crt[1in].o $(CURDIR)/debian/tmp-$(curpass)/lib
+	install -m 644 $(DEB_BUILDDIR)/csu/crt[01in].o $(CURDIR)/debian/tmp-$(curpass)/lib
 	${CC} -nostdlib -nostartfiles -shared -x c /dev/null \
 	        -o $(CURDIR)/debian/tmp-$(curpass)/lib/libc.so
 else
