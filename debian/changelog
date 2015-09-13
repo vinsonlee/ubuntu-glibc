@@ -1,14 +1,57 @@
-glibc (2.19-18+deb8u1) stable; urgency=medium
+glibc (2.19-20) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/tg-mmap32th_bit.diff: New patch to fix libpciaccess
+    mapping of BARs above 2GiB. Closes: #793543.
+  * rules.d/build.mk: Also install crt0.o in stage1, if any.
+  * sysdeps/hurd-i386.mk: Fix stage1 about xen packages for hurd-i386 too.
+  * patches/hurd-i386/tg-sysheaders.diff: New patch to fix stage1 finding hurd
+    headers.
+  * patches/hurd-i386/cvs-libpthread_clean2.diff: New patch to drop spurious
+    code getting in the way for stage1.
+  * patches/hurd-i386/cvs-libpthread_build.diff: New patch to fix build of
+    generic libpthread code.
+  * patches/hurd-i386/libpthread_build.diff: Fix header inclusion to get
+    pthread headers from libpthread/ instead of system.
+  * sysdeps/hurd.mk: Create symlinks to kernel and hurd headers required for
+    build, so that we can pass --with-headers to configure to make the build
+    really self-hosted.
+  * patches/hurd-i386/local-clock_gettime_MONOTONIC.diff: Update patch to not
+    advertise _POSIX_CLOCK_SELECTION for vlc
+  * patches/hurd-i386/{local,cvs}-bootstrap.diff: New patch to fix crt*.o build
+    in stage1.
+  * rules, rules.d/build.mk: Set MIG to gnu-type alias of mig, to fix
+    cross-build.
+  * control, control.d/main: Bump mig dependency to get the gnu-type alias in
+    non-cross case too.
 
   [ Aurelien Jarno ]
   * Update from upstream stable branch:
     - Fix pthread_mutex_trylock with lock elision.  Closes: #759197,
       #788999.
     - Fix gprof entry point on ppc64el.  Closes: #794222.
-    - Fix a buffer overflow in getanswer_r (CVE-2015-1781).
-      Closes: #796105.
+    - Fix a buffer overflow in getanswer_r (CVE-2015-1781).  Closes: #796105.
+    - Fix getaddrinfo sometimes returning uninitialized data with nscd.
+      Closes: #798515.
+  * sysdeps.mk/mips*.mk: force the ISA until it gets propagated to all GCC
+    versions.
+  * Update hppa patches.  Closes: #785664:
+    - Replace patches/hppa/local-fpu.diff by upstream patch cvs-fpu-r2.diff.
+    - Add patches/hppa/cvs-fpu2.diff from upstream.
+    - Add patches/hppa/local-fptr-table-size.diff from Carlos O'Donnell.
+    - Add patches/hppa/local-setcontext.diff.
+    - Add patches/hppa/cvs-start.diff from upstream.
+  * patches/any/cvs-pie-lt_executable.diff: new patch from upstream to fix
+    explicit loader invocation with PIE binaries.  Closes: #796899.
 
- -- Aurelien Jarno <aurel32@debian.org>  Sat, 29 Aug 2015 10:56:31 +0200
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 13 Sep 2015 18:39:36 +0200
+
+glibc (2.19-19) unstable; urgency=medium
+
+  * patches/hurd-i386/cvs-mlock.diff: New patch to permit one to use mlock
+    from non-root process.
+
+ -- Samuel Thibault <sthibault@debian.org>  Thu, 09 Jul 2015 14:28:56 +0200
 
 glibc (2.19-18) unstable; urgency=medium
 
