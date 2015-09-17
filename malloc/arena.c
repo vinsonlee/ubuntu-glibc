@@ -99,7 +99,7 @@ int __malloc_initialized = -1;
   } while (0)
 
 #define arena_lock(ptr, size) do {					      \
-      if (ptr)								      \
+      if (ptr && !arena_is_corrupt (ptr))				      \
         (void) mutex_lock (&ptr->mutex);				      \
       else								      \
         ptr = arena_get2 (ptr, (size), NULL);				      \
@@ -510,7 +510,7 @@ static heap_info *
 internal_function
 new_heap (size_t size, size_t top_pad)
 {
-  size_t page_mask = GLRO (dl_pagesize) - 1;
+  size_t pagesize = GLRO (dl_pagesize);
   char *p1, *p2;
   unsigned long ul;
   heap_info *h;
@@ -523,7 +523,7 @@ new_heap (size_t size, size_t top_pad)
     return 0;
   else
     size = HEAP_MAX_SIZE;
-  size = (size + page_mask) & ~page_mask;
+  size = ALIGN_UP (size, pagesize);
 
   /* A memory region aligned to a multiple of HEAP_MAX_SIZE is needed.
      No swap space needs to be reserved for the following large
@@ -588,10 +588,10 @@ new_heap (size_t size, size_t top_pad)
 static int
 grow_heap (heap_info *h, long diff)
 {
-  size_t page_mask = GLRO (dl_pagesize) - 1;
+  size_t pagesize = GLRO (dl_pagesize);
   long new_size;
 
-  diff = (diff + page_mask) & ~page_mask;
+  diff = ALIGN_UP (diff, pagesize);
   new_size = (long) h->size + diff;
   if ((unsigned long) new_size > (unsigned long) HEAP_MAX_SIZE)
     return -1;
@@ -658,7 +658,7 @@ heap_trim (heap_info *heap, size_t pad)
   unsigned long pagesz = GLRO (dl_pagesize);
   mchunkptr top_chunk = top (ar_ptr), p, bck, fwd;
   heap_info *prev_heap;
-  long new_size, top_size, extra, prev_size, misalign;
+  long new_size, top_size, top_area, extra, prev_size, misalign;
 
   /* Can this heap go away completely? */
   while (top_chunk == chunk_at_offset (heap, sizeof (*heap)))
@@ -686,7 +686,7 @@ heap_trim (heap_info *heap, size_t pad)
       if (!prev_inuse (p)) /* consolidate backward */
         {
           p = prev_chunk (p);
-          unlink (p, bck, fwd);
+          unlink (ar_ptr, p, bck, fwd);
         }
       assert (((unsigned long) ((char *) p + new_size) & (pagesz - 1)) == 0);
       assert (((char *) p + new_size) == ((char *) heap + heap->size));
@@ -694,9 +694,16 @@ heap_trim (heap_info *heap, size_t pad)
       set_head (top_chunk, new_size | PREV_INUSE);
       /*check_chunk(ar_ptr, top_chunk);*/
     }
+
+  /* Uses similar logic for per-thread arenas as the main arena with systrim
+     by preserving the top pad and at least a page.  */
   top_size = chunksize (top_chunk);
-  extra = (top_size - pad - MINSIZE - 1) & ~(pagesz - 1);
-  if (extra < (long) pagesz)
+  top_area = top_size - MINSIZE - 1;
+  if (top_area < 0 || (size_t) top_area <= pad)
+    return 0;
+
+  extra = ALIGN_DOWN(top_area - pad, pagesz);
+  if ((unsigned long) extra < mp_.trim_threshold)
     return 0;
 
   /* Try to shrink. */
@@ -802,7 +809,7 @@ reused_arena (mstate avoid_arena)
   result = next_to_use;
   do
     {
-      if (!mutex_trylock (&result->mutex))
+      if (!arena_is_corrupt (result) && !mutex_trylock (&result->mutex))
         goto out;
 
       result = result->next;
@@ -814,7 +821,21 @@ reused_arena (mstate avoid_arena)
   if (result == avoid_arena)
     result = result->next;
 
-  /* No arena available.  Wait for the next in line.  */
+  /* Make sure that the arena we get is not corrupted.  */
+  mstate begin = result;
+  while (arena_is_corrupt (result) || result == avoid_arena)
+    {
+      result = result->next;
+      if (result == begin)
+	break;
+    }
+
+  /* We could not find any arena that was either not corrupted or not the one
+     we wanted to avoid.  */
+  if (result == begin || result == avoid_arena)
+    return NULL;
+
+  /* No arena available without contention.  Wait for the next in line.  */
   LIBC_PROBE (memory_arena_reuse_wait, 3, &result->mutex, result, avoid_arena);
   (void) mutex_lock (&result->mutex);
 
