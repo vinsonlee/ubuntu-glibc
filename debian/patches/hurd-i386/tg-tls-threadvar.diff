@@ -32,14 +32,7 @@ That will fix sigaltstack.
 
 --- a/hurd/Versions
 +++ b/hurd/Versions
-@@ -25,20 +25,16 @@ libc {
- 
-     # weak refs to libthreads functions that libc calls iff libthreads in use
-     cthread_fork; cthread_detach;
-+    pthread_getattr_np; pthread_attr_getstack;
- %endif
- 
-     # necessary for the Hurd brk implementation
+@@ -4,14 +4,9 @@ libc {
      _end;
  
      # variables used in macros & inline functions
@@ -54,7 +47,7 @@ That will fix sigaltstack.
      # functions used in libmachuser and libhurduser
      _S_catch_exception_raise;
      _S_catch_exception_raise_state;
-@@ -161,6 +157,7 @@ libc {
+@@ -133,6 +128,7 @@ libc {
    HURD_CTHREADS_0.3 {
      # weak refs to libthreads functions that libc calls iff libthreads in use
      cthread_fork; cthread_detach;
@@ -72,11 +65,11 @@ That will fix sigaltstack.
  struct hurd_signal_preemptor;	/* <hurd/sigpreempt.h> */
  
  
-@@ -129,11 +128,9 @@ extern struct hurd_sigstate *_hurd_self_
+@@ -132,11 +131,9 @@ extern struct hurd_sigstate *_hurd_self_
  _HURD_SIGNAL_H_EXTERN_INLINE struct hurd_sigstate *
  _hurd_self_sigstate (void)
  {
--  struct hurd_sigstate **location =
+-  struct hurd_sigstate **location = (struct hurd_sigstate **)
 -    (void *) __hurd_threadvar_location (_HURD_THREADVAR_SIGSTATE);
 -  if (*location == NULL)
 -    *location = _hurd_thread_sigstate (__mach_thread_self ());
@@ -87,11 +80,11 @@ That will fix sigaltstack.
  }
  
  /* Thread listening on our message port; also called the "signal thread".  */
-@@ -167,16 +165,22 @@ extern int _hurd_core_limit;
+@@ -167,16 +164,22 @@ extern int _hurd_core_limit;
  _HURD_SIGNAL_H_EXTERN_INLINE void *
  _hurd_critical_section_lock (void)
  {
--  struct hurd_sigstate **location =
+-  struct hurd_sigstate **location = (struct hurd_sigstate **)
 -    (void *) __hurd_threadvar_location (_HURD_THREADVAR_SIGSTATE);
 -  struct hurd_sigstate *ss = *location;
 +  struct hurd_sigstate *ss;
@@ -108,12 +101,12 @@ That will fix sigaltstack.
        /* The thread variable is unset; this must be the first time we've
  	 asked for it.  In this case, the critical section flag cannot
  	 possible already be set.  Look up our sigstate structure the slow
- 	 way; this locks the sigstate lock.  */
+ 	 way.  */
 -      ss = *location = _hurd_thread_sigstate (__mach_thread_self ());
 +      ss = THREAD_SELF->_hurd_sigstate = _hurd_thread_sigstate (__mach_thread_self ());
-       __spin_unlock (&ss->lock);
      }
  
+   if (! __spin_try_lock (&ss->critical_section_lock))
 --- a/hurd/hurd/threadvar.h
 +++ b/hurd/hurd/threadvar.h
 @@ -20,6 +20,7 @@
@@ -236,7 +229,7 @@ That will fix sigaltstack.
  
  /* Linked-list of per-thread signal state.  */
  struct hurd_sigstate *_hurd_sigstates;
-@@ -234,11 +237,11 @@ abort_thread (struct hurd_sigstate *ss,
+@@ -234,11 +234,11 @@ abort_thread (struct hurd_sigstate *ss,
     that this location can be set without faulting, or else return NULL.  */
  
  static mach_port_t *
@@ -251,7 +244,7 @@ That will fix sigaltstack.
  
    if (sigthread && _hurdsig_catch_memory_fault (portloc))
      /* Faulted trying to read the stack.  */
-@@ -323,7 +326,8 @@ _hurdsig_abort_rpcs (struct hurd_sigstat
+@@ -323,7 +323,8 @@ _hurdsig_abort_rpcs (struct hurd_sigstat
  	   our nonzero return tells the trampoline code to finish the message
  	   receive operation before running the handler.  */
  
@@ -261,7 +254,7 @@ That will fix sigaltstack.
  							      sigthread);
  	error_t err = __interrupt_operation (intr_port, _hurdsig_interrupt_timeout);
  
-@@ -835,7 +839,8 @@ _hurd_internal_post_signal (struct hurd_
+@@ -835,7 +836,8 @@ _hurd_internal_post_signal (struct hurd_
  
  	    if (! machine_get_basic_state (ss->thread, &thread_state))
  	      goto sigbomb;
@@ -271,7 +264,7 @@ That will fix sigaltstack.
  	    if (loc && *loc != MACH_PORT_NULL)
  	      /* This is the reply port for the context which called
  		 sigreturn.  Since we are abandoning that context entirely
-@@ -901,7 +906,8 @@ _hurd_internal_post_signal (struct hurd_
+@@ -901,7 +903,8 @@ _hurd_internal_post_signal (struct hurd_
  	{
  	  /* Fetch the thread variable for the MiG reply port,
  	     and set it to MACH_PORT_NULL.  */
@@ -281,7 +274,7 @@ That will fix sigaltstack.
  							      1);
  	  if (loc)
  	    {
-@@ -1255,7 +1261,11 @@ _hurdsig_init (const int *intarray, size
+@@ -1255,7 +1258,11 @@ _hurdsig_init (const int *intarray, size
  
    /* Start the signal thread listening on the message port.  */
  
@@ -294,7 +287,7 @@ That will fix sigaltstack.
      {
        err = __thread_create (__mach_task_self (), &_hurd_msgport_thread);
        assert_perror (err);
-@@ -1270,14 +1280,6 @@ _hurdsig_init (const int *intarray, size
+@@ -1270,14 +1277,6 @@ _hurdsig_init (const int *intarray, size
        assert_perror (err);
  
        __hurd_sigthread_stack_end = __hurd_sigthread_stack_base + stacksize;
@@ -309,7 +302,7 @@ That will fix sigaltstack.
  
        /* Reinitialize the MiG support routines so they will use a per-thread
  	 variable for the cached reply port.  */
-@@ -1288,6 +1290,7 @@ _hurdsig_init (const int *intarray, size
+@@ -1288,6 +1287,7 @@ _hurdsig_init (const int *intarray, size
      }
    else
      {
@@ -317,7 +310,7 @@ That will fix sigaltstack.
        /* When cthreads is being used, we need to make the signal thread a
           proper cthread.  Otherwise it cannot use mutex_lock et al, which
           will be the cthreads versions.  Various of the message port RPC
-@@ -1297,9 +1300,20 @@ _hurdsig_init (const int *intarray, size
+@@ -1297,9 +1297,20 @@ _hurdsig_init (const int *intarray, size
           we'll let the signal thread's per-thread variables be found as for
           any normal cthread, and just leave the magic __hurd_sigthread_*
           values all zero so they'll be ignored.  */
@@ -373,14 +366,14 @@ That will fix sigaltstack.
  	  mach_port_t port = *reply_port;
 --- a/include/errno.h
 +++ b/include/errno.h
-@@ -21,7 +21,7 @@ extern int rtld_errno attribute_hidden;
+@@ -26,7 +26,7 @@ extern int rtld_errno attribute_hidden;
  
  #  include <tls.h>
  
 -#  if !defined(__GNU__)
-+#  if !(defined(__GNU__) && defined IS_IN_rtld)
++#  if !(defined(__GNU__) && IS_IN (rtld))
  #   undef  errno
- #   ifndef NOT_IN_libc
+ #   if IS_IN (libc)
  #    define errno __libc_errno
 --- a/sysdeps/mach/hurd/Versions
 +++ b/sysdeps/mach/hurd/Versions
@@ -392,7 +385,7 @@ That will fix sigaltstack.
  
      _dl_init_first;
    }
-@@ -14,8 +16,6 @@ libc {
+@@ -14,8 +15,6 @@ libc {
  ld {
    GLIBC_2.0 {
      # variables that must be shared with libc
@@ -401,7 +394,7 @@ That will fix sigaltstack.
      __hurd_threadvar_stack_mask;  __hurd_threadvar_stack_offset;
  
      # functions that must be shared with libc
-@@ -33,5 +33,6 @@ ld {
+@@ -33,5 +32,6 @@ ld {
  
      # functions that must be shared with libc
      __libc_read; __libc_write; __libc_lseek64;
@@ -436,7 +429,7 @@ That will fix sigaltstack.
 +++ /dev/null
 @@ -1,34 +0,0 @@
 -/* libc-internal interface for thread-specific data.  Hurd version.
--   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 -   This file is part of the GNU C Library.
 -
 -   The GNU C Library is free software; you can redistribute it and/or
@@ -525,7 +518,7 @@ That will fix sigaltstack.
 -#include <hurd/threadvar.h>
 -
 -int *
-+#ifdef IS_IN_rtld
++#if IS_IN (rtld)
 +/*
 + * rtld can not access TLS too early, thus rtld_errno.
 + *
@@ -560,10 +553,10 @@ That will fix sigaltstack.
  #include <setjmp.h>
  #include <thread_state.h>
  #include <sysdep.h>		/* For stack growth direction.  */
-@@ -504,19 +505,17 @@ __fork (void)
+@@ -508,19 +509,17 @@ __fork (void)
  				    (natural_t *) &state, &statecount))
  	LOSE;
- #if STACK_GROWTH_UP
+ #ifdef STACK_GROWTH_UP
 -#define THREADVAR_SPACE (__hurd_threadvar_max \
 -			 * sizeof *__hurd_sightread_variables)
        if (__hurd_sigthread_stack_base == 0)
@@ -584,7 +577,7 @@ That will fix sigaltstack.
  	     the per-thread variables.  */
 --- a/sysdeps/mach/hurd/i386/init-first.c
 +++ b/sysdeps/mach/hurd/i386/init-first.c
-@@ -152,15 +152,6 @@ init (int *data)
+@@ -157,15 +157,6 @@ init (int *data)
    char **argv = (void *) (data + 1);
    char **envp = &argv[argc + 1];
    struct hurd_startup_data *d;
@@ -600,7 +593,7 @@ That will fix sigaltstack.
  
    /* Since the cthreads initialization code uses malloc, and the
       malloc initialization code needs to get at the environment, make
-@@ -206,13 +197,6 @@ init (int *data)
+@@ -211,13 +202,6 @@ init (int *data)
    __pthread_initialize_minimal();
  #endif
  
@@ -614,7 +607,7 @@ That will fix sigaltstack.
  
    /* After possibly switching stacks, call `init1' (above) with the user
       code as the return address, and the argument data immediately above
-@@ -228,11 +212,6 @@ init (int *data)
+@@ -233,11 +217,6 @@ init (int *data)
  
        __libc_stack_end = newsp;
  
@@ -626,7 +619,7 @@ That will fix sigaltstack.
        /* Copy the argdata from the old stack to the new one.  */
        newsp = memcpy (newsp - ((char *) &d[1] - (char *) data), data,
  		      (char *) d - (char *) data);
-@@ -273,25 +252,11 @@ init (int *data)
+@@ -278,25 +257,11 @@ init (int *data)
      }
    else
      {
@@ -692,7 +685,7 @@ That will fix sigaltstack.
        mach_port_t port = *reply_port;
 --- a/sysdeps/mach/hurd/i386/tls.h
 +++ b/sysdeps/mach/hurd/i386/tls.h
-@@ -47,6 +47,8 @@ typedef struct
+@@ -53,6 +53,8 @@ typedef struct
    void *__private_tm[4];
    /* GCC split stack support.  */
    void *__private_ss;
@@ -701,7 +694,7 @@ That will fix sigaltstack.
  } tcbhead_t;
  #endif
  
-@@ -53,6 +53,17 @@
+@@ -88,6 +90,17 @@ typedef struct
        | (((unsigned int) (tcb)) & 0xff000000) /* base 24..31 */		      \
      }
  
@@ -718,8 +711,8 @@ That will fix sigaltstack.
 +     ds == gs; })
  
  static inline const char * __attribute__ ((unused))
- _hurd_tls_init (tcbhead_t *tcb, int secondcall)
-@@ -126,6 +137,20 @@ _hurd_tls_init (tcbhead_t *tcb, int seco
+ _hurd_tls_init (tcbhead_t *tcb)
+@@ -138,6 +151,20 @@ _hurd_tls_init (tcbhead_t *tcb)
  	      : "i" (offsetof (tcbhead_t, tcb)));			      \
       __tcb;})
  
