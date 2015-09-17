@@ -31,15 +31,23 @@ routines		= nsswitch getnssent getnssent_r digits_dots \
 # These are the databases that go through nss dispatch.
 # Caution: if you add a database here, you must add its real name
 # in databases.def, too.
-databases		= proto service hosts network grp pwd rpc ethers \
-			  spwd netgrp key alias sgrp
+databases		= proto service hosts network grp pwd ethers \
+			  spwd netgrp alias sgrp
+
+ifneq (,$(filter sunrpc,$(subdirs)))
+databases		+= key rpc
+have-sunrpc		:= 1
+else
+have-sunrpc		:= 0
+endif
+CPPFLAGS-getent.c	= -DHAVE_SUNRPC=$(have-sunrpc)
 
 others                  := getent makedb
 install-bin             := getent makedb
 makedb-modules = xmalloc hash-string
 extra-objs		+= $(makedb-modules:=.o)
 
-tests			= test-netdb tst-nss-test1 test-digits-dots
+tests			= test-netdb tst-nss-test1 test-digits-dots tst-nss-getpwent
 xtests			= bug-erange
 
 # Specify rules for the nss_* modules.  We have some services.
