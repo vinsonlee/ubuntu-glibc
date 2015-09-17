@@ -11,7 +11,6 @@ math/test-fenv
 math/test-misc
 misc/tst-writev
 nptl/tst-cond16
-nptl/tst-stack4
 posix/annexc
 posix/tst-waitid
 rt/tst-cpuclock2
@@ -19,7 +18,3 @@ rt/tst-cputimer1
 rt/tst-mqueue5
 rt/tst-timer
 stdio-common/bug22
-
-# This is an upstream regression on multiple architectures
-# see https://sourceware.org/bugzilla/show_bug.cgi?id=19303
-nptl/tst-cancel24-static

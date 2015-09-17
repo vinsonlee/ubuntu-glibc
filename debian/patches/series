@@ -43,7 +43,7 @@ alpha/submitted-dl-support.diff
 alpha/submitted-rtld-fPIC.diff
 alpha/local-string-functions.diff
 
-amd64/local-blacklist-for-Intel-TSX.diff
+amd64/local-blacklist-on-TSX-Haswell.diff
 
 arm/local-ioperm.diff
 arm/local-sigaction.diff
@@ -54,7 +54,6 @@ arm/local-vfp-sysdeps.diff
 arm/unsubmitted-ldso-multilib.diff
 arm/local-arm-futex.diff
 
-hppa/cvs-allocatestack-stacktop.diff
 hppa/local-inlining.diff
 hppa/local-stack-grows-up.diff
 hppa/local-elf-make-cflags.diff
@@ -62,9 +61,6 @@ hppa/local-shmlba.diff
 hppa/local-pthread_spin_unlock.diff
 hppa/local-fptr-table-size.diff
 hppa/cvs-start.diff
-hppa/submitted-gmon-start.diff
-hppa/submitted-mathdef.diff
-hppa/cvs-inline-syscall.diff
 
 hurd-i386/local-enable-ldconfig.diff
 hurd-i386/tg-context_functions.diff
@@ -80,7 +76,6 @@ hurd-i386/local-disable-ioctls.diff
 hurd-i386/tg-locarchive.diff
 hurd-i386/tg-no-hp-timing.diff
 hurd-i386/tg-sendmsg-SCM_RIGHTS.diff
-hurd-i386/tg-sendmsg-SCM_CREDS.diff
 hurd-i386/tg-grantpt.diff
 hurd-i386/submitted-add-needed.diff
 hurd-i386/local-ED.diff
@@ -139,11 +134,8 @@ hurd-i386/tg-mmap32th_bit.diff
 hurd-i386/tg-sysheaders.diff
 hurd-i386/cvs-bootstrap.diff
 hurd-i386/local-bootstrap.diff
-hurd-i386/cvs-cache-mach_host_self.diff
 hurd-i386/cvs-csu_crt0.diff
 hurd-i386/cvs-s_scalbn.diff
-hurd-i386/local-mach_print.diff
-hurd-i386/cvs-hidden.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
@@ -173,6 +165,7 @@ mips/local-r10k.diff
 mips/submitted-rld_map.diff
 
 powerpc/local-powerpc8xx-dcbz.diff
+powerpc/local-tune-power8.diff
 
 s390/submitted-nexttowardf.diff
 
@@ -239,3 +232,15 @@ any/submitted-argp-attribute.diff
 any/submitted-resolv-ipv6-nameservers.diff
 any/local-static-dlopen-search-path.diff
 any/local-math-logb.diff
+any/cvs-netinet-in-4.2.diff
+any/cvs-netinet-tcp-4.2.diff
+
+# Ubuntu patches live in their own little world, to maintain sanity
+ubuntu/lddebug-scopes.diff
+ubuntu/local-altlocaledir.diff
+ubuntu/local-disable-ld_audit.diff
+ubuntu/local-disable-nscd-netgroup-caching.diff
+ubuntu/submitted-no-sprintf-pre-truncate.diff
+ubuntu/submitted-no-stack-backtrace.diff
+ubuntu/unsubmitted-increase-dtv-surplus.diff
+ubuntu/local-warn-bsd-source.diff

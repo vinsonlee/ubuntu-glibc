@@ -1,5 +1,6 @@
 libc_rtlddir = /lib64
 extra_config_options = --enable-multi-arch --enable-lock-elision
+extra_cflags = -O3 -fno-tree-vectorize
 
 # build 32-bit (powerpc) alternative library
 GLIBC_MULTILIB_PASSES += powerpc
@@ -9,6 +10,7 @@ powerpc_add-ons = $(add-ons)
 powerpc_configure_target = powerpc-linux-gnu
 powerpc_CC = $(CC) -m32
 powerpc_CXX = $(CXX) -m32
+powerpc_extra_cflags = -O3 -fno-tree-vectorize
 powerpc_extra_config_options := $(extra_config_options)
 powerpc_slibdir = /lib32
 powerpc_libdir = /usr/lib32

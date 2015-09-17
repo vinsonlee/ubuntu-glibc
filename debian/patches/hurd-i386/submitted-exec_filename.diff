@@ -33,8 +33,10 @@ from argv[0] but argv[0] only contains the executable name by convention.
  sysdeps/mach/hurd/spawni.c  |   59 ++++++++++++++++++++++++++------------------
  8 files changed, 102 insertions(+), 43 deletions(-)
 
---- a/hurd/Versions
-+++ b/hurd/Versions
+Index: glibc-2.21/hurd/Versions
+===================================================================
+--- glibc-2.21.orig/hurd/Versions
++++ glibc-2.21/hurd/Versions
 @@ -140,6 +140,14 @@ libc {
      _hurd_sigstate_unlock;
      _hurd_sigstate_delete;
@@ -50,10 +52,12 @@ from argv[0] but argv[0] only contains the executable name by convention.
  
    HURD_CTHREADS_0.3 {
      # weak refs to libthreads functions that libc calls iff libthreads in use
---- a/hurd/Makefile
-+++ b/hurd/Makefile
+Index: glibc-2.21/hurd/Makefile
+===================================================================
+--- glibc-2.21.orig/hurd/Makefile
++++ glibc-2.21/hurd/Makefile
 @@ -32,8 +32,8 @@ user-interfaces		:= $(addprefix hurd/,\
- 				       auth auth_request auth_reply startup \
+ 				       auth startup \
  				       process process_request \
  				       msg msg_reply msg_request \
 -				       exec exec_startup crash interrupt \
@@ -63,8 +67,10 @@ from argv[0] but argv[0] only contains the executable name by convention.
  				       login password pfinet \
  				       )
  server-interfaces	:= hurd/msg faultexc
---- a/hurd/hurd.h
-+++ b/hurd/hurd.h
+Index: glibc-2.21/hurd/hurd.h
+===================================================================
+--- glibc-2.21.orig/hurd/hurd.h
++++ glibc-2.21/hurd/hurd.h
 @@ -245,12 +245,20 @@ extern FILE *fopenport (io_t port, const
  extern FILE *__fopenport (io_t port, const char *mode);
  
@@ -88,8 +94,10 @@ from argv[0] but argv[0] only contains the executable name by convention.
  
  
  /* Inform the proc server we have exited with STATUS, and kill the
---- a/hurd/hurdexec.c
-+++ b/hurd/hurdexec.c
+Index: glibc-2.21/hurd/hurdexec.c
+===================================================================
+--- glibc-2.21.orig/hurd/hurdexec.c
++++ glibc-2.21/hurd/hurdexec.c
 @@ -28,13 +28,33 @@
  #include <assert.h>
  #include <argz.h>
@@ -183,8 +191,10 @@ from argv[0] but argv[0] only contains the executable name by convention.
 +}
 +compat_symbol (libc, __hurd_exec_file_name_2_13, _hurd_exec_file_name, GLIBC_2_13_DEBIAN_33);
 +#endif
---- a/sysdeps/mach/hurd/execve.c
-+++ b/sysdeps/mach/hurd/execve.c
+Index: glibc-2.21/sysdeps/mach/hurd/execve.c
+===================================================================
+--- glibc-2.21.orig/sysdeps/mach/hurd/execve.c
++++ glibc-2.21/sysdeps/mach/hurd/execve.c
 @@ -34,7 +34,8 @@ __execve (file_name, argv, envp)
      return -1;
  
@@ -195,8 +205,10 @@ from argv[0] but argv[0] only contains the executable name by convention.
  
    /* Oh well.  Might as well be tidy.  */
    __mach_port_deallocate (__mach_task_self (), file);
---- a/sysdeps/mach/hurd/fexecve.c
-+++ b/sysdeps/mach/hurd/fexecve.c
+Index: glibc-2.21/sysdeps/mach/hurd/fexecve.c
+===================================================================
+--- glibc-2.21.orig/sysdeps/mach/hurd/fexecve.c
++++ glibc-2.21/sysdeps/mach/hurd/fexecve.c
 @@ -25,8 +25,9 @@
  int
  fexecve (int fd, char *const argv[], char *const envp[])
@@ -209,8 +221,10 @@ from argv[0] but argv[0] only contains the executable name by convention.
    if (! err)
      err = EGRATUITOUS;
    return __hurd_fail (err);
---- a/sysdeps/mach/hurd/spawni.c
-+++ b/sysdeps/mach/hurd/spawni.c
+Index: glibc-2.21/sysdeps/mach/hurd/spawni.c
+===================================================================
+--- glibc-2.21.orig/sysdeps/mach/hurd/spawni.c
++++ glibc-2.21/sysdeps/mach/hurd/spawni.c
 @@ -43,7 +43,7 @@ __spawni (pid_t *pid, const char *file,
  	  int xflags)
  {
