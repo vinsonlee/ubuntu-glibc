@@ -84,7 +84,7 @@ then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions "$preversion" lt 2.21; then
+	if dpkg --compare-versions "$preversion" lt GLIBC_VERSION; then
 	    # LP #504198; purge locales between major versions
 	    if which locale-gen >/dev/null; then
 		locale-gen --purge
@@ -185,16 +185,7 @@ then
 	    else
 		echo "Nothing to restart."
 	    fi
-	else
-
-	    # Here we issue the reboot notification for upgrades and
-            # security updates. We do want services to be restarted when we
-	    # update for a security issue, but planned by the
-	    # sysadmin, not automatically. (LP: #1546457)
-	    if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
-		/usr/share/update-notifier/notify-reboot-required
-	    fi
-	fi # end upgrading and $preversion lt 2.21
+	fi # end upgrading and $preversion lt GLIBC_VERSION
     fi # Upgrading
 
     # Restart init.  Currently handles chroots, systemd and upstart, and
