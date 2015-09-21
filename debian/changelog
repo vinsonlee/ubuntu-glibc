@@ -1,3 +1,10 @@
+glibc (2.19-22) unstable; urgency=medium
+
+  * patches/hurd-i386/cvs-cache-mach_host_self.diff: Remove, since it introduces
+    a new symbol, which will be easier to handle in 2.21.
+
+ -- Samuel Thibault <sthibault@debian.org>  Tue, 22 Sep 2015 01:38:34 +0200
+
 glibc (2.19-21) unstable; urgency=medium
 
   [ Samuel Thibault ]
