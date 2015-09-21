@@ -1,5 +1,5 @@
 /* AltiVec (new) version of setjmp for PowerPC.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 #include <rtld-global-offsets.h>
 #include <shlib-compat.h>
 
-#if !IS_IN (libc)
+#if defined NOT_IN_libc
 /* Build a non-versioned object for rtld-*.  */
 # define setjmp_symbol setjmp
 # define _setjmp_symbol _setjmp
@@ -28,7 +28,7 @@
 # define __sigjmp_save_symbol __sigjmp_save
 # include "setjmp-common.S"
 
-#else /* IS_IN (libc) */
+#else /* !NOT_IN_libc */
 /* Build a versioned object for libc.  */
 versioned_symbol (libc, __vmxsetjmp, setjmp, GLIBC_2_3_4)
 versioned_symbol (libc, __vmx_setjmp, _setjmp, GLIBC_2_3_4)
@@ -58,4 +58,4 @@ compat_symbol (libc, __novmx__sigsetjmp,__sigsetjmp, GLIBC_2_3)
 #  include "setjmp-common.S"
 strong_alias (__novmxsetjmp, __novmx__setjmp)
 # endif
-#endif /* IS_IN (libc) */
+#endif /* !NOT_IN_libc */

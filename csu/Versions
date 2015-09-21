@@ -1,3 +1,5 @@
+%include <tls.h>
+
 libc {
   GLIBC_2.0 {
     # helper functions

@@ -1,5 +1,5 @@
 /* Optimized memrchr implementation for PowerPC32/POWER7 using cmpb insn.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Luis Machado <luisgpm@br.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -32,8 +32,8 @@ ENTRY (__memrchr)
 	dcbt	r9,r6,16      /* Stream hint, decreasing addresses.  */
 
 	/* Replicate BYTE to word.  */
-	insrwi	r4,r4,8,16
-	insrwi	r4,r4,16,0
+	rldimi	r4,r4,8,48
+	rldimi	r4,r4,16,32
 	li	r6,-4
 	li	r9,-1
 	rlwinm	r0,r0,3,27,28 /* Calculate padding.  */

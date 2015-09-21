@@ -1,5 +1,5 @@
 /* Determine various system internal values, Linux version.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -34,6 +34,7 @@
 
 #include <atomic.h>
 #include <not-cancel.h>
+#include <kernel-features.h>
 
 
 /* How we can determine the number of available processors depends on
@@ -125,13 +126,13 @@ next_line (int fd, char *const buffer, char **cp, char **re,
 int
 __get_nprocs (void)
 {
-  static int cached_result = -1;
+  static int cached_result;
   static time_t timestamp;
 
   time_t now = time (NULL);
   time_t prev = timestamp;
   atomic_read_barrier ();
-  if (now == prev && cached_result > -1)
+  if (now == prev)
     return cached_result;
 
   /* XXX Here will come a test for the new system call.  */
@@ -142,7 +143,11 @@ __get_nprocs (void)
   char *cp = buffer_end;
   char *re = buffer_end;
 
+#ifdef O_CLOEXEC
   const int flags = O_RDONLY | O_CLOEXEC;
+#else
+  const int flags = O_RDONLY;
+#endif
   int fd = open_not_cancel_2 ("/sys/devices/system/cpu/online", flags);
   char *l;
   int result = 0;
@@ -299,7 +304,7 @@ phys_pages_info (const char *format)
 	 string "processor".  We don't have to fear extremely long
 	 lines since the kernel will not generate them.  8192
 	 bytes are really enough.  */
-      while (__fgets_unlocked (buffer, sizeof buffer, fp) != NULL)
+      while (fgets_unlocked (buffer, sizeof buffer, fp) != NULL)
 	if (sscanf (buffer, format, &result) == 1)
 	  {
 	    result /= (__getpagesize () / 1024);

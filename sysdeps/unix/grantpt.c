@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Zack Weinberg <zack@rabi.phys.columbia.edu>, 1998.
 
@@ -108,7 +108,7 @@ grantpt (int fd)
   char *buf = _buf;
   struct stat64 st;
 
-  if (__glibc_unlikely (pts_name (fd, &buf, sizeof (_buf), &st)))
+  if (__builtin_expect (pts_name (fd, &buf, sizeof (_buf), &st), 0))
     {
       int save_errno = errno;
 
@@ -136,7 +136,7 @@ grantpt (int fd)
     }
 
   static int tty_gid = -1;
-  if (__glibc_unlikely (tty_gid == -1))
+  if (__builtin_expect (tty_gid == -1, 0))
     {
       char *grtmpbuf;
       struct group grbuf;
@@ -176,7 +176,7 @@ grantpt (int fd)
   /* We have to use the helper program if it is available.  */
  helper:;
 
-#if HAVE_PT_CHOWN
+#ifdef HAVE_PT_CHOWN
   pid_t pid = __fork ();
   if (pid == -1)
     goto cleanup;
@@ -229,7 +229,7 @@ grantpt (int fd)
 	    break;
 
 	  default:
-	    assert(! "grantpt: internal error: invalid exit code from pt_chown");
+	    assert(! "getpt: internal error: invalid exit code from pt_chown");
 	  }
     }
 #endif

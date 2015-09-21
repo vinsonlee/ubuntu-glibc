@@ -6,8 +6,8 @@
 #include <wchar.h>
 
 
-static int
-do_test (void)
+int
+main (void)
 {
   locale_t l;
   locale_t old;
@@ -124,6 +124,3 @@ do_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

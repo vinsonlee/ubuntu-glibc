@@ -1,5 +1,5 @@
 /* Support for reading /etc/ld.so.cache files written by Linux ldconfig.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ do									      \
 									      \
 	/* Actually compare the entry with the key.  */			      \
 	cmpres = _dl_cache_libcmp (name, cache_data + key);		      \
-	if (__glibc_unlikely (cmpres == 0))				      \
+	if (__builtin_expect (cmpres == 0, 0))				      \
 	  {								      \
 	    /* Found it.  LEFT now marks the last entry for which we	      \
 	       know the name is correct.  */				      \
@@ -174,12 +174,9 @@ _dl_cache_libcmp (const char *p1, const char *p2)
 
 /* Look up NAME in ld.so.cache and return the file name stored there, or null
    if none is found.  The cache is loaded if it was not already.  If loading
-   the cache previously failed there will be no more attempts to load it.
-   The caller is responsible for freeing the returned string.  The ld.so.cache
-   may be unmapped at any time by a completing recursive dlopen and
-   this function must take care that it does not return references to
-   any data in the mapping.  */
-char *
+   the cache previously failed there will be no more attempts to load it.  */
+
+const char *
 internal_function
 _dl_load_cache_lookup (const char *name)
 {
@@ -190,7 +187,7 @@ _dl_load_cache_lookup (const char *name)
   const char *best;
 
   /* Print a message if the loading of libs is traced.  */
-  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
+  if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_LIBS, 0))
     _dl_debug_printf (" search cache=%s\n", LD_SO_CACHE);
 
   if (cache == NULL)
@@ -292,17 +289,7 @@ _dl_load_cache_lookup (const char *name)
       && best != NULL)
     _dl_debug_printf ("  trying file=%s\n", best);
 
-  if (best == NULL)
-    return NULL;
-
-  /* The double copy is *required* since malloc may be interposed
-     and call dlopen itself whose completion would unmap the data
-     we are accessing. Therefore we must make the copy of the
-     mapping data without using malloc.  */
-  char *temp;
-  temp = alloca (strlen (best) + 1);
-  strcpy (temp, best);
-  return strdup (temp);
+  return best;
 }
 
 #ifndef MAP_COPY

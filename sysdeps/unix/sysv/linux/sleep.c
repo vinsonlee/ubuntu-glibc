@@ -1,5 +1,5 @@
 /* Implementation of the POSIX sleep function using nanosleep.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -23,7 +23,6 @@
 #include <string.h>	/* For the real memset prototype.  */
 #include <unistd.h>
 #include <sys/param.h>
-#include <nptl/pthreadP.h>
 
 
 #if 0
@@ -48,7 +47,7 @@ __sleep (unsigned int seconds)
   unsigned int result;
 
   /* This is not necessary but some buggy programs depend on this.  */
-  if (__glibc_unlikely (seconds == 0))
+  if (__builtin_expect (seconds == 0, 0))
     {
 #ifdef CANCELLATION_P
       CANCELLATION_P (THREAD_SELF);

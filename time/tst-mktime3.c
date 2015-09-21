@@ -17,8 +17,8 @@ struct tm expected[] =
   { .tm_sec = 5, .tm_mday = 1, .tm_year = 102, .tm_wday = 2 }
 };
 
-static int
-do_test (void)
+int
+main (void)
 {
   setenv ("TZ", "UTC", 1);
   int i;
@@ -48,6 +48,3 @@ do_test (void)
     }
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

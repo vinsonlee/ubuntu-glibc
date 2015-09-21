@@ -1,5 +1,5 @@
 /* Look up a versioned symbol in a shared object loaded by `dlopen'.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 
 #include <ldsodefs.h>
 
-#if !defined SHARED && IS_IN (libdl)
+#if !defined SHARED && defined IS_IN_libdl
 
 void *
 weak_function
@@ -58,7 +58,7 @@ __dlvsym (void *handle, const char *name, const char *version_str
 	  DL_CALLER_DECL)
 {
 # ifdef SHARED
-  if (__glibc_unlikely (_dlfcn_hook != NULL))
+  if (__builtin_expect (_dlfcn_hook != NULL, 0))
     return _dlfcn_hook->dlvsym (handle, name, version_str, DL_CALLER);
 # endif
 

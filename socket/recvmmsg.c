@@ -1,5 +1,5 @@
 /* Receive multiple messages on a socket.  Stub version.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
    Returns the number of bytes read or -1 for errors.  */
 int
 recvmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags,
-	  struct timespec *tmo)
+	  const struct timespec *tmo)
 {
   __set_errno (ENOSYS);
   return -1;
