@@ -1,16 +1,16 @@
-Index: glibc-2.21/sysdeps/hppa/dl-fptr.c
+Index: glibc-2.19/ports/sysdeps/hppa/dl-fptr.c
 ===================================================================
---- glibc-2.21.orig/sysdeps/hppa/dl-fptr.c
-+++ glibc-2.21/sysdeps/hppa/dl-fptr.c
-@@ -28,6 +28,7 @@
+--- glibc-2.19.orig/ports/sysdeps/hppa/dl-fptr.c
++++ glibc-2.19/ports/sysdeps/hppa/dl-fptr.c
+@@ -27,6 +27,7 @@
+ #include <elf/dynamic-link.h>
  #include <dl-fptr.h>
- #include <dl-unmap-segments.h>
  #include <atomic.h>
 +#include <libc-internal.h>
  
  #ifndef ELF_MACHINE_BOOT_FPTR_TABLE_LEN
  /* ELF_MACHINE_BOOT_FPTR_TABLE_LEN should be greater than the number of
-@@ -181,24 +182,29 @@
+@@ -180,24 +181,29 @@ make_fdesc (ElfW(Addr) ip, ElfW(Addr) gp
  static inline ElfW(Addr) * __attribute__ ((always_inline))
  make_fptr_table (struct link_map *map)
  {

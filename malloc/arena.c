@@ -1,5 +1,5 @@
 /* Malloc implementation for multiple threads without lock contention.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Wolfram Gloger <wg@malloc.de>, 2001.
 
@@ -37,6 +37,14 @@
    mmap threshold, so that requests with a size just below that
    threshold can be fulfilled without creating too many heaps.  */
 
+
+#ifndef THREAD_STATS
+# define THREAD_STATS 0
+#endif
+
+/* If THREAD_STATS is non-zero, some statistics on mutex locking are
+   computed.  */
+
 /***************************************************************************/
 
 #define top(ar_ptr) ((ar_ptr)->top)
@@ -70,6 +78,13 @@ static tsd_key_t arena_key;
 static mutex_t list_lock = MUTEX_INITIALIZER;
 static size_t narenas = 1;
 static mstate free_list;
+
+#if THREAD_STATS
+static int stat_n_heaps;
+# define THREAD_STAT(x) x
+#else
+# define THREAD_STAT(x) do ; while (0)
+#endif
 
 /* Mapped memory in non-main arenas (reliable only for NO_THREADS). */
 static unsigned long arena_mem;
@@ -376,7 +391,7 @@ ptmalloc_init (void)
   tsd_setspecific (arena_key, (void *) &main_arena);
   thread_atfork (ptmalloc_lock_all, ptmalloc_unlock_all, ptmalloc_unlock_all2);
   const char *s = NULL;
-  if (__glibc_likely (_environ != NULL))
+  if (__builtin_expect (_environ != NULL, 1))
     {
       char **runp = _environ;
       char *envline;
@@ -578,6 +593,7 @@ new_heap (size_t size, size_t top_pad)
   h = (heap_info *) p2;
   h->size = size;
   h->mprotect_size = size;
+  THREAD_STAT (stat_n_heaps++);
   LIBC_PROBE (memory_heap_new, 2, h, h->size);
   return h;
 }
@@ -624,7 +640,7 @@ shrink_heap (heap_info *h, long diff)
 
   /* Try to re-map the extra heap space freshly to save memory, and make it
      inaccessible.  See malloc-sysdep.h to know when this is true.  */
-  if (__glibc_unlikely (check_may_shrink_heap ()))
+  if (__builtin_expect (check_may_shrink_heap (), 0))
     {
       if ((char *) MMAP ((char *) h + new_size, diff, PROT_NONE,
                          MAP_FIXED) == (char *) MAP_FAILED)
@@ -761,6 +777,8 @@ _int_new_arena (size_t size)
 
   (void) mutex_unlock (&list_lock);
 
+  THREAD_STAT (++(a->stat_lock_loop));
+
   return a;
 }
 
@@ -782,6 +800,7 @@ get_free_list (void)
           LIBC_PROBE (memory_arena_reuse_free_list, 1, result);
           (void) mutex_lock (&result->mutex);
           tsd_setspecific (arena_key, (void *) result);
+          THREAD_STAT (++(result->stat_lock_loop));
         }
     }
 
@@ -821,6 +840,7 @@ reused_arena (mstate avoid_arena)
 out:
   LIBC_PROBE (memory_arena_reuse, 2, result, avoid_arena);
   tsd_setspecific (arena_key, (void *) result);
+  THREAD_STAT (++(result->stat_lock_loop));
   next_to_use = result->next;
 
   return result;
@@ -863,12 +883,12 @@ arena_get2 (mstate a_tsd, size_t size, mstate avoid_arena)
          narenas_limit is 0.  There is no possibility for narenas to
          be too big for the test to always fail since there is not
          enough address space to create that many arenas.  */
-      if (__glibc_unlikely (n <= narenas_limit - 1))
+      if (__builtin_expect (n <= narenas_limit - 1, 0))
         {
           if (catomic_compare_and_exchange_bool_acq (&narenas, n + 1, n))
             goto repeat;
           a = _int_new_arena (size);
-	  if (__glibc_unlikely (a == NULL))
+          if (__builtin_expect (a == NULL, 0))
             catomic_decrement (&narenas);
         }
       else

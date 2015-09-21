@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -57,10 +57,10 @@ STRNCPY (char *s1, const char *s2, size_t n)
 	  if (--n4 == 0)
 	    goto last_chars;
 	}
-      s1++;
-      n = n - (s1 - s);
-      memset (s1, '\0', n);
-      return s;
+      n = n - (s1 - s) - 1;
+      if (n == 0)
+	return s;
+      goto zero_fill;
     }
 
  last_chars:
@@ -77,7 +77,11 @@ STRNCPY (char *s1, const char *s2, size_t n)
     }
   while (c != '\0');
 
-  memset (s1 + 1, '\0', n);
+ zero_fill:
+  do
+    *++s1 = '\0';
+  while (--n > 0);
+
   return s;
 }
 libc_hidden_builtin_def (strncpy)

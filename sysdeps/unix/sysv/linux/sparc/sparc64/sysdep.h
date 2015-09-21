@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson <richard@gnu.ai.mit.edu>, 1997.
 
@@ -21,7 +21,7 @@
 
 #include <sysdeps/unix/sysv/linux/sparc/sysdep.h>
 
-#if IS_IN (rtld)
+#ifdef IS_IN_rtld
 # include <dl-sysdep.h>		/* Defines RTLD_PRIVATE_ERRNO.  */
 #endif
 #include <tls.h>
@@ -89,7 +89,7 @@ ENTRY(name);					\
 	 mov	-1, %o0;
 # elif defined _LIBC_REENTRANT
 
-#  if IS_IN (libc)
+#  ifndef NOT_IN_libc
 #   define SYSCALL_ERROR_ERRNO __libc_errno
 #  else
 #   define SYSCALL_ERROR_ERRNO errno
@@ -140,7 +140,7 @@ ENTRY(name);					\
 #define STACK_BIAS	2047
 
 /* Pointer mangling support.  */
-#if IS_IN (rtld)
+#if defined NOT_IN_libc && defined IS_IN_rtld
 /* We cannot use the thread descriptor because in ld.so we use setjmp
    earlier than the descriptor is initialized.  */
 #else

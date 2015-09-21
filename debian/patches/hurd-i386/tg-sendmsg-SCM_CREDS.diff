@@ -231,7 +231,7 @@ Samuel Thibault  <samuel.thibault@ens-lyon.org>
    if (addr)
 --- a/hurd/Makefile
 +++ b/hurd/Makefile
-@@ -29,7 +29,7 @@ inline-headers = hurd.h $(addprefix hurd
+@@ -33,7 +33,7 @@ inline-headers = hurd.h $(addprefix hurd
  # The RPC interfaces go in a separate library.
  interface-library := libhurduser
  user-interfaces		:= $(addprefix hurd/,\

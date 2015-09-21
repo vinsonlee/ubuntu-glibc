@@ -1,5 +1,5 @@
 /* Run-time dynamic linker data structures for loaded ELF shared objects.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 #include <bits/libc-lock.h>
 #include <hp-timing.h>
 #include <tls.h>
+#include <kernel-features.h>
 
 __BEGIN_DECLS
 
@@ -90,7 +91,9 @@ typedef struct link_map *lookup_t;
 
 /* Unmap a loaded object, called by _dl_close (). */
 #ifndef DL_UNMAP_IS_SPECIAL
-# define DL_UNMAP(map)	_dl_unmap_segments (map)
+# define DL_UNMAP(map) \
+ __munmap ((void *) (map)->l_map_start,					      \
+	   (map)->l_map_end - (map)->l_map_start)
 #endif
 
 /* By default we do not need special support to initialize DSOs loaded
@@ -250,7 +253,7 @@ typedef void (*receiver_fct) (int, const char *, const char *);
 # define GL(name) _##name
 #else
 # define EXTERN
-# if IS_IN (rtld)
+# ifdef IS_IN_rtld
 #  define GL(name) _rtld_local._##name
 # else
 #  define GL(name) _rtld_global._##name
@@ -319,7 +322,7 @@ struct rtld_global
   /* The object to be initialized first.  */
   EXTERN struct link_map *_dl_initfirst;
 
-#if HP_SMALL_TIMING_AVAIL
+#if HP_TIMING_AVAIL || HP_SMALL_TIMING_AVAIL
   /* Start time on CPU clock.  */
   EXTERN hp_timing_t _dl_cpuclock_offset;
 #endif
@@ -409,7 +412,7 @@ struct rtld_global
 #ifdef SHARED
 };
 # define __rtld_global_attribute__
-# if IS_IN (rtld)
+# ifdef IS_IN_rtld
 #  ifdef HAVE_SDATA_SECTION
 #   define __rtld_local_attribute__ \
 	    __attribute__ ((visibility ("hidden"), section (".sdata")))
@@ -428,7 +431,7 @@ extern struct rtld_global _rtld_global __rtld_global_attribute__;
 #ifndef SHARED
 # define GLRO(name) _##name
 #else
-# if IS_IN (rtld)
+# ifdef IS_IN_rtld
 #  define GLRO(name) _rtld_local_ro._##name
 # else
 #  define GLRO(name) _rtld_global_ro._##name
@@ -532,6 +535,11 @@ struct rtld_global_ro
   /* All search directories defined at startup.  */
   EXTERN struct r_search_path_elem *_dl_init_all_dirs;
 
+#if HP_TIMING_AVAIL || HP_SMALL_TIMING_AVAIL
+  /* Overhead of a high-precision timing measurement.  */
+  EXTERN hp_timing_t _dl_hp_timing_overhead;
+#endif
+
 #ifdef NEED_DL_SYSINFO
   /* Syscall handling improvements.  This is very specific to x86.  */
   EXTERN uintptr_t _dl_sysinfo;
@@ -587,7 +595,7 @@ struct rtld_global_ro
   EXTERN int _dl_pointer_guard;
 };
 # define __rtld_global_attribute__
-# if IS_IN (rtld)
+# ifdef IS_IN_rtld
 #  define __rtld_local_attribute__ __attribute__ ((visibility ("hidden")))
 extern struct rtld_global_ro _rtld_local_ro
     attribute_relro __rtld_local_attribute__;
@@ -610,7 +618,7 @@ extern const ElfW(Phdr) *_dl_phdr;
 extern size_t _dl_phnum;
 #endif
 
-#if IS_IN (rtld)
+#ifdef IS_IN_rtld
 /* This is the initial value of GL(dl_error_catch_tsd).
    A non-TLS libpthread will change it.  */
 extern void **_dl_initial_error_catch_tsd (void) __attribute__ ((const))
@@ -641,8 +649,7 @@ extern char **_dl_argv
      attribute_relro
 #endif
      ;
-rtld_hidden_proto (_dl_argv)
-#if IS_IN (rtld)
+#ifdef IS_IN_rtld
 extern unsigned int _dl_skip_args attribute_hidden
 # ifndef DL_ARGV_NOT_RELRO
      attribute_relro
@@ -653,13 +660,22 @@ extern unsigned int _dl_skip_args_internal attribute_hidden
      attribute_relro
 # endif
      ;
+extern char **_dl_argv_internal attribute_hidden
+# ifndef DL_ARGV_NOT_RELRO
+     attribute_relro
+# endif
+     ;
+# define rtld_progname (INTUSE(_dl_argv)[0])
+#else
+# define rtld_progname _dl_argv[0]
 #endif
-#define rtld_progname _dl_argv[0]
 
 /* Flag set at startup and cleared when the last initializer has run.  */
 extern int _dl_starting_up;
 weak_extern (_dl_starting_up)
-rtld_hidden_proto (_dl_starting_up)
+#ifdef IS_IN_rtld
+extern int _dl_starting_up_internal attribute_hidden;
+#endif
 
 /* Random data provided by the kernel.  */
 extern void *_dl_random attribute_hidden attribute_relro;
@@ -883,7 +899,8 @@ extern void _dl_start_profile (void) internal_function attribute_hidden;
 
 /* The actual functions used to keep book on the calls.  */
 extern void _dl_mcount (ElfW(Addr) frompc, ElfW(Addr) selfpc);
-rtld_hidden_proto (_dl_mcount)
+extern void _dl_mcount_internal (ElfW(Addr) frompc, ElfW(Addr) selfpc)
+     attribute_hidden;
 
 /* This function is simply a wrapper around the _dl_mcount function
    which does not require a FROMPC parameter since this is the
@@ -905,8 +922,8 @@ extern const struct r_strlenpair *_dl_important_hwcaps (const char *platform,
      internal_function;
 
 /* Look up NAME in ld.so.cache and return the file name stored there,
-   or null if none is found.  Caller must free returned string.  */
-extern char *_dl_load_cache_lookup (const char *name)
+   or null if none is found.  */
+extern const char *_dl_load_cache_lookup (const char *name)
      internal_function;
 
 /* If the system does not support MAP_COPY we cannot leave the file open
@@ -939,9 +956,6 @@ extern void _dl_sysdep_start_cleanup (void)
 
 /* Determine next available module ID.  */
 extern size_t _dl_next_tls_modid (void) internal_function attribute_hidden;
-
-/* Count the modules with TLS segments.  */
-extern size_t _dl_count_modids (void) internal_function attribute_hidden;
 
 /* Calculate offset of the TLS blocks in the static TLS block.  */
 extern void _dl_determine_tlsoffset (void) internal_function attribute_hidden;

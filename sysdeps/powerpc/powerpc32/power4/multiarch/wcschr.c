@@ -1,5 +1,5 @@
 /* Multiple versions of wcschr
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,26 +16,23 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#if IS_IN (libc)
-# define wcschr __redirect_wcschr
+#ifndef NOT_IN_libc
 # include <wchar.h>
 # include <shlib-compat.h>
 # include "init-arch.h"
 
-extern __typeof (__redirect_wcschr) __wcschr_ppc attribute_hidden;
-extern __typeof (__redirect_wcschr) __wcschr_power6 attribute_hidden;
-extern __typeof (__redirect_wcschr) __wcschr_power7 attribute_hidden;
+extern __typeof (wcschr) __wcschr_ppc attribute_hidden;
+extern __typeof (wcschr) __wcschr_power6 attribute_hidden;
+extern __typeof (wcschr) __wcschr_power7 attribute_hidden;
 
-extern __typeof (__redirect_wcschr) __libc_wcschr;
-
-libc_ifunc (__libc_wcschr,
+libc_ifunc (wcschr,
 	     (hwcap & PPC_FEATURE_HAS_VSX)
              ? __wcschr_power7 :
 	       (hwcap & PPC_FEATURE_ARCH_2_05)
 	       ? __wcschr_power6
              : __wcschr_ppc);
-#undef wcschr
-weak_alias (__libc_wcschr, wcschr)
 #else
+#undef libc_hidden_def
+#define libc_hidden_def(a)
 #include <wcsmbs/wcschr.c>
 #endif

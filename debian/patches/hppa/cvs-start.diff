@@ -1,7 +1,7 @@
-Index: glibc-2.21/sysdeps/hppa/start.S
+Index: glibc-2.19/ports/sysdeps/hppa/start.S
 ===================================================================
---- glibc-2.21.orig/sysdeps/hppa/start.S
-+++ glibc-2.21/sysdeps/hppa/start.S
+--- glibc-2.19.orig/ports/sysdeps/hppa/start.S
++++ glibc-2.19/ports/sysdeps/hppa/start.S
 @@ -42,7 +42,11 @@
  	/* Have the linker create plabel words so we get PLABEL32
  	   relocs and not 21/14.  The use of 21/14 relocs is only

@@ -31,8 +31,8 @@ calloc (size_t n, size_t m)
   return ptr;
 }
 
-static int
-do_test (void)
+int
+main (void)
 {
   if (magic[1] != MAGIC1 || magic[0] != MAGIC2)
     {
@@ -42,6 +42,3 @@ do_test (void)
 
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

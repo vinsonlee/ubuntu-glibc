@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-static int
-do_test (void)
+int
+main (void)
 {
 #if LDBL_MANT_DIG >= 106
   volatile union { long double l; long long x[2]; } u, v;
@@ -82,6 +82,3 @@ do_test (void)
 #endif
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

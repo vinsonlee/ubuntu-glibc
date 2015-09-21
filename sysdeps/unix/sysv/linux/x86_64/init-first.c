@@ -1,5 +1,5 @@
 /* Initialization code run first thing by the ELF startup code.  Linux/x86-64.
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,20 +20,20 @@
 # include <time.h>
 # include <sysdep.h>
 # include <dl-vdso.h>
-# include <libc-vdso.h>
+# include <bits/libc-vdso.h>
 
 long int (*__vdso_clock_gettime) (clockid_t, struct timespec *)
   __attribute__ ((nocommon));
-libc_hidden_proto (__vdso_clock_gettime)
-libc_hidden_data_def (__vdso_clock_gettime)
+strong_alias (__vdso_clock_gettime, __GI___vdso_clock_gettime attribute_hidden)
 
 long int (*__vdso_getcpu) (unsigned *, unsigned *, void *) attribute_hidden;
+
 
 extern long int __syscall_clock_gettime (clockid_t, struct timespec *);
 
 
 static inline void
-__vdso_platform_setup (void)
+_libc_vdso_platform_setup (void)
 {
   PREPARE_VERSION (linux26, "LINUX_2.6", 61765110);
 
@@ -41,7 +41,7 @@ __vdso_platform_setup (void)
   if (p == NULL)
     p = __syscall_clock_gettime;
   PTR_MANGLE (p);
-  __vdso_clock_gettime = p;
+  __GI___vdso_clock_gettime = p;
 
   p = _dl_vdso_vsym ("__vdso_getcpu", &linux26);
   /* If the vDSO is not available we fall back on the old vsyscall.  */
@@ -52,7 +52,7 @@ __vdso_platform_setup (void)
   __vdso_getcpu = p;
 }
 
-# define VDSO_SETUP __vdso_platform_setup
+# define VDSO_SETUP _libc_vdso_platform_setup
 #endif
 
 #include <csu/init-first.c>

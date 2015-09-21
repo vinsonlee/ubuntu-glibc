@@ -1,5 +1,5 @@
 /* Conversion from and to CP1255.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998,
    and Bruno Haible <haible@clisp.cons.org>, 2001.
@@ -30,7 +30,6 @@
 #define TO_LOOP			to_cp1255
 #define DEFINE_INIT		1
 #define DEFINE_FINI		1
-#define ONE_DIRECTION		0
 #define FROM_LOOP_MIN_NEEDED_FROM	1
 #define FROM_LOOP_MAX_NEEDED_FROM	1
 #define FROM_LOOP_MIN_NEEDED_TO		4
@@ -66,7 +65,7 @@
     {									      \
       if (FROM_DIRECTION)						      \
 	{								      \
-	  if (__glibc_likely (outbuf + 4 <= outend))			      \
+	  if (__builtin_expect (outbuf + 4 <= outend, 1))		      \
 	    {								      \
 	      /* Write out the last character.  */			      \
 	      *((uint32_t *) outbuf) = data->__statep->__count >> 3;	      \
@@ -202,7 +201,7 @@ static const struct { unsigned int idx; unsigned int len; } comp_table[8] = {
     if (ch >= 0x80)							      \
       {									      \
 	ch = to_ucs4[ch - 0x80];					      \
-	if (__glibc_unlikely (ch == L'\0'))				      \
+	if (__builtin_expect (ch == L'\0', 0))				      \
 	  {								      \
 	    /* This is an illegal character.  */			      \
 	    STANDARD_FROM_LOOP_ERR_HANDLER (1);				      \
@@ -464,7 +463,7 @@ static const struct {
 	    res = 0;							      \
 	  }								      \
 									      \
-	if (__glibc_likely (res != 0))					      \
+	if (__builtin_expect (res != 0, 1))				      \
 	  {								      \
 	    *outptr++ = res;						      \
 	    inptr += 4;							      \
@@ -516,7 +515,7 @@ static const struct {
 		if (decomp_table[i].comb2 < 0)				      \
 		  {							      \
 		    /* See whether we have room for two bytes.  */	      \
-		    if (__glibc_unlikely (outptr + 1 >= outend))	      \
+		    if (__builtin_expect (outptr + 1 >= outend, 0))	      \
 		      {							      \
 			result = __GCONV_FULL_OUTPUT;			      \
 			break;						      \
@@ -528,7 +527,7 @@ static const struct {
 		else							      \
 		  {							      \
 		    /* See whether we have room for three bytes.  */	      \
-		    if (__glibc_unlikely (outptr + 2 >= outend))	      \
+		    if (__builtin_expect (outptr + 2 >= outend, 0))	      \
 		      {							      \
 			result = __GCONV_FULL_OUTPUT;			      \
 			break;						      \

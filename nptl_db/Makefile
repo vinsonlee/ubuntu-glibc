@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2015 Free Software Foundation, Inc.
+# Copyright (C) 2002-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,14 +19,12 @@
 
 subdir          := nptl_db
 
-include ../Makeconfig
-
 nptl_db-version = 1.0
 
 extra-libs = libthread_db
 extra-libs-others := $(extra-libs)
 
-headers         = thread_db.h sys/procfs.h
+headers         = thread_db.h
 
 libthread_db-routines = td_init td_log td_ta_new td_ta_delete \
 			td_ta_get_nthreads td_ta_get_ph \
@@ -51,13 +49,11 @@ libthread_db-inhibit-o = $(filter-out .os,$(object-suffixes))
 # The ps_* callback functions are not defined.
 libthread_db.so-no-z-defs = yes
 
-tests-special += $(objpfx)db-symbols.out
-
 include ../Rules
 
+tests: $(objpfx)db-symbols.out
 $(objpfx)db-symbols.out: $(objpfx)db-symbols.v.i \
 			 $(common-objpfx)nptl/libpthread.so
-	LC_ALL=C $(READELF) -W -s $(filter %.so,$^) | $(AWK) -f $< > $@; \
-	$(evaluate-test)
+	LC_ALL=C $(READELF) -W -s $(filter %.so,$^) | $(AWK) -f $< > $@
 
 $(objpfx)db-symbols.v.i: db-symbols.awk

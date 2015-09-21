@@ -1,27 +1,14 @@
 #
-# Allowed failures for x86_64-linux-gnux32-libc
+# Allowed failures for x86_64-linux-gnux32-libc and the returned make
+# failure number, indicating the signal the process died with.
+# Format: <Failed test>, Error <Make error code> [(ignored)]
 #
-posix/annexc
-debug/tst-backtrace6
-rt/tst-cpuclock2
-rt/tst-mqueue5
-rt/tst-timer
-posix/tst-waitid
-misc/tst-writev
-rt/tst-cputimer1
-conform/ISO11/time.h/conform
-conform/POSIX2008/mqueue.h/conform
-conform/POSIX2008/sys/select.h/conform
-conform/POSIX2008/sys/stat.h/conform
-conform/POSIX2008/time.h/conform
-conform/POSIX/mqueue.h/conform
-conform/POSIX/sched.h/conform
-conform/POSIX/time.h/conform
-conform/UNIX98/mqueue.h/conform
-conform/UNIX98/sched.h/conform
-conform/UNIX98/time.h/conform
-conform/XOPEN2K8/mqueue.h/conform
-conform/XOPEN2K8/sys/stat.h/conform
-conform/XOPEN2K8/time.h/conform
-conform/XOPEN2K/sys/select.h/conform
-conform/XOPEN2K/time.h/conform
+annexc.out, Error 1 (ignored)
+run-conformtest.out, Error 1 (ignored)
+tst-backtrace6.out, Error 1
+tst-cpuclock2.out, Error 1
+tst-mqueue5.out, Error 1
+tst-timer.out, Error 139
+tst-waitid.out, Error 1
+tst-writev.out, Error 1
+tst-cputimer1.out, Error 1

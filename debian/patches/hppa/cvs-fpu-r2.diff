@@ -1,13 +1,13 @@
 2015-03-07  John David Anglin  <danglin@gcc.gnu.org>
 
-	* sysdeps/hppa/fpu/feholdexcpt.c (feholdexcept): Don't modify
+	* ports/sysdeps/hppa/fpu/feholdexcpt.c (feholdexcept): Don't modify
 	bufptr in asms.
-	* sysdeps/hppa/fpu/fesetenv.c (fesetenv): Likewise.
+	* ports/sysdeps/hppa/fpu/fesetenv.c (fesetenv): Likewise.
 
-Index: glibc-2.21/sysdeps/hppa/fpu/feholdexcpt.c
+Index: glibc-2.19/ports/sysdeps/hppa/fpu/feholdexcpt.c
 ===================================================================
---- glibc-2.21.orig/sysdeps/hppa/fpu/feholdexcpt.c
-+++ glibc-2.21/sysdeps/hppa/fpu/feholdexcpt.c
+--- glibc-2.19.orig/ports/sysdeps/hppa/fpu/feholdexcpt.c
++++ glibc-2.19/ports/sysdeps/hppa/fpu/feholdexcpt.c
 @@ -29,8 +29,8 @@ feholdexcept (fenv_t *envp)
    /* Store the environment.  */
    bufptr = clear.buf;
@@ -33,10 +33,10 @@ Index: glibc-2.21/sysdeps/hppa/fpu/feholdexcpt.c
  	   : : "r" (bufptr), "m" (clear) : "%r0");
  
    return 0;
-Index: glibc-2.21/sysdeps/hppa/fpu/fesetenv.c
+Index: glibc-2.19/ports/sysdeps/hppa/fpu/fesetenv.c
 ===================================================================
---- glibc-2.21.orig/sysdeps/hppa/fpu/fesetenv.c
-+++ glibc-2.21/sysdeps/hppa/fpu/fesetenv.c
+--- glibc-2.19.orig/ports/sysdeps/hppa/fpu/fesetenv.c
++++ glibc-2.19/ports/sysdeps/hppa/fpu/fesetenv.c
 @@ -33,7 +33,7 @@ fesetenv (const fenv_t *envp)
       we want to use from the environment specified by the parameter.  */
    bufptr = temp.buf;

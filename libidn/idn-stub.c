@@ -130,7 +130,7 @@ __idna_to_ascii_lz (const char *input, char **output, int flags)
 }
 
 
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 libc_freeres_fn (unload_libidn)
 {
   if (h != NULL && h != (void *) 1l)

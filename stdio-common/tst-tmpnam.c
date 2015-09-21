@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int
-do_test (void)
+int
+main (void)
 {
   const char *name;
   int retval = 0;
@@ -48,6 +48,3 @@ do_test (void)
 
   return retval;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

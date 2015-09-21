@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 #define weak_alias(name, aliasname) \
   extern __typeof (__memcmp_ppc) aliasname \
     __attribute__ ((weak, alias ("__memcmp_ppc")));
-#if IS_IN (libc) && defined(SHARED)
+#if !defined(NOT_IN_libc) && defined(SHARED)
 # undef libc_hidden_builtin_def
 # define libc_hidden_builtin_def(name) \
   __hidden_ver1(__memcmp_ppc, __GI_memcmp, __memcmp_ppc);

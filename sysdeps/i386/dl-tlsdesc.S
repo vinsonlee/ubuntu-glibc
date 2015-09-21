@@ -1,5 +1,5 @@
 /* Thread-local storage handling in the ELF dynamic linker.  i386 version.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -126,7 +126,10 @@ _dl_tlsdesc_dynamic:
 	.p2align 4,,7
 .Lslow:
 	cfi_adjust_cfa_offset (28)
-	call	HIDDEN_JUMPTARGET (___tls_get_addr)
+	movl	%ebx, 16(%esp)
+	LOAD_PIC_REG (bx)
+	call	___tls_get_addr@PLT
+	movl	16(%esp), %ebx
 	jmp	.Lret
 	cfi_endproc
 	.size	_dl_tlsdesc_dynamic, .-_dl_tlsdesc_dynamic

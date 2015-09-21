@@ -25,8 +25,8 @@ avx_enabled (void)
 
 extern __m256i audit_test (__m256i, __m256i, __m256i, __m256i,
 			   __m256i, __m256i, __m256i, __m256i);
-static int
-do_test (void)
+int
+main (void)
 {
   /* Run AVX test only if AVX is supported.  */
   if (avx_enabled ())
@@ -41,12 +41,9 @@ do_test (void)
   return 0;
 }
 #else
-static int
-do_test (void)
+int
+main (void)
 {
   return 0;
 }
 #endif
-
-#define TEST_FUNCTION do_test ()
-#include "../../test-skeleton.c"

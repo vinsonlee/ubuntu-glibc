@@ -32,6 +32,10 @@ build-tree := build-tree
 stamp := $(CURDIR)/stamp-dir/
 DUMMY := $(shell mkdir -p $(stamp))
 
+# The minimum package version with which these packages are compatible.
+include debian/shlibver
+shlib_dep = $(libc) (>= $(shlib_dep_ver))
+
 # Beyond here you shouldn't need to customise anything:
 export SHELL          = /bin/bash -e
 
@@ -53,10 +57,6 @@ DEB_SOURCE_PACKAGE := $(strip $(shell egrep '^Source: ' debian/control | cut -f 
 
 DEB_VERSION := $(shell dpkg-parsechangelog | egrep '^Version:' | cut -f 2 -d ' ')
 GLIBC_VERSION = $(shell echo $(DEB_VERSION) | sed -e 's/.*://' -e 's/-.*//')
-
-# The minimum package version with which these packages are compatible.
-shlib_dep_ver = $(GLIBC_VERSION)
-shlib_dep = $(libc) (>= $(shlib_dep_ver))
 
 DEB_BUILDDIR ?= $(build-tree)/$(DEB_HOST_ARCH)-$(curpass)
 
@@ -102,7 +102,7 @@ libdir=/usr/lib/$(DEB_HOST_MULTIARCH)
 BASE_CC = gcc
 BASE_CXX = g++
 BASE_MIG = mig
-DEB_GCC_VERSION ?= -4.9
+DEB_GCC_VERSION ?= -4.8
 
 RUN_TESTSUITE = yes
 
@@ -148,7 +148,7 @@ ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
   DEB_UDEB_PACKAGES = 
 else
   DEB_ARCH_REGULAR_PACKAGES = $(libc) $(libc)-dev $(libc)-dbg $(libc)-pic libc-bin libc-dev-bin multiarch-support
-  DEB_INDEP_REGULAR_PACKAGES = glibc-doc glibc-source libc-l10n locales
+  DEB_INDEP_REGULAR_PACKAGES = glibc-doc glibc-source locales
   DEB_UDEB_PACKAGES = $(libc)-udeb libnss-dns-udeb libnss-files-udeb
   ## Locales can only be pre-generated during native compiles
   ifeq ($(DEB_HOST_ARCH),$(DEB_BUILD_ARCH))
@@ -182,17 +182,15 @@ NOSTRIP_$(libc)-dbg = 1
 # Don't put debug files from these packages in libc-dbg
 NODEBUG_libc-bin = 1
 NODEBUG_libc-dev-bin = 1
-NODEBUG_libc0.1-i386 = 1
 NODEBUG_libc6-amd64 = 1
 NODEBUG_libc6-i386 = 1
 NODEBUG_libc6-x32 = 1
-NODEBUG_libc6-mips32 =1
-NODEBUG_libc6-mips64 = 1
 NODEBUG_libc6-mipsn32 = 1
 NODEBUG_libc6-powerpc = 1
 NODEBUG_libc6-ppc64 = 1
 NODEBUG_libc6-s390 = 1
 NODEBUG_libc6-sparc64 = 1
+NODEBUG_libc6-mips64 = 1
 NODEBUG_nscd = 1
 
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
