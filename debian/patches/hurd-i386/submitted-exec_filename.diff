@@ -55,7 +55,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
 --- a/hurd/Makefile
 +++ b/hurd/Makefile
 @@ -36,8 +36,8 @@ user-interfaces		:= $(addprefix hurd/,\
- 				       auth startup \
+ 				       auth auth_request auth_reply startup \
  				       process process_request \
  				       msg msg_reply msg_request \
 -				       exec exec_startup crash interrupt \
@@ -123,7 +123,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
    error_t err;
    char *args, *env;
    size_t argslen, envlen;
-@@ -217,7 +235,7 @@ _hurd_exec (task_t task, file_t file,
+@@ -216,7 +234,7 @@ _hurd_exec (task_t task, file_t file,
        /* We have euid != svuid or egid != svgid.  POSIX.1 says that exec
  	 sets svuid = euid and svgid = egid.  So we must get a new auth
  	 port and reauthenticate everything with it.  We'll pass the new
@@ -132,7 +132,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
  
        auth_t newauth;
  
-@@ -361,13 +379,27 @@ _hurd_exec (task_t task, file_t file,
+@@ -360,13 +378,27 @@ _hurd_exec (task_t task, file_t file,
        if (__sigismember (&_hurdsig_traced, SIGKILL))
  	flags |= EXEC_SIGTRAP;
  #endif
