@@ -1,5 +1,5 @@
 /* POSIX.2 wordexp implementation.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Tim Waugh <tim@cyberelk.demon.co.uk>.
 
@@ -823,7 +823,7 @@ exec_comm_child (char *comm, int *fildes, int showerr, int noexec)
     args[1] = "-nc";
 
   /* Redirect output.  */
-  if (__glibc_likely (fildes[1] != STDOUT_FILENO))
+  if (__builtin_expect (fildes[1] != STDOUT_FILENO, 1))
     {
       __dup2 (fildes[1], STDOUT_FILENO);
       __close (fildes[1]);
@@ -892,10 +892,6 @@ exec_comm (char *comm, char **word, size_t *word_length, size_t *max_length,
   char buffer[bufsize];
   pid_t pid;
   int noexec = 0;
-
-  /* Do nothing if command substitution should not succeed.  */
-  if (flags & WRDE_NOCMD)
-    return WRDE_CMDSUB;
 
   /* Don't fork() unless necessary */
   if (!comm || !*comm)
@@ -2086,6 +2082,9 @@ parse_dollars (char **word, size_t *word_length, size_t *max_length,
 	    }
 	}
 
+      if (flags & WRDE_NOCMD)
+	return WRDE_CMDSUB;
+
       (*offset) += 2;
       return parse_comm (word, word_length, max_length, words, offset, flags,
 			 quoted? NULL : pwordexp, ifs, ifs_white);
@@ -2197,6 +2196,9 @@ parse_dquote (char **word, size_t *word_length, size_t *max_length,
 	  break;
 
 	case '`':
+	  if (flags & WRDE_NOCMD)
+	    return WRDE_CMDSUB;
+
 	  ++(*offset);
 	  error = parse_backtick (word, word_length, max_length, words,
 				  offset, flags, NULL, NULL, NULL);
@@ -2355,6 +2357,12 @@ wordexp (const char *words, wordexp_t *pwordexp, int flags)
 	break;
 
       case '`':
+	if (flags & WRDE_NOCMD)
+	  {
+	    error = WRDE_CMDSUB;
+	    goto do_error;
+	  }
+
 	++words_offset;
 	error = parse_backtick (&word, &word_length, &max_length, words,
 				&words_offset, flags, pwordexp, ifs,

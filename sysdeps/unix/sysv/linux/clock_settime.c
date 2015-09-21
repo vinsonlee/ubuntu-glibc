@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,6 +20,16 @@
 #include <time.h>
 
 #include "kernel-posix-cpu-timers.h"
+#include <kernel-features.h>
+
+#ifndef HAVE_CLOCK_GETRES_VSYSCALL
+# undef INTERNAL_VSYSCALL
+# define INTERNAL_VSYSCALL INTERNAL_SYSCALL
+# undef INLINE_VSYSCALL
+# define INLINE_VSYSCALL INLINE_SYSCALL
+#else
+# include <bits/libc-vdso.h>
+#endif
 
 
 /* The REALTIME clock is definitely supported in the kernel.  */

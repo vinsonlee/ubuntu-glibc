@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2015 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,8 +20,6 @@
 #
 subdir	:= time
 
-include ../Makeconfig
-
 headers	:= time.h sys/time.h sys/timeb.h bits/time.h
 
 routines := offtime asctime clock ctime ctime_r difftime \
@@ -37,7 +35,7 @@ aux :=	    era alt_digit lc-time-cleanup
 tests	:= test_time clocktest tst-posixtz tst-strptime tst_wcsftime \
 	   tst-getdate tst-mktime tst-mktime2 tst-ftime_l tst-strftime \
 	   tst-mktime3 tst-strptime2 bug-asctime bug-asctime_r bug-mktime1 \
-	   tst-strptime3 bug-getdate1 tst-strptime-whitespace tst-ftime
+	   tst-strptime3 bug-getdate1 tst-strptime-whitespace
 
 include ../Rules
 
@@ -54,5 +52,8 @@ CFLAGS-test_time.c = -Wno-format
 
 tst-getdate-ENV= DATEMSK=datemsk TZDIR=${common-objpfx}timezone/testdata
 test_time-ARGS= EST5EDT CST
+
+tst-strptime-ENV = LOCPATH=${common-objpfx}localedata
+tst-ftime_l-ENV = LOCPATH=${common-objpfx}localedata
 
 bug-getdate1-ARGS = ${objpfx}bug-getdate1-fmt

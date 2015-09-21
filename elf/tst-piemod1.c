@@ -6,8 +6,8 @@ foo (void)
   return 21;
 }
 
-static int
-do_test (void)
+int
+main (void)
 {
   int val = foo ();
   if (val != 34)
@@ -18,6 +18,3 @@ do_test (void)
 
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

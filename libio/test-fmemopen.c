@@ -1,5 +1,5 @@
 /* Test for fmemopen implementation.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Hanno Mueller, kontakt@hanno.de, 2000.
 
@@ -22,8 +22,8 @@ static char buffer[] = "foobar";
 #include <stdio.h>
 #include <string.h>
 
-static int
-do_test (void)
+int
+main (void)
 {
   int ch;
   FILE *stream;
@@ -37,6 +37,3 @@ do_test (void)
 
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

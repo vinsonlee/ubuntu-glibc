@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -27,7 +27,7 @@ sysv_scalbf (float x, float fn)
 {
   float z = __ieee754_scalbf (x, fn);
 
-  if (__glibc_unlikely (__isinff (z)))
+  if (__builtin_expect (__isinff (z), 0))
     {
       if (__finitef (x))
 	return __kernel_standard_f (x, fn, 132); /* scalb overflow */
@@ -45,32 +45,8 @@ sysv_scalbf (float x, float fn)
 float
 __scalbf (float x, float fn)
 {
-  if (__glibc_unlikely (_LIB_VERSION == _SVID_))
-    return sysv_scalbf (x, fn);
-  else
-    {
-      float z = __ieee754_scalbf (x, fn);
-
-      if (__glibc_unlikely (!__finitef (z) || z == 0.0f))
-	{
-	  if (__isnanf (z))
-	    {
-	      if (!__isnanf (x) && !__isnanf (fn))
-		__set_errno (EDOM);
-	    }
-	  else if (__isinf_nsf (z))
-	    {
-	      if (!__isinf_nsf (x) && !__isinf_nsf (fn))
-		__set_errno (ERANGE);
-	    }
-	  else
-	    {
-	      /* z == 0.  */
-	      if (x != 0.0f && !__isinf_nsf (fn))
-		__set_errno (ERANGE);
-	    }
-	}
-      return z;
-    }
+  return (__builtin_expect (_LIB_VERSION == _SVID_, 0)
+	  ? sysv_scalbf (x, fn)
+	  : __ieee754_scalbf (x, fn));
 }
 weak_alias (__scalbf, scalbf)

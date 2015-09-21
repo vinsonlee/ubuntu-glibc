@@ -1,5 +1,5 @@
 /* Startup code compliant to the ELF x86-64 ABI.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 2001.
 
@@ -55,7 +55,11 @@
 
 #include <sysdep.h>
 
-ENTRY (_start)
+	.text
+	.globl _start
+	.type _start,@function
+_start:
+	cfi_startproc
 	/* Clearing frame pointer is insufficient, use CFI.  */
 	cfi_undefined (rip)
 	/* Clear the frame pointer.  The ABI suggests this be done, to mark
@@ -119,7 +123,7 @@ ENTRY (_start)
 #endif
 
 	hlt			/* Crash if somehow `exit' does return.	 */
-END (_start)
+	cfi_endproc
 
 /* Define a symbol for the first piece of initialized data.  */
 	.data

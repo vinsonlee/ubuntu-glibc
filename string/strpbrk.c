@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -15,17 +15,21 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <string.h>
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
+#if defined _LIBC || defined HAVE_CONFIG_H
+# include <string.h>
+#endif
 
 #undef strpbrk
 
-#ifndef STRPBRK
-#define STRPBRK strpbrk
-#endif
-
 /* Find the first occurrence in S of any character in ACCEPT.  */
 char *
-STRPBRK (const char *s, const char *accept)
+strpbrk (s, accept)
+     const char *s;
+     const char *accept;
 {
   while (*s != '\0')
     {

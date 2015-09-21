@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -23,7 +23,7 @@
 
 #include <shlib-compat.h>
 #include <atomic.h>
-#include <safe-fatal.h>
+#include <sysdep.h>
 
 
 /* Pointers to the libc functions.  */
@@ -202,8 +202,11 @@ FORWARD (pthread_setcancelstate, (int state, int *oldstate), (state, oldstate),
 
 FORWARD (pthread_setcanceltype, (int type, int *oldtype), (type, oldtype), 0)
 
-FORWARD_NORETURN (__pthread_unwind,
-                  void attribute_hidden __attribute ((noreturn))
-                  __cleanup_fct_attribute attribute_compat_text_section,
-                  (__pthread_unwind_buf_t *buf), (buf),
-                  __safe_fatal ())
+FORWARD_NORETURN(__pthread_unwind,
+	 void attribute_hidden __attribute ((noreturn)) __cleanup_fct_attribute
+	 attribute_compat_text_section,
+	 (__pthread_unwind_buf_t *buf), (buf), {
+		       /* We cannot call abort() here.  */
+		       INTERNAL_SYSCALL_DECL (err);
+		       INTERNAL_SYSCALL (kill, err, 1, SIGKILL);
+		     })
