@@ -32,6 +32,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	rm -f $(DEB_BUILDDIR)/configparms
 	echo "CC = $(call xx,CC)"                 >> $(DEB_BUILDDIR)/configparms
 	echo "CXX = $(call xx,CXX)"               >> $(DEB_BUILDDIR)/configparms
+	echo "MIG = $(call xx,MIG)"               >> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CC = $(BUILD_CC)"             >> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CXX = $(BUILD_CXX)"           >> $(DEB_BUILDDIR)/configparms
 	echo "CFLAGS = $(HOST_CFLAGS)"            >> $(DEB_BUILDDIR)/configparms
@@ -78,11 +79,12 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		cd $(DEB_BUILDDIR) && \
 		CC="$(call xx,CC)" \
 		CXX="$(call xx,CXX)" \
+		MIG="$(call xx,MIG)" \
 		AUTOCONF=false \
 		MAKEINFO=: \
 		$(CURDIR)/configure \
 		--host=$(call xx,configure_target) \
-		--build=$$configure_build --prefix=/usr --without-cvs \
+		--build=$$configure_build --prefix=/usr \
 		--enable-add-ons=$(standard-add-ons)"$(call xx,add-ons)" \
 		--without-selinux \
 		--enable-stackguard-randomization \
@@ -137,24 +139,22 @@ $(stamp)check_%: $(stamp)build_%
 	  chmod +x debian/testsuite-checking/convertlog.sh ; \
 	  debian/testsuite-checking/convertlog.sh $(log_test) | tee $(log_results) ; \
 	  if test -f $(log_expected) ; then \
-	    echo "***************" ; \
 	    chmod +x debian/testsuite-checking/compare.sh ; \
 	    debian/testsuite-checking/compare.sh $(log_expected) $(log_results) $(DEB_BUILDDIR) ; \
-	    echo "***************" ; \
 	  else \
-	    echo "*** WARNING ***" ; \
+	    echo "*************************** WARNING ***************************" ; \
 	    echo "Please generate expected testsuite results for this arch ($(log_expected))!" ; \
-	    echo "*** WARNING ***" ; \
+	    echo "*************************** WARNING ***************************" ; \
 	  fi ; \
 	fi
-	@n=$$(grep '^make.* Error' $(log_test) | wc -l || true); \
+	@n=$$(grep '^FAIL: ' $(log_test) | wc -l || true); \
 	  echo "TEST SUMMARY $(log_test) ($$n matching lines)"; \
-	  grep '^make.* Error' $(log_test) || true; \
+	  grep '^FAIL: ' $(log_test) || true; \
 	  echo "END TEST SUMMARY $(log_test)"
 	touch $@
 
 $(patsubst %,install_%,$(GLIBC_PASSES)) :: install_% : $(stamp)install_%
-$(stamp)install_%: $(stamp)check_%
+$(stamp)install_%: $(stamp)build_%
 	@echo Installing $(curpass)
 	rm -rf $(CURDIR)/debian/tmp-$(curpass)
 ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
@@ -162,10 +162,10 @@ ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	    cross-compiling=yes install_root=$(CURDIR)/debian/tmp-$(curpass)	\
 	    install-bootstrap-headers=yes install-headers )
 
-	install -d $(CURDIR)/debian/tmp-$(curpass)/lib
-	install -m 644 $(DEB_BUILDDIR)/csu/crt[1in].o $(CURDIR)/debian/tmp-$(curpass)/lib
-	${CC} -nostdlib -nostartfiles -shared -x c /dev/null \
-	        -o $(CURDIR)/debian/tmp-$(curpass)/lib/libc.so
+	install -d $(CURDIR)/debian/tmp-$(curpass)/$(call xx,libdir)
+	install -m 644 $(DEB_BUILDDIR)/csu/crt[01in].o $(CURDIR)/debian/tmp-$(curpass)/$(call xx,libdir)/.
+	$(call xx,CC) -nostdlib -nostartfiles -shared -x c /dev/null \
+	        -o $(CURDIR)/debian/tmp-$(curpass)/$(call xx,libdir)/libc.so
 else
 	: # FIXME: why just needed for ARM multilib?
 	case "$(curpass)" in \
@@ -206,6 +206,7 @@ else
 	  $(MAKE) -f debian/generate-supported.mk IN=localedata/SUPPORTED \
 	    OUT=debian/tmp-$(curpass)/usr/share/i18n/SUPPORTED; \
 	fi
+endif
 
 	# Create the multiarch directories, and the configuration file in /etc/ld.so.conf.d
 	if [ $(curpass) = libc ]; then \
@@ -227,6 +228,7 @@ else
 	  mv debian/tmp-$(curpass)/usr/include/ieee754.h debian/tmp-$(curpass)/usr/include/$(DEB_HOST_MULTIARCH); \
 	fi
 
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	# For our biarch libc, add an ld.so.conf.d configuration; this
 	# is needed because multiarch libc Replaces: libc6-i386 for ld.so, and
 	# the multiarch ld.so doesn't look at the (non-standard) /lib32, so we
@@ -275,9 +277,17 @@ endif
 
 $(stamp)source: $(stamp)patch
 	mkdir -p $(build-tree)
-	tar -c -J -C .. \
-		-f $(build-tree)/glibc-$(GLIBC_VERSION).tar.xz \
-		$(GLIBC_SOURCES)
+	cd .. && \
+	       find $(GLIBC_SOURCES) -depth -newermt '$(DEB_BUILD_DATE)' \
+			-print0 | \
+               xargs -0r touch --no-dereference --date='$(DEB_BUILD_DATE)'
+	cd .. && \
+		find $(GLIBC_SOURCES) -print0 | \
+		LC_ALL=C sort -z | \
+		tar -c -J --null -T - --no-recursion \
+			--mode=go=rX,u+rw,a-s \
+			--owner=root --group=root --numeric-owner \
+			-f $(CURDIR)/$(build-tree)/glibc-$(GLIBC_VERSION).tar.xz
 	mkdir -p debian/glibc-source/usr/src/glibc
 	tar cf - --files-from debian/glibc-source.filelist \
 	  | tar -x -C debian/glibc-source/usr/src/glibc -f -

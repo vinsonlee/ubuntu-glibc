@@ -1,5 +1,5 @@
 /* Generic conversion to and from ISO 6937.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -380,6 +380,7 @@ static const char from_ucs4[][2] =
 #define MIN_NEEDED_FROM		1
 #define MAX_NEEDED_FROM		2
 #define MIN_NEEDED_TO		4
+#define ONE_DIRECTION		0
 
 
 /* First define the conversion function from ISO 6937 to UCS4.  */
@@ -397,7 +398,7 @@ static const char from_ucs4[][2] =
 	   is also available.  */					      \
 	int ch2;							      \
 									      \
-	if (__builtin_expect (inptr + 1 >= inend, 0))			      \
+	if (__glibc_unlikely (inptr + 1 >= inend))			      \
 	  {								      \
 	    /* The second character is not available.  Store the	      \
 	       intermediate result.  */					      \
@@ -416,7 +417,7 @@ static const char from_ucs4[][2] =
 									      \
 	ch = to_ucs4_comb[ch - 0xc1][ch2 - 0x20];			      \
 									      \
-	if (__builtin_expect (ch == 0, 0))				      \
+	if (__glibc_unlikely (ch == 0))					      \
 	  {								      \
 	    /* Illegal character.  */					      \
 	    STANDARD_FROM_LOOP_ERR_HANDLER (2);				      \
@@ -520,7 +521,7 @@ static const char from_ucs4[][2] =
 	    fail = 1;							      \
 	  }								      \
 									      \
-	if (__builtin_expect (fail, 0))					      \
+	if (__glibc_unlikely (fail))					      \
 	  {								      \
 	    /* Illegal characters.  */					      \
 	    STANDARD_TO_LOOP_ERR_HANDLER (4);				      \
@@ -538,7 +539,7 @@ static const char from_ucs4[][2] =
     /* Now test for a possible second byte and write this if possible.  */    \
     if (cp[1] != '\0')							      \
       {									      \
-	if (__builtin_expect (outptr >= outend, 0))			      \
+	if (__glibc_unlikely (outptr >= outend))			      \
 	  {								      \
 	    /* The result does not fit into the buffer.  */		      \
 	    --outptr;							      \

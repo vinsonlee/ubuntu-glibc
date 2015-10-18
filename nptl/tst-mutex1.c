@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -19,10 +19,12 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <errno.h>
+#include <stdbool.h>
 
 
 #ifndef ATTR
 # define ATTR NULL
+# define ATTR_NULL true
 #endif
 
 
@@ -32,7 +34,7 @@ do_test (void)
   pthread_mutex_t m;
 
   int e = pthread_mutex_init (&m, ATTR);
-  if (ATTR != NULL && e == ENOTSUP)
+  if (!ATTR_NULL && e == ENOTSUP)
     {
       puts ("cannot support selected type of mutexes");
       return 0;
@@ -43,7 +45,7 @@ do_test (void)
       return 1;
     }
 
-  if (ATTR != NULL && pthread_mutexattr_destroy (ATTR) != 0)
+  if (!ATTR_NULL && pthread_mutexattr_destroy (ATTR) != 0)
     {
       puts ("mutexattr_destroy failed");
       return 1;
