@@ -1,5 +1,5 @@
 /* Malloc implementation for multiple threads without lock contention.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Wolfram Gloger <wg@malloc.de>
    and Doug Lea <dl@cs.oswego.edu>, 2001.
@@ -22,7 +22,7 @@
   This is a version (aka ptmalloc2) of malloc/free/realloc written by
   Doug Lea and adapted to multiple threads/arenas by Wolfram Gloger.
 
-  There have been substantial changesmade after the integration into
+  There have been substantial changes made after the integration into
   glibc in all parts of the code.  Do not look for much commonality
   with the ptmalloc2 version.
 
@@ -269,6 +269,10 @@
   bounds. However, there are several add-ons and adaptations of this
   or other mallocs available that do this.
 */
+
+#ifndef MALLOC_DEBUG
+#define MALLOC_DEBUG 0
+#endif
 
 #ifdef NDEBUG
 # define assert(expr) ((void) 0)
@@ -1414,8 +1418,10 @@ typedef struct malloc_chunk *mbinptr;
         BK->fd = FD;							      \
         if (!in_smallbin_range (P->size)				      \
             && __builtin_expect (P->fd_nextsize != NULL, 0)) {		      \
-            assert (P->fd_nextsize->bk_nextsize == P);			      \
-            assert (P->bk_nextsize->fd_nextsize == P);			      \
+	    if (__builtin_expect (P->fd_nextsize->bk_nextsize != P, 0)	      \
+		|| __builtin_expect (P->bk_nextsize->fd_nextsize != P, 0))    \
+	      malloc_printerr (check_action,				      \
+			       "corrupted double-linked list (not small)", P);\
             if (FD->fd_nextsize == NULL) {				      \
                 if (P->fd_nextsize == P)				      \
                   FD->fd_nextsize = FD->bk_nextsize = FD;		      \
@@ -1672,11 +1678,6 @@ struct malloc_state
   /* Flags (formerly in max_fast).  */
   int flags;
 
-#if THREAD_STATS
-  /* Statistics for locking.  Only used if THREAD_STATS is defined.  */
-  long stat_lock_direct, stat_lock_loop, stat_lock_wait;
-#endif
-
   /* Fastbins */
   mfastbinptr fastbinsY[NFASTBINS];
 
@@ -1853,14 +1854,14 @@ static int check_action = DEFAULT_CHECK_ACTION;
 
 static int perturb_byte;
 
-static inline void
+static void
 alloc_perturb (char *p, size_t n)
 {
   if (__glibc_unlikely (perturb_byte))
     memset (p, perturb_byte ^ 0xff, n);
 }
 
-static inline void
+static void
 free_perturb (char *p, size_t n)
 {
   if (__glibc_unlikely (perturb_byte))
@@ -2750,6 +2751,9 @@ systrim (size_t pad, mstate av)
   /* Release in pagesize units, keeping at least one page */
   extra = (top_area - pad) & ~(pagesz - 1);
 
+  if (extra == 0)
+    return 0;
+
   /*
      Only proceed if end of memory is where we last set it.
      This avoids problems if there were foreign sbrk calls.
@@ -3010,17 +3014,7 @@ __libc_realloc (void *oldmem, size_t bytes)
     }
 
   ar_ptr = arena_for_chunk (oldp);
-#if THREAD_STATS
-  if (!mutex_trylock (&ar_ptr->mutex))
-    ++(ar_ptr->stat_lock_direct);
-  else
-    {
-      (void) mutex_lock (&ar_ptr->mutex);
-      ++(ar_ptr->stat_lock_wait);
-    }
-#else
   (void) mutex_lock (&ar_ptr->mutex);
-#endif
 
 
   newp = _int_realloc (ar_ptr, oldp, oldsize, nb);
@@ -3383,7 +3377,7 @@ _int_malloc (mstate av, size_t bytes)
           else
             {
               bck = victim->bk;
-              if (__builtin_expect (bck->fd != victim, 0))
+	if (__glibc_unlikely (bck->fd != victim))
                 {
                   errstr = "malloc(): smallbin double linked list corrupted";
                   goto errout;
@@ -3606,7 +3600,7 @@ _int_malloc (mstate av, size_t bytes)
                      have to perform a complete insert here.  */
                   bck = unsorted_chunks (av);
                   fwd = bck->fd;
-                  if (__builtin_expect (fwd->bk != bck, 0))
+	  if (__glibc_unlikely (fwd->bk != bck))
                     {
                       errstr = "malloc(): corrupted unsorted chunks";
                       goto errout;
@@ -3713,7 +3707,7 @@ _int_malloc (mstate av, size_t bytes)
                      have to perform a complete insert here.  */
                   bck = unsorted_chunks (av);
                   fwd = bck->fd;
-                  if (__builtin_expect (fwd->bk != bck, 0))
+	  if (__glibc_unlikely (fwd->bk != bck))
                     {
                       errstr = "malloc(): corrupted unsorted chunks 2";
                       goto errout;
@@ -3839,7 +3833,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
     }
   /* We know that each chunk is at least MINSIZE bytes in size or a
      multiple of MALLOC_ALIGNMENT.  */
-  if (__builtin_expect (size < MINSIZE || !aligned_OK (size), 0))
+  if (__glibc_unlikely (size < MINSIZE || !aligned_OK (size)))
     {
       errstr = "free(): invalid size";
       goto errout;
@@ -3929,16 +3923,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
 
   else if (!chunk_is_mmapped(p)) {
     if (! have_lock) {
-#if THREAD_STATS
-      if(!mutex_trylock(&av->mutex))
-	++(av->stat_lock_direct);
-      else {
-	(void)mutex_lock(&av->mutex);
-	++(av->stat_lock_wait);
-      }
-#else
       (void)mutex_lock(&av->mutex);
-#endif
       locked = 1;
     }
 
@@ -3946,7 +3931,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
 
     /* Lightweight tests: check whether the block is already the
        top block.  */
-    if (__builtin_expect (p == av->top, 0))
+    if (__glibc_unlikely (p == av->top))
       {
 	errstr = "double free or corruption (top)";
 	goto errout;
@@ -3960,7 +3945,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
 	goto errout;
       }
     /* Or whether the block is actually not marked used.  */
-    if (__builtin_expect (!prev_inuse(nextchunk), 0))
+    if (__glibc_unlikely (!prev_inuse(nextchunk)))
       {
 	errstr = "double free or corruption (!prev)";
 	goto errout;
@@ -4003,7 +3988,7 @@ _int_free (mstate av, mchunkptr p, int have_lock)
 
       bck = unsorted_chunks(av);
       fwd = bck->fd;
-      if (__builtin_expect (fwd->bk != bck, 0))
+      if (__glibc_unlikely (fwd->bk != bck))
 	{
 	  errstr = "free(): corrupted unsorted chunks";
 	  goto errout;
@@ -4501,7 +4486,7 @@ mtrim (mstate av, size_t pad)
 
                 if (size > psm1)
                   {
-#ifdef MALLOC_DEBUG
+#if MALLOC_DEBUG
                     /* When debugging we simulate destroying the memory
                        content.  */
                     memset (paligned_mem, 0x89, size & ~psm1);
@@ -4681,9 +4666,6 @@ __malloc_stats (void)
   int i;
   mstate ar_ptr;
   unsigned int in_use_b = mp_.mmapped_mem, system_b = in_use_b;
-#if THREAD_STATS
-  long stat_lock_direct = 0, stat_lock_loop = 0, stat_lock_wait = 0;
-#endif
 
   if (__malloc_initialized < 0)
     ptmalloc_init ();
@@ -4706,11 +4688,6 @@ __malloc_stats (void)
 #endif
       system_b += mi.arena;
       in_use_b += mi.uordblks;
-#if THREAD_STATS
-      stat_lock_direct += ar_ptr->stat_lock_direct;
-      stat_lock_loop += ar_ptr->stat_lock_loop;
-      stat_lock_wait += ar_ptr->stat_lock_wait;
-#endif
       (void) mutex_unlock (&ar_ptr->mutex);
       ar_ptr = ar_ptr->next;
       if (ar_ptr == &main_arena)
@@ -4722,14 +4699,6 @@ __malloc_stats (void)
   fprintf (stderr, "max mmap regions = %10u\n", (unsigned int) mp_.max_n_mmaps);
   fprintf (stderr, "max mmap bytes   = %10lu\n",
            (unsigned long) mp_.max_mmapped_mem);
-#if THREAD_STATS
-  fprintf (stderr, "heaps created    = %10d\n", stat_n_heaps);
-  fprintf (stderr, "locked directly  = %10ld\n", stat_lock_direct);
-  fprintf (stderr, "locked in loop   = %10ld\n", stat_lock_loop);
-  fprintf (stderr, "locked waiting   = %10ld\n", stat_lock_wait);
-  fprintf (stderr, "locked total     = %10ld\n",
-           stat_lock_direct + stat_lock_loop + stat_lock_wait);
-#endif
   ((_IO_FILE *) stderr)->_flags2 |= old_flags2;
   _IO_funlockfile (stderr);
 }
@@ -5004,7 +4973,7 @@ __posix_memalign (void **memptr, size_t alignment, size_t size)
   /* Test whether the SIZE argument is valid.  It must be a power of
      two multiple of sizeof (void *).  */
   if (alignment % sizeof (void *) != 0
-      || !powerof2 (alignment / sizeof (void *)) != 0
+      || !powerof2 (alignment / sizeof (void *))
       || alignment == 0)
     return EINVAL;
 
@@ -5024,7 +4993,7 @@ weak_alias (__posix_memalign, posix_memalign)
 
 
 int
-malloc_info (int options, FILE *fp)
+__malloc_info (int options, FILE *fp)
 {
   /* For now, at least.  */
   if (options != 0)
@@ -5040,136 +5009,7 @@ malloc_info (int options, FILE *fp)
   size_t total_aspace = 0;
   size_t total_aspace_mprotect = 0;
 
-  void
-  mi_arena (mstate ar_ptr)
-  {
-    fprintf (fp, "<heap nr=\"%d\">\n<sizes>\n", n++);
 
-    size_t nblocks = 0;
-    size_t nfastblocks = 0;
-    size_t avail = 0;
-    size_t fastavail = 0;
-    struct
-    {
-      size_t from;
-      size_t to;
-      size_t total;
-      size_t count;
-    } sizes[NFASTBINS + NBINS - 1];
-#define nsizes (sizeof (sizes) / sizeof (sizes[0]))
-
-    mutex_lock (&ar_ptr->mutex);
-
-    for (size_t i = 0; i < NFASTBINS; ++i)
-      {
-        mchunkptr p = fastbin (ar_ptr, i);
-        if (p != NULL)
-          {
-            size_t nthissize = 0;
-            size_t thissize = chunksize (p);
-
-            while (p != NULL)
-              {
-                ++nthissize;
-                p = p->fd;
-              }
-
-            fastavail += nthissize * thissize;
-            nfastblocks += nthissize;
-            sizes[i].from = thissize - (MALLOC_ALIGNMENT - 1);
-            sizes[i].to = thissize;
-            sizes[i].count = nthissize;
-          }
-        else
-          sizes[i].from = sizes[i].to = sizes[i].count = 0;
-
-        sizes[i].total = sizes[i].count * sizes[i].to;
-      }
-
-
-    mbinptr bin;
-    struct malloc_chunk *r;
-
-    for (size_t i = 1; i < NBINS; ++i)
-      {
-        bin = bin_at (ar_ptr, i);
-        r = bin->fd;
-        sizes[NFASTBINS - 1 + i].from = ~((size_t) 0);
-        sizes[NFASTBINS - 1 + i].to = sizes[NFASTBINS - 1 + i].total
-                                        = sizes[NFASTBINS - 1 + i].count = 0;
-
-        if (r != NULL)
-          while (r != bin)
-            {
-              ++sizes[NFASTBINS - 1 + i].count;
-              sizes[NFASTBINS - 1 + i].total += r->size;
-              sizes[NFASTBINS - 1 + i].from
-                = MIN (sizes[NFASTBINS - 1 + i].from, r->size);
-              sizes[NFASTBINS - 1 + i].to = MAX (sizes[NFASTBINS - 1 + i].to,
-                                                 r->size);
-
-              r = r->fd;
-            }
-
-        if (sizes[NFASTBINS - 1 + i].count == 0)
-          sizes[NFASTBINS - 1 + i].from = 0;
-        nblocks += sizes[NFASTBINS - 1 + i].count;
-        avail += sizes[NFASTBINS - 1 + i].total;
-      }
-
-    mutex_unlock (&ar_ptr->mutex);
-
-    total_nfastblocks += nfastblocks;
-    total_fastavail += fastavail;
-
-    total_nblocks += nblocks;
-    total_avail += avail;
-
-    for (size_t i = 0; i < nsizes; ++i)
-      if (sizes[i].count != 0 && i != NFASTBINS)
-        fprintf (fp, "							      \
-<size from=\"%zu\" to=\"%zu\" total=\"%zu\" count=\"%zu\"/>\n",
-                 sizes[i].from, sizes[i].to, sizes[i].total, sizes[i].count);
-
-    if (sizes[NFASTBINS].count != 0)
-      fprintf (fp, "\
-<unsorted from=\"%zu\" to=\"%zu\" total=\"%zu\" count=\"%zu\"/>\n",
-               sizes[NFASTBINS].from, sizes[NFASTBINS].to,
-               sizes[NFASTBINS].total, sizes[NFASTBINS].count);
-
-    total_system += ar_ptr->system_mem;
-    total_max_system += ar_ptr->max_system_mem;
-
-    fprintf (fp,
-             "</sizes>\n<total type=\"fast\" count=\"%zu\" size=\"%zu\"/>\n"
-             "<total type=\"rest\" count=\"%zu\" size=\"%zu\"/>\n"
-             "<system type=\"current\" size=\"%zu\"/>\n"
-             "<system type=\"max\" size=\"%zu\"/>\n",
-             nfastblocks, fastavail, nblocks, avail,
-             ar_ptr->system_mem, ar_ptr->max_system_mem);
-
-    if (ar_ptr != &main_arena)
-      {
-        heap_info *heap = heap_for_ptr (top (ar_ptr));
-        fprintf (fp,
-                 "<aspace type=\"total\" size=\"%zu\"/>\n"
-                 "<aspace type=\"mprotect\" size=\"%zu\"/>\n",
-                 heap->size, heap->mprotect_size);
-        total_aspace += heap->size;
-        total_aspace_mprotect += heap->mprotect_size;
-      }
-    else
-      {
-        fprintf (fp,
-                 "<aspace type=\"total\" size=\"%zu\"/>\n"
-                 "<aspace type=\"mprotect\" size=\"%zu\"/>\n",
-                 ar_ptr->system_mem, ar_ptr->system_mem);
-        total_aspace += ar_ptr->system_mem;
-        total_aspace_mprotect += ar_ptr->system_mem;
-      }
-
-    fputs ("</heap>\n", fp);
-  }
 
   if (__malloc_initialized < 0)
     ptmalloc_init ();
@@ -5180,25 +5020,153 @@ malloc_info (int options, FILE *fp)
   mstate ar_ptr = &main_arena;
   do
     {
-      mi_arena (ar_ptr);
+      fprintf (fp, "<heap nr=\"%d\">\n<sizes>\n", n++);
+
+      size_t nblocks = 0;
+      size_t nfastblocks = 0;
+      size_t avail = 0;
+      size_t fastavail = 0;
+      struct
+      {
+	size_t from;
+	size_t to;
+	size_t total;
+	size_t count;
+      } sizes[NFASTBINS + NBINS - 1];
+#define nsizes (sizeof (sizes) / sizeof (sizes[0]))
+
+      mutex_lock (&ar_ptr->mutex);
+
+      for (size_t i = 0; i < NFASTBINS; ++i)
+	{
+	  mchunkptr p = fastbin (ar_ptr, i);
+	  if (p != NULL)
+	    {
+	      size_t nthissize = 0;
+	      size_t thissize = chunksize (p);
+
+	      while (p != NULL)
+		{
+		  ++nthissize;
+		  p = p->fd;
+		}
+
+	      fastavail += nthissize * thissize;
+	      nfastblocks += nthissize;
+	      sizes[i].from = thissize - (MALLOC_ALIGNMENT - 1);
+	      sizes[i].to = thissize;
+	      sizes[i].count = nthissize;
+	    }
+	  else
+	    sizes[i].from = sizes[i].to = sizes[i].count = 0;
+
+	  sizes[i].total = sizes[i].count * sizes[i].to;
+	}
+
+
+      mbinptr bin;
+      struct malloc_chunk *r;
+
+      for (size_t i = 1; i < NBINS; ++i)
+	{
+	  bin = bin_at (ar_ptr, i);
+	  r = bin->fd;
+	  sizes[NFASTBINS - 1 + i].from = ~((size_t) 0);
+	  sizes[NFASTBINS - 1 + i].to = sizes[NFASTBINS - 1 + i].total
+					  = sizes[NFASTBINS - 1 + i].count = 0;
+
+	  if (r != NULL)
+	    while (r != bin)
+	      {
+		++sizes[NFASTBINS - 1 + i].count;
+		sizes[NFASTBINS - 1 + i].total += r->size;
+		sizes[NFASTBINS - 1 + i].from
+		  = MIN (sizes[NFASTBINS - 1 + i].from, r->size);
+		sizes[NFASTBINS - 1 + i].to = MAX (sizes[NFASTBINS - 1 + i].to,
+						   r->size);
+
+		r = r->fd;
+	      }
+
+	  if (sizes[NFASTBINS - 1 + i].count == 0)
+	    sizes[NFASTBINS - 1 + i].from = 0;
+	  nblocks += sizes[NFASTBINS - 1 + i].count;
+	  avail += sizes[NFASTBINS - 1 + i].total;
+	}
+
+      mutex_unlock (&ar_ptr->mutex);
+
+      total_nfastblocks += nfastblocks;
+      total_fastavail += fastavail;
+
+      total_nblocks += nblocks;
+      total_avail += avail;
+
+      for (size_t i = 0; i < nsizes; ++i)
+	if (sizes[i].count != 0 && i != NFASTBINS)
+	  fprintf (fp, "							      \
+  <size from=\"%zu\" to=\"%zu\" total=\"%zu\" count=\"%zu\"/>\n",
+		   sizes[i].from, sizes[i].to, sizes[i].total, sizes[i].count);
+
+      if (sizes[NFASTBINS].count != 0)
+	fprintf (fp, "\
+  <unsorted from=\"%zu\" to=\"%zu\" total=\"%zu\" count=\"%zu\"/>\n",
+		 sizes[NFASTBINS].from, sizes[NFASTBINS].to,
+		 sizes[NFASTBINS].total, sizes[NFASTBINS].count);
+
+      total_system += ar_ptr->system_mem;
+      total_max_system += ar_ptr->max_system_mem;
+
+      fprintf (fp,
+	       "</sizes>\n<total type=\"fast\" count=\"%zu\" size=\"%zu\"/>\n"
+	       "<total type=\"rest\" count=\"%zu\" size=\"%zu\"/>\n"
+	       "<system type=\"current\" size=\"%zu\"/>\n"
+	       "<system type=\"max\" size=\"%zu\"/>\n",
+	       nfastblocks, fastavail, nblocks, avail,
+	       ar_ptr->system_mem, ar_ptr->max_system_mem);
+
+      if (ar_ptr != &main_arena)
+	{
+	  heap_info *heap = heap_for_ptr (top (ar_ptr));
+	  fprintf (fp,
+		   "<aspace type=\"total\" size=\"%zu\"/>\n"
+		   "<aspace type=\"mprotect\" size=\"%zu\"/>\n",
+		   heap->size, heap->mprotect_size);
+	  total_aspace += heap->size;
+	  total_aspace_mprotect += heap->mprotect_size;
+	}
+      else
+	{
+	  fprintf (fp,
+		   "<aspace type=\"total\" size=\"%zu\"/>\n"
+		   "<aspace type=\"mprotect\" size=\"%zu\"/>\n",
+		   ar_ptr->system_mem, ar_ptr->system_mem);
+	  total_aspace += ar_ptr->system_mem;
+	  total_aspace_mprotect += ar_ptr->system_mem;
+	}
+
+      fputs ("</heap>\n", fp);
       ar_ptr = ar_ptr->next;
     }
   while (ar_ptr != &main_arena);
 
   fprintf (fp,
-           "<total type=\"fast\" count=\"%zu\" size=\"%zu\"/>\n"
-           "<total type=\"rest\" count=\"%zu\" size=\"%zu\"/>\n"
-           "<system type=\"current\" size=\"%zu\"/>\n"
-           "<system type=\"max\" size=\"%zu\"/>\n"
-           "<aspace type=\"total\" size=\"%zu\"/>\n"
-           "<aspace type=\"mprotect\" size=\"%zu\"/>\n"
-           "</malloc>\n",
-           total_nfastblocks, total_fastavail, total_nblocks, total_avail,
-           total_system, total_max_system,
-           total_aspace, total_aspace_mprotect);
+	   "<total type=\"fast\" count=\"%zu\" size=\"%zu\"/>\n"
+	   "<total type=\"rest\" count=\"%zu\" size=\"%zu\"/>\n"
+	   "<total type=\"mmap\" count=\"%d\" size=\"%zu\"/>\n"
+	   "<system type=\"current\" size=\"%zu\"/>\n"
+	   "<system type=\"max\" size=\"%zu\"/>\n"
+	   "<aspace type=\"total\" size=\"%zu\"/>\n"
+	   "<aspace type=\"mprotect\" size=\"%zu\"/>\n"
+	   "</malloc>\n",
+	   total_nfastblocks, total_fastavail, total_nblocks, total_avail,
+	   mp_.n_mmaps, mp_.mmapped_mem,
+	   total_system, total_max_system,
+	   total_aspace, total_aspace_mprotect);
 
   return 0;
 }
+weak_alias (__malloc_info, malloc_info)
 
 
 strong_alias (__libc_calloc, __calloc) weak_alias (__libc_calloc, calloc)

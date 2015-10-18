@@ -1,5 +1,5 @@
 /* Atomic operations.  sparc32 version.
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2003.
 
@@ -46,6 +46,9 @@ typedef intptr_t atomicptr_t;
 typedef uintptr_t uatomicptr_t;
 typedef intmax_t atomic_max_t;
 typedef uintmax_t uatomic_max_t;
+
+#define __HAVE_64B_ATOMICS 0
+#define USE_ATOMIC_COMPILER_BUILTINS 0
 
 
 /* We have no compare and swap, just test and set.
@@ -102,27 +105,28 @@ volatile unsigned char __sparc32_atomic_locks[64]
 #define __sparc32_atomic_do_unlock24(addr) \
   do								      \
     {								      \
-      *(char *) (addr) = 0;					      \
       __asm __volatile ("" ::: "memory");			      \
+      *(char *) (addr) = 0;					      \
     }								      \
   while (0)
 
 
 #ifndef SHARED
 # define __v9_compare_and_exchange_val_32_acq(mem, newval, oldval) \
-({									      \
-  register __typeof (*(mem)) __acev_tmp __asm ("%g6");			      \
+({union { __typeof (oldval) a; uint32_t v; } oldval_arg = { .a = (oldval) };  \
+  union { __typeof (newval) a; uint32_t v; } newval_arg = { .a = (newval) };  \
+  register uint32_t __acev_tmp __asm ("%g6");			              \
   register __typeof (mem) __acev_mem __asm ("%g1") = (mem);		      \
-  register __typeof (*(mem)) __acev_oldval __asm ("%g5");		      \
-  __acev_tmp = (newval);						      \
-  __acev_oldval = (oldval);						      \
+  register uint32_t __acev_oldval __asm ("%g5");		              \
+  __acev_tmp = newval_arg.v;						      \
+  __acev_oldval = oldval_arg.v;						      \
   /* .word 0xcde05005 is cas [%g1], %g5, %g6.  Can't use cas here though,     \
      because as will then mark the object file as V8+ arch.  */		      \
   __asm __volatile (".word 0xcde05005"					      \
 		    : "+r" (__acev_tmp), "=m" (*__acev_mem)		      \
 		    : "r" (__acev_oldval), "m" (*__acev_mem),		      \
 		      "r" (__acev_mem) : "memory");			      \
-  __acev_tmp; })
+  (__typeof (oldval)) __acev_tmp; })
 #endif
 
 /* The only basic operation needed is compare and exchange.  */
@@ -343,8 +347,8 @@ extern uint64_t _dl_hwcap __attribute__((weak));
 #define atomic_write_barrier()						\
   do {									\
      if (__atomic_is_v9)						\
-       /* membar  #StoreLoad | #StoreStore */				\
-       __asm __volatile (".word 0x8143e00a" : : : "memory");		\
+       /* membar  #LoadStore | #StoreStore */				\
+       __asm __volatile (".word 0x8143e00c" : : : "memory");		\
      else								\
        __asm __volatile ("" : : : "memory");				\
   } while (0)

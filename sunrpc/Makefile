@@ -1,4 +1,4 @@
-# Copyright (C) 1994-2014 Free Software Foundation, Inc.
+# Copyright (C) 1994-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,6 +19,8 @@
 #	Sub-makefile for sunrpc portion of the library.
 #
 subdir	:= sunrpc
+
+include ../Makeconfig
 
 # The code in this subdirectory is taken from Sun's RPCSRC-4.0
 # distribution with some additional changes from the TI-RPC package
@@ -54,11 +56,9 @@ headers-not-in-tirpc = $(addprefix rpc/,key_prot.h rpc_des.h) \
 		       $(rpcsvc:%=rpcsvc/%) rpcsvc/bootparam.h
 headers = rpc/netdb.h
 install-others = $(inst_sysconfdir)/rpc
-generated = $(rpcsvc:%.x=rpcsvc/%.h) $(rpcsvc:%.x=x%.c) $(rpcsvc:%.x=x%.stmp) \
-	    $(rpcsvc:%.x=rpcsvc/%.stmp) rpcgen
-generated-dirs := rpcsvc
-
-include ../Makeconfig
+generated += $(rpcsvc:%.x=rpcsvc/%.h) $(rpcsvc:%.x=x%.c) $(rpcsvc:%.x=x%.stmp) \
+	     $(rpcsvc:%.x=rpcsvc/%.stmp) rpcgen
+generated-dirs += rpcsvc
 
 ifeq ($(link-obsolete-rpc),yes)
 headers += $(headers-in-tirpc) $(headers-not-in-tirpc)
@@ -93,8 +93,6 @@ rpcgen-objs = rpc_main.o rpc_hout.o rpc_cout.o rpc_parse.o \
 	      rpc_tblout.o rpc_sample.o
 extra-objs = $(rpcgen-objs) $(addprefix cross-,$(rpcgen-objs))
 others += rpcgen
-
-all: # Make this the default target; it will be defined in Rules.
 
 tests = tst-xdrmem tst-xdrmem2
 xtests := tst-getmyaddr
@@ -168,7 +166,7 @@ $(cross-rpcgen-objs): $(objpfx)cross-%.o: %.c $(before-compile)
 $(objpfx)cross-rpcgen: $(cross-rpcgen-objs)
 	$(BUILD_CC) $^ $(BUILD_LDFLAGS) -o $@
 
-# This makes sure -DNOT_IN_libc is passed for all these modules.
+# This makes sure -DIN_MODULE is passed for all these modules.
 cpp-srcs-left := $(rpcgen-objs:.o=.c)
 lib := nonlib
 include $(patsubst %,$(..)cppflags-iterator.mk,$(cpp-srcs-left))

@@ -1,5 +1,5 @@
 /* Skeleton for benchmark programs.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,10 +18,12 @@
 
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
 #include <inttypes.h>
 #include "bench-timing.h"
+#include "json-lib.h"
 
 volatile unsigned int dontoptimize = 0;
 
@@ -48,6 +50,11 @@ main (int argc, char **argv)
   unsigned long i, k;
   struct timespec runtime;
   timing_t start, end;
+  bool detailed = false;
+  json_ctx_t json_ctx;
+
+  if (argc == 2 && !strcmp (argv[1], "-d"))
+    detailed = true;
 
   startup();
 
@@ -55,9 +62,17 @@ main (int argc, char **argv)
 
   unsigned long iters, res;
 
+#ifdef BENCH_INIT
+  BENCH_INIT ();
+#endif
   TIMING_INIT (res);
 
   iters = 1000 * res;
+
+  json_init (&json_ctx, 2, stdout);
+
+  /* Begin function.  */
+  json_attr_object_begin (&json_ctx, FUNCNAME);
 
   for (int v = 0; v < NUM_VARIANTS; v++)
     {
@@ -67,6 +82,7 @@ main (int argc, char **argv)
 
       double d_total_i = 0;
       timing_t total = 0, max = 0, min = 0x7fffffffffffffff;
+      int64_t c = 0;
       while (1)
 	{
 	  for (i = 0; i < NUM_SAMPLES (v); i++)
@@ -86,9 +102,13 @@ main (int argc, char **argv)
 		min = cur;
 
 	      TIMING_ACCUM (total, cur);
+	      /* Accumulate timings for the value.  In the end we will divide
+	         by the total iterations.  */
+	      RESULT_ACCUM (cur, v, i, c * iters, (c + 1) * iters);
 
 	      d_total_i += iters;
 	    }
+	  c++;
 	  struct timespec curtime;
 
 	  memset (&curtime, 0, sizeof (curtime));
@@ -104,9 +124,31 @@ main (int argc, char **argv)
       d_total_s = total;
       d_iters = iters;
 
-      TIMING_PRINT_STATS (VARIANT (v), d_total_s, d_iters, d_total_i, max,
-			  min);
+      /* Begin variant.  */
+      json_attr_object_begin (&json_ctx, VARIANT (v));
+
+      json_attr_double (&json_ctx, "duration", d_total_s);
+      json_attr_double (&json_ctx, "iterations", d_total_i);
+      json_attr_double (&json_ctx, "max", max / d_iters);
+      json_attr_double (&json_ctx, "min", min / d_iters);
+      json_attr_double (&json_ctx, "mean", d_total_s / d_total_i);
+
+      if (detailed)
+	{
+	  json_array_begin (&json_ctx, "timings");
+
+	  for (int i = 0; i < NUM_SAMPLES (v); i++)
+	    json_element_double (&json_ctx, RESULT (v, i));
+
+	  json_array_end (&json_ctx);
+	}
+
+      /* End variant.  */
+      json_attr_object_end (&json_ctx);
     }
+
+  /* End function.  */
+  json_attr_object_end (&json_ctx);
 
   return 0;
 }
