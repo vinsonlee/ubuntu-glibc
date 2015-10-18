@@ -1,5 +1,5 @@
 /* Multiple versions of strcmp
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -80,7 +80,7 @@
 /* Define multiple versions only for the definition in libc.  Don't
    define multiple versions for strncmp in static library since we
    need strncmp before the initialization happened.  */
-#if (defined SHARED || !defined USE_AS_STRNCMP) && !defined NOT_IN_libc
+#if (defined SHARED || !defined USE_AS_STRNCMP) && IS_IN (libc)
 	.text
 ENTRY(STRCMP)
 	.type	STRCMP, @gnu_indirect_function
@@ -91,10 +91,10 @@ ENTRY(STRCMP)
 1:
 #ifdef USE_AS_STRCMP
 	leaq	__strcmp_sse2_unaligned(%rip), %rax
-	testl   $bit_Fast_Unaligned_Load, __cpu_features+CPUID_OFFSET+index_Fast_Unaligned_Load(%rip)
+	testl   $bit_Fast_Unaligned_Load, __cpu_features+FEATURE_OFFSET+index_Fast_Unaligned_Load(%rip)
 	jnz     3f
 #else
-	testl	$bit_Slow_SSE4_2, __cpu_features+CPUID_OFFSET+index_Slow_SSE4_2(%rip)
+	testl	$bit_Slow_SSE4_2, __cpu_features+FEATURE_OFFSET+index_Slow_SSE4_2(%rip)
 	jnz	2f
 	leaq	STRCMP_SSE42(%rip), %rax
 	testl	$bit_SSE4_2, __cpu_features+CPUID_OFFSET+index_SSE4_2(%rip)
@@ -120,7 +120,7 @@ ENTRY(__strcasecmp)
 	testl	$bit_AVX_Usable, __cpu_features+FEATURE_OFFSET+index_AVX_Usable(%rip)
 	jnz	3f
 #  endif
-	testl	$bit_Slow_SSE4_2, __cpu_features+CPUID_OFFSET+index_Slow_SSE4_2(%rip)
+	testl	$bit_Slow_SSE4_2, __cpu_features+FEATURE_OFFSET+index_Slow_SSE4_2(%rip)
 	jnz	2f
 	leaq	__strcasecmp_sse42(%rip), %rax
 	testl	$bit_SSE4_2, __cpu_features+CPUID_OFFSET+index_SSE4_2(%rip)
@@ -146,7 +146,7 @@ ENTRY(__strncasecmp)
 	testl	$bit_AVX_Usable, __cpu_features+FEATURE_OFFSET+index_AVX_Usable(%rip)
 	jnz	3f
 #  endif
-	testl	$bit_Slow_SSE4_2, __cpu_features+CPUID_OFFSET+index_Slow_SSE4_2(%rip)
+	testl	$bit_Slow_SSE4_2, __cpu_features+FEATURE_OFFSET+index_Slow_SSE4_2(%rip)
 	jnz	2f
 	leaq	__strncasecmp_sse42(%rip), %rax
 	testl	$bit_SSE4_2, __cpu_features+CPUID_OFFSET+index_SSE4_2(%rip)

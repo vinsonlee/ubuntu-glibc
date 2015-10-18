@@ -1,5 +1,5 @@
 /* strlen with SSE2
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -19,7 +19,7 @@
 
 /* for strlen only SHARED version is optimized, for strcat, strncat, strnlen both STATIC and SHARED are optimized */
 
-#if (defined USE_AS_STRNLEN || defined USE_AS_STRCAT || defined SHARED) && !defined NOT_IN_libc
+#if (defined USE_AS_STRNLEN || defined USE_AS_STRCAT || defined SHARED) && IS_IN (libc)
 
 # ifndef USE_AS_STRCAT
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,15 +35,15 @@ typedef double double_t;	/* `double' expressions are evaluated as
 
 /* The GCC 4.6 compiler will define __FP_FAST_FMA{,F,L} if the fma{,f,l}
    builtins are supported.  */
-#if __FP_FAST_FMA
+#ifdef __FP_FAST_FMA
 # define FP_FAST_FMA 1
 #endif
 
-#if __FP_FAST_FMAF
+#ifdef __FP_FAST_FMAF
 # define FP_FAST_FMAF 1
 #endif
 
-#if __FP_FAST_FMAL
+#ifdef __FP_FAST_FMAL
 # define FP_FAST_FMAL 1
 #endif
 
