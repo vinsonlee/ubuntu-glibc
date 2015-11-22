@@ -56,6 +56,7 @@ arm/cvs-arm-sfi_breg.diff
 arm/cvs-memcpy-memmove-always-bx.diff
 arm/local-arm-futex.diff
 
+hppa/cvs-allocatestack-stacktop.diff
 hppa/local-inlining.diff
 hppa/local-stack-grows-up.diff
 hppa/local-elf-make-cflags.diff
@@ -68,6 +69,9 @@ hppa/local-fptr-table-size.diff
 hppa/local-setcontext.diff
 hppa/cvs-start.diff
 hppa/cvs-alloca-werror.diff
+hppa/cvs-atomic.diff
+hppa/cvs-inline-syscall.diff
+hppa/submitted-gmon-start.diff
 
 hurd-i386/local-enable-ldconfig.diff
 hurd-i386/tg-context_functions.diff
@@ -264,8 +268,10 @@ any/cvs-vismain-pie.diff
 any/local-tester-gcc-4.9.diff
 any/local-xfail-stdlib-linkns.diff
 any/cvs-localplt-new-readelf.diff
-any/cvs-make-typo.diff
 any/cvs-logbl-accuracy.diff
 any/local-math-logb.diff
 any/cvs-ld_pointer_guard.diff
 any/cvs-mangle-tls_dtor_list.diff
+any/cvs-tls-dtv.diff
+any/cvs-rfc3542-advanced-api.diff
+any/cvs-check-localplt.diff

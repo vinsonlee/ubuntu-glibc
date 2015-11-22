@@ -1,5 +1,5 @@
 #
-# Allowed failures for mipsel-linux-gnu-libc
+# Allowed failures for mipsel-linux-gnu-mips32
 #
 conform/POSIX2008/sys/stat.h/conform
 conform/POSIX/sys/stat.h/conform
