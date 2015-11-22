@@ -1,3 +1,58 @@
+glibc (2.21-0experimental3) experimental; urgency=medium
+
+  [ Aurelien Jarno ]
+  * patches/hppa/cvs-allocatestack-stacktop.diff: new patch from upstream
+    to fix a set-but-unused warning in nptl/allocatestack.c, causing a
+    build failure.
+  * patches/hppa/local-stack-grows-up.diff: rebase.
+  * patches/any/cvs-tls-dtv.diff: new patch from upstream to fix fix DTV race,
+    assert, and DTV_SURPLUS Static TLS limit.  This also reduces the failure
+    rate of nptl/tst-stack4.  Closes: #793641.
+  * Add expected testsuite result for mips64el:
+    - testsuite-checking/expected-results-mips64el-linux-gnu-libc
+    - testsuite-checking/expected-results-mips64el-linux-gnuabin32-mipsn32
+    - testsuite-checking/expected-results-mipsel-linux-gnu-mips32
+  * patches/kfreebsd/local-sysdeps.diff, patches/kfreebsd/local-fbtl.diff:
+    update to revision 5844 (from glibc-bsd):
+    - Update to glibc 2.21.
+    - Define F_DUP2FD_CLOEXEC.  Closes: #712074.
+    - Define SOCK_CLOEXEC and SOCK_NONBLOCK.
+    - Wire-up accept4.  Closes: #722885.
+  * sysdeps/kfreebsd-{amd64,i386}.mk: configure with --disable-werror.
+  * patches/kfreebsd/local-nscd-no-sockcloexec.diff: Drop.
+  * patches/kfreebsd/local-getaddrinfo-freebsd-kernel.diff: improve and remove
+    a warning.
+  * patches/kfreebsd/local-tst-auxv.diff: new patch to disable AT_EXECFN
+    testing in tst-auxv when it is not defined.
+  * patches/any/cvs-rfc3542-advanced-api.diff: new patch from usptream to
+    add missing Advanced API (RFC3542) (1) defines.  Closes: #753909.
+  * debian/rules: don't put debug files from libc0.1-i386 and libc6-mips32
+    into libc0.1-dbg or libc6-dbg.
+  * patches/hppa/cvs-atomic.diff, patches/hppa/cvs-inline-syscall.diff: new
+    patches from upstream to improve atomic and inline syscalls on HPPA
+    (closes: #799478).
+  * rules.d/build.mk: don't run the testsuite with make -k, as a build
+    failure in the testsuite, otherwise build failures cause the regression
+    comparison to be entirely skipped.
+  * testsuite-checking/expected-results-*kfreebsd-gnu-*: update testsuite
+    results.
+  * patches/any/cvs-check-localplt.diff: new patch from upstream to fix
+    check-localplt test with recent binutils version on x86.
+  * patches/hppa/submitted-gmon-start.diff: new patch from upstream to
+    fix __gmon_start__ symbol proliferation on hppa.  Closes: #805730.
+  * Update from upstream stable branch:
+    - patches/any/cvs-make-typo.diff: Merged. 
+    - Fix FTBFS with libselinux 2.4.
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/tg-pagesize.diff: Refresh.
+  * patches/hurd-i386/submitted-handle-eprototype.diff: Refresh.
+  * patches/hurd-i386/tg-posix_thread.diff: Update, to define
+    _POSIX_THREAD_KEYS_MAX, _POSIX_THREAD_DESTRUCTOR_ITERATIONS and
+    _POSIX_THREAD_THREADS_MAX.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 22 Nov 2015 19:37:39 +0100
+
 glibc (2.21-0experimental2) experimental; urgency=medium
 
   [ Samuel Thibault ]
