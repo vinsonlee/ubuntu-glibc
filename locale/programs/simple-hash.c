@@ -1,5 +1,5 @@
 /* Implement simple hashing table with string based keys.
-   Copyright (C) 1994-2014 Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Ulrich Drepper <drepper@gnu.ai.mit.edu>, October 1994.
 
@@ -27,11 +27,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#if HAVE_OBSTACK
-# include <obstack.h>
-#else
-# include "obstack.h"
-#endif
+#include <obstack.h>
 
 #ifdef HAVE_VALUES_H
 # include <values.h>
@@ -44,10 +40,6 @@
 
 #ifndef BITSPERBYTE
 # define BITSPERBYTE 8
-#endif
-
-#ifndef bcopy
-# define bcopy(s, d, n)	memcpy ((d), (s), (n))
 #endif
 
 #define hashval_t uint32_t

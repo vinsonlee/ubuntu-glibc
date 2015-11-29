@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2014 Free Software Foundation, Inc.
+# Copyright (C) 1991-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,6 +19,8 @@
 #	Makefile for stdlib routines
 #
 subdir	:= stdlib
+
+include ../Makeconfig
 
 headers	:= stdlib.h bits/stdlib.h bits/stdlib-ldbl.h bits/stdlib-float.h      \
 	   monetary.h bits/monetary-ldbl.h				      \
@@ -76,8 +78,6 @@ tests-static	:= tst-secure-getenv
 
 modules-names	= tst-tls-atexit-lib
 
-include ../Makeconfig
-
 ifeq ($(build-shared),yes)
 tests		+= tst-putenv
 endif
@@ -111,56 +111,49 @@ CFLAGS-tst-bsearch.c = $(stack-align-test-flags)
 CFLAGS-tst-qsort.c = $(stack-align-test-flags)
 CFLAGS-tst-makecontext2.c = $(stack-align-test-flags)
 
+# Run a test on the header files we use.
+tests-special += $(objpfx)isomac.out
+
+ifeq ($(run-built-tests),yes)
+tests-special += $(objpfx)tst-fmtmsg.out
+endif
+
 include ../Rules
 
 # Testdir has to be named stdlib and needs to be writable
 test-canon-ARGS = --test-dir=${common-objpfx}stdlib
 
-tst-strtod-ENV = LOCPATH=$(common-objpfx)localedata
-tst-strtod3-ENV = LOCPATH=$(common-objpfx)localedata
-tst-strtod4-ENV = LOCPATH=$(common-objpfx)localedata
-tst-strtod5-ENV = LOCPATH=$(common-objpfx)localedata
-testmb2-ENV = LOCPATH=$(common-objpfx)localedata
 bug-fmtmsg1-ENV = SEV_LEVEL=foo,11,newsev
-
-# Run a test on the header files we use.
-tests: $(objpfx)isomac.out
-
-ifeq ($(run-built-tests),yes)
-tests: $(objpfx)tst-fmtmsg.out
-endif
 
 $(objpfx)isomac.out: $(objpfx)isomac
 	$(dir $<)$(notdir $<) '$(CC)'  \
-	'-I../include $(+sysdep-includes) $(sysincludes) -I..' > $<.out
+	'-I../include $(+sysdep-includes) $(sysincludes) -I..' > $<.out; \
+	$(evaluate-test)
 
 isomac-CFLAGS = -O
 $(objpfx)isomac: isomac.c
 	$(native-compile)
 
 $(objpfx)tst-fmtmsg.out: tst-fmtmsg.sh $(objpfx)tst-fmtmsg
-	$(SHELL) $< $(common-objpfx) '$(test-program-prefix)' $(common-objpfx)stdlib/
+	$(SHELL) $< $(common-objpfx) '$(test-program-prefix-before-env)' \
+		 '$(run-program-env)' '$(test-program-prefix-after-env)' \
+		 $(common-objpfx)stdlib/; \
+	$(evaluate-test)
 
 $(objpfx)tst-putenv: $(objpfx)tst-putenvmod.so
 LDFLAGS-tst-putenv = $(no-as-needed)
 
 $(objpfx)tst-putenvmod.so: $(objpfx)tst-putenvmod.os $(link-libc-deps)
 	$(build-module)
-CFLAGS-tst-putenvmod.c = -DNOT_IN_libc=1
+libof-tst-putenvmod = extramodules
 
-ifeq ($(build-shared),yes)
-link-libm = $(common-objpfx)math/libm.so
-else
-link-libm = $(common-objpfx)math/libm.a
-endif
-$(objpfx)bug-getcontext: $(link-libm)
-$(objpfx)tst-strtod-round: $(link-libm)
-$(objpfx)tst-tininess: $(link-libm)
-$(objpfx)tst-strtod-underflow: $(link-libm)
-$(objpfx)tst-strtod6: $(link-libm)
+$(objpfx)bug-getcontext: $(libm)
+$(objpfx)tst-strtod-round: $(libm)
+$(objpfx)tst-tininess: $(libm)
+$(objpfx)tst-strtod-underflow: $(libm)
+$(objpfx)tst-strtod6: $(libm)
 
 tst-tls-atexit-lib.so-no-z-defs = yes
 
-$(objpfx)tst-tls-atexit: $(common-objpfx)nptl/libpthread.so \
-			 $(common-objpfx)dlfcn/libdl.so
+$(objpfx)tst-tls-atexit: $(shared-thread-library) $(libdl)
 $(objpfx)tst-tls-atexit.out: $(objpfx)tst-tls-atexit-lib.so

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -260,7 +260,11 @@ typedef unsigned long long int	uintmax_t;
 # if __WORDSIZE == 64
 #  define SIZE_MAX		(18446744073709551615UL)
 # else
-#  define SIZE_MAX		(4294967295U)
+#  ifdef __WORDSIZE32_SIZE_ULONG
+#   define SIZE_MAX		(4294967295UL)
+#  else
+#   define SIZE_MAX		(4294967295U)
+#  endif
 # endif
 
 /* Limits of `wchar_t'.  */
