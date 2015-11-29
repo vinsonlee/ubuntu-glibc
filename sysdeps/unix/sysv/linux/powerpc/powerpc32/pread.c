@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -23,14 +23,8 @@
 #include <sysdep-cancel.h>
 #include <sys/syscall.h>
 
-#include <kernel-features.h>
-
 ssize_t
-__libc_pread (fd, buf, count, offset)
-     int fd;
-     void *buf;
-     size_t count;
-     off_t offset;
+__libc_pread (int fd, void *buf, size_t count, off_t offset)
 {
   ssize_t result;
 

@@ -1,6 +1,6 @@
 /* Test for correct rounding of results of strtod and related
    functions.
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,6 +17,9 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+/* Defining _LIBC_TEST ensures long double math functions are
+   declared in the headers.  */
+#define _LIBC_TEST 1
 #include <fenv.h>
 #include <float.h>
 #include <math.h>
@@ -7871,7 +7874,7 @@ test_in_one_mode (const char *s, const struct test_results *expected,
 static int
 do_test (void)
 {
-  int save_round_mode = fegetround ();
+  int save_round_mode __attribute__ ((unused)) = fegetround ();
   int result = 0;
   for (size_t i = 0; i < sizeof (tests) / sizeof (tests[0]); i++)
     {

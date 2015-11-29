@@ -1,6 +1,6 @@
 /* Entry point for multi-version x86 strncasecmp.
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@ ENTRY(__strncasecmp)
 	leal	__strncasecmp_ssse3@GOTOFF(%ebx), %eax
 	testl	$bit_SSE4_2, CPUID_OFFSET+index_SSE4_2+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	testl	$bit_Slow_SSE4_2, CPUID_OFFSET+index_Slow_SSE4_2+__cpu_features@GOTOFF(%ebx)
+	testl	$bit_Slow_SSE4_2, FEATURE_OFFSET+index_Slow_SSE4_2+__cpu_features@GOTOFF(%ebx)
 	jnz	2f
 	leal	__strncasecmp_sse4_2@GOTOFF(%ebx), %eax
 2:	popl	%ebx
@@ -58,7 +58,7 @@ ENTRY(__strncasecmp)
 	leal	__strncasecmp_ssse3, %eax
 	testl	$bit_SSE4_2, CPUID_OFFSET+index_SSE4_2+__cpu_features
 	jz	2f
-	testl	$bit_Slow_SSE4_2, CPUID_OFFSET+index_Slow_SSE4_2+__cpu_features
+	testl	$bit_Slow_SSE4_2, FEATURE_OFFSET+index_Slow_SSE4_2+__cpu_features
 	jnz	2f
 	leal	__strncasecmp_sse4_2, %eax
 2:	ret

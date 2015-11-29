@@ -25,9 +25,16 @@ sysdep_routines += clone llseek umount umount2 readahead \
 CFLAGS-gethostid.c = -fexceptions
 CFLAGS-tst-writev.c += "-DARTIFICIAL_LIMIT=0x80000000-__getpagesize()"
 
+# Note that bits/mman-linux.h is listed here though the file lives in the
+# top-level bits/ subdirectory instead of here in sysdeps/.../linux/bits/.
+# That is just so that other (non-Linux) configurations for whom the
+# bits/mman-linux.h definitions work well do not have to duplicate the
+# contents of the file.  The file must still be listed in sysdep_headers
+# here and in any non-Linux configuration that uses it; other
+# configurations will not install the file.
 sysdep_headers += sys/mount.h sys/acct.h sys/sysctl.h \
 		  sys/klog.h sys/kdaemon.h \
-		  sys/user.h sys/procfs.h sys/prctl.h \
+		  sys/user.h sys/prctl.h \
 		  sys/kd.h sys/soundcard.h sys/vt.h \
 		  sys/quota.h sys/fsuid.h \
 		  scsi/sg.h scsi/scsi.h scsi/scsi_ioctl.h sys/pci.h \
@@ -134,9 +141,13 @@ endif
 ifeq ($(subdir),posix)
 sysdep_headers += bits/initspin.h
 
-sysdep_routines += exit-thread sched_getcpu
+sysdep_routines += sched_getcpu
 
 tests += tst-getcpu
+
+CFLAGS-fork.c = $(libio-mtsafe)
+CFLAGS-getpid.o = -fomit-frame-pointer
+CFLAGS-getpid.os = -fomit-frame-pointer
 endif
 
 ifeq ($(subdir),inet)
@@ -167,7 +178,11 @@ ifeq ($(subdir),elf)
 sysdep-rtld-routines += dl-brk dl-sbrk dl-getcwd dl-openat64 dl-opendir \
 			dl-fxstatat64
 
-CPPFLAGS-lddlibc4 += -DNOT_IN_libc
+libof-lddlibc4 = lddlibc4
+
+others += pldd
+install-bin += pldd
+$(objpfx)pldd: $(objpfx)xmalloc.o
 endif
 
 ifeq ($(subdir),rt)
@@ -178,4 +193,8 @@ endif
 ifeq ($(subdir),nscd)
 sysdep-CFLAGS += -DHAVE_EPOLL -DHAVE_SENDFILE -DHAVE_INOTIFY -DHAVE_NETLINK
 CFLAGS-gai.c += -DNEED_NETLINK
+endif
+
+ifeq ($(subdir),nptl)
+tests += tst-setgetname
 endif
