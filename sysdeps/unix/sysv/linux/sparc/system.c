@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,8 +14,6 @@
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
-
-#include <kernel-features.h>
 
 /* We have to and actually can handle cancelable system().  The big
    problem: we have to kill the child process if necessary.  To do

@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -100,6 +100,8 @@ extern "C" {
 #if (!defined _IO_USE_OLD_IO_FILE \
      && (!defined _G_IO_NO_BACKWARD_COMPAT || _G_IO_NO_BACKWARD_COMPAT == 0))
 # define _IO_JUMPS_OFFSET 1
+#else
+# define _IO_JUMPS_OFFSET 0
 #endif
 
 #define _IO_JUMPS(THIS) (THIS)->vtable
@@ -397,6 +399,7 @@ extern void _IO_wdoallocbuf (_IO_FILE *) __THROW;
 libc_hidden_proto (_IO_wdoallocbuf)
 extern void _IO_unsave_wmarkers (_IO_FILE *) __THROW;
 extern unsigned _IO_adjust_wcolumn (unsigned, const wchar_t *, int) __THROW;
+extern _IO_off64_t get_file_offset (_IO_FILE *fp);
 
 /* Marker-related function. */
 
@@ -899,7 +902,7 @@ _IO_acquire_lock_clear_flags2_fct (_IO_FILE **p)
     _IO_funlockfile (fp);
 }
 
-#if !defined _IO_MTSAFE_IO && !defined NOT_IN_libc
+#if !defined _IO_MTSAFE_IO && IS_IN (libc)
 # define _IO_acquire_lock(_fp)						      \
   do {									      \
     _IO_FILE *_IO_acquire_lock_file = NULL

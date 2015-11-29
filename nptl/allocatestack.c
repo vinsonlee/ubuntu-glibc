@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -30,6 +30,7 @@
 #include <list.h>
 #include <lowlevellock.h>
 #include <kernel-features.h>
+#include <stack-aliasing.h>
 
 
 #ifndef NEED_SEPARATE_REGISTER_STACK
@@ -306,7 +307,7 @@ queue_stack (struct pthread *stack)
   stack_list_add (&stack->list, &stack_cache);
 
   stack_cache_actsize += stack->stackblock_size;
-  if (__builtin_expect (stack_cache_actsize > stack_cache_maxsize, 0))
+  if (__glibc_unlikely (stack_cache_actsize > stack_cache_maxsize))
     __free_stacks (stack_cache_maxsize);
 }
 
@@ -368,7 +369,7 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
     }
 
   /* Get memory for the stack.  */
-  if (__builtin_expect (attr->flags & ATTR_FLAG_STACKADDR, 0))
+  if (__glibc_unlikely (attr->flags & ATTR_FLAG_STACKADDR))
     {
       uintptr_t adj;
 
@@ -429,8 +430,7 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 #endif
 
 #ifdef NEED_DL_SYSINFO
-      /* Copy the sysinfo value from the parent.  */
-      THREAD_SYSINFO(pd) = THREAD_SELF_SYSINFO;
+      SETUP_THREAD_SYSINFO (pd);
 #endif
 
       /* The process ID is also the same as that of the caller.  */
@@ -504,7 +504,7 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 	  mem = mmap (NULL, size, prot,
 		      MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
 
-	  if (__builtin_expect (mem == MAP_FAILED, 0))
+	  if (__glibc_unlikely (mem == MAP_FAILED))
 	    return errno;
 
 	  /* SIZE is guaranteed to be greater than zero.
@@ -525,7 +525,7 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 
 	  /* Make sure the coloring offsets does not disturb the alignment
 	     of the TCB and static TLS block.  */
-	  if (__builtin_expect ((coloring & __static_tls_align_m1) != 0, 0))
+	  if (__glibc_unlikely ((coloring & __static_tls_align_m1) != 0))
 	    coloring = (((coloring + __static_tls_align_m1)
 			 & ~(__static_tls_align_m1))
 			& ~pagesize_m1);
@@ -566,8 +566,7 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 #endif
 
 #ifdef NEED_DL_SYSINFO
-	  /* Copy the sysinfo value from the parent.  */
-	  THREAD_SYSINFO(pd) = THREAD_SELF_SYSINFO;
+	  SETUP_THREAD_SYSINFO (pd);
 #endif
 
 	  /* Don't allow setxid until cloned.  */
@@ -629,7 +628,7 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 	}
 
       /* Create or resize the guard area if necessary.  */
-      if (__builtin_expect (guardsize > pd->guardsize, 0))
+      if (__glibc_unlikely (guardsize > pd->guardsize))
 	{
 #ifdef NEED_SEPARATE_REGISTER_STACK
 	  char *guard = mem + (((size - guardsize) / 2) & ~pagesize_m1);
@@ -752,7 +751,7 @@ __deallocate_stack (struct pthread *pd)
      not reset the 'used' flag in the 'tid' field.  This is done by
      the kernel.  If no thread has been created yet this field is
      still zero.  */
-  if (__builtin_expect (! pd->user_stack, 1))
+  if (__glibc_likely (! pd->user_stack))
     (void) queue_stack (pd);
   else
     /* Free the memory associated with the ELF TLS.  */
@@ -830,26 +829,23 @@ __reclaim_stacks (void)
 
       if (add_p)
 	{
-	  /* We always add at the beginning of the list.  So in this
-	     case we only need to check the beginning of these lists.  */
-	  int check_list (list_t *l)
-	  {
-	    if (l->next->prev != l)
-	      {
-		assert (l->next->prev == elem);
+	  /* We always add at the beginning of the list.  So in this case we
+	     only need to check the beginning of these lists to see if the
+	     pointers at the head of the list are inconsistent.  */
+	  list_t *l = NULL;
 
-		elem->next = l->next;
-		elem->prev = l;
-		l->next = elem;
+	  if (stack_used.next->prev != &stack_used)
+	    l = &stack_used;
+	  else if (stack_cache.next->prev != &stack_cache)
+	    l = &stack_cache;
 
-		return 1;
-	      }
-
-	    return 0;
-	  }
-
-	  if (check_list (&stack_used) == 0)
-	    (void) check_list (&stack_cache);
+	  if (l != NULL)
+	    {
+	      assert (l->next->prev == elem);
+	      elem->next = l->next;
+	      elem->prev = l;
+	      l->next = elem;
+	    }
 	}
       else
 	{
@@ -916,7 +912,7 @@ __reclaim_stacks (void)
   INIT_LIST_HEAD (&stack_used);
   INIT_LIST_HEAD (&__stack_user);
 
-  if (__builtin_expect (THREAD_GETMEM (self, user_stack), 0))
+  if (__glibc_unlikely (THREAD_GETMEM (self, user_stack)))
     list_add (&self->list, &__stack_user);
   else
     list_add (&self->list, &stack_used);
@@ -980,6 +976,7 @@ __find_thread_by_id (pid_t tid)
 #endif
 
 
+#ifdef SIGSETXID
 static void
 internal_function
 setxid_mark_thread (struct xid_command *cmdp, struct pthread *t)
@@ -1061,6 +1058,25 @@ setxid_signal_thread (struct xid_command *cmdp, struct pthread *t)
     return 0;
 }
 
+/* Check for consistency across set*id system call results.  The abort
+   should not happen as long as all privileges changes happen through
+   the glibc wrappers.  ERROR must be 0 (no error) or an errno
+   code.  */
+void
+attribute_hidden
+__nptl_setxid_error (struct xid_command *cmdp, int error)
+{
+  do
+    {
+      int olderror = cmdp->error;
+      if (olderror == error)
+	break;
+      if (olderror != -1)
+	/* Mismatch between current and previous results.  */
+	abort ();
+    }
+  while (atomic_compare_and_exchange_bool_acq (&cmdp->error, error, -1));
+}
 
 int
 attribute_hidden
@@ -1072,6 +1088,7 @@ __nptl_setxid (struct xid_command *cmdp)
 
   __xidcmd = cmdp;
   cmdp->cntr = 0;
+  cmdp->error = -1;
 
   struct pthread *self = THREAD_SELF;
 
@@ -1155,15 +1172,20 @@ __nptl_setxid (struct xid_command *cmdp)
   INTERNAL_SYSCALL_DECL (err);
   result = INTERNAL_SYSCALL_NCS (cmdp->syscall_no, err, 3,
 				 cmdp->id[0], cmdp->id[1], cmdp->id[2]);
-  if (INTERNAL_SYSCALL_ERROR_P (result, err))
+  int error = 0;
+  if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (result, err)))
     {
-      __set_errno (INTERNAL_SYSCALL_ERRNO (result, err));
+      error = INTERNAL_SYSCALL_ERRNO (result, err);
+      __set_errno (error);
       result = -1;
     }
+  __nptl_setxid_error (cmdp, error);
 
   lll_unlock (stack_cache_lock, LLL_PRIVATE);
   return result;
 }
+#endif  /* SIGSETXID.  */
+
 
 static inline void __attribute__((always_inline))
 init_one_static_tls (struct pthread *curp, struct link_map *map)
