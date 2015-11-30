@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -60,7 +60,7 @@ __pthread_mutex_unlock_usercnt (mutex, decr)
 
       return 0;
     }
-  else if (__builtin_expect (type == PTHREAD_MUTEX_TIMED_ELISION_NP, 1))
+  else if (__glibc_likely (type == PTHREAD_MUTEX_TIMED_ELISION_NP))
     {
       /* Don't reset the owner/users fields for elision.  */
       return lll_unlock_elision (mutex->__data.__lock,
@@ -158,6 +158,10 @@ __pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
       THREAD_SETMEM (THREAD_SELF, robust_head.list_op_pending, NULL);
       break;
 
+    /* The PI support requires the Linux futex system call.  If that's not
+       available, pthread_mutex_init should never have allowed the type to
+       be set.  So it will get the default case for an invalid type.  */
+#ifdef __NR_futex
     case PTHREAD_MUTEX_PI_RECURSIVE_NP:
       /* Recursive mutex.  */
       if (mutex->__data.__owner != THREAD_GETMEM (THREAD_SELF, tid))
@@ -245,6 +249,7 @@ __pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
 
       THREAD_SETMEM (THREAD_SELF, robust_head.list_op_pending, NULL);
       break;
+#endif  /* __NR_futex.  */
 
     case PTHREAD_MUTEX_PP_RECURSIVE_NP:
       /* Recursive mutex.  */

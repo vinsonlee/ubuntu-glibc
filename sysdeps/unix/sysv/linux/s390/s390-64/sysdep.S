@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
    This file is part of the GNU C Library.
 
@@ -32,7 +32,7 @@
 .text
 ENTRY(__syscall_error)
 #ifndef PIC
-# ifndef NOT_IN_libc
+# if IS_IN (libc)
 #  define SYSCALL_ERROR_ERRNO __libc_errno
 # else
 #  define SYSCALL_ERROR_ERRNO errno
@@ -55,7 +55,7 @@ ENTRY(__syscall_error)
 	lghi	%r2,-1
 	br	%r14
 # else
-#  ifndef NOT_IN_libc
+#  if IS_IN (libc)
 #   define SYSCALL_ERROR_ERRNO __libc_errno
 #  else
 #   define SYSCALL_ERROR_ERRNO errno

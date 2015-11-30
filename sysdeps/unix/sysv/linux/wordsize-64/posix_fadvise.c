@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -37,4 +37,4 @@ posix_fadvise (int fd, off_t offset, off_t len, int advise)
   return ENOSYS;
 #endif
 }
-strong_alias (posix_fadvise, posix_fadvise64)
+weak_alias (posix_fadvise, posix_fadvise64)

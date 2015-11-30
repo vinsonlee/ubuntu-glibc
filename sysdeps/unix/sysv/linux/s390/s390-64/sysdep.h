@@ -1,5 +1,5 @@
 /* Assembler macros for 64 bit S/390.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
    This file is part of the GNU C Library.
 
@@ -113,7 +113,7 @@
     lghi  %r2,-1;							      \
     br    %r14
 # elif defined _LIBC_REENTRANT
-#  ifndef NOT_IN_libc
+#  if IS_IN (libc)
 #   define SYSCALL_ERROR_ERRNO __libc_errno
 #  else
 #   define SYSCALL_ERROR_ERRNO errno
@@ -188,7 +188,7 @@
 #define INLINE_SYSCALL(name, nr, args...)				      \
   ({									      \
     long _ret = INTERNAL_SYSCALL (name, , nr, args);			      \
-    if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (_ret, ), 0))	      \
+    if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (_ret, )))		      \
      {									      \
        __set_errno (INTERNAL_SYSCALL_ERRNO (_ret, ));			      \
        _ret = -1;							      \
@@ -372,7 +372,7 @@
     _ret; })
 
 /* Pointer mangling support.  */
-#if defined NOT_IN_libc && defined IS_IN_rtld
+#if IS_IN (rtld)
 /* We cannot use the thread descriptor because in ld.so we use setjmp
    earlier than the descriptor is initialized.  */
 #else

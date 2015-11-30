@@ -1,6 +1,6 @@
 #! /bin/sh
 # Test that gettext() in multithreaded applications works correctly.
-# Copyright (C) 2008-2014 Free Software Foundation, Inc.
+# Copyright (C) 2008-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -23,18 +23,10 @@ common_objpfx=$1
 test_program_prefix=$2
 objpfx=$3
 
-LC_ALL=C
-export LC_ALL
-
 # Create the domain directory.
 mkdir -p ${objpfx}domaindir/ja_JP/LC_MESSAGES
 # Populate it.
 msgfmt -o ${objpfx}domaindir/ja_JP/LC_MESSAGES/tstgettext6.mo ../po/ja.po
-
-GCONV_PATH=${common_objpfx}iconvdata
-export GCONV_PATH
-LOCPATH=${common_objpfx}localedata
-export LOCPATH
 
 ${test_program_prefix} ${objpfx}tst-gettext6 > ${objpfx}tst-gettext6.out
 
