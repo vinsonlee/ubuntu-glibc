@@ -1,5 +1,5 @@
 /* strcat with SSSE3
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -18,7 +18,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 
 # include <sysdep.h>
 

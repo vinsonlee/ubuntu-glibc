@@ -1,5 +1,5 @@
 /* Optimized, inlined string functions.  i486/x86-64 version.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,9 +29,14 @@
 			    || defined __pentiumpro__ || defined __pentium4__ \
 			    || defined __nocona__ || defined __atom__ 	      \
 			    || defined __core2__ || defined __corei7__	      \
+			    || defined __sandybridge__ || defined __haswell__ \
+			    || defined __bonnell__ || defined __silvermont__  \
 			    || defined __k6__ || defined __geode__	      \
 			    || defined __k8__ || defined __athlon__	      \
-			    || defined __amdfam10__)
+			    || defined __amdfam10__ || defined __bdver1__     \
+			    || defined __bdver2__ || defined __bdver3__	      \
+			    || defined __bdver4__ || defined __btver1__	      \
+			    || defined __btver2__)
 
 /* We only provide optimizations if the user selects them and if
    GNU CC is used.  */
@@ -1373,7 +1378,7 @@ __strchrnul_g (const char *__s, int __c)
 # endif
 
 
-# if defined __USE_BSD || defined __USE_XOPEN_EXTENDED
+# if defined __USE_MISC || defined __USE_XOPEN_EXTENDED
 /* Find the first occurrence of C in S.  This is the BSD name.  */
 #  define _HAVE_STRING_ARCH_index 1
 #  define index(s, c) \
@@ -1487,7 +1492,7 @@ __strrchr_g (const char *__s, int __c)
 # endif
 
 
-# if defined __USE_BSD || defined __USE_XOPEN_EXTENDED
+# if defined __USE_MISC || defined __USE_XOPEN_EXTENDED
 /* Find the last occurrence of C in S.  This is the BSD name.  */
 #  define _HAVE_STRING_ARCH_rindex 1
 #  define rindex(s, c) \
@@ -1957,7 +1962,7 @@ __strstr_g (const char *__haystack, const char *__needle)
 
 /* Bit find functions.  We define only the i686 version since for the other
    processors gcc generates good code.  */
-# if defined __USE_BSD || defined __USE_XOPEN_EXTENDED
+# if defined __USE_MISC || defined __USE_XOPEN_EXTENDED
 #  ifdef __i686__
 #   define _HAVE_STRING_ARCH_ffs 1
 #   define ffs(word) (__builtin_constant_p (word)			      \
@@ -1974,7 +1979,7 @@ __strstr_g (const char *__haystack, const char *__needle)
 #    define ffsl(word) ffs(word)
 #   endif
 #  endif /* i686 */
-# endif	/* BSD || X/Open */
+# endif	/* Misc || X/Open */
 
 # ifndef _FORCE_INLINES
 #  undef __STRING_INLINE
