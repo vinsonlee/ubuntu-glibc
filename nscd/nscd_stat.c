@@ -1,4 +1,4 @@
-/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1998.
 
@@ -93,6 +93,8 @@ send_stats (int fd, struct database_dyn dbs[lastdb])
 {
   struct statdata data;
   int cnt;
+
+  memset (&data, 0, sizeof (data));
 
   memcpy (data.version, compilation, sizeof (compilation));
   data.debug_level = debug_level;

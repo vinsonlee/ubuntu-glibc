@@ -1,5 +1,5 @@
 /* Set floating-point environment exception handling.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 int
 __fesetexceptflag (const fexcept_t *flagp, int excepts)
 {
-  fenv_union_t u;
+  fenv_union_t u, n;
   fexcept_t flag;
 
   /* Get the current state.  */
@@ -31,7 +31,7 @@ __fesetexceptflag (const fexcept_t *flagp, int excepts)
   flag = *flagp & excepts;
 
   /* Replace the exception status */
-  u.l = ((u.l & ~(FPSCR_STICKY_BITS & excepts))
+  n.l = ((u.l & ~(FPSCR_STICKY_BITS & excepts))
 	 | (flag & FPSCR_STICKY_BITS)
 	 | (flag >> ((31 - FPSCR_VX) - (31 - FPSCR_VXSOFT))
 	    & FE_INVALID_SOFTWARE));
@@ -39,7 +39,8 @@ __fesetexceptflag (const fexcept_t *flagp, int excepts)
   /* Store the new status word (along with the rest of the environment).
      This may cause floating-point exceptions if the restored state
      requests it.  */
-  fesetenv_register (u.fenv);
+  if (n.l != u.l)
+    fesetenv_register (n.fenv);
 
   /* Deal with FE_INVALID_SOFTWARE not being implemented on some chips.  */
   if (flag & FE_INVALID)

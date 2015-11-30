@@ -1,5 +1,5 @@
 /* Return arc hyperbole tangent for long double value.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -36,7 +36,7 @@ __catanhl (__complex__ long double x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (__builtin_expect (rcls <= FP_INFINITE || icls <= FP_INFINITE, 0))
+  if (__glibc_unlikely (rcls <= FP_INFINITE || icls <= FP_INFINITE))
     {
       if (icls == FP_INFINITE)
 	{
@@ -57,7 +57,7 @@ __catanhl (__complex__ long double x)
 	  __imag__ res = __nanl ("");
 	}
     }
-  else if (__builtin_expect (rcls == FP_ZERO && icls == FP_ZERO, 0))
+  else if (__glibc_unlikely (rcls == FP_ZERO && icls == FP_ZERO))
     {
       res = x;
     }
@@ -118,7 +118,11 @@ __catanhl (__complex__ long double x)
 	    }
 
 	  if (absy < LDBL_EPSILON / 2.0L)
-	    den = (1.0L - absx) * (1.0L + absx);
+	    {
+	      den = (1.0L - absx) * (1.0L + absx);
+	      if (den == -0.0L)
+		den = 0.0L;
+	    }
 	  else if (absx >= 1.0L)
 	    den = (1.0L - absx) * (1.0L + absx) - absy * absy;
 	  else if (absx >= 0.75L || absy >= 0.5L)
