@@ -1,5 +1,5 @@
 /* CPU specific memcmp implementations.  64 bit S/390 version.
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,9 +27,9 @@
 
        .text
 
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 
-ENTRY(memcmp_z196)
+ENTRY(__memcmp_z196)
 	.machine "z196"
         ltgr    %r4,%r4
         je      .L_Z196_4
@@ -60,9 +60,9 @@ ENTRY(memcmp_z196)
         br      %r14
 .L_Z196_14:
         clc     0(1,%r3),0(%r2)
-END(memcmp_z196)
+END(__memcmp_z196)
 
-ENTRY(memcmp_z10)
+ENTRY(__memcmp_z10)
 	.machine "z10"
         ltgr    %r4,%r4
         je      .L_Z10_4
@@ -87,15 +87,15 @@ ENTRY(memcmp_z10)
         j       .L_Z10_3
 .L_Z10_15:
         clc     0(1,%r3),0(%r2)
-END(memcmp_z10)
+END(__memcmp_z10)
 
 #endif
 
 #include "../memcmp.S"
 
-#ifdef NOT_IN_libc
+#if !IS_IN (libc)
 .globl   memcmp
-.set     memcmp,memcmp_z900
+.set     memcmp,__memcmp_z900
 .weak    bcmp
-.set	 bcmp,memcmp_z900
+.set	 bcmp,__memcmp_z900
 #endif

@@ -1,5 +1,5 @@
 /* Set a block of memory to some byte value.  64 bit S/390 version.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
    This file is part of the GNU C Library.
 
@@ -29,7 +29,7 @@
        .text
 
 #ifdef USE_MULTIARCH
-ENTRY(memset_z900)
+ENTRY(__memset_z900)
 #else
 ENTRY(memset)
 #endif
@@ -57,7 +57,7 @@ ENTRY(memset)
 .L_Z900_18:
         mvc     1(1,%r1),0(%r1)
 #ifdef USE_MULTIARCH
-END(memset_z900)
+END(__memset_z900)
 #else
 END(memset)
 libc_hidden_builtin_def (memset)

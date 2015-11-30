@@ -1,6 +1,6 @@
 /* Multiple versions of wcschr
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -21,9 +21,9 @@
 #include <sysdep.h>
 #include <init-arch.h>
 
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 	.text
-ENTRY(wcschr)
+ENTRY(__wcschr)
 	.type	wcschr, @gnu_indirect_function
 	pushl	%ebx
 	cfi_adjust_cfa_offset (4)
@@ -40,5 +40,6 @@ ENTRY(wcschr)
 	cfi_adjust_cfa_offset (-4);
 	cfi_restore (ebx)
 	ret
-END(wcschr)
+END(__wcschr)
+weak_alias (__wcschr, wcschr)
 #endif

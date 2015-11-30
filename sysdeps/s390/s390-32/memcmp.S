@@ -1,5 +1,5 @@
 /* memcmp - compare two memory blocks.  32 bit S/390 version.
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 
        .text
 #ifdef USE_MULTIARCH
-ENTRY(memcmp_g5)
+ENTRY(__memcmp_g5)
 #else
 ENTRY(memcmp)
 #endif
@@ -58,7 +58,7 @@ ENTRY(memcmp)
 .L_G5_17:
         clc     0(1,%r3),0(%r2)
 #ifdef USE_MULTIARCH
-END(memcmp_g5)
+END(__memcmp_g5)
 #else
 END(memcmp)
 libc_hidden_builtin_def (memcmp)
