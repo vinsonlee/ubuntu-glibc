@@ -1,7 +1,7 @@
-Index: glibc-2.19/ports/sysdeps/unix/sysv/linux/hppa/setcontext.S
+Index: glibc-2.21/sysdeps/unix/sysv/linux/hppa/setcontext.S
 ===================================================================
---- glibc-2.19.orig/ports/sysdeps/unix/sysv/linux/hppa/setcontext.S
-+++ glibc-2.19/ports/sysdeps/unix/sysv/linux/hppa/setcontext.S
+--- glibc-2.21.orig/sysdeps/unix/sysv/linux/hppa/setcontext.S
++++ glibc-2.21/sysdeps/unix/sysv/linux/hppa/setcontext.S
 @@ -139,8 +139,8 @@ ENTRY(__setcontext)
  	nop
  

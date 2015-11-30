@@ -1,5 +1,5 @@
 /* Change access and modification times of open file.  Linux version.
-   Copyright (C) 2007-2014 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,8 +20,6 @@
 #include <sys/stat.h>
 #include <sysdep.h>
 
-#include <kernel-features.h>
-
 
 /* Change the access time of FILE to TSP[0] and
    the modification time of FILE to TSP[1].
@@ -37,7 +35,8 @@ utimensat (int fd, const char *file, const struct timespec tsp[2],
       return -1;
     }
 #ifdef __NR_utimensat
-  return INLINE_SYSCALL (utimensat, 4, fd, file, tsp, flags);
+  /* Avoid implicit array coercion in syscall macros.  */
+  return INLINE_SYSCALL (utimensat, 4, fd, file, &tsp[0], flags);
 #else
   __set_errno (ENOSYS);
   return -1;

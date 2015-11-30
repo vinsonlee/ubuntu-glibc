@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  SH version.
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -188,7 +188,7 @@ _dl_start_user:\n\
 .L_dl_skip_args:\n\
 	.long _dl_skip_args@GOT\n\
 .L_dl_init:\n\
-	.long _dl_init_internal@PLT\n\
+	.long _dl_init@PLT\n\
 .L_dl_loaded:\n\
 	.long _rtld_local@GOT\n\
 .L_dl_fini:\n\
@@ -251,6 +251,7 @@ elf_machine_plt_value (struct link_map *map, const Elf32_Rela *reloc,
 
 /* SH never uses Elf32_Rel relocations.	 */
 #define ELF_MACHINE_NO_REL 1
+#define ELF_MACHINE_NO_RELA 0
 
 #ifdef RESOLVE_MAP
 
@@ -291,7 +292,7 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
     } \
   }
 
-  if (__builtin_expect (r_type == R_SH_RELATIVE, 0))
+  if (__glibc_unlikely (r_type == R_SH_RELATIVE))
     {
 #ifndef RTLD_BOOTSTRAP
       if (map != &GL(dl_rtld_map)) /* Already done in rtld itself.	 */
@@ -310,7 +311,7 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 	}
     }
 #ifndef RTLD_BOOTSTRAP
-  else if (__builtin_expect (r_type == R_SH_NONE, 0))
+  else if (__glibc_unlikely (r_type == R_SH_NONE))
     return;
 #endif
   else

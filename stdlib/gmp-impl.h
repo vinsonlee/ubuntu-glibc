@@ -1,6 +1,6 @@
 /* Include file for internal GNU MP types and definitions.
 
-Copyright (C) 1991-2014 Free Software Foundation, Inc.
+Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -47,7 +47,7 @@ along with the GNU MP Library; see the file COPYING.LIB.  If not, see
 #endif
 #endif
 
-#if ! defined (HAVE_ALLOCA) || USE_STACK_ALLOC
+#if ! defined (HAVE_ALLOCA) || defined (USE_STACK_ALLOC)
 #include "stack-alloc.h"
 #else
 #define TMP_DECL(m)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -27,7 +27,7 @@ invalid_fn (double x, double fn)
 {
   if (__rint (fn) != fn)
     {
-      feraiseexcept (FE_INVALID);
+      __feraiseexcept (FE_INVALID);
       return __nan ("");
     }
   else if (fn > 65000.0)
@@ -40,9 +40,9 @@ invalid_fn (double x, double fn)
 double
 __ieee754_scalb (double x, double fn)
 {
-  if (__builtin_expect (__isnan (x), 0))
+  if (__glibc_unlikely (__isnan (x)))
     return x * fn;
-  if (__builtin_expect (!__finite (fn), 0))
+  if (__glibc_unlikely (!__finite (fn)))
     {
       if (__isnan (fn) || fn > 0.0)
 	return x * fn;
@@ -50,7 +50,7 @@ __ieee754_scalb (double x, double fn)
 	return x;
       return x / -fn;
     }
-  if (__builtin_expect ((double) (int) fn != fn, 0))
+  if (__glibc_unlikely (fabs (fn) >= 0x1p31 || (double) (int) fn != fn))
     return invalid_fn (x, fn);
 
   return __scalbn (x, (int) fn);
