@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>
    and Richard Henderson <rth@redhat.com>, 2003.
@@ -18,6 +18,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <setjmp.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -62,7 +63,7 @@ unwind_stop (int version, _Unwind_Action actions,
 				    adj))
     do_longjump = 1;
 
-  if (__builtin_expect (curp != NULL, 0))
+  if (__glibc_unlikely (curp != NULL))
     {
       /* Handle the compatibility stuff.  Execute all handlers
 	 registered with the old method which would be unwound by this
@@ -103,11 +104,7 @@ unwind_cleanup (_Unwind_Reason_Code reason, struct _Unwind_Exception *exc)
 {
   /* When we get here a C++ catch block didn't rethrow the object.  We
      cannot handle this case and therefore abort.  */
-# define STR_N_LEN(str) str, strlen (str)
-  INTERNAL_SYSCALL_DECL (err);
-  INTERNAL_SYSCALL (write, err, 3, STDERR_FILENO,
-		    STR_N_LEN ("FATAL: exception not rethrown\n"));
-  abort ();
+  __libc_fatal ("FATAL: exception not rethrown\n");
 }
 
 #endif	/* have forced unwind */

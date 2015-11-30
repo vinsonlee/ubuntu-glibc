@@ -57,7 +57,7 @@ extern __typeof (strcasecmp_l) __strcasecmp_l;
 extern __typeof (strncasecmp_l) __strncasecmp_l;
 
 /* Alternative version which doesn't pollute glibc's namespace.  */
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 # undef strndupa
 # define strndupa(s, n)							      \
   (__extension__							      \
@@ -90,6 +90,8 @@ extern char *__strsep_g (char **__stringp, const char *__delim);
 libc_hidden_proto (__strsep_g)
 libc_hidden_proto (strnlen)
 libc_hidden_proto (memmem)
+extern __typeof (memmem) __memmem;
+libc_hidden_proto (__memmem)
 libc_hidden_proto (__ffs)
 
 libc_hidden_builtin_proto (memchr)
@@ -112,6 +114,14 @@ libc_hidden_builtin_proto (strrchr)
 libc_hidden_builtin_proto (strspn)
 libc_hidden_builtin_proto (strstr)
 libc_hidden_builtin_proto (ffs)
+
+#if (!IS_IN (libc) || !defined SHARED) \
+  && !defined NO_MEMPCPY_STPCPY_REDIRECT
+/* Redirect calls to __builtin_mempcpy and __builtin_stpcpy to call
+   __mempcpy and __stpcpy if not inlined.  */
+extern __typeof (mempcpy) mempcpy __asm__ ("__mempcpy");
+extern __typeof (stpcpy) stpcpy __asm__ ("__stpcpy");
+#endif
 
 # ifndef _ISOMAC
 #  ifndef index

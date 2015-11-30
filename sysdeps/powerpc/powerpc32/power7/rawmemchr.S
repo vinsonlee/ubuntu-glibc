@@ -1,5 +1,5 @@
 /* Optimized rawmemchr implementation for PowerPC32/POWER7 using cmpb insn.
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Luis Machado <luisgpm@br.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -27,8 +27,8 @@ ENTRY (__rawmemchr)
 	clrrwi	r8,r3,2	      /* Align the address to word boundary.  */
 
 	/* Replicate byte to word.  */
-	rldimi	r4,r4,8,48
-	rldimi	r4,r4,16,32
+	insrwi	r4,r4,8,16
+	insrwi	r4,r4,16,0
 
 	/* Now r4 has a word of c bytes.  */
 

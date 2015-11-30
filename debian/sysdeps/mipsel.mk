@@ -1,10 +1,10 @@
-libc_add-ons = ports nptl $(add-ons)
+libc_add-ons = $(add-ons)
 extra_cflags = -mno-plt -march=mips2 -mtune=mips32r2
 
 # build 32-bit (n32) alternative library
 GLIBC_MULTILIB_PASSES += mipsn32
 DEB_ARCH_MULTILIB_PACKAGES += libc6-mipsn32 libc6-dev-mipsn32
-mipsn32_add-ons = ports nptl $(add-ons)
+mipsn32_add-ons = $(add-ons)
 mipsn32_configure_target = mips64el-linux-gnuabin32
 mipsn32_extra_cflags = -mno-plt -march=mips3 -mtune=mips64r2
 mipsn32_CC = $(CC) -mabi=n32
@@ -18,7 +18,7 @@ mipsn32_extra_config_options := $(extra_config_options)
 # build 64-bit alternative library
 GLIBC_MULTILIB_PASSES += mips64
 DEB_ARCH_MULTILIB_PACKAGES += libc6-mips64 libc6-dev-mips64
-mips64_add-ons = ports nptl $(add-ons)
+mips64_add-ons = $(add-ons)
 mips64_configure_target = mips64el-linux-gnuabi64
 mips64_extra_cflags = -mno-plt -march=mips3 -mtune=mips64r2
 mips64_CC = $(CC) -mabi=64
@@ -54,17 +54,6 @@ cp -a debian/tmp-mipsn32/usr/include/gnu/stubs-n32_hard.h \
         debian/libc6-dev-mipsn32/usr/include/mipsel-linux-gnu/gnu
 
 endef
-
-# build a loongson-2f optimized library
-GLIBC_PASSES += loongson2f
-DEB_ARCH_REGULAR_PACKAGES += libc6-loongson2f
-loongson2f_add-ons = ports nptl $(add-ons)
-loongson2f_configure_target = mips32el-linux-gnu
-loongson2f_CC = $(CC) -mabi=32
-loongson2f_CXX = $(CXX) -mabi=32
-loongson2f_extra_cflags = -march=loongson2f -mtune=loongson2f -O2
-loongson2f_extra_config_options = $(extra_config_options)
-loongson2f_slibdir = /lib/$(DEB_HOST_MULTIARCH)/loongson2f
 
 # Need to put a tri-arch aware version of ldd in the base package
 define mipsn32_extra_install
