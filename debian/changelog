@@ -1,3 +1,96 @@
+glibc (2.22-0experimental0) experimental; urgency=medium
+
+  [ Adam Conrad ]
+  * New upstream release: version 2.22, with git updates up to 2015-11-27:
+    - debian/patches/all/local-alias-UTF-8.diff: Fixed upstream.
+    - debian/patches/any/cvs-ldconfig-aux-cache.diff: Upstreamed.
+    - debian/patches/any/cvs-localplt-new-readelf.diff: Upstreamed.
+    - debian/patches/any/cvs-logbl-accuracy.diff: Upstreamed.
+    - debian/patches/any/cvs-vismain-pie.diff: Upstreamed.
+    - debian/patches/any/local-xfail-stdlib-linkns.diff: Dropped.
+    - debian/patches/any/local-tester-gcc-4.9.diff: Dropped.
+    - debian/patches/arm/cvs-arm-sfi_breg.diff: Upstreamed.
+    - debian/patches/arm/cvs-memcpy-memmove-always-bx.diff: Upstreamed.
+    - debian/patches/hppa/cvs-alloca-werror.diff: Upstreamed.
+    - debian/patches/hppa/cvs-fpu-r2.diff: Upstreamed.
+    - debian/patches/hppa/cvs-fpu2.diff: Upstreamed.
+    - debian/patches/hppa/local-fcntl-osync.diff: Fixed upstream.
+    - debian/patches/hppa/local-setcontext.diff: Fixed upstream.
+    - debian/patches/powerpc/cvs-power7-strncpy.diff: Upstreamed.
+    - debian/patches/powerpc/cvs-ppc-feraiseexcept.diff: Upstreamed.
+    - debian/patches/powerpc/cvs-ppc-pow.diff: Upstreamed.
+    - debian/patches/powerpc/cvs-ppc-sqrt.diff: Upstreamed.
+    - debian/patches/powerpc/cvs-ppc-sqrtf.diff: Upstreamed.
+    - debian/patches/powerpc/cvs-ppc-tabort-le.diff: Upstreamed.
+    - debian/patches/all/local-alias-et_EE.diff: Rebased.
+    - debian/patches/amd64/local-blacklist-for-Intel-TSX.diff: Rebased.
+    - debian/patches/any/local-libgcc-compat-ports.diff: Rebased.
+    - debian/patches/any/local-libpic.diff: Rebased.
+    - debian/patches/any/local-no-pagesize.diff: Rebased.
+    - debian/patches/any/submitted-longdouble.diff: Rebased.
+    - debian/patches/any/submitted-missing-etc-hosts.diff: Rebased.
+    - debian/patches/any/submitted-resolv-ipv6-nameservers.diff: Rebased.
+    - debian/patches/i386/submitted-i686-timing.diff: Rebased.
+    - debian/patches/localedata/local-all-no-archive.diff: Rebased.
+    - debian/patches/localedata/submitted-locale-bo.diff: Rebased.
+    - debian/patches/mips/submitted-rld_map.diff: Rebased.
+  * debian/{control,symbols.wildcards,copyright}: Updated strings for 2.22.
+  * debian/libc6*.symbols: Add libmvec.so.1 to the amd64/x32 symbols files.
+  * debian/*: Conditionally add libmvec to libc-udeb only on amd64 and x32.
+
+  [ Samuel Thibault ]
+  * debian/patches/hurd-i386/tg-tls.diff: Rebased.
+  * debian/patches/hurd-i386/tg-tls-threadvar.diff: Rebased.
+  * debian/patches/hurd-i386/tg-ioctl-base-types.diff: Upstreamed.
+  * debian/patches/hurd-i386/tg-extern_inline.diff: Rebased.
+  * debian/patches/hurd-i386/tg-aio_misc.diff: Upstreamed.
+  * debian/patches/hurd-i386/tg-chflags.diff: Upstreamed.
+  * debian/patches/hurd-i386/tg-select-EINTR.diff: Upstreamed.
+  * debian/patches/hurd-i386/tg-af_local_strlen.diff: Upstreamed.
+  * debian/patches/hurd-i386/tg-nice.diff: Upstreamed.
+  * debian/patches/hurd-i386/tg-nfds-poll.diff: Upstreamed.
+  * debian/patches/hurd-i386/tg-sigstate_locking.diff: Upstreamed.
+  * debian/patches/hurd-i386/tg-mmap_file_prot_none_fix.diff: Upstreamed.
+  * debian/patches/hurd-i386/cvs-unwind-resume.diff: Upstreamed.
+  * debian/patches/hurd-i386/cvs-libc-modules.h.diff: Upstreamed.
+  * debian/patches/hurd-i386/cvs-warnings.diff: Upstreamed.
+  * debian/patches/hurd-i386/cvs-check-local-headers.diff: Upstreamed.
+  * debian/patches/hurd-i386/cvs-mlock.diff: Upstreamed.
+  * debian/patches/hurd-i386/cvs-csu_crt0.diff: New patch, fixes gcrt0.o
+    build.
+  * debian/patches/hurd-i386/cvs-s_scalbn.diff: New patch, fixes s_scalbn.S
+    build.
+  * debian/patches/hurd-i386/tg-tls-threadvar.diff: Update.
+  * patches/hurd-i386/tg-posix_thread.diff: Update, to define
+    _POSIX_THREAD_KEYS_MAX, _POSIX_THREAD_DESTRUCTOR_ITERATIONS and
+    _POSIX_THREAD_THREADS_MAX.
+
+  [ Aurelien Jarno ]
+  * debian/patches/hppa/cvs-atomic.diff: Upstreamed.
+  * debian/patches/hppa/cvs-sysdep-errno.diff: Upstreamed.
+  * debian/patches/hppa/cvs-inline-syscall-rewrite.diff: Upstreamed.
+  * debian/patches/any/cvs-mangle-tls_dtor_list.diff: Rebased.
+  * debian/patches/any/cvs-tls-dtv.diff: Upstreamed.
+  * debian/patches/any/cvs-rfc3542-advanced-api.diff: Upstreamed.
+  * debian/patches/any/cvs-check-localplt.diff: Upstreamed.
+  * debian/patches/any/cvs-ld_pointer_guard.diff: Upstreamed.
+  * debian/patches/any/cvs-mangle-tls_dtor_list.diff: Upstream.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 02 Dec 2015 00:06:13 +0100
+
+glibc (2.21-1) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * testsuite-checking/expected-results-mips64el-linux-gnu-*: allow 
+    nptl/tst-cancel24-static to fail on mips64el.  It's an upstream regression
+    only affecting static binaries currently under investigation.
+  * patches/hppa/submitted-mathdef.diff: update to include the ABI baseline
+    changes.
+  * testsuite-checking/expected-results-*kfreebsd-gnu-*: re-add rt/tst-shm as
+    it seems it can still occasionally fail on the buildds.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 01 Dec 2015 00:17:43 +0100
+
 glibc (2.21-0experimental4) experimental; urgency=medium
 
   [ Aurelien Jarno ]

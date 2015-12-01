@@ -78,6 +78,7 @@
  *	 See HP-15C Advanced Functions Handbook, p.193.
  */
 
+#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -118,7 +119,14 @@ __log1p (double x)
 	{
 	  math_force_eval (two54 + x);          /* raise inexact */
 	  if (ax < 0x3c900000)                  /* |x| < 2**-54 */
-	    return x;
+	    {
+	      if (fabs (x) < DBL_MIN)
+		{
+		  double force_underflow = x * x;
+		  math_force_eval (force_underflow);
+		}
+	      return x;
+	    }
 	  else
 	    return x - x * x * 0.5;
 	}
@@ -189,8 +197,3 @@ __log1p (double x)
   else
     return k * ln2_hi - ((hfsq - (s * (hfsq + R) + (k * ln2_lo + c))) - f);
 }
-weak_alias (__log1p, log1p)
-#ifdef NO_LONG_DOUBLE
-strong_alias (__log1p, __log1pl)
-weak_alias (__log1p, log1pl)
-#endif
