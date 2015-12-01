@@ -42,7 +42,7 @@ __csinf (__complex__ float x)
 	  const int t = (int) ((FLT_MAX_EXP - 1) * M_LN2);
 	  float sinix, cosix;
 
-	  if (__glibc_likely (rcls != FP_SUBNORMAL))
+	  if (__glibc_likely (__real__ x > FLT_MIN))
 	    {
 	      __sincosf (__real__ x, &sinix, &cosix);
 	    }
@@ -51,6 +51,9 @@ __csinf (__complex__ float x)
 	      sinix = __real__ x;
 	      cosix = 1.0f;
 	    }
+
+	  if (negate)
+	    sinix = -sinix;
 
 	  if (fabsf (__imag__ x) > t)
 	    {
@@ -85,9 +88,6 @@ __csinf (__complex__ float x)
 	      __real__ retval = __ieee754_coshf (__imag__ x) * sinix;
 	      __imag__ retval = __ieee754_sinhf (__imag__ x) * cosix;
 	    }
-
-	  if (negate)
-	    __real__ retval = -__real__ retval;
 
 	  if (fabsf (__real__ retval) < FLT_MIN)
 	    {
@@ -136,7 +136,7 @@ __csinf (__complex__ float x)
 	  /* Real part is finite.  */
 	  float sinix, cosix;
 
-	  if (__glibc_likely (rcls != FP_SUBNORMAL))
+	  if (__glibc_likely (__real__ x > FLT_MIN))
 	    {
 	      __sincosf (__real__ x, &sinix, &cosix);
 	    }
