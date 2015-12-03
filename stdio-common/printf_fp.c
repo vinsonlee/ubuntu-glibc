@@ -1,5 +1,5 @@
 /* Floating point output for `printf'.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
    Written by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
@@ -332,7 +332,8 @@ ___printf_fp (FILE *fp,
       fpnum.ldbl = *(const long double *) args[0];
 
       /* Check for special values: not a number or infinity.  */
-      if (isnan (fpnum.ldbl))
+      int res;
+      if (__isnanl (fpnum.ldbl))
 	{
 	  is_neg = signbit (fpnum.ldbl);
 	  if (isupper (info->spec))
@@ -346,9 +347,9 @@ ___printf_fp (FILE *fp,
 		wspecial = L"nan";
 	      }
 	}
-      else if (isinf (fpnum.ldbl))
+      else if ((res = __isinfl (fpnum.ldbl)))
 	{
-	  is_neg = signbit (fpnum.ldbl);
+	  is_neg = res < 0;
 	  if (isupper (info->spec))
 	    {
 	      special = "INF";
@@ -376,9 +377,11 @@ ___printf_fp (FILE *fp,
       fpnum.dbl = *(const double *) args[0];
 
       /* Check for special values: not a number or infinity.  */
-      if (isnan (fpnum.dbl))
+      int res;
+      if (__isnan (fpnum.dbl))
 	{
-	  is_neg = signbit (fpnum.dbl);
+	  union ieee754_double u = { .d = fpnum.dbl };
+	  is_neg = u.ieee.negative != 0;
 	  if (isupper (info->spec))
 	    {
 	      special = "NAN";
@@ -390,9 +393,9 @@ ___printf_fp (FILE *fp,
 	      wspecial = L"nan";
 	    }
 	}
-      else if (isinf (fpnum.dbl))
+      else if ((res = __isinf (fpnum.dbl)))
 	{
-	  is_neg = signbit (fpnum.dbl);
+	  is_neg = res < 0;
 	  if (isupper (info->spec))
 	    {
 	      special = "INF";
@@ -446,7 +449,7 @@ ___printf_fp (FILE *fp,
      efficient to use variables of the fixed maximum size but because this
      would be really big it could lead to memory problems.  */
   {
-    mp_size_t bignum_size = ((abs (p.exponent) + BITS_PER_MP_LIMB - 1)
+    mp_size_t bignum_size = ((ABS (p.exponent) + BITS_PER_MP_LIMB - 1)
 			     / BITS_PER_MP_LIMB
 			     + (LDBL_MANT_DIG / BITS_PER_MP_LIMB > 2 ? 8 : 4))
 			    * sizeof (mp_limb_t);

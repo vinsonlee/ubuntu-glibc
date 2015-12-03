@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,14 +20,25 @@
 
 #include  <shlib-compat.h>
 
+#if defined SHARED && SHLIB_COMPAT (libpthread, GLIBC_2_19, GLIBC_2_20)
+	/* we need a unique name in case of symbol versioning.  */
+# define longjmp __v1longjmp
+#endif /* defined SHARED && SHLIB_COMPAT (libpthread, GLIBC_2_19, GLIBC_2_20))  */
+
 #include <nptl/pt-longjmp.c>
 
-#if SHLIB_COMPAT (libpthread, GLIBC_2_19, GLIBC_2_20)
+#if defined SHARED && SHLIB_COMPAT (libpthread, GLIBC_2_19, GLIBC_2_20)
 /* In glibc release 2.19 new versions of longjmp-functions were introduced,
    but were reverted before 2.20. Thus both versions are the same function.  */
 
-DEFINE_LONGJMP (__v2longjmp)
+# undef longjmp
+
+strong_alias (__v1longjmp, __v2longjmp)
+versioned_symbol (libpthread, __v1longjmp, longjmp, GLIBC_2_0);
 compat_symbol (libpthread, __v2longjmp, longjmp, GLIBC_2_19);
-DEFINE_LONGJMP (__v2siglongjmp)
+
+weak_alias (siglongjmp, __v1siglongjmp)
+weak_alias (siglongjmp, __v2siglongjmp)
+versioned_symbol (libpthread, __v1siglongjmp, siglongjmp, GLIBC_2_0);
 compat_symbol (libpthread, __v2siglongjmp, siglongjmp, GLIBC_2_19);
-#endif /* SHLIB_COMPAT (libpthread, GLIBC_2_19, GLIBC_2_20))  */
+#endif /* defined SHARED && SHLIB_COMPAT (libpthread, GLIBC_2_19, GLIBC_2_20))  */

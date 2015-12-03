@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Geoffrey Keating <Geoff.Keating@anu.edu.au>, 1997.
 
@@ -51,6 +51,11 @@ typedef mp_limb_t mp1[SZ], mp2[SZ * 2];
 static const mp1 mp_exp1 = {
   CONSTSZ (2, b7e15162, 8aed2a6a, bf715880, 9cf4f3c7, 62e7160f, 38b4da56,
            a784d904, 5190cfef, 324e7738, 926cfbe5, f4bf8d8d, 8c31d763)
+};
+
+static const mp1 mp_exp_m1 = {
+  CONSTSZ (0, 5e2d58d8, b3bcdf1a, badec782, 9054f90d, da9805aa, b56c7733,
+           3024b9d0, a507daed, b16400bf, 472b4215, b8245b66, 9d90d27a)
 };
 
 static const mp1 mp_log2 = {
@@ -223,6 +228,6 @@ do_test (void)
   return failures == 0 ? 0 : 1;
 }
 
-#define TIMEOUT 300
+#define TIMEOUT 10
 #define TEST_FUNCTION do_test ()
 #include "../test-skeleton.c"

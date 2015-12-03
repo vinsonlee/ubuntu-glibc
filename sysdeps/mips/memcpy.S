@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 # include <sys/asm.h>
 # define PREFETCH_LOAD_HINT PREFETCH_HINT_LOAD_STREAMED
 # define PREFETCH_STORE_HINT PREFETCH_HINT_PREPAREFORSTORE
-#elif defined _COMPILING_NEWLIB
+#elif _COMPILING_NEWLIB
 # include "machine/asm.h"
 # include "machine/regdef.h"
 # define PREFETCH_LOAD_HINT PREFETCH_HINT_LOAD_STREAMED
@@ -48,6 +48,15 @@
 # ifndef DISABLE_DOUBLE
 #  define USE_DOUBLE
 # endif
+#endif
+
+
+#if __mips_isa_rev > 5
+# if (PREFETCH_STORE_HINT == PREFETCH_HINT_PREPAREFORSTORE)
+#  undef PREFETCH_STORE_HINT
+#  define PREFETCH_STORE_HINT PREFETCH_HINT_STORE_STREAMED
+# endif
+# define R6_CODE
 #endif
 
 /* Some asm.h files do not have the L macro definition.  */
@@ -187,14 +196,6 @@
 # define PREFETCH_FOR_STORE(offset, reg)
 #endif
 
-#if __mips_isa_rev > 5
-# if (PREFETCH_STORE_HINT == PREFETCH_HINT_PREPAREFORSTORE)
-#  undef PREFETCH_STORE_HINT
-#  define PREFETCH_STORE_HINT PREFETCH_HINT_STORE_STREAMED
-# endif
-# define R6_CODE
-#endif
-
 /* Allow the routine to be named something else if desired.  */
 #ifndef MEMCPY_NAME
 # define MEMCPY_NAME memcpy
@@ -224,7 +225,7 @@
 #ifdef USE_DOUBLE
 # define C_ST	sd
 # define C_LD	ld
-# ifdef __MIPSEB
+# if __MIPSEB
 #  define C_LDHI	ldl	/* high part is left in big-endian	*/
 #  define C_STHI	sdl	/* high part is left in big-endian	*/
 #  define C_LDLO	ldr	/* low part is right in big-endian	*/
@@ -239,7 +240,7 @@
 #else
 # define C_ST	sw
 # define C_LD	lw
-# ifdef __MIPSEB
+# if __MIPSEB
 #  define C_LDHI	lwl	/* high part is left in big-endian	*/
 #  define C_STHI	swl	/* high part is left in big-endian	*/
 #  define C_LDLO	lwr	/* low part is right in big-endian	*/
@@ -295,7 +296,7 @@ L(memcpy):
  * size, copy dst pointer to v0 for the return value.
  */
 	slti	t2,a2,(2 * NSIZE)
-	bne	t2,zero,L(lasts)
+	bne	t2,zero,L(lastb)
 #if defined(RETURN_FIRST_PREFETCH) || defined(RETURN_LAST_PREFETCH)
 	move	v0,zero
 #else
@@ -546,7 +547,7 @@ L(chkw):
  */
 L(chk1w):
 	andi	a2,t8,(NSIZE-1)	/* a2 is the reminder past one (d)word chunks */
-	beq	a2,t8,L(lastw)
+	beq	a2,t8,L(lastb)
 	PTR_SUBU a3,t8,a2	/* a3 is count of bytes in one (d)word chunks */
 	PTR_ADDU a3,a0,a3	/* a3 is the dst address after loop */
 
@@ -557,20 +558,6 @@ L(wordCopy_loop):
 	PTR_ADDIU a1,a1,UNIT(1)
 	bne	a0,a3,L(wordCopy_loop)
 	C_ST	REG3,UNIT(-1)(a0)
-
-/* If we have been copying double words, see if we can copy a single word
-   before doing byte copies.  We can have, at most, one word to copy.  */
-
-L(lastw):
-#ifdef USE_DOUBLE
-	andi    t8,a2,3		/* a2 is the remainder past 4 byte chunks.  */
-	beq	t8,a2,L(lastb)
-	move	a2,t8
-	lw	REG3,0(a1)
-	sw	REG3,0(a0)
-	PTR_ADDIU a0,a0,4
-	PTR_ADDIU a1,a1,4
-#endif
 
 /* Copy the last 8 (or 16) bytes */
 L(lastb):
@@ -585,33 +572,6 @@ L(lastbloop):
 L(leave):
 	j	ra
 	nop
-
-/* We jump here with a memcpy of less than 8 or 16 bytes, depending on
-   whether or not USE_DOUBLE is defined.  Instead of just doing byte
-   copies, check the alignment and size and use lw/sw if possible.
-   Otherwise, do byte copies.  */
-
-L(lasts):
-	andi	t8,a2,3
-	beq	t8,a2,L(lastb)
-
-	andi	t9,a0,3
-	bne	t9,zero,L(lastb)
-	andi	t9,a1,3
-	bne	t9,zero,L(lastb)
-
-	PTR_SUBU a3,a2,t8
-	PTR_ADDU a3,a0,a3
-
-L(wcopy_loop):
-	lw	REG3,0(a1)
-	PTR_ADDIU a0,a0,4
-	PTR_ADDIU a1,a1,4
-	bne	a0,a3,L(wcopy_loop)
-	sw	REG3,-4(a0)
-
-	b	L(lastb)
-	move	a2,t8
 
 #ifndef R6_CODE
 /*
@@ -807,7 +767,7 @@ L(ua_smallCopy_loop):
 
 #else /* R6_CODE */
 
-# ifdef __MIPSEB
+# if __MIPSEB
 #  define SWAP_REGS(X,Y) X, Y
 #  define ALIGN_OFFSET(N) (N)
 # else

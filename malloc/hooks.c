@@ -1,5 +1,5 @@
 /* Malloc implementation for multiple threads without lock contention.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Wolfram Gloger <wg@malloc.de>, 2001.
 
@@ -88,22 +88,11 @@ __malloc_check_init (void)
    overruns.  The goal here is to avoid obscure crashes due to invalid
    usage, unlike in the MALLOC_DEBUG code. */
 
-static unsigned char
-magicbyte (const void *p)
-{
-  unsigned char magic;
+#define MAGICBYTE(p) ((((size_t) p >> 3) ^ ((size_t) p >> 11)) & 0xFF)
 
-  magic = (((uintptr_t) p >> 3) ^ ((uintptr_t) p >> 11)) & 0xFF;
-  /* Do not return 1.  See the comment in mem2mem_check().  */
-  if (magic == 1)
-    ++magic;
-  return magic;
-}
-
-
-/* Visualize the chunk as being partitioned into blocks of 255 bytes from the
-   highest address of the chunk, downwards.  The end of each block tells
-   us the size of that block, up to the actual size of the requested
+/* Visualize the chunk as being partitioned into blocks of 256 bytes from the
+   highest address of the chunk, downwards.  The beginning of each block tells
+   us the size of the previous block, up to the actual size of the requested
    memory.  Our magic byte is right at the end of the requested size, so we
    must reach it with this iteration, otherwise we have witnessed a memory
    corruption.  */
@@ -112,7 +101,7 @@ malloc_check_get_size (mchunkptr p)
 {
   size_t size;
   unsigned char c;
-  unsigned char magic = magicbyte (p);
+  unsigned char magic = MAGICBYTE (p);
 
   assert (using_malloc_checking == 1);
 
@@ -123,8 +112,7 @@ malloc_check_get_size (mchunkptr p)
       if (c <= 0 || size < (c + 2 * SIZE_SZ))
         {
           malloc_printerr (check_action, "malloc_check_get_size: memory corruption",
-                           chunk2mem (p),
-			   chunk_is_mmapped (p) ? NULL : arena_for_chunk (p));
+                           chunk2mem (p));
           return 0;
         }
     }
@@ -134,36 +122,32 @@ malloc_check_get_size (mchunkptr p)
 }
 
 /* Instrument a chunk with overrun detector byte(s) and convert it
-   into a user pointer with requested size req_sz. */
+   into a user pointer with requested size sz. */
 
 static void *
 internal_function
-mem2mem_check (void *ptr, size_t req_sz)
+mem2mem_check (void *ptr, size_t sz)
 {
   mchunkptr p;
   unsigned char *m_ptr = ptr;
-  size_t max_sz, block_sz, i;
-  unsigned char magic;
+  size_t i;
 
   if (!ptr)
     return ptr;
 
   p = mem2chunk (ptr);
-  magic = magicbyte (p);
-  max_sz = chunksize (p) - 2 * SIZE_SZ;
-  if (!chunk_is_mmapped (p))
-    max_sz += SIZE_SZ;
-  for (i = max_sz - 1; i > req_sz; i -= block_sz)
+  for (i = chunksize (p) - (chunk_is_mmapped (p) ? 2 * SIZE_SZ + 1 : SIZE_SZ + 1);
+       i > sz;
+       i -= 0xFF)
     {
-      block_sz = MIN (i - req_sz, 0xff);
-      /* Don't allow the magic byte to appear in the chain of length bytes.
-         For the following to work, magicbyte cannot return 0x01.  */
-      if (block_sz == magic)
-        --block_sz;
-
-      m_ptr[i] = block_sz;
+      if (i - sz < 0x100)
+        {
+          m_ptr[i] = (unsigned char) (i - sz);
+          break;
+        }
+      m_ptr[i] = 0xFF;
     }
-  m_ptr[req_sz] = magic;
+  m_ptr[sz] = MAGICBYTE (p);
   return (void *) m_ptr;
 }
 
@@ -182,12 +166,11 @@ mem2chunk_check (void *mem, unsigned char **magic_p)
     return NULL;
 
   p = mem2chunk (mem);
-  sz = chunksize (p);
-  magic = magicbyte (p);
   if (!chunk_is_mmapped (p))
     {
       /* Must be a chunk in conventional heap memory. */
       int contig = contiguous (&main_arena);
+      sz = chunksize (p);
       if ((contig &&
            ((char *) p < mp_.sbrk_base ||
             ((char *) p + sz) >= (mp_.sbrk_base + main_arena.system_mem))) ||
@@ -197,9 +180,10 @@ mem2chunk_check (void *mem, unsigned char **magic_p)
                                next_chunk (prev_chunk (p)) != p)))
         return NULL;
 
+      magic = MAGICBYTE (p);
       for (sz += SIZE_SZ - 1; (c = ((unsigned char *) p)[sz]) != magic; sz -= c)
         {
-          if (c == 0 || sz < (c + 2 * SIZE_SZ))
+          if (c <= 0 || sz < (c + 2 * SIZE_SZ))
             return NULL;
         }
     }
@@ -217,12 +201,13 @@ mem2chunk_check (void *mem, unsigned char **magic_p)
            offset < 0x2000) ||
           !chunk_is_mmapped (p) || (p->size & PREV_INUSE) ||
           ((((unsigned long) p - p->prev_size) & page_mask) != 0) ||
-          ((p->prev_size + sz) & page_mask) != 0)
+          ((sz = chunksize (p)), ((p->prev_size + sz) & page_mask) != 0))
         return NULL;
 
+      magic = MAGICBYTE (p);
       for (sz -= 1; (c = ((unsigned char *) p)[sz]) != magic; sz -= c)
         {
-          if (c == 0 || sz < (c + 2 * SIZE_SZ))
+          if (c <= 0 || sz < (c + 2 * SIZE_SZ))
             return NULL;
         }
     }
@@ -252,8 +237,7 @@ top_check (void)
         (char *) t + chunksize (t) == mp_.sbrk_base + main_arena.system_mem)))
     return 0;
 
-  malloc_printerr (check_action, "malloc: top chunk is corrupt", t,
-		   &main_arena);
+  malloc_printerr (check_action, "malloc: top chunk is corrupt", t);
 
   /* Try to set up a new top chunk. */
   brk = MORECORE (0);
@@ -311,8 +295,7 @@ free_check (void *mem, const void *caller)
     {
       (void) mutex_unlock (&main_arena.mutex);
 
-      malloc_printerr (check_action, "free(): invalid pointer", mem,
-		       &main_arena);
+      malloc_printerr (check_action, "free(): invalid pointer", mem);
       return;
     }
   if (chunk_is_mmapped (p))
@@ -350,8 +333,7 @@ realloc_check (void *oldmem, size_t bytes, const void *caller)
   (void) mutex_unlock (&main_arena.mutex);
   if (!oldp)
     {
-      malloc_printerr (check_action, "realloc(): invalid pointer", oldmem,
-		       &main_arena);
+      malloc_printerr (check_action, "realloc(): invalid pointer", oldmem);
       return malloc_check (bytes, NULL);
     }
   const INTERNAL_SIZE_T oldsize = chunksize (oldp);

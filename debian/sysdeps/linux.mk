@@ -1,16 +1,17 @@
 # When changing this, make sure to update debian/debhelper.in/libc.preinst!
-MIN_KERNEL_SUPPORTED := 3.2
+MIN_KERNEL_SUPPORTED := 2.6.32
 libc = libc6
 
-# Do not build pt_chown on this platform
-pt_chown = no
-# Expect pldd on this platform
-pldd = yes
+# Build and expect pt_chown on this platform
+pt_chown = yes
 
 # NPTL Config
 threads = yes
+libc_add-ons = $(add-ons)
 
-ifeq ($(filter stage1 stage2,$(DEB_BUILD_PROFILES)),)
+ifneq ($(filter stage1 stage2,$(DEB_BUILD_PROFILES)),)
+  libc_extra_config_options = $(extra_config_options)
+else
   libc_extra_config_options = --with-selinux --enable-systemtap $(extra_config_options)
 endif
 

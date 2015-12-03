@@ -1,4 +1,4 @@
-# Copyright (C) 1993-2016 Free Software Foundation, Inc.
+# Copyright (C) 1993-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -46,16 +46,15 @@ hurd-objpfx = $(common-objpfx)hurd/
 
 # These are all the generated headers that <hurd.h> includes.
 before-compile += $(patsubst %,$(hurd-objpfx)hurd/%.h,auth io fs process)
-$(patsubst %,$(hurd-objpfx)hurd/%.h,auth io fs process): hurd-before-compile
-.PHONY: hurd-before-compile
-hurd-before-compile: $(common-objpfx)mach/mach-shortcuts.h
-	$(MAKE) -C $(..)hurd subdir=hurd before-compile no_deps=t
+$(patsubst %,$(hurd-objpfx)hurd/%.%,auth io fs process): \
+  $(common-objpfx)mach/mach-shortcuts.h
+	$(MAKE) -C $(..)hurd before-compile no_deps=t
 endif
 
 # Hurd profil.c includes this file, so give a rule to make it.
 ifeq ($(subdir),gmon)
 $(common-objpfx)hurd/../mach/RPC_task_get_sampled_pcs.c:
-	$(MAKE) -C $(..)mach subdir=mach before-compile no_deps=t
+	$(MAKE) -C $(..)mach before-compile no_deps=t
 endif
 
 
@@ -79,7 +78,7 @@ endef
 # the headers we want to search for Mach error codes, listed above (and
 # incidentally, all other headers those include).
 -include $(common-objpfx)errnos.d
-$(common-objpfx)errnos.d: $(mach-errnos-deps) libc-modules.h
+$(common-objpfx)errnos.d: $(mach-errnos-deps)
 	$(mach-errno-h) | \
 	$(CC) $(CFLAGS) $(CPPFLAGS) -M -x c - | \
 	sed $(sed-remove-objpfx) -e 's,- *:,mach-errnos-deps :=,' \

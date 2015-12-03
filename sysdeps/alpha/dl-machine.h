@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  Alpha version.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson <rth@tamu.edu>.
 
@@ -227,7 +227,7 @@ $fixup_stack:							\n\
    or TLS variables, so undefined references should not be allowed
    to define the value.
 
-   ELF_RTYPE_CLASS_COPY iff TYPE should not be allowed to resolve
+   ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve
    to one of the main executable's symbols, as for a COPY reloc.
    This is unused on Alpha.  */
 

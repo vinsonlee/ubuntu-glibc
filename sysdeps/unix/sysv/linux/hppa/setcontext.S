@@ -1,5 +1,5 @@
 /* Install given context.
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Helge Deller <deller@gmx.de>, 2008.
 
@@ -18,7 +18,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
-#include <libc-symbols.h>
 
 #include "ucontext_i.h"
 
@@ -140,7 +139,7 @@ ENTRY(__setcontext)
 	nop
 
 	/* No further context available. Exit now.  */
-	bl	HIDDEN_JUMPTARGET(exit), %r2
+	bl	_exit, %r2
 	ldi	-1, %r26
 
 

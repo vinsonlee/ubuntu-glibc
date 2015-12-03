@@ -4,7 +4,6 @@
  */
 
 #include <machine/asm.h>
-#include <i386-math-asm.h>
 
 RCSID("$NetBSD: s_log1pf.S,v 1.4 1995/05/09 00:13:05 jtc Exp $")
 
@@ -17,14 +16,6 @@ RCSID("$NetBSD: s_log1pf.S,v 1.4 1995/05/09 00:13:05 jtc Exp $")
 	*/
 limit:	.float 0.29
 one:	.float 1.0
-
-DEFINE_FLT_MIN
-
-#ifdef PIC
-# define MO(op) op##@GOTOFF(%edx)
-#else
-# define MO(op) op
-#endif
 
 /*
  * Use the fyl2xp1 function when the argument is in the range -0.29 to 0.29,
@@ -46,17 +37,24 @@ ENTRY(__log1pf)
 	sahf
 	jc	3f		// in case x is NaN or ±Inf
 4:	fabs
-	fcomps	MO(limit)
+#ifdef PIC
+	fcomps	limit@GOTOFF(%edx)
+#else
+	fcomps	limit
+#endif
 	fnstsw
 	sahf
 	jc	2f
 
-	fadds	MO(one)
+#ifdef PIC
+	fadds	one@GOTOFF(%edx)
+#else
+	fadds	one
+#endif
 	fyl2x
 	ret
 
 2:	fyl2xp1
-	FLT_CHECK_FORCE_UFLOW_NONNAN
 	ret
 
 3:	jp	4b		// in case x is ±Inf
@@ -65,3 +63,4 @@ ENTRY(__log1pf)
 	ret
 
 END (__log1pf)
+weak_alias (__log1pf, log1pf)

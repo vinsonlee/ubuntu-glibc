@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,7 +23,8 @@
 
 
 void
-_exit (int status)
+_exit (status)
+     int status;
 {
   while (1)
     {
@@ -38,5 +39,4 @@ _exit (int status)
     }
 }
 libc_hidden_def (_exit)
-rtld_hidden_def (_exit)
 weak_alias (_exit, _Exit)

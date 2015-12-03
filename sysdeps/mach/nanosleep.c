@@ -1,5 +1,5 @@
 /* nanosleep -- sleep for a period specified with a struct timespec
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,11 +19,10 @@
 #include <errno.h>
 #include <mach.h>
 #include <sys/time.h>
-#include <time.h>
 #include <unistd.h>
 
 int
-__libc_nanosleep (const struct timespec *requested_time,
+__nanosleep (const struct timespec *requested_time,
 	     struct timespec *remaining)
 {
   mach_port_t recv;
@@ -65,6 +64,5 @@ __libc_nanosleep (const struct timespec *requested_time,
 
   return 0;
 }
-weak_alias(__libc_nanosleep, __nanosleep)
 libc_hidden_def (__nanosleep)
-weak_alias (__libc_nanosleep, nanosleep)
+weak_alias (__nanosleep, nanosleep)

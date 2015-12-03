@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,11 @@
    Returns the number read or -1 for errors.  */
 
 ssize_t
-__recv (int fd, void *buf, size_t n, int flags)
+__recv (fd, buf, n, flags)
+     int fd;
+     void *buf;
+     size_t n;
+     int flags;
 {
   error_t err;
   mach_port_t addrport;
@@ -56,5 +60,4 @@ __recv (int fd, void *buf, size_t n, int flags)
 
   return nread;
 }
-libc_hidden_def (__recv)
 weak_alias (__recv, recv)

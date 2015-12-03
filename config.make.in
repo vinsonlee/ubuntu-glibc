@@ -12,7 +12,7 @@ datadir = @datadir@
 libdir = @libdir@
 slibdir = @libc_cv_slibdir@
 rtlddir = @libc_cv_rtlddir@
-complocaledir = @libc_cv_complocaledir@
+localedir = @libc_cv_localedir@
 sysconfdir = @libc_cv_sysconfdir@
 libexecdir = @libexecdir@
 rootsbindir = @libc_cv_rootsbindir@
@@ -49,13 +49,14 @@ enable-werror = @enable_werror@
 
 have-z-combreloc = @libc_cv_z_combreloc@
 have-z-execstack = @libc_cv_z_execstack@
-have-protected-data = @libc_cv_protected_data@
-have-glob-dat-reloc = @libc_cv_has_glob_dat@
+have-Bgroup = @libc_cv_Bgroup@
 with-fp = @with_fp@
-enable-timezone-tools = @enable_timezone_tools@
+old-glibc-headers = @old_glibc_headers@
 unwind-find-fde = @libc_cv_gcc_unwind_find_fde@
+have-forced-unwind = @libc_cv_forced_unwind@
 have-fpie = @libc_cv_fpie@
-stack-protector = @stack_protector@
+gnu89-inline-CFLAGS = @gnu89_inline@
+have-ssp = @libc_cv_ssp@
 have-selinux = @have_selinux@
 have-libaudit = @have_libaudit@
 have-libcap = @have_libcap@
@@ -65,18 +66,21 @@ bind-now = @bindnow@
 have-hash-style = @libc_cv_hashstyle@
 use-default-link = @use_default_link@
 output-format = @libc_cv_output_format@
-have-cxx-thread_local = @libc_cv_cxx_thread_local@
 
+static-libgcc = @libc_cv_gcc_static_libgcc@
+
+exceptions = @exceptions@
 multi-arch = @multi_arch@
 
 mach-interface-list = @mach_interface_list@
+
+sizeof-long-double = @sizeof_long_double@
 
 nss-crypt = @libc_cv_nss_crypt@
 
 # Configuration options.
 build-shared = @shared@
 build-pic-default= @libc_cv_pic_default@
-build-pie-default= @libc_cv_pie_default@
 build-profile = @profile@
 build-static-nss = @static_nss@
 add-ons = @add_ons@

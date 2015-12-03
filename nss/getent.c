@@ -1,4 +1,4 @@
-/* Copyright (c) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1998.
 
@@ -87,7 +87,7 @@ print_version (FILE *stream, struct argp_state *state)
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
-"), "2016");
+"), "2015");
   fprintf (stream, gettext ("Written by %s.\n"), "Thorsten Kukuk");
 }
 
@@ -184,8 +184,20 @@ ethers_keys (int number, char *key[])
 static void
 print_group (struct group *grp)
 {
-  if (putgrent (grp, stdout) != 0)
-    fprintf (stderr, "error writing group entry: %m\n");
+  unsigned int i = 0;
+
+  printf ("%s:%s:%lu:", grp->gr_name ? grp->gr_name : "",
+	  grp->gr_passwd ? grp->gr_passwd : "",
+	  (unsigned long int) grp->gr_gid);
+
+  while (grp->gr_mem[i] != NULL)
+    {
+      fputs_unlocked (grp->gr_mem[i], stdout);
+      ++i;
+      if (grp->gr_mem[i] != NULL)
+	putchar_unlocked (',');
+    }
+  putchar_unlocked ('\n');
 }
 
 static int
@@ -229,8 +241,32 @@ group_keys (int number, char *key[])
 static void
 print_gshadow (struct sgrp *sg)
 {
-  if (putsgent (sg, stdout) != 0)
-    fprintf (stderr, "error writing gshadow entry: %m\n");
+  unsigned int i = 0;
+
+  printf ("%s:%s:",
+	  sg->sg_namp ? sg->sg_namp : "",
+	  sg->sg_passwd ? sg->sg_passwd : "");
+
+  while (sg->sg_adm[i] != NULL)
+    {
+      fputs_unlocked (sg->sg_adm[i], stdout);
+      ++i;
+      if (sg->sg_adm[i] != NULL)
+	putchar_unlocked (',');
+    }
+
+  putchar_unlocked (':');
+
+  i = 0;
+  while (sg->sg_mem[i] != NULL)
+    {
+      fputs_unlocked (sg->sg_mem[i], stdout);
+      ++i;
+      if (sg->sg_mem[i] != NULL)
+	putchar_unlocked (',');
+    }
+
+  putchar_unlocked ('\n');
 }
 
 static int
@@ -567,8 +603,14 @@ networks_keys (int number, char *key[])
 static void
 print_passwd (struct passwd *pwd)
 {
-  if (putpwent (pwd, stdout) != 0)
-    fprintf (stderr, "error writing passwd entry: %m\n");
+  printf ("%s:%s:%lu:%lu:%s:%s:%s\n",
+	  pwd->pw_name ? pwd->pw_name : "",
+	  pwd->pw_passwd ? pwd->pw_passwd : "",
+	  (unsigned long int) pwd->pw_uid,
+	  (unsigned long int) pwd->pw_gid,
+	  pwd->pw_gecos ? pwd->pw_gecos : "",
+	  pwd->pw_dir ? pwd->pw_dir : "",
+	  pwd->pw_shell ? pwd->pw_shell : "");
 }
 
 static int
@@ -658,7 +700,6 @@ protocols_keys (int number, char *key[])
   return result;
 }
 
-#if HAVE_SUNRPC
 /* Now is all for rpc */
 static void
 print_rpc (struct rpcent *rpc)
@@ -704,7 +745,6 @@ rpc_keys (int number, char *key[])
 
   return result;
 }
-#endif
 
 /* for services */
 static void
@@ -770,8 +810,26 @@ services_keys (int number, char *key[])
 static void
 print_shadow (struct spwd *sp)
 {
-  if (putspent (sp, stdout) != 0)
-    fprintf (stderr, "error writing shadow entry: %m\n");
+  printf ("%s:%s:",
+	  sp->sp_namp ? sp->sp_namp : "",
+	  sp->sp_pwdp ? sp->sp_pwdp : "");
+
+#define SHADOW_FIELD(n) \
+  if (sp->n == -1)							      \
+    putchar_unlocked (':');						      \
+  else									      \
+    printf ("%ld:", sp->n)
+
+  SHADOW_FIELD (sp_lstchg);
+  SHADOW_FIELD (sp_min);
+  SHADOW_FIELD (sp_max);
+  SHADOW_FIELD (sp_warn);
+  SHADOW_FIELD (sp_inact);
+  SHADOW_FIELD (sp_expire);
+  if (sp->sp_flag == ~0ul)
+    putchar_unlocked ('\n');
+  else
+    printf ("%lu\n", sp->sp_flag);
 }
 
 static int
@@ -826,9 +884,7 @@ D(netgroup)
 D(networks)
 D(passwd)
 D(protocols)
-#if HAVE_SUNRPC
 D(rpc)
-#endif
 D(services)
 D(shadow)
 #undef D

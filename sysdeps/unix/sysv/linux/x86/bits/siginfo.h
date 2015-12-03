@@ -1,5 +1,5 @@
 /* siginfo_t, sigevent and constants.  Linux x86-64 version.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -108,11 +108,6 @@ typedef struct
 	  {
 	    void *si_addr;	/* Faulting insn/memory ref.  */
 	    short int si_addr_lsb;	/* Valid LSB of the reported address.  */
-	    struct
-	      {
-		void *_lower;
-		void *_upper;
-	      } si_addr_bnd;
 	  } _sigfault;
 
 	/* SIGPOLL.  */
@@ -146,8 +141,6 @@ typedef struct
 # define si_ptr		_sifields._rt.si_sigval.sival_ptr
 # define si_addr	_sifields._sigfault.si_addr
 # define si_addr_lsb	_sifields._sigfault.si_addr_lsb
-# define si_lower	_sifields._sigfault.si_addr_bnd._lower
-# define si_upper	_sifields._sigfault.si_addr_bnd._upper
 # define si_band	_sifields._sigpoll.si_band
 # define si_fd		_sifields._sigpoll.si_fd
 # define si_call_addr 	_sifields._sigsys._call_addr

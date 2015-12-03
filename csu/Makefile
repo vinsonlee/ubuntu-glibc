@@ -1,5 +1,5 @@
 # Makefile for csu code for GNU C library.
-# Copyright (C) 1995-2016 Free Software Foundation, Inc.
+# Copyright (C) 1995-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ aux	 = errno
 elide-routines.os = libc-tls
 static-only-routines = elf-init
 csu-dummies = $(filter-out $(start-installed-name),crt1.o Mcrt1.o)
-extra-objs = start.o \
+extra-objs = start.o gmon-start.o \
 	     $(start-installed-name) g$(start-installed-name) $(csu-dummies) \
 	     S$(start-installed-name)
 omit-deps = $(patsubst %.o,%,$(start-installed-name) g$(start-installed-name) \
@@ -46,14 +46,9 @@ tests := tst-empty tst-atomic tst-atomic-long
 tests-static := tst-empty
 
 ifeq (yes,$(build-shared))
-extra-objs += S$(start-installed-name) gmon-start.os
-ifneq ($(start-installed-name),$(static-start-installed-name))
-extra-objs += gmon-start.o
-endif
+extra-objs += S$(start-installed-name)
 install-lib += S$(start-installed-name)
 generated += start.os
-else
-extra-objs += gmon-start.o
 endif
 
 ifneq ($(start-installed-name),$(static-start-installed-name))
@@ -100,21 +95,10 @@ endif
 # The profiling startfile is made by linking together the normal
 # startfile with gmon-start.o, which defines a constructor function
 # to turn on profiling code at startup.
-ifeq (yes,$(build-shared))
-$(objpfx)g$(start-installed-name): \
-  $(objpfx)g%: $(objpfx)S% $(objpfx)gmon-start.os
-	$(link-relocatable)
-ifneq ($(start-installed-name),$(static-start-installed-name))
-$(objpfx)g$(static-start-installed-name): \
-  $(objpfx)g%: $(objpfx)% $(objpfx)gmon-start.o
-	$(link-relocatable)
-endif
-else
 $(addprefix $(objpfx),$(sort g$(start-installed-name) \
 			     g$(static-start-installed-name))): \
   $(objpfx)g%: $(objpfx)% $(objpfx)gmon-start.o
 	$(link-relocatable)
-endif
 
 # These extra files are sometimes expected by system standard linking
 # procedures, but we have nothing for them to do.  So compile empty files.

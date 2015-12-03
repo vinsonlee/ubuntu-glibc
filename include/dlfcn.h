@@ -54,8 +54,7 @@ struct link_map;
 extern void _dl_close (void *map) attribute_hidden;
 /* Same as above, but without locking and safety checks for user
    provided map arguments.  */
-extern void _dl_close_worker (struct link_map *map, bool force)
-    attribute_hidden;
+extern void _dl_close_worker (struct link_map *map) attribute_hidden;
 
 /* Look up NAME in shared object HANDLE (which may be RTLD_DEFAULT or
    RTLD_NEXT).  WHO is the calling function, for RTLD_NEXT.  Returns
@@ -70,6 +69,19 @@ extern void *_dl_sym (void *handle, const char *name, void *who)
 extern void *_dl_vsym (void *handle, const char *name, const char *version,
 		       void *who)
     internal_function;
+
+/* Call OPERATE, catching errors from `dl_signal_error'.  If there is no
+   error, *ERRSTRING is set to null.  If there is an error, *ERRSTRING is
+   set to a string constructed from the strings passed to _dl_signal_error,
+   and the error code passed is the return value and *OBJNAME is set to
+   the object name which experienced the problems.  ERRSTRING if nonzero
+   points to a malloc'ed string which the caller has to free after use.
+   ARGS is passed as argument to OPERATE.  MALLOCEDP is set to true only
+   if the returned string is allocated using the libc's malloc.  */
+extern int _dl_catch_error (const char **objname, const char **errstring,
+			    bool *mallocedp, void (*operate) (void *),
+			    void *args)
+     internal_function;
 
 /* Helper function for <dlfcn.h> functions.  Runs the OPERATE function via
    _dl_catch_error.  Returns zero for success, nonzero for failure; and

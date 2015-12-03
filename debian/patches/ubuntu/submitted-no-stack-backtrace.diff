@@ -17,8 +17,8 @@ Index: eglibc-2.15/debug/fortify_fail.c
 
  extern char **__libc_argv attribute_hidden;
 @@ -27,9 +27,15 @@
- __attribute__ ((noreturn)) internal_function
- __fortify_fail (const char *msg)
+ __fortify_fail (msg)
+      const char *msg;
  {
 +  int do_abort;
 +  /* Disable backtraces for fortify failures on the stack.  */

@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  nptl/i386 version.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -316,8 +316,7 @@ tls_fill_user_desc (union user_desc_init *desc,
      __value; })
 
 
-
-/* Set member of the thread descriptor directly.  */
+/* Same as THREAD_SETMEM, but the member offset can be non-constant.  */
 # define THREAD_SETMEM(descr, member, value) \
   ({ if (sizeof (descr->member) == 1)					      \
        asm volatile ("movb %b0,%%gs:%P1" :				      \
@@ -342,7 +341,7 @@ tls_fill_user_desc (union user_desc_init *desc,
        }})
 
 
-/* Same as THREAD_SETMEM, but the member offset can be non-constant.  */
+/* Set member of the thread descriptor directly.  */
 # define THREAD_SETMEM_NC(descr, member, idx, value) \
   ({ if (sizeof (descr->member[0]) == 1)				      \
        asm volatile ("movb %b0,%%gs:%P1(%2)" :				      \

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by GOTO Masanori <gotom@debian.or.jp>, 2004
 
@@ -38,7 +38,7 @@ struct convcode
 };
 
 /* test builtin transformation */
-static const struct convcode testcode[] = {
+struct convcode testcode[] = {
   {"ASCII", "ASCII"},
   {"UTF-8", "ASCII"},
   {"UCS-2BE", "ASCII"},
@@ -47,9 +47,9 @@ static const struct convcode testcode[] = {
   {"UCS-4LE", "ASCII"},
 };
 
-static const int number = (int) sizeof (testcode) / sizeof (struct convcode);
+int number = (int) sizeof (testcode) / sizeof (struct convcode);
 
-static int
+int
 convert (const char *tocode, const char *fromcode, char *inbufp,
 	 size_t inbytesleft, char *outbufp, size_t outbytesleft)
 {
@@ -88,8 +88,8 @@ convert (const char *tocode, const char *fromcode, char *inbufp,
 }
 
 
-static int
-test_unalign (const struct convcode *codes, const char *str, int len)
+int
+test_unalign (struct convcode *codes, char *str, int len)
 {
   struct unalign *inbufp, *outbufp;
   char *inbuf, *outbuf;
@@ -137,8 +137,8 @@ test_unalign (const struct convcode *codes, const char *str, int len)
   return 0;
 }
 
-static int
-do_test (void)
+int
+main (int argc, char *argv[])
 {
   int i;
   int ret = 0;
@@ -151,11 +151,7 @@ do_test (void)
       printf ("iconv: %s <-> %s: ok\n",
 	      testcode[i].fromcode, testcode[i].tocode);
     }
-  if (ret == 0)
-    printf ("Succeeded.\n");
+  printf ("Succeeded.\n");
 
   return ret;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

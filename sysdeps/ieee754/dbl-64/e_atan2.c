@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2015 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -41,9 +41,6 @@
 #include "MathLib.h"
 #include "uatan.tbl"
 #include "atnat2.h"
-#include <fenv.h>
-#include <float.h>
-#include <math.h>
 #include <math_private.h>
 #include <stap-probe.h>
 
@@ -193,7 +190,6 @@ __ieee754_atan2 (double y, double x)
 	return mhpi.d;
     }
 
-  SET_RESTORE_ROUND (FE_TONEAREST);
   /* either x/y or y/x is very close to zero */
   ax = (x < 0) ? -x : x;
   ay = (y < 0) ? -y : y;
@@ -206,18 +202,10 @@ __ieee754_atan2 (double y, double x)
     {
       if (x > 0)
 	{
-	  double ret;
 	  if ((z = ay / ax) < TWOM1022)
-	    ret = normalized (ax, ay, y, z);
+	    return normalized (ax, ay, y, z);
 	  else
-	    ret = signArctan2 (y, z);
-	  if (fabs (ret) < DBL_MIN)
-	    {
-	      double vret = ret ? ret : DBL_MIN;
-	      double force_underflow = vret * vret;
-	      math_force_eval (force_underflow);
-	    }
-	  return ret;
+	    return signArctan2 (y, z);
 	}
       else
 	{

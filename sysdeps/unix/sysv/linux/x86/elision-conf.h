@@ -1,5 +1,5 @@
 /* elision-conf.h: Lock elision tunable parameters.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,6 +19,7 @@
 #define _ELISION_CONF_H 1
 
 #include <pthread.h>
+#include <cpuid.h>
 #include <time.h>
 
 /* Should make sure there is no false sharing on this.  */

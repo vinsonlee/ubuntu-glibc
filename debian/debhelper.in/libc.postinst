@@ -73,8 +73,7 @@ then
     # We don't use a registry anymore, remove the old file
     rm -f /etc/ld.so.hwcappkgs
  
-    # /etc/ld.so.nohwcap code:
-    __NOHWCAP__
+    # /etc/ld.so.nohwcap code: NOHWCAP
 
     # Load debconf module if available
     if [ -f /usr/share/debconf/confmodule ] ; then
@@ -85,7 +84,15 @@ then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions "$preversion" lt GLIBC_VERSION; then
+	if dpkg --compare-versions "$preversion" lt 2.21; then
+	    # LP #504198; purge locales between major versions
+	    if which locale-gen >/dev/null; then
+		locale-gen --purge
+	    fi
+	    # give a reboot notification on major version upgrades
+	    if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
+		/usr/share/update-notifier/notify-reboot-required
+	    fi
 	    check=""
 	    [ -f /var/run/services.need_restart ] && check=$(cat /var/run/services.need_restart 2>/dev/null)
 	    # Change service names back into package names, so that we can
@@ -105,8 +112,7 @@ then
 	    # time are still around
             # the following substitution processes the check variable
             # and returns results in the services variable
-	    # NSS services check: 
-	    __NSS_CHECK__
+	    # NSS services check: NSS_CHECK
 	    # If there are services that we *stopped* in the preinst, don't
 	    # forget to restart them now
 	    if [ -e /var/run/services.need_start ]; then
@@ -179,11 +185,7 @@ then
 	    else
 		echo "Nothing to restart."
 	    fi
-	fi # end upgrading and $preversion lt GLIBC_VERSION
-	# give a reboot notification on al upgrades (LP: #1546457)
-	if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
-	    /usr/share/update-notifier/notify-reboot-required
-	fi
+	fi # end upgrading and $preversion lt 2.21
     fi # Upgrading
 
     # Restart init.  Currently handles chroots, systemd and upstart, and

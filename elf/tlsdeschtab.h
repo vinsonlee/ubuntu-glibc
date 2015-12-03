@@ -1,5 +1,5 @@
 /* Hash table for TLS descriptors.
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
 
@@ -19,8 +19,6 @@
 
 #ifndef TLSDESCHTAB_H
 # define TLSDESCHTAB_H 1
-
-#include <atomic.h>
 
 # ifdef SHARED
 
@@ -44,7 +42,7 @@ eq_tlsdesc (void *p, void *q)
   return tdp->tlsinfo.ti_offset == tdq->tlsinfo.ti_offset;
 }
 
-inline static size_t
+inline static int
 map_generation (struct link_map *map)
 {
   size_t idx = map->l_tls_modid;
@@ -60,7 +58,7 @@ map_generation (struct link_map *map)
 	     we can assume that, if the generation count is zero, we
 	     still haven't determined the generation count for this
 	     module.  */
-	  if (listp->slotinfo[idx].map == map && listp->slotinfo[idx].gen)
+	  if (listp->slotinfo[idx].gen)
 	    return listp->slotinfo[idx].gen;
 	  else
 	    break;
@@ -140,17 +138,17 @@ _dl_make_tlsdesc_dynamic (struct link_map *map, size_t ti_offset)
 static int
 _dl_tlsdesc_resolve_early_return_p (struct tlsdesc volatile *td, void *caller)
 {
-  if (caller != atomic_load_relaxed (&td->entry))
+  if (caller != td->entry)
     return 1;
 
   __rtld_lock_lock_recursive (GL(dl_load_lock));
-  if (caller != atomic_load_relaxed (&td->entry))
+  if (caller != td->entry)
     {
       __rtld_lock_unlock_recursive (GL(dl_load_lock));
       return 1;
     }
 
-  atomic_store_relaxed (&td->entry, _dl_tlsdesc_resolve_hold);
+  td->entry = _dl_tlsdesc_resolve_hold;
 
   return 0;
 }

@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  SPARC version.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -184,7 +184,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 
 /* ELF_RTYPE_CLASS_PLT iff TYPE describes relocation of a PLT entry, so
    PLT entries should not be allowed to define the value.
-   ELF_RTYPE_CLASS_COPY iff TYPE should not be allowed to resolve to one
+   ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
    of the main executable's symbols, as for a COPY reloc.  */
 #define elf_machine_type_class(type) \
   ((((type) == R_SPARC_JMP_SLOT						      \

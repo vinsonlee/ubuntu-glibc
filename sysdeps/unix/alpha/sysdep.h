@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Brendan Kehoe (brendan@zen.org).
 
@@ -17,7 +17,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <sysdeps/unix/sysdep.h>
-#include <dl-sysdep.h>         /* Defines RTLD_PRIVATE_ERRNO.  */
 
 #ifdef __ASSEMBLER__
 
@@ -26,6 +25,11 @@
 #else
 # include <regdef.h>
 #endif
+
+#if IS_IN (rtld)
+# include <dl-sysdep.h>         /* Defines RTLD_PRIVATE_ERRNO.  */
+#endif
+
 
 #define __LABEL(x)	x##:
 

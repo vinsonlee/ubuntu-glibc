@@ -1,5 +1,5 @@
 /* Implementation of the locale program according to POSIX 9945-2.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1995.
 
@@ -45,7 +45,7 @@
 #include "../locarchive.h"
 #include <programs/xmalloc.h>
 
-#define ARCHIVE_NAME COMPLOCALEDIR "/locale-archive"
+#define ARCHIVE_NAME LOCALEDIR "/locale-archive"
 
 /* If set print the name of the category.  */
 static int show_category_name;
@@ -295,7 +295,7 @@ print_version (FILE *stream, struct argp_state *state)
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
-"), "2016");
+"), "2015");
   fprintf (stream, gettext ("Written by %s.\n"), "Ulrich Drepper");
 }
 
@@ -325,11 +325,9 @@ select_dirs (const struct dirent *dirent)
 #endif
 	{
 	  struct stat64 st;
-	  char buf[sizeof (COMPLOCALEDIR)
-		   + strlen (dirent->d_name) + 1];
+	  char buf[sizeof (LOCALEDIR) + strlen (dirent->d_name) + 1];
 
-	  stpcpy (stpcpy (stpcpy (buf, COMPLOCALEDIR), "/"),
-		  dirent->d_name);
+	  stpcpy (stpcpy (stpcpy (buf, LOCALEDIR), "/"), dirent->d_name);
 
 	  if (stat64 (buf, &st) == 0)
 	    mode = st.st_mode;
@@ -446,21 +444,17 @@ write_locales (void)
     first_locale = 0;
 
   /* Now we can look for all files in the directory.  */
-  ndirents = scandir (COMPLOCALEDIR, &dirents, select_dirs,
-		      alphasort);
+  ndirents = scandir (LOCALEDIR, &dirents, select_dirs, alphasort);
   for (cnt = 0; cnt < ndirents; ++cnt)
     {
       /* Test whether at least the LC_CTYPE data is there.  Some
 	 directories only contain translations.  */
-      char buf[sizeof (COMPLOCALEDIR)
-	       + strlen (dirents[cnt]->d_name)
-	       + sizeof "/LC_IDENTIFICATION"];
+      char buf[sizeof (LOCALEDIR) + strlen (dirents[cnt]->d_name)
+	      + sizeof "/LC_IDENTIFICATION"];
       char *enddir;
       struct stat64 st;
 
-      stpcpy (enddir = stpcpy (stpcpy (stpcpy (buf,
-					       COMPLOCALEDIR),
-					       "/"),
+      stpcpy (enddir = stpcpy (stpcpy (stpcpy (buf, LOCALEDIR), "/"),
 			       dirents[cnt]->d_name),
 	      "/LC_IDENTIFICATION");
 

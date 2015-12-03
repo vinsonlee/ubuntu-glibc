@@ -4,20 +4,20 @@
 #
 # Translators:
 # Denis Barbier 2001-2006.
-# Christian Perrier <bubulle@debian.org>, 2007, 2008, 2009, 2011, 2015.
+# Christian Perrier <bubulle@debian.org>, 2007, 2008, 2009, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: glibc@packages.debian.org\n"
-"POT-Creation-Date: 2015-12-07 14:56+0100\n"
-"PO-Revision-Date: 2015-12-17 06:47+0100\n"
+"POT-Creation-Date: 2014-05-21 00:04+0200\n"
+"PO-Revision-Date: 2011-12-15 06:54+0100\n"
 "Last-Translator: Christian Perrier <bubulle@debian.org>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 2.0\n"
+"X-Generator: Lokalize 1.2\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #. Type: multiselect
@@ -248,38 +248,3 @@ msgstr ""
 "jour. Vous pouvez choisir ici que ce choix ne soit plus offert et que les "
 "redémarrages aient lieu systématiquement lors des mises à jour de "
 "bibliothèques."
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:6001
-msgid "Kernel must be upgraded"
-msgstr "Mise à jour nécessaire du noyau"
-
-#. Type: error
-#. Description
-#: ../debhelper.in/libc.templates:6001
-msgid ""
-"This version of the GNU libc requires kernel version ${kernel_ver} or "
-"later.  Please upgrade your kernel before installing glibc."
-msgstr ""
-"Cette version de la bibliothèque C GNU nécessite au minimum la version "
-"${kernel_ver} du noyau. Veuillez mettre le noyau à jour avant l'installation "
-"de glibc."
-
-#. Type: note
-#. Description
-#: ../debhelper.in/libc.templates:7001
-msgid "Kernel version not supported"
-msgstr "Version du noyau non gérée"
-
-#. Type: note
-#. Description
-#: ../debhelper.in/libc.templates:7001
-msgid ""
-"This version of the GNU libc requires kernel version ${kernel_ver} or "
-"later.  Older versions might work but are not officially supported.  Please "
-"consider upgrading your kernel."
-msgstr ""
-"Cette version de la bibliothèque C GNU nécessite au minimum la version "
-"${kernel_ver} du noyau. Des versions antérieures pourraient fonctionner, mais "
-"ne sont pas officiellement gérées. Veuillez prévoir la mise à jour du noyau."

@@ -1,5 +1,5 @@
 /* Handle configuration data.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <sys/param.h>
 
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <gconv_int.h>
 
 
@@ -468,7 +468,7 @@ __gconv_get_path (void)
 				":", 1),
 		     default_gconv_path, sizeof (default_gconv_path));
 	  cwd = __getcwd (NULL, 0);
-	  cwdlen = __glibc_unlikely (cwd == NULL) ? 0 : strlen (cwd);
+	  cwdlen = strlen (cwd);
 	}
       assert (default_gconv_path[0] == '/');
 

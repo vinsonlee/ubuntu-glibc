@@ -1,5 +1,5 @@
 /* Reentrant function to return the current login name.  Unix version.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -34,7 +34,9 @@
 STATIC
 #endif
 int
-__getlogin_r (char *name, size_t name_len)
+getlogin_r (name, name_len)
+     char *name;
+     size_t name_len;
 {
   char tty_pathname[2 + 2 * NAME_MAX];
   char *real_tty_path = tty_pathname;
@@ -97,7 +99,5 @@ __getlogin_r (char *name, size_t name_len)
   return result;
 }
 #ifndef STATIC
-libc_hidden_def (__getlogin_r)
-weak_alias (__getlogin_r, getlogin_r)
-libc_hidden_weak (getlogin_r)
+libc_hidden_def (getlogin_r)
 #endif

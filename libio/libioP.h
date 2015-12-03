@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -32,14 +32,12 @@
 
    FIXME: All of the C++ cruft eventually needs to go away.  */
 
-#include <stddef.h>
-
 #include <errno.h>
 #ifndef __set_errno
 # define __set_errno(Val) errno = (Val)
 #endif
 #if defined __GLIBC__ && __GLIBC__ >= 2
-# include <libc-lock.h>
+# include <bits/libc-lock.h>
 #else
 /*# include <comthread.h>*/
 #endif
@@ -106,30 +104,17 @@ extern "C" {
 # define _IO_JUMPS_OFFSET 0
 #endif
 
-/* Type of MEMBER in struct type TYPE.  */
-#define _IO_MEMBER_TYPE(TYPE, MEMBER) __typeof__ (((TYPE){}).MEMBER)
-
-/* Essentially ((TYPE *) THIS)->MEMBER, but avoiding the aliasing
-   violation in case THIS has a different pointer type.  */
-#define _IO_CAST_FIELD_ACCESS(THIS, TYPE, MEMBER) \
-  (*(_IO_MEMBER_TYPE (TYPE, MEMBER) *)(((char *) (THIS)) \
-				       + offsetof(TYPE, MEMBER)))
-
 #define _IO_JUMPS(THIS) (THIS)->vtable
-#define _IO_JUMPS_FILE_plus(THIS) \
-  _IO_CAST_FIELD_ACCESS ((THIS), struct _IO_FILE_plus, vtable)
-#define _IO_WIDE_JUMPS(THIS) \
-  _IO_CAST_FIELD_ACCESS ((THIS), struct _IO_FILE, _wide_data)->_wide_vtable
-#define _IO_CHECK_WIDE(THIS) \
-  (_IO_CAST_FIELD_ACCESS ((THIS), struct _IO_FILE, _wide_data) != NULL)
+#define _IO_WIDE_JUMPS(THIS) ((struct _IO_FILE *) (THIS))->_wide_data->_wide_vtable
+#define _IO_CHECK_WIDE(THIS) (((struct _IO_FILE *) (THIS))->_wide_data != NULL)
 
 #if _IO_JUMPS_OFFSET
 # define _IO_JUMPS_FUNC(THIS) \
- (*(struct _IO_jump_t **) ((void *) &_IO_JUMPS_FILE_plus (THIS) \
+ (*(struct _IO_jump_t **) ((void *) &_IO_JUMPS ((struct _IO_FILE_plus *) (THIS)) \
 			   + (THIS)->_vtable_offset))
 # define _IO_vtable_offset(THIS) (THIS)->_vtable_offset
 #else
-# define _IO_JUMPS_FUNC(THIS) _IO_JUMPS_FILE_plus (THIS)
+# define _IO_JUMPS_FUNC(THIS) _IO_JUMPS ((struct _IO_FILE_plus *) (THIS))
 # define _IO_vtable_offset(THIS) 0
 #endif
 #define _IO_WIDE_JUMPS_FUNC(THIS) _IO_WIDE_JUMPS(THIS)
@@ -760,6 +745,46 @@ extern _IO_off64_t _IO_seekpos_unlocked (_IO_FILE *, _IO_off64_t, int)
 #  define munmap __munmap
 #  define ftruncate __ftruncate
 # endif
+
+# define ROUND_TO_PAGE(_S) \
+       (((_S) + EXEC_PAGESIZE - 1) & ~(EXEC_PAGESIZE - 1))
+
+# define FREE_BUF(_B, _S) \
+       munmap ((_B), ROUND_TO_PAGE (_S))
+# define ALLOC_BUF(_B, _S, _R) \
+       do {								      \
+	  (_B) = (char *) mmap (0, ROUND_TO_PAGE (_S),			      \
+				PROT_READ | PROT_WRITE,			      \
+				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);	      \
+	  if ((_B) == (char *) MAP_FAILED)				      \
+	    return (_R);						      \
+       } while (0)
+# define ALLOC_WBUF(_B, _S, _R) \
+       do {								      \
+	  (_B) = (wchar_t *) mmap (0, ROUND_TO_PAGE (_S),		      \
+				   PROT_READ | PROT_WRITE,		      \
+				   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);	      \
+	  if ((_B) == (wchar_t *) MAP_FAILED)				      \
+	    return (_R);						      \
+       } while (0)
+
+#else /* _G_HAVE_MMAP */
+
+# define FREE_BUF(_B, _S) \
+       free(_B)
+# define ALLOC_BUF(_B, _S, _R) \
+       do {								      \
+	  (_B) = (char*)malloc(_S);					      \
+	  if ((_B) == NULL)						      \
+	    return (_R);						      \
+       } while (0)
+# define ALLOC_WBUF(_B, _S, _R) \
+       do {								      \
+	  (_B) = (wchar_t *)malloc(_S);					      \
+	  if ((_B) == NULL)						      \
+	    return (_R);						      \
+       } while (0)
+
 #endif /* _G_HAVE_MMAP */
 
 #ifndef OS_FSTAT

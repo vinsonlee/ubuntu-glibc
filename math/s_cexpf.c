@@ -1,5 +1,5 @@
 /* Return value of complex exponential function for float complex value.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -39,7 +39,7 @@ __cexpf (__complex__ float x)
 	  const int t = (int) ((FLT_MAX_EXP - 1) * M_LN2);
 	  float sinix, cosix;
 
-	  if (__glibc_likely (fabsf (__imag__ x) > FLT_MIN))
+	  if (__glibc_likely (icls != FP_SUBNORMAL))
 	    {
 	      __sincosf (__imag__ x, &sinix, &cosix);
 	    }
@@ -74,7 +74,18 @@ __cexpf (__complex__ float x)
 	      __real__ retval = exp_val * cosix;
 	      __imag__ retval = exp_val * sinix;
 	    }
-	  math_check_force_underflow_complex (retval);
+	  if (fabsf (__real__ retval) < FLT_MIN)
+	    {
+	      volatile float force_underflow
+		= __real__ retval * __real__ retval;
+	      (void) force_underflow;
+	    }
+	  if (fabsf (__imag__ retval) < FLT_MIN)
+	    {
+	      volatile float force_underflow
+		= __imag__ retval * __imag__ retval;
+	      (void) force_underflow;
+	    }
 	}
       else
 	{
@@ -104,7 +115,7 @@ __cexpf (__complex__ float x)
 	    {
 	      float sinix, cosix;
 
-	      if (__glibc_likely (fabsf (__imag__ x) > FLT_MIN))
+	      if (__glibc_likely (icls != FP_SUBNORMAL))
 		{
 		  __sincosf (__imag__ x, &sinix, &cosix);
 		}

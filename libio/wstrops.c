@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -32,8 +32,11 @@
 #include <stdio_ext.h>
 
 void
-_IO_wstr_init_static (_IO_FILE *fp, wchar_t *ptr, _IO_size_t size,
-		      wchar_t *pstart)
+_IO_wstr_init_static (fp, ptr, size, pstart)
+     _IO_FILE *fp;
+     wchar_t *ptr;
+     _IO_size_t size;
+     wchar_t *pstart;
 {
   wchar_t *end;
 
@@ -67,7 +70,9 @@ _IO_wstr_init_static (_IO_FILE *fp, wchar_t *ptr, _IO_size_t size,
 }
 
 _IO_wint_t
-_IO_wstr_overflow (_IO_FILE *fp, _IO_wint_t c)
+_IO_wstr_overflow (fp, c)
+     _IO_FILE *fp;
+     _IO_wint_t c;
 {
   int flush_only = c == WEOF;
   _IO_size_t pos;
@@ -90,11 +95,8 @@ _IO_wstr_overflow (_IO_FILE *fp, _IO_wint_t c)
 	  wchar_t *old_buf = fp->_wide_data->_IO_buf_base;
 	  size_t old_wblen = _IO_wblen (fp);
 	  _IO_size_t new_size = 2 * old_wblen + 100;
-
-	  if (__glibc_unlikely (new_size < old_wblen)
-	      || __glibc_unlikely (new_size > SIZE_MAX / sizeof (wchar_t)))
+	  if (new_size < old_wblen)
 	    return EOF;
-
 	  new_buf
 	    = (wchar_t *) (*((_IO_strfile *) fp)->_s._allocate_buffer) (new_size
 									* sizeof (wchar_t));
@@ -137,7 +139,8 @@ _IO_wstr_overflow (_IO_FILE *fp, _IO_wint_t c)
 
 
 _IO_wint_t
-_IO_wstr_underflow (_IO_FILE *fp)
+_IO_wstr_underflow (fp)
+     _IO_FILE *fp;
 {
   if (fp->_wide_data->_IO_write_ptr > fp->_wide_data->_IO_read_end)
     fp->_wide_data->_IO_read_end = fp->_wide_data->_IO_write_ptr;
@@ -156,7 +159,8 @@ _IO_wstr_underflow (_IO_FILE *fp)
 
 /* The size of the valid part of the buffer.  */
 _IO_ssize_t
-_IO_wstr_count (_IO_FILE *fp)
+_IO_wstr_count (fp)
+     _IO_FILE *fp;
 {
   struct _IO_wide_data *wd = fp->_wide_data;
 
@@ -182,9 +186,6 @@ enlarge_userbuf (_IO_FILE *fp, _IO_off64_t offset, int reading)
     return 1;
 
   _IO_size_t newsize = offset + 100;
-  if (__glibc_unlikely (newsize > SIZE_MAX / sizeof (wchar_t)))
-    return 1;
-
   wchar_t *oldbuf = wd->_IO_buf_base;
   wchar_t *newbuf
     = (wchar_t *) (*((_IO_strfile *) fp)->_s._allocate_buffer) (newsize
@@ -237,7 +238,11 @@ enlarge_userbuf (_IO_FILE *fp, _IO_off64_t offset, int reading)
 
 
 _IO_off64_t
-_IO_wstr_seekoff (_IO_FILE *fp, _IO_off64_t offset, int dir, int mode)
+_IO_wstr_seekoff (fp, offset, dir, mode)
+     _IO_FILE *fp;
+     _IO_off64_t offset;
+     int dir;
+     int mode;
 {
   _IO_off64_t new_pos;
 
@@ -315,7 +320,9 @@ _IO_wstr_seekoff (_IO_FILE *fp, _IO_off64_t offset, int dir, int mode)
 }
 
 _IO_wint_t
-_IO_wstr_pbackfail (_IO_FILE *fp, _IO_wint_t c)
+_IO_wstr_pbackfail (fp, c)
+     _IO_FILE *fp;
+     _IO_wint_t c;
 {
   if ((fp->_flags & _IO_NO_WRITES) && c != WEOF)
     return WEOF;
@@ -323,7 +330,9 @@ _IO_wstr_pbackfail (_IO_FILE *fp, _IO_wint_t c)
 }
 
 void
-_IO_wstr_finish (_IO_FILE *fp, int dummy)
+_IO_wstr_finish (fp, dummy)
+     _IO_FILE *fp;
+     int dummy;
 {
   if (fp->_wide_data->_IO_buf_base && !(fp->_flags2 & _IO_FLAGS2_USER_WBUF))
     (((_IO_strfile *) fp)->_s._free_buffer) (fp->_wide_data->_IO_buf_base);

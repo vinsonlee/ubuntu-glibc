@@ -8,16 +8,14 @@
 
 ENTRY(__nearbyintl)
 	fldt	8(%rsp)
-	fnstenv	-28(%rsp)
-	movl	-28(%rsp), %eax
+	fnstcw	-4(%rsp)
+	movl	-4(%rsp), %eax
 	orl	$0x20, %eax
-	movl	%eax, -32(%rsp)
-	fldcw	-32(%rsp)
+	movl	%eax, -8(%rsp)
+	fldcw	-8(%rsp)
 	frndint
-	fnstsw
-	andl	$0x1, %eax
-	orl	%eax, -24(%rsp)
-	fldenv	-28(%rsp)
+	fclex
+	fldcw	-4(%rsp)
 	ret
 END (__nearbyintl)
 weak_alias (__nearbyintl, nearbyintl)

@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  i386 version.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@
 #include <sysdep.h>
 #include <tls.h>
 #include <dl-tlsdesc.h>
-#include <cpu-features.c>
 
 /* Return nonzero iff ELF header is compatible with the running host.  */
 static inline int __attribute__ ((unused))
@@ -206,18 +205,14 @@ _dl_start_user:\n\
 /* ELF_RTYPE_CLASS_PLT iff TYPE describes relocation of a PLT entry or
    TLS variable, so undefined references should not be allowed to
    define the value.
-   ELF_RTYPE_CLASS_COPY iff TYPE should not be allowed to resolve to one
-   of the main executable's symbols, as for a COPY reloc.
-   ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA iff TYPE describes relocation may
-   against protected data whose address be external due to copy relocation.
- */
+   ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
+   of the main executable's symbols, as for a COPY reloc.  */
 # define elf_machine_type_class(type) \
   ((((type) == R_386_JMP_SLOT || (type) == R_386_TLS_DTPMOD32		      \
      || (type) == R_386_TLS_DTPOFF32 || (type) == R_386_TLS_TPOFF32	      \
      || (type) == R_386_TLS_TPOFF || (type) == R_386_TLS_DESC)		      \
     * ELF_RTYPE_CLASS_PLT)						      \
-   | (((type) == R_386_COPY) * ELF_RTYPE_CLASS_COPY)			      \
-   | (((type) == R_386_GLOB_DAT) * ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA))
+   | (((type) == R_386_COPY) * ELF_RTYPE_CLASS_COPY))
 
 /* A reloc type used for ld.so cmdline arg lookups to reject PLT entries.  */
 #define ELF_MACHINE_JMP_SLOT	R_386_JMP_SLOT
@@ -236,8 +231,6 @@ dl_platform_init (void)
   if (GLRO(dl_platform) != NULL && *GLRO(dl_platform) == '\0')
     /* Avoid an empty string which would disturb us.  */
     GLRO(dl_platform) = NULL;
-
-  init_cpu_features (&GLRO(dl_x86_cpu_features));
 }
 
 static inline Elf32_Addr

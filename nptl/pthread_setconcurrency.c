@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -25,7 +25,8 @@ int __concurrency_level;
 
 
 int
-pthread_setconcurrency (int level)
+pthread_setconcurrency (level)
+     int level;
 {
   if (level < 0)
     return EINVAL;

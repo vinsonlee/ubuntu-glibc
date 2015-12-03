@@ -1,5 +1,5 @@
 /* getpriority for Linux.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
    priority.  Priorities range from PRIO_MIN to PRIO_MAX.  */
 
 int
-__getpriority (enum __priority_which which, id_t who)
+getpriority (enum __priority_which which, id_t who)
 {
   int res;
 
@@ -41,5 +41,4 @@ __getpriority (enum __priority_which which, id_t who)
     res = PZERO - res;
   return res;
 }
-libc_hidden_def (__getpriority)
-weak_alias (__getpriority, getpriority)
+libc_hidden_def (getpriority)

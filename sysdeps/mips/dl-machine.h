@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  MIPS version.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Kazumoto Kojima <kkojima@info.kanagawa-u.ac.jp>.
 
@@ -68,17 +68,10 @@
    in l_info array.  */
 #define DT_MIPS(x) (DT_MIPS_##x - DT_LOPROC + DT_NUM)
 
-/* If there is a DT_MIPS_RLD_MAP_REL or DT_MIPS_RLD_MAP entry in the dynamic
-   section, fill in the debug map pointer with the run-time address of the
-   r_debug structure.  */
+/* If there is a DT_MIPS_RLD_MAP entry in the dynamic section, fill it in
+   with the run-time address of the r_debug structure  */
 #define ELF_MACHINE_DEBUG_SETUP(l,r) \
-do { if ((l)->l_info[DT_MIPS (RLD_MAP_REL)]) \
-       { \
-	 char *ptr = (char *)(l)->l_info[DT_MIPS (RLD_MAP_REL)]; \
-	 ptr += (l)->l_info[DT_MIPS (RLD_MAP_REL)]->d_un.d_val; \
-	 *(ElfW(Addr) *)ptr = (ElfW(Addr)) (r); \
-       } \
-     else if ((l)->l_info[DT_MIPS (RLD_MAP)]) \
+do { if ((l)->l_info[DT_MIPS (RLD_MAP)]) \
        *(ElfW(Addr) *)((l)->l_info[DT_MIPS (RLD_MAP)]->d_un.d_ptr) = \
        (ElfW(Addr)) (r); \
    } while (0)
@@ -151,7 +144,7 @@ elf_machine_load_address (void)
 #ifndef __mips16
   asm ("	.set noreorder\n"
        "	" STRINGXP (PTR_LA) " %0, 0f\n"
-# if !defined __mips_isa_rev || __mips_isa_rev < 6
+# if __mips_isa_rev < 6
        "	bltzal $0, 0f\n"
        "	nop\n"
        "0:	" STRINGXP (PTR_SUBU) " %0, $31, %0\n"
@@ -259,7 +252,7 @@ do {									\
       and not just plain _start.  */
 
 #ifndef __mips16
-# if !defined __mips_isa_rev || __mips_isa_rev < 6
+# if __mips_isa_rev < 6
 #  define LCOFF STRINGXP(.Lcof2)
 #  define LOAD_31 STRINGXP(bltzal $8) "," STRINGXP(.Lcof2)
 # else

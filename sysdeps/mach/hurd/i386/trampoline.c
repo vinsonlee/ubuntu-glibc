@@ -1,5 +1,5 @@
 /* Set thread_state for sighandler, and sigcontext to recover.  i386 version.
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@ _hurd_setup_sighandler (struct hurd_sigstate *ss, __sighandler_t handler,
   void trampoline (void);
   void rpc_wait_trampoline (void);
   void firewall (void);
+  extern const void _hurd_intr_rpc_msg_in_trap;
   extern const void _hurd_intr_rpc_msg_cx_sp;
   extern const void _hurd_intr_rpc_msg_sp_restored;
   void *volatile sigsp;

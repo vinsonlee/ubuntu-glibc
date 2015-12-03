@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    Contributed by MontaVista Software, Inc. (written by Nicolas Pitre)
@@ -125,12 +125,7 @@ ENTRY(memcpy)
 		push	{r10}
 		cfi_adjust_cfa_offset (4)
 		cfi_rel_offset (r10, 0)
-0:		add	r10, pc, ip, lsl #(ARM_BX_ALIGN_LOG2 - 2)
-		/* If alignment is not perfect, then there will be some
-		   padding (nop) instructions between this BX and label 6.
-		   The computation above assumed that two instructions
-		   later is exactly the right spot.  */
-		add	r10, #(6f - (0b + PC_OFS))
+		add	r10, pc, ip, lsl #(ARM_BX_ALIGN_LOG2 - 2)
 		bx	r10
 #endif
 		.p2align ARM_BX_ALIGN_LOG2
@@ -161,16 +156,11 @@ ENTRY(memcpy)
 		add	pc, pc, ip, lsl #(ARM_BX_ALIGN_LOG2 - 2)
 		nop
 #else
-0:		add	r10, pc, ip, lsl #(ARM_BX_ALIGN_LOG2 - 2)
-		/* If alignment is not perfect, then there will be some
-		   padding (nop) instructions between this BX and label 66.
-		   The computation above assumed that two instructions
-		   later is exactly the right spot.  */
-		add	r10, #(66f - (0b + PC_OFS))
+		add	r10, pc, ip, lsl #(ARM_BX_ALIGN_LOG2 - 2)
 		bx	r10
 #endif
 		.p2align ARM_BX_ALIGN_LOG2
-66:		nop
+		nop
 		.p2align ARM_BX_ALIGN_LOG2
 		sfi_breg r0, \
 		str	r3, [\B], #4

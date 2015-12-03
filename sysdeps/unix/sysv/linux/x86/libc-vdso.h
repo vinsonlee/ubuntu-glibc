@@ -1,5 +1,5 @@
 /* Resolve function pointers to VDSO functions.
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,12 +24,7 @@
 
 #ifdef SHARED
 
-# include <sysdep-vdso.h>
-
-extern long int (*VDSO_SYMBOL(clock_gettime)) (clockid_t, struct timespec *)
-  attribute_hidden;
-
-extern long int (*VDSO_SYMBOL(getcpu)) (unsigned *, unsigned *, void *);
+extern long int (*__vdso_clock_gettime) (clockid_t, struct timespec *);
 
 #endif
 

@@ -1,5 +1,5 @@
 /* Complex sine function for float.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -42,7 +42,7 @@ __csinf (__complex__ float x)
 	  const int t = (int) ((FLT_MAX_EXP - 1) * M_LN2);
 	  float sinix, cosix;
 
-	  if (__glibc_likely (__real__ x > FLT_MIN))
+	  if (__glibc_likely (rcls != FP_SUBNORMAL))
 	    {
 	      __sincosf (__real__ x, &sinix, &cosix);
 	    }
@@ -51,9 +51,6 @@ __csinf (__complex__ float x)
 	      sinix = __real__ x;
 	      cosix = 1.0f;
 	    }
-
-	  if (negate)
-	    sinix = -sinix;
 
 	  if (fabsf (__imag__ x) > t)
 	    {
@@ -89,7 +86,21 @@ __csinf (__complex__ float x)
 	      __imag__ retval = __ieee754_sinhf (__imag__ x) * cosix;
 	    }
 
-	  math_check_force_underflow_complex (retval);
+	  if (negate)
+	    __real__ retval = -__real__ retval;
+
+	  if (fabsf (__real__ retval) < FLT_MIN)
+	    {
+	      volatile float force_underflow
+		= __real__ retval * __real__ retval;
+	      (void) force_underflow;
+	    }
+	  if (fabsf (__imag__ retval) < FLT_MIN)
+	    {
+	      volatile float force_underflow
+		= __imag__ retval * __imag__ retval;
+	      (void) force_underflow;
+	    }
 	}
       else
 	{
@@ -125,7 +136,7 @@ __csinf (__complex__ float x)
 	  /* Real part is finite.  */
 	  float sinix, cosix;
 
-	  if (__glibc_likely (__real__ x > FLT_MIN))
+	  if (__glibc_likely (rcls != FP_SUBNORMAL))
 	    {
 	      __sincosf (__real__ x, &sinix, &cosix);
 	    }

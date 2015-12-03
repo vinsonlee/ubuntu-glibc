@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  nptl/x86_64 version.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -67,15 +67,14 @@ typedef struct
 # else
   int __glibc_reserved1;
 # endif
-  int __glibc_unused1;
+  int rtld_must_xmm_save;
   /* Reservation of some values for the TM ABI.  */
   void *__private_tm[4];
   /* GCC split stack support.  */
   void *__private_ss;
   long int __glibc_reserved2;
-  /* Must be kept even if it is no longer used by glibc since programs,
-     like AddressSanitizer, depend on the size of tcbhead_t.  */
-  __128bits __glibc_unused2[8][4] __attribute__ ((aligned (32)));
+  /* Have space for the post-AVX register size.  */
+  __128bits rtld_savespace_sse[8][4] __attribute__ ((aligned (32)));
 
   void *__padding[8];
 } tcbhead_t;
@@ -251,7 +250,7 @@ typedef struct
 #endif
 
 
-/* Set member of the thread descriptor directly.  */
+/* Same as THREAD_SETMEM, but the member offset can be non-constant.  */
 # define THREAD_SETMEM(descr, member, value) \
   ({ if (sizeof (descr->member) == 1)					      \
        asm volatile ("movb %b0,%%fs:%P1" :				      \
@@ -274,7 +273,7 @@ typedef struct
        }})
 
 
-/* Same as THREAD_SETMEM, but the member offset can be non-constant.  */
+/* Set member of the thread descriptor directly.  */
 # define THREAD_SETMEM_NC(descr, member, idx, value) \
   ({ if (sizeof (descr->member[0]) == 1)				      \
        asm volatile ("movb %b0,%%fs:%P1(%q2)" :				      \
@@ -384,6 +383,41 @@ typedef struct
   THREAD_SETMEM (THREAD_SELF, header.gscope_flag, THREAD_GSCOPE_FLAG_USED)
 # define THREAD_GSCOPE_WAIT() \
   GL(dl_wait_lookup_done) ()
+
+
+# ifdef SHARED
+/* Defined in dl-trampoline.S.  */
+extern void _dl_x86_64_save_sse (void);
+extern void _dl_x86_64_restore_sse (void);
+
+# define RTLD_CHECK_FOREIGN_CALL \
+  (THREAD_GETMEM (THREAD_SELF, header.rtld_must_xmm_save) != 0)
+
+/* NB: Don't use the xchg operation because that would imply a lock
+   prefix which is expensive and unnecessary.  The cache line is also
+   not contested at all.  */
+#  define RTLD_ENABLE_FOREIGN_CALL \
+  int old_rtld_must_xmm_save = THREAD_GETMEM (THREAD_SELF,		      \
+					      header.rtld_must_xmm_save);     \
+  THREAD_SETMEM (THREAD_SELF, header.rtld_must_xmm_save, 1)
+
+#  define RTLD_PREPARE_FOREIGN_CALL \
+  do if (THREAD_GETMEM (THREAD_SELF, header.rtld_must_xmm_save))	      \
+    {									      \
+      _dl_x86_64_save_sse ();						      \
+      THREAD_SETMEM (THREAD_SELF, header.rtld_must_xmm_save, 0);	      \
+    }									      \
+  while (0)
+
+#  define RTLD_FINALIZE_FOREIGN_CALL \
+  do {									      \
+    if (THREAD_GETMEM (THREAD_SELF, header.rtld_must_xmm_save) == 0)	      \
+      _dl_x86_64_restore_sse ();					      \
+    THREAD_SETMEM (THREAD_SELF, header.rtld_must_xmm_save,		      \
+		   old_rtld_must_xmm_save);				      \
+  } while (0)
+# endif
+
 
 #endif /* __ASSEMBLER__ */
 

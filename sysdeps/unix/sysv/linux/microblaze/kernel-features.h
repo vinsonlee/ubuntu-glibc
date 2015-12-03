@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,25 +18,6 @@
 
 /* MicroBlaze uses socketcall.  */
 #define __ASSUME_SOCKETCALL	1
-
-/* All supported kernel versions for MicroBlaze have these syscalls.  */
-#define __ASSUME_SOCKET_SYSCALL		1
-#define __ASSUME_BIND_SYSCALL		1
-#define __ASSUME_CONNECT_SYSCALL	1
-#define __ASSUME_LISTEN_SYSCALL		1
-#define __ASSUME_ACCEPT_SYSCALL		1
-#define __ASSUME_GETSOCKNAME_SYSCALL	1
-#define __ASSUME_GETPEERNAME_SYSCALL	1
-#define __ASSUME_SOCKETPAIR_SYSCALL	1
-#define __ASSUME_SEND_SYSCALL		1
-#define __ASSUME_SENDTO_SYSCALL		1
-#define __ASSUME_RECV_SYSCALL		1
-#define __ASSUME_RECVFROM_SYSCALL	1
-#define __ASSUME_SHUTDOWN_SYSCALL	1
-#define __ASSUME_GETSOCKOPT_SYSCALL	1
-#define __ASSUME_SETSOCKOPT_SYSCALL	1
-#define __ASSUME_SENDMSG_SYSCALL	1
-#define __ASSUME_RECVMSG_SYSCALL	1
 
 /* Support for the accept4 and recvmmsg syscalls was added in 2.6.33.  */
 #if __LINUX_KERNEL_VERSION >= 0x020621
@@ -62,11 +43,6 @@
 # undef __ASSUME_FUTEX_LOCK_PI
 # undef __ASSUME_REQUEUE_PI
 # undef __ASSUME_SET_ROBUST_LIST
-#endif
-
-/* The prlimit64 syscall was added for MicroBlaze in 2.6.37.  */
-#if __LINUX_KERNEL_VERSION < 0x020625
-# undef __ASSUME_PRLIMIT64
 #endif
 
 /* Support for the pselect6, preadv and pwritev syscalls was added in

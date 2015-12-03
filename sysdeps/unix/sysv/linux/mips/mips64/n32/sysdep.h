@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
 #define _LINUX_MIPS_SYSDEP_H 1
 
 /* There is some commonality.  */
-#include <sysdeps/unix/sysv/linux/sysdep.h>
 #include <sysdeps/unix/mips/mips64/n32/sysdep.h>
 
 #include <tls.h>
@@ -52,11 +51,11 @@
    call.  */
 #undef INLINE_SYSCALL
 #define INLINE_SYSCALL(name, nr, args...)				\
-  ({ INTERNAL_SYSCALL_DECL (_sc_err);					\
-     long result_var = INTERNAL_SYSCALL (name, _sc_err, nr, args);	\
-     if ( INTERNAL_SYSCALL_ERROR_P (result_var, _sc_err) )		\
+  ({ INTERNAL_SYSCALL_DECL(err);					\
+     long result_var = INTERNAL_SYSCALL (name, err, nr, args);		\
+     if ( INTERNAL_SYSCALL_ERROR_P (result_var, err) )			\
        {								\
-	 __set_errno (INTERNAL_SYSCALL_ERRNO (result_var, _sc_err));	\
+	 __set_errno (INTERNAL_SYSCALL_ERRNO (result_var, err));	\
 	 result_var = -1L;						\
        }								\
      result_var; })

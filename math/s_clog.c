@@ -1,5 +1,5 @@
 /* Compute complex natural logarithm.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -65,8 +65,15 @@ __clog (__complex__ double x)
 
       if (absx == 1.0 && scale == 0)
 	{
-	  __real__ result = __log1p (absy * absy) / 2.0;
-	  math_check_force_underflow_nonneg (__real__ result);
+	  double absy2 = absy * absy;
+	  if (absy2 <= DBL_MIN * 2.0)
+	    {
+	      double force_underflow = absy2 * absy2;
+	      __real__ result = absy2 / 2.0;
+	      math_force_eval (force_underflow);
+	    }
+	  else
+	    __real__ result = __log1p (absy2) / 2.0;
 	}
       else if (absx > 1.0 && absx < 2.0 && absy < 1.0 && scale == 0)
 	{
@@ -76,17 +83,14 @@ __clog (__complex__ double x)
 	  __real__ result = __log1p (d2m1) / 2.0;
 	}
       else if (absx < 1.0
-	       && absx >= 0.5
+	       && absx >= 0.75
 	       && absy < DBL_EPSILON / 2.0
 	       && scale == 0)
 	{
 	  double d2m1 = (absx - 1.0) * (absx + 1.0);
 	  __real__ result = __log1p (d2m1) / 2.0;
 	}
-      else if (absx < 1.0
-	       && absx >= 0.5
-	       && scale == 0
-	       && absx * absx + absy * absy >= 0.5)
+      else if (absx < 1.0 && (absx >= 0.75 || absy >= 0.5) && scale == 0)
 	{
 	  double d2m1 = __x2y2m1 (absx, absy);
 	  __real__ result = __log1p (d2m1) / 2.0;

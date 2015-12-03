@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1996.
 
@@ -18,12 +18,11 @@
 
 #include <wchar.h>
 
-#ifdef WMEMCHR
-# define __wmemchr WMEMCHR
-#endif
-
 wchar_t *
-__wmemchr (const wchar_t *s, wchar_t c, size_t n)
+wmemchr (s, c, n)
+     const wchar_t *s;
+     wchar_t c;
+     size_t n;
 {
   /* For performance reasons unfold the loop four times.  */
   while (n >= 4)
@@ -60,6 +59,4 @@ __wmemchr (const wchar_t *s, wchar_t c, size_t n)
 
   return NULL;
 }
-libc_hidden_def (__wmemchr)
-weak_alias (__wmemchr, wmemchr)
-libc_hidden_weak (wmemchr)
+libc_hidden_def (wmemchr)

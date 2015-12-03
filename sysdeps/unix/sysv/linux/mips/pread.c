@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -38,16 +38,35 @@
 ssize_t
 __libc_pread (int fd, void *buf, size_t count, off_t offset)
 {
+  ssize_t result;
+
 #if _MIPS_SIM != _ABI64
   assert (sizeof (offset) == 4);
 #endif
 
+  if (SINGLE_THREAD_P)
+    {
 #if _MIPS_SIM == _ABIN32 || _MIPS_SIM == _ABI64
-  return SYSCALL_CANCEL (pread, fd, buf, count, offset);
+      result = INLINE_SYSCALL (pread, 4, fd, buf, count, offset);
 #else
-  return SYSCALL_CANCEL (pread, fd, buf, count, 0,
-			 __LONG_LONG_PAIR (offset >> 31, offset));
+      result = INLINE_SYSCALL (pread, 6, fd, buf, count, 0,
+			       __LONG_LONG_PAIR (offset >> 31, offset));
 #endif
+      return result;
+    }
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+#if _MIPS_SIM == _ABIN32 || _MIPS_SIM == _ABI64
+  result = INLINE_SYSCALL (pread, 4, fd, buf, count, offset);
+#else
+  result = INLINE_SYSCALL (pread, 6, fd, buf, count, 0,
+			   __LONG_LONG_PAIR (offset >> 31, offset));
+#endif
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
 
 strong_alias (__libc_pread, __pread)

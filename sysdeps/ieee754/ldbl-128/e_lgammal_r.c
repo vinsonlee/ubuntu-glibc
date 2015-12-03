@@ -70,15 +70,19 @@
 
 #include <math.h>
 #include <math_private.h>
+#include <libc-internal.h>
 #include <float.h>
 
+/* BZ#16347: ldbl-128ibm uses this file as is, however the MAXLGM
+   definition overflows for IBM long double.  This directive prevents the
+   overflow warnings until IBM long double version is fixed.  */
 static const long double PIL = 3.1415926535897932384626433832795028841972E0L;
-#if LDBL_MANT_DIG == 106
-static const long double MAXLGM = 0x5.d53649e2d469dbc1f01e99fd66p+1012L;
-#else
+DIAG_PUSH_NEEDS_COMMENT;
+DIAG_IGNORE_NEEDS_COMMENT (4.6, "-Woverflow");
 static const long double MAXLGM = 1.0485738685148938358098967157129705071571E4928L;
-#endif
+DIAG_POP_NEEDS_COMMENT;
 static const long double one = 1.0L;
+static const long double zero = 0.0L;
 static const long double huge = LDBL_MAX;
 
 /* log gamma(x) = ( x - 0.5 ) * log(x) - x + LS2PI + 1/x P(1/x^2)
@@ -766,25 +770,23 @@ __ieee754_lgammal_r (long double x, int *signgamp)
 
   *signgamp = 1;
 
-  if (! isfinite (x))
+  if (! __finitel (x))
     return x * x;
 
   if (x == 0.0L)
     {
-      if (signbit (x))
+      if (__signbitl (x))
 	*signgamp = -1;
     }
 
   if (x < 0.0L)
     {
-      if (x < -2.0L && x > (LDBL_MANT_DIG == 106 ? -48.0L : -50.0L))
-	return __lgamma_negl (x, signgamp);
       q = -x;
       p = __floorl (q);
       if (p == q)
 	return (one / (p - p));
-      long double halfp = p * 0.5L;
-      if (halfp == __floorl (halfp))
+      i = p;
+      if ((i & 1) == 0)
 	*signgamp = -1;
       else
 	*signgamp = 1;
@@ -1032,8 +1034,6 @@ __ieee754_lgammal_r (long double x, int *signgamp)
   if (x > MAXLGM)
     return (*signgamp * huge * huge);
 
-  if (x > 0x1p120L)
-    return x * (__logl (x) - 1.0L);
   q = ls2pi - x;
   q = (x - 0.5L) * __logl (x) + q;
   if (x > 1.0e18L)

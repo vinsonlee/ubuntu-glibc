@@ -1,5 +1,5 @@
 /* Quad-precision floating point e^x.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jj@ultra.linux.cz>
    Partly based on double-precision code
@@ -230,16 +230,12 @@ __ieee754_expl (long double x)
       if (!unsafe)
 	return result;
       else
-	{
-	  result *= scale_u.d;
-	  math_check_force_underflow_nonneg (result);
-	  return result;
-	}
+	return result * scale_u.d;
     }
   /* Exceptional cases:  */
   else if (isless (x, himark))
     {
-      if (isinf (x))
+      if (__isinfl (x))
 	/* e^-inf == 0, with no error.  */
 	return 0;
       else

@@ -1,5 +1,5 @@
 /* Round long double value to long long int.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -17,8 +17,6 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <fenv.h>
-#include <limits.h>
 #include <math.h>
 
 #include <math_private.h>
@@ -66,14 +64,7 @@ __llroundl (long double x)
 	    ++result;
 
 	  if (j0 > 31)
-	    {
-	      result = (result << (j0 - 31)) | (j >> (63 - j0));
-#ifdef FE_INVALID
-	      if (sign == 1 && result == LLONG_MIN)
-		/* Rounding brought the value out of range.  */
-		feraiseexcept (FE_INVALID);
-#endif
-	    }
+	    result = (result << (j0 - 31)) | (j >> (63 - j0));
 	}
     }
   else

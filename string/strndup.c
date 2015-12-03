@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -37,7 +37,9 @@ char *malloc ();
 #endif
 
 char *
-__strndup (const char *s, size_t n)
+__strndup (s, n)
+     const char *s;
+     size_t n;
 {
   size_t len = __strnlen (s, n);
   char *new = (char *) malloc (len + 1);

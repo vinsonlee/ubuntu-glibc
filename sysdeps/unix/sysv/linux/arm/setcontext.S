@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ ENTRY(__startcontext)
 	bne     PLTJMP(__setcontext)
 
 	@ New context was 0 - exit
-	b       PLTJMP(HIDDEN_JUMPTARGET(exit))
+	b       PLTJMP(HIDDEN_JUMPTARGET(_exit))
 END(__startcontext)
 
 #ifdef PIC

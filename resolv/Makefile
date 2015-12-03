@@ -1,4 +1,4 @@
-# Copyright (C) 1994-2016 Free Software Foundation, Inc.
+# Copyright (C) 1994-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -39,7 +39,6 @@ extra-libs := libresolv libnss_dns
 ifeq ($(have-thread-library),yes)
 extra-libs += libanl
 routines += gai_sigqueue
-tests += tst-res_hconf_reorder
 endif
 extra-libs-others = $(extra-libs)
 libresolv-routines := gethnamaddr res_comp res_debug	\
@@ -72,13 +71,6 @@ xtests-special += $(objpfx)mtrace-tst-leaks2.out
 endif
 endif
 
-ifeq (,$(filter sunrpc,$(subdirs)))
-# The netdb.h we install does '#include <rpc/netdb.h>', so one must exist.
-# If sunrpc/ is built in this configuration, it installs a real <rpc/netdb.h>.
-# If that's not going to happen, install our dummy file.
-headers += rpc/netdb.h
-endif
-
 generated += mtrace-tst-leaks.out tst-leaks.mtrace \
 	     mtrace-tst-leaks2.out tst-leaks2.mtrace
 
@@ -90,11 +82,13 @@ CPPFLAGS += -Dgethostbyname=res_gethostbyname \
 	    -Dgetnetbyname=res_getnetbyname \
 	    -Dgetnetbyaddr=res_getnetbyaddr
 
-CFLAGS-libresolv += $(stack-protector)
+ifeq (yes,$(have-ssp))
+CFLAGS-libresolv += -fstack-protector
+endif
 CFLAGS-res_hconf.c = -fexceptions
 
 # The BIND code elicits some harmless warnings.
-+cflags += -Wno-write-strings
++cflags += -Wno-strict-prototypes -Wno-write-strings
 
 # The DNS NSS modules needs the resolver.
 $(objpfx)libnss_dns.so: $(objpfx)libresolv.so
@@ -103,9 +97,6 @@ $(objpfx)libnss_dns.so: $(objpfx)libresolv.so
 $(objpfx)libanl.so: $(shared-thread-library)
 
 $(objpfx)ga_test: $(objpfx)libanl.so $(shared-thread-library)
-
-$(objpfx)tst-res_hconf_reorder: $(libdl) $(shared-thread-library)
-tst-res_hconf_reorder-ENV = RESOLV_REORDER=on
 
 $(objpfx)tst-leaks: $(objpfx)libresolv.so
 tst-leaks-ENV = MALLOC_TRACE=$(objpfx)tst-leaks.mtrace

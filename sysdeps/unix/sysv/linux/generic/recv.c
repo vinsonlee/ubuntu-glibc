@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
 
@@ -24,9 +24,22 @@
 ssize_t
 __libc_recv (int sockfd, void *buffer, size_t len, int flags)
 {
-  return SYSCALL_CANCEL (recvfrom, sockfd, buffer, len, flags,
-			 NULL, NULL);
+  ssize_t result;
+
+  if (SINGLE_THREAD_P)
+    result = INLINE_SYSCALL (recvfrom, 6, sockfd, buffer, len, flags,
+                             NULL, NULL);
+  else
+    {
+      int oldtype = LIBC_CANCEL_ASYNC ();
+
+      result = INLINE_SYSCALL (recvfrom, 6, sockfd, buffer, len, flags,
+                               NULL, NULL);
+
+      LIBC_CANCEL_RESET (oldtype);
+    }
+
+  return result;
 }
 strong_alias (__libc_recv, __recv)
-libc_hidden_def (__recv)
 weak_alias (__libc_recv, recv)

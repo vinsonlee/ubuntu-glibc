@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2015 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -42,7 +42,6 @@
 #include "endian.h"
 #include "mpa.h"
 #include "sincos32.h"
-#include <math.h>
 #include <math_private.h>
 #include <stap-probe.h>
 
@@ -319,7 +318,7 @@ __mpranred (double x, mp_no *y, int p)
   int i, k, n;
   mp_no a, b, c;
 
-  if (fabs (x) < 2.8e14)
+  if (ABS (x) < 2.8e14)
     {
       t = (x * hpinv.d + toint.d);
       xn = t - toint.d;

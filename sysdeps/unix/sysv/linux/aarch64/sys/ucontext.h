@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -29,7 +29,7 @@
    included in <signal.h>.  */
 #include <bits/sigcontext.h>
 
-typedef elf_greg_t greg_t;
+typedef int greg_t;
 
 /* Container for all general registers.  */
 typedef elf_gregset_t gregset_t;

@@ -5,7 +5,6 @@
 # DP: Patch author: Martin Pitt <martin.pitt@canonical.com>
 # DP: Upstream status: Ubuntu-Specific
 # DP: Date: 2004-12-06 20:44:10 CET
-# DP: Updated: 2016-10-05 13:51:00 CET
 
 --- glibc-2.3.5.orig/intl/l10nflist.c
 +++ glibc-2.3.5/intl/l10nflist.c
@@ -18,21 +17,19 @@
  				* sizeof (struct loaded_l10nfile *)));
    if (retval == NULL)
      {
-@@ -310,6 +310,17 @@ _nl_make_l10nflist (l10nfile_list, dirli
+@@ -310,6 +310,15 @@ _nl_make_l10nflist (l10nfile_list, dirli
  				  language, territory, codeset,
  				  normalized_codeset, modifier, filename, 1);
        }
 +  const char* langpack_dir = "/usr/share/locale-langpack";
-+  if (strncmp(filename, "LC_MESSAGES", strlen("LC_MESSAGES")) == 0) {
-+    for (cnt = mask; cnt >= 0; --cnt)
-+      if ((cnt & ~mask) == 0)
-+	{
-+	    retval->successor[entries++]
-+	      = _nl_make_l10nflist (l10nfile_list, langpack_dir, strlen (langpack_dir) + 1, cnt,
-+				    language, territory, codeset,
-+				    normalized_codeset, modifier, filename, 1);
-+	}
-+  }
++  for (cnt = mask; cnt >= 0; --cnt)
++    if ((cnt & ~mask) == 0)
++      {
++	  retval->successor[entries++]
++	    = _nl_make_l10nflist (l10nfile_list, langpack_dir, strlen (langpack_dir) + 1, cnt,
++				  language, territory, codeset,
++				  normalized_codeset, modifier, filename, 1);
++      }
    retval->successor[entries] = NULL;
  
    return retval;

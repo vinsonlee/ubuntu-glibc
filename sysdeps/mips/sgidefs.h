@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ralf Baechle <ralf@gnu.org>.
 
@@ -68,9 +68,5 @@
 # define _ABI64			3
 #endif
 #define _MIPS_SIM_ABI64		_ABI64
-
-#ifndef _ABIO64
-# define _ABIO64		4
-#endif
 
 #endif /* sgidefs.h */

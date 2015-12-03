@@ -1,6 +1,6 @@
 /* Multiple versions of wcscmp
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -26,14 +26,22 @@
    happened.  */
 #if IS_IN (libc)
 	.text
-ENTRY(__wcscmp)
-	.type	__wcscmp, @gnu_indirect_function
-	LOAD_GOT_AND_RTLD_GLOBAL_RO
-	LOAD_FUNC_GOT_EAX (__wcscmp_ia32)
-	HAS_CPU_FEATURE (SSE2)
+ENTRY(wcscmp)
+	.type	wcscmp, @gnu_indirect_function
+	pushl	%ebx
+	cfi_adjust_cfa_offset (4)
+	cfi_rel_offset (ebx, 0)
+	LOAD_PIC_REG(bx)
+	cmpl	$0, KIND_OFFSET+__cpu_features@GOTOFF(%ebx)
+	jne	1f
+	call	__init_cpu_features
+1:	leal	__wcscmp_ia32@GOTOFF(%ebx), %eax
+	testl	$bit_SSE2, CPUID_OFFSET+index_SSE2+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	LOAD_FUNC_GOT_EAX (__wcscmp_sse2)
-2:	ret
-END(__wcscmp)
-weak_alias (__wcscmp, wcscmp)
+	leal	__wcscmp_sse2@GOTOFF(%ebx), %eax
+2:	popl	%ebx
+	cfi_adjust_cfa_offset (-4);
+	cfi_restore (ebx)
+	ret
+END(wcscmp)
 #endif

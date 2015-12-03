@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* This software is Copyright 1996 by Craig Metz, All Rights Reserved.  */
 
+#include <alloca.h>
 #include <errno.h>
 #include <netdb.h>
 #include <stddef.h>
@@ -51,8 +52,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/utsname.h>
-#include <libc-lock.h>
-#include <scratch_buffer.h>
+#include <bits/libc-lock.h>
 
 #ifdef HAVE_LIBIDN
 # include <libidn/idna.h>
@@ -82,21 +82,17 @@ nrl_domainname (void)
 	{
 	  char *c;
 	  struct hostent *h, th;
+	  size_t tmpbuflen = 1024;
+	  char *tmpbuf = alloca (tmpbuflen);
 	  int herror;
-	  struct scratch_buffer tmpbuf;
 
-	  scratch_buffer_init (&tmpbuf);
 	  not_first = 1;
 
-	  while (__gethostbyname_r ("localhost", &th,
-				    tmpbuf.data, tmpbuf.length,
-				    &h, &herror))
+	  while (__gethostbyname_r ("localhost", &th, tmpbuf, tmpbuflen, &h,
+				    &herror))
 	    {
 	      if (herror == NETDB_INTERNAL && errno == ERANGE)
-		{
-		  if (!scratch_buffer_grow (&tmpbuf))
-		    goto done;
-		}
+		tmpbuf = extend_alloca (tmpbuf, tmpbuflen, 2 * tmpbuflen);
 	      else
 		break;
 	    }
@@ -107,26 +103,22 @@ nrl_domainname (void)
 	    {
 	      /* The name contains no domain information.  Use the name
 		 now to get more information.  */
-	      while (__gethostname (tmpbuf.data, tmpbuf.length))
-		if (!scratch_buffer_grow (&tmpbuf))
-		  goto done;
+	      while (__gethostname (tmpbuf, tmpbuflen))
+		tmpbuf = extend_alloca (tmpbuf, tmpbuflen, 2 * tmpbuflen);
 
-	      if ((c = strchr (tmpbuf.data, '.')))
+	      if ((c = strchr (tmpbuf, '.')))
 		domain = __strdup (++c);
 	      else
 		{
 		  /* We need to preserve the hostname.  */
-		  const char *hstname = strdupa (tmpbuf.data);
+		  const char *hstname = strdupa (tmpbuf);
 
-		  while (__gethostbyname_r (hstname, &th,
-					    tmpbuf.data, tmpbuf.length,
+		  while (__gethostbyname_r (hstname, &th, tmpbuf, tmpbuflen,
 					    &h, &herror))
 		    {
 		      if (herror == NETDB_INTERNAL && errno == ERANGE)
-			{
-			  if (!scratch_buffer_grow (&tmpbuf))
-			    goto done;
-			}
+			tmpbuf = extend_alloca (tmpbuf, tmpbuflen,
+						2 * tmpbuflen);
 		      else
 			break;
 		    }
@@ -141,15 +133,12 @@ nrl_domainname (void)
 
 		      while (__gethostbyaddr_r ((const char *) &in_addr,
 						sizeof (struct in_addr),
-						AF_INET, &th,
-						tmpbuf.data, tmpbuf.length,
-						&h, &herror))
+						AF_INET, &th, tmpbuf,
+						tmpbuflen, &h, &herror))
 			{
 			  if (herror == NETDB_INTERNAL && errno == ERANGE)
-			    {
-			      if (!scratch_buffer_grow (&tmpbuf))
-				goto done;
-			    }
+			    tmpbuf = extend_alloca (tmpbuf, tmpbuflen,
+						    2 * tmpbuflen);
 			  else
 			    break;
 			}
@@ -159,8 +148,6 @@ nrl_domainname (void)
 		    }
 		}
 	    }
-	done:
-	  scratch_buffer_free (&tmpbuf);
 	}
 
       __libc_lock_unlock (lock);
@@ -176,12 +163,11 @@ getnameinfo (const struct sockaddr *sa, socklen_t addrlen, char *host,
 	     int flags)
 {
   int serrno = errno;
+  int tmpbuflen = 1024;
   int herrno;
+  char *tmpbuf = alloca (tmpbuflen);
   struct hostent th;
   int ok = 0;
-  struct scratch_buffer tmpbuf;
-
-  scratch_buffer_init (&tmpbuf);
 
   if (flags & ~(NI_NUMERICHOST|NI_NUMERICSERV|NI_NOFQDN|NI_NAMEREQD|NI_DGRAM
 #ifdef HAVE_LIBIDN
@@ -226,35 +212,21 @@ getnameinfo (const struct sockaddr *sa, socklen_t addrlen, char *host,
 	      {
 		while (__gethostbyaddr_r ((const void *) &(((const struct sockaddr_in6 *) sa)->sin6_addr),
 					  sizeof(struct in6_addr),
-					  AF_INET6, &th,
-					  tmpbuf.data, tmpbuf.length,
+					  AF_INET6, &th, tmpbuf, tmpbuflen,
 					  &h, &herrno))
 		  if (herrno == NETDB_INTERNAL && errno == ERANGE)
-		    {
-		      if (!scratch_buffer_grow (&tmpbuf))
-			{
-			  __set_h_errno (herrno);
-			  return EAI_MEMORY;
-			}
-		    }
+		    tmpbuf = extend_alloca (tmpbuf, tmpbuflen, 2 * tmpbuflen);
 		  else
 		    break;
 	      }
 	    else
 	      {
 		while (__gethostbyaddr_r ((const void *) &(((const struct sockaddr_in *)sa)->sin_addr),
-					  sizeof(struct in_addr),
-					  AF_INET, &th,
-					  tmpbuf.data, tmpbuf.length,
+					  sizeof(struct in_addr), AF_INET,
+					  &th, tmpbuf, tmpbuflen,
 					  &h, &herrno))
 		  if (herrno == NETDB_INTERNAL && errno == ERANGE)
-		    {
-		      if (!scratch_buffer_grow (&tmpbuf))
-			{
-			  __set_h_errno (herrno);
-			  return EAI_MEMORY;
-			}
-		    }
+		    tmpbuf = extend_alloca (tmpbuf, tmpbuflen, 2 * tmpbuflen);
 		  else
 		    break;
 	      }
@@ -429,14 +401,11 @@ getnameinfo (const struct sockaddr *sa, socklen_t addrlen, char *host,
 	    int e;
 	    while ((e = __getservbyport_r (((const struct sockaddr_in *) sa)->sin_port,
 					   ((flags & NI_DGRAM)
-					    ? "udp" : "tcp"), &ts,
-					   tmpbuf.data, tmpbuf.length, &s)))
+					    ? "udp" : "tcp"),
+					   &ts, tmpbuf, tmpbuflen, &s)))
 	      {
 		if (e == ERANGE)
-		  {
-		    if (!scratch_buffer_grow (&tmpbuf))
-		      return EAI_MEMORY;
-		  }
+		  tmpbuf = extend_alloca (tmpbuf, tmpbuflen, 2 * tmpbuflen);
 		else
 		  break;
 	      }

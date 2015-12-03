@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,14 +21,14 @@
 #include <stdio.h>
 #include <sysdep-cancel.h>
 
-/* Open FILE with access OFLAG.  If O_CREAT or O_TMPFILE is in OFLAG,
+/* Open FILE with access OFLAG.  If OFLAG includes O_CREAT,
    a third argument is the file protection.  */
 int
 __libc_open64 (const char *file, int oflag, ...)
 {
   int mode = 0;
 
-  if (__OPEN_NEEDS_MODE (oflag))
+  if (oflag & O_CREAT)
     {
       va_list arg;
       va_start (arg, oflag);
@@ -36,7 +36,16 @@ __libc_open64 (const char *file, int oflag, ...)
       va_end (arg);
     }
 
-  return SYSCALL_CANCEL (open, file, oflag | O_LARGEFILE, mode);
+  if (SINGLE_THREAD_P)
+    return INLINE_SYSCALL (open, 3, file, oflag | O_LARGEFILE, mode);
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  int result = INLINE_SYSCALL (open, 3, file, oflag | O_LARGEFILE, mode);
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
 weak_alias (__libc_open64, __open64)
 libc_hidden_weak (__open64)

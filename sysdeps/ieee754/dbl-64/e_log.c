@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2015 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -38,7 +38,6 @@
 #include <dla.h>
 #include "mpa.h"
 #include "MathLib.h"
-#include <math.h>
 #include <math_private.h>
 #include <stap-probe.h>
 
@@ -94,7 +93,7 @@ __ieee754_log (double x)
   /* Regular values of x */
 
   w = x - 1;
-  if (__glibc_likely (fabs (w) > U03))
+  if (__glibc_likely (ABS (w) > U03))
     goto case_03;
 
   /* log (1) is +0 in all rounding modes.  */

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,8 +17,12 @@
 
 #include <string.h>
 
-void
-bcopy (const void *src, void *dest, size_t len)
-{
-  memmove (dest, src, len);
-}
+#define	memmove		bcopy
+#define	rettype		void
+#define	RETURN(s)	return
+#define	a1		src
+#define	a1const		const
+#define	a2		dest
+#define	a2const
+
+#include <string/memmove.c>

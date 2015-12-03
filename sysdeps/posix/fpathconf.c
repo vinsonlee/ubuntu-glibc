@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,9 @@
 
 /* Get file-specific information about descriptor FD.  */
 long int
-__fpathconf (int fd, int name)
+__fpathconf (fd, name)
+     int fd;
+     int name;
 {
   if (fd < 0)
     {
@@ -64,10 +66,10 @@ __fpathconf (int fd, int name)
     case _PC_NAME_MAX:
 #ifdef	NAME_MAX
       {
-	struct statvfs64 sv;
+	struct statfs buf;
 	int save_errno = errno;
 
-	if (__fstatvfs64 (fd, &sv) < 0)
+	if (__fstatfs (fd, &buf) < 0)
 	  {
 	    if (errno == ENOSYS)
 	      {
@@ -81,7 +83,15 @@ __fpathconf (int fd, int name)
 	  }
 	else
 	  {
-	    return sv.f_namemax;
+#ifdef _STATFS_F_NAMELEN
+	    return buf.f_namelen;
+#else
+# ifdef _STATFS_F_NAME_MAX
+	    return buf.f_name_max;
+# else
+	    return NAME_MAX;
+# endif
+#endif
 	  }
       }
 #else

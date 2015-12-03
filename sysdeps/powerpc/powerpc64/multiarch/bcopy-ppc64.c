@@ -1,5 +1,5 @@
 /* PowerPC64 default bcopy.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,10 +18,8 @@
 
 #include <string.h>
 
-extern __typeof (bcopy)   __bcopy_ppc attribute_hidden;
-extern __typeof (memmove) __memmove_ppc attribute_hidden;
+extern __typeof (bcopy) __bcopy_ppc attribute_hidden;
 
-void __bcopy_ppc (const void *src, void *dest, size_t n)
-{
-  __memmove_ppc (dest, src, n);
-}
+#define bcopy __bcopy_ppc
+
+#include <string/bcopy.c>

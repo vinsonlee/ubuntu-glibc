@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -48,7 +48,7 @@
 #include <lowlevellock-futex.h>
 
 /* XXX Remove when no assembler code uses futexes anymore.  */
-#define SYS_futex		__NR_futex
+#define SYS_futex		240
 
 #ifndef __ASSEMBLER__
 
@@ -56,6 +56,28 @@
 #define LLL_LOCK_INITIALIZER		(0)
 #define LLL_LOCK_INITIALIZER_LOCKED	(1)
 #define LLL_LOCK_INITIALIZER_WAITERS	(2)
+
+
+#ifdef PIC
+# define LLL_EBX_LOAD	"xchgl %2, %%ebx\n"
+# define LLL_EBX_REG	"D"
+#else
+# define LLL_EBX_LOAD
+# define LLL_EBX_REG	"b"
+#endif
+
+#ifdef I386_USE_SYSENTER
+# ifdef SHARED
+#  define LLL_ENTER_KERNEL	"call *%%gs:%P6\n\t"
+# else
+#  define LLL_ENTER_KERNEL	"call *_dl_sysinfo\n\t"
+# endif
+#else
+# define LLL_ENTER_KERNEL	"int $0x80\n\t"
+#endif
+
+/* Delay in spinlock loop.  */
+#define BUSY_WAIT_NOP	asm ("rep; nop")
 
 
 /* NB: in the lll_trylock macro we simply return the value in %eax
@@ -317,7 +339,7 @@ extern int __lll_trylock_elision(int *lock, short *adapt_count)
 
 #define lll_lock_elision(futex, adapt_count, private) \
   __lll_lock_elision (&(futex), &(adapt_count), private)
-#define lll_unlock_elision(futex, adapt_count, private) \
+#define lll_unlock_elision(futex, private) \
   __lll_unlock_elision (&(futex), private)
 #define lll_trylock_elision(futex, adapt_count) \
   __lll_trylock_elision(&(futex), &(adapt_count))

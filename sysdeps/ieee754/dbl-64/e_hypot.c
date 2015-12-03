@@ -149,9 +149,7 @@ __ieee754_hypot (double x, double y)
       t1 = 1.0;
       GET_HIGH_WORD (high, t1);
       SET_HIGH_WORD (t1, high + (k << 20));
-      w *= t1;
-      math_check_force_underflow_nonneg (w);
-      return w;
+      return t1 * w;
     }
   else
     return w;

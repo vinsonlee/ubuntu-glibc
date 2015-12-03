@@ -1,7 +1,7 @@
 /* Return arc hyperbole sine for float value, with the imaginary part
    of the result possibly adjusted for use in computing other
    functions.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -182,7 +182,11 @@ __kernel_casinhf (__complex__ float x, int adj)
 	  else
 	    __imag__ res = __ieee754_atan2f (ix, s);
 	}
-      math_check_force_underflow_nonneg (__real__ res);
+      if (__real__ res < FLT_MIN)
+	{
+	  volatile float force_underflow = __real__ res * __real__ res;
+	  (void) force_underflow;
+	}
     }
   else
     {

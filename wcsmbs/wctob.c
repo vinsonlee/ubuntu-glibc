@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1996.
 
@@ -27,7 +27,8 @@
 
 
 int
-wctob (wint_t c)
+wctob (c)
+     wint_t c;
 {
   unsigned char buf[MB_LEN_MAX];
   struct __gconv_step_data data;

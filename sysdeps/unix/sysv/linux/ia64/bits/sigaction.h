@@ -1,5 +1,5 @@
 /* Definitions for Linux/ia64 sigaction.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -40,8 +40,7 @@ struct sigaction
 #endif
 
     /* Special flags.  */
-    int sa_flags;
-    int __glibc_reserved0;
+    unsigned long int sa_flags;
 
     /* Additional set of signals to be blocked.  */
     __sigset_t sa_mask;
