@@ -251,6 +251,7 @@ any/cvs-localplt-new-readelf.diff
 any/cvs-make-typo.diff
 any/cvs-logbl-accuracy.diff
 any/local-math-logb.diff
+any/cvs-selinux-nscd.diff
 
 # Ubuntu patches live in their own little world, to maintain sanity
 ubuntu/lddebug-scopes.diff
