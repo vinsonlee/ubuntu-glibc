@@ -1,3 +1,12 @@
+glibc (2.21-0ubuntu5) xenial; urgency=medium
+
+  * debian/patches/any/cvs-selinux-nscd.diff: Fix build with selinux.
+  * debian/control.in/libc: Remove a Breaks on s390x against a binary
+    NMU version of check that will never exist in the Ubuntu archive.
+  * debian/control: Regenerate for the above s390x-vs-binNMU changes.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Thu, 03 Dec 2015 13:24:51 -0700
+
 glibc (2.21-0ubuntu4) vivid; urgency=medium
 
   * debian/patches/arm/local-arm-futex.diff: Lie about the minimum
