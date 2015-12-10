@@ -1,3 +1,47 @@
+glibc (2.21-4) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/debhelper.in/libc.{preinst,prerm}: remove code handling the
+    upgrade from squeeze to wheezy, as we don't support squeeze to stretch
+    upgrades. Move tests which might exit with a failure at the beginning.
+  * debian/sysdeps/amd64.mk, debian/sysdeps/i386.mk: downgrade the minimal
+    Linux kernel version to 2.6.32 to support RHEL6 kernels.
+  * debhelper.in/libc.preinst: add a note explainling that pre-3.2 kernel
+    are not officially supported.
+  * debhelper.in/libc.preinst, debhelper.in/libc.templates, po/*: display
+    kernel related notes using debconf if available.
+  * patches/any/cvs-grantpt-pty-owner.diff: new patch from upstream to
+    improve granpt when /dev/pts is not mounted with the correct options.
+    Closes: #806882.
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/cvs-libpthread-api.diff: New patch, cleans libpthread
+    API. Fixes conflicting declarations between pthread.h and sigthread.h.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 10 Dec 2015 22:34:54 +0100
+
+glibc (2.21-3) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/control.in/opt: drop libc0.3-i686 and libc0.3-xen entries.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 04 Dec 2015 00:22:07 +0100
+
+glibc (2.21-2) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debhelper.in/libc.preinst: drop outdated code about pre-2.6 kernels.
+  * rules.d/debhelper.mk: prefix calls to objcopy and strip with 
+    $(DEB_HOST_GNU_TYPE)-.
+  * testsuite-checking/expected-results-hppa-linux-gnu-libc: update testsuite
+    result, from John David Anglin.  Closes: #806839.
+  * debhelper.in/libc.NEWS: add an entry about the required minimum kernel.
+  * rules.d/debhelper.mk: strip *crt*.o files.
+  * patches/any/cvs-tls-dtv.diff: update with a new patch from upstream
+    changing the IE model for static variables.  Closes: #806971.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 03 Dec 2015 22:46:21 +0100
+
 glibc (2.21-1) unstable; urgency=medium
 
   [ Aurelien Jarno ]
