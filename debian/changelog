@@ -1,3 +1,63 @@
+glibc (2.22-0experimental1) experimental; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/debhelper.in/libc-dev.install: install libmvec_nonshared.a.
+    Closes: #806910.
+  * debian/control.in/main, debian/rules: build with gcc-5.
+  * patches/kfreebsd/local-sysdeps.diff, patches/kfreebsd/local-fbtl.diff:
+    update to revision 5856 (from glibc-bsd):
+    - Update to glibc 2.22.
+  * debian/patches/kfreebsd/local-tst-malloc-backtrace.diff: new patch to fix
+    tst-malloc-backtrace on GNU/kFreeBSD.
+  * debian/sysdeps/ppc64el.mk: default to POWER8 and use default gcc options.
+  * debian/rules.d/build.mk: explicitly disable mathvec when mvec=no.
+  * debian/testsuite-checking/expected-results-s390x-linux-gnu-libc:
+    allow elf/tst-protected1a and elf/tst-protected1b to fail as they are
+    new tests. Cleanup resolved issues.
+  * debian/testsuite-checking/expected-results-aarch64-linux-gnu-libc:
+    cleanup resolved issues.
+  * debian/rules.d/build.mk: abort if the log file does not contain any
+    testsuite result.
+  * debian/patches/localedata/submitted-locale-bo.diff: drop, now useless.
+  * debian/patches/any/submitted-resolv-ipv6-nameservers.diff: drop, now
+    useless.
+  * debian/testsuite-checking/expected-results-powerpc-linux-gnu-libc,
+    debian/testsuite-checking/expected-results-powerpc64-linux-gnu-ppc64:
+    cleanup resolved issues.
+  * debian/testsuite-checking/expected-results-powerpc-linux-gnu-powerpc,
+    debian/testsuite-checking/expected-results-powerpc64-linux-gnu-libc:
+    new files.
+  * debian/patches/i386/submitted-i586-ulps.diff: new patch to provide
+    i586 ULPs.
+  * debian/patches/git-updates.diff: update to the latest commit of the
+    2.22 branch.
+  * debian/testsuite-checking/expected-results-i?86-linux-gnu-*: cleanup
+    resolved issues.
+  * debian/testsuite-checking/expected-results-x86_64-linux-gnu-*: cleanup
+    resolved issues.
+  * debian/testsuite-checking/expected-results-x86_64-linux-gnux32-*:
+    update and cleanup resolved issues.
+  * debian/testsuite-checking/expected-results-powerpc64le-linux-gnu-libc:
+    update and cleanup resolved issues.
+  * debian/testsuite-checking/expected-results-mips*: update and cleanup
+    resolved issues.
+  * debian/testsuite-checking/expected-results-*kfreebsd-gnu*: update and
+    cleanup resolved issues.
+  * debian/patches/mips/local-r10k.diff: dropped, we don't support systems
+    with a MIPS R10K CPU since the ISA has been switched to MIPS R2.
+  * debian/patches/mips/cvs-testsuite-o32-fp.diff: new patch to fix testsuite
+    build on pre-R2 ISA.
+  * debian/patcheS/any/cvs-grantpt-namespace.diff: new patch to fix the
+    grantpt link namespace when built without pt_chown.
+  * debian/patches/alpha/submitted-abilist.diff: new patch to fix alpha ABI
+    baseline sorting.
+  * debian/patches/alpha/submitted-fegetenv-namespace.diff: new patch to fix
+    the fegetenv link namespace on alpha.
+  * debian/patches/alpha/submitted-termios_h.diff: new patch to fix
+    visibility issues in termios.h on alpha.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 10 Dec 2015 23:29:06 +0100
+
 glibc (2.22-0experimental0) experimental; urgency=medium
 
   [ Adam Conrad ]
@@ -77,6 +137,50 @@ glibc (2.22-0experimental0) experimental; urgency=medium
   * debian/patches/any/cvs-mangle-tls_dtor_list.diff: Upstream.
 
  -- Aurelien Jarno <aurel32@debian.org>  Wed, 02 Dec 2015 00:06:13 +0100
+
+glibc (2.21-4) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/debhelper.in/libc.{preinst,prerm}: remove code handling the
+    upgrade from squeeze to wheezy, as we don't support squeeze to stretch
+    upgrades. Move tests which might exit with a failure at the beginning.
+  * debian/sysdeps/amd64.mk, debian/sysdeps/i386.mk: downgrade the minimal
+    Linux kernel version to 2.6.32 to support RHEL6 kernels.
+  * debhelper.in/libc.preinst: add a note explainling that pre-3.2 kernel
+    are not officially supported.
+  * debhelper.in/libc.preinst, debhelper.in/libc.templates, po/*: display
+    kernel related notes using debconf if available.
+  * patches/any/cvs-grantpt-pty-owner.diff: new patch from upstream to
+    improve granpt when /dev/pts is not mounted with the correct options.
+    Closes: #806882.
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/cvs-libpthread-api.diff: New patch, cleans libpthread
+    API. Fixes conflicting declarations between pthread.h and sigthread.h.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 10 Dec 2015 22:34:54 +0100
+
+glibc (2.21-3) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/control.in/opt: drop libc0.3-i686 and libc0.3-xen entries.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 04 Dec 2015 00:22:07 +0100
+
+glibc (2.21-2) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debhelper.in/libc.preinst: drop outdated code about pre-2.6 kernels.
+  * rules.d/debhelper.mk: prefix calls to objcopy and strip with 
+    $(DEB_HOST_GNU_TYPE)-.
+  * testsuite-checking/expected-results-hppa-linux-gnu-libc: update testsuite
+    result, from John David Anglin.  Closes: #806839.
+  * debhelper.in/libc.NEWS: add an entry about the required minimum kernel.
+  * rules.d/debhelper.mk: strip *crt*.o files.
+  * patches/any/cvs-tls-dtv.diff: update with a new patch from upstream
+    changing the IE model for static variables.  Closes: #806971.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 03 Dec 2015 22:46:21 +0100
 
 glibc (2.21-1) unstable; urgency=medium
 
