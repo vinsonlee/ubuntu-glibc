@@ -35,13 +35,15 @@ localedata/locale-C.diff
 localedata/locale-nb_NO.diff
 localedata/submitted-en_AU-date_fmt.diff
 localedata/submitted-es_MX-decimal_point.diff
-localedata/submitted-locale-bo.diff
 localedata/submitted-it_IT-thousands_sep.diff
 
 alpha/local-gcc4.1.diff
 alpha/submitted-dl-support.diff
 alpha/submitted-rtld-fPIC.diff
 alpha/local-string-functions.diff
+alpha/submitted-abilist.diff
+alpha/submitted-fegetenv-namespace.diff
+alpha/submitted-termios_h.diff
 
 amd64/local-blacklist-for-Intel-TSX.diff
 
@@ -144,11 +146,12 @@ hurd-i386/cvs-csu_crt0.diff
 hurd-i386/cvs-s_scalbn.diff
 hurd-i386/local-mach_print.diff
 hurd-i386/cvs-hidden.diff
+hurd-i386/cvs-libpthread-api.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
 i386/local-cpuid-level2.diff
-#i386/local-i586-ulps.diff
+i386/submitted-i586-ulps.diff
 i386/submitted-i686-timing.diff
 i386/unsubmitted-quiet-ldconfig.diff
 
@@ -169,8 +172,8 @@ m68k/local-fpic.diff
 m68k/local-reloc.diff
 m68k/submitted-gcc34-seccomment.diff
 
-mips/local-r10k.diff
 mips/submitted-rld_map.diff
+mips/cvs-testsuite-o32-fp.diff
 
 powerpc/local-powerpc8xx-dcbz.diff
 
@@ -236,6 +239,7 @@ any/local-dynamic-resolvconf.diff
 any/local-libpic.diff
 any/local-bootstrap-headers.diff
 any/submitted-argp-attribute.diff
-any/submitted-resolv-ipv6-nameservers.diff
 any/local-static-dlopen-search-path.diff
 any/local-math-logb.diff
+any/cvs-grantpt-namespace.diff
+any/cvs-grantpt-pty-owner.diff
