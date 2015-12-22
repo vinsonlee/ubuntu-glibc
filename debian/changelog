@@ -1,14 +1,3 @@
-glibc (2.21-6) unstable; urgency=medium
-
-  [ Aurelien Jarno ]
-  * sysdeps/kfreebsd.mk: test if the header directory exists before
-    trying to link directories from there. Fixes FTBFS on GNU/kFreeBSD.
-  * patches/s390/submitted-socketcall.diff: new patch to fix broken
-    socketcall related function on s390x when built against 4.3+ kernel
-    headers.
-
- -- Aurelien Jarno <aurel32@debian.org>  Fri, 25 Dec 2015 03:35:01 +0100
-
 glibc (2.21-5) unstable; urgency=medium
 
   [ Samuel Thibault ]
