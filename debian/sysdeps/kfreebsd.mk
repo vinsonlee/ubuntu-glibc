@@ -43,16 +43,12 @@ $(stamp)mkincludedir:
 
 	mkdir -p debian/include/sys
 	# Link to any headers found in the old locations first
-	if test -d $(KFREEBSD_HEADERS)/sys ; then \
-	    find $(KFREEBSD_HEADERS)/sys -mindepth 1 \
-		-exec ln -sf '{}' debian/include/sys ';' ; \
-	fi
+	find $(KFREEBSD_HEADERS)/sys -mindepth 1 \
+		-exec ln -sf '{}' debian/include/sys ';'
 	# Link to any headers found at the new multiarch location,
 	# replacing any existing links
-	if test -d $(KFREEBSD_ARCH_HEADERS)/sys ; then \
-	    find $(KFREEBSD_ARCH_HEADERS)/sys -mindepth 1 \
-		-exec ln -sf '{}' debian/include/sys ';' ; \
-	fi
+	find $(KFREEBSD_ARCH_HEADERS)/sys -mindepth 1 \
+		-exec ln -sf '{}' debian/include/sys ';'
 
 	# To make configure happy if libc0.1-dev is not installed.
 	touch debian/include/assert.h
