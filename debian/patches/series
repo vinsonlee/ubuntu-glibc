@@ -49,7 +49,7 @@ alpha/cvs-__pointer_chk_guard.diff
 alpha/cvs-unwind-backtrace.diff
 
 amd64/submitted-rwlock-stack-imbalance.diff
-amd64/local-blacklist-on-TSX-Haswell.diff
+amd64/local-blacklist-for-Intel-TSX.diff
 amd64/cvs-slow-sse42.diff
 
 arm/local-ioperm.diff
@@ -272,3 +272,6 @@ any/cvs-getnetbyname.diff
 any/cvs-vfprintf.diff
 any/cvs-wscanf.diff
 any/cvs-ldconfig-aux-cache.diff
+any/cvs-ld_pointer_guard.diff
+any/cvs-mangle-tls_dtor_list.diff
+any/cvs-strxfrm-buffer-overflows.diff
