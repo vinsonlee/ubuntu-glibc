@@ -1,5 +1,5 @@
 /* POSIX.1 sigaction call for Linux/SPARC.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Miguel de Icaza <miguel@nuclecu.unam.mx>, 1997.
 
@@ -62,8 +62,15 @@ __libc_sigaction (int sig, const struct sigaction *act, struct sigaction *oact)
 }
 libc_hidden_def (__libc_sigaction)
 
-#include <nptl/sigaction.c>
+#ifdef WRAPPER_INCLUDE
+# include WRAPPER_INCLUDE
+#endif
 
+#ifndef LIBC_SIGACTION
+weak_alias (__libc_sigaction, __sigaction);
+libc_hidden_weak (__sigaction)
+weak_alias (__libc_sigaction, sigaction);
+#endif
 
 static void
 __rt_sigreturn_stub (void)

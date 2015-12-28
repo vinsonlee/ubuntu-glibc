@@ -4,8 +4,8 @@
 #include <string.h>
 #include <wctype.h>
 
-static int
-do_test (void)
+int
+main (void)
 {
   wchar_t tmp[3];
   tmp[0] = '8';
@@ -20,6 +20,3 @@ do_test (void)
 
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

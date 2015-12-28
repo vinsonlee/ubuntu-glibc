@@ -1,6 +1,6 @@
 #! /bin/sh
 # Test of gettext functions.
-# Copyright (C) 2000-2015 Free Software Foundation, Inc.
+# Copyright (C) 2000-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,31 +20,36 @@
 set -e
 
 common_objpfx=$1
-test_program_prefix_before_env=$2
-run_program_env=$3
-test_program_prefix_after_env=$4
-objpfx=$5
+test_program_prefix=$2
+objpfx=$3
+
+LC_ALL=C
+export LC_ALL
 
 # Generate the test data.
 mkdir -p ${objpfx}domaindir
 # Create the locale directories.
-mkdir -p \
-  ${objpfx}domaindir/lang1/LC_MESSAGES \
-  ${objpfx}domaindir/lang2/LC_MESSAGES
-
-for f in ADDRESS COLLATE CTYPE IDENTIFICATION MEASUREMENT MONETARY NAME NUMERIC PAPER TELEPHONE TIME; do
-  [ -e ${objpfx}domaindir/lang1/LC_$f ] ||
+test -d ${objpfx}domaindir/lang1 || {
+  mkdir ${objpfx}domaindir/lang1
+  for f in ADDRESS COLLATE CTYPE IDENTIFICATION MEASUREMENT MONETARY NAME NUMERIC PAPER TELEPHONE TIME; do
     cp ${common_objpfx}localedata/de_DE.ISO-8859-1/LC_$f \
        ${objpfx}domaindir/lang1
-  [ -e ${objpfx}domaindir/lang2/LC_$f ] ||
+  done
+}
+test -d ${objpfx}domaindir/lang2 || {
+  mkdir ${objpfx}domaindir/lang2
+  for f in ADDRESS COLLATE CTYPE IDENTIFICATION MEASUREMENT MONETARY NAME NUMERIC PAPER TELEPHONE TIME; do
     cp ${common_objpfx}localedata/de_DE.ISO-8859-1/LC_$f \
        ${objpfx}domaindir/lang2
-done
-test -e ${objpfx}domaindir/lang1/LC_MESSAGES/SYS_LC_MESSAGES || {
+  done
+}
+test -d ${objpfx}domaindir/lang1/LC_MESSAGES || {
+  mkdir ${objpfx}domaindir/lang1/LC_MESSAGES
   cp ${common_objpfx}localedata/de_DE.ISO-8859-1/LC_MESSAGES/SYS_LC_MESSAGES \
      ${objpfx}domaindir/lang1/LC_MESSAGES
 }
-test -e ${objpfx}domaindir/lang2/LC_MESSAGES/SYS_LC_MESSAGES || {
+test -d ${objpfx}domaindir/lang2/LC_MESSAGES || {
+  mkdir ${objpfx}domaindir/lang2/LC_MESSAGES
   cp ${common_objpfx}localedata/de_DE.ISO-8859-1/LC_MESSAGES/SYS_LC_MESSAGES \
      ${objpfx}domaindir/lang2/LC_MESSAGES
 }
@@ -56,11 +61,13 @@ msgfmt -o ${objpfx}domaindir/lang1/LC_MESSAGES/tstlang.mo \
 msgfmt -o ${objpfx}domaindir/lang2/LC_MESSAGES/tstlang.mo \
        tstlang2.po
 
+GCONV_PATH=${common_objpfx}iconvdata
+export GCONV_PATH
+LOCPATH=${objpfx}domaindir
+export LOCPATH
+
 # Now run the test.
-${test_program_prefix_before_env} \
-${run_program_env} \
-LOCPATH=${objpfx}domaindir \
-${test_program_prefix_after_env} \
+${test_program_prefix} \
 ${objpfx}tst-gettext2 > ${objpfx}tst-gettext2.out ${objpfx}domaindir &&
 cmp ${objpfx}tst-gettext2.out - <<EOF
 String1 - Lang1: 1st string
