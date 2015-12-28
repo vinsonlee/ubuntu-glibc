@@ -73,8 +73,7 @@ then
     # We don't use a registry anymore, remove the old file
     rm -f /etc/ld.so.hwcappkgs
  
-    # /etc/ld.so.nohwcap code:
-    __NOHWCAP__
+    # /etc/ld.so.nohwcap code: NOHWCAP
 
     # Load debconf module if available
     if [ -f /usr/share/debconf/confmodule ] ; then
@@ -85,7 +84,7 @@ then
 	if [ ! -d /var/mail ] && [ ! -L /var/mail ]; then
 	    ln -sf spool/mail /var/mail
 	fi
-	if dpkg --compare-versions "$preversion" lt GLIBC_VERSION; then
+	if dpkg --compare-versions "$preversion" lt 2.19; then
 	    check="apache2.2-common apache apache-ssl apache-perl autofs at"
 	    check="$check boa cucipop courier-authdaemon cron cups exim"
 	    check="$check exim4-base dovecot-common cucipop incron lprng lpr"
@@ -94,8 +93,7 @@ then
 	    check="$check sasl2-bin slapd smail sendmail snmpd ssh"
 	    check="$check spamassassin vsftpd wu-ftpd wu-ftpd-academ wwwoffle"
 	    check="$check webmin dropbear gdm"
-	    # NSS services check: 
-	    __NSS_CHECK__
+	    # NSS services check: NSS_CHECK
 	    if [ -n "$services" ]; then
 
 	        if [ -f /usr/share/debconf/confmodule ] ; then
@@ -217,7 +215,7 @@ then
 	    else
 		echo "Nothing to restart."
 	    fi
-	fi # end upgrading and $preversion lt GLIBC_VERSION
+	fi # end upgrading and $preversion lt 2.19
     fi # Upgrading
 
     # Restart init.  Currently handles chroots, systemd and upstart, and

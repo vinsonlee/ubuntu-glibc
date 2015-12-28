@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2015 Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,6 @@
 
 subdir		:= math
 
-include ../Makeconfig
-
 # Installed header files.
 headers		:= math.h bits/mathcalls.h bits/mathinline.h bits/huge_val.h \
 		   bits/huge_valf.h bits/huge_vall.h bits/inf.h bits/nan.h \
@@ -36,7 +34,7 @@ aux		:= setfpucw fpu_control
 extra-libs	:= libm
 extra-libs-others = $(extra-libs)
 
-libm-support = s_lib_version s_matherr s_signgam			\
+libm-support = k_standard s_lib_version s_matherr s_signgam		\
 	       fclrexcpt fgetexcptflg fraiseexcpt fsetexcptflg		\
 	       ftestexcept fegetround fesetround fegetenv feholdexcpt	\
 	       fesetenv feupdateenv t_exp fedisblxcpt feenablxcpt	\
@@ -48,7 +46,7 @@ libm-calls = e_acos e_acosh e_asin e_atan2 e_atanh e_cosh e_exp e_fmod	\
 	     k_cos k_rem_pio2 k_sin k_tan s_asinh s_atan s_cbrt		\
 	     s_ceil s_cos s_erf s_expm1 s_fabs				\
 	     s_floor s_log1p s_logb					\
-	     s_nextafter s_nexttoward s_rint s_scalbln w_scalbln	\
+	     s_nextafter s_nexttoward s_rint s_scalbln			\
 	     s_significand s_sin s_tan s_tanh w_acos w_acosh w_asin	\
 	     w_atan2 w_atanh w_cosh w_drem w_exp w_exp2 w_exp10 w_fmod	\
 	     w_tgamma w_hypot w_j0 w_j1 w_jn w_lgamma w_lgamma_r	\
@@ -61,7 +59,9 @@ libm-calls = e_acos e_acosh e_asin e_atan2 e_atanh e_cosh e_exp e_fmod	\
 	     s_casinh s_cacosh s_catanh s_csqrt s_cpow s_cproj s_clog10 \
 	     s_fma s_lrint s_llrint s_lround s_llround e_exp10 w_log2	\
 	     s_isinf_ns s_issignaling $(calls:s_%=m_%) x2y2m1 k_casinh	\
-	     gamma_product k_standard
+	     gamma_product
+
+include ../Makeconfig
 
 dbl-only-routines := branred doasin dosincos halfulp mpa mpatan2	\
 		     mpatan mpexp mplog mpsqrt mptan sincos32 slowexp	\
@@ -90,7 +90,7 @@ tests = test-matherr test-fenv atest-exp atest-sincos atest-exp2 basic-test \
 	test-misc test-fpucw test-fpucw-ieee tst-definitions test-tgmath \
 	test-tgmath-ret bug-nextafter bug-nexttoward bug-tgmath1 \
 	test-tgmath-int test-tgmath2 test-powl tst-CMPLX tst-CMPLX2 test-snan \
-	test-fenv-tls test-fenv-preserve test-fenv-return $(tests-static)
+	test-fenv-tls $(tests-static)
 tests-static = test-fpucw-static test-fpucw-ieee-static
 # We do the `long double' tests only if this data type is available and
 # distinct from `double'.
@@ -126,9 +126,9 @@ $(objpfx)test-ldouble.o: $(objpfx)libm-test.stmp
 $(objpfx)test-ildoubl.o: $(objpfx)libm-test.stmp
 endif
 
-CFLAGS-test-float.c = -fno-inline -ffloat-store -fno-builtin
-CFLAGS-test-double.c = -fno-inline -ffloat-store -fno-builtin
-CFLAGS-test-ldouble.c = -fno-inline -ffloat-store -fno-builtin
+CFLAGS-test-float.c = -fno-inline -ffloat-store -fno-builtin -frounding-math
+CFLAGS-test-double.c = -fno-inline -ffloat-store -fno-builtin -frounding-math
+CFLAGS-test-ldouble.c = -fno-inline -ffloat-store -fno-builtin -frounding-math
 CFLAGS-test-tgmath.c = -fno-builtin
 # The following testcase uses very long lines (>3 million), so it may take a
 # while to compile it. See: http://llvm.org/bugs/show_bug.cgi?id=14106 and
@@ -136,12 +136,14 @@ CFLAGS-test-tgmath.c = -fno-builtin
 CFLAGS-test-tgmath2.c = -fno-builtin
 CFLAGS-test-tgmath-ret.c = -fno-builtin
 CFLAGS-test-powl.c = -fno-builtin
+CFLAGS-test-test-fenv.c = -frounding-math
+CFLAGS-test-misc.c = -frounding-math
 CPPFLAGS-test-ifloat.c = -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
-			 -DTEST_FAST_MATH -fno-builtin
+			 -DTEST_FAST_MATH -fno-builtin -frounding-math
 CPPFLAGS-test-idouble.c = -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
-			  -DTEST_FAST_MATH -fno-builtin
+			 -DTEST_FAST_MATH -fno-builtin -frounding-math
 CPPFLAGS-test-ildoubl.c = -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
-			  -DTEST_FAST_MATH -fno-builtin
+			  -DTEST_FAST_MATH -fno-builtin -frounding-math
 
 
 # The -lieee module sets the _LIB_VERSION_ switch to IEEE mode
@@ -157,7 +159,7 @@ ifneq (no,$(PERL))
 .PHONY: regen-ulps
 
 run-regen-ulps = $(test-wrapper-env) \
-	    $(run-program-env) \
+	    GCONV_PATH=$(common-objpfx)iconvdata LC_ALL=C \
 	    $($*-ENV) $(rtld-prefix) $${run}
 
 regen-ulps: $(addprefix $(objpfx),$(libm-tests))
@@ -217,8 +219,12 @@ $(objpfx)libieee.a: $(objpfx)ieee-math.o
 	$(patsubst %/,cd % &&,$(objpfx)) \
 	$(LN_S) $(<F) $(@F)
 
-$(addprefix $(objpfx),$(filter-out $(tests-static),$(tests))): $(libm)
+ifeq ($(build-shared),yes)
+$(addprefix $(objpfx),$(filter-out $(tests-static),$(tests))): $(objpfx)libm.so$(libm.so-version)
 $(addprefix $(objpfx),$(tests-static)): $(objpfx)libm.a
+else
+$(addprefix $(objpfx),$(tests)): $(objpfx)libm.a
+endif
 
 gmp-objs = $(patsubst %,$(common-objpfx)stdlib/%.o,\
 		      add_n sub_n cmp addmul_1 mul_1 mul_n divmod_1 \
@@ -227,4 +233,4 @@ gmp-objs = $(patsubst %,$(common-objpfx)stdlib/%.o,\
 $(objpfx)atest-exp: $(gmp-objs)
 $(objpfx)atest-sincos: $(gmp-objs)
 $(objpfx)atest-exp2: $(gmp-objs)
-$(objpfx)test-fenv-tls: $(shared-thread-library)
+$(objpfx)test-fenv-tls: $(common-objpfx)nptl/libpthread.so

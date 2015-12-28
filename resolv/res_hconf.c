@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David Mosberger (davidm@azstarnet.com).
 
@@ -45,10 +45,6 @@
 #include "ifreq.h"
 #include "res_hconf.h"
 #include <wchar.h>
-
-#if IS_IN (libc)
-# define fgets_unlocked __fgets_unlocked
-#endif
 
 #define _PATH_HOSTCONF	"/etc/host.conf"
 
@@ -362,7 +358,7 @@ _res_hconf_init (void)
 }
 
 
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 # if defined SIOCGIFCONF && defined SIOCGIFNETMASK
 /* List of known interfaces.  */
 libc_freeres_ptr (

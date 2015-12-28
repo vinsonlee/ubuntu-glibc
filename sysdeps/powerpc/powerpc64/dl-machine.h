@@ -1,6 +1,6 @@
 /* Machine-dependent ELF dynamic relocation inline functions.
    PowerPC64 version.
-   Copyright 1995-2015 Free Software Foundation, Inc.
+   Copyright 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -126,7 +126,7 @@ elf_machine_dynamic (void)
 #else
 # define DL_STARTING_UP_DEF \
 ".LC__dl_starting_up:\n"  \
-"	.tc __GI__dl_starting_up[TC],__GI__dl_starting_up\n"
+"	.tc _dl_starting_up_internal[TC],_dl_starting_up_internal\n"
 #endif
 
 
@@ -169,7 +169,7 @@ DL_STARTING_UP_DEF							\
 ".LC__dl_argc:\n"							\
 "	.tc _dl_argc[TC],_dl_argc\n"					\
 ".LC__dl_argv:\n"							\
-"	.tc __GI__dl_argv[TC],__GI__dl_argv\n"				\
+"	.tc _dl_argv_internal[TC],_dl_argv_internal\n"			\
 ".LC__dl_fini:\n"							\
 "	.tc _dl_fini[TC],_dl_fini\n"					\
 "	.popsection\n"							\
@@ -294,7 +294,6 @@ BODY_PREFIX "_dl_start_user:\n"						\
 
 /* The PowerPC never uses REL relocations.  */
 #define ELF_MACHINE_NO_REL 1
-#define ELF_MACHINE_NO_RELA 0
 
 /* Stuff for the PLT.  */
 #if _CALL_ELF != 2
@@ -623,9 +622,7 @@ resolve_ifunc (Elf64_Addr value,
       opd.fd_func = func->fd_func + sym_map->l_addr;
       opd.fd_toc = func->fd_toc + sym_map->l_addr;
       opd.fd_aux = func->fd_aux;
-      /* GCC 4.9+ eliminates the branch as dead code, force the odp set
-         dependency.  */
-      asm ("" : "=r" (value) : "0" (&opd), "X" (opd));
+      value = (Elf64_Addr) &opd;
     }
 #endif
 #endif
@@ -658,7 +655,7 @@ elf_machine_rela (struct link_map *map,
       return;
     }
 
-  if (__glibc_unlikely (r_type == R_PPC64_NONE))
+  if (__builtin_expect (r_type == R_PPC64_NONE, 0))
     return;
 
   /* We need SYM_MAP even in the absence of TLS, for elf_machine_fixup_plt
@@ -683,13 +680,13 @@ elf_machine_rela (struct link_map *map,
       return;
 
     case R_PPC64_IRELATIVE:
-      if (__glibc_likely (!skip_ifunc))
+      if (__builtin_expect (!skip_ifunc, 1))
 	value = resolve_ifunc (value, map, sym_map);
       *reloc_addr = value;
       return;
 
     case R_PPC64_JMP_IREL:
-      if (__glibc_likely (!skip_ifunc))
+      if (__builtin_expect (!skip_ifunc, 1))
 	value = resolve_ifunc (value, map, sym_map);
       /* Fall thru */
     case R_PPC64_JMP_SLOT:

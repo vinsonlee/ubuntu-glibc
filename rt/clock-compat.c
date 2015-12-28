@@ -1,5 +1,5 @@
 /* ABI compatibility redirects for clock_* symbols in librt.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 
 #include <time.h>
 
-#if HAVE_IFUNC
+#ifdef HAVE_IFUNC
 # define COMPAT_REDIRECT(name, proto, arglist)				      \
   __typeof (name) *name##_ifunc (void) asm (#name);			      \
   __typeof (name) *name##_ifunc (void)					      \

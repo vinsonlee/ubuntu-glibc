@@ -1,5 +1,5 @@
 /* Change access and modification times of open file.  Linux version.
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -37,8 +37,7 @@ futimens (int fd, const struct timespec tsp[2])
       __set_errno (EBADF);
       return -1;
     }
-  /* Avoid implicit array coercion in syscall macros.  */
-  return INLINE_SYSCALL (utimensat, 4, fd, NULL, &tsp[0], 0);
+  return INLINE_SYSCALL (utimensat, 4, fd, NULL, tsp, 0);
 #else
   __set_errno (ENOSYS);
   return -1;

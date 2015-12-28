@@ -1,5 +1,5 @@
 /* Atomic operations.  PowerPC64 version.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Paul Mackerras <paulus@au.ibm.com>, 2003.
 
@@ -32,9 +32,6 @@
 # define MUTEX_HINT_ACQ
 # define MUTEX_HINT_REL
 #endif
-
-#define __HAVE_64B_ATOMICS 1
-#define USE_ATOMIC_COMPILER_BUILTINS 0
 
 /* The 32-bit exchange_bool is different on powerpc64 because the subf
    does signed 64-bit arithmetic while the lwarx is 32-bit unsigned
@@ -100,7 +97,7 @@
 ({									      \
   unsigned long	__tmp;							      \
   __asm __volatile (__ARCH_REL_INSTR "\n"				      \
-		    "1:	ldarx	%0,0,%1" MUTEX_HINT_REL "\n"		      \
+		    "1:	ldarx	%0,0,%2" MUTEX_HINT_REL "\n"		      \
 		    "	subf.	%0,%2,%0\n"				      \
 		    "	bne	2f\n"					      \
 		    "	stdcx.	%3,0,%1\n"				      \
@@ -186,34 +183,6 @@
       __val;								      \
     })
 
-#define __arch_atomic_exchange_and_add_64_acq(mem, value) \
-    ({									      \
-      __typeof (*mem) __val, __tmp;					      \
-      __asm __volatile ("1:	ldarx	%0,0,%3" MUTEX_HINT_ACQ "\n"	      \
-			"	add	%1,%0,%4\n"			      \
-			"	stdcx.	%1,0,%3\n"			      \
-			"	bne-	1b\n"				      \
-			__ARCH_ACQ_INSTR				      \
-			: "=&b" (__val), "=&r" (__tmp), "=m" (*mem)	      \
-			: "b" (mem), "r" (value), "m" (*mem)		      \
-			: "cr0", "memory");				      \
-      __val;								      \
-    })
-
-#define __arch_atomic_exchange_and_add_64_rel(mem, value) \
-    ({									      \
-      __typeof (*mem) __val, __tmp;					      \
-      __asm __volatile (__ARCH_REL_INSTR "\n"				      \
-			"1:	ldarx	%0,0,%3" MUTEX_HINT_REL "\n"	      \
-			"	add	%1,%0,%4\n"			      \
-			"	stdcx.	%1,0,%3\n"			      \
-			"	bne-	1b"				      \
-			: "=&b" (__val), "=&r" (__tmp), "=m" (*mem)	      \
-			: "b" (mem), "r" (value), "m" (*mem)		      \
-			: "cr0", "memory");				      \
-      __val;								      \
-    })
-
 #define __arch_atomic_increment_val_64(mem) \
     ({									      \
       __typeof (*(mem)) __val;						      \
@@ -265,7 +234,6 @@
 #ifndef UP
 # define __ARCH_REL_INSTR	"lwsync"
 #endif
-#define atomic_write_barrier()	__asm ("lwsync" ::: "memory")
 
 /*
  * Include the rest of the atomic ops macros which are common to both

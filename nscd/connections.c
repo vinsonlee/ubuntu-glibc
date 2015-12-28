@@ -1,5 +1,5 @@
 /* Inner loops of cache daemon.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -59,7 +59,6 @@
 #include <resolv/resolv.h>
 
 #include <kernel-features.h>
-#include <libc-internal.h>
 
 
 /* Support to run nscd as an unprivileged user */
@@ -319,6 +318,12 @@ enum usekey
     use_he = 1,
     use_he_begin = use_he | use_begin,
     use_he_end = use_he | use_end,
+#if SEPARATE_KEY
+    use_key = 2,
+    use_key_begin = use_key | use_begin,
+    use_key_end = use_key | use_end,
+    use_key_first = use_key_begin | use_first,
+#endif
     use_data = 3,
     use_data_begin = use_data | use_begin,
     use_data_end = use_data | use_end,
@@ -467,7 +472,16 @@ verify_persistent_db (void *mem, struct database_pers_head *readhead, int dbnr)
 	  if (here->key < here->packet + sizeof (struct datahead)
 	      || here->key > here->packet + dh->allocsize
 	      || here->key + here->len > here->packet + dh->allocsize)
-	    goto fail;
+	    {
+#if SEPARATE_KEY
+	      /* If keys can appear outside of data, this should be done
+		 instead.  But gc doesn't mark the data in that case.  */
+	      if (! check_use (data, head->first_free, usemap,
+			       use_key | (here->first ? use_first : 0),
+			       here->key, here->len))
+#endif
+		goto fail;
+	    }
 
 	  work = here->next;
 
@@ -487,6 +501,10 @@ verify_persistent_db (void *mem, struct database_pers_head *readhead, int dbnr)
      he->first == true hashentry.  */
   for (ref_t idx = 0; idx < head->first_free; ++idx)
     {
+#if SEPARATE_KEY
+      if (usemap[idx] == use_key_begin)
+	goto fail;
+#endif
       if (usemap[idx] == use_data_begin)
 	goto fail;
     }
@@ -631,8 +649,8 @@ cannot create read-only descriptor for \"%s\"; no mmap"),
 		  close (fd);
 	      }
 	    else if (errno == EACCES)
-	      do_exit (EXIT_FAILURE, 0, _("cannot access '%s'"),
-		       dbs[cnt].db_filename);
+	      error (EXIT_FAILURE, 0, _("cannot access '%s'"),
+		     dbs[cnt].db_filename);
 	  }
 
 	if (dbs[cnt].head == NULL)
@@ -681,7 +699,8 @@ cannot create read-only descriptor for \"%s\"; no mmap"),
 		  {
 		    dbg_log (_("database for %s corrupted or simultaneously used; remove %s manually if necessary and restart"),
 			     dbnames[cnt], dbs[cnt].db_filename);
-		    do_exit (1, 0, NULL);
+		    // XXX Correct way to terminate?
+		    exit (1);
 		  }
 
 		if  (dbs[cnt].persistent)
@@ -848,7 +867,7 @@ cannot set socket to close on exec: %s; disabling paranoia mode"),
   if (sock < 0)
     {
       dbg_log (_("cannot open socket: %s"), strerror (errno));
-      do_exit (errno == EACCES ? 4 : 1, 0, NULL);
+      exit (errno == EACCES ? 4 : 1);
     }
   /* Bind a name to the socket.  */
   struct sockaddr_un sock_addr;
@@ -857,7 +876,7 @@ cannot set socket to close on exec: %s; disabling paranoia mode"),
   if (bind (sock, (struct sockaddr *) &sock_addr, sizeof (sock_addr)) < 0)
     {
       dbg_log ("%s: %s", _PATH_NSCDSOCKET, strerror (errno));
-      do_exit (errno == EACCES ? 4 : 1, 0, NULL);
+      exit (errno == EACCES ? 4 : 1);
     }
 
 #ifndef __ASSUME_SOCK_CLOEXEC
@@ -869,7 +888,7 @@ cannot set socket to close on exec: %s; disabling paranoia mode"),
 	{
 	  dbg_log (_("cannot change socket to nonblocking mode: %s"),
 		   strerror (errno));
-	  do_exit (1, 0, NULL);
+	  exit (1);
 	}
 
       /* The descriptor needs to be closed on exec.  */
@@ -877,7 +896,7 @@ cannot set socket to close on exec: %s; disabling paranoia mode"),
 	{
 	  dbg_log (_("cannot set socket to close on exec: %s"),
 		   strerror (errno));
-	  do_exit (1, 0, NULL);
+	  exit (1);
 	}
     }
 #endif
@@ -890,7 +909,7 @@ cannot set socket to close on exec: %s; disabling paranoia mode"),
     {
       dbg_log (_("cannot enable socket to accept connections: %s"),
 	       strerror (errno));
-      do_exit (1, 0, NULL);
+      exit (1);
     }
 
 #ifdef HAVE_NETLINK
@@ -934,7 +953,7 @@ cannot set socket to close on exec: %s; disabling paranoia mode"),
 		      dbg_log (_("\
 cannot change socket to nonblocking mode: %s"),
 			       strerror (errno));
-		      do_exit (1, 0, NULL);
+		      exit (1);
 		    }
 
 		  /* The descriptor needs to be closed on exec.  */
@@ -943,7 +962,7 @@ cannot change socket to nonblocking mode: %s"),
 		    {
 		      dbg_log (_("cannot set socket to close on exec: %s"),
 			       strerror (errno));
-		      do_exit (1, 0, NULL);
+		      exit (1);
 		    }
 		}
 # endif
@@ -980,7 +999,7 @@ register_traced_file (size_t dbidx, struct traced_file *finfo)
   if (! dbs[dbidx].enabled || ! dbs[dbidx].check_file)
     return;
 
-  if (__glibc_unlikely (debug_level > 0))
+  if (__builtin_expect (debug_level > 0, 0))
     dbg_log (_("register trace file %s for database %s"),
 	     finfo->fname, dbnames[dbidx]);
 
@@ -1110,7 +1129,7 @@ send_ro_fd (struct database_dyn *db, char *key, int fd)
 #endif
   (void) TEMP_FAILURE_RETRY (sendmsg (fd, &msg, MSG_NOSIGNAL));
 
-  if (__glibc_unlikely (debug_level > 0))
+  if (__builtin_expect (debug_level > 0, 0))
     dbg_log (_("provide access to FD %d, for %s"), db->ro_fd, key);
 }
 #endif	/* SCM_RIGHTS */
@@ -1182,7 +1201,7 @@ request from '%s' [%ld] not handled due to missing permission"),
 	}
 
       /* Is this service enabled?  */
-      if (__glibc_unlikely (!db->enabled))
+      if (__builtin_expect (!db->enabled, 0))
 	{
 	  /* No, sent the prepared record.  */
 	  if (TEMP_FAILURE_RETRY (send (fd, db->disabled_iov->iov_base,
@@ -1201,7 +1220,7 @@ request from '%s' [%ld] not handled due to missing permission"),
 	}
 
       /* Be sure we can read the data.  */
-      if (__glibc_unlikely (pthread_rwlock_tryrdlock (&db->lock) != 0))
+      if (__builtin_expect (pthread_rwlock_tryrdlock (&db->lock) != 0, 0))
 	{
 	  ++db->head->rdlockdelayed;
 	  pthread_rwlock_rdlock (&db->lock);
@@ -1217,7 +1236,7 @@ request from '%s' [%ld] not handled due to missing permission"),
 	  ssize_t nwritten;
 
 #ifdef HAVE_SENDFILE
-	  if (__glibc_likely (db->mmap_used))
+	  if (__builtin_expect (db->mmap_used, 1))
 	    {
 	      assert (db->wr_fd != -1);
 	      assert ((char *) cached->data > (char *) db->data);
@@ -1465,7 +1484,7 @@ cannot change to old UID: %s; disabling paranoia mode"),
 cannot change to old GID: %s; disabling paranoia mode"),
 		   strerror (errno));
 
-	  ignore_value (setuid (server_uid));
+	  setuid (server_uid);
 	  paranoia = 0;
 	  return;
 	}
@@ -1480,8 +1499,8 @@ cannot change to old working directory: %s; disabling paranoia mode"),
 
       if (server_user != NULL)
 	{
-	  ignore_value (setuid (server_uid));
-	  ignore_value (setgid (server_gid));
+	  setuid (server_uid);
+	  setgid (server_gid);
 	}
       paranoia = 0;
       return;
@@ -1525,8 +1544,8 @@ cannot change to old working directory: %s; disabling paranoia mode"),
 
   if (server_user != NULL)
     {
-      ignore_value (setuid (server_uid));
-      ignore_value (setgid (server_gid));
+      setuid (server_uid);
+      setgid (server_gid);
     }
   if (chdir ("/") != 0)
     dbg_log (_("cannot change current working directory to \"/\": %s"),
@@ -1584,7 +1603,7 @@ nscd_run_prune (void *p)
   dbs[my_number].head->timestamp = now;
 
   struct timespec prune_ts;
-  if (__glibc_unlikely (clock_gettime (timeout_clock, &prune_ts) == -1))
+  if (__builtin_expect (clock_gettime (timeout_clock, &prune_ts) == -1, 0))
     /* Should never happen.  */
     abort ();
 
@@ -1637,7 +1656,7 @@ nscd_run_prune (void *p)
 	     we need to wake up occasionally to update the timestamp.
 	     Wait 90% of the update period.  */
 #define UPDATE_MAPPING_TIMEOUT (MAPPING_TIMEOUT * 9 / 10)
-	  if (__glibc_unlikely (! dont_need_update))
+	  if (__builtin_expect (! dont_need_update, 0))
 	    {
 	      next_wait = MIN (UPDATE_MAPPING_TIMEOUT, next_wait);
 	      dbs[my_number].head->timestamp = now;
@@ -1737,7 +1756,7 @@ nscd_run_worker (void *p)
 #ifdef SO_PEERCRED
       pid_t pid = 0;
 
-      if (__glibc_unlikely (debug_level > 0))
+      if (__builtin_expect (debug_level > 0, 0))
 	{
 	  struct ucred caller;
 	  socklen_t optlen = sizeof (caller);
@@ -1830,7 +1849,7 @@ fd_ready (int fd)
     }
 
   bool do_signal = true;
-  if (__glibc_unlikely (nready == 0))
+  if (__builtin_expect (nready == 0, 0))
     {
       ++client_queued;
       do_signal = false;
@@ -2245,7 +2264,7 @@ main_loop_epoll (int efd)
 						 sizeof (inev)));
 		if (nb < (ssize_t) sizeof (struct inotify_event))
 		  {
-		    if (__glibc_unlikely (nb == -1 && errno != EAGAIN))
+		    if (__builtin_expect (nb == -1 && errno != EAGAIN, 0))
 		      {
 			/* Something went wrong when reading the inotify
 			   data.  Better disable inotify.  */
@@ -2373,7 +2392,7 @@ start_threads (void)
       if (pthread_cond_init (&dbs[i].prune_cond, &condattr) != 0)
 	{
 	  dbg_log (_("could not initialize conditional variable"));
-	  do_exit (1, 0, NULL);
+	  exit (1);
 	}
 
       pthread_t th;
@@ -2381,7 +2400,7 @@ start_threads (void)
 	  && pthread_create (&th, &attr, nscd_run_prune, (void *) i) != 0)
 	{
 	  dbg_log (_("could not start clean-up thread; terminating"));
-	  do_exit (1, 0, NULL);
+	  exit (1);
 	}
     }
 
@@ -2395,16 +2414,12 @@ start_threads (void)
 	  if (i == 0)
 	    {
 	      dbg_log (_("could not start any worker thread; terminating"));
-	      do_exit (1, 0, NULL);
+	      exit (1);
 	    }
 
 	  break;
 	}
     }
-
-  /* Now it is safe to let the parent know that we're doing fine and it can
-     exit.  */
-  notify_parent (0);
 
   /* Determine how much room for descriptors we should initially
      allocate.  This might need to change later if we cap the number
@@ -2450,8 +2465,8 @@ begin_drop_privileges (void)
   if (pwd == NULL)
     {
       dbg_log (_("Failed to run nscd as user '%s'"), server_user);
-      do_exit (EXIT_FAILURE, 0,
-	       _("Failed to run nscd as user '%s'"), server_user);
+      error (EXIT_FAILURE, 0, _("Failed to run nscd as user '%s'"),
+	     server_user);
     }
 
   server_uid = pwd->pw_uid;
@@ -2468,8 +2483,7 @@ begin_drop_privileges (void)
     {
       /* This really must never happen.  */
       dbg_log (_("Failed to run nscd as user '%s'"), server_user);
-      do_exit (EXIT_FAILURE, errno,
-	       _("initial getgrouplist failed"));
+      error (EXIT_FAILURE, errno, _("initial getgrouplist failed"));
     }
 
   server_groups = (gid_t *) xmalloc (server_ngroups * sizeof (gid_t));
@@ -2478,7 +2492,7 @@ begin_drop_privileges (void)
       == -1)
     {
       dbg_log (_("Failed to run nscd as user '%s'"), server_user);
-      do_exit (EXIT_FAILURE, errno, _("getgrouplist failed"));
+      error (EXIT_FAILURE, errno, _("getgrouplist failed"));
     }
 }
 
@@ -2496,7 +2510,7 @@ finish_drop_privileges (void)
   if (setgroups (server_ngroups, server_groups) == -1)
     {
       dbg_log (_("Failed to run nscd as user '%s'"), server_user);
-      do_exit (EXIT_FAILURE, errno, _("setgroups failed"));
+      error (EXIT_FAILURE, errno, _("setgroups failed"));
     }
 
   int res;
@@ -2507,7 +2521,8 @@ finish_drop_privileges (void)
   if (res == -1)
     {
       dbg_log (_("Failed to run nscd as user '%s'"), server_user);
-      do_exit (4, errno, "setgid");
+      perror ("setgid");
+      exit (4);
     }
 
   if (paranoia)
@@ -2517,7 +2532,8 @@ finish_drop_privileges (void)
   if (res == -1)
     {
       dbg_log (_("Failed to run nscd as user '%s'"), server_user);
-      do_exit (4, errno, "setuid");
+      perror ("setuid");
+      exit (4);
     }
 
 #if defined HAVE_LIBAUDIT && defined HAVE_LIBCAP

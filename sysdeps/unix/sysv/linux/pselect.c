@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2006.
 
@@ -89,6 +89,7 @@ __pselect (int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
   return result;
 }
 weak_alias (__pselect, pselect)
+strong_alias (__pselect, __libc_pselect)
 
 # ifndef __ASSUME_PSELECT
 #  define __pselect static __generic_pselect
