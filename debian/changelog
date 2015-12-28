@@ -1,3 +1,31 @@
+glibc (2.19-18+deb8u2) stable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+    - Fix getaddrinfo sometimes returning uninitialized data with nscd.
+      Closes: #798515.
+    - Fix data corruption while reading the NSS files database
+      (CVE-2015-5277).  Closes: #799966.
+    - Fix buffer overflow (read past end of buffer) in internal_fnmatch.
+    - Fix  _IO_wstr_overflow integer overflow.
+    - Fix unexpected closing of nss_files databases after lookups, 
+      causing denial of service (CVE-2014-8121).  Closes: #779587.
+    - Fix NSCD netgroup cache.  Closes: #800523. 
+  * patches/any/cvs-ld_pointer_guard.diff: new patch from upstream to
+    unconditionally disable LD_POINTER_GUARD.  Closes: #798316, #801691.
+  * patches/any/cvs-mangle-tls_dtor_list.diff: new patch from upstream to
+    mangle function pointers in tls_dtor_list.  Closes: #802256.
+  * patches/any/cvs-strxfrm-buffer-overflows.diff: new patch from upstream
+    to fix memory allocations issues that can lead to buffer overflows on
+    the stack.  Closes: #803927.
+
+  [ Henrique de Moraes Holschuh ]
+  * Replace patches/amd64/local-blacklist-on-TSX-Haswell.diff by 
+    local-blacklist-for-Intel-TSX.diff also blacklisting some Broadwell
+    models.  Closes: #800574.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 28 Dec 2015 21:39:40 +0100
+
 glibc (2.19-18+deb8u1) stable; urgency=medium
 
   [ Aurelien Jarno ]
