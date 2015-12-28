@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Wolfram Gloger <wg@malloc.de>, 2001.
 
@@ -29,8 +29,8 @@ merror (const char *msg)
   printf ("Error: %s\n", msg);
 }
 
-static int
-do_test (void)
+int
+main (void)
 {
   void *p1, *p2;
   void *save_state;
@@ -79,6 +79,3 @@ do_test (void)
  * c-basic-offset: 2
  * End:
  */
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

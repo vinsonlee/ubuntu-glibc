@@ -1,5 +1,5 @@
 /* Common code for DB-based databases in nss_db module.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -191,12 +191,6 @@ enum nss_status								      \
       char *p = memcpy (buffer, valstr, len);				      \
 									      \
       int err = parse_line (p, result, data, buflen, errnop EXTRA_ARGS);      \
-									      \
-      /* Advance before break_if_match, lest it uses continue to skip
-	 to the next entry.  */						      \
-      if ((hidx += hval2) >= header->dbs[i].hashsize)			      \
-	hidx -= header->dbs[i].hashsize;				      \
-									      \
       if (err > 0)							      \
 	{								      \
 	  status = NSS_STATUS_SUCCESS;					      \
@@ -209,6 +203,9 @@ enum nss_status								      \
 	  status = NSS_STATUS_TRYAGAIN;					      \
 	  break;							      \
 	}								      \
+									      \
+      if ((hidx += hval2) >= header->dbs[i].hashsize)			      \
+	hidx -= header->dbs[i].hashsize;				      \
     }									      \
 									      \
   if (status == NSS_STATUS_NOTFOUND)					      \

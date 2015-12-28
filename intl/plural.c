@@ -50,7 +50,7 @@
 #define YYSKELETON_NAME "yacc.c"
 
 /* Pure parsers.  */
-#define YYPURE 2
+#define YYPURE 1
 
 /* Push parsers.  */
 #define YYPUSH 0
@@ -73,31 +73,31 @@
 #line 1 "plural.y"
 
 /* Expression parsing for plural form selection.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
    Written by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Lesser General Public License as published by
-   the Free Software Foundation; either version 2.1 of the License, or
-   (at your option) any later version.
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   The GNU C Library is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Lesser General Public License for more details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
 
-   You should have received a copy of the GNU Lesser General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
-/* For bison < 2.0, the bison generated parser uses alloca.  AIX 3 forces us
-   to put this declaration at the beginning of the file.  The declaration in
-   bison's skeleton file comes too late.  This must come before <config.h>
-   because <config.h> may include arbitrary system headers.
-   This can go away once the AM_INTL_SUBDIR macro requires bison >= 2.0.  */
+/* The bison generated parser uses alloca.  AIX 3 forces us to put this
+   declaration at the beginning of the file.  The declaration in bison's
+   skeleton file comes too late.  This must come before <config.h>
+   because <config.h> may include arbitrary system headers.  */
 #if defined _AIX && !defined __GNUC__
  #pragma alloca
 #endif
-
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
@@ -113,9 +113,11 @@
 # define __gettextparse PLURAL_PARSE
 #endif
 
+#define YYLEX_PARAM	&((struct parse_args *) arg)->cp
+#define YYPARSE_PARAM	arg
 
 /* Line 371 of yacc.c  */
-#line 119 "plural.c"
+#line 121 "plural.c"
 
 # ifndef YY_NULL
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -171,12 +173,12 @@ typedef union YYSTYPE
 #line 49 "plural.y"
 
   unsigned long int num;
-  enum expression_operator op;
+  enum operator op;
   struct expression *exp;
 
 
 /* Line 387 of yacc.c  */
-#line 180 "plural.c"
+#line 182 "plural.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -192,7 +194,7 @@ int __gettextparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int __gettextparse (struct parse_args *arg);
+int __gettextparse (void);
 #else
 int __gettextparse ();
 #endif
@@ -205,14 +207,28 @@ int __gettextparse ();
 #line 55 "plural.y"
 
 /* Prototypes for local functions.  */
-static int yylex (YYSTYPE *lval, struct parse_args *arg);
-static void yyerror (struct parse_args *arg, const char *str);
+static struct expression *new_exp PARAMS ((int nargs, enum operator op,
+					   struct expression * const *args));
+static inline struct expression *new_exp_0 PARAMS ((enum operator op));
+static inline struct expression *new_exp_1 PARAMS ((enum operator op,
+						   struct expression *right));
+static struct expression *new_exp_2 PARAMS ((enum operator op,
+					     struct expression *left,
+					     struct expression *right));
+static inline struct expression *new_exp_3 PARAMS ((enum operator op,
+						   struct expression *bexp,
+						   struct expression *tbranch,
+						   struct expression *fbranch));
+static int yylex PARAMS ((YYSTYPE *lval, const char **pexp));
+static void yyerror PARAMS ((const char *str));
 
 /* Allocation of expressions.  */
 
 static struct expression *
-new_exp (int nargs, enum expression_operator op,
-	 struct expression * const *args)
+new_exp (nargs, op, args)
+     int nargs;
+     enum operator op;
+     struct expression * const *args;
 {
   int i;
   struct expression *newp;
@@ -241,13 +257,16 @@ new_exp (int nargs, enum expression_operator op,
 }
 
 static inline struct expression *
-new_exp_0 (enum expression_operator op)
+new_exp_0 (op)
+     enum operator op;
 {
   return new_exp (0, op, NULL);
 }
 
 static inline struct expression *
-new_exp_1 (enum expression_operator op, struct expression *right)
+new_exp_1 (op, right)
+     enum operator op;
+     struct expression *right;
 {
   struct expression *args[1];
 
@@ -256,8 +275,10 @@ new_exp_1 (enum expression_operator op, struct expression *right)
 }
 
 static struct expression *
-new_exp_2 (enum expression_operator op, struct expression *left,
-	   struct expression *right)
+new_exp_2 (op, left, right)
+     enum operator op;
+     struct expression *left;
+     struct expression *right;
 {
   struct expression *args[2];
 
@@ -267,8 +288,11 @@ new_exp_2 (enum expression_operator op, struct expression *left,
 }
 
 static inline struct expression *
-new_exp_3 (enum expression_operator op, struct expression *bexp,
-	   struct expression *tbranch, struct expression *fbranch)
+new_exp_3 (op, bexp, tbranch, fbranch)
+     enum operator op;
+     struct expression *bexp;
+     struct expression *tbranch;
+     struct expression *fbranch;
 {
   struct expression *args[3];
 
@@ -280,7 +304,7 @@ new_exp_3 (enum expression_operator op, struct expression *bexp,
 
 
 /* Line 390 of yacc.c  */
-#line 284 "plural.c"
+#line 308 "plural.c"
 
 #ifdef short
 # undef short
@@ -572,8 +596,8 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   152,   152,   160,   164,   168,   172,   176,   180,   184,
-     188,   192,   196,   201
+       0,   174,   174,   182,   186,   190,   194,   198,   202,   206,
+     210,   214,   218,   223
 };
 #endif
 
@@ -722,7 +746,7 @@ do                                                              \
     }                                                           \
   else                                                          \
     {                                                           \
-      yyerror (arg, YY_("syntax error: cannot back up")); \
+      yyerror (YY_("syntax error: cannot back up")); \
       YYERROR;							\
     }								\
 while (YYID (0))
@@ -742,7 +766,7 @@ while (YYID (0))
 #ifdef YYLEX_PARAM
 # define YYLEX yylex (&yylval, YYLEX_PARAM)
 #else
-# define YYLEX yylex (&yylval, arg)
+# define YYLEX yylex (&yylval)
 #endif
 
 /* Enable debugging if requested.  */
@@ -765,7 +789,7 @@ do {									  \
     {									  \
       YYFPRINTF (stderr, "%s ", Title);					  \
       yy_symbol_print (stderr,						  \
-		  Type, Value, arg); \
+		  Type, Value); \
       YYFPRINTF (stderr, "\n");						  \
     }									  \
 } while (YYID (0))
@@ -779,21 +803,19 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, struct parse_args *arg)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
 #else
 static void
-yy_symbol_value_print (yyoutput, yytype, yyvaluep, arg)
+yy_symbol_value_print (yyoutput, yytype, yyvaluep)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
-    struct parse_args *arg;
 #endif
 {
   FILE *yyo = yyoutput;
   YYUSE (yyo);
   if (!yyvaluep)
     return;
-  YYUSE (arg);
 # ifdef YYPRINT
   if (yytype < YYNTOKENS)
     YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
@@ -815,14 +837,13 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, arg)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, struct parse_args *arg)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
 #else
 static void
-yy_symbol_print (yyoutput, yytype, yyvaluep, arg)
+yy_symbol_print (yyoutput, yytype, yyvaluep)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
-    struct parse_args *arg;
 #endif
 {
   if (yytype < YYNTOKENS)
@@ -830,7 +851,7 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, arg)
   else
     YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, arg);
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -873,13 +894,12 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule, struct parse_args *arg)
+yy_reduce_print (YYSTYPE *yyvsp, int yyrule)
 #else
 static void
-yy_reduce_print (yyvsp, yyrule, arg)
+yy_reduce_print (yyvsp, yyrule)
     YYSTYPE *yyvsp;
     int yyrule;
-    struct parse_args *arg;
 #endif
 {
   int yynrhs = yyr2[yyrule];
@@ -893,7 +913,7 @@ yy_reduce_print (yyvsp, yyrule, arg)
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
-		       , arg);
+				       );
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -901,7 +921,7 @@ yy_reduce_print (yyvsp, yyrule, arg)
 # define YY_REDUCE_PRINT(Rule)		\
 do {					\
   if (yydebug)				\
-    yy_reduce_print (yyvsp, Rule, arg); \
+    yy_reduce_print (yyvsp, Rule); \
 } while (YYID (0))
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1181,18 +1201,16 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, struct parse_args *arg)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
 #else
 static void
-yydestruct (yymsg, yytype, yyvaluep, arg)
+yydestruct (yymsg, yytype, yyvaluep)
     const char *yymsg;
     int yytype;
     YYSTYPE *yyvaluep;
-    struct parse_args *arg;
 #endif
 {
   YYUSE (yyvaluep);
-  YYUSE (arg);
 
   if (!yymsg)
     yymsg = "Deleting";
@@ -1227,11 +1245,11 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (struct parse_args *arg)
+yyparse (void)
 #else
 int
-yyparse (arg)
-    struct parse_args *arg;
+yyparse ()
+
 #endif
 #endif
 {
@@ -1501,17 +1519,17 @@ yyreduce:
     {
         case 2:
 /* Line 1792 of yacc.c  */
-#line 153 "plural.y"
+#line 175 "plural.y"
     {
 	    if ((yyvsp[(1) - (1)].exp) == NULL)
 	      YYABORT;
-	    arg->res = (yyvsp[(1) - (1)].exp);
+	    ((struct parse_args *) arg)->res = (yyvsp[(1) - (1)].exp);
 	  }
     break;
 
   case 3:
 /* Line 1792 of yacc.c  */
-#line 161 "plural.y"
+#line 183 "plural.y"
     {
 	    (yyval.exp) = new_exp_3 (qmop, (yyvsp[(1) - (5)].exp), (yyvsp[(3) - (5)].exp), (yyvsp[(5) - (5)].exp));
 	  }
@@ -1519,7 +1537,7 @@ yyreduce:
 
   case 4:
 /* Line 1792 of yacc.c  */
-#line 165 "plural.y"
+#line 187 "plural.y"
     {
 	    (yyval.exp) = new_exp_2 (lor, (yyvsp[(1) - (3)].exp), (yyvsp[(3) - (3)].exp));
 	  }
@@ -1527,7 +1545,7 @@ yyreduce:
 
   case 5:
 /* Line 1792 of yacc.c  */
-#line 169 "plural.y"
+#line 191 "plural.y"
     {
 	    (yyval.exp) = new_exp_2 (land, (yyvsp[(1) - (3)].exp), (yyvsp[(3) - (3)].exp));
 	  }
@@ -1535,7 +1553,7 @@ yyreduce:
 
   case 6:
 /* Line 1792 of yacc.c  */
-#line 173 "plural.y"
+#line 195 "plural.y"
     {
 	    (yyval.exp) = new_exp_2 ((yyvsp[(2) - (3)].op), (yyvsp[(1) - (3)].exp), (yyvsp[(3) - (3)].exp));
 	  }
@@ -1543,7 +1561,7 @@ yyreduce:
 
   case 7:
 /* Line 1792 of yacc.c  */
-#line 177 "plural.y"
+#line 199 "plural.y"
     {
 	    (yyval.exp) = new_exp_2 ((yyvsp[(2) - (3)].op), (yyvsp[(1) - (3)].exp), (yyvsp[(3) - (3)].exp));
 	  }
@@ -1551,7 +1569,7 @@ yyreduce:
 
   case 8:
 /* Line 1792 of yacc.c  */
-#line 181 "plural.y"
+#line 203 "plural.y"
     {
 	    (yyval.exp) = new_exp_2 ((yyvsp[(2) - (3)].op), (yyvsp[(1) - (3)].exp), (yyvsp[(3) - (3)].exp));
 	  }
@@ -1559,7 +1577,7 @@ yyreduce:
 
   case 9:
 /* Line 1792 of yacc.c  */
-#line 185 "plural.y"
+#line 207 "plural.y"
     {
 	    (yyval.exp) = new_exp_2 ((yyvsp[(2) - (3)].op), (yyvsp[(1) - (3)].exp), (yyvsp[(3) - (3)].exp));
 	  }
@@ -1567,7 +1585,7 @@ yyreduce:
 
   case 10:
 /* Line 1792 of yacc.c  */
-#line 189 "plural.y"
+#line 211 "plural.y"
     {
 	    (yyval.exp) = new_exp_1 (lnot, (yyvsp[(2) - (2)].exp));
 	  }
@@ -1575,7 +1593,7 @@ yyreduce:
 
   case 11:
 /* Line 1792 of yacc.c  */
-#line 193 "plural.y"
+#line 215 "plural.y"
     {
 	    (yyval.exp) = new_exp_0 (var);
 	  }
@@ -1583,7 +1601,7 @@ yyreduce:
 
   case 12:
 /* Line 1792 of yacc.c  */
-#line 197 "plural.y"
+#line 219 "plural.y"
     {
 	    if (((yyval.exp) = new_exp_0 (num)) != NULL)
 	      (yyval.exp)->val.num = (yyvsp[(1) - (1)].num);
@@ -1592,7 +1610,7 @@ yyreduce:
 
   case 13:
 /* Line 1792 of yacc.c  */
-#line 202 "plural.y"
+#line 224 "plural.y"
     {
 	    (yyval.exp) = (yyvsp[(2) - (3)].exp);
 	  }
@@ -1600,7 +1618,7 @@ yyreduce:
 
 
 /* Line 1792 of yacc.c  */
-#line 1604 "plural.c"
+#line 1622 "plural.c"
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1650,7 +1668,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (arg, YY_("syntax error"));
+      yyerror (YY_("syntax error"));
 #else
 # define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
                                         yyssp, yytoken)
@@ -1677,7 +1695,7 @@ yyerrlab:
                 yymsgp = yymsg;
               }
           }
-        yyerror (arg, yymsgp);
+        yyerror (yymsgp);
         if (yysyntax_error_status == 2)
           goto yyexhaustedlab;
       }
@@ -1701,7 +1719,7 @@ yyerrlab:
       else
 	{
 	  yydestruct ("Error: discarding",
-		      yytoken, &yylval, arg);
+		      yytoken, &yylval);
 	  yychar = YYEMPTY;
 	}
     }
@@ -1757,7 +1775,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-		  yystos[yystate], yyvsp, arg);
+		  yystos[yystate], yyvsp);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1794,7 +1812,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (arg, YY_("memory exhausted"));
+  yyerror (YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -1806,7 +1824,7 @@ yyreturn:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval, arg);
+                  yytoken, &yylval);
     }
   /* Do not reclaim the symbols of the rule which action triggered
      this YYABORT or YYACCEPT.  */
@@ -1815,7 +1833,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-		  yystos[*yyssp], yyvsp, arg);
+		  yystos[*yyssp], yyvsp);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -1832,12 +1850,13 @@ yyreturn:
 
 
 /* Line 2055 of yacc.c  */
-#line 207 "plural.y"
+#line 229 "plural.y"
 
 
 void
 internal_function
-FREE_EXPRESSION (struct expression *exp)
+FREE_EXPRESSION (exp)
+     struct expression *exp;
 {
   if (exp == NULL)
     return;
@@ -1863,16 +1882,18 @@ FREE_EXPRESSION (struct expression *exp)
 
 
 static int
-yylex (YYSTYPE *lval, struct parse_args *arg)
+yylex (lval, pexp)
+     YYSTYPE *lval;
+     const char **pexp;
 {
-  const char *exp = arg->cp;
+  const char *exp = *pexp;
   int result;
 
   while (1)
     {
       if (exp[0] == '\0')
 	{
-	  arg->cp = exp;
+	  *pexp = exp;
 	  return YYEOF;
 	}
 
@@ -1999,14 +2020,15 @@ yylex (YYSTYPE *lval, struct parse_args *arg)
       break;
     }
 
-  arg->cp = exp;
+  *pexp = exp;
 
   return result;
 }
 
 
 static void
-yyerror (struct parse_args *arg, const char *str)
+yyerror (str)
+     const char *str;
 {
   /* Do nothing.  We don't print error messages here.  */
 }

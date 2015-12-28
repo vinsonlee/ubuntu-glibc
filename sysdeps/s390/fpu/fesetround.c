@@ -1,5 +1,5 @@
 /* Set current rounding direction.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Denis Joseph Barrow (djbarrow@de.ibm.com).
 
@@ -21,7 +21,7 @@
 #include <fpu_control.h>
 
 int
-__fesetround (int round)
+fesetround (int round)
 {
   if ((round|FPC_RM_MASK) != FPC_RM_MASK)
     {
@@ -34,6 +34,4 @@ __fesetround (int round)
 
   return 0;
 }
-libm_hidden_def (__fesetround)
-weak_alias (__fesetround, fesetround)
-libm_hidden_weak (fesetround)
+libm_hidden_def (fesetround)

@@ -1,5 +1,5 @@
 /* Utilities for reading/writing fstab, mtab, etc.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -127,7 +127,7 @@ __getmntent_r (FILE *stream, struct mntent *mp, char *buffer, int bufsiz)
     {
       char *end_ptr;
 
-      if (__fgets_unlocked (buffer, bufsiz, stream) == NULL)
+      if (fgets_unlocked (buffer, bufsiz, stream) == NULL)
 	{
 	  funlockfile (stream);
 	  return NULL;
@@ -135,16 +135,12 @@ __getmntent_r (FILE *stream, struct mntent *mp, char *buffer, int bufsiz)
 
       end_ptr = strchr (buffer, '\n');
       if (end_ptr != NULL)	/* chop newline */
-	{
-	  while (end_ptr[-1] == ' ' || end_ptr[-1] == '\t')
-            end_ptr--;
-	  *end_ptr = '\0';
-	}
+	*end_ptr = '\0';
       else
 	{
 	  /* Not the whole line was read.  Do it now but forget it.  */
 	  char tmp[1024];
-	  while (__fgets_unlocked (tmp, sizeof tmp, stream) != NULL)
+	  while (fgets_unlocked (tmp, sizeof tmp, stream) != NULL)
 	    if (strchr (tmp, '\n') != NULL)
 	      break;
 	}

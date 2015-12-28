@@ -1,6 +1,6 @@
 /* An alternative to qsort, with an identical interface.
    This file is part of the GNU C Library.
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
    Written by Mike Haertel, September 1988.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -162,7 +162,7 @@ msort_with_tmp (const struct msort_param *p, void *b, size_t n)
 
 
 void
-__qsort_r (void *b, size_t n, size_t s, __compar_d_fn_t cmp, void *arg)
+qsort_r (void *b, size_t n, size_t s, __compar_d_fn_t cmp, void *arg)
 {
   size_t size = n * s;
   char *tmp = NULL;
@@ -298,13 +298,12 @@ __qsort_r (void *b, size_t n, size_t s, __compar_d_fn_t cmp, void *arg)
     }
   free (tmp);
 }
-libc_hidden_def (__qsort_r)
-weak_alias (__qsort_r, qsort_r)
+libc_hidden_def (qsort_r)
 
 
 void
 qsort (void *b, size_t n, size_t s, __compar_fn_t cmp)
 {
-  return __qsort_r (b, n, s, (__compar_d_fn_t) cmp, NULL);
+  return qsort_r (b, n, s, (__compar_d_fn_t) cmp, NULL);
 }
 libc_hidden_def (qsort)
