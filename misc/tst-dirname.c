@@ -1,5 +1,5 @@
 /* Test program for dirname function a la XPG.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -37,8 +37,8 @@ test (const char *input, const char *result)
   return retval;
 }
 
-static int
-do_test (void)
+int
+main (void)
 {
   int result = 0;
 
@@ -67,6 +67,3 @@ do_test (void)
 
   return result != 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

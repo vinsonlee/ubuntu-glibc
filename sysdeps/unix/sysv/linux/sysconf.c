@@ -1,5 +1,5 @@
 /* Get file-specific information about a file.  Linux version.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/resource.h>
-#include <sys/param.h>
 #include <not-cancel.h>
 #include <ldsodefs.h>
 
@@ -89,9 +88,15 @@ __sysconf (int name)
       return HAS_CPUCLOCK (name);
 
     case _SC_ARG_MAX:
-      /* Use getrlimit to get the stack limit.  */
-      if (__getrlimit (RLIMIT_STACK, &rlimit) == 0)
-	return MAX (legacy_ARG_MAX, rlimit.rlim_cur / 4);
+#if !__ASSUME_ARG_MAX_STACK_BASED
+      /* Determine whether this is a kernel with an argument limit
+	 determined by the stack size.  */
+      if (GLRO(dl_discover_osversion) ()
+	  >= __LINUX_ARG_MAX_STACK_BASED_MIN_KERNEL)
+#endif
+	/* Use getrlimit to get the stack limit.  */
+	if (__getrlimit (RLIMIT_STACK, &rlimit) == 0)
+	  return MAX (legacy_ARG_MAX, rlimit.rlim_cur / 4);
 
       return legacy_ARG_MAX;
 

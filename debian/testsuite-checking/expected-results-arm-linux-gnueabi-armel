@@ -1,20 +1,18 @@
 #
-# Allowed failures for arm-linux-gnueabi-armel
+# Allowed failures for arm-linux-gnueabi-armel and the returned make
+# failure number, indicating the signal the process died with.
+# Format: <Failed test>, Error <Make error code> [(ignored)]
 #
-posix/annexc
-elf/check-localplt
-debug/tst-backtrace6
-rt/tst-cpuclock2
-rt/tst-cputimer1
-math/test-misc
-rt/tst-mqueue5
-rt/tst-timer
-posix/tst-waitid
-nptl/tst-stack4
+annexc.out, Error 1 (ignored)
+check-localplt.out, Error 1
+run-conformtest.out, Error 1 (ignored)
+tst-backtrace6.out, Error 1
+tst-cpuclock2.out, Error 1
+tst-cputimer1.out, Error 1
+test-misc.out, Error 1
+tst-mqueue5.out, Error 1
+tst-timer.out, Error 139
+tst-waitid.out, Error 1
 
 # This can be removed once bug#748616 is fixed
-math/basic-test
-
-# This is an upstream regression on multiple architectures
-# see https://sourceware.org/bugzilla/show_bug.cgi?id=19303
-nptl/tst-cancel24-static
+basic-test.out, Error 1

@@ -32,45 +32,175 @@ $as_echo "$ac_res" >&6; }
 # This file is generated from configure.ac by Autoconf.  DO NOT EDIT!
  # Local configure fragment for sysdeps/unix/sysv/linux.
 
+# Don't bother trying to generate any glue code to be compatible with the
+# existing system library, because we are the only system library.
+inhibit_glue=yes
+
 if test -n "$sysheaders"; then
   OLD_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="$CPPFLAGS $SYSINCLUDES"
 fi
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for grep that handles long lines and -e" >&5
+$as_echo_n "checking for grep that handles long lines and -e... " >&6; }
+if ${ac_cv_path_GREP+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -z "$GREP"; then
+  ac_path_GREP_found=false
+  # Loop through the user's path and test for each of PROGNAME-LIST
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_prog in grep ggrep; do
+    for ac_exec_ext in '' $ac_executable_extensions; do
+      ac_path_GREP="$as_dir/$ac_prog$ac_exec_ext"
+      { test -f "$ac_path_GREP" && $as_test_x "$ac_path_GREP"; } || continue
+# Check for GNU ac_path_GREP and select it if it is found.
+  # Check for GNU $ac_path_GREP
+case `"$ac_path_GREP" --version 2>&1` in
+*GNU*)
+  ac_cv_path_GREP="$ac_path_GREP" ac_path_GREP_found=:;;
+*)
+  ac_count=0
+  $as_echo_n 0123456789 >"conftest.in"
+  while :
+  do
+    cat "conftest.in" "conftest.in" >"conftest.tmp"
+    mv "conftest.tmp" "conftest.in"
+    cp "conftest.in" "conftest.nl"
+    $as_echo 'GREP' >> "conftest.nl"
+    "$ac_path_GREP" -e 'GREP$' -e '-(cannot match)-' < "conftest.nl" >"conftest.out" 2>/dev/null || break
+    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
+    as_fn_arith $ac_count + 1 && ac_count=$as_val
+    if test $ac_count -gt ${ac_path_GREP_max-0}; then
+      # Best one so far, save it but keep looking for a better one
+      ac_cv_path_GREP="$ac_path_GREP"
+      ac_path_GREP_max=$ac_count
+    fi
+    # 10*(2^10) chars as input seems more than enough
+    test $ac_count -gt 10 && break
+  done
+  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
+esac
+
+      $ac_path_GREP_found && break 3
+    done
+  done
+  done
+IFS=$as_save_IFS
+  if test -z "$ac_cv_path_GREP"; then
+    as_fn_error $? "no acceptable grep could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" "$LINENO" 5
+  fi
+else
+  ac_cv_path_GREP=$GREP
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_path_GREP" >&5
+$as_echo "$ac_cv_path_GREP" >&6; }
+ GREP="$ac_cv_path_GREP"
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for egrep" >&5
+$as_echo_n "checking for egrep... " >&6; }
+if ${ac_cv_path_EGREP+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if echo a | $GREP -E '(a|b)' >/dev/null 2>&1
+   then ac_cv_path_EGREP="$GREP -E"
+   else
+     if test -z "$EGREP"; then
+  ac_path_EGREP_found=false
+  # Loop through the user's path and test for each of PROGNAME-LIST
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_prog in egrep; do
+    for ac_exec_ext in '' $ac_executable_extensions; do
+      ac_path_EGREP="$as_dir/$ac_prog$ac_exec_ext"
+      { test -f "$ac_path_EGREP" && $as_test_x "$ac_path_EGREP"; } || continue
+# Check for GNU ac_path_EGREP and select it if it is found.
+  # Check for GNU $ac_path_EGREP
+case `"$ac_path_EGREP" --version 2>&1` in
+*GNU*)
+  ac_cv_path_EGREP="$ac_path_EGREP" ac_path_EGREP_found=:;;
+*)
+  ac_count=0
+  $as_echo_n 0123456789 >"conftest.in"
+  while :
+  do
+    cat "conftest.in" "conftest.in" >"conftest.tmp"
+    mv "conftest.tmp" "conftest.in"
+    cp "conftest.in" "conftest.nl"
+    $as_echo 'EGREP' >> "conftest.nl"
+    "$ac_path_EGREP" 'EGREP$' < "conftest.nl" >"conftest.out" 2>/dev/null || break
+    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
+    as_fn_arith $ac_count + 1 && ac_count=$as_val
+    if test $ac_count -gt ${ac_path_EGREP_max-0}; then
+      # Best one so far, save it but keep looking for a better one
+      ac_cv_path_EGREP="$ac_path_EGREP"
+      ac_path_EGREP_max=$ac_count
+    fi
+    # 10*(2^10) chars as input seems more than enough
+    test $ac_count -gt 10 && break
+  done
+  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
+esac
+
+      $ac_path_EGREP_found && break 3
+    done
+  done
+  done
+IFS=$as_save_IFS
+  if test -z "$ac_cv_path_EGREP"; then
+    as_fn_error $? "no acceptable egrep could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" "$LINENO" 5
+  fi
+else
+  ac_cv_path_EGREP=$EGREP
+fi
+
+   fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_path_EGREP" >&5
+$as_echo "$ac_cv_path_EGREP" >&6; }
+ EGREP="$ac_cv_path_EGREP"
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking installed Linux kernel header files" >&5
 $as_echo_n "checking installed Linux kernel header files... " >&6; }
-if ${libc_cv_linux2632+:} false; then :
+if ${libc_cv_linux2619+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <linux/version.h>
-#if !defined LINUX_VERSION_CODE || LINUX_VERSION_CODE <  (2 *65536+ 6 *256+ 32) /* 2.6.32 */
-# error kernel headers missing or too old
+#if !defined LINUX_VERSION_CODE || LINUX_VERSION_CODE <  (2 *65536+ 6 *256+ 19) /* 2.6.19 */
+eat flaming death
 #endif
-int
-main ()
-{
-
-  ;
-  return 0;
-}
 _ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  libc_cv_linux2632='2.6.32 or later'
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "eat flaming death" >/dev/null 2>&1; then :
+  libc_cv_linux2619='TOO OLD!'
 else
-  libc_cv_linux2632='missing or too old!'
+  libc_cv_linux2619='2.6.19 or later'
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -f conftest*
+
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libc_cv_linux2632" >&5
-$as_echo "$libc_cv_linux2632" >&6; }
-if test "$libc_cv_linux2632" != '2.6.32 or later'; then
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libc_cv_linux2619" >&5
+$as_echo "$libc_cv_linux2619" >&6; }
+if test "$libc_cv_linux2619" != '2.6.19 or later'; then
   as_fn_error $? "GNU libc requires kernel header files from
-Linux 2.6.32 or later to be installed before configuring.
+Linux 2.6.19 or later to be installed before configuring.
 The kernel header files are found usually in /usr/include/asm and
 /usr/include/linux; make sure these directories use files from
-Linux 2.6.32 or later.  This check uses <linux/version.h>, so
+Linux 2.6.19 or later.  This check uses <linux/version.h>, so
 make sure that file was built correctly when installing the kernel header
 files.  To use kernel headers not from /usr/include/linux, use the
 configure option --with-headers." "$LINENO" 5
@@ -82,7 +212,43 @@ fi
 # set arch_minimum_kernel already, let that override our defaults here.
 # Note that we presume such a fragment has set libc_cv_gcc_unwind_find_fde
 # if appropriate too.
-test -n "$arch_minimum_kernel" || arch_minimum_kernel=2.6.32
+test -n "$arch_minimum_kernel" ||
+case "$machine" in
+  i386*)
+    libc_cv_gcc_unwind_find_fde=yes
+    arch_minimum_kernel=2.6.16
+    ;;
+  x86_64/x32)
+    arch_minimum_kernel=3.4.0
+    ;;
+  powerpc/powerpc32*)
+    libc_cv_gcc_unwind_find_fde=yes
+    arch_minimum_kernel=2.6.16
+    ;;
+  s390/s390-32)
+    libc_cv_gcc_unwind_find_fde=yes
+    arch_minimum_kernel=2.6.16
+    ;;
+  s390/s390-64)
+    libc_cv_gcc_unwind_find_fde=yes
+    arch_minimum_kernel=2.6.16
+    ;;
+  sh*)
+    arch_minimum_kernel=2.6.16
+    libc_cv_gcc_unwind_find_fde=yes
+    ;;
+  sparc/sparc64*)
+    libc_cv_gcc_unwind_find_fde=yes
+    arch_minimum_kernel=2.6.16
+    ;;
+  sparc*)
+    libc_cv_gcc_unwind_find_fde=yes
+    arch_minimum_kernel=2.6.16
+    ;;
+  *)
+    arch_minimum_kernel=2.6.16
+    ;;
+esac
 if test -n "$minimum_kernel"; then
 
   user_version=$((`echo "$minimum_kernel.0.0.0" | sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\1 \* 65536 + \2 \* 256 + \3/'`))
@@ -105,22 +271,17 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <linux/version.h>
 #if LINUX_VERSION_CODE < $decnum
-# error kernel headers too old
+eat flaming death
 #endif
-int
-main ()
-{
-
-  ;
-  return 0;
-}
 _ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  libc_minimum_kernel=ok
-else
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "eat flaming death" >/dev/null 2>&1; then :
   libc_minimum_kernel='too old!'
+else
+  libc_minimum_kernel=ok
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -f conftest*
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $libc_minimum_kernel" >&5
 $as_echo "$libc_minimum_kernel" >&6; }
 if test "$libc_minimum_kernel" = ok; then
@@ -148,8 +309,41 @@ fi
 
 
 
+# The result of the above test for the use of the FDE code is invalid if
+# the user overrides the decision about the minimum ABI.
+if test "$oldest_abi" != default && test "2.2.4" \< "$oldest_abi"; then
+  libc_cv_gcc_unwind_find_fde=no
+fi
+
 if test -n "$sysheaders"; then
   CPPFLAGS=$OLD_CPPFLAGS
+fi
+
+# Under Linux the NPTL add-on should be available.
+case $add_ons in
+  # It is available.  Good.
+  *nptl*)
+    nptl_missing=
+    ;;
+  *)
+    nptl_missing=yes
+    ;;
+esac
+
+if test "$nptl_missing"; then
+  if test $enable_sanity = yes; then
+    echo "\
+*** On GNU/Linux systems it is normal to compile GNU libc with the
+*** \`nptl' add-on.  Without that, the library will be
+*** incompatible with normal GNU/Linux systems.
+*** If you really mean to not use this add-on, run configure again
+*** using the extra parameter \`--disable-sanity-checks'."
+    exit 1
+  else
+    echo "\
+*** WARNING: Are you sure you do not want to use the \`nptl'
+*** add-on?"
+  fi
 fi
 
 if test "$prefix" = "/usr/local" -o "$prefix" = "/usr/local/" -o "$prefix" = "NONE"; then
@@ -171,6 +365,29 @@ fi
 
 # One Linux we use ldconfig.
 use_ldconfig=yes
+
+# We need some extensions to the `ldd' script.
+
+case "$machine" in
+  i[3456]86*)
+    ldd_rewrite_script=sysdeps/unix/sysv/linux/ldd-rewrite.sed
+    ;;
+  s390*)
+    ldd_rewrite_script=sysdeps/unix/sysv/linux/s390/ldd-rewrite.sed
+    ;;
+  sparc*)
+    ldd_rewrite_script=sysdeps/unix/sysv/linux/sparc/ldd-rewrite.sed
+    ;;
+  x86_64*)
+    ldd_rewrite_script=sysdeps/unix/sysv/linux/x86_64/ldd-rewrite.sed
+    ;;
+  powerpc*)
+    ldd_rewrite_script=sysdeps/unix/sysv/linux/powerpc/ldd-rewrite.sed
+    ;;
+  *)
+    ;;
+esac
+
 
 if test $host = $build; then
   # If $prefix/include/{net,scsi} are symlinks, make install will

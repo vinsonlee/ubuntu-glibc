@@ -1,5 +1,5 @@
 /* Processor capability information handling macros.  PowerPC version.
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -166,7 +166,7 @@ _dl_string_platform (const char *str)
   return -1;
 }
 
-#if IS_IN (rtld)
+#ifdef IS_IN_rtld
 static inline int
 __attribute__ ((unused))
 _dl_procinfo (unsigned int type, unsigned long int word)
