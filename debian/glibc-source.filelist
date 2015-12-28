@@ -25,6 +25,10 @@ debian/libc6.symbols.mipsel
 debian/libc6.symbols.powerpc
 debian/libc6.symbols.sparc
 debian/libc6.symbols.sparc64
+debian/README
+debian/README.source
+debian/TODO
+debian/bug
 debian/changelog
 debian/changelog.upstream
 debian/compat
@@ -32,8 +36,10 @@ debian/control
 debian/control.in
 debian/copyright
 debian/debhelper.in
+debian/debver2localesdep.pl
 debian/generate-supported.mk
 debian/local
+debian/locales-depver
 debian/patches
 debian/po
 debian/quiltrc
@@ -41,8 +47,10 @@ debian/rules
 debian/rules.d
 debian/script.in
 debian/shlibs-add-udebs
+debian/shlibver
 debian/source
 debian/symbols.wildcards
 debian/sysdeps
 debian/testsuite-checking
 debian/watch
+debian/wrapper

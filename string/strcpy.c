@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,13 +17,27 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <memcopy.h>
 
 #undef strcpy
 
 /* Copy SRC to DEST.  */
 char *
-strcpy (char *dest, const char *src)
+strcpy (dest, src)
+     char *dest;
+     const char *src;
 {
-  return memcpy (dest, src, strlen (src) + 1);
+  char c;
+  char *s = (char *) src;
+  const ptrdiff_t off = dest - s - 1;
+
+  do
+    {
+      c = *s++;
+      s[off] = c;
+    }
+  while (c != '\0');
+
+  return dest;
 }
 libc_hidden_builtin_def (strcpy)

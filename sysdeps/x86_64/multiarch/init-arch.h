@@ -1,5 +1,5 @@
 /* This file is part of the GNU C Library.
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -24,8 +24,6 @@
 #define bit_FMA_Usable			(1 << 7)
 #define bit_FMA4_Usable			(1 << 8)
 #define bit_Slow_SSE4_2			(1 << 9)
-#define bit_AVX2_Usable			(1 << 10)
-#define bit_AVX_Fast_Unaligned_Load	(1 << 11)
 
 /* CPUID Feature flags.  */
 
@@ -42,17 +40,10 @@
 
 /* COMMON_CPUID_INDEX_7.  */
 #define bit_RTM		(1 << 11)
-#define bit_AVX2	(1 << 5)
 
 /* XCR0 Feature flags.  */
 #define bit_XMM_state  (1 << 1)
 #define bit_YMM_state  (2 << 1)
-
-/* The integer bit array index for the first set of internal feature bits.  */
-# define FEATURE_INDEX_1 0
-
-/* The current maximum size of the feature integer bit array.  */
-# define FEATURE_INDEX_MAX 1
 
 #ifdef	__ASSEMBLER__
 
@@ -63,7 +54,6 @@
 # define index_SSE4_1	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_ECX_OFFSET
 # define index_SSE4_2	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_ECX_OFFSET
 # define index_AVX	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_ECX_OFFSET
-# define index_AVX2	COMMON_CPUID_INDEX_7*CPUID_SIZE+CPUID_EBX_OFFSET
 
 # define index_Fast_Rep_String		FEATURE_INDEX_1*FEATURE_SIZE
 # define index_Fast_Copy_Backward	FEATURE_INDEX_1*FEATURE_SIZE
@@ -74,8 +64,6 @@
 # define index_FMA_Usable		FEATURE_INDEX_1*FEATURE_SIZE
 # define index_FMA4_Usable		FEATURE_INDEX_1*FEATURE_SIZE
 # define index_Slow_SSE4_2		FEATURE_INDEX_1*FEATURE_SIZE
-# define index_AVX2_Usable		FEATURE_INDEX_1*FEATURE_SIZE
-# define index_AVX_Fast_Unaligned_Load	FEATURE_INDEX_1*FEATURE_SIZE
 
 #else	/* __ASSEMBLER__ */
 
@@ -88,6 +76,13 @@ enum
     COMMON_CPUID_INDEX_80000001,	/* for AMD */
     /* Keep the following line at the end.  */
     COMMON_CPUID_INDEX_MAX
+  };
+
+enum
+  {
+    FEATURE_INDEX_1 = 0,
+    /* Keep the following line at the end.  */
+    FEATURE_INDEX_MAX
   };
 
 extern struct cpu_features
@@ -124,7 +119,7 @@ extern void __init_cpu_features (void) attribute_hidden;
 extern const struct cpu_features *__get_cpu_features (void)
      __attribute__ ((const));
 
-# if IS_IN (libc)
+# ifndef NOT_IN_libc
 #  define __get_cpu_features()	(&__cpu_features)
 # endif
 
@@ -150,8 +145,6 @@ extern const struct cpu_features *__get_cpu_features (void)
   HAS_CPUID_FLAG (COMMON_CPUID_INDEX_80000001, ecx, bit_FMA4)
 # define CPUID_RTM \
   HAS_CPUID_FLAG (COMMON_CPUID_INDEX_7, ebx, bit_RTM)
-# define CPUID_AVX2 \
-  HAS_CPUID_FLAG (COMMON_CPUID_INDEX_7, ebx, bit_AVX2)
 
 /* HAS_* evaluates to true if we may use the feature at runtime.  */
 # define HAS_SSE2	HAS_CPU_FEATURE (COMMON_CPUID_INDEX_1, edx, bit_SSE2)
@@ -170,8 +163,6 @@ extern const struct cpu_features *__get_cpu_features (void)
 # define index_FMA_Usable		FEATURE_INDEX_1
 # define index_FMA4_Usable		FEATURE_INDEX_1
 # define index_Slow_SSE4_2		FEATURE_INDEX_1
-# define index_AVX2_Usable		FEATURE_INDEX_1
-# define index_AVX_Fast_Unaligned_Load	FEATURE_INDEX_1
 
 # define HAS_ARCH_FEATURE(name) \
   ((__get_cpu_features ()->feature[index_##name] & (bit_##name)) != 0)
@@ -181,9 +172,7 @@ extern const struct cpu_features *__get_cpu_features (void)
 # define HAS_SLOW_BSF			HAS_ARCH_FEATURE (Slow_BSF)
 # define HAS_FAST_UNALIGNED_LOAD	HAS_ARCH_FEATURE (Fast_Unaligned_Load)
 # define HAS_AVX			HAS_ARCH_FEATURE (AVX_Usable)
-# define HAS_AVX2			HAS_ARCH_FEATURE (AVX2_Usable)
 # define HAS_FMA			HAS_ARCH_FEATURE (FMA_Usable)
 # define HAS_FMA4			HAS_ARCH_FEATURE (FMA4_Usable)
-# define HAS_AVX_FAST_UNALIGNED_LOAD	HAS_ARCH_FEATURE (AVX_Fast_Unaligned_Load)
 
 #endif	/* __ASSEMBLER__ */

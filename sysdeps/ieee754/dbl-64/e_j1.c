@@ -58,7 +58,6 @@
  *	   by method mentioned above.
  */
 
-#include <errno.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -90,7 +89,7 @@ __ieee754_j1 (double x)
 
   GET_HIGH_WORD (hx, x);
   ix = hx & 0x7fffffff;
-  if (__glibc_unlikely (ix >= 0x7ff00000))
+  if (__builtin_expect (ix >= 0x7ff00000, 0))
     return one / x;
   y = fabs (x);
   if (ix >= 0x40000000)         /* |x| >= 2.0 */
@@ -122,7 +121,7 @@ __ieee754_j1 (double x)
       else
 	return z;
     }
-  if (__glibc_unlikely (ix < 0x3e400000))                  /* |x|<2**-27 */
+  if (__builtin_expect (ix < 0x3e400000, 0))            /* |x|<2**-27 */
     {
       if (huge + x > one)
 	return 0.5 * x;                 /* inexact if x!=0 necessary */
@@ -164,12 +163,12 @@ __ieee754_y1 (double x)
   EXTRACT_WORDS (hx, lx, x);
   ix = 0x7fffffff & hx;
   /* if Y1(NaN) is NaN, Y1(-inf) is NaN, Y1(inf) is 0 */
-  if (__glibc_unlikely (ix >= 0x7ff00000))
+  if (__builtin_expect (ix >= 0x7ff00000, 0))
     return one / (x + x * x);
-  if (__glibc_unlikely ((ix | lx) == 0))
+  if (__builtin_expect ((ix | lx) == 0, 0))
     return -HUGE_VAL + x;
   /* -inf and overflow exception.  */;
-  if (__glibc_unlikely (hx < 0))
+  if (__builtin_expect (hx < 0, 0))
     return zero / (zero * x);
   if (ix >= 0x40000000)         /* |x| >= 2.0 */
     {
@@ -204,12 +203,9 @@ __ieee754_y1 (double x)
 	}
       return z;
     }
-  if (__glibc_unlikely (ix <= 0x3c900000))              /* x < 2**-54 */
+  if (__builtin_expect (ix <= 0x3c900000, 0))        /* x < 2**-54 */
     {
-      z = -tpi / x;
-      if (__isinf (z))
-	__set_errno (ERANGE);
-      return z;
+      return (-tpi / x);
     }
   z = x * x;
   u1 = U0[0] + z * U0[1]; z2 = z * z;

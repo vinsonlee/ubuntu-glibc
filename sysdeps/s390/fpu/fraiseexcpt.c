@@ -1,5 +1,5 @@
 /* Raise given exceptions.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Denis Joseph Barrow (djbarrow@de.ibm.com) and
    Martin Schwidefsky (schwidefsky@de.ibm.com).
@@ -37,7 +37,7 @@ fexceptadd (float d, float e)
 
 
 int
-__feraiseexcept (int excepts)
+feraiseexcept (int excepts)
 {
   /* Raise exceptions represented by EXPECTS.  But we must raise only
      one signal at a time.  It is important that if the overflow/underflow
@@ -69,6 +69,4 @@ __feraiseexcept (int excepts)
   /* Success.  */
   return 0;
 }
-libm_hidden_def (__feraiseexcept)
-weak_alias (__feraiseexcept, feraiseexcept)
-libm_hidden_weak (feraiseexcept)
+libm_hidden_def (feraiseexcept)

@@ -1,5 +1,5 @@
 /* Optimized, inlined string functions.  SPARC version.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,9 +19,6 @@
 #ifndef _STRING_H
 # error "Never use <bits/string.h> directly; include <string.h> instead."
 #endif
-
-/* Define if architecture can access unaligned multi-byte variables.  */
-#define _STRING_ARCH_unaligned   0
 
 /* sparc32 and sparc64 strchr(x, '\0') perform better than
    __rawmemchr(x, '\0').  */

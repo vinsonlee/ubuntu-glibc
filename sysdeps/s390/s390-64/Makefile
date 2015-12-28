@@ -28,10 +28,6 @@ s390x-iconv-modules = ISO-8859-1_CP037_Z900 UTF8_UTF16_Z9 UTF16_UTF32_Z9 UTF8_UT
 extra-modules-left += $(s390x-iconv-modules)
 include extra-module.mk
 
-cpp-srcs-left := $(foreach mod,$(s390x-iconv-modules),$($(mod)-routines))
-lib := iconvdata
-include $(patsubst %,$(..)cppflags-iterator.mk,$(cpp-srcs-left))
-
 extra-objs      += $(addsuffix .so, $(s390x-iconv-modules))
 install-others  += $(patsubst %, $(inst_gconvdir)/%.so, $(s390x-iconv-modules))
 
@@ -80,8 +76,8 @@ ifeq (no,$(cross-compiling))
 # Update the $(prefix)/lib/gconv/gconv-modules.cache file. This is necessary
 # if this libc has more gconv modules than the previously installed one.
 	if test -f "$(inst_gconvdir)/gconv-modules.cache"; then \
-	   LC_ALL=C \
-	   $(rtld-prefix) \
+	   LC_ALL=C LANGUAGE=C \
+	   $(common-objpfx)elf/ld.so --library-path $(rpath-link) \
 	   $(common-objpfx)iconv/iconvconfig \
 	     $(addprefix --prefix=,$(install_root)); \
 	fi

@@ -13,7 +13,6 @@
  * ====================================================
  */
 
-#include <errno.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -108,7 +107,6 @@ __ieee754_y1f(float x)
 		return -HUGE_VALF+x;  /* -inf and overflow exception.  */
 	if(__builtin_expect(hx<0, 0)) return zero/(zero*x);
 	if(ix >= 0x40000000) {  /* |x| >= 2.0 */
-		SET_RESTORE_ROUNDF (FE_TONEAREST);
 		__sincosf (x, &s, &c);
 		ss = -s-c;
 		cc = s-c;
@@ -136,10 +134,7 @@ __ieee754_y1f(float x)
 		return z;
 	}
 	if(__builtin_expect(ix<=0x33000000, 0)) {    /* x < 2**-25 */
-	    z = -tpi / x;
-	    if (__isinff (z))
-		__set_errno (ERANGE);
-	    return z;
+	    return(-tpi/x);
 	}
 	z = x*x;
 	u = U0[0]+z*(U0[1]+z*(U0[2]+z*(U0[3]+z*U0[4])));

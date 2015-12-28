@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,12 +22,20 @@
 #include <stdarg.h>
 
 #include <sys/syscall.h>
+#include <kernel-features.h>
+
+
+#ifdef __ASSUME_F_GETOWN_EX
+# define miss_F_GETOWN_EX 0
+#else
+static int miss_F_GETOWN_EX;
+#endif
 
 
 static int
 do_fcntl (int fd, int cmd, void *arg)
 {
-  if (cmd != F_GETOWN)
+  if (cmd != F_GETOWN || miss_F_GETOWN_EX)
     return INLINE_SYSCALL (fcntl, 3, fd, cmd, arg);
 
   INTERNAL_SYSCALL_DECL (err);
@@ -35,6 +43,15 @@ do_fcntl (int fd, int cmd, void *arg)
   int res = INTERNAL_SYSCALL (fcntl, err, 3, fd, F_GETOWN_EX, &fex);
   if (!INTERNAL_SYSCALL_ERROR_P (res, err))
     return fex.type == F_OWNER_GID ? -fex.pid : fex.pid;
+
+#ifndef __ASSUME_F_GETOWN_EX
+  if (INTERNAL_SYSCALL_ERRNO (res, err) == EINVAL)
+    {
+      res = INLINE_SYSCALL (fcntl, 3, fd, F_GETOWN, arg);
+      miss_F_GETOWN_EX = 1;
+      return res;
+    }
+#endif
 
   __set_errno (INTERNAL_SYSCALL_ERRNO (res, err));
   return -1;

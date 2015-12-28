@@ -1,5 +1,5 @@
 /* Run initializers for newly loaded objects.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,6 +22,12 @@
 
 /* Type of the initializer.  */
 typedef void (*init_t) (int, char **, char **);
+
+#ifndef HAVE_INLINED_SYSCALLS
+/* Flag, nonzero during startup phase.  */
+extern int _dl_starting_up;
+extern int _dl_starting_up_internal attribute_hidden;
+#endif
 
 
 static void
@@ -46,7 +52,7 @@ call_init (struct link_map *l, int argc, char **argv, char **env)
     return;
 
   /* Print a debug message if wanted.  */
-  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_IMPCALLS))
+  if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_IMPCALLS, 0))
     _dl_debug_printf ("\ncalling init: %s\n\n",
 		      DSO_FILENAME (l->l_name));
 
@@ -82,7 +88,7 @@ _dl_init (struct link_map *main_map, int argc, char **argv, char **env)
   ElfW(Dyn) *preinit_array_size = main_map->l_info[DT_PREINIT_ARRAYSZ];
   unsigned int i;
 
-  if (__glibc_unlikely (GL(dl_initfirst) != NULL))
+  if (__builtin_expect (GL(dl_initfirst) != NULL, 0))
     {
       call_init (GL(dl_initfirst), argc, argv, env);
       GL(dl_initfirst) = NULL;
@@ -96,7 +102,7 @@ _dl_init (struct link_map *main_map, int argc, char **argv, char **env)
       ElfW(Addr) *addrs;
       unsigned int cnt;
 
-      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_IMPCALLS))
+      if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_IMPCALLS, 0))
 	_dl_debug_printf ("\ncalling preinit: %s\n\n",
 			  DSO_FILENAME (main_map->l_name));
 
@@ -121,6 +127,7 @@ _dl_init (struct link_map *main_map, int argc, char **argv, char **env)
 
 #ifndef HAVE_INLINED_SYSCALLS
   /* Finished starting up.  */
-  _dl_starting_up = 0;
+  INTUSE(_dl_starting_up) = 0;
 #endif
 }
+INTDEF (_dl_init)

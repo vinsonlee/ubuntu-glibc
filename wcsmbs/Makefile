@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2015 Free Software Foundation, Inc.
+# Copyright (C) 1995-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,6 @@
 #	Sub-makefile for wcsmbs portion of the library.
 #
 subdir	:= wcsmbs
-
-include ../Makeconfig
 
 headers	:= wchar.h bits/wchar.h bits/wchar2.h bits/wchar-ldbl.h uchar.h
 
@@ -46,6 +44,8 @@ strop-tests :=  wcscmp wmemcmp wcslen wcschr wcsrchr wcscpy
 tests := tst-wcstof wcsmbs-tst1 tst-wcsnlen tst-btowc tst-mbrtowc \
 	 tst-wcrtomb tst-wcpncpy tst-mbsrtowcs tst-wchar-h tst-mbrtowc2 \
 	 tst-c16c32-1 wcsatcliff $(addprefix test-,$(strop-tests))
+tests-ifunc := $(strop-tests:%=test-%-ifunc)
+tests += $(tests-ifunc)
 
 include ../Rules
 
@@ -78,3 +78,10 @@ CPPFLAGS += $(libio-mtsafe)
 
 # We need to find the default version of strtold_l in stdlib.
 CPPFLAGS-wcstold_l.c = -I../stdlib
+
+tst-btowc-ENV = LOCPATH=$(common-objpfx)localedata
+tst-mbrtowc-ENV = LOCPATH=$(common-objpfx)localedata
+tst-wcrtomb-ENV = LOCPATH=$(common-objpfx)localedata
+tst-mbrtowc2-ENV = LOCPATH=$(common-objpfx)localedata
+tst-c16c32-1-ENV = LOCPATH=$(common-objpfx)localedata
+tst-mbsnrtowcs-ENV = LOCPATH=$(common-objpfx)localedata
