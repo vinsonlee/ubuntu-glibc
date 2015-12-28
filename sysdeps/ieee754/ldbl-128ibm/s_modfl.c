@@ -89,7 +89,7 @@ long double __modfl(long double x, long double *iptr)
 	    }
 	}
 }
-#if IS_IN (libm)
+#ifdef IS_IN_libm
 long_double_symbol (libm, __modfl, modfl);
 #else
 long_double_symbol (libc, __modfl, modfl);

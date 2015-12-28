@@ -1,5 +1,5 @@
 /* Return arc hyperbole tangent for float value.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -29,7 +29,7 @@ __catanhf (__complex__ float x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (__glibc_unlikely (rcls <= FP_INFINITE || icls <= FP_INFINITE))
+  if (__builtin_expect (rcls <= FP_INFINITE || icls <= FP_INFINITE, 0))
     {
       if (icls == FP_INFINITE)
 	{
@@ -50,7 +50,7 @@ __catanhf (__complex__ float x)
 	  __imag__ res = __nanf ("");
 	}
     }
-  else if (__glibc_unlikely (rcls == FP_ZERO && icls == FP_ZERO))
+  else if (__builtin_expect (rcls == FP_ZERO && icls == FP_ZERO, 0))
     {
       res = x;
     }
@@ -112,11 +112,7 @@ __catanhf (__complex__ float x)
 	    }
 
 	  if (absy < FLT_EPSILON / 2.0f)
-	    {
-	      den = (1.0f - absx) * (1.0f + absx);
-	      if (den == -0.0f)
-		den = 0.0f;
-	    }
+	    den = (1.0f - absx) * (1.0f + absx);
 	  else if (absx >= 1.0f)
 	    den = (1.0f - absx) * (1.0f + absx) - absy * absy;
 	  else if (absx >= 0.75f || absy >= 0.5f)

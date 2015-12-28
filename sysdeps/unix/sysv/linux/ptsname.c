@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Zack Weinberg <zack@rabi.phys.columbia.edu>, 1998.
 
@@ -105,9 +105,7 @@ __ptsname_internal (int fd, char *buf, size_t buflen, struct stat64 *stp)
 
       memcpy (__stpcpy (buf, devpts), p, &numbuf[sizeof (numbuf)] - p);
     }
-  else if (errno != EINVAL)
-    return errno;
-  else
+  else if (errno == EINVAL)
 #endif
     {
       char *p;

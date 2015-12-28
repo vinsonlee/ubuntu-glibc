@@ -37,8 +37,7 @@ extern __typeof (secure_getenv) __libc_secure_getenv;
 libc_hidden_proto (__libc_secure_getenv)
 libc_hidden_proto (bsearch)
 libc_hidden_proto (qsort)
-extern __typeof (qsort_r) __qsort_r;
-libc_hidden_proto (__qsort_r)
+libc_hidden_proto (qsort_r)
 libc_hidden_proto (lrand48_r)
 libc_hidden_proto (wctomb)
 
@@ -98,7 +97,8 @@ extern void _quicksort (void *const pbase, size_t total_elems,
 extern int __on_exit (void (*__func) (int __status, void *__arg), void *__arg);
 
 extern int __cxa_atexit (void (*func) (void *), void *arg, void *d);
-libc_hidden_proto (__cxa_atexit);
+extern int __cxa_atexit_internal (void (*func) (void *), void *arg, void *d)
+     attribute_hidden;
 
 extern int __cxa_thread_atexit_impl (void (*func) (void *), void *arg,
 				     void *d);
@@ -226,9 +226,11 @@ extern int __qfcvt_r (long double __value, int __ndigit,
 		      int *__restrict __decpt, int *__restrict __sign,
 		      char *__restrict __buf, size_t __len);
 
-# if IS_IN (libc)
+# ifndef NOT_IN_libc
 #  undef MB_CUR_MAX
 #  define MB_CUR_MAX (_NL_CURRENT_WORD (LC_CTYPE, _NL_CTYPE_MB_CUR_MAX))
+
+# define __cxa_atexit(func, arg, d) INTUSE(__cxa_atexit) (func, arg, d)
 # endif
 
 extern void *__default_morecore (ptrdiff_t) __THROW;

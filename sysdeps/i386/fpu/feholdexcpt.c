@@ -1,5 +1,5 @@
 /* Store current floating-point environment and clear exceptions.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -23,7 +23,7 @@
 #include <dl-procinfo.h>
 
 int
-__feholdexcept (fenv_t *envp)
+feholdexcept (fenv_t *envp)
 {
   /* Store the environment.  Recall that fnstenv has a side effect of
      masking all exceptions.  Then clear all exceptions.  */
@@ -35,16 +35,14 @@ __feholdexcept (fenv_t *envp)
       unsigned int xwork;
 
       /* Get the current control word.  */
-      __asm__ ("stmxcsr %0" : "=m" (envp->__eip));
+      __asm__ ("stmxcsr %0" : "=m" (*&xwork));
 
       /* Set all exceptions to non-stop and clear them.  */
-      xwork = (envp->__eip | 0x1f80) & ~0x3f;
+      xwork = (xwork | 0x1f80) & ~0x3f;
 
       __asm__ ("ldmxcsr %0" : : "m" (*&xwork));
     }
 
   return 0;
 }
-libm_hidden_def (__feholdexcept)
-weak_alias (__feholdexcept, feholdexcept)
-libm_hidden_weak (feholdexcept)
+libm_hidden_def (feholdexcept)

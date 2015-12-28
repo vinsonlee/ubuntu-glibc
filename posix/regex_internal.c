@@ -1,5 +1,5 @@
 /* Extended regular expression matching and search library.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Isamu Hasegawa <isamu@yamato.ibm.com>.
 
@@ -679,7 +679,7 @@ re_string_reconstruct (re_string_t *pstr, int idx, int eflags)
 			 pstr->valid_len - offset);
 	      pstr->valid_len -= offset;
 	      pstr->valid_raw_len -= offset;
-#if defined DEBUG && DEBUG
+#if DEBUG
 	      assert (pstr->valid_len > 0);
 #endif
 	    }
@@ -936,7 +936,7 @@ re_string_context_at (const re_string_t *input, int idx, int eflags)
       int wc_idx = idx;
       while(input->wcs[wc_idx] == WEOF)
 	{
-#if defined DEBUG && DEBUG
+#ifdef DEBUG
 	  /* It must not happen.  */
 	  assert (wc_idx >= 0);
 #endif

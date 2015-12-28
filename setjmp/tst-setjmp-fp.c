@@ -1,6 +1,6 @@
 /* Test that setjmp/longjmp do not save and restore floating-point
    exceptions and rounding modes.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static jmp_buf __attribute__ ((unused)) env;
+static jmp_buf env;
 static int result = 0;
 
 #if defined FE_TONEAREST && defined FE_TOWARDZERO

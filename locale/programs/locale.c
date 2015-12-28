@@ -1,5 +1,5 @@
 /* Implementation of the locale program according to POSIX 9945-2.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1995.
 
@@ -295,7 +295,7 @@ print_version (FILE *stream, struct argp_state *state)
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
-"), "2015");
+"), "2014");
   fprintf (stream, gettext ("Written by %s.\n"), "Ulrich Drepper");
 }
 
@@ -792,181 +792,188 @@ print_assignment (const char *name, const char *val, bool dquote)
 static void
 show_locale_vars (void)
 {
-  const char *lcall = getenv ("LC_ALL") ?: "";
-  const char *lang = getenv ("LANG") ?: "";
+  size_t cat_no;
+  const char *lcall = getenv ("LC_ALL") ? : "";
+  const char *lang = getenv ("LANG") ? : "";
+
+  auto void get_source (const char *name);
+
+  void get_source (const char *name)
+    {
+      char *val = getenv (name);
+
+      if (lcall[0] != '\0' || val == NULL)
+	print_assignment (name, lcall[0] ? lcall : lang[0] ? lang : "POSIX",
+			  true);
+      else
+	print_assignment (name, val, false);
+    }
 
   /* LANG has to be the first value.  */
   print_assignment ("LANG", lang, false);
 
   /* Now all categories in an unspecified order.  */
-  for (size_t cat_no = 0; cat_no < NCATEGORIES; ++cat_no)
+  for (cat_no = 0; cat_no < NCATEGORIES; ++cat_no)
     if (cat_no != LC_ALL)
-      {
-	const char *name = category[cat_no].name;
-	const char *val = getenv (name);
-
-	if (lcall[0] != '\0' || val == NULL)
-	  print_assignment (name,
-			    lcall[0] != '\0' ? lcall
-			    : lang[0] != '\0' ? lang
-			    : "POSIX",
-			    true);
-	else
-	  print_assignment (name, val, false);
-      }
+      get_source (category[cat_no].name);
 
   /* The last is the LC_ALL value.  */
   print_assignment ("LC_ALL", lcall, false);
 }
 
 
-/* Subroutine of show_info, below.  */
-static void
-print_item (struct cat_item *item)
-{
-  switch (item->value_type)
-    {
-    case string:
-      if (show_keyword_name)
-	printf ("%s=\"", item->name);
-      fputs (nl_langinfo (item->item_id) ? : "", stdout);
-      if (show_keyword_name)
-	putchar ('"');
-      putchar ('\n');
-      break;
-    case stringarray:
-      {
-	const char *val;
-	int cnt;
-
-	if (show_keyword_name)
-	  printf ("%s=\"", item->name);
-
-	for (cnt = 0; cnt < item->max - 1; ++cnt)
-	  {
-	    val = nl_langinfo (item->item_id + cnt);
-	    if (val != NULL)
-	      fputs (val, stdout);
-	    putchar (';');
-	  }
-
-	val = nl_langinfo (item->item_id + cnt);
-	if (val != NULL)
-	  fputs (val, stdout);
-
-	if (show_keyword_name)
-	  putchar ('"');
-	putchar ('\n');
-      }
-      break;
-    case stringlist:
-      {
-	int first = 1;
-	const char *val = nl_langinfo (item->item_id) ? : "";
-
-	if (show_keyword_name)
-	  printf ("%s=", item->name);
-
-	for (int cnt = 0; cnt < item->max && *val != '\0'; ++cnt)
-	  {
-	    printf ("%s%s%s%s", first ? "" : ";",
-		    show_keyword_name ? "\"" : "", val,
-		    show_keyword_name ? "\"" : "");
-	    val = strchr (val, '\0') + 1;
-	    first = 0;
-	  }
-	putchar ('\n');
-      }
-      break;
-    case byte:
-      {
-	const char *val = nl_langinfo (item->item_id);
-
-	if (show_keyword_name)
-	  printf ("%s=", item->name);
-
-	if (val != NULL)
-	  printf ("%d", *val == '\377' ? -1 : *val);
-	putchar ('\n');
-      }
-      break;
-    case bytearray:
-      {
-	const char *val = nl_langinfo (item->item_id);
-	int cnt = val ? strlen (val) : 0;
-
-	if (show_keyword_name)
-	  printf ("%s=", item->name);
-
-	while (cnt > 1)
-	  {
-	    printf ("%d;", *val == '\177' ? -1 : *val);
-	    --cnt;
-	    ++val;
-	  }
-
-	printf ("%d\n", cnt == 0 || *val == '\177' ? -1 : *val);
-      }
-      break;
-    case word:
-      {
-	union { unsigned int word; char *string; } val;
-	val.string = nl_langinfo (item->item_id);
-	if (show_keyword_name)
-	  printf ("%s=", item->name);
-
-	printf ("%d\n", val.word);
-      }
-      break;
-    case wordarray:
-      {
-	int first = 1;
-	union { unsigned int *wordarray; char *string; } val;
-
-	val.string = nl_langinfo (item->item_id);
-	if (show_keyword_name)
-	  printf ("%s=", item->name);
-
-	for (int cnt = 0; cnt < item->max; ++cnt)
-	  {
-	    printf ("%s%d", first ? "" : ";", val.wordarray[cnt]);
-	    first = 0;
-	  }
-	putchar ('\n');
-      }
-      break;
-    case wstring:
-    case wstringarray:
-    case wstringlist:
-      /* We don't print wide character information since the same
-	 information is available in a multibyte string.  */
-    default:
-      break;
-    }
-}
-
 /* Show the information request for NAME.  */
 static void
 show_info (const char *name)
 {
-  for (size_t cat_no = 0; cat_no < NCATEGORIES; ++cat_no)
+  size_t cat_no;
+
+  auto void print_item (struct cat_item *item);
+
+  void print_item (struct cat_item *item)
+    {
+      switch (item->value_type)
+	{
+	case string:
+	  if (show_keyword_name)
+	    printf ("%s=\"", item->name);
+	  fputs (nl_langinfo (item->item_id) ? : "", stdout);
+	  if (show_keyword_name)
+	    putchar ('"');
+	  putchar ('\n');
+	  break;
+	case stringarray:
+	  {
+	    int cnt;
+	    const char *val;
+
+	    if (show_keyword_name)
+	      printf ("%s=\"", item->name);
+
+	    for (cnt = 0; cnt < item->max - 1; ++cnt)
+	      {
+		val = nl_langinfo (item->item_id + cnt);
+		if (val != NULL)
+		  fputs (val, stdout);
+		putchar (';');
+	      }
+
+	    val = nl_langinfo (item->item_id + cnt);
+	    if (val != NULL)
+	      fputs (val, stdout);
+
+	    if (show_keyword_name)
+	      putchar ('"');
+	    putchar ('\n');
+	  }
+	  break;
+	case stringlist:
+	  {
+	    int first = 1;
+	    const char *val = nl_langinfo (item->item_id) ? : "";
+	    int cnt;
+
+	    if (show_keyword_name)
+	      printf ("%s=", item->name);
+
+	    for (cnt = 0; cnt < item->max && *val != '\0'; ++cnt)
+	      {
+		printf ("%s%s%s%s", first ? "" : ";",
+			show_keyword_name ? "\"" : "", val,
+			show_keyword_name ? "\"" : "");
+		val = strchr (val, '\0') + 1;
+		first = 0;
+	      }
+	    putchar ('\n');
+	  }
+	  break;
+	case byte:
+	  {
+	    const char *val = nl_langinfo (item->item_id);
+
+	    if (show_keyword_name)
+	      printf ("%s=", item->name);
+
+	    if (val != NULL)
+	      printf ("%d", *val == '\377' ? -1 : *val);
+	    putchar ('\n');
+	  }
+	  break;
+	case bytearray:
+	  {
+	    const char *val = nl_langinfo (item->item_id);
+	    int cnt = val ? strlen (val) : 0;
+
+	    if (show_keyword_name)
+	      printf ("%s=", item->name);
+
+	    while (cnt > 1)
+	      {
+		printf ("%d;", *val == '\177' ? -1 : *val);
+		--cnt;
+		++val;
+	      }
+
+	    printf ("%d\n", cnt == 0 || *val == '\177' ? -1 : *val);
+	  }
+	  break;
+	case word:
+	  {
+	    union { unsigned int word; char *string; } val;
+	    val.string = nl_langinfo (item->item_id);
+	    if (show_keyword_name)
+	      printf ("%s=", item->name);
+
+	    printf ("%d\n", val.word);
+	  }
+	  break;
+	case wordarray:
+	  {
+	    int first = 1;
+	    union { unsigned int *wordarray; char *string; } val;
+	    int cnt;
+
+	    val.string = nl_langinfo (item->item_id);
+	    if (show_keyword_name)
+	      printf ("%s=", item->name);
+
+	    for (cnt = 0; cnt < item->max; ++cnt)
+	      {
+		printf ("%s%d", first ? "" : ";", val.wordarray[cnt]);
+		first = 0;
+	      }
+	    putchar ('\n');
+	  }
+	  break;
+	case wstring:
+	case wstringarray:
+	case wstringlist:
+	  /* We don't print wide character information since the same
+	     information is available in a multibyte string.  */
+	default:
+	  break;
+
+	}
+    }
+
+  for (cat_no = 0; cat_no < NCATEGORIES; ++cat_no)
     if (cat_no != LC_ALL)
       {
+	size_t item_no;
+
 	if (strcmp (name, category[cat_no].name) == 0)
 	  /* Print the whole category.  */
 	  {
 	    if (show_category_name != 0)
 	      puts (category[cat_no].name);
 
-	    for (size_t item_no = 0;
-		 item_no < category[cat_no].number;
-		 ++item_no)
+	    for (item_no = 0; item_no < category[cat_no].number; ++item_no)
 	      print_item (&category[cat_no].item_desc[item_no]);
 
 	    return;
 	  }
 
-	for (size_t item_no = 0; item_no < category[cat_no].number; ++item_no)
+	for (item_no = 0; item_no < category[cat_no].number; ++item_no)
 	  if (strcmp (name, category[cat_no].item_desc[item_no].name) == 0)
 	    {
 	      if (show_category_name != 0)

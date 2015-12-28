@@ -1,5 +1,5 @@
 /* Inline floating-point environment handling functions for powerpc.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,24 +16,23 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#if defined __GNUC__ && !defined _SOFT_FLOAT && !defined __NO_FPRS__
+#if (defined __GNUC__ && !defined _SOFT_FLOAT && !defined __NO_FPRS__	\
+     && !defined __NO_MATH_INLINES)
 
 /* Inline definition for fegetround.  */
-# define __fegetround() \
+# define fegetround() \
   (__extension__  ({ int __fegetround_result;				      \
 		     __asm__ __volatile__				      \
 		       ("mcrfs 7,7 ; mfcr %0"				      \
 			: "=r"(__fegetround_result) : : "cr7");		      \
 		     __fegetround_result & 3; }))
-# define fegetround() __fegetround ()
 
-# ifndef __NO_MATH_INLINES
 /* The weird 'i#*X' constraints on the following suppress a gcc
    warning when __excepts is not a constant.  Otherwise, they mean the
    same as just plain 'i'.  */
 
 /* Inline definition for feraiseexcept.  */
-#  define feraiseexcept(__excepts) \
+# define feraiseexcept(__excepts) \
   ((__builtin_constant_p (__excepts)					      \
     && ((__excepts) & ((__excepts)-1)) == 0				      \
     && (__excepts) != FE_INVALID)					      \
@@ -46,7 +45,7 @@
    : (feraiseexcept) (__excepts))
 
 /* Inline definition for feclearexcept.  */
-#  define feclearexcept(__excepts) \
+# define feclearexcept(__excepts) \
   ((__builtin_constant_p (__excepts)					      \
     && ((__excepts) & ((__excepts)-1)) == 0				      \
     && (__excepts) != FE_INVALID)					      \
@@ -57,7 +56,5 @@
 			  0; }))					      \
       : 0)								      \
    : (feclearexcept) (__excepts))
-
-# endif /* !__NO_MATH_INLINES.  */
 
 #endif /* __GNUC__ && !_SOFT_FLOAT && !__NO_FPRS__ */

@@ -96,7 +96,7 @@ emit_weak_aliases()
       *@@*)
 	base=`echo $name | sed 's/@@.*//'`
 	ver=`echo $name | sed 's/.*@@//;s/\./_/g'`
-	echo "	 echo '#if IS_IN (libc)'; \\"
+	echo "	 echo '#ifndef NOT_IN_libc'; \\"
 	if test -z "$vcount" ; then
 	  source=$strong
 	  vcount=1
@@ -113,7 +113,7 @@ emit_weak_aliases()
       *@*)
 	base=`echo $name | sed 's/@.*//'`
 	ver=`echo $name | sed 's/.*@//;s/\./_/g'`
-	echo "	 echo '#if defined SHARED && IS_IN (libc)'; \\"
+	echo "	 echo '#ifndef NOT_IN_libc'; \\"
 	if test -z "$vcount" ; then
 	  source=$strong
 	  vcount=1

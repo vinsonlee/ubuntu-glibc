@@ -70,8 +70,10 @@ double __nextafter(double x, double y)
 	}
 	hy = hx&0x7ff00000;
 	if(hy>=0x7ff00000) {
-	  double u = x+x;	/* overflow  */
-	  math_force_eval (u);
+	  x = x+x;	/* overflow  */
+	  if (FLT_EVAL_METHOD != 0 && FLT_EVAL_METHOD != 1)
+	    asm ("" : "+m"(x));
+	  return x;	/* overflow  */
 	}
 	if(hy<0x00100000) {
 	    double u = x*x;			/* underflow */

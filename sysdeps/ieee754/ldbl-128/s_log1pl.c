@@ -144,16 +144,13 @@ __log1pl (long double xm1)
 	return xm1;
     }
 
-  if (xm1 >= 0x1p113L)
-    x = xm1;
-  else
-    x = xm1 + 1.0L;
+  x = xm1 + 1.0L;
 
   /* log1p(-1) = -inf */
   if (x <= 0.0L)
     {
       if (x == 0.0L)
-	return (-1.0L / zero);  /* log1p(-1) = -inf */
+	return (-1.0L / (x - x));
       else
 	return (zero / (x - x));
     }

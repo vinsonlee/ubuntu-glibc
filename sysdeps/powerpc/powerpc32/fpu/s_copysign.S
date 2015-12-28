@@ -1,5 +1,5 @@
 /* Copy a sign bit between floating-point values.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ strong_alias(__copysign,__copysignf)
 weak_alias (__copysign,copysignl)
 strong_alias(__copysign,__copysignl)
 #endif
-#if IS_IN (libm)
+#ifdef IS_IN_libm
 # if LONG_DOUBLE_COMPAT(libm, GLIBC_2_0)
 compat_symbol (libm, __copysign, copysignl, GLIBC_2_0)
 # endif
