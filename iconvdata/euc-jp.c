@@ -1,5 +1,5 @@
 /* Mapping tables for EUC-JP handling.
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -33,6 +33,7 @@
 #define MIN_NEEDED_FROM		1
 #define MAX_NEEDED_FROM		3
 #define MIN_NEEDED_TO		4
+#define ONE_DIRECTION		0
 
 
 /* First define the conversion function from EUC-JP to UCS4.  */
@@ -57,7 +58,7 @@
 	   byte is also available.  */					      \
 	int ch2;							      \
 									      \
-	if (__builtin_expect (inptr + 1 >= inend, 0))			      \
+	if (__glibc_unlikely (inptr + 1 >= inend))			      \
 	  {								      \
 	    /* The second byte is not available.  Store the		      \
 	       intermediate result.  */					      \
@@ -68,7 +69,7 @@
 	ch2 = inptr[1];							      \
 									      \
 	/* All second bytes of a multibyte character must be >= 0xa1. */      \
-	if (__builtin_expect (ch2 < 0xa1, 0))				      \
+	if (__glibc_unlikely (ch2 < 0xa1))				      \
 	  STANDARD_FROM_LOOP_ERR_HANDLER (1);				      \
 									      \
 	if (ch == 0x8e)							      \
@@ -105,7 +106,7 @@
 		result = __GCONV_INCOMPLETE_INPUT;			      \
 		break;							      \
 	      }								      \
-	    if (__builtin_expect (ch == __UNKNOWN_10646_CHAR, 0))	      \
+	    if (__glibc_unlikely (ch == __UNKNOWN_10646_CHAR))		      \
 	      /* Illegal character.  */					      \
 	      STANDARD_FROM_LOOP_ERR_HANDLER (1);			      \
 									      \
@@ -151,7 +152,7 @@
 	size_t found;							      \
 									      \
 	/* See whether we have room for at least two characters.  */	      \
-	if (__builtin_expect (outptr + 1 >= outend, 0))			      \
+	if (__glibc_unlikely (outptr + 1 >= outend))			      \
 	  {								      \
 	    result = __GCONV_FULL_OUTPUT;				      \
 	    break;							      \
