@@ -1,5 +1,5 @@
 /* Enumerate available IFUNC implementations of a function.  x86-64 version.
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -46,6 +46,8 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
 
   /* Support sysdeps/x86_64/multiarch/memmove_chk.S.  */
   IFUNC_IMPL (i, name, __memmove_chk,
+	      IFUNC_IMPL_ADD (array, i, __memmove_chk, HAS_AVX,
+			      __memmove_chk_avx_unaligned)
 	      IFUNC_IMPL_ADD (array, i, __memmove_chk, HAS_SSSE3,
 			      __memmove_chk_ssse3_back)
 	      IFUNC_IMPL_ADD (array, i, __memmove_chk, HAS_SSSE3,
@@ -55,11 +57,26 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
 
   /* Support sysdeps/x86_64/multiarch/memmove.S.  */
   IFUNC_IMPL (i, name, memmove,
+	      IFUNC_IMPL_ADD (array, i, memmove, HAS_AVX,
+			      __memmove_avx_unaligned)
 	      IFUNC_IMPL_ADD (array, i, memmove, HAS_SSSE3,
 			      __memmove_ssse3_back)
 	      IFUNC_IMPL_ADD (array, i, memmove, HAS_SSSE3,
 			      __memmove_ssse3)
 	      IFUNC_IMPL_ADD (array, i, memmove, 1, __memmove_sse2))
+
+#ifdef HAVE_AVX2_SUPPORT
+  /* Support sysdeps/x86_64/multiarch/memset_chk.S.  */
+  IFUNC_IMPL (i, name, __memset_chk,
+	      IFUNC_IMPL_ADD (array, i, __memset_chk, 1, __memset_chk_sse2)
+	      IFUNC_IMPL_ADD (array, i, __memset_chk, HAS_AVX2,
+			      __memset_chk_avx2))
+
+  /* Support sysdeps/x86_64/multiarch/memset.S.  */
+  IFUNC_IMPL (i, name, memset,
+	      IFUNC_IMPL_ADD (array, i, memset, 1, __memset_sse2)
+	      IFUNC_IMPL_ADD (array, i, memset, HAS_AVX2, __memset_avx2))
+#endif
 
   /* Support sysdeps/x86_64/multiarch/stpncpy.S.  */
   IFUNC_IMPL (i, name, stpncpy,
@@ -201,6 +218,8 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
 #ifdef SHARED
   /* Support sysdeps/x86_64/multiarch/memcpy_chk.S.  */
   IFUNC_IMPL (i, name, __memcpy_chk,
+	      IFUNC_IMPL_ADD (array, i, __memcpy_chk, HAS_AVX,
+			      __memcpy_chk_avx_unaligned)
 	      IFUNC_IMPL_ADD (array, i, __memcpy_chk, HAS_SSSE3,
 			      __memcpy_chk_ssse3_back)
 	      IFUNC_IMPL_ADD (array, i, __memcpy_chk, HAS_SSSE3,
@@ -210,6 +229,8 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
 
   /* Support sysdeps/x86_64/multiarch/memcpy.S.  */
   IFUNC_IMPL (i, name, memcpy,
+	      IFUNC_IMPL_ADD (array, i, memcpy, HAS_AVX,
+			      __memcpy_avx_unaligned)
 	      IFUNC_IMPL_ADD (array, i, memcpy, HAS_SSSE3,
 			      __memcpy_ssse3_back)
 	      IFUNC_IMPL_ADD (array, i, memcpy, HAS_SSSE3, __memcpy_ssse3)
@@ -218,6 +239,8 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
 
   /* Support sysdeps/x86_64/multiarch/mempcpy_chk.S.  */
   IFUNC_IMPL (i, name, __mempcpy_chk,
+	      IFUNC_IMPL_ADD (array, i, __mempcpy_chk, HAS_AVX,
+			      __mempcpy_chk_avx_unaligned)
 	      IFUNC_IMPL_ADD (array, i, __mempcpy_chk, HAS_SSSE3,
 			      __mempcpy_chk_ssse3_back)
 	      IFUNC_IMPL_ADD (array, i, __mempcpy_chk, HAS_SSSE3,
@@ -227,6 +250,8 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
 
   /* Support sysdeps/x86_64/multiarch/mempcpy.S.  */
   IFUNC_IMPL (i, name, mempcpy,
+	      IFUNC_IMPL_ADD (array, i, mempcpy, HAS_AVX,
+			      __mempcpy_avx_unaligned)
 	      IFUNC_IMPL_ADD (array, i, mempcpy, HAS_SSSE3,
 			      __mempcpy_ssse3_back)
 	      IFUNC_IMPL_ADD (array, i, mempcpy, HAS_SSSE3,

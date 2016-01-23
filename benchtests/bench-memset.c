@@ -1,5 +1,5 @@
 /* Measure memset functions.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -149,6 +149,11 @@ test_main (void)
 	  do_test (i, c, i);
 	  if (i & (i - 1))
 	    do_test (0, c, i);
+	}
+      for (i = 32; i < 512; i+=32)
+	{
+	  do_test (0, c, i);
+	  do_test (i, c, i);
 	}
       do_test (1, c, 14);
       do_test (3, c, 1024);

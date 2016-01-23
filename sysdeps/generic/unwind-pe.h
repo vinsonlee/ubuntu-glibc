@@ -1,5 +1,5 @@
 /* Exception handling and frame unwind runtime interface routines.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -22,7 +22,7 @@
    than duplicating code, however.  */
 
 /* If using C++, references to abort have to be qualified with std::.  */
-#if __cplusplus
+#ifdef __cplusplus
 #define __gxx_abort std::abort
 #else
 #define __gxx_abort abort

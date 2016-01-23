@@ -1,5 +1,5 @@
 /* Test for vfprintf nargs allocation overflow (BZ #13656).
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Kees Cook <keescook@chromium.org>, 2012.
 
@@ -65,7 +65,8 @@ do_test (void)
      test this on 32-bit systems.  */
   if (sizeof (long int) == 4)
     {
-      sprintf (buf, "%%1$d %%%" PRIdPTR "$d", UINT32_MAX / sizeof (int));
+      sprintf (buf, "%%1$d %%%" PRIdPTR "$d",
+	       (intptr_t) (UINT32_MAX / sizeof (int)));
       if (format_failed (buf, "1 %$d") != 0)
         rc = 1;
     }
