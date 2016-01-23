@@ -1,6 +1,6 @@
 /* Generic conversion to and from 8bit charsets,
    converting from UCS using gaps.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -42,6 +42,7 @@ struct gap
 #define DEFINE_FINI		1
 #define MIN_NEEDED_FROM		1
 #define MIN_NEEDED_TO		4
+#define ONE_DIRECTION		0
 
 
 /* First define the conversion function from the 8bit charset to UCS4.  */
@@ -88,7 +89,7 @@ struct gap
     uint32_t ch = get32 (inptr);					      \
     unsigned char res;							      \
 									      \
-    if (__builtin_expect (ch >= 0xffff, 0))				      \
+    if (__glibc_unlikely (ch >= 0xffff))				      \
       {									      \
 	UNICODE_TAG_HANDLER (ch, 4);					      \
 	rp = NULL;							      \

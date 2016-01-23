@@ -1,5 +1,5 @@
 /* Store current floating-point environment and clear exceptions.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 #define _FPU_MASK_ALL (_FPU_MASK_ZM | _FPU_MASK_OM | _FPU_MASK_UM | _FPU_MASK_XM | _FPU_MASK_IM)
 
 int
-feholdexcept (fenv_t *envp)
+__feholdexcept (fenv_t *envp)
 {
   fenv_union_t old, new;
 
@@ -31,6 +31,9 @@ feholdexcept (fenv_t *envp)
   /* Clear everything except for the rounding modes and non-IEEE arithmetic
      flag.  */
   new.l = old.l & 0xffffffff00000007LL;
+
+  if (new.l == old.l)
+    return 0;
 
   /* If the old env had any enabled exceptions, then mask SIGFPE in the
      MSR FE0/FE1 bits.  This may allow the FPU to run faster because it
@@ -43,4 +46,6 @@ feholdexcept (fenv_t *envp)
 
   return 0;
 }
-libm_hidden_def (feholdexcept)
+libm_hidden_def (__feholdexcept)
+weak_alias (__feholdexcept, feholdexcept)
+libm_hidden_weak (feholdexcept)

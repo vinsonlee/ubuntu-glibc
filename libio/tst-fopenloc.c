@@ -1,5 +1,5 @@
 /* Test for ,ccs= handling in fopen.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2001.
 
@@ -29,8 +29,8 @@
 static const char inputfile[] = "../iconvdata/testdata/ISO-8859-1";
 
 
-int
-main (void)
+static int
+do_test (void)
 {
   FILE *fp;
 
@@ -59,3 +59,6 @@ main (void)
 
   return 0;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

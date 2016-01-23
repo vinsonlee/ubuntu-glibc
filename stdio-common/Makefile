@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2014 Free Software Foundation, Inc.
+# Copyright (C) 1991-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,6 +20,8 @@
 #
 subdir	:= stdio-common
 
+include ../Makeconfig
+
 headers	:= stdio_ext.h printf.h bits/printf-ldbl.h bits/stdio_lim.h
 
 routines	:=							      \
@@ -39,8 +41,6 @@ routines	:=							      \
 	isoc99_vsscanf							      \
 	psiginfo
 
-include ../Makeconfig
-
 aux	:= errlist siglist printf-parsemb printf-parsewc fxprintf
 
 tests := tstscanf test_rdwr test-popen tstgetln test-fseek \
@@ -57,32 +57,29 @@ tests := tstscanf test_rdwr test-popen tstgetln test-fseek \
 	 bug19 bug19a tst-popen2 scanf13 scanf14 scanf15 bug20 bug21 bug22 \
 	 scanf16 scanf17 tst-setvbuf1 tst-grouping bug23 bug24 \
 	 bug-vfprintf-nargs tst-long-dbl-fphex tst-fphex-wide tst-sprintf3 \
-	 bug25 tst-printf-round bug26
+	 bug25 tst-printf-round bug23-2 bug23-3 bug23-4 bug26
 
 test-srcs = tst-unbputc tst-printf
+
+ifeq ($(run-built-tests),yes)
+tests-special += $(objpfx)tst-unbputc.out $(objpfx)tst-printf.out \
+		 $(objpfx)tst-setvbuf1-cmp.out
+endif
 
 include ../Rules
 
 ifeq ($(run-built-tests),yes)
-.PHONY: do-tst-unbputc do-tst-printf
-tests: do-tst-unbputc do-tst-printf
-
-do-tst-unbputc: $(objpfx)tst-unbputc.out
 $(objpfx)tst-unbputc.out: tst-unbputc.sh $(objpfx)tst-unbputc
-	$(SHELL) $< $(common-objpfx) '$(test-program-prefix)'
+	$(SHELL) $< $(common-objpfx) '$(test-program-prefix)'; \
+	$(evaluate-test)
 
-do-tst-printf: $(objpfx)tst-printf.out
 $(objpfx)tst-printf.out: tst-printf.sh $(objpfx)tst-printf
-	$(SHELL) $< $(common-objpfx) '$(test-program-prefix)'
+	$(SHELL) $< $(common-objpfx) '$(test-program-prefix)'; \
+	$(evaluate-test)
 endif
 
 CFLAGS-vfprintf.c = -Wno-uninitialized
 CFLAGS-vfwprintf.c = -Wno-uninitialized
-CFLAGS-tst-printf.c = -Wno-format
-CFLAGS-tstdiomisc.c = -Wno-format
-CFLAGS-scanf4.c = -Wno-format
-CFLAGS-scanf7.c = -Wno-format
-CFLAGS-tst-printfsz.c = -Wno-format
 
 CFLAGS-tmpfile.c = -fexceptions
 CFLAGS-tmpfile64.c = -fexceptions
@@ -114,26 +111,14 @@ CFLAGS-scanf15.c = -I../libio -I../stdlib -I../wcsmbs -I../time -I../string \
 CFLAGS-scanf17.c = -I../libio -I../stdlib -I../wcsmbs -I../time -I../string \
 		   -I../wctype
 
-# We know the test has a format string problem.
-CFLAGS-tst-sprintf.c = -Wno-format
-tst-sprintf-ENV = LOCPATH=$(common-objpfx)localedata
-tst-sscanf-ENV = LOCPATH=$(common-objpfx)localedata
-tst-swprintf-ENV = LOCPATH=$(common-objpfx)localedata
-tst-swscanf-ENV = LOCPATH=$(common-objpfx)localedata
-test-vfprintf-ENV = LOCPATH=$(common-objpfx)localedata
-scanf13-ENV = LOCPATH=$(common-objpfx)localedata
-bug14-ENV = LOCPATH=$(common-objpfx)localedata
-tst-grouping-ENV = LOCPATH=$(common-objpfx)localedata
-
 CPPFLAGS += $(libio-mtsafe)
 
-$(objpfx)tst-setvbuf1.out: tst-setvbuf1.expect $(objpfx)tst-setvbuf1
-	$(test-program-cmd) > $@ 2>&1
-	cmp tst-setvbuf1.expect $@
+$(objpfx)tst-setvbuf1.out: /dev/null $(objpfx)tst-setvbuf1
+	$(test-program-cmd) > $@ 2>&1; \
+	$(evaluate-test)
 
-ifeq ($(build-shared),yes)
-link-libm = $(common-objpfx)math/libm.so
-else
-link-libm = $(common-objpfx)math/libm.a
-endif
-$(objpfx)tst-printf-round: $(link-libm)
+$(objpfx)tst-setvbuf1-cmp.out: tst-setvbuf1.expect $(objpfx)tst-setvbuf1.out
+	cmp $^ > $@; \
+	$(evaluate-test)
+
+$(objpfx)tst-printf-round: $(libm)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -53,6 +53,9 @@ typedef uintmax_t uatomic_max_t;
 #  define LOCK_PREFIX "lock;"
 # endif
 #endif
+
+#define __HAVE_64B_ATOMICS 0
+#define USE_ATOMIC_COMPILER_BUILTINS 0
 
 
 #define atomic_compare_and_exchange_val_acq(mem, newval, oldval) \
