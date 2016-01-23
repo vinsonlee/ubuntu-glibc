@@ -1,6 +1,6 @@
 #! /bin/sh
 # Test for getconf(1).
-# Copyright (C) 2001-2014 Free Software Foundation, Inc.
+# Copyright (C) 2001-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -23,12 +23,6 @@ common_objpfx=$1; shift
 run_getconf=$1; shift
 
 logfile=$common_objpfx/posix/tst-getconf.out
-
-# Since we use `sort' we must make sure to use the same locale everywhere.
-LC_ALL=C
-export LC_ALL
-LANG=C
-export LANG
 
 rm -f $logfile
 result=0

@@ -4,10 +4,12 @@ libc = libc0.1
 
 # Build and expect pt_chown on this platform
 pt_chown = yes
+# Expect pldd on this platform
+pldd = no
 
 # NPTL Config
 threads = yes
-libc_add-ons = ports fbtl $(add-ons)
+libc_add-ons = fbtl $(add-ons)
 libc_extra_config_options = $(extra_config_options)
 
 ifndef KFREEBSD_SOURCE
@@ -16,6 +18,7 @@ ifndef KFREEBSD_SOURCE
   else
     KFREEBSD_HEADERS := /usr/$(DEB_HOST_GNU_TYPE)/include
   endif
+  KFREEBSD_ARCH_HEADERS := /usr/include/$(DEB_HOST_MULTIARCH)
 else
   KFREEBSD_HEADERS := $(KFREEBSD_SOURCE)/sys
 endif
@@ -27,17 +30,29 @@ KERNEL_HEADER_DIR = $(stamp)mkincludedir
 $(stamp)mkincludedir:
 	rm -rf debian/include
 	mkdir debian/include
-	for file in bsm net netatalk netipx nfs osreldate.h sys x86 vm ; do \
-	    if test -e $(KFREEBSD_HEADERS)/$$file ; then \
+
+	# Link to any headers found at the new multiarch location,
+	# otherwise look for them in the old locations
+	for file in bsm machine machine-amd64 machine-i386 net netatalk netipx nfs osreldate.h x86 vm ; do \
+	    if test -e $(KFREEBSD_ARCH_HEADERS)/$$file ; then \
+	        ln -s $(KFREEBSD_ARCH_HEADERS)/$$file debian/include ; \
+	    elif test -e $(KFREEBSD_HEADERS)/$$file ; then \
 	        ln -s $(KFREEBSD_HEADERS)/$$file debian/include ; \
 	    fi ; \
 	done
 
-        # Link all machine directories.  We can't just link machine
-        # because of explicit references to <machine-amd64/*> and
-	# <machine-i386/*>.
-	find $(KFREEBSD_HEADERS) -maxdepth 1 -xtype d -name machine\* \
-		-exec ln -s '{}' debian/include ';'
+	mkdir -p debian/include/sys
+	# Link to any headers found in the old locations first
+	if test -d $(KFREEBSD_HEADERS)/sys ; then \
+	    find $(KFREEBSD_HEADERS)/sys -mindepth 1 \
+		-exec ln -sf '{}' debian/include/sys ';' ; \
+	fi
+	# Link to any headers found at the new multiarch location,
+	# replacing any existing links
+	if test -d $(KFREEBSD_ARCH_HEADERS)/sys ; then \
+	    find $(KFREEBSD_ARCH_HEADERS)/sys -mindepth 1 \
+		-exec ln -sf '{}' debian/include/sys ';' ; \
+	fi
 
 	# To make configure happy if libc0.1-dev is not installed.
 	touch debian/include/assert.h

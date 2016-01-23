@@ -53,7 +53,7 @@ Author: Henrique de Moraes Holschuh <hmh@debian.org>
  
        unsigned int eax = __cpu_features.cpuid[COMMON_CPUID_INDEX_1].eax;
        unsigned int extended_family = (eax >> 20) & 0xff;
-@@ -131,7 +133,7 @@
+@@ -135,7 +137,7 @@
      {
        kind = arch_kind_amd;
  
@@ -62,7 +62,7 @@ Author: Henrique de Moraes Holschuh <hmh@debian.org>
  
        ecx = __cpu_features.cpuid[COMMON_CPUID_INDEX_1].ecx;
  
-@@ -176,6 +178,24 @@
+@@ -188,6 +190,24 @@
  	}
      }
  
@@ -89,10 +89,10 @@ Author: Henrique de Moraes Holschuh <hmh@debian.org>
    atomic_write_barrier ();
 --- a/sysdeps/x86_64/multiarch/init-arch.h
 +++ b/sysdeps/x86_64/multiarch/init-arch.h
-@@ -40,6 +40,7 @@
- 
+@@ -43,6 +43,7 @@
  /* COMMON_CPUID_INDEX_7.  */
  #define bit_RTM		(1 << 11)
+ #define bit_AVX2	(1 << 5)
 +#define bit_HLE		(1 << 4)
  
  /* XCR0 Feature flags.  */

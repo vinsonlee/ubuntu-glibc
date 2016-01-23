@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  S390 Version.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Carl Pederson & Martin Schwidefsky.
    This file is part of the GNU C Library.
 
@@ -72,11 +72,11 @@ elf_machine_load_address (void)
 
   asm( "   bras  1,2f\n"
        "1: .long _GLOBAL_OFFSET_TABLE_ - 1b\n"
-       "   .long _dl_start - 1b - 0x80000000\n"
+       "   .long (_dl_start - 1b - 0x80000000) & 0x00000000ffffffff\n"
        "2: l     %0,4(1)\n"
        "   ar    %0,1\n"
        "   al    1,0(1)\n"
-       "   sl    %0,_dl_start@GOT12(1)"
+       "   sl    %0,_dl_start@GOT(1)"
        : "=&d" (addr) : : "1" );
   return addr;
 }
@@ -114,7 +114,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 	 to intercept the calls to collect information.  In this case we
 	 don't store the address in the GOT so that all future calls also
 	 end in this function.  */
-      if (__builtin_expect (profile, 0))
+      if (__glibc_unlikely (profile))
 	{
 	  got[2] = (Elf32_Addr) &_dl_runtime_profile;
 
@@ -148,7 +148,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 .globl _dl_start_user\n\
 _start:\n\
 	basr  %r13,0\n\
-.L0:    ahi   %r13,.Llit-.L0\n\
+0:      ahi   %r13,.Llit-0b\n\
 	lr    %r2,%r15\n\
 	# Alloc stack frame\n\
 	ahi   %r15,-96\n\
@@ -165,19 +165,50 @@ _dl_start_user:\n\
 	ar    %r12,%r13\n\
 	# See if we were run as a command with the executable file\n\
 	# name as an extra leading argument.\n\
-	l     %r1,_dl_skip_args@GOT12(0,%r12)\n\
-	l     %r1,0(%r1)          # load _dl_skip_args\n\
+	l     %r1,_dl_skip_args@GOT(%r12)\n\
+	l     %r1,0(%r1)	# load _dl_skip_args\n\
+	ltr   %r1,%r1\n\
+	je    4f		# Skip the arg adjustment if there were none.\n\
 	# Get the original argument count.\n\
 	l     %r0,96(%r15)\n\
 	# Subtract _dl_skip_args from it.\n\
 	sr    %r0,%r1\n\
-	# Adjust the stack pointer to skip _dl_skip_args words.\n\
-	sll   %r1,2\n\
-	ar    %r15,%r1\n\
-	# Set the back chain to zero again\n\
-	xc    0(4,%r15),0(%r15)\n\
 	# Store back the modified argument count.\n\
 	st    %r0,96(%r15)\n\
+	# Copy argv and envp forward to account for skipped argv entries.\n\
+	# We skipped at least one argument or we would not get here.\n\
+	la    %r6,100(%r15)	# Destination pointer i.e. &argv[0]\n\
+	lr    %r5,%r6\n\
+	lr    %r0,%r1\n\
+	sll   %r0,2\n		# Number of skipped bytes.\n\
+	ar    %r5,%r0		# Source pointer = Dest + Skipped args.\n\
+	# argv copy loop:\n\
+1:	l     %r7,0(%r5)	# Load a word from the source.\n\
+	st    %r7,0(%r6)	# Store the word in the destination.\n\
+	ahi   %r5,4\n\
+	ahi   %r6,4\n\
+	ltr   %r7,%r7\n\
+	jne   1b		# Stop after copying the NULL.\n\
+	# envp copy loop:\n\
+2:	l     %r7,0(%r5)	# Load a word from the source.\n\
+	st    %r7,0(%r6)	# Store the word in the destination.\n\
+	ahi   %r5,4\n\
+	ahi   %r6,4\n\
+	ltr   %r7,%r7\n\
+	jne   2b		# Stop after copying the NULL.\n\
+	# Now we have to zero out the envp entries after NULL to allow\n\
+	# start.S to properly find auxv by skipping zeroes.\n\
+	# zero out loop:\n\
+	lhi   %r7,0\n\
+3:	st    %r7,0(%r6)	# Store zero.\n\
+	ahi   %r6,4		# Advance dest pointer.\n\
+	ahi   %r1,-1		# Subtract one from the word count.\n\
+	ltr   %r1,%r1\n\
+	jne    3b		# Keep copying if the word count is non-zero.\n\
+	# Adjust _dl_argv\n\
+	la    %r6,100(%r15)\n\
+	l     %r1,_dl_argv@GOT(%r12)\n\
+	st    %r6,0(%r1)\n\
 	# The special initializer gets called with the stack just\n\
 	# as the application's entry point will see it; it can\n\
 	# switch stacks if it moves these contents over.\n\
@@ -185,7 +216,7 @@ _dl_start_user:\n\
 	# Call the function to run the initializers.\n\
 	# Load the parameters:\n\
 	# (%r2, %r3, %r4, %r5) = (_dl_loaded, argc, argv, envp)\n\
-	l     %r2,_rtld_local@GOT(%r12)\n\
+4:	l     %r2,_rtld_local@GOT(%r12)\n\
 	l     %r2,0(%r2)\n\
 	l     %r3,96(%r15)\n\
 	la    %r4,100(%r15)\n\
@@ -203,7 +234,7 @@ _dl_start_user:\n\
 .Llit:\n\
 .Ladr0: .long _GLOBAL_OFFSET_TABLE_-.Llit\n\
 .Ladr1: .long _dl_start-.Llit\n\
-.Ladr4: .long _dl_init_internal@PLT-.Llit\n\
+.Ladr4: .long _dl_init@PLT-.Llit\n\
 ");
 
 #ifndef RTLD_START_SPECIAL_INIT
@@ -226,6 +257,7 @@ _dl_start_user:\n\
 
 /* The S390 never uses Elf32_Rel relocations.  */
 #define ELF_MACHINE_NO_REL 1
+#define ELF_MACHINE_NO_RELA 0
 
 /* We define an initialization functions.  This is called very early in
    _dl_sysdep_start.  */
@@ -277,7 +309,7 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
 
 #if !defined RTLD_BOOTSTRAP || !defined HAVE_Z_COMBRELOC
-  if (__builtin_expect (r_type == R_390_RELATIVE, 0))
+  if (__glibc_unlikely (r_type == R_390_RELATIVE))
     {
 # if !defined RTLD_BOOTSTRAP && !defined HAVE_Z_COMBRELOC
       /* This is defined in rtld.c, but nowhere in the static libc.a;
@@ -295,7 +327,7 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
     }
   else
 #endif
-  if (__builtin_expect (r_type == R_390_NONE, 0))
+  if (__glibc_unlikely (r_type == R_390_NONE))
     return;
   else
     {
@@ -316,7 +348,7 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 	{
 	case R_390_IRELATIVE:
 	  value = map->l_addr + reloc->r_addend;
-	  if (__builtin_expect (!skip_ifunc, 1))
+	  if (__glibc_likely (!skip_ifunc))
 	    value = elf_ifunc_invoke (value);
 	  *reloc_addr = value;
 	  break;
@@ -448,7 +480,7 @@ elf_machine_lazy_rel (struct link_map *map,
   Elf32_Addr *const reloc_addr = (void *) (l_addr + reloc->r_offset);
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
   /* Check for unexpected PLT reloc type.  */
-  if (__builtin_expect (r_type == R_390_JMP_SLOT, 1))
+  if (__glibc_likely (r_type == R_390_JMP_SLOT))
     {
       if (__builtin_expect (map->l_mach.plt, 0) == 0)
 	*reloc_addr += l_addr;
@@ -457,10 +489,10 @@ elf_machine_lazy_rel (struct link_map *map,
 	  map->l_mach.plt
 	  + (((Elf32_Addr) reloc_addr) - map->l_mach.gotplt) * 8;
     }
-  else if (__builtin_expect (r_type == R_390_IRELATIVE, 1))
+  else if (__glibc_likely (r_type == R_390_IRELATIVE))
     {
       Elf32_Addr value = map->l_addr + reloc->r_addend;
-      if (__builtin_expect (!skip_ifunc, 1))
+      if (__glibc_likely (!skip_ifunc))
 	value = elf_ifunc_invoke (value);
       *reloc_addr = value;
     }

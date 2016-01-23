@@ -1,6 +1,6 @@
 /* Multiple versions of memmove
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -22,7 +22,7 @@
 #include <init-arch.h>
 
 /* Define multiple versions only for the definition in lib.  */
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 # ifdef SHARED
 	.text
 ENTRY(memmove)
@@ -35,6 +35,11 @@ ENTRY(memmove)
 	jne	1f
 	call	__init_cpu_features
 1:	leal	__memmove_ia32@GOTOFF(%ebx), %eax
+	testl	$bit_SSE2, CPUID_OFFSET+index_SSE2+__cpu_features@GOTOFF(%ebx)
+	jz	2f
+	leal	__memmove_sse2_unaligned@GOTOFF(%ebx), %eax
+	testl	$bit_Fast_Unaligned_Load, FEATURE_OFFSET+index_Fast_Unaligned_Load+__cpu_features@GOTOFF(%ebx)
+	jnz	2f
 	testl	$bit_SSSE3, CPUID_OFFSET+index_SSSE3+__cpu_features@GOTOFF(%ebx)
 	jz	2f
 	leal	__memmove_ssse3@GOTOFF(%ebx), %eax
@@ -63,6 +68,11 @@ ENTRY(memmove)
 	jne	1f
 	call	__init_cpu_features
 1:	leal	__memmove_ia32, %eax
+	testl	$bit_SSE2, CPUID_OFFSET+index_SSE2+__cpu_features
+	jz	2f
+	leal	__memmove_sse2_unaligned, %eax
+	testl	$bit_Fast_Unaligned_Load, FEATURE_OFFSET+index_Fast_Unaligned_Load+__cpu_features
+	jnz	2f
 	testl	$bit_SSSE3, CPUID_OFFSET+index_SSSE3+__cpu_features
 	jz	2f
 	leal	__memmove_ssse3, %eax
