@@ -198,7 +198,7 @@
 #  define LDR_GLOBAL(R, T, SYMBOL, CONSTANT)				\
 	movw	T, #:lower16:SYMBOL;					\
 	movt	T, #:upper16:SYMBOL;					\
-	sfi_breg T, ldr R, [\B, $CONSTANT]
+	ldr	R, [T, $CONSTANT]
 # elif defined (ARCH_HAS_T2) && defined (PIC) && ARM_PCREL_MOVW_OK
 #  define LDR_GLOBAL(R, T, SYMBOL, CONSTANT)				\
 	movw	R, #:lower16:_GLOBAL_OFFSET_TABLE_ - 97f - PC_OFS;	\
@@ -212,7 +212,7 @@
 97:	add	R, R, pc;						\
 98:	LDST_PC_INDEXED (ldr, T, T, T);					\
 	LDST_INDEXED (ldr, R, T, R, T);					\
-	sfi_breg R, ldr	R, [\B, $CONSTANT]
+	ldr	R, [R, $CONSTANT]
 # else
 #  define LDR_GLOBAL(R, T, SYMBOL, CONSTANT)		\
 	ldr	T, 99f;					\

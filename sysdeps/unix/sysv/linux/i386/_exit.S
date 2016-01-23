@@ -40,5 +40,4 @@ _exit:
 	.size	_exit,.-_exit
 
 libc_hidden_def (_exit)
-rtld_hidden_def (_exit)
 weak_alias (_exit, _Exit)

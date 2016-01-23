@@ -230,20 +230,12 @@ __ieee754_expl (long double x)
       if (!unsafe)
 	return result;
       else
-	{
-	  result *= scale_u.d;
-	  if (result < LDBL_MIN)
-	    {
-	      long double force_underflow = result * result;
-	      math_force_eval (force_underflow);
-	    }
-	  return result;
-	}
+	return result * scale_u.d;
     }
   /* Exceptional cases:  */
   else if (isless (x, himark))
     {
-      if (isinf (x))
+      if (__isinfl (x))
 	/* e^-inf == 0, with no error.  */
 	return 0;
       else

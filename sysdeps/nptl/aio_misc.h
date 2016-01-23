@@ -22,20 +22,20 @@
 
 #include <assert.h>
 #include <nptl/pthreadP.h>
-#include <futex-internal.h>
+#include <lowlevellock.h>
 
 #define DONT_NEED_AIO_MISC_COND	1
 
 #define AIO_MISC_NOTIFY(waitlist) \
   do {									      \
     if (*waitlist->counterp > 0 && --*waitlist->counterp == 0)		      \
-      futex_wake ((unsigned int *) waitlist->counterp, 1, FUTEX_PRIVATE);     \
+      lll_futex_wake (waitlist->counterp, 1, LLL_PRIVATE);		      \
   } while (0)
 
 #define AIO_MISC_WAIT(result, futex, timeout, cancel)			      \
   do {									      \
-    volatile unsigned int *futexaddr = &futex;				      \
-    unsigned int oldval = futex;					      \
+    volatile int *futexaddr = &futex;					      \
+    int oldval = futex;							      \
 									      \
     if (oldval != 0)							      \
       {									      \
@@ -48,9 +48,9 @@
 	int status;							      \
 	do								      \
 	  {								      \
-	    status = futex_reltimed_wait ((unsigned int *) futexaddr, oldval, \
-					  timeout, FUTEX_PRIVATE);	      \
-	    if (status != EAGAIN)					      \
+	    status = lll_futex_timed_wait (futexaddr, oldval, timeout,	      \
+					   LLL_PRIVATE);		      \
+	    if (status != -EWOULDBLOCK)					      \
 	      break;							      \
 									      \
 	    oldval = *futexaddr;					      \
@@ -60,12 +60,12 @@
 	if (cancel)							      \
 	  LIBC_CANCEL_RESET (oldtype);					      \
 									      \
-	if (status == EINTR)						      \
+	if (status == -EINTR)						      \
 	  result = EINTR;						      \
-	else if (status == ETIMEDOUT)					      \
+	else if (status == -ETIMEDOUT)					      \
 	  result = EAGAIN;						      \
 	else								      \
-	  assert (status == 0 || status == EAGAIN);			      \
+	  assert (status == 0 || status == -EWOULDBLOCK);		      \
 									      \
 	pthread_mutex_lock (&__aio_requests_mutex);			      \
       }									      \

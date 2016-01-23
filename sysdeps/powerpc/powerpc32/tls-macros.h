@@ -1,5 +1,6 @@
 /* Include sysdeps/powerpc/tls-macros.h for __TLS_CALL_CLOBBERS  */
 #include_next "tls-macros.h"
+#include "config.h"
 
 /* PowerPC32 Local Exec TLS access.  */
 #define TLS_LE(x)							      \
@@ -9,7 +10,8 @@
      __result; })
 
 /* PowerPC32 Initial Exec TLS access.  */
-#define TLS_IE(x)							      \
+#ifdef HAVE_ASM_PPC_REL16
+# define TLS_IE(x)							      \
   ({ int *__result;							      \
      asm ("bcl 20,31,1f\n1:\t"						      \
 	  "mflr %0\n\t"							      \
@@ -20,9 +22,21 @@
 	  : "=b" (__result) :						      \
 	  : "lr");							      \
      __result; })
+#else
+# define TLS_IE(x)							      \
+  ({ int *__result;							      \
+     asm ("bl _GLOBAL_OFFSET_TABLE_@local-4\n\t"			      \
+	  "mflr %0\n\t"							      \
+	  "lwz %0," #x "@got@tprel(%0)\n\t"				      \
+	  "add %0,%0," #x "@tls"					      \
+	  : "=b" (__result) :						      \
+	  : "lr");							      \
+     __result; })
+#endif
 
 /* PowerPC32 Local Dynamic TLS access.  */
-#define TLS_LD(x)							      \
+#ifdef HAVE_ASM_PPC_REL16
+# define TLS_LD(x)							      \
   ({ int *__result;							      \
      asm ("bcl 20,31,1f\n1:\t"						      \
 	  "mflr 3\n\t"							      \
@@ -34,9 +48,22 @@
 	  : "=r" (__result) :						      \
 	  : "3", __TLS_CALL_CLOBBERS);					      \
      __result; })
+#else
+# define TLS_LD(x)							      \
+  ({ int *__result;							      \
+     asm ("bl _GLOBAL_OFFSET_TABLE_@local-4\n\t"			      \
+	  "mflr 3\n\t"							      \
+	  "addi 3,3," #x "@got@tlsld\n\t"				      \
+	  "bl __tls_get_addr@plt\n\t"					      \
+	  "addi %0,3," #x "@dtprel"					      \
+	  : "=r" (__result) :						      \
+	  : "3", __TLS_CALL_CLOBBERS);					      \
+     __result; })
+#endif
 
 /* PowerPC32 General Dynamic TLS access.  */
-#define TLS_GD(x)							      \
+#ifdef HAVE_ASM_PPC_REL16
+# define TLS_GD(x)							      \
   ({ register int *__result __asm__ ("r3");				      \
      asm ("bcl 20,31,1f\n1:\t"						      \
 	  "mflr 3\n\t"							      \
@@ -47,3 +74,14 @@
 	  : "=r" (__result) :						      \
 	  : __TLS_CALL_CLOBBERS);					      \
      __result; })
+#else
+# define TLS_GD(x)							      \
+  ({ register int *__result __asm__ ("r3");				      \
+     asm ("bl _GLOBAL_OFFSET_TABLE_@local-4\n\t"			      \
+	  "mflr 3\n\t"							      \
+	  "addi 3,3," #x "@got@tlsgd\n\t"				      \
+	  "bl __tls_get_addr@plt"					      \
+	  : "=r" (__result) :						      \
+	  : __TLS_CALL_CLOBBERS);					      \
+     __result; })
+#endif

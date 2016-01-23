@@ -19,7 +19,8 @@
 # error "Never include <bits/sem.h> directly; use <sys/sem.h> instead."
 #endif
 
-#include <sys/types.h>
+#include <bits/types.h>
+#include <bits/wordsize.h>
 
 /* Flags for `semop'.  */
 #define SEM_UNDO	0x1000		/* undo the operation on exit */

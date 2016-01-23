@@ -30,7 +30,6 @@
 /* X32 saves RCX, RDX, RSI, RDI, R8 and R9 plus RAX.  */
 # define REGISTER_SAVE_AREA	(8 * 7)
 # define REGISTER_SAVE_RAX	0
-# define PRESERVE_BND_REGS_PREFIX
 #else
 /* X86-64 saves RCX, RDX, RSI, RDI, R8 and R9 plus RAX as well as BND0,
    BND1, BND2, BND3.  */
@@ -41,11 +40,6 @@
 # define REGISTER_SAVE_BND2	(REGISTER_SAVE_BND1 + 16)
 # define REGISTER_SAVE_BND3	(REGISTER_SAVE_BND2 + 16)
 # define REGISTER_SAVE_RAX	(REGISTER_SAVE_BND3 + 16)
-# ifdef HAVE_MPX_SUPPORT
-#  define PRESERVE_BND_REGS_PREFIX bnd
-# else
-#  define PRESERVE_BND_REGS_PREFIX .byte 0xf2
-# endif
 #endif
 #define REGISTER_SAVE_RCX	(REGISTER_SAVE_RAX + 8)
 #define REGISTER_SAVE_RDX	(REGISTER_SAVE_RCX + 8)
@@ -80,11 +74,7 @@ _dl_runtime_resolve:
 	bndmov %bnd2, REGISTER_SAVE_BND2(%rsp)
 	bndmov %bnd3, REGISTER_SAVE_BND3(%rsp)
 # else
-#  if REGISTER_SAVE_BND0 == 0
-	.byte 0x66,0x0f,0x1b,0x04,0x24
-#  else
 	.byte 0x66,0x0f,0x1b,0x44,0x24,REGISTER_SAVE_BND0
-#  endif
 	.byte 0x66,0x0f,0x1b,0x4c,0x24,REGISTER_SAVE_BND1
 	.byte 0x66,0x0f,0x1b,0x54,0x24,REGISTER_SAVE_BND2
 	.byte 0x66,0x0f,0x1b,0x5c,0x24,REGISTER_SAVE_BND3
@@ -108,11 +98,7 @@ _dl_runtime_resolve:
 	.byte 0x66,0x0f,0x1a,0x5c,0x24,REGISTER_SAVE_BND3
 	.byte 0x66,0x0f,0x1a,0x54,0x24,REGISTER_SAVE_BND2
 	.byte 0x66,0x0f,0x1a,0x4c,0x24,REGISTER_SAVE_BND1
-#  if REGISTER_SAVE_BND0 == 0
-	.byte 0x66,0x0f,0x1a,0x04,0x24
-#  else
 	.byte 0x66,0x0f,0x1a,0x44,0x24,REGISTER_SAVE_BND0
-#  endif
 # endif
 #endif
 	# Get register content back.
@@ -126,8 +112,6 @@ _dl_runtime_resolve:
 	# Adjust stack(PLT did 2 pushes)
 	addq $(REGISTER_SAVE_AREA + 16), %rsp
 	cfi_adjust_cfa_offset(-(REGISTER_SAVE_AREA + 16))
-	# Preserve bound registers.
-	PRESERVE_BND_REGS_PREFIX
 	jmp *%r11		# Jump to function address.
 	cfi_endproc
 	.size _dl_runtime_resolve, .-_dl_runtime_resolve
@@ -214,8 +198,8 @@ _dl_runtime_profile:
 #  else
 	.byte 0x66,0x0f,0x1b,0x84,0x24;.long (LR_BND_OFFSET)
 	.byte 0x66,0x0f,0x1b,0x8c,0x24;.long (LR_BND_OFFSET + BND_SIZE)
-	.byte 0x66,0x0f,0x1b,0x94,0x24;.long (LR_BND_OFFSET + BND_SIZE*2)
-	.byte 0x66,0x0f,0x1b,0x9c,0x24;.long (LR_BND_OFFSET + BND_SIZE*3)
+	.byte 0x66,0x0f,0x1b,0x84,0x24;.long (LR_BND_OFFSET + BND_SIZE*2)
+	.byte 0x66,0x0f,0x1b,0x8c,0x24;.long (LR_BND_OFFSET + BND_SIZE*3)
 #  endif
 # endif
 

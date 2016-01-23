@@ -387,14 +387,6 @@ LDFLAGS.so += $(hashstyle-LDFLAGS)
 LDFLAGS-rtld += $(hashstyle-LDFLAGS)
 endif
 
-# Command to run after every final link (executable or shared object).
-# This is invoked with $(call after-link,...), so it should operate on
-# the file $1.  This can be set to do some sort of post-processing on
-# binaries, or to perform some sort of static sanity check.
-ifndef after-link
-after-link =
-endif
-
 # Command for linking PIE programs with the C library.
 ifndef +link-pie
 +link-pie-before-libc = $(CC) -pie -Wl,-O1 -nostdlib -nostartfiles -o $@ \
@@ -408,15 +400,10 @@ ifndef +link-pie
 			  $(common-objpfx)libc% $(+postinit),$^) \
 	     $(link-extra-libs)
 +link-pie-after-libc = $(+postctorS) $(+postinit)
-define +link-pie
-$(+link-pie-before-libc) $(rtld-LDFLAGS) $(link-libc) $(+link-pie-after-libc)
-$(call after-link,$@)
-endef
-define +link-pie-tests
-$(+link-pie-before-libc) $(rtld-tests-LDFLAGS) $(link-libc-tests) \
-			 $(+link-pie-after-libc)
-$(call after-link,$@)
-endef
++link-pie = $(+link-pie-before-libc) $(rtld-LDFLAGS) $(link-libc) \
+	    $(+link-pie-after-libc)
++link-pie-tests = $(+link-pie-before-libc) $(rtld-tests-LDFLAGS) \
+		  $(link-libc-tests) $(+link-pie-after-libc)
 endif
 # Command for statically linking programs with the C library.
 ifndef +link-static
@@ -430,23 +417,14 @@ ifndef +link-static
 			   $(common-objpfx)libc% $(+postinit),$^) \
 	      $(link-extra-libs-static)
 +link-static-after-libc = $(+postctorT) $(+postinit)
-define +link-static
-$(+link-static-before-libc) $(link-libc-static) $(+link-static-after-libc)
-$(call after-link,$@)
-endef
-define +link-static-tests
-$(+link-static-before-libc) $(link-libc-static-tests) $(+link-static-after-libc)
-$(call after-link,$@)
-endef
++link-static = $(+link-static-before-libc) $(link-libc-static) \
+	       $(+link-static-after-libc)
++link-static-tests = $(+link-static-before-libc) $(link-libc-static-tests) \
+		     $(+link-static-after-libc)
 endif
 # Commands for linking programs with the C library.
 ifndef +link
 ifeq (yes,$(build-shared))
-ifeq (yes,$(build-pie-default))
-no-pie-ldflag = -no-pie
-+link = $(+link-pie)
-+link-tests = $(+link-pie-tests)
-else
 +link-before-libc = $(CC) -nostdlib -nostartfiles -o $@ \
 	      $(sysdep-LDFLAGS) $(LDFLAGS) $(LDFLAGS-$(@F)) \
 	      $(combreloc-LDFLAGS) $(relro-LDFLAGS) $(hashstyle-LDFLAGS) \
@@ -458,16 +436,10 @@ else
 			   $(common-objpfx)libc% $(+postinit),$^) \
 	      $(link-extra-libs)
 +link-after-libc = $(+postctor) $(+postinit)
-define +link
-$(+link-before-libc) $(rtld-LDFLAGS) $(link-libc) $(+link-after-libc)
-$(call after-link,$@)
-endef
-define +link-tests
-$(+link-before-libc) $(rtld-tests-LDFLAGS) $(link-libc-tests) \
-		     $(+link-after-libc)
-$(call after-link,$@)
-endef
-endif
++link = $(+link-before-libc) $(rtld-LDFLAGS) $(link-libc) \
+	$(+link-after-libc)
++link-tests = $(+link-before-libc) $(rtld-tests-LDFLAGS) \
+	      $(link-libc-tests) $(+link-after-libc)
 else
 +link = $(+link-static)
 +link-tests = $(+link-static-tests)
@@ -504,7 +476,7 @@ link-libc = $(link-libc-rpath-link) $(link-libc-before-gnulib) $(gnulib)
 link-libc-tests = $(link-libc-tests-rpath-link) \
 		  $(link-libc-before-gnulib) $(gnulib-tests)
 # This is how to find at build-time things that will be installed there.
-rpath-dirs = math elf dlfcn nss nis rt resolv crypt mathvec
+rpath-dirs = math elf dlfcn nss nis rt resolv crypt
 rpath-link = \
 $(common-objdir):$(subst $(empty) ,:,$(patsubst ../$(subdir),.,$(rpath-dirs:%=$(common-objpfx)%)))
 else
@@ -602,6 +574,7 @@ endif
 # Variants of the two previous definitions for statically linking programs.
 +prectorT = `$(CC) $(sysdep-LDFLAGS) --print-file-name=crtbeginT.o`
 +postctorT = `$(CC) $(sysdep-LDFLAGS) --print-file-name=crtend.o`
++interp = $(addprefix $(elf-objpfx),interp.os)
 csu-objpfx = $(common-objpfx)csu/
 elf-objpfx = $(common-objpfx)elf/
 
@@ -615,11 +588,6 @@ endif
 # <variable>=<value> assignments for environment variables.
 ifndef test-wrapper-env
 test-wrapper-env = $(test-wrapper) env
-endif
-# Likewise, but the program's environment will be empty except for any
-# explicit <variable>=<value> assignments preceding the program name.
-ifndef test-wrapper-env-only
-test-wrapper-env-only = $(test-wrapper) env -i
 endif
 
 # Whether to run test programs built for the library's host system.
@@ -744,9 +712,9 @@ endif
 
 # Extra flags to pass to GCC.
 ifeq ($(all-warnings),yes)
-+gccwarn := -Wall -Wwrite-strings -Wcast-qual -Wbad-function-cast -Wmissing-noreturn -Wmissing-prototypes -Wmissing-declarations -Wcomment -Wcomments -Wtrigraphs -Wsign-compare -Wfloat-equal -Wmultichar
++gccwarn := -Wall -Wwrite-strings -Winline -Wcast-qual -Wbad-function-cast -Wmissing-noreturn -Wmissing-prototypes -Wmissing-declarations -Wcomment -Wcomments -Wtrigraphs -Wsign-compare -Wfloat-equal -Wmultichar
 else
-+gccwarn := -Wall -Wwrite-strings
++gccwarn := -Wall -Wwrite-strings -Winline
 endif
 +gccwarn += -Wundef
 ifeq ($(enable-werror),yes)
@@ -853,24 +821,24 @@ built-modules = iconvprogs iconvdata ldconfig lddlibc4 libmemusage \
 		libSegFault libpcprofile librpcsvc locale-programs \
 		memusagestat nonlib nscd extramodules libnldbl
 
+# We don't include libc-modules.h when these targets are being built.  These
+# targets don't (and will likely never need to) use the IS_IN facility.  In
+# fact, shlib-versions should not use it because that will create a circular
+# dependency as libc-modules.h is generated from shlib-versions.
+skip-module-cppflags = shlib-versions.v.i Versions.v.i
+
 in-module = $(subst -,_,$(firstword $(libof-$(basename $(@F))) \
 				    $(libof-$(<F)) \
 				    $(libof-$(@F)) \
 				    libc))
 
-# Build ld.so, libc.so and libpthread.so with -ftls-model=initial-exec
-tls-model = $(if $(filter libpthread rtld \
-			  libc,$(in-module)),-ftls-model=initial-exec,)
-
 module-cppflags-real = -include $(common-objpfx)libc-modules.h \
 		       -DMODULE_NAME=$(in-module)
 
-# We don't need libc-modules.h and the MODULE_NAME definition for .v.i
-# files.  These targets don't (and will likely never need to) use the IS_IN
-# facility.  In fact, shlib-versions should not use it because that will
-# create a circular dependency as libc-modules.h is generated from
-# shlib-versions.
-module-cppflags = $(if $(filter %.v.i,$(@F)),,$(module-cppflags-real))
+# We don't need libc-modules.h and the MODULE_NAME definition for
+# shlib-version.v.i.
+module-cppflags = $(if $(filter $(@F),$(skip-module-cppflags)), \
+		       ,$(module-cppflags-real))
 
 # These are the variables that the implicit compilation rules use.
 # Note that we can't use -std=* in CPPFLAGS, because it overrides
@@ -887,7 +855,7 @@ CPPFLAGS = $(config-extra-cppflags) $(CPPUNDEFS) $(CPPFLAGS-config) \
 override CFLAGS	= -std=gnu99 $(gnu89-inline-CFLAGS) $(config-extra-cflags) \
 		  $(filter-out %frame-pointer,$(+cflags)) $(+gccwarn-c) \
 		  $(sysdep-CFLAGS) $(CFLAGS-$(suffix $@)) $(CFLAGS-$(<F)) \
-		  $(CFLAGS-$(@F)) $(tls-model) \
+		  $(CFLAGS-$(@F)) \
 		  $(foreach lib,$(libof-$(basename $(@F))) \
 				$(libof-$(<F)) $(libof-$(@F)),$(CFLAGS-$(lib)))
 override CXXFLAGS = $(c++-sysincludes) \
@@ -958,7 +926,7 @@ endif
 ifndef ASFLAGS
 ASFLAGS := $(filter -g% -fdebug-prefix-map=%,$(CFLAGS))
 endif
-ASFLAGS += -Werror=undef $(ASFLAGS-config) $(asflags-cpu)
+ASFLAGS += $(ASFLAGS-config) $(asflags-cpu)
 
 ifndef BUILD_CC
 BUILD_CC = $(CC)
@@ -1083,10 +1051,8 @@ endif
 
 ifeq ($(build-shared),yes)
 libm = $(common-objpfx)math/libm.so$(libm.so-version)
-libmvec = $(common-objpfx)mathvec/libmvec.so$(libmvec.so-version)
 else
 libm = $(common-objpfx)math/libm.a
-libmvec = $(common-objpfx)mathvec/libmvec.a
 endif
 
 # These are the subdirectories containing the library source.  The order
@@ -1096,7 +1062,7 @@ all-subdirs = csu assert ctype locale intl catgets math setjmp signal	    \
 	      stdlib stdio-common libio malloc string wcsmbs time dirent    \
 	      grp pwd posix io termios resource misc socket sysvipc gmon    \
 	      gnulib iconv iconvdata wctype manual shadow gshadow po argp   \
-	      crypt localedata timezone rt conform debug mathvec	    \
+	      crypt localedata timezone rt conform debug		    \
 	      $(add-on-subdirs) dlfcn elf
 
 ifndef avoid-generated

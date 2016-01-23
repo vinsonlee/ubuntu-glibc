@@ -21,14 +21,6 @@
 #ifdef SHARED
 
 #include <dl-vdso.h>
-#include <errno.h>
-
-static time_t
-__time_syscall (time_t *t)
-{
-  INTERNAL_SYSCALL_DECL (err);
-  return INTERNAL_SYSCALL (time, err, 1, t);
-}
 
 void *time_ifunc (void) __asm__ ("time");
 
@@ -37,9 +29,7 @@ time_ifunc (void)
 {
   PREPARE_VERSION_KNOWN (linux26, LINUX_2_6);
 
-/* If the vDSO is not available we fall back on the syscall.  */
-  return _dl_vdso_vsym ("__vdso_time", &linux26)
-			?: (void*) &__time_syscall;
+  return _dl_vdso_vsym ("__vdso_time", &linux26) ?: TIME_FALLBACK;
 }
 asm (".type time, %gnu_indirect_function");
 

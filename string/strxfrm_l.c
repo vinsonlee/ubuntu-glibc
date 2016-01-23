@@ -29,6 +29,7 @@
 # define STRING_TYPE char
 # define USTRING_TYPE unsigned char
 # define STRXFRM __strxfrm_l
+# define STRCMP strcmp
 # define STRLEN strlen
 # define STPNCPY __stpncpy
 # define WEIGHT_H "../locale/weight.h"

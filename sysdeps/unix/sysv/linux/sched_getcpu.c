@@ -19,17 +19,13 @@
 #include <sched.h>
 #include <sysdep.h>
 
-#ifdef HAVE_GETCPU_VSYSCALL
-# define HAVE_VSYSCALL
-#endif
-#include <sysdep-vdso.h>
 
 int
 sched_getcpu (void)
 {
 #ifdef __NR_getcpu
   unsigned int cpu;
-  int r = INLINE_VSYSCALL (getcpu, 3, &cpu, NULL, NULL);
+  int r = INLINE_SYSCALL (getcpu, 3, &cpu, NULL, NULL);
 
   return r == -1 ? r : cpu;
 #else

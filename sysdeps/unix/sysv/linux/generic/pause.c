@@ -23,17 +23,41 @@
 /* Suspend the process until a signal arrives.
    This always returns -1 and sets errno to EINTR.  */
 
-int
-__libc_pause (void)
+static int
+__syscall_pause (void)
 {
   sigset_t set;
 
   int rc =
-    SYSCALL_CANCEL (rt_sigprocmask, SIG_BLOCK, NULL, &set, _NSIG / 8);
+    INLINE_SYSCALL (rt_sigprocmask, 4, SIG_BLOCK, NULL, &set, _NSIG / 8);
   if (rc == 0)
-    rc = SYSCALL_CANCEL (rt_sigsuspend, &set, _NSIG / 8);
+    rc = INLINE_SYSCALL (rt_sigsuspend, 2, &set, _NSIG / 8);
 
   return rc;
 }
 
+int
+__libc_pause (void)
+{
+  if (SINGLE_THREAD_P)
+    return __syscall_pause ();
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  int result = __syscall_pause ();
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
+}
 weak_alias (__libc_pause, pause)
+
+#ifndef NO_CANCELLATION
+# include <not-cancel.h>
+
+int
+__pause_nocancel (void)
+{
+  return __syscall_pause ();
+}
+#endif

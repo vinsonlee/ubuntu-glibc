@@ -22,7 +22,6 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include "pthreadP.h"
-#include <atomic.h>
 #include <lowlevellock.h>
 #include <not-cancel.h>
 
@@ -126,7 +125,10 @@ pthread_mutex_timedlock (mutex, abstime)
 					  PTHREAD_MUTEX_PSHARED (mutex));
 		  break;
 		}
-	      atomic_spin_nop ();
+
+#ifdef BUSY_WAIT_NOP
+	      BUSY_WAIT_NOP;
+#endif
 	    }
 	  while (lll_trylock (mutex->__data.__lock) != 0);
 

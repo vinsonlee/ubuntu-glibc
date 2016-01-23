@@ -1,8 +1,8 @@
 #
 # Allowed failures for s390x-linux-gnu-libc
 #
-elf/tst-protected1a
-elf/tst-protected1b
+posix/annexc
+elf/check-localplt
 nptl/tst-cancel17
 nptl/tst-cancelx17
 rt/tst-cpuclock2

@@ -25,20 +25,15 @@ orig_rc=$rc
 xfail=$3
 stop_on_failure=$4
 
-if [ $rc -eq 77 ]; then
-  result="UNSUPPORTED"
-  rc=0
+if [ $rc -eq 0 ]; then
+  result="PASS"
 else
-  if [ $rc -eq 0 ]; then
-    result="PASS"
-  else
-    result="FAIL"
-  fi
+  result="FAIL"
+fi
 
-  if $xfail; then
-    result="X$result"
-    rc=0
-  fi
+if $xfail; then
+  result="X$result"
+  rc=0
 fi
 
 echo "$result: $test_name"
