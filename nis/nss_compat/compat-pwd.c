@@ -311,6 +311,9 @@ _nss_compat_setpwent (int stayopen)
 static enum nss_status
 internal_endpwent (ent_t *ent)
 {
+  if (nss_endpwent)
+    nss_endpwent ();
+
   if (ent->stream != NULL)
     {
       fclose (ent->stream);
@@ -342,9 +345,6 @@ _nss_compat_endpwent (void)
   enum nss_status result;
 
   __libc_lock_lock (lock);
-
-  if (nss_endpwent)
-    nss_endpwent ();
 
   result = internal_endpwent (&ext_ent);
 

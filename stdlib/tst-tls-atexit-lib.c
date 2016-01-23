@@ -31,7 +31,7 @@ void A_dtor (void *obj)
   ((A *)obj)->val = obj;
 }
 
-void reg_dtor (void)
+void do_foo (void)
 {
   static __thread A b;
   __cxa_thread_atexit_impl (A_dtor, &b, __dso_handle);

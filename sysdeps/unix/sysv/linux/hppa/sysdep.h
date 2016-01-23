@@ -18,14 +18,8 @@
    License along with the GNU C Library.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifndef _LINUX_HPPA_SYSDEP_H
-#define _LINUX_HPPA_SYSDEP_H 1
-
-#include <sysdeps/unix/sysdep.h>
-#include <sysdeps/hppa/sysdep.h>
-
-/* Defines RTLD_PRIVATE_ERRNO.  */
-#include <dl-sysdep.h>
+#include <asm/unistd.h>
+#include <sysdeps/generic/sysdep.h>
 
 /* In order to get __set_errno() definition in INLINE_SYSCALL.  */
 #ifndef __ASSEMBLER__
@@ -121,7 +115,6 @@
    There is currently a bug in gdb which prevents us from specifying
    incomplete stabs information.  Fake some entries here which specify
    the current source file.  */
-#undef ENTRY
 #define	ENTRY(name)							\
 	.text						ASM_LINE_SEP	\
 	.align ALIGNARG(4)				ASM_LINE_SEP	\
@@ -178,7 +171,6 @@
 	bv,n 0(2)
 */
 
-#undef PSEUDO
 #define	PSEUDO(name, syscall_name, args)			\
   ENTRY (name)					ASM_LINE_SEP	\
   /* If necc. load args from stack */		ASM_LINE_SEP	\
@@ -367,13 +359,28 @@ L(pre_end):					ASM_LINE_SEP	\
 #undef INLINE_SYSCALL
 #define INLINE_SYSCALL(name, nr, args...)				\
 ({									\
-    long __sys_res = INTERNAL_SYSCALL (name, , nr, args);		\
-    if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (__sys_res, )))	\
-      {									\
-	__set_errno (INTERNAL_SYSCALL_ERRNO (__sys_res, ));		\
-	__sys_res = -1;							\
-      }									\
-    __sys_res;								\
+	long __sys_res;							\
+	{								\
+		register unsigned long __res asm("r28");		\
+		PIC_REG_DEF						\
+		LOAD_ARGS_##nr(args)					\
+		/* FIXME: HACK save/load r19 around syscall */		\
+		asm volatile(						\
+			SAVE_ASM_PIC					\
+			"	ble  0x100(%%sr2, %%r0)\n"		\
+			"	ldi %1, %%r20\n"			\
+			LOAD_ASM_PIC					\
+			: "=r" (__res)					\
+			: "i" (SYS_ify(name)) PIC_REG_USE ASM_ARGS_##nr	\
+			: "memory", CALL_CLOB_REGS CLOB_ARGS_##nr	\
+		);							\
+		__sys_res = (long)__res;				\
+	}								\
+	if ( (unsigned long)__sys_res >= (unsigned long)-4095 ){	\
+		__set_errno(-__sys_res);				\
+		__sys_res = -1;						\
+	}								\
+	__sys_res;							\
 })
 
 /* INTERNAL_SYSCALL_DECL - Allows us to setup some function static
@@ -488,5 +495,3 @@ L(pre_end):					ASM_LINE_SEP	\
 /* Pointer mangling is not yet supported for HPPA.  */
 #define PTR_MANGLE(var) (void) (var)
 #define PTR_DEMANGLE(var) (void) (var)
-
-#endif /* _LINUX_HPPA_SYSDEP_H */

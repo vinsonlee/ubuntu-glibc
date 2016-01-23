@@ -108,12 +108,7 @@ ENTRY(__asinhl)
 	fldt	MO(huge)		// huge : x : x
 	faddp				// huge+x : x
 	fstp	%st(0)			// x
-	cmpl	$0x0001, %eax
-	jae	8f
-	fld	%st(0)
-	fmul	%st(0)
-	fstp	%st(0)
-8:	ret
+	ret
 
 	// |x| > 2^34 => y = sign(x) * (log(|x|) + log(2))
 	.align ALIGNARG(4)

@@ -12,4 +12,4 @@
 +      *herrnop = HOST_NOT_FOUND;
      }
  
-   return status;
+   __libc_lock_unlock (lock);

@@ -19,17 +19,14 @@
 #ifndef _REGEXP_H
 #define _REGEXP_H	1
 
-/* The contents of this header file were standardized in the
-   Single Unix Specification, Version 2 (1997) but marked as
-   LEGACY; new applications were already being encouraged to
-   use <regex.h> instead.  POSIX.1-2001 removed this header.
+/* The contents of this header file was first standardized in X/Open
+   System Interface and Headers Issue 2, originally coming from SysV.
+   In issue 4, version 2, it is marked as TO BE WITDRAWN, and it has
+   been withdrawn in SUSv3.
 
-   This header is provided only for backward compatibility.
-   It will be removed in the next release of the GNU C Library.
-   New code should use <regex.h> instead.  */
-
-#warning "<regexp.h> will be removed in the next release of the GNU C Library."
-#warning "Please update your code to use <regex.h> instead (no trailing 'p')."
+   This code shouldn't be used in any newly written code.  It is
+   included only for compatibility reasons.  Use the POSIX definition
+   in <regex.h> for portable applications and a reasonable interface.  */
 
 #include <features.h>
 #include <alloca.h>
@@ -185,19 +182,19 @@ compile (char *__restrict instring, char *__restrict expbuf,
       case REG_ERPAREN:
       default:
 	/* There is no matching error code.  */
-	ERROR (36);
+	RETURN (36);
       case REG_ESUBREG:
-	ERROR (25);
+	RETURN (25);
       case REG_EBRACK:
-	ERROR (49);
+	RETURN (49);
       case REG_EPAREN:
-	ERROR (42);
+	RETURN (42);
       case REG_EBRACE:
-	ERROR (44);
+	RETURN (44);
       case REG_BADBR:
-	ERROR (46);
+	RETURN (46);
       case REG_ERANGE:
-	ERROR (11);
+	RETURN (11);
       case REG_ESPACE:
       case REG_ESIZE:
 	ERROR (50);

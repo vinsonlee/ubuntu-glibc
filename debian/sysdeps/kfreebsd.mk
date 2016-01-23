@@ -6,8 +6,6 @@ libc = libc0.1
 pt_chown = yes
 # Expect pldd on this platform
 pldd = no
-# Expect the mvec library on this platform
-mvec = no
 
 # NPTL Config
 threads = yes
@@ -45,12 +43,16 @@ $(stamp)mkincludedir:
 
 	mkdir -p debian/include/sys
 	# Link to any headers found in the old locations first
-	find $(KFREEBSD_HEADERS)/sys -mindepth 1 \
-		-exec ln -sf '{}' debian/include/sys ';'
+	if test -d $(KFREEBSD_HEADERS)/sys ; then \
+	    find $(KFREEBSD_HEADERS)/sys -mindepth 1 \
+		-exec ln -sf '{}' debian/include/sys ';' ; \
+	fi
 	# Link to any headers found at the new multiarch location,
 	# replacing any existing links
-	find $(KFREEBSD_ARCH_HEADERS)/sys -mindepth 1 \
-		-exec ln -sf '{}' debian/include/sys ';'
+	if test -d $(KFREEBSD_ARCH_HEADERS)/sys ; then \
+	    find $(KFREEBSD_ARCH_HEADERS)/sys -mindepth 1 \
+		-exec ln -sf '{}' debian/include/sys ';' ; \
+	fi
 
 	# To make configure happy if libc0.1-dev is not installed.
 	touch debian/include/assert.h

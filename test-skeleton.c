@@ -45,11 +45,6 @@
 # define TEST_DATA_LIMIT (64 << 20) /* Data limit (bytes) to run with.  */
 #endif
 
-#ifndef TIMEOUT
-  /* Default timeout is two seconds.  */
-# define TIMEOUT 2
-#endif
-
 #define OPT_DIRECT 1000
 #define OPT_TESTDIR 1001
 
@@ -73,7 +68,7 @@ static const char *test_dir;
 struct temp_name_list
 {
   struct qelem q;
-  char *name;
+  const char *name;
 } *temp_name_list;
 
 /* Add temporary files in list.  */
@@ -83,17 +78,14 @@ add_temp_file (const char *name)
 {
   struct temp_name_list *newp
     = (struct temp_name_list *) calloc (sizeof (*newp), 1);
-  char *newname = strdup (name);
-  if (newp != NULL && newname != NULL)
+  if (newp != NULL)
     {
-      newp->name = newname;
+      newp->name = name;
       if (temp_name_list == NULL)
 	temp_name_list = (struct temp_name_list *) &newp->q;
       else
 	insque (newp, temp_name_list);
     }
-  else
-    free (newp);
 }
 
 /* Delete all temporary files.  */
@@ -103,19 +95,11 @@ delete_temp_files (void)
   while (temp_name_list != NULL)
     {
       remove (temp_name_list->name);
-      free (temp_name_list->name);
-
-      struct temp_name_list *next
-	= (struct temp_name_list *) temp_name_list->q.q_forw;
-      free (temp_name_list);
-      temp_name_list = next;
+      temp_name_list = (struct temp_name_list *) temp_name_list->q.q_forw;
     }
 }
 
-/* Create a temporary file.  Return the opened file descriptor on
-   success, or -1 on failure.  Write the file name to *FILENAME if
-   FILENAME is not NULL.  In this case, the caller is expected to free
-   *FILENAME.  */
+/* Create a temporary file.  */
 static int
 __attribute__ ((unused))
 create_temp_file (const char *base, char **filename)
@@ -143,8 +127,6 @@ create_temp_file (const char *base, char **filename)
   add_temp_file (fname);
   if (filename != NULL)
     *filename = fname;
-  else
-    free (fname);
 
   return fd;
 }
@@ -218,22 +200,6 @@ signal_handler (int sig __attribute__ ((unused)))
   exit (1);
 }
 
-/* Avoid all the buffer overflow messages on stderr.  */
-static void
-__attribute__ ((unused))
-ignore_stderr (void)
-{
-  int fd = open (_PATH_DEVNULL, O_WRONLY);
-  if (fd == -1)
-    close (STDERR_FILENO);
-  else
-    {
-      dup2 (fd, STDERR_FILENO);
-      close (fd);
-    }
-  setenv ("LIBC_FATAL_STDERR_", "1", 1);
-}
-
 /* Set fortification error handler.  Used when tests want to verify that bad
    code is caught by the library.  */
 static void
@@ -247,7 +213,17 @@ set_fortify_handler (void (*handler) (int sig))
   sigemptyset (&sa.sa_mask);
 
   sigaction (SIGABRT, &sa, NULL);
-  ignore_stderr ();
+
+  /* Avoid all the buffer overflow messages on stderr.  */
+  int fd = open (_PATH_DEVNULL, O_WRONLY);
+  if (fd == -1)
+    close (STDERR_FILENO);
+  else
+    {
+      dup2 (fd, STDERR_FILENO);
+      close (fd);
+    }
+  setenv ("LIBC_FATAL_STDERR_", "1", 1);
 }
 
 /* We provide the entry point here.  */
@@ -317,7 +293,7 @@ main (int argc, char *argv[])
   /* Make sure we see all message, even those on stdout.  */
   setvbuf (stdout, NULL, _IONBF, 0);
 
-  /* Make sure temporary files are deleted.  */
+  /* make sure temporary files are deleted.  */
   atexit (delete_temp_files);
 
   /* Correct for the possible parameters.  */
@@ -329,47 +305,6 @@ main (int argc, char *argv[])
 #ifdef PREPARE
   PREPARE (argc, argv);
 #endif
-
-  const char *envstr_direct = getenv ("TEST_DIRECT");
-  if (envstr_direct != NULL)
-    {
-      FILE *f = fopen (envstr_direct, "w");
-      if (f == NULL)
-        {
-          printf ("cannot open TEST_DIRECT output file '%s': %m\n",
-                  envstr_direct);
-          exit (1);
-        }
-
-      fprintf (f, "timeout=%u\ntimeoutfactor=%u\n", TIMEOUT, timeoutfactor);
-#ifdef EXPECTED_STATUS
-      fprintf (f, "exit=%u\n", EXPECTED_STATUS);
-#endif
-#ifdef EXPECTED_SIGNAL
-      switch (EXPECTED_SIGNAL)
-        {
-        default: abort ();
-# define init_sig(signo, name, text) \
-        case signo: fprintf (f, "signal=%s\n", name); break;
-# include <siglist.h>
-# undef init_sig
-        }
-#endif
-
-      if (temp_name_list != NULL)
-        {
-          struct temp_name_list *n;
-          fprintf (f, "temp_files=(\n");
-          for (n = temp_name_list;
-               n != NULL;
-               n = (struct temp_name_list *) n->q.q_forw)
-            fprintf (f, "  '%s'\n", n->name);
-          fprintf (f, ")\n");
-        }
-
-      fclose (f);
-      direct = 1;
-    }
 
   /* If we are not expected to fork run the function immediately.  */
   if (direct)
@@ -424,6 +359,10 @@ main (int argc, char *argv[])
     }
 
   /* Set timeout.  */
+#ifndef TIMEOUT
+  /* Default timeout is two seconds.  */
+# define TIMEOUT 2
+#endif
   signal (SIGALRM, signal_handler);
   alarm (TIMEOUT * timeoutfactor);
 

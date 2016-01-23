@@ -11,6 +11,10 @@ ifeq ($(subdir),malloc)
 CFLAGS-malloc.c += -DMORECORE_CLEARS=2
 endif
 
+ifeq ($(subdir),socket)
+sysdep_routines += internal_accept4 internal_recvmmsg internal_sendmmsg
+endif
+
 ifeq ($(subdir),misc)
 include $(firstword $(wildcard $(sysdirs:=/sysctl.mk)))
 
@@ -192,10 +196,5 @@ CFLAGS-gai.c += -DNEED_NETLINK
 endif
 
 ifeq ($(subdir),nptl)
-tests += tst-setgetname tst-align-clone tst-getpid1 tst-getpid2
-
-# In this test, we create a CLONE_VM "thread" that shares TLS storage
-# with the original thread. Both threads then race in ld.so with lazy PLT
-# resolution. Avoid this race by disabling lazy binding. BZ #11214.
-tst-getpid2-ENV = LD_BIND_NOW=1
+tests += tst-setgetname
 endif

@@ -24,7 +24,20 @@
 ssize_t
 __libc_send (int sockfd, const void *buffer, size_t len, int flags)
 {
-  return SYSCALL_CANCEL (sendto, sockfd, buffer, len, flags, NULL, 0);
+  ssize_t result;
+
+  if (SINGLE_THREAD_P)
+    result = INLINE_SYSCALL (sendto, 6, sockfd, buffer, len, flags, NULL, 0);
+  else
+    {
+      int oldtype = LIBC_CANCEL_ASYNC ();
+
+      result = INLINE_SYSCALL (sendto, 6, sockfd, buffer, len, flags, NULL, 0);
+
+      LIBC_CANCEL_RESET (oldtype);
+    }
+
+  return result;
 }
 strong_alias (__libc_send, __send)
 weak_alias (__libc_send, send)

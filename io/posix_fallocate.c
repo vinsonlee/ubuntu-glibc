@@ -23,6 +23,7 @@
 int
 posix_fallocate (int fd, __off_t offset, __off_t len)
 {
-  return ENOSYS;
+  __set_errno (ENOSYS);
+  return -1;
 }
 stub_warning (posix_fallocate)

@@ -1,6 +1,8 @@
 #
 # Allowed failures for aarch64-linux-gnu-libc
 #
+posix/annexc
+elf/check-localplt
 math/test-fenv
 math/test-fenv-tls
 rt/tst-cpuclock2

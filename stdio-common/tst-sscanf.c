@@ -124,8 +124,8 @@ struct test2
   { L("0x.e+0"), L("%g%c"), 2, '+' },
 };
 
-static int
-do_test (void)
+int
+main (void)
 {
   double d[6];
   long l[6];
@@ -268,6 +268,3 @@ do_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

@@ -18,7 +18,6 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <errno.h>
 #include <math.h>
 
 #include <math_private.h>
@@ -39,8 +38,6 @@ __sincosl (long double x, long double *sinx, long double *cosx)
     {
       /* sin(Inf or NaN) is NaN */
       *sinx = *cosx = x - x;
-      if (__isinf_nsl (x))
-	__set_errno (EDOM);
     }
   else
     {

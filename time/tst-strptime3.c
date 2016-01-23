@@ -48,7 +48,10 @@ do_test (void)
       result = 1;
     }
 
-  return result;
+  if (result == 0)
+    puts ("all OK");
+
+  return 0;
 }
 
 #define TEST_FUNCTION do_test ()

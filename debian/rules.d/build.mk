@@ -93,7 +93,6 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		--with-bugurl="http://www.debian.org/Bugs/" \
 		$(if $(filter $(pt_chown),yes),--enable-pt_chown) \
 		$(if $(filter $(threads),no),--disable-nscd) \
-		$(if $(filter $(mvec),no),--disable-mathvec) \
 		$(call xx,with_headers) $(call xx,extra_config_options))
 	touch $@
 
@@ -137,10 +136,6 @@ $(stamp)check_%: $(stamp)build_%
 	  echo Testing $(curpass) / $(log_results); \
 	  find $(DEB_BUILDDIR) -name '*.out' -exec rm {} ';' ; \
 	  LD_PRELOAD="" LANG="" TIMEOUTFACTOR="50" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) check 2>&1 | tee $(log_test); \
-	  if ! grep -q '^Summary of test results:' $(log_test) ; then \
-	    echo "Error: testsuite failed to run completely.  Aborting." ; \
-	    exit 1 ; \
-	  fi ; \
 	  chmod +x debian/testsuite-checking/convertlog.sh ; \
 	  debian/testsuite-checking/convertlog.sh $(log_test) | tee $(log_results) ; \
 	  if test -f $(log_expected) ; then \

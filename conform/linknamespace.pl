@@ -46,14 +46,9 @@ close (STDSYMS) || die ("close $stdsyms_file: $!\n");
 # linkage when stdio.h included (and possibly not then), not
 # generally.
 #
-# * Bug 18442: re_syntax_options wrongly brought in by regcomp and
-# used by re_comp.
+# * False positive: matherr only used conditionally.
 #
-# * False positive: matherr only used conditionally.  matherrf/matherrl are used
-# by IA64 too for the same reason.
-#
-@whitelist = qw(signgam stdin stdout stderr re_syntax_options matherr matherrf
-		matherrl);
+@whitelist = qw(signgam stdin stdout stderr matherr);
 foreach my $sym (@whitelist) {
   $stdsyms{$sym} = 1;
 }
@@ -73,9 +68,6 @@ sub list_syms {
       next;
     }
     s/^\s*//;
-    # Architecture-specific st_other bits appear inside [] and disrupt
-    # the format of readelf output.
-    s/\[.*?\]//;
     my (@fields) = split (/\s+/, $_);
     if (@fields < 8) {
       next;
