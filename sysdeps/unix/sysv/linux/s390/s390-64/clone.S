@@ -1,5 +1,5 @@
 /* Wrapper around clone system call.  64 bit S/390 version.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
    This file is part of the GNU C Library.
 
@@ -55,7 +55,6 @@ error:
 PSEUDO_END (__clone)
 
 thread_start:
-#ifdef RESET_PID
 	tmh	%r3,1		/* CLONE_THREAD == 0x00010000 */
 	jne	1f
 	lhi	%r2,-1
@@ -68,7 +67,6 @@ thread_start:
 	st	%r2,PID(%r3)
 	st	%r2,TID(%r3)
 1:
-#endif
 	/* fn is in gpr 1, arg in gpr 0 */
 	lgr	%r2,%r0		/* set first parameter to void *arg */
 	aghi	%r15,-160	/* make room on the stack for the save area */

@@ -1,5 +1,5 @@
 /* Mapping tables for GBK handling.
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Sean Chen <seanc@turbolinux.com.cn>, 1999.
 
@@ -24107,6 +24107,7 @@ static const unsigned char __ucs_to_gb18030_tab2[][2] =
 #define MIN_NEEDED_FROM		1
 #define MAX_NEEDED_FROM		4
 #define MIN_NEEDED_TO		4
+#define ONE_DIRECTION		0
 
 
 /* First define the conversion function from GB18030 to UCS4.  */
@@ -24212,7 +24213,7 @@ static const unsigned char __ucs_to_gb18030_tab2[][2] =
 									      \
 	      inptr += 4;						      \
 	    }								      \
-	  else if (__builtin_expect (ch2 >= 0x40, 1))			      \
+	  else if (__glibc_likely (ch2 >= 0x40))			      \
 	    {								      \
 	      /* A two-byte character */				      \
 	      idx = (ch - 0x81) * 192 + (ch2 - 0x40);			      \
@@ -24375,7 +24376,7 @@ static const unsigned char __ucs_to_gb18030_tab2[][2] =
 	  {								      \
 	    /* See whether there is enough room for all four bytes we	      \
 	       write.  */						      \
-	    if (__builtin_expect (outptr + 3 >= outend, 0))		      \
+	    if (__glibc_unlikely (outptr + 3 >= outend))		      \
 	      {								      \
 		/* We have not enough room.  */				      \
 		result = __GCONV_FULL_OUTPUT;				      \

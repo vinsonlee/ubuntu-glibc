@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -201,6 +201,7 @@
     register long int r7  __asm__ ("r7");				\
     register long int r8  __asm__ ("r8");				\
     LOADARGS_##nr (name, ##args);					\
+    ABORT_TRANSACTION;							\
     __asm__ __volatile__						\
       ("sc\n\t"								\
        "mfcr  %0\n\t"							\
@@ -282,7 +283,7 @@
 
 
 /* Pointer mangling support.  */
-#if defined NOT_IN_libc && defined IS_IN_rtld
+#if IS_IN (rtld)
 /* We cannot use the thread descriptor because in ld.so we use setjmp
    earlier than the descriptor is initialized.  */
 #else

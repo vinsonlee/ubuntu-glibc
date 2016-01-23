@@ -1,9 +1,221 @@
 GNU C Library NEWS -- history of user-visible changes.
-Copyright (C) 1992-2014 Free Software Foundation, Inc.
+Copyright (C) 1992-2015 Free Software Foundation, Inc.
 See the end for copying conditions.
 
 Please send GNU C library bug reports via <http://sourceware.org/bugzilla/>
 using `glibc' in the "product" field.
+
+Version 2.21
+
+* The following bugs are resolved with this release:
+
+  6652, 10672, 12674, 12847, 12926, 13862, 14132, 14138, 14171, 14498,
+  15215, 15378, 15884, 16009, 16418, 16191, 16469, 16576, 16617, 16618,
+  16619, 16657, 16740, 16857, 17192, 17266, 17273, 17344, 17363, 17370,
+  17371, 17411, 17460, 17475, 17485, 17501, 17506, 17508, 17522, 17555,
+  17570, 17571, 17572, 17573, 17574, 17582, 17583, 17584, 17585, 17589,
+  17594, 17601, 17608, 17616, 17625, 17630, 17633, 17634, 17635, 17647,
+  17653, 17657, 17658, 17664, 17665, 17668, 17682, 17702, 17717, 17719,
+  17722, 17723, 17724, 17725, 17732, 17733, 17744, 17745, 17746, 17747,
+  17748, 17775, 17777, 17780, 17781, 17782, 17791, 17793, 17796, 17797,
+  17801, 17803, 17806, 17834, 17844, 17848, 17868, 17869, 17870, 17885,
+  17892.
+
+* CVE-2015-1472 Under certain conditions wscanf can allocate too little
+  memory for the to-be-scanned arguments and overflow the allocated
+  buffer.  The implementation now correctly computes the required buffer
+  size when using malloc.
+
+* A new semaphore algorithm has been implemented in generic C code for all
+  machines. Previous custom assembly implementations of semaphore were
+  difficult to reason about or ensure that they were safe. The new version
+  of semaphore supports machines with 64-bit or 32-bit atomic operations.
+  The new semaphore algorithm is used by sem_init, sem_open, sem_post,
+  sem_wait, sem_timedwait, sem_trywait, and sem_getvalue.
+
+* Port to Altera Nios II has been contributed by Mentor Graphics.
+
+* Optimized strcpy, stpcpy, strncpy, stpncpy, strcmp, and strncmp
+  implementations for powerpc64/powerpc64le.
+  Implemented by Adhemerval Zanella (IBM).
+
+* Added support for TSX lock elision of pthread mutexes on powerpc32, powerpc64
+  and powerpc64le.  This may improve lock scaling of existing programs on
+  HTM capable systems.  The lock elision code is only enabled with
+  --enable-lock-elision=yes.  Also, the TSX lock elision implementation for
+  powerpc will issue a transaction abort on every syscall to avoid side
+  effects being visible outside transactions.
+
+* Optimized strcpy, stpcpy, strchrnul and strrchr implementations for
+  AArch64.  Contributed by ARM Ltd.
+
+* i386 memcpy functions optimized with SSE2 unaligned load/store.
+
+* CVE-2104-7817 The wordexp function could ignore the WRDE_NOCMD flag
+  under certain input conditions resulting in the execution of a shell for
+  command substitution when the applicaiton did not request it. The
+  implementation now checks WRDE_NOCMD immediately before executing the
+  shell and returns the error WRDE_CMDSUB as expected.
+
+* CVE-2012-3406 printf-style functions could run into a stack overflow when
+  processing format strings with a large number of format specifiers.
+
+* CVE-2014-9402 The nss_dns implementation of getnetbyname could run into an
+  infinite loop if the DNS response contained a PTR record of an unexpected
+  format.
+
+* The minimum GCC version that can be used to build this version of the GNU
+  C Library is GCC 4.6.  Older GCC versions, and non-GNU compilers, can
+  still be used to compile programs using the GNU C Library.
+
+* The GNU C Library is now built with -Werror by default.  This can be
+  disabled by configuring with --disable-werror.
+
+* New locales: tu_IN, bh_IN, raj_IN, ce_RU.
+
+* The obsolete sigvec function has been removed.  This was the original
+  4.2BSD interface that inspired the POSIX.1 sigaction interface, which
+  programs have been using instead for about 25 years.  Of course, ABI
+  compatibility for old binaries using sigvec remains intact.
+
+* Merged gettext 0.19.3 into the intl subdirectory.  This fixes building
+  with newer versions of bison.
+
+* Support for MIPS o32 FPXX, FP64A and FP64 ABI Extensions.
+  The original MIPS o32 hard-float ABI requires an FPU where double-precision
+  registers overlay two consecutive single-precision registers.  MIPS32R2
+  introduced a new FPU mode (FR=1) where double-precision registers extend the
+  corresponding single-precision registers which is incompatible with the
+  o32 hard-float ABI.  The MIPS SIMD ASE and the MIPSR6 architecture both
+  require the use of FR=1 making a transition necessary.  New o32 ABI
+  extensions enable users to migrate over time from the original o32 ABI
+  through to the updated o32 FP64 ABI.  To achieve this the dynamic linker now
+  tracks the ABI of any loaded object and verifies that new objects are
+  compatible.  Mode transitions will also be requested as required and
+  unsupportable objects will be rejected.  The ABI checks include both soft and
+  hard float ABIs for o32, n32 and n64.
+
+  GCC 5 with GNU binutils 2.25 onwards:
+  It is strongly recommended that all o32 system libraries are built using the
+  new o32 FPXX ABI (-mfpxx) to facilitate the transition as this is compatible
+  with the original and all new o32 ABI extensions.  Configure a MIPS GCC
+  compiler using --with-fp-32=xx to set this by default.
+
+Version 2.20
+
+* The following bugs are resolved with this release:
+
+  6804, 9894, 12994, 13347, 13651, 14308, 14770, 15119, 15132, 15347, 15514,
+  15698, 15804, 15894, 15946, 16002, 16064, 16095, 16194, 16198, 16275,
+  16284, 16287, 16315, 16348, 16349, 16354, 16357, 16362, 16447, 16516,
+  16532, 16539, 16545, 16561, 16562, 16564, 16574, 16599, 16600, 16609,
+  16610, 16611, 16613, 16619, 16623, 16629, 16632, 16634, 16639, 16642,
+  16648, 16649, 16670, 16674, 16677, 16680, 16681, 16683, 16689, 16695,
+  16701, 16706, 16707, 16712, 16713, 16714, 16724, 16731, 16739, 16740,
+  16743, 16754, 16758, 16759, 16760, 16770, 16786, 16789, 16791, 16796,
+  16799, 16800, 16815, 16823, 16824, 16831, 16838, 16839, 16849, 16854,
+  16876, 16877, 16878, 16882, 16885, 16888, 16890, 16892, 16912, 16915,
+  16916, 16917, 16918, 16922, 16927, 16928, 16932, 16943, 16958, 16965,
+  16966, 16967, 16977, 16978, 16984, 16990, 16996, 17009, 17022, 17031,
+  17042, 17048, 17050, 17058, 17061, 17062, 17069, 17075, 17078, 17079,
+  17084, 17086, 17088, 17092, 17097, 17125, 17135, 17137, 17150, 17153,
+  17187, 17213, 17259, 17261, 17262, 17263, 17319, 17325, 17354.
+
+* Reverted change of ABI data structures for s390 and s390x:
+  On s390 and s390x the size of struct ucontext and jmp_buf was increased in
+  2.19. This change is reverted in 2.20. The introduced 2.19 symbol versions
+  of getcontext, setjmp, _setjmp, __sigsetjmp, longjmp, _longjmp, siglongjmp
+  are preserved pointing straight to the same implementation as the old ones.
+  Given that, new callers will simply provide a too-big buffer to these
+  functions. Any applications/libraries out there that embed jmp_buf or
+  ucontext_t in an ABI-relevant data structure that have already been rebuilt
+  against 2.19 headers will have to rebuilt again. This is necessary in any
+  case to revert the breakage in their ABI caused by the glibc change.
+
+* Support for file description locks is added to systems running the
+  Linux kernel. The standard file locking interfaces are extended to
+  operate on file descriptions, not file descriptors, via the use of
+  F_OFD_GETLK, F_OFD_SETLK, and F_OFD_SETLKW. File description locks
+  are associated with an open file instead of a process.
+
+* Optimized strchr implementation for AArch64.  Contributed by ARM Ltd.
+
+* The minimum Linux kernel version that this version of the GNU C Library
+  can be used with is 2.6.32.
+
+* Running the testsuite no longer terminates as soon as a test fails.
+  Instead, a file tests.sum (xtests.sum from "make xcheck") is generated,
+  with PASS or FAIL lines for individual tests.  A summary of the results is
+  printed, including a list of failing lists, and "make check" exits with
+  error status if there were any unexpected failures.  "make check
+  stop-on-test-failure=y" may be used to keep the old behavior.
+
+* The am33 port, which had not worked for several years, has been removed
+  from ports.
+
+* The _BSD_SOURCE and _SVID_SOURCE feature test macros are no longer
+  supported; they now act the same as _DEFAULT_SOURCE (but generate a
+  warning).  Except for cases where _BSD_SOURCE enabled BSD interfaces that
+  conflicted with POSIX (support for which was removed in 2.19), the
+  interfaces those macros enabled remain available when compiling with
+  _GNU_SOURCE defined, with _DEFAULT_SOURCE defined, or without any feature
+  test macros defined.
+
+* Optimized strcmp implementation for ARMv7.  Contributed by ARM Ltd.
+
+* Added support for TX lock elision of pthread mutexes on s390 and s390x.
+  This may improve lock scaling of existing programs on TX capable systems.
+  The lock elision code is only built with --enable-lock-elision=yes and
+  then requires a GCC version supporting the TX builtins.  With lock elision
+  default mutexes are elided via __builtin_tbegin, if the cpu supports
+  transactions. By default lock elision is not enabled and the elision code
+  is not built.
+
+* CVE-2014-4043 The posix_spawn_file_actions_addopen implementation did not
+  copy the path argument.  This allowed programs to cause posix_spawn to
+  deference a dangling pointer, or use an unexpected pathname argument if
+  the string was modified after the posix_spawn_file_actions_addopen
+  invocation.
+
+* All supported architectures now use the main glibc sysdeps directory
+  instead of some being in a separate "ports" directory (which was
+  distributed separately before glibc 2.17).
+
+* The NPTL implementation of POSIX pthreads is no longer an "add-on".
+  On configurations that support it (all Linux configurations), it's now
+  used regardless of the --enable-add-ons switch to configure.  It is no
+  longer possible to build such configurations without pthreads support.
+
+* Locale names, including those obtained from environment variables (LANG
+  and the LC_* variables), are more tightly checked for proper syntax.
+  setlocale will now fail (with EINVAL) for locale names that are overly
+  long, contain slashes without starting with a slash, or contain ".." path
+  components. (CVE-2014-0475)  Previously, some valid locale names were
+  silently replaced with the "C" locale when running in AT_SECURE mode
+  (e.g., in a SUID program).  This is no longer necessary because of the
+  additional checks.
+
+* On x86-64, the dynamic linker's lazy-binding support is now compatible
+  with application code using Intel MPX instructions.  (With all previous
+  versions, the MPX register state could be clobbered when making calls
+  into or out of a shared library.)  Note that while the new dynamic
+  linker is compatible with all known x86 hardware whether or not it
+  supports Intel MPX, some x86 instruction-set emulators might fail to
+  handle the new instruction encodings.  This is known to affect Valgrind
+  versions up through 3.9 (but will be fixed in the forthcoming 3.10
+  release), and might affect other tools that do instruction emulation.
+
+* Support for loadable gconv transliteration modules has been removed.
+  The support for transliteration modules has been non-functional for
+  over a decade, and the removal is prompted by security defects.  The
+  normal gconv conversion modules are still supported.  Transliteration
+  with //TRANSLIT is still possible, and the //IGNORE specifier
+  continues to be  supported. (CVE-2014-5119)
+
+* Decoding a crafted input sequence in the character sets IBM933, IBM935,
+  IBM937, IBM939, IBM1364 could result in an out-of-bounds array read,
+  resulting a denial-of-service security vulnerability in applications which
+  use functions related to iconv. (CVE-2014-6040)
 
 Version 2.19
 
@@ -24,9 +236,9 @@ Version 2.19
   16055, 16071, 16072, 16074, 16077, 16078, 16103, 16112, 16143, 16144,
   16146, 16150, 16151, 16153, 16167, 16169, 16172, 16195, 16214, 16245,
   16271, 16274, 16283, 16289, 16293, 16314, 16316, 16330, 16337, 16338,
-  16356, 16365, 16366, 16369, 16372, 16375, 16379, 16384, 16385, 16386,
-  16387, 16390, 16394, 16398, 16400, 16407, 16408, 16414, 16430, 16431,
-  16453, 16474, 16506, 16510, 16529
+  16356, 16365, 16366, 16369, 16372, 16375, 16379, 16381, 16384, 16385,
+  16386, 16387, 16390, 16394, 16398, 16400, 16407, 16408, 16414, 16430,
+  16431, 16453, 16474, 16506, 16510, 16529
 
 * Slovenian translations for glibc messages have been contributed by the
   Translation Project's Slovenian team of translators.
@@ -122,6 +334,20 @@ Version 2.19
 
 * Preliminary documentation about Multi-Thread, Async-Signal and
   Async-Cancel Safety has been added.
+
+* Change of ABI data structures for s390 and s390x:
+  On s390 and s390x the size of struct ucontext and jmp_buf was increased to
+  allow for future hardware extensions. All library functions that accept or
+  return these structures were versioned in order to provide backwards
+  compatibility with existing code. However, not all cases can be handled
+  with interface versioning. If an application embeds either structure into
+  another structure and that structure is passed to another compilation unit
+  which expects the newer larger-sized object then any access to the new
+  fields will result in undefined behaviour. Similarly any access to fields
+  that were moved by the enlarging of the structures will cause undefined
+  behaviour. To fix the undefined behaviour all objects that are part of the
+  final in-memory image must agree on the size of structures, and this may
+  require recompilation.
 
 Version 2.18
 
@@ -2388,7 +2614,7 @@ Version 1.04
 ----------------------------------------------------------------------
 Copyright information:
 
-Copyright (C) 1992-2014 Free Software Foundation, Inc.
+Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    Permission is granted to anyone to make or distribute verbatim copies
    of this document as received, in any medium, provided that the

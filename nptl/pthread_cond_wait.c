@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky <schwidefsky@de.ibm.com>, 2003.
 
@@ -22,6 +22,7 @@
 #include <lowlevellock.h>
 #include <pthread.h>
 #include <pthreadP.h>
+#include <kernel-features.h>
 
 #include <shlib-compat.h>
 #include <stap-probe.h>
@@ -97,9 +98,7 @@ __condvar_cleanup (void *arg)
 
 
 int
-__pthread_cond_wait (cond, mutex)
-     pthread_cond_t *cond;
-     pthread_mutex_t *mutex;
+__pthread_cond_wait (pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
   struct _pthread_cleanup_buffer buffer;
   struct _condvar_cleanup_buffer cbuffer;
@@ -119,7 +118,7 @@ __pthread_cond_wait (cond, mutex)
 
   /* Now we can release the mutex.  */
   err = __pthread_mutex_unlock_usercnt (mutex, 0);
-  if (__builtin_expect (err, 0))
+  if (__glibc_unlikely (err))
     {
       lll_unlock (cond->__data.__lock, pshared);
       return err;

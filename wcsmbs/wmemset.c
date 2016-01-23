@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1996.
 
@@ -20,7 +20,7 @@
 
 
 wchar_t *
-wmemset (s, c, n)
+__wmemset (s, c, n)
      wchar_t *s;
      wchar_t c;
      size_t n;
@@ -52,4 +52,6 @@ wmemset (s, c, n)
 
   return s;
 }
-libc_hidden_def (wmemset)
+libc_hidden_def (__wmemset)
+weak_alias (__wmemset, wmemset)
+libc_hidden_weak (wmemset)
