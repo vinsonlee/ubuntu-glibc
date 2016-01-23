@@ -1,5 +1,5 @@
 /* Convert a 'struct tm' to a time_t value.
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Paul Eggert <eggert@twinsun.com>.
 
@@ -38,7 +38,7 @@
 
 #include <string.h>		/* For the real memcpy prototype.  */
 
-#if DEBUG
+#if defined DEBUG && DEBUG
 # include <stdio.h>
 # include <stdlib.h>
 /* Make it work even if the system's libc has its own mktime routine.  */
@@ -142,7 +142,7 @@ verify (twos_complement_arithmetic,
 verify (base_year_is_a_multiple_of_100, TM_YEAR_BASE % 100 == 0);
 
 /* Return 1 if YEAR + TM_YEAR_BASE is a leap year.  */
-static inline int
+static int
 leapyear (long_int year)
 {
   /* Don't add YEAR to TM_YEAR_BASE, as that might overflow.
@@ -600,7 +600,7 @@ libc_hidden_def (mktime)
 libc_hidden_weak (timelocal)
 #endif
 
-#if DEBUG
+#if defined DEBUG && DEBUG
 
 static int
 not_equal_tm (const struct tm *a, const struct tm *b)

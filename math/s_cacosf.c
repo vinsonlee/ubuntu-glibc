@@ -1,5 +1,5 @@
 /* Return cosine of complex float value.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -34,6 +34,8 @@ __cacosf (__complex__ float x)
       y = __casinf (x);
 
       __real__ res = (float) M_PI_2 - __real__ y;
+      if (__real__ res == 0.0f)
+	__real__ res = 0.0f;
       __imag__ res = -__imag__ y;
     }
   else

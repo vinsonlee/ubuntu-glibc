@@ -1,5 +1,5 @@
 /* Conversion from and to IBM1364.
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Masahide Washizawa <washi@jp.ibm.com>, 2005.
 
@@ -55,6 +55,7 @@
 #else
 # define MAX_NEEDED_TO	4
 #endif
+#define ONE_DIRECTION	0
 #define PREPARE_LOOP \
   int save_curcs;							      \
   int *curcsp = &data->__statep->__count;
@@ -77,7 +78,7 @@
 	{								      \
 	  /* We are not in the initial state.  To switch back we have	      \
 	     to emit `SI'.  */						      \
-	  if (__builtin_expect (outbuf >= outend, 0))			      \
+	  if (__glibc_unlikely (outbuf >= outend))			      \
 	    /* We don't have enough room in the output buffer.  */	      \
 	    status = __GCONV_FULL_OUTPUT;				      \
 	  else								      \
@@ -120,7 +121,7 @@ enum
     else								      \
       {									      \
 	/* This is a combined character.  Make sure we have room.  */	      \
-	if (__builtin_expect (outptr + 8 > outend, 0))			      \
+	if (__glibc_unlikely (outptr + 8 > outend))			      \
 	  {								      \
 	    result = __GCONV_FULL_OUTPUT;				      \
 	    break;							      \
@@ -204,7 +205,7 @@ enum
       {									      \
 	assert (curcs == db);						      \
 									      \
-	if (__builtin_expect (inptr + 1 >= inend, 0))			      \
+	if (__glibc_unlikely (inptr + 1 >= inend))			      \
 	  {								      \
 	    /* The second character is not available.  Store the	      \
 	       intermediate result.  */					      \
@@ -220,7 +221,8 @@ enum
 	  ++rp2;							      \
 									      \
 	uint32_t res;							      \
-	if (__builtin_expect (ch < rp2->start, 0)			      \
+	if (__builtin_expect (rp2->start == 0xffff, 0)			      \
+	    || __builtin_expect (ch < rp2->start, 0)			      \
 	    || (res = DB_TO_UCS4[ch + rp2->idx],			      \
 		__builtin_expect (res, L'\1') == L'\0' && ch != '\0'))	      \
 	  {								      \
@@ -274,7 +276,7 @@ enum
 	    curcs = db;							      \
 	  }								      \
 									      \
-	if (__builtin_expect (outptr + 2 > outend, 0))			      \
+	if (__glibc_unlikely (outptr + 2 > outend))			      \
 	  {								      \
 	    result = __GCONV_FULL_OUTPUT;				      \
 	    break;							      \
@@ -301,7 +303,7 @@ enum
   {									      \
     uint32_t ch = get32 (inptr);					      \
 									      \
-    if (__builtin_expect (ch >= UCS_LIMIT, 0))				      \
+    if (__glibc_unlikely (ch >= UCS_LIMIT))				      \
       {									      \
 	UNICODE_TAG_HANDLER (ch, 4);					      \
 									      \
@@ -353,7 +355,7 @@ enum
 		curcs = db;						      \
 	      }								      \
 									      \
-	    if (__builtin_expect (outptr + 2 > outend, 0))		      \
+	    if (__glibc_unlikely (outptr + 2 > outend))			      \
 	      {								      \
 		result = __GCONV_FULL_OUTPUT;				      \
 		break;							      \
@@ -364,13 +366,13 @@ enum
       }									      \
     else								      \
       {									      \
-	if (__builtin_expect (curcs == db, 0))				      \
+	if (__glibc_unlikely (curcs == db))				      \
 	  {								      \
 	    /* We know there is room for at least one byte.  */		      \
 	    *outptr++ = SI;						      \
 	    curcs = sb;							      \
 									      \
-	    if (__builtin_expect (outptr >= outend, 0))			      \
+	    if (__glibc_unlikely (outptr >= outend))			      \
 	      {								      \
 		result = __GCONV_FULL_OUTPUT;				      \
 		break;							      \
