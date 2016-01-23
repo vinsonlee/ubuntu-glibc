@@ -25,9 +25,17 @@
 ssize_t
 __libc_recv (int fd, void *buf, size_t n, int flags)
 {
-  return SYSCALL_CANCEL (recvfrom, fd, buf, n, flags, NULL, NULL);
+  if (SINGLE_THREAD_P)
+    return INLINE_SYSCALL (recvfrom, 6, fd, buf, n, flags, NULL, NULL);
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  ssize_t result = INLINE_SYSCALL (recvfrom, 6, fd, buf, n, flags, NULL, NULL);
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
 
 weak_alias (__libc_recv, __recv)
-libc_hidden_weak (__recv)
 weak_alias (__recv, recv)

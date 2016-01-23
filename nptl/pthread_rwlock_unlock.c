@@ -19,7 +19,6 @@
 #include <errno.h>
 #include <sysdep.h>
 #include <lowlevellock.h>
-#include <futex-internal.h>
 #include <pthread.h>
 #include <pthreadP.h>
 #include <stap-probe.h>
@@ -30,9 +29,6 @@
 int
 __pthread_rwlock_unlock (pthread_rwlock_t *rwlock)
 {
-  int futex_shared =
-      rwlock->__data.__shared == LLL_PRIVATE ? FUTEX_PRIVATE : FUTEX_SHARED;
-
   LIBC_PROBE (rwlock_unlock, 1, rwlock);
 
   if (ELIDE_UNLOCK (rwlock->__data.__writer == 0
@@ -44,26 +40,22 @@ __pthread_rwlock_unlock (pthread_rwlock_t *rwlock)
     rwlock->__data.__writer = 0;
   else
     --rwlock->__data.__nr_readers;
-  /* If there are still readers present, we do not yet need to wake writers
-     nor are responsible to wake any readers.  */
   if (rwlock->__data.__nr_readers == 0)
     {
-      /* Note that if there is a blocked writer, we effectively make it
-	 responsible for waking any readers because we don't wake readers in
-	 this case.  */
       if (rwlock->__data.__nr_writers_queued)
 	{
 	  ++rwlock->__data.__writer_wakeup;
 	  lll_unlock (rwlock->__data.__lock, rwlock->__data.__shared);
-	  futex_wake (&rwlock->__data.__writer_wakeup, 1, futex_shared);
+	  lll_futex_wake (&rwlock->__data.__writer_wakeup, 1,
+			  rwlock->__data.__shared);
 	  return 0;
 	}
       else if (rwlock->__data.__nr_readers_queued)
 	{
 	  ++rwlock->__data.__readers_wakeup;
 	  lll_unlock (rwlock->__data.__lock, rwlock->__data.__shared);
-	  futex_wake (&rwlock->__data.__readers_wakeup, INT_MAX,
-		      futex_shared);
+	  lll_futex_wake (&rwlock->__data.__readers_wakeup, INT_MAX,
+			  rwlock->__data.__shared);
 	  return 0;
 	}
     }

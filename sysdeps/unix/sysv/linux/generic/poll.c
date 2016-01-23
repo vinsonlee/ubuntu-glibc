@@ -35,7 +35,16 @@ __poll (struct pollfd *fds, nfds_t nfds, int timeout)
       timeout_ts_p = &timeout_ts;
     }
 
-  return SYSCALL_CANCEL (ppoll, fds, nfds, timeout_ts_p, NULL, 0);
+  if (SINGLE_THREAD_P)
+    return INLINE_SYSCALL (ppoll, 5, fds, nfds, timeout_ts_p, NULL, 0);
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  int result = INLINE_SYSCALL (ppoll, 5, fds, nfds, timeout_ts_p, NULL, 0);
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
 libc_hidden_def (__poll)
 weak_alias (__poll, poll)

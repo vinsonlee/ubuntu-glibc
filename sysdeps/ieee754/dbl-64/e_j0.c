@@ -305,7 +305,6 @@ pzero (double x)
   int32_t ix;
   GET_HIGH_WORD (ix, x);
   ix &= 0x7fffffff;
-  /* ix >= 0x40000000 for all calls to this function.  */
   if (ix >= 0x41b00000)
     {
       return one;
@@ -322,7 +321,7 @@ pzero (double x)
     {
       p = pR3; q = pS3;
     }
-  else
+  else if (ix >= 0x40000000)
     {
       p = pR2; q = pS2;
     }
@@ -424,7 +423,6 @@ qzero (double x)
   int32_t ix;
   GET_HIGH_WORD (ix, x);
   ix &= 0x7fffffff;
-  /* ix >= 0x40000000 for all calls to this function.  */
   if (ix >= 0x41b00000)
     {
       return -.125 / x;
@@ -441,7 +439,7 @@ qzero (double x)
     {
       p = qR3; q = qS3;
     }
-  else
+  else if (ix >= 0x40000000)
     {
       p = qR2; q = qS2;
     }

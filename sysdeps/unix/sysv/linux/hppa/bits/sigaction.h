@@ -20,8 +20,6 @@
 # error "Never include <bits/sigaction.h> directly; use <signal.h> instead."
 #endif
 
-#include <bits/wordsize.h>
-
 /* Structure describing the action to be taken when a signal arrives.  */
 struct sigaction
   {
@@ -42,10 +40,7 @@ struct sigaction
 #endif
 
     /* Special flags.  */
-#if __WORDSIZE == 64
-    int __glibc_reserved0;
-#endif
-    int sa_flags;
+    unsigned long int sa_flags;
 
     /* Additional set of signals to be blocked.  */
     __sigset_t sa_mask;

@@ -23,13 +23,6 @@
 #include <math_private.h>
 #include <float.h>
 
-/* To avoid spurious underflows, use this definition to treat IBM long
-   double as approximating an IEEE-style format.  */
-#if LDBL_MANT_DIG == 106
-# undef LDBL_EPSILON
-# define LDBL_EPSILON 0x1p-106L
-#endif
-
 __complex__ long double
 __ctanl (__complex__ long double x)
 {
@@ -60,11 +53,12 @@ __ctanl (__complex__ long double x)
       long double sinrx, cosrx;
       long double den;
       const int t = (int) ((LDBL_MAX_EXP - 1) * M_LN2l / 2);
+      int rcls = fpclassify (__real__ x);
 
       /* tan(x+iy) = (sin(2x) + i*sinh(2y))/(cos(2x) + cosh(2y))
 	 = (sin(x)*cos(x) + i*sinh(y)*cosh(y)/(cos(x)^2 + sinh(y)^2). */
 
-      if (__glibc_likely (fabsl (__real__ x) > LDBL_MIN))
+      if (__glibc_likely (rcls != FP_SUBNORMAL))
 	{
 	  __sincosl (__real__ x, &sinrx, &cosrx);
 	}

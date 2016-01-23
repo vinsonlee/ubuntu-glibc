@@ -200,9 +200,6 @@ __tzfile_read (const char *file, size_t extra, char **extrap)
   num_isstd = (size_t) decode (tzhead.tzh_ttisstdcnt);
   num_isgmt = (size_t) decode (tzhead.tzh_ttisgmtcnt);
 
-  if (__glibc_unlikely (num_isstd > num_types || num_isgmt > num_types))
-    goto lose;
-
   /* For platforms with 64-bit time_t we use the new format if available.  */
   if (sizeof (time_t) == 8 && trans_width == 4
       && tzhead.tzh_version[0] != '\0')
@@ -270,8 +267,7 @@ __tzfile_read (const char *file, size_t extra, char **extrap)
       if (__glibc_unlikely (tzspec_len == 0 || tzspec_len - 1 < num_isgmt))
 	goto lose;
       tzspec_len -= num_isgmt + 1;
-      if (__glibc_unlikely (tzspec_len == 0
-			    || SIZE_MAX - total_size < tzspec_len))
+      if (__glibc_unlikely (SIZE_MAX - total_size < tzspec_len))
 	goto lose;
     }
   if (__glibc_unlikely (SIZE_MAX - total_size - tzspec_len < extra))
@@ -438,21 +434,13 @@ __tzfile_read (const char *file, size_t extra, char **extrap)
 	goto lose;
 
       tzspec_len = st.st_size - off - 1;
-      if (tzspec_len == 0)
-	goto lose;
-      char *tzstr = malloc (tzspec_len);
-      if (tzstr == NULL)
-	goto lose;
+      char *tzstr = alloca (tzspec_len);
       if (getc_unlocked (f) != '\n'
 	  || (__fread_unlocked (tzstr, 1, tzspec_len - 1, f)
 	      != tzspec_len - 1))
-	{
-	  free (tzstr);
-	  goto lose;
-	}
+	goto lose;
       tzstr[tzspec_len - 1] = '\0';
       tzspec = __tzstring (tzstr);
-      free (tzstr);
     }
 
   /* Don't use an empty TZ string.  */

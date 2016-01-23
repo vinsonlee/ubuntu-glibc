@@ -20,12 +20,36 @@
 #include <atomic.h>
 #include <errno.h>
 #include <sysdep.h>
-#include <lowlevellock.h>	/* lll_futex* used by the old code.  */
-#include <futex-internal.h>
+#include <lowlevellock.h>
 #include <internaltypes.h>
 #include <semaphore.h>
 
 #include <shlib-compat.h>
+
+/* Wrapper for lll_futex_wake, with error checking.
+   TODO Remove when cleaning up the futex API throughout glibc.  */
+static __always_inline void
+futex_wake (unsigned int* futex, int processes_to_wake, int private)
+{
+  int res = lll_futex_wake (futex, processes_to_wake, private);
+  /* No error.  Ignore the number of woken processes.  */
+  if (res >= 0)
+    return;
+  switch (res)
+    {
+    case -EFAULT: /* Could have happened due to memory reuse.  */
+    case -EINVAL: /* Could be either due to incorrect alignment (a bug in
+		     glibc or in the application) or due to memory being
+		     reused for a PI futex.  We cannot distinguish between the
+		     two causes, and one of them is correct use, so we do not
+		     act in this case.  */
+      return;
+    case -ENOSYS: /* Must have been caused by a glibc bug.  */
+    /* No other errors are documented at this time.  */
+    default:
+      abort ();
+    }
+}
 
 
 /* See sem_wait for an explanation of the algorithm.  */
@@ -60,14 +84,14 @@ __new_sem_post (sem_t *sem)
   unsigned int v = atomic_load_relaxed (&isem->value);
   do
     {
-      if ((v >> SEM_VALUE_SHIFT) == SEM_VALUE_MAX)
+      if ((v << SEM_VALUE_SHIFT) == SEM_VALUE_MAX)
 	{
 	  __set_errno (EOVERFLOW);
 	  return -1;
 	}
     }
-  while (!atomic_compare_exchange_weak_release
-	 (&isem->value, &v, v + (1 << SEM_VALUE_SHIFT)));
+  while (!atomic_compare_exchange_weak_release (&isem->value,
+      &v, v + (1 << SEM_VALUE_SHIFT)));
 
   /* If there is any potentially blocked waiter, wake one of them.  */
   if ((v & SEM_NWAITERS_MASK) != 0)
