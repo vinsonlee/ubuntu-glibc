@@ -38,6 +38,7 @@
 
 #undef iswalnum
 func (alnum, __ISwalnum)
+libc_hidden_def (__iswalnum)
 libc_hidden_weak (iswalnum)
 #undef iswalpha
 func (alpha, __ISwalpha)
@@ -51,6 +52,7 @@ func (digit, __ISwdigit)
 libc_hidden_weak (iswdigit)
 #undef iswlower
 func (lower, __ISwlower)
+libc_hidden_def (__iswlower)
 libc_hidden_weak (iswlower)
 #undef iswgraph
 func (graph, __ISwgraph)
@@ -69,22 +71,26 @@ libc_hidden_weak (iswxdigit)
 
 #undef towlower
 wint_t
-towlower (wc)
+__towlower (wc)
      wint_t wc;
 {
   size_t i = _NL_CURRENT_WORD (LC_CTYPE, _NL_CTYPE_MAP_OFFSET) + __TOW_tolower;
   const char *desc = _NL_CURRENT (LC_CTYPE, i);
   return wctrans_table_lookup (desc, wc);
 }
-libc_hidden_def (towlower)
+libc_hidden_def (__towlower)
+weak_alias (__towlower, towlower)
+libc_hidden_weak (towlower)
 
 #undef towupper
 wint_t
-towupper (wc)
+__towupper (wc)
      wint_t wc;
 {
   size_t i = _NL_CURRENT_WORD (LC_CTYPE, _NL_CTYPE_MAP_OFFSET) + __TOW_toupper;
   const char *desc = _NL_CURRENT (LC_CTYPE, i);
   return wctrans_table_lookup (desc, wc);
 }
-libc_hidden_def (towupper)
+libc_hidden_def (__towupper)
+weak_alias (__towupper, towupper)
+libc_hidden_weak (towupper)
