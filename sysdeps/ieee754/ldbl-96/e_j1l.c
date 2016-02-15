@@ -72,6 +72,7 @@
  */
 
 #include <errno.h>
+#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -150,8 +151,16 @@ __ieee754_j1l (long double x)
     }
   if (__glibc_unlikely (ix < 0x3fde))       /* |x| < 2^-33 */
     {
-      if (huge + x > one)
-	return 0.5 * x;		/* inexact if x!=0 necessary */
+      if (huge + x > one)		/* inexact if x!=0 necessary */
+	{
+	  long double ret = 0.5 * x;
+	  if (fabsl (ret) < LDBL_MIN)
+	    {
+	      long double force_underflow = ret * ret;
+	      math_force_eval (force_underflow);
+	    }
+	  return ret;
+	}
     }
   z = x * x;
   r = z * (R[0] + z * (R[1]+ z * (R[2] + z * (R[3] + z * R[4]))));
@@ -236,7 +245,7 @@ __ieee754_y1l (long double x)
   if (__glibc_unlikely (ix <= 0x3fbe))
     {				/* x < 2**-65 */
       z = -tpi / x;
-      if (__isinfl (z))
+      if (isinf (z))
 	__set_errno (ERANGE);
       return z;
     }
@@ -359,6 +368,7 @@ pone (long double x)
 
   GET_LDOUBLE_WORDS (se, i0, i1, x);
   ix = se & 0x7fff;
+  /* ix >= 0x4000 for all calls to this function.  */
   if (ix >= 0x4002) /* x >= 8 */
     {
       p = pr8;
@@ -377,7 +387,7 @@ pone (long double x)
 	  p = pr3;
 	  q = ps3;
 	}
-      else if (ix >= 0x4000)	/* x better be >= 2 */
+      else	/* x >= 2 */
 	{
 	  p = pr2;
 	  q = ps2;
@@ -505,6 +515,7 @@ qone (long double x)
 
   GET_LDOUBLE_WORDS (se, i0, i1, x);
   ix = se & 0x7fff;
+  /* ix >= 0x4000 for all calls to this function.  */
   if (ix >= 0x4002)		/* x >= 8 */
     {
       p = qr8;
@@ -523,7 +534,7 @@ qone (long double x)
 	  p = qr3;
 	  q = qs3;
 	}
-      else if (ix >= 0x4000)	/* x better be >= 2 */
+      else	/* x >= 2 */
 	{
 	  p = qr2;
 	  q = qs2;

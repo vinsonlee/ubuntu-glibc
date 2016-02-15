@@ -44,7 +44,7 @@ __remquol (long double x, long double p, int *quo)
     return (x * p) / (x * p); 			/* p = 0 */
   if ((ex == 0x7fff)				/* x not finite */
       || ((ep == 0x7fff)			/* p is NaN */
-	  && ((hp | lp) != 0)))
+	  && (((hp & 0x7fffffff) | lp) != 0)))
     return (x * p) / (x * p);
 
   if (ep <= 0x7ffb)
@@ -60,12 +60,12 @@ __remquol (long double x, long double p, int *quo)
   p  = fabsl (p);
   cquo = 0;
 
-  if (x >= 4 * p)
+  if (ep <= 0x7ffc && x >= 4 * p)
     {
       x -= 4 * p;
       cquo += 4;
     }
-  if (x >= 2 * p)
+  if (ep <= 0x7ffd && x >= 2 * p)
     {
       x -= 2 * p;
       cquo += 2;
@@ -101,6 +101,9 @@ __remquol (long double x, long double p, int *quo)
 
   *quo = qs ? -cquo : cquo;
 
+  /* Ensure correct sign of zero result in round-downward mode.  */
+  if (x == 0.0L)
+    x = 0.0L;
   if (sx)
     x = -x;
   return x;

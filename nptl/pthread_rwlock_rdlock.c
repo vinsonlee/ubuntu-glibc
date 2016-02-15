@@ -19,10 +19,12 @@
 #include <errno.h>
 #include <sysdep.h>
 #include <lowlevellock.h>
+#include <futex-internal.h>
 #include <pthread.h>
 #include <pthreadP.h>
 #include <stap-probe.h>
 #include <elide.h>
+#include <stdbool.h>
 
 
 /* Acquire read lock for RWLOCK.  Slow path.  */
@@ -30,6 +32,9 @@ static int __attribute__((noinline))
 __pthread_rwlock_rdlock_slow (pthread_rwlock_t *rwlock)
 {
   int result = 0;
+  bool wake = false;
+  int futex_shared =
+      rwlock->__data.__shared == LLL_PRIVATE ? FUTEX_PRIVATE : FUTEX_SHARED;
 
   /* Lock is taken in caller.  */
 
@@ -58,9 +63,10 @@ __pthread_rwlock_rdlock_slow (pthread_rwlock_t *rwlock)
       /* Free the lock.  */
       lll_unlock (rwlock->__data.__lock, rwlock->__data.__shared);
 
-      /* Wait for the writer to finish.  */
-      lll_futex_wait (&rwlock->__data.__readers_wakeup, waitval,
-		      rwlock->__data.__shared);
+      /* Wait for the writer to finish.  We do not check the return value
+	 because we decide how to continue based on the state of the rwlock.  */
+      futex_wait_simple (&rwlock->__data.__readers_wakeup, waitval,
+			 futex_shared);
 
       /* Get the lock.  */
       lll_lock (rwlock->__data.__lock, rwlock->__data.__shared);
@@ -81,7 +87,17 @@ __pthread_rwlock_rdlock_slow (pthread_rwlock_t *rwlock)
 	      result = EAGAIN;
 	    }
 	  else
-	    LIBC_PROBE (rdlock_acquire_read, 1, rwlock);
+	    {
+	      LIBC_PROBE (rdlock_acquire_read, 1, rwlock);
+	      /* See pthread_rwlock_rdlock.  */
+	      if (rwlock->__data.__nr_readers == 1
+		  && rwlock->__data.__nr_readers_queued > 0
+		  && rwlock->__data.__nr_writers_queued > 0)
+		{
+		  ++rwlock->__data.__readers_wakeup;
+		  wake = true;
+		}
+	    }
 
 	  break;
 	}
@@ -89,6 +105,9 @@ __pthread_rwlock_rdlock_slow (pthread_rwlock_t *rwlock)
 
   /* We are done, free the lock.  */
   lll_unlock (rwlock->__data.__lock, rwlock->__data.__shared);
+
+  if (wake)
+    futex_wake (&rwlock->__data.__readers_wakeup, INT_MAX, futex_shared);
 
   return result;
 }
@@ -100,6 +119,9 @@ int
 __pthread_rwlock_rdlock (pthread_rwlock_t *rwlock)
 {
   int result = 0;
+  bool wake = false;
+  int futex_shared =
+      rwlock->__data.__shared == LLL_PRIVATE ? FUTEX_PRIVATE : FUTEX_SHARED;
 
   LIBC_PROBE (rdlock_entry, 1, rwlock);
 
@@ -126,10 +148,28 @@ __pthread_rwlock_rdlock (pthread_rwlock_t *rwlock)
 	  result = EAGAIN;
 	}
       else
-	LIBC_PROBE (rdlock_acquire_read, 1, rwlock);
+	{
+	  LIBC_PROBE (rdlock_acquire_read, 1, rwlock);
+	  /* If we are the first reader, and there are blocked readers and
+	     writers (which we don't prefer, see above), then it can be the
+	     case that we stole the lock from a writer that was already woken
+	     to acquire it.  That means that we need to take over the writer's
+	     responsibility to wake all readers (see pthread_rwlock_unlock).
+	     Thus, wake all readers in this case.  */
+	  if (rwlock->__data.__nr_readers == 1
+	      && rwlock->__data.__nr_readers_queued > 0
+	      && rwlock->__data.__nr_writers_queued > 0)
+	    {
+	      ++rwlock->__data.__readers_wakeup;
+	      wake = true;
+	    }
+	}
 
       /* We are done, free the lock.  */
       lll_unlock (rwlock->__data.__lock, rwlock->__data.__shared);
+
+      if (wake)
+	futex_wake (&rwlock->__data.__readers_wakeup, INT_MAX, futex_shared);
 
       return result;
     }
