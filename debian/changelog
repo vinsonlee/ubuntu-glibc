@@ -1,3 +1,12 @@
+glibc (2.21-0ubuntu4.1) wily-security; urgency=medium
+
+  * SECURITY UPDATE: glibc getaddrinfo stack-based buffer overflow
+    - debian/patches/any/CVE-2015-7547.diff: fix buffer handling in
+      resolv/nss_dns/dns-host.c, resolv/res_query.c, resolv/res_send.c.
+    - CVE-2015-7547
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 16 Feb 2016 11:42:41 -0500
+
 glibc (2.21-0ubuntu4) vivid; urgency=medium
 
   * debian/patches/arm/local-arm-futex.diff: Lie about the minimum
