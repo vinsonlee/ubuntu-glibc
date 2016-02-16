@@ -3,7 +3,7 @@ MIN_KERNEL_SUPPORTED := 2.6.32
 libc = libc6
 
 # Build and expect pt_chown on this platform
-pt_chown = no
+pt_chown = yes
 
 # NPTL Config
 threads = yes
