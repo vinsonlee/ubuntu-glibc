@@ -261,3 +261,5 @@ ubuntu/submitted-no-sprintf-pre-truncate.diff
 ubuntu/submitted-no-stack-backtrace.diff
 ubuntu/unsubmitted-increase-dtv-surplus.diff
 ubuntu/local-warn-bsd-source.diff
+
+any/CVE-2015-7547.diff
