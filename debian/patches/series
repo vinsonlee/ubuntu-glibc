@@ -263,14 +263,3 @@ ubuntu/unsubmitted-increase-dtv-surplus.diff
 ubuntu/local-warn-bsd-source.diff
 
 any/CVE-2015-7547.diff
-any/CVE-2014-8121-1.diff
-any/CVE-2014-8121-2.diff
-any/CVE-2014-9761-1.diff
-any/CVE-2014-9761-2.diff
-any/CVE-2015-1781.diff
-any/CVE-2015-8776.diff
-any/CVE-2015-8777.diff
-any/CVE-2015-8778.diff
-any/CVE-2015-8779.diff
-any/CVE-2016-3075.diff
-any/CVE-2016-2856.diff
