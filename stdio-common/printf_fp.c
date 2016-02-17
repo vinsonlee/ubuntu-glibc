@@ -333,7 +333,7 @@ ___printf_fp (FILE *fp,
 
       /* Check for special values: not a number or infinity.  */
       int res;
-      if (isnan (fpnum.ldbl))
+      if (__isnanl (fpnum.ldbl))
 	{
 	  is_neg = signbit (fpnum.ldbl);
 	  if (isupper (info->spec))
@@ -378,7 +378,7 @@ ___printf_fp (FILE *fp,
 
       /* Check for special values: not a number or infinity.  */
       int res;
-      if (isnan (fpnum.dbl))
+      if (__isnan (fpnum.dbl))
 	{
 	  union ieee754_double u = { .d = fpnum.dbl };
 	  is_neg = u.ieee.negative != 0;
@@ -449,7 +449,7 @@ ___printf_fp (FILE *fp,
      efficient to use variables of the fixed maximum size but because this
      would be really big it could lead to memory problems.  */
   {
-    mp_size_t bignum_size = ((abs (p.exponent) + BITS_PER_MP_LIMB - 1)
+    mp_size_t bignum_size = ((ABS (p.exponent) + BITS_PER_MP_LIMB - 1)
 			     / BITS_PER_MP_LIMB
 			     + (LDBL_MANT_DIG / BITS_PER_MP_LIMB > 2 ? 8 : 4))
 			    * sizeof (mp_limb_t);

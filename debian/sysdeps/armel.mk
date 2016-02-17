@@ -1,9 +1,9 @@
-# configuration options for all flavours
+libc_add-ons = $(add-ons)
 extra_config_options = --enable-multi-arch
 
-# build hard-float (armhf) alternative library
 #GLIBC_MULTILIB_PASSES += armhf
 #DEB_ARCH_MULTILIB_PACKAGES += libc6-armhf libc6-dev-armhf
+#armhf_add-ons = $(add-ons)
 #armhf_configure_target = arm-linux-gnueabihf
 #armhf_CC = $(CC) -march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=hard
 #armhf_CXX = $(CXX) -march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=hard

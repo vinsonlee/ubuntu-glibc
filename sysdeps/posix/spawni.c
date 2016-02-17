@@ -188,7 +188,7 @@ __spawni (pid_t *pid, const char *file,
 		{
 		  if (! have_fdlimit)
 		    {
-		      __getrlimit64 (RLIMIT_NOFILE, &fdlimit);
+		      getrlimit64 (RLIMIT_NOFILE, &fdlimit);
 		      have_fdlimit = true;
 		    }
 

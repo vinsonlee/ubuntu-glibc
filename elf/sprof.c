@@ -439,7 +439,7 @@ load_shobj (const char *name)
   result = (struct shobj *) calloc (1, sizeof (struct shobj));
   if (result == NULL)
     {
-      error (0, errno, _("cannot create internal descriptor"));
+      error (0, errno, _("cannot create internal descriptors"));
       dlclose (map);
       return NULL;
     }

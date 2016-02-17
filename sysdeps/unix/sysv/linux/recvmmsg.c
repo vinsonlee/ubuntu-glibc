@@ -37,18 +37,24 @@ int
 recvmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags,
 	  struct timespec *tmo)
 {
-  return SYSCALL_CANCEL (recvmmsg, fd, vmessages, vlen, flags, tmo);
+  if (SINGLE_THREAD_P)
+    return INLINE_SYSCALL (recvmmsg, 5, fd, vmessages, vlen, flags, tmo);
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  int result = INLINE_SYSCALL (recvmmsg, 5, fd, vmessages, vlen, flags, tmo);
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
 #elif defined __NR_socketcall
-# include <socketcall.h>
-# ifdef __ASSUME_RECVMMSG_SOCKETCALL
-int
-recvmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags,
-	  struct timespec *tmo)
-{
-  return SOCKETCALL_CANCEL (recvmmsg, fd, vmessages, vlen, flags, tmo);
-}
-# else
+# ifndef __ASSUME_RECVMMSG_SOCKETCALL
+extern int __internal_recvmmsg (int fd, struct mmsghdr *vmessages,
+				unsigned int vlen, int flags,
+				struct timespec *tmo)
+     attribute_hidden;
+
 static int have_recvmmsg;
 
 int
@@ -57,8 +63,7 @@ recvmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags,
 {
   if (__glibc_likely (have_recvmmsg >= 0))
     {
-      int ret = SOCKETCALL_CANCEL (recvmmsg, fd, vmessages, vlen, flags,
-				   tmo);
+      int ret = __internal_recvmmsg (fd, vmessages, vlen, flags, tmo);
       /* The kernel returns -EINVAL for unknown socket operations.
 	 We need to convert that error to an ENOSYS error.  */
       if (__builtin_expect (ret < 0, 0)
@@ -69,7 +74,7 @@ recvmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags,
 	     descriptor and all other parameters cleared.  This call
 	     will not cause any harm and it will return
 	     immediately.  */
-	  ret = SOCKETCALL_CANCEL (invalid, -1);
+	  ret = __internal_recvmmsg (-1, 0, 0, 0, 0);
 	  if (errno == EINVAL)
 	    {
 	      have_recvmmsg = -1;
@@ -87,7 +92,10 @@ recvmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags,
   __set_errno (ENOSYS);
   return -1;
 }
-# endif /* __ASSUME_RECVMMSG_SOCKETCALL  */
+# else
+/* When __ASSUME_RECVMMSG_SOCKETCALL recvmmsg is defined in
+   internal_recvmmsg.S.  */
+# endif
 #else
 # include <socket/recvmmsg.c>
 #endif

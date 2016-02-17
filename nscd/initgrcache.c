@@ -24,7 +24,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <scratch_buffer.h>
 
 #include "dbg_log.h"
 #include "nscd.h"

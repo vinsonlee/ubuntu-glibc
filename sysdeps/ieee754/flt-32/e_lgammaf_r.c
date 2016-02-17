@@ -13,7 +13,6 @@
  * ====================================================
  */
 
-#include <libc-internal.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -220,28 +219,17 @@ __ieee754_lgammaf_r(float x, int *signgamp)
 	    case 3: z *= (y+(float)2.0);	/* FALLTHRU */
 		    r += __ieee754_logf(z); break;
 	    }
-    /* 8.0 <= x < 2**26 */
-	} else if (ix < 0x4c800000) {
+    /* 8.0 <= x < 2**58 */
+	} else if (ix < 0x5c800000) {
 	    t = __ieee754_logf(x);
 	    z = one/x;
 	    y = z*z;
 	    w = w0+z*(w1+y*(w2+y*(w3+y*(w4+y*(w5+y*w6)))));
 	    r = (x-half)*(t-one)+w;
 	} else
-    /* 2**26 <= x <= inf */
+    /* 2**58 <= x <= inf */
 	    r =  x*(__ieee754_logf(x)-one);
-	/* NADJ is set for negative arguments but not otherwise,
-	   resulting in warnings that it may be used uninitialized
-	   although in the cases where it is used it has always been
-	   set.  */
-	DIAG_PUSH_NEEDS_COMMENT;
-#if __GNUC_PREREQ (4, 7)
-	DIAG_IGNORE_NEEDS_COMMENT (4.9, "-Wmaybe-uninitialized");
-#else
-	DIAG_IGNORE_NEEDS_COMMENT (4.9, "-Wuninitialized");
-#endif
 	if(hx<0) r = nadj - r;
-	DIAG_POP_NEEDS_COMMENT;
 	return r;
 }
 strong_alias (__ieee754_lgammaf_r, __lgammaf_r_finite)

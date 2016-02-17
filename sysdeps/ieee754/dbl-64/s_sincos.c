@@ -17,7 +17,6 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <errno.h>
 #include <math.h>
 
 #include <math_private.h>
@@ -37,8 +36,6 @@ __sincos (double x, double *sinx, double *cosx)
     {
       /* sin(Inf or NaN) is NaN */
       *sinx = *cosx = x - x;
-      if (__isinf_ns (x))
-	__set_errno (EDOM);
     }
   else
     {

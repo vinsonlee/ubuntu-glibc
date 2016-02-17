@@ -617,10 +617,6 @@ eval_expr_multdiv (char **expr, long int *result)
 	  if (eval_expr_val (expr, &arg) != 0)
 	    return WRDE_SYNTAX;
 
-	  /* Division by zero or integer overflow.  */
-	  if (arg == 0 || (arg == -1 && *result == LONG_MIN))
-	    return WRDE_SYNTAX;
-
 	  *result /= arg;
 	}
       else break;
@@ -1222,9 +1218,6 @@ parse_comm (char **word, size_t *word_length, size_t *max_length,
   return WRDE_SYNTAX;
 }
 
-#define CHAR_IN_SET(ch, char_set) \
-  (memchr (char_set "", ch, sizeof (char_set) - 1) != NULL)
-
 static int
 internal_function
 parse_param (char **word, size_t *word_length, size_t *max_length,
@@ -1306,7 +1299,7 @@ parse_param (char **word, size_t *word_length, size_t *max_length,
 	}
       while (isdigit(words[++*offset]));
     }
-  else if (CHAR_IN_SET (words[*offset], "*@$"))
+  else if (strchr ("*@$", words[*offset]) != NULL)
     {
       /* Special parameter. */
       special = 1;
@@ -1350,7 +1343,7 @@ parse_param (char **word, size_t *word_length, size_t *max_length,
 	  break;
 
 	case ':':
-	  if (!CHAR_IN_SET (words[1 + *offset], "-=?+"))
+	  if (strchr ("-=?+", words[1 + *offset]) == NULL)
 	    goto syntax;
 
 	  colon_seen = 1;
@@ -1919,7 +1912,7 @@ envsubst:
 	  if (pattern && !value)
 	    goto no_space;
 
-	  __setenv (env, value ?: "", 1);
+	  __setenv (env, value, 1);
 	  break;
 
 	default:
@@ -2052,8 +2045,6 @@ do_error:
   return error;
 }
 
-#undef CHAR_IN_SET
-
 static int
 internal_function
 parse_dollars (char **word, size_t *word_length, size_t *max_length,
@@ -2152,6 +2143,7 @@ parse_backtick (char **word, size_t *word_length, size_t *max_length,
 	      break;
 	    }
 
+	  ++(*offset);
 	  error = parse_backslash (&comm, &comm_length, &comm_maxlen, words,
 				   offset);
 

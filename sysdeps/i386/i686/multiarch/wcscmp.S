@@ -26,8 +26,8 @@
    happened.  */
 #if IS_IN (libc)
 	.text
-ENTRY(__wcscmp)
-	.type	__wcscmp, @gnu_indirect_function
+ENTRY(wcscmp)
+	.type	wcscmp, @gnu_indirect_function
 	pushl	%ebx
 	cfi_adjust_cfa_offset (4)
 	cfi_rel_offset (ebx, 0)
@@ -43,6 +43,5 @@ ENTRY(__wcscmp)
 	cfi_adjust_cfa_offset (-4);
 	cfi_restore (ebx)
 	ret
-END(__wcscmp)
-weak_alias (__wcscmp, wcscmp)
+END(wcscmp)
 #endif
