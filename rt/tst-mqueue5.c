@@ -35,7 +35,7 @@
 
 #define TIMEOUT 3
 
-#if _POSIX_THREADS && defined SIGRTMIN && defined SA_SIGINFO
+#if _POSIX_THREADS
 # include <pthread.h>
 
 volatile int rtmin_cnt;

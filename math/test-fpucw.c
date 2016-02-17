@@ -23,8 +23,8 @@
 # define FPU_CONTROL _FPU_DEFAULT
 #endif
 
-static int
-do_test (void)
+int
+main (void)
 {
 #ifdef _FPU_GETCW
 /* Some architectures don't have _FPU_GETCW (e.g. Linux/Alpha).  */
@@ -44,6 +44,3 @@ do_test (void)
   return 0;
 #endif
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

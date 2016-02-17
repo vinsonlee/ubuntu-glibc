@@ -19,11 +19,10 @@
 #include <errno.h>
 #include "pthreadP.h"
 #include <lowlevellock.h>
-#include <futex-internal.h>
 #include <sparc-nptl.h>
 
 int
-__pthread_barrier_init (barrier, attr, count)
+pthread_barrier_init (barrier, attr, count)
      pthread_barrier_t *barrier;
      const pthread_barrierattr_t *attr;
      unsigned int count;
@@ -36,9 +35,10 @@ __pthread_barrier_init (barrier, attr, count)
   struct pthread_barrierattr *iattr = (struct pthread_barrierattr *) attr;
   if (iattr != NULL)
     {
-      int err = futex_supports_pshared (iattr->pshared);
-      if (err != 0)
-	return err;
+      if (iattr->pshared != PTHREAD_PROCESS_PRIVATE
+	  && __builtin_expect (iattr->pshared != PTHREAD_PROCESS_SHARED, 0))
+	/* Invalid attribute.  */
+	return EINVAL;
     }
 
   ibarrier = (union sparc_pthread_barrier *) barrier;
@@ -53,4 +53,3 @@ __pthread_barrier_init (barrier, attr, count)
 
   return 0;
 }
-weak_alias (__pthread_barrier_init, pthread_barrier_init)

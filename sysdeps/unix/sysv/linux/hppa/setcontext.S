@@ -18,7 +18,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
-#include <libc-symbols.h>
 
 #include "ucontext_i.h"
 
@@ -140,7 +139,7 @@ ENTRY(__setcontext)
 	nop
 
 	/* No further context available. Exit now.  */
-	bl	HIDDEN_JUMPTARGET(exit), %r2
+	bl	_exit, %r2
 	ldi	-1, %r26
 
 

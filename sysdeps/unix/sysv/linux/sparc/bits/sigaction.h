@@ -20,8 +20,6 @@
 # error "Never include <bits/sigaction.h> directly; use <signal.h> instead."
 #endif
 
-#include <bits/wordsize.h>
-
 /* Structure describing the action to be taken when a signal arrives.  */
 struct sigaction
   {
@@ -45,9 +43,7 @@ struct sigaction
     __sigset_t sa_mask;
 
     /* Special flags.  */
-#if __WORDSIZE == 64
     int __glibc_reserved0;
-#endif
     int sa_flags;
 
     /* Not used by Linux/Sparc yet.  */

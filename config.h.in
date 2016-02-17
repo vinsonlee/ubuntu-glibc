@@ -37,6 +37,9 @@
 /* Define if the assembler supports the gnu_unique_object symbol type.  */
 #undef	HAVE_ASM_UNIQUE_OBJECT
 
+/* Define a symbol_name as a global .symbol_name for ld.  */
+#undef	HAVE_ASM_GLOBAL_DOT_NAME
+
 /* On powerpc64, use overlapping .opd entries.  */
 #undef  USE_PPC64_OVERLAPPING_OPD
 
@@ -111,9 +114,6 @@
    include/libc-symbols.h that avoid PLT slots in the shared objects.  */
 #undef	NO_HIDDEN
 
-/* AArch64 big endian ABI */
-#undef HAVE_AARCH64_BE
-
 
 /* Defined to some form of __attribute__ ((...)) if the compiler supports
    a different, more efficient calling convention.  */
@@ -153,6 +153,9 @@
 
 /* Define if inlined system calls are available.  */
 #undef HAVE_INLINED_SYSCALLS
+
+/* Define if your assembler and linker support R_PPC_REL16* relocs.  */
+#undef HAVE_ASM_PPC_REL16
 
 /* Define if your compiler defaults to -msecure-plt mode on ppc.  */
 #undef HAVE_PPC_SECURE_PLT

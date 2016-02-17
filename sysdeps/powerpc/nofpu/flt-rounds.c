@@ -16,8 +16,6 @@
    License along with the GNU C Library.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <stdlib.h>
-
 #include "soft-fp.h"
 #include "soft-supp.h"
 

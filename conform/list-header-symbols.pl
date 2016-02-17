@@ -55,14 +55,13 @@ $extra_syms{"UNIX98"} = ["errno", "setjmp", "va_end", "environ", "signgam",
 $extra_syms{"XOPEN2K"} = ["errno", "setjmp", "va_end", "environ", "signgam",
 			  "sigsetjmp", "optarg", "optind", "opterr", "optopt",
 			  "daylight", "timezone", "tzname", "getdate_err",
-			  "h_errno", "in6addr_any", "in6addr_loopback"];
+			  "h_errno"];
 $extra_syms{"XOPEN2K8"} = ["errno", "setjmp", "va_end", "environ", "signgam",
 			   "sigsetjmp", "optarg", "optind", "opterr", "optopt",
-			   "daylight", "timezone", "tzname", "getdate_err",
-			   "in6addr_any", "in6addr_loopback"];
+			   "daylight", "timezone", "tzname", "getdate_err"];
 $extra_syms{"POSIX2008"} = ["errno", "setjmp", "va_end", "environ",
 			    "sigsetjmp", "optarg", "optind", "opterr", "optopt",
-			    "tzname", "in6addr_any", "in6addr_loopback"];
+			    "tzname"];
 
 %user_syms = ();
 

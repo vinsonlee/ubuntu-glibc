@@ -326,5 +326,5 @@ done:
       free (intern.next);
     }
 
-  return status;
+  return NSS_STATUS_SUCCESS;
 }
