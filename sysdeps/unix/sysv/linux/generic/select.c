@@ -42,8 +42,20 @@ __select(int nfds, fd_set *readfds,
       tsp = &ts;
     }
 
-  result = SYSCALL_CANCEL (pselect6, nfds, readfds, writefds, exceptfds, tsp,
-			   NULL);
+  if (SINGLE_THREAD_P)
+    {
+      result = INLINE_SYSCALL (pselect6, 6, nfds, readfds, writefds, exceptfds,
+                               tsp, NULL);
+    }
+  else
+    {
+      int oldtype = LIBC_CANCEL_ASYNC ();
+
+      result = INLINE_SYSCALL (pselect6, 6, nfds, readfds, writefds, exceptfds,
+                               tsp, NULL);
+
+      LIBC_CANCEL_RESET (oldtype);
+    }
 
   if (timeout)
     {

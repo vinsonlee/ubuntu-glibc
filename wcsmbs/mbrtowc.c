@@ -59,9 +59,6 @@ __mbrtowc (wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
       n = 1;
     }
 
-  if (n == 0)
-    return (size_t) -2;
-
   /* Tell where we want the result.  */
   data.__outbuf = outbuf;
   data.__outbufend = outbuf + sizeof (wchar_t);

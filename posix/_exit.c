@@ -29,7 +29,6 @@ _exit (status)
   abort ();
 }
 libc_hidden_def (_exit)
-rtld_hidden_def (_exit)
 weak_alias (_exit, _Exit)
 
 stub_warning (_exit)

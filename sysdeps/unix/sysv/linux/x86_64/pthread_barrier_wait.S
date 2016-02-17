@@ -23,10 +23,10 @@
 
 	.text
 
-	.globl	__pthread_barrier_wait
-	.type	__pthread_barrier_wait,@function
+	.globl	pthread_barrier_wait
+	.type	pthread_barrier_wait,@function
 	.align	16
-__pthread_barrier_wait:
+pthread_barrier_wait:
 	/* Get the mutex.  */
 	xorl	%eax, %eax
 	movl	$1, %esi
@@ -157,5 +157,4 @@ __pthread_barrier_wait:
 	xorl	$LLL_SHARED, %esi
 	callq	__lll_unlock_wake
 	jmp	10b
-	.size	__pthread_barrier_wait,.-__pthread_barrier_wait
-weak_alias (__pthread_barrier_wait, pthread_barrier_wait)
+	.size	pthread_barrier_wait,.-pthread_barrier_wait

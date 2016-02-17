@@ -25,7 +25,6 @@
 struct link_map;
 
 void *_dl_symbol_address (struct link_map *map, const ElfW(Sym) *ref);
-rtld_hidden_proto (_dl_symbol_address)
 
 #define DL_SYMBOL_ADDRESS(map, ref) _dl_symbol_address(map, ref)
 
@@ -35,7 +34,7 @@ Elf32_Addr _dl_lookup_address (const void *address);
 #define DL_LOOKUP_ADDRESS(addr) \
   (_dl_lookup_address ((void *)((unsigned long)addr & ~3)))
 
-void attribute_hidden _dl_unmap (struct link_map *map);
+void _dl_unmap (struct link_map *map);
 
 #define DL_UNMAP(map) _dl_unmap (map)
 

@@ -63,8 +63,7 @@ ENTRY(__memchr)
 	be,pn		%XCC, 12f			/* CTI				*/
 #endif
 	 sll		%o1, 8, %g3			/* IEU0		Group		*/
-	addcc		%o0, %o2, %o2			/* IEU1				*/
-	movcs		%XCC, -1, %o2			/* IEU0		Group		*/
+	add		%o0, %o2, %o2			/* IEU1				*/
 
 	sethi		%hi(0x01010101), %g1		/* IEU0		Group		*/
 	or		%g3, %o1, %g3			/* IEU1				*/

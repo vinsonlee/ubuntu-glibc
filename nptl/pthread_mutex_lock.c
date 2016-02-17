@@ -23,7 +23,6 @@
 #include <sys/param.h>
 #include <not-cancel.h>
 #include "pthreadP.h"
-#include <atomic.h>
 #include <lowlevellock.h>
 #include <stap-probe.h>
 
@@ -136,7 +135,10 @@ __pthread_mutex_lock (mutex)
 		  LLL_MUTEX_LOCK (mutex);
 		  break;
 		}
-	      atomic_spin_nop ();
+
+#ifdef BUSY_WAIT_NOP
+	      BUSY_WAIT_NOP;
+#endif
 	    }
 	  while (LLL_MUTEX_TRYLOCK (mutex) != 0);
 

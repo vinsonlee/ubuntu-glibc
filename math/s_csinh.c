@@ -42,7 +42,7 @@ __csinh (__complex__ double x)
 	  const int t = (int) ((DBL_MAX_EXP - 1) * M_LN2);
 	  double sinix, cosix;
 
-	  if (__glibc_likely (fabs (__imag__ x) > DBL_MIN))
+	  if (__glibc_likely (icls != FP_SUBNORMAL))
 	    {
 	      __sincos (__imag__ x, &sinix, &cosix);
 	    }
@@ -51,9 +51,6 @@ __csinh (__complex__ double x)
 	      sinix = __imag__ x;
 	      cosix = 1.0;
 	    }
-
-	  if (negate)
-	    cosix = -cosix;
 
 	  if (fabs (__real__ x) > t)
 	    {
@@ -88,6 +85,9 @@ __csinh (__complex__ double x)
 	      __real__ retval = __ieee754_sinh (__real__ x) * cosix;
 	      __imag__ retval = __ieee754_cosh (__real__ x) * sinix;
 	    }
+
+	  if (negate)
+	    __real__ retval = -__real__ retval;
 
 	  if (fabs (__real__ retval) < DBL_MIN)
 	    {
@@ -130,7 +130,7 @@ __csinh (__complex__ double x)
 	  /* Imaginary part is finite.  */
 	  double sinix, cosix;
 
-	  if (__glibc_likely (fabs (__imag__ x) > DBL_MIN))
+	  if (__glibc_likely (icls != FP_SUBNORMAL))
 	    {
 	      __sincos (__imag__ x, &sinix, &cosix);
 	    }

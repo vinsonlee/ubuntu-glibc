@@ -37,7 +37,7 @@ test-srcs := collate-test xfrm-test tst-fmon tst-rpmatch tst-trans \
 	     tst-ctype tst-langinfo tst-langinfo-static tst-numeric
 test-input := de_DE.ISO-8859-1 en_US.ISO-8859-1 da_DK.ISO-8859-1 \
 	      hr_HR.ISO-8859-2 sv_SE.ISO-8859-1 tr_TR.UTF-8 fr_FR.UTF-8 \
-	      si_LK.UTF-8 uk_UA.UTF-8
+	      si_LK.UTF-8
 test-input-data = $(addsuffix .in, $(basename $(test-input)))
 test-output := $(foreach s, .out .xout, \
 			 $(addsuffix $s, $(basename $(test-input))))
@@ -106,8 +106,12 @@ LOCALES := de_DE.ISO-8859-1 de_DE.UTF-8 en_US.ANSI_X3.4-1968 \
 	   hr_HR.ISO-8859-2 sv_SE.ISO-8859-1 ja_JP.SJIS fr_FR.ISO-8859-1 \
 	   nb_NO.ISO-8859-1 nn_NO.ISO-8859-1 tr_TR.UTF-8 cs_CZ.UTF-8 \
 	   zh_TW.EUC-TW fa_IR.UTF-8 fr_FR.UTF-8 ja_JP.UTF-8 si_LK.UTF-8 \
-	   tr_TR.ISO-8859-9 en_GB.UTF-8 uk_UA.UTF-8
-include ../gen-locales.mk
+	   tr_TR.ISO-8859-9 en_GB.UTF-8
+LOCALE_SRCS := $(shell echo "$(LOCALES)"|sed 's/\([^ .]*\)[^ ]*/\1/g')
+CHARMAPS := $(shell echo "$(LOCALES)" | \
+		    sed -e 's/[^ .]*[.]\([^ ]*\)/\1/g' -e s/SJIS/SHIFT_JIS/g)
+CTYPE_FILES = $(addsuffix /LC_CTYPE,$(LOCALES))
+tests-special += $(addprefix $(objpfx),$(CTYPE_FILES))
 endif
 
 include ../Rules
@@ -125,6 +129,16 @@ $(inst_i18ndir)/locales/%: locales/% $(+force); $(do-install)
 
 ifeq ($(run-built-tests),yes)
 generated-dirs += $(LOCALES)
+
+# Dependency for the locale files.  We actually make it depend only on
+# one of the files.
+$(addprefix $(objpfx),$(CTYPE_FILES)): %: \
+  gen-locale.sh $(common-objpfx)locale/localedef Makefile \
+  $(addprefix charmaps/,$(CHARMAPS)) $(addprefix locales/,$(LOCALE_SRCS))
+	@$(SHELL) gen-locale.sh $(common-objpfx) \
+		  '$(built-program-cmd-before-env)' '$(run-program-env)' \
+		  '$(built-program-cmd-after-env)' $@; \
+	$(evaluate-test)
 
 $(addsuffix .out,$(addprefix $(objpfx),$(tests))): %: \
   $(addprefix $(objpfx),$(CTYPE_FILES))
@@ -212,8 +226,8 @@ $(INSTALL-SUPPORTED-LOCALES): install-locales-dir
 	input=`echo $$locale | sed 's/\([^.]*\)[^@]*\(.*\)/\1\2/'`; \
 	$(LOCALEDEF) --alias-file=../intl/locale.alias \
 		     -i locales/$$input -c -f charmaps/$$charset \
-		     $(addprefix --prefix=,$(install_root)) $$locale \
-	&& echo ' done'; \
+		     $(addprefix --prefix=,$(install_root)) $$locale; \
+	echo ' done'; \
 
 tst-setlocale-ENV = LC_ALL=ja_JP.EUC-JP
 tst-wctype-ENV = LC_ALL=ja_JP.EUC-JP
@@ -223,8 +237,8 @@ $(objpfx)mtrace-tst-leaks.out: $(objpfx)tst-leaks.out
 	$(common-objpfx)malloc/mtrace $(objpfx)tst-leaks.mtrace > $@; \
 	$(evaluate-test)
 
-bug-setlocale1-ENV-only = LOCPATH=$(objpfx) LC_CTYPE=de_DE.UTF-8
-bug-setlocale1-static-ENV-only = $(bug-setlocale1-ENV-only)
+bug-setlocale1-ARGS = -- $(host-test-program-cmd)
+bug-setlocale1-static-ARGS = $(bug-setlocale1-ARGS)
 
 $(objdir)/iconvdata/gconv-modules:
 	$(MAKE) -C ../iconvdata subdir=iconvdata $@

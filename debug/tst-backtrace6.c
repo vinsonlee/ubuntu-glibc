@@ -17,12 +17,5 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <signal.h>
-
-#ifdef SA_SIGINFO
-# define SIGACTION_FLAGS SA_SIGINFO
-# include <debug/tst-backtrace5.c>
-#else
-# define TEST_FUNCTION  0
-# include "../test-skeleton.c"
-#endif
+#define SIGACTION_FLAGS SA_SIGINFO
+#include <debug/tst-backtrace5.c>

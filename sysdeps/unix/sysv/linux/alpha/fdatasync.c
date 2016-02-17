@@ -26,23 +26,39 @@
 
 #include <kernel-features.h>
 
-int
-__fdatasync (int fd)
+static int
+do_fdatasync (int fd)
 {
 #ifdef __ASSUME_FDATASYNC
-  return SYSCALL_CANCEL (fdatasync, fd);
+  return INLINE_SYSCALL (fdatasync, 1, fd);
 #elif defined __NR_fdatasync
   static int __have_no_fdatasync;
 
   if (!__builtin_expect (__have_no_fdatasync, 0))
     {
-      int result = SYSCALL_CANCEL (fdatasync, fd);
+      int result = INLINE_SYSCALL (fdatasync, 1, fd);
       if (__builtin_expect (result, 0) != -1 || errno != ENOSYS)
 	return result;
 
       __have_no_fdatasync = 1;
     }
 #endif
-  return SYSCALL_CANCEL (fsync, fd);
+  return INLINE_SYSCALL (fsync, 1, fd);
 }
+
+int
+__fdatasync (int fd)
+{
+  if (SINGLE_THREAD_P)
+    return do_fdatasync (fd);
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  int result = do_fdatasync (fd);
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
+}
+
 weak_alias (__fdatasync, fdatasync)

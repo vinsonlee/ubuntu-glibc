@@ -105,7 +105,7 @@ _nl_find_locale (const char *locale_path, size_t locale_path_len,
 {
   int mask;
   /* Name of the locale for this category.  */
-  const char *cloc_name = *name;
+  char *loc_name = (char *) *name;
   const char *language;
   const char *modifier;
   const char *territory;
@@ -113,39 +113,39 @@ _nl_find_locale (const char *locale_path, size_t locale_path_len,
   const char *normalized_codeset;
   struct loaded_l10nfile *locale_file;
 
-  if (cloc_name[0] == '\0')
+  if (loc_name[0] == '\0')
     {
       /* The user decides which locale to use by setting environment
 	 variables.  */
-      cloc_name = getenv ("LC_ALL");
-      if (!name_present (cloc_name))
-	cloc_name = getenv (_nl_category_names.str
-			    + _nl_category_name_idxs[category]);
-      if (!name_present (cloc_name))
-	cloc_name = getenv ("LANG");
-      if (!name_present (cloc_name))
-	cloc_name = _nl_C_name;
+      loc_name = getenv ("LC_ALL");
+      if (!name_present (loc_name))
+	loc_name = getenv (_nl_category_names.str
+			+ _nl_category_name_idxs[category]);
+      if (!name_present (loc_name))
+	loc_name = getenv ("LANG");
+      if (!name_present (loc_name))
+	loc_name = (char *) _nl_C_name;
     }
 
   /* We used to fall back to the C locale if the name contains a slash
      character '/', but we now check for directory traversal in
      valid_locale_name, so this is no longer necessary.  */
 
-  if (__builtin_expect (strcmp (cloc_name, _nl_C_name), 1) == 0
-      || __builtin_expect (strcmp (cloc_name, _nl_POSIX_name), 1) == 0)
+  if (__builtin_expect (strcmp (loc_name, _nl_C_name), 1) == 0
+      || __builtin_expect (strcmp (loc_name, _nl_POSIX_name), 1) == 0)
     {
       /* We need not load anything.  The needed data is contained in
 	 the library itself.  */
-      *name = _nl_C_name;
+      *name = (char *) _nl_C_name;
       return _nl_C[category];
     }
-  else if (!valid_locale_name (cloc_name))
+  else if (!valid_locale_name (loc_name))
     {
       __set_errno (EINVAL);
       return NULL;
     }
 
-  *name = cloc_name;
+  *name = loc_name;
 
   /* We really have to load some data.  First we try the archive,
      but only if there was no LOCPATH environment variable specified.  */
@@ -156,32 +156,21 @@ _nl_find_locale (const char *locale_path, size_t locale_path_len,
       if (__glibc_likely (data != NULL))
 	return data;
 
-      /* Nothing in the archive with the given name.  Expanding it as
-	 an alias and retry.  */
-      cloc_name = _nl_expand_alias (*name);
-      if (cloc_name != NULL)
-	{
-	  data = _nl_load_locale_from_archive (category, &cloc_name);
-	  if (__builtin_expect (data != NULL, 1))
-	    return data;
-	}
-
       /* Nothing in the archive.  Set the default path to search below.  */
       locale_path = _nl_default_locale_path;
       locale_path_len = sizeof _nl_default_locale_path;
     }
-  else
-    /* We really have to load some data.  First see whether the name is
-       an alias.  Please note that this makes it impossible to have "C"
-       or "POSIX" as aliases.  */
-    cloc_name = _nl_expand_alias (*name);
 
-  if (cloc_name == NULL)
+  /* We really have to load some data.  First see whether the name is
+     an alias.  Please note that this makes it impossible to have "C"
+     or "POSIX" as aliases.  */
+  loc_name = (char *) _nl_expand_alias (*name);
+  if (loc_name == NULL)
     /* It is no alias.  */
-    cloc_name = *name;
+    loc_name = (char *) *name;
 
   /* Make a writable copy of the locale name.  */
-  char *loc_name = strdupa (cloc_name);
+  loc_name = strdupa (loc_name);
 
   /* LOCALE can consist of up to four recognized parts for the XPG syntax:
 
