@@ -1,3 +1,30 @@
+glibc (2.19-18+deb8u4) stable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+      - Fixes bug18240 failing with a timeout on machines with a lot of swap.
+  * patches/any/cvs-grantpt-pty-owner.diff: new patch from upstream to
+    improve granpt when /dev/pts is not mounted with the correct options.
+  * rules.d/debhelper.mk: only install pt_chown when built.
+  * sysdeps/linux.mk: don't build pt_chown (CVE-2013-2207). Closes: #717544.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 27 Feb 2016 23:17:33 +0100
+
+glibc (2.19-18+deb8u3) stable-security; urgency=medium
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+    - Fix segmentation fault caused by passing out-of-range data to strftime()
+      (CVE-2015-8776).  Closes: #812445.
+    - Fix an integer overflow in hcreate() and hcreate_r() (CVE-2015-8778).
+      Closes: #812441.
+    - Fix multiple unbounded stack allocations in catopen() (CVE-2015-8779).
+      Closes: #812455.
+  * patches/any/local-CVE-2015-7547.diff: new patch to fix glibc getaddrinfo
+    stack-based buffer overflow (CVE-2015-7547).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 11 Feb 2016 23:31:28 +0100
+
 glibc (2.19-18+deb8u2) stable; urgency=medium
 
   [ Aurelien Jarno ]

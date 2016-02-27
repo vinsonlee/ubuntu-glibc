@@ -1,10 +1,47 @@
 GIT update of git://sourceware.org/git/glibc.git/release/2.19/master from glibc-2.19
 
 diff --git a/ChangeLog b/ChangeLog
-index 81c393a..e82ba7d 100644
+index 81c393a..9907019 100644
 --- a/ChangeLog
 +++ b/ChangeLog
-@@ -1,3 +1,406 @@
+@@ -1,3 +1,443 @@
++2016-02-12  Florian Weimer  <fweimer@redhat.com>
++
++	* misc/bug18240.c (do_test): Set RLIMIT_AS.
++
++2016-01-27  Paul Eggert  <eggert@cs.ucla.edu>
++
++	[BZ #18240]
++	* misc/hsearch_r.c (isprime, __hcreate_r): Protect against
++	unsigned int wraparound.
++
++2016-01-27  Florian Weimer  <fweimer@redhat.com>
++
++	[BZ #18240]
++	* misc/bug18240.c: New test.
++	* misc/Makefile (tests): Add it.
++
++2015-08-25  Ondřej Bílka  <neleai@seznam.cz>
++
++	[BZ #18240]
++	* misc/hsearch_r.c (__hcreate_r): Handle overflow.
++
++2015-09-26  Paul Pluzhnikov  <ppluzhnikov@google.com>
++
++	[BZ #18985]
++	* time/strftime_l.c (a_wkday, f_wkday, a_month, f_month): Range check.
++	(__strftime_internal): Likewise.
++	* time/tst-strftime.c (do_bz18985): New test.
++	(do_test): Call it.
++
++2015-08-08  Paul Pluzhnikov  <ppluzhnikov@google.com>
++
++	[BZ #17905]
++	* catgets/Makefile (tst-catgets-mem): New test.
++	* catgets/catgets.c (catopen): Don't use unbounded alloca.
++	* catgets/open_catalog.c (__open_catalog): Likewise.
++	* catgets/tst-catgets.c (do_bz17905): Test unbounded alloca.
++
 +2015-12-20  Siddhesh Poyarekar  <siddhesh@redhat.com>
 +
 +	[BZ #16758]
@@ -412,7 +449,7 @@ index 81c393a..e82ba7d 100644
  
  	[BZ #16529]
 diff --git a/NEWS b/NEWS
-index 98b479e..2972c4a 100644
+index 98b479e..0d1952c 100644
 --- a/NEWS
 +++ b/NEWS
 @@ -5,6 +5,65 @@ See the end for copying conditions.
@@ -425,8 +462,8 @@ index 98b479e..2972c4a 100644
 +
 +  15946, 16545, 16574, 16623, 16657, 16695, 16743, 16758, 16759, 16760,
 +  16878, 16882, 16885, 16916, 16932, 16943, 16958, 17048, 17062, 17069,
-+  17079, 17137, 17153, 17213, 17263, 17269, 17325, 17555, 18007, 18032,
-+  18287.
++  17079, 17137, 17153, 17213, 17263, 17269, 17325, 17555, 17905, 18007,
++  18032, 18240, 18287, 18905.
 +
 +* A buffer overflow in gethostbyname_r and related functions performing DNS
 +  requests has been fixed.  If the NSS functions were called with a
@@ -481,6 +518,214 @@ index 98b479e..2972c4a 100644
  Version 2.19
  
  * The following bugs are resolved with this release:
+diff --git a/catgets/Makefile b/catgets/Makefile
+index c95442d..8c39e3d 100644
+--- a/catgets/Makefile
++++ b/catgets/Makefile
+@@ -45,14 +45,14 @@ catgets-CPPFLAGS := -DNLSPATH='"$(msgcatdir)/%L/%N:$(msgcatdir)/%L/LC_MESSAGES/%
+ CPPFLAGS-gencat = -DNOT_IN_libc
+ 
+ generated = de.msg test1.cat test1.h test2.cat test2.h sample.SJIS.cat \
+-	    test-gencat.h
++	    test-gencat.h tst-catgets.mtrace tst-catgets-mem.out
+ generated-dirs = de
+ 
+-tst-catgets-ENV = NLSPATH="$(objpfx)%l/%N.cat" LANG=de
++tst-catgets-ENV = NLSPATH="$(objpfx)%l/%N.cat" LANG=de MALLOC_TRACE=$(objpfx)tst-catgets.mtrace
+ 
+ ifeq ($(run-built-tests),yes)
+ tests: $(objpfx)de/libc.cat $(objpfx)test1.cat $(objpfx)test2.cat \
+-       $(objpfx)test-gencat.out
++       $(objpfx)test-gencat.out $(objpfx)tst-catgets-mem.out
+ # This test just checks whether the program produces any error or not.
+ # The result is not tested.
+ $(objpfx)test1.cat: test1.msg $(objpfx)gencat
+@@ -80,4 +80,9 @@ $(objpfx)test-gencat.out: test-gencat.sh $(objpfx)test-gencat \
+ $(objpfx)sample.SJIS.cat: sample.SJIS $(objpfx)gencat
+ 	GCONV_PATH=$(common-objpfx)iconvdata LC_ALL=C \
+ 	$(built-program-cmd) -H $(objpfx)test-gencat.h < $(word 1,$^) > $@
++
++$(objpfx)tst-catgets-mem.out: $(objpfx)tst-catgets.out
++	$(common-objpfx)malloc/mtrace $(objpfx)tst-catgets.mtrace > $@; \
++	$(evaluate-test)
++
+ endif
+diff --git a/catgets/catgets.c b/catgets/catgets.c
+index eac2827..820c0f6 100644
+--- a/catgets/catgets.c
++++ b/catgets/catgets.c
+@@ -16,7 +16,6 @@
+    License along with the GNU C Library; if not, see
+    <http://www.gnu.org/licenses/>.  */
+ 
+-#include <alloca.h>
+ #include <errno.h>
+ #include <locale.h>
+ #include <nl_types.h>
+@@ -35,6 +34,7 @@ catopen (const char *cat_name, int flag)
+   __nl_catd result;
+   const char *env_var = NULL;
+   const char *nlspath = NULL;
++  char *tmp = NULL;
+ 
+   if (strchr (cat_name, '/') == NULL)
+     {
+@@ -54,7 +54,10 @@ catopen (const char *cat_name, int flag)
+ 	{
+ 	  /* Append the system dependent directory.  */
+ 	  size_t len = strlen (nlspath) + 1 + sizeof NLSPATH;
+-	  char *tmp = alloca (len);
++	  tmp = malloc (len);
++
++	  if (__glibc_unlikely (tmp == NULL))
++	    return (nl_catd) -1;
+ 
+ 	  __stpcpy (__stpcpy (__stpcpy (tmp, nlspath), ":"), NLSPATH);
+ 	  nlspath = tmp;
+@@ -65,16 +68,18 @@ catopen (const char *cat_name, int flag)
+ 
+   result = (__nl_catd) malloc (sizeof (*result));
+   if (result == NULL)
+-    /* We cannot get enough memory.  */
+-    return (nl_catd) -1;
+-
+-  if (__open_catalog (cat_name, nlspath, env_var, result) != 0)
++    {
++      /* We cannot get enough memory.  */
++      result = (nl_catd) -1;
++    }
++  else if (__open_catalog (cat_name, nlspath, env_var, result) != 0)
+     {
+       /* Couldn't open the file.  */
+       free ((void *) result);
+-      return (nl_catd) -1;
++      result = (nl_catd) -1;
+     }
+ 
++  free (tmp);
+   return (nl_catd) result;
+ }
+ 
+diff --git a/catgets/open_catalog.c b/catgets/open_catalog.c
+index bc44f98..5fa4011 100644
+--- a/catgets/open_catalog.c
++++ b/catgets/open_catalog.c
+@@ -47,6 +47,7 @@ __open_catalog (const char *cat_name, const char *nlspath, const char *env_var,
+   size_t tab_size;
+   const char *lastp;
+   int result = -1;
++  char *buf = NULL;
+ 
+   if (strchr (cat_name, '/') != NULL || nlspath == NULL)
+     fd = open_not_cancel_2 (cat_name, O_RDONLY);
+@@ -57,23 +58,23 @@ __open_catalog (const char *cat_name, const char *nlspath, const char *env_var,
+   if (__builtin_expect (bufact + (n) >= bufmax, 0))			      \
+     {									      \
+       char *old_buf = buf;						      \
+-      bufmax += 256 + (n);						      \
+-      buf = (char *) alloca (bufmax);					      \
+-      memcpy (buf, old_buf, bufact);					      \
++      bufmax += (bufmax < 256 + (n)) ? 256 + (n) : bufmax;		      \
++      buf = realloc (buf, bufmax);					      \
++      if (__glibc_unlikely (buf == NULL))				      \
++	{								      \
++	  free (old_buf);						      \
++	  return -1;							      \
++	}								      \
+     }
+ 
+       /* The RUN_NLSPATH variable contains a colon separated list of
+ 	 descriptions where we expect to find catalogs.  We have to
+ 	 recognize certain % substitutions and stop when we found the
+ 	 first existing file.  */
+-      char *buf;
+       size_t bufact;
+-      size_t bufmax;
++      size_t bufmax = 0;
+       size_t len;
+ 
+-      buf = NULL;
+-      bufmax = 0;
+-
+       fd = -1;
+       while (*run_nlspath != '\0')
+ 	{
+@@ -188,7 +189,10 @@ __open_catalog (const char *cat_name, const char *nlspath, const char *env_var,
+ 
+   /* Avoid dealing with directories and block devices */
+   if (__builtin_expect (fd, 0) < 0)
+-    return -1;
++    {
++      free (buf);
++      return -1;
++    }
+ 
+   if (__builtin_expect (__fxstat64 (_STAT_VER, fd, &st), 0) < 0)
+     goto close_unlock_return;
+@@ -325,6 +329,7 @@ __open_catalog (const char *cat_name, const char *nlspath, const char *env_var,
+   /* Release the lock again.  */
+  close_unlock_return:
+   close_not_cancel_no_status (fd);
++  free (buf);
+ 
+   return result;
+ }
+diff --git a/catgets/tst-catgets.c b/catgets/tst-catgets.c
+index fdaa834..25ef056 100644
+--- a/catgets/tst-catgets.c
++++ b/catgets/tst-catgets.c
+@@ -1,7 +1,10 @@
++#include <assert.h>
+ #include <mcheck.h>
+ #include <nl_types.h>
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <string.h>
++#include <sys/resource.h>
+ 
+ 
+ static const char *msgs[] =
+@@ -12,6 +15,33 @@ static const char *msgs[] =
+ };
+ #define nmsgs (sizeof (msgs) / sizeof (msgs[0]))
+ 
++
++/* Test for unbounded alloca.  */
++static int
++do_bz17905 (void)
++{
++  char *buf;
++  struct rlimit rl;
++  nl_catd result;
++
++  const int sz = 1024 * 1024;
++
++  getrlimit (RLIMIT_STACK, &rl);
++  rl.rlim_cur = sz;
++  setrlimit (RLIMIT_STACK, &rl);
++
++  buf = malloc (sz + 1);
++  memset (buf, 'A', sz);
++  buf[sz] = '\0';
++  setenv ("NLSPATH", buf, 1);
++
++  result = catopen (buf, NL_CAT_LOCALE);
++  assert (result == (nl_catd) -1);
++
++  free (buf);
++  return 0;
++}
++
+ #define ROUNDS 5
+ 
+ int
+@@ -62,5 +92,6 @@ main (void)
+ 	}
+     }
+ 
++  result += do_bz17905 ();
+   return result;
+ }
 diff --git a/elf/Makefile b/elf/Makefile
 index 4c58fc9..b9da0b8 100644
 --- a/elf/Makefile
@@ -1394,6 +1639,180 @@ index 0000000..e3b21a9
 +
 +#define TEST_FUNCTION do_test ()
 +#include "../test-skeleton.c"
+diff --git a/misc/Makefile b/misc/Makefile
+index b039182..ad9e921 100644
+--- a/misc/Makefile
++++ b/misc/Makefile
+@@ -76,7 +76,8 @@ install-lib := libg.a
+ gpl2lgpl := error.c error.h
+ 
+ tests := tst-dirname tst-tsearch tst-fdset tst-efgcvt tst-mntent tst-hsearch \
+-	 tst-error1 tst-pselect tst-insremque tst-mntent2 bug-hsearch1
++	 tst-error1 tst-pselect tst-insremque tst-mntent2 bug-hsearch1 \
++	 bug18240
+ ifeq ($(run-built-tests),yes)
+ tests: $(objpfx)tst-error1-mem
+ endif
+diff --git a/misc/bug18240.c b/misc/bug18240.c
+new file mode 100644
+index 0000000..773586e
+--- /dev/null
++++ b/misc/bug18240.c
+@@ -0,0 +1,97 @@
++/* Test integer wraparound in hcreate.
++   Copyright (C) 2016 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#include <errno.h>
++#include <limits.h>
++#include <search.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <sys/resource.h>
++
++static void
++test_size (size_t size)
++{
++  int res = hcreate (size);
++  if (res == 0)
++    {
++      if (errno == ENOMEM)
++        return;
++      printf ("error: hcreate (%zu): %m\n", size);
++      exit (1);
++    }
++  char *keys[100];
++  for (int i = 0; i < 100; ++i)
++    {
++      if (asprintf (keys + i, "%d", i) < 0)
++        {
++          printf ("error: asprintf: %m\n");
++          exit (1);
++        }
++      ENTRY e = { keys[i], (char *) "value" };
++      if (hsearch (e, ENTER) == NULL)
++        {
++          printf ("error: hsearch (\"%s\"): %m\n", keys[i]);
++          exit (1);
++        }
++    }
++  hdestroy ();
++
++  for (int i = 0; i < 100; ++i)
++    free (keys[i]);
++}
++
++static int
++do_test (void)
++{
++  /* Limit the size of the process, so that memory allocation will
++     fail without impacting the entire system.  */
++  {
++    struct rlimit limit;
++    if (getrlimit (RLIMIT_AS, &limit) != 0)
++      {
++        printf ("getrlimit (RLIMIT_AS) failed: %m\n");
++        return 1;
++      }
++    long target = 100 * 1024 * 1024;
++    if (limit.rlim_cur == RLIM_INFINITY || limit.rlim_cur > target)
++      {
++        limit.rlim_cur = target;
++        if (setrlimit (RLIMIT_AS, &limit) != 0)
++          {
++            printf ("setrlimit (RLIMIT_AS) failed: %m\n");
++            return 1;
++          }
++      }
++  }
++
++  test_size (500);
++  test_size (-1);
++  test_size (-3);
++  test_size (INT_MAX - 2);
++  test_size (INT_MAX - 1);
++  test_size (INT_MAX);
++  test_size (((unsigned) INT_MAX) + 1);
++  test_size (UINT_MAX - 2);
++  test_size (UINT_MAX - 1);
++  test_size (UINT_MAX);
++  return 0;
++}
++
++#define TEST_FUNCTION do_test ()
++#include "../test-skeleton.c"
+diff --git a/misc/hsearch_r.c b/misc/hsearch_r.c
+index 81c27d8..af55212 100644
+--- a/misc/hsearch_r.c
++++ b/misc/hsearch_r.c
+@@ -19,7 +19,7 @@
+ #include <errno.h>
+ #include <malloc.h>
+ #include <string.h>
+-
++#include <stdint.h>
+ #include <search.h>
+ 
+ /* [Aho,Sethi,Ullman] Compilers: Principles, Techniques and Tools, 1986
+@@ -46,15 +46,12 @@ static int
+ isprime (unsigned int number)
+ {
+   /* no even number will be passed */
+-  unsigned int div = 3;
+-
+-  while (div * div < number && number % div != 0)
+-    div += 2;
+-
+-  return number % div != 0;
++  for (unsigned int div = 3; div <= number / div; div += 2)
++    if (number % div == 0)
++      return 0;
++  return 1;
+ }
+ 
+-
+ /* Before using the hash table we must allocate memory for it.
+    Test for an existing table are done. We allocate one element
+    more as the found prime number says. This is done for more effective
+@@ -81,10 +78,19 @@ hcreate_r (nel, htab)
+      use will not work.  */
+   if (nel < 3)
+     nel = 3;
+-  /* Change nel to the first prime number not smaller as nel. */
+-  nel |= 1;      /* make odd */
+-  while (!isprime (nel))
+-    nel += 2;
++
++  /* Change nel to the first prime number in the range [nel, UINT_MAX - 2],
++     The '- 2' means 'nel += 2' cannot overflow.  */
++  for (nel |= 1; ; nel += 2)
++    {
++      if (UINT_MAX - 2 < nel)
++	{
++	  __set_errno (ENOMEM);
++	  return 0;
++	}
++      if (isprime (nel))
++	break;
++    }
+ 
+   htab->size = nel;
+   htab->filled = 0;
 diff --git a/misc/sys/xattr.h b/misc/sys/xattr.h
 index 929cd87..796df90 100644
 --- a/misc/sys/xattr.h
@@ -5775,6 +6194,124 @@ index 207b6c0..25c112f 100644
  ifloat: 1
  Test "yn (10, 0xcp-4)":
  double: 1
+diff --git a/time/strftime_l.c b/time/strftime_l.c
+index dfb7b4c..29c7cdd 100644
+--- a/time/strftime_l.c
++++ b/time/strftime_l.c
+@@ -509,13 +509,17 @@ __strftime_internal (s, maxsize, format, tp, tzset_called ut_argument
+      only a few elements.  Dereference the pointers only if the format
+      requires this.  Then it is ok to fail if the pointers are invalid.  */
+ # define a_wkday \
+-  ((const CHAR_T *) _NL_CURRENT (LC_TIME, NLW(ABDAY_1) + tp->tm_wday))
++  ((const CHAR_T *) (tp->tm_wday < 0 || tp->tm_wday > 6			     \
++		     ? "?" : _NL_CURRENT (LC_TIME, NLW(ABDAY_1) + tp->tm_wday)))
+ # define f_wkday \
+-  ((const CHAR_T *) _NL_CURRENT (LC_TIME, NLW(DAY_1) + tp->tm_wday))
++  ((const CHAR_T *) (tp->tm_wday < 0 || tp->tm_wday > 6			     \
++		     ? "?" : _NL_CURRENT (LC_TIME, NLW(DAY_1) + tp->tm_wday)))
+ # define a_month \
+-  ((const CHAR_T *) _NL_CURRENT (LC_TIME, NLW(ABMON_1) + tp->tm_mon))
++  ((const CHAR_T *) (tp->tm_mon < 0 || tp->tm_mon > 11			     \
++		     ? "?" : _NL_CURRENT (LC_TIME, NLW(ABMON_1) + tp->tm_mon)))
+ # define f_month \
+-  ((const CHAR_T *) _NL_CURRENT (LC_TIME, NLW(MON_1) + tp->tm_mon))
++  ((const CHAR_T *) (tp->tm_mon < 0 || tp->tm_mon > 11			     \
++		     ? "?" : _NL_CURRENT (LC_TIME, NLW(MON_1) + tp->tm_mon)))
+ # define ampm \
+   ((const CHAR_T *) _NL_CURRENT (LC_TIME, tp->tm_hour > 11		      \
+ 				 ? NLW(PM_STR) : NLW(AM_STR)))
+@@ -525,8 +529,10 @@ __strftime_internal (s, maxsize, format, tp, tzset_called ut_argument
+ # define ap_len STRLEN (ampm)
+ #else
+ # if !HAVE_STRFTIME
+-#  define f_wkday (weekday_name[tp->tm_wday])
+-#  define f_month (month_name[tp->tm_mon])
++#  define f_wkday (tp->tm_wday < 0 || tp->tm_wday > 6	\
++		   ? "?" : weekday_name[tp->tm_wday])
++#  define f_month (tp->tm_mon < 0 || tp->tm_mon > 11	\
++		   ? "?" : month_name[tp->tm_mon])
+ #  define a_wkday f_wkday
+ #  define a_month f_month
+ #  define ampm (L_("AMPM") + 2 * (tp->tm_hour > 11))
+@@ -1320,7 +1326,7 @@ __strftime_internal (s, maxsize, format, tp, tzset_called ut_argument
+ 		  *tzset_called = true;
+ 		}
+ # endif
+-	      zone = tzname[tp->tm_isdst];
++	      zone = tp->tm_isdst <= 1 ? tzname[tp->tm_isdst] : "?";
+ 	    }
+ #endif
+ 	  if (! zone)
+diff --git a/time/tst-strftime.c b/time/tst-strftime.c
+index 374fba4..af3ff72 100644
+--- a/time/tst-strftime.c
++++ b/time/tst-strftime.c
+@@ -4,6 +4,56 @@
+ #include <time.h>
+ 
+ 
++static int
++do_bz18985 (void)
++{
++  char buf[1000];
++  struct tm ttm;
++  int rc, ret = 0;
++
++  memset (&ttm, 1, sizeof (ttm));
++  ttm.tm_zone = NULL;  /* Dereferenced directly if non-NULL.  */
++  rc = strftime (buf, sizeof (buf), "%a %A %b %B %c %z %Z", &ttm);
++
++  if (rc == 66)
++    {
++      const char expected[]
++	= "? ? ? ? ? ? 16843009 16843009:16843009:16843009 16844909 +467836 ?";
++      if (0 != strcmp (buf, expected))
++	{
++	  printf ("expected:\n  %s\ngot:\n  %s\n", expected, buf);
++	  ret += 1;
++	}
++    }
++  else
++    {
++      printf ("expected 66, got %d\n", rc);
++      ret += 1;
++    }
++
++  /* Check negative values as well.  */
++  memset (&ttm, 0xFF, sizeof (ttm));
++  ttm.tm_zone = NULL;  /* Dereferenced directly if non-NULL.  */
++  rc = strftime (buf, sizeof (buf), "%a %A %b %B %c %z %Z", &ttm);
++
++  if (rc == 30)
++    {
++      const char expected[] = "? ? ? ? ? ? -1 -1:-1:-1 1899  ";
++      if (0 != strcmp (buf, expected))
++	{
++	  printf ("expected:\n  %s\ngot:\n  %s\n", expected, buf);
++	  ret += 1;
++	}
++    }
++  else
++    {
++      printf ("expected 30, got %d\n", rc);
++      ret += 1;
++    }
++
++  return ret;
++}
++
+ static struct
+ {
+   const char *fmt;
+@@ -104,7 +154,7 @@ do_test (void)
+ 	}
+     }
+ 
+-  return result;
++  return result + do_bz18985 ();
+ }
+ 
+ #define TEST_FUNCTION do_test ()
 diff --git a/timezone/Makefile b/timezone/Makefile
 index f5fb424..58e7f50 100644
 --- a/timezone/Makefile
