@@ -153,8 +153,10 @@ __res_vinit(res_state statp, int preinit) {
 	char *cp, **pp;
 	int n;
 	char buf[BUFSIZ];
-	int nserv = 0;    /* number of nameservers read from file */
-	int have_serv6 = 0;
+	int nserv = 0;    /* number of nameserver records read from file */
+#ifdef _LIBC
+	int nservall = 0; /* number of NS records read, nserv IPv4 only */
+#endif
 	int haveenv = 0;
 	int havesearch = 0;
 #ifdef RESOLVSORT
@@ -182,9 +184,15 @@ __res_vinit(res_state statp, int preinit) {
 	statp->_flags = 0;
 	statp->qhook = NULL;
 	statp->rhook = NULL;
+	statp->_u._ext.nsinit = 0;
 	statp->_u._ext.nscount = 0;
-	for (n = 0; n < MAXNS; n++)
-	    statp->_u._ext.nsaddrs[n] = NULL;
+#ifdef _LIBC
+	statp->_u._ext.nscount6 = 0;
+	for (n = 0; n < MAXNS; n++) {
+		statp->_u._ext.nsaddrs[n] = NULL;
+		statp->_u._ext.nsmap[n] = MAXNS;
+	}
+#endif
 
 	/* Allow user to override the local domain definition */
 	if ((cp = getenv("LOCALDOMAIN")) != NULL) {
@@ -230,7 +238,7 @@ __res_vinit(res_state statp, int preinit) {
 	    /* No threads use this stream.  */
 	    __fsetlocking (fp, FSETLOCKING_BYCALLER);
 	    /* read the config file */
-	    while (__fgets_unlocked(buf, sizeof(buf), fp) != NULL) {
+	    while (fgets_unlocked(buf, sizeof(buf), fp) != NULL) {
 		/* skip comments */
 		if (*buf == ';' || *buf == '#')
 			continue;
@@ -288,7 +296,11 @@ __res_vinit(res_state statp, int preinit) {
 		    continue;
 		}
 		/* read nameservers to query */
+#ifdef _LIBC
+		if (MATCH(buf, "nameserver") && nservall < MAXNS) {
+#else
 		if (MATCH(buf, "nameserver") && nserv < MAXNS) {
+#endif
 		    struct in_addr a;
 
 		    cp = buf + sizeof("nameserver") - 1;
@@ -296,12 +308,13 @@ __res_vinit(res_state statp, int preinit) {
 			cp++;
 		    if ((*cp != '\0') && (*cp != '\n')
 			&& __inet_aton(cp, &a)) {
-			statp->nsaddr_list[nserv].sin_addr = a;
-			statp->nsaddr_list[nserv].sin_family = AF_INET;
-			statp->nsaddr_list[nserv].sin_port =
+			statp->nsaddr_list[nservall].sin_addr = a;
+			statp->nsaddr_list[nservall].sin_family = AF_INET;
+			statp->nsaddr_list[nservall].sin_port =
 				htons(NAMESERVER_PORT);
 			nserv++;
 #ifdef _LIBC
+			nservall++;
 		    } else {
 			struct in6_addr a6;
 			char *el;
@@ -311,7 +324,7 @@ __res_vinit(res_state statp, int preinit) {
 			if ((el = strchr(cp, SCOPE_DELIMITER)) != NULL)
 			    *el = '\0';
 			if ((*cp != '\0') &&
-			    (__inet_pton(AF_INET6, cp, &a6) > 0)) {
+			    (inet_pton(AF_INET6, cp, &a6) > 0)) {
 			    struct sockaddr_in6 *sa6;
 
 			    sa6 = malloc(sizeof(*sa6));
@@ -321,14 +334,14 @@ __res_vinit(res_state statp, int preinit) {
 				sa6->sin6_flowinfo = 0;
 				sa6->sin6_addr = a6;
 
-				if (__glibc_likely (el == NULL))
+				if (__builtin_expect (el == NULL, 1))
 				    sa6->sin6_scope_id = 0;
 				else {
 				    int try_numericscope = 1;
 				    if (IN6_IS_ADDR_LINKLOCAL (&a6)
 					|| IN6_IS_ADDR_MC_LINKLOCAL (&a6)) {
 					sa6->sin6_scope_id
-					  = __if_nametoindex (el + 1);
+					  = if_nametoindex (el + 1);
 					if (sa6->sin6_scope_id != 0)
 					    try_numericscope = 0;
 				    }
@@ -343,11 +356,10 @@ __res_vinit(res_state statp, int preinit) {
 				    }
 				}
 
-				statp->nsaddr_list[nserv].sin_family = 0;
-				statp->_u._ext.nsaddrs[nserv] = sa6;
-				statp->_u._ext.nssocks[nserv] = -1;
-				have_serv6 = 1;
-				nserv++;
+				statp->_u._ext.nsaddrs[nservall] = sa6;
+				statp->_u._ext.nssocks[nservall] = -1;
+				statp->_u._ext.nsmap[nservall] = MAXNS + 1;
+				nservall++;
 			    }
 			}
 #endif
@@ -402,9 +414,10 @@ __res_vinit(res_state statp, int preinit) {
 		    continue;
 		}
 	    }
-	    statp->nscount = nserv;
+	    statp->nscount = nservall;
 #ifdef _LIBC
-	    if (have_serv6) {
+	    if (nservall - nserv > 0) {
+		statp->_u._ext.nscount6 = nservall - nserv;
 		/* We try IPv6 servers again.  */
 		statp->ipv6_unavail = false;
 	    }
@@ -415,7 +428,7 @@ __res_vinit(res_state statp, int preinit) {
 	    (void) fclose(fp);
 	}
 	if (__builtin_expect(statp->nscount == 0, 0)) {
-	    statp->nsaddr.sin_addr = __inet_makeaddr(IN_LOOPBACKNET, 1);
+	    statp->nsaddr.sin_addr = inet_makeaddr(IN_LOOPBACKNET, 1);
 	    statp->nsaddr.sin_family = AF_INET;
 	    statp->nsaddr.sin_port = htons(NAMESERVER_PORT);
 	    statp->nscount = 1;
@@ -593,7 +606,11 @@ __res_iclose(res_state statp, bool free_addr) {
 		statp->_vcsock = -1;
 		statp->_flags &= ~(RES_F_VC | RES_F_CONN);
 	}
+#ifdef _LIBC
+	for (ns = 0; ns < MAXNS; ns++)
+#else
 	for (ns = 0; ns < statp->_u._ext.nscount; ns++)
+#endif
 		if (statp->_u._ext.nsaddrs[ns]) {
 			if (statp->_u._ext.nssocks[ns] != -1) {
 				close_not_cancel_no_status(statp->_u._ext.nssocks[ns]);
@@ -604,6 +621,7 @@ __res_iclose(res_state statp, bool free_addr) {
 				statp->_u._ext.nsaddrs[ns] = NULL;
 			}
 		}
+	statp->_u._ext.nsinit = 0;
 }
 libc_hidden_def (__res_iclose)
 

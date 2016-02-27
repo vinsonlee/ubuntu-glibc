@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -51,7 +51,7 @@ sem_close (sem)
   /* Locate the entry for the mapping the caller provided.  */
   rec = NULL;
   the_sem = sem;
-  __twalk (__sem_mappings, walker);
+  twalk (__sem_mappings, walker);
   if  (rec != NULL)
     {
       /* Check the reference counter.  If it is going to be zero, free
@@ -59,7 +59,7 @@ sem_close (sem)
       if (--rec->refcnt == 0)
 	{
 	  /* Remove the record from the tree.  */
-	  (void) __tdelete (rec, &__sem_mappings, __sem_search);
+	  (void) tdelete (rec, &__sem_mappings, __sem_search);
 
 	  result = munmap (rec->sem, sizeof (sem_t));
 

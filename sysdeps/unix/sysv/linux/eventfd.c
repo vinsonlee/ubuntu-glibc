@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 
 
 int
-eventfd (unsigned int count, int flags)
+eventfd (int count, int flags)
 {
 #ifdef __NR_eventfd2
   int res = INLINE_SYSCALL (eventfd2, 2, count, flags);

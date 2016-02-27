@@ -12,8 +12,7 @@ constant SETALL
 type {struct semid_ds}
 
 element {struct semid_ds} {struct ipc_perm} sem_perm
-// Bug 18232: wrong type for sem_nsems member.
-xfail-element {struct semid_ds} {unsigned short int} sem_nsems
+element {struct semid_ds} {unsigned short int} sem_nsems
 element {struct semid_ds} time_t sem_otime
 element {struct semid_ds} time_t sem_ctime
 

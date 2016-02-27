@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,13 +21,29 @@
 #include <sys/wait.h>
 
 __pid_t
-__waitpid (__pid_t pid, int *stat_loc, int options)
+__libc_waitpid (__pid_t pid, int *stat_loc, int options)
 {
+  if (SINGLE_THREAD_P)
+    {
 #ifdef __NR_waitpid
-  return SYSCALL_CANCEL (waitpid, pid, stat_loc, options);
+      return INLINE_SYSCALL (waitpid, 3, pid, stat_loc, options);
 #else
-  return SYSCALL_CANCEL (wait4, pid, stat_loc, options, NULL);
+      return INLINE_SYSCALL (wait4, 4, pid, stat_loc, options, NULL);
 #endif
+    }
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+#ifdef __NR_waitpid
+  int result = INLINE_SYSCALL (waitpid, 3, pid, stat_loc, options);
+#else
+  int result = INLINE_SYSCALL (wait4, 4, pid, stat_loc, options, NULL);
+#endif
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
-libc_hidden_def (__waitpid)
-weak_alias (__waitpid, waitpid)
+weak_alias (__libc_waitpid, __waitpid)
+libc_hidden_weak (__waitpid)
+weak_alias (__libc_waitpid, waitpid)

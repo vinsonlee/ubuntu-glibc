@@ -33,6 +33,7 @@ erx =  8.4506291151e-01, /* 0x3f58560b */
  * Coefficients for approximation to  erf on [0,0.84375]
  */
 efx =  1.2837916613e-01, /* 0x3e0375d4 */
+efx8=  1.0270333290e+00, /* 0x3f8375d4 */
 pp0  =  1.2837916613e-01, /* 0x3e0375d4 */
 pp1  = -3.2504209876e-01, /* 0xbea66beb */
 pp2  = -2.8481749818e-02, /* 0xbce9528f */
@@ -110,16 +111,8 @@ float __erff(float x)
 	if(ix < 0x3f580000) {		/* |x|<0.84375 */
 	    if(ix < 0x31800000) { 	/* |x|<2**-28 */
 	        if (ix < 0x04000000)
-		  {
-		    /* Avoid spurious underflow.  */
-		    float ret = 0.0625f * (16.0f * x + (16.0f * efx) * x);
-		    if (fabsf (ret) < FLT_MIN)
-		      {
-			float force_underflow = ret * ret;
-			math_force_eval (force_underflow);
-		      }
-		    return ret;
-		  }
+		    /*avoid underflow */
+		    return (float)0.125*((float)8.0*x+efx8*x);
 		return x + efx*x;
 	    }
 	    z = x*x;
@@ -169,7 +162,7 @@ float __erfcf(float x)
 	}
 
 	if(ix < 0x3f580000) {		/* |x|<0.84375 */
-	    if(ix < 0x32800000)  	/* |x|<2**-26 */
+	    if(ix < 0x23800000)  	/* |x|<2**-56 */
 		return one-x;
 	    z = x*x;
 	    r = pp0+z*(pp1+z*(pp2+z*(pp3+z*pp4)));

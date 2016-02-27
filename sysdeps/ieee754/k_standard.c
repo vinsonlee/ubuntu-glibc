@@ -16,6 +16,7 @@ static char rcsid[] = "$NetBSD: k_standard.c,v 1.6 1995/05/10 20:46:35 jtc Exp $
 
 #include <math.h>
 #include <math_private.h>
+#include <float.h>
 #include <errno.h>
 
 #include <assert.h>
@@ -105,11 +106,6 @@ __kernel_standard(double x, double y, int type)
 	SET_HIGH_WORD(inf,0x7ff00000);	/* set inf to infinite */
 #endif
 
-	/* The SVID struct exception uses a field "char *name;".  */
-#define CSTR(func) ((char *) (type < 100				\
-			      ? func					\
-			      : (type < 200 ? func "f" : func "l")))
-
 #ifdef _USE_WRITE
 	(void) fflush(stdout);
 #endif
@@ -121,7 +117,8 @@ __kernel_standard(double x, double y, int type)
 	    case 201:
 		/* acos(|x|>1) */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("acos");
+		exc.name = type < 100 ? "acos" : (type < 200
+						  ? "acosf" : "acosl");;
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = HUGE;
 		else
@@ -140,7 +137,8 @@ __kernel_standard(double x, double y, int type)
 	    case 202:
 		/* asin(|x|>1) */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("asin");
+		exc.name = type < 100 ? "asin" : (type < 200
+						  ? "asinf" : "asinl");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = HUGE;
 		else
@@ -161,7 +159,8 @@ __kernel_standard(double x, double y, int type)
 		exc.arg1 = y;
 		exc.arg2 = x;
 		exc.type = DOMAIN;
-		exc.name = CSTR ("atan2");
+		exc.name = type < 100 ? "atan2" : (type < 200
+						   ? "atan2f" : "atan2l");
 		assert (_LIB_VERSION == _SVID_);
 		exc.retval = HUGE;
 		if(_LIB_VERSION == _POSIX_)
@@ -178,7 +177,8 @@ __kernel_standard(double x, double y, int type)
 	    case 204:
 		/* hypot(finite,finite) overflow */
 		exc.type = OVERFLOW;
-		exc.name = CSTR ("hypot");
+		exc.name = type < 100 ? "hypot" : (type < 200
+						   ? "hypotf" : "hypotl");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = HUGE;
 		else
@@ -194,7 +194,8 @@ __kernel_standard(double x, double y, int type)
 	    case 205:
 		/* cosh(finite) overflow */
 		exc.type = OVERFLOW;
-		exc.name = CSTR ("cosh");
+		exc.name = type < 100 ? "cosh" : (type < 200
+						  ? "coshf" : "coshl");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = HUGE;
 		else
@@ -210,7 +211,8 @@ __kernel_standard(double x, double y, int type)
 	    case 206:
 		/* exp(finite) overflow */
 		exc.type = OVERFLOW;
-		exc.name = CSTR ("exp");
+		exc.name = type < 100 ? "exp" : (type < 200
+						 ? "expf" : "expl");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = HUGE;
 		else
@@ -226,7 +228,8 @@ __kernel_standard(double x, double y, int type)
 	    case 207:
 		/* exp(finite) underflow */
 		exc.type = UNDERFLOW;
-		exc.name = CSTR ("exp");
+		exc.name = type < 100 ? "exp" : (type < 200
+						 ? "expf" : "expl");
 		exc.retval = zero;
 		if (_LIB_VERSION == _POSIX_)
 		  __set_errno (ERANGE);
@@ -239,7 +242,7 @@ __kernel_standard(double x, double y, int type)
 	    case 208:
 		/* y0(0) = -inf */
 		exc.type = DOMAIN;	/* should be SING for IEEE */
-		exc.name = CSTR ("y0");
+		exc.name = type < 100 ? "y0" : (type < 200 ? "y0f" : "y0l");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
@@ -258,7 +261,7 @@ __kernel_standard(double x, double y, int type)
 	    case 209:
 		/* y0(x<0) = NaN */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("y0");
+		exc.name = type < 100 ? "y0" : (type < 200 ? "y0f" : "y0l");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
@@ -277,7 +280,7 @@ __kernel_standard(double x, double y, int type)
 	    case 210:
 		/* y1(0) = -inf */
 		exc.type = DOMAIN;	/* should be SING for IEEE */
-		exc.name = CSTR ("y1");
+		exc.name = type < 100 ? "y1" : (type < 200 ? "y1f" : "y1l");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
@@ -296,7 +299,7 @@ __kernel_standard(double x, double y, int type)
 	    case 211:
 		/* y1(x<0) = NaN */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("y1");
+		exc.name = type < 100 ? "y1" : (type < 200 ? "y1f" : "y1l");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
@@ -315,7 +318,7 @@ __kernel_standard(double x, double y, int type)
 	    case 212:
 		/* yn(n,0) = -inf */
 		exc.type = DOMAIN;	/* should be SING for IEEE */
-		exc.name = CSTR ("yn");
+		exc.name = type < 100 ? "yn" : (type < 200 ? "ynf" : "ynl");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
@@ -336,7 +339,7 @@ __kernel_standard(double x, double y, int type)
 	    case 213:
 		/* yn(x<0) = NaN */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("yn");
+		exc.name = type < 100 ? "yn" : (type < 200 ? "ynf" : "ynl");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
@@ -355,7 +358,8 @@ __kernel_standard(double x, double y, int type)
 	    case 214:
 		/* lgamma(finite) overflow */
 		exc.type = OVERFLOW;
-		exc.name = CSTR ("lgamma");
+		exc.name = type < 100 ? "lgamma" : (type < 200
+						    ? "lgammaf" : "lgammal");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = HUGE;
 		else
@@ -371,7 +375,8 @@ __kernel_standard(double x, double y, int type)
 	    case 215:
 		/* lgamma(-integer) or lgamma(0) */
 		exc.type = SING;
-		exc.name = CSTR ("lgamma");
+		exc.name = type < 100 ? "lgamma" : (type < 200
+						    ? "lgammaf" : "lgammal");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = HUGE;
 		else
@@ -390,7 +395,7 @@ __kernel_standard(double x, double y, int type)
 	    case 216:
 		/* log(0) */
 		exc.type = SING;
-		exc.name = CSTR ("log");
+		exc.name = type < 100 ? "log" : (type < 200 ? "logf" : "logl");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
@@ -409,7 +414,7 @@ __kernel_standard(double x, double y, int type)
 	    case 217:
 		/* log(x<0) */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("log");
+		exc.name = type < 100 ? "log" : (type < 200 ? "logf" : "logl");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
@@ -428,7 +433,8 @@ __kernel_standard(double x, double y, int type)
 	    case 218:
 		/* log10(0) */
 		exc.type = SING;
-		exc.name = CSTR ("log10");
+		exc.name = type < 100 ? "log10" : (type < 200
+						   ? "log10f" : "log10l");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
@@ -447,7 +453,8 @@ __kernel_standard(double x, double y, int type)
 	    case 219:
 		/* log10(x<0) */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("log10");
+		exc.name = type < 100 ? "log10" : (type < 200
+						   ? "log10f" : "log10l");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
@@ -467,7 +474,7 @@ __kernel_standard(double x, double y, int type)
 		/* pow(0.0,0.0) */
 		/* error only if _LIB_VERSION == _SVID_ */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("pow");
+		exc.name = type < 100 ? "pow" : (type < 200 ? "powf" : "powl");
 		exc.retval = zero;
 		if (_LIB_VERSION != _SVID_) exc.retval = 1.0;
 		else if (!matherr(&exc)) {
@@ -480,7 +487,7 @@ __kernel_standard(double x, double y, int type)
 	    case 221:
 		/* pow(x,y) overflow */
 		exc.type = OVERFLOW;
-		exc.name = CSTR ("pow");
+		exc.name = type < 100 ? "pow" : (type < 200 ? "powf" : "powl");
 		if (_LIB_VERSION == _SVID_) {
 		  exc.retval = HUGE;
 		  y *= 0.5;
@@ -501,7 +508,7 @@ __kernel_standard(double x, double y, int type)
 	    case 222:
 		/* pow(x,y) underflow */
 		exc.type = UNDERFLOW;
-		exc.name = CSTR ("pow");
+		exc.name = type < 100 ? "pow" : (type < 200 ? "powf" : "powl");
 		exc.retval =  zero;
 		y *= 0.5;
 		if (x < zero && __rint (y) != y)
@@ -517,7 +524,7 @@ __kernel_standard(double x, double y, int type)
 	    case 223:
 		/* -0**neg */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("pow");
+		exc.name = type < 100 ? "pow" : (type < 200 ? "powf" : "powl");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = zero;
 		else
@@ -536,7 +543,7 @@ __kernel_standard(double x, double y, int type)
 	    case 243:
 		/* +0**neg */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("pow");
+		exc.name = type < 100 ? "pow" : (type < 200 ? "powf" : "powl");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = zero;
 		else
@@ -555,7 +562,7 @@ __kernel_standard(double x, double y, int type)
 	    case 224:
 		/* neg**non-integral */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("pow");
+		exc.name = type < 100 ? "pow" : (type < 200 ? "powf" : "powl");
 		if (_LIB_VERSION == _SVID_)
 		    exc.retval = zero;
 		else
@@ -574,7 +581,8 @@ __kernel_standard(double x, double y, int type)
 	    case 225:
 		/* sinh(finite) overflow */
 		exc.type = OVERFLOW;
-		exc.name = CSTR ("sinh");
+		exc.name = type < 100 ? "sinh" : (type < 200
+						  ? "sinhf" : "sinhl");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = ( (x>zero) ? HUGE : -HUGE);
 		else
@@ -590,7 +598,8 @@ __kernel_standard(double x, double y, int type)
 	    case 226:
 		/* sqrt(x<0) */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("sqrt");
+		exc.name = type < 100 ? "sqrt" : (type < 200
+						  ? "sqrtf" : "sqrtl");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = zero;
 		else
@@ -609,7 +618,8 @@ __kernel_standard(double x, double y, int type)
 	    case 227:
 		/* fmod(x,0) */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("fmod");
+		exc.name = type < 100 ? "fmod" : (type < 200
+						  ? "fmodf" : "fmodl");
 		if (_LIB_VERSION == _SVID_)
 		    exc.retval = x;
 		else
@@ -628,7 +638,9 @@ __kernel_standard(double x, double y, int type)
 	    case 228:
 		/* remainder(x,0) */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("remainder");
+		exc.name = type < 100 ? "remainder" : (type < 200
+						       ? "remainderf"
+						       : "remainderl");
 		exc.retval = zero/zero;
 		if (_LIB_VERSION == _POSIX_)
 		  __set_errno (EDOM);
@@ -644,7 +656,8 @@ __kernel_standard(double x, double y, int type)
 	    case 229:
 		/* acosh(x<1) */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("acosh");
+		exc.name = type < 100 ? "acosh" : (type < 200
+						   ? "acoshf" : "acoshl");
 		exc.retval = zero/zero;
 		if (_LIB_VERSION == _POSIX_)
 		  __set_errno (EDOM);
@@ -660,7 +673,8 @@ __kernel_standard(double x, double y, int type)
 	    case 230:
 		/* atanh(|x|>1) */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("atanh");
+		exc.name = type < 100 ? "atanh" : (type < 200
+						   ? "atanhf" : "atanhl");
 		exc.retval = zero/zero;
 		if (_LIB_VERSION == _POSIX_)
 		  __set_errno (EDOM);
@@ -676,7 +690,8 @@ __kernel_standard(double x, double y, int type)
 	    case 231:
 		/* atanh(|x|=1) */
 		exc.type = SING;
-		exc.name = CSTR ("atanh");
+		exc.name = type < 100 ? "atanh" : (type < 200
+						   ? "atanhf" : "atanhl");
 		exc.retval = x/zero;	/* sign(x)*inf */
 		if (_LIB_VERSION == _POSIX_)
 		  __set_errno (ERANGE);
@@ -692,7 +707,8 @@ __kernel_standard(double x, double y, int type)
 	    case 232:
 		/* scalb overflow; SVID also returns +-HUGE_VAL */
 		exc.type = OVERFLOW;
-		exc.name = CSTR ("scalb");
+		exc.name = type < 100 ? "scalb" : (type < 200
+						   ? "scalbf" : "scalbl");
 		exc.retval = x > zero ? HUGE_VAL : -HUGE_VAL;
 		if (_LIB_VERSION == _POSIX_)
 		  __set_errno (ERANGE);
@@ -705,7 +721,8 @@ __kernel_standard(double x, double y, int type)
 	    case 233:
 		/* scalb underflow */
 		exc.type = UNDERFLOW;
-		exc.name = CSTR ("scalb");
+		exc.name = type < 100 ? "scalb" : (type < 200
+						   ? "scalbf" : "scalbl");
 		exc.retval = __copysign(zero,x);
 		if (_LIB_VERSION == _POSIX_)
 		  __set_errno (ERANGE);
@@ -718,7 +735,7 @@ __kernel_standard(double x, double y, int type)
 	    case 234:
 		/* j0(|x|>X_TLOSS) */
 		exc.type = TLOSS;
-		exc.name = CSTR ("j0");
+		exc.name = type < 100 ? "j0" : (type < 200 ? "j0f" : "j0l");
 		exc.retval = zero;
 		if (_LIB_VERSION == _POSIX_)
 			__set_errno (ERANGE);
@@ -735,7 +752,7 @@ __kernel_standard(double x, double y, int type)
 	    case 235:
 		/* y0(x>X_TLOSS) */
 		exc.type = TLOSS;
-		exc.name = CSTR ("y0");
+		exc.name = type < 100 ? "y0" : (type < 200 ? "y0f" : "y0l");
 		exc.retval = zero;
 		if (_LIB_VERSION == _POSIX_)
 			__set_errno (ERANGE);
@@ -752,7 +769,7 @@ __kernel_standard(double x, double y, int type)
 	    case 236:
 		/* j1(|x|>X_TLOSS) */
 		exc.type = TLOSS;
-		exc.name = CSTR ("j1");
+		exc.name = type < 100 ? "j1" : (type < 200 ? "j1f" : "j1l");
 		exc.retval = zero;
 		if (_LIB_VERSION == _POSIX_)
 			__set_errno (ERANGE);
@@ -769,7 +786,7 @@ __kernel_standard(double x, double y, int type)
 	    case 237:
 		/* y1(x>X_TLOSS) */
 		exc.type = TLOSS;
-		exc.name = CSTR ("y1");
+		exc.name = type < 100 ? "y1" : (type < 200 ? "y1f" : "y1l");
 		exc.retval = zero;
 		if (_LIB_VERSION == _POSIX_)
 			__set_errno (ERANGE);
@@ -786,7 +803,7 @@ __kernel_standard(double x, double y, int type)
 	    case 238:
 		/* jn(|x|>X_TLOSS) */
 		exc.type = TLOSS;
-		exc.name = CSTR ("jn");
+		exc.name = type < 100 ? "jn" : (type < 200 ? "jnf" : "jnl");
 		exc.retval = zero;
 		if (_LIB_VERSION == _POSIX_)
 			__set_errno (ERANGE);
@@ -803,7 +820,7 @@ __kernel_standard(double x, double y, int type)
 	    case 239:
 		/* yn(x>X_TLOSS) */
 		exc.type = TLOSS;
-		exc.name = CSTR ("yn");
+		exc.name = type < 100 ? "yn" : (type < 200 ? "ynf" : "ynl");
 		exc.retval = zero;
 		if (_LIB_VERSION == _POSIX_)
 			__set_errno (ERANGE);
@@ -820,7 +837,8 @@ __kernel_standard(double x, double y, int type)
 	    case 240:
 		/* tgamma(finite) overflow */
 		exc.type = OVERFLOW;
-		exc.name = CSTR ("tgamma");
+		exc.name = type < 100 ? "tgamma" : (type < 200
+						   ? "tgammaf" : "tgammal");
 		exc.retval = __copysign (HUGE_VAL, x);
 		if (_LIB_VERSION == _POSIX_)
 		  __set_errno (ERANGE);
@@ -833,7 +851,8 @@ __kernel_standard(double x, double y, int type)
 	    case 241:
 		/* tgamma(-integer) */
 		exc.type = SING;
-		exc.name = CSTR ("tgamma");
+		exc.name = type < 100 ? "tgamma" : (type < 200
+						   ? "tgammaf" : "tgammal");
 		exc.retval = NAN;
 		if (_LIB_VERSION == _POSIX_)
 		  __set_errno (EDOM);
@@ -851,7 +870,7 @@ __kernel_standard(double x, double y, int type)
 		/* pow(NaN,0.0) */
 		/* error only if _LIB_VERSION == _SVID_ & _XOPEN_ */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("pow");
+		exc.name = type < 100 ? "pow" : (type < 200 ? "powf" : "powl");
 		exc.retval = x;
 		if (_LIB_VERSION == _IEEE_ ||
 		    _LIB_VERSION == _POSIX_) exc.retval = 1.0;
@@ -865,7 +884,8 @@ __kernel_standard(double x, double y, int type)
 	    case 244:
 		/* exp(finite) overflow */
 		exc.type = OVERFLOW;
-		exc.name = CSTR ("exp2");
+		exc.name = type < 100 ? "exp2" : (type < 200
+						  ? "exp2f" : "exp2l");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = HUGE;
 		else
@@ -881,7 +901,8 @@ __kernel_standard(double x, double y, int type)
 	    case 245:
 		/* exp(finite) underflow */
 		exc.type = UNDERFLOW;
-		exc.name = CSTR ("exp2");
+		exc.name = type < 100 ? "exp2" : (type < 200
+						  ? "exp2f" : "exp2l");
 		exc.retval = zero;
 		if (_LIB_VERSION == _POSIX_)
 		  __set_errno (ERANGE);
@@ -895,7 +916,8 @@ __kernel_standard(double x, double y, int type)
 	    case 246:
 		/* exp(finite) overflow */
 		exc.type = OVERFLOW;
-		exc.name = CSTR ("exp10");
+		exc.name = type < 100 ? "exp10" : (type < 200
+						   ? "exp10f" : "exp10l");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = HUGE;
 		else
@@ -911,7 +933,8 @@ __kernel_standard(double x, double y, int type)
 	    case 247:
 		/* exp(finite) underflow */
 		exc.type = UNDERFLOW;
-		exc.name = CSTR ("exp10");
+		exc.name = type < 100 ? "exp10" : (type < 200
+						   ? "exp10f" : "exp10l");
 		exc.retval = zero;
 		if (_LIB_VERSION == _POSIX_)
 		  __set_errno (ERANGE);
@@ -924,7 +947,8 @@ __kernel_standard(double x, double y, int type)
 	    case 248:
 		/* log2(0) */
 		exc.type = SING;
-		exc.name = CSTR ("log2");
+		exc.name = type < 100 ? "log2" : (type < 200
+						   ? "log2f" : "log2l");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
@@ -940,7 +964,8 @@ __kernel_standard(double x, double y, int type)
 	    case 249:
 		/* log2(x<0) */
 		exc.type = DOMAIN;
-		exc.name = CSTR ("log2");
+		exc.name = type < 100 ? "log2" : (type < 200
+						   ? "log2f" : "log2l");
 		if (_LIB_VERSION == _SVID_)
 		  exc.retval = -HUGE;
 		else
@@ -956,7 +981,8 @@ __kernel_standard(double x, double y, int type)
 	    case 250:
 		/* tgamma(+-0) */
 		exc.type = SING;
-		exc.name = CSTR ("tgamma");
+		exc.name = type < 100 ? "tgamma" : (type < 200
+						    ? "tgammaf" : "tgammal");
 		exc.retval = __copysign (HUGE_VAL, x);
 		if (_LIB_VERSION == _POSIX_)
 		  __set_errno (ERANGE);
@@ -971,3 +997,92 @@ __kernel_standard(double x, double y, int type)
 	}
 	return exc.retval;
 }
+
+
+float
+__kernel_standard_f(float x, float y, int type)
+{
+	return __kernel_standard(x, y, type);
+}
+
+#ifndef __NO_LONG_DOUBLE_MATH
+long double
+__kernel_standard_l (long double x, long double y, int type)
+{
+  double dx, dy;
+  struct exception exc;
+
+  if (isfinite (x))
+    {
+      long double ax = fabsl (x);
+      if (ax > DBL_MAX)
+	dx = __copysignl (DBL_MAX, x);
+      else if (ax > 0 && ax < DBL_MIN)
+	dx = __copysignl (DBL_MIN, x);
+      else
+	dx = x;
+    }
+  else
+    dx = x;
+  if (isfinite (y))
+    {
+      long double ay = fabsl (y);
+      if (ay > DBL_MAX)
+	dy = __copysignl (DBL_MAX, y);
+      else if (ay > 0 && ay < DBL_MIN)
+	dy = __copysignl (DBL_MIN, y);
+      else
+	dy = y;
+    }
+  else
+    dy = y;
+
+  switch (type)
+    {
+    case 221:
+      /* powl (x, y) overflow.  */
+      exc.arg1 = dx;
+      exc.arg2 = dy;
+      exc.type = OVERFLOW;
+      exc.name = "powl";
+      if (_LIB_VERSION == _SVID_)
+	{
+	  exc.retval = HUGE;
+	  y *= 0.5;
+	  if (x < zero && __rintl (y) != y)
+	    exc.retval = -HUGE;
+	}
+      else
+	{
+	  exc.retval = HUGE_VAL;
+	  y *= 0.5;
+	  if (x < zero && __rintl (y) != y)
+	    exc.retval = -HUGE_VAL;
+	}
+      if (_LIB_VERSION == _POSIX_)
+	__set_errno (ERANGE);
+      else if (!matherr (&exc))
+	__set_errno (ERANGE);
+      return exc.retval;
+
+    case 222:
+      /* powl (x, y) underflow.  */
+      exc.arg1 = dx;
+      exc.arg2 = dy;
+      exc.type = UNDERFLOW;
+      exc.name = "powl";
+      exc.retval = zero;
+      y *= 0.5;
+      if (x < zero && __rintl (y) != y)
+	exc.retval = -zero;
+      if (_LIB_VERSION == _POSIX_)
+	__set_errno (ERANGE);
+      else if (!matherr (&exc))
+	__set_errno (ERANGE);
+      return exc.retval;
+
+    default:
+      return __kernel_standard (dx, dy, type);
+    }
+}
+#endif

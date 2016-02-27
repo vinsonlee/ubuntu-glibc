@@ -1,5 +1,5 @@
 /* Multiple versions of isnan.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,19 +26,16 @@ extern __typeof (__isnan) __isnan_power5 attribute_hidden;
 extern __typeof (__isnan) __isnan_power6 attribute_hidden;
 extern __typeof (__isnan) __isnan_power6x attribute_hidden;
 extern __typeof (__isnan) __isnan_power7 attribute_hidden;
-extern __typeof (__isnan) __isnan_power8 attribute_hidden;
 
 libc_ifunc (__isnan,
-	    (hwcap2 & PPC_FEATURE2_ARCH_2_07)
-	    ? __isnan_power8 :
-	      (hwcap & PPC_FEATURE_ARCH_2_06)
-	      ? __isnan_power7 :
-		(hwcap & PPC_FEATURE_POWER6_EXT)
+	    (hwcap & PPC_FEATURE_ARCH_2_06)
+	    ? __isnan_power7 :
+	      (hwcap & PPC_FEATURE_POWER6_EXT)
 		? __isnan_power6x :
-		  (hwcap & PPC_FEATURE_ARCH_2_05)
-		    ? __isnan_power6 :
-		    (hwcap & PPC_FEATURE_POWER5)
-		      ? __isnan_power5
+		(hwcap & PPC_FEATURE_ARCH_2_05)
+		  ? __isnan_power6 :
+		  (hwcap & PPC_FEATURE_POWER5)
+		    ? __isnan_power5
             : __isnan_ppc64);
 
 weak_alias (__isnan, isnan)
@@ -48,7 +45,7 @@ strong_alias (__isnan, __isnanl)
 weak_alias (__isnan, isnanl)
 #endif
 
-#if !IS_IN (libm)
+#ifndef IS_IN_libm
 # if LONG_DOUBLE_COMPAT(libc, GLIBC_2_0)
 compat_symbol (libc, __isnan, __isnanl, GLIBC_2_0);
 compat_symbol (libc, isnan, isnanl, GLIBC_2_0);

@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
@@ -34,7 +34,7 @@ ENTRY(__setcontext)
 	lgr	%r1,%r2
 
 	/* sigprocmask (SIG_SETMASK, &sc->sc_mask, NULL).  */
-	la      %r2,SIG_SETMASK
+	la      %r2,SIG_BLOCK
 	la	%r3,SC_MASK(%r1)
 	slgr	%r4,%r4
 	lghi	%r5,_NSIG8

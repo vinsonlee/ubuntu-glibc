@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -22,23 +22,24 @@
 #include <sys/statvfs.h>
 
 extern void __internal_statvfs (const char *name, struct statvfs *buf,
-				struct statfs *fsbuf, int fd);
+				struct statfs *fsbuf, struct stat64 *st);
 
 
 int
-__statvfs (const char *file, struct statvfs *buf)
+statvfs (const char *file, struct statvfs *buf)
 {
   struct statfs fsbuf;
+  struct stat64 st;
 
   /* Get as much information as possible from the system.  */
   if (__statfs (file, &fsbuf) < 0)
     return -1;
 
   /* Convert the result.  */
-  __internal_statvfs (file, buf, &fsbuf, -1);
+  __internal_statvfs (file, buf, &fsbuf,
+		      stat64 (file, &st) == -1 ? NULL : &st);
 
   /* We signal success if the statfs call succeeded.  */
   return 0;
 }
-weak_alias (__statvfs, statvfs)
-libc_hidden_weak (statvfs)
+libc_hidden_def (statvfs)

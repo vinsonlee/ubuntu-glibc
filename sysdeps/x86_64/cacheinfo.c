@@ -1,5 +1,5 @@
 /* x86_64 cache info.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -191,7 +191,9 @@ intel_check_word (int name, unsigned int value, bool *has_level_2,
 	  unsigned int round = 0;
 	  while (1)
 	    {
-	      __cpuid_count (4, round, eax, ebx, ecx, edx);
+	      asm volatile ("xchgl %%ebx, %1; cpuid; xchgl %%ebx, %1"
+			    : "=a" (eax), "=r" (ebx), "=c" (ecx), "=d" (edx)
+			    : "0" (4), "2" (round));
 
 	      enum { null = 0, data = 1, inst = 2, uni = 3 } type = eax & 0x1f;
 	      if (type == null)
@@ -585,10 +587,6 @@ init_cacheinfo (void)
       __cpuid (1, eax, ebx_1, ecx, edx);
 #endif
 
-      unsigned int family = (eax >> 8) & 0x0f;
-      unsigned int model = (eax >> 4) & 0x0f;
-      unsigned int extended_model = (eax >> 12) & 0xf0;
-
 #ifndef DISABLE_PREFERRED_MEMORY_INSTRUCTION
       /* Intel prefers SSSE3 instructions for memory/string routines
 	 if they are available.  */
@@ -651,25 +649,6 @@ init_cacheinfo (void)
 		}
 	    }
 	  threads += 1;
-	  if (threads > 2 && level == 2 && family == 6)
-	    {
-	      model += extended_model;
-	      switch (model)
-		{
-		case 0x57:
-		  /* Knights Landing has L2 cache shared by 2 cores.  */
-		case 0x37:
-		case 0x4a:
-		case 0x4d:
-		case 0x5a:
-		case 0x5d:
-		  /* Silvermont has L2 cache shared by 2 cores.  */
-		  threads = 2;
-		  break;
-		default:
-		  break;
-		}
-	    }
 	}
       else
 	{

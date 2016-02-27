@@ -1,6 +1,6 @@
 /* Partial PLT profile trampoline to save and restore x86-64 vector
    registers.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,14 +19,14 @@
 
 #ifdef RESTORE_AVX
 	/* This is to support AVX audit modules.  */
-	VMOV %VEC(0),		      (LR_VECTOR_OFFSET)(%rsp)
-	VMOV %VEC(1), (LR_VECTOR_OFFSET +   VECTOR_SIZE)(%rsp)
-	VMOV %VEC(2), (LR_VECTOR_OFFSET + VECTOR_SIZE*2)(%rsp)
-	VMOV %VEC(3), (LR_VECTOR_OFFSET + VECTOR_SIZE*3)(%rsp)
-	VMOV %VEC(4), (LR_VECTOR_OFFSET + VECTOR_SIZE*4)(%rsp)
-	VMOV %VEC(5), (LR_VECTOR_OFFSET + VECTOR_SIZE*5)(%rsp)
-	VMOV %VEC(6), (LR_VECTOR_OFFSET + VECTOR_SIZE*6)(%rsp)
-	VMOV %VEC(7), (LR_VECTOR_OFFSET + VECTOR_SIZE*7)(%rsp)
+	vmovdqu %ymm0,		      (LR_VECTOR_OFFSET)(%rsp)
+	vmovdqu %ymm1, (LR_VECTOR_OFFSET +   VECTOR_SIZE)(%rsp)
+	vmovdqu %ymm2, (LR_VECTOR_OFFSET + VECTOR_SIZE*2)(%rsp)
+	vmovdqu %ymm3, (LR_VECTOR_OFFSET + VECTOR_SIZE*3)(%rsp)
+	vmovdqu %ymm4, (LR_VECTOR_OFFSET + VECTOR_SIZE*4)(%rsp)
+	vmovdqu %ymm5, (LR_VECTOR_OFFSET + VECTOR_SIZE*5)(%rsp)
+	vmovdqu %ymm6, (LR_VECTOR_OFFSET + VECTOR_SIZE*6)(%rsp)
+	vmovdqu %ymm7, (LR_VECTOR_OFFSET + VECTOR_SIZE*7)(%rsp)
 
 	/* Save xmm0-xmm7 registers to detect if any of them are
 	   changed by audit module.  */
@@ -72,7 +72,7 @@
 	je 2f
 	vmovdqa	%xmm0, (LR_VECTOR_OFFSET)(%rsp)
 	jmp 1f
-2:	VMOV (LR_VECTOR_OFFSET)(%rsp), %VEC(0)
+2:	vmovdqu	(LR_VECTOR_OFFSET)(%rsp), %ymm0
 	vmovdqa	%xmm0, (LR_XMM_OFFSET)(%rsp)
 
 1:	vpcmpeqq (LR_SIZE + XMM_SIZE)(%rsp), %xmm1, %xmm8
@@ -81,7 +81,7 @@
 	je 2f
 	vmovdqa	%xmm1, (LR_VECTOR_OFFSET + VECTOR_SIZE)(%rsp)
 	jmp 1f
-2:	VMOV (LR_VECTOR_OFFSET + VECTOR_SIZE)(%rsp), %VEC(1)
+2:	vmovdqu	(LR_VECTOR_OFFSET + VECTOR_SIZE)(%rsp), %ymm1
 	vmovdqa	%xmm1, (LR_XMM_OFFSET + XMM_SIZE)(%rsp)
 
 1:	vpcmpeqq (LR_SIZE + XMM_SIZE*2)(%rsp), %xmm2, %xmm8
@@ -90,7 +90,7 @@
 	je 2f
 	vmovdqa	%xmm2, (LR_VECTOR_OFFSET + VECTOR_SIZE*2)(%rsp)
 	jmp 1f
-2:	VMOV (LR_VECTOR_OFFSET + VECTOR_SIZE*2)(%rsp), %VEC(2)
+2:	vmovdqu (LR_VECTOR_OFFSET + VECTOR_SIZE*2)(%rsp), %ymm2
 	vmovdqa	%xmm2, (LR_XMM_OFFSET + XMM_SIZE*2)(%rsp)
 
 1:	vpcmpeqq (LR_SIZE + XMM_SIZE*3)(%rsp), %xmm3, %xmm8
@@ -99,7 +99,7 @@
 	je 2f
 	vmovdqa	%xmm3, (LR_VECTOR_OFFSET + VECTOR_SIZE*3)(%rsp)
 	jmp 1f
-2:	VMOV (LR_VECTOR_OFFSET + VECTOR_SIZE*3)(%rsp), %VEC(3)
+2:	vmovdqu (LR_VECTOR_OFFSET + VECTOR_SIZE*3)(%rsp), %ymm3
 	vmovdqa	%xmm3, (LR_XMM_OFFSET + XMM_SIZE*3)(%rsp)
 
 1:	vpcmpeqq (LR_SIZE + XMM_SIZE*4)(%rsp), %xmm4, %xmm8
@@ -108,7 +108,7 @@
 	je 2f
 	vmovdqa	%xmm4, (LR_VECTOR_OFFSET + VECTOR_SIZE*4)(%rsp)
 	jmp 1f
-2:	VMOV (LR_VECTOR_OFFSET + VECTOR_SIZE*4)(%rsp), %VEC(4)
+2:	vmovdqu (LR_VECTOR_OFFSET + VECTOR_SIZE*4)(%rsp), %ymm4
 	vmovdqa	%xmm4, (LR_XMM_OFFSET + XMM_SIZE*4)(%rsp)
 
 1:	vpcmpeqq (LR_SIZE + XMM_SIZE*5)(%rsp), %xmm5, %xmm8
@@ -117,7 +117,7 @@
 	je 2f
 	vmovdqa	%xmm5, (LR_VECTOR_OFFSET + VECTOR_SIZE*5)(%rsp)
 	jmp 1f
-2:	VMOV (LR_VECTOR_OFFSET + VECTOR_SIZE*5)(%rsp), %VEC(5)
+2:	vmovdqu (LR_VECTOR_OFFSET + VECTOR_SIZE*5)(%rsp), %ymm5
 	vmovdqa	%xmm5, (LR_XMM_OFFSET + XMM_SIZE*5)(%rsp)
 
 1:	vpcmpeqq (LR_SIZE + XMM_SIZE*6)(%rsp), %xmm6, %xmm8
@@ -126,7 +126,7 @@
 	je 2f
 	vmovdqa	%xmm6, (LR_VECTOR_OFFSET + VECTOR_SIZE*6)(%rsp)
 	jmp 1f
-2:	VMOV (LR_VECTOR_OFFSET + VECTOR_SIZE*6)(%rsp), %VEC(6)
+2:	vmovdqu (LR_VECTOR_OFFSET + VECTOR_SIZE*6)(%rsp), %ymm6
 	vmovdqa	%xmm6, (LR_XMM_OFFSET + XMM_SIZE*6)(%rsp)
 
 1:	vpcmpeqq (LR_SIZE + XMM_SIZE*7)(%rsp), %xmm7, %xmm8
@@ -135,29 +135,13 @@
 	je 2f
 	vmovdqa	%xmm7, (LR_VECTOR_OFFSET + VECTOR_SIZE*7)(%rsp)
 	jmp 1f
-2:	VMOV (LR_VECTOR_OFFSET + VECTOR_SIZE*7)(%rsp), %VEC(7)
+2:	vmovdqu (LR_VECTOR_OFFSET + VECTOR_SIZE*7)(%rsp), %ymm7
 	vmovdqa	%xmm7, (LR_XMM_OFFSET + XMM_SIZE*7)(%rsp)
 
 1:
 #endif
-
-#ifndef __ILP32__
-# ifdef HAVE_MPX_SUPPORT
-	bndmov              (LR_BND_OFFSET)(%rsp), %bnd0  # Restore bound
-	bndmov (LR_BND_OFFSET +   BND_SIZE)(%rsp), %bnd1  # registers.
-	bndmov (LR_BND_OFFSET + BND_SIZE*2)(%rsp), %bnd2
-	bndmov (LR_BND_OFFSET + BND_SIZE*3)(%rsp), %bnd3
-# else
-	.byte 0x66,0x0f,0x1a,0x84,0x24;.long (LR_BND_OFFSET)
-	.byte 0x66,0x0f,0x1a,0x8c,0x24;.long (LR_BND_OFFSET + BND_SIZE)
-	.byte 0x66,0x0f,0x1a,0x94,0x24;.long (LR_BND_OFFSET + BND_SIZE*2)
-	.byte 0x66,0x0f,0x1a,0x9c,0x24;.long (LR_BND_OFFSET + BND_SIZE*3)
-# endif
-#endif
-
 	mov  16(%rbx), %R10_LP	# Anything in framesize?
 	test %R10_LP, %R10_LP
-	PRESERVE_BND_REGS_PREFIX
 	jns 3f
 
 	/* There's nothing in the frame size, so there
@@ -176,7 +160,6 @@
 	addq $48, %rsp		# Adjust the stack to the return value
 				# (eats the reloc index and link_map)
 	cfi_adjust_cfa_offset(-48)
-	PRESERVE_BND_REGS_PREFIX
 	jmp *%r11		# Jump to function address.
 
 3:
@@ -203,7 +186,6 @@
 	movq 32(%rdi), %rsi
 	movq 40(%rdi), %rdi
 
-	PRESERVE_BND_REGS_PREFIX
 	call *%r11
 
 	mov 24(%rbx), %rsp	# Drop the copied stack content
@@ -231,23 +213,13 @@
 
 #ifdef RESTORE_AVX
 	/* This is to support AVX audit modules.  */
-	VMOV %VEC(0), LRV_VECTOR0_OFFSET(%rcx)
-	VMOV %VEC(1), LRV_VECTOR1_OFFSET(%rcx)
+	vmovdqu %ymm0, LRV_VECTOR0_OFFSET(%rcx)
+	vmovdqu %ymm1, LRV_VECTOR1_OFFSET(%rcx)
 
 	/* Save xmm0/xmm1 registers to detect if they are changed
 	   by audit module.  */
 	vmovdqa %xmm0,		  (LRV_SIZE)(%rcx)
 	vmovdqa %xmm1, (LRV_SIZE + XMM_SIZE)(%rcx)
-#endif
-
-#ifndef __ILP32__
-# ifdef HAVE_MPX_SUPPORT
-	bndmov %bnd0, LRV_BND0_OFFSET(%rcx)  # Preserve returned bounds.
-	bndmov %bnd1, LRV_BND1_OFFSET(%rcx)
-# else
-	.byte  0x66,0x0f,0x1b,0x81;.long (LRV_BND0_OFFSET)
-	.byte  0x66,0x0f,0x1b,0x89;.long (LRV_BND1_OFFSET)
-# endif
 #endif
 
 	fstpt LRV_ST0_OFFSET(%rcx)
@@ -271,25 +243,15 @@
 	vpmovmskb %xmm2, %esi
 	cmpl $0xffff, %esi
 	jne 1f
-	VMOV LRV_VECTOR0_OFFSET(%rsp), %VEC(0)
+	vmovdqu LRV_VECTOR0_OFFSET(%rsp), %ymm0
 
 1:	vpcmpeqq (LRV_SIZE + XMM_SIZE)(%rsp), %xmm1, %xmm2
 	vpmovmskb %xmm2, %esi
 	cmpl $0xffff, %esi
 	jne 1f
-	VMOV LRV_VECTOR1_OFFSET(%rsp), %VEC(1)
+	vmovdqu LRV_VECTOR1_OFFSET(%rsp), %ymm1
 
 1:
-#endif
-
-#ifndef __ILP32__
-# ifdef HAVE_MPX_SUPPORT
-	bndmov LRV_BND0_OFFSET(%rsp), %bnd0  # Restore bound registers.
-	bndmov LRV_BND1_OFFSET(%rsp), %bnd1
-# else
-	.byte  0x66,0x0f,0x1a,0x84,0x24;.long (LRV_BND0_OFFSET)
-	.byte  0x66,0x0f,0x1a,0x8c,0x24;.long (LRV_BND1_OFFSET)
-# endif
 #endif
 
 	fldt LRV_ST1_OFFSET(%rsp)
@@ -303,7 +265,6 @@
 	addq $48, %rsp		# Adjust the stack to the return value
 				# (eats the reloc index and link_map)
 	cfi_adjust_cfa_offset(-48)
-	PRESERVE_BND_REGS_PREFIX
 	retq
 
 #ifdef MORE_CODE

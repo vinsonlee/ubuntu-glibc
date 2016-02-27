@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2015 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2014 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -48,12 +48,10 @@
 
 
 #include <errno.h>
-#include <float.h>
 #include "endian.h"
 #include "mydefs.h"
 #include "usncs.h"
 #include "MathLib.h"
-#include <math.h>
 #include <math_private.h>
 #include <fenv.h>
 
@@ -296,14 +294,7 @@ __sin (double x)
   m = u.i[HIGH_HALF];
   k = 0x7fffffff & m;		/* no sign           */
   if (k < 0x3e500000)		/* if x->0 =>sin(x)=x */
-    {
-      if (fabs (x) < DBL_MIN)
-	{
-	  double force_underflow = x * x;
-	  math_force_eval (force_underflow);
-	}
-      retval = x;
-    }
+    retval = x;
  /*---------------------------- 2^-26 < |x|< 0.25 ----------------------*/
   else if (k < 0x3fd00000)
     {
@@ -364,7 +355,7 @@ __sin (double x)
       da = xn * mp3;
       a = y - da;
       da = (y - a) - da;
-      eps = fabs (x) * 1.2e-30;
+      eps = ABS (x) * 1.2e-30;
 
       switch (n)
 	{			/* quarter of unit circle */
@@ -456,21 +447,19 @@ __sin (double x)
 	    }
 	  else
 	    {
-	      double t;
 	      if (a > 0)
 		{
 		  m = 1;
-		  t = a;
 		  db = da;
 		}
 	      else
 		{
 		  m = 0;
-		  t = -a;
+		  a = -a;
 		  db = -da;
 		}
-	      u.x = big + t;
-	      y = t - (u.x - big);
+	      u.x = big + a;
+	      y = a - (u.x - big);
 	      res = do_sin (u, y, db, &cor);
 	      cor = (cor > 0) ? 1.035 * cor + eps : 1.035 * cor - eps;
 	      retval = ((res == res + cor) ? ((m) ? res : -res)
@@ -539,7 +528,7 @@ __cos (double x)
 
   else if (k < 0x3feb6000)
     {				/* 2^-27 < |x| < 0.855469 */
-      y = fabs (x);
+      y = ABS (x);
       u.x = big + y;
       y = y - (u.x - big);
       res = do_cos (u, y, &cor);
@@ -548,7 +537,7 @@ __cos (double x)
 
   else if (k < 0x400368fd)
     { /* 0.855469  <|x|<2.426265  */ ;
-      y = hp0 - fabs (x);
+      y = hp0 - ABS (x);
       a = y + hp1;
       da = (y - a) + hp1;
       xx = a * a;
@@ -591,7 +580,7 @@ __cos (double x)
       da = xn * mp3;
       a = y - da;
       da = (y - a) - da;
-      eps = fabs (x) * 1.2e-30;
+      eps = ABS (x) * 1.2e-30;
 
       switch (n)
 	{
@@ -682,21 +671,19 @@ __cos (double x)
 	    }
 	  else
 	    {
-	      double t;
 	      if (a > 0)
 		{
 		  m = 1;
-		  t = a;
 		  db = da;
 		}
 	      else
 		{
 		  m = 0;
-		  t = -a;
+		  a = -a;
 		  db = -da;
 		}
-	      u.x = big + t;
-	      y = t - (u.x - big);
+	      u.x = big + a;
+	      y = a - (u.x - big);
 	      res = do_sin (u, y, db, &cor);
 	      cor = (cor > 0) ? 1.035 * cor + eps : 1.035 * cor - eps;
 	      retval = ((res == res + cor) ? ((m) ? res : -res)
@@ -750,7 +737,7 @@ slow (double x)
     return res;
   else
     {
-      __dubsin (fabs (x), 0, w);
+      __dubsin (ABS (x), 0, w);
       if (w[0] == w[0] + 1.000000001 * w[1])
 	return (x > 0) ? w[0] : -w[0];
       else
@@ -769,7 +756,7 @@ slow1 (double x)
 {
   mynumber u;
   double w[2], y, cor, res;
-  y = fabs (x);
+  y = ABS (x);
   u.x = big + y;
   y = y - (u.x - big);
   res = do_sin_slow (u, y, 0, 0, &cor);
@@ -777,7 +764,7 @@ slow1 (double x)
     return (x > 0) ? res : -res;
   else
     {
-      __dubsin (fabs (x), 0, w);
+      __dubsin (ABS (x), 0, w);
       if (w[0] == w[0] + 1.000000005 * w[1])
 	return (x > 0) ? w[0] : -w[0];
       else
@@ -796,7 +783,7 @@ slow2 (double x)
   mynumber u;
   double w[2], y, y1, y2, cor, res, del;
 
-  y = fabs (x);
+  y = ABS (x);
   y = hp0 - y;
   if (y >= 0)
     {
@@ -815,7 +802,7 @@ slow2 (double x)
     return (x > 0) ? res : -res;
   else
     {
-      y = fabs (x) - hp0;
+      y = ABS (x) - hp0;
       y1 = y - hp1;
       y2 = (y - y1) - hp1;
       __docos (y1, y2, w);
@@ -843,9 +830,9 @@ sloww (double x, double dx, double orig)
   int4 n;
   res = TAYLOR_SLOW (x, dx, cor);
   if (cor > 0)
-    cor = 1.0005 * cor + fabs (orig) * 3.1e-30;
+    cor = 1.0005 * cor + ABS (orig) * 3.1e-30;
   else
-    cor = 1.0005 * cor - fabs (orig) * 3.1e-30;
+    cor = 1.0005 * cor - ABS (orig) * 3.1e-30;
 
   if (res == res + cor)
     return res;
@@ -853,9 +840,9 @@ sloww (double x, double dx, double orig)
     {
       (x > 0) ? __dubsin (x, dx, w) : __dubsin (-x, -dx, w);
       if (w[1] > 0)
-	cor = 1.000000001 * w[1] + fabs (orig) * 1.1e-30;
+	cor = 1.000000001 * w[1] + ABS (orig) * 1.1e-30;
       else
-	cor = 1.000000001 * w[1] - fabs (orig) * 1.1e-30;
+	cor = 1.000000001 * w[1] - ABS (orig) * 1.1e-30;
 
       if (w[0] == w[0] + cor)
 	return (x > 0) ? w[0] : -w[0];
@@ -879,9 +866,9 @@ sloww (double x, double dx, double orig)
 	    }
 	  (a > 0) ? __dubsin (a, da, w) : __dubsin (-a, -da, w);
 	  if (w[1] > 0)
-	    cor = 1.000000001 * w[1] + fabs (orig) * 1.1e-40;
+	    cor = 1.000000001 * w[1] + ABS (orig) * 1.1e-40;
 	  else
-	    cor = 1.000000001 * w[1] - fabs (orig) * 1.1e-40;
+	    cor = 1.000000001 * w[1] - ABS (orig) * 1.1e-40;
 
 	  if (w[0] == w[0] + cor)
 	    return (a > 0) ? w[0] : -w[0];
@@ -907,7 +894,7 @@ sloww1 (double x, double dx, double orig, int m)
 
   u.x = big + x;
   y = x - (u.x - big);
-  res = do_sin_slow (u, y, dx, 3.1e-30 * fabs (orig), &cor);
+  res = do_sin_slow (u, y, dx, 3.1e-30 * ABS (orig), &cor);
 
   if (res == res + cor)
     return (m > 0) ? res : -res;
@@ -916,9 +903,9 @@ sloww1 (double x, double dx, double orig, int m)
       __dubsin (x, dx, w);
 
       if (w[1] > 0)
-	cor = 1.000000005 * w[1] + 1.1e-30 * fabs (orig);
+	cor = 1.000000005 * w[1] + 1.1e-30 * ABS (orig);
       else
-	cor = 1.000000005 * w[1] - 1.1e-30 * fabs (orig);
+	cor = 1.000000005 * w[1] - 1.1e-30 * ABS (orig);
 
       if (w[0] == w[0] + cor)
 	return (m > 0) ? w[0] : -w[0];
@@ -943,7 +930,7 @@ sloww2 (double x, double dx, double orig, int n)
 
   u.x = big + x;
   y = x - (u.x - big);
-  res = do_cos_slow (u, y, dx, 3.1e-30 * fabs (orig), &cor);
+  res = do_cos_slow (u, y, dx, 3.1e-30 * ABS (orig), &cor);
 
   if (res == res + cor)
     return (n & 2) ? -res : res;
@@ -952,9 +939,9 @@ sloww2 (double x, double dx, double orig, int n)
       __docos (x, dx, w);
 
       if (w[1] > 0)
-	cor = 1.000000005 * w[1] + 1.1e-30 * fabs (orig);
+	cor = 1.000000005 * w[1] + 1.1e-30 * ABS (orig);
       else
-	cor = 1.000000005 * w[1] - 1.1e-30 * fabs (orig);
+	cor = 1.000000005 * w[1] - 1.1e-30 * ABS (orig);
 
       if (w[0] == w[0] + cor)
 	return (n & 2) ? -w[0] : w[0];
@@ -1009,7 +996,7 @@ bsloww1 (double x, double dx, double orig, int n)
   mynumber u;
   double w[2], y, cor, res;
 
-  y = fabs (x);
+  y = ABS (x);
   u.x = big + y;
   y = y - (u.x - big);
   dx = (x > 0) ? dx : -dx;
@@ -1018,7 +1005,7 @@ bsloww1 (double x, double dx, double orig, int n)
     return (x > 0) ? res : -res;
   else
     {
-      __dubsin (fabs (x), dx, w);
+      __dubsin (ABS (x), dx, w);
 
       if (w[1] > 0)
 	cor = 1.000000005 * w[1] + 1.1e-24;
@@ -1046,7 +1033,7 @@ bsloww2 (double x, double dx, double orig, int n)
   mynumber u;
   double w[2], y, cor, res;
 
-  y = fabs (x);
+  y = ABS (x);
   u.x = big + y;
   y = y - (u.x - big);
   dx = (x > 0) ? dx : -dx;
@@ -1055,7 +1042,7 @@ bsloww2 (double x, double dx, double orig, int n)
     return (n & 2) ? -res : res;
   else
     {
-      __docos (fabs (x), dx, w);
+      __docos (ABS (x), dx, w);
 
       if (w[1] > 0)
 	cor = 1.000000005 * w[1] + 1.1e-24;
@@ -1081,7 +1068,7 @@ cslow2 (double x)
   mynumber u;
   double w[2], y, cor, res;
 
-  y = fabs (x);
+  y = ABS (x);
   u.x = big + y;
   y = y - (u.x - big);
   res = do_cos_slow (u, y, 0, 0, &cor);
@@ -1089,7 +1076,7 @@ cslow2 (double x)
     return res;
   else
     {
-      y = fabs (x);
+      y = ABS (x);
       __docos (y, 0, w);
       if (w[0] == w[0] + 1.000000005 * w[1])
 	return w[0];
@@ -1118,9 +1105,9 @@ csloww (double x, double dx, double orig)
   res = TAYLOR_SLOW (x, dx, cor);
 
   if (cor > 0)
-    cor = 1.0005 * cor + fabs (orig) * 3.1e-30;
+    cor = 1.0005 * cor + ABS (orig) * 3.1e-30;
   else
-    cor = 1.0005 * cor - fabs (orig) * 3.1e-30;
+    cor = 1.0005 * cor - ABS (orig) * 3.1e-30;
 
   if (res == res + cor)
     return res;
@@ -1129,9 +1116,9 @@ csloww (double x, double dx, double orig)
       (x > 0) ? __dubsin (x, dx, w) : __dubsin (-x, -dx, w);
 
       if (w[1] > 0)
-	cor = 1.000000001 * w[1] + fabs (orig) * 1.1e-30;
+	cor = 1.000000001 * w[1] + ABS (orig) * 1.1e-30;
       else
-	cor = 1.000000001 * w[1] - fabs (orig) * 1.1e-30;
+	cor = 1.000000001 * w[1] - ABS (orig) * 1.1e-30;
 
       if (w[0] == w[0] + cor)
 	return (x > 0) ? w[0] : -w[0];
@@ -1156,9 +1143,9 @@ csloww (double x, double dx, double orig)
 	  (a > 0) ? __dubsin (a, da, w) : __dubsin (-a, -da, w);
 
 	  if (w[1] > 0)
-	    cor = 1.000000001 * w[1] + fabs (orig) * 1.1e-40;
+	    cor = 1.000000001 * w[1] + ABS (orig) * 1.1e-40;
 	  else
-	    cor = 1.000000001 * w[1] - fabs (orig) * 1.1e-40;
+	    cor = 1.000000001 * w[1] - ABS (orig) * 1.1e-40;
 
 	  if (w[0] == w[0] + cor)
 	    return (a > 0) ? w[0] : -w[0];
@@ -1184,7 +1171,7 @@ csloww1 (double x, double dx, double orig, int m)
 
   u.x = big + x;
   y = x - (u.x - big);
-  res = do_sin_slow (u, y, dx, 3.1e-30 * fabs (orig), &cor);
+  res = do_sin_slow (u, y, dx, 3.1e-30 * ABS (orig), &cor);
 
   if (res == res + cor)
     return (m > 0) ? res : -res;
@@ -1192,9 +1179,9 @@ csloww1 (double x, double dx, double orig, int m)
     {
       __dubsin (x, dx, w);
       if (w[1] > 0)
-	cor = 1.000000005 * w[1] + 1.1e-30 * fabs (orig);
+	cor = 1.000000005 * w[1] + 1.1e-30 * ABS (orig);
       else
-	cor = 1.000000005 * w[1] - 1.1e-30 * fabs (orig);
+	cor = 1.000000005 * w[1] - 1.1e-30 * ABS (orig);
       if (w[0] == w[0] + cor)
 	return (m > 0) ? w[0] : -w[0];
       else
@@ -1219,7 +1206,7 @@ csloww2 (double x, double dx, double orig, int n)
 
   u.x = big + x;
   y = x - (u.x - big);
-  res = do_cos_slow (u, y, dx, 3.1e-30 * fabs (orig), &cor);
+  res = do_cos_slow (u, y, dx, 3.1e-30 * ABS (orig), &cor);
 
   if (res == res + cor)
     return (n) ? -res : res;
@@ -1227,9 +1214,9 @@ csloww2 (double x, double dx, double orig, int n)
     {
       __docos (x, dx, w);
       if (w[1] > 0)
-	cor = 1.000000005 * w[1] + 1.1e-30 * fabs (orig);
+	cor = 1.000000005 * w[1] + 1.1e-30 * ABS (orig);
       else
-	cor = 1.000000005 * w[1] - 1.1e-30 * fabs (orig);
+	cor = 1.000000005 * w[1] - 1.1e-30 * ABS (orig);
       if (w[0] == w[0] + cor)
 	return (n) ? -w[0] : w[0];
       else

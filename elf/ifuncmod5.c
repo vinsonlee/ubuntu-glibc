@@ -1,13 +1,7 @@
 /* Test STT_GNU_IFUNC symbols without direct function call.  */
 #include "ifunc-sel.h"
 
-int global = -1;
-/* Can't use __attribute__((visibility("protected"))) until the GCC bug:
-
-   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65248
-
-   is fixed.  */
-asm (".protected global");
+int global __attribute__ ((visibility ("protected"))) = -1;
 
 static int
 one (void)

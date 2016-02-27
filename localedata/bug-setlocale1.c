@@ -7,8 +7,44 @@
 
 
 static int
-do_test (void)
+do_test (int argc, char *argv[])
 {
+  if (argc > 1)
+    {
+      char *newargv[5];
+      int i;
+      if (argc != 2 && argc != 5)
+	{
+	  printf ("wrong number of arguments (%d)\n", argc);
+	  return 1;
+	}
+
+      for (i = 0; i < (argc == 5 ? 4 : 1); i++)
+	newargv[i] = argv[i + 1];
+      newargv[i] = NULL;
+
+      char *env[3];
+      env[0] = (char *) "LC_CTYPE=de_DE.UTF-8";
+      char *loc = getenv ("LOCPATH");
+      if (loc == NULL || loc[0] == '\0')
+	{
+	  puts ("LOCPATH not set");
+	  return 1;
+	}
+      asprintf (&env[1], "LOCPATH=%s", loc);
+      if (env[1] == NULL)
+	{
+	  puts ("asprintf failed");
+	  return 1;
+	}
+      env[2] = NULL;
+
+      execve (newargv[0], newargv, env);
+
+      puts ("execve returned");
+      return 1;
+    }
+
   int result = 0;
 
   char *a = setlocale (LC_ALL, "");
@@ -92,5 +128,5 @@ do_test (void)
   return result;
 }
 
-#define TEST_FUNCTION do_test ()
+#define TEST_FUNCTION do_test (argc, argv)
 #include "../test-skeleton.c"

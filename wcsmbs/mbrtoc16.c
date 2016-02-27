@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -67,6 +67,7 @@ mbrtoc16 (char16_t *pc16, const char *s, size_t n, mbstate_t *ps)
   data.__internal_use = 1;
   data.__flags = __GCONV_IS_LAST;
   data.__statep = ps;
+  data.__trans = NULL;
 
   /* A first special case is if S is NULL.  This means put PS in the
      initial state.  */
@@ -76,9 +77,6 @@ mbrtoc16 (char16_t *pc16, const char *s, size_t n, mbstate_t *ps)
       s = "";
       n = 1;
     }
-
-  if (n == 0)
-    return (size_t) -2;
 
   /* Tell where we want the result.  */
   data.__outbuf = outbuf;
@@ -90,7 +88,7 @@ mbrtoc16 (char16_t *pc16, const char *s, size_t n, mbstate_t *ps)
   /* Do a normal conversion.  */
   inbuf = (const unsigned char *) s;
   endbuf = inbuf + n;
-  if (__glibc_unlikely (endbuf < inbuf))
+  if (__builtin_expect (endbuf < inbuf, 0))
     {
       endbuf = (const unsigned char *) ~(uintptr_t) 0;
       if (endbuf == inbuf)

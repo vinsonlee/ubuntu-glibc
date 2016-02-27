@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -23,6 +23,8 @@
 #include <sysdep-cancel.h>
 #include <sys/syscall.h>
 
+#include <kernel-features.h>
+
 #ifdef __NR_pwrite64		/* Newer kernels renamed but it's the same.  */
 # ifdef __NR_pwrite
 #  error "__NR_pwrite and __NR_pwrite64 both defined???"
@@ -31,13 +33,38 @@
 #endif
 
 
-ssize_t
-__libc_pwrite64 (int fd, const void *buf, size_t count, off64_t offset)
+static ssize_t
+do_pwrite64 (int fd, const void *buf, size_t count, off64_t offset)
 {
-  return SYSCALL_CANCEL (pwrite, fd, buf, count,
-			 __LONG_LONG_PAIR ((off_t) (offset >> 32),
-					   (off_t) (offset & 0xffffffff)));
+  ssize_t result;
+
+  result = INLINE_SYSCALL (pwrite, 5, fd, buf, count,
+			   __LONG_LONG_PAIR ((off_t) (offset >> 32),
+					     (off_t) (offset & 0xffffffff)));
+
+  return result;
 }
+
+
+ssize_t
+__libc_pwrite64 (fd, buf, count, offset)
+     int fd;
+     const void *buf;
+     size_t count;
+     off64_t offset;
+{
+  if (SINGLE_THREAD_P)
+    return do_pwrite64 (fd, buf, count, offset);
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  ssize_t result = do_pwrite64 (fd, buf, count, offset);
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
+}
+
 weak_alias (__libc_pwrite64, __pwrite64)
 libc_hidden_weak (__pwrite64)
 weak_alias (__libc_pwrite64, pwrite64)

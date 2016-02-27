@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -347,7 +347,7 @@ internal_addseverity (int severity, const char *string)
 
 /* Add new severity level or remove old one.  */
 int
-__addseverity (int severity, const char *string)
+addseverity (int severity, const char *string)
 {
   int result;
 
@@ -366,7 +366,6 @@ __addseverity (int severity, const char *string)
 
   return result;
 }
-weak_alias (__addseverity, addseverity)
 
 
 libc_freeres_fn (free_mem)

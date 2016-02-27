@@ -2,7 +2,7 @@
 default-abi := 32
 
 ifeq ($(subdir),misc)
-sysdep_routines += ioperm iopl vm86
+sysdep_routines += ioperm iopl vm86 call_pselect6 call_fallocate
 endif
 
 ifeq ($(subdir),elf)
@@ -10,14 +10,8 @@ sysdep-others += lddlibc4
 install-bin += lddlibc4
 endif
 
-# fallocate, posix_fallocate use six-argument inline syscalls.
 ifeq ($(subdir),io)
-sysdep_routines += libc-do-syscall
-endif
-
-# libpthread uses six-argument inline syscalls.
-ifeq ($(subdir),nptl)
-libpthread-sysdep_routines += libc-do-syscall
+sysdep_routines += call_sync_file_range
 endif
 
 ifeq ($(subdir),resource)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include <stdbool.h>
 
 #ifdef _LIBC
-# define HAVE_LOCALTIME_R 0
 # include "../locale/localeinfo.h"
 #endif
 

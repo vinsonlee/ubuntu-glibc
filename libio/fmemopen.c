@@ -1,6 +1,7 @@
-/* fmemopen implementation.
-   Copyright (C) 2015 Free Software Foundation, Inc.
+/* Fmemopen implementation.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
+   Contributed by Hanno Mueller, kontakt@hanno.de, 2000.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -16,10 +17,54 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-/* fmemopen() from 2.22 and forward works as defined by POSIX.  It also
-   provides an older symbol, version 2.2.5, that behaves different regarding
-   SEEK_END (libio/oldfmemopen.c).  */
-
+/*
+ * fmemopen() - "my" version of a string stream
+ * Hanno Mueller, kontakt@hanno.de
+ *
+ *
+ * I needed fmemopen() for an application that I currently work on,
+ * but couldn't find it in libio. The following snippet of code is an
+ * attempt to implement what glibc's documentation describes.
+ *
+ *
+ *
+ * I already see some potential problems:
+ *
+ * - I never used the "original" fmemopen(). I am sure that "my"
+ *   fmemopen() behaves differently than the original version.
+ *
+ * - The documentation doesn't say wether a string stream allows
+ *   seeks. I checked the old fmemopen implementation in glibc's stdio
+ *   directory, wasn't quite able to see what is going on in that
+ *   source, but as far as I understand there was no seek there. For
+ *   my application, I needed fseek() and ftell(), so it's here.
+ *
+ * - "append" mode and fseek(p, SEEK_END) have two different ideas
+ *   about the "end" of the stream.
+ *
+ *   As described in the documentation, when opening the file in
+ *   "append" mode, the position pointer will be set to the first null
+ *   character of the string buffer (yet the buffer may already
+ *   contain more data). For fseek(), the last byte of the buffer is
+ *   used as the end of the stream.
+ *
+ * - It is unclear to me what the documentation tries to say when it
+ *   explains what happens when you use fmemopen with a NULL
+ *   buffer.
+ *
+ *   Quote: "fmemopen [then] allocates an array SIZE bytes long. This
+ *   is really only useful if you are going to write things to the
+ *   buffer and then read them back in again."
+ *
+ *   What does that mean if the original fmemopen() did not allow
+ *   seeking? How do you read what you just wrote without seeking back
+ *   to the beginning of the stream?
+ *
+ * - I think there should be a second version of fmemopen() that does
+ *   not add null characters for each write. (At least in my
+ *   application, I am not actually using strings but binary data and
+ *   so I don't need the stream to add null characters on its own.)
+ */
 
 #include <errno.h>
 #include <libio.h>
@@ -34,23 +79,25 @@
 typedef struct fmemopen_cookie_struct fmemopen_cookie_t;
 struct fmemopen_cookie_struct
 {
-  char        *buffer;   /* memory buffer.  */
-  int         mybuffer;  /* allocated my buffer?  */
-  int         append;    /* buffer open for append?  */
-  size_t      size;      /* buffer length in bytes.  */
-  _IO_off64_t pos;       /* current position at the buffer.  */
-  size_t      maxpos;    /* max position in buffer.  */
+  char *buffer;
+  int mybuffer;
+  int binmode;
+  size_t size;
+  _IO_off64_t pos;
+  size_t maxpos;
 };
 
 
 static ssize_t
 fmemopen_read (void *cookie, char *b, size_t s)
 {
-  fmemopen_cookie_t *c = (fmemopen_cookie_t *) cookie;
+  fmemopen_cookie_t *c;
 
-  if (c->pos + s > c->maxpos)
+  c = (fmemopen_cookie_t *) cookie;
+
+  if (c->pos + s > c->size)
     {
-      if ((size_t) c->pos == c->maxpos)
+      if ((size_t) c->pos == c->size)
 	return 0;
       s = c->size - c->pos;
     }
@@ -68,28 +115,29 @@ fmemopen_read (void *cookie, char *b, size_t s)
 static ssize_t
 fmemopen_write (void *cookie, const char *b, size_t s)
 {
-  fmemopen_cookie_t *c = (fmemopen_cookie_t *) cookie;;
-  _IO_off64_t pos = c->append ? c->maxpos : c->pos;
+  fmemopen_cookie_t *c;
   int addnullc;
 
-  addnullc = (s == 0 || b[s - 1] != '\0');
+  c = (fmemopen_cookie_t *) cookie;
 
-  if (pos + s + addnullc > c->size)
+  addnullc = c->binmode == 0 && (s == 0 || b[s - 1] != '\0');
+
+  if (c->pos + s + addnullc > c->size)
     {
-      if ((size_t) (c->pos + addnullc) >= c->size)
+      if ((size_t) (c->pos + addnullc) == c->size)
 	{
 	  __set_errno (ENOSPC);
 	  return 0;
 	}
-      s = c->size - pos - addnullc;
+      s = c->size - c->pos - addnullc;
     }
 
-  memcpy (&(c->buffer[pos]), b, s);
+  memcpy (&(c->buffer[c->pos]), b, s);
 
-  pos += s;
-  if ((size_t) pos > c->maxpos)
+  c->pos += s;
+  if ((size_t) c->pos > c->maxpos)
     {
-      c->maxpos = pos;
+      c->maxpos = c->pos;
       if (addnullc)
 	c->buffer[c->maxpos] = '\0';
     }
@@ -102,7 +150,9 @@ static int
 fmemopen_seek (void *cookie, _IO_off64_t *p, int w)
 {
   _IO_off64_t np;
-  fmemopen_cookie_t *c = (fmemopen_cookie_t *) cookie;
+  fmemopen_cookie_t *c;
+
+  c = (fmemopen_cookie_t *) cookie;
 
   switch (w)
     {
@@ -115,7 +165,7 @@ fmemopen_seek (void *cookie, _IO_off64_t *p, int w)
       break;
 
     case SEEK_END:
-      np = c->maxpos + *p;
+      np = (c->binmode ? c->size : c->maxpos) - *p;
       break;
 
     default:
@@ -134,7 +184,9 @@ fmemopen_seek (void *cookie, _IO_off64_t *p, int w)
 static int
 fmemopen_close (void *cookie)
 {
-  fmemopen_cookie_t *c = (fmemopen_cookie_t *) cookie;
+  fmemopen_cookie_t *c;
+
+  c = (fmemopen_cookie_t *) cookie;
 
   if (c->mybuffer)
     free (c->buffer);
@@ -145,12 +197,19 @@ fmemopen_close (void *cookie)
 
 
 FILE *
-__fmemopen (void *buf, size_t len, const char *mode)
+fmemopen (void *buf, size_t len, const char *mode)
 {
   cookie_io_functions_t iof;
   fmemopen_cookie_t *c;
 
-  c = (fmemopen_cookie_t *) calloc (sizeof (fmemopen_cookie_t), 1);
+  if (__builtin_expect (len == 0, 0))
+    {
+    einval:
+      __set_errno (EINVAL);
+      return NULL;
+    }
+
+  c = (fmemopen_cookie_t *) malloc (sizeof (fmemopen_cookie_t));
   if (c == NULL)
     return NULL;
 
@@ -165,44 +224,32 @@ __fmemopen (void *buf, size_t len, const char *mode)
 	  return NULL;
 	}
       c->buffer[0] = '\0';
+      c->maxpos = 0;
     }
   else
     {
-      if (__glibc_unlikely ((uintptr_t) len > -(uintptr_t) buf))
+      if (__builtin_expect ((uintptr_t) len > -(uintptr_t) buf, 0))
 	{
 	  free (c);
-	  __set_errno (EINVAL);
-	  return NULL;
+	  goto einval;
 	}
 
       c->buffer = buf;
 
-      /* POSIX states that w+ mode should truncate the buffer.  */
-      if (mode[0] == 'w' && mode[1] == '+')
+      if (mode[0] == 'w')
 	c->buffer[0] = '\0';
 
-      if (mode[0] == 'a')
-        c->maxpos = strnlen (c->buffer, len);
+      c->maxpos = strnlen (c->buffer, len);
     }
-
-
-  /* Mode   |  starting position (cookie::pos) |          size (cookie::size)
-     ------ |----------------------------------|-----------------------------
-     read   |          beginning of the buffer |                size argument
-     write  |          beginning of the buffer |                         zero
-     append |    first null or size buffer + 1 |  first null or size argument
-   */
 
   c->size = len;
 
-  if (mode[0] == 'r')
-    c->maxpos = len;
-
-  c->append = mode[0] == 'a';
-  if (c->append)
+  if (mode[0] == 'a')
     c->pos = c->maxpos;
   else
     c->pos = 0;
+
+  c->binmode = mode[0] != '\0' && mode[1] == 'b';
 
   iof.read = fmemopen_read;
   iof.write = fmemopen_write;
@@ -211,5 +258,4 @@ __fmemopen (void *buf, size_t len, const char *mode)
 
   return _IO_fopencookie (c, mode, iof);
 }
-libc_hidden_def (__fmemopen)
-versioned_symbol (libc, __fmemopen, fmemopen, GLIBC_2_22);
+libc_hidden_def (fmemopen)

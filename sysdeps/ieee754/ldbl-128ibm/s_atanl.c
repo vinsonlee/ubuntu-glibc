@@ -59,7 +59,6 @@
     <http://www.gnu.org/licenses/>.  */
 
 
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 #include <math_ldbl_opt.h>
@@ -199,11 +198,6 @@ __atanl (long double x)
 
   if (k <= 0x3c800000) /* |x| <= 2**-55.  */
     {
-      if (fabsl (x) < LDBL_MIN)
-	{
-	  long double force_underflow = x * x;
-	  math_force_eval (force_underflow);
-	}
       /* Raise inexact.  */
       if (1e300L + x > 0.0)
 	return x;

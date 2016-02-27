@@ -1,4 +1,4 @@
-/* Copyright (c) 1998-2015 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1998.
 
@@ -87,7 +87,7 @@ print_version (FILE *stream, struct argp_state *state)
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
-"), "2015");
+"), "2014");
   fprintf (stream, gettext ("Written by %s.\n"), "Thorsten Kukuk");
 }
 
@@ -700,7 +700,6 @@ protocols_keys (int number, char *key[])
   return result;
 }
 
-#if HAVE_SUNRPC
 /* Now is all for rpc */
 static void
 print_rpc (struct rpcent *rpc)
@@ -746,7 +745,6 @@ rpc_keys (int number, char *key[])
 
   return result;
 }
-#endif
 
 /* for services */
 static void
@@ -886,9 +884,7 @@ D(netgroup)
 D(networks)
 D(passwd)
 D(protocols)
-#if HAVE_SUNRPC
 D(rpc)
-#endif
 D(services)
 D(shadow)
 #undef D

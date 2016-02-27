@@ -53,7 +53,6 @@
     <http://www.gnu.org/licenses/>.  */
 
 
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -141,25 +140,17 @@ __log1pl (long double xm1)
 
   if ((hx & 0x7fffffff) < 0x3f8e0000)
     {
-      if (fabsl (xm1) < LDBL_MIN)
-	{
-	  long double force_underflow = xm1 * xm1;
-	  math_force_eval (force_underflow);
-	}
       if ((int) xm1 == 0)
 	return xm1;
     }
 
-  if (xm1 >= 0x1p113L)
-    x = xm1;
-  else
-    x = xm1 + 1.0L;
+  x = xm1 + 1.0L;
 
   /* log1p(-1) = -inf */
   if (x <= 0.0L)
     {
       if (x == 0.0L)
-	return (-1.0L / zero);  /* log1p(-1) = -inf */
+	return (-1.0L / (x - x));
       else
 	return (zero / (x - x));
     }
@@ -259,3 +250,5 @@ __log1pl (long double xm1)
   z = z + e * C1;
   return (z);
 }
+
+weak_alias (__log1pl, log1pl)
