@@ -1,5 +1,5 @@
 /* Cache handling for host lookup.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2004.
 
@@ -24,7 +24,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <scratch_buffer.h>
 
 #include "dbg_log.h"
 #include "nscd.h"
@@ -72,7 +71,7 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
     char strdata[0];
   } *dataset = NULL;
 
-  if (__glibc_unlikely (debug_level > 0))
+  if (__builtin_expect (debug_level > 0, 0))
     {
       if (he == NULL)
 	dbg_log (_("Haven't found \"%s\" in group cache!"), (char *) key);
@@ -113,7 +112,7 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
      mempool_alloc.  */
   // XXX This really should use alloca.  need to change the backends.
   gid_t *groups = (gid_t *) malloc (size * sizeof (gid_t));
-  if (__glibc_unlikely (groups == NULL))
+  if (__builtin_expect (groups == NULL, 0))
     /* No more memory.  */
     goto out;
 
@@ -214,10 +213,14 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
 	  else if ((dataset = mempool_alloc (db, (sizeof (struct dataset)
 						  + req->key_len), 1)) != NULL)
 	    {
-	      timeout = datahead_init_neg (&dataset->head,
-					   (sizeof (struct dataset)
-					    + req->key_len), total,
-					   db->negtimeout);
+	      dataset->head.allocsize = sizeof (struct dataset) + req->key_len;
+	      dataset->head.recsize = total;
+	      dataset->head.notfound = true;
+	      dataset->head.nreloads = 0;
+	      dataset->head.usable = true;
+
+	      /* Compute the timeout time.  */
+	      timeout = dataset->head.timeout = time (NULL) + db->negtimeout;
 
 	      /* This is the reply.  */
 	      memcpy (&dataset->resp, &notfound, total);
@@ -273,10 +276,14 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
 	  alloca_used = true;
 	}
 
-      timeout = datahead_init_pos (&dataset->head, total + req->key_len,
-				   total - offsetof (struct dataset, resp),
-				   he == NULL ? 0 : dh->nreloads + 1,
-				   db->postimeout);
+      dataset->head.allocsize = total + req->key_len;
+      dataset->head.recsize = total - offsetof (struct dataset, resp);
+      dataset->head.notfound = false;
+      dataset->head.nreloads = he == NULL ? 0 : (dh->nreloads + 1);
+      dataset->head.usable = true;
+
+      /* Compute the timeout time.  */
+      timeout = dataset->head.timeout = time (NULL) + db->postimeout;
 
       dataset->resp.version = NSCD_VERSION;
       dataset->resp.found = 1;

@@ -114,10 +114,10 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 	struct addrinfo hints, *res, *ai;
 	union
 	{
-		struct sockaddr sa;
-		struct sockaddr_storage ss;
-		struct sockaddr_in sin;
-		struct sockaddr_in6 sin6;
+	  struct sockaddr sa;
+	  struct sockaddr_storage ss;
+	  struct sockaddr_in sin;
+	  struct sockaddr_in6 sin6;
 	} from;
 	struct pollfd pfd[2];
 	int32_t oldmask;
@@ -374,11 +374,7 @@ rresvport_af(alport, family)
 	int *alport;
 	sa_family_t family;
 {
-	union {
-		struct sockaddr generic;
-		struct sockaddr_in in;
-		struct sockaddr_in6 in6;
-	} ss;
+	struct sockaddr_storage ss;
 	int s;
 	size_t len;
 	uint16_t *sport;
@@ -386,11 +382,11 @@ rresvport_af(alport, family)
 	switch(family){
 	case AF_INET:
 		len = sizeof(struct sockaddr_in);
-		sport = &ss.in.sin_port;
+		sport = &((struct sockaddr_in *)&ss)->sin_port;
 		break;
 	case AF_INET6:
 		len = sizeof(struct sockaddr_in6);
-		sport = &ss.in6.sin6_port;
+		sport = &((struct sockaddr_in6 *)&ss)->sin6_port;
 		break;
 	default:
 		__set_errno (EAFNOSUPPORT);
@@ -402,9 +398,9 @@ rresvport_af(alport, family)
 
 	memset (&ss, '\0', sizeof(ss));
 #ifdef SALEN
-	ss.generic.__ss_len = len;
+	ss.__ss_len = len;
 #endif
-	ss.generic.sa_family = family;
+	ss.ss_family = family;
 
 	/* Ignore invalid values.  */
 	if (*alport < IPPORT_RESERVED / 2)
@@ -415,7 +411,7 @@ rresvport_af(alport, family)
 	int start = *alport;
 	do {
 		*sport = htons((uint16_t) *alport);
-		if (__bind(s, &ss.generic, len) >= 0)
+		if (__bind(s, (struct sockaddr *)&ss, len) >= 0)
 			return s;
 		if (errno != EADDRINUSE) {
 			(void)__close(s);
@@ -608,29 +604,27 @@ iruserok_af (raddr, superuser, ruser, luser, af)
      const char *ruser, *luser;
      sa_family_t af;
 {
-  union {
-    struct sockaddr generic;
-    struct sockaddr_in in;
-    struct sockaddr_in6 in6;
-  } ra;
+  struct sockaddr_storage ra;
   size_t ralen;
 
   memset (&ra, '\0', sizeof(ra));
   switch (af){
   case AF_INET:
-    ra.in.sin_family = AF_INET;
-    memcpy (&ra.in.sin_addr, raddr, sizeof(struct in_addr));
+    ra.ss_family = AF_INET;
+    memcpy (&(((struct sockaddr_in *)&ra)->sin_addr), raddr,
+	    sizeof(struct in_addr));
     ralen = sizeof(struct sockaddr_in);
     break;
   case AF_INET6:
-    ra.in6.sin6_family = AF_INET6;
-    memcpy (&ra.in6.sin6_addr, raddr, sizeof(struct in6_addr));
+    ra.ss_family = AF_INET6;
+    memcpy (&(((struct sockaddr_in6 *)&ra)->sin6_addr), raddr,
+	    sizeof(struct in6_addr));
     ralen = sizeof(struct sockaddr_in6);
     break;
   default:
     return 0;
   }
-  return ruserok_sa (&ra.generic, ralen, superuser, ruser, luser);
+  return ruserok_sa ((struct sockaddr *)&ra, ralen, superuser, ruser, luser);
 }
 libc_hidden_def (iruserok_af)
 
@@ -809,43 +803,31 @@ __validuser2_sa(hostf, ra, ralen, luser, ruser, rhost)
 	*p = '\0';              /* <nul> terminate username (+host?) */
 
 	/* buf -> host(?) ; user -> username(?) */
-	if (*buf == '\0')
-	  break;
-	if (*user == '\0')
-	  user = luser;
 
-	/* First check the user part.  In a naive implementation we
-	   would check the host part first, then the user.  However,
-	   if we check the user first and reject the entry we will
-	   have saved doing any host lookups to normalize the comparison
-	   and that likely saves several DNS queries.  Therefore we
-	   check the user first.  */
-	ucheck = __icheckuser (user, ruser);
+	/* First check host part */
+	hcheck = __checkhost_sa (ra, ralen, buf, rhost);
 
-	/* Either we found the user, or we didn't and this is a
-	   negative host check.  We must do the negative host lookup
-	   in order to preserve the semantics of stopping on this line
-	   before processing others.  */
-	if (ucheck != 0 || *buf == '-') {
+	if (hcheck < 0)
+	    break;
 
-	    /* Next check host part.  */
-	    hcheck = __checkhost_sa (ra, ralen, buf, rhost);
+	if (hcheck) {
+	    /* Then check user part */
+	    if (! (*user))
+		user = luser;
 
-	    /* Negative '-host user(?)' match?  */
-	    if (hcheck < 0)
-		break;
+	    ucheck = __icheckuser (user, ruser);
 
-	    /* Positive 'host user' match?  */
-	    if (hcheck > 0 && ucheck > 0) {
+	    /* Positive 'host user' match? */
+	    if (ucheck > 0) {
 		retval = 0;
 		break;
 	    }
 
-	    /* Negative 'host -user' match?  */
-	    if (hcheck > 0 && ucheck < 0)
-	      break;
+	    /* Negative 'host -user' match? */
+	    if (ucheck < 0)
+		break;
 
-	    /* Neither, go on looking for match.  */
+	    /* Neither, go on looking for match */
 	}
     }
 

@@ -1,5 +1,5 @@
 /* Print size value using units for orders of magnitude.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
    Based on a proposal by Larry McVoy <lm@sgi.com>.
@@ -126,7 +126,7 @@ __printf_size (FILE *fp, const struct printf_info *info,
       fpnum.ldbl = *(const long double *) args[0];
 
       /* Check for special values: not a number or infinity.  */
-      if (isnan (fpnum.ldbl))
+      if (__isnanl (fpnum.ldbl))
 	{
 	  special = "nan";
 	  wspecial = L"nan";
@@ -151,7 +151,7 @@ __printf_size (FILE *fp, const struct printf_info *info,
       fpnum.dbl.d = *(const double *) args[0];
 
       /* Check for special values: not a number or infinity.  */
-      if (isnan (fpnum.dbl.d))
+      if (__isnan (fpnum.dbl.d))
 	{
 	  special = "nan";
 	  wspecial = L"nan";

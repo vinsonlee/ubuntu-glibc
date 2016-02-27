@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -24,8 +24,8 @@
 double
 __remainder (double x, double y)
 {
-  if (((__builtin_expect (y == 0.0, 0) && ! isnan (x))
-       || (__builtin_expect (__isinf_ns (x), 0) && ! isnan (y)))
+  if (((__builtin_expect (y == 0.0, 0) && ! __isnan (x))
+       || (__builtin_expect (__isinf_ns (x), 0) && ! __isnan (y)))
       && _LIB_VERSION != _IEEE_)
     return __kernel_standard (x, y, 28); /* remainder domain */
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -28,8 +28,7 @@ pthread_mutexattr_gettype (attr, kind)
 
   iattr = (const struct pthread_mutexattr *) attr;
 
-  *kind = (iattr->mutexkind & ~PTHREAD_MUTEXATTR_FLAG_BITS
-	   & ~PTHREAD_MUTEX_NO_ELISION_NP);
+  *kind = iattr->mutexkind & ~PTHREAD_MUTEXATTR_FLAG_BITS;
 
   return 0;
 }

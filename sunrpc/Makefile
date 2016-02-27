@@ -1,4 +1,4 @@
-# Copyright (C) 1994-2015 Free Software Foundation, Inc.
+# Copyright (C) 1994-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,6 @@
 #	Sub-makefile for sunrpc portion of the library.
 #
 subdir	:= sunrpc
-
-include ../Makeconfig
 
 # The code in this subdirectory is taken from Sun's RPCSRC-4.0
 # distribution with some additional changes from the TI-RPC package
@@ -56,9 +54,11 @@ headers-not-in-tirpc = $(addprefix rpc/,key_prot.h rpc_des.h) \
 		       $(rpcsvc:%=rpcsvc/%) rpcsvc/bootparam.h
 headers = rpc/netdb.h
 install-others = $(inst_sysconfdir)/rpc
-generated += $(rpcsvc:%.x=rpcsvc/%.h) $(rpcsvc:%.x=x%.c) $(rpcsvc:%.x=x%.stmp) \
-	     $(rpcsvc:%.x=rpcsvc/%.stmp) rpcgen
-generated-dirs += rpcsvc
+generated = $(rpcsvc:%.x=rpcsvc/%.h) $(rpcsvc:%.x=x%.c) $(rpcsvc:%.x=x%.stmp) \
+	    $(rpcsvc:%.x=rpcsvc/%.stmp) rpcgen
+generated-dirs := rpcsvc
+
+include ../Makeconfig
 
 ifeq ($(link-obsolete-rpc),yes)
 headers += $(headers-in-tirpc) $(headers-not-in-tirpc)
@@ -76,8 +76,6 @@ routines := auth_none authuxprot bindrsvprt clnt_raw clnt_simp \
 	    pmap_rmt rpc_prot rpc_common rpc_cmsg svc_auth svc_authux svc_raw \
 	    svc_simple xdr_float xdr_rec publickey authdes_prot \
 	    des_crypt des_impl des_soft key_prot openchild rtime svcauth_des \
-	    getrpcent getrpcbyname getrpcbynumber \
-	    getrpcent_r getrpcbyname_r getrpcbynumber_r \
 	    clnt_unix svc_unix create_xid $(need-export-routines)
 ifneq ($(link-obsolete-rpc),yes)
 # We only add the RPC for compatibility to libc.so.
@@ -96,7 +94,9 @@ rpcgen-objs = rpc_main.o rpc_hout.o rpc_cout.o rpc_parse.o \
 extra-objs = $(rpcgen-objs) $(addprefix cross-,$(rpcgen-objs))
 others += rpcgen
 
-tests = tst-xdrmem tst-xdrmem2 test-rpcent
+all: # Make this the default target; it will be defined in Rules.
+
+tests = tst-xdrmem tst-xdrmem2
 xtests := tst-getmyaddr
 
 ifeq ($(have-thread-library),yes)
@@ -168,7 +168,7 @@ $(cross-rpcgen-objs): $(objpfx)cross-%.o: %.c $(before-compile)
 $(objpfx)cross-rpcgen: $(cross-rpcgen-objs)
 	$(BUILD_CC) $^ $(BUILD_LDFLAGS) -o $@
 
-# This makes sure -DIN_MODULE is passed for all these modules.
+# This makes sure -DNOT_IN_libc is passed for all these modules.
 cpp-srcs-left := $(rpcgen-objs:.o=.c)
 lib := nonlib
 include $(patsubst %,$(..)cppflags-iterator.mk,$(cpp-srcs-left))

@@ -31,18 +31,17 @@ do_test (void)
     }
 
   sa.sa_handler = SIG_IGN;
+  sa.sa_flags = SA_NOCLDWAIT;
+
   if (sigaction (SIGCHLD, &sa, NULL) != 0)
     {
       puts ("2nd sigaction failed");
       return 1;
     }
 
-  sigset_t ss_usr1;
-  sigemptyset (&ss_usr1);
-  sigaddset (&ss_usr1, SIGUSR1);
-  if (sigprocmask (SIG_BLOCK, &ss_usr1, NULL) != 0)
+  if (sigblock (sigmask (SIGUSR1)) != 0)
     {
-      puts ("sigprocmask failed");
+      puts ("sigblock failed");
       return 1;
     }
 

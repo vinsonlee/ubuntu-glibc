@@ -1,5 +1,5 @@
 /* libc-internal interface for mutex locks.  Hurd version using Mach cthreads.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -202,11 +202,5 @@ typedef cthread_key_t __libc_key_t;
 void *__libc_getspecific (__libc_key_t key);
 
 #endif /* _CTHREADS_ */
-
-/* Hide the definitions which are only supposed to be used inside libc in
-   a separate file.  This file is not present in the installation!  */
-#ifdef _LIBC
-# include <bits/libc-lockP.h>
-#endif
 
 #endif	/* bits/libc-lock.h */

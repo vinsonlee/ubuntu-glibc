@@ -1,6 +1,6 @@
 /* Test that the gettext() results come out in the correct encoding for
    locales that differ only in their encoding.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Bruno Haible <bruno@clisp.org>, 2001, 2005.
 
@@ -24,8 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int
-do_test (void)
+int
+main (void)
 {
   char *s;
   int result = 0;
@@ -57,6 +57,3 @@ do_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

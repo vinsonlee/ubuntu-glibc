@@ -58,8 +58,6 @@
  *	   by method mentioned above.
  */
 
-#include <errno.h>
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -91,7 +89,7 @@ __ieee754_j1 (double x)
 
   GET_HIGH_WORD (hx, x);
   ix = hx & 0x7fffffff;
-  if (__glibc_unlikely (ix >= 0x7ff00000))
+  if (__builtin_expect (ix >= 0x7ff00000, 0))
     return one / x;
   y = fabs (x);
   if (ix >= 0x40000000)         /* |x| >= 2.0 */
@@ -123,18 +121,10 @@ __ieee754_j1 (double x)
       else
 	return z;
     }
-  if (__glibc_unlikely (ix < 0x3e400000))                  /* |x|<2**-27 */
+  if (__builtin_expect (ix < 0x3e400000, 0))            /* |x|<2**-27 */
     {
-      if (huge + x > one)                 /* inexact if x!=0 necessary */
-	{
-	  double ret = 0.5 * x;
-	  if (fabs (ret) < DBL_MIN)
-	    {
-	      double force_underflow = ret * ret;
-	      math_force_eval (force_underflow);
-	    }
-	  return ret;
-	}
+      if (huge + x > one)
+	return 0.5 * x;                 /* inexact if x!=0 necessary */
     }
   z = x * x;
   r1 = z * R[0]; z2 = z * z;
@@ -173,12 +163,12 @@ __ieee754_y1 (double x)
   EXTRACT_WORDS (hx, lx, x);
   ix = 0x7fffffff & hx;
   /* if Y1(NaN) is NaN, Y1(-inf) is NaN, Y1(inf) is 0 */
-  if (__glibc_unlikely (ix >= 0x7ff00000))
+  if (__builtin_expect (ix >= 0x7ff00000, 0))
     return one / (x + x * x);
-  if (__glibc_unlikely ((ix | lx) == 0))
+  if (__builtin_expect ((ix | lx) == 0, 0))
     return -HUGE_VAL + x;
   /* -inf and overflow exception.  */;
-  if (__glibc_unlikely (hx < 0))
+  if (__builtin_expect (hx < 0, 0))
     return zero / (zero * x);
   if (ix >= 0x40000000)         /* |x| >= 2.0 */
     {
@@ -213,12 +203,9 @@ __ieee754_y1 (double x)
 	}
       return z;
     }
-  if (__glibc_unlikely (ix <= 0x3c900000))              /* x < 2**-54 */
+  if (__builtin_expect (ix <= 0x3c900000, 0))        /* x < 2**-54 */
     {
-      z = -tpi / x;
-      if (isinf (z))
-	__set_errno (ERANGE);
-      return z;
+      return (-tpi / x);
     }
   z = x * x;
   u1 = U0[0] + z * U0[1]; z2 = z * z;
@@ -314,7 +301,6 @@ pone (double x)
   int32_t ix;
   GET_HIGH_WORD (ix, x);
   ix &= 0x7fffffff;
-  /* ix >= 0x40000000 for all calls to this function.  */
   if (ix >= 0x41b00000)
     {
       return one;
@@ -331,7 +317,7 @@ pone (double x)
     {
       p = pr3; q = ps3;
     }
-  else
+  else if (ix >= 0x40000000)
     {
       p = pr2; q = ps2;
     }
@@ -434,7 +420,6 @@ qone (double x)
   int32_t ix;
   GET_HIGH_WORD (ix, x);
   ix &= 0x7fffffff;
-  /* ix >= 0x40000000 for all calls to this function.  */
   if (ix >= 0x41b00000)
     {
       return .375 / x;
@@ -451,7 +436,7 @@ qone (double x)
     {
       p = qr3; q = qs3;
     }
-  else
+  else if (ix >= 0x40000000)
     {
       p = qr2; q = qs2;
     }

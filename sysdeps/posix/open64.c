@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,14 +19,14 @@
 #include <stdarg.h>
 #include <sysdep-cancel.h>
 
-/* Open FILE with access OFLAG.  If O_CREAT or O_TMPFILE is in OFLAG,
+/* Open FILE with access OFLAG.  If OFLAG includes O_CREAT,
    a third argument is the file protection.  */
 int
 __libc_open64 (const char *file, int oflag, ...)
 {
   int mode = 0;
 
-  if (__OPEN_NEEDS_MODE (oflag))
+  if (oflag & O_CREAT)
     {
       va_list arg;
       va_start (arg, oflag);

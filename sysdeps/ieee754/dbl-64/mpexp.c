@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2015 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2014 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU  Lesser General Public License as published by
@@ -140,7 +140,7 @@ __mpexp (mp_no *x, mp_no *y, int p)
     }
   __dbl_mp (kf, &mpk, p);
   __dvd (&mpt2, &mpk, &mpt1, p);
-  __add (&__mpone, &mpt1, &mpt2, p);
+  __add (&mpone, &mpt1, &mpt2, p);
 
   /* Raise polynomial value to the power of 2**m. Put result in y.  */
   for (k = 0, j = 0; k < m;)

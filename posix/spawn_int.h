@@ -22,7 +22,7 @@ struct __spawn_action
     struct
     {
       int fd;
-      char *path;
+      const char *path;
       int oflag;
       mode_t mode;
     } open_action;

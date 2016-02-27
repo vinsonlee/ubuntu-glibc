@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,11 @@
    Return the position in DEST one byte past where C was copied, or
    NULL if C was not found in the first N bytes of SRC.  */
 void *
-__memccpy (void *dest, const void *src, int c, size_t n)
+__memccpy (dest, src, c, n)
+      void *dest;
+      const void *src;
+      int c;
+      size_t n;
 {
   const char *s = src;
   char *d = dest;

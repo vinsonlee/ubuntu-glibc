@@ -1,5 +1,5 @@
 /* Extended regular expression matching and search library.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Isamu Hasegawa <isamu@yamato.ibm.com>.
 
@@ -62,6 +62,7 @@
 # ifndef _RE_DEFINE_LOCALE_FUNCTIONS
 #  define _RE_DEFINE_LOCALE_FUNCTIONS 1
 #   include <locale/localeinfo.h>
+#   include <locale/elem-hash.h>
 #   include <locale/coll-lookup.h>
 # endif
 #endif
@@ -89,7 +90,7 @@
 # define SIZE_MAX ((size_t) -1)
 #endif
 
-#if (defined MB_CUR_MAX && HAVE_WCTYPE_H && HAVE_ISWCTYPE) || _LIBC
+#if (defined MB_CUR_MAX && HAVE_LOCALE_H && HAVE_WCTYPE_H && HAVE_WCHAR_H && HAVE_WCRTOMB && HAVE_MBRTOWC && HAVE_WCSCOLL) || _LIBC
 # define RE_ENABLE_I18N
 #endif
 
@@ -381,7 +382,7 @@ typedef struct re_dfa_t re_dfa_t;
 # endif
 #endif
 
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 static reg_errcode_t re_string_realloc_buffers (re_string_t *pstr,
 						int new_buf_len)
      internal_function;
@@ -471,7 +472,7 @@ typedef struct bin_tree_storage_t bin_tree_storage_t;
 
 #define IS_WORD_CHAR(ch) (isalnum (ch) || (ch) == '_')
 #define IS_NEWLINE(ch) ((ch) == NEWLINE_CHAR)
-#define IS_WIDE_WORD_CHAR(ch) (__iswalnum (ch) || (ch) == L'_')
+#define IS_WIDE_WORD_CHAR(ch) (iswalnum (ch) || (ch) == L'_')
 #define IS_WIDE_NEWLINE(ch) ((ch) == WIDE_NEWLINE_CHAR)
 
 #define NOT_SATISFY_PREV_CONSTRAINT(constraint,context) \
@@ -731,11 +732,7 @@ re_string_wchar_at (const re_string_t *pstr, int idx)
   return (wint_t) pstr->wcs[idx];
 }
 
-# if IS_IN (libc)
-#  ifdef _LIBC
-#   include <locale/weight.h>
-#  endif
-
+# ifndef NOT_IN_libc
 static int
 internal_function __attribute__ ((pure, unused))
 re_string_elem_size_at (const re_string_t *pstr, int idx)
@@ -743,6 +740,7 @@ re_string_elem_size_at (const re_string_t *pstr, int idx)
 #  ifdef _LIBC
   const unsigned char *p, *extra;
   const int32_t *table, *indirect;
+#   include <locale/weight.h>
   uint_fast32_t nrules = _NL_CURRENT_WORD (LC_COLLATE, _NL_COLLATE_NRULES);
 
   if (nrules != 0)
@@ -753,7 +751,7 @@ re_string_elem_size_at (const re_string_t *pstr, int idx)
       indirect = (const int32_t *) _NL_CURRENT (LC_COLLATE,
 						_NL_COLLATE_INDIRECTMB);
       p = pstr->mbs + idx;
-      findidx (table, indirect, extra, &p, pstr->len - idx);
+      findidx (&p, pstr->len - idx);
       return p - pstr->mbs - idx;
     }
   else

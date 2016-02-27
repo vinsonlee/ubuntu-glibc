@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>.
 
@@ -104,8 +104,8 @@ null_test (void)
 }
 
 
-static int
-do_test (void)
+int
+main (void)
 {
   /* We are allocating blocks with `calloc' and check whether every
      block is completely cleared.  We first try this for some fixed
@@ -123,6 +123,3 @@ do_test (void)
 
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

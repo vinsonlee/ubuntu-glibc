@@ -1,5 +1,5 @@
 /* Conversion module for ISO-2022-KR.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -42,7 +42,6 @@
 #define MAX_NEEDED_FROM		4
 #define MIN_NEEDED_TO		4
 #define MAX_NEEDED_TO		4
-#define ONE_DIRECTION		0
 #define PREPARE_LOOP \
   int save_set;								      \
   int *setp = &data->__statep->__count;					      \
@@ -87,7 +86,7 @@ enum
 	{								      \
 	  /* We are not in the initial state.  To switch back we have	      \
 	     to emit `SI'.  */						      \
-	  if (__glibc_unlikely (outbuf == outend))			      \
+	  if (__builtin_expect (outbuf == outend, 0))			      \
 	    /* We don't have enough room in the output buffer.  */	      \
 	    status = __GCONV_FULL_OUTPUT;				      \
 	  else								      \
@@ -119,7 +118,7 @@ enum
     uint32_t ch = *inptr;						      \
 									      \
     /* This is a 7bit character set, disallow all 8bit characters.  */	      \
-    if (__glibc_unlikely (ch > 0x7f))					      \
+    if (__builtin_expect (ch > 0x7f, 0))				      \
       STANDARD_FROM_LOOP_ERR_HANDLER (1);				      \
 									      \
     /* Recognize escape sequences.  */					      \
@@ -172,12 +171,12 @@ enum
 	/* Use the KSC 5601 table.  */					      \
 	ch = ksc5601_to_ucs4 (&inptr, inend - inptr, 0);		      \
 									      \
-	if (__glibc_unlikely (ch == 0))					      \
+	if (__builtin_expect (ch == 0, 0))				      \
 	  {								      \
 	    result = __GCONV_INCOMPLETE_INPUT;				      \
 	    break;							      \
 	  }								      \
-	else if (__glibc_unlikely (ch == __UNKNOWN_10646_CHAR))		      \
+	else if (__builtin_expect (ch == __UNKNOWN_10646_CHAR, 0))	      \
 	  {								      \
 	    STANDARD_FROM_LOOP_ERR_HANDLER (1);				      \
 	  }								      \
@@ -210,7 +209,7 @@ enum
 	  {								      \
 	    *outptr++ = SI;						      \
 	    set = ASCII_set;						      \
-	    if (__glibc_unlikely (outptr == outend))			      \
+	    if (__builtin_expect (outptr == outend, 0))			      \
 	      {								      \
 		result = __GCONV_FULL_OUTPUT;				      \
 		break;							      \
@@ -244,7 +243,7 @@ enum
 		set = KSC5601_set;					      \
 	      }								      \
 									      \
-	    if (__glibc_unlikely (outptr + 2 > outend))			      \
+	    if (__builtin_expect (outptr + 2 > outend, 0))		      \
 	      {								      \
 		result = __GCONV_FULL_OUTPUT;				      \
 		break;							      \

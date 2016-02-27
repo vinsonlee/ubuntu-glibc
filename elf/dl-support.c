@@ -1,5 +1,5 @@
 /* Support for dynamic linking code in static libc.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -128,6 +128,12 @@ void *_dl_random;
 
 /* Get architecture specific initializer.  */
 #include <dl-procinfo.c>
+
+/* We expect less than a second for relocation.  */
+#ifdef HP_SMALL_TIMING_AVAIL
+# undef HP_TIMING_AVAIL
+# define HP_TIMING_AVAIL HP_SMALL_TIMING_AVAIL
+#endif
 
 /* Initial value of the CPU clock.  */
 #ifndef HP_TIMING_NONAVAIL
@@ -309,7 +315,7 @@ _dl_non_dynamic_init (void)
   _dl_main_map.l_phdr = GL(dl_phdr);
   _dl_main_map.l_phnum = GL(dl_phnum);
 
-  if (HP_SMALL_TIMING_AVAIL)
+  if (HP_TIMING_AVAIL)
     HP_TIMING_NOW (_dl_cpuclock_offset);
 
   _dl_verbose = *(getenv ("LD_WARN") ?: "") == '\0' ? 0 : 1;

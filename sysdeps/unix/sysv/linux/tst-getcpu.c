@@ -43,7 +43,7 @@ do_test (void)
 		}
 	      if (cpu2 != cpu)
 		{
-		  printf ("getcpu results %d should be %d\n", cpu2, cpu);
+		  printf ("getcpu results %d not possible\n", cpu2);
 		  result = 1;
 		}
 	    }

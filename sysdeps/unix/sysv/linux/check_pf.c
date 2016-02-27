@@ -1,5 +1,5 @@
 /* Determine protocol families for which interfaces exist.  Linux version.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include <linux/rtnetlink.h>
 
 #include <not-cancel.h>
+#include <kernel-features.h>
 #include <bits/libc-lock.h>
 #include <atomic.h>
 #include <nscd/nscd-client.h>
@@ -61,11 +62,11 @@ static struct cached_data noai6ai_cached =
     .in6ailen = 0
   };
 
-static struct cached_data *cache;
+libc_freeres_ptr (static struct cached_data *cache);
 __libc_lock_define_initialized (static, lock);
 
 
-#if IS_IN (nscd)
+#ifdef IS_IN_nscd
 static uint32_t nl_timestamp;
 
 uint32_t
@@ -81,7 +82,7 @@ __bump_nl_timestamp (void)
 static inline uint32_t
 get_nl_timestamp (void)
 {
-#if IS_IN (nscd)
+#ifdef IS_IN_nscd
   return nl_timestamp;
 #elif defined USE_NSCD
   return __nscd_get_nl_timestamp ();
@@ -105,11 +106,6 @@ cache_valid_p (void)
 static struct cached_data *
 make_request (int fd, pid_t pid)
 {
-  struct cached_data *result = NULL;
-
-  size_t result_len = 0;
-  size_t result_cap = 32;
-
   struct req
   {
     struct nlmsghdr nlh;
@@ -135,11 +131,25 @@ make_request (int fd, pid_t pid)
   nladdr.nl_family = AF_NETLINK;
 
 #ifdef PAGE_SIZE
+  /* Help the compiler optimize out the malloc call if PAGE_SIZE
+     is constant and smaller or equal to PTHREAD_STACK_MIN/4.  */
   const size_t buf_size = PAGE_SIZE;
 #else
-  const size_t buf_size = 4096;
+  const size_t buf_size = __getpagesize ();
 #endif
-  char buf[buf_size];
+  bool use_malloc = false;
+  char *buf;
+
+  if (__libc_use_alloca (buf_size))
+    buf = alloca (buf_size);
+  else
+    {
+      buf = malloc (buf_size);
+      if (buf != NULL)
+	use_malloc = true;
+      else
+	goto out_fail;
+    }
 
   struct iovec iov = { buf, buf_size };
 
@@ -149,7 +159,12 @@ make_request (int fd, pid_t pid)
     goto out_fail;
 
   bool done = false;
-
+  struct in6ailist
+  {
+    struct in6addrinfo info;
+    struct in6ailist *next;
+  } *in6ailist = NULL;
+  size_t in6ailistlen = 0;
   bool seen_ipv4 = false;
   bool seen_ipv6 = false;
 
@@ -164,7 +179,7 @@ make_request (int fd, pid_t pid)
 	};
 
       ssize_t read_len = TEMP_FAILURE_RETRY (__recvmsg (fd, &msg, 0));
-      if (read_len <= 0)
+      if (read_len < 0)
 	goto out_fail;
 
       if (msg.msg_flags & MSG_TRUNC)
@@ -224,35 +239,28 @@ make_request (int fd, pid_t pid)
 		    }
 		}
 
-	      if (result_len == 0 || result_len == result_cap)
-		{
-		  result_cap = 2 * result_cap;
-		  result = realloc (result, sizeof (*result)
-				    + result_cap
-				      * sizeof (struct in6addrinfo));
-		}
-
-	      if (!result)
-		goto out_fail;
-
-	      struct in6addrinfo *info = &result->in6ai[result_len++];
-
-	      info->flags = (((ifam->ifa_flags
-			       & (IFA_F_DEPRECATED | IFA_F_OPTIMISTIC))
-			      ? in6ai_deprecated : 0)
-			     | ((ifam->ifa_flags & IFA_F_HOMEADDRESS)
-			         ? in6ai_homeaddress : 0));
-	      info->prefixlen = ifam->ifa_prefixlen;
-	      info->index = ifam->ifa_index;
+	      struct in6ailist *newp = alloca (sizeof (*newp));
+	      newp->info.flags = (((ifam->ifa_flags
+				    & (IFA_F_DEPRECATED
+				       | IFA_F_OPTIMISTIC))
+				   ? in6ai_deprecated : 0)
+				  | ((ifam->ifa_flags
+				      & IFA_F_HOMEADDRESS)
+				     ? in6ai_homeaddress : 0));
+	      newp->info.prefixlen = ifam->ifa_prefixlen;
+	      newp->info.index = ifam->ifa_index;
 	      if (ifam->ifa_family == AF_INET)
 		{
-		  info->addr[0] = 0;
-		  info->addr[1] = 0;
-		  info->addr[2] = htonl (0xffff);
-		  info->addr[3] = *(const in_addr_t *) address;
+		  newp->info.addr[0] = 0;
+		  newp->info.addr[1] = 0;
+		  newp->info.addr[2] = htonl (0xffff);
+		  newp->info.addr[3] = *(const in_addr_t *) address;
 		}
 	      else
-		memcpy (info->addr, address, sizeof (info->addr));
+		memcpy (newp->info.addr, address, sizeof (newp->info.addr));
+	      newp->next = in6ailist;
+	      in6ailist = newp;
+	      ++in6ailistlen;
 	    }
 	  else if (nlmh->nlmsg_type == NLMSG_DONE)
 	    /* We found the end, leave the loop.  */
@@ -261,29 +269,42 @@ make_request (int fd, pid_t pid)
     }
   while (! done);
 
-  if (seen_ipv6 && result != NULL)
+  struct cached_data *result;
+  if (seen_ipv6 && in6ailist != NULL)
     {
+      result = malloc (sizeof (*result)
+		       + in6ailistlen * sizeof (struct in6addrinfo));
+      if (result == NULL)
+	goto out_fail;
+
       result->timestamp = get_nl_timestamp ();
       result->usecnt = 2;
       result->seen_ipv4 = seen_ipv4;
       result->seen_ipv6 = true;
-      result->in6ailen = result_len;
+      result->in6ailen = in6ailistlen;
+
+      do
+	{
+	  result->in6ai[--in6ailistlen] = in6ailist->info;
+	  in6ailist = in6ailist->next;
+	}
+      while (in6ailist != NULL);
     }
   else
     {
-      free (result);
-
       atomic_add (&noai6ai_cached.usecnt, 2);
       noai6ai_cached.seen_ipv4 = seen_ipv4;
       noai6ai_cached.seen_ipv6 = seen_ipv6;
       result = &noai6ai_cached;
     }
 
+  if (use_malloc)
+    free (buf);
   return result;
 
- out_fail:
-
-  free (result);
+out_fail:
+  if (use_malloc)
+    free (buf);
   return NULL;
 }
 
@@ -310,7 +331,7 @@ __check_pf (bool *seen_ipv4, bool *seen_ipv6,
     {
       int fd = __socket (PF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
 
-      if (__glibc_likely (fd >= 0))
+      if (__builtin_expect (fd >= 0, 1))
 	{
 	  struct sockaddr_nl nladdr;
 	  memset (&nladdr, '\0', sizeof (nladdr));
@@ -356,12 +377,6 @@ __check_pf (bool *seen_ipv4, bool *seen_ipv6,
   *seen_ipv6 = true;
 }
 
-/* Free the cache if it has been allocated.  */
-libc_freeres_fn (freecache)
-{
-  if (cache)
-    __free_in6ai (cache->in6ai);
-}
 
 void
 __free_in6ai (struct in6addrinfo *ai)

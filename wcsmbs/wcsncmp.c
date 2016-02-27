@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -29,42 +29,42 @@ wcsncmp (s1, s2, n)
      const wchar_t *s2;
      size_t n;
 {
-  wchar_t c1 = L'\0';
-  wchar_t c2 = L'\0';
+  wint_t c1 = L'\0';
+  wint_t c2 = L'\0';
 
   if (n >= 4)
     {
       size_t n4 = n >> 2;
       do
 	{
-	  c1 = *s1++;
-	  c2 = *s2++;
+	  c1 = (wint_t) *s1++;
+	  c2 = (wint_t) *s2++;
 	  if (c1 == L'\0' || c1 != c2)
-	    return c1 > c2 ? 1 : (c1 < c2 ? -1 : 0);
-	  c1 = *s1++;
-	  c2 = *s2++;
+	    return c1 - c2;
+	  c1 = (wint_t) *s1++;
+	  c2 = (wint_t) *s2++;
 	  if (c1 == L'\0' || c1 != c2)
-	    return c1 > c2 ? 1 : (c1 < c2 ? -1 : 0);
-	  c1 = *s1++;
-	  c2 = *s2++;
+	    return c1 - c2;
+	  c1 = (wint_t) *s1++;
+	  c2 = (wint_t) *s2++;
 	  if (c1 == L'\0' || c1 != c2)
-	    return c1 > c2 ? 1 : (c1 < c2 ? -1 : 0);
-	  c1 = *s1++;
-	  c2 = *s2++;
+	    return c1 - c2;
+	  c1 = (wint_t) *s1++;
+	  c2 = (wint_t) *s2++;
 	  if (c1 == L'\0' || c1 != c2)
-	    return c1 > c2 ? 1 : (c1 < c2 ? -1 : 0);
+	    return c1 - c2;
 	} while (--n4 > 0);
       n &= 3;
     }
 
   while (n > 0)
     {
-      c1 = *s1++;
-      c2 = *s2++;
+      c1 = (wint_t) *s1++;
+      c2 = (wint_t) *s2++;
       if (c1 == L'\0' || c1 != c2)
-	return c1 > c2 ? 1 : (c1 < c2 ? -1 : 0);
+	return c1 - c2;
       n--;
     }
 
-  return 0;
+  return c1 - c2;
 }
