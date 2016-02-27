@@ -1,6 +1,6 @@
 /* Multiple versions of __memmove_chk
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -22,7 +22,7 @@
 #include <init-arch.h>
 
 /* Define multiple versions only for the definition in lib.  */
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 # ifdef SHARED
 	.text
 ENTRY(__memmove_chk)
@@ -35,11 +35,6 @@ ENTRY(__memmove_chk)
 	jne	1f
 	call	__init_cpu_features
 1:	leal	__memmove_chk_ia32@GOTOFF(%ebx), %eax
-	testl	$bit_SSE2, CPUID_OFFSET+index_SSE2+__cpu_features@GOTOFF(%ebx)
-	jz	2f
-	leal	__memmove_chk_sse2_unaligned@GOTOFF(%ebx), %eax
-	testl	$bit_Fast_Unaligned_Load, FEATURE_OFFSET+index_Fast_Unaligned_Load+__cpu_features@GOTOFF(%ebx)
-	jnz	2f
 	testl	$bit_SSSE3, CPUID_OFFSET+index_SSSE3+__cpu_features@GOTOFF(%ebx)
 	jz	2f
 	leal	__memmove_chk_ssse3@GOTOFF(%ebx), %eax
@@ -59,11 +54,6 @@ ENTRY(__memmove_chk)
 	jne	1f
 	call	__init_cpu_features
 1:	leal	__memmove_chk_ia32, %eax
-	testl	$bit_SSE2, CPUID_OFFSET+index_SSE2+__cpu_features
-	jz	2f
-	leal	__memmove_chk_sse2_unaligned, %eax
-	testl	$bit_Fast_Unaligned_Load, FEATURE_OFFSET+index_Fast_Unaligned_Load+__cpu_features
-	jnz	2f
 	testl	$bit_SSSE3, CPUID_OFFSET+index_SSSE3+__cpu_features
 	jz	2f
 	leal	__memmove_chk_ssse3, %eax
@@ -72,18 +62,6 @@ ENTRY(__memmove_chk)
 	leal	__memmove_chk_ssse3_rep, %eax
 2:	ret
 END(__memmove_chk)
-
-	.type __memmove_chk_sse2_unaligned, @function
-	.p2align 4;
-__memmove_chk_sse2_unaligned:
-	cfi_startproc
-	CALL_MCOUNT
-	movl	12(%esp), %eax
-	cmpl	%eax, 16(%esp)
-	jb	__chk_fail
-	jmp	__memmove_sse2_unaligned
-	cfi_endproc
-	.size __memmove_chk_sse2_unaligned, .-__memmove_chk_sse2_unaligned
 
 	.type __memmove_chk_ssse3, @function
 	.p2align 4;

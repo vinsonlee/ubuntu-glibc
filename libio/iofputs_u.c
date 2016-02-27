@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include <string.h>
 
 int
-__fputs_unlocked (str, fp)
+fputs_unlocked (str, fp)
       const char *str;
       _IO_FILE *fp;
 {
@@ -40,6 +40,4 @@ __fputs_unlocked (str, fp)
     result = 1;
   return result;
 }
-libc_hidden_def (__fputs_unlocked)
-weak_alias (__fputs_unlocked, fputs_unlocked)
-libc_hidden_weak (fputs_unlocked)
+libc_hidden_def (fputs_unlocked)

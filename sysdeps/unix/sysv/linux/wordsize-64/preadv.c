@@ -1,5 +1,5 @@
 /* 64-bit preadv.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,7 +38,16 @@ preadv (int fd, const struct iovec *vector, int count, off_t offset)
 #ifdef __NR_preadv
   ssize_t result;
 
-  result = SYSCALL_CANCEL (preadv, fd, vector, count, offset);
+  if (SINGLE_THREAD_P)
+    result = INLINE_SYSCALL (preadv, 4, fd, vector, count, offset);
+  else
+    {
+      int oldtype = LIBC_CANCEL_ASYNC ();
+
+      result = INLINE_SYSCALL (preadv, 4, fd, vector, count, offset);
+
+      LIBC_CANCEL_RESET (oldtype);
+    }
 # ifdef __ASSUME_PREADV
   return result;
 # endif

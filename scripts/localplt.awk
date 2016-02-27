@@ -13,8 +13,6 @@ FILENAME != lastfile {
   }
   lastfile = FILENAME;
   jmprel_offset = 0;
-  rela_offset = 0;
-  rel_offset = 0;
   delete section_offset_by_address;
 }
 
@@ -34,39 +32,9 @@ $1 == "Offset" && $2 == "Info" { in_relocs = 1; next }
 NF == 0 { in_relocs = 0 }
 
 in_relocs && relocs_offset == jmprel_offset && NF >= 5 {
-  # Relocations against GNU_IFUNC symbols are not shown as an hexadecimal
-  # value, but rather as the resolver symbol followed by ().
-  if ($4 ~ /\(\)/) {
-    print whatfile, gensub(/@.*/, "", "g", $5)
-  } else {
-    symval = strtonum("0x" $4);
-    if (symval != 0)
-      print whatfile, gensub(/@.*/, "", "g", $5)
-  }
-}
-
-in_relocs && relocs_offset == rela_offset && NF >= 5 {
-  # Relocations against GNU_IFUNC symbols are not shown as an hexadecimal
-  # value, but rather as the resolver symbol followed by ().
-  if ($4 ~ /\(\)/) {
-    print whatfile, gensub(/@.*/, "", "g", $5), "RELA", $3
-  } else {
-    symval = strtonum("0x" $4);
-    if (symval != 0)
-      print whatfile, gensub(/@.*/, "", "g", $5), "RELA", $3
-  }
-}
-
-in_relocs && relocs_offset == rel_offset && NF >= 5 {
-  # Relocations against GNU_IFUNC symbols are not shown as an hexadecimal
-  # value, but rather as the resolver symbol followed by ().
-  if ($4 ~ /\(\)/) {
-    print whatfile, gensub(/@.*/, "", "g", $5), "REL", $3
-  } else {
-    symval = strtonum("0x" $4);
-    if (symval != 0)
-      print whatfile, gensub(/@.*/, "", "g", $5), "REL", $3
-  }
+  symval = strtonum("0x" $4);
+  if (symval != 0)
+    print whatfile, $5
 }
 
 in_relocs { next }
@@ -88,25 +56,4 @@ $2 == "(JMPREL)" {
   next
 }
 
-$2 == "(RELA)" {
-  rela_addr = strtonum($3);
-  if (rela_addr in section_offset_by_address) {
-    rela_offset = section_offset_by_address[rela_addr];
-  } else {
-    print FILENAME ": *** DT_RELA does not match any section's address";
-    result = 2;
-  }
-  next
-}
-
-$2 == "(REL)" {
-  rel_addr = strtonum($3);
-  if (rel_addr in section_offset_by_address) {
-    rel_offset = section_offset_by_address[rel_addr];
-  } else {
-    print FILENAME ": *** DT_REL does not match any section's address";
-    result = 2;
-  }
-  next
-}
 END { exit(result) }

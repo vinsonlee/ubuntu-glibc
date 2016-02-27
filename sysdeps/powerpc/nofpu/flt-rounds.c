@@ -1,5 +1,5 @@
 /* Return current rounding mode as correct value for FLT_ROUNDS.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -15,8 +15,6 @@
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library.  If not, see
    <http://www.gnu.org/licenses/>.  */
-
-#include <stdlib.h>
 
 #include "soft-fp.h"
 #include "soft-supp.h"

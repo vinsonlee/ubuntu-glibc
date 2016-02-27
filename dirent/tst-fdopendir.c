@@ -6,9 +6,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#ifndef O_NOATIME
-# define O_NOATIME	0
-#endif
 
 static int
 do_test (void)

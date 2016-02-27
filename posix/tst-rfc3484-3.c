@@ -10,7 +10,6 @@
 #define __inet_aton inet_aton
 #define __gethostbyaddr_r gethostbyaddr_r
 #define __gethostbyname2_r gethostbyname2_r
-#define __qsort_r qsort_r
 
 void
 attribute_hidden

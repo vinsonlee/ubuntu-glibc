@@ -71,8 +71,6 @@
  *	   by method mentioned above.
  */
 
-#include <errno.h>
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -116,7 +114,7 @@ __ieee754_j1l (long double x)
 
   GET_LDOUBLE_EXP (se, x);
   ix = se & 0x7fff;
-  if (__glibc_unlikely (ix >= 0x7fff))
+  if (__builtin_expect (ix >= 0x7fff, 0))
     return one / x;
   y = fabsl (x);
   if (ix >= 0x4000)
@@ -136,7 +134,7 @@ __ieee754_j1l (long double x)
        * j1(x) = 1/sqrt(pi) * (P(1,x)*cc - Q(1,x)*ss) / sqrt(x)
        * y1(x) = 1/sqrt(pi) * (P(1,x)*ss + Q(1,x)*cc) / sqrt(x)
        */
-      if (__glibc_unlikely (ix > 0x4080))
+      if (__builtin_expect (ix > 0x4080, 0))
 	z = (invsqrtpi * cc) / __ieee754_sqrtl (y);
       else
 	{
@@ -149,18 +147,10 @@ __ieee754_j1l (long double x)
       else
 	return z;
     }
-  if (__glibc_unlikely (ix < 0x3fde))       /* |x| < 2^-33 */
+  if (__builtin_expect (ix < 0x3fde, 0)) /* |x| < 2^-33 */
     {
-      if (huge + x > one)		/* inexact if x!=0 necessary */
-	{
-	  long double ret = 0.5 * x;
-	  if (fabsl (ret) < LDBL_MIN)
-	    {
-	      long double force_underflow = ret * ret;
-	      math_force_eval (force_underflow);
-	    }
-	  return ret;
-	}
+      if (huge + x > one)
+	return 0.5 * x;		/* inexact if x!=0 necessary */
     }
   z = x * x;
   r = z * (R[0] + z * (R[1]+ z * (R[2] + z * (R[3] + z * R[4]))));
@@ -202,11 +192,11 @@ __ieee754_y1l (long double x)
   GET_LDOUBLE_WORDS (se, i0, i1, x);
   ix = se & 0x7fff;
   /* if Y1(NaN) is NaN, Y1(-inf) is NaN, Y1(inf) is 0 */
-  if (__glibc_unlikely (se & 0x8000))
+  if (__builtin_expect (se & 0x8000, 0))
     return zero / (zero * x);
-  if (__glibc_unlikely (ix >= 0x7fff))
+  if (__builtin_expect (ix >= 0x7fff, 0))
     return one / (x + x * x);
-  if (__glibc_unlikely ((i0 | i1) == 0))
+  if (__builtin_expect ((i0 | i1) == 0, 0))
     return -HUGE_VALL + x;  /* -inf and overflow exception.  */
   if (ix >= 0x4000)
     {				/* |x| >= 2.0 */
@@ -232,7 +222,7 @@ __ieee754_y1l (long double x)
        *              sin(x) +- cos(x) = -cos(2x)/(sin(x) -+ cos(x))
        * to compute the worse one.
        */
-      if (__glibc_unlikely (ix > 0x4080))
+      if (__builtin_expect (ix > 0x4080, 0))
 	z = (invsqrtpi * ss) / __ieee754_sqrtl (x);
       else
 	{
@@ -242,12 +232,9 @@ __ieee754_y1l (long double x)
 	}
       return z;
     }
-  if (__glibc_unlikely (ix <= 0x3fbe))
+  if (__builtin_expect (ix <= 0x3fbe, 0))
     {				/* x < 2**-65 */
-      z = -tpi / x;
-      if (isinf (z))
-	__set_errno (ERANGE);
-      return z;
+      return (-tpi / x);
     }
   z = x * x;
  u = U0[0] + z * (U0[1] + z * (U0[2] + z * (U0[3] + z * (U0[4] + z * U0[5]))));
@@ -368,7 +355,6 @@ pone (long double x)
 
   GET_LDOUBLE_WORDS (se, i0, i1, x);
   ix = se & 0x7fff;
-  /* ix >= 0x4000 for all calls to this function.  */
   if (ix >= 0x4002) /* x >= 8 */
     {
       p = pr8;
@@ -387,7 +373,7 @@ pone (long double x)
 	  p = pr3;
 	  q = ps3;
 	}
-      else	/* x >= 2 */
+      else if (ix >= 0x4000)	/* x better be >= 2 */
 	{
 	  p = pr2;
 	  q = ps2;
@@ -515,7 +501,6 @@ qone (long double x)
 
   GET_LDOUBLE_WORDS (se, i0, i1, x);
   ix = se & 0x7fff;
-  /* ix >= 0x4000 for all calls to this function.  */
   if (ix >= 0x4002)		/* x >= 8 */
     {
       p = qr8;
@@ -534,7 +519,7 @@ qone (long double x)
 	  p = qr3;
 	  q = qs3;
 	}
-      else	/* x >= 2 */
+      else if (ix >= 0x4000)	/* x better be >= 2 */
 	{
 	  p = qr2;
 	  q = qs2;

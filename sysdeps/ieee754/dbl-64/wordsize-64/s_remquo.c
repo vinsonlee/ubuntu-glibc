@@ -1,5 +1,5 @@
 /* Compute remainder and a congruent to the quotient.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -40,7 +40,7 @@ __remquo (double x, double y, int *quo)
   hx &= UINT64_C(0x7fffffffffffffff);
 
   /* Purge off exception values.  */
-  if (__glibc_unlikely (hy == 0))
+  if (__builtin_expect (hy == 0, 0))
     return (x * y) / (x * y);			/* y = 0 */
   if (__builtin_expect (hx >= UINT64_C(0x7ff0000000000000) /* x not finite */
 			|| hy > UINT64_C(0x7ff0000000000000), 0))/* y is NaN */
@@ -49,22 +49,22 @@ __remquo (double x, double y, int *quo)
   if (hy <= UINT64_C(0x7fbfffffffffffff))
     x = __ieee754_fmod (x, 8 * y);		/* now x < 8y */
 
-  if (__glibc_unlikely (hx == hy))
+  if (__builtin_expect (hx == hy, 0))
     {
       *quo = qs ? -1 : 1;
       return zero * x;
     }
 
-  x = fabs (x);
+  INSERT_WORDS64 (x, hx);
   INSERT_WORDS64 (y, hy);
   cquo = 0;
 
-  if (hy <= UINT64_C(0x7fcfffffffffffff) && x >= 4 * y)
+  if (x >= 4 * y)
     {
       x -= 4 * y;
       cquo += 4;
     }
-  if (hy <= UINT64_C(0x7fdfffffffffffff) && x >= 2 * y)
+  if (x >= 2 * y)
     {
       x -= 2 * y;
       cquo += 2;
@@ -100,9 +100,6 @@ __remquo (double x, double y, int *quo)
 
   *quo = qs ? -cquo : cquo;
 
-  /* Ensure correct sign of zero result in round-downward mode.  */
-  if (x == 0.0)
-    x = 0.0;
   if (sx)
     x = -x;
   return x;

@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ getpass (prompt)
 
   /* Write the prompt.  */
   __fxprintf (out, "%s", prompt);
-  __fflush_unlocked (out);
+  fflush_unlocked (out);
 
   /* Read the password.  */
   nread = __getline (&buf, &bufsize, in);

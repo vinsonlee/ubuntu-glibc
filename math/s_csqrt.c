@@ -1,5 +1,5 @@
 /* Complex square root of double value.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Based on an algorithm by Stephen L. Moshier <moshier@world.std.com>.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
@@ -30,7 +30,7 @@ __csqrt (__complex__ double x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (__glibc_unlikely (rcls <= FP_INFINITE || icls <= FP_INFINITE))
+  if (__builtin_expect (rcls <= FP_INFINITE || icls <= FP_INFINITE, 0))
     {
       if (icls == FP_INFINITE)
 	{
@@ -59,7 +59,7 @@ __csqrt (__complex__ double x)
     }
   else
     {
-      if (__glibc_unlikely (icls == FP_ZERO))
+      if (__builtin_expect (icls == FP_ZERO, 0))
 	{
 	  if (__real__ x < 0.0)
 	    {
@@ -73,7 +73,7 @@ __csqrt (__complex__ double x)
 	      __imag__ res = __copysign (0.0, __imag__ x);
 	    }
 	}
-      else if (__glibc_unlikely (rcls == FP_ZERO))
+      else if (__builtin_expect (rcls == FP_ZERO, 0))
 	{
 	  double r;
 	  if (fabs (__imag__ x) >= 2.0 * DBL_MIN)
@@ -118,28 +118,12 @@ __csqrt (__complex__ double x)
 	  if (__real__ x > 0)
 	    {
 	      r = __ieee754_sqrt (0.5 * (d + __real__ x));
-	      if (scale == 1 && fabs (__imag__ x) < 1.0)
-		{
-		  /* Avoid possible intermediate underflow.  */
-		  s = __imag__ x / r;
-		  r = __scalbn (r, scale);
-		  scale = 0;
-		}
-	      else
-		s = 0.5 * (__imag__ x / r);
+	      s = 0.5 * (__imag__ x / r);
 	    }
 	  else
 	    {
 	      s = __ieee754_sqrt (0.5 * (d - __real__ x));
-	      if (scale == 1 && fabs (__imag__ x) < 1.0)
-		{
-		  /* Avoid possible intermediate underflow.  */
-		  r = fabs (__imag__ x / s);
-		  s = __scalbn (s, scale);
-		  scale = 0;
-		}
-	      else
-		r = fabs (0.5 * (__imag__ x / s));
+	      r = fabs (0.5 * (__imag__ x / s));
 	    }
 
 	  if (scale)

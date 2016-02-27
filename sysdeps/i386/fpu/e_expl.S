@@ -65,10 +65,6 @@ c1:	.byte 0x20, 0xfa, 0xee, 0xc2, 0x5f, 0x70, 0xa5, 0xec, 0xed, 0x3f
 csat:	.byte 0, 0, 0, 0, 0, 0, 0, 0x80, 0x0e, 0x40
 	.byte 0, 0, 0, 0, 0, 0
 	ASM_SIZE_DIRECTIVE(csat)
-	.type cmin,@object
-cmin:	.byte 0, 0, 0, 0, 0, 0, 0, 0x80, 0x1, 0
-	.byte 0, 0, 0, 0, 0, 0
-	ASM_SIZE_DIRECTIVE(cmin)
 #endif
 
 #ifdef PIC
@@ -112,34 +108,12 @@ ENTRY(IEEE754_EXPL)
 	andb	%ah, %dh
 	cmpb	$0x40, %dh
 	je	2f
-
-	/* Test for arguments that are small but not subnormal.  */
-	movzwl	4+8(%esp), %eax
-	andl	$0x7fff, %eax
-	cmpl	$0x3fbf, %eax
-	jge	3f
-	/* Argument's exponent below -64; avoid spurious underflow if
-	   normal.  */
-	cmpl	$0x0001, %eax
-	jge	2f
-	/* Force underflow and return the argument, to avoid wrong signs
-	   of zero results from the code below in some rounding modes.  */
-	fld	%st
-	fmul	%st
-	fstp	%st
-	jmp	2f
 #else
 	movzwl	4+8(%esp), %eax
 	andl	$0x7fff, %eax
 	cmpl	$0x400d, %eax
-	jg	5f
-	cmpl	$0x3fbc, %eax
-	jge	3f
-	/* Argument's exponent below -67, result rounds to 1.  */
-	fld1
-	faddp
-	jmp	2f
-5:	/* Overflow, underflow or infinity or NaN as argument.  */
+	jle	3f
+	/* Overflow, underflow or infinity or NaN as argument.  */
 	fstsw	%ax
 	movb	$0x45, %dh
 	andb	%ah, %dh
@@ -199,18 +173,8 @@ ENTRY(IEEE754_EXPL)
 	fstp	%st(1)		/* 2  */
 	fscale			/* 2 scale factor is st(1); base^x */
 	fstp	%st(1)		/* 1  */
-	/* Ensure underflow for tiny result.  */
-	fldt	MO(cmin)	/* 2 cmin  */
-	fld	%st(1)		/* 3  */
-	fcompp			/* 1  */
-	fnstsw
-	sahf
-	jnc	6f
-	fld	%st
-	fmul	%st
-	fstp	%st
 #endif
-6:	fstp	%st(1)		/* 0  */
+	fstp	%st(1)		/* 0  */
 	jmp	2f
 1:
 #ifdef USE_AS_EXPM1L

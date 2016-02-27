@@ -739,9 +739,7 @@ xdr_string (xdrs, cpp, maxsize)
      u_int maxsize;
 {
   char *sp = *cpp;	/* sp is the actual string pointer */
-  /* Initialize to silence the compiler.  It is not really needed because SIZE
-     never actually gets used without being initialized.  */
-  u_int size = 0;
+  u_int size;
   u_int nodesize;
 
   /*

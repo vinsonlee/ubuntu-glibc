@@ -51,24 +51,3 @@ CFLAGS-slowexp-avx.c = -msse2avx -DSSE2AVX
 CFLAGS-s_tan-avx.c = -msse2avx -DSSE2AVX
 endif
 endif
-
-ifeq ($(subdir),mathvec)
-libmvec-sysdep_routines += svml_d_cos2_core_sse4 svml_d_cos4_core_avx2 \
-			   svml_d_cos8_core_avx512 svml_d_sin2_core_sse4 \
-			   svml_d_sin4_core_avx2 svml_d_sin8_core_avx512 \
-			   svml_d_log2_core_sse4 svml_d_log4_core_avx2 \
-			   svml_d_log8_core_avx512 svml_d_sincos2_core_sse4 \
-			   svml_d_sincos4_core_avx2 svml_d_sincos8_core_avx512 \
-			   svml_s_cosf4_core_sse4 svml_s_cosf8_core_avx2 \
-			   svml_s_cosf16_core_avx512 svml_s_sinf4_core_sse4 \
-			   svml_s_sinf8_core_avx2 svml_s_sinf16_core_avx512 \
-			   svml_s_logf4_core_sse4 svml_s_logf8_core_avx2 \
-			   svml_s_logf16_core_avx512 svml_d_exp2_core_sse4 \
-			   svml_d_exp4_core_avx2 svml_d_exp8_core_avx512 \
-			   svml_s_expf4_core_sse4 svml_s_expf8_core_avx2 \
-			   svml_s_expf16_core_avx512 svml_d_pow2_core_sse4 \
-			   svml_d_pow4_core_avx2 svml_d_pow8_core_avx512 \
-			   svml_s_powf4_core_sse4 svml_s_powf8_core_avx2 \
-			   svml_s_powf16_core_avx512 svml_s_sincosf4_core_sse4 \
-			   svml_s_sincosf8_core_avx2 svml_s_sincosf16_core_avx512
-endif

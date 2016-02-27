@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -24,6 +24,8 @@
 #include <sysdep-cancel.h>
 #include <sys/syscall.h>
 
+#include <kernel-features.h>
+
 #ifdef __NR_pread64             /* Newer kernels renamed but it's the same.  */
 # ifdef __NR_pread
 #  error "__NR_pread and __NR_pread64 both defined???"
@@ -33,10 +35,29 @@
 
 
 ssize_t
-__libc_pread (int fd, void *buf, size_t count, off_t offset)
+__libc_pread (fd, buf, count, offset)
+     int fd;
+     void *buf;
+     size_t count;
+     off_t offset;
 {
-  return SYSCALL_CANCEL (pread, fd, buf, count, 0,
-			 __LONG_LONG_PAIR (offset >> 31, offset));
+  ssize_t result;
+
+  if (SINGLE_THREAD_P)
+    {
+      result = INLINE_SYSCALL (pread, 6, fd, buf, count, 0,
+			       __LONG_LONG_PAIR (offset >> 31, offset));
+      return result;
+    }
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  result = INLINE_SYSCALL (pread, 6, fd, buf, count, 0,
+			   __LONG_LONG_PAIR (offset >> 31, offset));
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
 
 strong_alias (__libc_pread, __pread)
