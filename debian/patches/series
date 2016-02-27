@@ -275,3 +275,5 @@ any/cvs-ldconfig-aux-cache.diff
 any/cvs-ld_pointer_guard.diff
 any/cvs-mangle-tls_dtor_list.diff
 any/cvs-strxfrm-buffer-overflows.diff
+any/local-CVE-2015-7547.diff
+any/cvs-grantpt-pty-owner.diff
