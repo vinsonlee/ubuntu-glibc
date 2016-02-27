@@ -1,5 +1,5 @@
 /* Conversion module for UTF-16.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1999.
 
@@ -39,12 +39,11 @@
 #define MIN_NEEDED_FROM		2
 #define MAX_NEEDED_FROM		4
 #define MIN_NEEDED_TO		4
-#define ONE_DIRECTION		0
 #define FROM_DIRECTION		(dir == from_utf16)
 #define PREPARE_LOOP \
   enum direction dir = ((struct utf16_data *) step->__data)->dir;	      \
   enum variant var = ((struct utf16_data *) step->__data)->var;		      \
-  if (__glibc_unlikely (data->__invocation_counter == 0))		      \
+  if (__builtin_expect (data->__invocation_counter == 0, 0))		      \
     {									      \
       if (var == UTF_16)						      \
 	{								      \
@@ -68,7 +67,7 @@
 	  else if (!FROM_DIRECTION && !data->__internal_use)		      \
 	    {								      \
 	      /* Emit the Byte Order Mark.  */				      \
-	      if (__glibc_unlikely (outbuf + 2 > outend))		      \
+	      if (__builtin_expect (outbuf + 2 > outend, 0))		      \
 		return __GCONV_FULL_OUTPUT;				      \
 									      \
 	      put16u (outbuf, BOM);					      \
@@ -201,7 +200,7 @@ gconv_end (struct __gconv_step *data)
   {									      \
     uint32_t c = get32 (inptr);						      \
 									      \
-    if (__glibc_unlikely (c >= 0xd800 && c < 0xe000))			      \
+    if (__builtin_expect (c >= 0xd800 && c < 0xe000, 0))		      \
       {									      \
 	/* Surrogate characters in UCS-4 input are not valid.		      \
 	   We must catch this.  If we let surrogates pass through,	      \
@@ -217,15 +216,15 @@ gconv_end (struct __gconv_step *data)
 									      \
     if (swap)								      \
       {									      \
-	if (__glibc_unlikely (c >= 0x10000))				      \
+	if (__builtin_expect (c >= 0x10000, 0))				      \
 	  {								      \
-	    if (__glibc_unlikely (c >= 0x110000))			      \
+	    if (__builtin_expect (c >= 0x110000, 0))			      \
 	      {								      \
 		STANDARD_TO_LOOP_ERR_HANDLER (4);			      \
 	      }								      \
 									      \
 	    /* Generate a surrogate character.  */			      \
-	    if (__glibc_unlikely (outptr + 4 > outend))			      \
+	    if (__builtin_expect (outptr + 4 > outend, 0))		      \
 	      {								      \
 		/* Overflow in the output buffer.  */			      \
 		result = __GCONV_FULL_OUTPUT;				      \
@@ -241,15 +240,15 @@ gconv_end (struct __gconv_step *data)
       }									      \
     else								      \
       {									      \
-	if (__glibc_unlikely (c >= 0x10000))				      \
+	if (__builtin_expect (c >= 0x10000, 0))				      \
 	  {								      \
-	    if (__glibc_unlikely (c >= 0x110000))			      \
+	    if (__builtin_expect (c >= 0x110000, 0))			      \
 	      {								      \
 		STANDARD_TO_LOOP_ERR_HANDLER (4);			      \
 	      }								      \
 									      \
 	    /* Generate a surrogate character.  */			      \
-	    if (__glibc_unlikely (outptr + 4 > outend))			      \
+	    if (__builtin_expect (outptr + 4 > outend, 0))		      \
 	      {								      \
 		/* Overflow in the output buffer.  */			      \
 		result = __GCONV_FULL_OUTPUT;				      \
@@ -297,7 +296,7 @@ gconv_end (struct __gconv_step *data)
 									      \
 	    /* It's a surrogate character.  At least the first word says      \
 	       it is.  */						      \
-	    if (__glibc_unlikely (inptr + 4 > inend))			      \
+	    if (__builtin_expect (inptr + 4 > inend, 0))		      \
 	      {								      \
 		/* We don't have enough input for another complete input      \
 		   character.  */					      \
@@ -331,7 +330,7 @@ gconv_end (struct __gconv_step *data)
 	  {								      \
 	    /* It's a surrogate character.  At least the first word says      \
 	       it is.  */						      \
-	    if (__glibc_unlikely (inptr + 4 > inend))			      \
+	    if (__builtin_expect (inptr + 4 > inend, 0))		      \
 	      {								      \
 		/* We don't have enough input for another complete input      \
 		   character.  */					      \

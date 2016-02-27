@@ -1,5 +1,5 @@
 /* Double-precision floating point square root.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 #include <sysdep.h>
 #include <ldsodefs.h>
 
-#ifndef _ARCH_PPCSQ
 static const double almost_half = 0.5000000000000001;	/* 0.5 + 2^-53 */
 static const ieee_float_shape_type a_nan = {.word = 0x7fc00000 };
 static const ieee_float_shape_type a_inf = {.word = 0x7f800000 };
@@ -99,41 +98,38 @@ __slow_ieee754_sqrt (double x)
 	  /* Here we have three Newton-Raphson iterations each of a
 	     division and a square root and the remainder of the
 	     argument reduction, all interleaved.   */
-	  sd = -__builtin_fma (sg, sg, -sx);
+	  sd = -(sg * sg - sx);
 	  fsgi = (xi0 + 0x40000000) >> 1 & 0x7ff00000;
 	  sy2 = sy + sy;
-	  sg = __builtin_fma (sy, sd, sg);	/* 16-bit approximation to
-						   sqrt(sx). */
+	  sg = sy * sd + sg;	/* 16-bit approximation to sqrt(sx). */
 
 	  /* schedule the INSERT_WORDS (fsg, fsgi, 0) to get separation
 	     between the store and the load.  */
 	  INSERT_WORDS (fsg, fsgi, 0);
 	  iw_u.parts.msw = fsgi;
 	  iw_u.parts.lsw = (0);
-	  e = -__builtin_fma (sy, sg, -almost_half);
-	  sd = -__builtin_fma (sg, sg, -sx);
+	  e = -(sy * sg - almost_half);
+	  sd = -(sg * sg - sx);
 	  if ((xi0 & 0x7ff00000) == 0)
 	    goto denorm;
-	  sy = __builtin_fma (e, sy2, sy);
-	  sg = __builtin_fma (sy, sd, sg);	/* 32-bit approximation to
-						   sqrt(sx).  */
+	  sy = sy + e * sy2;
+	  sg = sg + sy * sd;	/* 32-bit approximation to sqrt(sx).  */
 	  sy2 = sy + sy;
 	  /* complete the INSERT_WORDS (fsg, fsgi, 0) operation.  */
 	  fsg = iw_u.value;
-	  e = -__builtin_fma (sy, sg, -almost_half);
-	  sd = -__builtin_fma (sg, sg, -sx);
-	  sy = __builtin_fma (e, sy2, sy);
+	  e = -(sy * sg - almost_half);
+	  sd = -(sg * sg - sx);
+	  sy = sy + e * sy2;
 	  shx = sx * fsg;
-	  sg = __builtin_fma (sy, sd, sg);	/* 64-bit approximation to
-						   sqrt(sx), but perhaps
-						   rounded incorrectly.  */
+	  sg = sg + sy * sd;	/* 64-bit approximation to sqrt(sx),
+				   but perhaps rounded incorrectly.  */
 	  sy2 = sy + sy;
 	  g = sg * fsg;
-	  e = -__builtin_fma (sy, sg, -almost_half);
-	  d = -__builtin_fma (g, sg, -shx);
-	  sy = __builtin_fma (e, sy2, sy);
+	  e = -(sy * sg - almost_half);
+	  d = -(g * sg - shx);
+	  sy = sy + e * sy2;
 	  fesetenv_register (fe);
-	  return __builtin_fma (sy, d, g);
+	  return g + sy * d;
 	denorm:
 	  /* For denormalised numbers, we normalise, calculate the
 	     square root, and return an adjusted result.  */
@@ -146,17 +142,16 @@ __slow_ieee754_sqrt (double x)
       /* For some reason, some PowerPC32 processors don't implement
 	 FE_INVALID_SQRT.  */
 #ifdef FE_INVALID_SQRT
-      __feraiseexcept (FE_INVALID_SQRT);
+      feraiseexcept (FE_INVALID_SQRT);
 
       fenv_union_t u = { .fenv = fegetenv_register () };
       if ((u.l & FE_INVALID) == 0)
 #endif
-	__feraiseexcept (FE_INVALID);
+	feraiseexcept (FE_INVALID);
       x = a_nan.value;
     }
   return f_wash (x);
 }
-#endif /* _ARCH_PPCSQ  */
 
 #undef __ieee754_sqrt
 double
@@ -164,11 +159,16 @@ __ieee754_sqrt (double x)
 {
   double z;
 
-#ifdef _ARCH_PPCSQ
-  asm ("fsqrt %0,%1\n" :"=f" (z):"f" (x));
-#else
-  z = __slow_ieee754_sqrt (x);
-#endif
+  /* If the CPU is 64-bit we can use the optional FP instructions.  */
+  if (__CPU_HAS_FSQRT)
+    {
+      /* Volatile is required to prevent the compiler from moving the
+	 fsqrt instruction above the branch.  */
+      __asm __volatile ("	fsqrt	%0,%1\n"
+				:"=f" (z):"f" (x));
+    }
+  else
+    z = __slow_ieee754_sqrt (x);
 
   return z;
 }

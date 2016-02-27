@@ -1,5 +1,5 @@
 /* Install given floating-point environment.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 
 
 int
-__fesetenv (const fenv_t *envp)
+fesetenv (const fenv_t *envp)
 {
   fenv_t temp;
 
@@ -85,6 +85,4 @@ __fesetenv (const fenv_t *envp)
   /* Success.  */
   return 0;
 }
-libm_hidden_def (__fesetenv)
-weak_alias (__fesetenv, fesetenv)
-libm_hidden_weak (fesetenv)
+libm_hidden_def (fesetenv)

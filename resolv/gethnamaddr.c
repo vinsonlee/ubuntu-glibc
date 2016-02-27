@@ -49,11 +49,6 @@
  * --Copyright--
  */
 
-/* XXX This file is not used by any of the resolver functions implemented by
-   glibc (i.e. get*info and gethostby*).  It cannot be removed however because
-   it exports symbols in the libresolv ABI.  The file is not maintained any
-   more, nor are these functions.  */
-
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
@@ -331,18 +326,23 @@ getanswer (const querybuf *answer, int anslen, const char *qname, int qtype)
 			buflen -= n;
 			continue;
 		}
-		if (type != qtype) {
-			/* Log a low priority message if we get an unexpected
-			 * record, but skip it if we are using DNSSEC since it
-			 * uses many different types in responses that do not
-			 * match QTYPE.
+		if ((type == T_SIG) || (type == T_KEY) || (type == T_NXT)) {
+			/* We don't support DNSSEC yet.  For now, ignore
+			 * the record and send a low priority message
+			 * to syslog.
 			 */
-			if ((_res.options & RES_USE_DNSSEC) == 0) {
-				syslog(LOG_NOTICE|LOG_AUTH,
+			syslog(LOG_DEBUG|LOG_AUTH,
 	       "gethostby*.getanswer: asked for \"%s %s %s\", got type \"%s\"",
-					qname, p_class(C_IN), p_type(qtype),
-					p_type(type));
-			}
+			       qname, p_class(C_IN), p_type(qtype),
+			       p_type(type));
+			cp += n;
+			continue;
+		}
+		if (type != qtype) {
+			syslog(LOG_NOTICE|LOG_AUTH,
+	       "gethostby*.getanswer: asked for \"%s %s %s\", got type \"%s\"",
+			       qname, p_class(C_IN), p_type(qtype),
+			       p_type(type));
 			cp += n;
 			continue;		/* XXX - had_error++ ? */
 		}
@@ -621,7 +621,7 @@ gethostbyname2(name, af)
 	buf.buf = origbuf = (querybuf *) alloca (1024);
 
 	if ((n = __libc_res_nsearch(&_res, name, C_IN, type, buf.buf->buf, 1024,
-				    &buf.ptr, NULL, NULL, NULL, NULL)) < 0) {
+				    &buf.ptr, NULL, NULL, NULL)) < 0) {
 		if (buf.buf != origbuf)
 			free (buf.buf);
 		Dprintf("res_nsearch failed (%d)\n", n);
@@ -667,8 +667,8 @@ gethostbyaddr(addr, len, af)
 		return (NULL);
 	}
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
-	    (!memcmp(uaddr, mapped, sizeof mapped) ||
-	     !memcmp(uaddr, tunnelled, sizeof tunnelled))) {
+	    (!bcmp(uaddr, mapped, sizeof mapped) ||
+	     !bcmp(uaddr, tunnelled, sizeof tunnelled))) {
 		/* Unmap. */
 		addr += sizeof mapped;
 		uaddr += sizeof mapped;
@@ -716,12 +716,12 @@ gethostbyaddr(addr, len, af)
 	buf.buf = orig_buf = (querybuf *) alloca (1024);
 
 	n = __libc_res_nquery(&_res, qbuf, C_IN, T_PTR, buf.buf->buf, 1024,
-			      &buf.ptr, NULL, NULL, NULL, NULL);
+			      &buf.ptr, NULL, NULL, NULL);
 	if (n < 0 && af == AF_INET6 && (_res.options & RES_NOIP6DOTINT) == 0) {
 		strcpy(qp, "ip6.int");
 		n = __libc_res_nquery(&_res, qbuf, C_IN, T_PTR, buf.buf->buf,
 				      buf.buf != orig_buf ? MAXPACKET : 1024,
-				      &buf.ptr, NULL, NULL, NULL, NULL);
+				      &buf.ptr, NULL, NULL, NULL);
 	}
 	if (n < 0) {
 		if (buf.buf != orig_buf)
@@ -917,7 +917,7 @@ _gethtbyaddr(addr, len, af)
 
 	_sethtent(0);
 	while ((p = _gethtent()))
-		if (p->h_addrtype == af && !memcmp(p->h_addr, addr, len))
+		if (p->h_addrtype == af && !bcmp(p->h_addr, addr, len))
 			break;
 	_endhtent();
 	return (p);

@@ -1,4 +1,4 @@
-# Copyright (C) 1997-2015 Free Software Foundation, Inc.
+# Copyright (C) 1997-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,6 @@
 #	Makefile for iconv data and code.
 #
 subdir	:= iconvdata
-
-include ../Makeconfig
 
 # Names of all the shared objects which implement the transformations.
 modules	:= ISO8859-1 ISO8859-2 ISO8859-3 ISO8859-4 ISO8859-5		 \
@@ -65,6 +63,8 @@ modules	:= ISO8859-1 ISO8859-2 ISO8859-3 ISO8859-4 ISO8859-5		 \
 
 modules.so := $(addsuffix .so, $(modules))
 
+include ../Makeconfig
+
 ifeq (yes,$(build-shared))
 tests = bug-iconv1 bug-iconv2 tst-loading tst-e2big tst-iconv4 bug-iconv4 \
 	tst-iconv6 bug-iconv5 bug-iconv6 tst-iconv7 bug-iconv8 bug-iconv9
@@ -73,7 +73,13 @@ tests += bug-iconv3
 endif
 
 test-srcs := tst-table-from tst-table-to
+
+bug-iconv6-ENV = LOCPATH=$(common-objpfx)localedata
+tst-iconv7-ENV = LOCPATH=$(common-objpfx)localedata
 endif
+
+# No code here is in libc.so.
+CPPFLAGS += -DNOT_IN_libc
 
 libJIS-routines := jis0201 jis0208 jis0212
 libKSC-routines := ksc5601
@@ -171,9 +177,9 @@ gen-special-modules := iso8859-7jp
 generated-modules := $(gen-8bit-modules) $(gen-8bit-gap-modules) \
 		     $(gen-special-modules)
 
-generated += $(generated-modules:=.h) $(generated-modules:=.stmp) \
-	     iconv-test.out iconv-rules tst-loading.mtrace	 \
-	     mtrace-tst-loading.out tst-tables.out iconv-test.xxx
+generated = $(generated-modules:=.h) $(generated-modules:=.stmp) \
+	    iconv-test.out iconv-rules tst-loading.mtrace	 \
+	    mtrace-tst-loading tst-tables.out iconv-test.xxx
 ifdef objpfx
 generated += gconv-modules
 endif
@@ -196,7 +202,7 @@ touch $@
 endef
 
 # The headers must be generated before the compilation.
-before-compile += $(addprefix $(objpfx),$(generated-modules:=.h))
+before-compile = $(addprefix $(objpfx),$(generated-modules:=.h))
 
 ifndef avoid-generated
 $(objpfx)iconv-rules: Makefile
@@ -208,7 +214,6 @@ $(objpfx)iconv-rules: Makefile
 	$(AWK) 'NR == 1 { \
 		  for (i = 1; i <= NF; i++) { \
 		    printf "%s-routines := %s\n", $$i, tolower($$i); \
-		    printf "libof-%s := iconvdata\n", tolower($$i); \
 		    printf "%s-map := gconv.map\n", $$i; \
 		  } \
 		}; \
@@ -249,8 +254,8 @@ ifeq (no,$(cross-compiling))
 # Update the $(prefix)/lib/gconv/gconv-modules.cache file. This is necessary
 # if this libc has more gconv modules than the previously installed one.
 	if test -f "$(inst_gconvdir)/gconv-modules.cache"; then \
-	   LC_ALL=C \
-	   $(rtld-prefix) \
+	   LC_ALL=C LANGUAGE=C \
+	   $(common-objpfx)elf/ld.so --library-path $(rpath-link) \
 	   $(common-objpfx)iconv/iconvconfig \
 	     $(addprefix --prefix=,$(install_root)); \
 	fi
@@ -260,28 +265,20 @@ endif
 
 endif # build-shared = yes
 
-ifeq ($(run-built-tests),yes)
-ifeq (yes,$(build-shared))
-tests-special += $(objpfx)iconv-test.out $(objpfx)tst-tables.out
-ifneq (no,$(PERL))
-tests-special += $(objpfx)mtrace-tst-loading.out
-endif
-endif
-endif
-
 include ../Rules
 
-# Set libof-* for each routine.
-cpp-srcs-left := $(modules) $(generated-modules) $(libJIS-routines) \
-		 $(libKSC-routines) $(libGB-routines) $(libCNS-routines) \
-		 $(libISOIR165-routines) $(libJISX0213-routines)
-lib := iconvdata
-include $(patsubst %,$(..)cppflags-iterator.mk,$(cpp-srcs-left))
+ifeq ($(run-built-tests),yes)
+ifeq (yes,$(build-shared))
+tests: $(objpfx)iconv-test.out $(objpfx)tst-tables.out
+ifneq (no,$(PERL))
+tests: $(objpfx)mtrace-tst-loading
+endif
+endif
+endif
 
 tst-loading-ENV = MALLOC_TRACE=$(objpfx)tst-loading.mtrace
-$(objpfx)mtrace-tst-loading.out: $(objpfx)tst-loading.out
-	$(common-objpfx)malloc/mtrace $(objpfx)tst-loading.mtrace > $@; \
-	$(evaluate-test)
+$(objpfx)mtrace-tst-loading: $(objpfx)tst-loading.out
+	$(common-objpfx)malloc/mtrace $(objpfx)tst-loading.mtrace > $@
 
 $(objpfx)bug-iconv1.out: $(objpfx)gconv-modules \
 			 $(addprefix $(objpfx),$(modules.so))
@@ -302,17 +299,13 @@ $(objpfx)tst-iconv7.out: $(objpfx)gconv-modules \
 $(objpfx)iconv-test.out: run-iconv-test.sh $(objpfx)gconv-modules \
 			 $(addprefix $(objpfx),$(modules.so)) \
 			 $(common-objdir)/iconv/iconv_prog TESTS
-	iconv_modules="$(modules)" \
-	$(SHELL) $< $(common-objdir) '$(test-wrapper-env)' \
-		 '$(run-program-env)' > $@; \
-	$(evaluate-test)
+	$(SHELL) $< $(common-objdir) '$(test-wrapper)' > $@
 
 $(objpfx)tst-tables.out: tst-tables.sh $(objpfx)gconv-modules \
 			 $(addprefix $(objpfx),$(modules.so)) \
 			 $(objpfx)tst-table-from $(objpfx)tst-table-to
 	$(SHELL) $< $(common-objpfx) $(common-objpfx)iconvdata/ \
-		'$(test-program-prefix)' > $@; \
-	$(evaluate-test)
+		'$(test-program-prefix)' > $@
 
 do-tests-clean common-mostlyclean: tst-tables-clean
 

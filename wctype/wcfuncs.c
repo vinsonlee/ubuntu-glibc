@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,7 +38,6 @@
 
 #undef iswalnum
 func (alnum, __ISwalnum)
-libc_hidden_def (__iswalnum)
 libc_hidden_weak (iswalnum)
 #undef iswalpha
 func (alpha, __ISwalpha)
@@ -52,7 +51,6 @@ func (digit, __ISwdigit)
 libc_hidden_weak (iswdigit)
 #undef iswlower
 func (lower, __ISwlower)
-libc_hidden_def (__iswlower)
 libc_hidden_weak (iswlower)
 #undef iswgraph
 func (graph, __ISwgraph)
@@ -71,26 +69,22 @@ libc_hidden_weak (iswxdigit)
 
 #undef towlower
 wint_t
-__towlower (wc)
+towlower (wc)
      wint_t wc;
 {
   size_t i = _NL_CURRENT_WORD (LC_CTYPE, _NL_CTYPE_MAP_OFFSET) + __TOW_tolower;
   const char *desc = _NL_CURRENT (LC_CTYPE, i);
   return wctrans_table_lookup (desc, wc);
 }
-libc_hidden_def (__towlower)
-weak_alias (__towlower, towlower)
-libc_hidden_weak (towlower)
+libc_hidden_def (towlower)
 
 #undef towupper
 wint_t
-__towupper (wc)
+towupper (wc)
      wint_t wc;
 {
   size_t i = _NL_CURRENT_WORD (LC_CTYPE, _NL_CTYPE_MAP_OFFSET) + __TOW_toupper;
   const char *desc = _NL_CURRENT (LC_CTYPE, i);
   return wctrans_table_lookup (desc, wc);
 }
-libc_hidden_def (__towupper)
-weak_alias (__towupper, towupper)
-libc_hidden_weak (towupper)
+libc_hidden_def (towupper)

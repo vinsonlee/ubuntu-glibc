@@ -1,5 +1,5 @@
 /* Optimized strchr implementation for PowerPC32/POWER7 using cmpb insn.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Luis Machado <luisgpm@br.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -35,8 +35,8 @@ ENTRY (strchr)
 	beq	cr7,L(null_match)
 
 	/* Replicate byte to word.  */
-	insrwi	r4,r4,8,16
-	insrwi	r4,r4,16,0
+	insrdi	r4,r4,8,48
+	insrdi	r4,r4,16,32
 
 	/* Now r4 has a word of c bytes and r0 has
 	   a word of null bytes.  */

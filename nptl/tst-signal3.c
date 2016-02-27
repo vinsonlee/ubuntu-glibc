@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -25,14 +25,13 @@
 #include <unistd.h>
 
 
-#ifdef SIGRTMIN
-
-/* Number of different signals to use.  Also is the number of threads.  */
-# define N 10
+/* Number of different signalss to use.  Also is the number of
+   threads.  */
+#define N 10
 /* Maximum number of threads in flight at any one time.  */
-# define INFLIGHT 5
+#define INFLIGHT 5
 /* Number of signals sent in total.  */
-# define ROUNDS 10000
+#define ROUNDS 10000
 
 
 static int received[N][N];
@@ -256,11 +255,6 @@ do_test (void)
   return result;
 }
 
-# define TIMEOUT 10
-# define TEST_FUNCTION do_test ()
-
-#else
-# define TEST_FUNCTION 0
-#endif
-
+#define TIMEOUT 10
+#define TEST_FUNCTION do_test ()
 #include "../test-skeleton.c"

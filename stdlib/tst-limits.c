@@ -16,8 +16,8 @@ bitval (int bits)
 }
 
 
-static int
-do_test (void)
+int
+main (void)
 {
   int result = 0;
 
@@ -58,7 +58,7 @@ do_test (void)
   /* Values from POSIX and Unix.  */
 #ifdef PAGESIZE
   TEST (PAGESIZE, "d", getpagesize ());
-#elif defined (PAGE_SIZE)
+#elif PAGE_SIZE
   TEST (PAGE_SIZE, "d", getpagesize ());
 #endif
 
@@ -67,6 +67,3 @@ do_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

@@ -7,8 +7,8 @@
 
 #define BUFSIZE 10000
 
-static int
-do_test (void)
+int
+main (int argc, char *argv[])
 {
   char inbuf[BUFSIZE];
   wchar_t outbuf[BUFSIZE];
@@ -51,6 +51,3 @@ do_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

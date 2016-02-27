@@ -1,5 +1,5 @@
 /* Initialization in nss_files module.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,43 +21,47 @@
 #include <string.h>
 #include <nscd/nscd.h>
 
-#define PWD_FILENAME "/etc/passwd"
-define_traced_file (pwd, PWD_FILENAME);
 
-#define GRP_FILENAME "/etc/group"
-define_traced_file (grp, GRP_FILENAME);
+#define TF(id, filename, ...)					\
+static union							\
+{								\
+  struct traced_file file;					\
+  char buf[sizeof (struct traced_file) + sizeof (filename)];	\
+} id##_traced_file =						\
+  {								\
+    .file =							\
+    {								\
+      __VA_ARGS__						\
+    }								\
+  }
 
-#define HST_FILENAME "/etc/hosts"
-define_traced_file (hst, HST_FILENAME);
+TF (pwd, "/etc/passwd");
+TF (grp, "/etc/group");
+TF (hst, "/etc/hosts");
+TF (resolv, "/etc/resolv.conf", .call_res_init = 1);
+TF (serv, "/etc/services");
+TF (netgr, "/etc/netgroup");
 
-#define RESOLV_FILENAME "/etc/resolv.conf"
-define_traced_file (resolv, RESOLV_FILENAME);
-
-#define SERV_FILENAME "/etc/services"
-define_traced_file (serv, SERV_FILENAME);
-
-#define NETGR_FILENAME "/etc/netgroup"
-define_traced_file (netgr, NETGR_FILENAME);
 
 void
 _nss_files_init (void (*cb) (size_t, struct traced_file *))
 {
-  init_traced_file (&pwd_traced_file.file, PWD_FILENAME, 0);
+  strcpy (pwd_traced_file.file.fname, "/etc/passwd");
   cb (pwddb, &pwd_traced_file.file);
 
-  init_traced_file (&grp_traced_file.file, GRP_FILENAME, 0);
+  strcpy (grp_traced_file.file.fname, "/etc/group");
   cb (grpdb, &grp_traced_file.file);
 
-  init_traced_file (&hst_traced_file.file, HST_FILENAME, 0);
+  strcpy (hst_traced_file.file.fname, "/etc/hosts");
   cb (hstdb, &hst_traced_file.file);
 
-  init_traced_file (&resolv_traced_file.file, RESOLV_FILENAME, 1);
+  strcpy (resolv_traced_file.file.fname, "/etc/resolv.conf");
   cb (hstdb, &resolv_traced_file.file);
 
-  init_traced_file (&serv_traced_file.file, SERV_FILENAME, 0);
+  strcpy (serv_traced_file.file.fname, "/etc/services");
   cb (servdb, &serv_traced_file.file);
 
-  init_traced_file (&netgr_traced_file.file, NETGR_FILENAME, 0);
+  strcpy (netgr_traced_file.file.fname, "/etc/netgroup");
   cb (netgrdb, &netgr_traced_file.file);
 }
 
