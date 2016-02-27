@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2015 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ endif # $(AUTOCONF) = no
 # These are the targets that are made by making them in each subdirectory.
 +subdir_targets	:= subdir_lib objects objs others subdir_mostlyclean	\
 		   subdir_clean subdir_distclean subdir_realclean	\
-		   tests xtests						\
+		   tests xtests subdir_lint.out				\
 		   subdir_update-abi subdir_check-abi			\
 		   subdir_echo-headers					\
 		   subdir_install					\
@@ -105,9 +105,9 @@ install-symbolic-link: subdir_install
 	rm -f $(symbolic-link-list)
 
 install:
-	-test ! -x $(elf-objpfx)ldconfig || LC_ALL=C \
-	  $(elf-objpfx)ldconfig $(addprefix -r ,$(install_root)) \
-				$(slibdir) $(libdir)
+	-test ! -x $(common-objpfx)elf/ldconfig || LC_ALL=C LANGUAGE=C \
+	  $(common-objpfx)elf/ldconfig $(addprefix -r ,$(install_root)) \
+				       $(slibdir) $(libdir)
 ifneq (no,$(PERL))
 ifeq (/usr,$(prefix))
 ifeq (,$(install_root))
@@ -250,20 +250,18 @@ mostlyclean: parent-mostlyclean
 tests-clean:
 	@$(MAKE) subdir_testclean no_deps=t
 
-tests-special += $(objpfx)c++-types-check.out $(objpfx)check-local-headers.out
+tests: $(objpfx)c++-types-check.out $(objpfx)check-local-headers.out
 ifneq ($(CXX),no)
 
 vpath c++-types.data $(+sysdep_dirs)
 
 $(objpfx)c++-types-check.out: c++-types.data scripts/check-c++-types.sh
-	scripts/check-c++-types.sh $< $(CXX) $(filter-out -std=gnu99 -Wstrict-prototypes,$(CFLAGS)) $(CPPFLAGS) > $@; \
-	$(evaluate-test)
+	scripts/check-c++-types.sh $< $(CXX) $(filter-out -std=gnu99 -Wstrict-prototypes,$(CFLAGS)) $(CPPFLAGS) > $@
 endif
 
 $(objpfx)check-local-headers.out: scripts/check-local-headers.sh
 	AWK='$(AWK)' scripts/check-local-headers.sh \
-	  "$(includedir)" "$(objpfx)" > $@; \
-	$(evaluate-test)
+	  "$(includedir)" "$(objpfx)" > $@
 
 ifneq ($(PERL),no)
 installed-headers = argp/argp.h assert/assert.h catgets/nl_types.h \
@@ -284,7 +282,7 @@ installed-headers = argp/argp.h assert/assert.h catgets/nl_types.h \
 		    malloc/obstack.h malloc/mcheck.h math/math.h \
 		    math/complex.h math/fenv.h math/tgmath.h misc/sys/uio.h \
 		    $(wildcard nis/rpcsvc/*.h) nptl_db/thread_db.h \
-		    sysdeps/nptl/pthread.h sysdeps/pthread/semaphore.h \
+		    nptl/sysdeps/pthread/pthread.h nptl/semaphore.h \
 		    nss/nss.h posix/sys/utsname.h posix/sys/times.h \
 		    posix/sys/wait.h posix/sys/types.h posix/unistd.h \
 		    posix/glob.h posix/regex.h posix/wordexp.h posix/fnmatch.h\
@@ -310,33 +308,10 @@ installed-headers = argp/argp.h assert/assert.h catgets/nl_types.h \
 		    time/sys/time.h time/sys/timeb.h wcsmbs/wchar.h \
 		    wctype/wctype.h
 
-tests-special += $(objpfx)begin-end-check.out
+tests: $(objpfx)begin-end-check.out
 $(objpfx)begin-end-check.out: scripts/begin-end-check.pl
-	$(PERL) scripts/begin-end-check.pl $(installed-headers) > $@; \
-	$(evaluate-test)
+	$(PERL) scripts/begin-end-check.pl $(installed-headers) > $@
 endif
-
-define summarize-tests
-@egrep -v '^(PASS|XFAIL):' $(objpfx)$1 || true
-@echo "Summary of test results$2:"
-@sed 's/:.*//' < $(objpfx)$1 | sort | uniq -c
-@! egrep -q -v '^(X?PASS|XFAIL|UNSUPPORTED):' $(objpfx)$1
-endef
-
-tests-special-notdir = $(patsubst $(objpfx)%, %, $(tests-special))
-tests: $(tests-special)
-	$(..)scripts/merge-test-results.sh -s $(objpfx) "" \
-	  $(sort $(tests-special-notdir:.out=)) \
-	  > $(objpfx)subdir-tests.sum
-	$(..)scripts/merge-test-results.sh -t $(objpfx) subdir-tests.sum \
-	  $(sort $(subdirs) .) \
-	  > $(objpfx)tests.sum
-	$(call summarize-tests,tests.sum)
-xtests:
-	$(..)scripts/merge-test-results.sh -t $(objpfx) subdir-xtests.sum \
-	  $(sort $(subdirs)) \
-	  > $(objpfx)xtests.sum
-	$(call summarize-tests,xtests.sum, for extra tests)
 
 # The realclean target is just like distclean for the parent, but we want
 # the subdirs to know the difference in case they care.

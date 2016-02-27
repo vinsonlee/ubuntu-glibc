@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2015 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,8 +20,6 @@
 #
 subdir	:= inet
 
-include ../Makeconfig
-
 headers	:= netinet/ether.h netinet/in.h netinet/in_systm.h \
 	   netinet/if_ether.h netinet/igmp.h \
 	   netinet/tcp.h netinet/ip.h $(wildcard arpa/*.h protocols/*.h) \
@@ -37,6 +35,8 @@ routines := htonl htons		\
 	    getproto getproto_r getprtent getprtent_r getprtname getprtname_r \
 	    getsrvbynm getsrvbynm_r getsrvbypt getsrvbypt_r getservent \
 	    getservent_r	\
+	    getrpcent getrpcbyname getrpcbynumber \
+	    getrpcent_r getrpcbyname_r getrpcbynumber_r \
 	    ether_aton ether_aton_r ether_hton ether_line \
 	    ether_ntoa ether_ntoa_r ether_ntoh \
 	    rcmd rexec ruserpass \

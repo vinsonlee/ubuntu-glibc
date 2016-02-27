@@ -1,5 +1,4 @@
-/* uname -- Report basic information about the system.  Generic version.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,8 +20,8 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
-/* This file defines UNAME_* to string constants.  */
-#include <uname-values.h>
+/* This file is created by the configuration process, and defines UNAME_*.  */
+#include <config-name.h>
 
 /* Put information about the system in NAME.  */
 int

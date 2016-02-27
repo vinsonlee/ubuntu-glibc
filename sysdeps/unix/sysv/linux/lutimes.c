@@ -1,6 +1,6 @@
 /* Change access and/or modification date of file.  Do not follow symbolic
    links.
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sysdep.h>
+#include <kernel-features.h>
 
 
 int

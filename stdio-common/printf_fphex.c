@@ -1,5 +1,5 @@
 /* Print floating point number in hexadecimal notation according to ISO C99.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -165,7 +165,7 @@ __printf_fphex (FILE *fp,
       fpnum.ldbl = *(const long double *) args[0];
 
       /* Check for special values: not a number or infinity.  */
-      if (isnan (fpnum.ldbl))
+      if (__isnanl (fpnum.ldbl))
 	{
 	  if (isupper (info->spec))
 	    {
@@ -202,7 +202,7 @@ __printf_fphex (FILE *fp,
       fpnum.dbl.d = *(const double *) args[0];
 
       /* Check for special values: not a number or infinity.  */
-      if (isnan (fpnum.dbl.d))
+      if (__isnan (fpnum.dbl.d))
 	{
 	  negative = fpnum.dbl.ieee.negative != 0;
 	  if (isupper (info->spec))

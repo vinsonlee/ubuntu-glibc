@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,27 +17,15 @@
 
 #include <wchar.h>
 
-#if IS_IN (libc)
-# undef libc_hidden_weak
-# define libc_hidden_weak(name)
-
-# undef weak_alias
-# undef libc_hidden_def
-
+#ifndef NOT_IN_libc
 # ifdef SHARED
-#  define libc_hidden_def(name)  \
-    __hidden_ver1 (__wcschr_ppc, __GI_wcschr, __wcschr_ppc); \
-    strong_alias (__wcschr_ppc, __wcschr_ppc_1); \
-    __hidden_ver1 (__wcschr_ppc_1, __GI___wcschr, __wcschr_ppc_1);
-#  define weak_alias(name,alias)
-# else
-#  define weak_alias(name, alias) \
-    _weak_alias(__wcschr_ppc, __wcschr)
-#  define libc_hidden_def(name)
-# endif /* SHARED  */
+#   undef libc_hidden_def
+#   define libc_hidden_def(name)  \
+    __hidden_ver1 (__wcschr_ppc, __GI_wcschr, __wcschr_ppc);
+# endif
+# define WCSCHR  __wcschr_ppc
 #endif
 
 extern __typeof (wcschr) __wcschr_ppc;
 
-#define WCSCHR  __wcschr_ppc
 #include <wcsmbs/wcschr.c>

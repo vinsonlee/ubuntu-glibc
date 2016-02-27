@@ -1,6 +1,6 @@
 /* Include file for internal GNU MP types and definitions.
 
-Copyright (C) 1991-2015 Free Software Foundation, Inc.
+Copyright (C) 1991-2014 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -47,7 +47,7 @@ along with the GNU MP Library; see the file COPYING.LIB.  If not, see
 #endif
 #endif
 
-#if ! defined (HAVE_ALLOCA) || defined (USE_STACK_ALLOC)
+#if ! defined (HAVE_ALLOCA) || USE_STACK_ALLOC
 #include "stack-alloc.h"
 #else
 #define TMP_DECL(m)
@@ -64,6 +64,7 @@ along with the GNU MP Library; see the file COPYING.LIB.  If not, see
 #define inline			/* Empty */
 #endif
 
+#define ABS(x) (x >= 0 ? x : -x)
 #ifndef MIN
 #define MIN(l,o) ((l) < (o) ? (l) : (o))
 #endif
@@ -73,6 +74,7 @@ along with the GNU MP Library; see the file COPYING.LIB.  If not, see
 
 /* Field access macros.  */
 #define SIZ(x) ((x)->_mp_size)
+#define ABSIZ(x) ABS (SIZ (x))
 #define PTR(x) ((x)->_mp_d)
 #define EXP(x) ((x)->_mp_exp)
 #define PREC(x) ((x)->_mp_prec)

@@ -1,5 +1,5 @@
 /* Private header for thread debug library
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@
 #include "thread_db.h"
 #include "../nptl/pthreadP.h"  	/* This is for *_BITMASK only.  */
 #include <list.h>
-#include <gnu/lib-names.h>
 
 /* Indeces for the symbol names.  */
 enum
@@ -140,11 +139,11 @@ ta_ok (const td_thragent_t *ta)
 }
 
 
-/* Internal wrappers around ps_pglobal_lookup.  */
-extern ps_err_e td_mod_lookup (struct ps_prochandle *ps, const char *modname,
-			       int idx, psaddr_t *sym_addr) attribute_hidden;
-#define td_lookup(ps, idx, sym_addr) \
-  td_mod_lookup ((ps), LIBPTHREAD_SO, (idx), (sym_addr))
+/* Internal wrapper around ps_pglobal_lookup.  */
+extern ps_err_e td_lookup (struct ps_prochandle *ps,
+			   int idx, psaddr_t *sym_addr) attribute_hidden;
+
+
 
 
 /* Store in psaddr_t VAR the address of inferior's symbol NAME.  */

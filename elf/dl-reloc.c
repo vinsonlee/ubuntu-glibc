@@ -1,5 +1,5 @@
 /* Relocate a shared object and resolve its references to other loaded objects.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include <sys/types.h>
 #include <_itoa.h>
 #include "dynamic-link.h"
-#include <libc-internal.h>
 
 /* Statistics function.  */
 #ifdef SHARED
@@ -75,9 +74,9 @@ _dl_try_allocate_static_tls (struct link_map *map)
   map->l_tls_offset = GL(dl_tls_static_used) = offset;
 #elif TLS_DTV_AT_TP
   /* dl_tls_static_used includes the TCB at the beginning.  */
-  size_t offset = (ALIGN_UP(GL(dl_tls_static_used)
-			    - map->l_tls_firstbyte_offset,
-			    map->l_tls_align)
+  size_t offset = (((GL(dl_tls_static_used)
+		     - map->l_tls_firstbyte_offset
+		     + map->l_tls_align - 1) & -map->l_tls_align)
 		   + map->l_tls_firstbyte_offset);
   size_t used = offset + map->l_tls_blocksize;
 
@@ -137,6 +136,12 @@ _dl_nothread_init_static_tls (struct link_map *map)
 # error "Either TLS_TCB_AT_TP or TLS_DTV_AT_TP must be defined"
 #endif
 
+  /* Fill in the DTV slot so that a later LD/GD access will find it.  */
+  dtv_t *dtv = THREAD_DTV ();
+  assert (map->l_tls_modid <= dtv[-1].counter);
+  dtv[map->l_tls_modid].pointer.val = dest;
+  dtv[map->l_tls_modid].pointer.is_static = true;
+
   /* Initialize the memory.  */
   memset (__mempcpy (dest, map->l_tls_initimage, map->l_tls_initimage_size),
 	  '\0', map->l_tls_blocksize - map->l_tls_initimage_size);
@@ -178,14 +183,14 @@ _dl_relocate_object (struct link_map *l, struct r_scope_elem *scope[],
       && __builtin_expect (l->l_info[DT_BIND_NOW] != NULL, 0))
     lazy = 0;
 
-  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_RELOC))
+  if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_RELOC, 0))
     _dl_debug_printf ("\nrelocation processing: %s%s\n",
 		      DSO_FILENAME (l->l_name), lazy ? " (lazy)" : "");
 
   /* DT_TEXTREL is now in level 2 and might phase out at some time.
      But we rewrite the DT_FLAGS entry to a DT_TEXTREL entry to make
      testing easier and therefore it will be available at all time.  */
-  if (__glibc_unlikely (l->l_info[DT_TEXTREL] != NULL))
+  if (__builtin_expect (l->l_info[DT_TEXTREL] != NULL, 0))
     {
       /* Bletch.  We must make read-only segments writable
 	 long enough to relocate them.  */
@@ -196,10 +201,11 @@ _dl_relocate_object (struct link_map *l, struct r_scope_elem *scope[],
 	    struct textrels *newp;
 
 	    newp = (struct textrels *) alloca (sizeof (*newp));
-	    newp->len = ALIGN_UP (ph->p_vaddr + ph->p_memsz, GLRO(dl_pagesize))
-			- ALIGN_DOWN (ph->p_vaddr, GLRO(dl_pagesize));
-	    newp->start = PTR_ALIGN_DOWN (ph->p_vaddr, GLRO(dl_pagesize))
-			  + (caddr_t) l->l_addr;
+	    newp->len = (((ph->p_vaddr + ph->p_memsz + GLRO(dl_pagesize) - 1)
+			  & ~(GLRO(dl_pagesize) - 1))
+			 - (ph->p_vaddr & ~(GLRO(dl_pagesize) - 1)));
+	    newp->start = ((ph->p_vaddr & ~(GLRO(dl_pagesize) - 1))
+			   + (caddr_t) l->l_addr);
 
 	    if (__mprotect (newp->start, newp->len, PROT_READ|PROT_WRITE) < 0)
 	      {
@@ -258,24 +264,28 @@ _dl_relocate_object (struct link_map *l, struct r_scope_elem *scope[],
     ELF_DYNAMIC_RELOCATE (l, lazy, consider_profiling, skip_ifunc);
 
 #ifndef PROF
-    if (__glibc_unlikely (consider_profiling)
-	&& l->l_info[DT_PLTRELSZ] != NULL)
+    if (__builtin_expect (consider_profiling, 0))
       {
 	/* Allocate the array which will contain the already found
 	   relocations.  If the shared object lacks a PLT (for example
 	   if it only contains lead function) the l_info[DT_PLTRELSZ]
 	   will be NULL.  */
-	size_t sizeofrel = l->l_info[DT_PLTREL]->d_un.d_val == DT_RELA
-			   ? sizeof (ElfW(Rela))
-			   : sizeof (ElfW(Rel));
-	size_t relcount = l->l_info[DT_PLTRELSZ]->d_un.d_val / sizeofrel;
-	l->l_reloc_result = calloc (sizeof (l->l_reloc_result[0]), relcount);
+	if (l->l_info[DT_PLTRELSZ] == NULL)
+	  {
+	    errstring = N_("%s: no PLTREL found in object %s\n");
+	  fatal:
+	    _dl_fatal_printf (errstring,
+			      RTLD_PROGNAME,
+			      l->l_name);
+	  }
 
+	l->l_reloc_result = calloc (sizeof (l->l_reloc_result[0]),
+				    l->l_info[DT_PLTRELSZ]->d_un.d_val);
 	if (l->l_reloc_result == NULL)
 	  {
 	    errstring = N_("\
 %s: out of memory to store relocation results for %s\n");
-	    _dl_fatal_printf (errstring, RTLD_PROGNAME, l->l_name);
+	    goto fatal;
 	  }
       }
 #endif
@@ -310,13 +320,11 @@ _dl_relocate_object (struct link_map *l, struct r_scope_elem *scope[],
 void internal_function
 _dl_protect_relro (struct link_map *l)
 {
-  ElfW(Addr) start = ALIGN_DOWN((l->l_addr
-				 + l->l_relro_addr),
-				GLRO(dl_pagesize));
-  ElfW(Addr) end = ALIGN_DOWN((l->l_addr
-			       + l->l_relro_addr
-			       + l->l_relro_size),
-			      GLRO(dl_pagesize));
+  ElfW(Addr) start = ((l->l_addr + l->l_relro_addr)
+		      & ~(GLRO(dl_pagesize) - 1));
+  ElfW(Addr) end = ((l->l_addr + l->l_relro_addr + l->l_relro_size)
+		    & ~(GLRO(dl_pagesize) - 1));
+
   if (start != end
       && __mprotect ((void *) start, end - start, PROT_READ) < 0)
     {

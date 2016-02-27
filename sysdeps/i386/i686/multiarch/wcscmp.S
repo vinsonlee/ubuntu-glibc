@@ -1,6 +1,6 @@
 /* Multiple versions of wcscmp
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -24,10 +24,10 @@
 /* Define multiple versions only for the definition in libc and for the
    DSO.  In static binaries, we need wcscmp before the initialization
    happened.  */
-#if IS_IN (libc)
+#ifndef  NOT_IN_libc
 	.text
-ENTRY(__wcscmp)
-	.type	__wcscmp, @gnu_indirect_function
+ENTRY(wcscmp)
+	.type	wcscmp, @gnu_indirect_function
 	pushl	%ebx
 	cfi_adjust_cfa_offset (4)
 	cfi_rel_offset (ebx, 0)
@@ -43,6 +43,5 @@ ENTRY(__wcscmp)
 	cfi_adjust_cfa_offset (-4);
 	cfi_restore (ebx)
 	ret
-END(__wcscmp)
-weak_alias (__wcscmp, wcscmp)
+END(wcscmp)
 #endif

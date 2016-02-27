@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,17 @@
 int
 __libc_tcdrain (int fd)
 {
+  if (SINGLE_THREAD_P)
+    /* With an argument of 1, TCSBRK for output to be drain.  */
+    return INLINE_SYSCALL (ioctl, 3, fd, TCSBRK, 1);
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
   /* With an argument of 1, TCSBRK for output to be drain.  */
-  return SYSCALL_CANCEL (ioctl, fd, TCSBRK, 1);
+  int result = INLINE_SYSCALL (ioctl, 3, fd, TCSBRK, 1);
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
 weak_alias (__libc_tcdrain, tcdrain)

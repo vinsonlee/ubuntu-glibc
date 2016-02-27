@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2015 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,23 +20,18 @@
 #
 subdir		:= dirent
 
-include ../Makeconfig
-
 headers		:= dirent.h bits/dirent.h
 routines	:= opendir closedir readdir readdir_r rewinddir \
 		   seekdir telldir scandir alphasort versionsort \
 		   getdents getdents64 dirfd readdir64 readdir64_r scandir64 \
 		   alphasort64 versionsort64 fdopendir \
-		   scandirat scandirat64 \
-		   scandir-cancel scandir-tail scandir64-tail
+		   scandirat scandirat64
 
 tests	   := list tst-seekdir opendir-tst1 bug-readdir1 tst-fdopendir \
-	      tst-fdopendir2 tst-scandir tst-scandir64
+	      tst-fdopendir2
 
 CFLAGS-scandir.c = $(uses-callbacks)
 CFLAGS-scandir64.c = $(uses-callbacks)
-CFLAGS-scandir-tail.c = $(uses-callbacks)
-CFLAGS-scandir64-tail.c = $(uses-callbacks)
 
 include ../Rules
 

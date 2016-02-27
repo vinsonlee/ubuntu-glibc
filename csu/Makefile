@@ -1,5 +1,5 @@
 # Makefile for csu code for GNU C library.
-# Copyright (C) 1995-2015 Free Software Foundation, Inc.
+# Copyright (C) 1995-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -24,33 +24,33 @@
 
 subdir := csu
 
-include ../Makeconfig
-
 routines = init-first libc-start $(libc-init) sysdep version check_fds \
 	   libc-tls elf-init dso_handle
 aux	 = errno
 elide-routines.os = libc-tls
 static-only-routines = elf-init
 csu-dummies = $(filter-out $(start-installed-name),crt1.o Mcrt1.o)
-extra-objs = start.o \
+extra-objs = start.o gmon-start.o \
 	     $(start-installed-name) g$(start-installed-name) $(csu-dummies) \
 	     S$(start-installed-name)
 omit-deps = $(patsubst %.o,%,$(start-installed-name) g$(start-installed-name) \
 			     b$(start-installed-name) $(csu-dummies) \
 			     S$(start-installed-name))
 install-lib = $(start-installed-name) g$(start-installed-name) $(csu-dummies)
-generated += version-info.h
-before-compile += $(objpfx)version-info.h
+generated = version-info.h
+before-compile = $(objpfx)version-info.h
 
 tests := tst-empty tst-atomic tst-atomic-long
 tests-static := tst-empty
 
+all: # Make this the default target; it will be defined in Rules.
+
+include ../Makeconfig
+
 ifeq (yes,$(build-shared))
-extra-objs += S$(start-installed-name) gmon-start.os
+extra-objs += S$(start-installed-name)
 install-lib += S$(start-installed-name)
 generated += start.os
-else
-extra-objs += gmon-start.o
 endif
 
 ifneq ($(start-installed-name),$(static-start-installed-name))
@@ -97,17 +97,10 @@ endif
 # The profiling startfile is made by linking together the normal
 # startfile with gmon-start.o, which defines a constructor function
 # to turn on profiling code at startup.
-ifeq (yes,$(build-shared))
-$(addprefix $(objpfx),$(sort g$(start-installed-name) \
-			     g$(static-start-installed-name))): \
-  $(objpfx)g%: $(objpfx)S% $(objpfx)gmon-start.os
-	$(link-relocatable)
-else
 $(addprefix $(objpfx),$(sort g$(start-installed-name) \
 			     g$(static-start-installed-name))): \
   $(objpfx)g%: $(objpfx)% $(objpfx)gmon-start.o
 	$(link-relocatable)
-endif
 
 # These extra files are sometimes expected by system standard linking
 # procedures, but we have nothing for them to do.  So compile empty files.
@@ -140,7 +133,40 @@ all-Banner-files = $(wildcard $(addsuffix /Banner,\
 						 $(sysdeps-srcdirs))))
 $(objpfx)version-info.h: $(common-objpfx)config.make $(all-Banner-files)
 	$(make-target-directory)
-	(files="$(all-Banner-files)";				\
+	(case $(config-os) in \
+	   linux*) version=`(printf '%s\n%s\n' \
+				    '#include <linux/version.h>' \
+				    UTS_RELEASE \
+			     | $(CC) $(CPPFLAGS) -O -E -P - -DNOT_IN_libc=1 | \
+			     sed -e 's/"\([^"]*\)".*/\1/p' -e d) 2>/dev/null`;\
+		   if [ -z "$$version" ]; then \
+		     version=`(printf '%s\n%s\n' \
+				      '#include <linux/version.h>' \
+				       LINUX_VERSION_CODE \
+			       | $(CC) $(CPPFLAGS) -O -E -P - -DNOT_IN_libc=1 \
+			       | sed -n -e '/^[123456789].*/p' \
+			       | awk '{v=$$1; \
+				       printf("%d.%d.%d\n", \
+					      v/65535, v/256%256, v%256)}') \
+				2>/dev/null`; \
+		   fi; \
+		   if [ -z "$$version" ]; then \
+		     if [ -r /proc/version ]; then \
+		       version=`sed 's/.*Linux version \([^ ]*\) .*/>>\1<</' \
+				< /proc/version`; \
+		     else \
+		       version=`uname -r`; \
+		     fi; \
+		   fi; \
+		   os=`uname -s 2> /dev/null`; \
+		   if [ -z "$$os" ]; then \
+		     os=Linux; \
+		   fi; \
+		   printf '"Compiled on a %s %s system on %s.\\n"\n' \
+			  "$$os" "$$version" "`date +%Y-%m-%d`";; \
+	   *) ;; \
+	 esac; \
+	 files="$(all-Banner-files)";				\
 	 if test -n "$$files"; then				\
 	   printf '"Available extensions:\\n"\n';		\
 	   sed -e '/^#/d' -e 's/^[[:space:]]*/	/'		\

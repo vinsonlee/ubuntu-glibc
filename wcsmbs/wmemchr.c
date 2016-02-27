@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1996.
 
@@ -19,7 +19,7 @@
 #include <wchar.h>
 
 wchar_t *
-__wmemchr (s, c, n)
+wmemchr (s, c, n)
      const wchar_t *s;
      wchar_t c;
      size_t n;
@@ -59,6 +59,4 @@ __wmemchr (s, c, n)
 
   return NULL;
 }
-libc_hidden_def (__wmemchr)
-weak_alias (__wmemchr, wmemchr)
-libc_hidden_weak (wmemchr)
+libc_hidden_def (wmemchr)

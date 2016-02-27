@@ -1,5 +1,5 @@
 /* Operating system support for run-time dynamic linker.  Hurd version.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ extern char **_dl_argv;
 extern char **_environ;
 
 int __libc_enable_secure = 0;
-rtld_hidden_data_def (__libc_enable_secure)
+INTVARDEF(__libc_enable_secure)
 int __libc_multiple_libcs = 0;	/* Defining this here avoids the inclusion
 				   of init-first.  */
 /* This variable contains the lowest stack address ever used.  */
@@ -96,9 +96,9 @@ static vm_size_t fmhs;
 static void unfmh(void){
 __vm_deallocate(__mach_task_self(),fmha,fmhs);}
 static void fmh(void) {
-    error_t err;int x;vm_offset_t o;mach_port_t p;
+    error_t err;int x;mach_port_t p;
     vm_address_t a=0x08000000U,max=VM_MAX_ADDRESS;
-    while (!(err=__vm_region(__mach_task_self(),&a,&fmhs,&x,&x,&x,&x,&p,&o))){
+    while (!(err=__vm_region(__mach_task_self(),&a,&fmhs,&x,&x,&x,&x,&p,&x))){
       __mach_port_deallocate(__mach_task_self(),p);
       if (a+fmhs>=0x80000000U){
 	max=a; break;}
@@ -140,7 +140,7 @@ _dl_sysdep_start (void **start_argptr,
       else
 	_dl_hurd_data = (void *) p;
 
-      __libc_enable_secure = _dl_hurd_data->flags & EXEC_SECURE;
+      INTUSE(__libc_enable_secure) = _dl_hurd_data->flags & EXEC_SECURE;
 
       if (_dl_hurd_data->flags & EXEC_STACK_ARGS &&
 	  _dl_hurd_data->user_entry == 0)
@@ -220,7 +220,7 @@ unfmh();			/* XXX */
 	 environment list.
 
 	 We use memmove, since the locations might overlap.  */
-      if (__libc_enable_secure || _dl_skip_args)
+      if (INTUSE(__libc_enable_secure) || _dl_skip_args)
 	{
 	  char **newp;
 

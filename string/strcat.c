@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,14 +16,36 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <string.h>
+#include <memcopy.h>
 
 #undef strcat
 
 /* Append SRC on the end of DEST.  */
 char *
-strcat (char *dest, const char *src)
+strcat (dest, src)
+     char *dest;
+     const char *src;
 {
-  strcpy (dest + strlen (dest), src);
+  char *s1 = dest;
+  const char *s2 = src;
+  char c;
+
+  /* Find the end of the string.  */
+  do
+    c = *s1++;
+  while (c != '\0');
+
+  /* Make S1 point before the next character, so we can increment
+     it while memory is read (wins on pipelined cpus).  */
+  s1 -= 2;
+
+  do
+    {
+      c = *s2++;
+      *++s1 = c;
+    }
+  while (c != '\0');
+
   return dest;
 }
 libc_hidden_builtin_def (strcat)

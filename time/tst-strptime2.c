@@ -26,8 +26,8 @@ static const struct
 #define ntests (sizeof (tests) / sizeof (tests[0]))
 
 
-static int
-do_test (void)
+int
+main (void)
 {
   int result = 0;
 
@@ -52,8 +52,8 @@ do_test (void)
 	}
     }
 
-  return result;
-}
+  if (result == 0)
+    puts ("all OK");
 
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"
+  return 0;
+}

@@ -1,5 +1,5 @@
 /* Single-precision floating point 2^x.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Geoffrey Keating <geoffk@ozemail.com.au>
 
@@ -54,9 +54,6 @@ __ieee754_exp2f (float x)
       float rx, x22, result;
       union ieee754_float ex2_u, scale_u;
 
-      if (fabsf (x) < FLT_EPSILON / 4.0f)
-	return 1.0f + x;
-
       {
 	SET_RESTORE_ROUND_NOEXF (FE_TONEAREST);
 
@@ -89,9 +86,7 @@ __ieee754_exp2f (float x)
 	/* 3. Compute ex2 = 2^(t/255+e+ex).  */
 	ex2_u.f = __exp2f_atable[tval & 255];
 	tval >>= 8;
-	/* x2 is an integer multiple of 2^-30; avoid intermediate
-	   underflow from the calculation of x22 * x.  */
-	unsafe = abs(tval) >= -FLT_MIN_EXP - 32;
+	unsafe = abs(tval) >= -FLT_MIN_EXP - 1;
 	ex2_u.ieee.exponent += tval >> unsafe;
 	scale_u.f = 1.0;
 	scale_u.ieee.exponent += tval - (tval >> unsafe);

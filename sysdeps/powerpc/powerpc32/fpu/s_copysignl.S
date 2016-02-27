@@ -1,6 +1,6 @@
 /* Copy a sign bit between floating-point values.
    IBM extended format long double version.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ L(0):	bgelr	cr6
 	blr
 END (__copysignl)
 
-#if IS_IN (libm)
+#ifdef IS_IN_libm
 long_double_symbol (libm, __copysignl, copysignl)
 #else
 long_double_symbol (libc, __copysignl, copysignl)

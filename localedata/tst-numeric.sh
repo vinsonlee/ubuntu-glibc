@@ -1,6 +1,6 @@
 #! /bin/sh
 # Testing the implementation of LC_NUMERIC and snprintf(3).
-# Copyright (C) 1996-2015 Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 # Contributed by Jochen Hein <jochen.hein@delphi.central.de>, 1997.
 
@@ -30,7 +30,9 @@ errcode=0
 while IFS="	" read locale format value expect; do
     case "$locale" in '#'*) continue ;; esac
     if [ -n "$format" ]; then
-	if ${test_program_prefix} ${common_objpfx}localedata/tst-numeric \
+	if LOCPATH=${common_objpfx}localedata \
+	    GCONV_PATH=${common_objpfx}/iconvdata \
+	    ${test_program_prefix} ${common_objpfx}localedata/tst-numeric \
 	    "$locale" "$format" "$value" "$expect" < /dev/null
 	then
 	    echo "Locale: \"${locale}\" Format: \"${format}\"" \

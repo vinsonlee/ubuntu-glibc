@@ -15,9 +15,3 @@ libc {
     __vmx__libc_longjmp; __vmx__libc_siglongjmp;
   }
 }
-
-ld {
-  GLIBC_2.22 {
-    __tls_get_addr_opt;
-  }
-}
