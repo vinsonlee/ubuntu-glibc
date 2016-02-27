@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -129,13 +129,9 @@ __fork (void)
       ports_locked = 1;
 
 
-      /* Keep our SS locked while stopping other threads, so they don't get a
-         chance to have it locked in the copied space.  */
-      __spin_lock (&ss->lock);
       /* Stop all other threads while copying the address space,
 	 so nothing changes.  */
       err = __proc_dostop (_hurd_ports[INIT_PORT_PROC].port, ss->thread);
-      __spin_unlock (&ss->lock);
       if (!err)
 	{
 	  stopped = 1;
@@ -507,7 +503,7 @@ __fork (void)
 				    MACHINE_THREAD_STATE_FLAVOR,
 				    (natural_t *) &state, &statecount))
 	LOSE;
-#ifdef STACK_GROWTH_UP
+#if STACK_GROWTH_UP
 #define THREADVAR_SPACE (__hurd_threadvar_max \
 			 * sizeof *__hurd_sightread_variables)
       if (__hurd_sigthread_stack_base == 0)

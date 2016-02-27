@@ -4,7 +4,7 @@ int
 attribute_hidden
 __isinfl (double x)
 {
-  return isinf (x);
+  return __isinf (x);
 }
 extern __typeof (__isinfl) isinfl attribute_hidden;
 weak_alias (__isinfl, isinfl)

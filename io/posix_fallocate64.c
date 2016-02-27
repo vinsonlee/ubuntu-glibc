@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 int
 posix_fallocate64 (int fd, __off64_t offset, __off64_t len)
 {
-  return ENOSYS;
+  __set_errno (ENOSYS);
+  return -1;
 }
 stub_warning (posix_fallocate64)

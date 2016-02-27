@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David Mosberger (davidm@azstarnet.com).
 
@@ -45,10 +45,6 @@
 #include "ifreq.h"
 #include "res_hconf.h"
 #include <wchar.h>
-
-#if IS_IN (libc)
-# define fgets_unlocked __fgets_unlocked
-#endif
 
 #define _PATH_HOSTCONF	"/etc/host.conf"
 
@@ -362,7 +358,7 @@ _res_hconf_init (void)
 }
 
 
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 # if defined SIOCGIFCONF && defined SIOCGIFNETMASK
 /* List of known interfaces.  */
 libc_freeres_ptr (
@@ -421,7 +417,7 @@ _res_hconf_reorder_addrs (struct hostent *hp)
       /* Get lock.  */
       __libc_lock_lock (lock);
 
-      /* Recheck, somebody else might have done the work by now.  */
+      /* Recheck, somebody else might have done the work by done.  */
       if (num_ifs <= 0)
 	{
 	  int new_num_ifs = 0;
@@ -439,24 +435,18 @@ _res_hconf_reorder_addrs (struct hostent *hp)
 	  for (cur_ifr = ifr, i = 0; i < num;
 	       cur_ifr = __if_nextreq (cur_ifr), ++i)
 	    {
-	      union
-	      {
-		struct sockaddr sa;
-		struct sockaddr_in sin;
-	      } ss;
-
 	      if (cur_ifr->ifr_addr.sa_family != AF_INET)
 		continue;
 
 	      ifaddrs[new_num_ifs].addrtype = AF_INET;
-	      ss.sa = cur_ifr->ifr_addr;
-	      ifaddrs[new_num_ifs].u.ipv4.addr = ss.sin.sin_addr.s_addr;
+	      ifaddrs[new_num_ifs].u.ipv4.addr =
+		((struct sockaddr_in *) &cur_ifr->ifr_addr)->sin_addr.s_addr;
 
 	      if (__ioctl (sd, SIOCGIFNETMASK, cur_ifr) < 0)
 		continue;
 
-	      ss.sa = cur_ifr->ifr_netmask;
-	      ifaddrs[new_num_ifs].u.ipv4.mask = ss.sin.sin_addr.s_addr;
+	      ifaddrs[new_num_ifs].u.ipv4.mask =
+		((struct sockaddr_in *) &cur_ifr->ifr_netmask)->sin_addr.s_addr;
 
 	      /* Now we're committed to this entry.  */
 	      ++new_num_ifs;
@@ -473,9 +463,9 @@ _res_hconf_reorder_addrs (struct hostent *hp)
 	  errno = save;
 
 	  num_ifs = new_num_ifs;
-	}
 
-      __libc_lock_unlock (lock);
+	  __libc_lock_unlock (lock);
+	}
 
       __close (sd);
     }

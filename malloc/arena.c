@@ -1,5 +1,5 @@
 /* Malloc implementation for multiple threads without lock contention.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Wolfram Gloger <wg@malloc.de>, 2001.
 
@@ -37,6 +37,14 @@
    mmap threshold, so that requests with a size just below that
    threshold can be fulfilled without creating too many heaps.  */
 
+
+#ifndef THREAD_STATS
+# define THREAD_STATS 0
+#endif
+
+/* If THREAD_STATS is non-zero, some statistics on mutex locking are
+   computed.  */
+
 /***************************************************************************/
 
 #define top(ar_ptr) ((ar_ptr)->top)
@@ -71,6 +79,13 @@ static mutex_t list_lock = MUTEX_INITIALIZER;
 static size_t narenas = 1;
 static mstate free_list;
 
+#if THREAD_STATS
+static int stat_n_heaps;
+# define THREAD_STAT(x) x
+#else
+# define THREAD_STAT(x) do ; while (0)
+#endif
+
 /* Mapped memory in non-main arenas (reliable only for NO_THREADS). */
 static unsigned long arena_mem;
 
@@ -99,7 +114,7 @@ int __malloc_initialized = -1;
   } while (0)
 
 #define arena_lock(ptr, size) do {					      \
-      if (ptr && !arena_is_corrupt (ptr))				      \
+      if (ptr)								      \
         (void) mutex_lock (&ptr->mutex);				      \
       else								      \
         ptr = arena_get2 (ptr, (size), NULL);				      \
@@ -376,7 +391,7 @@ ptmalloc_init (void)
   tsd_setspecific (arena_key, (void *) &main_arena);
   thread_atfork (ptmalloc_lock_all, ptmalloc_unlock_all, ptmalloc_unlock_all2);
   const char *s = NULL;
-  if (__glibc_likely (_environ != NULL))
+  if (__builtin_expect (_environ != NULL, 1))
     {
       char **runp = _environ;
       char *envline;
@@ -510,7 +525,7 @@ static heap_info *
 internal_function
 new_heap (size_t size, size_t top_pad)
 {
-  size_t pagesize = GLRO (dl_pagesize);
+  size_t page_mask = GLRO (dl_pagesize) - 1;
   char *p1, *p2;
   unsigned long ul;
   heap_info *h;
@@ -523,7 +538,7 @@ new_heap (size_t size, size_t top_pad)
     return 0;
   else
     size = HEAP_MAX_SIZE;
-  size = ALIGN_UP (size, pagesize);
+  size = (size + page_mask) & ~page_mask;
 
   /* A memory region aligned to a multiple of HEAP_MAX_SIZE is needed.
      No swap space needs to be reserved for the following large
@@ -578,6 +593,7 @@ new_heap (size_t size, size_t top_pad)
   h = (heap_info *) p2;
   h->size = size;
   h->mprotect_size = size;
+  THREAD_STAT (stat_n_heaps++);
   LIBC_PROBE (memory_heap_new, 2, h, h->size);
   return h;
 }
@@ -588,10 +604,10 @@ new_heap (size_t size, size_t top_pad)
 static int
 grow_heap (heap_info *h, long diff)
 {
-  size_t pagesize = GLRO (dl_pagesize);
+  size_t page_mask = GLRO (dl_pagesize) - 1;
   long new_size;
 
-  diff = ALIGN_UP (diff, pagesize);
+  diff = (diff + page_mask) & ~page_mask;
   new_size = (long) h->size + diff;
   if ((unsigned long) new_size > (unsigned long) HEAP_MAX_SIZE)
     return -1;
@@ -624,7 +640,7 @@ shrink_heap (heap_info *h, long diff)
 
   /* Try to re-map the extra heap space freshly to save memory, and make it
      inaccessible.  See malloc-sysdep.h to know when this is true.  */
-  if (__glibc_unlikely (check_may_shrink_heap ()))
+  if (__builtin_expect (check_may_shrink_heap (), 0))
     {
       if ((char *) MMAP ((char *) h + new_size, diff, PROT_NONE,
                          MAP_FIXED) == (char *) MAP_FAILED)
@@ -658,7 +674,7 @@ heap_trim (heap_info *heap, size_t pad)
   unsigned long pagesz = GLRO (dl_pagesize);
   mchunkptr top_chunk = top (ar_ptr), p, bck, fwd;
   heap_info *prev_heap;
-  long new_size, top_size, top_area, extra, prev_size, misalign;
+  long new_size, top_size, extra, prev_size, misalign;
 
   /* Can this heap go away completely? */
   while (top_chunk == chunk_at_offset (heap, sizeof (*heap)))
@@ -686,7 +702,7 @@ heap_trim (heap_info *heap, size_t pad)
       if (!prev_inuse (p)) /* consolidate backward */
         {
           p = prev_chunk (p);
-          unlink (ar_ptr, p, bck, fwd);
+          unlink (p, bck, fwd);
         }
       assert (((unsigned long) ((char *) p + new_size) & (pagesz - 1)) == 0);
       assert (((char *) p + new_size) == ((char *) heap + heap->size));
@@ -694,16 +710,9 @@ heap_trim (heap_info *heap, size_t pad)
       set_head (top_chunk, new_size | PREV_INUSE);
       /*check_chunk(ar_ptr, top_chunk);*/
     }
-
-  /* Uses similar logic for per-thread arenas as the main arena with systrim
-     by preserving the top pad and at least a page.  */
   top_size = chunksize (top_chunk);
-  top_area = top_size - MINSIZE - 1;
-  if (top_area < 0 || (size_t) top_area <= pad)
-    return 0;
-
-  extra = ALIGN_DOWN(top_area - pad, pagesz);
-  if ((unsigned long) extra < mp_.trim_threshold)
+  extra = (top_size - pad - MINSIZE - 1) & ~(pagesz - 1);
+  if (extra < (long) pagesz)
     return 0;
 
   /* Try to shrink. */
@@ -768,6 +777,8 @@ _int_new_arena (size_t size)
 
   (void) mutex_unlock (&list_lock);
 
+  THREAD_STAT (++(a->stat_lock_loop));
+
   return a;
 }
 
@@ -789,6 +800,7 @@ get_free_list (void)
           LIBC_PROBE (memory_arena_reuse_free_list, 1, result);
           (void) mutex_lock (&result->mutex);
           tsd_setspecific (arena_key, (void *) result);
+          THREAD_STAT (++(result->stat_lock_loop));
         }
     }
 
@@ -809,7 +821,7 @@ reused_arena (mstate avoid_arena)
   result = next_to_use;
   do
     {
-      if (!arena_is_corrupt (result) && !mutex_trylock (&result->mutex))
+      if (!mutex_trylock (&result->mutex))
         goto out;
 
       result = result->next;
@@ -821,27 +833,14 @@ reused_arena (mstate avoid_arena)
   if (result == avoid_arena)
     result = result->next;
 
-  /* Make sure that the arena we get is not corrupted.  */
-  mstate begin = result;
-  while (arena_is_corrupt (result) || result == avoid_arena)
-    {
-      result = result->next;
-      if (result == begin)
-	break;
-    }
-
-  /* We could not find any arena that was either not corrupted or not the one
-     we wanted to avoid.  */
-  if (result == begin || result == avoid_arena)
-    return NULL;
-
-  /* No arena available without contention.  Wait for the next in line.  */
+  /* No arena available.  Wait for the next in line.  */
   LIBC_PROBE (memory_arena_reuse_wait, 3, &result->mutex, result, avoid_arena);
   (void) mutex_lock (&result->mutex);
 
 out:
   LIBC_PROBE (memory_arena_reuse, 2, result, avoid_arena);
   tsd_setspecific (arena_key, (void *) result);
+  THREAD_STAT (++(result->stat_lock_loop));
   next_to_use = result->next;
 
   return result;
@@ -884,12 +883,12 @@ arena_get2 (mstate a_tsd, size_t size, mstate avoid_arena)
          narenas_limit is 0.  There is no possibility for narenas to
          be too big for the test to always fail since there is not
          enough address space to create that many arenas.  */
-      if (__glibc_unlikely (n <= narenas_limit - 1))
+      if (__builtin_expect (n <= narenas_limit - 1, 0))
         {
           if (catomic_compare_and_exchange_bool_acq (&narenas, n + 1, n))
             goto repeat;
           a = _int_new_arena (size);
-	  if (__glibc_unlikely (a == NULL))
+          if (__builtin_expect (a == NULL, 0))
             catomic_decrement (&narenas);
         }
       else

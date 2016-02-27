@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -18,16 +18,15 @@
 
 #include <errno.h>
 #include <pthreadP.h>
-#include <futex-internal.h>
 
 int
 pthread_condattr_setpshared (attr, pshared)
      pthread_condattr_t *attr;
      int pshared;
 {
-  int err = futex_supports_pshared (pshared);
-  if (err != 0)
-    return err;
+  if (pshared != PTHREAD_PROCESS_PRIVATE
+      && __builtin_expect (pshared != PTHREAD_PROCESS_SHARED, 0))
+    return EINVAL;
 
   int *valuep = &((struct pthread_condattr *) attr)->value;
 

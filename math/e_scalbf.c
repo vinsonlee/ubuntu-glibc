@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -40,17 +40,17 @@ invalid_fn (float x, float fn)
 float
 __ieee754_scalbf (float x, float fn)
 {
-  if (__glibc_unlikely (isnan (x)))
+  if (__builtin_expect (__isnanf (x), 0))
     return x * fn;
-  if (__glibc_unlikely (!isfinite (fn)))
+  if (__builtin_expect (!__finitef (fn), 0))
     {
-      if (isnan (fn) || fn > 0.0f)
+      if (__isnanf (fn) || fn > 0.0f)
 	return x * fn;
       if (x == 0.0f)
 	return x;
       return x / -fn;
     }
-  if (__glibc_unlikely (fabsf (fn) >= 0x1p31f || (float) (int) fn != fn))
+  if (__builtin_expect ((float) (int) fn != fn, 0))
     return invalid_fn (x, fn);
 
   return __scalbnf (x, (int) fn);

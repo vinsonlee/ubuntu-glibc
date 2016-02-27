@@ -1,5 +1,5 @@
 /* Multiple versions of strcasecmp_l.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,7 +16,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 # include <string.h>
 # define strcasecmp_l __strcasecmp_l_ppc
 extern __typeof (__strcasecmp_l) __strcasecmp_l_ppc attribute_hidden;
@@ -26,7 +26,7 @@ extern __typeof (__strcasecmp_l) __strcasecmp_l_power7 attribute_hidden;
 #include <string/strcasecmp_l.c>
 #undef strcasecmp_l
 
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 # include <shlib-compat.h>
 # include "init-arch.h"
 

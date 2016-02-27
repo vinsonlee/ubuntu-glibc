@@ -96,7 +96,6 @@ static const char rcsid[] = "$BINDId: res_send.c,v 8.38 2000/03/30 20:16:51 vixi
 #include <string.h>
 #include <unistd.h>
 #include <kernel-features.h>
-#include <libc-internal.h>
 
 #if PACKETSZ > 65536
 #define MAXPACKET       PACKETSZ
@@ -184,16 +183,15 @@ evNowTime(struct timespec *res) {
 
 /* Forward. */
 
-static struct sockaddr *get_nsaddr (res_state, int);
 static int		send_vc(res_state, const u_char *, int,
 				const u_char *, int,
 				u_char **, int *, int *, int, u_char **,
-				u_char **, int *, int *, int *);
+				u_char **, int *, int *);
 static int		send_dg(res_state, const u_char *, int,
 				const u_char *, int,
 				u_char **, int *, int *, int,
 				int *, int *, u_char **,
-				u_char **, int *, int *, int *);
+				u_char **, int *, int *);
 #ifdef DEBUG
 static void		Aerror(const res_state, FILE *, const char *, int,
 			       const struct sockaddr *);
@@ -222,21 +220,20 @@ res_ourserver_p(const res_state statp, const struct sockaddr_in6 *inp)
 	    in_port_t port = in4p->sin_port;
 	    in_addr_t addr = in4p->sin_addr.s_addr;
 
-	    for (ns = 0;  ns < statp->nscount;  ns++) {
+	    for (ns = 0;  ns < MAXNS;  ns++) {
 		const struct sockaddr_in *srv =
-		    (struct sockaddr_in *) get_nsaddr (statp, ns);
+		    (struct sockaddr_in *)EXT(statp).nsaddrs[ns];
 
-		if ((srv->sin_family == AF_INET) &&
+		if ((srv != NULL) && (srv->sin_family == AF_INET) &&
 		    (srv->sin_port == port) &&
 		    (srv->sin_addr.s_addr == INADDR_ANY ||
 		     srv->sin_addr.s_addr == addr))
 		    return (1);
 	    }
 	} else if (inp->sin6_family == AF_INET6) {
-	    for (ns = 0;  ns < statp->nscount;  ns++) {
-		const struct sockaddr_in6 *srv
-		  = (struct sockaddr_in6 *) get_nsaddr (statp, ns);
-		if ((srv->sin6_family == AF_INET6) &&
+	    for (ns = 0;  ns < MAXNS;  ns++) {
+		const struct sockaddr_in6 *srv = EXT(statp).nsaddrs[ns];
+		if ((srv != NULL) && (srv->sin6_family == AF_INET6) &&
 		    (srv->sin6_port == inp->sin6_port) &&
 		    !(memcmp(&srv->sin6_addr, &in6addr_any,
 			     sizeof (struct in6_addr)) &&
@@ -346,7 +343,7 @@ int
 __libc_res_nsend(res_state statp, const u_char *buf, int buflen,
 		 const u_char *buf2, int buflen2,
 		 u_char *ans, int anssiz, u_char **ansp, u_char **ansp2,
-		 int *nansp2, int *resplen2, int *ansp2_malloced)
+		 int *nansp2, int *resplen2)
 {
   int gotsomewhere, terrno, try, v_circuit, resplen, ns, n;
 
@@ -361,7 +358,7 @@ __libc_res_nsend(res_state statp, const u_char *buf, int buflen,
 	}
 
 #ifdef USE_HOOKS
-	if (__glibc_unlikely (statp->qhook || statp->rhook))       {
+	if (__builtin_expect (statp->qhook || statp->rhook, 0)) {
 		if (anssiz < MAXPACKET && ansp) {
 			u_char *buf = malloc (MAXPACKET);
 			if (buf == NULL)
@@ -386,48 +383,74 @@ __libc_res_nsend(res_state statp, const u_char *buf, int buflen,
 	 * If the ns_addr_list in the resolver context has changed, then
 	 * invalidate our cached copy and the associated timing data.
 	 */
-	if (EXT(statp).nscount != 0) {
+	if (EXT(statp).nsinit) {
 		int needclose = 0;
 
 		if (EXT(statp).nscount != statp->nscount)
 			needclose++;
 		else
-			for (ns = 0; ns < statp->nscount; ns++) {
-				if (statp->nsaddr_list[ns].sin_family != 0
+			for (ns = 0; ns < MAXNS; ns++) {
+				unsigned int map = EXT(statp).nsmap[ns];
+				if (map < MAXNS
 				    && !sock_eq((struct sockaddr_in6 *)
-						&statp->nsaddr_list[ns],
+						&statp->nsaddr_list[map],
 						EXT(statp).nsaddrs[ns]))
 				{
 					needclose++;
 					break;
 				}
 			}
-		if (needclose) {
+		if (needclose)
 			__res_iclose(statp, false);
-			EXT(statp).nscount = 0;
-		}
 	}
 
 	/*
 	 * Maybe initialize our private copy of the ns_addr_list.
 	 */
-	if (EXT(statp).nscount == 0) {
-		for (ns = 0; ns < statp->nscount; ns++) {
-			EXT(statp).nssocks[ns] = -1;
-			if (statp->nsaddr_list[ns].sin_family == 0)
-				continue;
-			if (EXT(statp).nsaddrs[ns] == NULL)
-				EXT(statp).nsaddrs[ns] =
+	if (EXT(statp).nsinit == 0) {
+		unsigned char map[MAXNS];
+
+		memset (map, MAXNS, sizeof (map));
+		for (n = 0; n < MAXNS; n++) {
+			ns = EXT(statp).nsmap[n];
+			if (ns < statp->nscount)
+				map[ns] = n;
+			else if (ns < MAXNS) {
+				free(EXT(statp).nsaddrs[n]);
+				EXT(statp).nsaddrs[n] = NULL;
+				EXT(statp).nsmap[n] = MAXNS;
+			}
+		}
+		n = statp->nscount;
+		if (statp->nscount > EXT(statp).nscount)
+			for (n = EXT(statp).nscount, ns = 0;
+			     n < statp->nscount; n++) {
+				while (ns < MAXNS
+				       && EXT(statp).nsmap[ns] != MAXNS)
+					ns++;
+				if (ns == MAXNS)
+					break;
+				EXT(statp).nsmap[ns] = n;
+				map[n] = ns++;
+			}
+		EXT(statp).nscount = n;
+		for (ns = 0; ns < EXT(statp).nscount; ns++) {
+			n = map[ns];
+			if (EXT(statp).nsaddrs[n] == NULL)
+				EXT(statp).nsaddrs[n] =
 				    malloc(sizeof (struct sockaddr_in6));
-			if (EXT(statp).nsaddrs[ns] != NULL)
-				memset (mempcpy(EXT(statp).nsaddrs[ns],
+			if (EXT(statp).nsaddrs[n] != NULL) {
+				memset (mempcpy(EXT(statp).nsaddrs[n],
 						&statp->nsaddr_list[ns],
 						sizeof (struct sockaddr_in)),
 					'\0',
 					sizeof (struct sockaddr_in6)
 					- sizeof (struct sockaddr_in));
+				EXT(statp).nssocks[n] = -1;
+				n++;
+			}
 		}
-		EXT(statp).nscount = statp->nscount;
+		EXT(statp).nsinit = 1;
 	}
 
 	/*
@@ -436,40 +459,47 @@ __libc_res_nsend(res_state statp, const u_char *buf, int buflen,
 	 */
 	if (__builtin_expect ((statp->options & RES_ROTATE) != 0, 0) &&
 	    (statp->options & RES_BLAST) == 0) {
-		struct sockaddr_in ina;
-		struct sockaddr_in6 *inp;
-		int lastns = statp->nscount - 1;
-		int fd;
+		struct sockaddr_in6 *ina;
+		unsigned int map;
 
-		inp = EXT(statp).nsaddrs[0];
-		ina = statp->nsaddr_list[0];
-		fd = EXT(statp).nssocks[0];
-		for (ns = 0; ns < lastns; ns++) {
-		    EXT(statp).nsaddrs[ns] = EXT(statp).nsaddrs[ns + 1];
-		    statp->nsaddr_list[ns] = statp->nsaddr_list[ns + 1];
-		    EXT(statp).nssocks[ns] = EXT(statp).nssocks[ns + 1];
+		n = 0;
+		while (n < MAXNS && EXT(statp).nsmap[n] == MAXNS)
+			n++;
+		if (n < MAXNS) {
+			ina = EXT(statp).nsaddrs[n];
+			map = EXT(statp).nsmap[n];
+			for (;;) {
+				ns = n + 1;
+				while (ns < MAXNS
+				       && EXT(statp).nsmap[ns] == MAXNS)
+					ns++;
+				if (ns == MAXNS)
+					break;
+				EXT(statp).nsaddrs[n] = EXT(statp).nsaddrs[ns];
+				EXT(statp).nsmap[n] = EXT(statp).nsmap[ns];
+				n = ns;
+			}
+			EXT(statp).nsaddrs[n] = ina;
+			EXT(statp).nsmap[n] = map;
 		}
-		EXT(statp).nsaddrs[lastns] = inp;
-		statp->nsaddr_list[lastns] = ina;
-		EXT(statp).nssocks[lastns] = fd;
 	}
 
 	/*
 	 * Send request, RETRY times, or until successful.
 	 */
 	for (try = 0; try < statp->retry; try++) {
-	    for (ns = 0; ns < statp->nscount; ns++)
+	    for (ns = 0; ns < MAXNS; ns++)
 	    {
 #ifdef DEBUG
 		char tmpbuf[40];
 #endif
-#if defined USE_HOOKS || defined DEBUG
-		struct sockaddr *nsap = get_nsaddr (statp, ns);
-#endif
+		struct sockaddr_in6 *nsap = EXT(statp).nsaddrs[ns];
 
+		if (nsap == NULL)
+			goto next_ns;
 	    same_ns:
 #ifdef USE_HOOKS
-		if (__glibc_unlikely (statp->qhook != NULL))       {
+		if (__builtin_expect (statp->qhook != NULL, 0)) {
 			int done = 0, loops = 0;
 
 			do {
@@ -505,19 +535,18 @@ __libc_res_nsend(res_state statp, const u_char *buf, int buflen,
 
 		Dprint(statp->options & RES_DEBUG,
 		       (stdout, ";; Querying server (# %d) address = %s\n",
-			ns + 1, inet_ntop(nsap->sa_family,
-					  (nsap->sa_family == AF_INET6
-					   ? &((struct sockaddr_in6 *) nsap)->sin6_addr
+			ns + 1, inet_ntop(nsap->sin6_family,
+					  (nsap->sin6_family == AF_INET6
+					   ? &nsap->sin6_addr
 					   : &((struct sockaddr_in *) nsap)->sin_addr),
 					  tmpbuf, sizeof (tmpbuf))));
 
-		if (__glibc_unlikely (v_circuit))       {
+		if (__builtin_expect (v_circuit, 0)) {
 			/* Use VC; at most one attempt per server. */
 			try = statp->retry;
 			n = send_vc(statp, buf, buflen, buf2, buflen2,
 				    &ans, &anssiz, &terrno,
-				    ns, ansp, ansp2, nansp2, resplen2,
-				    ansp2_malloced);
+				    ns, ansp, ansp2, nansp2, resplen2);
 			if (n < 0)
 				return (-1);
 			if (n == 0 && (buf2 == NULL || *resplen2 == 0))
@@ -527,7 +556,7 @@ __libc_res_nsend(res_state statp, const u_char *buf, int buflen,
 			n = send_dg(statp, buf, buflen, buf2, buflen2,
 				    &ans, &anssiz, &terrno,
 				    ns, &v_circuit, &gotsomewhere, ansp,
-				    ansp2, nansp2, resplen2, ansp2_malloced);
+				    ansp2, nansp2, resplen2);
 			if (n < 0)
 				return (-1);
 			if (n == 0 && (buf2 == NULL || *resplen2 == 0))
@@ -566,7 +595,7 @@ __libc_res_nsend(res_state statp, const u_char *buf, int buflen,
 			__res_iclose(statp, false);
 		}
 #ifdef USE_HOOKS
-		if (__glibc_unlikely (statp->rhook))       {
+		if (__builtin_expect (statp->rhook, 0)) {
 			int done = 0, loops = 0;
 
 			do {
@@ -617,33 +646,18 @@ res_nsend(res_state statp,
 	  const u_char *buf, int buflen, u_char *ans, int anssiz)
 {
   return __libc_res_nsend(statp, buf, buflen, NULL, 0, ans, anssiz,
-			  NULL, NULL, NULL, NULL, NULL);
+			  NULL, NULL, NULL, NULL);
 }
 libresolv_hidden_def (res_nsend)
 
 /* Private */
-
-static struct sockaddr *
-get_nsaddr (res_state statp, int n)
-{
-
-  if (statp->nsaddr_list[n].sin_family == 0 && EXT(statp).nsaddrs[n] != NULL)
-    /* EXT(statp).nsaddrs[n] holds an address that is larger than
-       struct sockaddr, and user code did not update
-       statp->nsaddr_list[n].  */
-    return (struct sockaddr *) EXT(statp).nsaddrs[n];
-  else
-    /* User code updated statp->nsaddr_list[n], or statp->nsaddr_list[n]
-       has the same content as EXT(statp).nsaddrs[n].  */
-    return (struct sockaddr *) (void *) &statp->nsaddr_list[n];
-}
 
 static int
 send_vc(res_state statp,
 	const u_char *buf, int buflen, const u_char *buf2, int buflen2,
 	u_char **ansp, int *anssizp,
 	int *terrno, int ns, u_char **anscp, u_char **ansp2, int *anssizp2,
-	int *resplen2, int *ansp2_malloced)
+	int *resplen2)
 {
 	const HEADER *hp = (HEADER *) buf;
 	const HEADER *hp2 = (HEADER *) buf2;
@@ -652,25 +666,8 @@ send_vc(res_state statp,
 	// XXX REMOVE
 	// int anssiz = *anssizp;
 	HEADER *anhp = (HEADER *) ans;
-	struct sockaddr *nsap = get_nsaddr (statp, ns);
-	int truncating, connreset, n;
-	/* On some architectures compiler might emit a warning indicating
-	   'resplen' may be used uninitialized.  However if buf2 == NULL
-	   then this code won't be executed; if buf2 != NULL, then first
-	   time round the loop recvresp1 and recvresp2 will be 0 so this
-	   code won't be executed but "thisresplenp = &resplen;" followed
-	   by "*thisresplenp = rlen;" will be executed so that subsequent
-	   times round the loop resplen has been initialized.  So this is
-	   a false-positive.
-	 */
-#if __GNUC_PREREQ (4, 7)
-	DIAG_PUSH_NEEDS_COMMENT;
-	DIAG_IGNORE_NEEDS_COMMENT (5, "-Wmaybe-uninitialized");
-#endif
-	int resplen;
-#if __GNUC_PREREQ (4, 7)
-	DIAG_POP_NEEDS_COMMENT;
-#endif
+	struct sockaddr_in6 *nsap = EXT(statp).nsaddrs[ns];
+	int truncating, connreset, resplen, n;
 	struct iovec iov[4];
 	u_short len;
 	u_short len2;
@@ -689,8 +686,8 @@ send_vc(res_state statp,
 
 		if (getpeername(statp->_vcsock,
 				(struct sockaddr *)&peer, &size) < 0 ||
-		    !sock_eq(&peer, (struct sockaddr_in6 *) nsap)) {
-			__res_iclose(statp, false);
+		    !sock_eq(&peer, nsap)) {
+		  __res_iclose(statp, false);
 			statp->_flags &= ~RES_F_VC;
 		}
 	}
@@ -699,19 +696,20 @@ send_vc(res_state statp,
 		if (statp->_vcsock >= 0)
 		  __res_iclose(statp, false);
 
-		statp->_vcsock = socket(nsap->sa_family, SOCK_STREAM, 0);
+		statp->_vcsock = socket(nsap->sin6_family, SOCK_STREAM, 0);
 		if (statp->_vcsock < 0) {
 			*terrno = errno;
 			Perror(statp, stderr, "socket(vc)", errno);
 			return (-1);
 		}
 		__set_errno (0);
-		if (connect(statp->_vcsock, nsap,
-			    nsap->sa_family == AF_INET
+		if (connect(statp->_vcsock, (struct sockaddr *)nsap,
+			    nsap->sin6_family == AF_INET
 			    ? sizeof (struct sockaddr_in)
 			    : sizeof (struct sockaddr_in6)) < 0) {
 			*terrno = errno;
-			Aerror(statp, stderr, "connect/vc", errno, nsap);
+			Aerror(statp, stderr, "connect/vc", errno,
+			       (struct sockaddr *) nsap);
 			__res_iclose(statp, false);
 			return (0);
 		}
@@ -788,11 +786,7 @@ send_vc(res_state statp,
 			/* No buffer allocated for the first
 			   reply.  We can try to use the rest
 			   of the user-provided buffer.  */
-#if __GNUC_PREREQ (4, 7)
-			DIAG_PUSH_NEEDS_COMMENT;
-			DIAG_IGNORE_NEEDS_COMMENT (5, "-Wmaybe-uninitialized");
-#endif
-#if _STRING_ARCH_unaligned
+#ifdef _STRING_ARCH_unaligned
 			*anssizp2 = orig_anssizp - resplen;
 			*ansp2 = *ansp + resplen;
 #else
@@ -801,9 +795,6 @@ send_vc(res_state statp,
 			     & ~(__alignof__ (HEADER) - 1));
 			*anssizp2 = orig_anssizp - aligned_resplen;
 			*ansp2 = *ansp + aligned_resplen;
-#endif
-#if __GNUC_PREREQ (4, 7)
-			DIAG_POP_NEEDS_COMMENT;
 #endif
 		} else {
 			/* The first reply did not fit into the
@@ -823,7 +814,7 @@ send_vc(res_state statp,
 	if (rlen > *thisanssizp) {
 		/* Yes, we test ANSCP here.  If we have two buffers
 		   both will be allocatable.  */
-		if (__glibc_likely (anscp != NULL))       {
+		if (__builtin_expect (anscp != NULL, 1)) {
 			u_char *newp = malloc (MAXPACKET);
 			if (newp == NULL) {
 				*terrno = ENOMEM;
@@ -832,8 +823,6 @@ send_vc(res_state statp,
 			}
 			*thisanssizp = MAXPACKET;
 			*thisansp = newp;
-			if (thisansp == ansp2)
-			  *ansp2_malloced = 1;
 			anhp = (HEADER *) newp;
 			len = rlen;
 		} else {
@@ -846,7 +835,7 @@ send_vc(res_state statp,
 	} else
 		len = rlen;
 
-	if (__glibc_unlikely (len < HFIXEDSZ))       {
+	if (__builtin_expect (len < HFIXEDSZ, 0)) {
 		/*
 		 * Undersized message.
 		 */
@@ -862,13 +851,13 @@ send_vc(res_state statp,
 		cp += n;
 		len -= n;
 	}
-	if (__glibc_unlikely (n <= 0))       {
+	if (__builtin_expect (n <= 0, 0)) {
 		*terrno = errno;
 		Perror(statp, stderr, "read(vc)", errno);
 		__res_iclose(statp, false);
 		return (0);
 	}
-	if (__glibc_unlikely (truncating))       {
+	if (__builtin_expect (truncating, 0)) {
 		/*
 		 * Flush rest of answer so connection stays in synch.
 		 */
@@ -922,12 +911,13 @@ static int
 reopen (res_state statp, int *terrno, int ns)
 {
 	if (EXT(statp).nssocks[ns] == -1) {
-		struct sockaddr *nsap = get_nsaddr (statp, ns);
+		struct sockaddr *nsap
+		  = (struct sockaddr *) EXT(statp).nsaddrs[ns];
 		socklen_t slen;
 
 		/* only try IPv6 if IPv6 NS and if not failed before */
 		if (nsap->sa_family == AF_INET6 && !statp->ipv6_unavail) {
-			if (__glibc_likely (__have_o_nonblock >= 0))       {
+			if (__builtin_expect (__have_o_nonblock >= 0, 1)) {
 				EXT(statp).nssocks[ns] =
 				  socket(PF_INET6, SOCK_DGRAM|SOCK_NONBLOCK,
 					 0);
@@ -938,14 +928,14 @@ reopen (res_state statp, int *terrno, int ns)
 					     && errno == EINVAL ? -1 : 1);
 #endif
 			}
-			if (__glibc_unlikely (__have_o_nonblock < 0))
+			if (__builtin_expect (__have_o_nonblock < 0, 0))
 				EXT(statp).nssocks[ns] =
 				  socket(PF_INET6, SOCK_DGRAM, 0);
 			if (EXT(statp).nssocks[ns] < 0)
 			    statp->ipv6_unavail = errno == EAFNOSUPPORT;
 			slen = sizeof (struct sockaddr_in6);
 		} else if (nsap->sa_family == AF_INET) {
-			if (__glibc_likely (__have_o_nonblock >= 0))       {
+			if (__builtin_expect (__have_o_nonblock >= 0, 1)) {
 				EXT(statp).nssocks[ns]
 				  = socket(PF_INET, SOCK_DGRAM|SOCK_NONBLOCK,
 					   0);
@@ -956,7 +946,7 @@ reopen (res_state statp, int *terrno, int ns)
 					     && errno == EINVAL ? -1 : 1);
 #endif
 			}
-			if (__glibc_unlikely (__have_o_nonblock < 0))
+			if (__builtin_expect (__have_o_nonblock < 0, 0))
 				EXT(statp).nssocks[ns]
 				  = socket(PF_INET, SOCK_DGRAM, 0);
 			slen = sizeof (struct sockaddr_in);
@@ -983,7 +973,7 @@ reopen (res_state statp, int *terrno, int ns)
 			__res_iclose(statp, false);
 			return (0);
 		}
-		if (__glibc_unlikely (__have_o_nonblock < 0))       {
+		if (__builtin_expect (__have_o_nonblock < 0, 0)) {
 			/* Make socket non-blocking.  */
 			int fl = __fcntl (EXT(statp).nssocks[ns], F_GETFL);
 			if  (fl != -1)
@@ -1002,7 +992,7 @@ send_dg(res_state statp,
 	const u_char *buf, int buflen, const u_char *buf2, int buflen2,
 	u_char **ansp, int *anssizp,
 	int *terrno, int ns, int *v_circuit, int *gotsomewhere, u_char **anscp,
-	u_char **ansp2, int *anssizp2, int *resplen2, int *ansp2_malloced)
+	u_char **ansp2, int *anssizp2, int *resplen2)
 {
 	const HEADER *hp = (HEADER *) buf;
 	const HEADER *hp2 = (HEADER *) buf2;
@@ -1065,7 +1055,7 @@ send_dg(res_state statp,
 	n = 0;
 	if (nwritten == 0)
 	  n = __poll (pfd, 1, 0);
-	if (__glibc_unlikely (n == 0))       {
+	if (__builtin_expect (n == 0, 0)) {
 		n = __poll (pfd, 1, ptimeout);
 		need_recompute = 1;
 	}
@@ -1140,7 +1130,7 @@ send_dg(res_state statp,
 		    reqs[1].msg_hdr.msg_controllen = 0;
 
 		    int ndg = __sendmmsg (pfd[0].fd, reqs, 2, MSG_NOSIGNAL);
-		    if (__glibc_likely (ndg == 2))
+		    if (__builtin_expect (ndg == 2, 1))
 		      {
 			if (reqs[0].msg_len != buflen
 			    || reqs[1].msg_len != buflen2)
@@ -1156,7 +1146,7 @@ send_dg(res_state statp,
 		    else
 		      {
 #ifndef __ASSUME_SENDMMSG
-			if (__glibc_unlikely (have_sendmmsg == 0))
+			if (__builtin_expect (have_sendmmsg == 0, 0))
 			  {
 			    if (ndg < 0 && errno == ENOSYS)
 			      {
@@ -1212,7 +1202,7 @@ send_dg(res_state statp,
 				/* No buffer allocated for the first
 				   reply.  We can try to use the rest
 				   of the user-provided buffer.  */
-#if _STRING_ARCH_unaligned
+#ifdef _STRING_ARCH_unaligned
 				*anssizp2 = orig_anssizp - resplen;
 				*ansp2 = *ansp + resplen;
 #else
@@ -1248,8 +1238,6 @@ send_dg(res_state statp,
 			if (newp != NULL) {
 				*anssizp = MAXPACKET;
 				*thisansp = ans = newp;
-				if (thisansp == ansp2)
-				  *ansp2_malloced = 1;
 			}
 		}
 		HEADER *anhp = (HEADER *) *thisansp;
@@ -1258,7 +1246,7 @@ send_dg(res_state statp,
 		*thisresplenp = recvfrom(pfd[0].fd, (char*)*thisansp,
 					 *thisanssizp, 0,
 					(struct sockaddr *)&from, &fromlen);
-		if (__glibc_unlikely (*thisresplenp <= 0))       {
+		if (__builtin_expect (*thisresplenp <= 0, 0)) {
 			if (errno == EINTR || errno == EAGAIN) {
 				need_recompute = 1;
 				goto wait;
@@ -1267,7 +1255,7 @@ send_dg(res_state statp,
 			goto err_out;
 		}
 		*gotsomewhere = 1;
-		if (__glibc_unlikely (*thisresplenp < HFIXEDSZ))       {
+		if (__builtin_expect (*thisresplenp < HFIXEDSZ, 0)) {
 			/*
 			 * Undersized message.
 			 */
@@ -1358,7 +1346,6 @@ send_dg(res_state statp,
 				(*thisresplenp > *thisanssizp)
 				? *thisanssizp : *thisresplenp);
 
-		next_ns:
 			if (recvresp1 || (buf2 != NULL && recvresp2)) {
 			  *resplen2 = 0;
 			  return resplen;
@@ -1376,6 +1363,7 @@ send_dg(res_state statp,
 			    goto wait;
 			  }
 
+		next_ns:
 			__res_iclose(statp, false);
 			/* don't retry if called from dig */
 			if (!statp->pfcode)
@@ -1417,7 +1405,6 @@ send_dg(res_state statp,
 					retval = reopen (statp, terrno, ns);
 					if (retval <= 0)
 						return retval;
-					pfd[0].fd = EXT(statp).nssocks[ns];
 				}
 			}
 			goto wait;

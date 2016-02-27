@@ -1,6 +1,6 @@
 /* Multiple versions of strspn
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -26,7 +26,7 @@
 #include <init-arch.h>
 
 /* Define multiple versions only for the definition in libc.  */
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 # ifdef SHARED
 	.text
 ENTRY(strspn)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper, <drepper@gnu.org>, August 1995.
 
@@ -34,7 +34,7 @@
 #define SYS_ify(syscall_name)	__NR_##syscall_name
 
 #if defined USE_DL_SYSINFO \
-    && (IS_IN (libc) || IS_IN (libpthread))
+    && (!defined NOT_IN_libc || defined IS_IN_libpthread)
 # define I386_USE_SYSENTER	1
 #else
 # undef I386_USE_SYSENTER
@@ -115,7 +115,7 @@
 
 # elif defined _LIBC_REENTRANT
 
-#  if IS_IN (libc)
+#  ifndef NOT_IN_libc
 #   define SYSCALL_ERROR_ERRNO __libc_errno
 #  else
 #   define SYSCALL_ERROR_ERRNO errno
@@ -304,33 +304,18 @@ asm (".L__X'%ebx = 1\n\t"
      ".endif\n\t"
      ".endm\n\t");
 
-/* Six-argument syscalls use an out-of-line helper, because an inline
-   asm using all registers apart from %esp cannot work reliably and
-   the assembler does not support describing an asm that saves and
-   restores %ebp itself as a separate stack frame.  This structure
-   stores the arguments not passed in registers; %edi is passed with a
-   pointer to this structure.  */
-struct libc_do_syscall_args
-{
-  int ebx, edi, ebp;
-};
-
 /* Define a macro which expands inline into the wrapper code for a system
    call.  */
 #undef INLINE_SYSCALL
 #define INLINE_SYSCALL(name, nr, args...) \
   ({									      \
     unsigned int resultvar = INTERNAL_SYSCALL (name, , nr, args);	      \
-    if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (resultvar, )))	      \
+    if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (resultvar, ), 0))	      \
       {									      \
 	__set_errno (INTERNAL_SYSCALL_ERRNO (resultvar, ));		      \
 	resultvar = 0xffffffff;						      \
       }									      \
     (int) resultvar; })
-
-/* List of system calls which are supported as vsyscalls.  */
-# define HAVE_CLOCK_GETTIME_VSYSCALL    1
-# define HAVE_GETTIMEOFDAY_VSYSCALL     1
 
 /* Define a macro which expands inline into the wrapper code for a system
    call.  This use is for internal calls that do not need to handle errors
@@ -340,42 +325,11 @@ struct libc_do_syscall_args
    The _NCS variant allows non-constant syscall numbers but it is not
    possible to use more than four parameters.  */
 #undef INTERNAL_SYSCALL
-#define INTERNAL_SYSCALL_MAIN_0(name, err, args...) \
-    INTERNAL_SYSCALL_MAIN_INLINE(name, err, 0, args)
-#define INTERNAL_SYSCALL_MAIN_1(name, err, args...) \
-    INTERNAL_SYSCALL_MAIN_INLINE(name, err, 1, args)
-#define INTERNAL_SYSCALL_MAIN_2(name, err, args...) \
-    INTERNAL_SYSCALL_MAIN_INLINE(name, err, 2, args)
-#define INTERNAL_SYSCALL_MAIN_3(name, err, args...) \
-    INTERNAL_SYSCALL_MAIN_INLINE(name, err, 3, args)
-#define INTERNAL_SYSCALL_MAIN_4(name, err, args...) \
-    INTERNAL_SYSCALL_MAIN_INLINE(name, err, 4, args)
-#define INTERNAL_SYSCALL_MAIN_5(name, err, args...) \
-    INTERNAL_SYSCALL_MAIN_INLINE(name, err, 5, args)
-/* Each object using 6-argument inline syscalls must include a
-   definition of __libc_do_syscall.  */
-#define INTERNAL_SYSCALL_MAIN_6(name, err, arg1, arg2, arg3,		\
-				arg4, arg5, arg6)			\
-  struct libc_do_syscall_args _xv =					\
-    {									\
-      (int) (arg1),							\
-      (int) (arg5),							\
-      (int) (arg6)							\
-    };									\
-    asm volatile (							\
-    "movl %1, %%eax\n\t"						\
-    "call __libc_do_syscall"						\
-    : "=a" (resultvar)							\
-    : "i" (__NR_##name), "c" (arg2), "d" (arg3), "S" (arg4), "D" (&_xv) \
-    : "memory", "cc")
-#define INTERNAL_SYSCALL(name, err, nr, args...) \
-  ({									      \
-    register unsigned int resultvar;					      \
-    INTERNAL_SYSCALL_MAIN_##nr (name, err, args);			      \
-    (int) resultvar; })
 #ifdef I386_USE_SYSENTER
 # ifdef SHARED
-#  define INTERNAL_SYSCALL_MAIN_INLINE(name, err, nr, args...) \
+#  define INTERNAL_SYSCALL(name, err, nr, args...) \
+  ({									      \
+    register unsigned int resultvar;					      \
     EXTRAVAR_##nr							      \
     asm volatile (							      \
     LOADARGS_##nr							      \
@@ -384,7 +338,8 @@ struct libc_do_syscall_args
     RESTOREARGS_##nr							      \
     : "=a" (resultvar)							      \
     : "i" (__NR_##name), "i" (offsetof (tcbhead_t, sysinfo))		      \
-      ASMFMT_##nr(args) : "memory", "cc")
+      ASMFMT_##nr(args) : "memory", "cc");				      \
+    (int) resultvar; })
 #  define INTERNAL_SYSCALL_NCS(name, err, nr, args...) \
   ({									      \
     register unsigned int resultvar;					      \
@@ -398,7 +353,9 @@ struct libc_do_syscall_args
       ASMFMT_##nr(args) : "memory", "cc");				      \
     (int) resultvar; })
 # else
-#  define INTERNAL_SYSCALL_MAIN_INLINE(name, err, nr, args...) \
+#  define INTERNAL_SYSCALL(name, err, nr, args...) \
+  ({									      \
+    register unsigned int resultvar;					      \
     EXTRAVAR_##nr							      \
     asm volatile (							      \
     LOADARGS_##nr							      \
@@ -406,7 +363,8 @@ struct libc_do_syscall_args
     "call *_dl_sysinfo\n\t"						      \
     RESTOREARGS_##nr							      \
     : "=a" (resultvar)							      \
-    : "i" (__NR_##name) ASMFMT_##nr(args) : "memory", "cc")
+    : "i" (__NR_##name) ASMFMT_##nr(args) : "memory", "cc");		      \
+    (int) resultvar; })
 #  define INTERNAL_SYSCALL_NCS(name, err, nr, args...) \
   ({									      \
     register unsigned int resultvar;					      \
@@ -420,7 +378,9 @@ struct libc_do_syscall_args
     (int) resultvar; })
 # endif
 #else
-# define INTERNAL_SYSCALL_MAIN_INLINE(name, err, nr, args...) \
+# define INTERNAL_SYSCALL(name, err, nr, args...) \
+  ({									      \
+    register unsigned int resultvar;					      \
     EXTRAVAR_##nr							      \
     asm volatile (							      \
     LOADARGS_##nr							      \
@@ -428,7 +388,8 @@ struct libc_do_syscall_args
     "int $0x80\n\t"							      \
     RESTOREARGS_##nr							      \
     : "=a" (resultvar)							      \
-    : "i" (__NR_##name) ASMFMT_##nr(args) : "memory", "cc")
+    : "i" (__NR_##name) ASMFMT_##nr(args) : "memory", "cc");		      \
+    (int) resultvar; })
 # define INTERNAL_SYSCALL_NCS(name, err, nr, args...) \
   ({									      \
     register unsigned int resultvar;					      \
@@ -541,7 +502,7 @@ struct libc_do_syscall_args
 #endif
 
 /* Consistency check for position-independent code.  */
-#if defined __PIC__ && !__GNUC_PREREQ (5,0)
+#ifdef __PIC__
 # define check_consistency()						      \
   ({ int __res;								      \
      __asm__ __volatile__						      \
@@ -558,7 +519,7 @@ struct libc_do_syscall_args
 
 
 /* Pointer mangling support.  */
-#if IS_IN (rtld)
+#if defined NOT_IN_libc && defined IS_IN_rtld
 /* We cannot use the thread descriptor because in ld.so we use setjmp
    earlier than the descriptor is initialized.  Using a global variable
    is too complicated here since we have no PC-relative addressing mode.  */

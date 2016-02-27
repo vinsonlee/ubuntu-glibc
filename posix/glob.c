@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -354,7 +354,7 @@ glob (pattern, flags, errfunc, pglob)
 	      /* It is an illegal expression.  */
 	    illegal_brace:
 #ifdef _LIBC
-	      if (__glibc_unlikely (!alloca_onealt))
+	      if (__builtin_expect (!alloca_onealt, 0))
 #endif
 		free (onealt);
 	      return glob (pattern, flags & ~GLOB_BRACE, errfunc, pglob);
@@ -404,7 +404,7 @@ glob (pattern, flags, errfunc, pglob)
 	      if (result && result != GLOB_NOMATCH)
 		{
 #ifdef _LIBC
-		  if (__glibc_unlikely (!alloca_onealt))
+		  if (__builtin_expect (!alloca_onealt, 0))
 #endif
 		    free (onealt);
 		  if (!(flags & GLOB_APPEND))
@@ -425,7 +425,7 @@ glob (pattern, flags, errfunc, pglob)
 	    }
 
 #ifdef _LIBC
-	  if (__glibc_unlikely (!alloca_onealt))
+	  if (__builtin_expect (!alloca_onealt, 0))
 #endif
 	    free (onealt);
 
@@ -488,7 +488,7 @@ glob (pattern, flags, errfunc, pglob)
 	}
       else
 	{
-	  if (__glibc_unlikely (pattern[0] == '\0'))
+	  if (__builtin_expect (pattern[0] == '\0', 0))
 	    {
 	      dirs.gl_pathv = NULL;
 	      goto no_matches;
@@ -619,7 +619,7 @@ glob (pattern, flags, errfunc, pglob)
 		buflen = 20;
 	      name = alloca_account (buflen, alloca_used);
 
-	      success = __getlogin_r (name, buflen) == 0;
+	      success = getlogin_r (name, buflen) == 0;
 	      if (success)
 		{
 		  struct passwd *p;
@@ -671,7 +671,7 @@ glob (pattern, flags, errfunc, pglob)
 						2 * pwbuflen);
 			  if (newp == NULL)
 			    {
-			      if (__glibc_unlikely (malloc_pwtmpbuf))
+			      if (__builtin_expect (malloc_pwtmpbuf, 0))
 				free (pwtmpbuf);
 			      retval = GLOB_NOSPACE;
 			      goto out;
@@ -717,7 +717,7 @@ glob (pattern, flags, errfunc, pglob)
 	    {
 	      if (flags & GLOB_TILDE_CHECK)
 		{
-		  if (__glibc_unlikely (malloc_home_dir))
+		  if (__builtin_expect (malloc_home_dir, 0))
 		    free (home_dir);
 		  retval = GLOB_NOMATCH;
 		  goto out;
@@ -730,7 +730,7 @@ glob (pattern, flags, errfunc, pglob)
 	  /* Now construct the full directory.  */
 	  if (dirname[1] == '\0')
 	    {
-	      if (__glibc_unlikely (malloc_dirname))
+	      if (__builtin_expect (malloc_dirname, 0))
 		free (dirname);
 
 	      dirname = home_dir;
@@ -750,7 +750,7 @@ glob (pattern, flags, errfunc, pglob)
 		  newp = malloc (home_len + dirlen);
 		  if (newp == NULL)
 		    {
-		      if (__glibc_unlikely (malloc_home_dir))
+		      if (__builtin_expect (malloc_home_dir, 0))
 			free (home_dir);
 		      retval = GLOB_NOSPACE;
 		      goto out;
@@ -760,7 +760,7 @@ glob (pattern, flags, errfunc, pglob)
 	      mempcpy (mempcpy (newp, home_dir, home_len),
 		       &dirname[1], dirlen);
 
-	      if (__glibc_unlikely (malloc_dirname))
+	      if (__builtin_expect (malloc_dirname, 0))
 		free (dirname);
 
 	      dirname = newp;
@@ -859,7 +859,7 @@ glob (pattern, flags, errfunc, pglob)
 		if (pwtmpbuf == NULL)
 		  {
 		  nomem_getpw:
-		    if (__glibc_unlikely (malloc_user_name))
+		    if (__builtin_expect (malloc_user_name, 0))
 		      free (user_name);
 		    retval = GLOB_NOSPACE;
 		    goto out;
@@ -884,7 +884,7 @@ glob (pattern, flags, errfunc, pglob)
 					  2 * buflen);
 		    if (newp == NULL)
 		      {
-			if (__glibc_unlikely (malloc_pwtmpbuf))
+			if (__builtin_expect (malloc_pwtmpbuf, 0))
 			  free (pwtmpbuf);
 			goto nomem_getpw;
 		      }
@@ -897,7 +897,7 @@ glob (pattern, flags, errfunc, pglob)
 	    p = getpwnam (user_name);
 #  endif
 
-	    if (__glibc_unlikely (malloc_user_name))
+	    if (__builtin_expect (malloc_user_name, 0))
 	      free (user_name);
 
 	    /* If we found a home directory use this.  */
@@ -906,7 +906,7 @@ glob (pattern, flags, errfunc, pglob)
 		size_t home_len = strlen (p->pw_dir);
 		size_t rest_len = end_name == NULL ? 0 : strlen (end_name);
 
-		if (__glibc_unlikely (malloc_dirname))
+		if (__builtin_expect (malloc_dirname, 0))
 		  free (dirname);
 		malloc_dirname = 0;
 
@@ -918,7 +918,7 @@ glob (pattern, flags, errfunc, pglob)
 		    dirname = malloc (home_len + rest_len + 1);
 		    if (dirname == NULL)
 		      {
-			if (__glibc_unlikely (malloc_pwtmpbuf))
+			if (__builtin_expect (malloc_pwtmpbuf, 0))
 			  free (pwtmpbuf);
 			retval = GLOB_NOSPACE;
 			goto out;
@@ -931,12 +931,12 @@ glob (pattern, flags, errfunc, pglob)
 		dirlen = home_len + rest_len;
 		dirname_modified = 1;
 
-		if (__glibc_unlikely (malloc_pwtmpbuf))
+		if (__builtin_expect (malloc_pwtmpbuf, 0))
 		  free (pwtmpbuf);
 	      }
 	    else
 	      {
-		if (__glibc_unlikely (malloc_pwtmpbuf))
+		if (__builtin_expect (malloc_pwtmpbuf, 0))
 		  free (pwtmpbuf);
 
 		if (flags & GLOB_TILDE_CHECK)
@@ -1035,7 +1035,7 @@ glob (pattern, flags, errfunc, pglob)
 	    *(char *) &dirname[--dirlen] = '\0';
 	}
 
-      if (__glibc_unlikely ((flags & GLOB_ALTDIRFUNC) != 0))
+      if (__builtin_expect ((flags & GLOB_ALTDIRFUNC) != 0, 0))
 	{
 	  /* Use the alternative access functions also in the recursive
 	     call.  */
@@ -1253,7 +1253,7 @@ glob (pattern, flags, errfunc, pglob)
     }
 
  out:
-  if (__glibc_unlikely (malloc_dirname))
+  if (__builtin_expect (malloc_dirname, 0))
     free (dirname);
 
   return retval;
@@ -1530,7 +1530,7 @@ glob_in_dir (const char *pattern, const char *directory, int flags,
 	   of the function to copy this name into the result.  */
 	flags |= GLOB_NOCHECK;
 
-      if (__glibc_unlikely (!alloca_fullname))
+      if (__builtin_expect (!alloca_fullname, 0))
 	free (fullname);
     }
   else
@@ -1573,7 +1573,7 @@ glob_in_dir (const char *pattern, const char *directory, int flags,
 		}
 	      d64buf;
 
-	      if (__glibc_unlikely (flags & GLOB_ALTDIRFUNC))
+	      if (__builtin_expect (flags & GLOB_ALTDIRFUNC, 0))
 		{
 		  struct dirent *d32 = (*pglob->gl_readdir) (stream);
 		  if (d32 != NULL)
@@ -1732,7 +1732,7 @@ glob_in_dir (const char *pattern, const char *directory, int flags,
   if (stream != NULL)
     {
       save = errno;
-      if (__glibc_unlikely (flags & GLOB_ALTDIRFUNC))
+      if (__builtin_expect (flags & GLOB_ALTDIRFUNC, 0))
 	(*pglob->gl_closedir) (stream);
       else
 	closedir (stream);

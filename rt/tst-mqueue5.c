@@ -1,5 +1,5 @@
 /* Test mq_notify.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2004.
 
@@ -35,7 +35,7 @@
 
 #define TIMEOUT 3
 
-#if _POSIX_THREADS && defined SIGRTMIN && defined SA_SIGINFO
+#if _POSIX_THREADS
 # include <pthread.h>
 
 volatile int rtmin_cnt;

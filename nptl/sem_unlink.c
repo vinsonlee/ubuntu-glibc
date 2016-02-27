@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -22,16 +22,44 @@
 #include <string.h>
 #include <unistd.h>
 #include "semaphoreP.h"
-#include <shm-directory.h>
+
 
 int
-sem_unlink (const char *name)
+sem_unlink (name)
+     const char *name;
 {
+  char *fname;
+  size_t namelen;
+
+  /* Determine where the shmfs is mounted.  */
+  __pthread_once (&__namedsem_once, __where_is_shmfs);
+
+  /* If we don't know the mount points there is nothing we can do.  Ever.  */
+  if (mountpoint.dir == NULL)
+    {
+      __set_errno (ENOSYS);
+      return -1;
+    }
+
   /* Construct the filename.  */
-  SHM_GET_NAME (ENOENT, -1, SEM_SHM_PREFIX);
+  while (name[0] == '/')
+    ++name;
+
+  if (name[0] == '\0')
+    {
+      /* The name "/" is not supported.  */
+      __set_errno (ENOENT);
+      return -1;
+    }
+  namelen = strlen (name);
+
+  /* Create the name of the file.  */
+  fname = (char *) alloca (mountpoint.dirlen + namelen + 1);
+  __mempcpy (__mempcpy (fname, mountpoint.dir, mountpoint.dirlen),
+	     name, namelen + 1);
 
   /* Now try removing it.  */
-  int ret = unlink (shm_name);
+  int ret = unlink (fname);
   if (ret < 0 && errno == EPERM)
     __set_errno (EACCES);
   return ret;

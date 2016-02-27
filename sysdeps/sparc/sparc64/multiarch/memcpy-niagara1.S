@@ -1,5 +1,5 @@
 /* Copy SIZE bytes from SRC to DEST.  For SUN4V Niagara.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David S. Miller (davem@davemloft.net)
 
@@ -35,7 +35,7 @@
 #define XCC xcc
 #endif
 
-#if IS_IN (libc)
+#if !defined NOT_IN_libc
 
 	.register	%g2,#scratch
 	.register	%g3,#scratch

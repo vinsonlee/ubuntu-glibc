@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
    This file is part of the GNU C Library.
 
@@ -105,7 +105,7 @@
     br    %r14;								      \
 2:  .long rtld_errno-1b
 # elif defined _LIBC_REENTRANT
-#  if IS_IN (libc)
+#  ifndef NOT_IN_libc
 #   define SYSCALL_ERROR_ERRNO __libc_errno
 #  else
 #   define SYSCALL_ERROR_ERRNO errno
@@ -182,7 +182,7 @@
 #define INLINE_SYSCALL(name, nr, args...)				      \
   ({									      \
     unsigned int _ret = INTERNAL_SYSCALL (name, , nr, args);		      \
-    if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (_ret, )))		      \
+    if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (_ret, ), 0))	      \
      {									      \
        __set_errno (INTERNAL_SYSCALL_ERRNO (_ret, ));			      \
        _ret = 0xffffffff;						      \
@@ -281,7 +281,63 @@
 /* List of system calls which are supported as vsyscalls.  */
 #define HAVE_CLOCK_GETRES_VSYSCALL	1
 #define HAVE_CLOCK_GETTIME_VSYSCALL	1
-#define HAVE_GETTIMEOFDAY_VSYSCALL	1
+
+/* This version is for kernels that implement system calls that
+   behave like function calls as far as register saving.
+   It falls back to the syscall in the case that the vDSO doesn't
+   exist or fails for ENOSYS */
+#ifdef SHARED
+# define INLINE_VSYSCALL(name, nr, args...) \
+  ({									      \
+    __label__ out;							      \
+    __label__ iserr;							      \
+    long int _ret;							      \
+									      \
+    if (__vdso_##name != NULL)						      \
+      {									      \
+	_ret = INTERNAL_VSYSCALL_NCS (__vdso_##name, , nr, ##args);	      \
+	if (!INTERNAL_SYSCALL_ERROR_P (_ret, ))				      \
+	  goto out;							      \
+	if (INTERNAL_SYSCALL_ERRNO (_ret, ) != ENOSYS)			      \
+	  goto iserr;							      \
+      }									      \
+									      \
+    _ret = INTERNAL_SYSCALL (name, , nr, ##args);			      \
+    if (INTERNAL_SYSCALL_ERROR_P (_ret, ))				      \
+      {									      \
+      iserr:								      \
+	__set_errno (INTERNAL_SYSCALL_ERRNO (_ret, ));			      \
+	_ret = -1L;							      \
+      }									      \
+  out:									      \
+    (int) _ret;								      \
+  })
+#else
+# define INLINE_VSYSCALL(name, nr, args...) \
+  INLINE_SYSCALL (name, nr, ##args)
+#endif
+
+#ifdef SHARED
+# define INTERNAL_VSYSCALL(name, err, nr, args...) \
+  ({									      \
+    __label__ out;							      \
+    long int _ret;							      \
+									      \
+    if (__vdso_##name != NULL)						      \
+      {									      \
+	_ret = INTERNAL_VSYSCALL_NCS (__vdso_##name, err, nr, ##args);	      \
+	if (!INTERNAL_SYSCALL_ERROR_P (_ret, err)			      \
+	    || INTERNAL_SYSCALL_ERRNO (_ret, err) != ENOSYS)		      \
+	  goto out;							      \
+      }									      \
+    _ret = INTERNAL_SYSCALL (name, err, nr, ##args);			      \
+  out:									      \
+    _ret;								      \
+  })
+#else
+# define INTERNAL_VSYSCALL(name, err, nr, args...) \
+  INTERNAL_SYSCALL (name, err, nr, ##args)
+#endif
 
 /* This version is for internal uses when there is no desire
    to set errno */
@@ -289,16 +345,14 @@
   ({									      \
     long int _ret = ENOSYS;						      \
 									      \
-    __typeof (__vdso_##name) vdsop = __vdso_##name;			      \
-    PTR_DEMANGLE (vdsop);						      \
-    if (vdsop != NULL)							      \
-      _ret = INTERNAL_VSYSCALL_CALL (vdsop, err, nr, ##args);		      \
+    if (__vdso_##name != NULL)						      \
+      _ret = INTERNAL_VSYSCALL_NCS (__vdso_##name, err, nr, ##args);	      \
     else								      \
       err = 1 << 28;							      \
     _ret;								      \
   })
 
-#define INTERNAL_VSYSCALL_CALL(fn, err, nr, args...)			      \
+#define INTERNAL_VSYSCALL_NCS(fn, err, nr, args...)			      \
   ({									      \
     DECLARGS_##nr(args)							      \
     register long _ret asm("2");						      \
@@ -312,7 +366,7 @@
     _ret; })
 
 /* Pointer mangling support.  */
-#if IS_IN (rtld)
+#if defined NOT_IN_libc && defined IS_IN_rtld
 /* We cannot use the thread descriptor because in ld.so we use setjmp
    earlier than the descriptor is initialized.  */
 #else
