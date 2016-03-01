@@ -24,7 +24,12 @@
 
 #ifdef SHARED
 
-extern long int (*__vdso_clock_gettime) (clockid_t, struct timespec *);
+# include <sysdep-vdso.h>
+
+extern long int (*VDSO_SYMBOL(clock_gettime)) (clockid_t, struct timespec *)
+  attribute_hidden;
+
+extern long int (*VDSO_SYMBOL(getcpu)) (unsigned *, unsigned *, void *);
 
 #endif
 
