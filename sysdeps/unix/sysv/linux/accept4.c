@@ -37,24 +37,17 @@
 int
 accept4 (int fd, __SOCKADDR_ARG addr, socklen_t *addr_len, int flags)
 {
-  if (SINGLE_THREAD_P)
-    return INLINE_SYSCALL (accept4, 4, fd, addr.__sockaddr__, addr_len, flags);
-
-  int oldtype = LIBC_CANCEL_ASYNC ();
-
-  int result = INLINE_SYSCALL (accept4, 4, fd, addr.__sockaddr__, addr_len,
-			       flags);
-
-  LIBC_CANCEL_RESET (oldtype);
-
-  return result;
+  return SYSCALL_CANCEL (accept4, fd, addr.__sockaddr__, addr_len, flags);
 }
 #elif defined __NR_socketcall
-# ifndef __ASSUME_ACCEPT4_SOCKETCALL
-extern int __internal_accept4 (int fd, __SOCKADDR_ARG addr,
-			       socklen_t *addr_len, int flags)
-     attribute_hidden;
-
+# include <socketcall.h>
+# ifdef __ASSUME_ACCEPT4_SOCKETCALL
+int
+accept4 (int fd, __SOCKADDR_ARG addr, socklen_t *addr_len, int flags)
+{
+  return SOCKETCALL_CANCEL (accept4, fd, addr.__sockaddr__, addr_len, flags);
+}
+# else
 static int have_accept4;
 
 int
@@ -62,7 +55,8 @@ accept4 (int fd, __SOCKADDR_ARG addr, socklen_t *addr_len, int flags)
 {
   if (__glibc_likely (have_accept4 >= 0))
     {
-      int ret = __internal_accept4 (fd, addr, addr_len, flags);
+      int ret = SOCKETCALL_CANCEL (accept4, fd, addr.__sockaddr__, addr_len,
+				   flags);
       /* The kernel returns -EINVAL for unknown socket operations.
 	 We need to convert that error to an ENOSYS error.  */
       if (__builtin_expect (ret < 0, 0)
@@ -72,7 +66,7 @@ accept4 (int fd, __SOCKADDR_ARG addr, socklen_t *addr_len, int flags)
 	  /* Try another call, this time with the FLAGS parameter
 	     cleared and an invalid file descriptor.  This call will not
 	     cause any harm and it will return immediately.  */
-	  ret = __internal_accept4 (-1, addr, addr_len, 0);
+	  ret = SOCKETCALL_CANCEL (invalid, -1);
 	  if (errno == EINVAL)
 	    {
 	      have_accept4 = -1;
@@ -90,11 +84,8 @@ accept4 (int fd, __SOCKADDR_ARG addr, socklen_t *addr_len, int flags)
   __set_errno (ENOSYS);
   return -1;
 }
-# else
-/* When __ASSUME_ACCEPT4_SOCKETCALL accept4 is defined in
-   internal_accept4.S.  */
-# endif
-#else
+# endif /* __ASSUME_ACCEPT4_SOCKETCALL  */
+#else /* __NR_socketcall   */
 int
 accept4 (int fd, __SOCKADDR_ARG addr, socklen_t *addr_len, int flags)
 {

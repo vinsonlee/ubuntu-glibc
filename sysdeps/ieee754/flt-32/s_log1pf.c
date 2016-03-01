@@ -13,6 +13,7 @@
  * ====================================================
  */
 
+#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -48,7 +49,14 @@ __log1pf(float x)
 	    if(ax<0x31000000) {			/* |x| < 2**-29 */
 		math_force_eval(two25+x);	/* raise inexact */
 		if (ax<0x24800000)		/* |x| < 2**-54 */
+		  {
+		    if (fabsf (x) < FLT_MIN)
+		      {
+			float force_underflow = x * x;
+			math_force_eval (force_underflow);
+		      }
 		    return x;
+		  }
 		else
 		    return x - x*x*(float)0.5;
 	    }
@@ -96,4 +104,3 @@ __log1pf(float x)
 	if(k==0) return f-(hfsq-s*(hfsq+R)); else
 		 return k*ln2_hi-((hfsq-(s*(hfsq+R)+(k*ln2_lo+c)))-f);
 }
-weak_alias (__log1pf, log1pf)

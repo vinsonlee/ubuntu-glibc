@@ -55,16 +55,16 @@ __remquo (double x, double y, int *quo)
       return zero * x;
     }
 
-  INSERT_WORDS64 (x, hx);
+  x = fabs (x);
   INSERT_WORDS64 (y, hy);
   cquo = 0;
 
-  if (x >= 4 * y)
+  if (hy <= UINT64_C(0x7fcfffffffffffff) && x >= 4 * y)
     {
       x -= 4 * y;
       cquo += 4;
     }
-  if (x >= 2 * y)
+  if (hy <= UINT64_C(0x7fdfffffffffffff) && x >= 2 * y)
     {
       x -= 2 * y;
       cquo += 2;
@@ -100,6 +100,9 @@ __remquo (double x, double y, int *quo)
 
   *quo = qs ? -cquo : cquo;
 
+  /* Ensure correct sign of zero result in round-downward mode.  */
+  if (x == 0.0)
+    x = 0.0;
   if (sx)
     x = -x;
   return x;
