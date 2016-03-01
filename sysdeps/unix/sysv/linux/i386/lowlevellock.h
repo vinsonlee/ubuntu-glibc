@@ -48,7 +48,7 @@
 #include <lowlevellock-futex.h>
 
 /* XXX Remove when no assembler code uses futexes anymore.  */
-#define SYS_futex		240
+#define SYS_futex		__NR_futex
 
 #ifndef __ASSEMBLER__
 
@@ -56,28 +56,6 @@
 #define LLL_LOCK_INITIALIZER		(0)
 #define LLL_LOCK_INITIALIZER_LOCKED	(1)
 #define LLL_LOCK_INITIALIZER_WAITERS	(2)
-
-
-#ifdef PIC
-# define LLL_EBX_LOAD	"xchgl %2, %%ebx\n"
-# define LLL_EBX_REG	"D"
-#else
-# define LLL_EBX_LOAD
-# define LLL_EBX_REG	"b"
-#endif
-
-#ifdef I386_USE_SYSENTER
-# ifdef SHARED
-#  define LLL_ENTER_KERNEL	"call *%%gs:%P6\n\t"
-# else
-#  define LLL_ENTER_KERNEL	"call *_dl_sysinfo\n\t"
-# endif
-#else
-# define LLL_ENTER_KERNEL	"int $0x80\n\t"
-#endif
-
-/* Delay in spinlock loop.  */
-#define BUSY_WAIT_NOP	asm ("rep; nop")
 
 
 /* NB: in the lll_trylock macro we simply return the value in %eax

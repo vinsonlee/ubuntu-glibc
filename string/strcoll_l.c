@@ -29,8 +29,8 @@
 # define STRING_TYPE char
 # define USTRING_TYPE unsigned char
 # define STRCOLL __strcoll_l
+# define STRDIFF __strdiff
 # define STRCMP strcmp
-# define STRLEN strlen
 # define WEIGHT_H "../locale/weight.h"
 # define SUFFIX	MB
 # define L(arg) arg
@@ -42,13 +42,26 @@
 #include "../locale/localeinfo.h"
 #include WEIGHT_H
 
+#define MASK_UTF8_7BIT  (1 << 7)
+#define MASK_UTF8_START (3 << 6)
+
+size_t
+STRDIFF (const STRING_TYPE *s, const STRING_TYPE *t)
+{
+  size_t n;
+
+  for (n = 0; *s != '\0' && *s++ == *t++; ++n)
+    continue;
+
+  return n;
+}
+
 /* Track status while looking for sequences in a string.  */
 typedef struct
 {
   int len;			/* Length of the current sequence.  */
   size_t val;			/* Position of the sequence relative to the
 				   previous non-ignored sequence.  */
-  size_t idxnow;		/* Current index in sequences.  */
   size_t idxmax;		/* Maximum index in sequences.  */
   size_t idxcnt;		/* Current count of indices.  */
   size_t backw;			/* Current Backward sequence index.  */
@@ -256,8 +269,28 @@ STRCOLL (const STRING_TYPE *s1, const STRING_TYPE *s2, __locale_t l)
   const USTRING_TYPE *extra;
   const int32_t *indirect;
 
+  /* In case there is no locale specific sort order (C / POSIX).  */
   if (nrules == 0)
     return STRCMP (s1, s2);
+
+  /* Fast forward to the position of the first difference.  Needs to be
+     encoding aware as the byte-by-byte comparison can stop in the middle
+     of a char sequence for multibyte encodings like UTF-8.  */
+  uint_fast32_t encoding =
+    current->values[_NL_ITEM_INDEX (_NL_COLLATE_ENCODING_TYPE)].word;
+  if (encoding != __cet_other)
+    {
+      size_t diff = STRDIFF (s1, s2);
+      if (diff > 0)
+	{
+	  if (encoding == __cet_utf8 && (*(s1 + diff) & MASK_UTF8_7BIT) != 0)
+	    do
+	      diff--;
+	    while (diff > 0 && (*(s1 + diff) & MASK_UTF8_START) != MASK_UTF8_START);
+	  s1 += diff;
+	  s2 += diff;
+	}
+    }
 
   /* Catch empty strings.  */
   if (__glibc_unlikely (*s1 == '\0') || __glibc_unlikely (*s2 == '\0'))
@@ -282,8 +315,11 @@ STRCOLL (const STRING_TYPE *s1, const STRING_TYPE *s2, __locale_t l)
   int result = 0, rule = 0;
 
   coll_seq seq1, seq2;
-  memset (&seq1, 0, sizeof (seq1));
-  seq2 = seq1;
+  seq1.len = 0;
+  seq1.idxmax = 0;
+  seq1.rule = 0;
+  seq2.len = 0;
+  seq2.idxmax = 0;
 
   for (int pass = 0; pass < nrules; ++pass)
     {
@@ -322,7 +358,8 @@ STRCOLL (const STRING_TYPE *s1, const STRING_TYPE *s2, __locale_t l)
 		     byte-level comparison to ensure that we don't waste time
 		     going through multiple passes for totally equal strings
 		     before proceeding to subsequent passes.  */
-		  if (pass == 0 && STRCMP (s1, s2) == 0)
+		  if (pass == 0 && encoding == __cet_other &&
+		      STRCMP (s1, s2) == 0)
 		    return result;
 		  else
 		    break;
