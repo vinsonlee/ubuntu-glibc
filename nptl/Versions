@@ -266,10 +266,14 @@ libpthread {
   GLIBC_2.20 {
   }
 
+  GLIBC_2.22 {
+  }
+
   GLIBC_PRIVATE {
     __pthread_initialize_minimal;
     __pthread_clock_gettime; __pthread_clock_settime;
     __pthread_unwind; __pthread_get_minstack;
+    __pthread_barrier_init; __pthread_barrier_wait;
     __shm_directory;
   }
 }
