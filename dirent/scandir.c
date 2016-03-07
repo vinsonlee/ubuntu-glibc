@@ -24,23 +24,20 @@
 
 #undef  scandir64
 
-#include <fcntl.h>
-
 #ifndef SCANDIR
-# define SCANDIR scandir
-# define SCANDIRAT scandirat
-# define DIRENT_TYPE struct dirent
+# define SCANDIR        scandir
+# define SCANDIR_TAIL   __scandir_tail
+# define DIRENT_TYPE    struct dirent
 #endif
 
 
 int
-SCANDIR (dir, namelist, select, cmp)
-     const char *dir;
-     DIRENT_TYPE ***namelist;
-     int (*select) (const DIRENT_TYPE *);
-     int (*cmp) (const DIRENT_TYPE **, const DIRENT_TYPE **);
+SCANDIR (const char *dir,
+	 DIRENT_TYPE ***namelist,
+	 int (*select) (const DIRENT_TYPE *),
+	 int (*cmp) (const DIRENT_TYPE **, const DIRENT_TYPE **))
 {
-  return SCANDIRAT (AT_FDCWD, dir, namelist, select, cmp);
+  return SCANDIR_TAIL (__opendir (dir), namelist, select, cmp);
 }
 
 #ifdef _DIRENT_MATCHES_DIRENT64

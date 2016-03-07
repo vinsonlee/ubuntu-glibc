@@ -27,7 +27,7 @@
 # include <sys/asm.h>
 # define PREFETCH_LOAD_HINT PREFETCH_HINT_LOAD_STREAMED
 # define PREFETCH_STORE_HINT PREFETCH_HINT_PREPAREFORSTORE
-#elif _COMPILING_NEWLIB
+#elif defined _COMPILING_NEWLIB
 # include "machine/asm.h"
 # include "machine/regdef.h"
 # define PREFETCH_LOAD_HINT PREFETCH_HINT_LOAD_STREAMED
@@ -48,15 +48,6 @@
 # ifndef DISABLE_DOUBLE
 #  define USE_DOUBLE
 # endif
-#endif
-
-
-#if __mips_isa_rev > 5
-# if (PREFETCH_STORE_HINT == PREFETCH_HINT_PREPAREFORSTORE)
-#  undef PREFETCH_STORE_HINT
-#  define PREFETCH_STORE_HINT PREFETCH_HINT_STORE_STREAMED
-# endif
-# define R6_CODE
 #endif
 
 /* Some asm.h files do not have the L macro definition.  */
@@ -196,6 +187,14 @@
 # define PREFETCH_FOR_STORE(offset, reg)
 #endif
 
+#if __mips_isa_rev > 5
+# if (PREFETCH_STORE_HINT == PREFETCH_HINT_PREPAREFORSTORE)
+#  undef PREFETCH_STORE_HINT
+#  define PREFETCH_STORE_HINT PREFETCH_HINT_STORE_STREAMED
+# endif
+# define R6_CODE
+#endif
+
 /* Allow the routine to be named something else if desired.  */
 #ifndef MEMCPY_NAME
 # define MEMCPY_NAME memcpy
@@ -225,7 +224,7 @@
 #ifdef USE_DOUBLE
 # define C_ST	sd
 # define C_LD	ld
-# if __MIPSEB
+# ifdef __MIPSEB
 #  define C_LDHI	ldl	/* high part is left in big-endian	*/
 #  define C_STHI	sdl	/* high part is left in big-endian	*/
 #  define C_LDLO	ldr	/* low part is right in big-endian	*/
@@ -240,7 +239,7 @@
 #else
 # define C_ST	sw
 # define C_LD	lw
-# if __MIPSEB
+# ifdef __MIPSEB
 #  define C_LDHI	lwl	/* high part is left in big-endian	*/
 #  define C_STHI	swl	/* high part is left in big-endian	*/
 #  define C_LDLO	lwr	/* low part is right in big-endian	*/
@@ -767,7 +766,7 @@ L(ua_smallCopy_loop):
 
 #else /* R6_CODE */
 
-# if __MIPSEB
+# ifdef __MIPSEB
 #  define SWAP_REGS(X,Y) X, Y
 #  define ALIGN_OFFSET(N) (N)
 # else
