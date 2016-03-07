@@ -32,6 +32,7 @@
 #include "libioP.h"
 #include <assert.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -352,7 +353,15 @@ _IO_new_file_fopen (_IO_FILE *fp, const char *filename, const char *mode,
 	  struct gconv_fcts fcts;
 	  struct _IO_codecvt *cc;
 	  char *endp = __strchrnul (cs + 5, ',');
-	  char ccs[endp - (cs + 5) + 3];
+	  char *ccs = malloc (endp - (cs + 5) + 3);
+
+	  if (ccs == NULL)
+	    {
+	      int malloc_err = errno;  /* Whatever malloc failed with.  */
+	      (void) _IO_file_close_it (fp);
+	      __set_errno (malloc_err);
+	      return NULL;
+	    }
 
 	  *((char *) __mempcpy (ccs, cs + 5, endp - (cs + 5))) = '\0';
 	  strip (ccs, ccs);
@@ -364,9 +373,12 @@ _IO_new_file_fopen (_IO_FILE *fp, const char *filename, const char *mode,
 		 This means we cannot proceed since the user explicitly asked
 		 for these.  */
 	      (void) _IO_file_close_it (fp);
+	      free (ccs);
 	      __set_errno (EINVAL);
 	      return NULL;
 	    }
+
+	  free (ccs);
 
 	  assert (fcts.towc_nsteps == 1);
 	  assert (fcts.tomb_nsteps == 1);
@@ -402,7 +414,7 @@ _IO_new_file_fopen (_IO_FILE *fp, const char *filename, const char *mode,
 	    &result->_wide_data->_IO_state;
 
 	  /* From now on use the wide character callback functions.  */
-	  ((struct _IO_FILE_plus *) fp)->vtable = fp->_wide_data->_wide_vtable;
+	  _IO_JUMPS_FILE_plus (fp) = fp->_wide_data->_wide_vtable;
 
 	  /* Set the mode now.  */
 	  result->_mode = 1;
@@ -454,7 +466,7 @@ _IO_file_setbuf_mmap (_IO_FILE *fp, char *p, _IO_ssize_t len)
   _IO_FILE *result;
 
   /* Change the function table.  */
-  _IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_file_jumps;
+  _IO_JUMPS_FILE_plus (fp) = &_IO_file_jumps;
   fp->_wide_data->_wide_vtable = &_IO_wfile_jumps;
 
   /* And perform the normal operation.  */
@@ -463,7 +475,7 @@ _IO_file_setbuf_mmap (_IO_FILE *fp, char *p, _IO_ssize_t len)
   /* If the call failed, restore to using mmap.  */
   if (result == NULL)
     {
-      _IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_file_jumps_mmap;
+      _IO_JUMPS_FILE_plus (fp) = &_IO_file_jumps_mmap;
       fp->_wide_data->_wide_vtable = &_IO_wfile_jumps_mmap;
     }
 
@@ -509,7 +521,7 @@ new_do_write (_IO_FILE *fp, const char *data, _IO_size_t to_do)
   _IO_setg (fp, fp->_IO_buf_base, fp->_IO_buf_base, fp->_IO_buf_base);
   fp->_IO_write_base = fp->_IO_write_ptr = fp->_IO_buf_base;
   fp->_IO_write_end = (fp->_mode <= 0
-		       && (fp->_flags & (_IO_LINE_BUF+_IO_UNBUFFERED))
+		       && (fp->_flags & (_IO_LINE_BUF | _IO_UNBUFFERED))
 		       ? fp->_IO_buf_base : fp->_IO_buf_end);
   return count;
 }
@@ -691,9 +703,9 @@ mmap_remap_check (_IO_FILE *fp)
       fp->_IO_buf_base = fp->_IO_buf_end = NULL;
       _IO_setg (fp, NULL, NULL, NULL);
       if (fp->_mode <= 0)
-	_IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_file_jumps;
+	_IO_JUMPS_FILE_plus (fp) = &_IO_file_jumps;
       else
-	_IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_wfile_jumps;
+	_IO_JUMPS_FILE_plus (fp) = &_IO_wfile_jumps;
       fp->_wide_data->_wide_vtable = &_IO_wfile_jumps;
 
       return 1;
@@ -761,9 +773,9 @@ decide_maybe_mmap (_IO_FILE *fp)
 	      fp->_offset = st.st_size;
 
 	      if (fp->_mode <= 0)
-		_IO_JUMPS ((struct _IO_FILE_plus *)fp) = &_IO_file_jumps_mmap;
+		_IO_JUMPS_FILE_plus (fp) = &_IO_file_jumps_mmap;
 	      else
-		_IO_JUMPS ((struct _IO_FILE_plus *)fp) = &_IO_wfile_jumps_mmap;
+		_IO_JUMPS_FILE_plus (fp) = &_IO_wfile_jumps_mmap;
 	      fp->_wide_data->_wide_vtable = &_IO_wfile_jumps_mmap;
 
 	      return;
@@ -774,9 +786,9 @@ decide_maybe_mmap (_IO_FILE *fp)
   /* We couldn't use mmap, so revert to the vanilla file operations.  */
 
   if (fp->_mode <= 0)
-    _IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_file_jumps;
+    _IO_JUMPS_FILE_plus (fp) = &_IO_file_jumps;
   else
-    _IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_wfile_jumps;
+    _IO_JUMPS_FILE_plus (fp) = &_IO_wfile_jumps;
   fp->_wide_data->_wide_vtable = &_IO_wfile_jumps;
 }
 
@@ -832,7 +844,7 @@ _IO_new_file_overflow (_IO_FILE *f, int ch)
       f->_IO_read_base = f->_IO_read_ptr = f->_IO_read_end;
 
       f->_flags |= _IO_CURRENTLY_PUTTING;
-      if (f->_mode <= 0 && f->_flags & (_IO_LINE_BUF+_IO_UNBUFFERED))
+      if (f->_mode <= 0 && f->_flags & (_IO_LINE_BUF | _IO_UNBUFFERED))
 	f->_IO_write_end = f->_IO_write_ptr;
     }
   if (ch == EOF)
