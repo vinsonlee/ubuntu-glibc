@@ -1,3 +1,25 @@
+glibc (2.22-2) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+    - Fix pow() precision on CPUs with fma4, and the corresponding testsuite
+      failures.
+    - debian/patches/s390/submitted-socketcall.diff: drop, merged upstream.
+  * debian/libc6{,-mips32,-mipsn32}.symbols.mips64el: add symbols for files for
+    mips64el.
+  * patches/kfreebsd/local-sysdeps.diff: update to revision 5932 (from
+    glibc-bsd):
+    - Fix consistency check for PIC code when built with GCC 5.  Closes:
+      #817207.
+  * debian/rules, debian/rules.d/build.mk, debian/rules.d/debhelper.mk: define
+    the mvec variable per flavour and not per platform.
+  * sysdeps/*mk: enable libmvec only on amd64 and x32 flavours.
+  * debian/debhelper.in/libc-dev-alt.install: install libmvec_nonshared.a also
+    for alternative builds.
+  * debian/debhelper.in/libc-dev{,-alt}.install: install libmvec.a.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 09 Mar 2016 18:42:19 +0100
+
 glibc (2.22-1) unstable; urgency=medium
 
   [ Aurelien Jarno ]
