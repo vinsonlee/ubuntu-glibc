@@ -1,5 +1,5 @@
 /* setjmp for s390, ELF version.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
    This file is part of the GNU C Library.
 
@@ -27,23 +27,21 @@
 #if !IS_IN (rtld)
 # if defined SHARED &&  SHLIB_COMPAT (libc, GLIBC_2_19, GLIBC_2_20)
 	/* we need a unique name in case of symbol versioning.  */
-#  define setjmp __v1setjmp
-#  define _setjmp __v1_setjmp
 #  define __sigsetjmp __v1__sigsetjmp
-
-#  undef libc_hidden_def
-#  define libc_hidden_def(name) strong_alias(_setjmp, __GI__setjmp)
 # endif /* if defined SHARED && SHLIB_COMPAT (libc, GLIBC_2_19, GLIBC_2_20)  */
 #endif /* !IS_IN (rtld)  */
 
-	/* We include the BSD entry points here as well.  */
+	/* We include the BSD entry points here as well but we make
+	   them weak.  */
 ENTRY (setjmp)
+	.weak C_SYMBOL_NAME (setjmp)
 	lhi    %r3,1                /* second argument of one */
 	j      .Linternal_sigsetjmp /* branch relativ to __sigsetjmp */
 END (setjmp)
 
 	/* Binary compatibility entry point.  */
 ENTRY(_setjmp)
+	.weak  C_SYMBOL_NAME (_setjmp)
 	lhi    %r3,0                /* second argument of zero */
 	j      .Linternal_sigsetjmp /* branch relativ to __sigsetjmp */
 END (_setjmp)
@@ -98,15 +96,15 @@ END (__sigsetjmp)
 /* In glibc release 2.19 new versions of setjmp-functions were introduced,
    but were reverted before 2.20. Thus both versions are the same function.  */
 
-#  undef setjmp
-#  undef _setjmp
 #  undef __sigsetjmp
 
-strong_alias (__v1setjmp, __v2setjmp);
+weak_alias (setjmp, __v1setjmp);
+weak_alias (setjmp, __v2setjmp);
 versioned_symbol (libc, __v1setjmp, setjmp, GLIBC_2_0);
 compat_symbol (libc, __v2setjmp, setjmp, GLIBC_2_19);
 
-strong_alias (__v1_setjmp, __v2_setjmp);
+weak_alias (_setjmp, __v1_setjmp);
+weak_alias (_setjmp, __v2_setjmp);
 versioned_symbol (libc, __v1_setjmp, _setjmp, GLIBC_2_0);
 compat_symbol (libc, __v2_setjmp, _setjmp, GLIBC_2_19);
 

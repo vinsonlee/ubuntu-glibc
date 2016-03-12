@@ -1,5 +1,5 @@
 /* Multiple versions of fma.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -19,16 +19,17 @@
 
 #include <config.h>
 
+#ifdef HAVE_AVX_SUPPORT
 #include <math.h>
 #include <init-arch.h>
 
 extern double __fma_ia32 (double x, double y, double z) attribute_hidden;
 extern double __fma_fma (double x, double y, double z) attribute_hidden;
 
-libm_ifunc (__fma,
-	    HAS_ARCH_FEATURE (FMA_Usable) ? __fma_fma : __fma_ia32);
+libm_ifunc (__fma, HAS_FMA ? __fma_fma : __fma_ia32);
 weak_alias (__fma, fma)
 
-#define __fma __fma_ia32
+# define __fma __fma_ia32
+#endif
 
 #include <sysdeps/ieee754/ldbl-96/s_fma.c>

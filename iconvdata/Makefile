@@ -1,4 +1,4 @@
-# Copyright (C) 1997-2016 Free Software Foundation, Inc.
+# Copyright (C) 1997-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -67,8 +67,7 @@ modules.so := $(addsuffix .so, $(modules))
 
 ifeq (yes,$(build-shared))
 tests = bug-iconv1 bug-iconv2 tst-loading tst-e2big tst-iconv4 bug-iconv4 \
-	tst-iconv6 bug-iconv5 bug-iconv6 tst-iconv7 bug-iconv8 bug-iconv9 \
-	bug-iconv10 bug-iconv11
+	tst-iconv6 bug-iconv5 bug-iconv6 tst-iconv7 bug-iconv8 bug-iconv9
 ifeq ($(have-thread-library),yes)
 tests += bug-iconv3
 endif
@@ -272,14 +271,6 @@ endif
 
 include ../Rules
 
-ifeq ($(run-built-tests),yes)
-LOCALES := de_DE.UTF-8
-include ../gen-locales.mk
-
-$(objpfx)bug-iconv6.out: $(gen-locales)
-$(objpfx)tst-iconv7.out: $(gen-locales)
-endif
-
 # Set libof-* for each routine.
 cpp-srcs-left := $(modules) $(generated-modules) $(libJIS-routines) \
 		 $(libKSC-routines) $(libGB-routines) $(libCNS-routines) \
@@ -307,8 +298,6 @@ $(objpfx)tst-iconv4.out: $(objpfx)gconv-modules \
 			 $(addprefix $(objpfx),$(modules.so))
 $(objpfx)tst-iconv7.out: $(objpfx)gconv-modules \
 			 $(addprefix $(objpfx),$(modules.so))
-$(objpfx)bug-iconv10.out: $(objpfx)gconv-modules \
-			  $(addprefix $(objpfx),$(modules.so))
 
 $(objpfx)iconv-test.out: run-iconv-test.sh $(objpfx)gconv-modules \
 			 $(addprefix $(objpfx),$(modules.so)) \

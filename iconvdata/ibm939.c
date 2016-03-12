@@ -1,5 +1,5 @@
 /* Conversion to and from IBM939.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Masahide Washizawa <washi@yamato.ibm.co.jp>, 2000.
 
@@ -16,11 +16,6 @@
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
-
-/* IBM939 is designed for the representation of Japanese Latin/Kanji
-   using a stateful EBCDIC encoding scheme.  It is also known as
-   CCSID 939 or CP939. See:
-   https://www-01.ibm.com/software/globalization/ccsid/ccsid939.html */
 
 #include <dlfcn.h>
 #include <stdint.h>
@@ -109,14 +104,24 @@ enum
 									      \
     if (__builtin_expect (ch, 0) == SO)					      \
       {									      \
-	/* Shift OUT, change to DBCS converter (redundant escape okay).  */   \
+	/* Shift OUT, change to DBCS converter.  */			      \
+	if (curcs == db)						      \
+	  {								      \
+	    result = __GCONV_ILLEGAL_INPUT;				      \
+	    break;							      \
+	  }								      \
 	curcs = db;							      \
 	++inptr;							      \
 	continue;							      \
       }									      \
     else if (__builtin_expect (ch, 0) == SI)				      \
       {									      \
-	/* Shift IN, change to SBCS converter (redundant escape okay).  */    \
+	/* Shift IN, change to SBCS converter.  */			      \
+	if (curcs == sb)						      \
+	  {								      \
+	    result = __GCONV_ILLEGAL_INPUT;				      \
+	    break;							      \
+	  }								      \
 	curcs = sb;							      \
 	++inptr;							      \
 	continue;							      \
@@ -250,7 +255,6 @@ enum
 		break;							      \
 	      }								      \
 	    *outptr++ = SI;						      \
-	    curcs = sb;							      \
 	  }								      \
 									      \
 	if (__glibc_unlikely (outptr + 1 > outend))			      \
@@ -264,6 +268,7 @@ enum
 	  *outptr++ = 0xb2;						      \
 	else								      \
 	  *outptr++ = cp[0];						      \
+	curcs = sb;							      \
       }									      \
 									      \
     /* Now that we wrote the output increment the input pointer.  */	      \

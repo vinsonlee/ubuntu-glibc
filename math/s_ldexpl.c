@@ -30,4 +30,3 @@ long double __ldexpl(long double value, int exp)
 	return value;
 }
 weak_alias (__ldexpl, ldexpl)
-weak_alias (__ldexpl, scalbnl)

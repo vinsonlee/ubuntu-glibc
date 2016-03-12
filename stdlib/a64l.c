@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, August 1995.
 
@@ -36,7 +36,8 @@ static const char a64l_table[TABLE_SIZE] =
 
 
 long int
-a64l (const char *string)
+a64l (string)
+     const char *string;
 {
   const char *ptr = string;
   unsigned long int result = 0ul;

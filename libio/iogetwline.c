@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -33,8 +33,12 @@
 #endif
 
 _IO_size_t
-_IO_getwline (_IO_FILE *fp, wchar_t *buf, _IO_size_t n, wint_t delim,
-	      int extract_delim)
+_IO_getwline (fp, buf, n, delim, extract_delim)
+     _IO_FILE *fp;
+     wchar_t *buf;
+     _IO_size_t n;
+     wint_t delim;
+     int extract_delim;
 {
   return _IO_getwline_info (fp, buf, n, delim, extract_delim, (wint_t *) 0);
 }
@@ -48,8 +52,13 @@ _IO_getwline (_IO_FILE *fp, wchar_t *buf, _IO_size_t n, wint_t delim,
    If extract_delim > 0, insert delim in output. */
 
 _IO_size_t
-_IO_getwline_info (_IO_FILE *fp, wchar_t *buf, _IO_size_t n, wint_t delim,
-		   int extract_delim, wint_t *eof)
+_IO_getwline_info (fp, buf, n, delim, extract_delim, eof)
+     _IO_FILE *fp;
+     wchar_t *buf;
+     _IO_size_t n;
+     wint_t delim;
+     int extract_delim;
+     wint_t *eof;
 {
   wchar_t *ptr = buf;
   if (eof != NULL)

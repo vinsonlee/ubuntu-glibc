@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,7 +23,9 @@
 /* Set the access and modification times of FILE to those given in TIMES.
    If TIMES is NULL, set them to the current time.  */
 int
-utime (const char *file, const struct utimbuf *times)
+utime (file, times)
+     const char *file;
+     const struct utimbuf *times;
 {
   if (file == NULL)
     {

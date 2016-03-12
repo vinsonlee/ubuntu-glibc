@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,9 @@
 
 /* Truncate the file referenced by FD to LENGTH bytes.  */
 int
-__ftruncate (int fd, off_t length)
+__ftruncate (fd, length)
+     int fd;
+     off_t length;
 {
   __set_errno (ENOSYS);
   return -1;

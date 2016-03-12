@@ -5,13 +5,15 @@
  */
 
 #include <machine/asm.h>
-#include <i386-math-asm.h>
 
 RCSID("$NetBSD: $")
 
 	.section .rodata.cst4,"aM",@progbits,4
 
-DEFINE_FLT_MIN
+	.p2align 2
+	.type flt_min,@object
+flt_min:	.byte 0, 0, 0x80, 0
+	ASM_SIZE_DIRECTIVE(flt_min)
 
 #ifdef PIC
 # define MO(op) op##@GOTOFF(%ecx)
@@ -33,7 +35,20 @@ ENTRY(__ieee754_asinf)
 	fsubp				/* 1 - x^2 */
 	fsqrt				/* sqrt (1 - x^2) */
 	fpatan
-	FLT_CHECK_FORCE_UFLOW
-	ret
+	flds	MO(flt_min)
+	fld	%st(1)
+	fabs
+	fucompp
+	fnstsw
+	sahf
+	jnc	1f
+	subl	$4, %esp
+	cfi_adjust_cfa_offset (4)
+	fld	%st(0)
+	fmul	%st(0)
+	fstps	(%esp)
+	addl	$4, %esp
+	cfi_adjust_cfa_offset (-4)
+1:	ret
 END (__ieee754_asinf)
 strong_alias (__ieee754_asinf, __asinf_finite)

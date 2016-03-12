@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,7 +23,9 @@
    or user (as specified by WHO) is used.  A lower priority number means higher
    priority.  Priorities range from PRIO_MIN to PRIO_MAX.  */
 int
-__getpriority (enum __priority_which which, id_t who)
+__getpriority (which, who)
+     enum __priority_which which;
+     id_t who;
 {
   __set_errno (ENOSYS);
   return -1;

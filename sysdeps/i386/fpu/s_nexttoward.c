@@ -26,7 +26,6 @@ static char rcsid[] = "$NetBSD: $";
  *   Special cases:
  */
 
-#include <errno.h>
 #include <math.h>
 #include <math_private.h>
 #include <float.h>
@@ -74,14 +73,15 @@ double __nexttoward(double x, long double y)
 	}
 	hy = hx&0x7ff00000;
 	if(hy>=0x7ff00000) {
-	  double u = x+x;			/* overflow  */
-	  math_force_eval (u);
-	  __set_errno (ERANGE);
+	  x = x+x;	/* overflow  */
+	  if (FLT_EVAL_METHOD != 0 && FLT_EVAL_METHOD != 1)
+	    /* Force conversion to double.  */
+	    asm ("" : "+m"(x));
+	  return x;
 	}
 	if(hy<0x00100000) {
 	    double u = x*x;			/* underflow */
 	    math_force_eval (u);		/* raise underflow flag */
-	    __set_errno (ERANGE);
 	}
 	INSERT_WORDS(x,hx,lx);
 	return x;

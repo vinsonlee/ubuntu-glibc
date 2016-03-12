@@ -1,5 +1,5 @@
 /* Convert a string representation of time to a time value.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -27,7 +27,10 @@
 
 
 char *
-strptime (const char *buf, const char *format, struct tm *tm)
+strptime (buf, format, tm)
+     const char *buf;
+     const char *format;
+     struct tm *tm;
 {
   return __strptime_internal (buf, format, tm, NULL, _NL_CURRENT_LOCALE);
 }

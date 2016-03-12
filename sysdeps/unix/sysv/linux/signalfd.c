@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -39,12 +39,16 @@ signalfd (int fd, const sigset_t *mask, int flags)
      kernel (sys_indirect) before implementing setting flags like
      O_NONBLOCK etc.  */
   if (flags != 0)
-    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+    {
+      __set_errno (EINVAL);
+      return -1;
+    }
 
 # ifdef __NR_signalfd
   return INLINE_SYSCALL (signalfd, 3, fd, mask, _NSIG / 8);
 # else
-  return INLINE_SYSCALL_ERROR_RETURN_VALUE (ENOSYS);
+  __set_errno (ENOSYS);
+  return -1;
 # endif
 #elif !defined __NR_signalfd4
 # error "__ASSUME_SIGNALFD4 defined but not __NR_signalfd4"

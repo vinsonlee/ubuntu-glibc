@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,7 +31,11 @@
 #define _IONBF 2 /* No buffering. */
 
 int
-_IO_setvbuf (_IO_FILE *fp, char *buf, int mode, _IO_size_t size)
+_IO_setvbuf (fp, buf, mode, size)
+     _IO_FILE *fp;
+     char *buf;
+     int mode;
+     _IO_size_t size;
 {
   int result;
   CHECK_FILE (fp, EOF);

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,7 +31,10 @@
 /* If ACT is not NULL, change the action for SIG to *ACT.
    If OACT is not NULL, put the old action for SIG in *OACT.  */
 int
-__libc_sigaction (int sig, const struct sigaction *act, struct sigaction *oact)
+__libc_sigaction (sig, act, oact)
+     int sig;
+     const struct sigaction *act;
+     struct sigaction *oact;
 {
   int result;
 

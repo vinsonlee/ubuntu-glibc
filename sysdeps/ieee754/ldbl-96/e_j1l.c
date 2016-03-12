@@ -154,9 +154,11 @@ __ieee754_j1l (long double x)
       if (huge + x > one)		/* inexact if x!=0 necessary */
 	{
 	  long double ret = 0.5 * x;
-	  math_check_force_underflow (ret);
-	  if (ret == 0 && x != 0)
-	    __set_errno (ERANGE);
+	  if (fabsl (ret) < LDBL_MIN)
+	    {
+	      long double force_underflow = ret * ret;
+	      math_force_eval (force_underflow);
+	    }
 	  return ret;
 	}
     }

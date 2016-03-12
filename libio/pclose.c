@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,7 +30,8 @@
 #include <shlib-compat.h>
 
 int
-__new_pclose (FILE *fp)
+__new_pclose (fp)
+     FILE *fp;
 {
 #if 0
   /* Does not actually test that stream was created by popen(). Instead,
