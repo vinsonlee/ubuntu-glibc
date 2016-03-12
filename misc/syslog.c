@@ -164,7 +164,7 @@ __vsyslog_chk(int pri, int flag, const char *fmt, va_list ap)
 		pri |= LogFacility;
 
 	/* Build the message in a memory-buffer stream.  */
-	f = open_memstream (&buf, &bufsize);
+	f = __open_memstream (&buf, &bufsize);
 	if (f == NULL)
 	  {
 	    /* We cannot get a stream.  There is not much we can do but
@@ -202,7 +202,7 @@ __vsyslog_chk(int pri, int flag, const char *fmt, va_list ap)
 	    if (LogTag == NULL)
 	      LogTag = __progname;
 	    if (LogTag != NULL)
-	      fputs_unlocked (LogTag, f);
+	      __fputs_unlocked (LogTag, f);
 	    if (LogStat & LOG_PID)
 	      fprintf (f, "[%d]", (int) __getpid ());
 	    if (LogTag != NULL)
@@ -298,7 +298,7 @@ __vsyslog_chk(int pri, int flag, const char *fmt, va_list ap)
 		if (LogStat & LOG_CONS &&
 		    (fd = __open(_PATH_CONSOLE, O_WRONLY|O_NOCTTY, 0)) >= 0)
 		  {
-		    dprintf (fd, "%s\r\n", buf + msgoff);
+		    __dprintf (fd, "%s\r\n", buf + msgoff);
 		    (void)__close(fd);
 		  }
 	      }
@@ -324,7 +324,7 @@ __vsyslog(int pri, const char *fmt, va_list ap)
   __vsyslog_chk (pri, -1, fmt, ap);
 }
 ldbl_hidden_def (__vsyslog, vsyslog)
-ldbl_strong_alias (__vsyslog, vsyslog)
+ldbl_weak_alias (__vsyslog, vsyslog)
 
 static struct sockaddr_un SyslogAddr;	/* AF_UNIX address of local logger */
 

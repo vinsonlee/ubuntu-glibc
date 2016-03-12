@@ -28,6 +28,7 @@
 struct link_map;
 
 extern void *_dl_symbol_address (struct link_map *map, const Elf64_Sym *ref);
+rtld_hidden_proto (_dl_symbol_address)
 
 #define DL_SYMBOL_ADDRESS(map, ref) _dl_symbol_address(map, ref)
 
@@ -35,7 +36,7 @@ extern Elf64_Addr _dl_lookup_address (const void *address);
 
 #define DL_LOOKUP_ADDRESS(addr) _dl_lookup_address (addr)
 
-extern void _dl_unmap (struct link_map *map);
+extern void attribute_hidden _dl_unmap (struct link_map *map);
 
 #define DL_UNMAP(map) _dl_unmap (map)
 
