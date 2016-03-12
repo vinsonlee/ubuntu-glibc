@@ -25,6 +25,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 #include <sys/types.h>
 #include <atomic.h>
 #include <nscd-types.h>
@@ -377,7 +378,7 @@ __nscd_acquire_maplock (volatile struct locked_map_ptr *mapptr)
       if (__glibc_unlikely (++cnt > 5))
 	return false;
 
-      atomic_delay ();
+      atomic_spin_nop ();
     }
 
   return true;

@@ -66,12 +66,12 @@ __remquol (long double x, long double y, int *quo)
   y  = fabsl (y);
   cquo = 0;
 
-  if (x >= 4 * y)
+  if (hy <= 0x7fcfffffffffffffLL && x >= 4 * y)
     {
       x -= 4 * y;
       cquo += 4;
     }
-  if (x >= 2 * y)
+  if (hy <= 0x7fdfffffffffffffLL && x >= 2 * y)
     {
       x -= 2 * y;
       cquo += 2;
@@ -107,6 +107,9 @@ __remquol (long double x, long double y, int *quo)
 
   *quo = qs ? -cquo : cquo;
 
+  /* Ensure correct sign of zero result in round-downward mode.  */
+  if (x == 0.0L)
+    x = 0.0L;
   if (sx)
     x = -x;
   return x;

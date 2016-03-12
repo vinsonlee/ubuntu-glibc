@@ -41,7 +41,7 @@ endif
 modules-names = glreflib1 glreflib2 glreflib3 failtestmod defaultmod1 \
 		defaultmod2 errmsg1mod modatexit modcxaatexit \
 		bug-dlsym1-lib1 bug-dlsym1-lib2 bug-atexit1-lib \
-		bug-atexit2-lib bug-atexit3-lib bug-dl-leaf-lib \
+		bug-atexit2-lib bug-dl-leaf-lib \
 		bug-dl-leaf-lib-cb moddummy1 moddummy2
 
 failtestmod.so-no-z-defs = yes
@@ -57,6 +57,12 @@ tststatic2-ENV = $(tststatic-ENV)
 tststatic3-ENV = $(tststatic-ENV)
 tststatic4-ENV = $(tststatic-ENV)
 tststatic5-ENV = $(tststatic-ENV)
+
+ifneq (,$(CXX))
+modules-names += bug-atexit3-lib
+else
+tests-unsupported += bug-atexit3
+endif
 endif
 
 extra-test-objs += $(modules-names:=.os)
@@ -131,9 +137,11 @@ $(objpfx)bug-atexit1.out: $(objpfx)bug-atexit1-lib.so
 $(objpfx)bug-atexit2: $(libdl)
 $(objpfx)bug-atexit2.out: $(objpfx)bug-atexit2-lib.so
 
+ifneq (,$(CXX))
 LDLIBS-bug-atexit3-lib.so = -lstdc++ -lgcc_eh
 $(objpfx)bug-atexit3: $(libdl)
 $(objpfx)bug-atexit3.out: $(objpfx)bug-atexit3-lib.so
+endif
 
 $(objpfx)bug-dl-leaf: $(objpfx)bug-dl-leaf-lib.so
 $(objpfx)bug-dl-leaf.out: $(objpfx)bug-dl-leaf-lib-cb.so
