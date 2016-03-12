@@ -42,7 +42,7 @@ __csinl (__complex__ long double x)
 	  const int t = (int) ((LDBL_MAX_EXP - 1) * M_LN2l);
 	  long double sinix, cosix;
 
-	  if (__glibc_likely (rcls != FP_SUBNORMAL))
+	  if (__glibc_likely (__real__ x > LDBL_MIN))
 	    {
 	      __sincosl (__real__ x, &sinix, &cosix);
 	    }
@@ -51,6 +51,9 @@ __csinl (__complex__ long double x)
 	      sinix = __real__ x;
 	      cosix = 1.0;
 	    }
+
+	  if (negate)
+	    sinix = -sinix;
 
 	  if (fabsl (__imag__ x) > t)
 	    {
@@ -85,9 +88,6 @@ __csinl (__complex__ long double x)
 	      __real__ retval = __ieee754_coshl (__imag__ x) * sinix;
 	      __imag__ retval = __ieee754_sinhl (__imag__ x) * cosix;
 	    }
-
-	  if (negate)
-	    __real__ retval = -__real__ retval;
 
 	  if (fabsl (__real__ retval) < LDBL_MIN)
 	    {
@@ -136,7 +136,7 @@ __csinl (__complex__ long double x)
 	  /* Real part is finite.  */
 	  long double sinix, cosix;
 
-	  if (__glibc_likely (rcls != FP_SUBNORMAL))
+	  if (__glibc_likely (__real__ x > LDBL_MIN))
 	    {
 	      __sincosl (__real__ x, &sinix, &cosix);
 	    }
