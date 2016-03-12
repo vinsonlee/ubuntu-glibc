@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky <schwidefsky@de.ibm.com>, 2003.
 
@@ -19,14 +19,15 @@
 #include "pthreadP.h"
 
 int
-pthread_spin_lock (pthread_spinlock_t *lock)
+pthread_spin_lock (lock)
+     pthread_spinlock_t *lock;
 {
   int oldval;
 
-  __asm__ __volatile__ ("0: lhi %0,0\n"
-			"   cs  %0,%2,%1\n"
-			"   jl  0b"
-			: "=&d" (oldval), "=Q" (*lock)
-			: "d" (1), "m" (*lock) : "cc" );
+  __asm __volatile ("0: lhi %0,0\n"
+		    "   cs  %0,%2,%1\n"
+		    "   jl  0b"
+		    : "=&d" (oldval), "=Q" (*lock)
+		    : "d" (1), "m" (*lock) : "cc" );
   return 0;
 }

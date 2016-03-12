@@ -67,7 +67,11 @@ float __atanf(float x)
 	    else     return -atanhi[3]-atanlo[3];
 	} if (ix < 0x3ee00000) {	/* |x| < 0.4375 */
 	    if (ix < 0x31000000) {	/* |x| < 2^-29 */
-		math_check_force_underflow (x);
+		if (fabsf (x) < FLT_MIN)
+		  {
+		    float force_underflow = x * x;
+		    math_force_eval (force_underflow);
+		  }
 		if(huge+x>one) return x;	/* raise inexact */
 	    }
 	    id = -1;

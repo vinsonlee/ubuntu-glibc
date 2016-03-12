@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -58,15 +58,15 @@ __scalb (double x, double fn)
 	      if (!isnan (x) && !isnan (fn))
 		__set_errno (EDOM);
 	    }
-	  else if (isinf (z))
+	  else if (__isinf_ns (z))
 	    {
-	      if (!isinf (x) && !isinf (fn))
+	      if (!__isinf_ns (x) && !__isinf_ns (fn))
 		__set_errno (ERANGE);
 	    }
 	  else
 	    {
 	      /* z == 0.  */
-	      if (x != 0.0 && !isinf (fn))
+	      if (x != 0.0 && !__isinf_ns (fn))
 		__set_errno (ERANGE);
 	    }
 	}

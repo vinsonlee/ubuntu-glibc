@@ -1,6 +1,6 @@
 /* Multiple versions of mempcpy
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -27,23 +27,17 @@
 #if defined SHARED && IS_IN (libc)
 ENTRY(__mempcpy)
 	.type	__mempcpy, @gnu_indirect_function
-	LOAD_RTLD_GLOBAL_RO_RDX
-#ifdef HAVE_AVX512_ASM_SUPPORT
-	HAS_ARCH_FEATURE (AVX512F_Usable)
-	jz	1f
-	HAS_ARCH_FEATURE (Prefer_No_VZEROUPPER)
-	jz	1f
-	leaq    __mempcpy_avx512_no_vzeroupper(%rip), %rax
-	ret
-#endif
+	cmpl	$0, KIND_OFFSET+__cpu_features(%rip)
+	jne	1f
+	call	__init_cpu_features
 1:	leaq	__mempcpy_sse2(%rip), %rax
-	HAS_CPU_FEATURE (SSSE3)
+	testl	$bit_SSSE3, __cpu_features+CPUID_OFFSET+index_SSSE3(%rip)
 	jz	2f
 	leaq	__mempcpy_ssse3(%rip), %rax
-	HAS_ARCH_FEATURE (Fast_Copy_Backward)
+	testl	$bit_Fast_Copy_Backward, __cpu_features+FEATURE_OFFSET+index_Fast_Copy_Backward(%rip)
 	jz	2f
 	leaq	__mempcpy_ssse3_back(%rip), %rax
-	HAS_ARCH_FEATURE (AVX_Fast_Unaligned_Load)
+	testl	$bit_AVX_Fast_Unaligned_Load, __cpu_features+FEATURE_OFFSET+index_AVX_Fast_Unaligned_Load(%rip)
 	jz	2f
 	leaq	__mempcpy_avx_unaligned(%rip), %rax
 2:	ret

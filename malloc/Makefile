@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2016 Free Software Foundation, Inc.
+# Copyright (C) 1991-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -28,8 +28,7 @@ tests := mallocbug tst-malloc tst-valloc tst-calloc tst-obstack \
 	 tst-mallocstate tst-mcheck tst-mallocfork tst-trim1 \
 	 tst-malloc-usable tst-realloc tst-posix_memalign \
 	 tst-pvalloc tst-memalign tst-mallopt tst-scratch_buffer \
-	 tst-malloc-backtrace tst-malloc-thread-exit \
-	 tst-malloc-thread-fail
+	 tst-malloc-backtrace
 test-srcs = tst-mtrace
 
 routines = malloc morecore mcheck mtrace obstack \
@@ -47,10 +46,6 @@ libmemusage-routines = memusage
 libmemusage-inhibit-o = $(filter-out .os,$(object-suffixes))
 
 $(objpfx)tst-malloc-backtrace: $(common-objpfx)nptl/libpthread.so \
-			       $(common-objpfx)nptl/libpthread_nonshared.a
-$(objpfx)tst-malloc-thread-exit: $(common-objpfx)nptl/libpthread.so \
-			       $(common-objpfx)nptl/libpthread_nonshared.a
-$(objpfx)tst-malloc-thread-fail: $(common-objpfx)nptl/libpthread.so \
 			       $(common-objpfx)nptl/libpthread_nonshared.a
 
 # These should be removed by `make clean'.

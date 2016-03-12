@@ -94,7 +94,8 @@ static const struct toktab {
 
 
 int
-ruserpass (const char *host, const char **aname, const char **apass)
+ruserpass(host, aname, apass)
+	const char *host, **aname, **apass;
 {
 	char *hdir, *buf, *tmp;
 	char myname[1024], *mydomain;

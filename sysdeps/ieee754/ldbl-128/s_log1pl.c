@@ -117,6 +117,7 @@ static const long double C2 = 1.428606820309417232121458176568075500134E-6L;
 
 static const long double sqrth = 0.7071067811865475244008443621048490392848L;
 /* ln (2^16384 * (1 - 2^-113)) */
+static const long double maxlog = 1.1356523406294143949491931077970764891253E4L;
 static const long double zero = 0.0L;
 
 long double
@@ -130,8 +131,8 @@ __log1pl (long double xm1)
   /* Test for NaN or infinity input. */
   u.value = xm1;
   hx = u.parts32.w0;
-  if ((hx & 0x7fffffff) >= 0x7fff0000)
-    return xm1 + fabsl (xm1);
+  if (hx >= 0x7fff0000)
+    return xm1;
 
   /* log1p(+- 0) = +- 0.  */
   if (((hx & 0x7fffffff) == 0)
@@ -140,7 +141,11 @@ __log1pl (long double xm1)
 
   if ((hx & 0x7fffffff) < 0x3f8e0000)
     {
-      math_check_force_underflow (xm1);
+      if (fabsl (xm1) < LDBL_MIN)
+	{
+	  long double force_underflow = xm1 * xm1;
+	  math_force_eval (force_underflow);
+	}
       if ((int) xm1 == 0)
 	return xm1;
     }

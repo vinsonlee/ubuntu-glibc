@@ -1,5 +1,5 @@
 /* Skeleton for a conversion module.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -675,7 +675,7 @@ FUNCTION_NAME (struct __gconv_step *step, struct __gconv_step_data *data,
 #else
 		      /* We have a problem in one of the functions below.
 			 Undo the conversion upto the error point.  */
-		      size_t nstatus __attribute__ ((unused));
+		      size_t nstatus;
 
 		      /* Reload the pointers.  */
 		      *inptrp = inptr;

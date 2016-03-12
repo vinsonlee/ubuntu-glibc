@@ -1,5 +1,5 @@
 /* Operating system support for run-time dynamic linker.  NaCl version.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -87,26 +87,3 @@ _dl_start_user (void (*user_entry) (uint32_t info[]), uint32_t info[])
 #endif  /* SHARED */
 
 #include <elf/dl-sysdep.c>
-
-#include <dl-sysdep-open.h>
-#include <nacl-interfaces.h>
-#include <assert.h>
-#include <string.h>
-#include <unistd.h>
-
-char *
-internal_function
-_dl_sysdep_open_object (const char *name, size_t namelen, int *fd)
-{
-  int error = __nacl_irt_resource_open.open_resource (name, fd);
-  if (error)
-    return NULL;
-  assert (*fd != -1);
-  char *realname = __strdup (name);
-  if (__glibc_unlikely (realname == NULL))
-    {
-      __close (*fd);
-      *fd = -1;
-    }
-  return realname;
-}

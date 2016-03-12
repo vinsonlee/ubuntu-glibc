@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -32,7 +32,8 @@ static const char conv_table[64] =
 };
 
 char *
-l64a (long int n)
+l64a (n)
+     long int n;
 {
   unsigned long int m = (unsigned long int) n;
   static char result[7];

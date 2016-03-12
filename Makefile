@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2016 Free Software Foundation, Inc.
+# Copyright (C) 1991-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -53,13 +53,12 @@ endif # $(AUTOCONF) = no
 		   subdir_clean subdir_distclean subdir_realclean	\
 		   tests xtests						\
 		   subdir_update-abi subdir_check-abi			\
-		   subdir_update-all-abi				\
 		   subdir_echo-headers					\
 		   subdir_install					\
 		   subdir_objs subdir_stubs subdir_testclean		\
 		   $(addprefix install-, no-libc.a bin lib data headers others)
 
-headers := limits.h values.h features.h gnu-versions.h \
+headers := limits.h values.h features.h gnu-versions.h bits/libc-lock.h \
 	   bits/xopen_lim.h gnu/libc-version.h stdc-predef.h
 
 echo-headers: subdir_echo-headers
@@ -257,13 +256,13 @@ ifneq ($(CXX),no)
 vpath c++-types.data $(+sysdep_dirs)
 
 $(objpfx)c++-types-check.out: c++-types.data scripts/check-c++-types.sh
-	scripts/check-c++-types.sh $< $(CXX) $(filter-out -std=gnu11 $(+gccwarn-c),$(CFLAGS)) $(CPPFLAGS) > $@; \
+	scripts/check-c++-types.sh $< $(CXX) $(filter-out -std=gnu99 -Wstrict-prototypes,$(CFLAGS)) $(CPPFLAGS) > $@; \
 	$(evaluate-test)
 endif
 
 $(objpfx)check-local-headers.out: scripts/check-local-headers.sh
 	AWK='$(AWK)' scripts/check-local-headers.sh \
-	  "$(includedir)" "$(objpfx)" < /dev/null > $@; \
+	  "$(includedir)" "$(objpfx)" > $@; \
 	$(evaluate-test)
 
 ifneq ($(PERL),no)
@@ -419,3 +418,30 @@ FORCE:
 
 iconvdata/% localedata/% po/%: FORCE
 	$(MAKE) $(PARALLELMFLAGS) -C $(@D) $(@F)
+
+# glibc 2.0 contains some header files which aren't used with glibc 2.1
+# anymore.
+# These rules should remove those headers
+ifeq (,$(install_root))
+ifeq ($(old-glibc-headers),yes)
+install: remove-old-headers
+endif
+endif
+
+headers2_0 :=	__math.h bytesex.h confname.h direntry.h elfclass.h	\
+		errnos.h fcntlbits.h huge_val.h ioctl-types.h		\
+		ioctls.h iovec.h jmp_buf.h libc-lock.h local_lim.h	\
+		mathcalls.h mpool.h nan.h ndbm.h posix1_lim.h		\
+		posix2_lim.h posix_opt.h resourcebits.h schedbits.h	\
+		selectbits.h semaphorebits.h sigaction.h sigcontext.h	\
+		signum.h sigset.h sockaddrcom.h socketbits.h stab.def	\
+		statbuf.h statfsbuf.h stdio-lock.h stdio_lim.h		\
+		syscall-list.h termbits.h timebits.h ustatbits.h	\
+		utmpbits.h utsnamelen.h waitflags.h waitstatus.h	\
+		xopen_lim.h gnu/types.h sys/ipc_buf.h			\
+		sys/kernel_termios.h sys/msq_buf.h sys/sem_buf.h	\
+		sys/shm_buf.h sys/socketcall.h sigstack.h
+
+.PHONY: remove-old-headers
+remove-old-headers:
+	rm -f $(addprefix $(inst_includedir)/, $(headers2_0))

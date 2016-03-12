@@ -315,25 +315,34 @@ recompute:
       break;
     case 1:
     case 2:;
+#if __FLT_EVAL_METHOD__ != 0
+      volatile
+#endif
       double fv = 0.0;
       for (i = jz; i >= 0; i--)
-	fv = math_narrow_eval (fv + fq[i]);
+	fv += fq[i];
       y[0] = (ih == 0) ? fv : -fv;
-      fv = math_narrow_eval (fq[0] - fv);
+      fv = fq[0] - fv;
       for (i = 1; i <= jz; i++)
-	fv = math_narrow_eval (fv + fq[i]);
+	fv += fq[i];
       y[1] = (ih == 0) ? fv : -fv;
       break;
     case 3:             /* painful */
       for (i = jz; i > 0; i--)
 	{
-	  double fv = math_narrow_eval (fq[i - 1] + fq[i]);
+#if __FLT_EVAL_METHOD__ != 0
+	  volatile
+#endif
+	  double fv = (double) (fq[i - 1] + fq[i]);
 	  fq[i] += fq[i - 1] - fv;
 	  fq[i - 1] = fv;
 	}
       for (i = jz; i > 1; i--)
 	{
-	  double fv = math_narrow_eval (fq[i - 1] + fq[i]);
+#if __FLT_EVAL_METHOD__ != 0
+	  volatile
+#endif
+	  double fv = (double) (fq[i - 1] + fq[i]);
 	  fq[i] += fq[i - 1] - fv;
 	  fq[i - 1] = fv;
 	}

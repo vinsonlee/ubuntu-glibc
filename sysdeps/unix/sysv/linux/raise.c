@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -24,7 +24,8 @@
 
 
 int
-raise (int sig)
+raise (sig)
+     int sig;
 {
   struct pthread *pd = THREAD_SELF;
   pid_t pid = THREAD_GETMEM (pd, pid);

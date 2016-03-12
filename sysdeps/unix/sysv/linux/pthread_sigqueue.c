@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2009.
 
@@ -26,7 +26,10 @@
 
 
 int
-pthread_sigqueue (pthread_t threadid, int signo, const union sigval value)
+pthread_sigqueue (threadid, signo, value)
+     pthread_t threadid;
+     int signo;
+     const union sigval value;
 {
 #ifdef __NR_rt_tgsigqueueinfo
   struct pthread *pd = (struct pthread *) threadid;

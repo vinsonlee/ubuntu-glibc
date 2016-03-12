@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,7 +30,9 @@
 static int _IO_strn_overflow (_IO_FILE *fp, int c) __THROW;
 
 static int
-_IO_strn_overflow (_IO_FILE *fp, int c)
+_IO_strn_overflow (fp, c)
+     _IO_FILE *fp;
+     int c;
 {
   /* When we come to here this means the user supplied buffer is
      filled.  But since we must return the number of characters which
@@ -90,8 +92,11 @@ const struct _IO_jump_t _IO_strn_jumps attribute_hidden =
 
 
 int
-_IO_vsnprintf (char *string, _IO_size_t maxlen, const char *format,
-	       _IO_va_list args)
+_IO_vsnprintf (string, maxlen, format, args)
+     char *string;
+     _IO_size_t maxlen;
+     const char *format;
+     _IO_va_list args;
 {
   _IO_strnfile sf;
   int ret;
