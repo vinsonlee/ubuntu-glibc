@@ -1,5 +1,5 @@
 /* Map in a shared object's segments from the file.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -36,14 +36,12 @@
 #include <caller.h>
 #include <sysdep.h>
 #include <stap-probe.h>
-#include <libc-internal.h>
 
 #include <dl-dst.h>
 #include <dl-load.h>
 #include <dl-map-segments.h>
 #include <dl-unmap-segments.h>
 #include <dl-machine-reject-phdr.h>
-#include <dl-sysdep-open.h>
 
 
 #include <endian.h>
@@ -864,10 +862,9 @@ lose (int code, int fd, const char *name, char *realname, struct link_map *l,
 static
 #endif
 struct link_map *
-_dl_map_object_from_fd (const char *name, const char *origname, int fd,
-			struct filebuf *fbp, char *realname,
-			struct link_map *loader, int l_type, int mode,
-			void **stack_endp, Lmid_t nsid)
+_dl_map_object_from_fd (const char *name, int fd, struct filebuf *fbp,
+			char *realname, struct link_map *loader, int l_type,
+			int mode, void **stack_endp, Lmid_t nsid)
 {
   struct link_map *l = NULL;
   const ElfW(Ehdr) *header;
@@ -1080,11 +1077,12 @@ _dl_map_object_from_fd (const char *name, const char *origname, int fd,
 	    }
 
 	  struct loadcmd *c = &loadcmds[nloadcmds++];
-	  c->mapstart = ALIGN_DOWN (ph->p_vaddr, GLRO(dl_pagesize));
-	  c->mapend = ALIGN_UP (ph->p_vaddr + ph->p_filesz, GLRO(dl_pagesize));
+	  c->mapstart = ph->p_vaddr & ~(GLRO(dl_pagesize) - 1);
+	  c->mapend = ((ph->p_vaddr + ph->p_filesz + GLRO(dl_pagesize) - 1)
+		       & ~(GLRO(dl_pagesize) - 1));
 	  c->dataend = ph->p_vaddr + ph->p_filesz;
 	  c->allocend = ph->p_vaddr + ph->p_memsz;
-	  c->mapoff = ALIGN_DOWN (ph->p_offset, GLRO(dl_pagesize));
+	  c->mapoff = ph->p_offset & ~(GLRO(dl_pagesize) - 1);
 
 	  /* Determine whether there is a gap between the last segment
 	     and this one.  */
@@ -1393,17 +1391,6 @@ cannot enable executable stack as shared object requires");
   /* Finally the file information.  */
   l->l_file_id = id;
 
-#ifdef SHARED
-  /* When auditing is used the recorded names might not include the
-     name by which the DSO is actually known.  Add that as well.  */
-  if (__glibc_unlikely (origname != NULL))
-    add_name_to_object (l, origname);
-#else
-  /* Audit modules only exist when linking is dynamic so ORIGNAME
-     cannot be non-NULL.  */
-  assert (origname == NULL);
-#endif
-
   /* When we profile the SONAME might be needed for something else but
      loading.  Add it right away.  */
   if (__glibc_unlikely (GLRO(dl_profile) != NULL)
@@ -1484,13 +1471,9 @@ print_search_path (struct r_search_path_elem **list,
    ignore only ELF files for other architectures.  Non-ELF files and
    ELF files with different header information cause fatal errors since
    this could mean there is something wrong in the installation and the
-   user might want to know about this.
-
-   If FD is not -1, then the file is already open and FD refers to it.
-   In that case, FD is consumed for both successful and error returns.  */
+   user might want to know about this.  */
 static int
-open_verify (const char *name, int fd,
-             struct filebuf *fbp, struct link_map *loader,
+open_verify (const char *name, struct filebuf *fbp, struct link_map *loader,
 	     int whatcode, int mode, bool *found_other_class, bool free_name)
 {
   /* This is the expected ELF header.  */
@@ -1531,7 +1514,6 @@ open_verify (const char *name, int fd,
   if (__glibc_unlikely (GLRO(dl_naudit) > 0) && whatcode != 0
       && loader->l_auditing == 0)
     {
-      const char *original_name = name;
       struct audit_ifaces *afct = GLRO(dl_audit);
       for (unsigned int cnt = 0; cnt < GLRO(dl_naudit); ++cnt)
 	{
@@ -1546,21 +1528,11 @@ open_verify (const char *name, int fd,
 
 	  afct = afct->next;
 	}
-
-      if (fd != -1 && name != original_name && strcmp (name, original_name))
-        {
-          /* An audit library changed what we're supposed to open,
-             so FD no longer matches it.  */
-          __close (fd);
-          fd = -1;
-        }
     }
 #endif
 
-  if (fd == -1)
-    /* Open the file.  We always open files read-only.  */
-    fd = __open (name, O_RDONLY | O_CLOEXEC);
-
+  /* Open the file.  We always open files read-only.  */
+  int fd = __open (name, O_RDONLY | O_CLOEXEC);
   if (fd != -1)
     {
       ElfW(Ehdr) *ehdr;
@@ -1829,7 +1801,7 @@ open_path (const char *name, size_t namelen, int mode,
 	  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))
 	    _dl_debug_printf ("  trying file=%s\n", buf);
 
-	  fd = open_verify (buf, -1, fbp, loader, whatcode, mode,
+	  fd = open_verify (buf, fbp, loader, whatcode, mode,
 			    found_other_class, false);
 	  if (this_dir->status[cnt] == unknown)
 	    {
@@ -1932,7 +1904,6 @@ _dl_map_object (struct link_map *loader, const char *name,
 		int type, int trace_mode, int mode, Lmid_t nsid)
 {
   int fd;
-  const char *origname = NULL;
   char *realname;
   char *name_copy;
   struct link_map *l;
@@ -1990,7 +1961,6 @@ _dl_map_object (struct link_map *loader, const char *name,
 	{
 	  if (afct->objsearch != NULL)
 	    {
-	      const char *before = name;
 	      name = afct->objsearch (name, &loader->l_audit[cnt].cookie,
 				      LA_SER_ORIG);
 	      if (name == NULL)
@@ -1998,15 +1968,6 @@ _dl_map_object (struct link_map *loader, const char *name,
 		  /* Do not try anything further.  */
 		  fd = -1;
 		  goto no_file;
-		}
-	      if (before != name && strcmp (before, name) != 0)
-		{
-		  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES))
-		    _dl_debug_printf ("audit changed filename %s -> %s\n",
-				      before, name);
-
-		  if (origname == NULL)
-		    origname = before;
 		}
 	    }
 
@@ -2080,20 +2041,6 @@ _dl_map_object (struct link_map *loader, const char *name,
 			&loader->l_runpath_dirs, &realname, &fb, loader,
 			LA_SER_RUNPATH, &found_other_class);
 
-      if (fd == -1)
-        {
-          realname = _dl_sysdep_open_object (name, namelen, &fd);
-          if (realname != NULL)
-            {
-              fd = open_verify (realname, fd,
-                                &fb, loader ?: GL(dl_ns)[nsid]._ns_loaded,
-                                LA_SER_CONFIG, mode, &found_other_class,
-                                false);
-              if (fd == -1)
-                free (realname);
-            }
-        }
-
 #ifdef USE_LDCONFIG
       if (fd == -1
 	  && (__glibc_likely ((mode & __RTLD_SECURE) == 0)
@@ -2139,7 +2086,7 @@ _dl_map_object (struct link_map *loader, const char *name,
 
 	      if (cached != NULL)
 		{
-		  fd = open_verify (cached, -1,
+		  fd = open_verify (cached,
 				    &fb, loader ?: GL(dl_ns)[nsid]._ns_loaded,
 				    LA_SER_CONFIG, mode, &found_other_class,
 				    false);
@@ -2174,7 +2121,7 @@ _dl_map_object (struct link_map *loader, const char *name,
 	fd = -1;
       else
 	{
-	  fd = open_verify (realname, -1, &fb,
+	  fd = open_verify (realname, &fb,
 			    loader ?: GL(dl_ns)[nsid]._ns_loaded, 0, mode,
 			    &found_other_class, true);
 	  if (__glibc_unlikely (fd == -1))
@@ -2236,8 +2183,8 @@ _dl_map_object (struct link_map *loader, const char *name,
     }
 
   void *stack_end = __libc_stack_end;
-  return _dl_map_object_from_fd (name, origname, fd, &fb, realname, loader,
-				 type, mode, &stack_end, nsid);
+  return _dl_map_object_from_fd (name, fd, &fb, realname, loader, type, mode,
+				 &stack_end, nsid);
 }
 
 struct add_path_state

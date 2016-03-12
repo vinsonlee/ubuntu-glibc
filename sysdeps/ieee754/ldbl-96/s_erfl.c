@@ -274,7 +274,11 @@ __erfl (long double x)
 	    {
 	      /* Avoid spurious underflow.  */
 	      long double ret = 0.0625 * (16.0 * x + (16.0 * efx) * x);
-	      math_check_force_underflow (ret);
+	      if (fabsl (ret) < LDBL_MIN)
+		{
+		  long double force_underflow = ret * ret;
+		  math_force_eval (force_underflow);
+		}
 	      return ret;
 	    }
 	  return x + efx * x;

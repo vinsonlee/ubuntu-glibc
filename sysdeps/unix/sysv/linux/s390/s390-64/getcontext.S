@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
@@ -74,6 +74,8 @@ ENTRY(__getcontext)
 	br	%r14
 END(__getcontext)
 
+weak_alias (__getcontext, getcontext)
+
 #if defined SHARED && SHLIB_COMPAT (libc, GLIBC_2_19, GLIBC_2_20)
 /* In glibc release 2.19 a new version of getcontext was introduced,
    but was reverted before 2.20. Thus both versions are the same function.  */
@@ -81,9 +83,4 @@ weak_alias (__getcontext, __v1__getcontext)
 weak_alias (__getcontext, __v2__getcontext)
 versioned_symbol (libc, __v1__getcontext, getcontext, GLIBC_2_1)
 compat_symbol (libc, __v2__getcontext, getcontext, GLIBC_2_19)
-
-#else
-
-weak_alias (__getcontext, getcontext)
-
-#endif /* !(defined SHARED && SHLIB_COMPAT (libc, GLIBC_2_19, GLIBC_2_20))  */
+#endif

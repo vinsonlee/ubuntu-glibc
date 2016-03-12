@@ -1,5 +1,5 @@
 /* ELF startup code for HPPA.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -42,11 +42,7 @@
 	/* Have the linker create plabel words so we get PLABEL32
 	   relocs and not 21/14.  The use of 21/14 relocs is only
 	   supported in the latest dynamic linker.  */
-#ifdef SHARED
-	.section	.data.rel.ro,"aw",@progbits
-#else
-	.section	.rodata,"a",@progbits
-#endif
+	.section	.rodata
 	.align 4
 .Lpmain:
 	.word P%main
@@ -56,10 +52,6 @@
 	.word P%__libc_csu_fini
 .Lp__libc_csu_init:
 	.word P%__libc_csu_init
-#ifdef SHARED
-.Lp__global:
-	.word $global$
-#endif
 
 	.text
 	.align 4
@@ -130,14 +122,10 @@ _start:
 	/* void *stack_end (7th argument) */
 	stw	%sp, -60(%sp)
 
-#ifdef SHARED
-	addil	LT'.Lp__global, %r19
-	ldw	RT'.Lp__global(%r1), %dp
-#else
 	/* load global */
 	ldil	L%$global$, %dp
 	ldo	R%$global$(%dp), %dp
-#endif
+
 	bl	__libc_start_main,%r2
 	nop
 	/* die horribly if it returned (it shouldn't) */

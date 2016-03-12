@@ -1,5 +1,5 @@
 /* Profile heap and stack memory usage of running program.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -276,10 +276,9 @@ me (void)
               /* Determine the buffer size.  We use the default if the
                  environment variable is not present.  */
               buffer_size = DEFAULT_BUFFER_SIZE;
-              const char *str_buffer_size = getenv ("MEMUSAGE_BUFFER_SIZE");
-              if (str_buffer_size != NULL)
+              if (getenv ("MEMUSAGE_BUFFER_SIZE") != NULL)
                 {
-                  buffer_size = atoi (str_buffer_size);
+                  buffer_size = atoi (getenv ("MEMUSAGE_BUFFER_SIZE"));
                   if (buffer_size == 0 || buffer_size > DEFAULT_BUFFER_SIZE)
                     buffer_size = DEFAULT_BUFFER_SIZE;
                 }

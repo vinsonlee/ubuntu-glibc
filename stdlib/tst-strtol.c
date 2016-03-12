@@ -611,7 +611,9 @@ do_test (void)
 }
 
 static void
-expand (char *dst, int c)
+expand (dst, c)
+     char *dst;
+     int c;
 {
   if (isprint (c))
     {

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -28,7 +28,11 @@
 
 	.text
 
-ENTRY(__pthread_cond_signal)
+	/* int pthread_cond_signal (pthread_cond_t *cond) */
+	.globl	__pthread_cond_signal
+	.type	__pthread_cond_signal, @function
+	.align	16
+__pthread_cond_signal:
 
 	LIBC_PROBE (cond_signal, 1, %rdi)
 
@@ -155,7 +159,6 @@ ENTRY(__pthread_cond_signal)
 	cmovne	%eax, %esi
 	callq	__lll_unlock_wake
 	jmp	6b
-END(__pthread_cond_signal)
-
+	.size	__pthread_cond_signal, .-__pthread_cond_signal
 versioned_symbol (libpthread, __pthread_cond_signal, pthread_cond_signal,
 		  GLIBC_2_3_2)

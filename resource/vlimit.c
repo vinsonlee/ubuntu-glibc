@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,9 @@
 /* Set the soft limit for RESOURCE to be VALUE.
    Returns 0 for success, -1 for failure.  */
 int
-vlimit (enum __vlimit_resource resource, int value)
+vlimit (resource, value)
+     enum __vlimit_resource resource;
+     int value;
 {
   if (resource >= LIM_CPU && resource <= LIM_MAXRSS)
     {

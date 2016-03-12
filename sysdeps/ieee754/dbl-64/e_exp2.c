@@ -1,5 +1,5 @@
 /* Double-precision floating point 2^x.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Geoffrey Keating <geoffk@ozemail.com.au>
 
@@ -120,11 +120,7 @@ __ieee754_exp2 (double x)
       if (!unsafe)
 	return result;
       else
-	{
-	  result *= scale_u.d;
-	  math_check_force_underflow_nonneg (result);
-	  return result;
-	}
+	return result * scale_u.d;
     }
   else
     /* Return x, if x is a NaN or Inf; or overflow, otherwise.  */

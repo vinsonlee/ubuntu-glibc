@@ -1,5 +1,5 @@
 /* Measure stpncpy functions.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,36 +18,18 @@
 
 #define STRNCPY_RESULT(dst, len, n) ((dst) + ((len) > (n) ? (n) : (len)))
 #define TEST_MAIN
-#ifndef WIDE
-# define TEST_NAME "stpncpy"
-#else
-# define TEST_NAME "wcpncpy"
-#endif /* WIDE */
+#define TEST_NAME "stpncpy"
 #include "bench-string.h"
-#ifndef WIDE
-# define CHAR char
-# define SIMPLE_STPNCPY simple_stpncpy
-# define STUPID_STPNCPY stupid_stpncpy
-# define STPNCPY stpncpy
-# define STRNLEN strnlen
-#else
-# include <wchar.h>
-# define CHAR wchar_t
-# define SIMPLE_STPNCPY simple_wcpncpy
-# define STUPID_STPNCPY stupid_wcpncpy
-# define STPNCPY wcpncpy
-# define STRNLEN wcsnlen
-#endif /* WIDE */
 
-CHAR *SIMPLE_STPNCPY (CHAR *, const CHAR *, size_t);
-CHAR *STUPID_STPNCPY (CHAR *, const CHAR *, size_t);
+char *simple_stpncpy (char *, const char *, size_t);
+char *stupid_stpncpy (char *, const char *, size_t);
 
-IMPL (STUPID_STPNCPY, 0)
-IMPL (SIMPLE_STPNCPY, 0)
-IMPL (STPNCPY, 1)
+IMPL (stupid_stpncpy, 0)
+IMPL (simple_stpncpy, 0)
+IMPL (stpncpy, 1)
 
-CHAR *
-SIMPLE_STPNCPY (CHAR *dst, const CHAR *src, size_t n)
+char *
+simple_stpncpy (char *dst, const char *src, size_t n)
 {
   while (n--)
     if ((*dst++ = *src++) == '\0')
@@ -61,10 +43,10 @@ SIMPLE_STPNCPY (CHAR *dst, const CHAR *src, size_t n)
   return dst;
 }
 
-CHAR *
-STUPID_STPNCPY (CHAR *dst, const CHAR *src, size_t n)
+char *
+stupid_stpncpy (char *dst, const char *src, size_t n)
 {
-  size_t nc = STRNLEN (src, n);
+  size_t nc = strnlen (src, n);
   size_t i;
 
   for (i = 0; i < nc; ++i)
@@ -74,5 +56,4 @@ STUPID_STPNCPY (CHAR *dst, const CHAR *src, size_t n)
   return dst + nc;
 }
 
-#undef CHAR
 #include "bench-strncpy.c"

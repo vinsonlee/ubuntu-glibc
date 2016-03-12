@@ -1,5 +1,5 @@
 /* xstrdup.c -- copy a string with out of memory checking
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,8 @@ char *xstrdup (char *string) __THROW;
 /* Return a newly allocated copy of STRING.  */
 
 char *
-xstrdup (char *string)
+xstrdup (string)
+     char *string;
 {
   return strcpy (xmalloc (strlen (string) + 1), string);
 }

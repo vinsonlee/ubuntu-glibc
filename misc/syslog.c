@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)syslog.c	8.4 (Berkeley) 3/18/94";
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <signal.h>
 #include <locale.h>
 
@@ -346,9 +346,36 @@ openlog_internal(const char *ident, int logstat, int logfac)
 			(void)strncpy(SyslogAddr.sun_path, _PATH_LOG,
 				      sizeof(SyslogAddr.sun_path));
 			if (LogStat & LOG_NDELAY) {
-			  LogFile = __socket(AF_UNIX, LogType | SOCK_CLOEXEC, 0);
-			  if (LogFile == -1)
-			    return;
+#ifdef SOCK_CLOEXEC
+# ifndef __ASSUME_SOCK_CLOEXEC
+				if (__have_sock_cloexec >= 0) {
+# endif
+					LogFile = __socket(AF_UNIX,
+							   LogType
+							   | SOCK_CLOEXEC, 0);
+# ifndef __ASSUME_SOCK_CLOEXEC
+					if (__have_sock_cloexec == 0)
+						__have_sock_cloexec
+						  = ((LogFile != -1
+						      || errno != EINVAL)
+						     ? 1 : -1);
+				}
+# endif
+#endif
+#ifndef __ASSUME_SOCK_CLOEXEC
+# ifdef SOCK_CLOEXEC
+				if (__have_sock_cloexec < 0)
+# endif
+				  LogFile = __socket(AF_UNIX, LogType, 0);
+#endif
+				if (LogFile == -1)
+					return;
+#ifndef __ASSUME_SOCK_CLOEXEC
+# ifdef SOCK_CLOEXEC
+				if (__have_sock_cloexec < 0)
+# endif
+					__fcntl(LogFile, F_SETFD, FD_CLOEXEC);
+#endif
 			}
 		}
 		if (LogFile != -1 && !connected)
@@ -425,7 +452,8 @@ closelog (void)
 
 /* setlogmask -- set the log mask level */
 int
-setlogmask (int pmask)
+setlogmask(pmask)
+	int pmask;
 {
 	int omask;
 

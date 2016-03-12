@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <stdlib.h>
 #include <resolv.h>
 

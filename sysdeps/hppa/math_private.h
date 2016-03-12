@@ -1,5 +1,5 @@
 /* Internal math stuff.  HPPA version.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,8 +16,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifndef HPPA_MATH_PRIVATE_H
-#define HPPA_MATH_PRIVATE_H 1
+#ifndef _MATH_PRIVATE_H
 
 /* One of the few architectures where the meaning of the quiet/signaling bit is
    inverse to IEEE 754-2008 (as well as common practice for IEEE 754-1985).  */

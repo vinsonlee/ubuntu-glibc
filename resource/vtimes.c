@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -53,7 +53,9 @@ vtimes_one (struct vtimes *vt, enum __rusage_who who)
    *CURRENT.  If CHILD is not NULL, write statistics for all terminated child
    processes into *CHILD.  Returns 0 for success, -1 for failure.  */
 int
-vtimes (struct vtimes *current, struct vtimes *child)
+vtimes (current, child)
+     struct vtimes *current;
+     struct vtimes *child;
 {
   if (vtimes_one (current, RUSAGE_SELF) < 0
       || vtimes_one (child, RUSAGE_CHILDREN) < 0)

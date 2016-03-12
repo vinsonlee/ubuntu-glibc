@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David Mosberger <davidm@hpl.hp.com>, 2004.
 
@@ -92,8 +92,8 @@ unload (const char *path, void *handle)
   dl_iterate_phdr (callback, (void *)(intptr_t) REMOVE);
 }
 
-static int
-do_test (void)
+int
+main (int argc, char **argv)
 {
   void *handle1, *handle2;
 
@@ -104,6 +104,3 @@ do_test (void)
   unload ("globalmod1.so", handle2);
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

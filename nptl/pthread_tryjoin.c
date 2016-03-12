@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -24,7 +24,9 @@
 
 
 int
-pthread_tryjoin_np (pthread_t threadid, void **thread_return)
+pthread_tryjoin_np (threadid, thread_return)
+     pthread_t threadid;
+     void **thread_return;
 {
   struct pthread *self;
   struct pthread *pd = (struct pthread *) threadid;

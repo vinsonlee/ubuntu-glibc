@@ -1,5 +1,5 @@
 /* Call the termination functions of loaded shared objects.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,6 +16,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#include <alloca.h>
 #include <assert.h>
 #include <string.h>
 #include <ldsodefs.h>
@@ -139,6 +140,8 @@ _dl_fini (void)
      using `dlopen' there are possibly several other modules with its
      dependencies to be taken into account.  Therefore we have to start
      determining the order of the modules once again from the beginning.  */
+  struct link_map **maps = NULL;
+  size_t maps_size = 0;
 
   /* We run the destructors of the main namespaces last.  As for the
      other namespaces, we pick run the destructors in them in reverse
@@ -152,6 +155,7 @@ _dl_fini (void)
       /* Protect against concurrent loads and unloads.  */
       __rtld_lock_lock_recursive (GL(dl_load_lock));
 
+      unsigned int nmaps = 0;
       unsigned int nloaded = GL(dl_ns)[ns]._ns_nloaded;
       /* No need to do anything for empty namespaces or those used for
 	 auditing DSOs.  */
@@ -160,107 +164,118 @@ _dl_fini (void)
 	  || GL(dl_ns)[ns]._ns_loaded->l_auditing != do_audit
 #endif
 	  )
-	__rtld_lock_unlock_recursive (GL(dl_load_lock));
-      else
+	goto out;
+
+      /* XXX Could it be (in static binaries) that there is no object
+	 loaded?  */
+      assert (ns != LM_ID_BASE || nloaded > 0);
+
+      /* Now we can allocate an array to hold all the pointers and copy
+	 the pointers in.  */
+      if (maps_size < nloaded * sizeof (struct link_map *))
 	{
-	  /* Now we can allocate an array to hold all the pointers and
-	     copy the pointers in.  */
-	  struct link_map *maps[nloaded];
-
-	  unsigned int i;
-	  struct link_map *l;
-	  assert (nloaded != 0 || GL(dl_ns)[ns]._ns_loaded == NULL);
-	  for (l = GL(dl_ns)[ns]._ns_loaded, i = 0; l != NULL; l = l->l_next)
-	    /* Do not handle ld.so in secondary namespaces.  */
-	    if (l == l->l_real)
-	      {
-		assert (i < nloaded);
-
-		maps[i] = l;
-		l->l_idx = i;
-		++i;
-
-		/* Bump l_direct_opencount of all objects so that they
-		   are not dlclose()ed from underneath us.  */
-		++l->l_direct_opencount;
-	      }
-	  assert (ns != LM_ID_BASE || i == nloaded);
-	  assert (ns == LM_ID_BASE || i == nloaded || i == nloaded - 1);
-	  unsigned int nmaps = i;
-
-	  /* Now we have to do the sorting.  */
-	  _dl_sort_fini (maps, nmaps, NULL, ns);
-
-	  /* We do not rely on the linked list of loaded object anymore
-	     from this point on.  We have our own list here (maps).  The
-	     various members of this list cannot vanish since the open
-	     count is too high and will be decremented in this loop.  So
-	     we release the lock so that some code which might be called
-	     from a destructor can directly or indirectly access the
-	     lock.  */
-	  __rtld_lock_unlock_recursive (GL(dl_load_lock));
-
-	  /* 'maps' now contains the objects in the right order.  Now
-	     call the destructors.  We have to process this array from
-	     the front.  */
-	  for (i = 0; i < nmaps; ++i)
+	  if (maps_size == 0)
 	    {
-	      struct link_map *l = maps[i];
+	      maps_size = nloaded * sizeof (struct link_map *);
+	      maps = (struct link_map **) alloca (maps_size);
+	    }
+	  else
+	    maps = (struct link_map **)
+	      extend_alloca (maps, maps_size,
+			     nloaded * sizeof (struct link_map *));
+	}
 
-	      if (l->l_init_called)
+      unsigned int i;
+      struct link_map *l;
+      assert (nloaded != 0 || GL(dl_ns)[ns]._ns_loaded == NULL);
+      for (l = GL(dl_ns)[ns]._ns_loaded, i = 0; l != NULL; l = l->l_next)
+	/* Do not handle ld.so in secondary namespaces.  */
+	if (l == l->l_real)
+	  {
+	    assert (i < nloaded);
+
+	    maps[i] = l;
+	    l->l_idx = i;
+	    ++i;
+
+	    /* Bump l_direct_opencount of all objects so that they are
+	       not dlclose()ed from underneath us.  */
+	    ++l->l_direct_opencount;
+	  }
+      assert (ns != LM_ID_BASE || i == nloaded);
+      assert (ns == LM_ID_BASE || i == nloaded || i == nloaded - 1);
+      nmaps = i;
+
+      /* Now we have to do the sorting.  */
+      _dl_sort_fini (maps, nmaps, NULL, ns);
+
+      /* We do not rely on the linked list of loaded object anymore from
+	 this point on.  We have our own list here (maps).  The various
+	 members of this list cannot vanish since the open count is too
+	 high and will be decremented in this loop.  So we release the
+	 lock so that some code which might be called from a destructor
+	 can directly or indirectly access the lock.  */
+    out:
+      __rtld_lock_unlock_recursive (GL(dl_load_lock));
+
+      /* 'maps' now contains the objects in the right order.  Now call the
+	 destructors.  We have to process this array from the front.  */
+      for (i = 0; i < nmaps; ++i)
+	{
+	  l = maps[i];
+
+	  if (l->l_init_called)
+	    {
+	      /* Make sure nothing happens if we are called twice.  */
+	      l->l_init_called = 0;
+
+	      /* Is there a destructor function?  */
+	      if (l->l_info[DT_FINI_ARRAY] != NULL
+		  || l->l_info[DT_FINI] != NULL)
 		{
-		  /* Make sure nothing happens if we are called twice.  */
-		  l->l_init_called = 0;
+		  /* When debugging print a message first.  */
+		  if (__builtin_expect (GLRO(dl_debug_mask)
+					& DL_DEBUG_IMPCALLS, 0))
+		    _dl_debug_printf ("\ncalling fini: %s [%lu]\n\n",
+				      DSO_FILENAME (l->l_name),
+				      ns);
 
-		  /* Is there a destructor function?  */
-		  if (l->l_info[DT_FINI_ARRAY] != NULL
-		      || l->l_info[DT_FINI] != NULL)
+		  /* First see whether an array is given.  */
+		  if (l->l_info[DT_FINI_ARRAY] != NULL)
 		    {
-		      /* When debugging print a message first.  */
-		      if (__builtin_expect (GLRO(dl_debug_mask)
-					    & DL_DEBUG_IMPCALLS, 0))
-			_dl_debug_printf ("\ncalling fini: %s [%lu]\n\n",
-					  DSO_FILENAME (l->l_name),
-					  ns);
-
-		      /* First see whether an array is given.  */
-		      if (l->l_info[DT_FINI_ARRAY] != NULL)
-			{
-			  ElfW(Addr) *array =
-			    (ElfW(Addr) *) (l->l_addr
-					    + l->l_info[DT_FINI_ARRAY]->d_un.d_ptr);
-			  unsigned int i = (l->l_info[DT_FINI_ARRAYSZ]->d_un.d_val
-					    / sizeof (ElfW(Addr)));
-			  while (i-- > 0)
-			    ((fini_t) array[i]) ();
-			}
-
-		      /* Next try the old-style destructor.  */
-		      if (l->l_info[DT_FINI] != NULL)
-			DL_CALL_DT_FINI
-			  (l, l->l_addr + l->l_info[DT_FINI]->d_un.d_ptr);
+		      ElfW(Addr) *array =
+			(ElfW(Addr) *) (l->l_addr
+					+ l->l_info[DT_FINI_ARRAY]->d_un.d_ptr);
+		      unsigned int i = (l->l_info[DT_FINI_ARRAYSZ]->d_un.d_val
+					/ sizeof (ElfW(Addr)));
+		      while (i-- > 0)
+			((fini_t) array[i]) ();
 		    }
 
-#ifdef SHARED
-		  /* Auditing checkpoint: another object closed.  */
-		  if (!do_audit && __builtin_expect (GLRO(dl_naudit) > 0, 0))
-		    {
-		      struct audit_ifaces *afct = GLRO(dl_audit);
-		      for (unsigned int cnt = 0; cnt < GLRO(dl_naudit); ++cnt)
-			{
-			  if (afct->objclose != NULL)
-			    /* Return value is ignored.  */
-			    (void) afct->objclose (&l->l_audit[cnt].cookie);
-
-			  afct = afct->next;
-			}
-		    }
-#endif
+		  /* Next try the old-style destructor.  */
+		  if (l->l_info[DT_FINI] != NULL)
+		     DL_CALL_DT_FINI(l, l->l_addr + l->l_info[DT_FINI]->d_un.d_ptr);
 		}
 
-	      /* Correct the previous increment.  */
-	      --l->l_direct_opencount;
+#ifdef SHARED
+	      /* Auditing checkpoint: another object closed.  */
+	      if (!do_audit && __builtin_expect (GLRO(dl_naudit) > 0, 0))
+		{
+		  struct audit_ifaces *afct = GLRO(dl_audit);
+		  for (unsigned int cnt = 0; cnt < GLRO(dl_naudit); ++cnt)
+		    {
+		      if (afct->objclose != NULL)
+			/* Return value is ignored.  */
+			(void) afct->objclose (&l->l_audit[cnt].cookie);
+
+		      afct = afct->next;
+		    }
+		}
+#endif
 	    }
+
+	  /* Correct the previous increment.  */
+	  --l->l_direct_opencount;
 	}
     }
 

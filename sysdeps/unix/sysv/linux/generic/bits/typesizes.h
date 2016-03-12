@@ -1,5 +1,5 @@
 /* bits/typesizes.h -- underlying types for *_t.  For the generic Linux ABI.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
 
@@ -60,7 +60,6 @@
 #define __SSIZE_T_TYPE		__SWORD_TYPE
 #define __SYSCALL_SLONG_TYPE	__SLONGWORD_TYPE
 #define __SYSCALL_ULONG_TYPE	__ULONGWORD_TYPE
-#define __CPU_MASK_TYPE 	__ULONGWORD_TYPE
 
 #ifdef __LP64__
 /* Tell the libc code that off_t and off64_t are actually the same type

@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2016 Free Software Foundation, Inc.
+# Copyright (C) 2002-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -212,8 +212,6 @@ CFLAGS-recvfrom.c = -fexceptions -fasynchronous-unwind-tables
 CFLAGS-pt-system.c = -fexceptions
 
 LDLIBS-tst-once5 = -lstdc++
-CFLAGS-tst-thread_local1.o = -std=gnu++11
-LDLIBS-tst-thread_local1 = -lstdc++
 
 tests = tst-typesizes \
 	tst-attr1 tst-attr2 tst-attr3 tst-default-attr \
@@ -241,7 +239,7 @@ tests = tst-typesizes \
 	tst-sem1 tst-sem2 tst-sem3 tst-sem4 tst-sem5 tst-sem6 tst-sem7 \
 	tst-sem8 tst-sem9 tst-sem10 tst-sem11 tst-sem12 tst-sem13 tst-sem14 \
 	tst-sem15 \
-	tst-barrier1 tst-barrier2 tst-barrier3 tst-barrier4 tst-barrier5 \
+	tst-barrier1 tst-barrier2 tst-barrier3 tst-barrier4 \
 	tst-align tst-align3 \
 	tst-basic1 tst-basic2 tst-basic3 tst-basic4 tst-basic5 tst-basic6 \
 	tst-basic7 \
@@ -259,7 +257,6 @@ tests = tst-typesizes \
 	tst-cancel11 tst-cancel12 tst-cancel13 tst-cancel14 tst-cancel15 \
 	tst-cancel16 tst-cancel17 tst-cancel18 tst-cancel19 tst-cancel20 \
 	tst-cancel21 tst-cancel22 tst-cancel23 tst-cancel24 tst-cancel25 \
-	tst-cancel26 tst-cancel27 \
 	tst-cancel-self tst-cancel-self-cancelstate \
 	tst-cancel-self-canceltype tst-cancel-self-testcancel \
 	tst-cleanup0 tst-cleanup1 tst-cleanup2 tst-cleanup3 tst-cleanup4 \
@@ -285,10 +282,8 @@ tests = tst-typesizes \
 	tst-vfork1 tst-vfork2 tst-vfork1x tst-vfork2x \
 	tst-getpid3 \
 	tst-setuid3 \
-	tst-initializers1 $(addprefix tst-initializers1-,\
-			    c89 gnu89 c99 gnu99 c11 gnu11) \
-	tst-bad-schedattr \
-	tst-thread_local1 tst-mutex-errorcheck
+	tst-initializers1 $(addprefix tst-initializers1-,c89 gnu89 c99 gnu99) \
+	tst-bad-schedattr
 xtests = tst-setuid1 tst-setuid1-static tst-setuid2 \
 	tst-mutexpp1 tst-mutexpp6 tst-mutexpp10
 test-srcs = tst-oddstacklimit
@@ -302,7 +297,7 @@ tests-nolibpthread = tst-unload
 
 gen-as-const-headers = pthread-errnos.sym \
 		       lowlevelcond.sym lowlevelrwlock.sym \
-		       unwindbuf.sym \
+		       lowlevelbarrier.sym unwindbuf.sym \
 		       lowlevelrobustlock.sym pthread-pi-defines.sym
 
 
@@ -312,12 +307,14 @@ LDFLAGS-pthread.so = -Wl,--enable-new-dtags,-z,nodelete,-z,initfirst
 CFLAGS-tst-cleanup2.c = -fno-builtin
 CFLAGS-tst-cleanupx2.c = -fno-builtin
 
+ifeq ($(have-forced-unwind),yes)
 tests += tst-cancelx2 tst-cancelx3 tst-cancelx4 tst-cancelx5 \
 	 tst-cancelx6 tst-cancelx7 tst-cancelx8 tst-cancelx9 tst-cancelx10 \
 	 tst-cancelx11 tst-cancelx12 tst-cancelx13 tst-cancelx14 tst-cancelx15 \
 	 tst-cancelx16 tst-cancelx17 tst-cancelx18 tst-cancelx20 tst-cancelx21 \
 	 tst-cleanupx0 tst-cleanupx1 tst-cleanupx2 tst-cleanupx3 tst-cleanupx4 \
 	 tst-oncex3 tst-oncex4
+endif
 ifeq ($(build-shared),yes)
 tests += tst-atfork2 tst-tls3 tst-tls4 tst-tls5 tst-_res1 tst-fini1 \
 	 tst-stackguard1
@@ -406,10 +403,6 @@ ifeq (,$(CXX))
 # These tests require a C++ compiler and runtime.
 tests-unsupported += tst-cancel24 tst-cancel24-static tst-once5
 endif
-# These tests require a C++ compiler and runtime with thread_local support.
-ifneq ($(have-cxx-thread_local),yes)
-tests-unsupported += tst-thread_local1
-endif
 
 include ../Rules
 
@@ -484,10 +477,8 @@ CFLAGS-tst-initializers1-< = $(CFLAGS-tst-initializers1.c) \
 			     $(patsubst tst-initializers1-%.c,-std=%,$<)
 CFLAGS-tst-initializers1-c89.c = $(CFLAGS-tst-initializers1-<)
 CFLAGS-tst-initializers1-c99.c = $(CFLAGS-tst-initializers1-<)
-CFLAGS-tst-initializers1-c11.c = $(CFLAGS-tst-initializers1-<)
 CFLAGS-tst-initializers1-gnu89.c = $(CFLAGS-tst-initializers1-<)
 CFLAGS-tst-initializers1-gnu99.c = $(CFLAGS-tst-initializers1-<)
-CFLAGS-tst-initializers1-gnu11.c = $(CFLAGS-tst-initializers1-<)
 
 tst-cancel7-ARGS = --command "exec $(host-test-program-cmd)"
 tst-cancelx7-ARGS = $(tst-cancel7-ARGS)

@@ -1,6 +1,6 @@
 /* memset/bzero -- set memory area to CH/0
    Highly optimized version for ix86, x>=6.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1999.
 
@@ -21,8 +21,11 @@
 #include <sysdep.h>
 #include "asm-syntax.h"
 
+/* BEWARE: `#ifdef memset' means that memset is redefined as `bzero' */
+#define BZERO_P (defined memset)
+
 #define PARMS	4+4	/* space for 1 saved reg */
-#ifdef USE_AS_BZERO
+#if BZERO_P
 # define DEST	PARMS
 # define LEN	DEST+4
 #else
@@ -33,7 +36,7 @@
 #endif
 
         .text
-#if defined SHARED && IS_IN (libc) && !defined USE_AS_BZERO
+#if defined PIC && IS_IN (libc) && !BZERO_P
 ENTRY_CHK (__memset_chk)
 	movl	12(%esp), %eax
 	cmpl	%eax, 16(%esp)
@@ -47,7 +50,7 @@ ENTRY (memset)
 	cfi_adjust_cfa_offset (4)
 	movl	DEST(%esp), %edx
 	movl	LEN(%esp), %ecx
-#ifdef USE_AS_BZERO
+#if BZERO_P
 	xorl	%eax, %eax	/* fill with 0 */
 #else
 	movzbl	CHR(%esp), %eax
@@ -71,7 +74,7 @@ ENTRY (memset)
 2:	movl	%ecx, %edx
 	shrl	$2, %ecx
 	andl	$3, %edx
-#ifndef USE_AS_BZERO
+#if !BZERO_P
 	imul	$0x01010101, %eax
 #endif
 	rep
@@ -81,19 +84,22 @@ ENTRY (memset)
 	stosb
 
 1:
-#ifndef USE_AS_BZERO
+#if !BZERO_P
 	movl DEST(%esp), %eax	/* start address of destination is result */
 #endif
 	popl	%edi
 	cfi_adjust_cfa_offset (-4)
 	cfi_restore (edi)
 
+#if BZERO_P
 	ret
+#else
+	ret
+#endif
 END (memset)
 libc_hidden_builtin_def (memset)
 
-#if defined SHARED && IS_IN (libc) && !defined __memset_chk \
-    && !defined USE_AS_BZERO
+#if defined PIC && IS_IN (libc) && !BZERO_P
 strong_alias (__memset_chk, __memset_zero_constant_len_parameter)
 	.section .gnu.warning.__memset_zero_constant_len_parameter
 	.string "memset used with constant zero length parameter; this could be due to transposed parameters"

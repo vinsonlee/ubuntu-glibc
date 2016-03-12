@@ -1,5 +1,5 @@
 /* Test case for i386 preserved registers in dynamic linker.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -82,7 +82,6 @@ la_objsearch (const char *name, uintptr_t *cookie, unsigned int flag)
       break;
     case LA_SER_DEFAULT:
       flagstr = "LA_SER_DEFAULT";
-      break;
     case LA_SER_SECURE:
       flagstr = "LA_SER_SECURE";
       break;

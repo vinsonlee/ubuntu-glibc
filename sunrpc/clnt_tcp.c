@@ -224,9 +224,14 @@ libc_hidden_nolink_sunrpc (clnttcp_create, GLIBC_2_0)
 #endif
 
 static enum clnt_stat
-clnttcp_call (CLIENT *h, u_long proc, xdrproc_t xdr_args, caddr_t args_ptr,
-	      xdrproc_t xdr_results, caddr_t results_ptr,
-	      struct timeval timeout)
+clnttcp_call (h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
+     CLIENT *h;
+     u_long proc;
+     xdrproc_t xdr_args;
+     caddr_t args_ptr;
+     xdrproc_t xdr_results;
+     caddr_t results_ptr;
+     struct timeval timeout;
 {
   struct ct_data *ct = (struct ct_data *) h->cl_private;
   XDR *xdrs = &(ct->ct_xdrs);
@@ -327,7 +332,9 @@ call_again:
 }
 
 static void
-clnttcp_geterr (CLIENT *h, struct rpc_err *errp)
+clnttcp_geterr (h, errp)
+     CLIENT *h;
+     struct rpc_err *errp;
 {
   struct ct_data *ct =
   (struct ct_data *) h->cl_private;
@@ -336,7 +343,10 @@ clnttcp_geterr (CLIENT *h, struct rpc_err *errp)
 }
 
 static bool_t
-clnttcp_freeres (CLIENT *cl, xdrproc_t xdr_res, caddr_t res_ptr)
+clnttcp_freeres (cl, xdr_res, res_ptr)
+     CLIENT *cl;
+     xdrproc_t xdr_res;
+     caddr_t res_ptr;
 {
   struct ct_data *ct = (struct ct_data *) cl->cl_private;
   XDR *xdrs = &(ct->ct_xdrs);

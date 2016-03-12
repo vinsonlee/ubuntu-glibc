@@ -1,5 +1,5 @@
 /* Entry-point for programs.  NaCl version.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -44,10 +44,6 @@
 /* The application defines this, of course.  */
 extern int main (int argc, char **argv, char **envp);
 
-/* But maybe it defines this too, in which case it takes precedence.  */
-extern int __nacl_main (int argc, char **argv, char **envp)
-  __attribute__ ((weak));
-
 /* These are defined in libc.  */
 extern int __libc_csu_init (int argc, char **argv, char **envp);
 extern void __libc_csu_fini (void);
@@ -63,7 +59,7 @@ _start (uint32_t info[])
 {
   /* The generic code actually assumes that envp follows argv.  */
 
-  __libc_start_main (&__nacl_main ?: &main,
+  __libc_start_main (&main,
 		     nacl_startup_argc (info),
 		     nacl_startup_argv (info),
 		     nacl_startup_auxv (info),
