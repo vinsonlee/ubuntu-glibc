@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Bernd Schmidt <crux@Pool.Informatik.RWTH-Aachen.DE>, 1997.
 
@@ -301,10 +301,7 @@ weak_alias (__tsearch, tsearch)
    KEY is the key to be located, ROOTP is the address of tree root,
    COMPAR the ordering function.  */
 void *
-__tfind (key, vrootp, compar)
-     const void *key;
-     void *const *vrootp;
-     __compar_fn_t compar;
+__tfind (const void *key, void *const *vrootp, __compar_fn_t compar)
 {
   node *rootp = (node *) vrootp;
 

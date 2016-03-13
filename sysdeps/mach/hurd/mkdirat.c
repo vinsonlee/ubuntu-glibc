@@ -1,5 +1,5 @@
 /* Create a directory named relative to another open directory.  Hurd version.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,10 +24,7 @@
 #include <string.h>
 
 int
-mkdirat (fd, path, mode)
-     int fd;
-     const char *path;
-     mode_t mode;
+mkdirat (int fd, const char *path, mode_t mode)
 {
   error_t err;
   const char *name;

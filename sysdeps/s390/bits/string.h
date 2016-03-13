@@ -1,5 +1,5 @@
 /* Optimized, inlined string functions.  S/390 version.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
    This file is part of the GNU C Library.
 
@@ -21,8 +21,8 @@
 # error "Never use <bits/string.h> directly; include <string.h> instead."
 #endif
 
-/* The s390 processors can access unaligned multi-byte variables.  */
-#define _STRING_ARCH_unaligned	1
+/* Use the unaligned string inline ABI.  */
+#define _STRING_INLINE_unaligned 1
 
 /* We only provide optimizations if the user selects them and if
    GNU CC is used.  */
@@ -64,7 +64,7 @@ __strlen_g (const char *__str)
 #ifndef _FORCE_INLINES
 #define strcpy(dest, src) __strcpy_g ((dest), (src))
 
-__STRING_INLINE char *__strcpy_g (char *, const char *) __asm ("strcpy");
+__STRING_INLINE char *__strcpy_g (char *, const char *) __asm__ ("strcpy");
 
 __STRING_INLINE char *
 __strcpy_g (char *__dest, const char *__src)
@@ -226,8 +226,8 @@ memchr (const void *__str, int __c, size_t __n)
 }
 #endif
 
-/* Search N bytes of S for C.  */
-#define _HAVE_STRING_ARCH_memchr 1
+/* Compare S1 and S2.  */
+#define _HAVE_STRING_ARCH_strcmp 1
 #ifndef _FORCE_INLINES
 __STRING_INLINE int
 strcmp (const char *__s1, const char *__s2)

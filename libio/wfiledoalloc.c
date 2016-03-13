@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -78,8 +78,7 @@
  */
 
 int
-_IO_wfile_doallocate (fp)
-     _IO_FILE *fp;
+_IO_wfile_doallocate (_IO_FILE *fp)
 {
   _IO_size_t size;
   wchar_t *p;
@@ -95,7 +94,9 @@ _IO_wfile_doallocate (fp)
   size = fp->_IO_buf_end - fp->_IO_buf_base;
   if ((fp->_flags & _IO_USER_BUF))
     size = (size + sizeof (wchar_t) - 1) / sizeof (wchar_t);
-  ALLOC_WBUF (p, size * sizeof (wchar_t), EOF);
+  p = malloc (size * sizeof (wchar_t));
+  if (__glibc_unlikely (p == NULL))
+    return EOF;
   _IO_wsetb (fp, p, p + size, 1);
   return 1;
 }

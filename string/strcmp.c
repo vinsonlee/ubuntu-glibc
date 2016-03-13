@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,11 +19,15 @@
 
 #undef strcmp
 
+#ifndef STRCMP
+# define STRCMP strcmp
+#endif
+
 /* Compare S1 and S2, returning less than, equal to or
    greater than zero if S1 is lexicographically less than,
    equal to or greater than S2.  */
 int
-strcmp (const char *p1, const char *p2)
+STRCMP (const char *p1, const char *p2)
 {
   const unsigned char *s1 = (const unsigned char *) p1;
   const unsigned char *s2 = (const unsigned char *) p2;

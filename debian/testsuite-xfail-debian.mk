@@ -15,9 +15,13 @@ test-xfail-tst-cancel24-static = yes
 # alpha (including optimized flavours)
 ######################################################################
 ifneq (,$(filter $(config-machine)-$(config-os), alpha-linux-gnu alphaev67-linux-gnu))
+test-xfail-tst-backtrace5 = yes
+test-xfail-tst-backtrace6 = yes
+test-xfail-tst-cancel19 = yes
 test-xfail-check-localplt = yes
 test-xfail-test-double = yes
 test-xfail-test-float = yes
+test-xfail-test-fenv-return = yes
 test-xfail-test-snan = yes
 test-xfail-tst-eintr1 = yes
 test-xfail-tst-mqueue5 = yes
@@ -749,8 +753,10 @@ test-xfail-XPG4/unistd.h/linknamespace = yes
 test-xfail-XPG4/wordexp.h/linknamespace = yes
 
 # changed in 2.22, tests were run directly, now using threads
+# TODO: should be succeeding again with gnumach >= 2016-03-06
 test-xfail-test-fpucw = yes
 test-xfail-test-fpucw-ieee = yes
+test-xfail-test-fpucw-ieee-static = yes
 test-xfail-test-fpucw-static = yes
 test-xfail-test-static = yes
 
@@ -1191,6 +1197,11 @@ test-xfail-tst-cond16 = yes
 test-xfail-tst-mqueue5 = yes
 test-xfail-tst-stack4 = yes
 test-xfail-tst-waitid = yes
+
+# These failures are due to a bug in the Loongson 3A FPU
+test-xfail-test-double = yes
+test-xfail-test-double-finite = yes
+test-xfail-test-idouble = yes
 endif
 
 
@@ -1284,6 +1295,9 @@ test-xfail-tst-backtrace5 = yes
 test-xfail-tst-backtrace6 = yes
 test-xfail-tst-mqueue5 = yes
 test-xfail-tst-waitid = yes
+
+# Known failure not a regression, see https://sourceware.org/bugzilla/show_bug.cgi?id=6527
+tst-malloc-thread-fail = yes
 
 # Failures due to a GCC bug, see http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59412
 #                            and http://gcc.gnu.org/bugzilla/show_bug.cgi?id=64811

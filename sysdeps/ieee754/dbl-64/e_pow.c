@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2015 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2016 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -119,6 +119,8 @@ __ieee754_pow (double x, double y)
 	retval = huge * huge;
       else if (retval == 0)
 	retval = tiny * tiny;
+      else
+	math_check_force_underflow_nonneg (retval);
       return retval;
     }
 
@@ -243,7 +245,8 @@ static double
 SECTION
 log1 (double x, double *delta, double *error)
 {
-  int i, j, m;
+  unsigned int i, j;
+  int m;
   double uu, vv, eps, nx, e, e1, e2, t, t1, t2, res, add = 0;
   mynumber u, v;
 #ifdef BIG_ENDI
@@ -342,7 +345,8 @@ static double
 SECTION
 my_log2 (double x, double *delta, double *error)
 {
-  int i, j, m;
+  unsigned int i, j;
+  int m;
   double uu, vv, eps, nx, e, e1, e2, t, t1, t2, res, add = 0;
   double ou1, ou2, lu1, lu2, ov, lv1, lv2, a, a1, a2;
   double y, yy, z, zz, j1, j2, j7, j8;

@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,10 +26,7 @@
    protocol PROTOCOL.  If PROTOCOL is zero, one is chosen automatically.
    Returns a file descriptor for the new socket, or -1 for errors.  */
 int
-__socket (domain, type, protocol)
-     int domain;
-     int type;
-     int protocol;
+__socket (int domain, int type, int protocol)
 {
   error_t err;
   socket_t sock, server;
