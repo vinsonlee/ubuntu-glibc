@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,8 +22,7 @@
 
 /* Duplicate FD, returning a new file descriptor open on the same file.  */
 int
-__dup (fd)
-     int fd;
+__dup (int fd)
 {
   return fcntl (fd, F_DUPFD, 0);
 }

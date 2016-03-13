@@ -1,5 +1,5 @@
 /* Message-writing for the dynamic linker.  Generic version.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
 
 #include <sys/uio.h>
 #include <ldsodefs.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 
 /* This is used from only one place: dl-misc.c:_dl_debug_vdprintf.
    Hence it's in a header with the expectation it will be inlined.

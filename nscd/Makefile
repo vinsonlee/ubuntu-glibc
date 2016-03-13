@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2015 Free Software Foundation, Inc.
+# Copyright (C) 1998-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -84,9 +84,7 @@ CPPFLAGS-nscd += -D_FORTIFY_SOURCE=2
 ifeq (yesyes,$(have-fpie)$(build-shared))
 CFLAGS-nscd += $(pie-ccflag)
 endif
-ifeq (yes,$(have-ssp))
-CFLAGS-nscd += -fstack-protector
-endif
+CFLAGS-nscd += $(stack-protector)
 
 ifeq (yesyes,$(have-fpie)$(build-shared))
 LDFLAGS-nscd = -Wl,-z,now

@@ -1,5 +1,5 @@
 /* Implementation of gamma function according to ISO C.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -186,6 +186,7 @@ __ieee754_gammal_r (long double x, int *signgamp)
 	      ret = M_PIl / (-x * sinpix
 			     * gammal_positive (-x, &exp2_adj));
 	      ret = __scalbnl (ret, -exp2_adj);
+	      math_check_force_underflow_nonneg (ret);
 	    }
 	}
     }

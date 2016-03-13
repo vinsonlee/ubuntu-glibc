@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  NPTL/s390 version.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -53,7 +53,11 @@ typedef struct
   int gscope_flag;
 #ifndef __ASSUME_PRIVATE_FUTEX
   int private_futex;
+#else
+  int __glibc_reserved1;
 #endif
+  /* GCC split stack support.  */
+  void *__private_ss;
 } tcbhead_t;
 
 # ifndef __s390x__
@@ -159,9 +163,9 @@ typedef struct
 
 /* Set the stack guard field in TCB head.  */
 #define THREAD_SET_STACK_GUARD(value) \
-  do 									      \
+  do									      \
    {									      \
-     __asm __volatile ("" : : : "a0", "a1");				      \
+     __asm__ __volatile__ ("" : : : "a0", "a1");			      \
      THREAD_SETMEM (THREAD_SELF, header.stack_guard, value);		      \
    }									      \
   while (0)
