@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,11 +24,7 @@
 
 #ifdef __NR_getpmsg
 int
-getmsg (fildes, ctlptr, dataptr, flagsp)
-     int fildes;
-     struct strbuf *ctlptr;
-     struct strbuf *dataptr;
-     int *flagsp;
+getmsg (int fildes, struct strbuf *ctlptr, struct strbuf *dataptr, int *flagsp)
 {
   return INLINE_SYSCALL (getpmsg, 5, fildes, ctlptr, dataptr, NULL, flagsp);
 }

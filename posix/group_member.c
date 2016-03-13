@@ -1,5 +1,5 @@
 /* `group_member' -- test if process is in a given group.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,8 +26,7 @@
 #endif
 
 int
-__group_member (gid)
-     gid_t gid;
+__group_member (gid_t gid)
 {
   int n, size;
   gid_t *groups;

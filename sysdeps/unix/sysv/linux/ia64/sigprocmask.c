@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Linux/IA64 specific sigprocmask
    Written by Jes Sorensen, <Jes.Sorensen@cern.ch>, April 1999.
@@ -29,10 +29,7 @@
 
 /* Get and/or change the set of blocked signals.  */
 int
-__sigprocmask (how, set, oset)
-     int how;
-     const sigset_t *set;
-     sigset_t *oset;
+__sigprocmask (int how, const sigset_t *set, sigset_t *oset)
 {
 
   /* XXX The size argument hopefully will have to be changed to the

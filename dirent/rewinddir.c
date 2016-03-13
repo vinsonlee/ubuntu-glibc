@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,8 +22,7 @@
 
 /* Rewind DIRP to the beginning of the directory.  */
 void
-__rewinddir (dirp)
-     DIR *dirp;
+__rewinddir (DIR *dirp)
 {
   __set_errno (ENOSYS);
   /* No way to indicate failure.	*/

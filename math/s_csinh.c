@@ -1,5 +1,5 @@
 /* Complex sine hyperbole function for double.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -89,18 +89,7 @@ __csinh (__complex__ double x)
 	      __imag__ retval = __ieee754_cosh (__real__ x) * sinix;
 	    }
 
-	  if (fabs (__real__ retval) < DBL_MIN)
-	    {
-	      volatile double force_underflow
-		= __real__ retval * __real__ retval;
-	      (void) force_underflow;
-	    }
-	  if (fabs (__imag__ retval) < DBL_MIN)
-	    {
-	      volatile double force_underflow
-		= __imag__ retval * __imag__ retval;
-	      (void) force_underflow;
-	    }
+	  math_check_force_underflow_complex (retval);
 	}
       else
 	{

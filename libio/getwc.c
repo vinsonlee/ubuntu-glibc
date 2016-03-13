@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,8 +31,7 @@
 #undef _IO_getwc
 
 wint_t
-_IO_getwc (fp)
-     FILE *fp;
+_IO_getwc (FILE *fp)
 {
   wint_t result;
   CHECK_FILE (fp, WEOF);
