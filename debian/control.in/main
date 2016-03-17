@@ -3,19 +3,21 @@ Section: libs
 Priority: required
 Build-Depends: gettext, dpkg-dev (>= 1.17.14), xz-utils, file, quilt,
  autoconf, gawk, debhelper (>= 9.20141010), rdfind, symlinks, netbase,
- linux-libc-dev (>= 3.9) [linux-any],
- libaudit-dev [linux-any], libcap-dev [linux-any], libselinux-dev [linux-any], systemtap-sdt-dev [linux-any],
- mig (>= 1.5-3) [hurd-i386], hurd-dev (>= 1:0.5.git20140320~) [hurd-i386], gnumach-dev (>= 2:1.4+git20141109-1) [hurd-i386],
+ linux-libc-dev (>= 3.9) [linux-any], systemtap-sdt-dev [linux-any],
+ libaudit-dev [linux-any], libcap-dev [linux-any], libselinux-dev [linux-any],
+ mig (>= 1.5-3) [hurd-i386], gnumach-dev (>= 2:1.4+git20141109~) [hurd-i386],
+ hurd-dev (>= 1:0.5.git20140320~) [hurd-i386] | hurd-headers-dev [hurd-i386],
+ hurd-dev (>= 1:0.5.git20140320~) [hurd-i386] <!stage1> | libihash-dev [hurd-i386] <!stage1>,
  kfreebsd-kernel-headers [kfreebsd-any],
  binutils (>= 2.21),
- g++-4.9, g++-4.9-multilib [amd64 armhf armel i386 kfreebsd-amd64 mips mipsel mipsn32 mipsn32el mips64 mips64el powerpc ppc64 s390x sparc sparc64 x32]
+ g++-5, g++-5-multilib [amd64 armhf armel i386 kfreebsd-amd64 mips mipsel mipsn32 mipsn32el mips64 mips64el powerpc ppc64 s390x sparc sparc64 x32]
 Build-Depends-Indep: perl, po-debconf (>= 1.0)
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: GNU Libc Maintainers <debian-glibc@lists.debian.org>
 Uploaders: Clint Adams <clint@debian.org>, Aurelien Jarno <aurel32@debian.org>, Adam Conrad <adconrad@0c3.net>
-Standards-Version: 3.9.6
-Vcs-Browser: http://svn.debian.org/wsvn/pkg-glibc/glibc-package/
-Vcs-Svn: svn://svn.debian.org/pkg-glibc/glibc-package/
+Standards-Version: 3.9.7
+Vcs-Browser: https://anonscm.debian.org/cgit/pkg-glibc/glibc.git
+Vcs-Git: https://anonscm.debian.org/git/pkg-glibc/glibc.git
 Homepage: http://www.gnu.org/software/libc/libc.html
 XS-Testsuite: autopkgtest
 
@@ -26,9 +28,7 @@ Priority: required
 Essential: yes
 Multi-Arch: foreign
 Depends: ${shlibs:Depends}, ${misc:Depends}, hurd (>= 20070606-1+SVN) [hurd-i386]
-Recommends: manpages
-Breaks: libc0.1 (<< 2.10), libc0.3 (<< 2.10), libc6 (<< 2.10), libc6.1 (<< 2.10)
-Replaces: libc0.1, libc0.3, libc6, libc6.1
+Suggests: manpages
 Build-Profiles: <!stage1>
 Description: GNU C Library: Binaries
  This package contains utility programs related to the GNU C Library.
@@ -48,7 +48,6 @@ Priority: optional
 Multi-Arch: foreign
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends: manpages, manpages-dev
-Replaces: libc0.1-dev, libc0.3-dev, libc6-dev, libc6.1-dev
 Build-Profiles: <!stage1>
 Description: GNU C Library: Development binaries
  This package contains utility programs related to the GNU C Library
@@ -59,8 +58,8 @@ Architecture: all
 Section: localization
 Priority: standard
 Depends: ${misc:Depends}
-Breaks: locales (<< 2.21-0experimental1)
-Replaces: locales (<< 2.21-0experimental1)
+Breaks: locales (<< 2.21-1)
+Replaces: locales (<< 2.21-1)
 Build-Profiles: <!stage1>
 Description: GNU C Library: localization files
  This package contains the translation files for the GNU C library and
@@ -96,8 +95,9 @@ Package: locales
 Architecture: all
 Section: localization
 Priority: standard
-Depends: libc-bin (>> @GLIBC_VERSION@), libc-l10n (>> @GLIBC_VERSION@), ${misc:Depends}, debconf | debconf-2.0
-Replaces: manpages-fr-extra (<< 20141022)
+Depends: libc-bin (>> @GLIBC_VERSION@), ${misc:Depends}, debconf | debconf-2.0
+Breaks: libc-bin (<< 2.23)
+Replaces: libc-bin (<< 2.23), manpages-fr-extra (<< 20141022)
 Build-Profiles: <!stage1>
 Description: GNU C Library: National Language (locale) data [support]
  Machine-readable data files, shared objects and programs used by the
@@ -114,7 +114,7 @@ Architecture: any
 Section: localization
 Priority: extra
 Multi-Arch: foreign
-Depends: libc-l10n (>> @GLIBC_VERSION@), ${misc:Depends}
+Depends: ${misc:Depends}
 Breaks: locales (<< 2.13-17)
 Provides: locales
 Build-Profiles: <!stage1>

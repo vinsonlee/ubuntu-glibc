@@ -1,4 +1,4 @@
-/* Copyright (C) 2015 Free Software Foundation, Inc.
+/* Copyright (C) 2015-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,11 +20,17 @@
 #include <sys/socket.h>
 
 #include <socketcall.h>
+#include <kernel-features.h>
+#include <sys/syscall.h>
 
 int
 __socket (int fd, int type, int domain)
 {
+#ifdef __ASSUME_SOCKET_SYSCALL
+  return INLINE_SYSCALL (socket, 3, fd, type, domain);
+#else
   return SOCKETCALL (socket, fd, type, domain);
+#endif
 }
 libc_hidden_def (__socket)
 weak_alias (__socket, socket)

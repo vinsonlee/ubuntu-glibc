@@ -9,8 +9,8 @@ pldd = no
 
 # NPTL Config
 threads = yes
+extra_config_options = --disable-compatible-utmp --disable-multi-arch --disable-werror
 libc_add-ons = fbtl $(add-ons)
-libc_extra_config_options = $(extra_config_options)
 
 ifndef KFREEBSD_SOURCE
   ifeq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
@@ -43,12 +43,16 @@ $(stamp)mkincludedir:
 
 	mkdir -p debian/include/sys
 	# Link to any headers found in the old locations first
-	find $(KFREEBSD_HEADERS)/sys -mindepth 1 \
-		-exec ln -sf '{}' debian/include/sys ';'
+	if test -d $(KFREEBSD_HEADERS)/sys ; then \
+	    find $(KFREEBSD_HEADERS)/sys -mindepth 1 \
+		-exec ln -sf '{}' debian/include/sys ';' ; \
+	fi
 	# Link to any headers found at the new multiarch location,
 	# replacing any existing links
-	find $(KFREEBSD_ARCH_HEADERS)/sys -mindepth 1 \
-		-exec ln -sf '{}' debian/include/sys ';'
+	if test -d $(KFREEBSD_ARCH_HEADERS)/sys ; then \
+	    find $(KFREEBSD_ARCH_HEADERS)/sys -mindepth 1 \
+		-exec ln -sf '{}' debian/include/sys ';' ; \
+	fi
 
 	# To make configure happy if libc0.1-dev is not installed.
 	touch debian/include/assert.h

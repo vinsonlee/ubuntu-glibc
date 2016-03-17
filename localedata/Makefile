@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2015 Free Software Foundation, Inc.
+# Copyright (C) 1996-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -199,7 +199,7 @@ $(rtld-prefix) $(common-objpfx)locale/localedef
 install-locales: $(INSTALL-SUPPORTED-LOCALES)
 
 install-locales-dir:
-	$(..)./scripts/mkinstalldirs $(inst_localedir)
+	$(..)./scripts/mkinstalldirs $(inst_complocaledir)
 
 $(INSTALL-SUPPORTED-LOCALES): install-locales-dir
 	@locale=`echo $@ | sed -e 's/^install-//'`; \

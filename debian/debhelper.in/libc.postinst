@@ -73,7 +73,8 @@ then
     # We don't use a registry anymore, remove the old file
     rm -f /etc/ld.so.hwcappkgs
  
-    # /etc/ld.so.nohwcap code: NOHWCAP
+    # /etc/ld.so.nohwcap code:
+    __NOHWCAP__
 
     # Load debconf module if available
     if [ -f /usr/share/debconf/confmodule ] ; then
@@ -85,10 +86,6 @@ then
 	    ln -sf spool/mail /var/mail
 	fi
 	if dpkg --compare-versions "$preversion" lt GLIBC_VERSION; then
-	    # LP #504198; purge locales between major versions
-	    if which locale-gen >/dev/null; then
-		locale-gen --purge
-	    fi
 	    # give a reboot notification on major version upgrades
 	    if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
 		/usr/share/update-notifier/notify-reboot-required
@@ -112,7 +109,8 @@ then
 	    # time are still around
             # the following substitution processes the check variable
             # and returns results in the services variable
-	    # NSS services check: NSS_CHECK
+	    # NSS services check: 
+	    __NSS_CHECK__
 	    # If there are services that we *stopped* in the preinst, don't
 	    # forget to restart them now
 	    if [ -e /var/run/services.need_start ]; then

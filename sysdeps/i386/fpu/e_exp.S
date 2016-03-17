@@ -4,10 +4,22 @@
  */
 
 #include <machine/asm.h>
+#include <i386-math-asm.h>
 
+DEFINE_DBL_MIN
 
+#ifdef PIC
+# define MO(op) op##@GOTOFF(%ecx)
+#else
+# define MO(op) op
+#endif
+
+	.text
 /* e^x = 2^(x * log2(e)) */
 ENTRY(__ieee754_exp)
+#ifdef  PIC
+	LOAD_PIC_REG (cx)
+#endif
 	fldl	4(%esp)
 /* I added the following ugly construct because exp(+-Inf) resulted
    in NaN.  The ugliness results from the bright minds at Intel.
@@ -30,6 +42,7 @@ ENTRY(__ieee754_exp)
 	faddp				/* 2^(fract(x * log2(e))) */
 	fscale				/* e^x */
 	fstp	%st(1)
+	DBL_NARROW_EVAL_UFLOW_NONNEG_NAN
 	ret
 
 1:	testl	$0x200, %eax		/* Test sign.  */
@@ -41,6 +54,9 @@ END (__ieee754_exp)
 
 
 ENTRY(__exp_finite)
+#ifdef  PIC
+	LOAD_PIC_REG (cx)
+#endif
 	fldl2e
 	fmull	4(%esp)			/* x * log2(e) */
 	fld	%st
@@ -52,5 +68,6 @@ ENTRY(__exp_finite)
 	faddp				/* 2^(fract(x * log2(e))) */
 	fscale				/* e^x */
 	fstp	%st(1)
+	DBL_NARROW_EVAL_UFLOW_NONNEG
 	ret
 END(__exp_finite)

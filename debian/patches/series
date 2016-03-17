@@ -25,27 +25,24 @@ localedata/locale-se_NO.diff
 localedata/tailor-iso14651_t1.diff
 localedata/locale-hsb_DE.diff
 localedata/tailor-iso14651_t1-common.diff
-localedata/fix-lang.diff
 localedata/fr_CA-first_weekday.diff
 localedata/fr_CH-first_weekday.diff
 localedata/locale-de_LI.diff
 localedata/submitted-bz9725-locale-sv_SE.diff
 localedata/first_weekday.diff
 localedata/locale-C.diff
-localedata/locale-nb_NO.diff
 localedata/submitted-en_AU-date_fmt.diff
 localedata/submitted-es_MX-decimal_point.diff
-localedata/submitted-locale-bo.diff
 localedata/submitted-it_IT-thousands_sep.diff
 
 alpha/local-gcc4.1.diff
 alpha/submitted-dl-support.diff
-alpha/submitted-rtld-fPIC.diff
 alpha/local-string-functions.diff
+alpha/submitted-fegetenv-namespace.diff
+alpha/submitted-termios_h.diff
 
-amd64/local-blacklist-on-TSX-Haswell.diff
+amd64/local-blacklist-for-Intel-TSX.diff
 
-arm/local-ioperm.diff
 arm/local-sigaction.diff
 arm/unsubmitted-ldconfig-cache-abi.diff
 arm/unsubmitted-ldso-abi-check.diff
@@ -58,9 +55,8 @@ hppa/local-inlining.diff
 hppa/local-stack-grows-up.diff
 hppa/local-elf-make-cflags.diff
 hppa/local-shmlba.diff
-hppa/local-pthread_spin_unlock.diff
 hppa/local-fptr-table-size.diff
-hppa/cvs-start.diff
+hppa/submitted-gmon-start.diff
 
 hurd-i386/local-enable-ldconfig.diff
 hurd-i386/tg-context_functions.diff
@@ -76,6 +72,7 @@ hurd-i386/local-disable-ioctls.diff
 hurd-i386/tg-locarchive.diff
 hurd-i386/tg-no-hp-timing.diff
 hurd-i386/tg-sendmsg-SCM_RIGHTS.diff
+hurd-i386/tg-sendmsg-SCM_CREDS.diff
 hurd-i386/tg-grantpt.diff
 hurd-i386/submitted-add-needed.diff
 hurd-i386/local-ED.diff
@@ -89,6 +86,7 @@ hurd-i386/tg-hurdsig-SA_SIGINFO.diff
 hurd-i386/tg-hurdsig-fixes-2.diff
 hurd-i386/tg-hooks.diff
 hurd-i386/cvs-libpthread.diff
+hurd-i386/cvs-libpthread-2.23.diff
 hurd-i386/libpthread_spin-lock.diff
 hurd-i386/libpthread_build.diff
 hurd-i386/libpthread_sigmask.diff
@@ -99,7 +97,6 @@ hurd-i386/tg-libpthread_depends.diff
 hurd-i386/libpthread_version.diff
 hurd-i386/submitted-exec_filename.diff
 hurd-i386/unsubmitted-gnumach.defs.diff
-hurd-i386/submitted-fork_port_leak.diff
 hurd-i386/tg-hurdsig-boot-fix.diff
 hurd-i386/tg-single-select-timeout.diff
 hurd-i386/tg-setitimer.diff
@@ -124,23 +121,24 @@ hurd-i386/submitted-bind_umask2.diff
 hurd-i386/local-libpthread-stacksize.diff
 hurd-i386/tg-WRLCK-upgrade.diff
 hurd-i386/tg-reboot-startup.diff
-hurd-i386/cvs-libpthread-libc-lockP.diff
 hurd-i386/libpthread-versions.diff
 hurd-i386/cvs-revert-gnu-gnu-cleanup.diff
 hurd-i386/unsubmitted-libc_alloca_cutoff.diff
 hurd-i386/libpthread_pthread_types.diff
 hurd-i386/unsubmitted-libpthread-semaphore.h.diff
-hurd-i386/tg-mmap32th_bit.diff
-hurd-i386/tg-sysheaders.diff
-hurd-i386/cvs-bootstrap.diff
 hurd-i386/local-bootstrap.diff
-hurd-i386/cvs-csu_crt0.diff
-hurd-i386/cvs-s_scalbn.diff
+hurd-i386/local-mach_print.diff
+hurd-i386/cvs-hidden.diff
+hurd-i386/cvs-libpthread-api.diff
+hurd-i386/cvs-libpthread-sigstate.diff
+hurd-i386/submitted-hurd-abilist.diff
+hurd-i386/cvs-openat.diff
+hurd-i386/cvs-gai_sigqueue.diff
+hurd-i386/cvs-aio_sigqueue.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
 i386/local-cpuid-level2.diff
-#i386/local-i586-ulps.diff
 i386/submitted-i686-timing.diff
 i386/unsubmitted-quiet-ldconfig.diff
 
@@ -156,23 +154,17 @@ kfreebsd/local-getaddrinfo-freebsd-kernel.diff
 kfreebsd/local-no-execfn.diff
 
 m68k/local-dwarf2-buildfix.diff
-m68k/local-fpic.diff
-# m68k/local-mathinline_h.diff
 m68k/local-reloc.diff
 m68k/submitted-gcc34-seccomment.diff
 
-mips/local-r10k.diff
 mips/submitted-rld_map.diff
 
 powerpc/local-powerpc8xx-dcbz.diff
-powerpc/local-tune-power8.diff
-
-s390/submitted-nexttowardf.diff
 
 sh4/local-fpscr_values.diff
 
 sparc/local-sparcv9-target.diff
-sparc/submitted-timing.diff
+sparc/submitted-sparc64-socketcall.diff
 
 all/local-alias-et_EE.diff
 all/local-remove-manual.diff
@@ -187,7 +179,6 @@ any/local-bindresvport_blacklist.diff
 any/local-allocalim-header.diff
 any/local-fhs-linux-paths.diff
 any/local-fhs-nscd.diff
-# any/local-ipv6-lookup.diff -p1               # has issues
 any/local-ld-multiarch.diff
 any/local-ldso-disable-hwcap.diff
 any/local-ldconfig.diff
@@ -195,23 +186,15 @@ any/local-ldconfig-fsync.diff
 any/local-libgcc-compat-main.diff
 any/local-libgcc-compat-ports.diff
 any/local-libgcc-compat-abilists.diff
-# any/local-localedef-fix-trampoline.diff	# trips -Werror=unused-function
-any/local-mktemp.diff
 any/local-no-pagesize.diff
 any/local-nss-upgrade.diff
 any/local-stubs_h.diff
-any/local-stdio-lock.diff
 any/local-tcsetaddr.diff
-any/local-disable-test-tgmath2.diff
 any/local-tst-mktime2.diff
-any/submitted-nis-netgrp.diff
 any/submitted-longdouble.diff
-#any/submitted-fileops-and-signals.diff		# has issues
 any/local-nss-overflow.diff
-#any/local-disable-gethostbyname4.diff
 any/submitted-missing-etc-hosts.diff
 any/submitted-bits-fcntl_h-at.diff
-any/local-no-SOCK_NONBLOCK.diff
 any/submitted-nptl-invalid-td.patch
 any/local-dlfptr.diff
 any/submitted-string2-strcmp.diff
@@ -222,18 +205,14 @@ any/local-revert-bz13979.diff
 any/local-tst-eintr1-eagain.diff
 any/unsubmitted-ldso-machine-mismatch.diff
 any/unsubmitted-dlopen-static-crash.diff
-any/unsubmitted-scanf-includes.diff
 any/local-ldconfig-ignore-ld.so.diff
-any/local-no-malloc-backtrace.diff
 any/local-dynamic-resolvconf.diff
 any/local-libpic.diff
 any/local-bootstrap-headers.diff
 any/submitted-argp-attribute.diff
-any/submitted-resolv-ipv6-nameservers.diff
-any/local-static-dlopen-search-path.diff
-any/local-math-logb.diff
-any/cvs-netinet-in-4.2.diff
-any/cvs-netinet-tcp-4.2.diff
+any/submitted-dlopen-noload.diff
+any/cvs-tst-malloc-thread-exit.diff
+any/cvs-resolver-leak.diff
 
 # Ubuntu patches live in their own little world, to maintain sanity
 ubuntu/lddebug-scopes.diff
@@ -242,5 +221,15 @@ ubuntu/local-disable-ld_audit.diff
 ubuntu/local-disable-nscd-netgroup-caching.diff
 ubuntu/submitted-no-sprintf-pre-truncate.diff
 ubuntu/submitted-no-stack-backtrace.diff
-ubuntu/unsubmitted-increase-dtv-surplus.diff
 ubuntu/local-warn-bsd-source.diff
+ubuntu/localedata/bn-language.diff
+ubuntu/localedata/ckb_IQ-new_locale.diff
+ubuntu/localedata/en_CA-dateformat.diff
+ubuntu/localedata/en_IE-am_pm.diff
+ubuntu/localedata/eo_US.diff
+ubuntu/localedata/es_DO-am_pm.diff
+ubuntu/localedata/ln_CD-new_locale.diff
+ubuntu/localedata/lv_LV-currency.diff
+ubuntu/localedata/pt_BR-d_fmt.diff
+ubuntu/localedata/sd_PK.diff
+ubuntu/localedata/ug_CN@latin.diff

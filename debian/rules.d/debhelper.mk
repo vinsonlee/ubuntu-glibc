@@ -31,13 +31,6 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGUL
 	dh_link -p$(curpass)
 	dh_bugfiles -p$(curpass)
 
-	if test "$(curpass)" = "libc-bin"; then			\
-	  mv debian/$(curpass)/sbin/ldconfig			\
-	    debian/$(curpass)/sbin/ldconfig.real;		\
-	  install -m755 -o0 -g0 debian/local/sbin/ldconfig	\
-	    debian/$(curpass)/sbin/ldconfig;			\
-	fi
-
 	# when you want to install extra packages, use extra_pkg_install.
 	$(call xx,extra_pkg_install)
 
@@ -55,9 +48,14 @@ ifeq ($(filter nostrip,$(DEB_BUILD_OPTIONS)),)
 	        -e "s#^.*Build ID: \([0-9a-f]\{2\}\)\([0-9a-f]\+\)#\1/\2.debug#") ;	\
 	      dbgpath=debian/$(libc)-dbg/usr/lib/debug/.build-id/$$dbgfile ;		\
 	      mkdir -p $$(dirname $$dbgpath) ;						\
-	      objcopy --only-keep-debug $$f $$dbgpath ;					\
-	      objcopy --add-gnu-debuglink=$$dbgpath $$f ;				\
-	      strip --strip-debug --remove-section=.comment --remove-section=.note $$f ;\
+	      $(DEB_HOST_GNU_TYPE)-objcopy --only-keep-debug $$f $$dbgpath ;		\
+	      $(DEB_HOST_GNU_TYPE)-objcopy --add-gnu-debuglink=$$dbgpath $$f ;		\
+	      $(DEB_HOST_GNU_TYPE)-strip --strip-debug --remove-section=.comment	\
+	                                 --remove-section=.note $$f ;			\
+	    done ;									\
+	    for f in $$(find debian/$(curpass) -name \*crt\*.o) ; do			\
+	      $(DEB_HOST_GNU_TYPE)-strip --strip-debug --remove-section=.comment	\
+	                                 --remove-section=.note $$f ;			\
 	    done ;									\
 	  else										\
 	    dh_strip -p$(curpass) -Xlibpthread;						\
@@ -67,6 +65,9 @@ endif
 
 	dh_compress -p$(curpass)
 	dh_fixperms -p$(curpass) -Xpt_chown
+	if [ $(curpass) = locales ] ; then \
+		chmod +x debian/$(curpass)/usr/share/locales/*-language-pack ; \
+	fi
 	# Use this instead of -X to dh_fixperms so that we can use
 	# an unescaped regular expression.  ld.so must be executable;
 	# libc.so and NPTL's libpthread.so print useful version
@@ -129,14 +130,15 @@ debhelper: $(stamp)debhelper-common $(patsubst %,$(stamp)debhelper_%,$(GLIBC_PAS
 $(stamp)debhelper-common: 
 	for x in `find debian/debhelper.in -maxdepth 1 -type f`; do \
 	  y=debian/`basename $$x`; \
-	  sed -e "/NSS_CHECK/r debian/script.in/nsscheck.sh" \
-	      -e "/NOHWCAP/r debian/script.in/nohwcap.sh" \
-	      -e "/__PROVIDED_LOCALES__/r debian/tmp-libc/usr/share/i18n/SUPPORTED" \
-	      -e "s#GLIBC_VERSION#$(GLIBC_VERSION)#" \
-	      -e "s#CURRENT_VER#$(DEB_VERSION)#" \
-	      -e "s#BUILD-TREE#$(build-tree)#" \
-	      -e "s#LIBC#$(libc)#" \
-	      -e "s#DEB_HOST_ARCH#$(DEB_HOST_ARCH)#" \
+	  perl -p \
+	      -e 'BEGIN {undef $$/; open(IN, "debian/script.in/nsscheck.sh"); $$j=<IN>;} s/__NSS_CHECK__/$$j/g;' \
+	      -e 'BEGIN {undef $$/; open(IN, "debian/script.in/nohwcap.sh"); $$k=<IN>;} s/__NOHWCAP__/$$k/g;' \
+	      -e 'BEGIN {undef $$/; open(IN, "debian/tmp-libc/usr/share/i18n/SUPPORTED"); $$l=<IN>;} s/__PROVIDED_LOCALES__/$$l/g;' \
+	      -e 's#GLIBC_VERSION#$(GLIBC_VERSION)#g;' \
+	      -e 's#CURRENT_VER#$(DEB_VERSION)#g;' \
+	      -e 's#BUILD-TREE#$(build-tree)#g;' \
+	      -e 's#LIBC#$(libc)#g;' \
+	      -e 's#DEB_HOST_ARCH#$(DEB_HOST_ARCH)#g;' \
 	      $$x > $$y ; \
 	  case $$y in \
 	    *.install) \
@@ -235,6 +237,7 @@ $(stamp)debhelper_%: $(stamp)debhelper-common $(stamp)install_%
 	    sed -e "s#FLAVOR#$$curpass#g" -i $$t; \
 	    sed -e "s#RTLD_SO#$$rtld_so#g" -i $$t ; \
 	    sed -e "s#MULTIARCHDIR#$$DEB_HOST_MULTIARCH#g" -i $$t ; \
+	    $(if $(filter $(call xx,mvec),no),sed -e "/libmvec/d" -i $$t ;) \
 	  done ; \
 	done
 endif

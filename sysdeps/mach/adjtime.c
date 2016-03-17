@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,9 +24,7 @@
    of time adjustment remaining to be done from the last `__adjtime' call.
    This call is restricted to the super-user.  */
 int
-__adjtime (delta, olddelta)
-     const struct timeval *delta;
-     struct timeval *olddelta;
+__adjtime (const struct timeval *delta, struct timeval *olddelta)
 {
   error_t err;
   mach_port_t hostpriv;

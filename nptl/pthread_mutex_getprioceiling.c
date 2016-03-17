@@ -1,5 +1,5 @@
 /* Get current priority ceiling of pthread_mutex_t.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2006.
 
@@ -22,9 +22,7 @@
 
 
 int
-pthread_mutex_getprioceiling (mutex, prioceiling)
-     const pthread_mutex_t *mutex;
-     int *prioceiling;
+pthread_mutex_getprioceiling (const pthread_mutex_t *mutex, int *prioceiling)
 {
   if (__builtin_expect ((mutex->__data.__kind
 			 & PTHREAD_MUTEX_PRIO_PROTECT_NP) == 0, 0))

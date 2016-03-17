@@ -4,6 +4,8 @@ Subject: [PATCH] tls-threadvar
 replace the custom threadvar mechanism with generic TLS.
 That will fix sigaltstack.
 
+Note: the added reply_port and _hurd_sigstate fields should be kept last.
+
 ---
  hurd/Versions                               |  7 +--
  hurd/hurd/signal.h                          | 24 +++++----
@@ -13,8 +15,8 @@ That will fix sigaltstack.
  hurd/sigunwind.c                            |  4 +-
  include/errno.h                     |  2 +-
  sysdeps/mach/hurd/Versions                  |  6 ++-
- sysdeps/mach/hurd/bits/libc-lock.h          |  5 +-
- sysdeps/mach/hurd/bits/libc-tsd.h           | 34 ------------
+ sysdeps/mach/hurd/libc-lock.h               |  5 +-
+ sysdeps/mach/hurd/libc-tsd.h                | 34 ------------
  sysdeps/mach/hurd/cthreads.c                |  3 ++
  sysdeps/mach/hurd/dl-sysdep.c               | 19 -------
  sysdeps/mach/hurd/errno-loc.c               | 24 ++++++---
@@ -229,7 +231,7 @@ That will fix sigaltstack.
  
  /* Linked-list of per-thread signal state.  */
  struct hurd_sigstate *_hurd_sigstates;
-@@ -234,11 +234,11 @@ abort_thread (struct hurd_sigstate *ss,
+@@ -234,14 +234,14 @@ abort_thread (struct hurd_sigstate *ss,
     that this location can be set without faulting, or else return NULL.  */
  
  static mach_port_t *
@@ -243,7 +245,11 @@ That will fix sigaltstack.
 +  mach_port_t *portloc = &THREAD_TCB(thread, thread_state)->reply_port;
  
    if (sigthread && _hurdsig_catch_memory_fault (portloc))
-     /* Faulted trying to read the stack.  */
+-    /* Faulted trying to read the stack.  */
++    /* Faulted trying to read the TCB.  */
+     return NULL;
+ 
+   /* Fault now if this pointer is bogus.  */
 @@ -323,7 +323,8 @@ _hurdsig_abort_rpcs (struct hurd_sigstat
  	   our nonzero return tells the trampoline code to finish the message
  	   receive operation before running the handler.  */
@@ -381,7 +387,7 @@ That will fix sigaltstack.
    GLIBC_PRIVATE {
      # Functions shared with the dynamic linker
      __libc_read; __libc_write; __libc_lseek64;
-+    __libc_lock_self0; __libc_get_lock_self;
++    __libc_lock_self0;
  
      _dl_init_first;
    }
@@ -398,11 +404,11 @@ That will fix sigaltstack.
  
      # functions that must be shared with libc
      __libc_read; __libc_write; __libc_lseek64;
-+    __libc_lock_self0; __libc_get_lock_self;
++    __libc_lock_self0;
    }
  }
---- a/sysdeps/mach/hurd/bits/libc-lock.h
-+++ b/sysdeps/mach/hurd/bits/libc-lock.h
+--- a/sysdeps/mach/hurd/libc-lock.h
++++ b/sysdeps/mach/hurd/libc-lock.h
 @@ -24,7 +24,6 @@
  #include <tls.h>
  #endif
@@ -411,25 +417,21 @@ That will fix sigaltstack.
  
  typedef struct mutex __libc_lock_t;
  typedef struct
-@@ -35,7 +34,12 @@ typedef struct
+@@ -35,7 +34,8 @@ typedef struct
  } __libc_lock_recursive_t;
  typedef __libc_lock_recursive_t __rtld_lock_recursive_t;
  
 -#define __libc_lock_owner_self() ((void *) __hurd_threadvar_location (0))
 +extern char __libc_lock_self0[0];
-+/* We have to hide the __libc_lock_self access behind a function call,
-+   otherwise gcc >= 4.9 would try to prefetch the TLS dereference even before
-+   the __LIBC_NO_TLS test is finished... */
-+extern void *__libc_get_lock_self(void);
-+#define __libc_lock_owner_self() (__LIBC_NO_TLS() ? &__libc_lock_self0 : __libc_get_lock_self())
++#define __libc_lock_owner_self() (__LIBC_NO_TLS() ? &__libc_lock_self0 : THREAD_SELF)
  
  #else
  typedef struct __libc_lock_opaque__ __libc_lock_t;
---- a/sysdeps/mach/hurd/bits/libc-tsd.h
+--- a/sysdeps/mach/hurd/libc-tsd.h
 +++ /dev/null
 @@ -1,34 +0,0 @@
 -/* libc-internal interface for thread-specific data.  Hurd version.
--   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 -   This file is part of the GNU C Library.
 -
 -   The GNU C Library is free software; you can redistribute it and/or
@@ -446,8 +448,8 @@ That will fix sigaltstack.
 -   License along with the GNU C Library; if not, see
 -   <http://www.gnu.org/licenses/>.  */
 -
--#ifndef _BITS_LIBC_TSD_H
--#define _BITS_LIBC_TSD_H 1
+-#ifndef _LIBC_TSD_H
+-#define _LIBC_TSD_H 1
 -
 -#include <hurd/threadvar.h>
 -
@@ -461,21 +463,14 @@ That will fix sigaltstack.
 -#define __libc_tsd_set(TYPE, KEY, VALUE) \
 -  (*__libc_tsd_address (TYPE, KEY) = (VALUE))
 -
--#endif	/* bits/libc-tsd.h */
+-#endif	/* libc-tsd.h */
 --- a/sysdeps/mach/hurd/cthreads.c
 +++ b/sysdeps/mach/hurd/cthreads.c
-@@ -19,6 +19,15 @@
+@@ -19,6 +19,8 @@ 
  #include <errno.h>
  #include <stdlib.h>
  
 +char __libc_lock_self0[0];
-+static __thread char __libc_lock_self[0];
-+
-+void *
-+__libc_get_lock_self(void)
-+{
-+  return (void*) &__libc_lock_self;
-+}
 +
  /* Placeholder for key creation routine from Hurd cthreads library.  */
  int
@@ -673,6 +668,15 @@ That will fix sigaltstack.
  
 --- a/sysdeps/mach/hurd/i386/sigreturn.c
 +++ b/sysdeps/mach/hurd/i386/sigreturn.c
+@@ -68,7 +68,7 @@ __sigreturn (struct sigcontext *scp)
+ 
+   if (scp->sc_onstack)
+     {
+-      ss->sigaltstack.ss_flags &= ~SS_ONSTACK; /* XXX threadvars */
++      ss->sigaltstack.ss_flags &= ~SS_ONSTACK;
+       /* XXX cannot unlock until off sigstack */
+       abort ();
+     }
 @@ -77,8 +77,7 @@ __sigreturn (struct sigcontext *scp)
  
    /* Destroy the MiG reply port used by the signal handler, and restore the
@@ -685,10 +689,12 @@ That will fix sigaltstack.
        mach_port_t port = *reply_port;
 --- a/sysdeps/mach/hurd/i386/tls.h
 +++ b/sysdeps/mach/hurd/i386/tls.h
-@@ -53,6 +53,8 @@ typedef struct
+@@ -53,6 +53,10 @@ typedef struct
    void *__private_tm[4];
    /* GCC split stack support.  */
    void *__private_ss;
++
++  /* Keep this field last */
 +  mach_port_t reply_port;      /* This thread's reply port.  */
 +  struct hurd_sigstate *_hurd_sigstate;
  } tcbhead_t;

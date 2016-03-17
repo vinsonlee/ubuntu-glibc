@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -22,9 +22,7 @@
 
 
 int
-__pthread_key_create (key, destr)
-     pthread_key_t *key;
-     void (*destr) (void *);
+__pthread_key_create (pthread_key_t *key, void (*destr) (void *))
 {
   /* Find a slot in __pthread_keys which is unused.  */
   for (size_t cnt = 0; cnt < PTHREAD_KEYS_MAX; ++cnt)
