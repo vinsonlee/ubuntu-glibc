@@ -1,5 +1,5 @@
 /* The proper definitions for Linux/SPARC sigaction.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,6 +19,8 @@
 #ifndef _SIGNAL_H
 # error "Never include <bits/sigaction.h> directly; use <signal.h> instead."
 #endif
+
+#include <bits/wordsize.h>
 
 /* Structure describing the action to be taken when a signal arrives.  */
 struct sigaction
@@ -43,7 +45,9 @@ struct sigaction
     __sigset_t sa_mask;
 
     /* Special flags.  */
+#if __WORDSIZE == 64
     int __glibc_reserved0;
+#endif
     int sa_flags;
 
     /* Not used by Linux/Sparc yet.  */

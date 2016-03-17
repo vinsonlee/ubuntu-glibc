@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -22,6 +22,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include "pthreadP.h"
+#include <atomic.h>
 #include <lowlevellock.h>
 #include <not-cancel.h>
 
@@ -40,9 +41,8 @@
 #endif
 
 int
-pthread_mutex_timedlock (mutex, abstime)
-     pthread_mutex_t *mutex;
-     const struct timespec *abstime;
+pthread_mutex_timedlock (pthread_mutex_t *mutex,
+			 const struct timespec *abstime)
 {
   int oldval;
   pid_t id = THREAD_GETMEM (THREAD_SELF, tid);
@@ -89,7 +89,8 @@ pthread_mutex_timedlock (mutex, abstime)
       if (__glibc_unlikely (mutex->__data.__owner == id))
 	return EDEADLK;
 
-      /* FALLTHROUGH */
+      /* Don't do lock elision on an error checking mutex.  */
+      goto simple;
 
     case PTHREAD_MUTEX_TIMED_NP:
       FORCE_ELISION (mutex, goto elision);
@@ -125,10 +126,7 @@ pthread_mutex_timedlock (mutex, abstime)
 					  PTHREAD_MUTEX_PSHARED (mutex));
 		  break;
 		}
-
-#ifdef BUSY_WAIT_NOP
-	      BUSY_WAIT_NOP;
-#endif
+	      atomic_spin_nop ();
 	    }
 	  while (lll_trylock (mutex->__data.__lock) != 0);
 

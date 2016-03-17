@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,9 +22,8 @@
 extern char **__libc_argv attribute_hidden;
 
 void
-__attribute__ ((noreturn))
-__fortify_fail (msg)
-     const char *msg;
+__attribute__ ((noreturn)) internal_function
+__fortify_fail (const char *msg)
 {
   /* The loop is added only to keep gcc happy.  */
   while (1)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -26,28 +26,9 @@
 ssize_t
 __libc_pwrite64 (int fd, const void *buf, size_t count, off64_t offset)
 {
-  ssize_t result;
-
-  if (SINGLE_THREAD_P)
-    {
   /* On PPC32 64bit values are aligned in odd/even register pairs.  */
-      result = INLINE_SYSCALL (pwrite, 6, fd, buf, count,
-			       0, (long) (offset >> 32),
-			       (long) offset);
-
-      return result;
-    }
-
-  int oldtype = LIBC_CANCEL_ASYNC ();
-
-  /* On PPC32 64bit values are aligned in odd/even register pairs.  */
-  result = INLINE_SYSCALL (pwrite, 6, fd, buf, count,
-			   0, (long) (offset >> 32),
-			   (long) offset);
-
-  LIBC_CANCEL_RESET (oldtype);
-
-  return result;
+  return SYSCALL_CANCEL (pwrite, fd, buf, count, 0, (long) (offset >> 32),
+			 (long) offset);
 }
 
 weak_alias (__libc_pwrite64, __pwrite64)

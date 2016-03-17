@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -39,13 +39,10 @@
 #define __CONCATX(a,b) __CONCAT(a,b)
 
 float_type
-__CONCATX(__scalbn,suffix) (x, exp)
-     float_type x;
-     int exp;
+__CONCATX(__scalbn,suffix) (float_type x, int exp)
 {
   return __m81_u(__CONCATX(__scalbn,suffix))(x, exp);
 }
-weak_alias (__CONCATX(__scalbn,suffix), __CONCATX(scalbn,suffix))
 strong_alias (__CONCATX(__scalbn,suffix), __CONCATX(__scalbln,suffix))
 
 #include <shlib-compat.h>

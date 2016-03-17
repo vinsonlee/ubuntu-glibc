@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ int __have_atfcts;
 #endif
 
 /* Open FILE with access OFLAG.  Interpret relative paths relative to
-   the directory associated with FD.  If OFLAG includes O_CREAT, a
+   the directory associated with FD.  If O_CREAT or O_TMPFILE is in OFLAG, a
    third argument is the file protection.  */
 int
 __openat (int fd, const char *file, int oflag, ...)
@@ -58,7 +58,7 @@ __openat (int fd, const char *file, int oflag, ...)
 	}
     }
 
-  if (oflag & O_CREAT)
+  if (__OPEN_NEEDS_MODE (oflag))
     {
       va_list arg;
       va_start (arg, oflag);

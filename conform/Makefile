@@ -1,4 +1,4 @@
-# Copyright (C) 1999-2015 Free Software Foundation, Inc.
+# Copyright (C) 1999-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -150,11 +150,6 @@ $(conformtest-header-list-tests): $(objpfx)header-list-%.out: \
 		 "$(conformtest-headers-data)" > $@; \
 	$(evaluate-test)
 
-# GCC 4.6 and earlier lack features required by these tests.
-test-xfail-ISO11/complex.h/conform = yes
-test-xfail-ISO11/stdalign.h/conform = yes
-test-xfail-ISO11/stdnoreturn.h/conform = yes
-
 # Pre-standard C feature no longer supported by GCC (obsoleted in
 # newer POSIX standards).
 test-xfail-XPG3/varargs.h/conform = yes
@@ -170,7 +165,6 @@ test-xfail-XOPEN2K8/ndbm.h/conform = yes
 # Unsorted expected failures.
 test-xfail-XPG3/fcntl.h/conform = yes
 test-xfail-XPG3/ftw.h/conform = yes
-test-xfail-XPG3/grp.h/conform = yes
 test-xfail-XPG3/langinfo.h/conform = yes
 test-xfail-XPG3/limits.h/conform = yes
 test-xfail-XPG3/pwd.h/conform = yes
@@ -179,10 +173,6 @@ test-xfail-XPG3/signal.h/conform = yes
 test-xfail-XPG3/stdio.h/conform = yes
 test-xfail-XPG3/stdlib.h/conform = yes
 test-xfail-XPG3/string.h/conform = yes
-test-xfail-XPG3/sys/ipc.h/conform = yes
-test-xfail-XPG3/sys/msg.h/conform = yes
-test-xfail-XPG3/sys/sem.h/conform = yes
-test-xfail-XPG3/sys/shm.h/conform = yes
 test-xfail-XPG3/sys/stat.h/conform = yes
 test-xfail-XPG3/sys/types.h/conform = yes
 test-xfail-XPG3/sys/wait.h/conform = yes
@@ -197,12 +187,6 @@ test-xfail-XPG4/netinet/in.h/conform = yes
 test-xfail-XPG4/signal.h/conform = yes
 test-xfail-XPG4/stdio.h/conform = yes
 test-xfail-XPG4/stdlib.h/conform = yes
-test-xfail-XPG4/stropts.h/conform = yes
-test-xfail-XPG4/sys/ipc.h/conform = yes
-test-xfail-XPG4/sys/msg.h/conform = yes
-test-xfail-XPG4/sys/sem.h/conform = yes
-test-xfail-XPG4/sys/shm.h/conform = yes
-test-xfail-XPG4/sys/socket.h/conform = yes
 test-xfail-XPG4/sys/stat.h/conform = yes
 test-xfail-XPG4/sys/time.h/conform = yes
 test-xfail-XPG4/sys/types.h/conform = yes
@@ -220,68 +204,33 @@ test-xfail-UNIX98/netinet/in.h/conform = yes
 test-xfail-UNIX98/signal.h/conform = yes
 test-xfail-UNIX98/stdio.h/conform = yes
 test-xfail-UNIX98/stdlib.h/conform = yes
-test-xfail-UNIX98/stropts.h/conform = yes
-test-xfail-UNIX98/sys/ipc.h/conform = yes
-test-xfail-UNIX98/sys/msg.h/conform = yes
-test-xfail-UNIX98/sys/sem.h/conform = yes
-test-xfail-UNIX98/sys/shm.h/conform = yes
-test-xfail-UNIX98/sys/socket.h/conform = yes
 test-xfail-UNIX98/sys/time.h/conform = yes
 test-xfail-UNIX98/sys/wait.h/conform = yes
 test-xfail-UNIX98/ucontext.h/conform = yes
 test-xfail-UNIX98/unistd.h/conform = yes
 test-xfail-UNIX98/utmpx.h/conform = yes
 test-xfail-XOPEN2K/aio.h/conform = yes
-test-xfail-XOPEN2K/arpa/inet.h/conform = yes
 test-xfail-XOPEN2K/fcntl.h/conform = yes
 test-xfail-XOPEN2K/langinfo.h/conform = yes
-test-xfail-XOPEN2K/math.h/conform = yes
 test-xfail-XOPEN2K/mqueue.h/conform = yes
-test-xfail-XOPEN2K/netdb.h/conform = yes
-test-xfail-XOPEN2K/netinet/in.h/conform = yes
 test-xfail-XOPEN2K/semaphore.h/conform = yes
 test-xfail-XOPEN2K/signal.h/conform = yes
 test-xfail-XOPEN2K/stdarg.h/conform = yes
 test-xfail-XOPEN2K/stdio.h/conform = yes
-test-xfail-XOPEN2K/stropts.h/conform = yes
-test-xfail-XOPEN2K/sys/ipc.h/conform = yes
-test-xfail-XOPEN2K/sys/msg.h/conform = yes
-test-xfail-XOPEN2K/sys/sem.h/conform = yes
-test-xfail-XOPEN2K/sys/shm.h/conform = yes
-test-xfail-XOPEN2K/sys/socket.h/conform = yes
 test-xfail-XOPEN2K/sys/wait.h/conform = yes
 test-xfail-XOPEN2K/termios.h/conform = yes
-test-xfail-XOPEN2K/tgmath.h/conform = yes
 test-xfail-XOPEN2K/ucontext.h/conform = yes
-test-xfail-XOPEN2K/utmpx.h/conform = yes
 test-xfail-POSIX2008/arpa/inet.h/conform = yes
-test-xfail-POSIX2008/fcntl.h/conform = yes
 test-xfail-POSIX2008/netdb.h/conform = yes
 test-xfail-POSIX2008/netinet/in.h/conform = yes
 test-xfail-POSIX2008/signal.h/conform = yes
-test-xfail-POSIX2008/stropts.h/conform = yes
 test-xfail-POSIX2008/sys/socket.h/conform = yes
 test-xfail-POSIX2008/sys/wait.h/conform = yes
-test-xfail-XOPEN2K8/arpa/inet.h/conform = yes
-test-xfail-XOPEN2K8/fcntl.h/conform = yes
 test-xfail-XOPEN2K8/limits.h/conform = yes
-test-xfail-XOPEN2K8/math.h/conform = yes
-test-xfail-XOPEN2K8/netdb.h/conform = yes
-test-xfail-XOPEN2K8/netinet/in.h/conform = yes
 test-xfail-XOPEN2K8/signal.h/conform = yes
 test-xfail-XOPEN2K8/stdio.h/conform = yes
-test-xfail-XOPEN2K8/stropts.h/conform = yes
-test-xfail-XOPEN2K8/sys/ipc.h/conform = yes
-test-xfail-XOPEN2K8/sys/msg.h/conform = yes
-test-xfail-XOPEN2K8/sys/select.h/conform = yes
-test-xfail-XOPEN2K8/sys/sem.h/conform = yes
-test-xfail-XOPEN2K8/sys/shm.h/conform = yes
-test-xfail-XOPEN2K8/sys/socket.h/conform = yes
-test-xfail-XOPEN2K8/sys/time.h/conform = yes
 test-xfail-XOPEN2K8/sys/wait.h/conform = yes
 test-xfail-XOPEN2K8/termios.h/conform = yes
-test-xfail-XOPEN2K8/tgmath.h/conform = yes
-test-xfail-XOPEN2K8/utmpx.h/conform = yes
 
 conformtest-cc-flags = -I../include $(+sysdep-includes) $(sysincludes) -I..
 $(conformtest-header-tests): $(objpfx)%/conform.out: \
@@ -343,75 +292,3 @@ test-xfail-XPG4/ndbm.h/linknamespace = yes
 test-xfail-UNIX98/ndbm.h/linknamespace = yes
 test-xfail-XOPEN2K/ndbm.h/linknamespace = yes
 test-xfail-XOPEN2K8/ndbm.h/linknamespace = yes
-
-# Unsorted expected failures.
-test-xfail-XPG3/fnmatch.h/linknamespace = yes
-test-xfail-XPG3/glob.h/linknamespace = yes
-test-xfail-XPG3/regex.h/linknamespace = yes
-test-xfail-XPG3/search.h/linknamespace = yes
-test-xfail-XPG3/stdio.h/linknamespace = yes
-test-xfail-XPG3/unistd.h/linknamespace = yes
-test-xfail-XPG3/wordexp.h/linknamespace = yes
-test-xfail-XPG4/fmtmsg.h/linknamespace = yes
-test-xfail-XPG4/fnmatch.h/linknamespace = yes
-test-xfail-XPG4/glob.h/linknamespace = yes
-test-xfail-XPG4/netdb.h/linknamespace = yes
-test-xfail-XPG4/regex.h/linknamespace = yes
-test-xfail-XPG4/search.h/linknamespace = yes
-test-xfail-XPG4/stdio.h/linknamespace = yes
-test-xfail-XPG4/stdlib.h/linknamespace = yes
-test-xfail-XPG4/syslog.h/linknamespace = yes
-test-xfail-XPG4/unistd.h/linknamespace = yes
-test-xfail-XPG4/wordexp.h/linknamespace = yes
-test-xfail-POSIX/aio.h/linknamespace = yes
-test-xfail-POSIX/fnmatch.h/linknamespace = yes
-test-xfail-POSIX/glob.h/linknamespace = yes
-test-xfail-POSIX/mqueue.h/linknamespace = yes
-test-xfail-POSIX/regex.h/linknamespace = yes
-test-xfail-POSIX/semaphore.h/linknamespace = yes
-test-xfail-POSIX/unistd.h/linknamespace = yes
-test-xfail-POSIX/wordexp.h/linknamespace = yes
-test-xfail-UNIX98/fmtmsg.h/linknamespace = yes
-test-xfail-UNIX98/fnmatch.h/linknamespace = yes
-test-xfail-UNIX98/glob.h/linknamespace = yes
-test-xfail-UNIX98/mqueue.h/linknamespace = yes
-test-xfail-UNIX98/netdb.h/linknamespace = yes
-test-xfail-UNIX98/regex.h/linknamespace = yes
-test-xfail-UNIX98/search.h/linknamespace = yes
-test-xfail-UNIX98/stdio.h/linknamespace = yes
-test-xfail-UNIX98/stdlib.h/linknamespace = yes
-test-xfail-UNIX98/syslog.h/linknamespace = yes
-test-xfail-UNIX98/unistd.h/linknamespace = yes
-test-xfail-UNIX98/wchar.h/linknamespace = yes
-test-xfail-UNIX98/wordexp.h/linknamespace = yes
-test-xfail-XOPEN2K/fmtmsg.h/linknamespace = yes
-test-xfail-XOPEN2K/fnmatch.h/linknamespace = yes
-test-xfail-XOPEN2K/glob.h/linknamespace = yes
-test-xfail-XOPEN2K/netdb.h/linknamespace = yes
-test-xfail-XOPEN2K/regex.h/linknamespace = yes
-test-xfail-XOPEN2K/search.h/linknamespace = yes
-test-xfail-XOPEN2K/signal.h/linknamespace = yes
-test-xfail-XOPEN2K/spawn.h/linknamespace = yes
-test-xfail-XOPEN2K/stdlib.h/linknamespace = yes
-test-xfail-XOPEN2K/sys/wait.h/linknamespace = yes
-test-xfail-XOPEN2K/syslog.h/linknamespace = yes
-test-xfail-XOPEN2K/ucontext.h/linknamespace = yes
-test-xfail-XOPEN2K/unistd.h/linknamespace = yes
-test-xfail-XOPEN2K/wordexp.h/linknamespace = yes
-test-xfail-POSIX2008/dirent.h/linknamespace = yes
-test-xfail-POSIX2008/grp.h/linknamespace = yes
-test-xfail-POSIX2008/netdb.h/linknamespace = yes
-test-xfail-POSIX2008/regex.h/linknamespace = yes
-test-xfail-POSIX2008/semaphore.h/linknamespace = yes
-test-xfail-POSIX2008/spawn.h/linknamespace = yes
-test-xfail-POSIX2008/unistd.h/linknamespace = yes
-test-xfail-XOPEN2K8/dirent.h/linknamespace = yes
-test-xfail-XOPEN2K8/fmtmsg.h/linknamespace = yes
-test-xfail-XOPEN2K8/grp.h/linknamespace = yes
-test-xfail-XOPEN2K8/netdb.h/linknamespace = yes
-test-xfail-XOPEN2K8/pwd.h/linknamespace = yes
-test-xfail-XOPEN2K8/regex.h/linknamespace = yes
-test-xfail-XOPEN2K8/search.h/linknamespace = yes
-test-xfail-XOPEN2K8/spawn.h/linknamespace = yes
-test-xfail-XOPEN2K8/syslog.h/linknamespace = yes
-test-xfail-XOPEN2K8/unistd.h/linknamespace = yes

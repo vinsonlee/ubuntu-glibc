@@ -1,5 +1,5 @@
 /* Compute 2^x.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,6 +20,13 @@
 #include <math_private.h>
 #include <float.h>
 
+/* To avoid spurious underflows, use this definition to treat IBM long
+   double as approximating an IEEE-style format.  */
+#if LDBL_MANT_DIG == 106
+# undef LDBL_EPSILON
+# define LDBL_EPSILON 0x1p-106L
+#endif
+
 long double
 __ieee754_exp2l (long double x)
 {
@@ -31,12 +38,18 @@ __ieee754_exp2l (long double x)
 	{
 	  int intx = (int) x;
 	  long double fractx = x - intx;
-	  return __scalbnl (__ieee754_expl (M_LN2l * fractx), intx);
+	  long double result;
+	  if (fabsl (fractx) < LDBL_EPSILON / 4.0L)
+	    result = __scalbnl (1.0L + fractx, intx);
+	  else
+	    result = __scalbnl (__ieee754_expl (M_LN2l * fractx), intx);
+	  math_check_force_underflow_nonneg (result);
+	  return result;
 	}
       else
 	{
 	  /* Underflow or exact zero.  */
-	  if (__isinfl (x))
+	  if (isinf (x))
 	    return 0;
 	  else
 	    return LDBL_MIN * LDBL_MIN;

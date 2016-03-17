@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -504,6 +504,7 @@ hidden_proto (__pthread_key_create)
 hidden_proto (__pthread_getspecific)
 hidden_proto (__pthread_setspecific)
 hidden_proto (__pthread_once)
+hidden_proto (__pthread_setcancelstate)
 #endif
 
 extern int __pthread_cond_broadcast_2_0 (pthread_cond_2_0_t *cond);
@@ -536,16 +537,20 @@ extern void __librt_disable_asynccancel (int oldtype)
 extern void __pthread_cleanup_push (struct _pthread_cleanup_buffer *buffer,
 				    void (*routine) (void *), void *arg)
      attribute_hidden;
+
+/* Replace cleanup macros defined in <pthread.h> with internal
+   versions that don't depend on unwind info and better support
+   cancellation.  */
 # undef pthread_cleanup_push
-# define pthread_cleanup_push(routine,arg) \
-  { struct _pthread_cleanup_buffer _buffer;				      \
-    __pthread_cleanup_push (&_buffer, (routine), (arg));
+# define pthread_cleanup_push(routine,arg)              \
+  { struct _pthread_cleanup_buffer _buffer;             \
+  __pthread_cleanup_push (&_buffer, (routine), (arg));
 
 extern void __pthread_cleanup_pop (struct _pthread_cleanup_buffer *buffer,
 				   int execute) attribute_hidden;
 # undef pthread_cleanup_pop
-# define pthread_cleanup_pop(execute) \
-    __pthread_cleanup_pop (&_buffer, (execute)); }
+# define pthread_cleanup_pop(execute)                   \
+  __pthread_cleanup_pop (&_buffer, (execute)); }
 #endif
 
 extern void __pthread_cleanup_push_defer (struct _pthread_cleanup_buffer *buffer,

@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
 
@@ -46,3 +46,9 @@ typedef double double_t;
 # endif
 
 #endif /* ISO C99 */
+
+#ifndef __NO_LONG_DOUBLE_MATH
+/* Signal that we do not really have a `long double'.  This disables the
+   declaration of all the `long double' function variants.  */
+# define __NO_LONG_DOUBLE_MATH	1
+#endif

@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,20 +23,20 @@
 #include <assert.h>
 #include <signal.h>
 #include <nptl/pthreadP.h>
-#include <lowlevellock.h>
+#include <futex-internal.h>
 
 #define DONT_NEED_GAI_MISC_COND	1
 
 #define GAI_MISC_NOTIFY(waitlist) \
   do {									      \
     if (*waitlist->counterp > 0 && --*waitlist->counterp == 0)		      \
-      lll_futex_wake (waitlist->counterp, 1, LLL_PRIVATE);		      \
+      futex_wake ((unsigned int *) waitlist->counterp, 1, FUTEX_PRIVATE);     \
   } while (0)
 
 #define GAI_MISC_WAIT(result, futex, timeout, cancel) \
   do {									      \
-    volatile int *futexaddr = &futex;					      \
-    int oldval = futex;							      \
+    volatile unsigned int *futexaddr = &futex;				      \
+    unsigned int oldval = futex;					      \
 									      \
     if (oldval != 0)							      \
       {									      \
@@ -49,9 +49,9 @@
 	int status;							      \
 	do								      \
 	  {								      \
-	    status = lll_futex_timed_wait (futexaddr, oldval, timeout,	      \
-					   LLL_PRIVATE);		      \
-	    if (status != -EWOULDBLOCK)					      \
+	    status = futex_reltimed_wait ((unsigned int *) futexaddr, oldval, \
+					  timeout, FUTEX_PRIVATE);	      \
+	    if (status != EAGAIN)					      \
 	      break;							      \
 									      \
 	    oldval = *futexaddr;					      \
@@ -61,12 +61,12 @@
 	if (cancel)							      \
 	  LIBC_CANCEL_RESET (oldtype);					      \
 									      \
-	if (status == -EINTR)						      \
+	if (status == EINTR)						      \
 	  result = EINTR;						      \
-	else if (status == -ETIMEDOUT)					      \
+	else if (status == ETIMEDOUT)					      \
 	  result = EAGAIN;						      \
 	else								      \
-	  assert (status == 0 || status == -EWOULDBLOCK);		      \
+	  assert (status == 0 || status == EAGAIN);			      \
 									      \
 	pthread_mutex_lock (&__gai_requests_mutex);			      \
       }									      \
@@ -81,7 +81,8 @@ __gai_start_notify_thread (void)
 {
   sigset_t ss;
   sigemptyset (&ss);
-  int sigerr = pthread_sigmask (SIG_SETMASK, &ss, NULL);
+  int sigerr __attribute__ ((unused));
+  sigerr = pthread_sigmask (SIG_SETMASK, &ss, NULL);
   assert_perror (sigerr);
 }
 
@@ -105,7 +106,8 @@ __gai_create_helper_thread (pthread_t *threadp, void *(*tf) (void *),
   sigset_t ss;
   sigset_t oss;
   sigfillset (&ss);
-  int sigerr = pthread_sigmask (SIG_SETMASK, &ss, &oss);
+  int sigerr __attribute__ ((unused));
+  sigerr = pthread_sigmask (SIG_SETMASK, &ss, &oss);
   assert_perror (sigerr);
 
   int ret = pthread_create (threadp, &attr, tf, arg);

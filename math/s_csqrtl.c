@@ -1,5 +1,5 @@
 /* Complex square root of long double value.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Based on an algorithm by Stephen L. Moshier <moshier@world.std.com>.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
@@ -104,10 +104,10 @@ __csqrtl (__complex__ long double x)
 		__real__ x = 0.0L;
 	      __imag__ x = __scalbnl (__imag__ x, -2 * scale);
 	    }
-	  else if (fabsl (__real__ x) < LDBL_MIN
-		   && fabsl (__imag__ x) < LDBL_MIN)
+	  else if (fabsl (__real__ x) < 2.0L * LDBL_MIN
+		   && fabsl (__imag__ x) < 2.0L * LDBL_MIN)
 	    {
-	      scale = -(LDBL_MANT_DIG / 2);
+	      scale = -((LDBL_MANT_DIG + 1) / 2);
 	      __real__ x = __scalbnl (__real__ x, -2 * scale);
 	      __imag__ x = __scalbnl (__imag__ x, -2 * scale);
 	    }
@@ -118,12 +118,28 @@ __csqrtl (__complex__ long double x)
 	  if (__real__ x > 0)
 	    {
 	      r = __ieee754_sqrtl (0.5L * (d + __real__ x));
-	      s = 0.5L * (__imag__ x / r);
+	      if (scale == 1 && fabsl (__imag__ x) < 1.0L)
+		{
+		  /* Avoid possible intermediate underflow.  */
+		  s = __imag__ x / r;
+		  r = __scalbnl (r, scale);
+		  scale = 0;
+		}
+	      else
+		s = 0.5L * (__imag__ x / r);
 	    }
 	  else
 	    {
 	      s = __ieee754_sqrtl (0.5L * (d - __real__ x));
-	      r = fabsl (0.5L * (__imag__ x / s));
+	      if (scale == 1 && fabsl (__imag__ x) < 1.0L)
+		{
+		  /* Avoid possible intermediate underflow.  */
+		  r = fabsl (__imag__ x / s);
+		  s = __scalbnl (s, scale);
+		  scale = 0;
+		}
+	      else
+		r = fabsl (0.5L * (__imag__ x / s));
 	    }
 
 	  if (scale)
@@ -131,6 +147,9 @@ __csqrtl (__complex__ long double x)
 	      r = __scalbnl (r, scale);
 	      s = __scalbnl (s, scale);
 	    }
+
+	  math_check_force_underflow (r);
+	  math_check_force_underflow (s);
 
 	  __real__ res = r;
 	  __imag__ res = __copysignl (s, __imag__ x);

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -781,9 +781,13 @@ tf_sigpause (void *arg)
 
   pthread_cleanup_push (cl, NULL);
 
+#ifdef SIGCANCEL
   /* Just for fun block the cancellation signal.  We need to use
      __xpg_sigpause since otherwise we will get the BSD version.  */
   __xpg_sigpause (SIGCANCEL);
+#else
+  pause ();
+#endif
 
   pthread_cleanup_pop (0);
 

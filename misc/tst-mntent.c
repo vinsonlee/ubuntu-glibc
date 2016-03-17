@@ -5,8 +5,8 @@
 #include <string.h>
 
 
-int
-main (int argc, char *argv[])
+static int
+do_test (void)
 {
   int result = 0;
   struct mntent mef;
@@ -73,27 +73,10 @@ main (int argc, char *argv[])
 	  puts ("Error while reading written entry back in");
 	  result = 1;
 	}
-
-      /* Part III: Entry with whitespaces at the end of a line. */
-      rewind (fp);
-
-      fputs ("/foo\\040dir /bar\\040dir auto bind \t \n", fp);
-
-      rewind (fp);
-
-      mnt = getmntent (fp);
-
-      if (strcmp (mnt->mnt_fsname, "/foo dir") != 0
-	  || strcmp (mnt->mnt_dir, "/bar dir") != 0
-	  || strcmp (mnt->mnt_type, "auto") != 0
-	  || strcmp (mnt->mnt_opts, "bind") != 0
-	  || mnt->mnt_freq != 0
-	  || mnt->mnt_passno != 0)
-	{
-	  puts ("Error while reading entry with trailing whitespaces");
-	  result = 1;
-	}
    }
 
   return result;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,10 +22,7 @@
 
 /* Retrieve the CPU affinity mask for a particular process.  */
 int
-sched_getaffinity (pid, cpusetsize, cpuset)
-     pid_t pid;
-     size_t cpusetsize;
-     cpu_set_t *cpuset;
+sched_getaffinity (pid_t pid, size_t cpusetsize, cpu_set_t *cpuset)
 {
   __set_errno (ENOSYS);
   return -1;

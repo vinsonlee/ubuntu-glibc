@@ -1,4 +1,4 @@
-# Copyright (C) 2000-2015 Free Software Foundation, Inc.
+# Copyright (C) 2000-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 # Contributed by David Huggins-Daines (dhd@debian.org)
 
@@ -26,8 +26,6 @@ CFLAGS-rtld.c += -mdisable-fpregs
 sysdep-dl-routines += dl-symaddr dl-fptr
 # dl-fptr.c needs a complete rewrite to fix ISO C aliasing violations.
 CFLAGS-dl-fptr.c = -Wno-error
-sysdep_routines += $(sysdep-dl-routines)
-sysdep-rtld-routines += $(sysdep-dl-routines)
 endif
 
 ifeq ($(subdir),csu)

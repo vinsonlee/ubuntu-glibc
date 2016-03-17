@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2015 Free Software Foundation, Inc.
+# Copyright (C) 1996-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ endif
 subdir-dirs = programs
 vpath %.c programs
 
-tests := tst-utmp tst-utmpx tst-grantpt tst-ptsname
+tests := tst-utmp tst-utmpx tst-grantpt tst-ptsname tst-getlogin
 
 # Build the -lutil library with these extra functions.
 extra-libs      := libutil
@@ -58,9 +58,7 @@ CFLAGS-getpt.c = -fexceptions
 ifeq (yesyes,$(have-fpie)$(build-shared))
 pt_chown-cflags += $(pie-ccflag)
 endif
-ifeq (yes,$(have-ssp))
-pt_chown-cflags += -fstack-protector
-endif
+pt_chown-cflags += $(stack-protector)
 ifeq (yes,$(have-libcap))
 libcap = -lcap
 endif
