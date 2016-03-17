@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -67,6 +67,7 @@ struct shmid_ds
 # define SHM_DEST	01000	/* segment will be destroyed on last detach */
 # define SHM_LOCKED	02000   /* segment will not be swapped */
 # define SHM_HUGETLB	04000	/* segment is mapped via hugetlb */
+# define SHM_NORESERVE	010000  /* don't check for reservations */
 
 struct shminfo
   {

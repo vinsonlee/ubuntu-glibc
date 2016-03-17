@@ -1,5 +1,5 @@
 /* Return nonzero value if number is negative.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -19,13 +19,8 @@
 
 #include <math.h>
 
-#include <math_private.h>
-
 int
 __signbitl (long double x)
 {
-  int64_t e;
-
-  GET_LDOUBLE_MSW64 (e, x);
-  return e < 0;
+  return __builtin_signbitl (x);
 }

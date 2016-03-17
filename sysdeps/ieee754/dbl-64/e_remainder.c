@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2015 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2016 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -33,6 +33,7 @@
 #include "mydefs.h"
 #include "urem.h"
 #include "MathLib.h"
+#include <math.h>
 #include <math_private.h>
 
 /**************************************************************************/
@@ -66,7 +67,7 @@ __ieee754_remainder (double x, double y)
 	    return (xx != 0) ? xx : ((x > 0) ? ZERO.x : nZERO.x);
 	  else
 	    {
-	      if (ABS (xx) > 0.5 * t.x)
+	      if (fabs (xx) > 0.5 * t.x)
 		return (z > d) ? xx - t.x : xx + t.x;
 	      else
 		return xx;
@@ -98,10 +99,10 @@ __ieee754_remainder (double x, double y)
 	  z = u.x * r.x;
 	  d = (z + big.x) - big.x;
 	  u.x = (u.x - d * w.x) - d * ww.x;
-	  if (ABS (u.x) < 0.5 * t.x)
+	  if (fabs (u.x) < 0.5 * t.x)
 	    return (u.x != 0) ? u.x : ((x > 0) ? ZERO.x : nZERO.x);
 	  else
-	  if (ABS (u.x) > 0.5 * t.x)
+	  if (fabs (u.x) > 0.5 * t.x)
 	    return (d > z) ? u.x + t.x : u.x - t.x;
 	  else
 	    {
@@ -114,7 +115,7 @@ __ieee754_remainder (double x, double y)
     {
       if (kx < 0x7fe00000 && ky < 0x7ff00000 && (ky > 0 || t.i[LOW_HALF] != 0))
 	{
-	  y = ABS (y) * t128.x;
+	  y = fabs (y) * t128.x;
 	  z = __ieee754_remainder (x, y) * t128.x;
 	  z = __ieee754_remainder (z, y) * tm128.x;
 	  return z;
@@ -124,11 +125,13 @@ __ieee754_remainder (double x, double y)
 	  if ((kx & 0x7ff00000) == 0x7fe00000 && ky < 0x7ff00000 &&
               (ky > 0 || t.i[LOW_HALF] != 0))
 	    {
-	      y = ABS (y);
+	      y = fabs (y);
 	      z = 2.0 * __ieee754_remainder (0.5 * x, y);
-	      d = ABS (z);
-	      if (d <= ABS (d - y))
+	      d = fabs (z);
+	      if (d <= fabs (d - y))
 		return z;
+	      else if (d == y)
+		return 0.0 * x;
 	      else
 		return (z > 0) ? z - y : z + y;
 	    }

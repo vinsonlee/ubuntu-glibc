@@ -1,5 +1,5 @@
 /* Look up a symbol in the loaded objects.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 #include <dl-hash.h>
 #include <dl-machine.h>
 #include <sysdep-cancel.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <tls.h>
 #include <atomic.h>
 
@@ -463,6 +463,59 @@ do_lookup_x (const char *undef_name, uint_fast32_t new_hash,
       if (sym != NULL)
 	{
 	found_it:
+	  /* When UNDEF_MAP is NULL, which indicates we are called from
+	     do_lookup_x on relocation against protected data, we skip
+	     the data definion in the executable from copy reloc.  */
+	  if (ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA
+	      && undef_map == NULL
+	      && map->l_type == lt_executable
+	      && type_class == ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA)
+	    {
+	      const ElfW(Sym) *s;
+	      unsigned int i;
+
+#if ! ELF_MACHINE_NO_RELA
+	      if (map->l_info[DT_RELA] != NULL
+		  && map->l_info[DT_RELASZ] != NULL
+		  && map->l_info[DT_RELASZ]->d_un.d_val != 0)
+		{
+		  const ElfW(Rela) *rela
+		    = (const ElfW(Rela) *) D_PTR (map, l_info[DT_RELA]);
+		  unsigned int rela_count
+		    = map->l_info[DT_RELASZ]->d_un.d_val / sizeof (*rela);
+
+		  for (i = 0; i < rela_count; i++, rela++)
+		    if (elf_machine_type_class (ELFW(R_TYPE) (rela->r_info))
+			== ELF_RTYPE_CLASS_COPY)
+		      {
+			s = &symtab[ELFW(R_SYM) (rela->r_info)];
+			if (!strcmp (strtab + s->st_name, undef_name))
+			  goto skip;
+		      }
+		}
+#endif
+#if ! ELF_MACHINE_NO_REL
+	      if (map->l_info[DT_REL] != NULL
+		  && map->l_info[DT_RELSZ] != NULL
+		  && map->l_info[DT_RELSZ]->d_un.d_val != 0)
+		{
+		  const ElfW(Rel) *rel
+		    = (const ElfW(Rel) *) D_PTR (map, l_info[DT_REL]);
+		  unsigned int rel_count
+		    = map->l_info[DT_RELSZ]->d_un.d_val / sizeof (*rel);
+
+		  for (i = 0; i < rel_count; i++, rel++)
+		    if (elf_machine_type_class (ELFW(R_TYPE) (rel->r_info))
+			== ELF_RTYPE_CLASS_COPY)
+		      {
+			s = &symtab[ELFW(R_SYM) (rel->r_info)];
+			if (!strcmp (strtab + s->st_name, undef_name))
+			  goto skip;
+		      }
+		}
+#endif
+	    }
+
 	  switch (ELFW(ST_BIND) (sym->st_info))
 	    {
 	    case STB_WEAK:
@@ -494,6 +547,7 @@ do_lookup_x (const char *undef_name, uint_fast32_t new_hash,
 	    }
 	}
 
+skip:
       /* If this current map is the one mentioned in the verneed entry
 	 and we have not found a weak entry, it is a bug.  */
       if (symidx == STN_UNDEF && version != NULL && version->filename != NULL
@@ -844,7 +898,12 @@ _dl_lookup_symbol_x (const char *undef_name, struct link_map *undef_map,
 	  for (scope = symbol_scope; *scope != NULL; i = 0, ++scope)
 	    if (do_lookup_x (undef_name, new_hash, &old_hash, *ref,
 			     &protected_value, *scope, i, version, flags,
-			     skip_map, ELF_RTYPE_CLASS_PLT, NULL) != 0)
+			     skip_map,
+			     (ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA
+			      && ELFW(ST_TYPE) ((*ref)->st_info) == STT_OBJECT
+			      && type_class == ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA)
+			     ? ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA
+			     : ELF_RTYPE_CLASS_PLT, NULL) != 0)
 	      break;
 
 	  if (protected_value.s != NULL && protected_value.m != undef_map)
@@ -957,6 +1016,18 @@ _dl_debug_bindings (const char *undef_name, struct link_map *undef_map,
 #ifdef SHARED
   if (GLRO(dl_debug_mask) & DL_DEBUG_PRELINK)
     {
+/* ELF_RTYPE_CLASS_XXX must match RTYPE_CLASS_XXX used by prelink with
+   LD_TRACE_PRELINKING.  */
+#define RTYPE_CLASS_VALID	8
+#define RTYPE_CLASS_PLT		(8|1)
+#define RTYPE_CLASS_COPY	(8|2)
+#define RTYPE_CLASS_TLS		(8|4)
+#if ELF_RTYPE_CLASS_PLT != 0 && ELF_RTYPE_CLASS_PLT != 1
+# error ELF_RTYPE_CLASS_PLT must be 0 or 1!
+#endif
+#if ELF_RTYPE_CLASS_COPY != 0 && ELF_RTYPE_CLASS_COPY != 2
+# error ELF_RTYPE_CLASS_COPY must be 0 or 2!
+#endif
       int conflict = 0;
       struct sym_val val = { NULL, NULL };
 
@@ -1012,12 +1083,17 @@ _dl_debug_bindings (const char *undef_name, struct link_map *undef_map,
 
       if (value->s)
 	{
+	  /* Keep only ELF_RTYPE_CLASS_PLT and ELF_RTYPE_CLASS_COPY
+	     bits since since prelink only uses them.  */
+	  type_class &= ELF_RTYPE_CLASS_PLT | ELF_RTYPE_CLASS_COPY;
 	  if (__glibc_unlikely (ELFW(ST_TYPE) (value->s->st_info)
 				== STT_TLS))
-	    type_class = 4;
+	    /* Clear the RTYPE_CLASS_VALID bit in RTYPE_CLASS_TLS.  */
+	    type_class = RTYPE_CLASS_TLS & ~RTYPE_CLASS_VALID;
 	  else if (__glibc_unlikely (ELFW(ST_TYPE) (value->s->st_info)
 				     == STT_GNU_IFUNC))
-	    type_class |= 8;
+	    /* Set the RTYPE_CLASS_VALID bit.  */
+	    type_class |= RTYPE_CLASS_VALID;
 	}
 
       if (conflict

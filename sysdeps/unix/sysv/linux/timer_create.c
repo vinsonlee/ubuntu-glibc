@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -35,10 +35,7 @@
 
 
 int
-timer_create (clock_id, evp, timerid)
-     clockid_t clock_id;
-     struct sigevent *evp;
-     timer_t *timerid;
+timer_create (clockid_t clock_id, struct sigevent *evp, timer_t *timerid)
 {
 #undef timer_create
   {

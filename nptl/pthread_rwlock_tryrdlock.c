@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -19,13 +19,18 @@
 #include <errno.h>
 #include "pthreadP.h"
 #include <lowlevellock.h>
+#include <futex-internal.h>
 #include <elide.h>
+#include <stdbool.h>
 
 
 int
 __pthread_rwlock_tryrdlock (pthread_rwlock_t *rwlock)
 {
   int result = EBUSY;
+  bool wake = false;
+  int futex_shared =
+      rwlock->__data.__shared == LLL_PRIVATE ? FUTEX_PRIVATE : FUTEX_SHARED;
 
   if (ELIDE_TRYLOCK (rwlock->__data.__rwelision,
 		     rwlock->__data.__lock == 0
@@ -45,10 +50,23 @@ __pthread_rwlock_tryrdlock (pthread_rwlock_t *rwlock)
 	  result = EAGAIN;
 	}
       else
-	result = 0;
+	{
+	  result = 0;
+	  /* See pthread_rwlock_rdlock.  */
+	  if (rwlock->__data.__nr_readers == 1
+	      && rwlock->__data.__nr_readers_queued > 0
+	      && rwlock->__data.__nr_writers_queued > 0)
+	    {
+	      ++rwlock->__data.__readers_wakeup;
+	      wake = true;
+	    }
+	}
     }
 
   lll_unlock (rwlock->__data.__lock, rwlock->__data.__shared);
+
+  if (wake)
+    futex_wake (&rwlock->__data.__readers_wakeup, INT_MAX, futex_shared);
 
   return result;
 }

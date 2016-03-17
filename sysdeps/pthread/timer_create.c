@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Kaz Kylheku <kaz@ashi.footprints.net>.
 
@@ -27,10 +27,7 @@
 
 /* Create new per-process timer using CLOCK.  */
 int
-timer_create (clock_id, evp, timerid)
-     clockid_t clock_id;
-     struct sigevent *evp;
-     timer_t *timerid;
+timer_create (clockid_t clock_id, struct sigevent *evp, timer_t *timerid)
 {
   int retval = -1;
   struct timer_node *newtimer = NULL;

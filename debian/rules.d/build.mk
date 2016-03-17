@@ -32,6 +32,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	rm -f $(DEB_BUILDDIR)/configparms
 	echo "CC = $(call xx,CC)"                 >> $(DEB_BUILDDIR)/configparms
 	echo "CXX = $(call xx,CXX)"               >> $(DEB_BUILDDIR)/configparms
+	echo "MIG = $(call xx,MIG)"               >> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CC = $(BUILD_CC)"             >> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CXX = $(BUILD_CXX)"           >> $(DEB_BUILDDIR)/configparms
 	echo "CFLAGS = $(HOST_CFLAGS)"            >> $(DEB_BUILDDIR)/configparms
@@ -62,6 +63,9 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	# overwrite system headers.
 	echo "install_root = $(CURDIR)/debian/tmp-$(curpass)" >> $(DEB_BUILDDIR)/configparms
 
+	# Per architecture debian specific tests whitelist
+	echo "include $(CURDIR)/debian/testsuite-xfail-debian.mk" >> $(DEB_BUILDDIR)/configparms
+
 	# Prevent autoconf from running unexpectedly by setting it to false.
 	# Also explicitly pass CC down - this is needed to get -m64 on
 	# Sparc, et cetera.
@@ -78,11 +82,12 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		cd $(DEB_BUILDDIR) && \
 		CC="$(call xx,CC)" \
 		CXX="$(call xx,CXX)" \
+		MIG="$(call xx,MIG)" \
 		AUTOCONF=false \
 		MAKEINFO=: \
 		$(CURDIR)/configure \
 		--host=$(call xx,configure_target) \
-		--build=$$configure_build --prefix=/usr --without-cvs \
+		--build=$$configure_build --prefix=/usr \
 		--enable-add-ons=$(standard-add-ons)"$(call xx,add-ons)" \
 		--without-selinux \
 		--enable-stackguard-randomization \
@@ -91,6 +96,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 		--with-bugurl="https://bugs.launchpad.net/ubuntu/+source/glibc/+bugs" \
 		$(if $(filter $(pt_chown),yes),--enable-pt_chown) \
 		$(if $(filter $(threads),no),--disable-nscd) \
+		$(if $(filter $(call xx,mvec),no),--disable-mathvec) \
 		$(call xx,with_headers) $(call xx,extra_config_options))
 	touch $@
 
@@ -121,38 +127,48 @@ $(patsubst %,check_%,$(GLIBC_PASSES)) :: check_% : $(stamp)check_%
 $(stamp)check_%: $(stamp)build_%
 	@set -e ; \
 	if [ -n "$(findstring nocheck,$(DEB_BUILD_OPTIONS))" ]; then \
-	  echo "Tests have been disabled via DEB_BUILD_OPTIONS." | tee $(log_results) ; \
+	  echo "Tests have been disabled via DEB_BUILD_OPTIONS." ; \
 	elif [ $(call xx,configure_build) != $(call xx,configure_target) ] && \
 	     ! $(DEB_BUILDDIR)/elf/ld.so $(DEB_BUILDDIR)/libc.so >/dev/null 2>&1 ; then \
-	  echo "Flavour cross-compiled, tests have been skipped." | tee $(log_results) ; \
+	  echo "Flavour cross-compiled, tests have been skipped." ; \
 	elif ! $(call kernel_check,$(call xx,MIN_KERNEL_SUPPORTED)); then \
-	  echo "Kernel too old, tests have been skipped." | tee $(log_results) ; \
+	  echo "Kernel too old, tests have been skipped." ; \
 	elif [ $(call xx,RUN_TESTSUITE) != "yes" ]; then \
 	  echo "Testsuite disabled for $(curpass), skipping tests."; \
-	  echo "Tests have been disabled." > $(log_results) ; \
 	else \
-	  echo Testing $(curpass) / $(log_results); \
-	  find $(DEB_BUILDDIR) -name '*.out' -exec rm {} ';' ; \
-	  LD_PRELOAD="" LANG="" TIMEOUTFACTOR="50" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) -k check 2>&1 | tee $(log_test); \
-	  chmod +x debian/testsuite-checking/convertlog.sh ; \
-	  debian/testsuite-checking/convertlog.sh $(log_test) | tee $(log_results) ; \
-	  if test -f $(log_expected) ; then \
-	    chmod +x debian/testsuite-checking/compare.sh ; \
-	    debian/testsuite-checking/compare.sh $(log_expected) $(log_results) $(DEB_BUILDDIR) ; \
+	  find $(DEB_BUILDDIR) -name '*.out' -delete ; \
+	  LD_PRELOAD="" LANG="" TIMEOUTFACTOR="50" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) check 2>&1 | tee $(log_test) ; \
+	  if ! test -f $(DEB_BUILDDIR)/tests.sum ; then \
+	    echo "+---------------------------------------------------------------------+" ; \
+	    echo "|                     Testsuite failed to build.                      |" ; \
+	    echo "+---------------------------------------------------------------------+" ; \
+	    exit 1 ; \
+	  fi ; \
+	  echo "+---------------------------------------------------------------------+" ; \
+	  echo "|                             Testsuite summary                       |" ; \
+	  echo "+---------------------------------------------------------------------+" ; \
+	  grep -E '^(FAIL|XFAIL|XPASS):' $(DEB_BUILDDIR)/tests.sum | sort ; \
+	  for test in $$(sed -e '/^\(FAIL\|XFAIL\): /!d;s/^.*: //' $(DEB_BUILDDIR)/tests.sum) ; do \
+	    echo "----------" ; \
+	    cat $(DEB_BUILDDIR)/$$test.test-result ; \
+	    cat $(DEB_BUILDDIR)/$$test.out ; \
+	    echo "----------" ; \
+	  done ; \
+	  if grep -q '^FAIL:' $(DEB_BUILDDIR)/tests.sum ; then \
+	    echo "+---------------------------------------------------------------------+" ; \
+	    echo "|     Encountered regressions that don't match expected failures.     |" ; \
+	    echo "+---------------------------------------------------------------------+" ; \
+	    exit 1 ; \
 	  else \
-	    echo "*************************** WARNING ***************************" ; \
-	    echo "Please generate expected testsuite results for this arch ($(log_expected))!" ; \
-	    echo "*************************** WARNING ***************************" ; \
+	    echo "+---------------------------------------------------------------------+" ; \
+	    echo "| Passed regression testing.  Give yourself a hearty pat on the back. |" ; \
+	    echo "+---------------------------------------------------------------------+" ; \
 	  fi ; \
 	fi
-	@n=$$(grep '^FAIL: ' $(log_test) | wc -l || true); \
-	  echo "TEST SUMMARY $(log_test) ($$n matching lines)"; \
-	  grep '^FAIL: ' $(log_test) || true; \
-	  echo "END TEST SUMMARY $(log_test)"
 	touch $@
 
 $(patsubst %,install_%,$(GLIBC_PASSES)) :: install_% : $(stamp)install_%
-$(stamp)install_%: $(stamp)check_%
+$(stamp)install_%: $(stamp)build_%
 	@echo Installing $(curpass)
 	rm -rf $(CURDIR)/debian/tmp-$(curpass)
 ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
@@ -160,10 +176,10 @@ ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	    cross-compiling=yes install_root=$(CURDIR)/debian/tmp-$(curpass)	\
 	    install-bootstrap-headers=yes install-headers )
 
-	install -d $(CURDIR)/debian/tmp-$(curpass)/lib
-	install -m 644 $(DEB_BUILDDIR)/csu/crt[1in].o $(CURDIR)/debian/tmp-$(curpass)/lib
-	${CC} -nostdlib -nostartfiles -shared -x c /dev/null \
-	        -o $(CURDIR)/debian/tmp-$(curpass)/lib/libc.so
+	install -d $(CURDIR)/debian/tmp-$(curpass)/$(call xx,libdir)
+	install -m 644 $(DEB_BUILDDIR)/csu/crt[01in].o $(CURDIR)/debian/tmp-$(curpass)/$(call xx,libdir)/.
+	$(call xx,CC) -nostdlib -nostartfiles -shared -x c /dev/null \
+	        -o $(CURDIR)/debian/tmp-$(curpass)/$(call xx,libdir)/libc.so
 else
 	: # FIXME: why just needed for ARM multilib?
 	case "$(curpass)" in \
@@ -204,6 +220,7 @@ else
 	  $(MAKE) -f debian/generate-supported.mk IN=localedata/SUPPORTED \
 	    OUT=debian/tmp-$(curpass)/usr/share/i18n/SUPPORTED; \
 	fi
+endif
 
 	# Create the multiarch directories, and the configuration file in /etc/ld.so.conf.d
 	if [ $(curpass) = libc ]; then \
@@ -225,6 +242,7 @@ else
 	  mv debian/tmp-$(curpass)/usr/include/ieee754.h debian/tmp-$(curpass)/usr/include/$(DEB_HOST_MULTIARCH); \
 	fi
 
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	# For our biarch libc, add an ld.so.conf.d configuration; this
 	# is needed because multiarch libc Replaces: libc6-i386 for ld.so, and
 	# the multiarch ld.so doesn't look at the (non-standard) /lib32, so we
@@ -273,9 +291,17 @@ endif
 
 $(stamp)source: $(stamp)patch
 	mkdir -p $(build-tree)
-	tar -c -J -C .. \
-		-f $(build-tree)/glibc-$(GLIBC_VERSION).tar.xz \
-		$(GLIBC_SOURCES)
+	cd .. && \
+	       find $(GLIBC_SOURCES) -depth -newermt '$(DEB_BUILD_DATE)' \
+			-print0 | \
+               xargs -0r touch --no-dereference --date='$(DEB_BUILD_DATE)'
+	cd .. && \
+		find $(GLIBC_SOURCES) -print0 | \
+		LC_ALL=C sort -z | \
+		tar -c -J --null -T - --no-recursion \
+			--mode=go=rX,u+rw,a-s \
+			--owner=root --group=root --numeric-owner \
+			-f $(CURDIR)/$(build-tree)/glibc-$(GLIBC_VERSION).tar.xz
 	mkdir -p debian/glibc-source/usr/src/glibc
 	tar cf - --files-from debian/glibc-source.filelist \
 	  | tar -x -C debian/glibc-source/usr/src/glibc -f -

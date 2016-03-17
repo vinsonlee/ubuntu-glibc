@@ -1,5 +1,5 @@
 /* Processor capability information handling macros.  PowerPC version.
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@
 #include <ldsodefs.h>
 #include <sysdep.h>	/* This defines the PPC_FEATURE[2]_* macros.  */
 
-/* There are 25 bits used, but they are bits 7..31.  */
-#define _DL_HWCAP_FIRST		7
+/* There are 28 bits used, but they are bits 4..31.  */
+#define _DL_HWCAP_FIRST		4
 
 /* The total number of available bits (including those prior to
    _DL_HWCAP_FIRST).  Some of these bits might not be used.  */
@@ -40,7 +40,7 @@
 #define HWCAP_IMPORTANT		(PPC_FEATURE_HAS_ALTIVEC \
 				+ PPC_FEATURE_HAS_DFP)
 
-#define _DL_PLATFORMS_COUNT	14
+#define _DL_PLATFORMS_COUNT	15
 
 #define _DL_FIRST_PLATFORM	32
 /* Mask to filter out platforms.  */
@@ -62,6 +62,7 @@
 #define PPC_PLATFORM_PPC464		11
 #define PPC_PLATFORM_PPC476		12
 #define PPC_PLATFORM_POWER8		13
+#define PPC_PLATFORM_POWER9		14
 
 static inline const char *
 __attribute__ ((unused))
@@ -124,6 +125,9 @@ _dl_string_platform (const char *str)
 	  break;
 	case '8':
 	  ret = _DL_FIRST_PLATFORM + PPC_PLATFORM_POWER8;
+	  break;
+	case '9':
+	  ret = _DL_FIRST_PLATFORM + PPC_PLATFORM_POWER9;
 	  break;
 	default:
 	  return -1;

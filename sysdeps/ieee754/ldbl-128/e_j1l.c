@@ -687,7 +687,7 @@ __ieee754_j1l (long double x)
 {
   long double xx, xinv, z, p, q, c, s, cc, ss;
 
-  if (! __finitel (x))
+  if (! isfinite (x))
     {
       if (x != x)
 	return x;
@@ -697,6 +697,14 @@ __ieee754_j1l (long double x)
   if (x == 0.0L)
     return x;
   xx = fabsl (x);
+  if (xx <= 0x1p-58L)
+    {
+      long double ret = x * 0.5L;
+      math_check_force_underflow (ret);
+      if (ret == 0)
+	__set_errno (ERANGE);
+      return ret;
+    }
   if (xx <= 2.0L)
     {
       /* 0 <= x <= 2 */
@@ -838,7 +846,7 @@ __ieee754_y1l (long double x)
 {
   long double xx, xinv, z, p, q, c, s, cc, ss;
 
-  if (! __finitel (x))
+  if (! isfinite (x))
     {
       if (x != x)
 	return x;
@@ -855,7 +863,7 @@ __ieee754_y1l (long double x)
   if (xx <= 0x1p-114)
     {
       z = -TWOOPI / x;
-      if (__isinfl (z))
+      if (isinf (z))
 	__set_errno (ERANGE);
       return z;
     }

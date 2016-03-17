@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,10 +22,7 @@
 
 /* Combine sets LEFT and RIGHT by logical OR and place result in DEST.  */
 int
-sigorset (dest, left, right)
-     sigset_t *dest;
-     const sigset_t *left;
-     const sigset_t *right;
+sigorset (sigset_t *dest, const sigset_t *left, const sigset_t *right)
 {
   if (dest == NULL || left == NULL || right == NULL)
     {

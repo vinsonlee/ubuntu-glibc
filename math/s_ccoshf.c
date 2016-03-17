@@ -1,5 +1,5 @@
 /* Complex cosine hyperbole function for float.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -39,7 +39,7 @@ __ccoshf (__complex__ float x)
 	  const int t = (int) ((FLT_MAX_EXP - 1) * M_LN2);
 	  float sinix, cosix;
 
-	  if (__glibc_likely (icls != FP_SUBNORMAL))
+	  if (__glibc_likely (fabsf (__imag__ x) > FLT_MIN))
 	    {
 	      __sincosf (__imag__ x, &sinix, &cosix);
 	    }
@@ -83,18 +83,7 @@ __ccoshf (__complex__ float x)
 	      __imag__ retval = __ieee754_sinhf (__real__ x) * sinix;
 	    }
 
-	  if (fabsf (__real__ retval) < FLT_MIN)
-	    {
-	      volatile float force_underflow
-		= __real__ retval * __real__ retval;
-	      (void) force_underflow;
-	    }
-	  if (fabsf (__imag__ retval) < FLT_MIN)
-	    {
-	      volatile float force_underflow
-		= __imag__ retval * __imag__ retval;
-	      (void) force_underflow;
-	    }
+	  math_check_force_underflow_complex (retval);
 	}
       else
 	{
@@ -113,7 +102,7 @@ __ccoshf (__complex__ float x)
 	  /* Imaginary part is finite.  */
 	  float sinix, cosix;
 
-	  if (__glibc_likely (icls != FP_SUBNORMAL))
+	  if (__glibc_likely (fabsf (__imag__ x) > FLT_MIN))
 	    {
 	      __sincosf (__imag__ x, &sinix, &cosix);
 	    }

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -29,9 +29,8 @@ static const struct pthread_rwlockattr default_rwlockattr =
 
 
 int
-__pthread_rwlock_init (rwlock, attr)
-     pthread_rwlock_t *rwlock;
-     const pthread_rwlockattr_t *attr;
+__pthread_rwlock_init (pthread_rwlock_t *rwlock,
+		       const pthread_rwlockattr_t *attr)
 {
   const struct pthread_rwlockattr *iattr;
 
@@ -58,15 +57,8 @@ __pthread_rwlock_init (rwlock, attr)
 
      If the pshared value is in locking functions XORed with avail
      we get the expected result.  */
-#ifdef __ASSUME_PRIVATE_FUTEX
   rwlock->__data.__shared = (iattr->pshared == PTHREAD_PROCESS_PRIVATE
 			     ? 0 : FUTEX_PRIVATE_FLAG);
-#else
-  rwlock->__data.__shared = (iattr->pshared == PTHREAD_PROCESS_PRIVATE
-			     ? 0
-			     : THREAD_GETMEM (THREAD_SELF,
-					      header.private_futex));
-#endif
 
   return 0;
 }
