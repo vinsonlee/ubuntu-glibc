@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -22,9 +22,7 @@
 
 
 int
-__pthread_setspecific (key, value)
-     pthread_key_t key;
-     const void *value;
+__pthread_setspecific (pthread_key_t key, const void *value)
 {
   struct pthread *self;
   unsigned int idx1st;

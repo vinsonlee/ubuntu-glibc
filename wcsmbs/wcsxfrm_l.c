@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1996.
 
@@ -22,7 +22,6 @@
 #define STRING_TYPE wchar_t
 #define USTRING_TYPE wint_t
 #define STRXFRM __wcsxfrm_l
-#define STRCMP wcscmp
 #define STRLEN __wcslen
 #define STPNCPY __wcpncpy
 #define WEIGHT_H "../locale/weightwc.h"

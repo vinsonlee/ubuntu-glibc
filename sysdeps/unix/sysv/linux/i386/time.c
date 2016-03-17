@@ -1,5 +1,5 @@
 /* time -- Get number of seconds since Epoch.  Linux/i386 version.
-   Copyright (C) 2015 Free Software Foundation, Inc.
+   Copyright (C) 2015-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,17 +18,6 @@
 
 #ifdef SHARED
 
-# include <dl-vdso.h>
-# include <errno.h>
-
-/* If the vDSO is not available we fall back on the old vsyscall.  */
-static time_t
-__time_syscall (time_t *t)
-{
-  INTERNAL_SYSCALL_DECL (err);
-  return INTERNAL_SYSCALL (time, err, 1, t);
-}
-# define TIME_FALLBACK  (void*) &__time_syscall
 # undef libc_ifunc_hidden_def
 # define libc_ifunc_hidden_def(name)  \
   libc_ifunc_hidden_def1 (__GI_##name, __time_syscall)

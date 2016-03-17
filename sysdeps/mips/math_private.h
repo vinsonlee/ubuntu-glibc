@@ -1,5 +1,5 @@
 /* Internal math stuff.  MIPS version.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,7 +16,8 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifndef _MATH_PRIVATE_H
+#ifndef MIPS_MATH_PRIVATE_H
+#define MIPS_MATH_PRIVATE_H 1
 
 #ifdef __mips_nan2008
 /* MIPS aligned to IEEE 754-2008.  */
@@ -106,7 +107,7 @@ libc_feholdexcept_setround_mips (fenv_t *envp, int round)
 static __always_inline void
 libc_fesetenv_mips (fenv_t *envp)
 {
-  fpu_control_t cw;
+  fpu_control_t cw __attribute__ ((unused));
 
   /* Read current state to flush fpu pipeline.  */
   _FPU_GETCW (cw);
@@ -246,6 +247,10 @@ libc_feholdsetround_mips_ctx (struct rm_ctx *ctx, int round)
 # define libc_feholdsetroundl_ctx         libc_feholdsetround_mips_ctx
 
 #endif
+
+/* Enable __finitel, __isinfl, and __isnanl for binary compatibility
+   when built without long double support. */
+#define LDBL_CLASSIFY_COMPAT 1
 
 #include_next <math_private.h>
 

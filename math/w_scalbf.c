@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -27,9 +27,9 @@ sysv_scalbf (float x, float fn)
 {
   float z = __ieee754_scalbf (x, fn);
 
-  if (__glibc_unlikely (__isinff (z)))
+  if (__glibc_unlikely (isinf (z)))
     {
-      if (__finitef (x))
+      if (isfinite (x))
 	return __kernel_standard_f (x, fn, 132); /* scalb overflow */
       else
 	__set_errno (ERANGE);
@@ -51,22 +51,22 @@ __scalbf (float x, float fn)
     {
       float z = __ieee754_scalbf (x, fn);
 
-      if (__glibc_unlikely (!__finitef (z) || z == 0.0f))
+      if (__glibc_unlikely (!isfinite (z) || z == 0.0f))
 	{
-	  if (__isnanf (z))
+	  if (isnan (z))
 	    {
-	      if (!__isnanf (x) && !__isnanf (fn))
+	      if (!isnan (x) && !isnan (fn))
 		__set_errno (EDOM);
 	    }
-	  else if (__isinf_nsf (z))
+	  else if (isinf (z))
 	    {
-	      if (!__isinf_nsf (x) && !__isinf_nsf (fn))
+	      if (!isinf (x) && !isinf (fn))
 		__set_errno (ERANGE);
 	    }
 	  else
 	    {
 	      /* z == 0.  */
-	      if (x != 0.0f && !__isinf_nsf (fn))
+	      if (x != 0.0f && !isinf (fn))
 		__set_errno (ERANGE);
 	    }
 	}

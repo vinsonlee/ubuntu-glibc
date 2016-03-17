@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -56,9 +56,6 @@
 #define LLL_LOCK_INITIALIZER		(0)
 #define LLL_LOCK_INITIALIZER_LOCKED	(1)
 #define LLL_LOCK_INITIALIZER_WAITERS	(2)
-
-/* Delay in spinlock loop.  */
-#define BUSY_WAIT_NOP	  asm ("rep; nop")
 
 
 /* NB: in the lll_trylock macro we simply return the value in %eax
@@ -345,7 +342,7 @@ extern int __lll_trylock_elision (int *lock, short *adapt_count)
 
 #define lll_lock_elision(futex, adapt_count, private) \
   __lll_lock_elision (&(futex), &(adapt_count), private)
-#define lll_unlock_elision(futex, private) \
+#define lll_unlock_elision(futex, adapt_count, private) \
   __lll_unlock_elision (&(futex), private)
 #define lll_trylock_elision(futex, adapt_count) \
   __lll_trylock_elision (&(futex), &(adapt_count))

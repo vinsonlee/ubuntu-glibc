@@ -1,5 +1,5 @@
 /* Cancellable system call stubs.  Linux/PowerPC64 version.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Franz Sirl <Franz.Sirl-kernel@lauterbach.com>, 2003.
 
@@ -25,11 +25,7 @@
 
 #if IS_IN (libc) || IS_IN (libpthread) || IS_IN (librt)
 
-# ifdef HAVE_ASM_GLOBAL_DOT_NAME
-#  define DASHDASHPFX(str) .__##str
-# else
-#  define DASHDASHPFX(str) __##str
-# endif
+# define DASHDASHPFX(str) __##str
 
 #if _CALL_ELF == 2
 #define CANCEL_FRAMESIZE (FRAME_MIN_SIZE+16+48)

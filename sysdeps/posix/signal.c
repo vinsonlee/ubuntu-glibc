@@ -1,5 +1,5 @@
 /* BSD-like signal function.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,9 +26,7 @@ sigset_t _sigintr attribute_hidden;		/* Set by siginterrupt.  */
 /* Set the handler for the signal SIG to HANDLER,
    returning the old handler, or SIG_ERR on error.  */
 __sighandler_t
-__bsd_signal (sig, handler)
-     int sig;
-     __sighandler_t handler;
+__bsd_signal (int sig, __sighandler_t handler)
 {
   struct sigaction act, oact;
 

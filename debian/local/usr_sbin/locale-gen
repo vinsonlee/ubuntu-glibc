@@ -5,6 +5,7 @@ set -e
 LOCALEGEN=/etc/locale.gen
 LOCALES=/usr/share/i18n/locales
 USER_LOCALES=/usr/local/share/i18n/locales
+SUPPORTED=/var/lib/locales/supported.d
 if [ -n "$POSIXLY_CORRECT" ]; then
   unset POSIXLY_CORRECT
 fi
@@ -16,6 +17,7 @@ fi
 KEEP=
 if [ "$1" = '--keep-existing' ]; then
 	KEEP=1
+	shift
 fi
 
 if [ -z "$KEEP" ]; then
@@ -35,8 +37,20 @@ is_entry_ok() {
   fi
 }
 
+GENERATE=
+if [ -z "$1" ]; then
+    GENERATE="`cat $SUPPORTED/* $LOCALEGEN 2>/dev/null || true`"
+else
+  while [ -n "$1" ]; do
+    if [ -f "$SUPPORTED/$1" ]; then
+      GENERATE="`cat $SUPPORTED/$1`"
+    fi
+    shift
+  done
+fi
+
 echo "Generating locales (this might take a while)..."
-while read locale charset; do \
+/bin/echo -e "$GENERATE" | sort -u | while read locale charset; do \
 	case $locale in \#*) continue;; "") continue;; esac; \
 	is_entry_ok || continue
 	if [ "$KEEP" ] && PERL_BADLANG=0 perl -MPOSIX -e \
@@ -59,5 +73,5 @@ while read locale charset; do \
 	fi
 	localedef -i $input -c -f $charset -A /usr/share/locale/locale.alias $locale || :; \
 	echo ' done'; \
-done < $LOCALEGEN
+done
 echo "Generation complete."

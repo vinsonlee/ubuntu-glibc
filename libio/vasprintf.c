@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -32,10 +32,7 @@
 #include "strfile.h"
 
 int
-_IO_vasprintf (result_ptr, format, args)
-     char **result_ptr;
-     const char *format;
-     _IO_va_list args;
+_IO_vasprintf (char **result_ptr, const char *format, _IO_va_list args)
 {
   /* Initial size of the buffer to be used.  Will be doubled each time an
      overflow occurs.  */

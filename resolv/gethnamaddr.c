@@ -147,9 +147,7 @@ extern int h_errno;
 
 #ifdef DEBUG
 static void
-Dprintf(msg, num)
-	char *msg;
-	int num;
+Dprintf (char *msg, int num)
 {
 	if (_res.options & RES_DEBUG) {
 		int save = errno;
@@ -331,23 +329,18 @@ getanswer (const querybuf *answer, int anslen, const char *qname, int qtype)
 			buflen -= n;
 			continue;
 		}
-		if ((type == T_SIG) || (type == T_KEY) || (type == T_NXT)) {
-			/* We don't support DNSSEC yet.  For now, ignore
-			 * the record and send a low priority message
-			 * to syslog.
-			 */
-			syslog(LOG_DEBUG|LOG_AUTH,
-	       "gethostby*.getanswer: asked for \"%s %s %s\", got type \"%s\"",
-			       qname, p_class(C_IN), p_type(qtype),
-			       p_type(type));
-			cp += n;
-			continue;
-		}
 		if (type != qtype) {
-			syslog(LOG_NOTICE|LOG_AUTH,
+			/* Log a low priority message if we get an unexpected
+			 * record, but skip it if we are using DNSSEC since it
+			 * uses many different types in responses that do not
+			 * match QTYPE.
+			 */
+			if ((_res.options & RES_USE_DNSSEC) == 0) {
+				syslog(LOG_NOTICE|LOG_AUTH,
 	       "gethostby*.getanswer: asked for \"%s %s %s\", got type \"%s\"",
-			       qname, p_class(C_IN), p_type(qtype),
-			       p_type(type));
+					qname, p_class(C_IN), p_type(qtype),
+					p_type(type));
+			}
 			cp += n;
 			continue;		/* XXX - had_error++ ? */
 		}
@@ -491,8 +484,7 @@ extern struct hostent *gethostbyname2(const char *name, int af);
 libresolv_hidden_proto (gethostbyname2)
 
 struct hostent *
-gethostbyname(name)
-	const char *name;
+gethostbyname (const char *name)
 {
 	struct hostent *hp;
 
@@ -509,9 +501,7 @@ gethostbyname(name)
 }
 
 struct hostent *
-gethostbyname2(name, af)
-	const char *name;
-	int af;
+gethostbyname2 (const char *name, int af)
 {
 	union
 	{
@@ -642,10 +632,7 @@ gethostbyname2(name, af)
 libresolv_hidden_def (gethostbyname2)
 
 struct hostent *
-gethostbyaddr(addr, len, af)
-	const void *addr;
-	socklen_t len;
-	int af;
+gethostbyaddr (const void *addr, socklen_t len, int af)
 {
 	const u_char *uaddr = (const u_char *)addr;
 	static const u_char mapped[] = { 0,0, 0,0, 0,0, 0,0, 0,0, 0xff,0xff };
@@ -788,8 +775,7 @@ gethostbyaddr(addr, len, af)
 }
 
 void
-_sethtent(f)
-	int f;
+_sethtent (int f)
 {
 	if (!hostf)
 		hostf = fopen(_PATH_HOSTS, "rce" );
@@ -875,8 +861,7 @@ _gethtent (void)
 libresolv_hidden_def (_gethtent)
 
 struct hostent *
-_gethtbyname(name)
-	const char *name;
+_gethtbyname (const char *name)
 {
 	struct hostent *hp;
 
@@ -889,9 +874,7 @@ _gethtbyname(name)
 }
 
 struct hostent *
-_gethtbyname2(name, af)
-	const char *name;
-	int af;
+_gethtbyname2 (const char *name, int af)
 {
 	struct hostent *p;
 	char **cp;
@@ -913,10 +896,7 @@ _gethtbyname2(name, af)
 libresolv_hidden_def (_gethtbyname2)
 
 struct hostent *
-_gethtbyaddr(addr, len, af)
-	const char *addr;
-	size_t len;
-	int af;
+_gethtbyaddr (const char *addr, size_t len, int af)
 {
 	struct hostent *p;
 
@@ -930,9 +910,7 @@ _gethtbyaddr(addr, len, af)
 libresolv_hidden_def (_gethtbyaddr)
 
 static void
-map_v4v6_address(src, dst)
-	const char *src;
-	char *dst;
+map_v4v6_address (const char *src, char *dst)
 {
 	u_char *p = (u_char *)dst;
 	char tmp[INADDRSZ];
@@ -950,10 +928,7 @@ map_v4v6_address(src, dst)
 }
 
 static void
-map_v4v6_hostent(hp, bpp, lenp)
-	struct hostent *hp;
-	char **bpp;
-	int *lenp;
+map_v4v6_hostent (struct hostent *hp, char **bpp, int *lenp)
 {
 	char **ap;
 
@@ -980,9 +955,7 @@ map_v4v6_hostent(hp, bpp, lenp)
 
 #ifdef RESOLVSORT
 extern void
-addrsort(ap, num)
-	char **ap;
-	int num;
+addrsort (char **ap, int num)
 {
 	int i, j;
 	char **p;
@@ -1026,8 +999,7 @@ addrsort(ap, num)
 #if defined(BSD43_BSD43_NFS) || defined(sun)
 /* some libc's out there are bound internally to these names (UMIPS) */
 void
-ht_sethostent(stayopen)
-	int stayopen;
+ht_sethostent (int stayopen)
 {
 	_sethtent(stayopen);
 }
@@ -1039,17 +1011,13 @@ ht_endhostent (void)
 }
 
 struct hostent *
-ht_gethostbyname(name)
-	char *name;
+ht_gethostbyname (char *name)
 {
 	return (_gethtbyname(name));
 }
 
 struct hostent *
-ht_gethostbyaddr(addr, len, af)
-	const char *addr;
-	size_t len;
-	int af;
+ht_gethostbyaddr (const char *addr, size_t len, int af)
 {
 	return (_gethtbyaddr(addr, len, af));
 }

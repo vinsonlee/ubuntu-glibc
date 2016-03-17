@@ -5,6 +5,10 @@ asm-CPPFLAGS += -DGAS_SYNTAX
 # The i386 `long double' is a distinct type we support.
 long-double-fcts = yes
 
+ifeq ($(subdir),string)
+sysdep_routines += cacheinfo
+endif
+
 ifeq ($(subdir),gmon)
 sysdep_routines += i386-mcount
 endif
@@ -33,6 +37,7 @@ sysdep-CFLAGS += -mpreferred-stack-boundary=4
 else
 ifeq ($(subdir),csu)
 sysdep-CFLAGS += -mpreferred-stack-boundary=4
+gen-as-const-headers += link-defines.sym
 else
 # Likewise, any function which calls user callbacks
 uses-callbacks += -mpreferred-stack-boundary=4
@@ -66,10 +71,29 @@ endif
 
 ifeq ($(subdir),elf)
 sysdep-dl-routines += tlsdesc dl-tlsdesc
-sysdep_routines += tlsdesc dl-tlsdesc
-sysdep-rtld-routines += tlsdesc dl-tlsdesc
+
+tests += tst-audit3
+modules-names += tst-auditmod3a tst-auditmod3b
+
+$(objpfx)tst-audit3: $(objpfx)tst-auditmod3a.so
+$(objpfx)tst-audit3.out: $(objpfx)tst-auditmod3b.so
+tst-audit3-ENV = LD_AUDIT=$(objpfx)tst-auditmod3b.so
 endif
 
 ifeq ($(subdir),csu)
 gen-as-const-headers += tlsdesc.sym
+endif
+
+ifeq ($(subdir),elf)
+# Make sure no code in ld.so uses mm/xmm/ymm/zmm registers on i386 since
+# the first 3 mm/xmm/ymm/zmm registers are used to pass vector parameters
+# which must be preserved.
+CFLAGS-.os += $(if $(filter $(@F),$(patsubst %,%.os,$(all-rtld-routines))),\
+		   -mno-sse -mno-mmx)
+
+tests-special += $(objpfx)tst-ld-sse-use.out
+$(objpfx)tst-ld-sse-use.out: ../sysdeps/i386/tst-ld-sse-use.sh $(objpfx)ld.so
+	@echo "Checking ld.so for SSE register use.  This will take a few seconds..."
+	$(BASH) $< $(objpfx) '$(NM)' '$(OBJDUMP)' '$(READELF)' > $@; \
+	$(evaluate-test)
 endif

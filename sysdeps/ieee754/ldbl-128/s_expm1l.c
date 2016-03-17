@@ -84,8 +84,6 @@ static const long double
 
   C1 = 6.93145751953125E-1L,
   C2 = 1.428606820309417232121458176568075500134E-6L,
-/* ln (2^16384 * (1 - 2^-113)) */
-  maxlog = 1.1356523406294143949491931077970764891253E4L,
 /* ln 2^-114 */
   minarg = -7.9018778583833765273564461846232128760607E1L, big = 1e4932L;
 
@@ -110,14 +108,9 @@ __expm1l (long double x)
     }
   if (ix >= 0x7fff0000)
     {
-      /* Infinity. */
+      /* Infinity (which must be negative infinity). */
       if (((ix & 0xffff) | u.parts32.w1 | u.parts32.w2 | u.parts32.w3) == 0)
-	{
-	  if (sign)
-	    return -1.0L;
-	  else
-	    return x;
-	}
+	return -1.0L;
       /* NaN. No invalid exception. */
       return x;
     }
@@ -126,20 +119,18 @@ __expm1l (long double x)
   if ((ix == 0) && (u.parts32.w1 | u.parts32.w2 | u.parts32.w3) == 0)
     return x;
 
-  /* Overflow.  */
-  if (x > maxlog)
-    {
-      __set_errno (ERANGE);
-      return (big * big);
-    }
-
   /* Minimum value.  */
   if (x < minarg)
     return (4.0/big - 1.0L);
 
-  /* Avoid internal underflow when result does not underflow.  */
-  if (fabsl (x) < 0x1p-113L && fabsl (x) >= LDBL_MIN)
-    return x;
+  /* Avoid internal underflow when result does not underflow, while
+     ensuring underflow (without returning a zero of the wrong sign)
+     when the result does underflow.  */
+  if (fabsl (x) < 0x1p-113L)
+    {
+      math_check_force_underflow (x);
+      return x;
+    }
 
   /* Express x = ln 2 (k + remainder), remainder not exceeding 1/2. */
   xx = C1 + C2;			/* ln 2. */

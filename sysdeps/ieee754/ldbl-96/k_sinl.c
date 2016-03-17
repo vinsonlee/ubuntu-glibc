@@ -1,5 +1,5 @@
 /* Quad-precision floating point sine on <-pi/4,pi/4>.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Based on quad-precision sine by Jakub Jelinek <jj@ultra.linux.cz>
 
@@ -20,6 +20,7 @@
 /* The polynomials have not been optimized for extended-precision and
    may contain more terms than needed.  */
 
+#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -94,7 +95,10 @@ __kernel_sinl(long double x, long double y, int iy)
       /* Argument is small enough to approximate it by a Chebyshev
 	 polynomial of degree 17.  */
       if (absx < 0x1p-33L)
-	if (!((int)x)) return x;	/* generate inexact */
+	{
+	  math_check_force_underflow (x);
+	  if (!((int)x)) return x;	/* generate inexact */
+	}
       z = x * x;
       return x + (x * (z*(SIN1+z*(SIN2+z*(SIN3+z*(SIN4+
 		       z*(SIN5+z*(SIN6+z*(SIN7+z*SIN8)))))))));

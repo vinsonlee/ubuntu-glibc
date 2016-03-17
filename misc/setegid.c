@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,8 +20,7 @@
 
 /* Set the effective group ID of the calling process to GID.  */
 int
-setegid (gid)
-     __gid_t gid;
+setegid (__gid_t gid)
 {
   __set_errno (ENOSYS);
   return -1;
