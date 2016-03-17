@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
 
@@ -35,16 +35,7 @@ __poll (struct pollfd *fds, nfds_t nfds, int timeout)
       timeout_ts_p = &timeout_ts;
     }
 
-  if (SINGLE_THREAD_P)
-    return INLINE_SYSCALL (ppoll, 5, fds, nfds, timeout_ts_p, NULL, 0);
-
-  int oldtype = LIBC_CANCEL_ASYNC ();
-
-  int result = INLINE_SYSCALL (ppoll, 5, fds, nfds, timeout_ts_p, NULL, 0);
-
-  LIBC_CANCEL_RESET (oldtype);
-
-  return result;
+  return SYSCALL_CANCEL (ppoll, fds, nfds, timeout_ts_p, NULL, 0);
 }
 libc_hidden_def (__poll)
 weak_alias (__poll, poll)

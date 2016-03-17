@@ -1,5 +1,5 @@
 /* Inline math functions for s390.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ __NTH (__ieee754_sqrt (double x))
 {
   double res;
 
-  asm ( "sqdbr %0,%1" : "=f" (res) : "f" (x) );
+  __asm__ ( "sqdbr %0,%1" : "=f" (res) : "f" (x) );
   return res;
 }
 
@@ -80,7 +80,7 @@ __NTH (__ieee754_sqrtf (float x))
 {
   float res;
 
-  asm ( "sqebr %0,%1" : "=f" (res) : "f" (x) );
+  __asm__ ( "sqebr %0,%1" : "=f" (res) : "f" (x) );
   return res;
 }
 
@@ -90,7 +90,7 @@ __NTH (sqrtl (long double __x))
 {
   long double res;
 
-  asm ( "sqxbr %0,%1" : "=f" (res) : "f" (__x) );
+  __asm__ ( "sqxbr %0,%1" : "=f" (res) : "f" (__x) );
   return res;
 }
 # endif /* !__NO_LONG_DOUBLE_MATH */

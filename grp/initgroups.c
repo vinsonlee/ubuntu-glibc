@@ -1,4 +1,4 @@
-/* Copyright (C) 1989, 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -15,7 +15,6 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <alloca.h>
 #include <assert.h>
 #include <errno.h>
 #include <grp.h>
@@ -26,6 +25,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <nsswitch.h>
+#include <scratch_buffer.h>
 
 #include "../nscd/nscd-client.h"
 #include "../nscd/nscd_proto.h"

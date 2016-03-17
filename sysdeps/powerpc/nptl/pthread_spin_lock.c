@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Paul Mackerras <paulus@au.ibm.com>, 2003.
 
@@ -19,18 +19,17 @@
 #include "pthreadP.h"
 
 int
-pthread_spin_lock (lock)
-     pthread_spinlock_t *lock;
+pthread_spin_lock (pthread_spinlock_t *lock)
 {
   unsigned int __tmp;
 
   asm volatile (
-       "1:	lwarx	%0,0,%1\n"
+       "1:	lwarx	%0,0,%1" MUTEX_HINT_ACQ "\n"
        "	cmpwi	0,%0,0\n"
        "	bne-	2f\n"
        "	stwcx.	%2,0,%1\n"
        "	bne-	2f\n"
-       "	isync\n"
+                __ARCH_ACQ_INSTR "\n"
        "	.subsection 1\n"
        "2:	lwzx	%0,0,%1\n"
        "	cmpwi	0,%0,0\n"

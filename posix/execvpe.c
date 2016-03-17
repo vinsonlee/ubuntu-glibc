@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -45,10 +45,7 @@ scripts_argv (const char *file, char *const argv[], int argc, char **new_argv)
 /* Execute FILE, searching in the `PATH' environment variable if it contains
    no slashes, with arguments ARGV and environment from ENVP.  */
 int
-__execvpe (file, argv, envp)
-     const char *file;
-     char *const argv[];
-     char *const envp[];
+__execvpe (const char *file, char *const argv[], char *const envp[])
 {
   if (*file == '\0')
     {

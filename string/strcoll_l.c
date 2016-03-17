@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Ulrich Drepper <drepper@gnu.org>, 1995.
 
@@ -30,7 +30,6 @@
 # define USTRING_TYPE unsigned char
 # define STRCOLL __strcoll_l
 # define STRCMP strcmp
-# define STRLEN strlen
 # define WEIGHT_H "../locale/weight.h"
 # define SUFFIX	MB
 # define L(arg) arg
@@ -48,7 +47,6 @@ typedef struct
   int len;			/* Length of the current sequence.  */
   size_t val;			/* Position of the sequence relative to the
 				   previous non-ignored sequence.  */
-  size_t idxnow;		/* Current index in sequences.  */
   size_t idxmax;		/* Maximum index in sequences.  */
   size_t idxcnt;		/* Current count of indices.  */
   size_t backw;			/* Current Backward sequence index.  */
@@ -282,8 +280,11 @@ STRCOLL (const STRING_TYPE *s1, const STRING_TYPE *s2, __locale_t l)
   int result = 0, rule = 0;
 
   coll_seq seq1, seq2;
-  memset (&seq1, 0, sizeof (seq1));
-  seq2 = seq1;
+  seq1.len = 0;
+  seq1.idxmax = 0;
+  seq1.rule = 0;
+  seq2.len = 0;
+  seq2.idxmax = 0;
 
   for (int pass = 0; pass < nrules; ++pass)
     {

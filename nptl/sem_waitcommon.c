@@ -1,5 +1,5 @@
 /* sem_waitcommon -- wait on a semaphore, shared code.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Paul Mackerras <paulus@au.ibm.com>, 2003.
 
@@ -17,9 +17,10 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#include <kernel-features.h>
 #include <errno.h>
 #include <sysdep.h>
-#include <lowlevellock.h>
+#include <futex-internal.h>
 #include <internaltypes.h>
 #include <semaphore.h>
 #include <sys/time.h>
@@ -27,96 +28,6 @@
 #include <pthreadP.h>
 #include <shlib-compat.h>
 #include <atomic.h>
-
-/* Wrapper for lll_futex_wait with absolute timeout and error checking.
-   TODO Remove when cleaning up the futex API throughout glibc.  */
-static __always_inline int
-futex_abstimed_wait (unsigned int* futex, unsigned int expected,
-		     const struct timespec* abstime, int private, bool cancel)
-{
-  int err, oldtype;
-  if (abstime == NULL)
-    {
-      if (cancel)
-	oldtype = __pthread_enable_asynccancel ();
-      err = lll_futex_wait (futex, expected, private);
-      if (cancel)
-	__pthread_disable_asynccancel (oldtype);
-    }
-  else
-    {
-      struct timeval tv;
-      struct timespec rt;
-      int sec, nsec;
-
-      /* Get the current time.  */
-      __gettimeofday (&tv, NULL);
-
-      /* Compute relative timeout.  */
-      sec = abstime->tv_sec - tv.tv_sec;
-      nsec = abstime->tv_nsec - tv.tv_usec * 1000;
-      if (nsec < 0)
-        {
-          nsec += 1000000000;
-          --sec;
-        }
-
-      /* Already timed out?  */
-      if (sec < 0)
-        return ETIMEDOUT;
-
-      /* Do wait.  */
-      rt.tv_sec = sec;
-      rt.tv_nsec = nsec;
-      if (cancel)
-	oldtype = __pthread_enable_asynccancel ();
-      err = lll_futex_timed_wait (futex, expected, &rt, private);
-      if (cancel)
-	__pthread_disable_asynccancel (oldtype);
-    }
-  switch (err)
-    {
-    case 0:
-    case -EAGAIN:
-    case -EINTR:
-    case -ETIMEDOUT:
-      return -err;
-
-    case -EFAULT: /* Must have been caused by a glibc or application bug.  */
-    case -EINVAL: /* Either due to wrong alignment or due to the timeout not
-		     being normalized.  Must have been caused by a glibc or
-		     application bug.  */
-    case -ENOSYS: /* Must have been caused by a glibc bug.  */
-    /* No other errors are documented at this time.  */
-    default:
-      abort ();
-    }
-}
-
-/* Wrapper for lll_futex_wake, with error checking.
-   TODO Remove when cleaning up the futex API throughout glibc.  */
-static __always_inline void
-futex_wake (unsigned int* futex, int processes_to_wake, int private)
-{
-  int res = lll_futex_wake (futex, processes_to_wake, private);
-  /* No error.  Ignore the number of woken processes.  */
-  if (res >= 0)
-    return;
-  switch (res)
-    {
-    case -EFAULT: /* Could have happened due to memory reuse.  */
-    case -EINVAL: /* Could be either due to incorrect alignment (a bug in
-		     glibc or in the application) or due to memory being
-		     reused for a PI futex.  We cannot distinguish between the
-		     two causes, and one of them is correct use, so we do not
-		     act in this case.  */
-      return;
-    case -ENOSYS: /* Must have been caused by a glibc bug.  */
-    /* No other errors are documented at this time.  */
-    default:
-      abort ();
-    }
-}
 
 
 /* The semaphore provides two main operations: sem_post adds a token to the
@@ -167,14 +78,6 @@ futex_wake (unsigned int* futex, int processes_to_wake, int private)
    requirement because the semaphore must not be destructed while any sem_wait
    is still executing.  */
 
-/* Set this to true if you assume that, in contrast to current Linux futex
-   documentation, lll_futex_wake can return -EINTR only if interrupted by a
-   signal, not spuriously due to some other reason.
-   TODO Discuss EINTR conditions with the Linux kernel community.  For
-   now, we set this to true to not change behavior of semaphores compared
-   to previous glibc builds.  */
-static const int sem_assume_only_signals_cause_futex_EINTR = 1;
-
 #if !__HAVE_64B_ATOMICS
 static void
 __sem_wait_32_finish (struct new_sem *sem);
@@ -205,11 +108,12 @@ do_futex_wait (struct new_sem *sem, const struct timespec *abstime)
   int err;
 
 #if __HAVE_64B_ATOMICS
-  err = futex_abstimed_wait ((unsigned int *) &sem->data + SEM_VALUE_OFFSET, 0,
-			     abstime, sem->private, true);
+  err = futex_abstimed_wait_cancelable (
+      (unsigned int *) &sem->data + SEM_VALUE_OFFSET, 0, abstime,
+      sem->private);
 #else
-  err = futex_abstimed_wait (&sem->value, SEM_NWAITERS_MASK, abstime,
-			     sem->private, true);
+  err = futex_abstimed_wait_cancelable (&sem->value, SEM_NWAITERS_MASK,
+					abstime, sem->private);
 #endif
 
   return err;
@@ -279,26 +183,12 @@ __new_sem_wait_slow (struct new_sem *sem, const struct timespec *abstime)
 	     wake-up, or due to a change in the number of tokens.  We retry in
 	     these cases.
 	     If we timed out, forward this to the caller.
-	     EINTR could be either due to being interrupted by a signal, or
-	     due to a spurious wake-up.  Thus, we cannot distinguish between
-	     both, and are not allowed to return EINTR to the caller but have
-	     to retry; this is because we may not have been interrupted by a
-	     signal.  However, if we assume that only signals cause a futex
-	     return of EINTR, we forward EINTR to the caller.
-
-	     Retrying on EINTR is technically always allowed because to
-	     reliably interrupt sem_wait with a signal, the signal handler
-	     must call sem_post (which is AS-Safe).  In executions where the
-	     signal handler does not do that, the implementation can correctly
-	     claim that sem_wait hadn't actually started to execute yet, and
-	     thus the signal never actually interrupted sem_wait.  We make no
-	     timing guarantees, so the program can never observe that sem_wait
-	     actually did start to execute.  Thus, in a correct program, we
-	     can expect a signal that wanted to interrupt the sem_wait to have
-	     provided a token, and can just try to grab this token if
-	     futex_wait returns EINTR.  */
-	  if (err == ETIMEDOUT ||
-	      (err == EINTR && sem_assume_only_signals_cause_futex_EINTR))
+	     EINTR is returned if we are interrupted by a signal; we
+	     forward this to the caller.  (See futex_wait and related
+	     documentation.  Before Linux 2.6.22, EINTR was also returned on
+	     spurious wake-ups; we only support more recent Linux versions,
+	     so do not need to consider this here.)  */
+	  if (err == ETIMEDOUT || err == EINTR)
 	    {
 	      __set_errno (err);
 	      err = -1;
@@ -390,8 +280,7 @@ __new_sem_wait_slow (struct new_sem *sem, const struct timespec *abstime)
 	    {
 	      /* See __HAVE_64B_ATOMICS variant.  */
 	      err = do_futex_wait(sem, abstime);
-	      if (err == ETIMEDOUT ||
-		  (err == EINTR && sem_assume_only_signals_cause_futex_EINTR))
+	      if (err == ETIMEDOUT || err == EINTR)
 		{
 		  __set_errno (err);
 		  err = -1;

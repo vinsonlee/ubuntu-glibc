@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2015 Free Software Foundation, Inc.
+# Copyright (C) 1991-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -122,6 +122,16 @@ $(common-objpfx)libc-abis.stamp: $(..)scripts/gen-libc-abis \
 	touch $@
 common-generated += $(common-objpfx)libc-abis.h
 endif # avoid-generated
+
+ifeq (yes,$(build-shared))
+$(common-objpfx)runtime-linker.h: $(common-objpfx)runtime-linker.stamp; @:
+$(common-objpfx)runtime-linker.stamp: $(common-objpfx)config.make
+	$(make-target-directory)
+	echo '#define RUNTIME_LINKER "$(rtlddir)/$(rtld-installed-name)"' \
+		> ${@:stamp=T}
+	$(move-if-change) ${@:stamp=T} ${@:stamp=h}
+	touch $@
+endif
 
 # Make sure the subdirectory for object files gets created.
 ifdef objpfx
@@ -505,9 +515,10 @@ link-libc-deps = $(common-objpfx)libc.so $(common-objpfx)linkobj/libc.so \
 # to be as similar as possible to a default link with an installed libc.
 lib%.so: lib%_pic.a $(+preinit) $(+postinit) $(link-libc-deps)
 	$(build-shlib) $(link-libc-args)
+	$(call after-link,$@)
 
 define build-shlib-helper
-$(LINK.o) -shared $(static-libgcc) -Wl,-O1 $(sysdep-LDFLAGS) \
+$(LINK.o) -shared -static-libgcc -Wl,-O1 $(sysdep-LDFLAGS) \
 	  $(if $($(@F)-no-z-defs)$(no-z-defs),,-Wl,-z,defs) $(rtld-LDFLAGS) \
 	  $(extra-B-$(@F:lib%.so=%).so) -B$(csu-objpfx) \
 	  $(extra-B-$(@F:lib%.so=%).so) $(load-map-file) \
@@ -566,7 +577,7 @@ $(build-shlib-helper) -o $@ $(shlib-lds-flags) \
 endef
 
 define build-module-helper
-$(LINK.o) -shared $(static-libgcc) $(sysdep-LDFLAGS) $(rtld-LDFLAGS) \
+$(LINK.o) -shared -static-libgcc $(sysdep-LDFLAGS) $(rtld-LDFLAGS) \
 	  $(if $($(@F)-no-z-defs)$(no-z-defs),,-Wl,-z,defs) \
 	  -B$(csu-objpfx) $(load-map-file) \
 	  $(LDFLAGS.so) $(LDFLAGS-$(@F:%.so=%).so) \
@@ -580,12 +591,14 @@ endef
 define build-module
 $(build-module-helper) -o $@ $(shlib-lds-flags) \
 	  $(csu-objpfx)abi-note.o $(build-module-objlist) $(link-libc-args)
+$(call after-link,$@)
 endef
 define build-module-asneeded
 $(build-module-helper) -o $@ $(shlib-lds-flags) \
 	  $(csu-objpfx)abi-note.o \
 	  -Wl,--as-needed $(build-module-objlist) -Wl,--no-as-needed \
 	  $(link-libc-args)
+$(call after-link,$@)
 endef
 
 build-module-helper-objlist = \
@@ -666,6 +679,7 @@ $(common-objpfx)libc.so: $(elf-objpfx)soinit.os \
 			 $(elf-objpfx)ld.so \
 			 $(shlib-lds)
 	$(build-shlib)
+	$(call after-link,$@)
 
 $(common-objpfx)linkobj/libc.so: $(elf-objpfx)soinit.os \
 			 $(common-objpfx)linkobj/libc_pic.a \
@@ -674,6 +688,7 @@ $(common-objpfx)linkobj/libc.so: $(elf-objpfx)soinit.os \
 			 $(elf-objpfx)ld.so \
 			 $(shlib-lds)
 	$(build-shlib)
+	$(call after-link,$@)
 
 ifeq ($(build-shared),yes)
 $(common-objpfx)libc.so: $(common-objpfx)libc.map
@@ -901,6 +916,26 @@ endef
 installed-libcs := $(foreach o,$(filter-out .os,$(object-suffixes-for-libc)),\
 			     $(inst_libdir)/$(patsubst %,$(libtype$o),\
 						     $(libprefix)$(libc-name)))
+
+.PHONY: check-install-supported
+check-install-supported:
+
+# Check to see if the prefix or exec_prefix GNU standard variable
+# has been overridden on the command line and, if so, fail with
+# an error message since doing so is not supported (set DESTDIR
+# instead).
+ifeq ($(origin prefix),command line)
+check-install-supported:
+	$(error Overriding prefix is not supported. Set DESTDIR instead.)
+endif
+
+ifeq ($(origin exec_prefix),command line)
+check-install-supported:
+	$(error Overriding exec_prefix is not supported. Set DESTDIR instead.)
+endif
+
+install: check-install-supported
+
 install: $(installed-libcs)
 $(installed-libcs): $(inst_libdir)/lib$(libprefix)%: lib $(+force)
 	$(make-target-directory)
@@ -1097,7 +1132,8 @@ endif
 
 define do-install-so
 $(do-install-program)
-$(patsubst %,ln -s -f $(@F) $(@D)/$(patsubst %$*.so,%,$(<F))$(libprefix)$*.so,\
+$(patsubst %,$(LN_S) -f $(@F) \
+			$(@D)/$(patsubst %$*.so,%,$(<F))$(libprefix)$*.so,\
 	   $(filter-out %.so,$@))
 endef
 
@@ -1311,25 +1347,54 @@ define update-abi
  fi
 endef
 
-.PHONY: update-abi check-abi
+# Patch all .abilist files for one DSO.  The find command locates
+# abilist files for all architectures.  The regular expression in the
+# find invocation is needed to separate libc.abilist and
+# libcrypt.abilist, for example.  It assumes that abilist-pattern, if
+# set, is of the form "%-SUFFIX", and not "%SUFFIX", that is, there is
+# a non-alphanumeric seperator between the pattern and the suffix
+# added.  The abilist files in /generic/ are filtered out because
+# these are expected to remain empty.
+define update-all-abi
+$(SHELL) $(..)scripts/update-abilist.sh $^ \
+  $$(find $(..)sysdeps \
+    -regextype posix-egrep -regex '.*/$*([^a-z0-9].*)?\.abilist$$' \
+    \! -regex '.*/generic/.*')
+endef
+ifdef abilist-pattern
+update-all-abi-%: $(abilist-pattern) $(objpfx)%.symlist
+	$(update-all-abi)
+update-all-abi-%: $(abilist-pattern) $(common-objpfx)%.symlist
+	$(update-all-abi)
+endif
+update-all-abi-%: %.abilist $(objpfx)%.symlist
+	$(update-all-abi)
+update-all-abi-%: %.abilist $(common-objpfx)%.symlist
+	$(update-all-abi)
+
+.PHONY: update-abi update-all-abi check-abi
 update-abi: $(patsubst %.so,update-abi-%,$(install-lib.so-versioned))
+update-all-abi: $(patsubst %.so,update-all-abi-%,$(install-lib.so-versioned))
 check-abi-list = $(patsubst %.so,$(objpfx)check-abi-%.out, \
 				 $(install-lib.so-versioned))
 check-abi: $(check-abi-list)
 ifdef subdir
 subdir_check-abi: check-abi
 subdir_update-abi: update-abi
+subdir_update-all-abi: update-all-abi
 else
 check-abi: subdir_check-abi
 	if grep -q '^FAIL:' $(objpfx)*/check-abi*.test-result; then \
 		cat $(objpfx)*/check-abi*.out && exit 1; fi
 update-abi: subdir_update-abi
+update-all-abi: subdir_update-all-abi
 endif
 
 ifeq ($(subdir),elf)
 check-abi: $(objpfx)check-abi-libc.out
 tests-special += $(objpfx)check-abi-libc.out
 update-abi: update-abi-libc
+update-all-abi: update-all-abi-libc
 common-generated += libc.symlist
 endif
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,12 +23,7 @@
 
 /* Change the owner and group of FILE.  */
 int
-fchownat (fd, file, owner, group, flag)
-     int fd;
-     const char *file;
-     uid_t owner;
-     gid_t group;
-     int flag;
+fchownat (int fd, const char *file, uid_t owner, gid_t group, int flag)
 {
   if (file == NULL || (flag & ~AT_SYMLINK_NOFOLLOW) != 0)
     {

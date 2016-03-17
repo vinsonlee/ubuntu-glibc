@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,9 +29,7 @@
 /* The `uname' information includes the domain name.  */
 
 int
-getdomainname (name, len)
-    char *name;
-    size_t len;
+getdomainname (char *name, size_t len)
 {
   struct utsname u;
   size_t u_len;
@@ -47,9 +45,7 @@ getdomainname (name, len)
 #else
 
 int
-getdomainname (name, len)
-     char *name;
-     size_t len;
+getdomainname (char *name, size_t len)
 {
   __set_errno (ENOSYS);
   return -1;

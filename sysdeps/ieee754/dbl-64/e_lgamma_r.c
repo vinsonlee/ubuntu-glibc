@@ -77,6 +77,7 @@
  *
  */
 
+#include <libc-internal.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -225,6 +226,8 @@ __ieee754_lgamma_r(double x, int *signgamp)
 	    if(__builtin_expect(ix>=0x43300000, 0))
 		/* |x|>=2**52, must be -integer */
 		return x/zero;
+	    if (x < -2.0 && x > -28.0)
+		return __lgamma_neg (x, signgamp);
 	    t = sin_pi(x);
 	    if(t==zero) return one/fabsf(t); /* -integer */
 	    nadj = __ieee754_log(pi/fabs(t*x));
@@ -293,8 +296,15 @@ __ieee754_lgamma_r(double x, int *signgamp)
 	    r = (x-half)*(t-one)+w;
 	} else
     /* 2**58 <= x <= inf */
-	    r =  x*(__ieee754_log(x)-one);
+	    r =  math_narrow_eval (x*(__ieee754_log(x)-one));
+	/* NADJ is set for negative arguments but not otherwise,
+	   resulting in warnings that it may be used uninitialized
+	   although in the cases where it is used it has always been
+	   set.  */
+	DIAG_PUSH_NEEDS_COMMENT;
+	DIAG_IGNORE_NEEDS_COMMENT (4.9, "-Wmaybe-uninitialized");
 	if(hx<0) r = nadj - r;
+	DIAG_POP_NEEDS_COMMENT;
 	return r;
 }
 strong_alias (__ieee754_lgamma_r, __lgamma_r_finite)

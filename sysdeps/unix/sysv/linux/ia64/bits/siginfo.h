@@ -1,5 +1,5 @@
 /* siginfo_t, sigevent and constants.  Linux/ia64 version.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>.
 
@@ -42,7 +42,7 @@ typedef union sigval
 # define __SI_MAX_SIZE     128
 # define __SI_PAD_SIZE     ((__SI_MAX_SIZE / sizeof (int)) - 4)
 
-typedef struct siginfo
+typedef struct
   {
     int si_signo;		/* Signal number.  */
     int si_errno;		/* If non-zero, an errno value associated with

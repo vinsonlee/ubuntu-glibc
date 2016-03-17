@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>.
 
@@ -43,9 +43,13 @@ __libgcc_s_init (void)
     __libc_fatal (LIBGCC_S_SO
                   " must be installed for pthread_cancel to work\n");
 
+#ifdef PTR_MANGLE
   PTR_MANGLE (resume);
+#endif
   __libgcc_s_resume = resume;
+#ifdef PTR_MANGLE
   PTR_MANGLE (personality);
+#endif
   libgcc_s_personality = personality;
 }
 
@@ -57,7 +61,9 @@ _Unwind_Resume (struct _Unwind_Exception *exc)
     __libgcc_s_init ();
 
   __typeof (__libgcc_s_resume) resume = __libgcc_s_resume;
+#ifdef PTR_DEMANGLE
   PTR_DEMANGLE (resume);
+#endif
   (*resume) (exc);
 }
 #endif
@@ -69,6 +75,8 @@ __gcc_personality_v0 PERSONALITY_PROTO
     __libgcc_s_init ();
 
   __typeof (libgcc_s_personality) personality = libgcc_s_personality;
+#ifdef PTR_DEMANGLE
   PTR_DEMANGLE (personality);
+#endif
   return (*personality) PERSONALITY_ARGS;
 }

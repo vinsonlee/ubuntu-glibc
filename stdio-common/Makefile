@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2015 Free Software Foundation, Inc.
+# Copyright (C) 1991-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -57,18 +57,36 @@ tests := tstscanf test_rdwr test-popen tstgetln test-fseek \
 	 bug19 bug19a tst-popen2 scanf13 scanf14 scanf15 bug20 bug21 bug22 \
 	 scanf16 scanf17 tst-setvbuf1 tst-grouping bug23 bug24 \
 	 bug-vfprintf-nargs tst-long-dbl-fphex tst-fphex-wide tst-sprintf3 \
-	 bug25 tst-printf-round bug23-2 bug23-3 bug23-4 bug26
+	 bug25 tst-printf-round bug23-2 bug23-3 bug23-4 bug26 tst-fmemopen3 \
+	 tst-printf-bz18872
 
 test-srcs = tst-unbputc tst-printf
 
 ifeq ($(run-built-tests),yes)
 tests-special += $(objpfx)tst-unbputc.out $(objpfx)tst-printf.out \
+		 $(objpfx)tst-printf-bz18872-mem.out \
 		 $(objpfx)tst-setvbuf1-cmp.out
+generated += tst-printf-bz18872.c tst-printf-bz18872.mtrace \
+	     tst-printf-bz18872-mem.out
 endif
 
 include ../Rules
 
 ifeq ($(run-built-tests),yes)
+LOCALES := de_DE.ISO-8859-1 de_DE.UTF-8 en_US.ISO-8859-1 ja_JP.EUC-JP
+include ../gen-locales.mk
+
+$(objpfx)bug14.out: $(gen-locales)
+$(objpfx)scanf13.out: $(gen-locales)
+$(objpfx)test-vfprintf.out: $(gen-locales)
+$(objpfx)tst-grouping.out: $(gen-locales)
+$(objpfx)tst-sprintf.out: $(gen-locales)
+$(objpfx)tst-sscanf.out: $(gen-locales)
+$(objpfx)tst-swprintf.out: $(gen-locales)
+endif
+
+tst-printf-bz18872-ENV = MALLOC_TRACE=$(objpfx)tst-printf-bz18872.mtrace
+
 $(objpfx)tst-unbputc.out: tst-unbputc.sh $(objpfx)tst-unbputc
 	$(SHELL) $< $(common-objpfx) '$(test-program-prefix)'; \
 	$(evaluate-test)
@@ -76,7 +94,15 @@ $(objpfx)tst-unbputc.out: tst-unbputc.sh $(objpfx)tst-unbputc
 $(objpfx)tst-printf.out: tst-printf.sh $(objpfx)tst-printf
 	$(SHELL) $< $(common-objpfx) '$(test-program-prefix)'; \
 	$(evaluate-test)
-endif
+
+# We generate this source because it requires a printf invocation with
+# 10K arguments.
+$(objpfx)tst-printf-bz18872.c: tst-printf-bz18872.sh
+	rm -f $@ && $(BASH) $^ > $@.new && mv $@.new $@
+
+$(objpfx)tst-printf-bz18872-mem.out: $(objpfx)tst-printf-bz18872.out
+	$(common-objpfx)malloc/mtrace $(objpfx)tst-printf-bz18872.mtrace > $@; \
+	$(evaluate-test)
 
 CFLAGS-vfprintf.c = -Wno-uninitialized
 CFLAGS-vfwprintf.c = -Wno-uninitialized
@@ -88,18 +114,18 @@ CFLAGS-psignal.c = -fexceptions
 CFLAGS-vprintf.c = -fexceptions
 CFLAGS-cuserid.c = -fexceptions
 
-CFLAGS-vfprintf.c += $(exceptions)
-CFLAGS-fprintf.c += $(exceptions)
-CFLAGS-printf.c += $(exceptions)
-CFLAGS-vfwprintf.c += $(exceptions)
-CFLAGS-vfscanf.c += $(exceptions)
-CFLAGS-vfwscanf.c += $(exceptions)
-CFLAGS-fscanf.c += $(exceptions)
-CFLAGS-scanf.c += $(exceptions)
-CFLAGS-isoc99_vfscanf.c += $(exceptions)
-CFLAGS-isoc99_vscanf.c += $(exceptions)
-CFLAGS-isoc99_fscanf.c += $(exceptions)
-CFLAGS-isoc99_scanf.c += $(exceptions)
+CFLAGS-vfprintf.c += -fexceptions
+CFLAGS-fprintf.c += -fexceptions
+CFLAGS-printf.c += -fexceptions
+CFLAGS-vfwprintf.c += -fexceptions
+CFLAGS-vfscanf.c += -fexceptions
+CFLAGS-vfwscanf.c += -fexceptions
+CFLAGS-fscanf.c += -fexceptions
+CFLAGS-scanf.c += -fexceptions
+CFLAGS-isoc99_vfscanf.c += -fexceptions
+CFLAGS-isoc99_vscanf.c += -fexceptions
+CFLAGS-isoc99_fscanf.c += -fexceptions
+CFLAGS-isoc99_scanf.c += -fexceptions
 CFLAGS-errlist.c = $(fno-unit-at-a-time)
 CFLAGS-siglist.c = $(fno-unit-at-a-time)
 

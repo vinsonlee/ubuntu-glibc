@@ -1,5 +1,5 @@
 /* Machine-dependent details of interruptible RPC messaging.  i386 version.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -33,9 +33,9 @@
        "_hurd_intr_rpc_msg_do_trap:	lcall $7, $0 # status in %0\n"	      \
        "_hurd_intr_rpc_msg_in_trap:	movl %%ecx, %%esp\n"		      \
        "_hurd_intr_rpc_msg_sp_restored:"				      \
-       : "=a" (err), "=m" (option), "=m" (timeout)			      \
-       : "m" ((&msg)[-1]), "1" (option), "2" (timeout)			      \
-       : "%ecx");							      \
+       : "=a" (err), "+m" (option), "+m" (timeout)			      \
+       : "m" ((&msg)[-1])						      \
+       : "ecx");							      \
   err;									      \
 })
 

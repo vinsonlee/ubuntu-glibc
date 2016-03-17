@@ -1,5 +1,5 @@
 /* memcpy with unaliged loads
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -15,6 +15,8 @@
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
+
+#if IS_IN (libc)
 
 #include <sysdep.h>
 
@@ -169,3 +171,5 @@ L(between_5_8):
 	movl	%eax, -4(%rdi,%rdx)
 	jmp	L(return)
 END(__memcpy_sse2_unaligned)
+
+#endif

@@ -7,6 +7,7 @@ Description: Lie about futex_atomic_cmpxchg_inatomic kernel support.
  and plug our ears and scream "LA LA LA" about how wrong this is.
 Author: Adam Conrad <adconrad@ubuntu.com>
 Bug-Ubuntu: https://launchpad.net/bugs/1436162
+Bug-Debian: https://bugs.debian.org/788799
 Last-Update: 2015-03-25
 
 --- glibc-2.21.orig/sysdeps/unix/sysv/linux/arm/kernel-features.h

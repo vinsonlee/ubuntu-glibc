@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -65,6 +65,9 @@ __BEGIN_DECLS
 
 /* The utilities on GNU systems also correspond to this version.  */
 #define _POSIX2_VERSION	__POSIX2_THIS_VERSION
+
+/* This symbol was required until the 2001 edition of POSIX.  */
+#define	_POSIX2_C_VERSION	__POSIX2_THIS_VERSION
 
 /* If defined, the implementation supports the
    C Language Bindings Option.  */
