@@ -20,6 +20,7 @@
  *   Special cases:
  */
 
+#include <errno.h>
 #include <math.h>
 #include <math_private.h>
 #include <float.h>
@@ -59,15 +60,14 @@ float __nexttowardf(float x, long double y)
 	}
 	hy = hx&0x7f800000;
 	if(hy>=0x7f800000) {
-	  x = x+x;	/* overflow  */
-	  if (FLT_EVAL_METHOD != 0)
-	    /* Force conversion to float.  */
-	    asm ("" : "+m"(x));
-	  return x;
+	  float u = x+x;			/* overflow  */
+	  math_force_eval (u);
+	  __set_errno (ERANGE);
 	}
 	if(hy<0x00800000) {
 	    float u = x*x;			/* underflow */
 	    math_force_eval (u);		/* raise underflow flag */
+	    __set_errno (ERANGE);
 	}
 	SET_FLOAT_WORD(x,hx);
 	return x;

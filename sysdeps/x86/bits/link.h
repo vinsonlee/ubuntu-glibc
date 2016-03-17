@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,6 +38,8 @@ typedef struct La_i86_retval
   uint32_t lrv_edx;
   long double lrv_st0;
   long double lrv_st1;
+  uint64_t lrv_bnd0;
+  uint64_t lrv_bnd1;
 } La_i86_retval;
 
 

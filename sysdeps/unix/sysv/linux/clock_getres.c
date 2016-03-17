@@ -1,5 +1,5 @@
 /* clock_getres -- Get the resolution of a POSIX clockid_t.  Linux version.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,14 +21,10 @@
 #include <time.h>
 #include "kernel-posix-cpu-timers.h"
 
-#ifndef HAVE_CLOCK_GETRES_VSYSCALL
-# undef INTERNAL_VSYSCALL
-# define INTERNAL_VSYSCALL INTERNAL_SYSCALL
-# undef INLINE_VSYSCALL
-# define INLINE_VSYSCALL INLINE_SYSCALL
-#else
-# include <bits/libc-vdso.h>
+#ifdef HAVE_CLOCK_GETRES_VSYSCALL
+# define HAVE_VSYSCALL
 #endif
+#include <sysdep-vdso.h>
 
 #define SYSCALL_GETRES \
   retval = INLINE_VSYSCALL (clock_getres, 2, clock_id, res); \

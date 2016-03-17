@@ -1,5 +1,5 @@
 /* Minimal replacements for basic facilities used in the dynamic linker.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,6 +18,7 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <stdio.h>
 #include <string.h>
 #include <tls.h>
 #include <unistd.h>
@@ -193,8 +194,22 @@ __strerror_r (int errnum, char *buf, size_t buflen)
   return msg;
 }
 
-#ifndef NDEBUG
+void
+__libc_fatal (const char *message)
+{
+  _dl_fatal_printf ("%s", message);
+}
+rtld_hidden_def (__libc_fatal)
 
+void
+__attribute__ ((noreturn))
+__chk_fail (void)
+{
+  _exit (127);
+}
+rtld_hidden_def (__chk_fail)
+
+#ifndef NDEBUG
 /* Define (weakly) our own assert failure function which doesn't use stdio.
    If we are linked into the user program (-ldl), the normal __assert_fail
    defn can override this one.  */
@@ -209,7 +224,7 @@ Inconsistency detected by ld.so: %s: %u: %s%sAssertion `%s' failed!\n",
 		    assertion);
 
 }
-rtld_hidden_weak(__assert_fail)
+rtld_hidden_weak (__assert_fail)
 
 void weak_function
 __assert_perror_fail (int errnum,
@@ -225,7 +240,7 @@ Inconsistency detected by ld.so: %s: %u: %s%sUnexpected error: %s.\n",
 }
 rtld_hidden_weak (__assert_perror_fail)
 #endif
-
+
 unsigned long int weak_function
 __strtoul_internal (const char *nptr, char **endptr, int base, int group)
 {
@@ -309,11 +324,8 @@ __strtoul_internal (const char *nptr, char **endptr, int base, int group)
    also has to be present and it is never about speed when these
    functions are used.  */
 char *
-_itoa (value, buflim, base, upper_case)
-     unsigned long long int value;
-     char *buflim;
-     unsigned int base;
-     int upper_case;
+_itoa (unsigned long long int value, char *buflim, unsigned int base,
+       int upper_case)
 {
   assert (! upper_case);
 
@@ -324,7 +336,11 @@ _itoa (value, buflim, base, upper_case)
   return buflim;
 }
 
-
+/* The '_itoa_lower_digits' variable in libc.so is able to handle bases
+   up to 36.  We don't need this here.  */
+const char _itoa_lower_digits[16] = "0123456789abcdef";
+rtld_hidden_data_def (_itoa_lower_digits)
+
 /* The following is not a complete strsep implementation.  It cannot
    handle empty delimiter strings.  But this isn't necessary for the
    execution of ld.so.  */
@@ -367,16 +383,3 @@ __strsep (char **stringp, const char *delim)
 }
 weak_alias (__strsep, strsep)
 strong_alias (__strsep, __strsep_g)
-
-void
-__attribute__ ((noreturn))
-__chk_fail (void)
-{
-  _exit (127);
-}
-rtld_hidden_def (__chk_fail)
-
-/* The '_itoa_lower_digits' variable in libc.so is able to handle bases
-   up to 36.  We don't need this here.  */
-const char _itoa_lower_digits[16] = "0123456789abcdef";
-rtld_hidden_data_def (_itoa_lower_digits)

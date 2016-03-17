@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Geoffrey Keating <Geoff.Keating@anu.edu.au>, 1997.
 
@@ -278,6 +278,6 @@ do_test (void)
    return (sin_failures == 0 && cos_failures == 0) ? 0 : 1;
 }
 
-#define TIMEOUT 10
+#define TIMEOUT 600
 #define TEST_FUNCTION do_test ()
 #include "../test-skeleton.c"

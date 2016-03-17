@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
    Based on work contributed by by Carl Pederson & Martin Schwidefsky.
@@ -210,7 +210,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 /* ELF_RTYPE_CLASS_PLT iff TYPE describes relocation of a PLT entry or
    TLS variable, so undefined references should not be allowed to
    define the value.
-   ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
+   ELF_RTYPE_CLASS_COPY iff TYPE should not be allowed to resolve to one
    of the main executable's symbols, as for a COPY reloc.  */
 #define elf_machine_type_class(type) \
   ((((type) == R_TILE(JMP_SLOT) || (type) == R_TILE_TLS(DTPMOD)		      \

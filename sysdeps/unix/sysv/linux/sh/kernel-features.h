@@ -1,6 +1,6 @@
 /* Set flags signalling availability of kernel features based on given
    kernel version number.  SH version.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,6 +19,27 @@
 
 /* SH uses socketcall.  */
 #define __ASSUME_SOCKETCALL		1
+
+/* These syscalls were added for SH in 2.6.37.  */
+#if __LINUX_KERNEL_VERSION >= 0x020625
+# define __ASSUME_SOCKET_SYSCALL	1
+# define __ASSUME_BIND_SYSCALL		1
+# define __ASSUME_CONNECT_SYSCALL	1
+# define __ASSUME_LISTEN_SYSCALL	1
+# define __ASSUME_ACCEPT_SYSCALL	1
+# define __ASSUME_GETSOCKNAME_SYSCALL	1
+# define __ASSUME_GETPEERNAME_SYSCALL	1
+# define __ASSUME_SOCKETPAIR_SYSCALL	1
+# define __ASSUME_SEND_SYSCALL		1
+# define __ASSUME_SENDTO_SYSCALL	1
+# define __ASSUME_RECV_SYSCALL		1
+# define __ASSUME_RECVFROM_SYSCALL	1
+# define __ASSUME_SHUTDOWN_SYSCALL	1
+# define __ASSUME_GETSOCKOPT_SYSCALL	1
+# define __ASSUME_SETSOCKOPT_SYSCALL	1
+# define __ASSUME_SENDMSG_SYSCALL	1
+# define __ASSUME_RECVMSG_SYSCALL	1
+#endif
 
 /* The accept4 syscall was added for SH in 2.6.37.  */
 #if __LINUX_KERNEL_VERSION >= 0x020625
@@ -40,3 +61,8 @@
 
 /* SH does not have a 64-bit inode field.  */
 #undef __ASSUME_ST_INO_64_BIT
+
+/* The prlimit64 syscall was added for SH in 2.6.37.  */
+#if __LINUX_KERNEL_VERSION < 0x020625
+# undef __ASSUME_PRLIMIT64
+#endif

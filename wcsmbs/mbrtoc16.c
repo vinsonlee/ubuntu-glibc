@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -76,6 +76,9 @@ mbrtoc16 (char16_t *pc16, const char *s, size_t n, mbstate_t *ps)
       s = "";
       n = 1;
     }
+
+  if (n == 0)
+    return (size_t) -2;
 
   /* Tell where we want the result.  */
   data.__outbuf = outbuf;

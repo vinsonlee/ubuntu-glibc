@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * Written by International Business Machines Corp.
- * Copyright (C) 2001-2015 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2016 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -29,7 +29,7 @@
 
 #include "mydefs.h"
 
-const static double one = 1.0, zero = 0.0, hhuge = 1.0e300, tiny = 1.0e-300,
+const static double zero = 0.0, hhuge = 1.0e300, tiny = 1.0e-300,
 err_0 = 1.000014, err_1 = 0.000016;
 const static int4 bigint = 0x40862002,
              badint = 0x40876000,smallint = 0x3C8fffff;

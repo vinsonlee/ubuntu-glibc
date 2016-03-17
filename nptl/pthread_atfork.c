@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -48,10 +48,8 @@ int
 /* Don't mark the compatibility function as hidden.  */
 attribute_hidden
 #endif
-__pthread_atfork (prepare, parent, child)
-     void (*prepare) (void);
-     void (*parent) (void);
-     void (*child) (void);
+__pthread_atfork (void (*prepare) (void), void (*parent) (void),
+		  void (*child) (void))
 {
   return __register_atfork (prepare, parent, child,
 			    &__dso_handle == NULL ? NULL : __dso_handle);

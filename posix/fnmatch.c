@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -166,9 +166,7 @@ static int posixly_correct;
 
 # if !defined HAVE___STRCHRNUL && !defined _LIBC
 static char *
-__strchrnul (s, c)
-     const char *s;
-     int c;
+__strchrnul (const char *s, int c)
 {
   char *result = strchr (s, c);
   if (result == NULL)
@@ -179,9 +177,7 @@ __strchrnul (s, c)
 
 # if HANDLE_MULTIBYTE && !defined HAVE___STRCHRNUL && !defined _LIBC
 static wchar_t *
-__wcschrnul (s, c)
-     const wchar_t *s;
-     wint_t c;
+__wcschrnul (const wchar_t *s, wint_t c)
 {
   wchar_t *result = wcschr (s, c);
   if (result == NULL)
@@ -229,7 +225,7 @@ __wcschrnul (s, c)
 # if HANDLE_MULTIBYTE
 /* Note that this evaluates C many times.  */
 #  ifdef _LIBC
-#   define FOLD(c) ((flags & FNM_CASEFOLD) ? towlower (c) : (c))
+#   define FOLD(c) ((flags & FNM_CASEFOLD) ? __towlower (c) : (c))
 #  else
 #   define FOLD(c) ((flags & FNM_CASEFOLD) && ISUPPER (c) ? towlower (c) : (c))
 #  endif
@@ -245,7 +241,7 @@ __wcschrnul (s, c)
 #  define STRLEN(S) __wcslen (S)
 #  define STRCAT(D, S) __wcscat (D, S)
 #  define MEMPCPY(D, S, N) __wmempcpy (D, S, N)
-#  define MEMCHR(S, C, N) wmemchr (S, C, N)
+#  define MEMCHR(S, C, N) __wmemchr (S, C, N)
 #  define STRCOLL(S1, S2) wcscoll (S1, S2)
 #  define WIDE_CHAR_VERSION 1
 /* Change the name the header defines so it doesn't conflict with
@@ -327,10 +323,7 @@ is_char_class (const wchar_t *wcs)
 
 
 int
-fnmatch (pattern, string, flags)
-     const char *pattern;
-     const char *string;
-     int flags;
+fnmatch (const char *pattern, const char *string, int flags)
 {
 # if HANDLE_MULTIBYTE
   if (__builtin_expect (MB_CUR_MAX, 1) != 1)
@@ -348,7 +341,7 @@ fnmatch (pattern, string, flags)
       memset (&ps, '\0', sizeof (ps));
       p = pattern;
 #ifdef _LIBC
-      n = strnlen (pattern, 1024);
+      n = __strnlen (pattern, 1024);
 #else
       n = strlen (pattern);
 #endif
@@ -392,7 +385,7 @@ fnmatch (pattern, string, flags)
 
       assert (mbsinit (&ps));
 #ifdef _LIBC
-      n = strnlen (string, 1024);
+      n = __strnlen (string, 1024);
 #else
       n = strlen (string);
 #endif

@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2015 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2016 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -39,6 +39,8 @@
 #include "powtwo.tbl"
 #include "MathLib.h"
 #include "uasncs.h"
+#include <float.h>
+#include <math.h>
 #include <math_private.h>
 
 #ifndef SECTION
@@ -67,7 +69,11 @@ __ieee754_asin(double x){
   m = u.i[HIGH_HALF];
   k = 0x7fffffff&m;              /* no sign */
 
-  if (k < 0x3e500000) return x;  /* for x->0 => sin(x)=x */
+  if (k < 0x3e500000)
+    {
+      math_check_force_underflow (x);
+      return x;  /* for x->0 => sin(x)=x */
+    }
   /*----------------------2^-26 <= |x| < 2^ -3    -----------------*/
   else
   if (k < 0x3fc00000) {
@@ -94,9 +100,9 @@ __ieee754_asin(double x){
 	__doasin(x,0,w);
 	if (w[0]==(w[0]+1.00000001*w[1])) return w[0];
 	else {
-	  y=ABS(x);
-	  res=ABS(w[0]);
-	  res1=ABS(w[0]+1.1*w[1]);
+	  y=fabs(x);
+	  res=fabs(w[0]);
+	  res1=fabs(w[0]+1.1*w[1]);
 	  return (m>0)?__sin32(y,res,res1):-__sin32(y,res,res1);
 	}
       }
@@ -125,11 +131,11 @@ __ieee754_asin(double x){
 	res1=res+1.1*cor;
 	z=0.5*(res1-res);
 	__dubsin(res,z,w);
-	z=(w[0]-ABS(x))+w[1];
+	z=(w[0]-fabs(x))+w[1];
 	if (z>1.0e-27) return (m>0)?min(res,res1):-min(res,res1);
 	else if (z<-1.0e-27) return (m>0)?max(res,res1):-max(res,res1);
 	else {
-	  y=ABS(x);
+	  y=fabs(x);
 	  return (m>0)?__sin32(y,res,res1):-__sin32(y,res,res1);
 	}
       }
@@ -158,11 +164,11 @@ __ieee754_asin(double x){
 	res1=res+1.1*cor;
 	z=0.5*(res1-res);
 	__dubsin(res,z,w);
-	z=(w[0]-ABS(x))+w[1];
+	z=(w[0]-fabs(x))+w[1];
 	if (z>1.0e-27) return (m>0)?min(res,res1):-min(res,res1);
 	else if (z<-1.0e-27) return (m>0)?max(res,res1):-max(res,res1);
 	else {
-	  y=ABS(x);
+	  y=fabs(x);
 	  return (m>0)?__sin32(y,res,res1):-__sin32(y,res,res1);
 	}
       }
@@ -193,11 +199,11 @@ __ieee754_asin(double x){
 	y=hp0.x-res;
 	z=((hp0.x-y)-res)+(hp1.x-z);
 	__dubcos(y,z,w);
-	z=(w[0]-ABS(x))+w[1];
+	z=(w[0]-fabs(x))+w[1];
 	if (z>1.0e-27) return (m>0)?min(res,res1):-min(res,res1);
 	else if (z<-1.0e-27) return (m>0)?max(res,res1):-max(res,res1);
 	else {
-	  y=ABS(x);
+	  y=fabs(x);
 	  return (m>0)?__sin32(y,res,res1):-__sin32(y,res,res1);
 	}
       }
@@ -231,11 +237,11 @@ __ieee754_asin(double x){
 	z=y+hp1.x;
 	y=(y-z)+hp1.x;
 	__dubcos(z,y,w);
-	z=(w[0]-ABS(x))+w[1];
+	z=(w[0]-fabs(x))+w[1];
 	if (z>1.0e-27) return (m>0)?min(res,res1):-min(res,res1);
 	else if (z<-1.0e-27) return (m>0)?max(res,res1):-max(res,res1);
 	else {
-	  y=ABS(x);
+	  y=fabs(x);
 	  return (m>0)?__sin32(y,res,res1):-__sin32(y,res,res1);
 	}
       }
@@ -270,11 +276,11 @@ __ieee754_asin(double x){
 	z=y+hp1.x;
 	y=(y-z)+hp1.x;
 	__dubcos(z,y,w);
-	z=(w[0]-ABS(x))+w[1];
+	z=(w[0]-fabs(x))+w[1];
 	if (z>1.0e-27) return (m>0)?min(res,res1):-min(res,res1);
 	else if (z<-1.0e-27) return (m>0)?max(res,res1):-max(res,res1);
 	else {
-	  y=ABS(x);
+	  y=fabs(x);
 	  return (m>0)?__sin32(y,res,res1):-__sin32(y,res,res1);
 	}
       }
@@ -308,7 +314,7 @@ __ieee754_asin(double x){
       cor = (res1-res)+cor;
       if (res==(res+1.0000001*cor)) return (m>0)?res:-res;
       else {
-	y=ABS(x);
+	y=fabs(x);
 	res1=res+1.1*cor;
 	return (m>0)?__sin32(y,res,res1):-__sin32(y,res,res1);
       }

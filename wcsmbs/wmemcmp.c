@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1996.
 
@@ -23,10 +23,7 @@
 #endif
 
 int
-WMEMCMP (s1, s2, n)
-     const wchar_t *s1;
-     const wchar_t *s2;
-     size_t n;
+WMEMCMP (const wchar_t *s1, const wchar_t *s2, size_t n)
 {
   wchar_t c1;
   wchar_t c2;

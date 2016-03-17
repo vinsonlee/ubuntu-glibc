@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,7 +16,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
-#include <sysdeps/generic/sysdep.h>
 #include <tls.h>
 #ifndef __ASSEMBLER__
 # include <nptl/pthreadP.h>

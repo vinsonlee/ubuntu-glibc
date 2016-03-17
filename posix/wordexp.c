@@ -1,5 +1,5 @@
 /* POSIX.2 wordexp implementation.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Tim Waugh <tim@cyberelk.demon.co.uk>.
 
@@ -42,7 +42,7 @@
 #include <wordexp.h>
 #include <kernel-features.h>
 
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <_itoa.h>
 
 /* Undefine the following line for the production version.  */
@@ -617,6 +617,10 @@ eval_expr_multdiv (char **expr, long int *result)
 	  if (eval_expr_val (expr, &arg) != 0)
 	    return WRDE_SYNTAX;
 
+	  /* Division by zero or integer overflow.  */
+	  if (arg == 0 || (arg == -1 && *result == LONG_MIN))
+	    return WRDE_SYNTAX;
+
 	  *result /= arg;
 	}
       else break;
@@ -1182,7 +1186,7 @@ parse_comm (char **word, size_t *word_length, size_t *max_length,
 		  // XXX Ideally we do want the thread being cancelable.
 		  // XXX If demand is there we'll change it.
 		  int state = PTHREAD_CANCEL_ENABLE;
-		  __libc_ptf_call (pthread_setcancelstate,
+		  __libc_ptf_call (__pthread_setcancelstate,
 				   (PTHREAD_CANCEL_DISABLE, &state), 0);
 #endif
 
@@ -1190,7 +1194,8 @@ parse_comm (char **word, size_t *word_length, size_t *max_length,
 				     flags, pwordexp, ifs, ifs_white);
 
 #ifdef __libc_ptf_call
-		  __libc_ptf_call (pthread_setcancelstate, (state, NULL), 0);
+		  __libc_ptf_call (__pthread_setcancelstate,
+				   (state, NULL), 0);
 #endif
 
 		  free (comm);
@@ -1217,6 +1222,9 @@ parse_comm (char **word, size_t *word_length, size_t *max_length,
 
   return WRDE_SYNTAX;
 }
+
+#define CHAR_IN_SET(ch, char_set) \
+  (memchr (char_set "", ch, sizeof (char_set) - 1) != NULL)
 
 static int
 internal_function
@@ -1299,7 +1307,7 @@ parse_param (char **word, size_t *word_length, size_t *max_length,
 	}
       while (isdigit(words[++*offset]));
     }
-  else if (strchr ("*@$", words[*offset]) != NULL)
+  else if (CHAR_IN_SET (words[*offset], "*@$"))
     {
       /* Special parameter. */
       special = 1;
@@ -1343,7 +1351,7 @@ parse_param (char **word, size_t *word_length, size_t *max_length,
 	  break;
 
 	case ':':
-	  if (strchr ("-=?+", words[1 + *offset]) == NULL)
+	  if (!CHAR_IN_SET (words[1 + *offset], "-=?+"))
 	    goto syntax;
 
 	  colon_seen = 1;
@@ -1912,7 +1920,7 @@ envsubst:
 	  if (pattern && !value)
 	    goto no_space;
 
-	  __setenv (env, value, 1);
+	  __setenv (env, value ?: "", 1);
 	  break;
 
 	default:
@@ -2045,6 +2053,8 @@ do_error:
   return error;
 }
 
+#undef CHAR_IN_SET
+
 static int
 internal_function
 parse_dollars (char **word, size_t *word_length, size_t *max_length,
@@ -2143,7 +2153,6 @@ parse_backtick (char **word, size_t *word_length, size_t *max_length,
 	      break;
 	    }
 
-	  ++(*offset);
 	  error = parse_backslash (&comm, &comm_length, &comm_maxlen, words,
 				   offset);
 

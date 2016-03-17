@@ -1,5 +1,5 @@
 /* SELinux access controls for nscd.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Matthew Rickard <mjricka@epoch.ncsc.mil>, 2004.
 
@@ -29,7 +29,6 @@
 #include <unistd.h>
 #include <sys/prctl.h>
 #include <selinux/avc.h>
-#include <selinux/flask.h>
 #include <selinux/selinux.h>
 #ifdef HAVE_LIBAUDIT
 # include <libaudit.h>
