@@ -1,8 +1,8 @@
-#! /usr/bin/perl
+#!/usr/bin/perl
 
 # Shared code for glibc conformance tests.
 
-# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# Copyright (C) 2014-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -27,8 +27,8 @@ require Exporter;
 # Compiler options for each standard.
 $CFLAGS{"ISO"} = "-ansi";
 $CFLAGS{"ISO99"} = "-std=c99";
-$CFLAGS{"ISO11"} = "-std=c1x -D_ISOC11_SOURCE";
-$CFLAGS{"POSIX"} = "-D_POSIX_C_SOURCE=199912 -ansi";
+$CFLAGS{"ISO11"} = "-std=c11";
+$CFLAGS{"POSIX"} = "-D_POSIX_C_SOURCE=199506L -ansi";
 $CFLAGS{"XPG3"} = "-ansi -D_XOPEN_SOURCE";
 $CFLAGS{"XPG4"} = "-ansi -D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED";
 $CFLAGS{"UNIX98"} = "-ansi -D_XOPEN_SOURCE=500";

@@ -1,9 +1,9 @@
-#! /usr/bin/perl
+#!/usr/bin/perl
 
 # Print a list of symbols exported by some headers that would
 # otherwise be in the user's namespace.
 
-# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# Copyright (C) 2014-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -55,13 +55,14 @@ $extra_syms{"UNIX98"} = ["errno", "setjmp", "va_end", "environ", "signgam",
 $extra_syms{"XOPEN2K"} = ["errno", "setjmp", "va_end", "environ", "signgam",
 			  "sigsetjmp", "optarg", "optind", "opterr", "optopt",
 			  "daylight", "timezone", "tzname", "getdate_err",
-			  "h_errno"];
+			  "h_errno", "in6addr_any", "in6addr_loopback"];
 $extra_syms{"XOPEN2K8"} = ["errno", "setjmp", "va_end", "environ", "signgam",
 			   "sigsetjmp", "optarg", "optind", "opterr", "optopt",
-			   "daylight", "timezone", "tzname", "getdate_err"];
+			   "daylight", "timezone", "tzname", "getdate_err",
+			   "in6addr_any", "in6addr_loopback"];
 $extra_syms{"POSIX2008"} = ["errno", "setjmp", "va_end", "environ",
 			    "sigsetjmp", "optarg", "optind", "opterr", "optopt",
-			    "tzname"];
+			    "tzname", "in6addr_any", "in6addr_loopback"];
 
 %user_syms = ();
 

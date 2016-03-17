@@ -1,17 +1,18 @@
+# configuration options for all flavours
 extra_config_options = --enable-multi-arch --enable-lock-elision
+MIN_KERNEL_SUPPORTED := 2.6.32
 libc_extra_cflags = -mno-tls-direct-seg-refs -fno-regmove
 
 # build 64-bit (amd64) alternative library
 GLIBC_MULTILIB_PASSES += amd64
 DEB_ARCH_MULTILIB_PACKAGES += libc6-amd64 libc6-dev-amd64
 libc6-amd64_shlib_dep = libc6-amd64 (>= $(shlib_dep_ver))
-amd64_add-ons = $(add-ons)
 amd64_configure_target = x86_64-linux-gnu
 # __x86_64__ is defined here because Makeconfig uses -undef and the
 # /usr/include/asm wrappers need that symbol.
 amd64_CC = $(CC) -m64 -D__x86_64__
 amd64_CXX = $(CXX) -m64 -D__x86_64__
-amd64_extra_config_options = $(extra_config_options)
+amd64_mvec = yes
 amd64_rtlddir = /lib64
 amd64_slibdir = /lib64
 amd64_libdir = /usr/lib64
@@ -43,11 +44,10 @@ endef
 GLIBC_MULTILIB_PASSES += x32
 DEB_ARCH_MULTILIB_PACKAGES += libc6-x32 libc6-dev-x32
 libc6-x32_shlib_dep = libc6-x32 (>= $(shlib_dep_ver))
-x32_add-ons = $(add-ons)
 x32_configure_target = x86_64-linux-gnux32
 x32_CC = $(CC) -mx32
 x32_CXX = $(CXX) -mx32
-x32_extra_config_options = $(extra_config_options)
+x32_mvec = yes
 x32_rtlddir = /libx32
 x32_slibdir = /libx32
 x32_libdir = /usr/libx32

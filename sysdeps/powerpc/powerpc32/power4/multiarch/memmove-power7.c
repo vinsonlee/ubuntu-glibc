@@ -1,5 +1,5 @@
 /* Power7 multiarch memmove.
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,6 +17,17 @@
    not, see <http://www.gnu.org/licenses/>.  */
 
 #include <string.h>
+#include <memcopy.h>
+
+extern __typeof (_wordcopy_fwd_aligned) _wordcopy_fwd_aligned_power7;
+extern __typeof (_wordcopy_fwd_dest_aligned) _wordcopy_fwd_dest_aligned_power7;
+extern __typeof (_wordcopy_bwd_aligned) _wordcopy_bwd_aligned_power7;
+extern __typeof (_wordcopy_bwd_dest_aligned) _wordcopy_bwd_dest_aligned_power7;
+
+#define _wordcopy_fwd_aligned       _wordcopy_fwd_aligned_power7
+#define _wordcopy_fwd_dest_aligned  _wordcopy_fwd_dest_aligned_power7
+#define _wordcopy_bwd_aligned       _wordcopy_bwd_aligned_power7
+#define _wordcopy_bwd_dest_aligned  _wordcopy_bwd_dest_aligned_power7
 
 extern __typeof (memcpy) __memcpy_power7;
 #define memcpy __memcpy_power7

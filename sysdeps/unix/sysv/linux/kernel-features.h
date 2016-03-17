@@ -1,6 +1,6 @@
 /* Set flags signalling availability of kernel features based on given
    kernel version number.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -41,14 +41,8 @@
 #define __ASSUME_SENDFILE		1
 
 /* Some architectures use the socketcall multiplexer for some or all
-   socket-related operations, via a socket.S file in glibc, instead of
-   separate syscalls.  __ASSUME_SOCKETCALL is defined for such
-   architectures.  */
-
-/* Linux 2.3.39 introduced IPC64.  Except for powerpc.  Linux 2.4.0 on
-   PPC introduced a correct IPC64.  But PowerPC64 does not support a
-   separate 64-bit syscall, already 64-bit.  */
-#define __ASSUME_IPC64		1
+   socket-related operations instead of separate syscalls.
+   __ASSUME_SOCKETCALL is defined for such architectures.  */
 
 /* The changed st_ino field appeared in 2.4.0-test6.  However, SH is lame,
    and still does not have a 64-bit inode field.  */
@@ -92,7 +86,6 @@
 
 /* Support for various CLOEXEC and NONBLOCK flags was added in
    2.6.27.  */
-#define __ASSUME_SOCK_CLOEXEC	1
 #define __ASSUME_IN_NONBLOCK	1
 #define __ASSUME_PIPE2		1
 #define __ASSUME_EVENTFD2	1

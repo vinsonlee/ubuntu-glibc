@@ -1,5 +1,5 @@
 /* _FORTIFY_SOURCE wrapper for open64.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@
 int
 __open64_2 (const char *file, int oflag)
 {
-  if (oflag & O_CREAT)
-    __fortify_fail ("invalid open64 call: O_CREAT without mode");
+  if (__OPEN_NEEDS_MODE (oflag))
+    __fortify_fail ("invalid open64 call: O_CREAT or O_TMPFILE without mode");
 
   return __open64 (file, oflag);
 }

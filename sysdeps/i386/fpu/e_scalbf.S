@@ -7,6 +7,7 @@
  */
 
 #include <machine/asm.h>
+#include <i386-math-asm.h>
 
 	.section .rodata
 
@@ -54,6 +55,7 @@ ENTRY(__ieee754_scalbf)
 	jne	4f
 	fscale
 	fstp	%st(1)
+	FLT_NARROW_EVAL
 	ret
 
 	/* y is -inf */
@@ -67,8 +69,10 @@ ENTRY(__ieee754_scalbf)
 	fstp	%st
 	fstp	%st
 	andl	$0x80000000, %edx
+	andl	$0x0228, %eax
+	cmpl	$0x0028, %eax
+	je	4f
 	andl	$8, %eax
-	jnz	4f
 	shrl	$27, %edx
 	addl	%edx, %eax
 	fldl	MOX(zero_nan, %eax, 1)

@@ -52,6 +52,9 @@ extern unsigned long long int __wcstoull_internal (const wchar_t *
 						   __restrict __endptr,
 						   int __base,
 						   int __group) __THROW;
+extern unsigned long long int ____wcstoull_l_internal (const wchar_t *,
+						       wchar_t **, int, int,
+						       __locale_t);
 libc_hidden_proto (__wcstof_internal)
 libc_hidden_proto (__wcstod_internal)
 libc_hidden_proto (__wcstold_internal)
@@ -81,21 +84,29 @@ libc_hidden_proto (vswscanf)
 
 libc_hidden_proto (mbrtowc)
 libc_hidden_proto (wcrtomb)
-libc_hidden_proto (wcscmp)
+extern int __wcscmp (const wchar_t *__s1, const wchar_t *__s2)
+     __THROW __attribute_pure__;
+libc_hidden_proto (__wcscmp)
 libc_hidden_proto (wcsftime)
 libc_hidden_proto (wcsspn)
 libc_hidden_proto (wcschr)
 /* The C++ overloading of wcschr means we have to repeat the type to
    declare __wcschr instead of using typeof, to avoid errors in C++
-   tests.  */
+   tests; in addition, __THROW cannot be used with a function type
+   from typeof in C++.  The same applies to __wmemchr and, as regards
+   __THROW, to __wcscmp and __wcscoll.  */
 extern wchar_t *__wcschr (const wchar_t *__wcs, wchar_t __wc)
      __THROW __attribute_pure__;
 libc_hidden_proto (__wcschr)
-libc_hidden_proto (wcscoll)
+extern int __wcscoll (const wchar_t *__s1, const wchar_t *__s2) __THROW;
+libc_hidden_proto (__wcscoll)
 libc_hidden_proto (wcspbrk)
 
 extern typeof (wmemset) __wmemset;
+extern wchar_t *__wmemchr (const wchar_t *__s, wchar_t __c, size_t __n)
+     __THROW __attribute_pure__;
 libc_hidden_proto (wmemchr)
+libc_hidden_proto (__wmemchr)
 libc_hidden_proto (wmemset)
 libc_hidden_proto (__wmemset)
 
@@ -189,7 +200,11 @@ extern int __isoc99_vwscanf (const wchar_t *__restrict __format,
 extern int __isoc99_vswscanf (const wchar_t *__restrict __s,
 			      const wchar_t *__restrict __format,
 			      __gnuc_va_list __arg) __THROW;
+extern int __vswscanf (const wchar_t *__restrict __s,
+		       const wchar_t *__restrict __format,
+		       __gnuc_va_list __arg) __THROW;
 libc_hidden_proto (__isoc99_vswscanf)
+libc_hidden_proto (__vswscanf)
 libc_hidden_proto (__isoc99_vfwscanf)
 
 /* Internal functions.  */

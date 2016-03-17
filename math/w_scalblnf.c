@@ -1,5 +1,5 @@
 /* Wrapper for __scalblnf handles setting errno.
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,12 +23,12 @@
 float
 __w_scalblnf (float x, long int n)
 {
-  if (!__finitef (x) || x == 0.0f)
+  if (!isfinite (x) || x == 0.0f)
     return x;
 
   x = __scalblnf (x, n);
 
-  if (!__finitef (x) || x == 0.0f)
+  if (!isfinite (x) || x == 0.0f)
     __set_errno (ERANGE);
 
   return x;

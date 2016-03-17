@@ -1,6 +1,6 @@
 /* Software floating-point emulation.
    Definitions for IEEE Quad Precision.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson (rth@cygnus.com),
 		  Jakub Jelinek (jj@ultra.linux.cz),
@@ -29,6 +29,9 @@
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
+
+#ifndef SOFT_FP_QUAD_H
+#define SOFT_FP_QUAD_H	1
 
 #if _FP_W_TYPE_SIZE < 32
 # error "Here's a nickel, kid. Go buy yourself a real computer."
@@ -323,3 +326,5 @@ union _FP_UNION_Q
 # define _FP_FRAC_HIGH_DW_Q(X)	_FP_FRAC_HIGH_4 (X)
 
 #endif /* not _FP_W_TYPE_SIZE < 64 */
+
+#endif /* !SOFT_FP_QUAD_H */

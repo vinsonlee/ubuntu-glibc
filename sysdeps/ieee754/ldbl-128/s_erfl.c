@@ -140,7 +140,6 @@ deval (long double x, const long double *p, int n)
 
 static const long double
 tiny = 1e-4931L,
-  half = 0.5L,
   one = 1.0L,
   two = 2.0L,
   /* 2/sqrt(pi) - 1 */
@@ -786,11 +785,7 @@ __erfl (long double x)
 	    {
 	      /* Avoid spurious underflow.  */
 	      long double ret =  0.0625 * (16.0 * x + (16.0 * efx) * x);
-	      if (fabsl (ret) < LDBL_MIN)
-		{
-		  long double force_underflow = ret * ret;
-		  math_force_eval (force_underflow);
-		}
+	      math_check_force_underflow (ret);
 	      return ret;
 	    }
 	  return x + efx * x;
@@ -874,7 +869,7 @@ __erfcl (long double x)
 	  y = C19b + z * neval (z, RNr19, NRNr19) / deval (z, RDr19, NRDr19);
 	  y += C19a;
 	  break;
-	case 9:
+	default: /* i == 9.  */
 	  z = x - 1.125L;
 	  y = C20b + z * neval (z, RNr20, NRNr20) / deval (z, RDr20, NRDr20);
 	  y += C20a;

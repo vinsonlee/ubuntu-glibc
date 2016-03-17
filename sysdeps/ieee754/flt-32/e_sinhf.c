@@ -13,6 +13,7 @@
  * ====================================================
  */
 
+#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -34,8 +35,10 @@ __ieee754_sinhf(float x)
 	if (jx<0) h = -h;
     /* |x| in [0,22], return sign(x)*0.5*(E+E/(E+1))) */
 	if (ix < 0x41b00000) {		/* |x|<22 */
-	    if (__builtin_expect(ix<0x31800000, 0))	/* |x|<2**-28 */
+	    if (__builtin_expect(ix<0x31800000, 0)) {	/* |x|<2**-28 */
+		math_check_force_underflow (x);
 		if(shuge+x>one) return x;/* sinh(tiny) = tiny with inexact */
+	    }
 	    t = __expm1f(fabsf(x));
 	    if(ix<0x3f800000) return h*((float)2.0*t-t*t/(t+one));
 	    return h*(t+t/(t+one));
@@ -52,6 +55,6 @@ __ieee754_sinhf(float x)
 	}
 
     /* |x| > overflowthresold, sinh(x) overflow */
-	return x*shuge;
+	return math_narrow_eval (x*shuge);
 }
 strong_alias (__ieee754_sinhf, __sinhf_finite)

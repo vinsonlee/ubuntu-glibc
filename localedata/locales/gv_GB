@@ -6,7 +6,7 @@ comment_char  %
 
 % Manx Gaelic language locale for Britain
 % Source: Alastair McKinstry
-% Address: Croí Lár, Ballinahalla, Maigh Cuilinn,
+% Address: CroÃ­ LÃ¡r, Ballinahalla, Maigh Cuilinn,
 %    Co. Gaillimh, Ireland
 % Contact: Alastair McKinstry
 % Email: mckinstry@computer.org
@@ -16,7 +16,6 @@ comment_char  %
 % Revision: 4.3
 % Date: 1999-07-06
 % Users: general
-% Repertoiremap: mnemonic,ds
 % Charset: ISO-8859-1
 % Distribution and use is free, also
 % for commercial purposes.
@@ -24,7 +23,7 @@ comment_char  %
 LC_IDENTIFICATION
 title      "Manx Gaelic locale for Britain"
 source     "Alastair McKinstry"
-address    "Croí Lár, Ballinahalla, Maigh Cuilinn,, Co. Gaillimh, Ireland"
+address    "CroÃ­ LÃ¡r, Ballinahalla, Maigh Cuilinn,, Co. Gaillimh, Ireland"
 contact    ""
 email      "bug-glibc-locales@gnu.org"
 tel        ""

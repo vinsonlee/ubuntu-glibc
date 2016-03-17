@@ -1,7 +1,7 @@
 /* Return arc hyperbole sine for double value, with the imaginary part
    of the result possibly adjusted for use in computing other
    functions.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -180,11 +180,7 @@ __kernel_casinh (__complex__ double x, int adj)
 	  else
 	    __imag__ res = __ieee754_atan2 (ix, s);
 	}
-      if (__real__ res < DBL_MIN)
-	{
-	  volatile double force_underflow = __real__ res * __real__ res;
-	  (void) force_underflow;
-	}
+      math_check_force_underflow_nonneg (__real__ res);
     }
   else
     {
@@ -199,7 +195,7 @@ __kernel_casinh (__complex__ double x, int adj)
       if (adj)
 	{
 	  double t = __real__ y;
-	  __real__ y = copysign (__imag__ y, __imag__ x);
+	  __real__ y = __copysign (__imag__ y, __imag__ x);
 	  __imag__ y = t;
 	}
 

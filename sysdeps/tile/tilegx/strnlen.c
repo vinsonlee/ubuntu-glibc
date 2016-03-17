@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -52,5 +52,6 @@ __strnlen (const char *s, size_t maxlen)
   size_t len = ((const char *) p) + (CFZ (bits) >> 3) - s;
   return (len < maxlen ? len : maxlen);
 }
+libc_hidden_def (__strnlen)
 weak_alias (__strnlen, strnlen)
 libc_hidden_def (strnlen)

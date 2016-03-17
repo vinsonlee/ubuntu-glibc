@@ -1,5 +1,5 @@
 /* Get file-specific information about a file.  Linux version.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -79,7 +79,7 @@ distinguish_extX (const struct statfs *fsbuf, const char *file, int fd)
   if (n != -1 && n < sizeof (path))
     {
       path[n] = '\0';
-      char *base = strdupa (basename (path));
+      char *base = strdupa (__basename (path));
       __snprintf (path, sizeof (path), "/sys/fs/ext4/%s", base);
 
       return __access (path, F_OK) == 0 ? EXT4_LINK_MAX : EXT2_LINK_MAX;
