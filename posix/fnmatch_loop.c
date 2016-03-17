@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,14 +38,8 @@ static const CHAR *END (const CHAR *patternp) internal_function;
 
 static int
 internal_function
-FCT (pattern, string, string_end, no_leading_period, flags, ends, alloca_used)
-     const CHAR *pattern;
-     const CHAR *string;
-     const CHAR *string_end;
-     int no_leading_period;
-     int flags;
-     struct STRUCT *ends;
-     size_t alloca_used;
+FCT (const CHAR *pattern, const CHAR *string, const CHAR *string_end,
+     int no_leading_period, int flags, struct STRUCT *ends, size_t alloca_used)
 {
   const CHAR *p = pattern, *n = string;
   UCHAR c;
@@ -945,14 +939,13 @@ FCT (pattern, string, string_end, no_leading_period, flags, ends, alloca_used)
 		  }
 		else if (c == L('[') && *p == L('.'))
 		  {
-		    ++p;
 		    while (1)
 		      {
 			c = *++p;
-			if (c == '\0')
+			if (c == L('\0'))
 			  return FNM_NOMATCH;
 
-			if (*p == L('.') && p[1] == L(']'))
+			if (c == L('.') && p[1] == L(']'))
 			  break;
 		      }
 		    p += 2;
@@ -1037,7 +1030,12 @@ END (const CHAR *pattern)
       }
     else if ((*p == L('?') || *p == L('*') || *p == L('+') || *p == L('@')
 	      || *p == L('!')) && p[1] == L('('))
-      p = END (p + 1);
+      {
+	p = END (p + 1);
+	if (*p == L('\0'))
+	  /* This is an invalid pattern.  */
+	  return pattern;
+      }
     else if (*p == L(')'))
       break;
 

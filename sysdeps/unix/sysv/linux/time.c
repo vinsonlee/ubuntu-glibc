@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,8 +23,7 @@
 #ifdef __NR_time
 
 time_t
-time (t)
-     time_t *t;
+time (time_t *t)
 {
   INTERNAL_SYSCALL_DECL (err);
   time_t res = INTERNAL_SYSCALL (time, err, 1, NULL);

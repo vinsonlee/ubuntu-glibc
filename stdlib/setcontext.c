@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,7 @@
 #include <ucontext.h>
 
 int
-setcontext (ucp)
-     const ucontext_t *ucp;
+setcontext (const ucontext_t *ucp)
 {
   __set_errno (ENOSYS);
   return -1;

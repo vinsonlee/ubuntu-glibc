@@ -1,5 +1,5 @@
 /* Optimized, inlined string functions.  i486/x86-64 version.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,8 +20,8 @@
 # error "Never use <bits/string.h> directly; include <string.h> instead."
 #endif
 
-/* The ix86 processors can access unaligned multi-byte variables.  */
-#define _STRING_ARCH_unaligned	1
+/* Use the unaligned string inline ABI.  */
+#define _STRING_INLINE_unaligned 1
 
 /* Enable inline functions only for i486 or better when compiling for
    ia32.  */
@@ -176,13 +176,15 @@ __memmove_g (void *__dest, const void *__src, size_t __n)
 	 "m" ( *(struct { __extension__ char __x[__n]; } *)__src));
   else
     __asm__ __volatile__
-      ("std\n\t"
+      ("decl %1\n\t"
+       "decl %2\n\t"
+       "std\n\t"
        "rep; movsb\n\t"
        "cld"
        : "=&c" (__d0), "=&S" (__d1), "=&D" (__d2),
 	 "=m" ( *(struct { __extension__ char __x[__n]; } *)__dest)
-       : "0" (__n), "1" (__n - 1 + (const char *) __src),
-	 "2" (__n - 1 + (char *) __tmp),
+       : "0" (__n), "1" (__n + (const char *) __src),
+	 "2" (__n + (char *) __tmp),
 	 "m" ( *(struct { __extension__ char __x[__n]; } *)__src));
   return __dest;
 }
@@ -999,9 +1001,10 @@ __strcat_c (char *__dest, const char __src[], size_t __srclen)
      : "cc");
   --__tmp;
 # else
-  register char *__tmp = __dest - 1;
+  register char *__tmp = __dest;
   __asm__ __volatile__
-    ("1:\n\t"
+    ("decl	%0\n\t"
+     "1:\n\t"
      "incl	%0\n\t"
      "cmpb	$0,(%0)\n\t"
      "jne	1b\n"
@@ -1020,10 +1023,11 @@ __STRING_INLINE char *__strcat_g (char *__dest, const char *__src);
 __STRING_INLINE char *
 __strcat_g (char *__dest, const char *__src)
 {
-  register char *__tmp = __dest - 1;
+  register char *__tmp = __dest;
   register char __dummy;
   __asm__ __volatile__
-    ("1:\n\t"
+    ("decl	%1\n\t"
+     "1:\n\t"
      "incl	%1\n\t"
      "cmpb	$0,(%1)\n\t"
      "jne	1b\n"

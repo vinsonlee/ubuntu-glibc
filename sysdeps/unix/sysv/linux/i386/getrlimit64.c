@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,5 +21,5 @@
 
 #undef getrlimit64
 #include <shlib-compat.h>
-versioned_symbol (libc, __new_getrlimit64, getrlimit64, GLIBC_2_2);
-strong_alias (__new_getrlimit64, __GI_getrlimit64)
+versioned_symbol (libc, __getrlimit64, getrlimit64, GLIBC_2_2);
+strong_alias (__getrlimit64, __GI_getrlimit64)

@@ -1,5 +1,5 @@
 /* Return exit value of asynchronous I/O request.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -30,8 +30,7 @@
 
 
 ssize_t
-aio_return (aiocbp)
-     struct aiocb *aiocbp;
+aio_return (struct aiocb *aiocbp)
 {
   return aiocbp->__return_value;
 }

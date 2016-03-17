@@ -1,6 +1,6 @@
 /* Set current context.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -97,10 +97,10 @@ ENTRY (__setcontext)
 
 	/* Restore the FP SIMD context.  */
 	add	x3, x2, #oV0 + 8 * SZVREG
-	ldp	 d8,  d9, [x3], #2 * SZVREG
-	ldp	d10, d11, [x3], #2 * SZVREG
-	ldp	d12, d13, [x3], #2 * SZVREG
-	ldp	d14, d15, [x3], #2 * SZVREG
+	ldp	 q8,  q9, [x3], #2 * SZVREG
+	ldp	q10, q11, [x3], #2 * SZVREG
+	ldp	q12, q13, [x3], #2 * SZVREG
+	ldp	q14, q15, [x3], #2 * SZVREG
 
 	add	x3, x2, oFPSR
 
@@ -125,5 +125,5 @@ weak_alias (__setcontext, setcontext)
 ENTRY (__startcontext)
 	mov	x0, x19
 	cbnz	x0, __setcontext
-1:	b       HIDDEN_JUMPTARGET (_exit)
+1:	b       HIDDEN_JUMPTARGET (exit)
 END (__startcontext)

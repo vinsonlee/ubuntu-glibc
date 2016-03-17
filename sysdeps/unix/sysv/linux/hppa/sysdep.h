@@ -1,5 +1,5 @@
 /* Assembler macros for PA-RISC.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper, <drepper@cygnus.com>, August 1999.
    Linux/PA-RISC changes by Philipp Rumpf, <prumpf@tux.org>, March 2000.
@@ -18,8 +18,15 @@
    License along with the GNU C Library.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <asm/unistd.h>
-#include <sysdeps/generic/sysdep.h>
+#ifndef _LINUX_HPPA_SYSDEP_H
+#define _LINUX_HPPA_SYSDEP_H 1
+
+#include <sysdeps/unix/sysdep.h>
+#include <sysdeps/unix/sysv/linux/sysdep.h>
+#include <sysdeps/hppa/sysdep.h>
+
+/* Defines RTLD_PRIVATE_ERRNO.  */
+#include <dl-sysdep.h>
 
 /* In order to get __set_errno() definition in INLINE_SYSCALL.  */
 #ifndef __ASSEMBLER__
@@ -115,6 +122,7 @@
    There is currently a bug in gdb which prevents us from specifying
    incomplete stabs information.  Fake some entries here which specify
    the current source file.  */
+#undef ENTRY
 #define	ENTRY(name)							\
 	.text						ASM_LINE_SEP	\
 	.align ALIGNARG(4)				ASM_LINE_SEP	\
@@ -171,6 +179,7 @@
 	bv,n 0(2)
 */
 
+#undef PSEUDO
 #define	PSEUDO(name, syscall_name, args)			\
   ENTRY (name)					ASM_LINE_SEP	\
   /* If necc. load args from stack */		ASM_LINE_SEP	\
@@ -359,28 +368,13 @@ L(pre_end):					ASM_LINE_SEP	\
 #undef INLINE_SYSCALL
 #define INLINE_SYSCALL(name, nr, args...)				\
 ({									\
-	long __sys_res;							\
-	{								\
-		register unsigned long __res asm("r28");		\
-		PIC_REG_DEF						\
-		LOAD_ARGS_##nr(args)					\
-		/* FIXME: HACK save/load r19 around syscall */		\
-		asm volatile(						\
-			SAVE_ASM_PIC					\
-			"	ble  0x100(%%sr2, %%r0)\n"		\
-			"	ldi %1, %%r20\n"			\
-			LOAD_ASM_PIC					\
-			: "=r" (__res)					\
-			: "i" (SYS_ify(name)) PIC_REG_USE ASM_ARGS_##nr	\
-			: "memory", CALL_CLOB_REGS CLOB_ARGS_##nr	\
-		);							\
-		__sys_res = (long)__res;				\
-	}								\
-	if ( (unsigned long)__sys_res >= (unsigned long)-4095 ){	\
-		__set_errno(-__sys_res);				\
-		__sys_res = -1;						\
-	}								\
-	__sys_res;							\
+    long __sys_res = INTERNAL_SYSCALL (name, , nr, args);		\
+    if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (__sys_res, )))	\
+      {									\
+	__set_errno (INTERNAL_SYSCALL_ERRNO (__sys_res, ));		\
+	__sys_res = -1;							\
+      }									\
+    __sys_res;								\
 })
 
 /* INTERNAL_SYSCALL_DECL - Allows us to setup some function static
@@ -407,9 +401,10 @@ L(pre_end):					ASM_LINE_SEP	\
 ({									\
 	long __sys_res;							\
 	{								\
+		LOAD_ARGS_##nr(args)					\
 		register unsigned long __res asm("r28");		\
 		PIC_REG_DEF						\
-		LOAD_ARGS_##nr(args)					\
+		LOAD_REGS_##nr						\
 		/* FIXME: HACK save/load r19 around syscall */		\
 		asm volatile(						\
 			SAVE_ASM_PIC					\
@@ -432,9 +427,10 @@ L(pre_end):					ASM_LINE_SEP	\
 ({									\
 	long __sys_res;							\
 	{								\
+		LOAD_ARGS_##nr(args)					\
 		register unsigned long __res asm("r28");		\
 		PIC_REG_DEF						\
-		LOAD_ARGS_##nr(args)					\
+		LOAD_REGS_##nr						\
 		/* FIXME: HACK save/load r19 around syscall */		\
 		asm volatile(						\
 			SAVE_ASM_PIC					\
@@ -450,27 +446,44 @@ L(pre_end):					ASM_LINE_SEP	\
 	__sys_res;							\
  })
 
-
-
 #define LOAD_ARGS_0()
-#define LOAD_ARGS_1(r26)						\
-  register unsigned long __r26 __asm__("r26") = (unsigned long)(r26);	\
+#define LOAD_REGS_0
+#define LOAD_ARGS_1(a1)							\
+  register unsigned long __x26 = (unsigned long)(a1);			\
   LOAD_ARGS_0()
-#define LOAD_ARGS_2(r26,r25)						\
-  register unsigned long __r25 __asm__("r25") = (unsigned long)(r25);	\
-  LOAD_ARGS_1(r26)
-#define LOAD_ARGS_3(r26,r25,r24)					\
-  register unsigned long __r24 __asm__("r24") = (unsigned long)(r24);	\
-  LOAD_ARGS_2(r26,r25)
-#define LOAD_ARGS_4(r26,r25,r24,r23)					\
-  register unsigned long __r23 __asm__("r23") = (unsigned long)(r23);	\
-  LOAD_ARGS_3(r26,r25,r24)
-#define LOAD_ARGS_5(r26,r25,r24,r23,r22)				\
-  register unsigned long __r22 __asm__("r22") = (unsigned long)(r22);	\
-  LOAD_ARGS_4(r26,r25,r24,r23)
-#define LOAD_ARGS_6(r26,r25,r24,r23,r22,r21)				\
-  register unsigned long __r21 __asm__("r21") = (unsigned long)(r21);	\
-  LOAD_ARGS_5(r26,r25,r24,r23,r22)
+#define LOAD_REGS_1							\
+  register unsigned long __r26 __asm__("r26") = __x26;			\
+  LOAD_REGS_0
+#define LOAD_ARGS_2(a1,a2)						\
+  register unsigned long __x25 = (unsigned long)(a2);			\
+  LOAD_ARGS_1(a1)
+#define LOAD_REGS_2							\
+  register unsigned long __r25 __asm__("r25") = __x25;			\
+  LOAD_REGS_1
+#define LOAD_ARGS_3(a1,a2,a3)						\
+  register unsigned long __x24 = (unsigned long)(a3);			\
+  LOAD_ARGS_2(a1,a2)
+#define LOAD_REGS_3							\
+  register unsigned long __r24 __asm__("r24") = __x24;			\
+  LOAD_REGS_2
+#define LOAD_ARGS_4(a1,a2,a3,a4)					\
+  register unsigned long __x23 = (unsigned long)(a4);			\
+  LOAD_ARGS_3(a1,a2,a3)
+#define LOAD_REGS_4							\
+  register unsigned long __r23 __asm__("r23") = __x23;			\
+  LOAD_REGS_3
+#define LOAD_ARGS_5(a1,a2,a3,a4,a5)					\
+  register unsigned long __x22 = (unsigned long)(a5);			\
+  LOAD_ARGS_4(a1,a2,a3,a4)
+#define LOAD_REGS_5							\
+  register unsigned long __r22 __asm__("r22") = __x22;			\
+  LOAD_REGS_4
+#define LOAD_ARGS_6(a1,a2,a3,a4,a5,a6)					\
+  register unsigned long __x21 = (unsigned long)(a6);			\
+  LOAD_ARGS_5(a1,a2,a3,a4,a5)
+#define LOAD_REGS_6							\
+  register unsigned long __r21 __asm__("r21") = __x21;			\
+  LOAD_REGS_5
 
 /* Even with zero args we use r20 for the syscall number */
 #define ASM_ARGS_0
@@ -495,3 +508,5 @@ L(pre_end):					ASM_LINE_SEP	\
 /* Pointer mangling is not yet supported for HPPA.  */
 #define PTR_MANGLE(var) (void) (var)
 #define PTR_DEMANGLE(var) (void) (var)
+
+#endif /* _LINUX_HPPA_SYSDEP_H */

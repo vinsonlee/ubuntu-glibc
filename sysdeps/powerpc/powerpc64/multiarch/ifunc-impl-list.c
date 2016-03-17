@@ -1,5 +1,5 @@
 /* Enumerate available IFUNC implementations of a function.  PowerPC64 version.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -321,6 +321,15 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
 			      __strcat_power7)
 	      IFUNC_IMPL_ADD (array, i, strcat, 1,
 			     __strcat_ppc))
+
+  /* Support sysdeps/powerpc/powerpc64/multiarch/strstr.c.  */
+  IFUNC_IMPL (i, name, strstr,
+             IFUNC_IMPL_ADD (array, i, strstr,
+                             hwcap & PPC_FEATURE_HAS_VSX,
+                             __strstr_power7)
+             IFUNC_IMPL_ADD (array, i, strstr, 1,
+                             __strstr_ppc))
+
 
   return i;
 }

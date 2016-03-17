@@ -1,5 +1,5 @@
 /* Open a file by name.  Stub version.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,12 +23,10 @@
 #include <stdio.h>
 
 
-/* Open FILE with access OFLAG.  If OFLAG includes O_CREAT,
+/* Open FILE with access OFLAG.  If O_CREAT or O_TMPFILE is in OFLAG,
    a third argument is the file protection.  */
 int
-__libc_open (file, oflag)
-     const char *file;
-     int oflag;
+__libc_open (const char *file, int oflag)
 {
   int mode;
 
@@ -38,7 +36,7 @@ __libc_open (file, oflag)
       return -1;
     }
 
-  if (oflag & O_CREAT)
+  if (__OPEN_NEEDS_MODE (oflag))
     {
       va_list arg;
       va_start(arg, oflag);

@@ -23,6 +23,7 @@
  */
 
 #include <machine/asm.h>
+#include <i386-math-asm.h>
 
 #ifdef USE_AS_EXP10L
 # define IEEE754_EXPL __ieee754_exp10l
@@ -65,6 +66,7 @@ c1:	.byte 0x20, 0xfa, 0xee, 0xc2, 0x5f, 0x70, 0xa5, 0xec, 0xed, 0x3f
 csat:	.byte 0, 0, 0, 0, 0, 0, 0, 0x80, 0x0e, 0x40
 	.byte 0, 0, 0, 0, 0, 0
 	ASM_SIZE_DIRECTIVE(csat)
+DEFINE_LDBL_MIN
 #endif
 
 #ifdef PIC
@@ -118,6 +120,12 @@ ENTRY(IEEE754_EXPL)
 	   normal.  */
 	cmpl	$0x0001, %eax
 	jge	2f
+	/* Force underflow and return the argument, to avoid wrong signs
+	   of zero results from the code below in some rounding modes.  */
+	fld	%st
+	fmul	%st
+	fstp	%st
+	jmp	2f
 #else
 	movzwl	4+8(%esp), %eax
 	andl	$0x7fff, %eax
@@ -189,6 +197,7 @@ ENTRY(IEEE754_EXPL)
 	fstp	%st(1)		/* 2  */
 	fscale			/* 2 scale factor is st(1); base^x */
 	fstp	%st(1)		/* 1  */
+	LDBL_CHECK_FORCE_UFLOW_NONNEG
 #endif
 	fstp	%st(1)		/* 0  */
 	jmp	2f

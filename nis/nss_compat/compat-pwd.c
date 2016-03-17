@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1996.
 
@@ -27,7 +27,7 @@
 #include <string.h>
 #include <rpc/types.h>
 #include <rpcsvc/ypclnt.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <kernel-features.h>
 
 #include "netgroup.h"
@@ -311,9 +311,6 @@ _nss_compat_setpwent (int stayopen)
 static enum nss_status
 internal_endpwent (ent_t *ent)
 {
-  if (nss_endpwent)
-    nss_endpwent ();
-
   if (ent->stream != NULL)
     {
       fclose (ent->stream);
@@ -345,6 +342,9 @@ _nss_compat_endpwent (void)
   enum nss_status result;
 
   __libc_lock_lock (lock);
+
+  if (nss_endpwent)
+    nss_endpwent ();
 
   result = internal_endpwent (&ext_ent);
 

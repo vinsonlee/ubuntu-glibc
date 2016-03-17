@@ -1,5 +1,5 @@
 /* Conversion module for ISO-2022-CN-EXT.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
@@ -426,7 +426,7 @@ enum
       }									      \
     else								      \
       {									      \
-	unsigned char buf[2];						      \
+	unsigned char buf[2] = { 0, 0 };				      \
 	int used;							      \
 									      \
 	if (set == GB2312_set || ((ann & SO_ann) != CNS11643_1_ann	      \

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,17 +26,8 @@
 pid_t
 __libc_wait (__WAIT_STATUS_DEFN stat_loc)
 {
-  if (SINGLE_THREAD_P)
-    return INLINE_SYSCALL (wait4, 4, WAIT_ANY, stat_loc, 0,
-			   (struct rusage *) NULL);
-
-  int oldtype = LIBC_CANCEL_ASYNC ();
-
-  pid_t result = INLINE_SYSCALL (wait4, 4, WAIT_ANY, stat_loc, 0,
+  pid_t result = SYSCALL_CANCEL (wait4, WAIT_ANY, stat_loc, 0,
 				 (struct rusage *) NULL);
-
-  LIBC_CANCEL_RESET (oldtype);
-
   return result;
 }
 

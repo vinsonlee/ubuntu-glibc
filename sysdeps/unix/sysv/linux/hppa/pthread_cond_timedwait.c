@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Carlos O'Donell <carlos@codesourcery.com>, 2009.
 
@@ -25,10 +25,8 @@
 # include <internaltypes.h>
 # include <shlib-compat.h>
 int
-__pthread_cond_timedwait (cond, mutex, abstime)
-     pthread_cond_t *cond;
-     pthread_mutex_t *mutex;
-     const struct timespec *abstime;
+__pthread_cond_timedwait (pthread_cond_t *cond, pthread_mutex_t *mutex,
+			  const struct timespec *abstime)
 {
   cond_compat_check_and_clear (cond);
   return __pthread_cond_timedwait_internal (cond, mutex, abstime);

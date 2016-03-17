@@ -1,5 +1,5 @@
 /* Round long double to integer away from zero.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997 and
 		  Jakub Jelinek <jj@ultra.linux.cz>, 1999.
@@ -34,7 +34,7 @@ __roundl (long double x)
 
   GET_LDOUBLE_WORDS64 (i0, i1, x);
   j0 = ((i0 >> 48) & 0x7fff) - 0x3fff;
-  if (j0 < 31)
+  if (j0 < 48)
     {
       if (j0 < 0)
 	{

@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -53,18 +53,8 @@ PWRITEV (int fd, const struct iovec *vector, int count, OFF_T offset)
 #ifdef __NR_pwritev
   ssize_t result;
 
-  if (SINGLE_THREAD_P)
-    result = INLINE_SYSCALL (pwritev, 5, fd, vector, count,
-			     LO_HI_LONG (offset));
-  else
-    {
-      int oldtype = LIBC_CANCEL_ASYNC ();
+  result = SYSCALL_CANCEL (pwritev, fd, vector, count, LO_HI_LONG (offset));
 
-      result = INLINE_SYSCALL (pwritev, 5, fd, vector, count,
-			     LO_HI_LONG (offset));
-
-      LIBC_CANCEL_RESET (oldtype);
-    }
 # ifdef __ASSUME_PWRITEV
   return result;
 # endif

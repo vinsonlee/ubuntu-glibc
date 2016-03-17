@@ -2,10 +2,9 @@ GLIBC_PROVIDES dnl See aclocal.m4 in the top level source directory.
 # Local configure fragment for sysdeps/arm.
 
 dnl It is always possible to access static and hidden symbols in an
-dnl position independent way.
-dnl NOTE: This feature was added by the GCC TLS patches.  We should test for
-dnl it.  Until we do, don't define it.
-#AC_DEFINE(PI_STATIC_AND_HIDDEN)
+dnl position independent way.  This has been true since GCC 4.1,
+dnl which is older than the minimum version required to build libc.
+AC_DEFINE(PI_STATIC_AND_HIDDEN)
 
 # We check to see if the compiler and flags are
 # selecting the hard-float ABI and if they are then
@@ -25,19 +24,6 @@ if test $libc_cv_arm_pcs_vfp = yes; then
   LIBC_CONFIG_VAR([default-abi], [hard])
 else
   LIBC_CONFIG_VAR([default-abi], [soft])
-fi
-
-AC_CACHE_CHECK([whether the build tools support the GNU descriptor TLS scheme],
-  [libc_cv_arm_tls_desc],
-  [old_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS -mtls-dialect=gnu2"
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([asm (".word\tfoo(tlsdesc)");], [])],
-    [libc_cv_arm_tls_desc=yes], [libc_cv_arm_tls_desc=no])
-  CFLAGS="$old_CFLAGS"])
-if test $libc_cv_arm_tls_desc = yes; then
-  LIBC_CONFIG_VAR([have-arm-tls-desc], [yes])
-else
-  LIBC_CONFIG_VAR([have-arm-tls-desc], [no])
 fi
 
 AC_CACHE_CHECK([whether PC-relative relocs in movw/movt work properly],
@@ -80,13 +66,47 @@ if test $libc_cv_arm_pcrel_movw = yes; then
   AC_DEFINE([ARM_PCREL_MOVW_OK])
 fi
 
+# This was buggy in assemblers from GNU binutils versions before 2.25.1
+# (it's known to be broken in 2.24 and 2.25; see
+# https://sourceware.org/bugzilla/show_bug.cgi?id=18383).
+AC_CACHE_CHECK([whether TPOFF relocs with addends are assembled correctly],
+	       libc_cv_arm_tpoff_addend, [
+cat > conftest.s <<\EOF
+	.syntax unified
+	.arm
+	.arch armv7-a
+
+	.text
+foo:
+	.word tbase(tpoff)+4
+
+	.section .tdata,"awT",%progbits
+	.word -4
+tbase:	.word 0
+	.word 4
+EOF
+libc_cv_arm_tpoff_addend=no
+${CC-cc} -c $CFLAGS $CPPFLAGS \
+	 -o conftest.o conftest.s 1>&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD &&
+LC_ALL=C $READELF -x.text conftest.o > conftest.x 2>&AS_MESSAGE_LOG_FD &&
+{
+  cat conftest.x 1>&AS_MESSAGE_LOG_FD
+  $AWK 'BEGIN { result = 2 }
+$1 ~ /0x0+/ && $2 ~ /[[0-9a-f]]+/ {
+# Check for little-endian or big-endian encoding of 4 in the in-place addend.
+  result = ($2 == "04000000" || $2 == "00000004") ? 0 : 1
+}
+END { exit(result) }
+' conftest.x 2>&AS_MESSAGE_LOG_FD && libc_cv_arm_tpoff_addend=yes
+}
+rm -f conftest*])
+if test $libc_cv_arm_tpoff_addend = no; then
+  LIBC_CONFIG_VAR([test-xfail-tst-tlsalign], [yes])
+  LIBC_CONFIG_VAR([test-xfail-tst-tlsalign-static], [yes])
+fi
+
+
 libc_cv_gcc_unwind_find_fde=no
 
 # Remove -fno-unwind-tables that was added in sysdeps/arm/preconfigure.ac.
 CFLAGS=${CFLAGS% -fno-unwind-tables}
-
-dnl The normal configure check for gcc -fexecptions fails because it can't
-dnl find __aeabi_unwind_cpp_pr0.  Work around this here; our GCC definitely
-dnl has -fexceptions.
-libc_cv_gcc_exceptions=yes
-exceptions=-fexceptions

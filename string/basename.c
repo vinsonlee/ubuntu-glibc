@@ -1,5 +1,5 @@
 /* Return the name-within-directory of a file name.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,9 +19,11 @@
 #include <string.h>
 
 char *
-basename (const char *filename)
+__basename (const char *filename)
 {
   char *p = strrchr (filename, '/');
   return p ? p + 1 : (char *) filename;
 }
-libc_hidden_def (basename)
+libc_hidden_def (__basename)
+weak_alias (__basename, basename)
+libc_hidden_weak (basename)
