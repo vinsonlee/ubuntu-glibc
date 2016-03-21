@@ -26,7 +26,6 @@ localedata/tailor-iso14651_t1.diff
 localedata/locale-hsb_DE.diff
 localedata/tailor-iso14651_t1-common.diff
 localedata/fix-lang.diff
-localedata/fr_CA-first_weekday.diff
 localedata/fr_CH-first_weekday.diff
 localedata/locale-de_LI.diff
 localedata/submitted-bz9725-locale-sv_SE.diff
@@ -150,6 +149,8 @@ hurd-i386/cvs-libpthread-sigstate.diff
 hurd-i386/cvs-O_DIRECTORY.diff
 hurd-i386/cvs-raise-longjump.diff
 hurd-i386/submitted-hurd-abilist.diff
+hurd-i386/cvs-errnos.d.diff
+hurd-i386/cvs-mach-syscalls.mk.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
