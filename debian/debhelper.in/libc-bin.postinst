@@ -13,6 +13,8 @@ if [ "$1" = "configure" ] && [ "$2" = "" ] ; then
 fi
 
 if [ "$1" = "triggered" ] || [ "$1" = "configure" ]; then
+  LDCONFIG_NOTRIGGER=y
+  export LDCONFIG_NOTRIGGER
   ldconfig || ldconfig --verbose
   exit 0
 fi
