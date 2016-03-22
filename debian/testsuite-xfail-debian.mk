@@ -212,8 +212,10 @@ test-xfail-tst-timer2 = yes
 # We don't have auxv yet
 test-xfail-tst-auxv = yes
 
+# check-c++-types.sh support will be fixed in hurd (>> 1:0.7.git20160316-1)
+test-xfail-c++-types-check = yes
+
 # We don't provide ABI reference yet
-test-xfail-c++-types-check= yes
 test-xfail-check-abi-libcrypt = yes
 test-xfail-check-abi-libdl = yes
 test-xfail-check-abi-ld = yes
@@ -240,7 +242,6 @@ test-xfail-check-textrel = yes
 test-xfail-opendir-tst1 = yes
 test-xfail-test-idouble = yes
 test-xfail-test-ifloat = yes
-test-xfail-test-lfs = yes
 test-xfail-tst-aio10 = yes
 test-xfail-tst-aio9 = yes
 test-xfail-tst-audit1 = yes
@@ -278,6 +279,10 @@ test-xfail-tst-strtod-round = yes
 test-xfail-tst-sysconf = yes
 test-xfail-tst-tls9-static = yes
 test-xfail-tst-vfork3-mem = yes
+
+# This generates GiBs of data instead of sparse files, putting build box on its knees
+tests-unsupported += test-lfs
+#test-xfail-test-lfs = yes
 
 # happens seldomly
 test-xfail-tst-clock_nanosleep = yes
@@ -762,6 +767,13 @@ test-xfail-test-fpucw-ieee = yes
 test-xfail-test-fpucw-ieee-static = yes
 test-xfail-test-fpucw-static = yes
 test-xfail-test-static = yes
+
+# new in 2.23
+test-xfail-test-fenv-sse-2 = yes
+test-xfail-test-fenv-x87 = yes
+test-xfail-tst-audit11 = yes
+test-xfail-tst-audit12 = yes
+test-xfail-tst-get-cpu-features = yes
 
 # newly failing in 2.21, real regression
 test-xfail-tst-backtrace2 = yes
