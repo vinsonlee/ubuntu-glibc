@@ -1,10 +1,20 @@
+glibc (2.23-0ubuntu2) xenial; urgency=medium
+
+  * Merge with 2.23 from experimental, bringing in upstream updates.
+  * Revert dropping the ldconfig wrapper, xenial still has a lot of
+    packages that don't ship a trigger but instead call in postinst.
+  * Add more belocs options to locale-gen to appease our installers.
+  * Use DH_COMPAT=8 for dh_strip to fix debug sections for valgrind.
+  * Tweak locales.config to allow langpacks for /etc/default/locale.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Tue, 22 Mar 2016 15:10:45 -0600
+
 glibc (2.23-0ubuntu1) xenial; urgency=medium
 
   * Merge with 2.23 from experimental (LP: #1521172), remaining changes:
     - Remove the libc6 recommends on libc6-i686, which we don't build.
     - Enable libc6{,-dev}-armel on armhf and libc6{-dev}-armhf on armel.
     - Ship update-locale and validlocale in /usr/sbin in libc-bin.
-    - Don't build locales or locales-all in Ubuntu, we rely on langpacks.
     - Heavily mangle the way we do service restarting on major upgrades.
     - Build i386 variants as -march=i686, build amd64 with -O3, and build
       ppc64 variants (both 64-bit and 32-bit) with -O3 -fno-tree-vectorize.
@@ -65,10 +75,17 @@ glibc (2.23-0ubuntu1) xenial; urgency=medium
 glibc (2.23-0experimental1) UNRELEASED; urgency=medium
 
   [ Aurelien Jarno ]
+  * debian/patches/git-updates.diff: update from upstream stable branch.
   * debian/testsuite-xfail-debian.mk (powerpc) really mark
     tst-malloc-thread-exit as xfail.
   * debian/testsuite-xfail-debian.mk (ppc64) mark tst-malloc-thread-exit
     test as xfail, it is a known issue and not a regression.
+  * patches/kfreebsd/local-fbtl.diff: update to revision 5969 (from
+    glibc-bsd).
+  * debian/patches/kfreebsd/local-tst-malloc-fbtl.diff: drop, obsoleted by
+    hurd-i386/cvs-libpthread.so.diff.
+  * debian/patches/kfreebsd/local-tst-unique.diff: disable tst-unique* on
+    GNU/kFreeBSD, as they are not supported by the FreeBSD ELF OSABI.
 
   [ Samuel Thibault ]
   * hurd-i386/cvs-libpthread.diff: More updates to glibc-2.23.
@@ -77,15 +94,21 @@ glibc (2.23-0experimental1) UNRELEASED; urgency=medium
   * hurd-i386/cvs-aio_sigqueue.diff: Fix aio_sigqueue prototype.
   * hurd-i386/cvs-libpthread.diff: Separate 2.23 changes to...
   * hurd-i386/cvs-libpthread-2.23.diff: ... separate patch.
-  * hurd-i386/unsubmitted-libpthread.so.diff: Fix building malloc tests.
+  * hurd-i386/cvs-libpthread.so.diff: Fix building malloc tests.
   * testsuite-xfail-debian.mk: Skip test which just overflows memory.
+  * hurd-i386/cvs-pt-kill.diff: Fix pthread_kill locking.
+  * hurd-i386/cvs-open.diff: Fix __open in ld.so, thus fixing dlopen().
+  * hurd-i386/cvs-c++-types.diff: Add expected c++-types.data.
+  * hurd-i386/local-ihash-use.diff: Note that libpthread uses ihash.h.
+  * testsuite-xfail-debian.mk: Add failing new tests. Disable the problematic
+    test-lfs test.
+  * hurd-i386/local-versions.diff: New patch to fix symbol version.
 
   [ Adam Conrad ]
   * debian/patches/any/cvs-tst-malloc-thread-exit.diff: Backport fix from
     upstream to make tst-malloc-thread-exit use fewer system resources.
-  * debian/patches/any/cvs-resolver-leak.diff: Backport upstream patch by
-    Andreas Schwab to fix a memory leak in the resolver (Closes: #818178)
-  * debian/glibc-source.filelist: Refresh list of source files and sort.
+  * debian/debhelper.in/locales.config: Make default_environment_locale
+    get preseeded correctly both with and without /etc/default/locale.
   * debian/control.in/i386: Remove list of Breaks that predate oldstable.
   * debian/control.in/*: Drop long obsolete file overlap Breaks/Replaces.
 
@@ -173,6 +196,34 @@ glibc (2.23-0experimental0) experimental; urgency=medium
     glibc-bsd).
 
  -- Aurelien Jarno <aurel32@debian.org>  Sun, 13 Mar 2016 19:22:45 +0100
+
+glibc (2.22-4) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+    - Fix a memory leak in the resolver.  Closes: #818178.
+  * debian/patches/localedata/fr_CA-first_weekday.diff: drop.  Closes:
+    #769051.
+  * debian/rules, debian/rules.d/build.mk: move the C.UTF-8 locale and
+    locales-all generation to a separate target instead of building them
+    in the build_libc target.
+  * debian/control.in/main, debian/rules, debian/rules.d/build.mk: make sure
+    to use the just built localedef when building locales. When
+    cross-compiling use the system localedef with the correct endianness and
+    build-depends on the correct version.
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/tg-sendmsg-SCM_RIGHTS.diff,tg-sendmsg-SCM_CREDS.diff:
+    Update.
+  * patches/hurd-i386/cvs-errnos.d.diff: New patch to fix build dependency
+    loop.
+  * patches/hurd-i386/cvs-mach-syscalls.mk.diff: New patch to fix missing
+    dependency.
+
+  [ Adam Conrad ]
+  * debian/glibc-source.filelist: Refresh list of source files and sort.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 21 Mar 2016 18:41:37 +0100
 
 glibc (2.22-3) unstable; urgency=medium
 
