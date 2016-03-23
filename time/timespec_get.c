@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,9 +20,7 @@
 
 /* Set TS to calendar time based in time base BASE.  */
 int
-timespec_get (ts, base)
-     struct timespec *ts;
-     int base;
+timespec_get (struct timespec *ts, int base)
 {
   switch (base)
     {

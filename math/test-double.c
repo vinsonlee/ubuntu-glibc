@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 1997.
 
@@ -17,7 +17,9 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include "test-double.h"
+#include "test-math-no-finite.h"
 #include "test-math-no-inline.h"
+#include "test-math-errno.h"
 #include "test-math-scalar.h"
 
 #define TEST_MSG "testing double (without inline functions)\n"

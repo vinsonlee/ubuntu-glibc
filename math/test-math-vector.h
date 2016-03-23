@@ -1,5 +1,5 @@
 /* Common definitions for libm tests for vector functions.
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,6 +17,8 @@
    <http://www.gnu.org/licenses/>.  */
 
 #define TEST_MATHVEC 1
+#define TEST_FINITE 0
+#define TEST_ERRNO 0
 
 #define CNCT(x, y) x ## y
 #define CONCAT(a, b) CNCT (a, b)
