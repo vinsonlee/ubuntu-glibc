@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,9 +21,7 @@
 
 /* Set the terminal parameters associated with FD to *PARAMS.  */
 int
-stty (fd, params)
-     int fd;
-     const struct sgttyb *params;
+stty (int fd, const struct sgttyb *params)
 {
   if (params == NULL)
     {

@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2015 Free Software Foundation, Inc.
+# Copyright (C) 2013-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -15,28 +15,34 @@
 # License along with the GNU C Library; if not, see
 # <http://www.gnu.org/licenses/>.
 
-
 # Makefile for benchmark tests.  The only useful target here is `bench`.
 # Add benchmark functions in alphabetical order.
+
+PYTHON := python
 
 subdir := benchtests
 
 include ../Makeconfig
-bench-math := acos acosh asin asinh atan atanh cos cosh exp exp2 ffs ffsll \
-	      log log2 modf pow rint sin sincos sinh sqrt tan tanh
+bench-math := acos acosh asin asinh atan atanh cos cosh exp exp2 log log2 \
+	      modf pow rint sin sincos sinh sqrt tan tanh
 
 bench-pthread := pthread_once
 
-bench := $(bench-math) $(bench-pthread)
+bench-string := ffs ffsll
+
+bench := $(bench-math) $(bench-pthread) $(bench-string)
 
 # String function benchmarks.
-string-bench := bcopy bzero memccpy memchr memcmp memcpy memmem memmove \
-		mempcpy memset rawmemchr stpcpy stpncpy strcasecmp strcasestr \
-		strcat strchr strchrnul strcmp strcpy strcspn strlen \
-		strncasecmp strncat strncmp strncpy strnlen strpbrk strrchr \
-		strspn strstr strcpy_chk stpcpy_chk memrchr strsep strtok \
-		strcoll
-string-bench-all := $(string-bench)
+string-benchset := bcopy bzero memccpy memchr memcmp memcpy memmem memmove \
+		   mempcpy memset rawmemchr stpcpy stpncpy strcasecmp strcasestr \
+		   strcat strchr strchrnul strcmp strcpy strcspn strlen \
+		   strncasecmp strncat strncmp strncpy strnlen strpbrk strrchr \
+		   strspn strstr strcpy_chk stpcpy_chk memrchr strsep strtok \
+		   strcoll
+wcsmbs-benchset := wcslen wcsnlen wcscpy wcpcpy wcsncpy wcpncpy wcscat wcsncat \
+		   wcscmp wcsncmp wcschr wcschrnul wcsrchr wcsspn wcspbrk wcscspn \
+		   wmemchr wmemset wmemcmp
+string-benchset-all := $(string-benchset) ${wcsmbs-benchset}
 
 # We have to generate locales
 LOCALES := en_US.UTF-8 tr_TR.UTF-8 cs_CZ.UTF-8 fa_IR.UTF-8 fr_FR.UTF-8 \
@@ -46,11 +52,14 @@ LOCALES := en_US.UTF-8 tr_TR.UTF-8 cs_CZ.UTF-8 fa_IR.UTF-8 fr_FR.UTF-8 \
 	   hu_HU.UTF-8 it_IT.UTF-8 sr_RS.UTF-8 zh_CN.UTF-8
 include ../gen-locales.mk
 
-stdlib-bench := strtod
+stdlib-benchset := strtod
 
-stdio-common-bench := sprintf
+stdio-common-benchset := sprintf
 
-benchset := $(string-bench-all) $(stdlib-bench) $(stdio-common-bench)
+math-benchset := math-inlines
+
+benchset := $(string-benchset-all) $(stdlib-benchset) $(stdio-common-benchset) \
+	    $(math-benchset)
 
 CFLAGS-bench-ffs.c += -fno-builtin
 CFLAGS-bench-ffsll.c += -fno-builtin
@@ -58,6 +67,7 @@ CFLAGS-bench-ffsll.c += -fno-builtin
 bench-malloc := malloc-thread
 
 $(addprefix $(objpfx)bench-,$(bench-math)): $(libm)
+$(addprefix $(objpfx)bench-,$(math-benchset)): $(libm)
 $(addprefix $(objpfx)bench-,$(bench-pthread)): $(shared-thread-library)
 $(objpfx)bench-malloc-thread: $(shared-thread-library)
 
@@ -155,7 +165,7 @@ bench-func: $(binaries-bench)
 	  mv -f $(objpfx)bench.out $(objpfx)bench.out.old; \
 	fi; \
 	mv -f $(objpfx)bench.out-tmp $(objpfx)bench.out
-	scripts/validate_benchout.py $(objpfx)bench.out \
+	$(PYTHON) scripts/validate_benchout.py $(objpfx)bench.out \
 		scripts/benchout.schema.json
 
 $(timing-type) $(binaries-bench) $(binaries-benchset) \
@@ -168,5 +178,5 @@ $(objpfx)bench-%.c: %-inputs $(bench-deps)
 	{ if [ -n "$($*-INCLUDE)" ]; then \
 	  cat $($*-INCLUDE); \
 	fi; \
-	scripts/bench.py $(patsubst %-inputs,%,$<); } > $@-tmp
+	$(PYTHON) scripts/bench.py $(patsubst %-inputs,%,$<); } > $@-tmp
 	mv -f $@-tmp $@

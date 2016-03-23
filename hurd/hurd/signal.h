@@ -1,5 +1,5 @@
 /* Implementing POSIX.1 signals under the Hurd.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -233,8 +233,8 @@ extern void _hurdsig_fault_init (void);
    sigstate SS points to.  If SS is a null pointer, this instead affects
    the calling thread.  */
 
-extern void _hurd_raise_signal (struct hurd_sigstate *ss, int signo,
-				const struct hurd_signal_detail *detail);
+extern int _hurd_raise_signal (struct hurd_sigstate *ss, int signo,
+			       const struct hurd_signal_detail *detail);
 
 /* Translate a Mach exception into a signal (machine-dependent).  */
 

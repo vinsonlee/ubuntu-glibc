@@ -1,5 +1,5 @@
 /* bits/typesizes.h -- underlying types for *_t.  NaCl version.
-   Copyright (C) 2015 Free Software Foundation, Inc.
+   Copyright (C) 2015-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -59,6 +59,7 @@
 #define __SSIZE_T_TYPE		__SWORD_TYPE
 #define __SYSCALL_SLONG_TYPE	__SLONGWORD_TYPE
 #define __SYSCALL_ULONG_TYPE	__ULONGWORD_TYPE
+#define __CPU_MASK_TYPE 	__ULONGWORD_TYPE
 
 /* All our foo64_t types match their foo_t counterparts.  */
 #define __OFF_T_MATCHES_OFF64_T	1

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -20,10 +20,8 @@
 
 
 void
-_pthread_cleanup_push_defer (buffer, routine, arg)
-     struct _pthread_cleanup_buffer *buffer;
-     void (*routine) (void *);
-     void *arg;
+_pthread_cleanup_push_defer (struct _pthread_cleanup_buffer *buffer,
+			     void (*routine) (void *), void *arg)
 {
   struct pthread *self = THREAD_SELF;
 
@@ -59,9 +57,8 @@ strong_alias (_pthread_cleanup_push_defer, __pthread_cleanup_push_defer)
 
 
 void
-_pthread_cleanup_pop_restore (buffer, execute)
-     struct _pthread_cleanup_buffer *buffer;
-     int execute;
+_pthread_cleanup_pop_restore (struct _pthread_cleanup_buffer *buffer,
+			      int execute)
 {
   struct pthread *self = THREAD_SELF;
 

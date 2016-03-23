@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -18,16 +18,16 @@
 
 #include <wchar.h>
 
+#ifndef WCSNCMP
+# define WCSNCMP wcsncmp
+#endif
 
 /* Compare no more than N characters of S1 and S2,
    returning less than, equal to or greater than zero
    if S1 is lexicographically less than, equal to or
    greater than S2.  */
 int
-wcsncmp (s1, s2, n)
-     const wchar_t *s1;
-     const wchar_t *s2;
-     size_t n;
+WCSNCMP (const wchar_t *s1, const wchar_t *s2, size_t n)
 {
   wchar_t c1 = L'\0';
   wchar_t c2 = L'\0';

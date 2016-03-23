@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,8 +22,7 @@
    If S is not NULL, it points to a buffer of at least L_cuserid bytes
    into which the name is copied; otherwise, a static buffer is used.  */
 char *
-cuserid (s)
-     char *s;
+cuserid (char *s)
 {
   __set_errno (ENOSYS);
   return NULL;

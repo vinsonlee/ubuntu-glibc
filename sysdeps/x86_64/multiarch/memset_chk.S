@@ -1,6 +1,6 @@
 /* Multiple versions of memset_chk
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,16 +22,21 @@
 
 /* Define multiple versions only for the definition in lib.  */
 #if IS_IN (libc)
-# if defined SHARED && defined HAVE_AVX2_SUPPORT
+# ifdef SHARED
 ENTRY(__memset_chk)
 	.type	__memset_chk, @gnu_indirect_function
-	cmpl	$0, __cpu_features+KIND_OFFSET(%rip)
-	jne	1f
-	call	__init_cpu_features
-1:	leaq	__memset_chk_sse2(%rip), %rax
-	testl	$bit_AVX2_Usable, __cpu_features+FEATURE_OFFSET+index_AVX2_Usable(%rip)
+	LOAD_RTLD_GLOBAL_RO_RDX
+	leaq	__memset_chk_sse2(%rip), %rax
+	HAS_ARCH_FEATURE (AVX2_Usable)
 	jz	2f
 	leaq	__memset_chk_avx2(%rip), %rax
+#ifdef HAVE_AVX512_ASM_SUPPORT
+	HAS_ARCH_FEATURE (AVX512F_Usable)
+	jz	2f
+	HAS_ARCH_FEATURE (Prefer_No_VZEROUPPER)
+	jz	2f
+	leaq	__memset_chk_avx512_no_vzeroupper(%rip), %rax
+#endif
 2:	ret
 END(__memset_chk)
 

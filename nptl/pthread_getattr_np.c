@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -30,9 +30,7 @@
 
 
 int
-pthread_getattr_np (thread_id, attr)
-     pthread_t thread_id;
-     pthread_attr_t *attr;
+pthread_getattr_np (pthread_t thread_id, pthread_attr_t *attr)
 {
   struct pthread *thread = (struct pthread *) thread_id;
   struct pthread_attr *iattr = (struct pthread_attr *) attr;

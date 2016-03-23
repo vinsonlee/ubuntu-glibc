@@ -1,5 +1,5 @@
 /* Quad-precision floating point e^x.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jj@ultra.linux.cz>
    Partly based on double-precision code
@@ -232,11 +232,7 @@ __ieee754_expl (long double x)
       else
 	{
 	  result *= scale_u.d;
-	  if (result < LDBL_MIN)
-	    {
-	      long double force_underflow = result * result;
-	      math_force_eval (force_underflow);
-	    }
+	  math_check_force_underflow_nonneg (result);
 	  return result;
 	}
     }

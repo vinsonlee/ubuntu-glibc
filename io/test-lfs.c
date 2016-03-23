@@ -1,5 +1,5 @@
 /* Some basic tests for LFS.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 2000.
 
@@ -56,7 +56,6 @@ do_prepare (int argc, char *argv[])
   name = malloc (name_len + sizeof ("/lfsXXXXXX"));
   mempcpy (mempcpy (name, test_dir, name_len),
            "/lfsXXXXXX", sizeof ("/lfsXXXXXX"));
-  add_temp_file (name);
 
   /* Open our test file.   */
   fd = mkstemp64 (name);
@@ -71,6 +70,7 @@ do_prepare (int argc, char *argv[])
       else
 	error (EXIT_FAILURE, errno, "cannot create temporary file");
     }
+  add_temp_file (name);
 
   if (getrlimit64 (RLIMIT_FSIZE, &rlim) != 0)
     {
@@ -144,7 +144,7 @@ test_ftello (void)
 int
 do_test (int argc, char *argv[])
 {
-  int ret;
+  int ret, fd2;
   struct stat64 statbuf;
 
   ret = lseek64 (fd, TWO_GB+100, SEEK_SET);
@@ -194,6 +194,25 @@ do_test (int argc, char *argv[])
   else if (statbuf.st_size != (TWO_GB + 100 + 5))
     error (EXIT_FAILURE, 0, "stat reported size %lld instead of %lld.",
 	   (long long int) statbuf.st_size, (TWO_GB + 100 + 5));
+
+  fd2 = openat64 (AT_FDCWD, name, O_RDWR);
+  if (fd2 == -1)
+    {
+      if (errno == ENOSYS)
+	{
+	  /* Silently ignore this test.  */
+	  error (0, 0, "openat64 is not supported");
+	}
+      else
+	error (EXIT_FAILURE, errno, "openat64 failed to open big file");
+    }
+  else
+    {
+      ret = close (fd2);
+
+      if (ret == -1)
+	error (EXIT_FAILURE, errno, "error closing file");
+    }
 
   test_ftello ();
 

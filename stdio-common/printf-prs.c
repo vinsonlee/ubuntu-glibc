@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -56,10 +56,7 @@
 
 
 size_t
-parse_printf_format (fmt, n, argtypes)
-      const char *fmt;
-      size_t n;
-      int *argtypes;
+parse_printf_format (const char *fmt, size_t n, int *argtypes)
 {
   size_t nargs;			/* Number of arguments.  */
   size_t max_ref_arg;		/* Highest index used in a positional arg.  */

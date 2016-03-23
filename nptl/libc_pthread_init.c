@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -23,7 +23,7 @@
 #include <tls.h>
 #include <string.h>
 #include <pthreadP.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <sysdep.h>
 #include <ldsodefs.h>
 
@@ -38,10 +38,9 @@ extern int __libc_multiple_threads attribute_hidden;
 
 int *
 #endif
-__libc_pthread_init (ptr, reclaim, functions)
-     unsigned long int *ptr;
-     void (*reclaim) (void);
-     const struct pthread_functions *functions;
+internal_function
+__libc_pthread_init (unsigned long int *ptr, void (*reclaim) (void),
+		     const struct pthread_functions *functions)
 {
   /* Remember the pointer to the generation counter in libpthread.  */
   __fork_generation_pointer = ptr;

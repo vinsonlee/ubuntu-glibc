@@ -1,5 +1,5 @@
 /* Single-precision floating point 2^x.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Geoffrey Keating <geoffk@ozemail.com.au>
 
@@ -37,8 +37,8 @@
 
 #include "t_exp2f.h"
 
-static const volatile float TWOM100 = 7.88860905e-31;
-static const volatile float TWO127 = 1.7014118346e+38;
+static const float TWOM100 = 7.88860905e-31;
+static const float TWO127 = 1.7014118346e+38;
 
 float
 __ieee754_exp2f (float x)
@@ -109,12 +109,16 @@ __ieee754_exp2f (float x)
       if (!unsafe)
 	return result;
       else
-	return result * scale_u.f;
+	{
+	  result *= scale_u.f;
+	  math_check_force_underflow_nonneg (result);
+	  return result;
+	}
     }
   /* Exceptional cases:  */
   else if (isless (x, himark))
     {
-      if (__isinf_nsf (x))
+      if (isinf (x))
 	/* e^-inf == 0, with no error.  */
 	return 0;
       else
