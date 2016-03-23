@@ -161,6 +161,9 @@ __ieee754_lgammaf_r(float x, int *signgamp)
 	if(hx<0) {
 	    if(ix>=0x4b000000)	/* |x|>=2**23, must be -integer */
 		return x/zero;
+	    if (ix > 0x40000000 /* X < 2.0f.  */
+		&& ix < 0x41700000 /* X > -15.0f.  */)
+		return __lgamma_negf (x, signgamp);
 	    t = sin_pif(x);
 	    if(t==zero) return one/fabsf(t); /* -integer */
 	    nadj = __ieee754_logf(pi/fabsf(t*x));
@@ -229,17 +232,13 @@ __ieee754_lgammaf_r(float x, int *signgamp)
 	    r = (x-half)*(t-one)+w;
 	} else
     /* 2**26 <= x <= inf */
-	    r =  x*(__ieee754_logf(x)-one);
+	    r =  math_narrow_eval (x*(__ieee754_logf(x)-one));
 	/* NADJ is set for negative arguments but not otherwise,
 	   resulting in warnings that it may be used uninitialized
 	   although in the cases where it is used it has always been
 	   set.  */
 	DIAG_PUSH_NEEDS_COMMENT;
-#if __GNUC_PREREQ (4, 7)
 	DIAG_IGNORE_NEEDS_COMMENT (4.9, "-Wmaybe-uninitialized");
-#else
-	DIAG_IGNORE_NEEDS_COMMENT (4.9, "-Wuninitialized");
-#endif
 	if(hx<0) r = nadj - r;
 	DIAG_POP_NEEDS_COMMENT;
 	return r;

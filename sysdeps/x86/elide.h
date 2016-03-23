@@ -1,5 +1,5 @@
 /* elide.h: Generic lock elision support.
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -93,7 +93,9 @@ elision_adapt(signed char *adapt_count, unsigned int status)
     ret;						\
     })
 
-/* Returns true if lock defined by IS_LOCK_FREE was elided.  */
+/* Returns true if lock defined by IS_LOCK_FREE was elided.  The call
+   to _xend crashes if the application incorrectly tries to unlock a
+   lock which has not been locked.  */
 
 #define ELIDE_UNLOCK(is_lock_free)		\
   ({						\

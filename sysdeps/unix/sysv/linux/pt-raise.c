@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -23,8 +23,7 @@
 
 
 int
-raise (sig)
-     int sig;
+raise (int sig)
 {
   /* raise is an async-safe function.  It could be called while the
      fork function temporarily invalidated the PID field.  Adjust for

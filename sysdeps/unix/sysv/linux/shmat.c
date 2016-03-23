@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -29,10 +29,7 @@
    and where the segment is attached.  */
 
 void *
-shmat (shmid, shmaddr, shmflg)
-     int shmid;
-     const void *shmaddr;
-     int shmflg;
+shmat (int shmid, const void *shmaddr, int shmflg)
 {
   INTERNAL_SYSCALL_DECL(err);
   unsigned long resultvar;
@@ -43,10 +40,8 @@ shmat (shmid, shmaddr, shmflg)
 				(long int) &raddr,
 				(void *) shmaddr);
   if (INTERNAL_SYSCALL_ERROR_P (resultvar, err))
-    {
-      __set_errno (INTERNAL_SYSCALL_ERRNO (resultvar, err));
-      return (void *) -1l;
-    }
+    return (void *) INLINE_SYSCALL_ERROR_RETURN_VALUE (INTERNAL_SYSCALL_ERRNO (resultvar,
+									       err));
 
   return raddr;
 }

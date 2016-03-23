@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2015 Free Software Foundation, Inc.
+# Copyright (C) 1991-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ export sysdep_dir := $(sysdep_dir)
 include $(common-objpfx)config.make
 
 # What flags to give to sources which call user provided callbacks
-uses-callbacks = $(exceptions)
+uses-callbacks = -fexceptions
 
 # What flags to give to tests which test stack alignment
 stack-align-test-flags =
@@ -190,11 +190,12 @@ zonedir = $(datadir)/zoneinfo
 endif
 inst_zonedir = $(install_root)$(zonedir)
 
-# Where to install the locale files.
-ifndef localedir
-localedir = $(libdir)/locale
+# Where to install the compiled binary locale archive and compiled
+# binary locale files.
+ifndef complocaledir
+complocaledir = $(libdir)/locale
 endif
-inst_localedir = $(install_root)$(localedir)
+inst_complocaledir = $(install_root)$(complocaledir)
 
 # Where to install the message catalog data files (which are
 # machine-independent).
@@ -345,9 +346,7 @@ endif
 endif
 
 # Flags to pass the C compiler when assembling preprocessed assembly code
-# (`.S' files).  On some systems the assembler doesn't understand the `#' line
-# directives the preprocessor produces.  If you have troubling compiling
-# assembly code, try using -P here to suppress these directives.
+# (`.S' files).
 ifndef asm-CPPFLAGS
 asm-CPPFLAGS =
 endif
@@ -750,9 +749,9 @@ else
 endif
 +gccwarn += -Wundef
 ifeq ($(enable-werror),yes)
-+gccwarn += -Werror -Wno-error=undef
++gccwarn += -Werror
 endif
-+gccwarn-c = -Wstrict-prototypes
++gccwarn-c = -Wstrict-prototypes -Wold-style-definition
 
 # We do not depend on the address of constants in different files to be
 # actually different, so allow the compiler to merge them all.
@@ -884,7 +883,7 @@ CPPFLAGS = $(config-extra-cppflags) $(CPPUNDEFS) $(CPPFLAGS-config) \
 	   $(foreach lib,$(libof-$(basename $(@F))) \
 			 $(libof-$(<F)) $(libof-$(@F)),$(CPPFLAGS-$(lib))) \
 	   $(CPPFLAGS-$(<F)) $(CPPFLAGS-$(@F)) $(CPPFLAGS-$(basename $(@F)))
-override CFLAGS	= -std=gnu99 $(gnu89-inline-CFLAGS) $(config-extra-cflags) \
+override CFLAGS	= -std=gnu11 -fgnu89-inline $(config-extra-cflags) \
 		  $(filter-out %frame-pointer,$(+cflags)) $(+gccwarn-c) \
 		  $(sysdep-CFLAGS) $(CFLAGS-$(suffix $@)) $(CFLAGS-$(<F)) \
 		  $(CFLAGS-$(@F)) $(tls-model) \

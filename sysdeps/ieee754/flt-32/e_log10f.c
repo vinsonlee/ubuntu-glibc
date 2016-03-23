@@ -15,14 +15,13 @@
 
 #include <math.h>
 #include <math_private.h>
+#include <fix-int-fp-convert-zero.h>
 
 static const float
 two25      =  3.3554432000e+07, /* 0x4c000000 */
 ivln10     =  4.3429449201e-01, /* 0x3ede5bd9 */
 log10_2hi  =  3.0102920532e-01, /* 0x3e9a2080 */
 log10_2lo  =  7.9034151668e-07; /* 0x355427db */
-
-static const float zero   =  0.0;
 
 float
 __ieee754_log10f(float x)
@@ -46,6 +45,8 @@ __ieee754_log10f(float x)
 	i  = ((u_int32_t)k&0x80000000)>>31;
 	hx = (hx&0x007fffff)|((0x7f-i)<<23);
 	y  = (float)(k+i);
+	if (FIX_INT_FP_CONVERT_ZERO && y == 0.0f)
+	  y = 0.0f;
 	SET_FLOAT_WORD(x,hx);
 	z  = y*log10_2lo + ivln10*__ieee754_logf(x);
 	return  z+y*log10_2hi;
