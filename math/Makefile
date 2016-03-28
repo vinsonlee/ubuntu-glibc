@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2016 Free Software Foundation, Inc.
+# Copyright (C) 1996-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ libm-calls = e_acos e_acosh e_asin e_atan2 e_atanh e_cosh e_exp e_fmod	\
 	     s_floor s_log1p w_log1p s_logb				\
 	     s_nextafter s_nexttoward s_rint s_scalbln w_scalbln	\
 	     s_significand s_sin s_tan s_tanh w_acos w_acosh w_asin	\
-	     w_atan2 w_atanh w_cosh w_exp w_exp2 w_exp10 w_fmod		\
+	     w_atan2 w_atanh w_cosh w_drem w_exp w_exp2 w_exp10 w_fmod	\
 	     w_tgamma w_hypot w_j0 w_j1 w_jn w_lgamma w_lgamma_r	\
 	     w_log w_log10 w_pow w_remainder w_scalb w_sinh w_sqrt	\
 	     w_ilogb							\
@@ -61,9 +61,8 @@ libm-calls = e_acos e_acosh e_asin e_atan2 e_atanh e_cosh e_exp e_fmod	\
 	     s_catan s_casin s_ccos s_csin s_ctan s_ctanh s_cacos	\
 	     s_casinh s_cacosh s_catanh s_csqrt s_cpow s_cproj s_clog10 \
 	     s_fma s_lrint s_llrint s_lround s_llround e_exp10 w_log2	\
-	     s_issignaling $(calls:s_%=m_%) x2y2m1 k_casinh	\
-	     gamma_product k_standard lgamma_neg lgamma_product		\
-	     w_lgamma_compat
+	     s_isinf_ns s_issignaling $(calls:s_%=m_%) x2y2m1 k_casinh	\
+	     gamma_product k_standard
 
 dbl-only-routines := branred doasin dosincos halfulp mpa mpatan2	\
 		     mpatan mpexp mplog mpsqrt mptan sincos32 slowexp	\
@@ -99,7 +98,7 @@ $(inst_libdir)/libm.so: $(common-objpfx)format.lds \
 	(echo '/* GNU ld script'; echo '*/';\
 	 cat $<; \
 	 echo 'GROUP ( $(slibdir)/libm.so$(libm.so-version) ' \
-	      'AS_NEEDED ( $(libdir)/libmvec_nonshared.a $(slibdir)/libmvec.so$(libmvec.so-version) ) )' \
+	      'AS_NEEDED ( $(slibdir)/libmvec.so$(libmvec.so-version) ) )' \
 	) > $@
 endif
 
@@ -109,26 +108,16 @@ tests = test-matherr test-fenv atest-exp atest-sincos atest-exp2 basic-test \
 	test-tgmath-ret bug-nextafter bug-nexttoward bug-tgmath1 \
 	test-tgmath-int test-tgmath2 test-powl tst-CMPLX tst-CMPLX2 test-snan \
 	test-fenv-tls test-fenv-preserve test-fenv-return test-fenvinline \
-	test-nearbyint-except test-fenv-clear test-signgam-finite \
-	test-signgam-finite-c99 test-signgam-finite-c11 \
-	test-nearbyint-except-2 test-signgam-uchar test-signgam-uchar-init \
-	test-signgam-uint test-signgam-uint-init test-signgam-ullong \
-	test-signgam-ullong-init test-nan-overflow test-nan-payload \
-	test-math-isinff \
 	$(tests-static)
-tests-static = test-fpucw-static test-fpucw-ieee-static \
-	       test-signgam-uchar-static test-signgam-uchar-init-static \
-	       test-signgam-uint-static test-signgam-uint-init-static \
-	       test-signgam-ullong-static test-signgam-ullong-init-static
+tests-static = test-fpucw-static test-fpucw-ieee-static
 # We do the `long double' tests only if this data type is available and
 # distinct from `double'.
-test-longdouble-yes = test-ldouble test-ildoubl test-ldouble-finite
+test-longdouble-yes = test-ldouble test-ildoubl
 
 ifneq (no,$(PERL))
 libm-vec-tests = $(addprefix test-,$(libmvec-tests))
 libm-tests = test-float test-double $(test-longdouble-$(long-double-fcts)) \
-	test-ifloat test-idouble test-float-finite test-double-finite \
-	$(libm-vec-tests)
+	test-ifloat test-idouble $(libm-vec-tests)
 libm-tests.o = $(addsuffix .o,$(libm-tests))
 
 tests += $(libm-tests)
@@ -151,13 +140,10 @@ $(objpfx)libm-test.stmp: $(ulps-file) libm-test.inc gen-libm-test.pl \
 
 $(objpfx)test-float.o: $(objpfx)libm-test.stmp
 $(objpfx)test-ifloat.o: $(objpfx)libm-test.stmp
-$(objpfx)test-float-finite.o: $(objpfx)libm-test.stmp
 $(objpfx)test-double.o: $(objpfx)libm-test.stmp
 $(objpfx)test-idouble.o: $(objpfx)libm-test.stmp
-$(objpfx)test-double-finite.o: $(objpfx)libm-test.stmp
 $(objpfx)test-ldouble.o: $(objpfx)libm-test.stmp
 $(objpfx)test-ildoubl.o: $(objpfx)libm-test.stmp
-$(objpfx)test-ldouble-finite.o: $(objpfx)libm-test.stmp
 endif
 
 libm-test-fast-math-cflags = -fno-builtin -D__FAST_MATH__ -DTEST_FAST_MATH
@@ -180,15 +166,9 @@ CFLAGS-test-float-vlen8-wrappers.c = $(float-vlen8-arch-ext-cflags)
 CFLAGS-test-float-vlen16.c = $(libm-test-vec-cflags)
 CFLAGS-test-float-vlen16-wrappers.c = $(float-vlen16-arch-ext-cflags)
 
-libm-test-no-inline-cflags = -fno-inline -ffloat-store -fno-builtin
-libm-test-finite-cflags = $(libm-test-no-inline-cflags) \
-			  -U__FINITE_MATH_ONLY__ -D__FINITE_MATH_ONLY__=1
-CFLAGS-test-float.c = $(libm-test-no-inline-cflags)
-CFLAGS-test-float-finite.c = $(libm-test-finite-cflags)
-CFLAGS-test-double.c = $(libm-test-no-inline-cflags)
-CFLAGS-test-double-finite.c = $(libm-test-finite-cflags)
-CFLAGS-test-ldouble.c = $(libm-test-no-inline-cflags)
-CFLAGS-test-ldouble-finite.c = $(libm-test-finite-cflags)
+CFLAGS-test-float.c = -fno-inline -ffloat-store -fno-builtin
+CFLAGS-test-double.c = -fno-inline -ffloat-store -fno-builtin
+CFLAGS-test-ldouble.c = -fno-inline -ffloat-store -fno-builtin
 CFLAGS-test-tgmath.c = -fno-builtin
 # The following testcase uses very long lines (>3 million), so it may take a
 # while to compile it. See: http://llvm.org/bugs/show_bug.cgi?id=14106 and
@@ -196,8 +176,6 @@ CFLAGS-test-tgmath.c = -fno-builtin
 CFLAGS-test-tgmath2.c = -fno-builtin
 CFLAGS-test-tgmath-ret.c = -fno-builtin
 CFLAGS-test-powl.c = -fno-builtin
-
-CFLAGS-test-snan.c = -fsignaling-nans
 CPPFLAGS-test-ifloat.c = -U__LIBC_INTERNAL_MATH_INLINES \
 			 $(libm-test-fast-math-cflags)
 CPPFLAGS-test-idouble.c = -U__LIBC_INTERNAL_MATH_INLINES \
@@ -205,23 +183,6 @@ CPPFLAGS-test-idouble.c = -U__LIBC_INTERNAL_MATH_INLINES \
 CPPFLAGS-test-ildoubl.c = -U__LIBC_INTERNAL_MATH_INLINES \
 			  $(libm-test-fast-math-cflags)
 
-CFLAGS-test-signgam-finite.c = -ffinite-math-only
-CFLAGS-test-signgam-finite-c99.c = -ffinite-math-only -std=c99
-CFLAGS-test-signgam-finite-c11.c = -ffinite-math-only -std=c11
-CFLAGS-test-signgam-uchar.c = -std=c99
-CFLAGS-test-signgam-uchar-init.c = -std=c99
-CFLAGS-test-signgam-uchar-static.c = -std=c99
-CFLAGS-test-signgam-uchar-init-static.c = -std=c99
-CFLAGS-test-signgam-uint.c = -std=c99
-CFLAGS-test-signgam-uint-init.c = -std=c99
-CFLAGS-test-signgam-uint-static.c = -std=c99
-CFLAGS-test-signgam-uint-init-static.c = -std=c99
-CFLAGS-test-signgam-ullong.c = -std=c99
-CFLAGS-test-signgam-ullong-init.c = -std=c99
-CFLAGS-test-signgam-ullong-static.c = -std=c99
-CFLAGS-test-signgam-ullong-init-static.c = -std=c99
-
-CFLAGS-test-math-isinff.cc = -std=gnu++11
 
 # The -lieee module sets the _LIB_VERSION_ switch to IEEE mode
 # for error handling in the -lm functions.
@@ -288,6 +249,9 @@ ifneq ($(long-double-fcts),yes)
 math-CPPFLAGS += -DNO_LONG_DOUBLE -D_Mlong_double_=double
 endif
 
+# The fdlibm code generates a lot of these warnings but is otherwise clean.
+override CFLAGS += -Wno-uninitialized
+
 # The -lieee library is actually an object file.
 # The module just defines the _LIB_VERSION_ variable.
 # It's not a library to make sure it is linked in instead of s_lib_version.o.
@@ -298,8 +262,8 @@ $(objpfx)libieee.a: $(objpfx)ieee-math.o
 
 $(addprefix $(objpfx),$(filter-out $(tests-static) $(libm-vec-tests),$(tests))): $(libm)
 $(addprefix $(objpfx),$(tests-static)): $(objpfx)libm.a
-$(addprefix $(objpfx), $(libm-vec-tests)): $(objpfx)%: $(objpfx)%-wrappers.o $(libm) \
-					   $(libmvec)
+$(addprefix $(objpfx), $(libm-vec-tests)): $(objpfx)%: $(libm) $(libmvec) \
+					   $(objpfx)init-arch.o $(objpfx)%-wrappers.o
 
 gmp-objs = $(patsubst %,$(common-objpfx)stdlib/%.o,\
 		      add_n sub_n cmp addmul_1 mul_1 mul_n divmod_1 \

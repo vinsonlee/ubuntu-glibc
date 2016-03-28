@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Mark Kettenis <kettenis@phys.uva.nl>, 1997.
 
@@ -16,7 +16,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <stdlib.h>
 #include <string.h>
 #include <utmp.h>

@@ -125,11 +125,7 @@ __ieee754_hypotl(long double x, long double y)
 	    w  = __ieee754_sqrtl(a1*b1-(w*(-w)-(a1*b2+a2*b)));
 	}
 	if(k!=0)
-	    {
-		w *= kld;
-		math_check_force_underflow_nonneg (w);
-		return w;
-	    }
+	    return w*kld;
 	else
 	    return w;
 }

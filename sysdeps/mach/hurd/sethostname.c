@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,9 @@
    This call is restricted to the super-user.  */
 /* XXX should be __sethostname ? */
 int
-sethostname (const char *name, size_t len)
+sethostname (name, len)
+     const char *name;
+     size_t len;
 {
   /* The host name is just the contents of the file /etc/hostname.  */
   ssize_t n = _hurd_set_host_config ("/etc/hostname", name, len);

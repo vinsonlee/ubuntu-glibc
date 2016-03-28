@@ -1,5 +1,5 @@
 /* Compute x^2 + y^2 - 1, without large cancellation error.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,8 +21,8 @@
 #include <float.h>
 
 /* Return X^2 + Y^2 - 1, computed without large cancellation error.
-   It is given that 1 > X >= Y >= epsilon / 2, and that X^2 + Y^2 >=
-   0.5.  */
+   It is given that 1 > X >= Y >= epsilon / 2, and that either X >=
+   0.75 or Y >= 0.5.  */
 
 float
 __x2y2m1f (float x, float y)

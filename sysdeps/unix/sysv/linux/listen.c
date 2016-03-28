@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,16 +20,10 @@
 #include <sys/socket.h>
 
 #include <socketcall.h>
-#include <kernel-features.h>
-#include <sys/syscall.h>
 
 int
 listen (int fd, int backlog)
 {
-#ifdef __ASSUME_LISTEN_SYSCALL
-  return INLINE_SYSCALL (listen, 2, fd, backlog);
-#else
   return SOCKETCALL (listen, fd, backlog);
-#endif
 }
 weak_alias (listen, __listen);

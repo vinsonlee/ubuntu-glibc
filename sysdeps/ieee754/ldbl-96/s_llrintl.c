@@ -1,6 +1,6 @@
 /* Round argument to nearest integral value according to current rounding
    direction.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -18,8 +18,6 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <fenv.h>
-#include <limits.h>
 #include <math.h>
 
 #include <math_private.h>
@@ -37,7 +35,7 @@ __llrintl (long double x)
   int32_t se,j0;
   u_int32_t i0, i1;
   long long int result;
-  long double w;
+  volatile long double w;
   long double t;
   int sx;
 
@@ -52,21 +50,8 @@ __llrintl (long double x)
 	result = (((long long int) i0 << 32) | i1) << (j0 - 63);
       else
 	{
-#if defined FE_INVALID || defined FE_INEXACT
-	  /* X < LLONG_MAX + 1 implied by J0 < 63.  */
-	  if (x > (long double) LLONG_MAX)
-	    {
-	      /* In the event of overflow we must raise the "invalid"
-		 exception, but not "inexact".  */
-	      t = __nearbyintl (x);
-	      feraiseexcept (t == LLONG_MAX ? FE_INEXACT : FE_INVALID);
-	    }
-	  else
-#endif
-	    {
-	      w = two63[sx] + x;
-	      t = w - two63[sx];
-	    }
+	  w = two63[sx] + x;
+	  t = w - two63[sx];
 	  GET_LDOUBLE_WORDS (se, i0, i1, t);
 	  j0 = (se & 0x7fff) - 0x3fff;
 

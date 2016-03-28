@@ -1,6 +1,6 @@
 /* Multiple versions of strcspn
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -19,6 +19,9 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
+
+#ifdef HAVE_SSE4_SUPPORT
+
 #include <sysdep.h>
 #include <init-arch.h>
 
@@ -39,16 +42,40 @@
    define multiple versions for strpbrk in static library since we
    need strpbrk before the initialization happened.  */
 #if (defined SHARED || !defined USE_AS_STRPBRK) && IS_IN (libc)
+# ifdef SHARED
 	.text
 ENTRY(STRCSPN)
 	.type	STRCSPN, @gnu_indirect_function
-	LOAD_GOT_AND_RTLD_GLOBAL_RO
-	LOAD_FUNC_GOT_EAX (STRCSPN_IA32)
-	HAS_CPU_FEATURE (SSE4_2)
+	pushl	%ebx
+	cfi_adjust_cfa_offset (4)
+	cfi_rel_offset (ebx, 0)
+	LOAD_PIC_REG(bx)
+	cmpl	$0, KIND_OFFSET+__cpu_features@GOTOFF(%ebx)
+	jne	1f
+	call	__init_cpu_features
+1:	leal	STRCSPN_IA32@GOTOFF(%ebx), %eax
+	testl	$bit_SSE4_2, CPUID_OFFSET+index_SSE4_2+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	LOAD_FUNC_GOT_EAX (STRCSPN_SSE42)
+	leal	STRCSPN_SSE42@GOTOFF(%ebx), %eax
+2:	popl	%ebx
+	cfi_adjust_cfa_offset (-4);
+	cfi_restore (ebx)
+	ret
+END(STRCSPN)
+# else
+	.text
+ENTRY(STRCSPN)
+	.type	STRCSPN, @gnu_indirect_function
+	cmpl	$0, KIND_OFFSET+__cpu_features
+	jne	1f
+	call	__init_cpu_features
+1:	leal	STRCSPN_IA32, %eax
+	testl	$bit_SSE4_2, CPUID_OFFSET+index_SSE4_2+__cpu_features
+	jz	2f
+	leal	STRCSPN_SSE42, %eax
 2:	ret
 END(STRCSPN)
+# endif
 
 # undef ENTRY
 # define ENTRY(name) \
@@ -67,6 +94,8 @@ END(STRCSPN)
 # define libc_hidden_builtin_def(name) \
 	.globl __GI_STRCSPN; __GI_STRCSPN = STRCSPN_IA32
 #endif
+
+#endif /* HAVE_SSE4_SUPPORT */
 
 #ifdef USE_AS_STRPBRK
 #include "../../strpbrk.S"

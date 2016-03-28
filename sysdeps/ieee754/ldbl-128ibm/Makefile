@@ -3,8 +3,3 @@
 # when -mlong-double-64 is not used).
 long-double-fcts = yes
 sysdep-CFLAGS += -mlong-double-128
-
-ifeq ($(subdir),stdlib)
-tests += tst-strtold-ldbl-128ibm
-$(objpfx)tst-strtold-ldbl-128ibm: $(libm)
-endif

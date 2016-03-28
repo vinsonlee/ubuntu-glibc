@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -81,8 +81,7 @@ __gai_start_notify_thread (void)
 {
   sigset_t ss;
   sigemptyset (&ss);
-  int sigerr __attribute__ ((unused));
-  sigerr = pthread_sigmask (SIG_SETMASK, &ss, NULL);
+  int sigerr = pthread_sigmask (SIG_SETMASK, &ss, NULL);
   assert_perror (sigerr);
 }
 
@@ -106,8 +105,7 @@ __gai_create_helper_thread (pthread_t *threadp, void *(*tf) (void *),
   sigset_t ss;
   sigset_t oss;
   sigfillset (&ss);
-  int sigerr __attribute__ ((unused));
-  sigerr = pthread_sigmask (SIG_SETMASK, &ss, &oss);
+  int sigerr = pthread_sigmask (SIG_SETMASK, &ss, &oss);
   assert_perror (sigerr);
 
   int ret = pthread_create (threadp, &attr, tf, arg);

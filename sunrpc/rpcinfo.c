@@ -201,7 +201,10 @@ main (int argc, char **argv)
 }
 
 static void
-udpping (u_short portnum, int argc, char **argv)
+udpping (portnum, argc, argv)
+     u_short portnum;
+     int argc;
+     char **argv;
 {
   struct timeval to;
   struct sockaddr_in addr;
@@ -353,7 +356,10 @@ udpping (u_short portnum, int argc, char **argv)
 }
 
 static void
-tcpping (u_short portnum, int argc, char **argv)
+tcpping (portnum, argc, argv)
+     u_short portnum;
+     int argc;
+     char **argv;
 {
   struct timeval to;
   struct sockaddr_in addr;
@@ -499,7 +505,10 @@ tcpping (u_short portnum, int argc, char **argv)
  * a good error message.
  */
 static int
-pstatus (register CLIENT *client, u_long prognum, u_long vers)
+pstatus (client, prognum, vers)
+     register CLIENT *client;
+     u_long prognum;
+     u_long vers;
 {
   struct rpc_err rpcerr;
 
@@ -518,7 +527,9 @@ pstatus (register CLIENT *client, u_long prognum, u_long vers)
 }
 
 static void
-pmapdump (int argc, char **argv)
+pmapdump (argc, argv)
+     int argc;
+     char **argv;
 {
   struct sockaddr_in server_addr;
   register struct hostent *hp;
@@ -613,7 +624,9 @@ reply_proc (res, who)
 }
 
 static void
-brdcst (int argc, char **argv)
+brdcst (argc, argv)
+     int argc;
+     char **argv;
 {
   enum clnt_stat rpc_stat;
   u_long prognum, vers;
@@ -638,7 +651,9 @@ brdcst (int argc, char **argv)
 }
 
 static void
-deletereg (int argc, char **argv)
+deletereg (argc, argv)
+     int argc;
+     char **argv;
 {
   u_long prog_num, version_num;
 
@@ -685,7 +700,8 @@ print_version (void)
 }
 
 static u_long
-getprognum (char *arg)
+getprognum (arg)
+     char *arg;
 {
   register struct rpcent *rpc;
   register u_long prognum;
@@ -709,7 +725,8 @@ getprognum (char *arg)
 }
 
 static u_long
-getvers (char *arg)
+getvers (arg)
+     char *arg;
 {
   register u_long vers;
 
@@ -718,7 +735,9 @@ getvers (char *arg)
 }
 
 static void
-get_inet_address (struct sockaddr_in *addr, char *host)
+get_inet_address (addr, host)
+     struct sockaddr_in *addr;
+     char *host;
 {
   register struct hostent *hp;
 

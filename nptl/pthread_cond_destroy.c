@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -23,7 +23,8 @@
 
 
 int
-__pthread_cond_destroy (pthread_cond_t *cond)
+__pthread_cond_destroy (cond)
+     pthread_cond_t *cond;
 {
   int pshared = (cond->__data.__mutex == (void *) ~0l)
 		? LLL_SHARED : LLL_PRIVATE;

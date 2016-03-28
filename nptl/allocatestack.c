@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -353,6 +353,7 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
   struct pthread *pd;
   size_t size;
   size_t pagesize_m1 = __getpagesize () - 1;
+  void *stacktop;
 
   assert (powerof2 (pagesize_m1 + 1));
   assert (TCB_ALIGNMENT >= STACK_ALIGN);
@@ -716,23 +717,19 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
   /* We place the thread descriptor at the end of the stack.  */
   *pdp = pd;
 
-#if _STACK_GROWS_DOWN
-  void *stacktop;
-
-# if TLS_TCB_AT_TP
+#if TLS_TCB_AT_TP
   /* The stack begins before the TCB and the static TLS block.  */
   stacktop = ((char *) (pd + 1) - __static_tls_size);
-# elif TLS_DTV_AT_TP
+#elif TLS_DTV_AT_TP
   stacktop = (char *) (pd - 1);
-# endif
+#endif
 
-# ifdef NEED_SEPARATE_REGISTER_STACK
+#ifdef NEED_SEPARATE_REGISTER_STACK
   *stack = pd->stackblock;
   *stacksize = stacktop - *stack;
-# else
+#elif _STACK_GROWS_DOWN
   *stack = stacktop;
-# endif
-#else
+#elif _STACK_GROWS_UP
   *stack = pd->stackblock;
   assert (*stack > 0);
 #endif

@@ -1,6 +1,6 @@
 /* Multiple versions of memchr
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -22,22 +22,46 @@
 #include <init-arch.h>
 
 #if IS_IN (libc)
+# define CFI_POP(REG) \
+	cfi_adjust_cfa_offset (-4); \
+	cfi_restore (REG)
+
+# define CFI_PUSH(REG) \
+	cfi_adjust_cfa_offset (4); \
+	cfi_rel_offset (REG, 0)
+
 	.text
 ENTRY(__memchr)
 	.type	__memchr, @gnu_indirect_function
-	LOAD_GOT_AND_RTLD_GLOBAL_RO
-	HAS_CPU_FEATURE (SSE2)
+	pushl	%ebx
+	CFI_PUSH (%ebx)
+	LOAD_PIC_REG(bx)
+	cmpl	$0, KIND_OFFSET+__cpu_features@GOTOFF(%ebx)
+	jne	1f
+	call	__init_cpu_features
+
+1:	testl	$bit_SSE2, CPUID_OFFSET+index_SSE2+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	HAS_ARCH_FEATURE (Slow_BSF)
+	testl	$bit_Slow_BSF, FEATURE_OFFSET+index_Slow_BSF+__cpu_features@GOTOFF(%ebx)
 	jz	3f
 
-	LOAD_FUNC_GOT_EAX ( __memchr_sse2)
+	leal	__memchr_sse2@GOTOFF(%ebx), %eax
+	popl	%ebx
+	CFI_POP	(%ebx)
 	ret
 
-2:	LOAD_FUNC_GOT_EAX (__memchr_ia32)
+	CFI_PUSH (%ebx)
+
+2:	leal	__memchr_ia32@GOTOFF(%ebx), %eax
+	popl	%ebx
+	CFI_POP	(%ebx)
 	ret
 
-3:	LOAD_FUNC_GOT_EAX (__memchr_sse2_bsf)
+	CFI_PUSH (%ebx)
+
+3:	leal	__memchr_sse2_bsf@GOTOFF(%ebx), %eax
+	popl	%ebx
+	CFI_POP	(%ebx)
 	ret
 END(__memchr)
 

@@ -1,5 +1,5 @@
 /* Utilities for reading/writing fstab, mtab, etc.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
 
 #include <mntent.h>
 #include <stdlib.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 
 /* We don't want to allocate the static buffer all the time since it
    is not always used (in fact, rather infrequently).  Accept the

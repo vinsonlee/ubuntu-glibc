@@ -1,5 +1,5 @@
 /* Elided pthread mutex trylock.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,9 +30,9 @@
 int
 __lll_trylock_elision (int *futex, short *adapt_count)
 {
-  __asm__ __volatile__ (".machinemode \"zarch_nohighgprs\"\n\t"
-			".machine \"all\""
-			: : : "memory");
+  __asm__ volatile (".machinemode \"zarch_nohighgprs\"\n\t"
+		    ".machine \"all\""
+		    : : : "memory");
 
   /* Implement POSIX semantics by forbiding nesting elided trylocks.
      Sorry.  After the abort the code is re-executed

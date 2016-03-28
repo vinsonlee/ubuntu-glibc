@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,7 +27,8 @@
    and effective user IDs, and the saved set-user-ID to UID;
    if not, the effective user ID is set to UID.  */
 int
-__setuid (uid_t uid)
+__setuid (uid)
+     uid_t uid;
 {
   auth_t newauth;
   error_t err;

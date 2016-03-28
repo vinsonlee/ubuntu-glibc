@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -158,7 +158,9 @@ static const struct random_poly_info random_poly_info =
    introduced by the L.C.R.N.G.  Note that the initialization of randtbl[]
    for default usage relies on values produced by this routine.  */
 int
-__srandom_r (unsigned int seed, struct random_data *buf)
+__srandom_r (seed, buf)
+     unsigned int seed;
+     struct random_data *buf;
 {
   int type;
   int32_t *state;
@@ -227,8 +229,11 @@ weak_alias (__srandom_r, srandom_r)
    setstate so that it doesn't matter when initstate is called.
    Returns 0 on success, non-zero on failure.  */
 int
-__initstate_r (unsigned int seed, char *arg_state, size_t n,
-	       struct random_data *buf)
+__initstate_r (seed, arg_state, n, buf)
+     unsigned int seed;
+     char *arg_state;
+     size_t n;
+     struct random_data *buf;
 {
   if (buf == NULL)
     goto fail;
@@ -292,7 +297,9 @@ weak_alias (__initstate_r, initstate_r)
    same state as the current state
    Returns 0 on success, non-zero on failure.  */
 int
-__setstate_r (char *arg_state, struct random_data *buf)
+__setstate_r (arg_state, buf)
+     char *arg_state;
+     struct random_data *buf;
 {
   int32_t *new_state = 1 + (int32_t *) arg_state;
   int type;
@@ -350,7 +357,9 @@ weak_alias (__setstate_r, setstate_r)
    pointer if the front one has wrapped.  Returns a 31-bit random number.  */
 
 int
-__random_r (struct random_data *buf, int32_t *result)
+__random_r (buf, result)
+     struct random_data *buf;
+     int32_t *result;
 {
   int32_t *state;
 

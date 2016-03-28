@@ -1,5 +1,5 @@
 /* longjmp for ARM.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -81,7 +81,7 @@ ENTRY (__longjmp)
 		    C_SYMBOL_NAME(_rtld_local_ro) \
 		    + RTLD_GLOBAL_RO_DL_HWCAP_OFFSET)
 # else
-#  ifdef SHARED
+#  ifdef PIC
 	LDR_GLOBAL (a4, a3, C_SYMBOL_NAME(_rtld_global_ro), \
 		    RTLD_GLOBAL_RO_DL_HWCAP_OFFSET)
 #  else

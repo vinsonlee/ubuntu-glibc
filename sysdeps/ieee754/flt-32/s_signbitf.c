@@ -1,5 +1,5 @@
 /* Return nonzero value if number is negative.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -19,8 +19,13 @@
 
 #include <math.h>
 
+#include <math_private.h>
+
 int
 __signbitf (float x)
 {
-  return __builtin_signbitf (x);
+  int32_t hx;
+
+  GET_FLOAT_WORD (hx, x);
+  return hx & 0x80000000;
 }

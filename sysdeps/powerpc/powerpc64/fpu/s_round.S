@@ -1,5 +1,5 @@
 /* round function.  PowerPC64 version.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,12 +38,11 @@
 
 EALIGN (__round, 4, 0)
 	CALL_MCOUNT 0
+	mffs	fp11		/* Save current FPU rounding mode.  */
 	lfd	fp13,.LC0@toc(2)
 	fabs	fp0,fp1
 	fsub	fp12,fp13,fp13	/* generate 0.0  */
 	fcmpu	cr7,fp0,fp13	/* if (fabs(x) > TWO52)  */
-	mffs	fp11		/* Save current FPU rounding mode and
-				   "inexact" state.  */
 	fcmpu	cr6,fp1,fp12	/* if (x > 0.0)  */
 	bnllr-	cr7
 	mtfsfi	7,1		/* Set rounding mode toward 0.  */
@@ -54,8 +53,7 @@ EALIGN (__round, 4, 0)
 	fsub	fp1,fp1,fp13	/* x-= TWO52;  */
 	fabs	fp1,fp1		/* if (x == 0.0)  */
 				/* x = 0.0; */
-	mtfsf	0xff,fp11	/* Restore previous rounding mode and
-				   "inexact" state.  */
+	mtfsf	0x01,fp11	/* restore previous rounding mode.  */
 	blr
 .L4:
 	fsub	fp9,fp1,fp10	/* x+= 0.5;  */
@@ -65,8 +63,7 @@ EALIGN (__round, 4, 0)
 	fnabs	fp1,fp1		/* if (x == 0.0)  */
 				/* x = -0.0; */
 .L9:
-	mtfsf	0xff,fp11	/* Restore previous rounding mode and
-				   "inexact" state.  */
+	mtfsf	0x01,fp11	/* restore previous rounding mode.  */
 	blr
 	END (__round)
 
