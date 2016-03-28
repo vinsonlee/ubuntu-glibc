@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -33,7 +33,10 @@ static char const zeroes[PADSIZE] =
 {'0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'};
 
 _IO_ssize_t
-_IO_padn (_IO_FILE *fp, int pad, _IO_ssize_t count)
+_IO_padn (fp, pad, count)
+      _IO_FILE *fp;
+      int pad;
+      _IO_ssize_t count;
 {
   char padbuf[PADSIZE];
   const char *padptr;

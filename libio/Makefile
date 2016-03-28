@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2016 Free Software Foundation, Inc.
+# Copyright (C) 1995-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ subdir	:= libio
 
 include ../Makeconfig
 
-headers	:= stdio.h libio.h _G_config.h bits/stdio.h \
+headers	:= stdio.h libio.h _G_config.h bits/stdio.h bits/stdio-lock.h \
 	   bits/sys_errlist.h bits/stdio2.h bits/stdio-ldbl.h bits/libio-ldbl.h
 
 routines	:=							      \
@@ -84,74 +84,72 @@ endif
 CPPFLAGS += $(libio-mtsafe)
 
 # Support for exception handling.
-CFLAGS-fileops.c = -fexceptions
-CFLAGS-fputc.c = -fexceptions
-CFLAGS-fputwc.c = -fexceptions
-CFLAGS-freopen64.c = -fexceptions
-CFLAGS-freopen.c = -fexceptions
-CFLAGS-fseek.c = -fexceptions
-CFLAGS-fseeko64.c = -fexceptions
-CFLAGS-fseeko.c = -fexceptions
-CFLAGS-ftello64.c = -fexceptions
-CFLAGS-ftello.c = -fexceptions
-CFLAGS-fwide.c = -fexceptions
-CFLAGS-genops.c = -fexceptions
-CFLAGS-getc.c = -fexceptions
-CFLAGS-getchar.c = -fexceptions
-CFLAGS-getwc.c = -fexceptions
-CFLAGS-getwchar.c = -fexceptions
-CFLAGS-iofclose.c = -fexceptions
-CFLAGS-iofflush.c = -fexceptions
-CFLAGS-iofgetpos64.c = -fexceptions
-CFLAGS-iofgetpos.c = -fexceptions
-CFLAGS-iofgets.c = -fexceptions
-CFLAGS-iofgetws.c = -fexceptions
-CFLAGS-iofputs.c = -fexceptions
-CFLAGS-iofputws.c = -fexceptions
-CFLAGS-iofread.c = -fexceptions
-CFLAGS-iofsetpos64.c = -fexceptions
-CFLAGS-iofsetpos.c = -fexceptions
-CFLAGS-ioftell.c = -fexceptions
-CFLAGS-iofwrite.c = -fexceptions
-CFLAGS-iogetdelim.c = -fexceptions
-CFLAGS-iogetline.c = -fexceptions
-CFLAGS-iogets.c = -fexceptions
-CFLAGS-iogetwline.c = -fexceptions
-CFLAGS-ioputs.c = -fexceptions
-CFLAGS-ioseekoff.c = -fexceptions
-CFLAGS-ioseekpos.c = -fexceptions
-CFLAGS-iosetbuffer.c = -fexceptions
-CFLAGS-iosetvbuf.c = -fexceptions
-CFLAGS-ioungetc.c = -fexceptions
-CFLAGS-ioungetwc.c = -fexceptions
-CFLAGS-oldfileops.c = -fexceptions
-CFLAGS-oldiofclose.c = -fexceptions
-CFLAGS-oldiofgetpos64.c = -fexceptions
-CFLAGS-oldiofgetpos.c = -fexceptions
-CFLAGS-oldiofsetpos64.c = -fexceptions
-CFLAGS-oldiofsetpos.c = -fexceptions
-CFLAGS-peekc.c = -fexceptions
-CFLAGS-putc.c = -fexceptions
-CFLAGS-putchar.c = -fexceptions
-CFLAGS-putwc.c = -fexceptions
-CFLAGS-putwchar.c = -fexceptions
-CFLAGS-rewind.c = -fexceptions
-CFLAGS-wfileops.c = -fexceptions
-CFLAGS-wgenops.c = -fexceptions
-CFLAGS-oldiofopen.c = -fexceptions
-CFLAGS-iofopen.c = -fexceptions
-CFLAGS-iofopen64.c = -fexceptions
-CFLAGS-oldtmpfile.c = -fexceptions
+CFLAGS-fileops.c = $(exceptions)
+CFLAGS-fputc.c = $(exceptions)
+CFLAGS-fputwc.c = $(exceptions)
+CFLAGS-freopen64.c = $(exceptions)
+CFLAGS-freopen.c = $(exceptions)
+CFLAGS-fseek.c = $(exceptions)
+CFLAGS-fseeko64.c = $(exceptions)
+CFLAGS-fseeko.c = $(exceptions)
+CFLAGS-ftello64.c = $(exceptions)
+CFLAGS-ftello.c = $(exceptions)
+CFLAGS-fwide.c = $(exceptions)
+CFLAGS-genops.c = $(exceptions)
+CFLAGS-getc.c = $(exceptions)
+CFLAGS-getchar.c = $(exceptions)
+CFLAGS-getwc.c = $(exceptions)
+CFLAGS-getwchar.c = $(exceptions)
+CFLAGS-iofclose.c = $(exceptions)
+CFLAGS-iofflush.c = $(exceptions)
+CFLAGS-iofgetpos64.c = $(exceptions)
+CFLAGS-iofgetpos.c = $(exceptions)
+CFLAGS-iofgets.c = $(exceptions)
+CFLAGS-iofgetws.c = $(exceptions)
+CFLAGS-iofputs.c = $(exceptions)
+CFLAGS-iofputws.c = $(exceptions)
+CFLAGS-iofread.c = $(exceptions)
+CFLAGS-iofsetpos64.c = $(exceptions)
+CFLAGS-iofsetpos.c = $(exceptions)
+CFLAGS-ioftell.c = $(exceptions)
+CFLAGS-iofwrite.c = $(exceptions)
+CFLAGS-iogetdelim.c = $(exceptions)
+CFLAGS-iogetline.c = $(exceptions)
+CFLAGS-iogets.c = $(exceptions)
+CFLAGS-iogetwline.c = $(exceptions)
+CFLAGS-ioputs.c = $(exceptions)
+CFLAGS-ioseekoff.c = $(exceptions)
+CFLAGS-ioseekpos.c = $(exceptions)
+CFLAGS-iosetbuffer.c = $(exceptions)
+CFLAGS-iosetvbuf.c = $(exceptions)
+CFLAGS-ioungetc.c = $(exceptions)
+CFLAGS-ioungetwc.c = $(exceptions)
+CFLAGS-oldfileops.c = $(exceptions)
+CFLAGS-oldiofclose.c = $(exceptions)
+CFLAGS-oldiofgetpos64.c = $(exceptions)
+CFLAGS-oldiofgetpos.c = $(exceptions)
+CFLAGS-oldiofsetpos64.c = $(exceptions)
+CFLAGS-oldiofsetpos.c = $(exceptions)
+CFLAGS-peekc.c = $(exceptions)
+CFLAGS-putc.c = $(exceptions)
+CFLAGS-putchar.c = $(exceptions)
+CFLAGS-putwc.c = $(exceptions)
+CFLAGS-putwchar.c = $(exceptions)
+CFLAGS-rewind.c = $(exceptions)
+CFLAGS-wfileops.c = $(exceptions)
+CFLAGS-wgenops.c = $(exceptions)
+CFLAGS-oldiofopen.c = $(exceptions)
+CFLAGS-iofopen.c = $(exceptions)
+CFLAGS-iofopen64.c = $(exceptions)
+CFLAGS-oldtmpfile.c = $(exceptions)
 # XXX Do we need filedoalloc and wfiledoalloc?  Others?
 
 CFLAGS-tst_putwc.c = -DOBJPFX=\"$(objpfx)\"
 
 tst_wprintf2-ARGS = "Some Text"
 
-test-fmemopen-ENV = MALLOC_TRACE=$(objpfx)test-fmemopen.mtrace
 tst-fopenloc-ENV = MALLOC_TRACE=$(objpfx)tst-fopenloc.mtrace
 
-generated += test-fmemopen.mtrace test-fmemopen.check
 generated += tst-fopenloc.mtrace tst-fopenloc.check
 
 aux	:= fileops genops stdfiles stdio strops
@@ -166,7 +164,7 @@ shared-only-routines = oldiofopen oldiofdopen oldiofclose oldfileops	\
 		       oldiofsetpos64
 
 ifeq ($(run-built-tests),yes)
-tests-special += $(objpfx)test-freopen.out $(objpfx)test-fmemopen-mem.out
+tests-special += $(objpfx)test-freopen.out
 ifeq (yes,$(build-shared))
 # Run tst-fopenloc-cmp.out and tst-openloc-mem.out only if shared
 # library is enabled since they depend on tst-fopenloc.out.
@@ -176,30 +174,6 @@ endif
 
 include ../Rules
 
-ifeq ($(run-built-tests),yes)
-LOCALES := de_DE.ISO-8859-1 de_DE.UTF-8 en_US.ISO-8859-1 en_US.UTF-8 \
-	   ja_JP.EUC-JP ja_JP.UTF-8
-include ../gen-locales.mk
-
-$(objpfx)bug-ftell.out: $(gen-locales)
-$(objpfx)bug-ungetwc1.out: $(gen-locales)
-$(objpfx)bug-ungetwc2.out: $(gen-locales)
-$(objpfx)tst-fgetwc.out: $(gen-locales)
-$(objpfx)tst-fgetws.out: $(gen-locales)
-$(objpfx)tst-fopenloc.out: $(gen-locales)
-$(objpfx)tst-fputws.out: $(gen-locales)
-$(objpfx)tst-fseek.out: $(gen-locales)
-$(objpfx)tst-ftell-active-handler.out: $(gen-locales)
-$(objpfx)tst-ftell-append.out: $(gen-locales)
-$(objpfx)tst-ftell-partial-wide.out: $(gen-locales)
-$(objpfx)tst-setvbuf1.out: $(gen-locales)
-$(objpfx)tst-swscanf.out: $(gen-locales)
-$(objpfx)tst-ungetwc1.out: $(gen-locales)
-$(objpfx)tst-ungetwc2.out: $(gen-locales)
-$(objpfx)tst-widetext.out: $(gen-locales)
-$(objpfx)tst_wprintf2.out: $(gen-locales)
-endif
-
 $(objpfx)test-freopen.out: test-freopen.sh $(objpfx)test-freopen
 	$(SHELL) $< $(common-objpfx) '$(test-program-prefix)'	\
 	$(common-objpfx)libio/; \
@@ -208,10 +182,6 @@ $(objpfx)test-freopen.out: test-freopen.sh $(objpfx)test-freopen
 $(objpfx)tst-fopenloc-cmp.out: ../iconvdata/testdata/ISO-8859-1..UTF8 \
 			       $(objpfx)tst-fopenloc.out
 	cmp $^ > $@; \
-	$(evaluate-test)
-
-$(objpfx)test-fmemopen-mem.out: $(objpfx)test-fmemopen.out
-	$(common-objpfx)malloc/mtrace $(objpfx)test-fmemopen.mtrace > $@; \
 	$(evaluate-test)
 
 $(objpfx)tst-fopenloc-mem.out: $(objpfx)tst-fopenloc.out

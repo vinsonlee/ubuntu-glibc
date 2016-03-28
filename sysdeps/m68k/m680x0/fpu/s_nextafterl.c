@@ -26,7 +26,6 @@ static char rcsid[] = "$NetBSD: $";
  *   Special cases:
  */
 
-#include <errno.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -93,12 +92,10 @@ long double __nextafterl(long double x, long double y)
 	if(esy==0x7fff) {
 	    long double u = x + x;	/* overflow  */
 	    math_force_eval (u);
-	    __set_errno (ERANGE);
 	}
 	if(esy==0 && (hx & 0x80000000) == 0) { /* underflow */
 	    y = x*x;
 	    math_force_eval (y);		/* raise underflow flag */
-	    __set_errno (ERANGE);
 	}
 	SET_LDOUBLE_WORDS(x,esx,hx,lx);
 	return x;

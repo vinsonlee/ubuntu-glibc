@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,7 +29,9 @@
    Returns 0 on success, -1 for errors.  */
 /* XXX should be __shutdown ? */
 int
-shutdown (int fd, int how)
+shutdown (fd, how)
+     int fd;
+     int how;
 {
   error_t err = HURD_DPORT_USE (fd, __socket_shutdown (port, how));
   if (err)

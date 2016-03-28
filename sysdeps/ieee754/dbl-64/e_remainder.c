@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2015 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -130,8 +130,6 @@ __ieee754_remainder (double x, double y)
 	      d = fabs (z);
 	      if (d <= fabs (d - y))
 		return z;
-	      else if (d == y)
-		return 0.0 * x;
 	      else
 		return (z > 0) ? z - y : z + y;
 	    }

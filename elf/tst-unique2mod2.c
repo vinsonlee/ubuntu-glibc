@@ -1,5 +1,6 @@
 #include <config.h>
 
+#ifdef HAVE_ASM_UNIQUE_OBJECT
 asm (".data;"
      ".globl var\n"
      ".type var, %gnu_unique_object\n"
@@ -13,3 +14,4 @@ f (int *p)
 {
   return &var != p || *p != 1;
 }
+#endif

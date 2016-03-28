@@ -1,5 +1,4 @@
-/* This tests destruction of a barrier right after waiting on it.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2004.
 
@@ -17,6 +16,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+/* This is a test for behavior not guaranteed by POSIX.  */
 #include <errno.h>
 #include <pthread.h>
 #include <stdio.h>

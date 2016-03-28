@@ -529,7 +529,6 @@ EXP_ERROR_RETURN:
 }
 
 GLOBAL_IEEE754_END(remainder)
-weak_alias (__remainder, drem)
 
 
 

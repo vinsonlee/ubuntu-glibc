@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -23,6 +23,7 @@
 #include <string.h>
 #include <pthreadP.h>
 #include <shlib-compat.h>
+#include <check-cpuset.h>
 
 
 int
@@ -42,6 +43,11 @@ __pthread_attr_setaffinity_new (pthread_attr_t *attr, size_t cpusetsize,
     }
   else
     {
+      int ret = check_cpuset_attr (cpuset, cpusetsize);
+
+      if (ret)
+        return ret;
+
       if (iattr->cpusetsize != cpusetsize)
 	{
 	  void *newp = (cpu_set_t *) realloc (iattr->cpuset, cpusetsize);

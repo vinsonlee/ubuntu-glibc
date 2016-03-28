@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,8 @@
 /* Store in SET all signals that are blocked and pending.  */
 /* XXX should be __sigpending ? */
 int
-sigpending (sigset_t *set)
+sigpending (set)
+     sigset_t *set;
 {
   struct hurd_sigstate *ss;
   sigset_t pending;

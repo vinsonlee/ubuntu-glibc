@@ -2,7 +2,7 @@
 
    This module uses the Z9-109 variants of the Convert Unicode
    instructions.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
    Author: Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
    Based on the work by Ulrich Drepper  <drepper@cygnus.com>, 1997.
@@ -163,22 +163,22 @@ gconv_end (struct __gconv_step *data)
    directions.  */
 #define HARDWARE_CONVERT(INSTRUCTION)					\
   {									\
-    register const unsigned char* pInput __asm__ ("8") = inptr;		\
-    register unsigned long long inlen __asm__ ("9") = inend - inptr;	\
-    register unsigned char* pOutput __asm__ ("10") = outptr;		\
-    register unsigned long long outlen __asm__("11") = outend - outptr;	\
+    register const unsigned char* pInput asm ("8") = inptr;		\
+    register unsigned long long inlen asm ("9") = inend - inptr;	\
+    register unsigned char* pOutput asm ("10") = outptr;		\
+    register unsigned long long outlen asm("11") = outend - outptr;	\
     uint64_t cc = 0;							\
 									\
-    __asm__ volatile (".machine push       \n\t"			\
-		      ".machine \"z9-109\" \n\t"			\
-		      "0: " INSTRUCTION "  \n\t"			\
-		      ".machine pop        \n\t"			\
-		      "   jo     0b        \n\t"			\
-		      "   ipm    %2        \n"				\
-		      : "+a" (pOutput), "+a" (pInput), "+d" (cc),	\
-		      "+d" (outlen), "+d" (inlen)			\
-		      :							\
-		      : "cc", "memory");				\
+    asm volatile (".machine push       \n\t"				\
+                  ".machine \"z9-109\" \n\t"				\
+		  "0: " INSTRUCTION "  \n\t"				\
+                  ".machine pop        \n\t"				\
+                  "   jo     0b        \n\t"				\
+		  "   ipm    %2        \n"			        \
+		  : "+a" (pOutput), "+a" (pInput), "+d" (cc),		\
+		    "+d" (outlen), "+d" (inlen)				\
+		  :							\
+		  : "cc", "memory");					\
 									\
     inptr = pInput;							\
     outptr = pOutput;							\

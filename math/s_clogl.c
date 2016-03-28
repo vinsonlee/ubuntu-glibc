@@ -1,5 +1,5 @@
 /* Compute complex natural logarithm.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -72,8 +72,15 @@ __clogl (__complex__ long double x)
 
       if (absx == 1.0L && scale == 0)
 	{
-	  __real__ result = __log1pl (absy * absy) / 2.0L;
-	  math_check_force_underflow_nonneg (__real__ result);
+	  long double absy2 = absy * absy;
+	  if (absy2 <= LDBL_MIN * 2.0L)
+	    {
+	      long double force_underflow = absy2 * absy2;
+	      __real__ result = absy2 / 2.0L;
+	      math_force_eval (force_underflow);
+	    }
+	  else
+	    __real__ result = __log1pl (absy2) / 2.0L;
 	}
       else if (absx > 1.0L && absx < 2.0L && absy < 1.0L && scale == 0)
 	{
@@ -83,17 +90,14 @@ __clogl (__complex__ long double x)
 	  __real__ result = __log1pl (d2m1) / 2.0L;
 	}
       else if (absx < 1.0L
-	       && absx >= 0.5L
+	       && absx >= 0.75L
 	       && absy < LDBL_EPSILON / 2.0L
 	       && scale == 0)
 	{
 	  long double d2m1 = (absx - 1.0L) * (absx + 1.0L);
 	  __real__ result = __log1pl (d2m1) / 2.0L;
 	}
-      else if (absx < 1.0L
-	       && absx >= 0.5L
-	       && scale == 0
-	       && absx * absx + absy * absy >= 0.5L)
+      else if (absx < 1.0L && (absx >= 0.75L || absy >= 0.5L) && scale == 0)
 	{
 	  long double d2m1 = __x2y2m1l (absx, absy);
 	  __real__ result = __log1pl (d2m1) / 2.0L;

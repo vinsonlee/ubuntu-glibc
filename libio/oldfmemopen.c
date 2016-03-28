@@ -1,5 +1,5 @@
 /* Fmemopen implementation.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Hanno Mueller, kontakt@hanno.de, 2000.
 
@@ -204,7 +204,6 @@ __old_fmemopen (void *buf, size_t len, const char *mode)
 {
   cookie_io_functions_t iof;
   fmemopen_cookie_t *c;
-  FILE *result;
 
   if (__glibc_unlikely (len == 0))
     {
@@ -260,16 +259,7 @@ __old_fmemopen (void *buf, size_t len, const char *mode)
   iof.seek = fmemopen_seek;
   iof.close = fmemopen_close;
 
-  result = _IO_fopencookie (c, mode, iof);
-  if (__glibc_unlikely (result == NULL))
-    {
-      if (c->mybuffer)
-	free (c->buffer);
-
-      free (c);
-    }
-
-  return result;
+  return _IO_fopencookie (c, mode, iof);
 }
 compat_symbol (libc, __old_fmemopen, fmemopen, GLIBC_2_2);
 #endif

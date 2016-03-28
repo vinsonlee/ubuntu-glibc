@@ -1,6 +1,6 @@
-#!/bin/sh
+#! /bin/sh
 # Testing the stdio implementation
-# Copyright (C) 2000-2016 Free Software Foundation, Inc.
+# Copyright (C) 2000-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -28,6 +28,6 @@ ${test_program_prefix} \
   ${common_objpfx}stdio-common/tst-unbputc \
     2> ${common_objpfx}stdio-common/tst-unbputc.out || status=1
 
-(printf 12 | cmp ${common_objpfx}stdio-common/tst-unbputc.out -) || status=1
+(echo -n 12 | cmp ${common_objpfx}stdio-common/tst-unbputc.out -) || status=1
 
 exit $status

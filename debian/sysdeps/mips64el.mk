@@ -22,8 +22,8 @@ GLIBC_MULTILIB_PASSES += mips32
 DEB_ARCH_MULTILIB_PACKAGES += libc6-mips32 libc6-dev-mips32
 libc6-mips32_shlib_dep = libc6-mips32 (>= $(shlib_dep_ver))
 mips32_configure_target = mipsel-linux-gnu
-mips32_CC = $(CC) -mabi=32 -march=mips32 -mtune=mips32r2
-mips32_CXX = $(CXX) -mabi=32 -march=mips32 -mtune=mips32r2
+mips32_CC = $(CC) -mabi=32 -march=mips2 -mtune=mips32r2
+mips32_CXX = $(CXX) -mabi=32 -march=mips2 -mtune=mips32r2
 mips32_rtlddir = /lib
 mips32_slibdir = /libo32
 mips32_libdir = /usr/libo32
