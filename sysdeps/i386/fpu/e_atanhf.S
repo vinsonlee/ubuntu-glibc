@@ -1,5 +1,5 @@
 /* ix87 specific implementation of arctanh function.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -18,7 +18,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <machine/asm.h>
-#include <i386-math-asm.h>
 
 	.section .rodata
 
@@ -37,7 +36,12 @@ limit:	.double 0.29
 ln2_2:	.tfloat 0.3465735902799726547086160
 	ASM_SIZE_DIRECTIVE(ln2_2)
 
-DEFINE_FLT_MIN
+	.section .rodata.cst4,"aM",@progbits,4
+
+	.p2align 2
+	.type flt_min,@object
+flt_min:	.byte 0, 0, 0x80, 0
+	ASM_SIZE_DIRECTIVE(flt_min)
 
 #ifdef PIC
 #define MO(op) op##@GOTOFF(%edx)
@@ -80,8 +84,18 @@ ENTRY(__ieee754_atanhf)
 	sahf
 	jae	4f
 	fyl2xp1			// 0.5*ln2*ld(1+2*|x|+(2*|x|^2)/(1-|x|))
-	FLT_CHECK_FORCE_UFLOW_NONNEG
-	jecxz	3f
+	fcoms	MO(flt_min)
+	fnstsw
+	sahf
+	jae	6f
+	subl	$4, %esp
+	cfi_adjust_cfa_offset (4)
+	fld	%st(0)
+	fmul	%st(0)
+	fstps	(%esp)
+	addl	$4, %esp
+	cfi_adjust_cfa_offset (-4)
+6:	jecxz	3f
 	fchs			// 0.5*ln2*ld(1+2*x+(2*x^2)/(1-x))
 3:	ret
 

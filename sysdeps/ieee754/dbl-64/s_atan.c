@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2015 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -90,7 +90,11 @@ atan (double x)
 	{
 	  if (u < A)
 	    {
-	      math_check_force_underflow_nonneg (u);
+	      if (u < DBL_MIN)
+		{
+		  double force_underflow = x * x;
+		  math_force_eval (force_underflow);
+		}
 	      return x;
 	    }
 	  else

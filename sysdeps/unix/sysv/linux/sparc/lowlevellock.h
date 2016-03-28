@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2003.
 
@@ -126,19 +126,17 @@ __lll_robust_timedlock (int *futex, const struct timespec *abstime,
 #define lll_unlock(lock, private) \
   ((void) ({								      \
     int *__futex = &(lock);						      \
-    int __private = (private);						      \
     int __val = atomic_exchange_24_rel (__futex, 0);			      \
     if (__glibc_unlikely (__val > 1))					      \
-      lll_futex_wake (__futex, 1, __private);				      \
+      lll_futex_wake (__futex, 1, private);				      \
   }))
 
 #define lll_robust_unlock(lock, private) \
   ((void) ({								      \
     int *__futex = &(lock);						      \
-    int __private = (private);						      \
     int __val = atomic_exchange_rel (__futex, 0);			      \
     if (__glibc_unlikely (__val & FUTEX_WAITERS))			      \
-      lll_futex_wake (__futex, 1, __private);				      \
+      lll_futex_wake (__futex, 1, private);				      \
   }))
 
 #define lll_islocked(futex) \

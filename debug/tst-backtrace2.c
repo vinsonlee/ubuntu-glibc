@@ -1,5 +1,5 @@
 /* Test backtrace and backtrace_symbols.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -94,12 +94,6 @@ fn3 (void)
 NO_INLINE static int
 do_test (void)
 {
-  /* Test BZ #18084.  */
-  void *buffer[1];
-
-  if (backtrace (buffer, 0) != 0)
-    FAIL ();
-
   fn3 ();
   return ret;
 }

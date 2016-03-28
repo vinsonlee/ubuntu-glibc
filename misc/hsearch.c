@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>
    This file is part of the GNU C Library.
 
@@ -24,7 +24,9 @@ static struct hsearch_data htab;
 
 /* Define the non-reentrant function using the reentrant counterparts.  */
 ENTRY *
-hsearch (ENTRY item, ACTION action)
+hsearch (item, action)
+     ENTRY item;
+     ACTION action;
 {
   ENTRY *result;
 
@@ -35,7 +37,8 @@ hsearch (ENTRY item, ACTION action)
 
 
 int
-hcreate (size_t nel)
+hcreate (nel)
+     size_t nel;
 {
   return __hcreate_r (nel, &htab);
 }

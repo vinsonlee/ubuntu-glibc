@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Torbjorn Granlund (tege@sics.se).
 
@@ -93,7 +93,8 @@ typedef unsigned char byte;
 static int memcmp_bytes (op_t, op_t) __THROW;
 
 static int
-memcmp_bytes (op_t a, op_t b)
+memcmp_bytes (a, b)
+     op_t a, b;
 {
   long int srcp1 = (long int) &a;
   long int srcp2 = (long int) &b;
@@ -117,7 +118,10 @@ static int memcmp_common_alignment (long, long, size_t) __THROW;
    objects (not LEN bytes!).  Both SRCP1 and SRCP2 should be aligned for
    memory operations on `op_t's.  */
 static int
-memcmp_common_alignment (long int srcp1, long int srcp2, size_t len)
+memcmp_common_alignment (srcp1, srcp2, len)
+     long int srcp1;
+     long int srcp2;
+     size_t len;
 {
   op_t a0, a1;
   op_t b0, b1;
@@ -201,7 +205,10 @@ static int memcmp_not_common_alignment (long, long, size_t) __THROW;
    `op_t' objects (not LEN bytes!).  SRCP2 should be aligned for memory
    operations on `op_t', but SRCP1 *should be unaligned*.  */
 static int
-memcmp_not_common_alignment (long int srcp1, long int srcp2, size_t len)
+memcmp_not_common_alignment (srcp1, srcp2, len)
+     long int srcp1;
+     long int srcp2;
+     size_t len;
 {
   op_t a0, a1, a2, a3;
   op_t b0, b1, b2, b3;
@@ -301,7 +308,10 @@ memcmp_not_common_alignment (long int srcp1, long int srcp2, size_t len)
 }
 
 int
-MEMCMP (const __ptr_t s1, const __ptr_t s2, size_t len)
+MEMCMP (s1, s2, len)
+     const __ptr_t s1;
+     const __ptr_t s2;
+     size_t len;
 {
   op_t a0;
   op_t b0;

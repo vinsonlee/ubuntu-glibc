@@ -120,7 +120,11 @@ __log1p (double x)
 	  math_force_eval (two54 + x);          /* raise inexact */
 	  if (ax < 0x3c900000)                  /* |x| < 2**-54 */
 	    {
-	      math_check_force_underflow (x);
+	      if (fabs (x) < DBL_MIN)
+		{
+		  double force_underflow = x * x;
+		  math_force_eval (force_underflow);
+		}
 	      return x;
 	    }
 	  else

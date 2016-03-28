@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,11 @@
 
 
 char *
-__strncpy_chk (char *s1, const char *s2, size_t n, size_t s1len)
+__strncpy_chk (s1, s2, n, s1len)
+     char *s1;
+     const char *s2;
+     size_t n;
+     size_t s1len;
 {
   if (__builtin_expect (s1len < n, 0))
     __chk_fail ();

@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1996.
 
@@ -25,7 +25,7 @@
 #include <stdio_ext.h>
 #include <string.h>
 #include <rpc/types.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <kernel-features.h>
 
 static service_user *ni;

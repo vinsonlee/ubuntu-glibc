@@ -1,5 +1,4 @@
-#ifndef TILE_MATH_PRIVATE_H
-#define TILE_MATH_PRIVATE_H 1
+#ifndef _MATH_PRIVATE_H
 
 /* Internally, we suppress any use of exception or rounding other
    than what is supported by the hardware.  This does mean that some

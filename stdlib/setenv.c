@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,11 @@
    there seems to be no way to pacify GCC selectively, only for the
    place where it's needed.  Do not use DIAG_IGNORE_NEEDS_COMMENT
    here, as it's not defined yet.  */
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#if ((__GNUC__ << 16) + __GNUC_MINOR__) >= ((4 << 16) + 7)
+# pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#else
+# pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
 
 #include <errno.h>
 #if !_LIBC
@@ -53,7 +57,7 @@ extern char **environ;
 
 #if _LIBC
 /* This lock protects against simultaneous modifications of `environ'.  */
-# include <libc-lock.h>
+# include <bits/libc-lock.h>
 __libc_lock_define_initialized (static, envlock)
 # define LOCK	__libc_lock_lock (envlock)
 # define UNLOCK	__libc_lock_unlock (envlock)
@@ -113,8 +117,11 @@ static char **last_environ;
    to reuse values once generated for a `setenv' call since we can never
    free the strings.  */
 int
-__add_to_environ (const char *name, const char *value, const char *combined,
-		  int replace)
+__add_to_environ (name, value, combined, replace)
+     const char *name;
+     const char *value;
+     const char *combined;
+     int replace;
 {
   char **ep;
   size_t size;
@@ -248,7 +255,10 @@ __add_to_environ (const char *name, const char *value, const char *combined,
 }
 
 int
-setenv (const char *name, const char *value, int replace)
+setenv (name, value, replace)
+     const char *name;
+     const char *value;
+     int replace;
 {
   if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
     {
@@ -260,7 +270,8 @@ setenv (const char *name, const char *value, int replace)
 }
 
 int
-unsetenv (const char *name)
+unsetenv (name)
+     const char *name;
 {
   size_t len;
   char **ep;

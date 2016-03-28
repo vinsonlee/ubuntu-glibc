@@ -2,8 +2,8 @@
 #include <string.h>
 #include <netinet/ether.h>
 
-static int
-do_test (void)
+int
+main (int argc, char *argv[])
 {
   struct ether_addr *valp, val;
   int result, r;
@@ -55,6 +55,3 @@ do_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

@@ -1,6 +1,6 @@
 /* Multiple versions of strcpy
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -61,21 +61,51 @@
    need strncpy before the initialization happened.  */
 #if IS_IN (libc)
 
+# ifdef SHARED
 	.text
 ENTRY(STRCPY)
 	.type	STRCPY, @gnu_indirect_function
-	LOAD_GOT_AND_RTLD_GLOBAL_RO
-	LOAD_FUNC_GOT_EAX (STRCPY_IA32)
-	HAS_CPU_FEATURE (SSE2)
+	pushl	%ebx
+	cfi_adjust_cfa_offset (4)
+	cfi_rel_offset (ebx, 0)
+	LOAD_PIC_REG(bx)
+	cmpl	$0, KIND_OFFSET+__cpu_features@GOTOFF(%ebx)
+	jne	1f
+	call	__init_cpu_features
+1:	leal	STRCPY_IA32@GOTOFF(%ebx), %eax
+	testl	$bit_SSE2, CPUID_OFFSET+index_SSE2+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	LOAD_FUNC_GOT_EAX (STRCPY_SSE2)
-	HAS_ARCH_FEATURE (Fast_Unaligned_Load)
+	leal	STRCPY_SSE2@GOTOFF(%ebx), %eax
+	testl	$bit_Fast_Unaligned_Load, FEATURE_OFFSET+index_Fast_Unaligned_Load+__cpu_features@GOTOFF(%ebx)
 	jnz	2f
-	HAS_CPU_FEATURE (SSSE3)
+	testl	$bit_SSSE3, CPUID_OFFSET+index_SSSE3+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	LOAD_FUNC_GOT_EAX (STRCPY_SSSE3)
+	leal	STRCPY_SSSE3@GOTOFF(%ebx), %eax
+2:	popl	%ebx
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (ebx)
+	ret
+END(STRCPY)
+# else
+
+ENTRY(STRCPY)
+	.type	STRCPY, @gnu_indirect_function
+	cmpl	$0, KIND_OFFSET+__cpu_features
+	jne	1f
+	call	__init_cpu_features
+1:	leal	STRCPY_IA32, %eax
+	testl	$bit_SSE2, CPUID_OFFSET+index_SSE2+__cpu_features
+	jz	2f
+	leal	STRCPY_SSE2, %eax
+	testl	$bit_Fast_Unaligned_Load, FEATURE_OFFSET+index_Fast_Unaligned_Load+__cpu_features
+	jnz	2f
+	testl	$bit_SSSE3, CPUID_OFFSET+index_SSSE3+__cpu_features
+	jz	2f
+	leal	STRCPY_SSSE3, %eax
 2:	ret
 END(STRCPY)
+
+# endif
 
 # undef ENTRY
 # define ENTRY(name) \

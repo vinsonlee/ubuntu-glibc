@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2015 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky <schwidefsky@de.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -23,7 +23,7 @@ __ieee754_sqrtf (float x)
 {
   float res;
 
-  __asm__ ( "sqebr %0,%1" : "=f" (res) : "f" (x) );
+  asm ( "sqebr %0,%1" : "=f" (res) : "f" (x) );
   return res;
 }
 strong_alias (__ieee754_sqrtf, __sqrtf_finite)

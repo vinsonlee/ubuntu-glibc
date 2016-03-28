@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Zack Weinberg <zack@rabi.phys.columbia.edu>, 1998.
 
@@ -23,7 +23,8 @@
    the slave can be opened.  This is to avoid a race between opening the
    master and calling grantpt() to take possession of the slave. */
 int
-unlockpt (int fd __attribute__ ((unused)))
+unlockpt (fd)
+     int fd __attribute__ ((unused));
 {
   __set_errno (ENOSYS);
   return -1;

@@ -1,5 +1,5 @@
 /* ix87 specific implementation of pow function.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -18,7 +18,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <machine/asm.h>
-#include <i386-math-asm.h>
 
 	.section .rodata.cst8,"aM",@progbits,8
 
@@ -51,7 +50,6 @@ minfinity:
 mzero:
 	.byte 0, 0, 0, 0, 0, 0, 0, 0x80
 	ASM_SIZE_DIRECTIVE(minf_mzero)
-DEFINE_FLT_MIN
 
 #ifdef PIC
 # define MO(op) op##@GOTOFF(%ecx)
@@ -98,7 +96,7 @@ ENTRY(__ieee754_powf)
 	je	15f		// x is ±inf
 
 	cmpb	$0x01, %ah
-	je	33f		// x is NaN
+	je	32f		// x is NaN
 
 	fxch			// y : x
 
@@ -150,7 +148,6 @@ ENTRY(__ieee754_powf)
 	testl	%edx, %edx
 	jnz	6b
 	fstp	%st(0)		// ST*x
-	FLT_NARROW_EVAL_UFLOW_NONNAN
 	ret
 
 	/* y is ±NAN */
@@ -199,15 +196,8 @@ ENTRY(__ieee754_powf)
 32:	addl	$4, %esp
 	cfi_adjust_cfa_offset (-4)
 	fstp	%st(1)		// 2^fract(y*log2(x))*2^int(y*log2(x))
-	FLT_NARROW_EVAL_UFLOW_NONNAN
 	ret
 
-	/* x is NaN.  */
-	cfi_adjust_cfa_offset (4)
-33:	addl	$4, %esp
-	cfi_adjust_cfa_offset (-4)
-	fstp	%st(1)
-	ret
 
 	// pow(x,±0) = 1
 	.align ALIGNARG(4)

@@ -1,5 +1,5 @@
 /* Implementation of the internal dcigettext function.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as published by
@@ -103,7 +103,7 @@ extern int errno;
 
 /* Handle multi-threaded applications.  */
 #ifdef _LIBC
-# include <libc-lock.h>
+# include <bits/libc-lock.h>
 # define gl_rwlock_define_initialized __libc_rwlock_define_initialized
 # define gl_rwlock_rdlock __libc_rwlock_rdlock
 # define gl_rwlock_wrlock __libc_rwlock_wrlock

@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Kaz Kylheku <kaz@ashi.footprints.net>.
 
@@ -25,8 +25,11 @@
 
 /* Set timer TIMERID to VALUE, returning old value in OVLAUE.  */
 int
-timer_settime (timer_t timerid, int flags, const struct itimerspec *value,
-	       struct itimerspec *ovalue)
+timer_settime (timerid, flags, value, ovalue)
+     timer_t timerid;
+     int flags;
+     const struct itimerspec *value;
+     struct itimerspec *ovalue;
 {
   struct timer_node *timer;
   struct thread_node *thread = NULL;

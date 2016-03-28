@@ -1,5 +1,5 @@
 /* Multiple versions of memchr.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 #if IS_IN (libc)
-# undef memchr
+# undef memcpy
 /* Redefine memchr so that the compiler won't make the weak_alias point
    to internal hidden definition (__GI_memchr), since PPC32 does not
    support local IFUNC calls.  */
