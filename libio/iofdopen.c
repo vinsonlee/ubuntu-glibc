@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -46,7 +46,6 @@ _IO_new_fdopen (fd, mode)
      const char *mode;
 {
   int read_write;
-  int posix_mode = 0;
   struct locked_FILE
   {
     struct _IO_FILE_plus fp;
@@ -55,9 +54,13 @@ _IO_new_fdopen (fd, mode)
 #endif
     struct _IO_wide_data wd;
   } *new_f;
-  int fd_flags;
   int i;
   int use_mmap = 0;
+
+  /* Decide whether we modify the offset of the file we attach to and seek to
+     the end of file.  We only do this if the mode is 'a' and if the file
+     descriptor did not have O_APPEND in its flags already.  */
+  bool do_seek = false;
 
   switch (*mode)
     {
@@ -68,7 +71,6 @@ _IO_new_fdopen (fd, mode)
       read_write = _IO_NO_READS;
       break;
     case 'a':
-      posix_mode = O_APPEND;
       read_write = _IO_NO_READS|_IO_IS_APPENDING;
       break;
     default:
@@ -96,7 +98,7 @@ _IO_new_fdopen (fd, mode)
       break;
     }
 #ifdef F_GETFL
-  fd_flags = _IO_fcntl (fd, F_GETFL);
+  int fd_flags = _IO_fcntl (fd, F_GETFL);
 #ifndef O_ACCMODE
 #define O_ACCMODE (O_RDONLY|O_WRONLY|O_RDWR)
 #endif
@@ -115,9 +117,9 @@ _IO_new_fdopen (fd, mode)
      Realtime Extensions], Rationale B.8.3.3
      Open a Stream on a File Descriptor says:
 
-         Although not explicitly required by POSIX.1, a good
-         implementation of append ("a") mode would cause the
-         O_APPEND flag to be set.
+	 Although not explicitly required by POSIX.1, a good
+	 implementation of append ("a") mode would cause the
+	 O_APPEND flag to be set.
 
      (Historical implementations [such as Solaris2] do a one-time
      seek in fdopen.)
@@ -126,8 +128,9 @@ _IO_new_fdopen (fd, mode)
      though that would seem consistent) because that would be more
      likely to break historical programs.
      */
-  if ((posix_mode & O_APPEND) && !(fd_flags & O_APPEND))
+  if ((read_write & _IO_IS_APPENDING) && !(fd_flags & O_APPEND))
     {
+      do_seek = true;
 #ifdef F_SETFL
       if (_IO_fcntl (fd, F_SETFL, fd_flags | O_APPEND) == -1)
 #endif
@@ -141,9 +144,6 @@ _IO_new_fdopen (fd, mode)
 #ifdef _IO_MTSAFE_IO
   new_f->fp.file._lock = &new_f->lock;
 #endif
-  /* Set up initially to use the `maybe_mmap' jump tables rather than using
-     __fopen_maybe_mmap to do it, because we need them in place before we
-     call _IO_file_attach or else it will allocate a buffer immediately.  */
   _IO_no_init (&new_f->fp.file, 0, 0, &new_f->wd,
 #ifdef _G_HAVE_MMAP
 	       (use_mmap && (read_write & _IO_NO_WRITES))
@@ -159,18 +159,27 @@ _IO_new_fdopen (fd, mode)
 #if  !_IO_UNIFIED_JUMPTABLES
   new_f->fp.vtable = NULL;
 #endif
-  if (_IO_file_attach ((_IO_FILE *) &new_f->fp, fd) == NULL)
-    {
-      _IO_setb (&new_f->fp.file, NULL, NULL, 0);
-      _IO_un_link (&new_f->fp);
-      free (new_f);
-      return NULL;
-    }
+  /* We only need to record the fd because _IO_file_init will have unset the
+     offset.  It is important to unset the cached offset because the real
+     offset in the file could change between now and when the handle is
+     activated and we would then mislead ftell into believing that we have a
+     valid offset.  */
+  new_f->fp.file._fileno = fd;
   new_f->fp.file._flags &= ~_IO_DELETE_DONT_CLOSE;
 
   _IO_mask_flags (&new_f->fp.file, read_write,
 		  _IO_NO_READS+_IO_NO_WRITES+_IO_IS_APPENDING);
 
+  /* For append mode, set the file offset to the end of the file if we added
+     O_APPEND to the file descriptor flags.  Don't update the offset cache
+     though, since the file handle is not active.  */
+  if (do_seek && ((read_write & (_IO_IS_APPENDING | _IO_NO_READS))
+		  == (_IO_IS_APPENDING | _IO_NO_READS)))
+    {
+      _IO_off64_t new_pos = _IO_SYSSEEK (&new_f->fp.file, 0, _IO_seek_end);
+      if (new_pos == _IO_pos_BAD && errno != ESPIPE)
+	return NULL;
+    }
   return &new_f->fp.file;
 }
 libc_hidden_ver (_IO_new_fdopen, _IO_fdopen)

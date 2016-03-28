@@ -1,5 +1,5 @@
 /* Complex sine hyperbole function for float.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -33,16 +33,16 @@ __csinhf (__complex__ float x)
 
   __real__ x = fabsf (__real__ x);
 
-  if (__builtin_expect (rcls >= FP_ZERO, 1))
+  if (__glibc_likely (rcls >= FP_ZERO))
     {
       /* Real part is finite.  */
-      if (__builtin_expect (icls >= FP_ZERO, 1))
+      if (__glibc_likely (icls >= FP_ZERO))
 	{
 	  /* Imaginary part is finite.  */
 	  const int t = (int) ((FLT_MAX_EXP - 1) * M_LN2);
 	  float sinix, cosix;
 
-	  if (__builtin_expect (icls != FP_SUBNORMAL, 1))
+	  if (__glibc_likely (fabsf (__imag__ x) > FLT_MIN))
 	    {
 	      __sincosf (__imag__ x, &sinix, &cosix);
 	    }
@@ -51,6 +51,9 @@ __csinhf (__complex__ float x)
 	      sinix = __imag__ x;
 	      cosix = 1.0f;
 	    }
+
+	  if (negate)
+	    cosix = -cosix;
 
 	  if (fabsf (__real__ x) > t)
 	    {
@@ -86,9 +89,6 @@ __csinhf (__complex__ float x)
 	      __imag__ retval = __ieee754_coshf (__real__ x) * sinix;
 	    }
 
-	  if (negate)
-	    __real__ retval = -__real__ retval;
-
 	  if (fabsf (__real__ retval) < FLT_MIN)
 	    {
 	      volatile float force_underflow
@@ -122,15 +122,15 @@ __csinhf (__complex__ float x)
 	    }
 	}
     }
-  else if (__builtin_expect (rcls == FP_INFINITE, 1))
+  else if (__glibc_likely (rcls == FP_INFINITE))
     {
       /* Real part is infinite.  */
-      if (__builtin_expect (icls > FP_ZERO, 1))
+      if (__glibc_likely (icls > FP_ZERO))
 	{
 	  /* Imaginary part is finite.  */
 	  float sinix, cosix;
 
-	  if (__builtin_expect (icls != FP_SUBNORMAL, 1))
+	  if (__glibc_likely (fabsf (__imag__ x) > FLT_MIN))
 	    {
 	      __sincosf (__imag__ x, &sinix, &cosix);
 	    }

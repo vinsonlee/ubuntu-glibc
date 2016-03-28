@@ -1,5 +1,5 @@
 /* Extended regular expression matching and search library.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Isamu Hasegawa <isamu@yamato.ibm.com>.
 
@@ -18,6 +18,10 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <stdint.h>
+
+#ifdef _LIBC
+# include <locale/weight.h>
+#endif
 
 static reg_errcode_t re_compile_internal (regex_t *preg, const char * pattern,
 					  size_t length, reg_syntax_t syntax);
@@ -208,7 +212,7 @@ const size_t __re_error_msgid_idx[] attribute_hidden =
    compiles PATTERN (of length LENGTH) and puts the result in BUFP.
    Returns 0 if the pattern was valid, otherwise an error string.
 
-   Assumes the `allocated' (and perhaps `buffer') and `translate' fields
+   Assumes the 'allocated' (and perhaps 'buffer') and 'translate' fields
    are set in BUFP on entry.  */
 
 const char *
@@ -237,7 +241,7 @@ re_compile_pattern (pattern, length, bufp)
 weak_alias (__re_compile_pattern, re_compile_pattern)
 #endif
 
-/* Set by `re_set_syntax' to the current regexp syntax to recognize.  Can
+/* Set by 're_set_syntax' to the current regexp syntax to recognize.  Can
    also be assigned to arbitrarily: each pattern buffer stores its own
    syntax, so it can be changed between regex compilations.  */
 /* This has no initializer because initialized variables in Emacs
@@ -288,8 +292,8 @@ weak_alias (__re_compile_fastmap, re_compile_fastmap)
 #endif
 
 static inline void
-__attribute ((always_inline))
-re_set_fastmap (char *fastmap, int icase, int ch)
+__attribute__ ((always_inline))
+re_set_fastmap (char *fastmap, bool icase, int ch)
 {
   fastmap[ch] = 1;
   if (icase)
@@ -330,7 +334,7 @@ re_compile_fastmap_iter (regex_t *bufp, const re_dfastate_t *init_state,
 	      memset (&state, '\0', sizeof (state));
 	      if (__mbrtowc (&wc, (const char *) buf, p - buf,
 			     &state) == p - buf
-		  && (__wcrtomb ((char *) buf, towlower (wc), &state)
+		  && (__wcrtomb ((char *) buf, __towlower (wc), &state)
 		      != (size_t) -1))
 		re_set_fastmap (fastmap, 0, buf[0]);
 	    }
@@ -406,7 +410,7 @@ re_compile_fastmap_iter (regex_t *bufp, const re_dfastate_t *init_state,
 		    re_set_fastmap (fastmap, icase, *(unsigned char *) buf);
 		  if ((bufp->syntax & RE_ICASE) && dfa->mb_cur_max > 1)
 		    {
-		      if (__wcrtomb (buf, towlower (cset->mbchars[i]), &state)
+		      if (__wcrtomb (buf, __towlower (cset->mbchars[i]), &state)
 			  != (size_t) -1)
 			re_set_fastmap (fastmap, false, *(unsigned char *) buf);
 		    }
@@ -434,15 +438,15 @@ re_compile_fastmap_iter (regex_t *bufp, const re_dfastate_t *init_state,
    PREG is a regex_t *.  We do not expect any fields to be initialized,
    since POSIX says we shouldn't.  Thus, we set
 
-     `buffer' to the compiled pattern;
-     `used' to the length of the compiled pattern;
-     `syntax' to RE_SYNTAX_POSIX_EXTENDED if the
+     'buffer' to the compiled pattern;
+     'used' to the length of the compiled pattern;
+     'syntax' to RE_SYNTAX_POSIX_EXTENDED if the
        REG_EXTENDED bit in CFLAGS is set; otherwise, to
        RE_SYNTAX_POSIX_BASIC;
-     `newline_anchor' to REG_NEWLINE being set in CFLAGS;
-     `fastmap' to an allocated space for the fastmap;
-     `fastmap_accurate' to zero;
-     `re_nsub' to the number of subexpressions in PATTERN.
+     'newline_anchor' to REG_NEWLINE being set in CFLAGS;
+     'fastmap' to an allocated space for the fastmap;
+     'fastmap_accurate' to zero;
+     're_nsub' to the number of subexpressions in PATTERN.
 
    PATTERN is the address of the pattern string.
 
@@ -699,7 +703,7 @@ re_comp (s)
 				 + __re_error_msgid_idx[(int) REG_ESPACE]);
     }
 
-  /* Since `re_exec' always passes NULL for the `regs' argument, we
+  /* Since 're_exec' always passes NULL for the 'regs' argument, we
      don't need to initialize the pattern buffer fields which affect it.  */
 
   /* Match anchors at newlines.  */
@@ -1507,7 +1511,7 @@ duplicate_node_closure (re_dfa_t *dfa, int top_org_node, int top_clone_node,
 	     destination.  */
 	  org_dest = dfa->edests[org_node].elems[0];
 	  re_node_set_empty (dfa->edests + clone_node);
-	  /* If the node is root_node itself, it means the epsilon clsoure
+	  /* If the node is root_node itself, it means the epsilon closure
 	     has a loop.   Then tie it to the destination of the root_node.  */
 	  if (org_node == root_node && clone_node != org_node)
 	    {
@@ -1516,7 +1520,7 @@ duplicate_node_closure (re_dfa_t *dfa, int top_org_node, int top_clone_node,
 		return REG_ESPACE;
 	      break;
 	    }
-	  /* In case of the node has another constraint, add it.  */
+	  /* In case the node has another constraint, append it.  */
 	  constraint |= dfa->nodes[org_node].constraint;
 	  clone_dest = duplicate_node (dfa, org_dest, constraint);
 	  if (BE (clone_dest == -1, 0))
@@ -1659,7 +1663,7 @@ calc_eclosure (re_dfa_t *dfa)
       /* If we have already calculated, skip it.  */
       if (dfa->eclosures[node_idx].nelem != 0)
 	continue;
-      /* Calculate epsilon closure of `node_idx'.  */
+      /* Calculate epsilon closure of 'node_idx'.  */
       err = calc_eclosure_iter (&eclosure_elem, dfa, node_idx, 1);
       if (BE (err != REG_NOERROR, 0))
 	return err;
@@ -1726,11 +1730,11 @@ calc_eclosure_iter (re_node_set *new_set, re_dfa_t *dfa, int node, int root)
 	  }
 	else
 	  eclosure_elem = dfa->eclosures[edest];
-	/* Merge the epsilon closure of `edest'.  */
+	/* Merge the epsilon closure of 'edest'.  */
 	err = re_node_set_merge (&eclosure, &eclosure_elem);
 	if (BE (err != REG_NOERROR, 0))
 	  return err;
-	/* If the epsilon closure of `edest' is incomplete,
+	/* If the epsilon closure of 'edest' is incomplete,
 	   the epsilon closure of this node is also incomplete.  */
 	if (dfa->eclosures[edest].nelem == 0)
 	  {
@@ -2092,7 +2096,7 @@ peek_token_bracket (re_token_t *token, re_string_t *input, reg_syntax_t syntax)
 
 /* Entry point of the parser.
    Parse the regular expression REGEXP and return the structure tree.
-   If an error is occured, ERR is set by error code, and return NULL.
+   If an error occurs, ERR is set by error code, and return NULL.
    This function build the following tree, from regular expression <reg_exp>:
 	   CAT
 	   / \
@@ -2134,7 +2138,7 @@ parse (re_string_t *regexp, regex_t *preg, reg_syntax_t syntax,
 	  /   \
    <branch1> <branch2>
 
-   ALT means alternative, which represents the operator `|'.  */
+   ALT means alternative, which represents the operator '|'.  */
 
 static bin_tree_t *
 parse_reg_exp (re_string_t *regexp, regex_t *preg, re_token_t *token,
@@ -2154,7 +2158,11 @@ parse_reg_exp (re_string_t *regexp, regex_t *preg, re_token_t *token,
 	{
 	  branch = parse_branch (regexp, preg, token, syntax, nest, err);
 	  if (BE (*err != REG_NOERROR && branch == NULL, 0))
-	    return NULL;
+	    {
+	      if (tree != NULL)
+		postorder (tree, free_tree, NULL);
+	      return NULL;
+	    }
 	}
       else
 	branch = NULL;
@@ -2415,14 +2423,21 @@ parse_expression (re_string_t *regexp, regex_t *preg, re_token_t *token,
   while (token->type == OP_DUP_ASTERISK || token->type == OP_DUP_PLUS
 	 || token->type == OP_DUP_QUESTION || token->type == OP_OPEN_DUP_NUM)
     {
-      tree = parse_dup_op (tree, regexp, dfa, token, syntax, err);
-      if (BE (*err != REG_NOERROR && tree == NULL, 0))
-	return NULL;
+      bin_tree_t *dup_tree = parse_dup_op (tree, regexp, dfa, token, syntax, err);
+      if (BE (*err != REG_NOERROR && dup_tree == NULL, 0))
+	{
+	  if (tree != NULL)
+	    postorder (tree, free_tree, NULL);
+	  return NULL;
+	}
+      tree = dup_tree;
       /* In BRE consecutive duplications are not allowed.  */
       if ((syntax & RE_CONTEXT_INVALID_DUP)
 	  && (token->type == OP_DUP_ASTERISK
 	      || token->type == OP_OPEN_DUP_NUM))
 	{
+	  if (tree != NULL)
+	    postorder (tree, free_tree, NULL);
 	  *err = REG_BADRPT;
 	  return NULL;
 	}
@@ -2571,6 +2586,8 @@ parse_dup_op (bin_tree_t *elem, re_string_t *regexp, re_dfa_t *dfa,
 
       /* Duplicate ELEM before it is marked optional.  */
       elem = duplicate_tree (elem, dfa);
+      if (BE (elem == NULL, 0))
+        goto parse_dup_op_espace;
       old_tree = tree;
     }
   else
@@ -2617,7 +2634,7 @@ parse_dup_op (bin_tree_t *elem, re_string_t *regexp, re_dfa_t *dfa,
      Build the range expression which starts from START_ELEM, and ends
      at END_ELEM.  The result are written to MBCSET and SBCSET.
      RANGE_ALLOC is the allocated size of mbcset->range_starts, and
-     mbcset->range_ends, is a pointer argument sinse we may
+     mbcset->range_ends, is a pointer argument since we may
      update it.  */
 
 static reg_errcode_t
@@ -2666,7 +2683,7 @@ build_range_exp (bitset_t sbcset, bracket_elem_t *start_elem,
       return REG_ECOLLATE;
     cmp_buf[0] = start_wc;
     cmp_buf[4] = end_wc;
-    if (wcscoll (cmp_buf, cmp_buf + 4) > 0)
+    if (__wcscoll (cmp_buf, cmp_buf + 4) > 0)
       return REG_ERANGE;
 
     /* Got valid collation sequence values, add them as a new entry.
@@ -2708,8 +2725,8 @@ build_range_exp (bitset_t sbcset, bracket_elem_t *start_elem,
     for (wc = 0; wc < SBC_MAX; ++wc)
       {
 	cmp_buf[2] = wc;
-	if (wcscoll (cmp_buf, cmp_buf + 2) <= 0
-	    && wcscoll (cmp_buf + 2, cmp_buf + 4) <= 0)
+	if (__wcscoll (cmp_buf, cmp_buf + 2) <= 0
+	    && __wcscoll (cmp_buf + 2, cmp_buf + 4) <= 0)
 	  bitset_set (sbcset, wc);
       }
   }
@@ -2776,13 +2793,13 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
   const int32_t *symb_table;
   const unsigned char *extra;
 
-  /* Local function for parse_bracket_exp used in _LIBC environement.
-     Seek the collating symbol entry correspondings to NAME.
+  /* Local function for parse_bracket_exp used in _LIBC environment.
+     Seek the collating symbol entry corresponding to NAME.
      Return the index of the symbol in the SYMB_TABLE,
      or -1 if not found.  */
 
   auto inline int32_t
-  __attribute ((always_inline))
+  __attribute__ ((always_inline))
   seek_collating_symbol_entry (const unsigned char *name, size_t name_len)
     {
       int32_t elem;
@@ -2808,7 +2825,7 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
      Return the value if succeeded, UINT_MAX otherwise.  */
 
   auto inline unsigned int
-  __attribute ((always_inline))
+  __attribute__ ((always_inline))
   lookup_collation_sequence_value (bracket_elem_t *br_elem)
     {
       if (br_elem->type == SB_CHAR)
@@ -2868,15 +2885,15 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
       return UINT_MAX;
     }
 
-  /* Local function for parse_bracket_exp used in _LIBC environement.
+  /* Local function for parse_bracket_exp used in _LIBC environment.
      Build the range expression which starts from START_ELEM, and ends
      at END_ELEM.  The result are written to MBCSET and SBCSET.
      RANGE_ALLOC is the allocated size of mbcset->range_starts, and
-     mbcset->range_ends, is a pointer argument sinse we may
+     mbcset->range_ends, is a pointer argument since we may
      update it.  */
 
   auto inline reg_errcode_t
-  __attribute ((always_inline))
+  __attribute__ ((always_inline))
   build_range_exp (bitset_t sbcset, re_charset_t *mbcset, int *range_alloc,
 		   bracket_elem_t *start_elem, bracket_elem_t *end_elem)
     {
@@ -2949,14 +2966,14 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
       return REG_NOERROR;
     }
 
-  /* Local function for parse_bracket_exp used in _LIBC environement.
+  /* Local function for parse_bracket_exp used in _LIBC environment.
      Build the collating element which is represented by NAME.
      The result are written to MBCSET and SBCSET.
      COLL_SYM_ALLOC is the allocated size of mbcset->coll_sym, is a
-     pointer argument sinse we may update it.  */
+     pointer argument since we may update it.  */
 
   auto inline reg_errcode_t
-  __attribute ((always_inline))
+  __attribute__ ((always_inline))
   build_collating_symbol (bitset_t sbcset, re_charset_t *mbcset,
 			  int *coll_sym_alloc, const unsigned char *name)
     {
@@ -3097,6 +3114,7 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
       re_token_t token2;
 
       start_elem.opr.name = start_name_buf;
+      start_elem.type = COLL_SYM;
       ret = parse_bracket_element (&start_elem, regexp, token, token_len, dfa,
 				   syntax, first_round);
       if (BE (ret != REG_NOERROR, 0))
@@ -3140,6 +3158,7 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
       if (is_range_exp == 1)
 	{
 	  end_elem.opr.name = end_name_buf;
+	  end_elem.type = COLL_SYM;
 	  ret = parse_bracket_element (&end_elem, regexp, &token2, token_len2,
 				       dfa, syntax, 1);
 	  if (BE (ret != REG_NOERROR, 0))
@@ -3393,7 +3412,7 @@ parse_bracket_symbol (bracket_elem_t *elem, re_string_t *regexp,
      Build the equivalence class which is represented by NAME.
      The result are written to MBCSET and SBCSET.
      EQUIV_CLASS_ALLOC is the allocated size of mbcset->equiv_classes,
-     is a pointer argument sinse we may update it.  */
+     is a pointer argument since we may update it.  */
 
 static reg_errcode_t
 #ifdef RE_ENABLE_I18N
@@ -3413,8 +3432,6 @@ build_equiv_class (bitset_t sbcset, const unsigned char *name)
       int32_t idx1, idx2;
       unsigned int ch;
       size_t len;
-      /* This #include defines a local function!  */
-# include <locale/weight.h>
       /* Calculate the index for equivalence class.  */
       cp = name;
       table = (const int32_t *) _NL_CURRENT (LC_COLLATE, _NL_COLLATE_TABLEMB);
@@ -3424,7 +3441,7 @@ build_equiv_class (bitset_t sbcset, const unsigned char *name)
 						   _NL_COLLATE_EXTRAMB);
       indirect = (const int32_t *) _NL_CURRENT (LC_COLLATE,
 						_NL_COLLATE_INDIRECTMB);
-      idx1 = findidx (&cp, -1);
+      idx1 = findidx (table, indirect, extra, &cp, -1);
       if (BE (idx1 == 0 || *cp != '\0', 0))
 	/* This isn't a valid character.  */
 	return REG_ECOLLATE;
@@ -3435,7 +3452,7 @@ build_equiv_class (bitset_t sbcset, const unsigned char *name)
 	{
 	  char_buf[0] = ch;
 	  cp = char_buf;
-	  idx2 = findidx (&cp, 1);
+	  idx2 = findidx (table, indirect, extra, &cp, 1);
 /*
 	  idx2 = table[ch];
 */
@@ -3488,7 +3505,7 @@ build_equiv_class (bitset_t sbcset, const unsigned char *name)
      Build the character class which is represented by NAME.
      The result are written to MBCSET and SBCSET.
      CHAR_CLASS_ALLOC is the allocated size of mbcset->char_classes,
-     is a pointer argument sinse we may update it.  */
+     is a pointer argument since we may update it.  */
 
 static reg_errcode_t
 #ifdef RE_ENABLE_I18N

@@ -97,6 +97,7 @@
  */
 
 #include <errno.h>
+#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -143,9 +144,7 @@ tiny = 1e-4931L,
   one = 1.0L,
   two = 2.0L,
   /* 2/sqrt(pi) - 1 */
-  efx = 1.2837916709551257389615890312154517168810E-1L,
-  /* 8 * (2/sqrt(pi) - 1) */
-  efx8 = 1.0270333367641005911692712249723613735048E0L;
+  efx = 1.2837916709551257389615890312154517168810E-1L;
 
 
 /* erf(x)  = x  + x R(x^2)
@@ -770,6 +769,8 @@ __erfl (long double x)
 
   if (ix >= 0x3fff0000) /* |x| >= 1.0 */
     {
+      if (ix >= 0x40030000 && sign > 0)
+	return one; /* x >= 16, avoid spurious underflow from erfc.  */
       y = __erfcl (x);
       return (one - y);
       /*    return (one - __erfcl (x)); */
@@ -782,7 +783,16 @@ __erfl (long double x)
       if (ix < 0x3fc60000) /* |x|<2**-57 */
 	{
 	  if (ix < 0x00080000)
-	    return 0.125 * (8.0 * x + efx8 * x);	/*avoid underflow */
+	    {
+	      /* Avoid spurious underflow.  */
+	      long double ret =  0.0625 * (16.0 * x + (16.0 * efx) * x);
+	      if (fabsl (ret) < LDBL_MIN)
+		{
+		  long double force_underflow = ret * ret;
+		  math_force_eval (force_underflow);
+		}
+	      return ret;
+	    }
 	  return x + efx * x;
 	}
       y = a + a * neval (z, TN1, NTN1) / deval (z, TD1, NTD1);
@@ -864,7 +874,7 @@ __erfcl (long double x)
 	  y = C19b + z * neval (z, RNr19, NRNr19) / deval (z, RDr19, NRDr19);
 	  y += C19a;
 	  break;
-	case 9:
+	default: /* i == 9.  */
 	  z = x - 1.125L;
 	  y = C20b + z * neval (z, RNr20, NRNr20) / deval (z, RDr20, NRDr20);
 	  y += C20a;

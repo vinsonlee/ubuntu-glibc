@@ -1,5 +1,5 @@
 /* Reentrant function to return the current login name.  Hurd version.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
    If it cannot be determined or some other error occurred, return the error
    code.  Otherwise return 0.  */
 int
-getlogin_r (name, name_len)
+__getlogin_r (name, name_len)
      char *name;
      size_t name_len;
 {
@@ -45,4 +45,6 @@ getlogin_r (name, name_len)
   memcpy (name, login, len);
   return 0;
 }
-libc_hidden_def (getlogin_r)
+libc_hidden_def (__getlogin_r)
+weak_alias (__getlogin_r, getlogin_r)
+libc_hidden_weak (getlogin_r)

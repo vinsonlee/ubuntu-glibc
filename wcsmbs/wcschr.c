@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,15 +17,13 @@
 
 #include <wchar.h>
 
-/* Find the first occurrence of WC in WCS.  */
-#ifdef WCSCHR
-# define wcschr WCSCHR
+#ifndef WCSCHR
+# define WCSCHR __wcschr
 #endif
 
+/* Find the first occurrence of WC in WCS.  */
 wchar_t *
-wcschr (wcs, wc)
-     const wchar_t *wcs;
-     const wchar_t wc;
+WCSCHR (const wchar_t *wcs, const wchar_t wc)
 {
   do
     if (*wcs == wc)
@@ -34,4 +32,6 @@ wcschr (wcs, wc)
 
   return NULL;
 }
-libc_hidden_def (wcschr)
+libc_hidden_def (__wcschr)
+weak_alias (__wcschr, wcschr)
+libc_hidden_weak (wcschr)

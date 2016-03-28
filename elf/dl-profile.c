@@ -1,5 +1,5 @@
 /* Profiling of shared libraries.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
    Based on the BSD mcount implementation.
@@ -598,4 +598,4 @@ _dl_mcount (ElfW(Addr) frompc, ElfW(Addr) selfpc)
  done:
   ;
 }
-INTDEF(_dl_mcount)
+rtld_hidden_def (_dl_mcount)

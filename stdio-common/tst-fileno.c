@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,10 +28,13 @@ check (const char *name, FILE *stream, int fd)
   return sfd != fd;
 }
 
-int
-main (void)
+static int
+do_test (void)
 {
   return (check ("stdin", stdin, STDIN_FILENO) ||
 	  check ("stdout", stdout, STDOUT_FILENO) ||
 	  check ("stderr", stderr, STDERR_FILENO));
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

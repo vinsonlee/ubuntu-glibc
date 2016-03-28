@@ -1,5 +1,5 @@
 /* Complex hyperbole tangent for double.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -28,7 +28,7 @@ __ctanh (__complex__ double x)
 {
   __complex__ double res;
 
-  if (__builtin_expect (!isfinite (__real__ x) || !isfinite (__imag__ x), 0))
+  if (__glibc_unlikely (!isfinite (__real__ x) || !isfinite (__imag__ x)))
     {
       if (__isinf_ns (__real__ x))
 	{
@@ -53,12 +53,11 @@ __ctanh (__complex__ double x)
       double sinix, cosix;
       double den;
       const int t = (int) ((DBL_MAX_EXP - 1) * M_LN2 / 2);
-      int icls = fpclassify (__imag__ x);
 
       /* tanh(x+iy) = (sinh(2x) + i*sin(2y))/(cosh(2x) + cos(2y))
 	 = (sinh(x)*cosh(x) + i*sin(y)*cos(y))/(sinh(x)^2 + cos(y)^2).  */
 
-      if (__builtin_expect (icls != FP_SUBNORMAL, 1))
+      if (__glibc_likely (fabs (__imag__ x) > DBL_MIN))
 	{
 	  __sincos (__imag__ x, &sinix, &cosix);
 	}

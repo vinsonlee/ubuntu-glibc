@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Bernd Schmidt <crux@Pool.Informatik.RWTH-Aachen.DE>, 1997.
 
@@ -293,6 +293,7 @@ __tsearch (const void *key, void **vrootp, __compar_fn_t compar)
 
   return q;
 }
+libc_hidden_def (__tsearch)
 weak_alias (__tsearch, tsearch)
 
 
@@ -325,6 +326,7 @@ __tfind (key, vrootp, compar)
     }
   return NULL;
 }
+libc_hidden_def (__tfind)
 weak_alias (__tfind, tfind)
 
 
@@ -585,6 +587,7 @@ __tdelete (const void *key, void **vrootp, __compar_fn_t compar)
   free (unchained);
   return retval;
 }
+libc_hidden_def (__tdelete)
 weak_alias (__tdelete, tdelete)
 
 
@@ -625,6 +628,7 @@ __twalk (const void *vroot, __action_fn_t action)
   if (root != NULL && action != NULL)
     trecurse (root, action, 0);
 }
+libc_hidden_def (__twalk)
 weak_alias (__twalk, twalk)
 
 
