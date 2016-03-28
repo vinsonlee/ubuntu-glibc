@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,10 @@
 #ifdef __NR_rt_sigqueueinfo
 /* Return any pending signal or wait for one for the given time.  */
 int
-__sigqueue (pid_t pid, int sig, const union sigval val)
+__sigqueue (pid, sig, val)
+     pid_t pid;
+     int sig;
+     const union sigval val;
 {
   siginfo_t info;
 

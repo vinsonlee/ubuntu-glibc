@@ -29,4 +29,3 @@ float __ldexpf(float value, int exp)
 	return value;
 }
 weak_alias (__ldexpf, ldexpf)
-weak_alias (__ldexpf, scalbnf)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,8 @@
 #include <stropts.h>
 
 int
-isastream (int fildes)
+isastream (fildes)
+     int fildes;
 {
   /* In general we do not have a STREAMS implementation and therefore
      return 0.  But for invalid file descriptors we have to return an

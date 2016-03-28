@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,8 @@
 #include <wchar.h>
 
 wint_t
-putwchar_unlocked (wchar_t wc)
+putwchar_unlocked (wc)
+     wchar_t wc;
 {
   CHECK_FILE (_IO_stdout, WEOF);
   return _IO_putwc_unlocked (wc, _IO_stdout);

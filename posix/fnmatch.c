@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -166,7 +166,9 @@ static int posixly_correct;
 
 # if !defined HAVE___STRCHRNUL && !defined _LIBC
 static char *
-__strchrnul (const char *s, int c)
+__strchrnul (s, c)
+     const char *s;
+     int c;
 {
   char *result = strchr (s, c);
   if (result == NULL)
@@ -177,7 +179,9 @@ __strchrnul (const char *s, int c)
 
 # if HANDLE_MULTIBYTE && !defined HAVE___STRCHRNUL && !defined _LIBC
 static wchar_t *
-__wcschrnul (const wchar_t *s, wint_t c)
+__wcschrnul (s, c)
+     const wchar_t *s;
+     wint_t c;
 {
   wchar_t *result = wcschr (s, c);
   if (result == NULL)
@@ -323,7 +327,10 @@ is_char_class (const wchar_t *wcs)
 
 
 int
-fnmatch (const char *pattern, const char *string, int flags)
+fnmatch (pattern, string, flags)
+     const char *pattern;
+     const char *string;
+     int flags;
 {
 # if HANDLE_MULTIBYTE
   if (__builtin_expect (MB_CUR_MAX, 1) != 1)

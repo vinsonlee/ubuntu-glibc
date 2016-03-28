@@ -103,8 +103,12 @@ libc_hidden_proto (iruserok_af)
 libc_freeres_ptr(static char *ahostbuf);
 
 int
-rcmd_af (char **ahost, u_short rport, const char *locuser, const char *remuser,
-	 const char *cmd, int *fd2p, sa_family_t af)
+rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
+	char **ahost;
+	u_short rport;
+	const char *locuser, *remuser, *cmd;
+	int *fd2p;
+	sa_family_t af;
 {
 	char paddr[INET6_ADDRSTRLEN];
 	struct addrinfo hints, *res, *ai;
@@ -356,14 +360,19 @@ bad:
 libc_hidden_def (rcmd_af)
 
 int
-rcmd (char **ahost, u_short rport, const char *locuser, const char *remuser,
-      const char *cmd, int *fd2p)
+rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
+	char **ahost;
+	u_short rport;
+	const char *locuser, *remuser, *cmd;
+	int *fd2p;
 {
   return rcmd_af (ahost, rport, locuser, remuser, cmd, fd2p, AF_INET);
 }
 
 int
-rresvport_af (int *alport, sa_family_t family)
+rresvport_af(alport, family)
+	int *alport;
+	sa_family_t family;
 {
 	union {
 		struct sockaddr generic;
@@ -422,7 +431,8 @@ rresvport_af (int *alport, sa_family_t family)
 libc_hidden_def (rresvport_af)
 
 int
-rresvport (int *alport)
+rresvport(alport)
+	int *alport;
 {
 	return rresvport_af(alport, AF_INET);
 }
@@ -431,8 +441,10 @@ int	__check_rhosts_file = 1;
 char	*__rcmd_errstr;
 
 int
-ruserok_af (const char *rhost, int superuser, const char *ruser,
-	    const char *luser, sa_family_t af)
+ruserok_af(rhost, superuser, ruser, luser, af)
+	const char *rhost, *ruser, *luser;
+	int superuser;
+	sa_family_t af;
 {
 	struct addrinfo hints, *res, *res0;
 	int gai;
@@ -456,8 +468,9 @@ ruserok_af (const char *rhost, int superuser, const char *ruser,
 libc_hidden_def (ruserok_af)
 
 int
-ruserok (const char *rhost, int superuser, const char *ruser,
-	 const char *luser)
+ruserok(rhost, superuser, ruser, luser)
+	const char *rhost, *ruser, *luser;
+	int superuser;
 {
 	return ruserok_af(rhost, superuser, ruser, luser, AF_INET);
 }
@@ -517,8 +530,11 @@ iruserfopen (const char *file, uid_t okuser)
  * Returns 0 if ok, -1 if not ok.
  */
 static int
-ruserok2_sa (struct sockaddr *ra, size_t ralen, int superuser,
-	     const char *ruser, const char *luser, const char *rhost)
+ruserok2_sa (ra, ralen, superuser, ruser, luser, rhost)
+     struct sockaddr *ra;
+     size_t ralen;
+     int superuser;
+     const char *ruser, *luser, *rhost;
 {
   FILE *hostf = NULL;
   int isbad = -1;
@@ -575,17 +591,22 @@ ruserok2_sa (struct sockaddr *ra, size_t ralen, int superuser,
  * ruserok_sa() is now discussed on ipng, so
  * currently disabled for external use
  */
-static int
-ruserok_sa (struct sockaddr *ra, size_t ralen, int superuser,
-	    const char *ruser, const char *luser)
+static int ruserok_sa(ra, ralen, superuser, ruser, luser)
+     struct sockaddr *ra;
+     size_t ralen;
+     int superuser;
+     const char *ruser, *luser;
 {
   return ruserok2_sa(ra, ralen, superuser, ruser, luser, "-");
 }
 
 /* This is the exported version.  */
 int
-iruserok_af (const void *raddr, int superuser, const char *ruser,
-	     const char *luser, sa_family_t af)
+iruserok_af (raddr, superuser, ruser, luser, af)
+     const void *raddr;
+     int superuser;
+     const char *ruser, *luser;
+     sa_family_t af;
 {
   union {
     struct sockaddr generic;
@@ -614,7 +635,10 @@ iruserok_af (const void *raddr, int superuser, const char *ruser,
 libc_hidden_def (iruserok_af)
 
 int
-iruserok (u_int32_t raddr, int superuser, const char *ruser, const char *luser)
+iruserok (raddr, superuser, ruser, luser)
+     u_int32_t raddr;
+     int superuser;
+     const char *ruser, *luser;
 {
   return iruserok_af (&raddr, superuser, ruser, luser, AF_INET);
 }
@@ -631,8 +655,10 @@ iruserok (u_int32_t raddr, int superuser, const char *ruser, const char *luser)
  * Returns 0 if ok, -1 if not ok.
  */
 int
-__ivaliduser (FILE *hostf, u_int32_t raddr, const char *luser,
-	      const char *ruser)
+__ivaliduser(hostf, raddr, luser, ruser)
+	FILE *hostf;
+	u_int32_t raddr;
+	const char *luser, *ruser;
 {
 	struct sockaddr_in ra;
 	memset(&ra, '\0', sizeof(ra));
@@ -743,8 +769,11 @@ __isempty (char *p)
  * Returns 0 if positive match, -1 if _not_ ok.
  */
 static int
-__validuser2_sa (FILE *hostf, struct sockaddr *ra, size_t ralen,
-		 const char *luser, const char *ruser, const char *rhost)
+__validuser2_sa(hostf, ra, ralen, luser, ruser, rhost)
+	FILE *hostf;
+	struct sockaddr *ra;
+	size_t ralen;
+	const char *luser, *ruser, *rhost;
 {
     const char *user;
     char *p;

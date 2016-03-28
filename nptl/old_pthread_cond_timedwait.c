@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -25,8 +25,10 @@
 
 #if SHLIB_COMPAT(libpthread, GLIBC_2_0, GLIBC_2_3_2)
 int
-__pthread_cond_timedwait_2_0 (pthread_cond_2_0_t *cond, pthread_mutex_t *mutex,
-			      const struct timespec *abstime)
+__pthread_cond_timedwait_2_0 (cond, mutex, abstime)
+     pthread_cond_2_0_t *cond;
+     pthread_mutex_t *mutex;
+     const struct timespec *abstime;
 {
   if (cond->cond == NULL)
     {

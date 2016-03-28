@@ -1,5 +1,5 @@
 /* Test and measure strspn functions.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Jakub Jelinek <jakub@redhat.com>, 1999.
 
@@ -18,49 +18,22 @@
    <http://www.gnu.org/licenses/>.  */
 
 #define TEST_MAIN
-#ifndef WIDE
-# define TEST_NAME "strspn"
-#else
-# define TEST_NAME "wcsspn"
-#endif /* WIDE */
+#define TEST_NAME "strspn"
 #include "test-string.h"
 
-#ifndef WIDE
-# define STRSPN strspn
-# define CHAR char
-# define UCHAR unsigned char
-# define SIMPLE_STRSPN simple_strspn
-# define STUPID_STRSPN stupid_strspn
-# define STRLEN strlen
-# define STRCHR strchr
-# define BIG_CHAR CHAR_MAX
-# define SMALL_CHAR 127
-#else
-# include <wchar.h>
-# define STRSPN wcsspn
-# define CHAR wchar_t
-# define UCHAR wchar_t
-# define SIMPLE_STRSPN simple_wcsspn
-# define STUPID_STRSPN stupid_wcsspn
-# define STRLEN wcslen
-# define STRCHR wcschr
-# define BIG_CHAR WCHAR_MAX
-# define SMALL_CHAR 1273
-#endif /* WIDE */
+typedef size_t (*proto_t) (const char *, const char *);
+size_t simple_strspn (const char *, const char *);
+size_t stupid_strspn (const char *, const char *);
 
-typedef size_t (*proto_t) (const CHAR *, const CHAR *);
-size_t SIMPLE_STRSPN (const CHAR *, const CHAR *);
-size_t STUPID_STRSPN (const CHAR *, const CHAR *);
-
-IMPL (STUPID_STRSPN, 0)
-IMPL (SIMPLE_STRSPN, 0)
-IMPL (STRSPN, 1)
+IMPL (stupid_strspn, 0)
+IMPL (simple_strspn, 0)
+IMPL (strspn, 1)
 
 size_t
-SIMPLE_STRSPN (const CHAR *s, const CHAR *acc)
+simple_strspn (const char *s, const char *acc)
 {
-  const CHAR *r, *str = s;
-  CHAR c;
+  const char *r, *str = s;
+  char c;
 
   while ((c = *s++) != '\0')
     {
@@ -74,9 +47,9 @@ SIMPLE_STRSPN (const CHAR *s, const CHAR *acc)
 }
 
 size_t
-STUPID_STRSPN (const CHAR *s, const CHAR *acc)
+stupid_strspn (const char *s, const char *acc)
 {
-  size_t ns = STRLEN (s), nacc = STRLEN (acc);
+  size_t ns = strlen (s), nacc = strlen (acc);
   size_t i, j;
 
   for (i = 0; i < ns; ++i)
@@ -91,7 +64,7 @@ STUPID_STRSPN (const CHAR *s, const CHAR *acc)
 }
 
 static void
-do_one_test (impl_t *impl, const CHAR *s, const CHAR *acc, size_t exp_res)
+do_one_test (impl_t *impl, const char *s, const char *acc, size_t exp_res)
 {
   size_t res = CALL (impl, s, acc);
   if (res != exp_res)
@@ -107,34 +80,34 @@ static void
 do_test (size_t align, size_t pos, size_t len)
 {
   size_t i;
-  CHAR *acc, *s;
+  char *acc, *s;
 
   align &= 7;
-  if ((align + pos + 10) * sizeof (CHAR) >= page_size || len > 240 || ! len)
+  if (align + pos + 10 >= page_size || len > 240 || ! len)
     return;
 
-  acc = (CHAR *) (buf2) + (random () & 255);
-  s = (CHAR *) (buf1) + align;
+  acc = (char *) (buf2 + (random () & 255));
+  s = (char *) (buf1 + align);
 
   for (i = 0; i < len; ++i)
     {
-      acc[i] = random () & BIG_CHAR;
+      acc[i] = random () & 255;
       if (!acc[i])
-	acc[i] = random () & BIG_CHAR;
+	acc[i] = random () & 255;
       if (!acc[i])
-	acc[i] = 1 + (random () & SMALL_CHAR);
+	acc[i] = 1 + (random () & 127);
     }
   acc[len] = '\0';
 
   for (i = 0; i < pos; ++i)
     s[i] = acc[random () % len];
-  s[pos] = random () & BIG_CHAR;
-  if (STRCHR (acc, s[pos]))
+  s[pos] = random () & 255;
+  if (strchr (acc, s[pos]))
     s[pos] = '\0';
   else
     {
       for (i = pos + 1; i < pos + 10; ++i)
-	s[i] = random () & BIG_CHAR;
+	s[i] = random () & 255;
       s[i] = '\0';
     }
 
@@ -146,8 +119,8 @@ static void
 do_random_tests (void)
 {
   size_t i, j, n, align, pos, alen, len;
-  UCHAR *p = (UCHAR *) (buf1 + page_size) - 512;
-  UCHAR *acc;
+  unsigned char *p = buf1 + page_size - 512;
+  unsigned char *acc;
 
   for (n = 0; n < ITERATIONS; n++)
     {
@@ -165,14 +138,14 @@ do_random_tests (void)
       len = random () & 511;
       if (len + align >= 512)
 	len = 511 - align - (random () & 7);
-      acc = (UCHAR *) (buf2 + page_size) - alen - 1 - (random () & 7);
+      acc = buf2 + page_size - alen - 1 - (random () & 7);
       for (i = 0; i < alen; ++i)
 	{
-	  acc[i] = random () & BIG_CHAR;
+	  acc[i] = random () & 255;
 	  if (!acc[i])
-	    acc[i] = random () & BIG_CHAR;
+	    acc[i] = random () & 255;
 	  if (!acc[i])
-	    acc[i] = 1 + (random () & SMALL_CHAR);
+	    acc[i] = 1 + (random () & 127);
 	}
       acc[i] = '\0';
       j = (pos > len ? pos : len) + align + 64;
@@ -185,23 +158,23 @@ do_random_tests (void)
 	    p[i] = '\0';
 	  else if (i == pos + align)
 	    {
-	      p[i] = random () & BIG_CHAR;
-	      if (STRCHR ((CHAR *) acc, p[i]))
+	      p[i] = random () & 255;
+	      if (strchr ((char *) acc, p[i]))
 		p[i] = '\0';
 	    }
 	  else if (i < align || i > pos + align)
-	    p[i] = random () & BIG_CHAR;
+	    p[i] = random () & 255;
 	  else
 	    p[i] = acc [random () % alen];
 	}
 
       FOR_EACH_IMPL (impl, 1)
-	if (CALL (impl, (CHAR *) (p + align),
-		  (CHAR *) acc) != (pos < len ? pos : len))
+	if (CALL (impl, (char *) (p + align),
+		  (char *) acc) != (pos < len ? pos : len))
 	  {
 	    error (0, 0, "Iteration %zd - wrong result in function %s (%zd, %p, %zd, %zd, %zd) %zd != %zd",
 		   n, impl->name, align, acc, alen, pos, len,
-		   CALL (impl, (CHAR *) (p + align), (CHAR *) acc),
+		   CALL (impl, (char *) (p + align), (char *) acc),
 		   (pos < len ? pos : len));
 	    ret = 1;
 	  }

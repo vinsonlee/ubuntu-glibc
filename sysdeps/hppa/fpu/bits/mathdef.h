@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -34,10 +34,5 @@ typedef double double_t;	/* `double' expressions are evaluated as
 
 #endif	/* ISO C99 */
 
-#ifndef __NO_LONG_DOUBLE_MATH
-/* On hppa `long double' and `double' are 64-bits.  So, libm is built
-   with NO_LONG_DOUBLE defined.  The following define ensures the library
-   and headers are consistent.  This disables the declaration of all the
-   `long double' function variants.  */
-# define __NO_LONG_DOUBLE_MATH	1
-#endif
+/* On hppa `long double' is 64-bits. */
+#undef __NO_LONG_DOUBLE_MATH

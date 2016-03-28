@@ -1,5 +1,5 @@
 /* Skeleton for benchmark programs.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,9 +24,21 @@
 #include <inttypes.h>
 #include "bench-timing.h"
 #include "json-lib.h"
-#include "bench-util.h"
 
-#include "bench-util.c"
+volatile unsigned int dontoptimize = 0;
+
+void
+startup (void)
+{
+  /* This loop should cause CPU to switch to maximal freqency.
+     This makes subsequent measurement more accurate.  We need a side effect
+     to prevent the loop being deleted by compiler.
+     This should be enough to cause CPU to speed up and it is simpler than
+     running loop for constant time. This is used when user does not have root
+     access to set a constant freqency.  */
+  for (int k = 0; k < 10000000; k++)
+    dontoptimize += 23 * dontoptimize + 2;
+}
 
 #define TIMESPEC_AFTER(a, b) \
   (((a).tv_sec == (b).tv_sec) ?						      \
@@ -44,7 +56,7 @@ main (int argc, char **argv)
   if (argc == 2 && !strcmp (argv[1], "-d"))
     detailed = true;
 
-  bench_start ();
+  startup();
 
   memset (&runtime, 0, sizeof (runtime));
 

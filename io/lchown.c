@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,10 @@
 
 /* Change the owner and group of FILE.  */
 int
-__lchown (const char *file, uid_t owner, gid_t group)
+__lchown (file, owner, group)
+     const char *file;
+     uid_t owner;
+     gid_t group;
 {
   if (file == NULL)
     {

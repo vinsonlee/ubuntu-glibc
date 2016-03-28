@@ -56,7 +56,6 @@
  *		       = 1 - 2*(tan(y) - (tan(y)^2)/(1+tan(y)))
  */
 
-#include <float.h>
 #include <libc-internal.h>
 #include <math.h>
 #include <math_private.h>
@@ -99,13 +98,8 @@ __kernel_tanl (long double x, long double y, int iy)
 	{
 	  if ((ix | lx | (iy + 1)) == 0)
 	    return one / fabs (x);
-	  else if (iy == 1)
-	    {
-	      math_check_force_underflow (x);
-	      return x;
-	    }
 	  else
-	    return -one / x;
+	    return (iy == 1) ? x : -one / x;
 	}
     }
   if (ix >= 0x3fe59420) /* |x| >= 0.6743316650390625 */
@@ -141,7 +135,11 @@ __kernel_tanl (long double x, long double y, int iy)
 	 uninitialized although in the cases where it is used it has
 	 always been set.  */
       DIAG_PUSH_NEEDS_COMMENT;
+#if __GNUC_PREREQ (4, 7)
       DIAG_IGNORE_NEEDS_COMMENT (5, "-Wmaybe-uninitialized");
+#else
+      DIAG_IGNORE_NEEDS_COMMENT (5, "-Wuninitialized");
+#endif
       if (sign < 0)
 	w = -w;
       DIAG_POP_NEEDS_COMMENT;

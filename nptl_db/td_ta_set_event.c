@@ -1,5 +1,5 @@
 /* Globally enable events.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 1999.
 
@@ -22,7 +22,9 @@
 
 
 td_err_e
-td_ta_set_event (const td_thragent_t *ta_arg, td_thr_events_t *event)
+td_ta_set_event (ta_arg, event)
+     const td_thragent_t *ta_arg;
+     td_thr_events_t *event;
 {
   td_thragent_t *const ta = (td_thragent_t *) ta_arg;
   td_err_e err;

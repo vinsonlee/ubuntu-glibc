@@ -1,5 +1,5 @@
 /* Multiple versions of vectorized sin.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,9 +22,11 @@
 	.text
 ENTRY (_ZGVbN2v_sin)
         .type   _ZGVbN2v_sin, @gnu_indirect_function
-	LOAD_RTLD_GLOBAL_RO_RDX
-        leaq    _ZGVbN2v_sin_sse4(%rip), %rax
-	HAS_CPU_FEATURE (SSE4_1)
+        cmpl    $0, KIND_OFFSET+__cpu_features(%rip)
+        jne     1f
+        call    __init_cpu_features
+1:      leaq    _ZGVbN2v_sin_sse4(%rip), %rax
+        testl   $bit_SSE4_1, __cpu_features+CPUID_OFFSET+index_SSE4_1(%rip)
         jz      2f
         ret
 2:      leaq    _ZGVbN2v_sin_sse2(%rip), %rax

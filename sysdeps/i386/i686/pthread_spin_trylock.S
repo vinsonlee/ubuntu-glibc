@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -17,4 +17,4 @@
    <http://www.gnu.org/licenses/>.  */
 
 #define HAVE_CMOV	1
-#include <sysdeps/i386/pthread_spin_trylock.S>
+#include <sysdeps/i386/i486/pthread_spin_trylock.S>

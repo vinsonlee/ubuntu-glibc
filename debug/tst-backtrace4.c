@@ -1,5 +1,5 @@
 /* Test backtrace and backtrace_symbols for signal frames.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -49,9 +49,9 @@ handle_signal (int signum)
 
   /* Get the backtrace addresses.  */
   n = backtrace (addresses, sizeof (addresses) / sizeof (addresses[0]));
-  printf ("Obtained backtrace with %d functions (want at least %d)\n",
+  printf ("Obtained backtrace with %d functions (but wanted at least %d)\n",
 	  n, NUM_FUNCTIONS);
-  /* Check that there are at least NUM_FUNCTIONS functions.  */
+  /* Check that there are at least six functions.  */
   if (n < NUM_FUNCTIONS)
     {
       FAIL ();

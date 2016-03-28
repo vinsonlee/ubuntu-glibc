@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -24,7 +24,7 @@
 #include <stap-probe.h>
 
 #ifndef lll_unlock_elision
-#define lll_unlock_elision(a,b,c) ({ lll_unlock (a,c); 0; })
+#define lll_unlock_elision(a,b) ({ lll_unlock (a,b); 0; })
 #endif
 
 static int
@@ -34,7 +34,9 @@ __pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
 
 int
 internal_function attribute_hidden
-__pthread_mutex_unlock_usercnt (pthread_mutex_t *mutex, int decr)
+__pthread_mutex_unlock_usercnt (mutex, decr)
+     pthread_mutex_t *mutex;
+     int decr;
 {
   int type = PTHREAD_MUTEX_TYPE_ELISION (mutex);
   if (__builtin_expect (type &
@@ -61,7 +63,7 @@ __pthread_mutex_unlock_usercnt (pthread_mutex_t *mutex, int decr)
   else if (__glibc_likely (type == PTHREAD_MUTEX_TIMED_ELISION_NP))
     {
       /* Don't reset the owner/users fields for elision.  */
-      return lll_unlock_elision (mutex->__data.__lock, mutex->__data.__elision,
+      return lll_unlock_elision (mutex->__data.__lock,
 				      PTHREAD_MUTEX_PSHARED (mutex));
     }
   else if (__builtin_expect (PTHREAD_MUTEX_TYPE (mutex)
@@ -230,18 +232,16 @@ __pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
 	/* One less user.  */
 	--mutex->__data.__nusers;
 
-      /* Unlock.  Load all necessary mutex data before releasing the mutex
-	 to not violate the mutex destruction requirements (see
-	 lll_unlock).  */
-      int robust = mutex->__data.__kind & PTHREAD_MUTEX_ROBUST_NORMAL_NP;
-      int private = (robust
-		     ? PTHREAD_ROBUST_MUTEX_PSHARED (mutex)
-		     : PTHREAD_MUTEX_PSHARED (mutex));
+      /* Unlock.  */
       if ((mutex->__data.__lock & FUTEX_WAITERS) != 0
 	  || atomic_compare_and_exchange_bool_rel (&mutex->__data.__lock, 0,
 						   THREAD_GETMEM (THREAD_SELF,
 								  tid)))
 	{
+	  int robust = mutex->__data.__kind & PTHREAD_MUTEX_ROBUST_NORMAL_NP;
+	  int private = (robust
+			 ? PTHREAD_ROBUST_MUTEX_PSHARED (mutex)
+			 : PTHREAD_MUTEX_PSHARED (mutex));
 	  INTERNAL_SYSCALL_DECL (__err);
 	  INTERNAL_SYSCALL (futex, __err, 2, &mutex->__data.__lock,
 			    __lll_private_flag (FUTEX_UNLOCK_PI, private));
@@ -309,7 +309,8 @@ __pthread_mutex_unlock_full (pthread_mutex_t *mutex, int decr)
 
 
 int
-__pthread_mutex_unlock (pthread_mutex_t *mutex)
+__pthread_mutex_unlock (mutex)
+     pthread_mutex_t *mutex;
 {
   return __pthread_mutex_unlock_usercnt (mutex, 1);
 }
