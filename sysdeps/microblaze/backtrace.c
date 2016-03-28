@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -113,9 +113,6 @@ __backtrace (void **array, int size)
 
   int count;
   int rc = 0;
-
-  if (size <= 0)
-    return 0;
 
   __asm__ __volatile__ ("mfs %0, rpc"
                         : "=r"(pc));

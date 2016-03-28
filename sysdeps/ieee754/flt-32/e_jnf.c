@@ -167,15 +167,13 @@ __ieee754_jnf(int n, float x)
 	    }
 	}
 	if(sgn==1) ret = -b; else ret = b;
-	ret = math_narrow_eval (ret);
     }
     if (ret == 0)
-      {
-	ret = math_narrow_eval (__copysignf (FLT_MIN, ret) * FLT_MIN);
-	__set_errno (ERANGE);
-      }
-    else
-	math_check_force_underflow (ret);
+	ret = __copysignf (FLT_MIN, ret) * FLT_MIN;
+    else if (fabsf (ret) < FLT_MIN) {
+	float force_underflow = ret * ret;
+	math_force_eval (force_underflow);
+    }
     return ret;
 }
 strong_alias (__ieee754_jnf, __jnf_finite)

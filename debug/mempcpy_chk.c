@@ -1,7 +1,7 @@
 /* Copy memory to memory until the specified number of bytes
    has been copied, return pointer to following byte, with error checking.
    Overlap is NOT handled correctly.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Torbjorn Granlund (tege@sics.se).
 
@@ -23,7 +23,11 @@
 #include <memcopy.h>
 
 void *
-__mempcpy_chk (void *dstpp, const void *srcpp, size_t len, size_t dstlen)
+__mempcpy_chk (dstpp, srcpp, len, dstlen)
+     void *dstpp;
+     const void *srcpp;
+     size_t len;
+     size_t dstlen;
 {
   if (__glibc_unlikely (dstlen < len))
     __chk_fail ();

@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,6 +18,10 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <kernel-features.h>
+
+#if defined SOCK_CLOEXEC && !defined __ASSUME_SOCK_CLOEXEC
+int __have_sock_cloexec;
+#endif
 
 #if defined O_CLOEXEC && !defined __ASSUME_PIPE2
 int __have_pipe2;

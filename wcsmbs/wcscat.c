@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -18,13 +18,12 @@
 
 #include <wchar.h>
 
-#ifdef WCSCAT
-# define __wcscat WCSCAT
-#endif
 
 /* Append SRC on the end of DEST.  */
 wchar_t *
-__wcscat (wchar_t *dest, const wchar_t *src)
+__wcscat (dest, src)
+     wchar_t *dest;
+     const wchar_t *src;
 {
   wchar_t *s1 = dest;
   const wchar_t *s2 = src;
@@ -48,6 +47,4 @@ __wcscat (wchar_t *dest, const wchar_t *src)
 
   return dest;
 }
-#ifndef WCSCAT
 weak_alias (__wcscat, wcscat)
-#endif

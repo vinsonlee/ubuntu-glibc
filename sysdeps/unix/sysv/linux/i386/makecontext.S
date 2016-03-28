@@ -1,5 +1,5 @@
 /* Create new context.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2001.
 
@@ -102,10 +102,15 @@ L(exitcode):
 	   parameters (see above).  */
 	leal	(%esp,%ebx,4), %esp
 
+#ifdef	PIC
+	call	1f
+1:	popl	%ebx
+	addl	$_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx
+#endif
 	cmpl	$0, (%esp)		/* Check the next context.  */
 	je	2f			/* If it is zero exit.  */
 
-	call	HIDDEN_JUMPTARGET(__setcontext)
+	call	JUMPTARGET(__setcontext)
 	/* If this returns (which can happen if the syscall fails) we'll
 	   exit the program with the return error value (-1).  */
 

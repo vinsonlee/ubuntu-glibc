@@ -1,5 +1,5 @@
 # Makefile for csu code for GNU C library.
-# Copyright (C) 1995-2016 Free Software Foundation, Inc.
+# Copyright (C) 1995-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -47,9 +47,6 @@ tests-static := tst-empty
 
 ifeq (yes,$(build-shared))
 extra-objs += S$(start-installed-name) gmon-start.os
-ifneq ($(start-installed-name),$(static-start-installed-name))
-extra-objs += gmon-start.o
-endif
 install-lib += S$(start-installed-name)
 generated += start.os
 else
@@ -101,14 +98,10 @@ endif
 # startfile with gmon-start.o, which defines a constructor function
 # to turn on profiling code at startup.
 ifeq (yes,$(build-shared))
-$(objpfx)g$(start-installed-name): \
+$(addprefix $(objpfx),$(sort g$(start-installed-name) \
+			     g$(static-start-installed-name))): \
   $(objpfx)g%: $(objpfx)S% $(objpfx)gmon-start.os
 	$(link-relocatable)
-ifneq ($(start-installed-name),$(static-start-installed-name))
-$(objpfx)g$(static-start-installed-name): \
-  $(objpfx)g%: $(objpfx)% $(objpfx)gmon-start.o
-	$(link-relocatable)
-endif
 else
 $(addprefix $(objpfx),$(sort g$(start-installed-name) \
 			     g$(static-start-installed-name))): \

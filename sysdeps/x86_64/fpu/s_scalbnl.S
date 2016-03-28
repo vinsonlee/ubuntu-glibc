@@ -15,3 +15,4 @@ ENTRY(__scalbnl)
 	fstp	%st(1)
 	ret
 END (__scalbnl)
+weak_alias (__scalbnl, scalbnl)

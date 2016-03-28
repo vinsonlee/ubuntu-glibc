@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -91,7 +91,8 @@ local_isatty (int fd)
  */
 
 int
-_IO_file_doallocate (_IO_FILE *fp)
+_IO_file_doallocate (fp)
+     _IO_FILE *fp;
 {
   _IO_size_t size;
   char *p;
@@ -124,9 +125,7 @@ _IO_file_doallocate (_IO_FILE *fp)
 	size = st.st_blksize;
 #endif
     }
-  p = malloc (size);
-  if (__glibc_unlikely (p == NULL))
-    return EOF;
+  ALLOC_BUF (p, size, EOF);
   _IO_setb (fp, p, p + size, 1);
   return 1;
 }

@@ -1,5 +1,5 @@
 /* Return arc hyperbole tangent for float value.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -127,7 +127,16 @@ __catanhf (__complex__ float x)
 	  __imag__ res = 0.5f * __ieee754_atan2f (2.0f * __imag__ x, den);
 	}
 
-      math_check_force_underflow_complex (res);
+      if (fabsf (__real__ res) < FLT_MIN)
+	{
+	  volatile float force_underflow = __real__ res * __real__ res;
+	  (void) force_underflow;
+	}
+      if (fabsf (__imag__ res) < FLT_MIN)
+	{
+	  volatile float force_underflow = __imag__ res * __imag__ res;
+	  (void) force_underflow;
+	}
     }
 
   return res;

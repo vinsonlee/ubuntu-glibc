@@ -1,5 +1,5 @@
 /* poll file descriptors.  Hurd version.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,7 +28,10 @@
    or -1 for errors.  */
 
 int
-__poll (struct pollfd *fds, nfds_t nfds, int timeout)
+__poll (fds, nfds, timeout)
+     struct pollfd *fds;
+     nfds_t nfds;
+     int timeout;
 {
   struct timespec ts, *to;
 

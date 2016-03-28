@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2016 Free Software Foundation, Inc.
+# Copyright (C) 1995-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -33,7 +33,6 @@ routines := wcscat wcschr wcscmp wcscpy wcscspn wcsdup wcslen wcsncat \
 	    wcstol wcstoul wcstoll wcstoull wcstod wcstold wcstof \
 	    wcstol_l wcstoul_l wcstoll_l wcstoull_l \
 	    wcstod_l wcstold_l wcstof_l \
-	    wcstod_nan wcstold_nan wcstof_nan \
 	    wcscoll wcsxfrm \
 	    wcwidth wcswidth \
 	    wcscoll_l wcsxfrm_l \
@@ -43,30 +42,12 @@ routines := wcscat wcschr wcscmp wcscpy wcscspn wcsdup wcslen wcsncat \
 	    isoc99_swscanf isoc99_vswscanf \
 	    mbrtoc16 c16rtomb
 
-strop-tests :=  wcscmp wcsncmp wmemcmp wcslen wcschr wcsrchr wcscpy wcsnlen \
-		wcpcpy wcsncpy wcpncpy wcscat wcsncat wcschrnul wcsspn wcspbrk \
-		wcscspn wmemchr wmemset
+strop-tests :=  wcscmp wcsncmp wmemcmp wcslen wcschr wcsrchr wcscpy
 tests := tst-wcstof wcsmbs-tst1 tst-wcsnlen tst-btowc tst-mbrtowc \
 	 tst-wcrtomb tst-wcpncpy tst-mbsrtowcs tst-wchar-h tst-mbrtowc2 \
-	 tst-c16c32-1 wcsatcliff tst-wcstol-locale tst-wcstod-nan-locale \
-	 $(addprefix test-,$(strop-tests))
+	 tst-c16c32-1 wcsatcliff $(addprefix test-,$(strop-tests))
 
 include ../Rules
-
-ifeq ($(run-built-tests),yes)
-LOCALES := de_DE.ISO-8859-1 de_DE.UTF-8 en_US.ANSI_X3.4-1968 hr_HR.ISO-8859-2 \
-	   ja_JP.EUC-JP zh_TW.EUC-TW tr_TR.UTF-8 tr_TR.ISO-8859-9
-include ../gen-locales.mk
-
-$(objpfx)tst-btowc.out: $(gen-locales)
-$(objpfx)tst-c16c32-1.out: $(gen-locales)
-$(objpfx)tst-mbrtowc.out: $(gen-locales)
-$(objpfx)tst-mbrtowc2.out: $(gen-locales)
-$(objpfx)tst-wcrtomb.out: $(gen-locales)
-$(objpfx)wcsmbs-tst1.out: $(gen-locales)
-$(objpfx)tst-wcstol-locale.out: $(gen-locales)
-$(objpfx)tst-wcstod-nan-locale.out: $(gen-locales)
-endif
 
 CFLAGS-wcwidth.c = -I../wctype
 CFLAGS-wcswidth.c = -I../wctype
@@ -88,14 +69,12 @@ CFLAGS-wcstold_l.c = $(strtox-CFLAGS)
 CFLAGS-wcstof_l.c = $(strtox-CFLAGS)
 CPPFLAGS-tst-wchar-h.c = -D_FORTIFY_SOURCE=2
 
-CFLAGS-isoc99_wscanf.c += -fexceptions
-CFLAGS-isoc99_fwscanf.c += -fexceptions
-CFLAGS-isoc99_vwscanf.c += -fexceptions
-CFLAGS-isoc99_vfwscanf.c += -fexceptions
+CFLAGS-isoc99_wscanf.c += $(exceptions)
+CFLAGS-isoc99_fwscanf.c += $(exceptions)
+CFLAGS-isoc99_vwscanf.c += $(exceptions)
+CFLAGS-isoc99_vfwscanf.c += $(exceptions)
 
 CPPFLAGS += $(libio-mtsafe)
 
 # We need to find the default version of strtold_l in stdlib.
 CPPFLAGS-wcstold_l.c = -I../stdlib
-
-$(objpfx)tst-wcstod-nan-locale: $(libm)

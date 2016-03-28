@@ -1,5 +1,5 @@
 /* Change access and modification times of open file.  Linux version.
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,12 +30,16 @@ utimensat (int fd, const char *file, const struct timespec tsp[2],
 	   int flags)
 {
   if (file == NULL)
-    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+    {
+      __set_errno (EINVAL);
+      return -1;
+    }
 #ifdef __NR_utimensat
   /* Avoid implicit array coercion in syscall macros.  */
   return INLINE_SYSCALL (utimensat, 4, fd, file, &tsp[0], flags);
 #else
-  return INLINE_SYSCALL_ERROR_RETURN_VALUE (ENOSYS);
+  __set_errno (ENOSYS);
+  return -1;
 #endif
 }
 #ifndef __NR_utimensat

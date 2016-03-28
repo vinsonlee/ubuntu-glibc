@@ -49,7 +49,10 @@ static int inet_pton6 (const char *src, u_char *dst) internal_function;
  *	Paul Vixie, 1996.
  */
 int
-__inet_pton (int af, const char *src, void *dst)
+__inet_pton(af, src, dst)
+	int af;
+	const char *src;
+	void *dst;
 {
 	switch (af) {
 	case AF_INET:
@@ -79,7 +82,9 @@ libc_hidden_weak (inet_pton)
  */
 static int
 internal_function
-inet_pton4 (const char *src, u_char *dst)
+inet_pton4(src, dst)
+	const char *src;
+	u_char *dst;
 {
 	int saw_digit, octets, ch;
 	u_char tmp[NS_INADDRSZ], *tp;
@@ -131,7 +136,9 @@ inet_pton4 (const char *src, u_char *dst)
  */
 static int
 internal_function
-inet_pton6 (const char *src, u_char *dst)
+inet_pton6(src, dst)
+	const char *src;
+	u_char *dst;
 {
 	static const char xdigits[] = "0123456789abcdef";
 	u_char tmp[NS_IN6ADDRSZ], *tp, *endp, *colonp;

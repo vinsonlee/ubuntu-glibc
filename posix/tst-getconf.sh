@@ -1,6 +1,6 @@
-#!/bin/sh
+#! /bin/sh
 # Test for getconf(1).
-# Copyright (C) 2001-2016 Free Software Foundation, Inc.
+# Copyright (C) 2001-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ logfile=$common_objpfx/posix/tst-getconf.out
 rm -f $logfile
 result=0
 while read name; do
-  printf %s "getconf $name: " >> $logfile
+  echo -n "getconf $name: " >> $logfile
   ${run_getconf} "$name" < /dev/null 2>> $logfile >> $logfile
   if test $? -ne 0; then
     echo "*** $name FAILED" >> $logfile
@@ -205,7 +205,7 @@ XBS5_LPBIG_OFFBIG_LINTFLAGS
 EOF
 
 while read name; do
-  printf %s "getconf $name /: " >> $logfile
+  echo -n "getconf $name /: " >> $logfile
   ${run_getconf} "$name" / < /dev/null 2>> $logfile >> $logfile
   if test $? -ne 0; then
     echo "*** $name FAILED" >> $logfile
