@@ -1,5 +1,5 @@
 /* Measure string and memory functions.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <sys/cdefs.h>
-#define TEST_IFUNC 1
 
 typedef struct
 {
@@ -69,8 +68,6 @@ int ret, do_srandom;
 unsigned int seed;
 size_t page_size;
 
-hp_timing_t _dl_hp_timing_overhead;
-
 # ifndef ITERATIONS
 size_t iterations = 100000;
 #  define ITERATIONS_OPTIONS \
@@ -109,7 +106,7 @@ size_t iterations = 100000;
 # define CALL(impl, ...)	\
     (* (proto_t) (impl)->fn) (__VA_ARGS__)
 
-# if defined TEST_IFUNC && defined TEST_NAME
+# ifdef TEST_NAME
 /* Increase size of FUNC_LIST if assert is triggered at run-time.  */
 static struct libc_ifunc_impl func_list[32];
 static int func_count;
@@ -155,11 +152,11 @@ static impl_t *impl_array;
      impl = impl_array;							      \
      for (count = 0; count < impl_count; ++count, ++impl)		      \
        if (!notall || impl->test)
-# else /* ! (defined TEST_IFUNC && defined TEST_NAME) */
+# else /* !TEST_NAME */
 #  define FOR_EACH_IMPL(impl, notall) \
      for (impl_t *impl = __start_impls; impl < __stop_impls; ++impl)	      \
        if (!notall || impl->test)
-# endif /* ! (defined TEST_IFUNC && defined TEST_NAME) */
+# endif /* !TEST_NAME */
 
 # ifndef BUF1PAGES
 #  define BUF1PAGES 1
@@ -168,7 +165,7 @@ static impl_t *impl_array;
 static void
 test_init (void)
 {
-# if defined TEST_IFUNC && defined TEST_NAME
+# ifdef TEST_NAME
   func_count = __libc_ifunc_impl_list (TEST_NAME, func_list,
 				       (sizeof func_list
 					/ sizeof func_list[0]));

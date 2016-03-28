@@ -1,5 +1,5 @@
 /* Complex square root of float value.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Based on an algorithm by Stephen L. Moshier <moshier@world.std.com>.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
@@ -30,7 +30,7 @@ __csqrtf (__complex__ float x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (__builtin_expect (rcls <= FP_INFINITE || icls <= FP_INFINITE, 0))
+  if (__glibc_unlikely (rcls <= FP_INFINITE || icls <= FP_INFINITE))
     {
       if (icls == FP_INFINITE)
 	{
@@ -59,7 +59,7 @@ __csqrtf (__complex__ float x)
     }
   else
     {
-      if (__builtin_expect (icls == FP_ZERO, 0))
+      if (__glibc_unlikely (icls == FP_ZERO))
 	{
 	  if (__real__ x < 0.0)
 	    {
@@ -73,7 +73,7 @@ __csqrtf (__complex__ float x)
 	      __imag__ res = __copysignf (0.0, __imag__ x);
 	    }
 	}
-      else if (__builtin_expect (rcls == FP_ZERO, 0))
+      else if (__glibc_unlikely (rcls == FP_ZERO))
 	{
 	  float r;
 	  if (fabsf (__imag__ x) >= 2.0f * FLT_MIN)
@@ -118,12 +118,28 @@ __csqrtf (__complex__ float x)
 	  if (__real__ x > 0)
 	    {
 	      r = __ieee754_sqrtf (0.5f * (d + __real__ x));
-	      s = 0.5f * (__imag__ x / r);
+	      if (scale == 1 && fabsf (__imag__ x) < 1.0f)
+		{
+		  /* Avoid possible intermediate underflow.  */
+		  s = __imag__ x / r;
+		  r = __scalbnf (r, scale);
+		  scale = 0;
+		}
+	      else
+		s = 0.5f * (__imag__ x / r);
 	    }
 	  else
 	    {
 	      s = __ieee754_sqrtf (0.5f * (d - __real__ x));
-	      r = fabsf (0.5f * (__imag__ x / s));
+	      if (scale == 1 && fabsf (__imag__ x) < 1.0f)
+		{
+		  /* Avoid possible intermediate underflow.  */
+		  r = fabsf (__imag__ x / s);
+		  s = __scalbnf (s, scale);
+		  scale = 0;
+		}
+	      else
+		r = fabsf (0.5f * (__imag__ x / s));
 	    }
 
 	  if (scale)

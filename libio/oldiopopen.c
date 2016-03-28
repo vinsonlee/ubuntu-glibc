@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Per Bothner <bothner@cygnus.com>.
 
@@ -215,7 +215,7 @@ _IO_old_popen (command, mode)
 #endif
   fp = &new_f->fpx.file.file._file;
   _IO_old_init (fp, 0);
-  _IO_JUMPS ((struct _IO_FILE_plus *) &new_f->fpx.file) = &_IO_old_proc_jumps;
+  _IO_JUMPS_FILE_plus (&new_f->fpx.file) = &_IO_old_proc_jumps;
   _IO_old_file_init ((struct _IO_FILE_plus *) &new_f->fpx.file);
 #if  !_IO_UNIFIED_JUMPTABLES
   new_f->fpx.file.vtable = NULL;

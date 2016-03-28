@@ -1,5 +1,5 @@
 /* Read and display shared object profiling data.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -391,7 +391,7 @@ Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
 "),
-	   "2014");
+	   "2015");
   fprintf (stream, gettext ("Written by %s.\n"), "Ulrich Drepper");
 }
 
@@ -439,7 +439,7 @@ load_shobj (const char *name)
   result = (struct shobj *) calloc (1, sizeof (struct shobj));
   if (result == NULL)
     {
-      error (0, errno, _("cannot create internal descriptors"));
+      error (0, errno, _("cannot create internal descriptor"));
       dlclose (map);
       return NULL;
     }

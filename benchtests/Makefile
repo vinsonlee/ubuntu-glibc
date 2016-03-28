@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2014 Free Software Foundation, Inc.
+# Copyright (C) 2013-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,41 +20,46 @@
 # Add benchmark functions in alphabetical order.
 
 subdir := benchtests
-bench := acos acosh asin asinh atan atanh cos cosh exp exp2 log log2 modf pow \
-	 rint sin sincos sinh sqrt tan tanh
+
+include ../Makeconfig
+bench-math := acos acosh asin asinh atan atanh cos cosh exp exp2 ffs ffsll \
+	      log log2 modf pow rint sin sincos sinh sqrt tan tanh
+
+bench-pthread := pthread_once
+
+bench := $(bench-math) $(bench-pthread)
 
 # String function benchmarks.
 string-bench := bcopy bzero memccpy memchr memcmp memcpy memmem memmove \
 		mempcpy memset rawmemchr stpcpy stpncpy strcasecmp strcasestr \
 		strcat strchr strchrnul strcmp strcpy strcspn strlen \
 		strncasecmp strncat strncmp strncpy strnlen strpbrk strrchr \
-		strspn strstr strcpy_chk stpcpy_chk memrchr strsep strtok
+		strspn strstr strcpy_chk stpcpy_chk memrchr strsep strtok \
+		strcoll
 string-bench-all := $(string-bench)
+
+# We have to generate locales
+LOCALES := en_US.UTF-8 tr_TR.UTF-8 cs_CZ.UTF-8 fa_IR.UTF-8 fr_FR.UTF-8 \
+	   ja_JP.UTF-8 si_LK.UTF-8 en_GB.UTF-8 vi_VN.UTF-8 ar_SA.UTF-8 \
+	   da_DK.UTF-8 pl_PL.UTF-8 pt_PT.UTF-8 el_GR.UTF-8 ru_RU.UTF-8 \
+	   iw_IL.UTF-8 is_IS.UTF-8 es_ES.UTF-8 hi_IN.UTF-8 sv_SE.UTF-8 \
+	   hu_HU.UTF-8 it_IT.UTF-8 sr_RS.UTF-8 zh_CN.UTF-8
+include ../gen-locales.mk
 
 stdlib-bench := strtod
 
-benchset := $(string-bench-all) $(stdlib-bench)
+stdio-common-bench := sprintf
 
-LDLIBS-bench-acos = -lm
-LDLIBS-bench-acosh = -lm
-LDLIBS-bench-asin = -lm
-LDLIBS-bench-asinh = -lm
-LDLIBS-bench-atan = -lm
-LDLIBS-bench-atanh = -lm
-LDLIBS-bench-cos = -lm
-LDLIBS-bench-cosh = -lm
-LDLIBS-bench-exp = -lm
-LDLIBS-bench-exp2 = -lm
-LDLIBS-bench-log = -lm
-LDLIBS-bench-log2 = -lm
-LDLIBS-bench-pow = -lm
-LDLIBS-bench-rint = -lm
-LDLIBS-bench-sin = -lm
-LDLIBS-bench-sinh = -lm
-LDLIBS-bench-sqrt = -lm
-LDLIBS-bench-tan = -lm
-LDLIBS-bench-tanh = -lm
-LDLIBS-bench-sincos = -lm
+benchset := $(string-bench-all) $(stdlib-bench) $(stdio-common-bench)
+
+CFLAGS-bench-ffs.c += -fno-builtin
+CFLAGS-bench-ffsll.c += -fno-builtin
+
+bench-malloc := malloc-thread
+
+$(addprefix $(objpfx)bench-,$(bench-math)): $(libm)
+$(addprefix $(objpfx)bench-,$(bench-pthread)): $(shared-thread-library)
+$(objpfx)bench-malloc-thread: $(shared-thread-library)
 
 
 
@@ -65,11 +70,11 @@ LDLIBS-bench-sincos = -lm
 # affect their performance.
 .NOTPARALLEL:
 
-include ../Makeconfig
 include ../Rules
 
 binaries-bench := $(addprefix $(objpfx)bench-,$(bench))
 binaries-benchset := $(addprefix $(objpfx)bench-,$(benchset))
+binaries-bench-malloc := $(addprefix $(objpfx)bench-,$(bench-malloc))
 
 # The default duration: 10 seconds.
 ifndef BENCH_DURATION
@@ -84,23 +89,36 @@ ifdef USE_CLOCK_GETTIME
 CPPFLAGS-nonlib += -DUSE_CLOCK_GETTIME
 endif
 
+DETAILED_OPT :=
+
+ifdef DETAILED
+DETAILED_OPT := -d
+endif
+
 # This makes sure CPPFLAGS-nonlib and CFLAGS-nonlib are passed
 # for all these modules.
-cpp-srcs-left := $(binaries-benchset:=.c) $(binaries-bench:=.c)
+cpp-srcs-left := $(binaries-benchset:=.c) $(binaries-bench:=.c) \
+		 $(binaries-bench-malloc:=.c)
 lib := nonlib
 include $(patsubst %,$(..)cppflags-iterator.mk,$(cpp-srcs-left))
+
+extra-objs += json-lib.o
 
 bench-deps := bench-skeleton.c bench-timing.h Makefile
 
 run-bench = $(test-wrapper-env) \
-	    GCONV_PATH=$(common-objpfx)iconvdata LC_ALL=C \
+	    $(run-program-env) \
 	    $($*-ENV) $(rtld-prefix) $${run}
+
+timing-type := $(objpfx)bench-timing-type
 
 bench-clean:
 	rm -f $(binaries-bench) $(addsuffix .o,$(binaries-bench))
 	rm -f $(binaries-benchset) $(addsuffix .o,$(binaries-benchset))
+	rm -f $(binaries-bench-malloc) $(addsuffix .o,$(binaries-bench-malloc))
+	rm -f $(timing-type) $(addsuffix .o,$(timing-type))
 
-bench: bench-set bench-func
+bench: $(timing-type) $(gen-locales) bench-set bench-func bench-malloc
 
 bench-set: $(binaries-benchset)
 	for run in $^; do \
@@ -108,17 +126,40 @@ bench-set: $(binaries-benchset)
 	  $(run-bench) > $${run}.out; \
 	done
 
+bench-malloc: $(binaries-bench-malloc)
+	run=$(objpfx)bench-malloc-thread; \
+	for thr in 1 8 16 32; do \
+	  echo "Running $${run} $${thr}"; \
+	  $(run-bench) $${thr} > $${run}-$${thr}.out; \
+	done
+
+# Build and execute the benchmark functions.  This target generates JSON
+# formatted bench.out.  Each of the programs produce independent JSON output,
+# so one could even execute them individually and process it using any JSON
+# capable language or tool.
 bench-func: $(binaries-bench)
-	{ for run in $^; do \
+	{ timing_type=$$($(timing-type)); \
+	echo "{\"timing_type\": \"$${timing_type}\","; \
+	echo " \"functions\": {"; \
+	for run in $^; do \
+	  if ! [ "x$${run}" = "x$<" ]; then \
+	    echo ","; \
+	  fi; \
 	  echo "Running $${run}" >&2; \
-	  $(run-bench); \
-	done; } > $(objpfx)bench.out-tmp; \
+	  $(run-bench) $(DETAILED_OPT); \
+	done; \
+	echo; \
+	echo " }"; \
+	echo "}"; } > $(objpfx)bench.out-tmp; \
 	if [ -f $(objpfx)bench.out ]; then \
 	  mv -f $(objpfx)bench.out $(objpfx)bench.out.old; \
 	fi; \
 	mv -f $(objpfx)bench.out-tmp $(objpfx)bench.out
+	scripts/validate_benchout.py $(objpfx)bench.out \
+		scripts/benchout.schema.json
 
-$(binaries-bench) $(binaries-benchset): %: %.o \
+$(timing-type) $(binaries-bench) $(binaries-benchset) \
+	$(binaries-bench-malloc): %: %.o $(objpfx)json-lib.o \
   $(sort $(filter $(common-objpfx)lib%,$(link-libc))) \
   $(addprefix $(csu-objpfx),start.o) $(+preinit) $(+postinit)
 	$(+link)
@@ -127,5 +168,5 @@ $(objpfx)bench-%.c: %-inputs $(bench-deps)
 	{ if [ -n "$($*-INCLUDE)" ]; then \
 	  cat $($*-INCLUDE); \
 	fi; \
-	$(..)scripts/bench.pl $(patsubst %-inputs,%,$<); } > $@-tmp
+	scripts/bench.py $(patsubst %-inputs,%,$<); } > $@-tmp
 	mv -f $@-tmp $@

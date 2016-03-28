@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,12 +28,7 @@
 #include <errno.h>
 #include <fnmatch.h>
 #include <ctype.h>
-
-#if HAVE_STRING_H || defined _LIBC
-# include <string.h>
-#else
-# include <strings.h>
-#endif
+#include <string.h>
 
 #if defined STDC_HEADERS || defined _LIBC
 # include <stdlib.h>
@@ -225,13 +220,16 @@ __wcschrnul (s, c)
 # define MEMPCPY(D, S, N) __mempcpy (D, S, N)
 # define MEMCHR(S, C, N) memchr (S, C, N)
 # define STRCOLL(S1, S2) strcoll (S1, S2)
+# define WIDE_CHAR_VERSION 0
+# include <locale/weight.h>
+# define FINDIDX findidx
 # include "fnmatch_loop.c"
 
 
 # if HANDLE_MULTIBYTE
 /* Note that this evaluates C many times.  */
 #  ifdef _LIBC
-#   define FOLD(c) ((flags & FNM_CASEFOLD) ? towlower (c) : (c))
+#   define FOLD(c) ((flags & FNM_CASEFOLD) ? __towlower (c) : (c))
 #  else
 #   define FOLD(c) ((flags & FNM_CASEFOLD) && ISUPPER (c) ? towlower (c) : (c))
 #  endif
@@ -247,9 +245,15 @@ __wcschrnul (s, c)
 #  define STRLEN(S) __wcslen (S)
 #  define STRCAT(D, S) __wcscat (D, S)
 #  define MEMPCPY(D, S, N) __wmempcpy (D, S, N)
-#  define MEMCHR(S, C, N) wmemchr (S, C, N)
+#  define MEMCHR(S, C, N) __wmemchr (S, C, N)
 #  define STRCOLL(S1, S2) wcscoll (S1, S2)
 #  define WIDE_CHAR_VERSION 1
+/* Change the name the header defines so it doesn't conflict with
+   the <locale/weight.h> version included above.  */
+#  define findidx findidxwc
+#  include <locale/weightwc.h>
+#  undef findidx
+#  define FINDIDX findidxwc
 
 #  undef IS_CHAR_CLASS
 /* We have to convert the wide character string in a multibyte string.  But
@@ -344,16 +348,16 @@ fnmatch (pattern, string, flags)
       memset (&ps, '\0', sizeof (ps));
       p = pattern;
 #ifdef _LIBC
-      n = strnlen (pattern, 1024);
+      n = __strnlen (pattern, 1024);
 #else
       n = strlen (pattern);
 #endif
-      if (__builtin_expect (n < 1024, 1))
+      if (__glibc_likely (n < 1024))
 	{
 	  wpattern = (wchar_t *) alloca_account ((n + 1) * sizeof (wchar_t),
 						 alloca_used);
 	  n = mbsrtowcs (wpattern, &p, n + 1, &ps);
-	  if (__builtin_expect (n == (size_t) -1, 0))
+	  if (__glibc_unlikely (n == (size_t) -1))
 	    /* Something wrong.
 	       XXX Do we have to set `errno' to something which mbsrtows hasn't
 	       already done?  */
@@ -368,12 +372,12 @@ fnmatch (pattern, string, flags)
 	{
 	prepare_wpattern:
 	  n = mbsrtowcs (NULL, &pattern, 0, &ps);
-	  if (__builtin_expect (n == (size_t) -1, 0))
+	  if (__glibc_unlikely (n == (size_t) -1))
 	    /* Something wrong.
 	       XXX Do we have to set `errno' to something which mbsrtows hasn't
 	       already done?  */
 	    return -1;
-	  if (__builtin_expect (n >= (size_t) -1 / sizeof (wchar_t), 0))
+	  if (__glibc_unlikely (n >= (size_t) -1 / sizeof (wchar_t)))
 	    {
 	      __set_errno (ENOMEM);
 	      return -2;
@@ -388,17 +392,17 @@ fnmatch (pattern, string, flags)
 
       assert (mbsinit (&ps));
 #ifdef _LIBC
-      n = strnlen (string, 1024);
+      n = __strnlen (string, 1024);
 #else
       n = strlen (string);
 #endif
       p = string;
-      if (__builtin_expect (n < 1024, 1))
+      if (__glibc_likely (n < 1024))
 	{
 	  wstring = (wchar_t *) alloca_account ((n + 1) * sizeof (wchar_t),
 						alloca_used);
 	  n = mbsrtowcs (wstring, &p, n + 1, &ps);
-	  if (__builtin_expect (n == (size_t) -1, 0))
+	  if (__glibc_unlikely (n == (size_t) -1))
 	    {
 	      /* Something wrong.
 		 XXX Do we have to set `errno' to something which
@@ -417,12 +421,12 @@ fnmatch (pattern, string, flags)
 	{
 	prepare_wstring:
 	  n = mbsrtowcs (NULL, &string, 0, &ps);
-	  if (__builtin_expect (n == (size_t) -1, 0))
+	  if (__glibc_unlikely (n == (size_t) -1))
 	    /* Something wrong.
 	       XXX Do we have to set `errno' to something which mbsrtows hasn't
 	       already done?  */
 	    goto free_return;
-	  if (__builtin_expect (n >= (size_t) -1 / sizeof (wchar_t), 0))
+	  if (__glibc_unlikely (n >= (size_t) -1 / sizeof (wchar_t)))
 	    {
 	      free (wpattern_malloc);
 	      __set_errno (ENOMEM);
