@@ -1,5 +1,5 @@
 /* 64-bit pwritev.
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,16 +38,7 @@ pwritev (int fd, const struct iovec *vector, int count, off_t offset)
 #ifdef __NR_pwritev
   ssize_t result;
 
-  if (SINGLE_THREAD_P)
-    result = INLINE_SYSCALL (pwritev, 4, fd, vector, count, offset);
-  else
-    {
-      int oldtype = LIBC_CANCEL_ASYNC ();
-
-      result = INLINE_SYSCALL (pwritev, 4, fd, vector, count, offset);
-
-      LIBC_CANCEL_RESET (oldtype);
-    }
+  result = SYSCALL_CANCEL (pwritev, fd, vector, count, offset);
 # ifdef __ASSUME_PWRITEV
   return result;
 # endif

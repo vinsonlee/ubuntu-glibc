@@ -1,5 +1,5 @@
 /* Suspend until termination of a requests.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -94,13 +94,13 @@ cleanup (void *arg)
 #ifdef DONT_NEED_AIO_MISC_COND
 static int
 __attribute__ ((noinline))
-do_aio_misc_wait(int *cntr, const struct timespec *timeout)
+do_aio_misc_wait (unsigned int *cntr, const struct timespec *timeout)
 {
-	int result = 0;
+  int result = 0;
 
-	AIO_MISC_WAIT(result, *cntr, timeout, 1);
+  AIO_MISC_WAIT (result, *cntr, timeout, 1);
 
-	return result;
+  return result;
 }
 #endif
 
@@ -110,7 +110,7 @@ aio_suspend (list, nent, timeout)
      int nent;
      const struct timespec *timeout;
 {
-  if (__builtin_expect (nent < 0, 0))
+  if (__glibc_unlikely (nent < 0))
     {
       __set_errno (EINVAL);
       return -1;
@@ -124,7 +124,7 @@ aio_suspend (list, nent, timeout)
   int cnt;
   bool any = false;
   int result = 0;
-  int cntr = 1;
+  unsigned int cntr = 1;
 
   /* Request the mutex.  */
   pthread_mutex_lock (&__aio_requests_mutex);
@@ -180,7 +180,7 @@ aio_suspend (list, nent, timeout)
       pthread_cleanup_push (cleanup, &clparam);
 
 #ifdef DONT_NEED_AIO_MISC_COND
-      result = do_aio_misc_wait(&cntr, timeout);
+      result = do_aio_misc_wait (&cntr, timeout);
 #else
       if (timeout == NULL)
 	result = pthread_cond_wait (&cond, &__aio_requests_mutex);
@@ -229,7 +229,7 @@ aio_suspend (list, nent, timeout)
 
 #ifndef DONT_NEED_AIO_MISC_COND
   /* Release the conditional variable.  */
-  if (__builtin_expect (pthread_cond_destroy (&cond) != 0, 0))
+  if (__glibc_unlikely (pthread_cond_destroy (&cond) != 0))
     /* This must never happen.  */
     abort ();
 #endif

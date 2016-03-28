@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -34,8 +34,15 @@
 #include <shlib-compat.h>
 #include <smp.h>
 #include <lowlevellock.h>
+#include <futex-internal.h>
 #include <kernel-features.h>
+#include <libc-internal.h>
+#include <pthread-pids.h>
 
+#ifndef TLS_MULTIPLE_THREADS_IN_TCB
+/* Pointer to the corresponding variable in libc.  */
+int *__libc_multiple_threads_ptr attribute_hidden;
+#endif
 
 /* Size and alignment of static TLS block.  */
 size_t __static_tls_size;
@@ -135,7 +142,9 @@ static const struct pthread_functions pthread_functions =
     .ptr_nthreads = &__nptl_nthreads,
     .ptr___pthread_unwind = &__pthread_unwind,
     .ptr__nptl_deallocate_tsd = __nptl_deallocate_tsd,
+# ifdef SIGSETXID
     .ptr__nptl_setxid = __nptl_setxid,
+# endif
     /* For now only the stack cache needs to be freed.  */
     .ptr_freeres = nptl_freeres,
     .ptr_set_robust = __nptl_set_robust
@@ -162,12 +171,15 @@ static
 void
 __nptl_set_robust (struct pthread *self)
 {
+#ifdef __NR_set_robust_list
   INTERNAL_SYSCALL_DECL (err);
   INTERNAL_SYSCALL (set_robust_list, err, 2, &self->robust_head,
 		    sizeof (struct robust_list_head));
+#endif
 }
 
 
+#ifdef SIGCANCEL
 /* For asynchronous cancellation we use a signal.  This is the handler.  */
 static void
 sigcancel_handler (int sig, siginfo_t *si, void *ctx)
@@ -175,7 +187,7 @@ sigcancel_handler (int sig, siginfo_t *si, void *ctx)
   /* Determine the process ID.  It might be negative if the thread is
      in the middle of a fork() call.  */
   pid_t pid = THREAD_GETMEM (THREAD_SELF, pid);
-  if (__builtin_expect (pid < 0, 0))
+  if (__glibc_unlikely (pid < 0))
     pid = -pid;
 
   /* Safety check.  It would be possible to call this function for
@@ -219,8 +231,10 @@ sigcancel_handler (int sig, siginfo_t *si, void *ctx)
       oldval = curval;
     }
 }
+#endif
 
 
+#ifdef SIGSETXID
 struct xid_command *__xidcmd attribute_hidden;
 
 /* We use the SIGSETXID signal in the setuid, setgid, etc. implementations to
@@ -232,7 +246,8 @@ sighandler_setxid (int sig, siginfo_t *si, void *ctx)
   /* Determine the process ID.  It might be negative if the thread is
      in the middle of a fork() call.  */
   pid_t pid = THREAD_GETMEM (THREAD_SELF, pid);
-  if (__builtin_expect (pid < 0, 0))
+  int result;
+  if (__glibc_unlikely (pid < 0))
     pid = -pid;
 
   /* Safety check.  It would be possible to call this function for
@@ -245,8 +260,12 @@ sighandler_setxid (int sig, siginfo_t *si, void *ctx)
     return;
 
   INTERNAL_SYSCALL_DECL (err);
-  INTERNAL_SYSCALL_NCS (__xidcmd->syscall_no, err, 3, __xidcmd->id[0],
-			__xidcmd->id[1], __xidcmd->id[2]);
+  result = INTERNAL_SYSCALL_NCS (__xidcmd->syscall_no, err, 3, __xidcmd->id[0],
+				 __xidcmd->id[1], __xidcmd->id[2]);
+  int error = 0;
+  if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (result, err)))
+    error = INTERNAL_SYSCALL_ERRNO (result, err);
+  __nptl_setxid_error (__xidcmd, error);
 
   /* Reset the SETXID flag.  */
   struct pthread *self = THREAD_SELF;
@@ -261,11 +280,12 @@ sighandler_setxid (int sig, siginfo_t *si, void *ctx)
 
   /* And release the futex.  */
   self->setxid_futex = 1;
-  lll_futex_wake (&self->setxid_futex, 1, LLL_PRIVATE);
+  futex_wake (&self->setxid_futex, 1, FUTEX_PRIVATE);
 
   if (atomic_decrement_val (&__xidcmd->cntr) == 0)
-    lll_futex_wake (&__xidcmd->cntr, 1, LLL_PRIVATE);
+    futex_wake ((unsigned int *) &__xidcmd->cntr, 1, FUTEX_PRIVATE);
 }
+#endif
 
 
 /* When using __thread for this, we do it in libc so as not
@@ -293,8 +313,7 @@ __pthread_initialize_minimal_internal (void)
 
   /* Minimal initialization of the thread descriptor.  */
   struct pthread *pd = THREAD_SELF;
-  INTERNAL_SYSCALL_DECL (err);
-  pd->pid = pd->tid = INTERNAL_SYSCALL (set_tid_address, err, 1, &pd->tid);
+  __pthread_initialize_pids (pd);
   THREAD_SETMEM (pd, specific[0], &pd->specific_1stblock[0]);
   THREAD_SETMEM (pd, user_stack, true);
   if (LLL_LOCK_INITIALIZER != 0)
@@ -304,25 +323,30 @@ __pthread_initialize_minimal_internal (void)
 #endif
 
   /* Initialize the robust mutex data.  */
+  {
 #ifdef __PTHREAD_MUTEX_HAVE_PREV
-  pd->robust_prev = &pd->robust_head;
+    pd->robust_prev = &pd->robust_head;
 #endif
-  pd->robust_head.list = &pd->robust_head;
+    pd->robust_head.list = &pd->robust_head;
 #ifdef __NR_set_robust_list
-  pd->robust_head.futex_offset = (offsetof (pthread_mutex_t, __data.__lock)
-				  - offsetof (pthread_mutex_t,
-					      __data.__list.__next));
-  int res = INTERNAL_SYSCALL (set_robust_list, err, 2, &pd->robust_head,
-			      sizeof (struct robust_list_head));
-  if (INTERNAL_SYSCALL_ERROR_P (res, err))
+    pd->robust_head.futex_offset = (offsetof (pthread_mutex_t, __data.__lock)
+				    - offsetof (pthread_mutex_t,
+						__data.__list.__next));
+    INTERNAL_SYSCALL_DECL (err);
+    int res = INTERNAL_SYSCALL (set_robust_list, err, 2, &pd->robust_head,
+				sizeof (struct robust_list_head));
+    if (INTERNAL_SYSCALL_ERROR_P (res, err))
 #endif
-    set_robust_list_not_avail ();
+      set_robust_list_not_avail ();
+  }
 
-#ifndef __ASSUME_PRIVATE_FUTEX
+#ifdef __NR_futex
+# ifndef __ASSUME_PRIVATE_FUTEX
   /* Private futexes are always used (at least internally) so that
      doing the test once this early is beneficial.  */
   {
     int word = 0;
+    INTERNAL_SYSCALL_DECL (err);
     word = INTERNAL_SYSCALL (futex, err, 3, &word,
 			    FUTEX_WAKE | FUTEX_PRIVATE_FLAG, 1);
     if (!INTERNAL_SYSCALL_ERROR_P (word, err))
@@ -334,8 +358,8 @@ __pthread_initialize_minimal_internal (void)
      know the former are not supported.  This also means we know the
      kernel will return ENOSYS for unknown operations.  */
   if (THREAD_GETMEM (pd, header.private_futex) != 0)
-#endif
-#ifndef __ASSUME_FUTEX_CLOCK_REALTIME
+# endif
+# ifndef __ASSUME_FUTEX_CLOCK_REALTIME
     {
       int word = 0;
       /* NB: the syscall actually takes six parameters.  The last is the
@@ -343,6 +367,7 @@ __pthread_initialize_minimal_internal (void)
 	 is irrelevant.  Given that passing six parameters is difficult
 	 on some architectures we just pass whatever random value the
 	 calling convention calls for to the kernel.  It causes no harm.  */
+      INTERNAL_SYSCALL_DECL (err);
       word = INTERNAL_SYSCALL (futex, err, 5, &word,
 			       FUTEX_WAIT_BITSET | FUTEX_CLOCK_REALTIME
 			       | FUTEX_PRIVATE_FLAG, 1, NULL, 0);
@@ -350,6 +375,7 @@ __pthread_initialize_minimal_internal (void)
       if (INTERNAL_SYSCALL_ERRNO (word, err) != ENOSYS)
 	__set_futex_clock_realtime ();
     }
+# endif
 #endif
 
   /* Set initial thread's stack block from 0 up to __libc_stack_end.
@@ -365,29 +391,41 @@ __pthread_initialize_minimal_internal (void)
      had to set __nptl_initial_report_events.  Propagate its setting.  */
   THREAD_SETMEM (pd, report_events, __nptl_initial_report_events);
 
+#if defined SIGCANCEL || defined SIGSETXID
+  struct sigaction sa;
+  __sigemptyset (&sa.sa_mask);
+
+# ifdef SIGCANCEL
   /* Install the cancellation signal handler.  If for some reason we
      cannot install the handler we do not abort.  Maybe we should, but
      it is only asynchronous cancellation which is affected.  */
-  struct sigaction sa;
   sa.sa_sigaction = sigcancel_handler;
   sa.sa_flags = SA_SIGINFO;
-  __sigemptyset (&sa.sa_mask);
-
   (void) __libc_sigaction (SIGCANCEL, &sa, NULL);
+# endif
 
+# ifdef SIGSETXID
   /* Install the handle to change the threads' uid/gid.  */
   sa.sa_sigaction = sighandler_setxid;
   sa.sa_flags = SA_SIGINFO | SA_RESTART;
-
   (void) __libc_sigaction (SIGSETXID, &sa, NULL);
+# endif
 
   /* The parent process might have left the signals blocked.  Just in
      case, unblock it.  We reuse the signal mask in the sigaction
      structure.  It is already cleared.  */
+# ifdef SIGCANCEL
   __sigaddset (&sa.sa_mask, SIGCANCEL);
+# endif
+# ifdef SIGSETXID
   __sigaddset (&sa.sa_mask, SIGSETXID);
-  (void) INTERNAL_SYSCALL (rt_sigprocmask, err, 4, SIG_UNBLOCK, &sa.sa_mask,
-			   NULL, _NSIG / 8);
+# endif
+  {
+    INTERNAL_SYSCALL_DECL (err);
+    (void) INTERNAL_SYSCALL (rt_sigprocmask, err, 4, SIG_UNBLOCK, &sa.sa_mask,
+			     NULL, _NSIG / 8);
+  }
+#endif
 
   /* Get the size of the static and alignment requirements for the TLS
      block.  */
@@ -404,7 +442,7 @@ __pthread_initialize_minimal_internal (void)
   /* Determine the default allowed stack size.  This is the size used
      in case the user does not specify one.  */
   struct rlimit limit;
-  if (getrlimit (RLIMIT_STACK, &limit) != 0
+  if (__getrlimit (RLIMIT_STACK, &limit) != 0
       || limit.rlim_cur == RLIM_INFINITY)
     /* The system limit is not usable.  Use an architecture-specific
        default.  */
@@ -422,7 +460,7 @@ __pthread_initialize_minimal_internal (void)
     limit.rlim_cur = minstack;
 
   /* Round the resource limit up to page size.  */
-  limit.rlim_cur = (limit.rlim_cur + pagesz - 1) & -pagesz;
+  limit.rlim_cur = ALIGN_UP (limit.rlim_cur, pagesz);
   lll_lock (__default_pthread_attr_lock, LLL_PRIVATE);
   __default_pthread_attr.stacksize = limit.rlim_cur;
   __default_pthread_attr.guardsize = GLRO (dl_pagesize);

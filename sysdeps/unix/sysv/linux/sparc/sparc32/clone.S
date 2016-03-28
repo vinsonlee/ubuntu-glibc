@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson (rth@tamu.edu).
 
@@ -80,7 +80,6 @@ END(__clone)
 
 	.type	__thread_start,@function
 __thread_start:
-#ifdef RESET_PID
 	sethi	%hi(CLONE_THREAD), %l0
 	andcc	%g4, %l0, %g0
 	bne	1f
@@ -93,7 +92,6 @@ __thread_start:
 	st	%o0,[%g7 + PID]
 	st	%o0,[%g7 + TID]
 1:
-#endif
 	mov	%g0, %fp	/* terminate backtrace */
 	call	%g2
 	 mov	%g3,%o0

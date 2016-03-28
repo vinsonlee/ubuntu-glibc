@@ -76,6 +76,7 @@ extern FILE *__old_tmpfile (void);
 
 
 #  define __need_size_t
+#  define __need_wint_t
 #  include <stddef.h>
 /* Generate a unique file name (and possibly open it).  */
 extern int __path_search (char *__tmpl, size_t __tmpl_len,
@@ -117,7 +118,7 @@ extern const char *const _sys_errlist_internal[] attribute_hidden;
 extern int _sys_nerr_internal attribute_hidden;
 
 libc_hidden_proto (__asprintf)
-#  if !defined NOT_IN_libc
+#  if IS_IN (libc)
 extern _IO_FILE *_IO_new_fopen (const char*, const char*);
 #   define fopen(fname, mode) _IO_new_fopen (fname, mode)
 extern _IO_FILE *_IO_new_fdopen (int, const char*);
@@ -134,6 +135,9 @@ extern int _IO_new_fgetpos (_IO_FILE *, _IO_fpos_t *);
 #  endif
 
 libc_hidden_proto (dprintf)
+extern __typeof (dprintf) __dprintf
+     __attribute__ ((__format__ (__printf__, 2, 3)));
+libc_hidden_proto (__dprintf)
 libc_hidden_proto (fprintf)
 libc_hidden_proto (vfprintf)
 libc_hidden_proto (sprintf)
@@ -143,18 +147,32 @@ libc_hidden_proto (perror)
 libc_hidden_proto (remove)
 libc_hidden_proto (rewind)
 libc_hidden_proto (fileno)
+extern __typeof (fileno) __fileno;
+libc_hidden_proto (__fileno)
 libc_hidden_proto (fwrite)
 libc_hidden_proto (fseek)
-libc_hidden_proto (ftello)
+extern __typeof (ftello) __ftello;
+libc_hidden_proto (__ftello)
 libc_hidden_proto (fflush)
 libc_hidden_proto (fflush_unlocked)
-libc_hidden_proto (fread_unlocked)
+extern __typeof (fflush_unlocked) __fflush_unlocked;
+libc_hidden_proto (__fflush_unlocked)
+extern __typeof (fread_unlocked) __fread_unlocked;
+libc_hidden_proto (__fread_unlocked)
 libc_hidden_proto (fwrite_unlocked)
 libc_hidden_proto (fgets_unlocked)
+extern __typeof (fgets_unlocked) __fgets_unlocked;
+libc_hidden_proto (__fgets_unlocked)
 libc_hidden_proto (fputs_unlocked)
+extern __typeof (fputs_unlocked) __fputs_unlocked;
+libc_hidden_proto (__fputs_unlocked)
 libc_hidden_proto (fmemopen)
-libc_hidden_proto (open_memstream)
+/* The prototype needs repeating instead of using __typeof to use
+   __THROW in C++ tests.  */
+extern FILE *__open_memstream (char **, size_t *) __THROW __wur;
+libc_hidden_proto (__open_memstream)
 libc_hidden_proto (__libc_fatal)
+rtld_hidden_proto (__libc_fatal)
 libc_hidden_proto (__vsprintf_chk)
 libc_hidden_proto (__vsnprintf_chk)
 libc_hidden_proto (__vfprintf_chk)
@@ -179,6 +197,9 @@ gets (char *__str)
   return __gets_warn (__str);
 }
 #  endif
+
+extern FILE * __fmemopen (void *buf, size_t len, const char *mode);
+libc_hidden_proto (__fmemopen)
 
 __END_DECLS
 # endif

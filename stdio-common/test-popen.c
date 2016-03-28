@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -49,8 +49,8 @@ read_data (FILE *stream)
     }
 }
 
-int
-main (void)
+static int
+do_test (void)
 {
   FILE *output, *input;
   int wstatus, rstatus;
@@ -100,3 +100,6 @@ main (void)
   puts (wstatus | rstatus  ? "Test FAILED!" : "Test succeeded.");
   return (wstatus | rstatus);
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

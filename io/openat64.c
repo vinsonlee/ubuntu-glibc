@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,15 +21,13 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <libc-internal.h>
 
 /* Open FILE with access OFLAG.  Interpret relative paths relative to
-   the directory associated with FD.  If OFLAG includes O_CREAT, a
+   the directory associated with FD.  If O_CREAT or O_TMPFILE is in OFLAG, a
    third argument is the file protection.  */
 int
-__openat64 (fd, file, oflag)
-     int fd;
-     const char *file;
-     int oflag;
+__openat64 (int fd, const char *file, int oflag, ...)
 {
   int mode;
 
@@ -53,12 +51,14 @@ __openat64 (fd, file, oflag)
 	}
     }
 
-  if (oflag & O_CREAT)
+  if (__OPEN_NEEDS_MODE (oflag))
     {
       va_list arg;
       va_start (arg, oflag);
       mode = va_arg (arg, int);
       va_end (arg);
+
+      ignore_value (mode);
     }
 
   __set_errno (ENOSYS);

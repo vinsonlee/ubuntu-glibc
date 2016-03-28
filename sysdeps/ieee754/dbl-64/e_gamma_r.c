@@ -1,5 +1,5 @@
 /* Implementation of gamma function according to ISO C.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -104,7 +104,7 @@ gamma_positive (double x, int *exp2_adj)
 		    * __ieee754_exp (-x_adj)
 		    * __ieee754_sqrt (2 * M_PI / x_adj)
 		    / prod);
-      exp_adj += x_eps * __ieee754_log (x);
+      exp_adj += x_eps * __ieee754_log (x_adj);
       double bsum = gamma_coeff[NCOEFF - 1];
       double x_adj2 = x_adj * x_adj;
       for (size_t i = 1; i <= NCOEFF - 1; i++)
@@ -119,10 +119,14 @@ __ieee754_gamma_r (double x, int *signgamp)
 {
   int32_t hx;
   u_int32_t lx;
+#if FLT_EVAL_METHOD != 0
+  volatile
+#endif
+  double ret;
 
   EXTRACT_WORDS (hx, lx, x);
 
-  if (__builtin_expect (((hx & 0x7fffffff) | lx) == 0, 0))
+  if (__glibc_unlikely (((hx & 0x7fffffff) | lx) == 0))
     {
       /* Return value for x == 0 is Inf with divide by zero exception.  */
       *signgamp = 0;
@@ -135,13 +139,13 @@ __ieee754_gamma_r (double x, int *signgamp)
       *signgamp = 0;
       return (x - x) / (x - x);
     }
-  if (__builtin_expect ((unsigned int) hx == 0xfff00000 && lx == 0, 0))
+  if (__glibc_unlikely ((unsigned int) hx == 0xfff00000 && lx == 0))
     {
       /* x == -Inf.  According to ISO this is NaN.  */
       *signgamp = 0;
       return x - x;
     }
-  if (__builtin_expect ((hx & 0x7ff00000) == 0x7ff00000, 0))
+  if (__glibc_unlikely ((hx & 0x7ff00000) == 0x7ff00000))
     {
       /* Positive infinity (return positive infinity) or NaN (return
 	 NaN).  */
@@ -153,36 +157,69 @@ __ieee754_gamma_r (double x, int *signgamp)
     {
       /* Overflow.  */
       *signgamp = 0;
-      return DBL_MAX * DBL_MAX;
-    }
-  else if (x > 0.0)
-    {
-      *signgamp = 0;
-      int exp2_adj;
-      double ret = gamma_positive (x, &exp2_adj);
-      return __scalbn (ret, exp2_adj);
-    }
-  else if (x >= -DBL_EPSILON / 4.0)
-    {
-      *signgamp = 0;
-      return 1.0 / x;
+      ret = DBL_MAX * DBL_MAX;
+      return ret;
     }
   else
     {
-      double tx = __trunc (x);
-      *signgamp = (tx == 2.0 * __trunc (tx / 2.0)) ? -1 : 1;
-      if (x <= -184.0)
-	/* Underflow.  */
-	return DBL_MIN * DBL_MIN;
-      double frac = tx - x;
-      if (frac > 0.5)
-	frac = 1.0 - frac;
-      double sinpix = (frac <= 0.25
-		       ? __sin (M_PI * frac)
-		       : __cos (M_PI * (0.5 - frac)));
-      int exp2_adj;
-      double ret = M_PI / (-x * sinpix * gamma_positive (-x, &exp2_adj));
-      return __scalbn (ret, -exp2_adj);
+      SET_RESTORE_ROUND (FE_TONEAREST);
+      if (x > 0.0)
+	{
+	  *signgamp = 0;
+	  int exp2_adj;
+	  double tret = gamma_positive (x, &exp2_adj);
+	  ret = __scalbn (tret, exp2_adj);
+	}
+      else if (x >= -DBL_EPSILON / 4.0)
+	{
+	  *signgamp = 0;
+	  ret = 1.0 / x;
+	}
+      else
+	{
+	  double tx = __trunc (x);
+	  *signgamp = (tx == 2.0 * __trunc (tx / 2.0)) ? -1 : 1;
+	  if (x <= -184.0)
+	    /* Underflow.  */
+	    ret = DBL_MIN * DBL_MIN;
+	  else
+	    {
+	      double frac = tx - x;
+	      if (frac > 0.5)
+		frac = 1.0 - frac;
+	      double sinpix = (frac <= 0.25
+			       ? __sin (M_PI * frac)
+			       : __cos (M_PI * (0.5 - frac)));
+	      int exp2_adj;
+	      double tret = M_PI / (-x * sinpix
+				    * gamma_positive (-x, &exp2_adj));
+	      ret = __scalbn (tret, -exp2_adj);
+	    }
+	}
     }
+  if (isinf (ret) && x != 0)
+    {
+      if (*signgamp < 0)
+	{
+	  ret = -__copysign (DBL_MAX, ret) * DBL_MAX;
+	  ret = -ret;
+	}
+      else
+	ret = __copysign (DBL_MAX, ret) * DBL_MAX;
+      return ret;
+    }
+  else if (ret == 0)
+    {
+      if (*signgamp < 0)
+	{
+	  ret = -__copysign (DBL_MIN, ret) * DBL_MIN;
+	  ret = -ret;
+	}
+      else
+	ret = __copysign (DBL_MIN, ret) * DBL_MIN;
+      return ret;
+    }
+  else
+    return ret;
 }
 strong_alias (__ieee754_gamma_r, __gamma_r_finite)

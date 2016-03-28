@@ -1,6 +1,6 @@
 /* Machine-dependent ELF dynamic relocation inline functions.
    64 bit S/390 Version.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
    This file is part of the GNU C Library.
 
@@ -103,7 +103,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 	 to intercept the calls to collect information.	 In this case we
 	 don't store the address in the GOT so that all future calls also
 	 end in this function.	*/
-      if (__builtin_expect (profile, 0))
+      if (__glibc_unlikely (profile))
 	{
 	  got[2] = (Elf64_Addr) &_dl_runtime_profile;
 
@@ -175,7 +175,7 @@ _dl_start_user:\n\
 	lgr   %r5,%r3\n\
 	sllg  %r5,%r5,3\n\
 	la    %r5,176(%r5,%r15)\n\
-	brasl %r14,_dl_init_internal@PLT\n\
+	brasl %r14,_dl_init@PLT\n\
 	# Pass our finalizer function to the user in %r14, as per ELF ABI.\n\
 	lghi  %r14,_dl_fini@GOT\n\
 	lg    %r14,0(%r14,%r12)\n\
@@ -192,7 +192,7 @@ _dl_start_user:\n\
 /* ELF_RTYPE_CLASS_PLT iff TYPE describes relocation of a PLT entry or
    TLS variable, so undefined references should not be allowed to
    define the value.
-   ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
+   ELF_RTYPE_CLASS_COPY iff TYPE should not be allowed to resolve to one
    of the main executable's symbols, as for a COPY reloc.  */
 #define elf_machine_type_class(type) \
   ((((type) == R_390_JMP_SLOT || (type) == R_390_TLS_DTPMOD		      \
@@ -205,6 +205,7 @@ _dl_start_user:\n\
 
 /* The 64 bit S/390 never uses Elf64_Rel relocations.  */
 #define ELF_MACHINE_NO_REL 1
+#define ELF_MACHINE_NO_RELA 0
 
 /* We define an initialization functions.  This is called very early in
    _dl_sysdep_start.  */
@@ -255,7 +256,7 @@ elf_machine_rela (struct link_map *map, const Elf64_Rela *reloc,
   const unsigned int r_type = ELF64_R_TYPE (reloc->r_info);
 
 #if !defined RTLD_BOOTSTRAP || !defined HAVE_Z_COMBRELOC
-  if (__builtin_expect (r_type == R_390_RELATIVE, 0))
+  if (__glibc_unlikely (r_type == R_390_RELATIVE))
     {
 # if !defined RTLD_BOOTSTRAP && !defined HAVE_Z_COMBRELOC
       /* This is defined in rtld.c, but nowhere in the static libc.a;
@@ -273,11 +274,12 @@ elf_machine_rela (struct link_map *map, const Elf64_Rela *reloc,
     }
   else
 #endif
-  if (__builtin_expect (r_type == R_390_NONE, 0))
+  if (__glibc_unlikely (r_type == R_390_NONE))
     return;
   else
     {
-#ifndef RESOLVE_CONFLICT_FIND_MAP
+#if !defined RTLD_BOOTSTRAP && !defined RESOLVE_CONFLICT_FIND_MAP
+      /* Only needed for R_390_COPY below.  */
       const Elf64_Sym *const refsym = sym;
 #endif
       struct link_map *sym_map = RESOLVE_MAP (&sym, version, r_type);
@@ -294,7 +296,7 @@ elf_machine_rela (struct link_map *map, const Elf64_Rela *reloc,
 	{
 	case R_390_IRELATIVE:
 	  value = map->l_addr + reloc->r_addend;
-	  if (__builtin_expect (!skip_ifunc, 1))
+	  if (__glibc_likely (!skip_ifunc))
 	    value = elf_ifunc_invoke (value);
 	  *reloc_addr = value;
 	  break;
@@ -432,7 +434,7 @@ elf_machine_lazy_rel (struct link_map *map,
   Elf64_Addr *const reloc_addr = (void *) (l_addr + reloc->r_offset);
   const unsigned int r_type = ELF64_R_TYPE (reloc->r_info);
   /* Check for unexpected PLT reloc type.  */
-  if (__builtin_expect (r_type == R_390_JMP_SLOT, 1))
+  if (__glibc_likely (r_type == R_390_JMP_SLOT))
     {
       if (__builtin_expect (map->l_mach.plt, 0) == 0)
 	*reloc_addr += l_addr;
@@ -441,10 +443,10 @@ elf_machine_lazy_rel (struct link_map *map,
 	  map->l_mach.plt
 	  + (((Elf64_Addr) reloc_addr) - map->l_mach.gotplt) * 4;
     }
-  else if (__builtin_expect (r_type == R_390_IRELATIVE, 1))
+  else if (__glibc_likely (r_type == R_390_IRELATIVE))
     {
       Elf64_Addr value = map->l_addr + reloc->r_addend;
-      if (__builtin_expect (!skip_ifunc, 1))
+      if (__glibc_likely (!skip_ifunc))
 	value = elf_ifunc_invoke (value);
       *reloc_addr = value;
     }

@@ -1,5 +1,5 @@
 /* Assembly macros for 64-bit PowerPC.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -140,25 +140,14 @@
 name##: OPD_ENT (name);				\
 	.previous;
 
-#ifdef HAVE_ASM_GLOBAL_DOT_NAME
-# define DOT_LABEL(X) .##X
-# define BODY_LABEL(X) .##X
-# define ENTRY_2(name)	\
-	.globl BODY_LABEL(name);		\
-	ENTRY_1(name)				\
-	.size name, 24;
-# define END_2(name)	\
-	.size BODY_LABEL(name),.-BODY_LABEL(name);
-#else
-# define DOT_LABEL(X) X
-# define BODY_LABEL(X) .LY##X
-# define ENTRY_2(name)	\
+#define DOT_LABEL(X) X
+#define BODY_LABEL(X) .LY##X
+#define ENTRY_2(name)	\
 	.type name,@function;			\
 	ENTRY_1(name)
-# define END_2(name)	\
+#define END_2(name)	\
 	.size name,.-BODY_LABEL(name);		\
 	.size BODY_LABEL(name),.-BODY_LABEL(name);
-#endif
 #define LOCALENTRY(name)
 
 #else /* _CALL_ELF */
@@ -283,7 +272,23 @@ LT_LABELSUFFIX(name,_name_end): ; \
   TRACEBACK_MASK(name,mask)	\
   END_2(name)
 
+#if !IS_IN(rtld) && defined (ENABLE_LOCK_ELISION)
+# define ABORT_TRANSACTION \
+    cmpdi    13,0;		\
+    beq      1f;		\
+    lwz      0,TM_CAPABLE(13);	\
+    cmpwi    0,0;		\
+    beq	     1f;		\
+    li	     0,_ABORT_SYSCALL;	\
+    tabort.  0;			\
+    .align 4;                   \
+1:
+#else
+# define ABORT_TRANSACTION
+#endif
+
 #define DO_CALL(syscall) \
+    ABORT_TRANSACTION \
     li 0,syscall; \
     sc
 
@@ -387,25 +392,14 @@ LT_LABELSUFFIX(name,_name_end): ; \
 	OPD_ENT (name) "\n"						\
 	".popsection;"
 
-#ifdef HAVE_ASM_GLOBAL_DOT_NAME
-# define DOT_PREFIX "."
-# define BODY_PREFIX "."
-# define ENTRY_2(name)	\
-	".globl " BODY_PREFIX #name ";\n"				\
-	ENTRY_1(name) "\n"						\
-	".size  " #name ", 24;"
-# define END_2(name)	\
-	".size " BODY_PREFIX #name ",.-" BODY_PREFIX #name ";"
-#else
-# define DOT_PREFIX ""
-# define BODY_PREFIX ".LY"
-# define ENTRY_2(name)	\
+#define DOT_PREFIX ""
+#define BODY_PREFIX ".LY"
+#define ENTRY_2(name)	\
 	".type " #name ",@function;\n"					\
 	ENTRY_1(name)
-# define END_2(name)	\
+#define END_2(name)	\
 	".size " #name ",.-" BODY_PREFIX #name ";\n"			\
 	".size " BODY_PREFIX #name ",.-" BODY_PREFIX #name ";"
-#endif
 #define LOCALENTRY(name)
 
 #else /* _CALL_ELF */

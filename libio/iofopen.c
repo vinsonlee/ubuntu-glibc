@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,8 +35,7 @@
 #endif
 
 _IO_FILE *
-__fopen_maybe_mmap (fp)
-     _IO_FILE *fp;
+__fopen_maybe_mmap (_IO_FILE *fp)
 {
 #ifdef _G_HAVE_MMAP
   if ((fp->_flags2 & _IO_FLAGS2_MMAP) && (fp->_flags & _IO_NO_WRITES))
@@ -47,9 +46,9 @@ __fopen_maybe_mmap (fp)
 	 vanilla file operations and reset the jump table accordingly.  */
 
       if (fp->_mode <= 0)
-	_IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_file_jumps_maybe_mmap;
+	_IO_JUMPS_FILE_plus (fp) = &_IO_file_jumps_maybe_mmap;
       else
-	_IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_wfile_jumps_maybe_mmap;
+	_IO_JUMPS_FILE_plus (fp) = &_IO_wfile_jumps_maybe_mmap;
       fp->_wide_data->_wide_vtable = &_IO_wfile_jumps_maybe_mmap;
     }
 #endif
@@ -58,10 +57,7 @@ __fopen_maybe_mmap (fp)
 
 
 _IO_FILE *
-__fopen_internal (filename, mode, is32)
-     const char *filename;
-     const char *mode;
-     int is32;
+__fopen_internal (const char *filename, const char *mode, int is32)
 {
   struct locked_FILE
   {
@@ -96,9 +92,7 @@ __fopen_internal (filename, mode, is32)
 }
 
 _IO_FILE *
-_IO_new_fopen (filename, mode)
-     const char *filename;
-     const char *mode;
+_IO_new_fopen (const char *filename, const char *mode)
 {
   return __fopen_internal (filename, mode, 1);
 }
