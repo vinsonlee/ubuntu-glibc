@@ -1,5 +1,5 @@
 /* Set the default attributes to be used by pthread_create in the process.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include <pthreadP.h>
 #include <assert.h>
 #include <string.h>
+#include <check-cpuset.h>
 
 
 int
@@ -46,6 +47,10 @@ pthread_setattr_default_np (const pthread_attr_t *in)
       if (ret)
 	return ret;
     }
+
+  ret = check_cpuset_attr (real_in->cpuset, real_in->cpusetsize);
+  if (ret)
+    return ret;
 
   /* stacksize == 0 is fine.  It means that we don't change the current
      value.  */

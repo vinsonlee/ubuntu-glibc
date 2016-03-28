@@ -1,6 +1,6 @@
 /* Multiple versions of wcscpy
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -27,8 +27,11 @@
 	.text
 ENTRY(wcscpy)
 	.type	wcscpy, @gnu_indirect_function
-	LOAD_RTLD_GLOBAL_RO_RDX
-	HAS_CPU_FEATURE (SSSE3)
+	cmpl	$0, KIND_OFFSET+__cpu_features(%rip)
+	jne	1f
+	call	__init_cpu_features
+
+1:	testl	$bit_SSSE3, __cpu_features+CPUID_OFFSET+index_SSSE3(%rip)
 	jnz	2f
 	leaq	__wcscpy_sse2(%rip), %rax
 	ret

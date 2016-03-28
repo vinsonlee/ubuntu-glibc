@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -51,7 +51,8 @@
 
 /* Return the `div_t' representation of NUMER over DENOM.  */
 div_t
-div (int numer, int denom)
+div (numer, denom)
+     int numer, denom;
 {
   div_t result;
 

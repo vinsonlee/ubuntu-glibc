@@ -1,5 +1,5 @@
 /* Generate expected output for libm tests with MPFR and MPC.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
 
 /* Compile this program as:
 
-   gcc -std=gnu11 -O2 -Wall -Wextra gen-auto-libm-tests.c -lmpc -lmpfr -lgmp \
+   gcc -std=gnu99 -O2 -Wall -Wextra gen-auto-libm-tests.c -lmpc -lmpfr -lgmp \
      -o gen-auto-libm-tests
 
    (use of current MPC and MPFR versions recommended) and run it as:
@@ -675,7 +675,7 @@ generic_value_copy (generic_value *dest, const generic_value *src)
 /* Initialize data for floating-point formats.  */
 
 static void
-init_fp_formats (void)
+init_fp_formats ()
 {
   int global_max_exp = 0, global_min_subnorm_exp = 0;
   for (fp_format f = fp_first_format; f < fp_num_formats; f++)

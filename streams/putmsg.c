@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,11 @@
 #include <stropts.h>
 
 int
-putmsg (int fildes, const struct strbuf *ctlptr, const struct strbuf *dataptr,
-	int flags)
+putmsg (fildes, ctlptr, dataptr, flags)
+     int fildes;
+     const struct strbuf *ctlptr;
+     const struct strbuf *dataptr;
+     int flags;
 {
   __set_errno (ENOSYS);
   return -1;

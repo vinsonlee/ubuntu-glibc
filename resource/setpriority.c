@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,10 @@
 /* Set the priority of all processes specified by WHICH and WHO
    to PRIO.  Returns 0 on success, -1 on errors.  */
 int
-__setpriority (enum __priority_which which, id_t who, int prio)
+__setpriority (which, who, prio)
+     enum __priority_which which;
+     id_t who;
+     int prio;
 {
   __set_errno (ENOSYS);
   return -1;

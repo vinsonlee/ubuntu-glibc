@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,16 +20,10 @@
 #include <sys/socket.h>
 
 #include <socketcall.h>
-#include <kernel-features.h>
-#include <sys/syscall.h>
 
 int
 __getsockopt (int fd, int level, int optname, void *optval, socklen_t *len)
 {
-#ifdef __ASSUME_GETSOCKOPT_SYSCALL
-  return INLINE_SYSCALL (getsockopt, 5, fd, level, optname, optval, len);
-#else
   return SOCKETCALL (getsockopt, fd, level, optname, optval, len);
-#endif
 }
 weak_alias (__getsockopt, getsockopt)

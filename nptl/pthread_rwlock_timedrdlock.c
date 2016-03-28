@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky <schwidefsky@de.ibm.com>, 2003.
 
@@ -28,8 +28,9 @@
 
 /* Try to acquire read lock for RWLOCK or return after specfied time.  */
 int
-pthread_rwlock_timedrdlock (pthread_rwlock_t *rwlock,
-			    const struct timespec *abstime)
+pthread_rwlock_timedrdlock (rwlock, abstime)
+     pthread_rwlock_t *rwlock;
+     const struct timespec *abstime;
 {
   int result = 0;
   bool wake = false;

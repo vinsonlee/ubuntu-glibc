@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -32,7 +32,9 @@ static int getlogin_r_fd0 (char *name, size_t namesize);
 
 int
 attribute_hidden
-__getlogin_r_loginuid (char *name, size_t namesize)
+__getlogin_r_loginuid (name, namesize)
+     char *name;
+     size_t namesize;
 {
   int fd = open_not_cancel_2 ("/proc/self/loginuid", O_RDONLY);
   if (fd == -1)
@@ -107,7 +109,9 @@ __getlogin_r_loginuid (char *name, size_t namesize)
    code.  Otherwise return 0.  */
 
 int
-__getlogin_r (char *name, size_t namesize)
+__getlogin_r (name, namesize)
+     char *name;
+     size_t namesize;
 {
   int res = __getlogin_r_loginuid (name, namesize);
   if (res >= 0)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 1999.
 
@@ -25,12 +25,12 @@
 #include <sys/syscall.h>
 
 /* This is always 12, even on architectures where PAGE_SHIFT != 12.  */
-#ifndef MMAP2_PAGE_SHIFT
-# define MMAP2_PAGE_SHIFT 12
-#endif
 #if MMAP2_PAGE_SHIFT == -1
 static int page_shift;
 #else
+# ifndef MMAP2_PAGE_SHIFT
+#  define MMAP2_PAGE_SHIFT 12
+# endif
 #define page_shift MMAP2_PAGE_SHIFT
 #endif
 
@@ -46,7 +46,10 @@ __mmap64 (void *addr, size_t len, int prot, int flags, int fd, off64_t offset)
     }
 #endif
   if (offset & ((1 << page_shift) - 1))
-    return (void *) INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+    {
+      __set_errno (EINVAL);
+      return MAP_FAILED;
+    }
   void *result;
   result = (void *)
     INLINE_SYSCALL (mmap2, 6, addr,

@@ -1,5 +1,5 @@
 /* Compute x * y + z as ternary operation.  S/390 version.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2010.
 
@@ -23,7 +23,7 @@ float
 __fmaf (float x, float y, float z)
 {
   float r;
-  __asm__ ("maebr %0,%1,%2" : "=f" (r) : "%f" (x), "fR" (y), "0" (z));
+  asm ("maebr %0,%1,%2" : "=f" (r) : "%f" (x), "fR" (y), "0" (z));
   return r;
 }
 #ifndef __fmaf

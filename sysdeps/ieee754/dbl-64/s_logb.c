@@ -18,7 +18,6 @@
 
 #include <math.h>
 #include <math_private.h>
-#include <fix-int-fp-convert-zero.h>
 
 double
 __logb (double x)
@@ -42,8 +41,6 @@ __logb (double x)
 	ma = __builtin_clz (ix);
       rix -= ma - 12;
     }
-  if (FIX_INT_FP_CONVERT_ZERO && rix == 1023)
-    return 0.0;
   return (double) (rix - 1023);
 }
 weak_alias (__logb, logb)

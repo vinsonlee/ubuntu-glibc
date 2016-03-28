@@ -1,5 +1,5 @@
 /* Minimal replacements for basic facilities used in the dynamic linker.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -324,8 +324,11 @@ __strtoul_internal (const char *nptr, char **endptr, int base, int group)
    also has to be present and it is never about speed when these
    functions are used.  */
 char *
-_itoa (unsigned long long int value, char *buflim, unsigned int base,
-       int upper_case)
+_itoa (value, buflim, base, upper_case)
+     unsigned long long int value;
+     char *buflim;
+     unsigned int base;
+     int upper_case;
 {
   assert (! upper_case);
 

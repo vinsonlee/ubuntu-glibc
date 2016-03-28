@@ -131,7 +131,7 @@ __ieee754_powf(float x, float y)
 	    if(ix>0x3f800007) return (hy>0)? huge*huge:tiny*tiny;
 	/* now |1-x| is tiny <= 2**-20, suffice to compute
 	   log(x) by x-x^2/2+x^3/3-x^4/4 */
-	    t = ax-1;		/* t has 20 trailing zeros */
+	    t = x-1;		/* t has 20 trailing zeros */
 	    w = (t*t)*((float)0.5-t*((float)0.333333333333-t*(float)0.25));
 	    u = ivln2_h*t;	/* ivln2_h has 16 sig. bits */
 	    v = t*ivln2_l-w*ivln2;
@@ -166,9 +166,7 @@ __ieee754_powf(float x, float y)
 	    GET_FLOAT_WORD(is,s_h);
 	    SET_FLOAT_WORD(s_h,is&0xfffff000);
 	/* t_h=ax+bp[k] High */
-	    SET_FLOAT_WORD (t_h,
-			    ((((ix>>1)|0x20000000)+0x00400000+(k<<21))
-			     & 0xfffff000));
+	    SET_FLOAT_WORD(t_h,((ix>>1)|0x20000000)+0x0040000+(k<<21));
 	    t_l = ax - (t_h-bp[k]);
 	    s_l = v*((u-s_h*t_h)-s_h*t_l);
 	/* compute log(ax) */
@@ -246,12 +244,7 @@ __ieee754_powf(float x, float y)
 	z  = one-(r-z);
 	GET_FLOAT_WORD(j,z);
 	j += (n<<23);
-	if((j>>23)<=0)	/* subnormal output */
-	  {
-	    z = __scalbnf (z, n);
-	    float force_underflow = z * z;
-	    math_force_eval (force_underflow);
-	  }
+	if((j>>23)<=0) z = __scalbnf(z,n);	/* subnormal output */
 	else SET_FLOAT_WORD(z,j);
 	return s*z;
 }

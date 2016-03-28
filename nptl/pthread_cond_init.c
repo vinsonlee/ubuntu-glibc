@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -22,7 +22,9 @@
 
 
 int
-__pthread_cond_init (pthread_cond_t *cond, const pthread_condattr_t *cond_attr)
+__pthread_cond_init (cond, cond_attr)
+     pthread_cond_t *cond;
+     const pthread_condattr_t *cond_attr;
 {
   struct pthread_condattr *icond_attr = (struct pthread_condattr *) cond_attr;
 

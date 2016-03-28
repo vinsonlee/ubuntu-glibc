@@ -1,5 +1,5 @@
 /* Test recursive dlopen using malloc hooks.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ call_func (const char *dso_name, const char *func_name)
   dlerror ();
 
   /* Lookup func.  */
-  func = (int (*) (void)) dlsym (dso, func_name);
+  *(void **) (&func) = dlsym (dso, func_name);
   if (func == NULL)
     {
       err = dlerror ();
