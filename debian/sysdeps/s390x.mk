@@ -1,5 +1,5 @@
 libc_rtlddir = /lib
-extra_config_options = --enable-multi-arch --enable-lock-elision
+extra_config_options = --enable-multi-arch
 
 # build 32-bit (s390) alternative library
 GLIBC_MULTILIB_PASSES += s390

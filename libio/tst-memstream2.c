@@ -100,6 +100,5 @@ do_test (void)
   return 0;
 }
 
-#define TIMEOUT 100
 #define TEST_FUNCTION do_test ()
 #include "../test-skeleton.c"

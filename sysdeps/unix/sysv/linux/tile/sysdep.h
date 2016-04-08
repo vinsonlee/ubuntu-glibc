@@ -78,17 +78,16 @@
 /* Define a macro which expands inline into the wrapper code for a system
    call.  */
 # undef INLINE_SYSCALL
-# define INLINE_SYSCALL(name, nr, args...)                              \
+# define INLINE_SYSCALL(name, nr, args...) \
   ({                                                                    \
-    INTERNAL_SYSCALL_DECL (_sc_err);                                    \
-    unsigned long _sc_val = INTERNAL_SYSCALL (name, _sc_err, nr, args); \
-    if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (_sc_val, _sc_err), 0)) \
-    {                                                                   \
-      __set_errno (INTERNAL_SYSCALL_ERRNO (_sc_val, _sc_err));          \
-      _sc_val = -1;                                                     \
-    }                                                                   \
-    (long) _sc_val;                                                     \
-  })
+    INTERNAL_SYSCALL_DECL (err);                                        \
+    unsigned long val = INTERNAL_SYSCALL (name, err, nr, args);         \
+    if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (val, err), 0))      \
+      {                                                                 \
+	__set_errno (INTERNAL_SYSCALL_ERRNO (val, err));                \
+        val = -1;                                                       \
+      }                                                                 \
+    (long) val; })
 
 #undef INTERNAL_SYSCALL
 #define INTERNAL_SYSCALL(name, err, nr, args...)        \
@@ -203,19 +202,70 @@
   "=R02" (_clobber_r2), "=R03" (_clobber_r3), "=R04" (_clobber_r4),     \
     "=R05" (_clobber_r5), "=R10" (_clobber_r10)
 
-
-#define INTERNAL_VSYSCALL_CALL(funcptr, err, nr, args...)               \
-  ({                                                                    \
-    struct syscall_return_value _sc_rv = funcptr (args);                \
-    err = _sc_rv.error;                                                 \
-    _sc_rv.value;                                                       \
+/* This version is for kernels that implement system calls that
+   behave like function calls as far as register saving.
+   It falls back to the syscall in the case that the vDSO doesn't
+   exist or fails for ENOSYS */
+# ifdef SHARED
+#  define INLINE_VSYSCALL(name, nr, args...) \
+  ({									      \
+    __label__ out;							      \
+    __label__ iserr;							      \
+    INTERNAL_SYSCALL_DECL (sc_err);					      \
+    long int sc_ret;							      \
+									      \
+    __typeof (__vdso_##name) vdsop = __vdso_##name;			      \
+    if (vdsop != NULL)							      \
+      {									      \
+        struct syscall_return_value rv = vdsop (args);			      \
+        sc_ret = rv.value;						      \
+        sc_err = rv.error;						      \
+        if (!INTERNAL_SYSCALL_ERROR_P (sc_ret, sc_err))			      \
+          goto out;							      \
+        if (INTERNAL_SYSCALL_ERRNO (sc_ret, sc_err) != ENOSYS)		      \
+          goto iserr;							      \
+      }									      \
+									      \
+    sc_ret = INTERNAL_SYSCALL (name, sc_err, nr, ##args);		      \
+    if (INTERNAL_SYSCALL_ERROR_P (sc_ret, sc_err))			      \
+      {									      \
+      iserr:								      \
+        __set_errno (INTERNAL_SYSCALL_ERRNO (sc_ret, sc_err));		      \
+        sc_ret = -1L;							      \
+      }									      \
+  out:									      \
+    sc_ret;								      \
   })
+#  define INTERNAL_VSYSCALL(name, err, nr, args...) \
+  ({									      \
+    __label__ out;							      \
+    long int v_ret;							      \
+									      \
+    __typeof (__vdso_##name) vdsop = __vdso_##name;			      \
+    if (vdsop != NULL)							      \
+      {									      \
+        struct syscall_return_value rv = vdsop (args);			      \
+        v_ret = rv.value;						      \
+        err = rv.error;							      \
+        if (!INTERNAL_SYSCALL_ERROR_P (v_ret, err)			      \
+            || INTERNAL_SYSCALL_ERRNO (v_ret, err) != ENOSYS)		      \
+          goto out;							      \
+      }									      \
+    v_ret = INTERNAL_SYSCALL (name, err, nr, ##args);			      \
+  out:									      \
+    v_ret;								      \
+  })
+
+# else
+#  define INLINE_VSYSCALL(name, nr, args...) \
+  INLINE_SYSCALL (name, nr, ##args)
+#  define INTERNAL_VSYSCALL(name, err, nr, args...) \
+  INTERNAL_SYSCALL (name, err, nr, ##args)
+# endif
+#endif /* not __ASSEMBLER__ */
 
 /* List of system calls which are supported as vsyscalls.  */
 #define HAVE_CLOCK_GETTIME_VSYSCALL	1
-#define HAVE_GETTIMEOFDAY_VSYSCALL	1
-
-#endif /* __ASSEMBLER__  */
 
 /* Pointer mangling support.  */
 #if IS_IN (rtld)

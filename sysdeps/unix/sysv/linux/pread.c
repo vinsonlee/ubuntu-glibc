@@ -32,14 +32,33 @@
 #endif
 
 
-ssize_t
-__libc_pread (int fd, void *buf, size_t count, off_t offset)
+static ssize_t
+#ifdef NO_CANCELLATION
+inline __attribute ((always_inline))
+#endif
+do_pread (int fd, void *buf, size_t count, off_t offset)
 {
   ssize_t result;
 
   assert (sizeof (offset) == 4);
-  result = SYSCALL_CANCEL (pread, fd, buf, count,
+  result = INLINE_SYSCALL (pread, 5, fd, buf, count,
 			   __LONG_LONG_PAIR (offset >> 31, offset));
+
+  return result;
+}
+
+
+ssize_t
+__libc_pread (int fd, void *buf, size_t count, off_t offset)
+{
+  if (SINGLE_THREAD_P)
+    return do_pread (fd, buf, count, offset);
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  ssize_t result = do_pread (fd, buf, count, offset);
+
+  LIBC_CANCEL_RESET (oldtype);
 
   return result;
 }

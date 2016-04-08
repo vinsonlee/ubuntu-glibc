@@ -23,7 +23,17 @@
 ssize_t
 __libc_send (int fd, const void *buf, size_t n, int flags)
 {
-  return SYSCALL_CANCEL (sendto, fd, buf, n, flags, NULL, (size_t) 0);
+  if (SINGLE_THREAD_P)
+    return INLINE_SYSCALL (sendto, 6, fd, buf, n, flags, NULL, (size_t) 0);
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  ssize_t result = INLINE_SYSCALL (sendto, 6, fd, buf, n, flags, NULL,
+				   (size_t) 0);
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
 
 weak_alias (__libc_send, __send)

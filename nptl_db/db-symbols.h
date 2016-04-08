@@ -16,7 +16,11 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#define DOT(x)	x		/* No prefix.  */
+#ifdef HAVE_ASM_GLOBAL_DOT_NAME
+# define DOT(x)	.##x		/* PPC64 requires . prefix on code symbols.  */
+#else
+# define DOT(x)	x		/* No prefix.  */
+#endif
 
 #define STRINGIFY(name)		STRINGIFY_1(name)
 #define STRINGIFY_1(name)	#name

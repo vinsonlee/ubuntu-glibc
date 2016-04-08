@@ -5,8 +5,8 @@
 #include <string.h>
 #include <gnu/lib-names.h>
 
-static int
-do_test (void)
+int
+main (void)
 {
   void *handle = dlopen ("modstatic2-nonexistent.so", RTLD_LAZY);
   if (handle == NULL)
@@ -162,6 +162,3 @@ do_test (void)
 
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

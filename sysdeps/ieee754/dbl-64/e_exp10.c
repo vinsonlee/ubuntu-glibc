@@ -29,7 +29,7 @@ __ieee754_exp10 (double arg)
   double arg_high, arg_low;
   double exp_high, exp_low;
 
-  if (!isfinite (arg))
+  if (!__finite (arg))
     return __ieee754_exp (arg);
   if (arg < DBL_MIN_10_EXP - DBL_DIG - 10)
     return DBL_MIN * DBL_MIN;

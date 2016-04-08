@@ -35,7 +35,6 @@
 #include "endian.h"
 #include "mydefs.h"
 #include "branred.h"
-#include <math.h>
 #include <math_private.h>
 
 #ifndef SECTION
@@ -124,7 +123,7 @@ __branred(double x, double *a, double *aa)
 
  sum=sum1+sum2;
  b=b1+b2;
- bb = (fabs(b1)>fabs(b2))? (b1-b)+b2 : (b2-b)+b1;
+ bb = (ABS(b1)>ABS(b2))? (b1-b)+b2 : (b2-b)+b1;
  if (b > 0.5)
    {b-=1.0; sum+=1.0;}
  else if (b < -0.5)

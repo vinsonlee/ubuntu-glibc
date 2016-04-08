@@ -34,10 +34,8 @@
 #include <shlib-compat.h>
 #include <smp.h>
 #include <lowlevellock.h>
-#include <futex-internal.h>
 #include <kernel-features.h>
 #include <libc-internal.h>
-#include <pthread-pids.h>
 
 #ifndef TLS_MULTIPLE_THREADS_IN_TCB
 /* Pointer to the corresponding variable in libc.  */
@@ -280,10 +278,10 @@ sighandler_setxid (int sig, siginfo_t *si, void *ctx)
 
   /* And release the futex.  */
   self->setxid_futex = 1;
-  futex_wake (&self->setxid_futex, 1, FUTEX_PRIVATE);
+  lll_futex_wake (&self->setxid_futex, 1, LLL_PRIVATE);
 
   if (atomic_decrement_val (&__xidcmd->cntr) == 0)
-    futex_wake ((unsigned int *) &__xidcmd->cntr, 1, FUTEX_PRIVATE);
+    lll_futex_wake (&__xidcmd->cntr, 1, LLL_PRIVATE);
 }
 #endif
 
@@ -313,7 +311,10 @@ __pthread_initialize_minimal_internal (void)
 
   /* Minimal initialization of the thread descriptor.  */
   struct pthread *pd = THREAD_SELF;
-  __pthread_initialize_pids (pd);
+#ifdef __NR_set_tid_address
+  INTERNAL_SYSCALL_DECL (err);
+  pd->pid = pd->tid = INTERNAL_SYSCALL (set_tid_address, err, 1, &pd->tid);
+#endif
   THREAD_SETMEM (pd, specific[0], &pd->specific_1stblock[0]);
   THREAD_SETMEM (pd, user_stack, true);
   if (LLL_LOCK_INITIALIZER != 0)
@@ -323,22 +324,19 @@ __pthread_initialize_minimal_internal (void)
 #endif
 
   /* Initialize the robust mutex data.  */
-  {
 #ifdef __PTHREAD_MUTEX_HAVE_PREV
-    pd->robust_prev = &pd->robust_head;
+  pd->robust_prev = &pd->robust_head;
 #endif
-    pd->robust_head.list = &pd->robust_head;
+  pd->robust_head.list = &pd->robust_head;
 #ifdef __NR_set_robust_list
-    pd->robust_head.futex_offset = (offsetof (pthread_mutex_t, __data.__lock)
-				    - offsetof (pthread_mutex_t,
-						__data.__list.__next));
-    INTERNAL_SYSCALL_DECL (err);
-    int res = INTERNAL_SYSCALL (set_robust_list, err, 2, &pd->robust_head,
-				sizeof (struct robust_list_head));
-    if (INTERNAL_SYSCALL_ERROR_P (res, err))
+  pd->robust_head.futex_offset = (offsetof (pthread_mutex_t, __data.__lock)
+				  - offsetof (pthread_mutex_t,
+					      __data.__list.__next));
+  int res = INTERNAL_SYSCALL (set_robust_list, err, 2, &pd->robust_head,
+			      sizeof (struct robust_list_head));
+  if (INTERNAL_SYSCALL_ERROR_P (res, err))
 #endif
-      set_robust_list_not_avail ();
-  }
+    set_robust_list_not_avail ();
 
 #ifdef __NR_futex
 # ifndef __ASSUME_PRIVATE_FUTEX
@@ -346,7 +344,6 @@ __pthread_initialize_minimal_internal (void)
      doing the test once this early is beneficial.  */
   {
     int word = 0;
-    INTERNAL_SYSCALL_DECL (err);
     word = INTERNAL_SYSCALL (futex, err, 3, &word,
 			    FUTEX_WAKE | FUTEX_PRIVATE_FLAG, 1);
     if (!INTERNAL_SYSCALL_ERROR_P (word, err))
@@ -367,7 +364,6 @@ __pthread_initialize_minimal_internal (void)
 	 is irrelevant.  Given that passing six parameters is difficult
 	 on some architectures we just pass whatever random value the
 	 calling convention calls for to the kernel.  It causes no harm.  */
-      INTERNAL_SYSCALL_DECL (err);
       word = INTERNAL_SYSCALL (futex, err, 5, &word,
 			       FUTEX_WAIT_BITSET | FUTEX_CLOCK_REALTIME
 			       | FUTEX_PRIVATE_FLAG, 1, NULL, 0);
@@ -420,11 +416,8 @@ __pthread_initialize_minimal_internal (void)
 # ifdef SIGSETXID
   __sigaddset (&sa.sa_mask, SIGSETXID);
 # endif
-  {
-    INTERNAL_SYSCALL_DECL (err);
-    (void) INTERNAL_SYSCALL (rt_sigprocmask, err, 4, SIG_UNBLOCK, &sa.sa_mask,
-			     NULL, _NSIG / 8);
-  }
+  (void) INTERNAL_SYSCALL (rt_sigprocmask, err, 4, SIG_UNBLOCK, &sa.sa_mask,
+			   NULL, _NSIG / 8);
 #endif
 
   /* Get the size of the static and alignment requirements for the TLS

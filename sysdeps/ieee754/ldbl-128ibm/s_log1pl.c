@@ -249,3 +249,5 @@ __log1pl (long double xm1)
   z = z + e * C1;
   return (z);
 }
+
+long_double_symbol (libm, __log1pl, log1pl);

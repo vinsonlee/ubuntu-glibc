@@ -27,26 +27,37 @@ import sys
 import os
 
 try:
-    import import_bench as bench
+    import jsonschema
 except ImportError:
-    print('Import Error: Output will not be validated.')
+    print('Could not find jsonschema module.  Output not validated.')
     # Return success because we don't want the bench target to fail just
     # because the jsonschema module was not found.
     sys.exit(os.EX_OK)
 
 
-def print_and_exit(message, exitcode):
-    """Prints message to stderr and returns the exit code.
+def validate_bench(benchfile, schemafile):
+    """Validate benchmark file
+
+    Validate a benchmark output file against a JSON schema.
 
     Args:
-        message: The message to print
-        exitcode: The exit code to return
+        benchfile: The file name of the bench.out file.
+        schemafile: The file name of the JSON schema file to validate
+        bench.out against.
 
-    Returns:
-        The passed exit code
+    Exceptions:
+        jsonschema.ValidationError: When bench.out is not valid
+        jsonschema.SchemaError: When the JSON schema is not valid
+        IOError: If any of the files are not found.
     """
-    print(message, file=sys.stderr)
-    return exitcode
+    with open(benchfile, 'r') as bfile:
+        with open(schemafile, 'r') as sfile:
+            bench = json.load(bfile)
+            schema = json.load(sfile)
+            jsonschema.validate(bench, schema)
+
+    # If we reach here, we're all good.
+    print("Benchmark output in %s is valid." % benchfile)
 
 
 def main(args):
@@ -62,23 +73,11 @@ def main(args):
         Exceptions thrown by validate_bench
     """
     if len(args) != 2:
-        return print_and_exit("Usage: %s <bench.out file> <bench.out schema>"
-                % sys.argv[0], os.EX_USAGE)
+        print("Usage: %s <bench.out file> <bench.out schema>" % sys.argv[0],
+                file=sys.stderr)
+        return os.EX_USAGE
 
-    try:
-        bench.parse_bench(args[0], args[1])
-    except IOError as e:
-        return print_and_exit("IOError(%d): %s" % (e.errno, e.strerror),
-                os.EX_OSFILE)
-
-    except bench.validator.ValidationError as e:
-        return print_and_exit("Invalid benchmark output: %s" % e.message,
-            os.EX_DATAERR)
-
-    except bench.validator.SchemaError as e:
-        return print_and_exit("Invalid schema: %s" % e.message, os.EX_DATAERR)
-
-    print("Benchmark output in %s is valid." % args[0])
+    validate_bench(args[0], args[1])
     return os.EX_OK
 
 

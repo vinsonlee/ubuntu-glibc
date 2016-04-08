@@ -33,7 +33,6 @@ sysdep-CFLAGS += -mpreferred-stack-boundary=4
 else
 ifeq ($(subdir),csu)
 sysdep-CFLAGS += -mpreferred-stack-boundary=4
-gen-as-const-headers += link-defines.sym
 else
 # Likewise, any function which calls user callbacks
 uses-callbacks += -mpreferred-stack-boundary=4
@@ -67,13 +66,8 @@ endif
 
 ifeq ($(subdir),elf)
 sysdep-dl-routines += tlsdesc dl-tlsdesc
-
-tests += tst-audit3
-modules-names += tst-auditmod3a tst-auditmod3b
-
-$(objpfx)tst-audit3: $(objpfx)tst-auditmod3a.so
-$(objpfx)tst-audit3.out: $(objpfx)tst-auditmod3b.so
-tst-audit3-ENV = LD_AUDIT=$(objpfx)tst-auditmod3b.so
+sysdep_routines += tlsdesc dl-tlsdesc
+sysdep-rtld-routines += tlsdesc dl-tlsdesc
 endif
 
 ifeq ($(subdir),csu)

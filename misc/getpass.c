@@ -91,7 +91,7 @@ getpass (prompt)
 
   /* Write the prompt.  */
   __fxprintf (out, "%s", prompt);
-  __fflush_unlocked (out);
+  fflush_unlocked (out);
 
   /* Read the password.  */
   nread = __getline (&buf, &bufsize, in);

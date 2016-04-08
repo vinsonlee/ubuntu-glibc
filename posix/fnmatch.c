@@ -229,7 +229,7 @@ __wcschrnul (s, c)
 # if HANDLE_MULTIBYTE
 /* Note that this evaluates C many times.  */
 #  ifdef _LIBC
-#   define FOLD(c) ((flags & FNM_CASEFOLD) ? __towlower (c) : (c))
+#   define FOLD(c) ((flags & FNM_CASEFOLD) ? towlower (c) : (c))
 #  else
 #   define FOLD(c) ((flags & FNM_CASEFOLD) && ISUPPER (c) ? towlower (c) : (c))
 #  endif
@@ -245,7 +245,7 @@ __wcschrnul (s, c)
 #  define STRLEN(S) __wcslen (S)
 #  define STRCAT(D, S) __wcscat (D, S)
 #  define MEMPCPY(D, S, N) __wmempcpy (D, S, N)
-#  define MEMCHR(S, C, N) __wmemchr (S, C, N)
+#  define MEMCHR(S, C, N) wmemchr (S, C, N)
 #  define STRCOLL(S1, S2) wcscoll (S1, S2)
 #  define WIDE_CHAR_VERSION 1
 /* Change the name the header defines so it doesn't conflict with
@@ -348,7 +348,7 @@ fnmatch (pattern, string, flags)
       memset (&ps, '\0', sizeof (ps));
       p = pattern;
 #ifdef _LIBC
-      n = __strnlen (pattern, 1024);
+      n = strnlen (pattern, 1024);
 #else
       n = strlen (pattern);
 #endif
@@ -392,7 +392,7 @@ fnmatch (pattern, string, flags)
 
       assert (mbsinit (&ps));
 #ifdef _LIBC
-      n = __strnlen (string, 1024);
+      n = strnlen (string, 1024);
 #else
       n = strlen (string);
 #endif
