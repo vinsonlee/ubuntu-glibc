@@ -233,7 +233,7 @@ __ieee754_expl (long double x)
   /* Exceptional cases:  */
   else if (isless (x, himark))
     {
-      if (isinf (x))
+      if (__isinfl (x))
 	/* e^-inf == 0, with no error.  */
 	return 0;
       else

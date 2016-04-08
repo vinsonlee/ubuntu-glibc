@@ -27,7 +27,6 @@ dnl Check if asm supports AVX512.
 AC_CACHE_CHECK(for AVX512 support in assembler, libc_cv_asm_avx512, [dnl
 cat > conftest.s <<\EOF
         vmovdqu64 %zmm0, (%rsp)
-        vandpd (%rax), %zmm6, %zmm1
 EOF
 if AC_TRY_COMMAND(${CC-cc} -c $ASFLAGS conftest.s 1>&AS_MESSAGE_LOG_FD); then
   libc_cv_asm_avx512=yes
@@ -99,10 +98,6 @@ if test $libc_cv_cc_avx2 = yes; then
   AC_DEFINE(HAVE_AVX2_SUPPORT)
 fi
 LIBC_CONFIG_VAR([config-cflags-avx2], [$libc_cv_cc_avx2])
-
-if test x"$build_mathvec" = xnotset; then
-  build_mathvec=yes
-fi
 
 dnl It is always possible to access static and hidden symbols in an
 dnl position independent way.

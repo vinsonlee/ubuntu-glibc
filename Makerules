@@ -123,16 +123,6 @@ $(common-objpfx)libc-abis.stamp: $(..)scripts/gen-libc-abis \
 common-generated += $(common-objpfx)libc-abis.h
 endif # avoid-generated
 
-ifeq (yes,$(build-shared))
-$(common-objpfx)runtime-linker.h: $(common-objpfx)runtime-linker.stamp; @:
-$(common-objpfx)runtime-linker.stamp: $(common-objpfx)config.make
-	$(make-target-directory)
-	echo '#define RUNTIME_LINKER "$(rtlddir)/$(rtld-installed-name)"' \
-		> ${@:stamp=T}
-	$(move-if-change) ${@:stamp=T} ${@:stamp=h}
-	touch $@
-endif
-
 # Make sure the subdirectory for object files gets created.
 ifdef objpfx
 ifeq (,$(wildcard $(objpfx).))
@@ -515,7 +505,6 @@ link-libc-deps = $(common-objpfx)libc.so $(common-objpfx)linkobj/libc.so \
 # to be as similar as possible to a default link with an installed libc.
 lib%.so: lib%_pic.a $(+preinit) $(+postinit) $(link-libc-deps)
 	$(build-shlib) $(link-libc-args)
-	$(call after-link,$@)
 
 define build-shlib-helper
 $(LINK.o) -shared $(static-libgcc) -Wl,-O1 $(sysdep-LDFLAGS) \
@@ -591,14 +580,12 @@ endef
 define build-module
 $(build-module-helper) -o $@ $(shlib-lds-flags) \
 	  $(csu-objpfx)abi-note.o $(build-module-objlist) $(link-libc-args)
-$(call after-link,$@)
 endef
 define build-module-asneeded
 $(build-module-helper) -o $@ $(shlib-lds-flags) \
 	  $(csu-objpfx)abi-note.o \
 	  -Wl,--as-needed $(build-module-objlist) -Wl,--no-as-needed \
 	  $(link-libc-args)
-$(call after-link,$@)
 endef
 
 build-module-helper-objlist = \
@@ -679,7 +666,6 @@ $(common-objpfx)libc.so: $(elf-objpfx)soinit.os \
 			 $(elf-objpfx)ld.so \
 			 $(shlib-lds)
 	$(build-shlib)
-	$(call after-link,$@)
 
 $(common-objpfx)linkobj/libc.so: $(elf-objpfx)soinit.os \
 			 $(common-objpfx)linkobj/libc_pic.a \
@@ -688,7 +674,6 @@ $(common-objpfx)linkobj/libc.so: $(elf-objpfx)soinit.os \
 			 $(elf-objpfx)ld.so \
 			 $(shlib-lds)
 	$(build-shlib)
-	$(call after-link,$@)
 
 ifeq ($(build-shared),yes)
 $(common-objpfx)libc.so: $(common-objpfx)libc.map
@@ -916,26 +901,6 @@ endef
 installed-libcs := $(foreach o,$(filter-out .os,$(object-suffixes-for-libc)),\
 			     $(inst_libdir)/$(patsubst %,$(libtype$o),\
 						     $(libprefix)$(libc-name)))
-
-.PHONY: check-install-supported
-check-install-supported:
-
-# Check to see if the prefix or exec_prefix GNU standard variable
-# has been overridden on the command line and, if so, fail with
-# an error message since doing so is not supported (set DESTDIR
-# instead).
-ifeq ($(origin prefix),command line)
-check-install-supported:
-	$(error Overriding prefix is not supported. Set DESTDIR instead.)
-endif
-
-ifeq ($(origin exec_prefix),command line)
-check-install-supported:
-	$(error Overriding exec_prefix is not supported. Set DESTDIR instead.)
-endif
-
-install: check-install-supported
-
 install: $(installed-libcs)
 $(installed-libcs): $(inst_libdir)/lib$(libprefix)%: lib $(+force)
 	$(make-target-directory)
@@ -1132,8 +1097,7 @@ endif
 
 define do-install-so
 $(do-install-program)
-$(patsubst %,$(LN_S) -f $(@F) \
-			$(@D)/$(patsubst %$*.so,%,$(<F))$(libprefix)$*.so,\
+$(patsubst %,ln -s -f $(@F) $(@D)/$(patsubst %$*.so,%,$(<F))$(libprefix)$*.so,\
 	   $(filter-out %.so,$@))
 endef
 

@@ -50,18 +50,9 @@ if test $host != $build; then
 fi
 AC_SUBST(cross_compiling)
 AC_PROG_CPP
-AC_CHECK_TOOL(READELF, readelf, false)
-
 # We need the C++ compiler only for testing.
 AC_PROG_CXX
-# It's useless to us if it can't link programs (e.g. missing -lstdc++).
-AC_CACHE_CHECK([whether $CXX can link programs], libc_cv_cxx_link_ok, [dnl
-AC_LANG_PUSH([C++])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
-	       [libc_cv_cxx_link_ok=yes],
-	       [libc_cv_cxx_link_ok=no])
-AC_LANG_POP([C++])])
-AS_IF([test $libc_cv_cxx_link_ok != yes], [CXX=])
+AC_CHECK_TOOL(READELF, readelf, false)
 
 if test "`cd $srcdir; /bin/pwd`" = "`/bin/pwd`"; then
   AC_MSG_ERROR([you must configure in a separate build directory])
@@ -369,24 +360,6 @@ if test "$build_pt_chown" = yes; then
   AC_DEFINE(HAVE_PT_CHOWN)
 fi
 
-# The abi-tags file uses a fairly simplistic model for name recognition that
-# can't distinguish i486-pc-linux-gnu fully from i486-pc-gnu.  So we mutate a
-# $host_os of `gnu*' here to be `gnu-gnu*' just so that it can tell.
-# This doesn't get used much beyond that, so it's fairly safe.
-case "$host_os" in
-linux*)
-  ;;
-gnu*)
-  host_os=`echo $host_os | sed -e 's/gnu/gnu-gnu/'`
-  ;;
-esac
-
-AC_ARG_ENABLE([mathvec],
-	      [AS_HELP_STRING([--enable-mathvec],
-	      [Enable building and installing mathvec @<:@default depends on architecture@:>@])],
-	      [build_mathvec=$enableval],
-	      [build_mathvec=notset])
-
 # We keep the original values in `$config_*' and never modify them, so we
 # can write them unchanged into config.make.  Everything else uses
 # $machine, $vendor, and $os, and changes them whenever convenient.
@@ -418,12 +391,11 @@ AC_ARG_WITH([cpu],
   esac
 ])
 
-# An preconfigure script can set this when it wants to disable the sanity
-# check below.
-libc_config_ok=no
-
 dnl Let sysdeps/*/preconfigure act here, like they can in add-ons.
 LIBC_PRECONFIGURE([$srcdir], [for sysdeps])
+
+# An add-on can set this when it wants to disable the sanity check below.
+libc_config_ok=no
 
 dnl Having this here, though empty, makes sure that if add-ons' fragments
 dnl do AC_CONFIG_SUBDIRS([some-dir]), which just sets $subdirs, then
@@ -1227,29 +1199,6 @@ EOF
 fi
 
 if test $libc_cv_visibility_attribute = yes; then
-  AC_CACHE_CHECK(linker support for protected data symbol,
-		 libc_cv_protected_data,
-		 [cat > conftest.c <<EOF
-		  int bar __attribute__ ((visibility ("protected"))) = 1;
-EOF
-		  libc_cv_protected_data=no
-		  if AC_TRY_COMMAND(${CC-cc} -nostdlib -nostartfiles -fPIC -shared conftest.c -o conftest.so); then
-		    cat > conftest.c <<EOF
-		    extern int bar;
-		    int main (void) { return bar; }
-EOF
-		    if AC_TRY_COMMAND(${CC-cc} -nostdlib -nostartfiles conftest.c -o conftest conftest.so); then
-		      libc_cv_protected_data=yes
-		    fi
-		  fi
-		  rm -f conftest.*
-		 ])
-else
-  libc_cv_protected_data=no
-fi
-AC_SUBST(libc_cv_protected_data)
-
-if test $libc_cv_visibility_attribute = yes; then
   AC_CACHE_CHECK(for broken __attribute__((visibility())),
 		 libc_cv_broken_visibility_attribute,
 		 [cat > conftest.c <<EOF
@@ -2000,11 +1949,6 @@ for dir in $sysnames; do
   fi
 done
 
-if test x"$build_mathvec" = xnotset; then
-  build_mathvec=no
-fi
-LIBC_CONFIG_VAR([build-mathvec], [$build_mathvec])
-
 AC_SUBST(libc_extra_cflags)
 AC_SUBST(libc_extra_cppflags)
 
@@ -2074,19 +2018,6 @@ if eval "${CC-cc} -S conftest.c 2>&AS_MESSAGE_LOG_FD 1>&AS_MESSAGE_LOG_FD"; then
 fi
 rm -f conftest.*])
 AC_SUBST(libc_cv_pic_default)
-
-AC_CACHE_CHECK([whether -fPIE is default], libc_cv_pie_default,
-[libc_cv_pie_default=yes
-cat > conftest.c <<EOF
-#if defined __PIE__ || defined __pie__ || defined PIE || defined pie
-# error PIE is default.
-#endif
-EOF
-if eval "${CC-cc} -S conftest.c 2>&AS_MESSAGE_LOG_FD 1>&AS_MESSAGE_LOG_FD"; then
-  libc_cv_pie_default=no
-fi
-rm -f conftest.*])
-AC_SUBST(libc_cv_pie_default)
 
 AC_SUBST(profile)
 AC_SUBST(static_nss)

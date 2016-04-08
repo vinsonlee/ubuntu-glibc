@@ -48,7 +48,8 @@ __mmap (__ptr_t addr, size_t len, int prot, int flags, int fd, off_t offset)
       && prot == (PROT_READ|PROT_WRITE)) /* cf VM_PROT_DEFAULT */
     {
       /* vm_allocate has (a little) less overhead in the kernel too.  */
-      err = __vm_allocate (__mach_task_self (), &mapaddr, len, mapaddr == 0);
+      err = __vm_allocate (__mach_task_self (), &mapaddr, len,
+			   mapaddr == NULL);
 
       if (err == KERN_NO_SPACE)
 	{
@@ -60,7 +61,7 @@ __mmap (__ptr_t addr, size_t len, int prot, int flags, int fd, off_t offset)
 	      if (!err)
 		err = __vm_allocate (__mach_task_self (), &mapaddr, len, 0);
 	    }
-	  else if (mapaddr != 0)
+	  else if (mapaddr != NULL)
 	    err = __vm_allocate (__mach_task_self (), &mapaddr, len, 1);
 	}
 
@@ -96,13 +97,6 @@ __mmap (__ptr_t addr, size_t len, int prot, int flags, int fd, off_t offset)
 	  }
 	switch (prot & (PROT_READ|PROT_WRITE))
 	  {
-	  /* Although it apparently doesn't make sense to map a file with
-	     protection set to PROT_NONE, it is actually sometimes done.
-	     In particular, that's how localedef reserves some space for
-	     the locale archive file, the rationale being that some
-	     implementations take into account whether the mapping is
-	     anonymous or not when selecting addresses.  */
-	  case PROT_NONE:
 	  case PROT_READ:
 	    memobj = robj;
 	    if (wobj != MACH_PORT_NULL)
@@ -132,8 +126,8 @@ __mmap (__ptr_t addr, size_t len, int prot, int flags, int fd, off_t offset)
 		return (__ptr_t) (long int) __hurd_fail (EACCES);
 	      }
 	    break;
-	  default:
-	    __builtin_unreachable ();
+	  default:		/* impossible */
+	    return 0;
 	  }
 	break;
 	/* XXX handle MAP_NOEXTEND */
@@ -144,7 +138,7 @@ __mmap (__ptr_t addr, size_t len, int prot, int flags, int fd, off_t offset)
 
   err = __vm_map (__mach_task_self (),
 		  &mapaddr, (vm_size_t) len, (vm_address_t) 0,
-		  mapaddr == 0,
+		  mapaddr == NULL,
 		  memobj, (vm_offset_t) offset,
 		  ! (flags & MAP_SHARED),
 		  vmprot, VM_PROT_ALL,
@@ -166,7 +160,7 @@ __mmap (__ptr_t addr, size_t len, int prot, int flags, int fd, off_t offset)
 			    (flags & MAP_SHARED) ? VM_INHERIT_SHARE
 			    : VM_INHERIT_COPY);
 	}
-      else if (mapaddr != 0)
+      else if (mapaddr != NULL)
 	err = __vm_map (__mach_task_self (),
 			&mapaddr, (vm_size_t) len, (vm_address_t) 0,
 			1, memobj, (vm_offset_t) offset,

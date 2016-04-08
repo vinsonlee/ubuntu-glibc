@@ -32,6 +32,10 @@ build-tree := build-tree
 stamp := $(CURDIR)/stamp-dir/
 DUMMY := $(shell mkdir -p $(stamp))
 
+# The minimum package version with which these packages are compatible.
+include debian/shlibver
+shlib_dep = $(libc) (>= $(shlib_dep_ver))
+
 # Beyond here you shouldn't need to customise anything:
 export SHELL          = /bin/bash -e
 
@@ -53,10 +57,6 @@ DEB_SOURCE_PACKAGE := $(strip $(shell egrep '^Source: ' debian/control | cut -f 
 
 DEB_VERSION := $(shell dpkg-parsechangelog | egrep '^Version:' | cut -f 2 -d ' ')
 GLIBC_VERSION = $(shell echo $(DEB_VERSION) | sed -e 's/.*://' -e 's/-.*//')
-
-# The minimum package version with which these packages are compatible.
-shlib_dep_ver = $(GLIBC_VERSION)
-shlib_dep = $(libc) (>= $(shlib_dep_ver))
 
 DEB_BUILDDIR ?= $(build-tree)/$(DEB_HOST_ARCH)-$(curpass)
 
@@ -101,7 +101,6 @@ libdir=/usr/lib/$(DEB_HOST_MULTIARCH)
 
 BASE_CC = gcc
 BASE_CXX = g++
-BASE_MIG = mig
 DEB_GCC_VERSION ?= -4.9
 
 RUN_TESTSUITE = yes
@@ -110,7 +109,6 @@ RUN_TESTSUITE = yes
 # change the GNU triplet as it doesn't match the compiler name.
 CC     = $(DEB_HOST_GNU_TYPE)-$(BASE_CC)$(DEB_GCC_VERSION)
 CXX    = $(DEB_HOST_GNU_TYPE)-$(BASE_CXX)$(DEB_GCC_VERSION)
-MIG    = $(DEB_HOST_GNU_TYPE)-$(BASE_MIG)
 BUILD_CC = $(DEB_BUILD_GNU_TYPE)-$(BASE_CC)
 BUILD_CXX = $(DEB_BUILD_GNU_TYPE)-$(BASE_CXX)
 

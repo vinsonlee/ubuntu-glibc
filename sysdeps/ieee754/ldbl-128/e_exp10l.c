@@ -29,7 +29,7 @@ __ieee754_exp10l (long double arg)
   long double arg_high, arg_low;
   long double exp_high, exp_low;
 
-  if (!isfinite (arg))
+  if (!__finitel (arg))
     return __ieee754_expl (arg);
   if (arg < LDBL_MIN_10_EXP - LDBL_DIG - 10)
     return LDBL_MIN * LDBL_MIN;

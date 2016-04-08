@@ -153,6 +153,5 @@ libc {
     __madvise;
     __mktemp;
     __libc_ifunc_impl_list;
-    __tdelete; __tfind; __tsearch; __twalk;
   }
 }

@@ -18,25 +18,19 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
-#include <fpu_control.h>
+#include <math.h>
 
 int
 fesetexceptflag (const fexcept_t *flagp, int excepts)
 {
-  fpu_control_t fpsr;
-  fpu_control_t fpsr_new;
+  union { unsigned long long l; unsigned int sw[2]; } s;
 
   /* Get the current status word. */
-  _FPU_GETCW (fpsr);
-  excepts &= FE_ALL_EXCEPT;
-
-  /* Install new raised flags.  */
-  fpsr_new = fpsr & ~(excepts << _FPU_HPPA_SHIFT_FLAGS);
-  fpsr_new |= (*flagp & excepts) << _FPU_HPPA_SHIFT_FLAGS;
-
+  __asm__ ("fstd %%fr0,0(%1)" : "=m" (s.l) : "r" (&s.l) : "%r0");
+  /* Install new raised trap bits */
+  s.sw[0] |= (*flagp & excepts & FE_ALL_EXCEPT) << 27;
   /* Store the new status word.  */
-  if (fpsr != fpsr_new)
-    _FPU_SETCW (fpsr_new);
+  __asm__ ("fldd 0(%0),%%fr0" : : "r" (&s.l), "m" (s.l) : "%r0");
 
   /* Success.  */
   return 0;

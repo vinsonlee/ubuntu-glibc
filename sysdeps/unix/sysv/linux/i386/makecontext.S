@@ -83,10 +83,6 @@ ENTRY(__makecontext)
 #else
 	movl	$L(exitcode), (%edx)
 #endif
-	/* We need to terminate the FDE here instead of after ret because
-	   the unwinder looks at ra-1 for unwind information.  */
-	cfi_endproc
-
 	/* 'makecontext' returns no value.  */
 	ret
 
@@ -96,6 +92,7 @@ ENTRY(__makecontext)
 	   the context 'makecontext' manipulated at the time of the
 	   'makecontext' call.  If the pointer is NULL the process must
 	   terminate.  */
+	cfi_endproc
 L(exitcode):
 	/* This removes the parameters passed to the function given to
 	   'makecontext' from the stack.  EBX contains the number of

@@ -29,7 +29,6 @@
 #include <tls.h>
 #include <list.h>
 #include <lowlevellock.h>
-#include <futex-internal.h>
 #include <kernel-features.h>
 #include <stack-aliasing.h>
 
@@ -988,7 +987,7 @@ setxid_mark_thread (struct xid_command *cmdp, struct pthread *t)
   if (t->setxid_futex == -1
       && ! atomic_compare_and_exchange_bool_acq (&t->setxid_futex, -2, -1))
     do
-      futex_wait_simple (&t->setxid_futex, -2, FUTEX_PRIVATE);
+      lll_futex_wait (&t->setxid_futex, -2, LLL_PRIVATE);
     while (t->setxid_futex == -2);
 
   /* Don't let the thread exit before the setxid handler runs.  */
@@ -1006,7 +1005,7 @@ setxid_mark_thread (struct xid_command *cmdp, struct pthread *t)
 	  if ((ch & SETXID_BITMASK) == 0)
 	    {
 	      t->setxid_futex = 1;
-	      futex_wake (&t->setxid_futex, 1, FUTEX_PRIVATE);
+	      lll_futex_wake (&t->setxid_futex, 1, LLL_PRIVATE);
 	    }
 	  return;
 	}
@@ -1033,7 +1032,7 @@ setxid_unmark_thread (struct xid_command *cmdp, struct pthread *t)
 
   /* Release the futex just in case.  */
   t->setxid_futex = 1;
-  futex_wake (&t->setxid_futex, 1, FUTEX_PRIVATE);
+  lll_futex_wake (&t->setxid_futex, 1, LLL_PRIVATE);
 }
 
 
@@ -1142,8 +1141,7 @@ __nptl_setxid (struct xid_command *cmdp)
       int cur = cmdp->cntr;
       while (cur != 0)
 	{
-	  futex_wait_simple ((unsigned int *) &cmdp->cntr, cur,
-			     FUTEX_PRIVATE);
+	  lll_futex_wait (&cmdp->cntr, cur, LLL_PRIVATE);
 	  cur = cmdp->cntr;
 	}
     }
@@ -1192,6 +1190,7 @@ __nptl_setxid (struct xid_command *cmdp)
 static inline void __attribute__((always_inline))
 init_one_static_tls (struct pthread *curp, struct link_map *map)
 {
+  dtv_t *dtv = GET_DTV (TLS_TPADJ (curp));
 # if TLS_TCB_AT_TP
   void *dest = (char *) curp - map->l_tls_offset;
 # elif TLS_DTV_AT_TP
@@ -1200,9 +1199,11 @@ init_one_static_tls (struct pthread *curp, struct link_map *map)
 #  error "Either TLS_TCB_AT_TP or TLS_DTV_AT_TP must be defined"
 # endif
 
-  /* We cannot delay the initialization of the Static TLS area, since
-     it can be accessed with LE or IE, but since the DTV is only used
-     by GD and LD, we can delay its update to avoid a race.  */
+  /* Fill in the DTV slot so that a later LD/GD access will find it.  */
+  dtv[map->l_tls_modid].pointer.val = dest;
+  dtv[map->l_tls_modid].pointer.is_static = true;
+
+  /* Initialize the memory.  */
   memset (__mempcpy (dest, map->l_tls_initimage, map->l_tls_initimage_size),
 	  '\0', map->l_tls_blocksize - map->l_tls_initimage_size);
 }
@@ -1253,8 +1254,7 @@ __wait_lookup_done (void)
 	continue;
 
       do
-	futex_wait_simple ((unsigned int *) gscope_flagp,
-			   THREAD_GSCOPE_FLAG_WAIT, FUTEX_PRIVATE);
+	lll_futex_wait (gscope_flagp, THREAD_GSCOPE_FLAG_WAIT, LLL_PRIVATE);
       while (*gscope_flagp == THREAD_GSCOPE_FLAG_WAIT);
     }
 
@@ -1276,8 +1276,7 @@ __wait_lookup_done (void)
 	continue;
 
       do
-	futex_wait_simple ((unsigned int *) gscope_flagp,
-			   THREAD_GSCOPE_FLAG_WAIT, FUTEX_PRIVATE);
+	lll_futex_wait (gscope_flagp, THREAD_GSCOPE_FLAG_WAIT, LLL_PRIVATE);
       while (*gscope_flagp == THREAD_GSCOPE_FLAG_WAIT);
     }
 

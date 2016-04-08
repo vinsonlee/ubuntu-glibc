@@ -51,4 +51,5 @@ echo "+---------------------------- END COMPARE ----------------------------+"
 
 rm -f $expected $results
 # This would be a lovely place to exit 0 if you wanted to disable hard failures
+#exit 0 # This line should be disabled after the Jessie release.
 exit $rv

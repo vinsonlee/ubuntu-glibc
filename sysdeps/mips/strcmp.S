@@ -22,7 +22,7 @@
 # include <sysdep.h>
 # include <regdef.h>
 # include <sys/asm.h>
-#elif defined _COMPILING_NEWLIB
+#elif _COMPILING_NEWLIB
 # include "machine/asm.h"
 # include "machine/regdef.h"
 #else
