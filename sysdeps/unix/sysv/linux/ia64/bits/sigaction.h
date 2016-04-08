@@ -40,8 +40,7 @@ struct sigaction
 #endif
 
     /* Special flags.  */
-    int sa_flags;
-    int __glibc_reserved0;
+    unsigned long int sa_flags;
 
     /* Additional set of signals to be blocked.  */
     __sigset_t sa_mask;

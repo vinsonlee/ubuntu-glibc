@@ -24,7 +24,7 @@
    or user (as specified by WHO) is used.  A lower priority number means higher
    priority.  Priorities range from PRIO_MIN to PRIO_MAX.  */
 int
-__getpriority (enum __priority_which which, id_t who)
+getpriority (enum __priority_which which, id_t who)
 {
   error_t err, onerr;
   int maxpri = INT_MIN;
@@ -81,5 +81,4 @@ __getpriority (enum __priority_which which, id_t who)
 
   return MACH_PRIORITY_TO_NICE (maxpri);
 }
-libc_hidden_def (__getpriority)
-weak_alias (__getpriority, getpriority)
+libc_hidden_def (getpriority)

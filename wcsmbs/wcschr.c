@@ -17,13 +17,17 @@
 
 #include <wchar.h>
 
-#ifndef WCSCHR
-# define WCSCHR __wcschr
+/* Find the first occurrence of WC in WCS.  */
+#ifdef WCSCHR
+# define wcschr WCSCHR
+#else
+# define wcschr __wcschr
 #endif
 
-/* Find the first occurrence of WC in WCS.  */
 wchar_t *
-WCSCHR (const wchar_t *wcs, const wchar_t wc)
+wcschr (wcs, wc)
+     const wchar_t *wcs;
+     const wchar_t wc;
 {
   do
     if (*wcs == wc)
@@ -32,6 +36,9 @@ WCSCHR (const wchar_t *wcs, const wchar_t wc)
 
   return NULL;
 }
-libc_hidden_def (__wcschr)
+libc_hidden_def (wcschr)
+#ifndef WCSCHR
+# undef wcschr
 weak_alias (__wcschr, wcschr)
 libc_hidden_weak (wcschr)
+#endif

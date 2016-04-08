@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <libc-internal.h>
 #include <sysdep.h>
-#include <libc-vdso.h>
+#include <bits/libc-vdso.h>
 #include <not-cancel.h>
 
 hp_timing_t
@@ -41,7 +41,7 @@ __get_clockfreq (void)
      contains at least one line like:
      timebase        : 33333333
      We search for this line and convert the number into an integer.  */
-  int fd = open_not_cancel_2 ("/proc/cpuinfo", O_RDONLY);
+  int fd = __open_nocancel ("/proc/cpuinfo", O_RDONLY);
   if (__glibc_likely (fd != -1))
     return result;
 

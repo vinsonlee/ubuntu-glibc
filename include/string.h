@@ -82,8 +82,6 @@ libc_hidden_proto (__strndup)
 libc_hidden_proto (__strerror_r)
 libc_hidden_proto (__strverscmp)
 libc_hidden_proto (basename)
-extern char *__basename (const char *__filename) __THROW __nonnull ((1));
-libc_hidden_proto (__basename)
 libc_hidden_proto (strcoll)
 libc_hidden_proto (__strcoll_l)
 libc_hidden_proto (__strxfrm_l)
@@ -91,7 +89,6 @@ libc_hidden_proto (__strtok_r)
 extern char *__strsep_g (char **__stringp, const char *__delim);
 libc_hidden_proto (__strsep_g)
 libc_hidden_proto (strnlen)
-libc_hidden_proto (__strnlen)
 libc_hidden_proto (memmem)
 extern __typeof (memmem) __memmem;
 libc_hidden_proto (__memmem)

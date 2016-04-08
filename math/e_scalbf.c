@@ -40,11 +40,11 @@ invalid_fn (float x, float fn)
 float
 __ieee754_scalbf (float x, float fn)
 {
-  if (__glibc_unlikely (isnan (x)))
+  if (__glibc_unlikely (__isnanf (x)))
     return x * fn;
-  if (__glibc_unlikely (!isfinite (fn)))
+  if (__glibc_unlikely (!__finitef (fn)))
     {
-      if (isnan (fn) || fn > 0.0f)
+      if (__isnanf (fn) || fn > 0.0f)
 	return x * fn;
       if (x == 0.0f)
 	return x;

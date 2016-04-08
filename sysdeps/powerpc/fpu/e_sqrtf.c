@@ -87,28 +87,26 @@ __slow_ieee754_sqrtf (float x)
 	  /* Here we have three Newton-Raphson iterations each of a
 	     division and a square root and the remainder of the
 	     argument reduction, all interleaved.   */
-	  sd = -__builtin_fmaf (sg, sg, -sx);
+	  sd = -(sg * sg - sx);
 	  fsgi = (xi + 0x40000000) >> 1 & 0x7f800000;
 	  sy2 = sy + sy;
-	  sg = __builtin_fmaf (sy, sd, sg);	/* 16-bit approximation to
-						   sqrt(sx). */
-	  e = -__builtin_fmaf (sy, sg, -almost_half);
+	  sg = sy * sd + sg;	/* 16-bit approximation to sqrt(sx). */
+	  e = -(sy * sg - almost_half);
 	  SET_FLOAT_WORD (fsg, fsgi);
-	  sd = -__builtin_fmaf (sg, sg, -sx);
-	  sy = __builtin_fmaf (e, sy2, sy);
+	  sd = -(sg * sg - sx);
+	  sy = sy + e * sy2;
 	  if ((xi & 0x7f800000) == 0)
 	    goto denorm;
 	  shx = sx * fsg;
-	  sg = __builtin_fmaf (sy, sd, sg);	/* 32-bit approximation to
-						   sqrt(sx), but perhaps
-						   rounded incorrectly.  */
+	  sg = sg + sy * sd;	/* 32-bit approximation to sqrt(sx),
+				   but perhaps rounded incorrectly.  */
 	  sy2 = sy + sy;
 	  g = sg * fsg;
-	  e = -__builtin_fmaf (sy, sg, -almost_half);
-	  d = -__builtin_fmaf (g, sg, -shx);
-	  sy = __builtin_fmaf (e, sy2, sy);
+	  e = -(sy * sg - almost_half);
+	  d = -(g * sg - shx);
+	  sy = sy + e * sy2;
 	  fesetenv_register (fe);
-	  return __builtin_fmaf (sy, d, g);
+	  return g + sy * d;
 	denorm:
 	  /* For denormalised numbers, we normalise, calculate the
 	     square root, and return an adjusted result.  */

@@ -59,7 +59,6 @@
  */
 
 #include <errno.h>
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -125,16 +124,8 @@ __ieee754_j1 (double x)
     }
   if (__glibc_unlikely (ix < 0x3e400000))                  /* |x|<2**-27 */
     {
-      if (huge + x > one)                 /* inexact if x!=0 necessary */
-	{
-	  double ret = 0.5 * x;
-	  if (fabs (ret) < DBL_MIN)
-	    {
-	      double force_underflow = ret * ret;
-	      math_force_eval (force_underflow);
-	    }
-	  return ret;
-	}
+      if (huge + x > one)
+	return 0.5 * x;                 /* inexact if x!=0 necessary */
     }
   z = x * x;
   r1 = z * R[0]; z2 = z * z;
@@ -216,7 +207,7 @@ __ieee754_y1 (double x)
   if (__glibc_unlikely (ix <= 0x3c900000))              /* x < 2**-54 */
     {
       z = -tpi / x;
-      if (isinf (z))
+      if (__isinf (z))
 	__set_errno (ERANGE);
       return z;
     }
@@ -314,7 +305,6 @@ pone (double x)
   int32_t ix;
   GET_HIGH_WORD (ix, x);
   ix &= 0x7fffffff;
-  /* ix >= 0x40000000 for all calls to this function.  */
   if (ix >= 0x41b00000)
     {
       return one;
@@ -331,7 +321,7 @@ pone (double x)
     {
       p = pr3; q = ps3;
     }
-  else
+  else if (ix >= 0x40000000)
     {
       p = pr2; q = ps2;
     }
@@ -434,7 +424,6 @@ qone (double x)
   int32_t ix;
   GET_HIGH_WORD (ix, x);
   ix &= 0x7fffffff;
-  /* ix >= 0x40000000 for all calls to this function.  */
   if (ix >= 0x41b00000)
     {
       return .375 / x;
@@ -451,7 +440,7 @@ qone (double x)
     {
       p = qr3; q = qs3;
     }
-  else
+  else if (ix >= 0x40000000)
     {
       p = qr2; q = qs2;
     }

@@ -493,14 +493,17 @@ _dl_allocate_tls_init (void *result)
 	  assert (listp->slotinfo[cnt].gen <= GL(dl_tls_generation));
 	  maxgen = MAX (maxgen, listp->slotinfo[cnt].gen);
 
-	  dtv[map->l_tls_modid].pointer.val = TLS_DTV_UNALLOCATED;
-	  dtv[map->l_tls_modid].pointer.is_static = false;
-
 	  if (map->l_tls_offset == NO_TLS_OFFSET
 	      || map->l_tls_offset == FORCED_DYNAMIC_TLS_OFFSET)
-	    continue;
+	    {
+	      /* For dynamically loaded modules we simply store
+		 the value indicating deferred allocation.  */
+	      dtv[map->l_tls_modid].pointer.val = TLS_DTV_UNALLOCATED;
+	      dtv[map->l_tls_modid].pointer.is_static = false;
+	      continue;
+	    }
 
-	  assert (map->l_tls_modid == total + cnt);
+	  assert (map->l_tls_modid == cnt);
 	  assert (map->l_tls_blocksize >= map->l_tls_initimage_size);
 #if TLS_TCB_AT_TP
 	  assert ((size_t) map->l_tls_offset >= map->l_tls_blocksize);
@@ -512,6 +515,8 @@ _dl_allocate_tls_init (void *result)
 #endif
 
 	  /* Copy the initialization image and clear the BSS part.  */
+	  dtv[map->l_tls_modid].pointer.val = dest;
+	  dtv[map->l_tls_modid].pointer.is_static = true;
 	  memset (__mempcpy (dest, map->l_tls_initimage,
 			     map->l_tls_initimage_size), '\0',
 		  map->l_tls_blocksize - map->l_tls_initimage_size);
@@ -674,16 +679,13 @@ _dl_update_slotinfo (unsigned long int req_modid)
 	      struct link_map *map = listp->slotinfo[cnt].map;
 	      if (map == NULL)
 		{
-		  if (dtv[-1].counter >= total + cnt)
+		  /* If this modid was used at some point the memory
+		     might still be allocated.  */
+		  if (! dtv[total + cnt].pointer.is_static
+		      && dtv[total + cnt].pointer.val != TLS_DTV_UNALLOCATED)
 		    {
-		      /* If this modid was used at some point the memory
-			 might still be allocated.  */
-		      if (! dtv[total + cnt].pointer.is_static
-			  && (dtv[total + cnt].pointer.val
-			      != TLS_DTV_UNALLOCATED))
-			free (dtv[total + cnt].pointer.val);
+		      free (dtv[total + cnt].pointer.val);
 		      dtv[total + cnt].pointer.val = TLS_DTV_UNALLOCATED;
-		      dtv[total + cnt].pointer.is_static = false;
 		    }
 
 		  continue;
@@ -716,8 +718,10 @@ _dl_update_slotinfo (unsigned long int req_modid)
 		   memalign and not malloc.  */
 		free (dtv[modid].pointer.val);
 
-	      dtv[modid].pointer.val = TLS_DTV_UNALLOCATED;
+	      /* This module is loaded dynamically- We defer memory
+		 allocation.  */
 	      dtv[modid].pointer.is_static = false;
+	      dtv[modid].pointer.val = TLS_DTV_UNALLOCATED;
 
 	      if (modid == req_modid)
 		the_map = map;
@@ -755,12 +759,13 @@ tls_get_addr_tail (GET_ADDR_ARGS, dtv_t *dtv, struct link_map *the_map)
       the_map = listp->slotinfo[idx].map;
     }
 
+ again:
   /* Make sure that, if a dlopen running in parallel forces the
      variable into static storage, we'll wait until the address in the
      static TLS block is set up, and use that.  If we're undecided
      yet, make sure we make the decision holding the lock as well.  */
-  if (__glibc_unlikely (the_map->l_tls_offset
-			!= FORCED_DYNAMIC_TLS_OFFSET))
+  if (__builtin_expect (the_map->l_tls_offset
+			!= FORCED_DYNAMIC_TLS_OFFSET, 0))
     {
       __rtld_lock_lock_recursive (GL(dl_load_lock));
       if (__glibc_likely (the_map->l_tls_offset == NO_TLS_OFFSET))
@@ -768,28 +773,22 @@ tls_get_addr_tail (GET_ADDR_ARGS, dtv_t *dtv, struct link_map *the_map)
 	  the_map->l_tls_offset = FORCED_DYNAMIC_TLS_OFFSET;
 	  __rtld_lock_unlock_recursive (GL(dl_load_lock));
 	}
-      else if (__glibc_likely (the_map->l_tls_offset
-			       != FORCED_DYNAMIC_TLS_OFFSET))
-	{
-#if TLS_TCB_AT_TP
-	  void *p = (char *) THREAD_SELF - the_map->l_tls_offset;
-#elif TLS_DTV_AT_TP
-	  void *p = (char *) THREAD_SELF + the_map->l_tls_offset + TLS_PRE_TCB_SIZE;
-#else
-# error "Either TLS_TCB_AT_TP or TLS_DTV_AT_TP must be defined"
-#endif
-	  __rtld_lock_unlock_recursive (GL(dl_load_lock));
-
-	  dtv[GET_ADDR_MODULE].pointer.is_static = true;
-	  dtv[GET_ADDR_MODULE].pointer.val = p;
-
-	  return (char *) p + GET_ADDR_OFFSET;
-	}
       else
-	__rtld_lock_unlock_recursive (GL(dl_load_lock));
+	{
+	  __rtld_lock_unlock_recursive (GL(dl_load_lock));
+	  if (__builtin_expect (the_map->l_tls_offset
+				!= FORCED_DYNAMIC_TLS_OFFSET, 1))
+	    {
+	      void *p = dtv[GET_ADDR_MODULE].pointer.val;
+	      if (__glibc_unlikely (p == TLS_DTV_UNALLOCATED))
+		goto again;
+
+	      return (char *) p + GET_ADDR_OFFSET;
+	    }
+	}
     }
   void *p = dtv[GET_ADDR_MODULE].pointer.val = allocate_and_init (the_map);
-  assert (!dtv[GET_ADDR_MODULE].pointer.is_static);
+  dtv[GET_ADDR_MODULE].pointer.is_static = false;
 
   return (char *) p + GET_ADDR_OFFSET;
 }

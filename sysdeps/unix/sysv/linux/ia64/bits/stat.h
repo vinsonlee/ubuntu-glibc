@@ -38,10 +38,10 @@ struct stat
     __mode_t st_mode;		/* File mode.  */
     __uid_t st_uid;		/* User ID of the file's owner.	*/
     __gid_t st_gid;		/* Group ID of the file's group.*/
-    int __glibc_reserved0;
+    int pad0;
     __dev_t st_rdev;		/* Device number, if device.  */
     __off_t st_size;		/* Size of file, in bytes.  */
-#ifdef __USE_XOPEN2K8
+#ifdef __USE_MISC
     /* Nanosecond resolution timestamps are stored in a format
        equivalent to 'struct timespec'.  This is the type used
        whenever possible but the Unix namespace rules do not allow the
@@ -77,10 +77,10 @@ struct stat64
     __mode_t st_mode;		/* File mode.  */
     __uid_t st_uid;		/* User ID of the file's owner.	*/
     __gid_t st_gid;		/* Group ID of the file's group.*/
-    int __glibc_reserved0;
+    int pad0;
     __dev_t st_rdev;		/* Device number, if device.  */
     __off_t st_size;		/* Size of file, in bytes.  */
-#ifdef __USE_XOPEN2K8
+#ifdef __USE_MISC
     /* Nanosecond resolution timestamps are stored in a format
        equivalent to 'struct timespec'.  This is the type used
        whenever possible but the Unix namespace rules do not allow the

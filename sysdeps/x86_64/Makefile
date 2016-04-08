@@ -20,6 +20,8 @@ endif
 
 ifeq ($(subdir),elf)
 sysdep-dl-routines += tlsdesc dl-tlsdesc
+sysdep_routines += tlsdesc dl-tlsdesc
+sysdep-rtld-routines += tlsdesc dl-tlsdesc
 
 tests += tst-quad1 tst-quad2
 modules-names += tst-quadmod1 tst-quadmod2

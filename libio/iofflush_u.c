@@ -28,7 +28,7 @@
 #include <stdio.h>
 
 int
-__fflush_unlocked (fp)
+fflush_unlocked (fp)
      _IO_FILE *fp;
 {
   if (fp == NULL)
@@ -39,6 +39,4 @@ __fflush_unlocked (fp)
       return _IO_SYNC (fp) ? EOF : 0;
     }
 }
-libc_hidden_def (__fflush_unlocked)
-weak_alias (__fflush_unlocked, fflush_unlocked)
-libc_hidden_weak (fflush_unlocked)
+libc_hidden_def (fflush_unlocked)

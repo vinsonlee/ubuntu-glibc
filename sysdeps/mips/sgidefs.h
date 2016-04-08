@@ -69,8 +69,4 @@
 #endif
 #define _MIPS_SIM_ABI64		_ABI64
 
-#ifndef _ABIO64
-# define _ABIO64		4
-#endif
-
 #endif /* sgidefs.h */

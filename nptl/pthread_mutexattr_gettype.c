@@ -28,8 +28,7 @@ pthread_mutexattr_gettype (attr, kind)
 
   iattr = (const struct pthread_mutexattr *) attr;
 
-  *kind = (iattr->mutexkind & ~PTHREAD_MUTEXATTR_FLAG_BITS
-	   & ~PTHREAD_MUTEX_NO_ELISION_NP);
+  *kind = iattr->mutexkind & ~PTHREAD_MUTEXATTR_FLAG_BITS;
 
   return 0;
 }
