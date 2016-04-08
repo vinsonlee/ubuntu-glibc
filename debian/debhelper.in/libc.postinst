@@ -185,6 +185,15 @@ then
 	    else
 		echo "Nothing to restart."
 	    fi
+	else
+
+	    # Here we issue the reboot notification for upgrades and
+            # security updates. We do want services to be restarted when we
+	    # update for a security issue, but planned by the
+	    # sysadmin, not automatically. (LP: #1546457)
+	    if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
+		/usr/share/update-notifier/notify-reboot-required
+	    fi
 	fi # end upgrading and $preversion lt 2.21
     fi # Upgrading
 
