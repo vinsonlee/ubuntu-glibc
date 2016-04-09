@@ -1,5 +1,5 @@
 /* Out-of-line syscall stub for six-argument syscalls from C.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,8 +17,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
-
-#ifndef OPTIMIZE_FOR_GCC_5
 
 /* %eax, %ecx, %edx and %esi contain the values expected by the kernel.
    %edi points to a structure with the values of %ebx, %edi and %ebp.  */
@@ -50,4 +48,3 @@ ENTRY (__libc_do_syscall)
 	cfi_restore (ebx)
 	ret
 END (__libc_do_syscall)
-#endif

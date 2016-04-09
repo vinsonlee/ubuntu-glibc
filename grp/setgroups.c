@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,9 @@
 
 /* Set the group set for the current user to GROUPS (N of them).  */
 int
-setgroups (size_t n, const gid_t *groups)
+setgroups (n, groups)
+     size_t n;
+     const gid_t *groups;
 {
   __set_errno (ENOSYS);
   return -1;

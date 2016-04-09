@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,11 +23,45 @@
 
 /* Copy SRC to DEST with checking of destination buffer overflow.  */
 char *
-__strcpy_chk (char *dest, const char *src, size_t destlen)
+__strcpy_chk (dest, src, destlen)
+     char *dest;
+     const char *src;
+     size_t destlen;
 {
-  size_t len = strlen (src);
-  if (len >= destlen)
-    __chk_fail ();
+  char c;
+  char *s = (char *) src;
+  const ptrdiff_t off = dest - s;
 
-  return memcpy (dest, src, len + 1);
+  while (__builtin_expect (destlen >= 4, 0))
+    {
+      c = s[0];
+      s[off] = c;
+      if (c == '\0')
+        return dest;
+      c = s[1];
+      s[off + 1] = c;
+      if (c == '\0')
+        return dest;
+      c = s[2];
+      s[off + 2] = c;
+      if (c == '\0')
+        return dest;
+      c = s[3];
+      s[off + 3] = c;
+      if (c == '\0')
+        return dest;
+      destlen -= 4;
+      s += 4;
+    }
+
+  do
+    {
+      if (__glibc_unlikely (destlen-- == 0))
+        __chk_fail ();
+      c = *s;
+      *(s++ + off) = c;
+    }
+  while (c != '\0');
+
+  return dest;
 }

@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2015 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -71,7 +71,11 @@ __ieee754_asin(double x){
 
   if (k < 0x3e500000)
     {
-      math_check_force_underflow (x);
+      if (fabs (x) < DBL_MIN)
+	{
+	  double force_underflow = x * x;
+	  math_force_eval (force_underflow);
+	}
       return x;  /* for x->0 => sin(x)=x */
     }
   /*----------------------2^-26 <= |x| < 2^ -3    -----------------*/

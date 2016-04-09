@@ -1,17 +1,16 @@
 #include <stdio.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <rpc/rpc.h>
 #include <assert.h>
 
-#include <libc-lock.h>
-#include <libc-tsd.h>
+#include <bits/libc-lock.h>
+#include <bits/libc-tsd.h>
 
 #ifdef _RPC_THREAD_SAFE_
 
 /* Variable used in non-threaded applications or for the first thread.  */
 static struct rpc_thread_variables __libc_tsd_RPC_VARS_mem;
-static __thread struct rpc_thread_variables *thread_rpc_vars
-        attribute_tls_model_ie;
+__libc_tsd_define (, struct rpc_thread_variables *, RPC_VARS)
 
 /*
  * Task-variable destructor
@@ -19,7 +18,8 @@ static __thread struct rpc_thread_variables *thread_rpc_vars
 void __attribute__ ((section ("__libc_thread_freeres_fn")))
 __rpc_thread_destroy (void)
 {
-	struct rpc_thread_variables *tvp = thread_rpc_vars;
+	struct rpc_thread_variables *tvp
+	  = __libc_tsd_get (struct rpc_thread_variables *, RPC_VARS);
 
 	if (tvp != NULL) {
 		__rpc_thread_svc_cleanup ();
@@ -34,7 +34,7 @@ __rpc_thread_destroy (void)
 		free (tvp->svc_pollfd_s);
 		if (tvp != &__libc_tsd_RPC_VARS_mem)
 			free (tvp);
-		thread_rpc_vars = NULL;
+		__libc_tsd_set (struct rpc_thread_variables *, RPC_VARS, NULL);
 	}
 }
 #ifdef _LIBC_REENTRANT
@@ -49,7 +49,8 @@ text_set_element (__libc_subfreeres, __rpc_thread_destroy);
 static void
 rpc_thread_multi (void)
 {
-  thread_rpc_vars = &__libc_tsd_RPC_VARS_mem;
+  __libc_tsd_set (struct rpc_thread_variables *, RPC_VARS,
+		  &__libc_tsd_RPC_VARS_mem);
 }
 
 
@@ -57,15 +58,20 @@ struct rpc_thread_variables *
 __rpc_thread_variables (void)
 {
 	__libc_once_define (static, once);
-	struct rpc_thread_variables *tvp = thread_rpc_vars;
+	struct rpc_thread_variables *tvp;
 
+	tvp = __libc_tsd_get (struct rpc_thread_variables *, RPC_VARS);
 	if (tvp == NULL) {
 		__libc_once (once, rpc_thread_multi);
-		tvp = thread_rpc_vars;
+		tvp = __libc_tsd_get (struct rpc_thread_variables *, RPC_VARS);
 		if (tvp == NULL) {
 			tvp = calloc (1, sizeof *tvp);
 			if (tvp != NULL)
-				thread_rpc_vars = tvp;
+				__libc_tsd_set (struct rpc_thread_variables *,
+						RPC_VARS, tvp);
+			else
+				tvp = __libc_tsd_get (struct rpc_thread_variables *,
+						      RPC_VARS);
 		}
 	}
 	return tvp;

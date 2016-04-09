@@ -1,5 +1,5 @@
 /* Print size value using units for orders of magnitude.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
    Based on a proposal by Larry McVoy <lm@sgi.com>.
@@ -108,7 +108,7 @@ __printf_size (FILE *fp, const struct printf_info *info,
   fpnum;
   const void *ptr = &fpnum;
 
-  int is_neg = 0;
+  int fpnum_sign = 0;
 
   /* "NaN" or "Inf" for the special cases.  */
   const char *special = NULL;
@@ -117,6 +117,7 @@ __printf_size (FILE *fp, const struct printf_info *info,
   struct printf_info fp_info;
   int done = 0;
   int wide = info->wide;
+  int res;
 
   /* Fetch the argument value.	*/
 #ifndef __NO_LONG_DOUBLE_MATH
@@ -129,11 +130,11 @@ __printf_size (FILE *fp, const struct printf_info *info,
 	{
 	  special = "nan";
 	  wspecial = L"nan";
-	  // is_neg = 0;	Already zero
+	  // fpnum_sign = 0;	Already zero
 	}
-      else if (isinf (fpnum.ldbl))
+      else if ((res = __isinfl (fpnum.ldbl)))
 	{
-	  is_neg = signbit (fpnum.ldbl);
+	  fpnum_sign = res;
 	  special = "inf";
 	  wspecial = L"inf";
 	}
@@ -154,11 +155,11 @@ __printf_size (FILE *fp, const struct printf_info *info,
 	{
 	  special = "nan";
 	  wspecial = L"nan";
-	  // is_neg = 0;	Already zero
+	  // fpnum_sign = 0;	Already zero
 	}
-      else if (isinf (fpnum.dbl.d))
+      else if ((res = __isinf (fpnum.dbl.d)))
 	{
-	  is_neg = signbit (fpnum.dbl.d);
+	  fpnum_sign = res;
 	  special = "inf";
 	  wspecial = L"inf";
 	}
@@ -174,14 +175,14 @@ __printf_size (FILE *fp, const struct printf_info *info,
     {
       int width = info->prec > info->width ? info->prec : info->width;
 
-      if (is_neg || info->showsign || info->space)
+      if (fpnum_sign < 0 || info->showsign || info->space)
 	--width;
       width -= 3;
 
       if (!info->left && width > 0)
 	PADN (' ', width);
 
-      if (is_neg)
+      if (fpnum_sign < 0)
 	outchar ('-');
       else if (info->showsign)
 	outchar ('+');

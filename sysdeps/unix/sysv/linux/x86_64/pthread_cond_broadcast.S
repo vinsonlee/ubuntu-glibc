@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -28,7 +28,10 @@
 	.text
 
 	/* int pthread_cond_broadcast (pthread_cond_t *cond) */
-ENTRY(__pthread_cond_broadcast)
+	.globl	__pthread_cond_broadcast
+	.type	__pthread_cond_broadcast, @function
+	.align	16
+__pthread_cond_broadcast:
 
 	LIBC_PROBE (cond_broadcast, 1, %rdi)
 
@@ -171,7 +174,6 @@ ENTRY(__pthread_cond_broadcast)
 	movl	$SYS_futex, %eax
 	syscall
 	jmp	10b
-END(__pthread_cond_broadcast)
-
+	.size	__pthread_cond_broadcast, .-__pthread_cond_broadcast
 versioned_symbol (libpthread, __pthread_cond_broadcast, pthread_cond_broadcast,
 		  GLIBC_2_3_2)

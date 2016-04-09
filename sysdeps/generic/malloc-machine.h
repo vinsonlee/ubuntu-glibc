@@ -1,6 +1,6 @@
 /* Basic platform-independent macro definitions for mutexes,
    thread-specific data and parameters for malloc.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,6 +38,14 @@ typedef int mutex_t;
 # define mutex_lock(m)          ({ *(m) = 1; 0; })
 # define mutex_trylock(m)       (*(m) ? 1 : ((*(m) = 1), 0))
 # define mutex_unlock(m)        (*(m) = 0)
+# define MUTEX_INITIALIZER      (0)
+
+typedef void *tsd_key_t;
+# define tsd_key_create(key, destr) do {} while(0)
+# define tsd_setspecific(key, data) ((key) = (data))
+# define tsd_getspecific(key, vptr) (vptr = (key))
+
+# define thread_atfork(prepare, parent, child) do {} while(0)
 
 #endif /* !defined mutex_init */
 

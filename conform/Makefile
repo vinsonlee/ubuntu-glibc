@@ -1,4 +1,4 @@
-# Copyright (C) 1999-2016 Free Software Foundation, Inc.
+# Copyright (C) 1999-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -150,6 +150,11 @@ $(conformtest-header-list-tests): $(objpfx)header-list-%.out: \
 		 "$(conformtest-headers-data)" > $@; \
 	$(evaluate-test)
 
+# GCC 4.6 and earlier lack features required by these tests.
+test-xfail-ISO11/complex.h/conform = yes
+test-xfail-ISO11/stdalign.h/conform = yes
+test-xfail-ISO11/stdnoreturn.h/conform = yes
+
 # Pre-standard C feature no longer supported by GCC (obsoleted in
 # newer POSIX standards).
 test-xfail-XPG3/varargs.h/conform = yes
@@ -212,6 +217,7 @@ test-xfail-UNIX98/utmpx.h/conform = yes
 test-xfail-XOPEN2K/aio.h/conform = yes
 test-xfail-XOPEN2K/fcntl.h/conform = yes
 test-xfail-XOPEN2K/langinfo.h/conform = yes
+test-xfail-XOPEN2K/math.h/conform = yes
 test-xfail-XOPEN2K/mqueue.h/conform = yes
 test-xfail-XOPEN2K/semaphore.h/conform = yes
 test-xfail-XOPEN2K/signal.h/conform = yes
@@ -219,6 +225,7 @@ test-xfail-XOPEN2K/stdarg.h/conform = yes
 test-xfail-XOPEN2K/stdio.h/conform = yes
 test-xfail-XOPEN2K/sys/wait.h/conform = yes
 test-xfail-XOPEN2K/termios.h/conform = yes
+test-xfail-XOPEN2K/tgmath.h/conform = yes
 test-xfail-XOPEN2K/ucontext.h/conform = yes
 test-xfail-POSIX2008/arpa/inet.h/conform = yes
 test-xfail-POSIX2008/netdb.h/conform = yes
@@ -227,10 +234,12 @@ test-xfail-POSIX2008/signal.h/conform = yes
 test-xfail-POSIX2008/sys/socket.h/conform = yes
 test-xfail-POSIX2008/sys/wait.h/conform = yes
 test-xfail-XOPEN2K8/limits.h/conform = yes
+test-xfail-XOPEN2K8/math.h/conform = yes
 test-xfail-XOPEN2K8/signal.h/conform = yes
 test-xfail-XOPEN2K8/stdio.h/conform = yes
 test-xfail-XOPEN2K8/sys/wait.h/conform = yes
 test-xfail-XOPEN2K8/termios.h/conform = yes
+test-xfail-XOPEN2K8/tgmath.h/conform = yes
 
 conformtest-cc-flags = -I../include $(+sysdep-includes) $(sysincludes) -I..
 $(conformtest-header-tests): $(objpfx)%/conform.out: \

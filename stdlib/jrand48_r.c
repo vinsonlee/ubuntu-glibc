@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -19,8 +19,10 @@
 #include <stdlib.h>
 
 int
-__jrand48_r (unsigned short int xsubi[3], struct drand48_data *buffer,
-	     long int *result)
+__jrand48_r (xsubi, buffer, result)
+     unsigned short int xsubi[3];
+     struct drand48_data *buffer;
+     long int *result;
 {
   /* Compute next state.  */
   if (__drand48_iterate (xsubi, buffer) < 0)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -41,7 +41,9 @@
 #  define localtime_r my_localtime_r
 static struct tm *localtime_r (const time_t *, struct tm *);
 static struct tm *
-localtime_r (const time_t *t, struct tm *tp)
+localtime_r (t, tp)
+     const time_t *t;
+     struct tm *tp;
 {
   struct tm *l = localtime (t);
   if (! l)
@@ -181,13 +183,17 @@ static const unsigned short int __mon_yday[2][13] =
 # undef _NL_CURRENT_WORD
 # define _NL_CURRENT_WORD(category, item) \
   (current->values[_NL_ITEM_INDEX (item)].word)
-# define LOCALE_PARAM , __locale_t locale
+# define LOCALE_PARAM , locale
 # define LOCALE_ARG , locale
+# define LOCALE_PARAM_PROTO , __locale_t locale
+# define LOCALE_PARAM_DECL __locale_t locale;
 # define HELPER_LOCALE_ARG , current
 # define ISSPACE(Ch) __isspace_l (Ch, locale)
 #else
 # define LOCALE_PARAM
 # define LOCALE_ARG
+# define LOCALE_PARAM_DECL
+# define LOCALE_PARAM_PROTO
 # define HELPER_LOCALE_ARG
 # define ISSPACE(Ch) isspace (Ch)
 #endif
@@ -235,8 +241,12 @@ internal_function
 #else
 static char *
 #endif
-__strptime_internal (const char *rp, const char *fmt, struct tm *tmp,
-		     void *statep LOCALE_PARAM)
+__strptime_internal (rp, fmt, tmp, statep LOCALE_PARAM)
+     const char *rp;
+     const char *fmt;
+     struct tm *tmp;
+     void *statep;
+     LOCALE_PARAM_DECL
 {
 #ifdef _LIBC
   struct __locale_data *const current = locale->__locales[LC_TIME];
@@ -739,21 +749,13 @@ __strptime_internal (const char *rp, const char *fmt, struct tm *tmp,
 	    rp++;
 	  break;
 	case 'z':
-	  /* We recognize four formats:
-	     1. Two digits specify hours.
-	     2. Four digits specify hours and minutes.
-	     3. Two digits, ':', and two digits specify hours and minutes.
-	     4. 'Z' is equivalent to +0000.  */
+	  /* We recognize two formats: if two digits are given, these
+	     specify hours.  If fours digits are used, minutes are
+	     also specified.  */
 	  {
 	    val = 0;
 	    while (ISSPACE (*rp))
 	      ++rp;
-	    if (*rp == 'Z')
-	      {
-		++rp;
-		tm->tm_gmtoff = 0;
-		break;
-	      }
 	    if (*rp != '+' && *rp != '-')
 	      return NULL;
 	    bool neg = *rp++ == '-';
@@ -762,18 +764,22 @@ __strptime_internal (const char *rp, const char *fmt, struct tm *tmp,
 	      {
 		val = val * 10 + *rp++ - '0';
 		++n;
-		if (*rp == ':' && n == 2 && isdigit (*(rp + 1)))
-		  ++rp;
 	      }
 	    if (n == 2)
 	      val *= 100;
 	    else if (n != 4)
 	      /* Only two or four digits recognized.  */
 	      return NULL;
-	    else if (val % 100 >= 60)
-	      /* Minutes valid range is 0 through 59.  */
+	    else
+	      {
+		/* We have to convert the minutes into decimal.  */
+		if (val % 100 >= 60)
+		  return NULL;
+		val = (val / 100) * 100 + ((val % 100) * 50) / 30;
+	      }
+	    if (val > 1200)
 	      return NULL;
-	    tm->tm_gmtoff = (val / 100) * 3600 + (val % 100) * 60;
+	    tm->tm_gmtoff = (val * 3600) / 100;
 	    if (neg)
 	      tm->tm_gmtoff = -tm->tm_gmtoff;
 	  }
@@ -1201,7 +1207,11 @@ __strptime_internal (const char *rp, const char *fmt, struct tm *tmp,
 
 
 char *
-strptime (const char *buf, const char *format, struct tm *tm LOCALE_PARAM)
+strptime (buf, format, tm LOCALE_PARAM)
+     const char *buf;
+     const char *format;
+     struct tm *tm;
+     LOCALE_PARAM_DECL
 {
   return __strptime_internal (buf, format, tm, NULL LOCALE_ARG);
 }

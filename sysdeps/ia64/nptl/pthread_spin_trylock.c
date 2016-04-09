@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2003.
 
@@ -20,7 +20,8 @@
 #include "pthreadP.h"
 
 int
-pthread_spin_trylock (pthread_spinlock_t *lock)
+pthread_spin_trylock (lock)
+     pthread_spinlock_t *lock;
 {
   return __sync_val_compare_and_swap ((int *) lock, 0, 1) == 0 ? 0 : EBUSY;
 }

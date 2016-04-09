@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Maxim Kuvyrkov <maxim@codesourcery.com>, 2010.
 
@@ -18,7 +18,7 @@
 
 #ifdef SHARED
 
-#include <m68k-vdso.h>
+#include <bits/m68k-vdso.h>
 
 /* Because these pointers are used from other libraries than libc,
    they are exported at GLIBC_PRIVATE version.

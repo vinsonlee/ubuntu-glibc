@@ -1,5 +1,5 @@
 /* POSIX.1 `sigaction' call for Linux/i386.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -69,14 +69,11 @@ __libc_sigaction (int sig, const struct sigaction *act, struct sigaction *oact)
 
   /* XXX The size argument hopefully will have to be changed to the
      real size of the user-level sigset_t.  */
-  INTERNAL_SYSCALL_DECL (err);
-  result = INTERNAL_SYSCALL (rt_sigaction, err, 4,
-			     sig, act ? &kact : NULL,
-			     oact ? &koact : NULL, _NSIG / 8);
-  if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (result, err)))
-     return INLINE_SYSCALL_ERROR_RETURN_VALUE (INTERNAL_SYSCALL_ERRNO (result,
-								       err));
-  else if (oact && result >= 0)
+  result = INLINE_SYSCALL (rt_sigaction, 4,
+			   sig, act ? &kact : NULL,
+			   oact ? &koact : NULL, _NSIG / 8);
+
+  if (oact && result >= 0)
     {
       oact->sa_handler = koact.k_sa_handler;
       memcpy (&oact->sa_mask, &koact.sa_mask, sizeof (sigset_t));

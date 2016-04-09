@@ -1,5 +1,5 @@
 /* elision-conf.c: Lock elision tunable parameters.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -62,11 +62,11 @@ elision_init (int argc __attribute__ ((unused)),
 	      char **argv  __attribute__ ((unused)),
 	      char **environ)
 {
-  __elision_available = HAS_CPU_FEATURE (RTM);
+  __elision_available = HAS_RTM;
 #ifdef ENABLE_LOCK_ELISION
   __pthread_force_elision = __libc_enable_secure ? 0 : __elision_available;
 #endif
-  if (!HAS_CPU_FEATURE (RTM))
+  if (!HAS_RTM)
     __elision_aconf.retry_try_xbegin = 0; /* Disable elision on rwlocks */
 }
 

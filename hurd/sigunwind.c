@@ -1,5 +1,5 @@
 /* longjmp cleanup function for unwinding past signal handlers.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -50,8 +50,7 @@ _hurdsig_longjmp_from_handler (void *data, jmp_buf env, int val)
 	  *reply_port = MACH_PORT_DEAD;
 	  __mach_port_destroy (__mach_task_self (), port);
 	}
-      if (scp->sc_reply_port)
-	__mach_port_destroy (__mach_task_self (), scp->sc_reply_port);
+      *reply_port = scp->sc_reply_port;
     }
 
   __spin_lock (&ss->lock);

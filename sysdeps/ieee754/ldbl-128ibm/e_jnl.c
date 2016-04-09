@@ -296,12 +296,12 @@ __ieee754_jnl (int n, long double x)
       ret = b;
   }
   if (ret == 0)
+    ret = __copysignl (LDBL_MIN, ret) * LDBL_MIN;
+  else if (fabsl (ret) < LDBL_MIN)
     {
-      ret = __copysignl (LDBL_MIN, ret) * LDBL_MIN;
-      __set_errno (ERANGE);
+      long double force_underflow = ret * ret;
+      math_force_eval (force_underflow);
     }
-  else
-    math_check_force_underflow (ret);
   return ret;
 }
 strong_alias (__ieee754_jnl, __jnl_finite)

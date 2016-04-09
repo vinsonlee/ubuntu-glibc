@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -75,7 +75,7 @@ struct pthread_functions
   int (*ptr_pthread_mutex_lock) (pthread_mutex_t *);
   int (*ptr_pthread_mutex_unlock) (pthread_mutex_t *);
   pthread_t (*ptr_pthread_self) (void);
-  int (*ptr___pthread_setcancelstate) (int, int *);
+  int (*ptr_pthread_setcancelstate) (int, int *);
   int (*ptr_pthread_setcanceltype) (int, int *);
   void (*ptr___pthread_cleanup_upto) (__jmp_buf, char *);
   int (*ptr___pthread_once) (pthread_once_t *, void (*) (void));

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -23,8 +23,9 @@
 
 
 int
-__pthread_attr_setschedparam (pthread_attr_t *attr,
-			      const struct sched_param *param)
+__pthread_attr_setschedparam (attr, param)
+     pthread_attr_t *attr;
+     const struct sched_param *param;
 {
   assert (sizeof (*attr) >= sizeof (struct pthread_attr));
   struct pthread_attr *iattr = (struct pthread_attr *) attr;

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -80,7 +80,8 @@ static int create_thread (struct pthread *pd, const struct pthread_attr *attr,
 
 struct pthread *
 internal_function
-__find_in_stack_list (struct pthread *pd)
+__find_in_stack_list (pd)
+     struct pthread *pd;
 {
   list_t *entry;
   struct pthread *result = NULL;
@@ -487,8 +488,11 @@ report_thread_creation (struct pthread *pd)
 
 
 int
-__pthread_create_2_1 (pthread_t *newthread, const pthread_attr_t *attr,
-		      void *(*start_routine) (void *), void *arg)
+__pthread_create_2_1 (newthread, attr, start_routine, arg)
+     pthread_t *newthread;
+     const pthread_attr_t *attr;
+     void *(*start_routine) (void *);
+     void *arg;
 {
   STACK_VARIABLES;
 
@@ -720,8 +724,11 @@ versioned_symbol (libpthread, __pthread_create_2_1, pthread_create, GLIBC_2_1);
 
 #if SHLIB_COMPAT(libpthread, GLIBC_2_0, GLIBC_2_1)
 int
-__pthread_create_2_0 (pthread_t *newthread, const pthread_attr_t *attr,
-		      void *(*start_routine) (void *), void *arg)
+__pthread_create_2_0 (newthread, attr, start_routine, arg)
+     pthread_t *newthread;
+     const pthread_attr_t *attr;
+     void *(*start_routine) (void *);
+     void *arg;
 {
   /* The ATTR attribute is not really of type `pthread_attr_t *'.  It has
      the old size and access to the new members might crash the program.

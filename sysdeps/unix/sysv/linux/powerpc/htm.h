@@ -2,7 +2,7 @@
    compilers and assemblers that do not support the intrinsics and instructions
    yet.
 
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -118,54 +118,21 @@
      __ret;				\
   })
 
-#define __libc_tbegin(tdb)       _tbegin ()
-#define __libc_tend(nested)      _tend ()
-#define __libc_tabort(abortcode) _tabort (abortcode)
-#define __builtin_get_texasru()  _texasru ()
+#define __builtin_tbegin(tdb)       _tbegin ()
+#define __builtin_tend(nested)      _tend ()
+#define __builtin_tabort(abortcode) _tabort (abortcode)
+#define __builtin_get_texasru()     _texasru ()
 
 #else
 # include <htmintrin.h>
-
-# ifdef __TM_FENCE__
-   /* New GCC behavior.  */
-#  define __libc_tbegin(R)  __builtin_tbegin (R)
-#  define __libc_tend(R)    __builtin_tend (R)
-#  define __libc_tabort(R)  __builtin_tabort (R)
-# else
-   /* Workaround an old GCC behavior. Earlier releases of GCC 4.9 and 5.0,
-      didn't use to treat __builtin_tbegin, __builtin_tend and
-      __builtin_tabort as compiler barriers, moving instructions into and
-      out the transaction.
-      Remove this when glibc drops support for GCC 5.0.  */
-#  define __libc_tbegin(R)			\
-   ({ __asm__ volatile("" ::: "memory");	\
-     unsigned int __ret = __builtin_tbegin (R);	\
-     __asm__ volatile("" ::: "memory");		\
-     __ret;					\
-   })
-#  define __libc_tabort(R)			\
-  ({ __asm__ volatile("" ::: "memory");		\
-    unsigned int __ret = __builtin_tabort (R);	\
-    __asm__ volatile("" ::: "memory");		\
-    __ret;					\
-  })
-#  define __libc_tend(R)			\
-   ({ __asm__ volatile("" ::: "memory");	\
-     unsigned int __ret = __builtin_tend (R);	\
-     __asm__ volatile("" ::: "memory");		\
-     __ret;					\
-   })
-# endif /* __TM_FENCE__  */
 #endif /* __HTM__  */
 
 #endif /* __ASSEMBLER__ */
 
-/* Definitions used for TEXASR Failure code (bits 0:7).  If the failure
-   should be persistent, the abort code must be odd.  0xd0 through 0xff
-   are reserved for the kernel and potential hypervisor.  */
-#define _ABORT_PERSISTENT      0x01   /* An unspecified persistent abort.  */
-#define _ABORT_LOCK_BUSY       0x34   /* Busy lock, not persistent.  */
-#define _ABORT_NESTED_TRYLOCK  (0x32 | _ABORT_PERSISTENT)
-#define _ABORT_SYSCALL         (0x30 | _ABORT_PERSISTENT)
+/* Definitions used for TEXASR Failure code (bits 0:6), they need to be even
+   because tabort. always sets the first bit.  */
+#define _ABORT_LOCK_BUSY       0x3f   /* Lock already used.  */
+#define _ABORT_NESTED_TRYLOCK  0x3e   /* Write operation in trylock.  */
+#define _ABORT_SYSCALL         0x3d   /* Syscall issued.  */
 
 #endif

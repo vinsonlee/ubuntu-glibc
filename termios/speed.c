@@ -1,5 +1,5 @@
 /* `struct termios' speed frobnication functions.  4.4 BSD/generic GNU version.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,21 +22,25 @@
 
 /* Return the output baud rate stored in *TERMIOS_P.  */
 speed_t
-cfgetospeed (const struct termios *termios_p)
+cfgetospeed (termios_p)
+     const struct termios *termios_p;
 {
   return termios_p->__ospeed;
 }
 
 /* Return the input baud rate stored in *TERMIOS_P.  */
 speed_t
-cfgetispeed (const struct termios *termios_p)
+cfgetispeed (termios_p)
+     const struct termios *termios_p;
 {
   return termios_p->__ispeed;
 }
 
 /* Set the output baud rate stored in *TERMIOS_P to SPEED.  */
 int
-cfsetospeed (struct termios *termios_p, speed_t speed)
+cfsetospeed (termios_p, speed)
+     struct termios *termios_p;
+     speed_t speed;
 {
   if (termios_p == NULL)
     {
@@ -51,7 +55,9 @@ libc_hidden_def (cfsetospeed)
 
 /* Set the input baud rate stored in *TERMIOS_P to SPEED.  */
 int
-cfsetispeed (struct termios *termios_p, speed_t speed)
+cfsetispeed (termios_p, speed)
+     struct termios *termios_p;
+     speed_t speed;
 {
   if (termios_p == NULL)
     {

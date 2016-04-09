@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -43,10 +43,9 @@ syscall (long int __sysno, ...)
   va_end (args);
 
   {
-    LOAD_ARGS_6 (arg0, arg1, arg2, arg3, arg4, arg5)
     register unsigned long int __res asm("r28");
     PIC_REG_DEF
-    LOAD_REGS_6
+    LOAD_ARGS_6 (arg0, arg1, arg2, arg3, arg4, arg5)
     asm volatile (SAVE_ASM_PIC
 		  "	ble  0x100(%%sr2, %%r0)	\n"
 		  "	copy %1, %%r20		\n"

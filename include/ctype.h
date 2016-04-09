@@ -21,7 +21,7 @@ extern int (__isctype) (int __c, int __mask);
    NL_CURRENT_INDIRECT.  */
 
 #  include "../locale/localeinfo.h"
-#  include <libc-tsd.h>
+#  include <bits/libc-tsd.h>
 
 #  ifndef CTYPE_EXTERN_INLINE	/* Used by ctype/ctype-info.c, which see.  */
 #   define CTYPE_EXTERN_INLINE extern inline

@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -18,14 +18,14 @@
 
 #include <wchar.h>
 
-#ifdef WCPNCPY
-# define __wcpncpy WCPNCPY
-#endif
 
 /* Copy no more than N wide-characters of SRC to DEST, returning the
    address of the last character written into DEST.  */
 wchar_t *
-__wcpncpy (wchar_t *dest, const wchar_t *src, size_t n)
+__wcpncpy (dest, src, n)
+     wchar_t *dest;
+     const wchar_t *src;
+     size_t n;
 {
   wint_t c;
   wchar_t *const s = dest;
@@ -82,6 +82,4 @@ __wcpncpy (wchar_t *dest, const wchar_t *src, size_t n)
   return dest - 1;
 }
 
-#ifndef WCPNCPY
 weak_alias (__wcpncpy, wcpncpy)
-#endif

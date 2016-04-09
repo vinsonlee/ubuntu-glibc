@@ -1,5 +1,5 @@
 /* Optimized strstr implementation for PowerPC64/POWER7.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,8 +23,6 @@
 /* The performance gain is obtained using aligned memory access, load
  * doubleword and usage of cmpb instruction for quicker comparison.  */
 
-#define ITERATIONS	64
-
 #ifndef STRLEN
 /* For builds with no IFUNC support, local calls should be made to internal
    GLIBC symbol (created by libc_hidden_builtin_def).  */
@@ -41,7 +39,7 @@
 # ifdef SHARED
 #  define STRNLEN   __GI_strnlen
 # else
-#  define STRNLEN  __strnlen
+#  define STRNLEN   strnlen
 # endif
 #endif
 
@@ -64,8 +62,6 @@ EALIGN (strstr, 4, 0)
 	cfi_offset(r30, -16)
 	std	r29, -24(r1)		/* Save callers register r29.  */
 	cfi_offset(r29, -24)
-	std	r28, -32(r1)		/* Save callers register r28.  */
-	cfi_offset(r28, -32)
 	std	r0, 16(r1)		/* Store the link register.  */
 	cfi_offset(lr, 16)
 	stdu	r1, -FRAMESIZE(r1)	/* Create the stack frame.  */
@@ -73,6 +69,7 @@ EALIGN (strstr, 4, 0)
 
 	dcbt	0, r3
 	dcbt	0, r4
+
 	cmpdi	cr7, r3, 0
 	beq	cr7, L(retnull)
 	cmpdi	cr7, r4, 0
@@ -86,6 +83,10 @@ EALIGN (strstr, 4, 0)
 
 	cmpdi	cr7, r3, 0	/* If search str is null.  */
 	beq	cr7, L(ret_r3)
+
+	/* Call __strstr_ppc if needle len > 2048 */
+	cmpdi	cr7, r3, 2048
+	bgt	cr7, L(default)
 
 	mr	r31, r3
 	mr	r4, r3
@@ -104,8 +105,7 @@ EALIGN (strstr, 4, 0)
 	/* If first char of search str is not present.  */
 	cmpdi	cr7, r3, 0
 	ble	cr7, L(end)
-	/* Reg r28 is used to count the number of iterations. */
-	li	r28, 0
+
 	rldicl	r8, r3, 0, 52	/* Page cross check.  */
 	cmpldi	cr7, r8, 4096-16
 	bgt	cr7, L(bytebybyte)
@@ -324,10 +324,6 @@ L(return4):
 	.align	4
 L(begin):
 	mr	r3, r8
-	/* When our iterations exceed ITERATIONS,fall back to default. */
-	addi	r28, r28, 1
-	cmpdi	cr7, r28, ITERATIONS
-	beq	cr7, L(default)
 	lbz	r4, 0(r30)
 	bl	STRCHR
 	nop
@@ -427,10 +423,6 @@ L(nextbyte):
 	cmpdi	cr7, r9, -1
 	beq	cr7, L(end)
 	addi	r3, r4, 1
-	/* When our iterations exceed ITERATIONS,fall back to default. */
-	addi	r28, r28, 1
-	cmpdi	cr7, r28, ITERATIONS
-	beq	cr7, L(default)
 	lbz	r4, 0(r30)
 	bl	STRCHR
 	nop
@@ -498,6 +490,7 @@ L(retnull):
 
 	.align	4
 L(default):
+	mr	r3, r29
 	mr	r4, r30
 	bl	__strstr_ppc
 	nop
@@ -507,7 +500,6 @@ L(end):
 	addi	r1, r1, FRAMESIZE	/* Restore stack pointer.  */
 	cfi_adjust_cfa_offset(-FRAMESIZE)
 	ld	r0, 16(r1)	/* Restore the saved link register.  */
-	ld	r28, -32(r1)	/* Restore callers save register r28.  */
 	ld	r29, -24(r1)	/* Restore callers save register r29.  */
 	ld	r30, -16(r1)	/* Restore callers save register r30.  */
 	ld	r31, -8(r1)	/* Restore callers save register r31.  */
