@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -71,7 +71,8 @@ libc_hidden_weak (iswxdigit)
 
 #undef towlower
 wint_t
-__towlower (wint_t wc)
+__towlower (wc)
+     wint_t wc;
 {
   size_t i = _NL_CURRENT_WORD (LC_CTYPE, _NL_CTYPE_MAP_OFFSET) + __TOW_tolower;
   const char *desc = _NL_CURRENT (LC_CTYPE, i);
@@ -83,7 +84,8 @@ libc_hidden_weak (towlower)
 
 #undef towupper
 wint_t
-__towupper (wint_t wc)
+__towupper (wc)
+     wint_t wc;
 {
   size_t i = _NL_CURRENT_WORD (LC_CTYPE, _NL_CTYPE_MAP_OFFSET) + __TOW_toupper;
   const char *desc = _NL_CURRENT (LC_CTYPE, i);

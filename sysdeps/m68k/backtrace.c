@@ -1,5 +1,5 @@
 /* Return backtrace of current program state.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,7 +16,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <dlfcn.h>
 #include <execinfo.h>
 #include <stdlib.h>
@@ -111,10 +111,6 @@ int
 __backtrace (void **array, int size)
 {
   struct trace_arg arg = { .array = array, .size = size, .cnt = -1 };
-
-  if (size <= 0)
-    return 0;
-
 #ifdef SHARED
   __libc_once_define (static, once);
 
@@ -123,7 +119,8 @@ __backtrace (void **array, int size)
     return 0;
 #endif
 
-  unwind_backtrace (backtrace_helper, &arg);
+  if (size >= 1)
+    unwind_backtrace (backtrace_helper, &arg);
 
   if (arg.cnt > 1 && arg.array[arg.cnt - 1] == NULL)
     --arg.cnt;

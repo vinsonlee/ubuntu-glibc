@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -31,7 +31,8 @@
 #endif
 
 int
-__pthread_mutex_trylock (pthread_mutex_t *mutex)
+__pthread_mutex_trylock (mutex)
+     pthread_mutex_t *mutex;
 {
   int oldval;
   pid_t id = THREAD_GETMEM (THREAD_SELF, tid);

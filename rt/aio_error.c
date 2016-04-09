@@ -1,5 +1,5 @@
 /* Return error status of asynchronous I/O request.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -30,7 +30,8 @@
 
 
 int
-aio_error (const struct aiocb *aiocbp)
+aio_error (aiocbp)
+     const struct aiocb *aiocbp;
 {
   return aiocbp->__error_code;
 }

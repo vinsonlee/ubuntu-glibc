@@ -1,6 +1,6 @@
 /* Entry point for multi-version x86 strncasecmp.
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,20 +20,49 @@
 #include <sysdep.h>
 #include <init-arch.h>
 
+#ifdef SHARED
 	.text
 ENTRY(__strncasecmp)
 	.type	__strncasecmp, @gnu_indirect_function
-	LOAD_GOT_AND_RTLD_GLOBAL_RO
-	LOAD_FUNC_GOT_EAX (__strncasecmp_ia32)
-	HAS_CPU_FEATURE (SSSE3)
+	pushl	%ebx
+	cfi_adjust_cfa_offset (4)
+	cfi_rel_offset (ebx, 0)
+	LOAD_PIC_REG(bx)
+	cmpl	$0, KIND_OFFSET+__cpu_features@GOTOFF(%ebx)
+	jne	1f
+	call	__init_cpu_features
+1:	leal	__strncasecmp_ia32@GOTOFF(%ebx), %eax
+	testl	$bit_SSSE3, CPUID_OFFSET+index_SSSE3+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	LOAD_FUNC_GOT_EAX (__strncasecmp_ssse3)
-	HAS_CPU_FEATURE (SSE4_2)
+	leal	__strncasecmp_ssse3@GOTOFF(%ebx), %eax
+	testl	$bit_SSE4_2, CPUID_OFFSET+index_SSE4_2+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	HAS_ARCH_FEATURE (Slow_SSE4_2)
+	testl	$bit_Slow_SSE4_2, FEATURE_OFFSET+index_Slow_SSE4_2+__cpu_features@GOTOFF(%ebx)
 	jnz	2f
-	LOAD_FUNC_GOT_EAX (__strncasecmp_sse4_2)
+	leal	__strncasecmp_sse4_2@GOTOFF(%ebx), %eax
+2:	popl	%ebx
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (ebx)
+	ret
+END(__strncasecmp)
+#else
+	.text
+ENTRY(__strncasecmp)
+	.type	__strncasecmp, @gnu_indirect_function
+	cmpl	$0, KIND_OFFSET+__cpu_features
+	jne	1f
+	call	__init_cpu_features
+1:	leal	__strncasecmp_ia32, %eax
+	testl	$bit_SSSE3, CPUID_OFFSET+index_SSSE3+__cpu_features
+	jz	2f
+	leal	__strncasecmp_ssse3, %eax
+	testl	$bit_SSE4_2, CPUID_OFFSET+index_SSE4_2+__cpu_features
+	jz	2f
+	testl	$bit_Slow_SSE4_2, FEATURE_OFFSET+index_Slow_SSE4_2+__cpu_features
+	jnz	2f
+	leal	__strncasecmp_sse4_2, %eax
 2:	ret
 END(__strncasecmp)
+#endif
 
 weak_alias (__strncasecmp, strncasecmp)

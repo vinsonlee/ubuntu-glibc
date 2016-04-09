@@ -45,8 +45,6 @@ if test -z "$libc_mips_float"; then
 fi
 
 libc_mips_o32_fp=
-libc_cv_mips_fp64=
-libc_cv_mips_modd_spreg=
 
 if test x"$libc_mips_abi" = xo32 -a x"$libc_mips_float" = xhard; then
   AC_COMPILE_IFELSE(
@@ -86,13 +84,8 @@ if test x"$libc_mips_abi" = xo32 -a x"$libc_mips_float" = xhard; then
               [libc_mips_o32_fp=64],
               [])])])])])],
     [])
-
-  LIBC_TRY_CC_OPTION([-mfp64], [libc_cv_mips_fp64=yes], [libc_cv_mips_fp64=no])
-  LIBC_TRY_CC_OPTION([-Werror -modd-spreg], [libc_cv_mips_modd_spreg=yes], [libc_cv_mips_modd_spreg=no])
 fi
 LIBC_CONFIG_VAR([o32-fpabi],[${libc_mips_o32_fp}])
-LIBC_CONFIG_VAR([has-mpf64],[${libc_cv_mips_fp64}])
-LIBC_CONFIG_VAR([has-modd-spreg],[${libc_cv_mips_modd_spreg}])
 
 AC_COMPILE_IFELSE(
   [AC_LANG_PROGRAM([
@@ -131,6 +124,9 @@ libc_cv_gcc_unwind_find_fde=yes
 
 if test -z "$arch_minimum_kernel"; then
   if test x$libc_cv_mips_nan2008 = xyes; then
-    arch_minimum_kernel=4.5.0
+    # FIXME: Adjust this setting to the actual first upstream kernel
+    # version to support the 2008 NaN encoding and then remove this
+    # comment.
+    arch_minimum_kernel=10.0.0
   fi
 fi

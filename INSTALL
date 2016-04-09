@@ -127,17 +127,6 @@ will be used, and CFLAGS sets optimization options for the compiler.
      library.  This option hardcodes the newly built C library path in
      dynamic tests so that they can be invoked directly.
 
-'--disable-timezone-tools'
-     By default, timezone related utilities ('zic', 'zdump', and
-     'tzselect') are installed with the GNU C Library.  If you are
-     building these independently (e.g.  by using the 'tzcode' package),
-     then this option will allow disabling the install of these.
-
-     Note that you need to make sure the external tools are kept in sync
-     with the versions that the GNU C Library expects as the data
-     formats may change over time.  Consult the 'timezone' subdirectory
-     for more details.
-
 '--enable-lock-elision=yes'
      Enable lock elision for pthread mutexes by default.
 
@@ -357,12 +346,12 @@ build the GNU C Library:
      recommend GNU 'make' version 3.79.  All earlier versions have
      severe bugs or lack features.
 
-   * GCC 4.7 or newer
+   * GCC 4.6 or newer
 
-     GCC 4.7 or higher is required.  In general it is recommended to use
+     GCC 4.6 or higher is required.  In general it is recommended to use
      the newest version of the compiler that is known to work for
      building the GNU C Library, as newer compilers usually produce
-     better code.  As of release time, GCC 5.3 is the newest compiler
+     better code.  As of release time, GCC 4.9.2 is the newest compiler
      verified to work to build the GNU C Library.
 
      You can use whatever compiler you like to compile programs that use
@@ -384,16 +373,14 @@ build the GNU C Library:
      need this version of the 'texinfo' package.  Earlier versions do
      not understand all the tags used in the document, and the
      installation mechanism for the info files is not present or works
-     differently.  As of release time, 'texinfo' 6.0 is the newest
+     differently.  As of release time, 'texinfo' 5.2 is the newest
      verified to work to build the GNU C Library.
 
    * GNU 'awk' 3.1.2, or higher
 
      'awk' is used in several places to generate files.  Some 'gawk'
      extensions are used, including the 'asorti' function, which was
-     introduced in version 3.1.2 of 'gawk'.  As of release time, 'gawk'
-     version 4.1.3 is the newest verified to work to build the GNU C
-     Library.
+     introduced in version 3.1.2 of 'gawk'.
 
    * Perl 5
 
@@ -403,8 +390,11 @@ build the GNU C Library:
    * GNU 'sed' 3.02 or newer
 
      'Sed' is used in several places to generate files.  Most scripts
-     work with any version of 'sed'.  As of release time, 'sed' version
-     4.2.2 is the newest verified to work to build the GNU C Library.
+     work with any version of 'sed'.  The known exception is the script
+     'po2test.sed' in the 'intl' subdirectory which is used to generate
+     'msgs.h' for the test suite.  This script works correctly only with
+     GNU 'sed' 3.02.  If you like to run the test suite, you should
+     definitely upgrade 'sed'.
 
 If you change any of the 'configure.ac' files you will also need
 

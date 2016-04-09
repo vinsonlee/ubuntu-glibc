@@ -1,5 +1,5 @@
 /* pthread_setname_np -- Set  thread name.  Linux version
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,7 +28,9 @@
 
 
 int
-pthread_setname_np (pthread_t th, const char *name)
+pthread_setname_np (th, name)
+     pthread_t th;
+     const char *name;
 {
   const struct pthread *pd = (const struct pthread *) th;
 

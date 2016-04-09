@@ -1,5 +1,5 @@
 /* Measure strncpy functions.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,56 +16,23 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifdef WIDE
-# include <wchar.h>
-# define CHAR wchar_t
-# define UCHAR wchar_t
-# define BIG_CHAR WCHAR_MAX
-# define SMALL_CHAR 1273
-# define MEMCMP wmemcmp
-# define MEMSET wmemset
-# define STRNLEN wcsnlen
-#else
-# define CHAR char
-# define UCHAR unsigned char
-# define BIG_CHAR CHAR_MAX
-# define SMALL_CHAR 127
-# define MEMCMP memcmp
-# define MEMSET memset
-# define STRNLEN strnlen
-#endif /* !WIDE */
-
-
 #ifndef STRNCPY_RESULT
 # define STRNCPY_RESULT(dst, len, n) dst
 # define TEST_MAIN
-# ifndef WIDE
-#  define TEST_NAME "strncpy"
-# else
-#  define TEST_NAME "wcsncpy"
-# endif /* WIDE */
+# define TEST_NAME "strncpy"
 # include "bench-string.h"
-# ifndef WIDE
-#  define SIMPLE_STRNCPY simple_strncpy
-#  define STUPID_STRNCPY stupid_strncpy
-#  define STRNCPY strncpy
-# else
-#  define SIMPLE_STRNCPY simple_wcsncpy
-#  define STUPID_STRNCPY stupid_wcsncpy
-#  define STRNCPY wcsncpy
-# endif /* WIDE */
 
-CHAR *SIMPLE_STRNCPY (CHAR *, const CHAR *, size_t);
-CHAR *STUPID_STRNCPY (CHAR *, const CHAR *, size_t);
+char *simple_strncpy (char *, const char *, size_t);
+char *stupid_strncpy (char *, const char *, size_t);
 
-IMPL (STUPID_STRNCPY, 0)
-IMPL (SIMPLE_STRNCPY, 0)
-IMPL (STRNCPY, 1)
+IMPL (stupid_strncpy, 0)
+IMPL (simple_strncpy, 0)
+IMPL (strncpy, 1)
 
-CHAR *
-SIMPLE_STRNCPY (CHAR *dst, const CHAR *src, size_t n)
+char *
+simple_strncpy (char *dst, const char *src, size_t n)
 {
-  CHAR *ret = dst;
+  char *ret = dst;
   while (n--)
     if ((*dst++ = *src++) == '\0')
       {
@@ -76,10 +43,10 @@ SIMPLE_STRNCPY (CHAR *dst, const CHAR *src, size_t n)
   return ret;
 }
 
-CHAR *
-STUPID_STRNCPY (CHAR *dst, const CHAR *src, size_t n)
+char *
+stupid_strncpy (char *dst, const char *src, size_t n)
 {
-  size_t nc = STRNLEN (src, n);
+  size_t nc = strnlen (src, n);
   size_t i;
 
   for (i = 0; i < nc; ++i)
@@ -88,12 +55,12 @@ STUPID_STRNCPY (CHAR *dst, const CHAR *src, size_t n)
     dst[i] = '\0';
   return dst;
 }
-#endif /* !STRNCPY_RESULT */
+#endif
 
-typedef CHAR *(*proto_t) (CHAR *, const CHAR *, size_t);
+typedef char *(*proto_t) (char *, const char *, size_t);
 
 static void
-do_one_test (impl_t *impl, CHAR *dst, const CHAR *src, size_t len, size_t n)
+do_one_test (impl_t *impl, char *dst, const char *src, size_t len, size_t n)
 {
   size_t i, iters = INNER_LOOP_ITERS;
   timing_t start, stop, cur;
@@ -106,7 +73,7 @@ do_one_test (impl_t *impl, CHAR *dst, const CHAR *src, size_t len, size_t n)
       return;
     }
 
-  if (memcmp (dst, src, (len > n ? n : len) * sizeof (CHAR)) != 0)
+  if (memcmp (dst, src, len > n ? n : len) != 0)
     {
       error (0, 0, "Wrong result in function %s", impl->name);
       ret = 1;
@@ -142,26 +109,23 @@ static void
 do_test (size_t align1, size_t align2, size_t len, size_t n, int max_char)
 {
   size_t i;
-  CHAR *s1, *s2;
+  char *s1, *s2;
 
-/* For wcsncpy: align1 and align2 here mean alignment not in bytes,
-   but in wchar_ts, in bytes it will equal to align * (sizeof (wchar_t)).  */
   align1 &= 7;
-  if ((align1 + len) * sizeof (CHAR) >= page_size)
+  if (align1 + len >= page_size)
     return;
 
   align2 &= 7;
-  if ((align2 + len) * sizeof (CHAR) >= page_size)
+  if (align2 + len >= page_size)
     return;
 
-  s1 = (CHAR *) (buf1) + align1;
-  s2 = (CHAR *) (buf2) + align2;
+  s1 = (char *) (buf1 + align1);
+  s2 = (char *) (buf2 + align2);
 
   for (i = 0; i < len; ++i)
     s1[i] = 32 + 23 * i % (max_char - 32);
   s1[len] = 0;
-  for (i = len + 1; (i + align1) * sizeof (CHAR) < page_size && i < len + 64;
-       ++i)
+  for (i = len + 1; i + align1 < page_size && i < len + 64; ++i)
     s1[i] = 32 + 32 * i % (max_char - 32);
 
   printf ("Length %4zd, n %4zd, alignment %2zd/%2zd:", len, n, align1, align2);
@@ -186,22 +150,22 @@ test_main (void)
 
   for (i = 1; i < 8; ++i)
     {
-      do_test (i, i, 16, 16, SMALL_CHAR);
-      do_test (i, i, 16, 16, BIG_CHAR);
-      do_test (i, 2 * i, 16, 16, SMALL_CHAR);
-      do_test (2 * i, i, 16, 16, BIG_CHAR);
-      do_test (8 - i, 2 * i, 1 << i, 2 << i, SMALL_CHAR);
-      do_test (2 * i, 8 - i, 2 << i, 1 << i, SMALL_CHAR);
-      do_test (8 - i, 2 * i, 1 << i, 2 << i, BIG_CHAR);
-      do_test (2 * i, 8 - i, 2 << i, 1 << i, BIG_CHAR);
+      do_test (i, i, 16, 16, 127);
+      do_test (i, i, 16, 16, 255);
+      do_test (i, 2 * i, 16, 16, 127);
+      do_test (2 * i, i, 16, 16, 255);
+      do_test (8 - i, 2 * i, 1 << i, 2 << i, 127);
+      do_test (2 * i, 8 - i, 2 << i, 1 << i, 127);
+      do_test (8 - i, 2 * i, 1 << i, 2 << i, 255);
+      do_test (2 * i, 8 - i, 2 << i, 1 << i, 255);
     }
 
   for (i = 1; i < 8; ++i)
     {
-      do_test (0, 0, 4 << i, 8 << i, SMALL_CHAR);
-      do_test (0, 0, 16 << i, 8 << i, SMALL_CHAR);
-      do_test (8 - i, 2 * i, 4 << i, 8 << i, SMALL_CHAR);
-      do_test (8 - i, 2 * i, 16 << i, 8 << i, SMALL_CHAR);
+      do_test (0, 0, 4 << i, 8 << i, 127);
+      do_test (0, 0, 16 << i, 8 << i, 127);
+      do_test (8 - i, 2 * i, 4 << i, 8 << i, 127);
+      do_test (8 - i, 2 * i, 16 << i, 8 << i, 127);
     }
 
   return ret;

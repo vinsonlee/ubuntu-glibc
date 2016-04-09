@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -22,13 +22,19 @@
 
 
 int
-pthread_barrierattr_setpshared (pthread_barrierattr_t *attr, int pshared)
+pthread_barrierattr_setpshared (attr, pshared)
+     pthread_barrierattr_t *attr;
+     int pshared;
 {
+  struct pthread_barrierattr *iattr;
+
   int err = futex_supports_pshared (pshared);
   if (err != 0)
     return err;
 
-  ((struct pthread_barrierattr *) attr)->pshared = pshared;
+  iattr = (struct pthread_barrierattr *) attr;
+
+  iattr->pshared = pshared;
 
   return 0;
 }

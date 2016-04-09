@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.come>, 2011.
 
@@ -22,9 +22,10 @@
 
 ENTRY(__ceil)
 	.type	__ceil, @gnu_indirect_function
-	LOAD_RTLD_GLOBAL_RO_RDX
+	call	__get_cpu_features@plt
+	movq	%rax, %rdx
 	leaq	__ceil_sse41(%rip), %rax
-	HAS_CPU_FEATURE (SSE4_1)
+	testl	$bit_SSE4_1, CPUID_OFFSET+index_SSE4_1(%rdx)
 	jnz	2f
 	leaq	__ceil_c(%rip), %rax
 2:	ret

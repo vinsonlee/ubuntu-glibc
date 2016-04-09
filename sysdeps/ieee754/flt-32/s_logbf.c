@@ -15,7 +15,6 @@
 
 #include <math.h>
 #include <math_private.h>
-#include <fix-int-fp-convert-zero.h>
 
 float
 __logbf (float x)
@@ -34,8 +33,6 @@ __logbf (float x)
          though it were normalized.  */
       rix -= __builtin_clz (ix) - 9;
     }
-  if (FIX_INT_FP_CONVERT_ZERO && rix == 127)
-    return 0.0f;
   return (float) (rix - 127);
 }
 weak_alias (__logbf, logbf)

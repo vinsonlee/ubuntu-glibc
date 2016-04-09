@@ -29,16 +29,15 @@ static char rcsid[] = "$NetBSD: s_tanh.c,v 1.7 1995/05/10 20:48:22 jtc Exp $";
  *	    2**-57 <  x <=  1     : tanh(x) := -----; t = expm1(-2x)
  *					       t + 2
  *						     2
- *	    1      <= x <=  40.0  : tanh(x) := 1-  ----- ; t=expm1(2x)
+ *	    1      <= x <=  22.0  : tanh(x) := 1-  ----- ; t=expm1(2x)
  *						   t + 2
- *	    40.0   <  x <= INF    : tanh(x) := 1.
+ *	    22.0   <  x <= INF    : tanh(x) := 1.
  *
  * Special cases:
  *	tanh(NaN) is NaN;
  *	only tanh(0)=0 is exact for finite argument.
  */
 
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 #include <math_ldbl_opt.h>
@@ -62,15 +61,12 @@ long double __tanhl(long double x)
 	    else       return one/x-one;    /* tanh(NaN) = NaN */
 	}
 
-    /* |x| < 40 */
-	if (ix < 0x4044000000000000LL) {		/* |x|<40 */
+    /* |x| < 22 */
+	if (ix < 0x4036000000000000LL) {		/* |x|<22 */
 	    if (ix == 0)
 		return x;		/* x == +-0 */
 	    if (ix<0x3c60000000000000LL) 	/* |x|<2**-57 */
-	      {
-		math_check_force_underflow (x);
-		return x;		/* tanh(small) = small */
-	      }
+		return x*(one+x);    	/* tanh(small) = small */
 	    if (ix>=0x3ff0000000000000LL) {	/* |x|>=1  */
 		t = __expm1l(two*fabsl(x));
 		z = one - two/(t+two);
@@ -78,7 +74,7 @@ long double __tanhl(long double x)
 	        t = __expm1l(-two*fabsl(x));
 	        z= -t/(t+two);
 	    }
-    /* |x| > 40, return +-1 */
+    /* |x| > 22, return +-1 */
 	} else {
 	    z = one - tiny;		/* raised inexact flag */
 	}

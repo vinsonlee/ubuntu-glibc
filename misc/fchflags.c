@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,9 @@
 int fchflags (int fd, unsigned long int flags) __THROW;
 
 int
-fchflags (int fd, unsigned long int flags)
+fchflags (fd, flags)
+     int fd;
+     unsigned long int flags;
 {
   if (fd < 0)
     {

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Linux/IA64 specific sigaction
    Written by Jes Sorensen, <Jes.Sorensen@cern.ch>, April 1999.
@@ -34,7 +34,10 @@
 /* If ACT is not NULL, change the action for SIG to *ACT.
    If OACT is not NULL, put the old action for SIG in *OACT.  */
 int
-__libc_sigaction (int sig, const struct sigaction *act, struct sigaction *oact)
+__libc_sigaction (sig, act, oact)
+     int sig;
+     const struct sigaction *act;
+     struct sigaction *oact;
 {
   /* XXX The size argument hopefully will have to be changed to the
      real size of the user-level sigset_t.  */

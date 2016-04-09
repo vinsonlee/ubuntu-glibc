@@ -307,8 +307,11 @@ p_cdname(const u_char *cp, const u_char *msg, FILE *file) {
    length supplied).  */
 
 const u_char *
-p_fqnname (const u_char *cp, const u_char *msg, int msglen, char *name,
-	   int namelen)
+p_fqnname(cp, msg, msglen, name, namelen)
+	const u_char *cp, *msg;
+	int msglen;
+	char *name;
+	int namelen;
 {
 	int n, newlen;
 
@@ -787,7 +790,9 @@ latlon2ul (const char **latlonstrptr, int *which)
 /* converts a zone file representation in a string to an RDATA on-the-wire
  * representation. */
 int
-loc_aton (const char *ascii, u_char *binary)
+loc_aton(ascii, binary)
+	const char *ascii;
+	u_char *binary;
 {
 	const char *cp, *maxcp;
 	u_char *bcp;
@@ -896,7 +901,9 @@ loc_aton (const char *ascii, u_char *binary)
 
 /* takes an on-the-wire LOC RR and formats it in a human readable format. */
 const char *
-loc_ntoa (const u_char *binary, char *ascii)
+loc_ntoa(binary, ascii)
+	const u_char *binary;
+	char *ascii;
 {
 	static const char error[] = "?";
 	static char tmpbuf[sizeof

@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson (rth@tamu.edu)
 
@@ -47,11 +47,19 @@ ENTRY (__clone)
 	/* Sanity check arguments.  */
 	movl	$-EINVAL,%eax
 	movl	FUNC(%esp),%ecx		/* no NULL function pointers */
+#ifdef PIC
+	jecxz	SYSCALL_ERROR_LABEL
+#else
 	testl	%ecx,%ecx
 	jz	SYSCALL_ERROR_LABEL
+#endif
 	movl	STACK(%esp),%ecx	/* no NULL stack pointers */
+#ifdef PIC
+	jecxz	SYSCALL_ERROR_LABEL
+#else
 	testl	%ecx,%ecx
 	jz	SYSCALL_ERROR_LABEL
+#endif
 
 	/* Insert the argument onto the new stack.  Make sure the new
 	   thread is started with an alignment of (mod 16).  */
