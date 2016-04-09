@@ -26,21 +26,32 @@
 long double
 __logbl (long double x)
 {
-  int64_t hx, rhx;
-  double xhi;
+  int64_t hx, hxs, rhx;
+  double xhi, xlo;
 
-  xhi = ldbl_high (x);
+  ldbl_unpack (x, &xhi, &xlo);
   EXTRACT_WORDS64 (hx, xhi);
+  hxs = hx;
   hx &= 0x7fffffffffffffffLL;	/* high |x| */
   if (hx == 0)
     return -1.0 / fabs (x);
   if (hx >= 0x7ff0000000000000LL)
     return x * x;
-  if (__builtin_expect ((rhx = hx >> 52) == 0, 0))
+  if (__glibc_unlikely ((rhx = hx >> 52) == 0))
     {
       /* POSIX specifies that denormal number is treated as
          though it were normalized.  */
       rhx -= __builtin_clzll (hx) - 12;
+    }
+  else if ((hx & 0x000fffffffffffffLL) == 0)
+    {
+      /* If the high part is a power of 2, and the low part is nonzero
+	 with the opposite sign, the low part affects the
+	 exponent.  */
+      int64_t lx;
+      EXTRACT_WORDS64 (lx, xlo);
+      if ((hxs ^ lx) < 0 && (lx & 0x7fffffffffffffffLL) != 0)
+	rhx--;
     }
   return (long double) (rhx - 1023);
 }

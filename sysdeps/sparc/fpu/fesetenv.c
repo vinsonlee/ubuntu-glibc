@@ -1,5 +1,5 @@
 /* Install given floating-point environment.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -50,5 +50,6 @@ strong_alias (__fesetenv, __old_fesetenv)
 compat_symbol (libm, __old_fesetenv, fesetenv, GLIBC_2_1);
 #endif
 
+libm_hidden_def (__fesetenv)
 libm_hidden_ver (__fesetenv, fesetenv)
 versioned_symbol (libm, __fesetenv, fesetenv, GLIBC_2_2);

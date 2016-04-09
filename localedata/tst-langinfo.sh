@@ -1,6 +1,6 @@
 #! /bin/sh
 # Test nl_langinfo.
-# Copyright (C) 2000-2014 Free Software Foundation, Inc.
+# Copyright (C) 2000-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,9 @@
 set -e
 
 common_objpfx=$1
-tst_langinfo=$2
+tst_langinfo_before_env=$2
+run_program_env=$3
+tst_langinfo_after_env=$4
 
 # Run the test program.
 cat <<"EOF" |
@@ -339,8 +341,8 @@ ja_JP.EUC-JP         NOEXPR      ^([nNｎＮ]|いいえ|イイエ)
 # ja_JP.EUC-JP         CRNCYSTR    JPY
 ja_JP.EUC-JP         CODESET     EUC-JP
 EOF
-LOCPATH=${common_objpfx}localedata GCONV_PATH=${common_objpfx}iconvdata \
-LC_ALL=tt_TT ${tst_langinfo} \
-    > ${common_objpfx}localedata/tst-langinfo.out
+${tst_langinfo_before_env} \
+${run_program_env} \
+LC_ALL=tt_TT ${tst_langinfo_after_env}
 
 exit $?

@@ -1,5 +1,5 @@
 /* Handle configuration data.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -468,7 +468,7 @@ __gconv_get_path (void)
 				":", 1),
 		     default_gconv_path, sizeof (default_gconv_path));
 	  cwd = __getcwd (NULL, 0);
-	  cwdlen = strlen (cwd);
+	  cwdlen = __glibc_unlikely (cwd == NULL) ? 0 : strlen (cwd);
 	}
       assert (default_gconv_path[0] == '/');
 

@@ -1,5 +1,5 @@
 /* Complex hyperbole tangent for long double.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -23,12 +23,19 @@
 #include <math_private.h>
 #include <float.h>
 
+/* To avoid spurious underflows, use this definition to treat IBM long
+   double as approximating an IEEE-style format.  */
+#if LDBL_MANT_DIG == 106
+# undef LDBL_EPSILON
+# define LDBL_EPSILON 0x1p-106L
+#endif
+
 __complex__ long double
 __ctanhl (__complex__ long double x)
 {
   __complex__ long double res;
 
-  if (__builtin_expect (!isfinite (__real__ x) || !isfinite (__imag__ x), 0))
+  if (__glibc_unlikely (!isfinite (__real__ x) || !isfinite (__imag__ x)))
     {
       if (__isinf_nsl (__real__ x))
 	{
@@ -53,12 +60,11 @@ __ctanhl (__complex__ long double x)
       long double sinix, cosix;
       long double den;
       const int t = (int) ((LDBL_MAX_EXP - 1) * M_LN2l / 2);
-      int icls = fpclassify (__imag__ x);
 
       /* tanh(x+iy) = (sinh(2x) + i*sin(2y))/(cosh(2x) + cos(2y))
 	 = (sinh(x)*cosh(x) + i*sin(y)*cos(y))/(sinh(x)^2 + cos(y)^2).  */
 
-      if (__builtin_expect (icls != FP_SUBNORMAL, 1))
+      if (__glibc_likely (fabsl (__imag__ x) > LDBL_MIN))
 	{
 	  __sincosl (__imag__ x, &sinix, &cosix);
 	}

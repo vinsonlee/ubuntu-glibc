@@ -1,5 +1,5 @@
 /* Wrapper around clone system call.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
 #include <sysdep.h>
 #define _ERRNO_H	1
 #include <bits/errno.h>
-#include <kernel-features.h>
 
 #define CLONE_VM	0x00000100
 #define CLONE_THREAD	0x00010000
@@ -44,11 +43,7 @@ ENTRY (__clone)
 	/* Set up stack frame for parent.  */
 	stwu	r1,-32(r1)
 	cfi_adjust_cfa_offset (32)
-#ifdef RESET_PID
 	stmw	r28,16(r1)
-#else
-	stmw	r30,16(r1)
-#endif
 
 	/* Set up stack frame for child.  */
 	clrrwi	r4,r4,4
@@ -57,9 +52,7 @@ ENTRY (__clone)
 
 	/* Save fn, args, stack across syscall.  */
 	mr	r30,r3			/* Function in r30.  */
-#ifdef RESET_PID
 	mr	r28,r5
-#endif
 	mr	r31,r6			/* Argument in r31.  */
 
 	/* 'flags' argument is first parameter to clone syscall. (The other
@@ -83,7 +76,6 @@ ENTRY (__clone)
 	crandc	cr1*4+eq,cr1*4+eq,cr0*4+so
 	bne-	cr1,L(parent)		/* The '-' is to minimise the race.  */
 
-#ifdef RESET_PID
 	andis.	r0,r28,CLONE_THREAD>>16
 	bne+	r0,L(oldpid)
 	andi.	r0,r28,CLONE_VM
@@ -94,7 +86,6 @@ L(nomoregetpid):
 	stw	r3,TID(r2)
 	stw	r3,PID(r2)
 L(oldpid):
-#endif
 
 	/* Call procedure.  */
 	mtctr	r30
@@ -105,11 +96,7 @@ L(oldpid):
 
 L(parent):
 	/* Parent.  Restore registers & return.  */
-#ifdef RESET_PID
 	lmw	r28,16(r1)
-#else
-	lmw	r30,16(r1)
-#endif
 	addi	r1,r1,32
 	bnslr+
 	b	__syscall_error@local

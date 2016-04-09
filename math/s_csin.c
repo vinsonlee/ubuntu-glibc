@@ -1,5 +1,5 @@
 /* Complex sine function for double.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -33,16 +33,16 @@ __csin (__complex__ double x)
 
   __real__ x = fabs (__real__ x);
 
-  if (__builtin_expect (icls >= FP_ZERO, 1))
+  if (__glibc_likely (icls >= FP_ZERO))
     {
       /* Imaginary part is finite.  */
-      if (__builtin_expect (rcls >= FP_ZERO, 1))
+      if (__glibc_likely (rcls >= FP_ZERO))
 	{
 	  /* Real part is finite.  */
 	  const int t = (int) ((DBL_MAX_EXP - 1) * M_LN2);
 	  double sinix, cosix;
 
-	  if (__builtin_expect (rcls != FP_SUBNORMAL, 1))
+	  if (__glibc_likely (__real__ x > DBL_MIN))
 	    {
 	      __sincos (__real__ x, &sinix, &cosix);
 	    }
@@ -51,6 +51,9 @@ __csin (__complex__ double x)
 	      sinix = __real__ x;
 	      cosix = 1.0;
 	    }
+
+	  if (negate)
+	    sinix = -sinix;
 
 	  if (fabs (__imag__ x) > t)
 	    {
@@ -85,9 +88,6 @@ __csin (__complex__ double x)
 	      __real__ retval = __ieee754_cosh (__imag__ x) * sinix;
 	      __imag__ retval = __ieee754_sinh (__imag__ x) * cosix;
 	    }
-
-	  if (negate)
-	    __real__ retval = -__real__ retval;
 
 	  if (fabs (__real__ retval) < DBL_MIN)
 	    {
@@ -136,7 +136,7 @@ __csin (__complex__ double x)
 	  /* Real part is finite.  */
 	  double sinix, cosix;
 
-	  if (__builtin_expect (rcls != FP_SUBNORMAL, 1))
+	  if (__glibc_likely (__real__ x > DBL_MIN))
 	    {
 	      __sincos (__real__ x, &sinix, &cosix);
 	    }

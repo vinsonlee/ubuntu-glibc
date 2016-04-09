@@ -5,6 +5,7 @@
 __BEGIN_DECLS
 
 libc_hidden_proto (_exit, __noreturn__)
+rtld_hidden_proto (_exit, __noreturn__)
 libc_hidden_proto (alarm)
 libc_hidden_proto (confstr)
 libc_hidden_proto (execl)
@@ -14,6 +15,8 @@ libc_hidden_proto (execvp)
 libc_hidden_proto (getpid)
 libc_hidden_proto (getsid)
 libc_hidden_proto (getdomainname)
+extern __typeof (getlogin_r) __getlogin_r  __nonnull ((1));
+libc_hidden_proto (__getlogin_r)
 libc_hidden_proto (getlogin_r)
 libc_hidden_proto (seteuid)
 libc_hidden_proto (setegid)
@@ -151,18 +154,12 @@ libc_hidden_proto (__sbrk)
    environment variables that normally affect them.  */
 extern int __libc_enable_secure attribute_relro;
 extern int __libc_enable_secure_decided;
-#ifdef IS_IN_rtld
-/* XXX The #ifdef should go.  */
-extern int __libc_enable_secure_internal attribute_relro attribute_hidden;
-#endif
+rtld_hidden_proto (__libc_enable_secure)
 
 
 /* Various internal function.  */
 extern void __libc_check_standard_fds (void);
 
-
-/* Special exit function which only terminates the current thread.  */
-extern void __exit_thread (int val) __attribute__ ((noreturn));
 
 /* Internal name for fork function.  */
 extern __pid_t __libc_fork (void);

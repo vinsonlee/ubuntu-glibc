@@ -1,5 +1,5 @@
 /* Mapping tables for GBK handling.
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Sean Chen <sean.chen@turbolinux.com>, 1999.
 
@@ -13130,6 +13130,7 @@ static const char __gbk_from_ucs4_tab12[][2] =
 #define MIN_NEEDED_FROM		1
 #define MAX_NEEDED_FROM		2
 #define MIN_NEEDED_TO		4
+#define ONE_DIRECTION		0
 
 
 /* First define the conversion function from GBK to UCS4.  */
@@ -13157,7 +13158,7 @@ static const char __gbk_from_ucs4_tab12[][2] =
 	  uint32_t ch2;							      \
 	  int idx;							      \
 									      \
-	  if (__builtin_expect (inptr + 1 >= inend, 0))			      \
+	  if (__glibc_unlikely (inptr + 1 >= inend))			      \
 	    {								      \
 	      /* The second character is not available.  Store		      \
 		 the intermediate result.  */				      \
