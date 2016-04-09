@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -47,10 +47,15 @@ __sbrk (intptr_t increment)
     return __curbrk;
 
   oldbrk = __curbrk;
-  if ((increment > 0
-       ? ((uintptr_t) oldbrk + (uintptr_t) increment < (uintptr_t) oldbrk)
-       : ((uintptr_t) oldbrk < (uintptr_t) -increment))
-      || __brk (oldbrk + increment) < 0)
+  if (increment > 0
+      ? ((uintptr_t) oldbrk + (uintptr_t) increment < (uintptr_t) oldbrk)
+      : ((uintptr_t) oldbrk < (uintptr_t) -increment))
+    {
+      __set_errno (ENOMEM);
+      return (void *) -1;
+    }
+
+  if (__brk (oldbrk + increment) < 0)
     return (void *) -1;
 
   return oldbrk;

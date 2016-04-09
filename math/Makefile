@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2014 Free Software Foundation, Inc.
+# Copyright (C) 1996-2015 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,12 +19,15 @@
 
 subdir		:= math
 
+include ../Makeconfig
+
 # Installed header files.
 headers		:= math.h bits/mathcalls.h bits/mathinline.h bits/huge_val.h \
 		   bits/huge_valf.h bits/huge_vall.h bits/inf.h bits/nan.h \
 		   fpu_control.h complex.h bits/cmathcalls.h fenv.h \
 		   bits/fenv.h bits/fenvinline.h bits/mathdef.h tgmath.h \
-		   bits/math-finite.h
+		   bits/math-finite.h bits/math-vector.h \
+		   bits/libm-simd-decl-stubs.h
 
 # FPU support code.
 aux		:= setfpucw fpu_control
@@ -34,7 +37,7 @@ aux		:= setfpucw fpu_control
 extra-libs	:= libm
 extra-libs-others = $(extra-libs)
 
-libm-support = k_standard s_lib_version s_matherr s_signgam		\
+libm-support = s_lib_version s_matherr s_signgam			\
 	       fclrexcpt fgetexcptflg fraiseexcpt fsetexcptflg		\
 	       ftestexcept fegetround fesetround fegetenv feholdexcpt	\
 	       fesetenv feupdateenv t_exp fedisblxcpt feenablxcpt	\
@@ -45,8 +48,8 @@ libm-calls = e_acos e_acosh e_asin e_atan2 e_atanh e_cosh e_exp e_fmod	\
 	     e_ilogb							\
 	     k_cos k_rem_pio2 k_sin k_tan s_asinh s_atan s_cbrt		\
 	     s_ceil s_cos s_erf s_expm1 s_fabs				\
-	     s_floor s_log1p s_logb					\
-	     s_nextafter s_nexttoward s_rint s_scalbln			\
+	     s_floor s_log1p w_log1p s_logb				\
+	     s_nextafter s_nexttoward s_rint s_scalbln w_scalbln	\
 	     s_significand s_sin s_tan s_tanh w_acos w_acosh w_asin	\
 	     w_atan2 w_atanh w_cosh w_drem w_exp w_exp2 w_exp10 w_fmod	\
 	     w_tgamma w_hypot w_j0 w_j1 w_jn w_lgamma w_lgamma_r	\
@@ -59,9 +62,7 @@ libm-calls = e_acos e_acosh e_asin e_atan2 e_atanh e_cosh e_exp e_fmod	\
 	     s_casinh s_cacosh s_catanh s_csqrt s_cpow s_cproj s_clog10 \
 	     s_fma s_lrint s_llrint s_lround s_llround e_exp10 w_log2	\
 	     s_isinf_ns s_issignaling $(calls:s_%=m_%) x2y2m1 k_casinh	\
-	     gamma_product
-
-include ../Makeconfig
+	     gamma_product k_standard
 
 dbl-only-routines := branred doasin dosincos halfulp mpa mpatan2	\
 		     mpatan mpexp mplog mpsqrt mptan sincos32 slowexp	\
@@ -85,24 +86,42 @@ generated += $(foreach s,.c .S l.c l.S f.c f.S,$(calls:s_%=m_%$s))
 routines = $(calls) $(calls:=f) $(long-c-$(long-double-fcts))
 long-c-yes = $(calls:=l)
 
+ifeq ($(build-mathvec),yes)
+# We need to install libm.so as linker script
+# for more comfortable use of vector math library.
+install-lib-ldscripts := libm.so
+install_subdir: $(inst_libdir)/libm.so
+$(inst_libdir)/libm.so: $(common-objpfx)format.lds \
+			$(libm) \
+			$(libmvec) \
+			$(+force)
+	(echo '/* GNU ld script'; echo '*/';\
+	 cat $<; \
+	 echo 'GROUP ( $(slibdir)/libm.so$(libm.so-version) ' \
+	      'AS_NEEDED ( $(slibdir)/libmvec.so$(libmvec.so-version) ) )' \
+	) > $@
+endif
+
 # Rules for the test suite.
 tests = test-matherr test-fenv atest-exp atest-sincos atest-exp2 basic-test \
 	test-misc test-fpucw test-fpucw-ieee tst-definitions test-tgmath \
 	test-tgmath-ret bug-nextafter bug-nexttoward bug-tgmath1 \
 	test-tgmath-int test-tgmath2 test-powl tst-CMPLX tst-CMPLX2 test-snan \
-	test-fenv-tls $(tests-static)
+	test-fenv-tls test-fenv-preserve test-fenv-return test-fenvinline \
+	$(tests-static)
 tests-static = test-fpucw-static test-fpucw-ieee-static
 # We do the `long double' tests only if this data type is available and
 # distinct from `double'.
 test-longdouble-yes = test-ldouble test-ildoubl
 
 ifneq (no,$(PERL))
+libm-vec-tests = $(addprefix test-,$(libmvec-tests))
 libm-tests = test-float test-double $(test-longdouble-$(long-double-fcts)) \
-	test-ifloat test-idouble
+	test-ifloat test-idouble $(libm-vec-tests)
 libm-tests.o = $(addsuffix .o,$(libm-tests))
 
 tests += $(libm-tests)
-libm-tests-generated = libm-test-ulps.h libm-test.c
+libm-tests-generated = libm-test-ulps.h libm-have-vector-test.h libm-test.c
 generated += $(libm-tests-generated) libm-test.stmp
 
 # This is needed for dependencies
@@ -113,9 +132,10 @@ ulps-file = $(firstword $(wildcard $(sysdirs:%=%/libm-test-ulps)))
 $(addprefix $(objpfx), $(libm-tests-generated)): $(objpfx)libm-test.stmp
 
 $(objpfx)libm-test.stmp: $(ulps-file) libm-test.inc gen-libm-test.pl \
-			 auto-libm-test-out
+			 gen-libm-have-vector-test.sh auto-libm-test-out
 	$(make-target-directory)
 	$(PERL) gen-libm-test.pl -u $< -o "$(objpfx)"
+	$(SHELL) gen-libm-have-vector-test.sh > $(objpfx)libm-have-vector-test.h
 	@echo > $@
 
 $(objpfx)test-float.o: $(objpfx)libm-test.stmp
@@ -126,9 +146,29 @@ $(objpfx)test-ldouble.o: $(objpfx)libm-test.stmp
 $(objpfx)test-ildoubl.o: $(objpfx)libm-test.stmp
 endif
 
-CFLAGS-test-float.c = -fno-inline -ffloat-store -fno-builtin -frounding-math
-CFLAGS-test-double.c = -fno-inline -ffloat-store -fno-builtin -frounding-math
-CFLAGS-test-ldouble.c = -fno-inline -ffloat-store -fno-builtin -frounding-math
+libm-test-fast-math-cflags = -fno-builtin -D__FAST_MATH__ -DTEST_FAST_MATH
+libm-test-vec-cflags = $(libm-test-fast-math-cflags) -fno-inline \
+		       -ffloat-store -D_OPENMP=201307 -Wno-unknown-pragmas
+
+CFLAGS-test-double-vlen2.c = $(libm-test-vec-cflags)
+
+CFLAGS-test-double-vlen4.c = $(libm-test-vec-cflags)
+CFLAGS-test-double-vlen4-wrappers.c = $(double-vlen4-arch-ext-cflags)
+
+CFLAGS-test-double-vlen8.c = $(libm-test-vec-cflags)
+CFLAGS-test-double-vlen8-wrappers.c = $(double-vlen8-arch-ext-cflags)
+
+CFLAGS-test-float-vlen4.c = $(libm-test-vec-cflags)
+
+CFLAGS-test-float-vlen8.c = $(libm-test-vec-cflags)
+CFLAGS-test-float-vlen8-wrappers.c = $(float-vlen8-arch-ext-cflags)
+
+CFLAGS-test-float-vlen16.c = $(libm-test-vec-cflags)
+CFLAGS-test-float-vlen16-wrappers.c = $(float-vlen16-arch-ext-cflags)
+
+CFLAGS-test-float.c = -fno-inline -ffloat-store -fno-builtin
+CFLAGS-test-double.c = -fno-inline -ffloat-store -fno-builtin
+CFLAGS-test-ldouble.c = -fno-inline -ffloat-store -fno-builtin
 CFLAGS-test-tgmath.c = -fno-builtin
 # The following testcase uses very long lines (>3 million), so it may take a
 # while to compile it. See: http://llvm.org/bugs/show_bug.cgi?id=14106 and
@@ -136,14 +176,12 @@ CFLAGS-test-tgmath.c = -fno-builtin
 CFLAGS-test-tgmath2.c = -fno-builtin
 CFLAGS-test-tgmath-ret.c = -fno-builtin
 CFLAGS-test-powl.c = -fno-builtin
-CFLAGS-test-test-fenv.c = -frounding-math
-CFLAGS-test-misc.c = -frounding-math
-CPPFLAGS-test-ifloat.c = -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
-			 -DTEST_FAST_MATH -fno-builtin -frounding-math
-CPPFLAGS-test-idouble.c = -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
-			 -DTEST_FAST_MATH -fno-builtin -frounding-math
-CPPFLAGS-test-ildoubl.c = -U__LIBC_INTERNAL_MATH_INLINES -D__FAST_MATH__ \
-			  -DTEST_FAST_MATH -fno-builtin -frounding-math
+CPPFLAGS-test-ifloat.c = -U__LIBC_INTERNAL_MATH_INLINES \
+			 $(libm-test-fast-math-cflags)
+CPPFLAGS-test-idouble.c = -U__LIBC_INTERNAL_MATH_INLINES \
+			  $(libm-test-fast-math-cflags)
+CPPFLAGS-test-ildoubl.c = -U__LIBC_INTERNAL_MATH_INLINES \
+			  $(libm-test-fast-math-cflags)
 
 
 # The -lieee module sets the _LIB_VERSION_ switch to IEEE mode
@@ -155,11 +193,14 @@ extra-objs += libieee.a ieee-math.o
 include ../Rules
 
 ifneq (no,$(PERL))
+# This must come after the inclusion of sysdeps Makefiles via Rules.
+$(addprefix $(objpfx), $(addsuffix .o, $(libm-vec-tests))): $(objpfx)libm-test.stmp
+
 # Run the math programs to automatically generate ULPs files.
 .PHONY: regen-ulps
 
 run-regen-ulps = $(test-wrapper-env) \
-	    GCONV_PATH=$(common-objpfx)iconvdata LC_ALL=C \
+	    $(run-program-env) \
 	    $($*-ENV) $(rtld-prefix) $${run}
 
 regen-ulps: $(addprefix $(objpfx),$(libm-tests))
@@ -219,12 +260,10 @@ $(objpfx)libieee.a: $(objpfx)ieee-math.o
 	$(patsubst %/,cd % &&,$(objpfx)) \
 	$(LN_S) $(<F) $(@F)
 
-ifeq ($(build-shared),yes)
-$(addprefix $(objpfx),$(filter-out $(tests-static),$(tests))): $(objpfx)libm.so$(libm.so-version)
+$(addprefix $(objpfx),$(filter-out $(tests-static) $(libm-vec-tests),$(tests))): $(libm)
 $(addprefix $(objpfx),$(tests-static)): $(objpfx)libm.a
-else
-$(addprefix $(objpfx),$(tests)): $(objpfx)libm.a
-endif
+$(addprefix $(objpfx), $(libm-vec-tests)): $(objpfx)%: $(libm) $(libmvec) \
+					   $(objpfx)init-arch.o $(objpfx)%-wrappers.o
 
 gmp-objs = $(patsubst %,$(common-objpfx)stdlib/%.o,\
 		      add_n sub_n cmp addmul_1 mul_1 mul_n divmod_1 \
@@ -233,4 +272,4 @@ gmp-objs = $(patsubst %,$(common-objpfx)stdlib/%.o,\
 $(objpfx)atest-exp: $(gmp-objs)
 $(objpfx)atest-sincos: $(gmp-objs)
 $(objpfx)atest-exp2: $(gmp-objs)
-$(objpfx)test-fenv-tls: $(common-objpfx)nptl/libpthread.so
+$(objpfx)test-fenv-tls: $(shared-thread-library)

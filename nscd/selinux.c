@@ -1,5 +1,5 @@
 /* SELinux access controls for nscd.
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Matthew Rickard <mjricka@epoch.ncsc.mil>, 2004.
 
@@ -28,9 +28,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <sys/prctl.h>
-#include <selinux/av_permissions.h>
 #include <selinux/avc.h>
-#include <selinux/flask.h>
 #include <selinux/selinux.h>
 #ifdef HAVE_LIBAUDIT
 # include <libaudit.h>
@@ -44,35 +42,31 @@
 /* Global variable to tell if the kernel has SELinux support.  */
 int selinux_enabled;
 
-/* Define mappings of access vector permissions to request types.  */
-static const access_vector_t perms[LASTREQ] =
+/* Define mappings of request type to AVC permission name.  */
+static const char *perms[LASTREQ] =
 {
-  [GETPWBYNAME] = NSCD__GETPWD,
-  [GETPWBYUID] = NSCD__GETPWD,
-  [GETGRBYNAME] = NSCD__GETGRP,
-  [GETGRBYGID] = NSCD__GETGRP,
-  [GETHOSTBYNAME] = NSCD__GETHOST,
-  [GETHOSTBYNAMEv6] = NSCD__GETHOST,
-  [GETHOSTBYADDR] = NSCD__GETHOST,
-  [GETHOSTBYADDRv6] = NSCD__GETHOST,
-  [GETSTAT] = NSCD__GETSTAT,
-  [SHUTDOWN] = NSCD__ADMIN,
-  [INVALIDATE] = NSCD__ADMIN,
-  [GETFDPW] = NSCD__SHMEMPWD,
-  [GETFDGR] = NSCD__SHMEMGRP,
-  [GETFDHST] = NSCD__SHMEMHOST,
-  [GETAI] = NSCD__GETHOST,
-  [INITGROUPS] = NSCD__GETGRP,
-#ifdef NSCD__GETSERV
-  [GETSERVBYNAME] = NSCD__GETSERV,
-  [GETSERVBYPORT] = NSCD__GETSERV,
-  [GETFDSERV] = NSCD__SHMEMSERV,
-#endif
-#ifdef NSCD__GETNETGRP
-  [GETNETGRENT] = NSCD__GETNETGRP,
-  [INNETGR] = NSCD__GETNETGRP,
-  [GETFDNETGR] = NSCD__SHMEMNETGRP,
-#endif
+  [GETPWBYNAME] = "getpwd",
+  [GETPWBYUID] = "getpwd",
+  [GETGRBYNAME] = "getgrp",
+  [GETGRBYGID] = "getgrp",
+  [GETHOSTBYNAME] = "gethost",
+  [GETHOSTBYNAMEv6] = "gethost",
+  [GETHOSTBYADDR] = "gethost",
+  [GETHOSTBYADDRv6] = "gethost",
+  [SHUTDOWN] = "admin",
+  [GETSTAT] = "getstat",
+  [INVALIDATE] = "admin",
+  [GETFDPW] = "shmempwd",
+  [GETFDGR] = "shmemgrp",
+  [GETFDHST] = "shmemhost",
+  [GETAI] = "gethost",
+  [INITGROUPS] = "getgrp",
+  [GETSERVBYNAME] = "getserv",
+  [GETSERVBYPORT] = "getserv",
+  [GETFDSERV] = "shmemserv",
+  [GETNETGRENT] = "getnetgrp",
+  [INNETGR] = "getnetgrp",
+  [GETFDNETGR] = "shmemnetgrp",
 };
 
 /* Store an entry ref to speed AVC decisions.  */
@@ -179,7 +173,7 @@ preserve_capabilities (void)
   if (prctl (PR_SET_KEEPCAPS, 1) == -1)
     {
       dbg_log (_("Failed to set keep-capabilities"));
-      error (EXIT_FAILURE, errno, _("prctl(KEEPCAPS) failed"));
+      do_exit (EXIT_FAILURE, errno, _("prctl(KEEPCAPS) failed"));
       /* NOTREACHED */
     }
 
@@ -194,7 +188,7 @@ preserve_capabilities (void)
 	cap_free (tmp_caps);
 
       dbg_log (_("Failed to initialize drop of capabilities"));
-      error (EXIT_FAILURE, 0, _("cap_init failed"));
+      do_exit (EXIT_FAILURE, 0, _("cap_init failed"));
     }
 
   /* There is no reason why these should not work.  */
@@ -212,11 +206,11 @@ preserve_capabilities (void)
 
   cap_free (tmp_caps);
 
-  if (__builtin_expect (res != 0, 0))
+  if (__glibc_unlikely (res != 0))
     {
       cap_free (new_caps);
       dbg_log (_("Failed to drop capabilities"));
-      error (EXIT_FAILURE, 0, _("cap_set_proc failed"));
+      do_exit (EXIT_FAILURE, 0, _("cap_set_proc failed"));
     }
 
   return new_caps;
@@ -233,7 +227,7 @@ install_real_capabilities (cap_t new_caps)
     {
       cap_free (new_caps);
       dbg_log (_("Failed to drop capabilities"));
-      error (EXIT_FAILURE, 0, _("cap_set_proc failed"));
+      do_exit (EXIT_FAILURE, 0, _("cap_set_proc failed"));
       /* NOTREACHED */
     }
 
@@ -242,7 +236,7 @@ install_real_capabilities (cap_t new_caps)
   if (prctl (PR_SET_KEEPCAPS, 0) == -1)
     {
       dbg_log (_("Failed to unset keep-capabilities"));
-      error (EXIT_FAILURE, errno, _("prctl(KEEPCAPS) failed"));
+      do_exit (EXIT_FAILURE, errno, _("prctl(KEEPCAPS) failed"));
       /* NOTREACHED */
     }
 }
@@ -258,7 +252,7 @@ nscd_selinux_enabled (int *selinux_enabled)
   if (*selinux_enabled < 0)
     {
       dbg_log (_("Failed to determine if kernel supports SELinux"));
-      exit (EXIT_FAILURE);
+      do_exit (EXIT_FAILURE, 0, NULL);
     }
 }
 
@@ -272,7 +266,7 @@ avc_create_thread (void (*run) (void))
   rc =
     pthread_create (&avc_notify_thread, NULL, (void *(*) (void *)) run, NULL);
   if (rc != 0)
-    error (EXIT_FAILURE, rc, _("Failed to start AVC thread"));
+    do_exit (EXIT_FAILURE, rc, _("Failed to start AVC thread"));
 
   return &avc_notify_thread;
 }
@@ -294,7 +288,7 @@ avc_alloc_lock (void)
 
   avc_mutex = malloc (sizeof (pthread_mutex_t));
   if (avc_mutex == NULL)
-    error (EXIT_FAILURE, errno, _("Failed to create AVC lock"));
+    do_exit (EXIT_FAILURE, errno, _("Failed to create AVC lock"));
   pthread_mutex_init (avc_mutex, NULL);
 
   return avc_mutex;
@@ -334,7 +328,7 @@ nscd_avc_init (void)
   avc_entry_ref_init (&aeref);
 
   if (avc_init ("avc", NULL, &log_cb, &thread_cb, &lock_cb) < 0)
-    error (EXIT_FAILURE, errno, _("Failed to start AVC"));
+    do_exit (EXIT_FAILURE, errno, _("Failed to start AVC"));
   else
     dbg_log (_("Access Vector Cache (AVC) started"));
 #ifdef HAVE_LIBAUDIT
@@ -344,7 +338,16 @@ nscd_avc_init (void)
 
 
 /* Check the permission from the caller (via getpeercon) to nscd.
-   Returns 0 if access is allowed, 1 if denied, and -1 on error.  */
+   Returns 0 if access is allowed, 1 if denied, and -1 on error.
+
+   The SELinux policy, enablement, and permission bits are all dynamic and the
+   caching done by glibc is not entirely correct.  This nscd support should be
+   rewritten to use selinux_check_permission.  A rewrite is risky though and
+   requires some refactoring.  Currently we use symbolic mappings instead of
+   compile time constants (which SELinux upstream says are going away), and we
+   use security_deny_unknown to determine what to do if selinux-policy* doesn't
+   have a definition for the the permission or object class we are looking
+   up.  */
 int
 nscd_request_avc_has_perm (int fd, request_type req)
 {
@@ -354,6 +357,33 @@ nscd_request_avc_has_perm (int fd, request_type req)
   security_id_t ssid = NULL;
   security_id_t tsid = NULL;
   int rc = -1;
+  security_class_t sc_nscd;
+  access_vector_t perm;
+  int avc_deny_unknown;
+
+  /* Check if SELinux denys or allows unknown object classes
+     and permissions.  It is 0 if they are allowed, 1 if they
+     are not allowed and -1 on error.  */
+  if ((avc_deny_unknown = security_deny_unknown ()) == -1)
+    dbg_log (_("Error querying policy for undefined object classes "
+	       "or permissions."));
+
+  /* Get the security class for nscd.  If this fails we will likely be
+     unable to do anything unless avc_deny_unknown is 0.  */
+  sc_nscd = string_to_security_class ("nscd");
+  if (sc_nscd == 0 && avc_deny_unknown == 1)
+    dbg_log (_("Error getting security class for nscd."));
+
+  /* Convert permission to AVC bits.  */
+  perm = string_to_av_perm (sc_nscd, perms[req]);
+  if (perm == 0 && avc_deny_unknown == 1)
+      dbg_log (_("Error translating permission name "
+		 "\"%s\" to access vector bit."), perms[req]);
+
+  /* If the nscd security class was not found or perms were not
+     found and AVC does not deny unknown values then allow it.  */
+  if ((sc_nscd == 0 || perm == 0) && avc_deny_unknown == 0)
+    return 0;
 
   if (getpeercon (fd, &scon) < 0)
     {
@@ -372,15 +402,13 @@ nscd_request_avc_has_perm (int fd, request_type req)
       goto out;
     }
 
-#ifndef NSCD__GETSERV
-  if (perms[req] == 0)
-    {
-      dbg_log (_("compile-time support for database policy missing"));
-      goto out;
-    }
-#endif
-
-  rc = avc_has_perm (ssid, tsid, SECCLASS_NSCD, perms[req], &aeref, NULL) < 0;
+  /* The SELinux API for avc_has_perm conflates access denied and error into
+     the return code -1, while nscd_request_avs_has_perm has distinct error
+     (-1) and denied (1) return codes. We map the avc_has_perm access denied or
+     error into an access denied at the nscd interface level (we do accurately
+     report error for the getpeercon, getcon, and avc_context_to_sid interfaces
+     used above).  */
+  rc = avc_has_perm (ssid, tsid, sc_nscd, perm, &aeref, NULL) < 0;
 
 out:
   if (scon)

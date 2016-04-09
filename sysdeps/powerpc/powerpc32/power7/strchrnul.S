@@ -1,5 +1,5 @@
 /* Optimized strchrnul implementation for PowerPC32/POWER7 using cmpb insn.
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Luis Machado <luisgpm@br.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -27,8 +27,8 @@ ENTRY (__strchrnul)
 	clrrwi	r8,r3,2	      /* Align the address to word boundary.  */
 
 	/* Replicate byte to word.  */
-	insrdi	r4,r4,8,48
-	insrdi	r4,r4,16,32
+	insrwi  r4,r4,8,16
+	insrwi  r4,r4,16,0
 
 	rlwinm	r6,r3,3,27,28 /* Calculate padding.  */
 	lwz	r12,0(r8)     /* Load word from memory.  */

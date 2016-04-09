@@ -1,4 +1,4 @@
-/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1998.
 
@@ -31,9 +31,6 @@
 
 #include "dbg_log.h"
 #include "nscd.h"
-
-/* Wrapper functions with error checking for standard functions.  */
-extern char *xstrdup (const char *s);
 
 
 /* Names of the databases.  */

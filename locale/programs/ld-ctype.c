@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1995.
 
@@ -41,15 +41,6 @@
 #include "locfile.h"
 
 #include <assert.h>
-
-
-#ifdef PREDEFINED_CLASSES
-/* These are the extra bits not in wctype.h since these are not preallocated
-   classes.  */
-# define _ISwspecial1	(1 << 29)
-# define _ISwspecial2	(1 << 30)
-# define _ISwspecial3	(1 << 31)
-#endif
 
 
 /* The bit used for representing a special class.  */
@@ -113,6 +104,9 @@ struct translit_include_t
 
   struct translit_include_t *next;
 };
+
+/* Provide some dummy pointer for empty string.  */
+static uint32_t no_str[] = { 0 };
 
 
 /* Sparse table of uint32_t.  */
@@ -334,26 +328,6 @@ ctype_startup (struct linereader *lr, struct localedef_t *locale,
 	  ctype_class_new (lr, ctype, "cntrl");
 	  ctype_class_new (lr, ctype, "punct");
 	  ctype_class_new (lr, ctype, "alnum");
-#ifdef PREDEFINED_CLASSES
-	  /* The following are extensions from ISO 14652.  */
-	  ctype_class_new (lr, ctype, "left_to_right");
-	  ctype_class_new (lr, ctype, "right_to_left");
-	  ctype_class_new (lr, ctype, "num_terminator");
-	  ctype_class_new (lr, ctype, "num_separator");
-	  ctype_class_new (lr, ctype, "segment_separator");
-	  ctype_class_new (lr, ctype, "block_separator");
-	  ctype_class_new (lr, ctype, "direction_control");
-	  ctype_class_new (lr, ctype, "sym_swap_layout");
-	  ctype_class_new (lr, ctype, "char_shape_selector");
-	  ctype_class_new (lr, ctype, "num_shape_selector");
-	  ctype_class_new (lr, ctype, "non_spacing");
-	  ctype_class_new (lr, ctype, "non_spacing_level3");
-	  ctype_class_new (lr, ctype, "normal_connect");
-	  ctype_class_new (lr, ctype, "r_connect");
-	  ctype_class_new (lr, ctype, "no_connect");
-	  ctype_class_new (lr, ctype, "no_connect-space");
-	  ctype_class_new (lr, ctype, "vowel_connect");
-#endif
 
 	  ctype->class_collection_max = charmap->mb_cur_max == 1 ? 256 : 512;
 	  ctype->class_collection
@@ -365,18 +339,13 @@ ctype_startup (struct linereader *lr, struct localedef_t *locale,
 	  ctype->last_map_idx = MAX_NR_CHARMAP;
 	  ctype_map_new (lr, ctype, "toupper", charmap);
 	  ctype_map_new (lr, ctype, "tolower", charmap);
-#ifdef PREDEFINED_CLASSES
-	  ctype_map_new (lr, ctype, "tosymmetric", charmap);
-#endif
 
 	  /* Fill first 256 entries in `toXXX' arrays.  */
 	  for (cnt = 0; cnt < 256; ++cnt)
 	    {
 	      ctype->map_collection[0][cnt] = cnt;
 	      ctype->map_collection[1][cnt] = cnt;
-#ifdef PREDEFINED_CLASSES
-	      ctype->map_collection[2][cnt] = cnt;
-#endif
+
 	      ctype->map256_collection[0][cnt] = cnt;
 	      ctype->map256_collection[1][cnt] = cnt;
 	    }
@@ -1777,7 +1746,7 @@ find_translit2 (struct locale_ctype_t *ctype, const struct charmap_t *charmap,
 
 	  for (wi = tirunp->from; wi <= wch; wi += tirunp->step)
 	    if (wi == wch)
-	      return (uint32_t []) { 0 };
+	      return no_str;
 	}
     }
 
@@ -1831,7 +1800,7 @@ read_widestring (struct linereader *ldfile, struct token *now,
 
   if (now->tok == tok_default_missing)
     /* The special name "" will denote this case.  */
-    wstr = ((uint32_t *) { 0 });
+    wstr = no_str;
   else if (now->tok == tok_bsymbol)
     {
       /* Get the value from the repertoire.  */
@@ -2266,24 +2235,10 @@ ctype_read (struct linereader *ldfile, struct localedef_t *result,
 		  break;
 	      if (cnt >= ctype->nr_charclass)
 		{
-#ifdef PREDEFINED_CLASSES
-		  if (now->val.str.lenmb == 8
-		      && memcmp ("special1", now->val.str.startmb, 8) == 0)
-		    class_bit = _ISwspecial1;
-		  else if (now->val.str.lenmb == 8
-		      && memcmp ("special2", now->val.str.startmb, 8) == 0)
-		    class_bit = _ISwspecial2;
-		  else if (now->val.str.lenmb == 8
-		      && memcmp ("special3", now->val.str.startmb, 8) == 0)
-		    class_bit = _ISwspecial3;
-		  else
-#endif
-		    {
-		      /* OK, it's a new class.  */
-		      ctype_class_new (ldfile, ctype, now->val.str.startmb);
+		  /* OK, it's a new class.  */
+		  ctype_class_new (ldfile, ctype, now->val.str.startmb);
 
-		      class_bit = _ISwbit (ctype->nr_charclass - 1);
-		    }
+		  class_bit = _ISwbit (ctype->nr_charclass - 1);
 		}
 	      else
 		{
@@ -2871,31 +2826,6 @@ previous definition was here")));
 	      free (now->val.str.startmb);
 	      goto read_mapping;
             }
-#ifdef PREDEFINED_CLASSES
-	  if (strcmp (now->val.str.startmb, "special1") == 0)
-	    {
-	      class_bit = _ISwspecial1;
-	      free (now->val.str.startmb);
-	      goto read_charclass;
-	    }
-	  if (strcmp (now->val.str.startmb, "special2") == 0)
-	    {
-	      class_bit = _ISwspecial2;
-	      free (now->val.str.startmb);
-	      goto read_charclass;
-	    }
-	  if (strcmp (now->val.str.startmb, "special3") == 0)
-	    {
-	      class_bit = _ISwspecial3;
-	      free (now->val.str.startmb);
-	      goto read_charclass;
-	    }
-	  if (strcmp (now->val.str.startmb, "tosymmetric") == 0)
-	    {
-	      mapidx = 2;
-	      goto read_mapping;
-	    }
-#endif
 	  break;
 
 	case tok_end:
@@ -2928,60 +2858,63 @@ previous definition was here")));
 }
 
 
+/* Subroutine of set_class_defaults, below.  */
+static void
+set_one_default (struct locale_ctype_t *ctype,
+                 const struct charmap_t *charmap,
+                 int bitpos, int from, int to)
+{
+  char tmp[2];
+  int ch;
+  int bit = _ISbit (bitpos);
+  int bitw = _ISwbit (bitpos);
+  /* Define string.  */
+  strcpy (tmp, "?");
+
+  for (ch = from; ch <= to; ++ch)
+    {
+      struct charseq *seq;
+      tmp[0] = ch;
+
+      seq = charmap_find_value (charmap, tmp, 1);
+      if (seq == NULL)
+        {
+          char buf[10];
+          sprintf (buf, "U%08X", ch);
+          seq = charmap_find_value (charmap, buf, 9);
+        }
+      if (seq == NULL)
+        {
+          if (!be_quiet)
+            WITH_CUR_LOCALE (error (0, 0, _("\
+%s: character `%s' not defined while needed as default value"),
+                                    "LC_CTYPE", tmp));
+        }
+      else if (seq->nbytes != 1)
+        WITH_CUR_LOCALE (error (0, 0, _("\
+%s: character `%s' in charmap not representable with one byte"),
+                                "LC_CTYPE", tmp));
+      else
+        ctype->class256_collection[seq->bytes[0]] |= bit;
+
+      /* No need to search here, the ASCII value is also the Unicode
+         value.  */
+      ELEM (ctype, class_collection, , ch) |= bitw;
+    }
+}
+
 static void
 set_class_defaults (struct locale_ctype_t *ctype,
 		    const struct charmap_t *charmap,
 		    struct repertoire_t *repertoire)
 {
-  size_t cnt;
+#define set_default(bitpos, from, to) \
+  set_one_default (ctype, charmap, bitpos, from, to)
 
   /* These function defines the default values for the classes and conversions
      according to POSIX.2 2.5.2.1.
      It may seem that the order of these if-blocks is arbitrary but it is NOT.
      Don't move them unless you know what you do!  */
-
-  auto void set_default (int bitpos, int from, int to);
-
-  void set_default (int bitpos, int from, int to)
-    {
-      char tmp[2];
-      int ch;
-      int bit = _ISbit (bitpos);
-      int bitw = _ISwbit (bitpos);
-      /* Define string.  */
-      strcpy (tmp, "?");
-
-      for (ch = from; ch <= to; ++ch)
-	{
-	  struct charseq *seq;
-	  tmp[0] = ch;
-
-	  seq = charmap_find_value (charmap, tmp, 1);
-	  if (seq == NULL)
-	    {
-	      char buf[10];
-	      sprintf (buf, "U%08X", ch);
-	      seq = charmap_find_value (charmap, buf, 9);
-	    }
-	  if (seq == NULL)
-	    {
-	      if (!be_quiet)
-		WITH_CUR_LOCALE (error (0, 0, _("\
-%s: character `%s' not defined while needed as default value"),
-					"LC_CTYPE", tmp));
-	    }
-	  else if (seq->nbytes != 1)
-	    WITH_CUR_LOCALE (error (0, 0, _("\
-%s: character `%s' in charmap not representable with one byte"),
-				    "LC_CTYPE", tmp));
-	  else
-	    ctype->class256_collection[seq->bytes[0]] |= bit;
-
-	  /* No need to search here, the ASCII value is also the Unicode
-	     value.  */
-	  ELEM (ctype, class_collection, , ch) |= bitw;
-	}
-    }
 
   /* Set default values if keyword was not present.  */
   if ((ctype->class_done & BITw (tok_upper)) == 0)
@@ -3003,11 +2936,11 @@ set_class_defaults (struct locale_ctype_t *ctype,
       unsigned long int mask = BIT (tok_upper) | BIT (tok_lower);
       unsigned long int maskw = BITw (tok_upper) | BITw (tok_lower);
 
-      for (cnt = 0; cnt < 256; ++cnt)
+      for (size_t cnt = 0; cnt < 256; ++cnt)
 	if ((ctype->class256_collection[cnt] & mask) != 0)
 	  ctype->class256_collection[cnt] |= BIT (tok_alpha);
 
-      for (cnt = 0; cnt < ctype->class_collection_act; ++cnt)
+      for (size_t cnt = 0; cnt < ctype->class_collection_act; ++cnt)
 	if ((ctype->class_collection[cnt] & maskw) != 0)
 	  ctype->class_collection[cnt] |= BITw (tok_alpha);
     }
@@ -3025,11 +2958,11 @@ set_class_defaults (struct locale_ctype_t *ctype,
     unsigned long int mask = BIT (tok_alpha) | BIT (tok_digit);
     unsigned long int maskw = BITw (tok_alpha) | BITw (tok_digit);
 
-    for (cnt = 0; cnt < 256; ++cnt)
+    for (size_t cnt = 0; cnt < 256; ++cnt)
       if ((ctype->class256_collection[cnt] & mask) != 0)
 	ctype->class256_collection[cnt] |= BIT (tok_alnum);
 
-    for (cnt = 0; cnt < ctype->class_collection_act; ++cnt)
+    for (size_t cnt = 0; cnt < ctype->class_collection_act; ++cnt)
       if ((ctype->class_collection[cnt] & maskw) != 0)
 	ctype->class_collection[cnt] |= BITw (tok_alnum);
   }
@@ -3240,13 +3173,12 @@ set_class_defaults (struct locale_ctype_t *ctype,
       unsigned long int maskw = BITw (tok_upper) | BITw (tok_lower) |
 	BITw (tok_alpha) | BITw (tok_digit) | BITw (tok_xdigit) |
 	BITw (tok_punct);
-      size_t cnt;
 
-      for (cnt = 0; cnt < ctype->class_collection_act; ++cnt)
+      for (size_t cnt = 0; cnt < ctype->class_collection_act; ++cnt)
 	if ((ctype->class_collection[cnt] & maskw) != 0)
 	  ctype->class_collection[cnt] |= BITw (tok_graph);
 
-      for (cnt = 0; cnt < 256; ++cnt)
+      for (size_t cnt = 0; cnt < 256; ++cnt)
 	if ((ctype->class256_collection[cnt] & mask) != 0)
 	  ctype->class256_collection[cnt] |= BIT (tok_graph);
     }
@@ -3262,14 +3194,13 @@ set_class_defaults (struct locale_ctype_t *ctype,
       unsigned long int maskw = BITw (tok_upper) | BITw (tok_lower) |
 	BITw (tok_alpha) | BITw (tok_digit) | BITw (tok_xdigit) |
 	BITw (tok_punct);
-      size_t cnt;
       struct charseq *seq;
 
-      for (cnt = 0; cnt < ctype->class_collection_act; ++cnt)
+      for (size_t cnt = 0; cnt < ctype->class_collection_act; ++cnt)
 	if ((ctype->class_collection[cnt] & maskw) != 0)
 	  ctype->class_collection[cnt] |= BITw (tok_print);
 
-      for (cnt = 0; cnt < 256; ++cnt)
+      for (size_t cnt = 0; cnt < 256; ++cnt)
 	if ((ctype->class256_collection[cnt] & mask) != 0)
 	  ctype->class256_collection[cnt] |= BIT (tok_print);
 
@@ -3376,13 +3307,13 @@ set_class_defaults (struct locale_ctype_t *ctype,
     /* "If this keyword [tolower] is not specified, the mapping shall be
        the reverse mapping of the one specified to `toupper'."  [P1003.2]  */
     {
-      for (cnt = 0; cnt < ctype->map_collection_act[0]; ++cnt)
+      for (size_t cnt = 0; cnt < ctype->map_collection_act[0]; ++cnt)
 	if (ctype->map_collection[0][cnt] != 0)
 	  ELEM (ctype, map_collection, [1],
 		ctype->map_collection[0][cnt])
 	    = ctype->charnames[cnt];
 
-      for (cnt = 0; cnt < 256; ++cnt)
+      for (size_t cnt = 0; cnt < 256; ++cnt)
 	if (ctype->map256_collection[0][cnt] != 0)
 	  ctype->map256_collection[1][ctype->map256_collection[0][cnt]] = cnt;
     }
@@ -3394,7 +3325,7 @@ set_class_defaults (struct locale_ctype_t *ctype,
 %s: field `%s' does not contain exactly ten entries"),
 				"LC_CTYPE", "outdigit"));
 
-      for (cnt = ctype->outdigits_act; cnt < 10; ++cnt)
+      for (size_t cnt = ctype->outdigits_act; cnt < 10; ++cnt)
 	{
 	  ctype->mboutdigits[cnt] = charmap_find_symbol (charmap,
 							 (char *) digits + cnt,
@@ -3429,6 +3360,8 @@ no output digits defined and none of the standard names in the charmap")));
 
       ctype->outdigits_act = 10;
     }
+
+#undef set_default
 }
 
 
@@ -3878,76 +3811,72 @@ allocate_arrays (struct locale_ctype_t *ctype, const struct charmap_t *charmap,
 
     /* Now add the explicitly specified widths.  */
     if (charmap->width_rules != NULL)
-      {
-	size_t cnt;
+      for (size_t cnt = 0; cnt < charmap->nwidth_rules; ++cnt)
+        {
+          unsigned char bytes[charmap->mb_cur_max];
+          int nbytes = charmap->width_rules[cnt].from->nbytes;
 
-	for (cnt = 0; cnt < charmap->nwidth_rules; ++cnt)
-	  {
-	    unsigned char bytes[charmap->mb_cur_max];
-	    int nbytes = charmap->width_rules[cnt].from->nbytes;
+          /* We have the range of character for which the width is
+             specified described using byte sequences of the multibyte
+             charset.  We have to convert this to UCS4 now.  And we
+             cannot simply convert the beginning and the end of the
+             sequence, we have to iterate over the byte sequence and
+             convert it for every single character.  */
+          memcpy (bytes, charmap->width_rules[cnt].from->bytes, nbytes);
 
-	    /* We have the range of character for which the width is
-	       specified described using byte sequences of the multibyte
-	       charset.  We have to convert this to UCS4 now.  And we
-	       cannot simply convert the beginning and the end of the
-	       sequence, we have to iterate over the byte sequence and
-	       convert it for every single character.  */
-	    memcpy (bytes, charmap->width_rules[cnt].from->bytes, nbytes);
+          while (nbytes < charmap->width_rules[cnt].to->nbytes
+                 || memcmp (bytes, charmap->width_rules[cnt].to->bytes,
+                            nbytes) <= 0)
+            {
+              /* Find the UCS value for `bytes'.  */
+              int inner;
+              uint32_t wch;
+              struct charseq *seq =
+                charmap_find_symbol (charmap, (char *) bytes, nbytes);
 
-	    while (nbytes < charmap->width_rules[cnt].to->nbytes
-		   || memcmp (bytes, charmap->width_rules[cnt].to->bytes,
-			      nbytes) <= 0)
-	      {
-		/* Find the UCS value for `bytes'.  */
-		int inner;
-		uint32_t wch;
-		struct charseq *seq =
-		  charmap_find_symbol (charmap, (char *) bytes, nbytes);
+              if (seq == NULL)
+                wch = ILLEGAL_CHAR_VALUE;
+              else if (seq->ucs4 != UNINITIALIZED_CHAR_VALUE)
+                wch = seq->ucs4;
+              else
+                wch = repertoire_find_value (ctype->repertoire, seq->name,
+                                             strlen (seq->name));
 
-		if (seq == NULL)
-		  wch = ILLEGAL_CHAR_VALUE;
-		else if (seq->ucs4 != UNINITIALIZED_CHAR_VALUE)
-		  wch = seq->ucs4;
-		else
-		  wch = repertoire_find_value (ctype->repertoire, seq->name,
-					       strlen (seq->name));
+              if (wch != ILLEGAL_CHAR_VALUE)
+                {
+                  /* Store the value.  */
+                  uint32_t *class_bits =
+                    find_idx (ctype, &ctype->class_collection, NULL,
+                              &ctype->class_collection_act, wch);
 
-		if (wch != ILLEGAL_CHAR_VALUE)
-		  {
-		    /* Store the value.  */
-		    uint32_t *class_bits =
-		      find_idx (ctype, &ctype->class_collection, NULL,
-				&ctype->class_collection_act, wch);
+                  if (class_bits != NULL && (*class_bits & BITw (tok_print)))
+                    wcwidth_table_add (t, wch,
+                                       charmap->width_rules[cnt].width);
+                }
 
-		    if (class_bits != NULL && (*class_bits & BITw (tok_print)))
-		      wcwidth_table_add (t, wch,
-					 charmap->width_rules[cnt].width);
-		  }
+              /* "Increment" the bytes sequence.  */
+              inner = nbytes - 1;
+              while (inner >= 0 && bytes[inner] == 0xff)
+                --inner;
 
-		/* "Increment" the bytes sequence.  */
-		inner = nbytes - 1;
-		while (inner >= 0 && bytes[inner] == 0xff)
-		  --inner;
+              if (inner < 0)
+                {
+                  /* We have to extend the byte sequence.  */
+                  if (nbytes >= charmap->width_rules[cnt].to->nbytes)
+                    break;
 
-		if (inner < 0)
-		  {
-		    /* We have to extend the byte sequence.  */
-		    if (nbytes >= charmap->width_rules[cnt].to->nbytes)
-		      break;
-
-		    bytes[0] = 1;
-		    memset (&bytes[1], 0, nbytes);
-		    ++nbytes;
-		  }
-		else
-		  {
-		    ++bytes[inner];
-		    while (++inner < nbytes)
-		      bytes[inner] = 0;
-		  }
-	      }
-	  }
-      }
+                  bytes[0] = 1;
+                  memset (&bytes[1], 0, nbytes);
+                  ++nbytes;
+                }
+              else
+                {
+                  ++bytes[inner];
+                  while (++inner < nbytes)
+                    bytes[inner] = 0;
+                }
+            }
+        }
 
     /* Set the width of L'\0' to 0.  */
     wcwidth_table_add (t, 0, 0);
@@ -3976,7 +3905,6 @@ allocate_arrays (struct locale_ctype_t *ctype, const struct charmap_t *charmap,
       /* First count how many entries we have.  This is the upper limit
 	 since some entries from the included files might be overwritten.  */
       size_t number = 0;
-      size_t cnt;
       struct translit_t *runp = ctype->translit;
       struct translit_t **sorted;
       size_t from_len, to_len;
@@ -4036,7 +3964,7 @@ allocate_arrays (struct locale_ctype_t *ctype, const struct charmap_t *charmap,
 	 - to-string array.
       */
       from_len = to_len = 0;
-      for (cnt = 0; cnt < number; ++cnt)
+      for (size_t cnt = 0; cnt < number; ++cnt)
 	{
 	  struct translit_to_t *srunp;
 	  from_len += wcslen ((const wchar_t *) sorted[cnt]->from) + 1;
@@ -4059,7 +3987,7 @@ allocate_arrays (struct locale_ctype_t *ctype, const struct charmap_t *charmap,
 
       from_len = 0;
       to_len = 0;
-      for (cnt = 0; cnt < number; ++cnt)
+      for (size_t cnt = 0; cnt < number; ++cnt)
 	{
 	  size_t len;
 	  struct translit_to_t *srunp;
@@ -4092,12 +4020,9 @@ allocate_arrays (struct locale_ctype_t *ctype, const struct charmap_t *charmap,
     }
   else
     {
-      /* Provide some dummy pointers since we have nothing to write out.  */
-      static uint32_t no_str = { 0 };
-
-      ctype->translit_from_idx = &no_str;
-      ctype->translit_from_tbl = &no_str;
-      ctype->translit_to_tbl = &no_str;
+      ctype->translit_from_idx = no_str;
+      ctype->translit_from_tbl = no_str;
+      ctype->translit_to_tbl = no_str;
       ctype->translit_idx_size = 0;
       ctype->translit_from_tbl_size = 0;
       ctype->translit_to_tbl_size = 0;

@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, August 1995.
 
@@ -24,23 +24,9 @@
 #include <sys/syscall.h>
 
 int
-__libc_msgsnd (msqid, msgp, msgsz, msgflg)
-     int msqid;
-     const void *msgp;
-     size_t msgsz;
-     int msgflg;
+__libc_msgsnd (int msqid, const void *msgp, size_t msgsz, int msgflg)
 {
-  if (SINGLE_THREAD_P)
-    return INLINE_SYSCALL (ipc, 5, IPCOP_msgsnd, msqid, msgsz,
-			   msgflg, (void *) msgp);
-
-  int oldtype = LIBC_CANCEL_ASYNC ();
-
-  int result = INLINE_SYSCALL (ipc, 5, IPCOP_msgsnd, msqid, msgsz,
-			       msgflg, (void *) msgp);
-
-  LIBC_CANCEL_RESET (oldtype);
-
-  return result;
+  return SYSCALL_CANCEL (ipc, IPCOP_msgsnd, msqid, msgsz, msgflg,
+			 (void *) msgp);
 }
 weak_alias (__libc_msgsnd, msgsnd)

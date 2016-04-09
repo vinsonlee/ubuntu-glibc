@@ -1,5 +1,5 @@
 /* Conversion from and to IBM933.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Masahide Washizawa <washi@yamato.ibm.co.jp>, 2000.
 
@@ -31,6 +31,7 @@
 #define CHARSET_NAME	"IBM933//"
 #define FROM_LOOP	from_ibm933
 #define TO_LOOP		to_ibm933
+#define ONE_DIRECTION			0
 #define FROM_LOOP_MIN_NEEDED_FROM	1
 #define FROM_LOOP_MAX_NEEDED_FROM	2
 #define FROM_LOOP_MIN_NEEDED_TO		4
@@ -61,7 +62,7 @@
 	{								      \
 	  /* We are not in the initial state.  To switch back we have	      \
 	     to emit `SI'.  */						      \
-	  if (__builtin_expect (outbuf >= outend, 0))			      \
+	  if (__glibc_unlikely (outbuf >= outend))			      \
 	    /* We don't have enough room in the output buffer.  */	      \
 	    status = __GCONV_FULL_OUTPUT;				      \
 	  else								      \
@@ -149,7 +150,7 @@ enum
 	assert (curcs == db);						      \
 									      \
 	/* Use the IBM933 table for double byte.  */			      \
-	if (__builtin_expect (inptr + 1 >= inend, 0))			      \
+	if (__glibc_unlikely (inptr + 1 >= inend))			      \
 	  {								      \
 	    /* The second character is not available.  Store the	      \
 	       intermediate result. */					      \
@@ -161,7 +162,7 @@ enum
 	while (ch > rp2->end)						      \
 	  ++rp2;							      \
 									      \
-	if (__builtin_expect (rp2 == NULL, 0)				      \
+	if (__builtin_expect (rp2->start == 0xffff, 0)			      \
 	    || __builtin_expect (ch < rp2->start, 0)			      \
 	    || (res = __ibm933db_to_ucs4[ch + rp2->idx],		      \
 		__builtin_expect (res, L'\1') == L'\0' && ch != '\0'))	      \
@@ -196,7 +197,7 @@ enum
     const struct gap *rp2 = __ucs4_to_ibm933db_idx;			      \
     const char *cp;							      \
 									      \
-    if (__builtin_expect (ch >= 0xffff, 0))				      \
+    if (__glibc_unlikely (ch >= 0xffff))				      \
       {									      \
 	UNICODE_TAG_HANDLER (ch, 4);					      \
 									      \
@@ -226,7 +227,7 @@ enum
 	  {								      \
 	    if (curcs == sb)						      \
 	      {								      \
-		if (__builtin_expect (outptr + 1 > outend, 0))		      \
+		if (__glibc_unlikely (outptr + 1 > outend))		      \
 		  {							      \
 		    result = __GCONV_FULL_OUTPUT;			      \
 		    break;						      \
@@ -235,7 +236,7 @@ enum
 		curcs = db;						      \
 	      }								      \
 									      \
-	    if (__builtin_expect (outptr + 2 > outend, 0))		      \
+	    if (__glibc_unlikely (outptr + 2 > outend))			      \
 	      {								      \
 		result = __GCONV_FULL_OUTPUT;				      \
 		break;							      \
@@ -248,7 +249,7 @@ enum
       {									      \
 	if (curcs == db)						      \
 	  {								      \
-	    if (__builtin_expect (outptr + 1 > outend, 0))		      \
+	    if (__glibc_unlikely (outptr + 1 > outend))			      \
 	      {								      \
 		result = __GCONV_FULL_OUTPUT;				      \
 		break;							      \
@@ -256,7 +257,7 @@ enum
 	    *outptr++ = SI;						      \
 	  }								      \
 									      \
-	if (__builtin_expect (outptr + 1 > outend, 0))			      \
+	if (__glibc_unlikely (outptr + 1 > outend))			      \
 	  {								      \
 	    result = __GCONV_FULL_OUTPUT;				      \
 	    break;							      \

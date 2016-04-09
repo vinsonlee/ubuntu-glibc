@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -15,9 +15,13 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#define WORDCOPY_FWD_ALIGNED      _wordcopy_fwd_aligned_ppc
-#define WORDCOPY_FWD_DEST_ALIGNED _wordcopy_fwd_dest_aligned_ppc
-#define WORDCOPY_BWD_ALIGNED      _wordcopy_bwd_aligned_ppc
-#define WORDCOPY_BWD_DEST_ALIGNED _wordcopy_bwd_dest_aligned_ppc
+#if IS_IN (libc)
+# define WORDCOPY_FWD_ALIGNED      _wordcopy_fwd_aligned_ppc
+# define WORDCOPY_FWD_DEST_ALIGNED _wordcopy_fwd_dest_aligned_ppc
+# define WORDCOPY_BWD_ALIGNED      _wordcopy_bwd_aligned_ppc
+# define WORDCOPY_BWD_DEST_ALIGNED _wordcopy_bwd_dest_aligned_ppc
 
-#include <sysdeps/powerpc/power4/wordcopy.c>
+# include <sysdeps/powerpc/power4/wordcopy.c>
+#else
+# include <string/wordcopy.c>
+#endif

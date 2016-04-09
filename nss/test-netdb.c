@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 1998.
 
@@ -23,14 +23,12 @@
   - /etc/hosts
   - /etc/networks
   - /etc/protocols
-  - /etc/rpc
   The tests try to be fairly generic and simple so that they work on
   every possible setup (and might therefore not detect some possible
   errors).
 */
 
 #include <netdb.h>
-#include <rpc/netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -300,43 +298,6 @@ test_protocols (void)
 }
 
 
-static void
-output_rpcent (const char *call, struct rpcent *rptr)
-{
-  char **pptr;
-
-  if (rptr == NULL)
-    printf ("Call: %s returned NULL\n", call);
-  else
-    {
-      printf ("Call: %s, returned: r_name: %s, r_number: %d\n",
-		call, rptr->r_name, rptr->r_number);
-      for (pptr = rptr->r_aliases; *pptr != NULL; pptr++)
-	printf ("  alias: %s\n", *pptr);
-    }
-}
-
-static void
-test_rpc (void)
-{
-  struct rpcent *rptr;
-
-  rptr = getrpcbyname ("portmap");
-  output_rpcent ("getrpcyname (\"portmap\")", rptr);
-
-  rptr = getrpcbynumber (100000);
-  output_rpcent ("getrpcbynumber (100000)", rptr);
-
-  setrpcent (0);
-  do
-    {
-      rptr = getrpcent ();
-      output_rpcent ("getrpcent ()", rptr);
-    }
-  while (rptr != NULL);
-  endrpcent ();
-}
-
 /* Override /etc/nsswitch.conf for this program.  This is mainly
    useful for developers. */
 static void  __attribute__ ((unused))
@@ -351,13 +312,12 @@ setdb (const char *dbname)
 	__nss_configure_lookup ("networks", dbname);
       }
   __nss_configure_lookup ("protocols", dbname);
-  __nss_configure_lookup ("rpc", dbname);
   __nss_configure_lookup ("services", dbname);
 }
 
 
-int
-main (void)
+static int
+do_test (void)
 {
   /*
     setdb ("db");
@@ -366,7 +326,6 @@ main (void)
   test_hosts ();
   test_network ();
   test_protocols ();
-  test_rpc ();
   test_services ();
 
   if (error_count)
@@ -376,3 +335,6 @@ main (void)
 
   return (error_count != 0);
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"
