@@ -1,5 +1,5 @@
 /* Raise given exceptions (soft-float edition).
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez <aldyh@redhat.com>, 2002.
    This file is part of the GNU C Library.
 
@@ -38,5 +38,6 @@ strong_alias (__feraiseexcept, __old_feraiseexcept)
 compat_symbol (libm, __old_feraiseexcept, feraiseexcept, GLIBC_2_1);
 #endif
 
+libm_hidden_def (__feraiseexcept)
 libm_hidden_ver (__feraiseexcept, feraiseexcept)
 versioned_symbol (libm, __feraiseexcept, feraiseexcept, GLIBC_2_2);

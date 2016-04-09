@@ -1,5 +1,5 @@
 /* clock_gettime -- Get current time from a POSIX clockid_t.  Linux version.
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,25 +20,11 @@
 #include <errno.h>
 #include <time.h>
 #include "kernel-posix-cpu-timers.h"
-#include <kernel-features.h>
 
-#ifndef HAVE_CLOCK_GETTIME_VSYSCALL
-# undef INTERNAL_VSYSCALL
-# define INTERNAL_VSYSCALL INTERNAL_SYSCALL
-# undef INLINE_VSYSCALL
-# define INLINE_VSYSCALL INLINE_SYSCALL
-#else
-# include <bits/libc-vdso.h>
+#ifdef HAVE_CLOCK_GETTIME_VSYSCALL
+# define HAVE_VSYSCALL
 #endif
-
-#ifndef SYSCALL_GETTIME
-# define SYSCALL_GETTIME(id, tp) \
-  INLINE_VSYSCALL (clock_gettime, 2, id, tp)
-#endif
-#ifndef INTERNAL_GETTIME
-# define INTERNAL_GETTIME(id, tp) \
-  INTERNAL_VSYSCALL (clock_gettime, err, 2, id, tp)
-#endif
+#include <sysdep-vdso.h>
 
 /* The REALTIME and MONOTONIC clock are definitely supported in the
    kernel.  */
@@ -46,7 +32,7 @@
   SYSDEP_GETTIME_CPUTIME;						      \
   case CLOCK_REALTIME:							      \
   case CLOCK_MONOTONIC:							      \
-    retval = SYSCALL_GETTIME (clock_id, tp);				      \
+    retval = INLINE_VSYSCALL (clock_gettime, 2, clock_id, tp);		      \
     break
 
 /* We handled the REALTIME clock here.  */
@@ -54,7 +40,7 @@
 #define HANDLED_CPUTIME	1
 
 #define SYSDEP_GETTIME_CPU(clock_id, tp) \
-  retval = SYSCALL_GETTIME (clock_id, tp); \
+  retval = INLINE_VSYSCALL (clock_gettime, 2, clock_id, tp); \
   break
 #define SYSDEP_GETTIME_CPUTIME	/* Default catches them too.  */
 

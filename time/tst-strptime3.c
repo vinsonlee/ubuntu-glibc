@@ -4,8 +4,8 @@
 #include <time.h>
 
 
-int
-main (void)
+static int
+do_test (void)
 {
   int result = 0;
   struct tm tm;
@@ -48,8 +48,8 @@ main (void)
       result = 1;
     }
 
-  if (result == 0)
-    puts ("all OK");
-
-  return 0;
+  return result;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

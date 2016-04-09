@@ -1,5 +1,5 @@
 /* On-demand PLT fixup for shared objects.
-   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include <dl-irel.h>
 
 
-#if (!defined ELF_MACHINE_NO_RELA && !defined ELF_MACHINE_PLT_REL) \
+#if (!ELF_MACHINE_NO_RELA && !defined ELF_MACHINE_PLT_REL) \
     || ELF_MACHINE_NO_REL
 # define PLTREL  ElfW(Rela)
 #else
@@ -142,7 +142,7 @@ _dl_fixup (
     value = elf_ifunc_invoke (DL_FIXUP_VALUE_ADDR (value));
 
   /* Finally, fix up the plt itself.  */
-  if (__builtin_expect (GLRO(dl_bind_not), 0))
+  if (__glibc_unlikely (GLRO(dl_bind_not)))
     return value;
 
   return elf_machine_fixup_plt (l, result, reloc, rel_addr, value);
@@ -158,7 +158,7 @@ _dl_profile_fixup (
 		   struct link_map *l, ElfW(Word) reloc_arg,
 		   ElfW(Addr) retaddr, void *regs, long int *framesizep)
 {
-  void (*mcount_fct) (ElfW(Addr), ElfW(Addr)) = INTUSE(_dl_mcount);
+  void (*mcount_fct) (ElfW(Addr), ElfW(Addr)) = _dl_mcount;
 
   if (l->l_reloc_result == NULL)
     {
@@ -347,7 +347,7 @@ _dl_profile_fixup (
 #endif
 
       /* Store the result for later runs.  */
-      if (__builtin_expect (! GLRO(dl_bind_not), 1))
+      if (__glibc_likely (! GLRO(dl_bind_not)))
 	*resultp = value;
     }
 

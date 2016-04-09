@@ -1,5 +1,5 @@
 /* ix87 specific implementation of exp(x)-1.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
    Based on code by John C. Bowman <bowman@ipp-garching.mpg.de>.
@@ -36,6 +36,13 @@ one:	.double 1.0
 	.type l2e,@object
 l2e:	.tfloat 1.442695040888963407359924681002
 	ASM_SIZE_DIRECTIVE(l2e)
+
+	.section .rodata.cst8,"aM",@progbits,8
+
+	.p2align 3
+	.type dbl_min,@object
+dbl_min:	.byte 0, 0, 0, 0, 0, 0, 0x10, 0
+	ASM_SIZE_DIRECTIVE(dbl_min)
 
 #ifdef PIC
 #define MO(op) op##@GOTOFF(%edx)
@@ -74,6 +81,21 @@ ENTRY(__expm1)
 #ifdef	PIC
 	LOAD_PIC_REG (dx)
 #endif
+	fld	%st
+	fabs
+	fcoml	MO(dbl_min)
+	fstp	%st
+	fnstsw
+	sahf
+	jae	5f
+	subl	$8, %esp
+	cfi_adjust_cfa_offset (8)
+	fld	%st(0)
+	fmul	%st(0)
+	fstpl	(%esp)
+	addl	$8, %esp
+	cfi_adjust_cfa_offset (-8)
+	ret
 
 5:	fldt	MO(l2e)		// log2(e) : x
 	fmulp			// log2(e)*x

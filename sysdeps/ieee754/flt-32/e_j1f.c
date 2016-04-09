@@ -13,6 +13,8 @@
  * ====================================================
  */
 
+#include <errno.h>
+#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -68,7 +70,14 @@ __ieee754_j1f(float x)
 		else	 return  z;
 	}
 	if(__builtin_expect(ix<0x32000000, 0)) {	/* |x|<2**-27 */
-	    if(huge+x>one) return (float)0.5*x;/* inexact if x!=0 necessary */
+	    if(huge+x>one) {		/* inexact if x!=0 necessary */
+		float ret = (float) 0.5 * x;
+		if (fabsf (ret) < FLT_MIN) {
+		    float force_underflow = ret * ret;
+		    math_force_eval (force_underflow);
+		}
+		return ret;
+	    }
 	}
 	z = x*x;
 	r =  z*(r00+z*(r01+z*(r02+z*r03)));
@@ -107,6 +116,7 @@ __ieee754_y1f(float x)
 		return -HUGE_VALF+x;  /* -inf and overflow exception.  */
 	if(__builtin_expect(hx<0, 0)) return zero/(zero*x);
 	if(ix >= 0x40000000) {  /* |x| >= 2.0 */
+		SET_RESTORE_ROUNDF (FE_TONEAREST);
 		__sincosf (x, &s, &c);
 		ss = -s-c;
 		cc = s-c;
@@ -134,7 +144,10 @@ __ieee754_y1f(float x)
 		return z;
 	}
 	if(__builtin_expect(ix<=0x33000000, 0)) {    /* x < 2**-25 */
-	    return(-tpi/x);
+	    z = -tpi / x;
+	    if (isinf (z))
+		__set_errno (ERANGE);
+	    return z;
 	}
 	z = x*x;
 	u = U0[0]+z*(U0[1]+z*(U0[2]+z*(U0[3]+z*U0[4])));
@@ -225,10 +238,11 @@ ponef(float x)
 	int32_t ix;
 	GET_FLOAT_WORD(ix,x);
 	ix &= 0x7fffffff;
+	/* ix >= 0x40000000 for all calls to this function.  */
 	if(ix>=0x41000000)     {p = pr8; q= ps8;}
 	else if(ix>=0x40f71c58){p = pr5; q= ps5;}
 	else if(ix>=0x4036db68){p = pr3; q= ps3;}
-	else if(ix>=0x40000000){p = pr2; q= ps2;}
+	else {p = pr2; q= ps2;}
 	z = one/(x*x);
 	r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
 	s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*q[4]))));
@@ -322,10 +336,11 @@ qonef(float x)
 	int32_t ix;
 	GET_FLOAT_WORD(ix,x);
 	ix &= 0x7fffffff;
+	/* ix >= 0x40000000 for all calls to this function.  */
 	if(ix>=0x40200000)     {p = qr8; q= qs8;}
 	else if(ix>=0x40f71c58){p = qr5; q= qs5;}
 	else if(ix>=0x4036db68){p = qr3; q= qs3;}
-	else if(ix>=0x40000000){p = qr2; q= qs2;}
+	else {p = qr2; q= qs2;}
 	z = one/(x*x);
 	r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
 	s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*(q[4]+z*q[5])))));

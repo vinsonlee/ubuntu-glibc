@@ -140,7 +140,10 @@ __log1pl (long double xm1)
   if (((hx & 0x7fffffff) | lx) == 0)
     return xm1;
 
-  x = xm1 + 1.0L;
+  if (xm1 >= 0x1p107L)
+    x = xm1;
+  else
+    x = xm1 + 1.0L;
 
   /* log1p(-1) = -inf */
   if (x <= 0.0L)
@@ -246,5 +249,3 @@ __log1pl (long double xm1)
   z = z + e * C1;
   return (z);
 }
-
-long_double_symbol (libm, __log1pl, log1pl);

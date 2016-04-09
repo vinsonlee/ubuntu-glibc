@@ -1,5 +1,5 @@
 /* Switch to context.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
 #include <sysdep.h>
 #include <rtld-global-offsets.h>
 #include <shlib-compat.h>
-#include <kernel-features.h>
 
 #define __ASSEMBLY__
 #include <asm/ptrace.h>
@@ -82,22 +81,31 @@ ENTRY(__novec_setcontext)
 
 # ifdef _ARCH_PWR6
   /* Use the extended four-operand version of the mtfsf insn.  */
-  mtfsf  0xff,fp0,1,0
-# else
   .machine push
   .machine "power6"
+
+  mtfsf  0xff,fp0,1,0
+
+  .machine pop
+# else
   /* Availability of DFP indicates a 64-bit FPSCR.  */
   andi.  r6,r5,PPC_FEATURE_HAS_DFP
   beq    5f
   /* Use the extended four-operand version of the mtfsf insn.  */
+  .machine push
+  .machine "power6"
+
   mtfsf  0xff,fp0,1,0
+
+  .machine pop
+
   b      6f
   /* Continue to operate on the FPSCR as if it were 32-bits.  */
 5:
   mtfsf  0xff,fp0
 6:
-  .machine pop
 # endif /* _ARCH_PWR6 */
+
   lfd  fp29,(SIGCONTEXT_FP_REGS+(PT_R29*8))(r31)
   lfd  fp28,(SIGCONTEXT_FP_REGS+(PT_R28*8))(r31)
   lfd  fp27,(SIGCONTEXT_FP_REGS+(PT_R27*8))(r31)
@@ -365,22 +373,31 @@ L(has_no_vec):
 
 # ifdef _ARCH_PWR6
   /* Use the extended four-operand version of the mtfsf insn.  */
-  mtfsf  0xff,fp0,1,0
-# else
   .machine push
   .machine "power6"
+
+  mtfsf  0xff,fp0,1,0
+
+  .machine pop
+# else
   /* Availability of DFP indicates a 64-bit FPSCR.  */
   andi.  r6,r5,PPC_FEATURE_HAS_DFP
   beq    7f
   /* Use the extended four-operand version of the mtfsf insn.  */
+  .machine push
+  .machine "power6"
+
   mtfsf  0xff,fp0,1,0
+
+  .machine pop
+
   b      8f
   /* Continue to operate on the FPSCR as if it were 32-bits.  */
 7:
   mtfsf  0xff,fp0
 8:
-  .machine pop
 # endif /* _ARCH_PWR6 */
+
   lfd  fp29,(SIGCONTEXT_FP_REGS+(PT_R29*8))(r31)
   lfd  fp28,(SIGCONTEXT_FP_REGS+(PT_R28*8))(r31)
   lfd  fp27,(SIGCONTEXT_FP_REGS+(PT_R27*8))(r31)

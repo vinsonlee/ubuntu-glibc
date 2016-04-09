@@ -1,6 +1,6 @@
 /* Multiple versions of strspn
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -26,7 +26,7 @@
 #include <init-arch.h>
 
 /* Define multiple versions only for the definition in libc.  */
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 	.text
 ENTRY(strspn)
 	.type	strspn, @gnu_indirect_function
@@ -50,12 +50,6 @@ END(strspn)
 # undef END
 # define END(name) \
 	cfi_endproc; .size __strspn_sse2, .-__strspn_sse2
-# undef libc_hidden_builtin_def
-/* It doesn't make sense to send libc-internal strspn calls through a PLT.
-   The speedup we get from using SSE4.2 instruction is likely eaten away
-   by the indirect call in the PLT.  */
-# define libc_hidden_builtin_def(name) \
-	.globl __GI_strspn; __GI_strspn = __strspn_sse2
 #endif
 
 #endif /* HAVE_SSE4_SUPPORT */

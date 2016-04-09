@@ -39,6 +39,11 @@ element {struct stat} off_t st_size
 element {struct stat} time_t st_atime
 element {struct stat} time_t st_mtime
 element {struct stat} time_t st_ctime
+#if defined XOPEN2K8 || defined POSIX2008
+element {struct stat} {struct timespec} st_atim
+element {struct stat} {struct timespec} st_mtim
+element {struct stat} {struct timespec} st_ctim
+#endif
 #if !defined POSIX && !defined POSIX2008
 element {struct stat} blksize_t st_blksize
 element {struct stat} blkcnt_t st_blocks
@@ -66,6 +71,7 @@ constant S_IRUSR
 constant S_IWUSR
 constant S_IXUSR
 constant S_IRWXG
+constant S_IRGRP
 constant S_IWGRP
 constant S_IXGRP
 constant S_IRWXO
@@ -78,12 +84,12 @@ constant S_ISGID
 constant S_ISVTX
 #endif
 
-#if !defined POSIX
 macro S_ISBLK
 macro S_ISCHR
 macro S_ISDIR
 macro S_ISFIFO
 macro S_ISREG
+#if !defined POSIX
 macro S_ISLNK
 macro S_ISSOCK
 #endif
@@ -92,7 +98,9 @@ macro S_ISSOCK
 optional-macro S_TYPEISMQ
 optional-macro S_TYPEISSEM
 optional-macro S_TYPEISSHM
+# if !defined POSIX && !defined XPG3 && !defined XPG4 && !defined UNIX98
 optional-macro S_TYPEISTMO
+# endif
 
 # if defined XOPEN2K8 || defined POSIX2008
 constant UTIME_NOW

@@ -95,6 +95,7 @@
     License along with this library; if not, see
     <http://www.gnu.org/licenses/>.  */
 
+#include <errno.h>
 #include <math.h>
 #include <math_private.h>
 #include <float.h>
@@ -686,7 +687,7 @@ __ieee754_j1l (long double x)
 {
   long double xx, xinv, z, p, q, c, s, cc, ss;
 
-  if (! __finitel (x))
+  if (! isfinite (x))
     {
       if (x != x)
 	return x;
@@ -696,6 +697,16 @@ __ieee754_j1l (long double x)
   if (x == 0.0L)
     return x;
   xx = fabsl (x);
+  if (xx <= 0x1p-58L)
+    {
+      long double ret = x * 0.5L;
+      if (fabsl (ret) < LDBL_MIN)
+	{
+	  long double force_underflow = ret * ret;
+	  math_force_eval (force_underflow);
+	}
+      return ret;
+    }
   if (xx <= 2.0L)
     {
       /* 0 <= x <= 2 */
@@ -837,7 +848,7 @@ __ieee754_y1l (long double x)
 {
   long double xx, xinv, z, p, q, c, s, cc, ss;
 
-  if (! __finitel (x))
+  if (! isfinite (x))
     {
       if (x != x)
 	return x;
@@ -852,10 +863,16 @@ __ieee754_y1l (long double x)
     }
   xx = fabsl (x);
   if (xx <= 0x1p-114)
-    return -TWOOPI / x;
+    {
+      z = -TWOOPI / x;
+      if (isinf (z))
+	__set_errno (ERANGE);
+      return z;
+    }
   if (xx <= 2.0L)
     {
       /* 0 <= x <= 2 */
+      SET_RESTORE_ROUNDL (FE_TONEAREST);
       z = xx * xx;
       p = xx * neval (z, Y0_2N, NY0_2N) / deval (z, Y0_2D, NY0_2D);
       p = -TWOOPI / xx + p;
