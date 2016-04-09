@@ -55,7 +55,11 @@ __ieee754_atanhl(long double x)
 	    return x/zero;
 	if(ix<0x3fdf) {
 	    math_force_eval(huge+x);
-	    math_check_force_underflow (x);
+	    if (fabsl (x) < LDBL_MIN)
+	      {
+		long double force_underflow = x * x;
+		math_force_eval (force_underflow);
+	      }
 	    return x;	/* x<2**-32 */
 	}
 	SET_LDOUBLE_EXP(x,ix);

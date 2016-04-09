@@ -1,5 +1,5 @@
 /* Multiple versions of vectorized cosf.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,12 +22,14 @@
 	.text
 ENTRY (_ZGVeN16v_cosf)
         .type   _ZGVeN16v_cosf, @gnu_indirect_function
-	LOAD_RTLD_GLOBAL_RO_RDX
-        leaq    _ZGVeN16v_cosf_skx(%rip), %rax
-	HAS_ARCH_FEATURE (AVX512DQ_Usable)
+        cmpl    $0, KIND_OFFSET+__cpu_features(%rip)
+        jne     1f
+        call    __init_cpu_features
+1:      leaq    _ZGVeN16v_cosf_skx(%rip), %rax
+        testl   $bit_AVX512DQ_Usable, __cpu_features+FEATURE_OFFSET+index_AVX512DQ_Usable(%rip)
         jnz     2f
         leaq    _ZGVeN16v_cosf_knl(%rip), %rax
-	HAS_ARCH_FEATURE (AVX512F_Usable)
+        testl   $bit_AVX512F_Usable, __cpu_features+FEATURE_OFFSET+index_AVX512F_Usable(%rip)
         jnz     2f
         leaq    _ZGVeN16v_cosf_avx2_wrapper(%rip), %rax
 2:      ret

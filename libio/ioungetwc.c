@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,7 +28,9 @@
 #include <wchar.h>
 
 wint_t
-ungetwc (wint_t c, _IO_FILE *fp)
+ungetwc (c, fp)
+     wint_t c;
+     _IO_FILE *fp;
 {
   wint_t result;
   CHECK_FILE (fp, WEOF);

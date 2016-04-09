@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,7 +27,11 @@
 #include "libioP.h"
 
 _IO_size_t
-_IO_fwrite (const void *buf, _IO_size_t size, _IO_size_t count, _IO_FILE *fp)
+_IO_fwrite (buf, size, count, fp)
+     const void *buf;
+     _IO_size_t size;
+     _IO_size_t count;
+     _IO_FILE *fp;
 {
   _IO_size_t request = size * count;
   _IO_size_t written = 0;

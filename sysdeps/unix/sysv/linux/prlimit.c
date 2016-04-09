@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -59,14 +59,20 @@ prlimit (__pid_t pid, enum __rlimit_resource resource,
       if (old_rlimit->rlim_cur != old_rlimit64_mem.rlim_cur)
 	{
 	  if (new_rlimit == NULL)
-	    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EOVERFLOW);
+	    {
+	      __set_errno (EOVERFLOW);
+	      return -1;
+	    }
 	  old_rlimit->rlim_cur = RLIM_INFINITY;
 	}
       old_rlimit->rlim_max = old_rlimit64_mem.rlim_max;
       if (old_rlimit->rlim_max != old_rlimit64_mem.rlim_max)
 	{
 	  if (new_rlimit == NULL)
-	    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EOVERFLOW);
+	    {
+	      __set_errno (EOVERFLOW);
+	      return -1;
+	    }
 	  old_rlimit->rlim_max = RLIM_INFINITY;
 	}
     }
@@ -78,7 +84,8 @@ int
 prlimit (__pid_t pid, enum __rlimit_resource resource,
 	 const struct rlimit *new_rlimit, struct rlimit *old_rlimit)
 {
-  return INLINE_SYSCALL_ERROR_RETURN_VALUE (ENOSYS);
+  __set_errno (ENOSYS);
+  return -1;
 }
 stub_warning (prlimit)
 #endif

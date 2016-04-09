@@ -1,5 +1,5 @@
 /* `struct termios' speed frobnication functions.  Linux version.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -34,7 +34,8 @@
 
 /* Return the output baud rate stored in *TERMIOS_P.  */
 speed_t
-cfgetospeed (const struct termios *termios_p)
+cfgetospeed (termios_p)
+     const struct termios *termios_p;
 {
   return termios_p->c_cflag & (CBAUD | CBAUDEX);
 }
@@ -44,7 +45,8 @@ cfgetospeed (const struct termios *termios_p)
    speed, the numerical 0 is a special case for the input baud rate. It
    should set the input baud rate to the output baud rate. */
 speed_t
-cfgetispeed (const struct termios *termios_p)
+cfgetispeed (termios_p)
+     const struct termios *termios_p;
 {
   return ((termios_p->c_iflag & IBAUD0)
 	  ? 0 : termios_p->c_cflag & (CBAUD | CBAUDEX));
@@ -52,11 +54,16 @@ cfgetispeed (const struct termios *termios_p)
 
 /* Set the output baud rate stored in *TERMIOS_P to SPEED.  */
 int
-cfsetospeed (struct termios *termios_p, speed_t speed)
+cfsetospeed  (termios_p, speed)
+     struct termios *termios_p;
+     speed_t speed;
 {
   if ((speed & ~CBAUD) != 0
       && (speed < B57600 || speed > __MAX_BAUD))
-    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+    {
+      __set_errno (EINVAL);
+      return -1;
+    }
 
 #ifdef _HAVE_STRUCT_TERMIOS_C_OSPEED
   termios_p->c_ospeed = speed;
@@ -74,11 +81,16 @@ libc_hidden_def (cfsetospeed)
    speed, the numerical 0 is a special case for the input baud rate.  It
    should set the input baud rate to the output baud rate.  */
 int
-cfsetispeed (struct termios *termios_p, speed_t speed)
+cfsetispeed (termios_p, speed)
+     struct termios *termios_p;
+     speed_t speed;
 {
   if ((speed & ~CBAUD) != 0
       && (speed < B57600 || speed > __MAX_BAUD))
-    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+    {
+      __set_errno (EINVAL);
+      return -1;
+    }
 
 #ifdef _HAVE_STRUCT_TERMIOS_C_ISPEED
   termios_p->c_ispeed = speed;

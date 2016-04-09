@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,19 +21,11 @@
 
 #include <sysdep-cancel.h>
 #include <socketcall.h>
-#include <sys/syscall.h>
-#include <kernel-features.h>
 
 int
 __libc_accept (int fd, __SOCKADDR_ARG addr, socklen_t *len)
 {
-#ifdef __ASSUME_ACCEPT_SYSCALL
-  return SYSCALL_CANCEL (accept, fd, addr.__sockaddr__, len);
-#elif defined __ASSUME_ACCEPT4_FOR_ACCEPT_SYSCALL
-  return SYSCALL_CANCEL (accept4, fd, addr.__sockaddr__, len, 0);
-#else
   return SOCKETCALL_CANCEL (accept, fd, addr.__sockaddr__, len);
-#endif
 }
 weak_alias (__libc_accept, accept)
 libc_hidden_def (accept)

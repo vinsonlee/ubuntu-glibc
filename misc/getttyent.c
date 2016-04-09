@@ -142,7 +142,8 @@ weak_alias (__getttyent, getttyent)
  */
 static char *
 internal_function
-skip (char *p)
+skip(p)
+	char *p;
 {
 	char *t;
 	int c, q;
@@ -176,7 +177,8 @@ skip (char *p)
 
 static char *
 internal_function
-value (char *p)
+value(p)
+	char *p;
 {
 
 	return ((p = index(p, '=')) ? ++p : NULL);

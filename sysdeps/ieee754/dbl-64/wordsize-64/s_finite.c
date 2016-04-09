@@ -16,7 +16,6 @@
 
 #include <math.h>
 #include <math_private.h>
-#include <shlib-compat.h>
 #include <stdint.h>
 
 #undef __finite
@@ -25,18 +24,11 @@ __finite(double x)
 {
   int64_t lx;
   EXTRACT_WORDS64(lx,x);
-  return (int)((uint64_t)((lx&INT64_C(0x7ff0000000000000))-INT64_C(0x7ff0000000000000))>>63);
+  return (int)((uint64_t)((lx&INT64_C(0x7fffffffffffffff))-INT64_C(0x7ff0000000000000))>>63);
 }
 hidden_def (__finite)
 weak_alias (__finite, finite)
 #ifdef NO_LONG_DOUBLE
-# ifdef LDBL_CLASSIFY_COMPAT
-#  if SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_23)
-compat_symbol (libc, __finite, __finitel, GLIBC_2_0);
-#  endif
-#  if SHLIB_COMPAT (libm, GLIBC_2_1, GLIBC_2_23)
-compat_symbol (libm, __finite, __finitel, GLIBC_2_1);
-#  endif
-# endif
+strong_alias (__finite, __finitel)
 weak_alias (__finite, finitel)
 #endif

@@ -1,5 +1,5 @@
 /* brk system call for Linux/i386.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,11 +31,19 @@ weak_alias (__curbrk, ___brk_addr)
 int
 __brk (void *addr)
 {
+  void *newbrk;
+
   INTERNAL_SYSCALL_DECL (err);
-  void *newbrk = (void *) INTERNAL_SYSCALL (brk, err, 1, addr);
+  newbrk = (void *) INTERNAL_SYSCALL (brk, err, 1, addr);
+
   __curbrk = newbrk;
+
   if (newbrk < addr)
-    return INLINE_SYSCALL_ERROR_RETURN_VALUE (ENOMEM);
+    {
+      __set_errno (ENOMEM);
+      return -1;
+    }
+
   return 0;
 }
 weak_alias (__brk, brk)

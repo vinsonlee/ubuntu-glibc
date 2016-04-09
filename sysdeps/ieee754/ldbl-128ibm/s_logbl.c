@@ -22,7 +22,6 @@
 #include <math.h>
 #include <math_private.h>
 #include <math_ldbl_opt.h>
-#include <fix-int-fp-convert-zero.h>
 
 long double
 __logbl (long double x)
@@ -54,8 +53,6 @@ __logbl (long double x)
       if ((hxs ^ lx) < 0 && (lx & 0x7fffffffffffffffLL) != 0)
 	rhx--;
     }
-  if (FIX_INT_FP_CONVERT_ZERO && rhx == 1023)
-    return 0.0L;
   return (long double) (rhx - 1023);
 }
 #ifndef __logbl

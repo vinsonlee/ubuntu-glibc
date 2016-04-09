@@ -65,9 +65,7 @@ int __kernel_rem_pio2f(float *x, float *y, int e0, int nx, int prec, const int32
 
     /* compute q[0],q[1],...q[jk] */
 	for (i=0;i<=jk;i++) {
-	    for(j=0,fw=0.0;j<=jx;j++)
-		fw += x[j]*f[jx+i-j];
-	    q[i] = fw;
+	    for(j=0,fw=0.0;j<=jx;j++) fw += x[j]*f[jx+i-j]; q[i] = fw;
 	}
 
 	jz = jk;
@@ -169,21 +167,30 @@ recompute:
 		break;
 	    case 1:
 	    case 2:;
+#if __FLT_EVAL_METHOD__ != 0
+		volatile
+#endif
 		float fv = 0.0;
-		for (i=jz;i>=0;i--) fv = math_narrow_eval (fv + fq[i]);
+		for (i=jz;i>=0;i--) fv += fq[i];
 		y[0] = (ih==0)? fv: -fv;
-		fv = math_narrow_eval (fq[0]-fv);
-		for (i=1;i<=jz;i++) fv = math_narrow_eval (fv + fq[i]);
+		fv = fq[0]-fv;
+		for (i=1;i<=jz;i++) fv += fq[i];
 		y[1] = (ih==0)? fv: -fv;
 		break;
 	    case 3:	/* painful */
 		for (i=jz;i>0;i--) {
-		    float fv = math_narrow_eval (fq[i-1]+fq[i]);
+#if __FLT_EVAL_METHOD__ != 0
+		    volatile
+#endif
+		    float fv = fq[i-1]+fq[i];
 		    fq[i]  += fq[i-1]-fv;
 		    fq[i-1] = fv;
 		}
 		for (i=jz;i>1;i--) {
-		    float fv = math_narrow_eval (fq[i-1]+fq[i]);
+#if __FLT_EVAL_METHOD__ != 0
+		    volatile
+#endif
+		    float fv = fq[i-1]+fq[i];
 		    fq[i]  += fq[i-1]-fv;
 		    fq[i-1] = fv;
 		}

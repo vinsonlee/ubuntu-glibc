@@ -116,7 +116,6 @@ static char rcsid[] = "$NetBSD: s_erf.c,v 1.8 1995/05/10 20:47:05 jtc Exp $";
 #include <float.h>
 #include <math.h>
 #include <math_private.h>
-#include <fix-int-fp-convert-zero.h>
 
 static const double
   tiny = 1e-300,
@@ -214,7 +213,11 @@ __erf (double x)
 	    {
 	      /* Avoid spurious underflow.  */
 	      double ret = 0.0625 * (16.0 * x + (16.0 * efx) * x);
-	      math_check_force_underflow (ret);
+	      if (fabs (ret) < DBL_MIN)
+		{
+		  double force_underflow = ret * ret;
+		  math_force_eval (force_underflow);
+		}
 	      return ret;
 	    }
 	  return x + efx * x;
@@ -309,10 +312,7 @@ __erfc (double x)
   ix = hx & 0x7fffffff;
   if (ix >= 0x7ff00000)                         /* erfc(nan)=nan */
     {                                           /* erfc(+-inf)=0,2 */
-      double ret = (double) (((u_int32_t) hx >> 31) << 1) + one / x;
-      if (FIX_INT_FP_CONVERT_ZERO && ret == 0.0)
-	return 0.0;
-      return ret;
+      return (double) (((u_int32_t) hx >> 31) << 1) + one / x;
     }
 
   if (ix < 0x3feb0000)                  /* |x|<0.84375 */
@@ -402,7 +402,10 @@ __erfc (double x)
 	  __ieee754_exp ((z - x) * (z + x) + R / S);
       if (hx > 0)
 	{
-	  double ret = math_narrow_eval (r / x);
+#if FLT_EVAL_METHOD != 0
+	  volatile
+#endif
+	  double ret = r / x;
 	  if (ret == 0)
 	    __set_errno (ERANGE);
 	  return ret;

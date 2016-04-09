@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -16,13 +16,14 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <sysdep.h>
-
-ENTRY(pthread_spin_unlock)
+	.globl	pthread_spin_unlock
+	.type	pthread_spin_unlock,@function
+	.align	16
+pthread_spin_unlock:
 	movl	$1, (%rdi)
 	xorl	%eax, %eax
 	retq
-END(pthread_spin_unlock)
+	.size	pthread_spin_unlock,.-pthread_spin_unlock
 
 	/* The implementation of pthread_spin_init is identical.  */
 	.globl	pthread_spin_init

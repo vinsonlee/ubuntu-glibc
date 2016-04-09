@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,16 +20,10 @@
 #include <sys/socket.h>
 
 #include <socketcall.h>
-#include <kernel-features.h>
-#include <sys/syscall.h>
 
 int
 __bind (int fd, __CONST_SOCKADDR_ARG addr, socklen_t len)
 {
-#ifdef __ASSUME_BIND_SYSCALL
-  return INLINE_SYSCALL (bind, 3, fd, addr.__sockaddr__, len);
-#else
   return SOCKETCALL (bind, fd, addr.__sockaddr__, len, 0, 0, 0);
-#endif
 }
 weak_alias (__bind, bind)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,7 +28,10 @@
 
 /* Get and/or change the set of blocked signals.  */
 int
-__sigprocmask (int how, const sigset_t *set, sigset_t *oset)
+__sigprocmask (how, set, oset)
+     int how;
+     const sigset_t *set;
+     sigset_t *oset;
 {
 #ifdef SIGCANCEL
   sigset_t local_newmask;

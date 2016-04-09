@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,6 @@
 #include <unistd.h>
 
 mach_port_t __mach_task_self_;
-mach_port_t __mach_host_self_;
 vm_size_t __vm_page_size = 0;	/* Must be data not bss for weak alias.  */
 weak_alias (__vm_page_size, vm_page_size)
 
@@ -35,7 +34,6 @@ __mach_init (void)
   kern_return_t err;
 
   __mach_task_self_ = (__mach_task_self) ();
-  __mach_host_self_ = (__mach_host_self) ();
   __mig_init (0);
 
 #ifdef HAVE_HOST_PAGE_SIZE

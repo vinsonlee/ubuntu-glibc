@@ -1,5 +1,5 @@
 /* Quad-precision floating point sine and cosine on <-pi/4,pi/4>.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jj@ultra.linux.cz>
 
@@ -114,7 +114,11 @@ __kernel_sincosl(long double x, long double y, long double *sinx, long double *c
 	 polynomial of degree 16(17).  */
       if (tix < 0x3c600000)		/* |x| < 2^-57 */
 	{
-	  math_check_force_underflow (x);
+	  if (fabsl (x) < LDBL_MIN)
+	    {
+	      long double force_underflow = x * x;
+	      math_force_eval (force_underflow);
+	    }
 	  if (!((int)x))			/* generate inexact */
 	    {
 	      *sinx = x;

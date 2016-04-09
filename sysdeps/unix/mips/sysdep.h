@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Brendan Kehoe (brendan@zen.org).
 
@@ -18,10 +18,6 @@
 
 #include <sgidefs.h>
 #include <sysdeps/unix/sysdep.h>
-
-#ifndef __mips_isa_rev
-# define __mips_isa_rev 0
-#endif
 
 #ifdef __ASSEMBLER__
 
@@ -80,6 +76,10 @@
 # define L(label) $L ## label
 #else
 # define L(label) .L ## label
+#endif
+
+#ifndef __mips_isa_rev
+# define __mips_isa_rev 0
 #endif
 
 #endif

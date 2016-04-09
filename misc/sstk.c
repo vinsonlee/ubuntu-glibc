@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,7 +23,8 @@
 void *sstk (int increment) __THROW;
 
 void *
-sstk (int increment)
+sstk (increment)
+     int increment;
 {
   __set_errno (ENOSYS);
   return (void *) -1;
