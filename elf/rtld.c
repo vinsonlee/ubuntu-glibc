@@ -1,5 +1,5 @@
 /* Run time dynamic linker.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include <entry.h>
 #include <fpu_control.h>
 #include <hp-timing.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include "dynamic-link.h"
 #include <dl-librecon.h>
 #include <unsecvars.h>
@@ -162,7 +162,6 @@ struct rtld_global_ro _rtld_global_ro attribute_relro =
     ._dl_hwcap_mask = HWCAP_IMPORTANT,
     ._dl_lazy = 1,
     ._dl_fpu_control = _FPU_DEFAULT,
-    ._dl_pointer_guard = 1,
     ._dl_pagesize = EXEC_PAGESIZE,
     ._dl_inhibit_cache = 0,
 
@@ -709,15 +708,12 @@ security_init (void)
 #endif
 
   /* Set up the pointer guard as well, if necessary.  */
-  if (GLRO(dl_pointer_guard))
-    {
-      uintptr_t pointer_chk_guard = _dl_setup_pointer_guard (_dl_random,
-							     stack_chk_guard);
+  uintptr_t pointer_chk_guard
+    = _dl_setup_pointer_guard (_dl_random, stack_chk_guard);
 #ifdef THREAD_SET_POINTER_GUARD
-      THREAD_SET_POINTER_GUARD (pointer_chk_guard);
+  THREAD_SET_POINTER_GUARD (pointer_chk_guard);
 #endif
-      __pointer_chk_guard_local = pointer_chk_guard;
-    }
+  __pointer_chk_guard_local = pointer_chk_guard;
 
   /* We do not need the _dl_random value anymore.  The less
      information we leave behind, the better, so clear the
@@ -2471,9 +2467,6 @@ process_envvars (enum mode *modep)
 	      GLRO(dl_use_load_bias) = envline[14] == '1' ? -1 : 0;
 	      break;
 	    }
-
-	  if (memcmp (envline, "POINTER_GUARD", 13) == 0)
-	    GLRO(dl_pointer_guard) = envline[14] != '0';
 	  break;
 
 	case 14:

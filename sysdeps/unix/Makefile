@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2015 Free Software Foundation, Inc.
+# Copyright (C) 1991-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -59,8 +59,20 @@ $(objpfx)stub-syscalls.c: $(common-objpfx)sysd-syscalls \
 	   *@*) \
 	     ver=$${call##*@}; call=$${call%%@*}; \
 	     ver=`echo "$$ver" | sed 's/\./_/g'`; \
+	     case $$ver in \
+	     *:*) \
+	       compat_ver=$${ver#*:}; \
+	       ver=$${ver%%:*}; \
+	       compat_cond="SHLIB_COMPAT (libc, $$ver, $$compat_ver)"; \
+	       ;; \
+	     *) \
+	       compat_cond=""; \
+	       ;; \
+	     esac; \
+	     if [ -n "$$compat_cond" ]; then echo "#if $$compat_cond"; fi; \
 	     echo "strong_alias (_no_syscall, __$${call}_$${ver})"; \
-	     echo "compat_symbol (libc, __$${call}_$${ver}, $$call, $$ver);" \
+	     echo "compat_symbol (libc, __$${call}_$${ver}, $$call, $$ver);"; \
+	     if [ -n "$$compat_cond" ]; then echo "#endif"; fi; \
 	     ;; \
 	   *) echo "weak_alias (_no_syscall, $$call)"; \
 	      echo "stub_warning ($$call)"; \

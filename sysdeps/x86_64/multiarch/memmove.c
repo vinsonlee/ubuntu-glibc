@@ -1,6 +1,6 @@
 /* Multiple versions of memmove.
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -36,6 +36,9 @@ extern __typeof (__redirect_memmove) __memmove_sse2 attribute_hidden;
 extern __typeof (__redirect_memmove) __memmove_ssse3 attribute_hidden;
 extern __typeof (__redirect_memmove) __memmove_ssse3_back attribute_hidden;
 extern __typeof (__redirect_memmove) __memmove_avx_unaligned attribute_hidden;
+# ifdef HAVE_AVX512_ASM_SUPPORT
+  extern __typeof (__redirect_memmove) __memmove_avx512_no_vzeroupper attribute_hidden;
+# endif
 
 #endif
 
@@ -49,12 +52,18 @@ extern __typeof (__redirect_memmove) __memmove_avx_unaligned attribute_hidden;
    ifunc symbol properly.  */
 extern __typeof (__redirect_memmove) __libc_memmove;
 libc_ifunc (__libc_memmove,
-	    HAS_AVX_FAST_UNALIGNED_LOAD
+#ifdef HAVE_AVX512_ASM_SUPPORT
+	    HAS_ARCH_FEATURE (AVX512F_Usable)
+	      && HAS_ARCH_FEATURE (Prefer_No_VZEROUPPER)
+	    ? __memmove_avx512_no_vzeroupper
+	    :
+#endif
+	    (HAS_ARCH_FEATURE (AVX_Fast_Unaligned_Load)
 	    ? __memmove_avx_unaligned
-	    : (HAS_SSSE3
-	       ? (HAS_FAST_COPY_BACKWARD
+	    : (HAS_CPU_FEATURE (SSSE3)
+	       ? (HAS_ARCH_FEATURE (Fast_Copy_Backward)
 	          ? __memmove_ssse3_back : __memmove_ssse3)
-	       : __memmove_sse2));
+	       : __memmove_sse2)));
 
 strong_alias (__libc_memmove, memmove)
 
