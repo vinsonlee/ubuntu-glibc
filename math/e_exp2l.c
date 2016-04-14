@@ -1,5 +1,5 @@
 /* Compute 2^x.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,9 +38,13 @@ __ieee754_exp2l (long double x)
 	{
 	  int intx = (int) x;
 	  long double fractx = x - intx;
+	  long double result;
 	  if (fabsl (fractx) < LDBL_EPSILON / 4.0L)
-	    return __scalbnl (1.0L + fractx, intx);
-	  return __scalbnl (__ieee754_expl (M_LN2l * fractx), intx);
+	    result = __scalbnl (1.0L + fractx, intx);
+	  else
+	    result = __scalbnl (__ieee754_expl (M_LN2l * fractx), intx);
+	  math_check_force_underflow_nonneg (result);
+	  return result;
 	}
       else
 	{

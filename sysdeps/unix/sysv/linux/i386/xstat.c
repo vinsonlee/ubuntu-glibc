@@ -1,5 +1,5 @@
 /* xstat using old-style Unix stat system call.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -43,10 +43,13 @@ __xstat (int vers, const char *name, struct stat *buf)
   {
     struct stat64 buf64;
 
-    result = INLINE_SYSCALL (stat64, 2, name, &buf64);
-    if (result == 0)
-      result = __xstat32_conv (vers, &buf64, buf);
-    return result;
+    INTERNAL_SYSCALL_DECL (err);
+    result = INTERNAL_SYSCALL (stat64, err, 2, name, &buf64);
+    if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (result, err)))
+      return INLINE_SYSCALL_ERROR_RETURN_VALUE (INTERNAL_SYSCALL_ERRNO (result,
+									err));
+    else
+      return __xstat32_conv (vers, &buf64, buf);
   }
 }
 hidden_def (__xstat)

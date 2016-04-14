@@ -1,5 +1,5 @@
 /* User interface for extracting locale-dependent parameters.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,9 +27,7 @@
 /* Return a string with the data for locale-dependent parameter ITEM.  */
 
 char *
-__nl_langinfo_l (item, l)
-     nl_item item;
-     __locale_t l;
+__nl_langinfo_l (nl_item item, __locale_t l)
 {
   int category = _NL_ITEM_CATEGORY (item);
   unsigned int index = _NL_ITEM_INDEX (item);

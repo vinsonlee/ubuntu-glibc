@@ -1,5 +1,5 @@
 /* Common definitions for libm tests for double.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,3 +22,4 @@
 #define PRINTF_XEXPR "a"
 #define PRINTF_NEXPR "f"
 #define TEST_DOUBLE 1
+#define BUILD_COMPLEX(real, imag) (CMPLX ((real), (imag)))

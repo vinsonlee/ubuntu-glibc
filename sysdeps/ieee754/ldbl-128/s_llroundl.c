@@ -1,5 +1,5 @@
 /* Round long double value to long long int.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997 and
 		  Jakub Jelinek <jj@ultra.linux.cz>, 1999.
@@ -18,10 +18,12 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#include <fenv.h>
+#include <limits.h>
 #include <math.h>
 
 #include <math_private.h>
-
+#include <fix-fp-int-convert-overflow.h>
 
 long long int
 __llroundl (long double x)
@@ -60,13 +62,37 @@ __llroundl (long double x)
 	  if (j0 == 48)
 	    result = (long long int) i0;
 	  else
-	    result = ((long long int) i0 << (j0 - 48)) | (j >> (112 - j0));
+	    {
+	      result = ((long long int) i0 << (j0 - 48)) | (j >> (112 - j0));
+#ifdef FE_INVALID
+	      if (sign == 1 && result == LLONG_MIN)
+		/* Rounding brought the value out of range.  */
+		feraiseexcept (FE_INVALID);
+#endif
+	    }
 	}
     }
   else
     {
-      /* The number is too large.  It is left implementation defined
-	 what happens.  */
+      /* The number is too large.  Unless it rounds to LLONG_MIN,
+	 FE_INVALID must be raised and the return value is
+	 unspecified.  */
+#ifdef FE_INVALID
+      if (FIX_LDBL_LLONG_CONVERT_OVERFLOW
+	  && !(sign == -1 && x > (long double) LLONG_MIN - 0.5L))
+	{
+	  feraiseexcept (FE_INVALID);
+	  return sign == 1 ? LLONG_MAX : LLONG_MIN;
+	}
+      else if (!FIX_LDBL_LLONG_CONVERT_OVERFLOW
+	       && x <= (long double) LLONG_MIN - 0.5L)
+	{
+	  /* If truncation produces LLONG_MIN, the cast will not raise
+	     the exception, but may raise "inexact".  */
+	  feraiseexcept (FE_INVALID);
+	  return LLONG_MIN;
+	}
+#endif
       return (long long int) x;
     }
 

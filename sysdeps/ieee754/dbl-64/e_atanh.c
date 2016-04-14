@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -52,11 +52,7 @@ __ieee754_atanh (double x)
       if (__glibc_unlikely (xa < 0x1.0p-28))
 	{
 	  math_force_eval (huge + x);
-	  if (fabs (x) < DBL_MIN)
-	    {
-	      double force_underflow = x * x;
-	      math_force_eval (force_underflow);
-	    }
+	  math_check_force_underflow (x);
 	  return x;
 	}
 

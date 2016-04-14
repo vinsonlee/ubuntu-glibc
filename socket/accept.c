@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,10 +24,7 @@
    peer and *ADDR_LEN to the address's actual length, and return the
    new socket's descriptor, or -1 for errors.  */
 int
-accept (fd, addr, addr_len)
-     int fd;
-     __SOCKADDR_ARG addr;
-     socklen_t *addr_len;
+accept (int fd, __SOCKADDR_ARG addr, socklen_t *addr_len)
 {
   __set_errno (ENOSYS);
   return -1;
