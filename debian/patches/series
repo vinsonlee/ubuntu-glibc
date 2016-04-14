@@ -39,6 +39,7 @@ alpha/submitted-dl-support.diff
 alpha/local-string-functions.diff
 alpha/submitted-fegetenv-namespace.diff
 alpha/submitted-termios_h.diff
+alpha/submitted-fts64.diff
 
 amd64/local-blacklist-for-Intel-TSX.diff
 
@@ -142,6 +143,8 @@ hurd-i386/cvs-errnos.d.diff
 hurd-i386/cvs-mach-syscalls.mk.diff
 hurd-i386/local-versions.diff
 hurd-i386/cvs-libpthread.so.diff
+hurd-i386/submitted-auxv.diff
+hurd-i386/submitted-anon-mmap-shared.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
@@ -183,7 +186,6 @@ all/submitted-po-fr-fixes.diff
 any/local-rtlddir-cross.diff
 any/local-asserth-decls.diff
 any/local-bindresvport_blacklist.diff
-any/local-allocalim-header.diff
 any/local-fhs-linux-paths.diff
 any/local-fhs-nscd.diff
 any/local-ld-multiarch.diff
@@ -193,7 +195,6 @@ any/local-ldconfig-fsync.diff
 any/local-libgcc-compat-main.diff
 any/local-libgcc-compat-ports.diff
 any/local-libgcc-compat-abilists.diff
-any/local-no-pagesize.diff
 any/local-nss-upgrade.diff
 any/local-stubs_h.diff
 any/local-tcsetaddr.diff
@@ -219,6 +220,7 @@ any/local-bootstrap-headers.diff
 any/submitted-argp-attribute.diff
 any/submitted-dlopen-noload.diff
 any/cvs-tst-malloc-thread-exit.diff
+any/cvs-sys-personality-h.diff
 
 # Ubuntu patches live in their own little world, to maintain sanity
 ubuntu/lddebug-scopes.diff

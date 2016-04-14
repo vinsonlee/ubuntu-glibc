@@ -121,31 +121,37 @@ add_to_locale_gen() {
   done
 }
 
-GENERATE=
 if [ -z "$1" ]; then
-    GENERATE="`cat $SUPPORTED/* $LOCALEGEN 2>/dev/null || true`"
+  GENERATE="`cat $SUPPORTED/* $LOCALEGEN 2>/dev/null || true`"
 else
+  GENERATE=
   while [ -n "$1" ]; do
     if [ -f "$SUPPORTED/$1" ]; then
-      GENERATE="`cat $SUPPORTED/$1`"
+      GENERATE="$GENERATE\n`cat $SUPPORTED/$1`"
     elif [ $IS_LANG = no ] && L=`grep "^${1/%.utf8/.UTF-8} " /usr/share/i18n/SUPPORTED`; then
-      GENERATE="$L"
-      add_to_locale_gen "$GENERATE"
+      # convert utf8 to UTF-8 and check if the requested locale exists
+      GENERATE="$GENERATE\n$L"
+      add_to_locale_gen "$L"
+    elif [ $IS_LANG = no ] && L=`grep "^${1%.[uU][tT][fF]*} UTF-8" /usr/share/i18n/SUPPORTED`; then
+      # recognize 'll_CC.UTF-8' or 'll_CC.utf8' as ll_CC without codeset
+      GENERATE="$GENERATE\n$L"
+      add_to_locale_gen "$L"
     else
       # try to come up with a sensible default
-      GENERATE=`grep -E "^${1}( |[._@][^[:space:]]* )UTF-8" /usr/share/i18n/SUPPORTED`
-      if [ -z "$GENERATE" ]; then
+      L=`grep -E "^${1}( |[._@][^[:space:]]* )UTF-8" /usr/share/i18n/SUPPORTED || true`
+      if [ -z "$L" ]; then
         echo "Error: '$1' is not a supported language or locale" >&2
         exit 1
       fi
-      add_to_locale_gen "$GENERATE"
+      GENERATE="$GENERATE\n$L"
+      add_to_locale_gen "$L"
     fi
     shift
   done
 fi
 
 echo "Generating locales (this might take a while)..."
-echo "$GENERATE" | sort -u | while read locale charset; do \
+echo -e "$GENERATE" | sort -u | while read locale charset; do \
 	case $locale in \#*) continue;; "") continue;; esac; \
 	is_entry_ok || continue
 	if [ "$KEEP" ] && PERL_BADLANG=0 perl -MPOSIX -e \
