@@ -1,5 +1,5 @@
 /* Return quiet nan.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -28,14 +28,7 @@
 double
 __nan (const char *tagp)
 {
-  if (tagp[0] != '\0')
-    {
-      char buf[6 + strlen (tagp)];
-      sprintf (buf, "NAN(%s)", tagp);
-      return strtod (buf, NULL);
-    }
-
-  return NAN;
+  return __strtod_nan (tagp, NULL, 0);
 }
 weak_alias (__nan, nan)
 #ifdef NO_LONG_DOUBLE

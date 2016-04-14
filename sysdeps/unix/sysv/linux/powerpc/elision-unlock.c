@@ -1,5 +1,5 @@
 /* elision-unlock.c: Commit an elided pthread lock.
-   Copyright (C) 2015 Free Software Foundation, Inc.
+   Copyright (C) 2015-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,12 +21,20 @@
 #include "htm.h"
 
 int
-__lll_unlock_elision(int *lock, int pshared)
+__lll_unlock_elision (int *lock, short *adapt_count, int pshared)
 {
   /* When the lock was free we're in a transaction.  */
   if (*lock == 0)
-    __builtin_tend (0);
+    __libc_tend (0);
   else
-    lll_unlock ((*lock), pshared);
+    {
+      lll_unlock ((*lock), pshared);
+
+      /* Update the adapt count AFTER completing the critical section.
+         Doing this here prevents unneeded stalling when entering
+         a critical section.  Saving about 8% runtime on P8.  */
+      if (*adapt_count > 0)
+	(*adapt_count)--;
+    }
   return 0;
 }

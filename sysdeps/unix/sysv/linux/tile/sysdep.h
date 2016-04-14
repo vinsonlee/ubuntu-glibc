@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
 
@@ -53,17 +53,20 @@
 # define SYSCALL_ERROR_NAME plt(__syscall_error)
 #endif
 
+#undef PSEUDO_END
 #define	PSEUDO_END(name)				\
 0:							\
   j SYSCALL_ERROR_NAME;					\
   END (name)
 
+#undef PSEUDO_NOERRNO
 #define	PSEUDO_NOERRNO(name, syscall_name, args)	\
   ENTRY	(name);						\
   DO_CALL(syscall_name, args)
 
 #define ret_NOERRNO  jrp lr
 
+#undef PSEUDO_END_NOERRNO
 #define	PSEUDO_END_NOERRNO(name) \
   END (name)
 

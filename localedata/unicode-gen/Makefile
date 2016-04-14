@@ -1,4 +1,4 @@
-# Copyright (C) 2015 Free Software Foundation, Inc.
+# Copyright (C) 2015-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -35,13 +35,13 @@
 # files for making modifications.
 
 
-UNICODE_VERSION = 7.0.0
+UNICODE_VERSION = 8.0.0
 
 PYTHON3 = python3
 WGET = wget
 
 DOWNLOADS = UnicodeData.txt DerivedCoreProperties.txt EastAsianWidth.txt
-GENERATED = i18n UTF-8
+GENERATED = i18n tr_TR UTF-8 translit_combining translit_compat translit_circle translit_cjk_compat translit_font translit_fraction
 REPORTS = i18n-report UTF-8-report
 
 all: $(GENERATED)
@@ -50,7 +50,14 @@ check: check-i18n check-UTF-8
 
 install:
 	cp -p i18n ../locales/i18n
+	cp -p tr_TR ../locales/tr_TR
 	cp -p UTF-8 ../charmaps/UTF-8
+	cp -p translit_combining ../locales/translit_combining
+	cp -p translit_compat ../locales/translit_compat
+	cp -p translit_circle ../locales/translit_circle
+	cp -p translit_cjk_compat ../locales/translit_cjk_compat
+	cp -p translit_font ../locales/translit_font
+	cp -p translit_fraction ../locales/translit_fraction
 
 clean: mostlyclean
 	-rm -rf __pycache__
@@ -76,19 +83,56 @@ check-i18n: i18n-report
 		i18n-report; \
 	then echo manual verification required; false; else true; fi
 
+tr_TR: UnicodeData.txt DerivedCoreProperties.txt
+tr_TR: ../locales/tr_TR # Preserve non-ctype information.
+tr_TR: gen_unicode_ctype.py
+	$(PYTHON3) gen_unicode_ctype.py -u UnicodeData.txt \
+	  -d DerivedCoreProperties.txt -i ../locales/tr_TR -o $@ \
+	  --unicode_version $(UNICODE_VERSION) --turkish
+
 UTF-8: UnicodeData.txt EastAsianWidth.txt
 UTF-8: utf8_gen.py
 	$(PYTHON3) utf8_gen.py UnicodeData.txt EastAsianWidth.txt
 
 UTF-8-report: UTF-8 ../charmaps/UTF-8
 UTF-8-report: utf8_compatibility.py
-	$(PYTHON3) ./utf8_compatibility.py -o ../charmaps/UTF-8 \
-	  -n UTF-8 -a -m > $@
+	$(PYTHON3) ./utf8_compatibility.py -u UnicodeData.txt \
+	-e EastAsianWidth.txt -o ../charmaps/UTF-8 \
+	-n UTF-8 -a -m -c > $@
 
 check-UTF-8: UTF-8-report
 	@if grep '^Total.*: [^0]' UTF-8-report; \
 	then echo manual verification required; false; else true; fi
 
+translit_combining: UnicodeData.txt
+translit_combining: gen_translit_combining.py
+	$(PYTHON3) ./gen_translit_combining.py -u UnicodeData.txt \
+	-o $@ --unicode_version $(UNICODE_VERSION)
+
+translit_compat: UnicodeData.txt
+translit_compat: gen_translit_compat.py
+	$(PYTHON3) ./gen_translit_compat.py -u UnicodeData.txt \
+	-o $@ --unicode_version $(UNICODE_VERSION)
+
+translit_circle: UnicodeData.txt
+translit_circle: gen_translit_circle.py
+	$(PYTHON3) ./gen_translit_circle.py -u UnicodeData.txt \
+	-o $@ --unicode_version $(UNICODE_VERSION)
+
+translit_cjk_compat: UnicodeData.txt
+translit_cjk_compat: gen_translit_cjk_compat.py
+	$(PYTHON3) ./gen_translit_cjk_compat.py -u UnicodeData.txt \
+	-o $@ --unicode_version $(UNICODE_VERSION)
+
+translit_font: UnicodeData.txt
+translit_font: gen_translit_font.py
+	$(PYTHON3) ./gen_translit_font.py -u UnicodeData.txt \
+	-o $@ --unicode_version $(UNICODE_VERSION)
+
+translit_fraction: UnicodeData.txt
+translit_fraction: gen_translit_fraction.py
+	$(PYTHON3) ./gen_translit_fraction.py -u UnicodeData.txt \
+	-o $@ --unicode_version $(UNICODE_VERSION)
 
 .PHONY: downloads clean-downloads
 downloads: $(DOWNLOADS)
