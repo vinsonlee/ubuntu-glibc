@@ -86,10 +86,6 @@ then
 	    ln -sf spool/mail /var/mail
 	fi
 	if dpkg --compare-versions "$preversion" lt GLIBC_VERSION; then
-	    # give a reboot notification on major version upgrades
-	    if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
-		/usr/share/update-notifier/notify-reboot-required
-	    fi
 	    check=""
 	    [ -f /var/run/services.need_restart ] && check=$(cat /var/run/services.need_restart 2>/dev/null)
 	    # Change service names back into package names, so that we can
@@ -184,6 +180,10 @@ then
 		echo "Nothing to restart."
 	    fi
 	fi # end upgrading and $preversion lt GLIBC_VERSION
+	# give a reboot notification on al upgrades (LP: #1546457)
+	if [ -x /usr/share/update-notifier/notify-reboot-required ]; then
+	    /usr/share/update-notifier/notify-reboot-required
+	fi
     fi # Upgrading
 
     # Restart init.  Currently handles chroots, systemd and upstart, and
