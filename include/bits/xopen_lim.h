@@ -77,9 +77,7 @@
 
 /* Maximum number of bytes in N-to-1 collation mapping.  We have no
    limit.  */
-#if defined __USE_GNU || !defined __USE_XOPEN2K8
-# define NL_NMAX	INT_MAX
-#endif
+#define NL_NMAX		INT_MAX
 
 /* Maximum set number.  We have no limit.  */
 #define NL_SETMAX	INT_MAX

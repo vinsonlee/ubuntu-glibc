@@ -24,7 +24,7 @@ long double
 __w_scalblnl (long double x, long int n)
 {
   if (!isfinite (x) || x == 0.0L)
-    return x + x;
+    return x;
 
   x = __scalblnl (x, n);
 

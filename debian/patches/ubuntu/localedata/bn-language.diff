@@ -11,7 +11,7 @@ Index: langpack-locales/locales/bn_BD
  email      "taneem@bengalinux.org, jamil@bengalinux.org"
  tel        ""
  fax        ""
--language   "Bengali"
+-language   "Bengali/Bangla"
 +language   "Bangla"
  territory  "Bangladesh"
  revision   "0.5"

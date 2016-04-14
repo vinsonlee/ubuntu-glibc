@@ -20,7 +20,16 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/poll.h>
+#include <kernel-features.h>
 #include <sysdep-cancel.h>
+
+
+#ifdef __NR_ppoll
+# ifndef __ASSUME_PPOLL
+static int __generic_ppoll (struct pollfd *fds, nfds_t nfds,
+			    const struct timespec *timeout,
+			    const sigset_t *sigmask);
+# endif
 
 
 int
@@ -36,6 +45,24 @@ ppoll (struct pollfd *fds, nfds_t nfds, const struct timespec *timeout,
       timeout = &tval;
     }
 
-  return SYSCALL_CANCEL (ppoll, fds, nfds, timeout, sigmask, _NSIG / 8);
+  int result;
+
+  result = SYSCALL_CANCEL (ppoll, fds, nfds, timeout, sigmask, _NSIG / 8);
+
+# ifndef __ASSUME_PPOLL
+  if (result == -1 && errno == ENOSYS)
+    result = __generic_ppoll (fds, nfds, timeout, sigmask);
+# endif
+
+  return result;
 }
 libc_hidden_def (ppoll)
+
+# ifndef __ASSUME_PPOLL
+#  define ppoll static __generic_ppoll
+# endif
+#endif
+
+#ifndef __ASSUME_PPOLL
+# include <io/ppoll.c>
+#endif

@@ -30,6 +30,8 @@ $(patsubst %,configure_%,$(GLIBC_PASSES)) :: configure_% : $(stamp)configure_%
 $(stamp)configure_%: $(stamp)mkbuilddir_%
 	@echo Configuring $(curpass)
 	rm -f $(DEB_BUILDDIR)/configparms
+	echo "CC = $(call xx,CC)"                 >> $(DEB_BUILDDIR)/configparms
+	echo "CXX = $(call xx,CXX)"               >> $(DEB_BUILDDIR)/configparms
 	echo "MIG = $(call xx,MIG)"               >> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CC = $(BUILD_CC)"             >> $(DEB_BUILDDIR)/configparms
 	echo "BUILD_CXX = $(BUILD_CXX)"           >> $(DEB_BUILDDIR)/configparms
@@ -79,7 +81,7 @@ $(stamp)configure_%: $(stamp)mkbuilddir_%
 	$(call logme, -a $(log_build), \
 		cd $(DEB_BUILDDIR) && \
 		CC="$(call xx,CC)" \
-		CXX=$(if $(filter nocheck,$(DEB_BUILD_OPTIONS)),:,"$(call xx,CXX)") \
+		CXX="$(call xx,CXX)" \
 		MIG="$(call xx,MIG)" \
 		AUTOCONF=false \
 		MAKEINFO=: \
@@ -113,7 +115,7 @@ endif
 $(patsubst %,check_%,$(GLIBC_PASSES)) :: check_% : $(stamp)check_%
 $(stamp)check_%: $(stamp)build_%
 	@set -e ; \
-	if [ -n "$(filter nocheck,$(DEB_BUILD_OPTIONS))" ]; then \
+	if [ -n "$(findstring nocheck,$(DEB_BUILD_OPTIONS))" ]; then \
 	  echo "Tests have been disabled via DEB_BUILD_OPTIONS." ; \
 	elif [ $(call xx,configure_build) != $(call xx,configure_target) ] && \
 	     ! $(DEB_BUILDDIR)/elf/ld.so $(DEB_BUILDDIR)/libc.so >/dev/null 2>&1 ; then \
@@ -124,7 +126,7 @@ $(stamp)check_%: $(stamp)build_%
 	  echo "Testsuite disabled for $(curpass), skipping tests."; \
 	else \
 	  find $(DEB_BUILDDIR) -name '*.out' -delete ; \
-	  LD_PRELOAD="" LANG="" TIMEOUTFACTOR="15" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) check 2>&1 | tee $(log_test) ; \
+	  LD_PRELOAD="" LANG="" TIMEOUTFACTOR="50" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) check 2>&1 | tee $(log_test) ; \
 	  if ! test -f $(DEB_BUILDDIR)/tests.sum ; then \
 	    echo "+---------------------------------------------------------------------+" ; \
 	    echo "|                     Testsuite failed to build.                      |" ; \
@@ -138,16 +140,13 @@ $(stamp)check_%: $(stamp)build_%
 	  for test in $$(sed -e '/^\(FAIL\|XFAIL\): /!d;s/^.*: //' $(DEB_BUILDDIR)/tests.sum) ; do \
 	    echo "----------" ; \
 	    cat $(DEB_BUILDDIR)/$$test.test-result ; \
-	    if test -f $(DEB_BUILDDIR)/$$test.out ; then \
-	      cat $(DEB_BUILDDIR)/$$test.out ; \
-	    fi ; \
+	    cat $(DEB_BUILDDIR)/$$test.out ; \
 	    echo "----------" ; \
 	  done ; \
 	  if grep -q '^FAIL:' $(DEB_BUILDDIR)/tests.sum ; then \
 	    echo "+---------------------------------------------------------------------+" ; \
 	    echo "|     Encountered regressions that don't match expected failures.     |" ; \
 	    echo "+---------------------------------------------------------------------+" ; \
-	    grep -E '^FAIL:' $(DEB_BUILDDIR)/tests.sum | sort ; \
 	    exit 1 ; \
 	  else \
 	    echo "+---------------------------------------------------------------------+" ; \
