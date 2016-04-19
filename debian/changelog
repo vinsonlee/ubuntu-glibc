@@ -1,3 +1,31 @@
+glibc (2.22-7) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * hurd-i386/submitted-auxv.diff: Update from upstream commit into
+    cvs-auxv.diff.
+  * hurd-i386/unsubmitted-prof-eintr.diff: Fix recording profiling from
+    ext2fs.
+  * hurd-i386/submitted-anon-mmap-shared.diff: Disable, actually breaks
+    booting hurd-i386.
+  * control: Add myself as uploader.
+
+ -- Samuel Thibault <sthibault@debian.org>  Tue, 19 Apr 2016 11:48:08 +0200
+
+glibc (2.22-6) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * hurd-i386/submitted-auxv.diff: New patch, fixes cvs crash.
+  * hurd-i386/submitted-anon-mmap-shared.diff: New patch, fixes inheritence of
+    shared anonymous memory.
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+    - Fix stack overflow when getnetbyname is invoked on a very long name
+      (CVE-2016-3075).
+    - Fix HTM on powerpc/ppc64/ppc64el.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 09 Apr 2016 13:35:19 +0200
+
 glibc (2.22-5) unstable; urgency=medium
 
   [ Samuel Thibault ]
