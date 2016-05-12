@@ -1,3 +1,19 @@
+glibc (2.22-9) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * hurd-i386/cvs-libpthread.so.diff: Fix building malloc tests.
+  * debian/testsuite-xfail-debian.mk: Update LFS tests.
+
+  [ Aurelien Jarno ]
+  * debian/testsuite-xfail-debian.mk: drop check on i586 flavours.
+  * debian/patches/kfreebsd/local-tst-malloc-backtrace.diff: drop, obsoleted
+    by hurd-i386/cvs-libpthread.so.diff.
+  * debian/patches/arm/unsubmitted-ldconfig-cache-abi.diff: correctly apply
+    patch. Really fix #822489.
+  * control.in/main: Bump Standards-Version to 3.9.8 (no changes).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 12 May 2016 12:55:01 +0200
+
 glibc (2.22-8) unstable; urgency=medium
 
   [ Samuel Thibault ]
