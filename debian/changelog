@@ -1,3 +1,65 @@
+glibc (2.21-0ubuntu4.3) wily-security; urgency=medium
+
+  * REGRESSION UPDATE: revert CVE-2014-9761 fix due to added symbol
+    dependency from libm to libc (LP: #1585614)
+    - debian/patches/any/CVE-2014-9761-2.diff: keep exporting
+      __strto*_nan symbols added to libc.
+
+ -- Steve Beattie <sbeattie@ubuntu.com>  Thu, 26 May 2016 01:28:23 -0700
+
+glibc (2.21-0ubuntu4.2) wily-security; urgency=medium
+
+  * SECURITY UPDATE: buffer overflow in gethostbyname_r and related
+    functions
+    - debian/patches/any/CVE-2015-1781.diff: take alignment padding
+      into account when computing if buffer is too small.
+    - CVE-2015-1781
+  * SECURITY UPDATE: glibc Name Service Switch (NSS) denial of sevice
+    - debian/patches/any/CVE-2014-8121-1.diff: do not close NSS files
+      database during iteration.
+    - debian/patches/any/CVE-2014-8121-2.diff: Separate internal state
+      between getXXent and getXXbyYY NSS calls.
+    - CVE-2014-8121
+  * SECURITY UPDATE: glibc unbounded stack usage in NaN strtod
+    conversion
+    - debian/patches/any/CVE-2014-9761-1.diff: Refactor strtod parsing
+      of NaN payloads.
+    - debian/patches/any/CVE-2014-9761-1.diff:  Fix nan functions
+      handling of payload strings
+    - CVE-2014-9761
+  * SECURITY UPDATE: out of range data to strftime() causes segfault
+    (denial of service)
+    - debian/patches/any/CVE-2015-8776.diff: add range checks to
+      strftime() processing
+    - CVE-2015-8776
+  * SECURITY UPDATE: glibc honors LD_POINTER_GUARD env for setuid
+    AT_SECURE programs (e.g. setuid), allowing disabling of pointer
+    mangling
+    - debian/patches/any/CVE-2015-8777.diff: Always enable pointer
+      guard
+    - CVE-2015-8777
+  * SECURITY UPDATE: integer overflow in hcreate and hcreate_r
+    - debian/patches/any/CVE-2015-8778.diff: check for large inputs
+    - CVE-2015-8778
+  * SECURITY UPDATE: unbounded stack allocation in catopen()
+    - debian/patches/any/CVE-2015-8779.diff: stop using unbounded
+      alloca()
+    - CVE-2015-8779
+  * SECURITY UPDATE: Stack overflow in _nss_dns_getnetbyname_r
+    - debian/patches/any/CVE-2016-3075.diff: do not make unneeded
+      memory copy on the stack.
+    - CVE-2016-3075
+  * SECURITY UPDATE: pt_chown privilege escalation
+    - debian/patches/any/CVE-2016-2856.diff: grantpt: trust the kernel
+      about pty group and permission mode
+    - debian/sysdeps/linux.mk: don't build pt_chown
+    - debian/rules.d/debhelper.mk: only install pt_chown when built.
+    - CVE-2016-2856, CVE-2013-2207
+  * debian/debhelper.in/libc.postinst: add reboot notifications for
+    security updates (LP: #1546457)
+
+ -- Steve Beattie <sbeattie@ubuntu.com>  Fri, 08 Apr 2016 09:44:34 -0700
+
 glibc (2.21-0ubuntu4.1) wily-security; urgency=medium
 
   * SECURITY UPDATE: glibc getaddrinfo stack-based buffer overflow
