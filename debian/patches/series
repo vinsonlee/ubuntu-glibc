@@ -66,6 +66,7 @@ hppa/submitted-mathdef.diff
 hppa/cvs-update-mman.h.diff
 hppa/submitted-dladdr.diff
 hppa/submitted-setcontext.diff
+hppa/submitted-start.diff
 
 hurd-i386/local-enable-ldconfig.diff
 hurd-i386/tg-context_functions.diff
@@ -185,6 +186,7 @@ m68k/submitted-gcc34-seccomment.diff
 
 mips/submitted-rld_map.diff
 mips/cvs-testsuite-o32-fp.diff
+mips/submitted-vfork.diff
 
 powerpc/local-powerpc8xx-dcbz.diff
 
@@ -192,6 +194,7 @@ sh4/local-fpscr_values.diff
 
 sparc/local-sparcv9-target.diff
 sparc/submitted-sparc64-socketcall.diff
+sparc/submitted-vfork.diff
 
 all/local-alias-et_EE.diff
 all/local-remove-manual.diff
