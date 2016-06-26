@@ -1,3 +1,171 @@
+glibc (2.22-13) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/patches/mips/submitted-vfork.diff: new patch to fix ABI change and
+    testsuite on mips*.
+  * debian/patches/sparc/submitted-vfork.diff: new patch to fix ABI change and
+    testsuite on sparc*.
+  * debian/sysdeps/mipsel.mk, debian/sysdeps/mips64el.mk: bump ISA to MIPS32
+    and MIPS64.
+  * debian/patches/hppa/submitted-start.diff: new patch from John David Anglin
+    to fix crash in executables built with -p and linked against gcrt1.o.
+    Closes: #827876.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 27 Jun 2016 00:51:43 +0200
+
+glibc (2.22-12) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+    - fix FTBFS with recent binutils versions on mips* and sparc*.  Closes:
+      #827477.
+  * debian/sysdeps/kfreebsd-i386.mk: fix libc0.1-i686 package name.
+  * debian/rules.d/build.mk: in case of build failure due testsuite
+    issues, display again the failed tests so that they appear at the end of
+    the build log.
+  * debian/local/etc/nsswitch.conf: add gshadow line to default
+    /etc/nsswitch.conf (addresses #699090).
+  * debian/debhelper.in/libc-bin.postinst: update /etc/nsswitch.conf to the
+    current default if it matches a version shipped by base-files or
+    libc-bin. This is based on a patch from Santiago Vila, thanks.  Closes:
+    #827105.
+
+  [ Samuel Thibault ]
+  * hurd-i386/tg-eintr.diff: New patch to fix "Interrupted" issues in ghc.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 20 Jun 2016 00:01:21 +0200
+
+glibc (2.22-11) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * hurd-i386/tg-poll_errors_fixes.diff: Fix crash when calling poll or select
+    on a fd which had never been allocated.  Closes: #826175.
+  * hurd-i386/tg-faccessat.diff: Finish faccessat implementation. Fixes
+    findutils.  Closes: #823027.
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch.
+  * debian/control: re-add libc0.1-i686, libc0.3-i686, libc6-i686 as a
+    dummy package to ease the upgrades.  Closes: #825421, #826290.
+  * debian/sysdeps/i386.mk: add libc6-i686 dummy package.
+  * debian/sysdeps/hurd-i386.mk: add libc0.1-i686 dummy package.
+  * debian/sysdeps/kfreebsd-i386.mk: add libc0.3-i686 dummy package.
+  * debian/debhelper.in/libc.NEWS: drop the new about libc6-i686, libc0.1-i686
+    and libc0.3-i686 packages removal.
+  * debian/script.in/nohwcap.sh: drop sparc optimized packages.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 05 Jun 2016 00:04:04 +0200
+
+glibc (2.22-10) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+    - Fix a stack overflow in Sun RPC clntudp_call() (CVE-2016-4429).
+  * debian/control.in/main: build-depends on dpkg (>= 1.18.7) instead of
+    dpkg-dev (>= 1.18.7) as the cputable file is in dpkg, not dpkg-dev.
+    Closes: #824127.
+  * debian/debhelper.in/libc.NEWS: add an entry about the dropped libc6-i686,
+    libc0.1-i686 and libc0.3-i686 packages.  Closes: #825421.
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/cvs-i686-link.diff: Fix link of i686 build.
+  * sysdeps/hurd-i386.mk: Disable ifunc, not working yet.
+  * sysdeps/hurd-i386.mk: Fix and re-enable xen build.
+  * control: Re-introduce libc0.3-xen package.
+  * patches/hurd-i386/cvs-check-local-headers.diff: Update exclusion list.
+
+  [ John David Anglin ]
+  * debian/patches/hppa/submitted-setcontext.diff: new patch to fix setcontext
+    return code on hppa.  Closes: #824344.
+  * debian/patches/hppa/submitted-dladdr.diff: update patch to fix
+    debug/backtrace-tst test failure.  Closes: #824362.
+  * debian/testsuite-xfail-debian.mk: update expected testsuite results.
+    Closes: #824363.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 31 May 2016 23:48:20 +0200
+
+glibc (2.22-9) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * hurd-i386/cvs-libpthread.so.diff: Fix building malloc tests.
+  * debian/testsuite-xfail-debian.mk: Update LFS tests.
+
+  [ Aurelien Jarno ]
+  * debian/testsuite-xfail-debian.mk: drop check on i586 flavours.
+  * debian/patches/kfreebsd/local-tst-malloc-backtrace.diff: drop, obsoleted
+    by hurd-i386/cvs-libpthread.so.diff.
+  * debian/patches/arm/unsubmitted-ldconfig-cache-abi.diff: correctly apply
+    patch. Really fix #822489.
+  * control.in/main: Bump Standards-Version to 3.9.8 (no changes).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 12 May 2016 12:55:01 +0200
+
+glibc (2.22-8) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * hurd-i386/cvs-gprof-tick.diff: Cherry-pick from upstream to fix gprof
+    timing.
+  * hurd-i386/cvs-IPV6_PKTINFO.diff: Cherry-pick from upstream to fix
+    IPV6_*PKT* macros.
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+    - Fix a buffer overflow in the glob function (CVE-2016-1234).
+    - Fix a stack overflow in getaddrinfo function (CVE-2016-3706).
+    - Fix nss_hesiod breakage.  Closes: #821358.
+  * patches/kfreebsd/local-sysdeps.diff: update to revision 6051 (from
+    glibc-bsd) to fix FTBFS and provide PT_FOLLOW_FORK in sys/ptrace.h.
+    Closes: #822143, #823387.
+  * patches/arm/unsubmitted-ldconfig-cache-abi.diff: apply fix from Steve
+    McIntyre to fix an armhf ABI detection crash in ldconfig on arm64.
+    Closes: #822489.
+  * debian/control.in/main: upgrade breaks on binutils. This is plainly
+    wrong though, glibc should not be a special case: either we don't
+    support partial upgrades or we do that for all libraries. With that
+    let's hope people will stop reporting bugs, sigh.  Closes: #819165.
+  * Drop libc*-i686 packages as GCC now defaults to i686:
+    - debian/control: drop packages, add provides and build-depends on
+      g++-5 (>= 5.3.1-17) and dpkg-dev (>= 1.18.7).
+    - debian/sysdeps/hurd-i386.mk: stop building libc0.3-i686. Use the
+      default compiler options to build libc0.3-xen.
+    - debian/sysdeps/i386.mk: stop building libc6-i686.
+    - debian/sysdeps/kfreebsd-i386.mk: drop.
+    - debian/patches/i386/submitted-i686-timing.diff: drop.  Closes:
+      #218519.
+
+  [ Adam Conrad ]
+  * debian/control.in/libc: Force i686 variants off the system on upgrade.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 11 May 2016 23:39:05 +0200
+
+glibc (2.22-7) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * hurd-i386/submitted-auxv.diff: Update from upstream commit into
+    cvs-auxv.diff.
+  * hurd-i386/unsubmitted-prof-eintr.diff: Fix recording profiling from
+    ext2fs.
+  * hurd-i386/submitted-anon-mmap-shared.diff: Disable, actually breaks
+    booting hurd-i386.
+  * control: Add myself as uploader.
+
+ -- Samuel Thibault <sthibault@debian.org>  Tue, 19 Apr 2016 11:48:08 +0200
+
+glibc (2.22-6) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * hurd-i386/submitted-auxv.diff: New patch, fixes cvs crash.
+  * hurd-i386/submitted-anon-mmap-shared.diff: New patch, fixes inheritence of
+    shared anonymous memory.
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+    - Fix stack overflow when getnetbyname is invoked on a very long name
+      (CVE-2016-3075).
+    - Fix HTM on powerpc/ppc64/ppc64el.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 09 Apr 2016 13:35:19 +0200
+
 glibc (2.22-5) unstable; urgency=medium
 
   [ Samuel Thibault ]
