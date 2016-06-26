@@ -160,8 +160,10 @@ test-xfail-tst-cancel4 = yes
 test-xfail-tst-cancel5 = yes
 test-xfail-tst-cancelx20 = yes
 test-xfail-tst-cancelx21 = yes
+test-xfail-tst-cancelx3 = yes
 test-xfail-tst-cancelx4 = yes
 test-xfail-tst-cancelx5 = yes
+test-xfail-tst-cleanup4 = yes
 test-xfail-tst-cleanupx4 = yes
 test-xfail-tst-cputimer2 = yes
 test-xfail-tst-cputimer3 = yes
@@ -182,7 +184,7 @@ endif
 ######################################################################
 # hurd-i386 (including optimized flavours)
 ######################################################################
-ifneq (,$(filter $(config-machine)-$(config-os), i586-gnu-gnu-gnu i686-gnu-gnu-gnu))
+ifeq ($(config-machine)-$(config-os),i686-gnu-gnu-gnu)
 # sysdeps/mach/hurd/dl-sysdep.c's open_file does not support the linker
 # creating files.
 test-xfail-tst-null-argv = yes
@@ -277,7 +279,10 @@ test-xfail-tst-vfork3-mem = yes
 
 # This generates GiBs of data instead of sparse files, putting build box on its knees
 tests-unsupported += test-lfs
+
+# Needs LFS support
 #test-xfail-test-lfs = yes
+test-xfail-tst-tzset = yes
 
 # happens seldomly
 test-xfail-tst-clock_nanosleep = yes
@@ -796,7 +801,7 @@ endif
 ######################################################################
 # i386 (including optimized flavours)
 ######################################################################
-ifneq (,$(filter $(config-machine)-$(config-os), i586-linux-gnu i686-linux-gnu))
+ifeq ($(config-machine)-$(config-os),i686-linux-gnu)
 test-xfail-tst-backtrace6 = yes
 test-xfail-tst-mqueue5 = yes
 test-xfail-tst-waitid = yes
@@ -1063,7 +1068,7 @@ endif
 ######################################################################
 # kfreebsd-i386 (including optimized flavours)
 ######################################################################
-ifneq (,$(filter $(config-machine)-$(config-os), i586-kfreebsd-gnu i686-kfreebsd-gnu))
+ifeq ($(config-machine)-$(config-os),i686-kfreebsd-gnu)
 test-xfail-check-local-headers = yes
 test-xfail-tst-aio10 = yes
 test-xfail-tst-aio9 = yes
