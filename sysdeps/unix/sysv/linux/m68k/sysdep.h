@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Andreas Schwab, <schwab@issan.informatik.uni-dortmund.de>,
    December 1995.
@@ -17,6 +17,7 @@
    License along with the GNU C Library.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
+#include <sysdeps/unix/sysv/linux/sysdep.h>
 #include <tls.h>
 
 /* Defines RTLD_PRIVATE_ERRNO.  */

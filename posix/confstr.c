@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,10 +29,7 @@
    of BUF with the value corresponding to NAME and zero-terminate BUF.
    Return the number of bytes required to hold NAME's entire value.  */
 size_t
-confstr (name, buf, len)
-     int name;
-     char *buf;
-     size_t len;
+confstr (int name, char *buf, size_t len)
 {
   const char *string = "";
   size_t string_len = 1;

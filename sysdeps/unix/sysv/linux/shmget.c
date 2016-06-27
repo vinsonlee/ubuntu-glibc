@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, August 1995.
 
@@ -28,10 +28,7 @@
    which is associated with KEY.  */
 
 int
-shmget (key, size, shmflg)
-     key_t key;
-     size_t size;
-     int shmflg;
+shmget (key_t key, size_t size, int shmflg)
 {
   return INLINE_SYSCALL (ipc, 5, IPCOP_shmget, key, size, shmflg, NULL);
 }

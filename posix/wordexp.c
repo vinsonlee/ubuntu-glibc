@@ -1,5 +1,5 @@
 /* POSIX.2 wordexp implementation.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Tim Waugh <tim@cyberelk.demon.co.uk>.
 
@@ -42,7 +42,7 @@
 #include <wordexp.h>
 #include <kernel-features.h>
 
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <_itoa.h>
 
 /* Undefine the following line for the production version.  */
@@ -1186,7 +1186,7 @@ parse_comm (char **word, size_t *word_length, size_t *max_length,
 		  // XXX Ideally we do want the thread being cancelable.
 		  // XXX If demand is there we'll change it.
 		  int state = PTHREAD_CANCEL_ENABLE;
-		  __libc_ptf_call (pthread_setcancelstate,
+		  __libc_ptf_call (__pthread_setcancelstate,
 				   (PTHREAD_CANCEL_DISABLE, &state), 0);
 #endif
 
@@ -1194,7 +1194,8 @@ parse_comm (char **word, size_t *word_length, size_t *max_length,
 				     flags, pwordexp, ifs, ifs_white);
 
 #ifdef __libc_ptf_call
-		  __libc_ptf_call (pthread_setcancelstate, (state, NULL), 0);
+		  __libc_ptf_call (__pthread_setcancelstate,
+				   (state, NULL), 0);
 #endif
 
 		  free (comm);

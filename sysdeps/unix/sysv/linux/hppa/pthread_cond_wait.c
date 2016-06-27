@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Carlos O'Donell <carlos@codesourcery.com>, 2009.
 
@@ -25,9 +25,7 @@
 # include <internaltypes.h>
 # include <shlib-compat.h>
 int
-__pthread_cond_wait (cond, mutex)
-     pthread_cond_t *cond;
-     pthread_mutex_t *mutex;
+__pthread_cond_wait (pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
   cond_compat_check_and_clear (cond);
   return __pthread_cond_wait_internal (cond, mutex);

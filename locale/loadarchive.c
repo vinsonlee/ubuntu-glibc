@@ -1,5 +1,5 @@
 /* Code to load locale data from the locale archive file.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 
 
 /* Name of the locale archive file.  */
-static const char archfname[] = LOCALEDIR "/locale-archive";
+static const char archfname[] = COMPLOCALEDIR "/locale-archive";
 
 /* Size of initial mapping window, optimal if large enough to
    cover the header plus the initial locale.  */
@@ -515,7 +515,7 @@ _nl_archive_subfreeres (void)
 
       free (dead->name);
       for (category = 0; category < __LC_LAST; ++category)
-	if (category != LC_ALL)
+	if (category != LC_ALL && dead->data[category] != NULL)
 	  {
 	    /* _nl_unload_locale just does this free for the archive case.  */
 	    if (dead->data[category]->private.cleanup)
