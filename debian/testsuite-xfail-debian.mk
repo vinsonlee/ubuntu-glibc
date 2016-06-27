@@ -160,8 +160,10 @@ test-xfail-tst-cancel4 = yes
 test-xfail-tst-cancel5 = yes
 test-xfail-tst-cancelx20 = yes
 test-xfail-tst-cancelx21 = yes
+test-xfail-tst-cancelx3 = yes
 test-xfail-tst-cancelx4 = yes
 test-xfail-tst-cancelx5 = yes
+test-xfail-tst-cleanup4 = yes
 test-xfail-tst-cleanupx4 = yes
 test-xfail-tst-cputimer2 = yes
 test-xfail-tst-cputimer3 = yes
@@ -182,7 +184,7 @@ endif
 ######################################################################
 # hurd-i386 (including optimized flavours)
 ######################################################################
-ifneq (,$(filter $(config-machine)-$(config-os), i586-gnu-gnu-gnu i686-gnu-gnu-gnu))
+ifeq ($(config-machine)-$(config-os),i686-gnu-gnu-gnu)
 # sysdeps/mach/hurd/dl-sysdep.c's open_file does not support the linker
 # creating files.
 test-xfail-tst-null-argv = yes
@@ -197,6 +199,9 @@ tests-unsupported += tst-timer4
 tests-unsupported += tst-timer5
 tests-unsupported += tst-malloc-backtrace
 
+# bounding memory allocation is not supported yet
+tests-unsupported += tst-malloc-thread-fail
+
 # Need actual porting
 test-xfail-exe = yes
 test-xfail-tst-mqueue5 = yes
@@ -209,8 +214,10 @@ test-xfail-tst-timer2 = yes
 # We don't have auxv yet
 test-xfail-tst-auxv = yes
 
+# check-c++-types.sh support will be fixed in hurd (>> 1:0.7.git20160316-1)
+test-xfail-c++-types-check = yes
+
 # We don't provide ABI reference yet
-test-xfail-c++-types-check= yes
 test-xfail-check-abi-libcrypt = yes
 test-xfail-check-abi-libdl = yes
 test-xfail-check-abi-ld = yes
@@ -277,7 +284,10 @@ test-xfail-tst-vfork3-mem = yes
 
 # This generates GiBs of data instead of sparse files, putting build box on its knees
 tests-unsupported += test-lfs
+
+# Needs LFS support
 #test-xfail-test-lfs = yes
+test-xfail-tst-tzset = yes
 
 # happens seldomly
 test-xfail-tst-clock_nanosleep = yes
@@ -763,6 +773,13 @@ test-xfail-test-fpucw-ieee-static = yes
 test-xfail-test-fpucw-static = yes
 test-xfail-test-static = yes
 
+# new in 2.23
+test-xfail-test-fenv-sse-2 = yes
+test-xfail-test-fenv-x87 = yes
+test-xfail-tst-audit11 = yes
+test-xfail-tst-audit12 = yes
+test-xfail-tst-get-cpu-features = yes
+
 # newly failing in 2.21, real regression
 test-xfail-tst-backtrace2 = yes
 test-xfail-tst-backtrace3 = yes
@@ -796,7 +813,7 @@ endif
 ######################################################################
 # i386 (including optimized flavours)
 ######################################################################
-ifneq (,$(filter $(config-machine)-$(config-os), i586-linux-gnu i686-linux-gnu))
+ifeq ($(config-machine)-$(config-os),i686-linux-gnu)
 test-xfail-tst-backtrace6 = yes
 test-xfail-tst-mqueue5 = yes
 test-xfail-tst-waitid = yes
@@ -1063,7 +1080,7 @@ endif
 ######################################################################
 # kfreebsd-i386 (including optimized flavours)
 ######################################################################
-ifneq (,$(filter $(config-machine)-$(config-os), i586-kfreebsd-gnu i686-kfreebsd-gnu))
+ifeq ($(config-machine)-$(config-os),i686-kfreebsd-gnu)
 test-xfail-check-local-headers = yes
 test-xfail-tst-aio10 = yes
 test-xfail-tst-aio9 = yes
@@ -1200,6 +1217,11 @@ test-xfail-tst-cond16 = yes
 test-xfail-tst-mqueue5 = yes
 test-xfail-tst-stack4 = yes
 test-xfail-tst-waitid = yes
+
+# These failures are due to a bug in the Loongson 3A FPU
+test-xfail-test-double = yes
+test-xfail-test-double-finite = yes
+test-xfail-test-idouble = yes
 endif
 
 
@@ -1282,6 +1304,10 @@ test-xfail-tst-backtrace5 = yes
 test-xfail-tst-backtrace6 = yes
 test-xfail-tst-mqueue5 = yes
 test-xfail-tst-waitid = yes
+
+# Known failure not a regression, see https://sourceware.org/bugzilla/show_bug.cgi?id=6527
+test-xfail-tst-malloc-thread-exit = yes
+test-xfail-tst-malloc-thread-fail = yes
 endif
 
 
@@ -1293,6 +1319,10 @@ test-xfail-tst-backtrace5 = yes
 test-xfail-tst-backtrace6 = yes
 test-xfail-tst-mqueue5 = yes
 test-xfail-tst-waitid = yes
+
+# Known failure not a regression, see https://sourceware.org/bugzilla/show_bug.cgi?id=6527
+test-xfail-tst-malloc-thread-exit = yes
+test-xfail-tst-malloc-thread-fail = yes
 
 # Failures due to a GCC bug, see http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59412
 #                            and http://gcc.gnu.org/bugzilla/show_bug.cgi?id=64811

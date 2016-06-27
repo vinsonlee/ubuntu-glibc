@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,8 +27,7 @@
 #define __CONCATX(a,b) __CONCAT(a,b)
 
 int
-__CONCATX(__,FUNC) (x)
-     float_type x;
+__CONCATX(__,FUNC) (float_type x)
 {
   return __m81_u(__CONCATX(__,FUNC))(x);
 }

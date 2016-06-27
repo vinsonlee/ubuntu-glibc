@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,24 +30,6 @@
 # define OPENAT openat
 #endif
 
-
-#define OPENAT_NOT_CANCEL CONCAT (OPENAT)
-#define CONCAT(name) CONCAT2 (name)
-#define CONCAT2(name) __##name##_nocancel
-
-
-int
-OPENAT_NOT_CANCEL (int fd, const char *file, int oflag, mode_t mode)
-{
-
-  /* We have to add the O_LARGEFILE flag for openat64.  */
-#ifdef MORE_OFLAGS
-  oflag |= MORE_OFLAGS;
-#endif
-
-  return INLINE_SYSCALL (openat, 4, fd, file, oflag, mode);
-}
-
 #define UNDERIZE(name) UNDERIZE_1 (name)
 #define UNDERIZE_1(name) __##name
 #define __OPENAT UNDERIZE (OPENAT)
@@ -67,6 +49,11 @@ __OPENAT (int fd, const char *file, int oflag, ...)
       mode = va_arg (arg, mode_t);
       va_end (arg);
     }
+
+  /* We have to add the O_LARGEFILE flag for openat64.  */
+#ifdef MORE_OFLAGS
+  oflag |= MORE_OFLAGS;
+#endif
 
   return SYSCALL_CANCEL (openat, fd, file, oflag, mode);
 }

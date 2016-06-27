@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, August 1995.
 
@@ -26,10 +26,7 @@
 /* Perform user-defined atomical operation of array of semaphores.  */
 
 int
-semop (semid, sops, nsops)
-     int semid;
-     struct sembuf *sops;
-     size_t nsops;
+semop (int semid, struct sembuf *sops, size_t nsops)
 {
   return INLINE_SYSCALL (ipc, 5, IPCOP_semop, semid, (int) nsops, 0, sops);
 }

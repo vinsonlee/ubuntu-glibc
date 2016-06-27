@@ -1,5 +1,5 @@
 /* Test for access to FILE using effective UID and GID.  Hurd version.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,9 +23,7 @@
 #include <hurd.h>
 
 int
-__euidaccess (file, type)
-     const char *file;
-     int type;
+__euidaccess (const char *file, int type)
 {
   error_t err;
   file_t port;
