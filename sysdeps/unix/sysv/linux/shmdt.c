@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -27,8 +27,7 @@
    from the caller's data segment.  */
 
 int
-shmdt (shmaddr)
-     const void *shmaddr;
+shmdt (const void *shmaddr)
 {
   return INLINE_SYSCALL (ipc, 5, IPCOP_shmdt, 0, 0, 0, (void *) shmaddr);
 }

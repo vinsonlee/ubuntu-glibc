@@ -1,5 +1,5 @@
 /* FPU control word bits.  Mips version.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Olaf Flebbe and Ralf Baechle.
 
@@ -93,20 +93,20 @@ extern fpu_control_t __fpu_control;
 /* Mask for rounding control.  */
 #define _FPU_RC_MASK	0x3
 
-#define _FPU_RESERVED 0xfe840000  /* Reserved bits in cw, incl NAN2008.  */
+#define _FPU_RESERVED 0xfe8c0000  /* Reserved bits in cw, incl ABS/NAN2008.  */
 
 
 /* The fdlibm code requires strict IEEE double precision arithmetic,
    and no interrupts for exceptions, rounding to nearest.  */
 #ifdef __mips_nan2008
-# define _FPU_DEFAULT 0x00040000
+# define _FPU_DEFAULT 0x000C0000
 #else
 # define _FPU_DEFAULT 0x00000000
 #endif
 
 /* IEEE: same as above, but exceptions.  */
 #ifdef __mips_nan2008
-# define _FPU_IEEE    0x00040F80
+# define _FPU_IEEE    0x000C0F80
 #else
 # define _FPU_IEEE    0x00000F80
 #endif

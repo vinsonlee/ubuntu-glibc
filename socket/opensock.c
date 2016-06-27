@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
 
 #include <stdio.h>
 #include <sys/socket.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 
 /* Return a socket of any type.  The socket can be used in subsequent
    ioctl calls to talk to the kernel.  */

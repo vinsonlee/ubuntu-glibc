@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
 #include <math_private.h>
 #include <float.h>
 
-static const long double log10_high = 0x2.4d763776aaa2cp0L;
-static const long double log10_low = -0xf.a456a4a751f4b3d75c75c04c18p-56L;
+static const long double log10_high = 0x2.4d763776aaap+0L;
+static const long double log10_low = 0x2.b05ba95b58ae0b4c28a38a3fb4p-48L;
 
 long double
 __ieee754_exp10l (long double arg)

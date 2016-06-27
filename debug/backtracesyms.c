@@ -1,5 +1,5 @@
 /* Return list with names for address in backtrace.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -34,9 +34,7 @@
 
 
 char **
-__backtrace_symbols (array, size)
-     void *const *array;
-     int size;
+__backtrace_symbols (void *const *array, int size)
 {
   Dl_info info[size];
   int status[size];

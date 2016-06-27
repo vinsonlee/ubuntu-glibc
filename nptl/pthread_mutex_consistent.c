@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2005.
 
@@ -21,8 +21,7 @@
 
 
 int
-pthread_mutex_consistent (mutex)
-     pthread_mutex_t *mutex;
+pthread_mutex_consistent (pthread_mutex_t *mutex)
 {
   /* Test whether this is a robust mutex with a dead owner.  */
   if ((mutex->__data.__kind & PTHREAD_MUTEX_ROBUST_NORMAL_NP) == 0

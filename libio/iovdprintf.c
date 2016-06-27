@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,10 +28,7 @@
 #include <stdio_ext.h>
 
 int
-_IO_vdprintf (d, format, arg)
-     int d;
-     const char *format;
-     _IO_va_list arg;
+_IO_vdprintf (int d, const char *format, _IO_va_list arg)
 {
   struct _IO_FILE_plus tmpfil;
   struct _IO_wide_data wd;

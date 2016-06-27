@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -34,9 +34,7 @@
 
 _IO_FILE *
 attribute_compat_text_section
-_IO_old_fopen (filename, mode)
-     const char *filename;
-     const char *mode;
+_IO_old_fopen (const char *filename, const char *mode)
 {
   struct locked_FILE
   {

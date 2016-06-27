@@ -1,5 +1,5 @@
 /* pthread_getname_np -- Get  thread name.  Linux version
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,10 +28,7 @@
 
 
 int
-pthread_getname_np (th, buf, len)
-     pthread_t th;
-     char *buf;
-     size_t len;
+pthread_getname_np (pthread_t th, char *buf, size_t len)
 {
   const struct pthread *pd = (const struct pthread *) th;
 
