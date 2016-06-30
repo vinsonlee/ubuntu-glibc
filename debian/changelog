@@ -1,3 +1,14 @@
+glibc (2.23-0experimental4) experimental; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/patches/git-updates.diff: update from upstream stable branch.
+  * debian/rules.d/build.mk: allow a test to fail without having a .out
+    file.
+  * patches/kfreebsd/local-sysdeps.diff: update to revision 6075 (from
+    glibc-bsd).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 30 Jun 2016 12:25:44 +0200
+
 glibc (2.23-0experimental3) experimental; urgency=medium
 
   [ Aurelien Jarno ]
