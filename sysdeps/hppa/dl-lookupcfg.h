@@ -1,5 +1,5 @@
 /* Configuration of lookup functions.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,9 +31,7 @@ rtld_hidden_proto (_dl_symbol_address)
 
 Elf32_Addr _dl_lookup_address (const void *address);
 
-/* Clear the bottom two bits so generic code can find the fdesc entry */
-#define DL_LOOKUP_ADDRESS(addr) \
-  (_dl_lookup_address ((void *)((unsigned long)addr & ~3)))
+#define DL_LOOKUP_ADDRESS(addr) _dl_lookup_address ((const void *) addr)
 
 void attribute_hidden _dl_unmap (struct link_map *map);
 

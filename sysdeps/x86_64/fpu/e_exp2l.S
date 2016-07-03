@@ -6,7 +6,17 @@
  */
 
 #include <machine/asm.h>
+#include <x86_64-math-asm.h>
 
+DEFINE_LDBL_MIN
+
+#ifdef PIC
+# define MO(op) op##(%rip)
+#else
+# define MO(op) op
+#endif
+
+	.text
 ENTRY(__ieee754_exp2l)
 	fldt	8(%rsp)
 /* I added the following ugly construct because exp(+-Inf) resulted
@@ -36,6 +46,7 @@ ENTRY(__ieee754_exp2l)
 	faddp				/* 2^(fract(x)) */
 	fscale				/* e^x */
 	fstp	%st(1)
+	LDBL_CHECK_FORCE_UFLOW_NONNEG_NAN
 	ret
 
 1:	testl	$0x200, %eax		/* Test sign.  */
