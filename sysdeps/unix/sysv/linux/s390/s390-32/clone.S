@@ -54,10 +54,13 @@ error:
 PSEUDO_END (__clone)
 
 thread_start:
-	tml	%r3,256		/* CLONE_VM == 0x00000100 */
+	tmh	%r3,1		/* CLONE_THREAD == 0x00010000 */
 	jne	1f
+	lhi	%r2,-1
+	tml	%r3,256		/* CLONE_VM == 0x00000100 */
+	jne	2f
 	svc	SYS_ify(getpid)
-	ear	%r3,%a0
+2:	ear	%r3,%a0
 	st	%r2,PID(%r3)
 	st	%r2,TID(%r3)
 1:
@@ -67,6 +70,4 @@ thread_start:
 	xc	0(4,%r15),0(%r15)
 	basr    %r14,%r1        /* jump to fn */
 	DO_CALL (exit, 1)
-
-libc_hidden_def (__clone)
 weak_alias (__clone, clone)

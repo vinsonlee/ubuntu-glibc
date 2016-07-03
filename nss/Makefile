@@ -88,7 +88,6 @@ routines                += $(libnss_files-routines)
 static-only-routines    += $(libnss_files-routines)
 tests-static		+= tst-nss-static
 endif
-extra-test-objs		+= nss_test1.os
 
 include ../Rules
 
