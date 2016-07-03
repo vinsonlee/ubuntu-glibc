@@ -1,5 +1,5 @@
 /* Operating system support for run-time dynamic linker.  Hurd version.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -55,7 +55,8 @@ rtld_hidden_data_def (__libc_enable_secure)
 int __libc_multiple_libcs = 0;	/* Defining this here avoids the inclusion
 				   of init-first.  */
 /* This variable contains the lowest stack address ever used.  */
-void *__libc_stack_end;
+void *__libc_stack_end = NULL;
+rtld_hidden_data_def(__libc_stack_end)
 
 #if HP_TIMING_AVAIL
 hp_timing_t _dl_cpuclock_offset;
@@ -186,7 +187,7 @@ unfmh();			/* XXX */
 	    assert_perror (err);
 
 	    lastslash = strrchr (p, '/');
-	    l = _dl_map_object_from_fd (lastslash ? lastslash + 1 : p,
+	    l = _dl_map_object_from_fd (lastslash ? lastslash + 1 : p, NULL,
 					memobj, strdup (p), 0);
 
 	    /* Squirrel away the memory object port where it
@@ -279,6 +280,7 @@ _dl_sysdep_start_cleanup (void)
      __mach_init.  We are done with them now, and the user will
      reacquire them for himself when he wants them.  */
   __mig_dealloc_reply_port (MACH_PORT_NULL);
+  __mach_port_deallocate (__mach_task_self (), __mach_host_self_);
   __mach_port_deallocate (__mach_task_self (), __mach_task_self_);
 }
 

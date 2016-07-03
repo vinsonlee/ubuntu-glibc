@@ -1,5 +1,5 @@
 /* Implementation of gamma function according to ISO C.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -76,11 +76,7 @@ gamma_positive (double x, int *exp2_adj)
 	  /* Adjust into the range for applying Stirling's
 	     approximation.  */
 	  double n = __ceil (12.0 - x);
-#if FLT_EVAL_METHOD != 0
-	  volatile
-#endif
-	  double x_tmp = x + n;
-	  x_adj = x_tmp;
+	  x_adj = math_narrow_eval (x + n);
 	  x_eps = (x - (x_adj - n));
 	  prod = __gamma_product (x_adj - n, x_eps, n, &eps);
 	}
@@ -119,9 +115,6 @@ __ieee754_gamma_r (double x, int *signgamp)
 {
   int32_t hx;
   u_int32_t lx;
-#if FLT_EVAL_METHOD != 0
-  volatile
-#endif
   double ret;
 
   EXTRACT_WORDS (hx, lx, x);
@@ -157,7 +150,7 @@ __ieee754_gamma_r (double x, int *signgamp)
     {
       /* Overflow.  */
       *signgamp = 0;
-      ret = DBL_MAX * DBL_MAX;
+      ret = math_narrow_eval (DBL_MAX * DBL_MAX);
       return ret;
     }
   else
@@ -194,29 +187,31 @@ __ieee754_gamma_r (double x, int *signgamp)
 	      double tret = M_PI / (-x * sinpix
 				    * gamma_positive (-x, &exp2_adj));
 	      ret = __scalbn (tret, -exp2_adj);
+	      math_check_force_underflow_nonneg (ret);
 	    }
 	}
+      ret = math_narrow_eval (ret);
     }
   if (isinf (ret) && x != 0)
     {
       if (*signgamp < 0)
 	{
-	  ret = -__copysign (DBL_MAX, ret) * DBL_MAX;
+	  ret = math_narrow_eval (-__copysign (DBL_MAX, ret) * DBL_MAX);
 	  ret = -ret;
 	}
       else
-	ret = __copysign (DBL_MAX, ret) * DBL_MAX;
+	ret = math_narrow_eval (__copysign (DBL_MAX, ret) * DBL_MAX);
       return ret;
     }
   else if (ret == 0)
     {
       if (*signgamp < 0)
 	{
-	  ret = -__copysign (DBL_MIN, ret) * DBL_MIN;
+	  ret = math_narrow_eval (-__copysign (DBL_MIN, ret) * DBL_MIN);
 	  ret = -ret;
 	}
       else
-	ret = __copysign (DBL_MIN, ret) * DBL_MIN;
+	ret = math_narrow_eval (__copysign (DBL_MIN, ret) * DBL_MIN);
       return ret;
     }
   else

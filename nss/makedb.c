@@ -1,5 +1,5 @@
 /* Create simple DB database from textual input.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -386,7 +386,7 @@ print_version (FILE *stream, struct argp_state *state)
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
-"), "2015");
+"), "2016");
   fprintf (stream, gettext ("Written by %s.\n"), "Ulrich Drepper");
 }
 
@@ -415,11 +415,7 @@ valstr_compare (const void *p1, const void *p2)
 
 
 static int
-process_input (input, inname, to_lowercase, be_quiet)
-     FILE *input;
-     const char *inname;
-     int to_lowercase;
-     int be_quiet;
+process_input (FILE *input, const char *inname, int to_lowercase, int be_quiet)
 {
   char *line;
   size_t linelen;

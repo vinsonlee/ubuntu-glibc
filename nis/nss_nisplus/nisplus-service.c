@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1997.
 
@@ -23,7 +23,7 @@
 #include <nss.h>
 #include <string.h>
 #include <rpcsvc/nis.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 
 #include "nss-nisplus.h"
 

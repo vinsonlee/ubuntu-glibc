@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2015 Free Software Foundation, Inc.
+# Copyright (C) 1998-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -60,25 +60,25 @@ CFLAGS-vsnprintf_chk.c = $(libio-mtsafe)
 CFLAGS-asprintf_chk.c = $(libio-mtsafe)
 CFLAGS-vasprintf_chk.c = $(libio-mtsafe)
 CFLAGS-obprintf_chk.c = $(libio-mtsafe)
-CFLAGS-dprintf_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-vdprintf_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-printf_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-fprintf_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-vprintf_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-vfprintf_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-gets_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-fgets_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-fgets_u_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-fread_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-fread_u_chk.c = $(libio-mtsafe) $(exceptions)
+CFLAGS-dprintf_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-vdprintf_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-printf_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-fprintf_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-vprintf_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-vfprintf_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-gets_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-fgets_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-fgets_u_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-fread_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-fread_u_chk.c = $(libio-mtsafe) -fexceptions
 CFLAGS-swprintf_chk.c = $(libio-mtsafe)
 CFLAGS-vswprintf_chk.c = $(libio-mtsafe)
-CFLAGS-wprintf_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-fwprintf_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-vwprintf_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-vfwprintf_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-fgetws_chk.c = $(libio-mtsafe) $(exceptions)
-CFLAGS-fgetws_u_chk.c = $(libio-mtsafe) $(exceptions)
+CFLAGS-wprintf_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-fwprintf_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-vwprintf_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-vfwprintf_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-fgetws_chk.c = $(libio-mtsafe) -fexceptions
+CFLAGS-fgetws_u_chk.c = $(libio-mtsafe) -fexceptions
 CFLAGS-read_chk.c = -fexceptions -fasynchronous-unwind-tables
 CFLAGS-pread_chk.c = -fexceptions -fasynchronous-unwind-tables
 CFLAGS-pread64_chk.c = -fexceptions -fasynchronous-unwind-tables
@@ -161,6 +161,13 @@ endif
 generated += catchsegv xtrace
 
 include ../Rules
+
+ifeq ($(run-built-tests),yes)
+LOCALES := de_DE.UTF-8
+include ../gen-locales.mk
+
+$(objpfx)tst-chk1.out: $(gen-locales)
+endif
 
 sLIBdir := $(shell echo $(slibdir) | sed 's,lib\(\|64\)$$,\\\\$$LIB,')
 

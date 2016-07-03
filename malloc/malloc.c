@@ -1,5 +1,5 @@
 /* Malloc implementation for multiple threads without lock contention.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Wolfram Gloger <wg@malloc.de>
    and Doug Lea <dl@cs.oswego.edu>, 2001.
@@ -241,7 +241,7 @@
 /* For MIN, MAX, powerof2.  */
 #include <sys/param.h>
 
-/* For ALIGN_UP.  */
+/* For ALIGN_UP et. al.  */
 #include <libc-internal.h>
 
 
@@ -283,7 +283,7 @@
 # define assert(expr) \
   ((expr)								      \
    ? ((void) 0)								      \
-   : __malloc_assert (__STRING (expr), __FILE__, __LINE__, __func__))
+   : __malloc_assert (#expr, __FILE__, __LINE__, __func__))
 
 extern const char *__progname;
 
@@ -1709,8 +1709,14 @@ struct malloc_state
   /* Linked list */
   struct malloc_state *next;
 
-  /* Linked list for free arenas.  */
+  /* Linked list for free arenas.  Access to this field is serialized
+     by free_list_lock in arena.c.  */
   struct malloc_state *next_free;
+
+  /* Number of threads attached to this arena.  0 if the arena is on
+     the free list.  Access to this field is serialized by
+     free_list_lock in arena.c.  */
+  INTERNAL_SIZE_T attached_threads;
 
   /* Memory allocated from the system in this arena.  */
   INTERNAL_SIZE_T system_mem;
@@ -1754,8 +1760,9 @@ struct malloc_par
 
 static struct malloc_state main_arena =
 {
-  .mutex = MUTEX_INITIALIZER,
-  .next = &main_arena
+  .mutex = _LIBC_LOCK_INITIALIZER,
+  .next = &main_arena,
+  .attached_threads = 1
 };
 
 /* There is only one instance of the malloc parameters.  */
@@ -2767,8 +2774,8 @@ systrim (size_t pad, mstate av)
   if (top_area <= pad)
     return 0;
 
-  /* Release in pagesize units, keeping at least one page */
-  extra = (top_area - pad) & ~(pagesize - 1);
+  /* Release in pagesize units and round down to the nearest page.  */
+  extra = ALIGN_DOWN(top_area - pad, pagesize);
 
   if (extra == 0)
     return 0;
@@ -4667,7 +4674,7 @@ int_mallinfo (mstate av, struct mallinfo *m)
 
 
 struct mallinfo
-__libc_mallinfo ()
+__libc_mallinfo (void)
 {
   struct mallinfo m;
   mstate ar_ptr;

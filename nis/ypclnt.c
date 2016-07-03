@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1996.
 
@@ -28,7 +28,7 @@
 #include <rpcsvc/ypupd.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 
 /* This should only be defined on systems with a BSD compatible ypbind */
 #ifndef BINDINGDIR
@@ -68,25 +68,11 @@ yp_bind_client_create (const char *domain, dom_binding *ysd,
   ysd->dom_domain[YPMAXDOMAIN] = '\0';
 
   ysd->dom_socket = RPC_ANYSOCK;
-#ifdef SOCK_CLOEXEC
-# define xflags SOCK_CLOEXEC
-#else
-# define xflags 0
-#endif
   ysd->dom_client = __libc_clntudp_bufcreate (&ysd->dom_server_addr, YPPROG,
 					      YPVERS, UDPTIMEOUT,
 					      &ysd->dom_socket,
 					      UDPMSGSIZE, UDPMSGSIZE,
-					      xflags);
-
-  if (ysd->dom_client != NULL)
-    {
-#ifndef SOCK_CLOEXEC
-      /* If the program exits, close the socket */
-      if (fcntl (ysd->dom_socket, F_SETFD, FD_CLOEXEC) == -1)
-	perror ("fcntl: F_SETFD");
-#endif
-    }
+					      SOCK_CLOEXEC);
 }
 
 #if USE_BINDINGDIR

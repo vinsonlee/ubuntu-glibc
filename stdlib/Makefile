@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2015 Free Software Foundation, Inc.
+# Copyright (C) 1991-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -50,6 +50,7 @@ routines	:=							      \
 	strtol_l strtoul_l strtoll_l strtoull_l				      \
 	strtof strtod strtold						      \
 	strtof_l strtod_l strtold_l					      \
+	strtof_nan strtod_nan strtold_nan				      \
 	system canonicalize						      \
 	a64l l64a							      \
 	rpmatch strfmon strfmon_l getsubopt xpg_basename fmtmsg		      \
@@ -74,7 +75,8 @@ tests		:= tst-strtol tst-strtod testmb testrand testsort testdiv   \
 		   tst-makecontext3 bug-getcontext bug-fmtmsg1		    \
 		   tst-secure-getenv tst-strtod-overflow tst-strtod-round   \
 		   tst-tininess tst-strtod-underflow tst-tls-atexit	    \
-		   tst-setcontext3 tst-tls-atexit-nodelete
+		   tst-setcontext3 tst-tls-atexit-nodelete		    \
+		   tst-strtol-locale tst-strtod-nan-locale
 tests-static	:= tst-secure-getenv
 
 modules-names	= tst-tls-atexit-lib
@@ -110,6 +112,7 @@ CFLAGS-strfmon_l.c = $(libio-mtsafe)
 
 CFLAGS-tst-bsearch.c = $(stack-align-test-flags)
 CFLAGS-tst-qsort.c = $(stack-align-test-flags)
+CFLAGS-tst-makecontext.c += -funwind-tables
 CFLAGS-tst-makecontext2.c = $(stack-align-test-flags)
 
 # Run a test on the header files we use.
@@ -120,6 +123,21 @@ tests-special += $(objpfx)tst-fmtmsg.out
 endif
 
 include ../Rules
+
+ifeq ($(run-built-tests),yes)
+LOCALES := cs_CZ.UTF-8 de_DE.UTF-8 en_US.ISO-8859-1 tr_TR.UTF-8 \
+	   tr_TR.ISO-8859-9
+include ../gen-locales.mk
+
+$(objpfx)bug-strtod2.out: $(gen-locales)
+$(objpfx)testmb2.out: $(gen-locales)
+$(objpfx)tst-strtod.out: $(gen-locales)
+$(objpfx)tst-strtod3.out: $(gen-locales)
+$(objpfx)tst-strtod4.out: $(gen-locales)
+$(objpfx)tst-strtod5.out: $(gen-locales)
+$(objpfx)tst-strtol-locale.out: $(gen-locales)
+$(objpfx)tst-strtod-nan-locale.out: $(gen-locales)
+endif
 
 # Testdir has to be named stdlib and needs to be writable
 test-canon-ARGS = --test-dir=${common-objpfx}stdlib
@@ -153,6 +171,7 @@ $(objpfx)tst-strtod-round: $(libm)
 $(objpfx)tst-tininess: $(libm)
 $(objpfx)tst-strtod-underflow: $(libm)
 $(objpfx)tst-strtod6: $(libm)
+$(objpfx)tst-strtod-nan-locale: $(libm)
 
 tst-tls-atexit-lib.so-no-z-defs = yes
 

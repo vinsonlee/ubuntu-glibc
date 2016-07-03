@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Zack Weinberg <zack@rabi.phys.columbia.edu>, 1998.
 
@@ -23,8 +23,7 @@
    with the slave to the calling process, and set its group and
    mode appropriately.  Note that this is an unprivileged operation. */
 int
-grantpt (fd)
-     int fd __attribute__ ((unused));
+grantpt (int fd __attribute__ ((unused)))
 {
   __set_errno (ENOSYS);
   return -1;

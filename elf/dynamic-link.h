@@ -1,5 +1,5 @@
 /* Inline functions for dynamic linking.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -42,7 +42,8 @@
      && (__builtin_expect ((sym_map)->l_tls_offset != NO_TLS_OFFSET, 1)	\
 	 || _dl_try_allocate_static_tls (sym_map) == 0))
 
-int internal_function _dl_try_allocate_static_tls (struct link_map *map);
+int internal_function attribute_hidden
+  _dl_try_allocate_static_tls (struct link_map *map);
 
 #include <elf.h>
 
@@ -135,16 +136,18 @@ elf_machine_lazy_rel (struct link_map *map,
 									      \
 	if (ranges[0].start + ranges[0].size == (start + size))		      \
 	  ranges[0].size -= size;					      \
-	if (! ELF_DURING_STARTUP && ((do_lazy) || ranges[0].size == 0))	      \
+	if (ELF_DURING_STARTUP						      \
+	    || (!(do_lazy)						      \
+		&& (ranges[0].start + ranges[0].size) == start))	      \
+	  {								      \
+	    /* Combine processing the sections.  */			      \
+	    ranges[0].size += size;					      \
+	  }								      \
+	else								      \
 	  {								      \
 	    ranges[1].start = start;					      \
 	    ranges[1].size = size;					      \
 	    ranges[1].lazy = (do_lazy);					      \
-	  }								      \
-	else								      \
-	  {								      \
-	    /* Combine processing the sections.  */			      \
-	    ranges[0].size += size;					      \
 	  }								      \
       }									      \
 									      \
