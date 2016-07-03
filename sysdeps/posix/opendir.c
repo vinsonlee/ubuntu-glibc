@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -105,7 +105,7 @@ need_isdir_precheck (void)
     tryopen_o_directory ();
 
   /* We can skip the expensive `stat' call if O_DIRECTORY works.  */
-  return o_directory_works > 0;
+  return o_directory_works < 0;
 #endif
   return true;
 }

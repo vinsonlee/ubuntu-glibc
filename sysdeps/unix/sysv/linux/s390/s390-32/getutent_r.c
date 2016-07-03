@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2016 Free Software Foundation, Inc.
    Contributed by Andreas Krebbel <Andreas.Krebbel@de.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -16,7 +16,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <stdlib.h>
 #include <utmp.h>
 

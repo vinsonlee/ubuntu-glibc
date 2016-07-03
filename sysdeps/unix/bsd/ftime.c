@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,7 @@
 #include <sys/time.h>
 
 int
-ftime (timebuf)
-     struct timeb *timebuf;
+ftime (struct timeb *timebuf)
 {
   struct timeval tv;
   struct timezone tz;

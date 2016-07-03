@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2015 Free Software Foundation, Inc.
+# Copyright (C) 1995-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -148,7 +148,8 @@ tests += loadtest restest1 preloadtest loadfail multiload origtest resolvfail \
 	 tst-unique1 tst-unique2 $(if $(CXX),tst-unique3 tst-unique4 \
 	 tst-nodelete) \
 	 tst-initorder tst-initorder2 tst-relsort1 tst-null-argv \
-	 tst-ptrguard1 tst-tlsalign tst-tlsalign-extern tst-nodelete-opened
+	 tst-ptrguard1 tst-tlsalign tst-tlsalign-extern tst-nodelete-opened \
+	 tst-nodelete2 tst-audit11 tst-audit12
 #	 reldep9
 ifeq ($(build-hardcoded-path-in-tests),yes)
 tests += tst-dlopen-aout
@@ -218,13 +219,22 @@ modules-names = testobj1 testobj2 testobj3 testobj4 testobj5 testobj6 \
 		tst-initorder2d \
 		tst-relsort1mod1 tst-relsort1mod2 tst-array2dep \
 		tst-array5dep tst-null-argv-lib \
-		tst-tlsalign-lib tst-nodelete-opened-lib
+		tst-tlsalign-lib tst-nodelete-opened-lib tst-nodelete2mod \
+		tst-audit11mod1 tst-audit11mod2 tst-auditmod11 \
+		tst-audit12mod1 tst-audit12mod2 tst-audit12mod3 tst-auditmod12
 ifeq (yes,$(have-protected-data))
 modules-names += tst-protected1moda tst-protected1modb
 tests += tst-protected1a tst-protected1b
 $(objpfx)tst-protected1a: $(addprefix $(objpfx),tst-protected1moda.so tst-protected1modb.so)
 $(objpfx)tst-protected1b: $(addprefix $(objpfx),tst-protected1modb.so tst-protected1moda.so)
 tst-protected1modb.so-no-z-defs = yes
+# These tests fail with GCC versions prior to 5.1 and with some versions
+# of binutils.  See https://sourceware.org/bugzilla/show_bug.cgi?id=17709
+# and https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65248 for details.
+# Perhaps in future we can make these XFAILs conditional on some detection
+# of compiler/linker behavior/version.
+test-xfail-tst-protected1a = yes
+test-xfail-tst-protected1b = yes
 endif
 ifeq (yesyes,$(have-fpie)$(build-shared))
 modules-names += tst-piemod1
@@ -291,6 +301,14 @@ endif
 check-abi: $(objpfx)check-abi-ld.out
 tests-special += $(objpfx)check-abi-ld.out
 update-abi: update-abi-ld
+update-all-abi: update-all-abi-ld
+
+ifeq ($(have-glob-dat-reloc),yes)
+tests += tst-prelink
+ifeq ($(run-built-tests),yes)
+tests-special += $(objpfx)tst-prelink-cmp.out
+endif
+endif
 
 include ../Rules
 
@@ -594,6 +612,7 @@ tst-auditmod9b.so-no-z-defs = yes
 tst-nodelete-uniquemod.so-no-z-defs = yes
 tst-nodelete-rtldmod.so-no-z-defs = yes
 tst-nodelete-zmod.so-no-z-defs = yes
+tst-nodelete2mod.so-no-z-defs = yes
 
 ifeq ($(build-shared),yes)
 # Build all the modules even when not actually running test programs.
@@ -872,6 +891,7 @@ endif
 ifeq ($(have-z-execstack),yes)
 $(objpfx)tst-execstack: $(libdl)
 $(objpfx)tst-execstack.out: $(objpfx)tst-execstack-mod.so
+CPPFLAGS-tst-execstack.c = -DUSE_PTHREADS=0
 LDFLAGS-tst-execstack = -Wl,-z,noexecstack
 LDFLAGS-tst-execstack-mod = -Wl,-z,execstack
 
@@ -1164,6 +1184,11 @@ $(objpfx)tst-nodelete.out: $(objpfx)tst-nodelete-uniquemod.so \
 LDFLAGS-tst-nodelete = -rdynamic
 LDFLAGS-tst-nodelete-zmod.so = -Wl,--enable-new-dtags,-z,nodelete
 
+$(objpfx)tst-nodelete2: $(libdl)
+$(objpfx)tst-nodelete2.out: $(objpfx)tst-nodelete2mod.so
+
+LDFLAGS-tst-nodelete2 = -rdynamic
+
 $(objpfx)tst-initorder-cmp.out: tst-initorder.exp $(objpfx)tst-initorder.out
 	cmp $^ > $@; \
 	$(evaluate-test)
@@ -1204,4 +1229,26 @@ $(objpfx)tst-unused-dep.out: $(objpfx)testobj1.so
 
 $(objpfx)tst-unused-dep-cmp.out: $(objpfx)tst-unused-dep.out
 	cmp $< /dev/null > $@; \
+	$(evaluate-test)
+
+$(objpfx)tst-audit11.out: $(objpfx)tst-auditmod11.so $(objpfx)tst-audit11mod1.so
+$(objpfx)tst-audit11: $(libdl)
+tst-audit11-ENV = LD_AUDIT=$(objpfx)tst-auditmod11.so
+$(objpfx)tst-audit11mod1.so: $(objpfx)tst-audit11mod2.so
+LDFLAGS-tst-audit11mod2.so = -Wl,--version-script=tst-audit11mod2.map,-soname,tst-audit11mod2.so
+
+$(objpfx)tst-audit12.out: $(objpfx)tst-auditmod12.so $(objpfx)tst-audit12mod1.so $(objpfx)tst-audit12mod3.so
+$(objpfx)tst-audit12: $(libdl)
+tst-audit12-ENV = LD_AUDIT=$(objpfx)tst-auditmod12.so
+$(objpfx)tst-audit12mod1.so: $(objpfx)tst-audit12mod2.so
+LDFLAGS-tst-audit12mod2.so = -Wl,--version-script=tst-audit12mod2.map
+
+tst-prelink-ENV = LD_TRACE_PRELINKING=1
+
+$(objpfx)tst-prelink-conflict.out: $(objpfx)tst-prelink.out
+	grep stdout $< | grep conflict | $(AWK) '{ print $$10, $$11 }' > $@
+
+$(objpfx)tst-prelink-cmp.out: tst-prelink.exp \
+			      $(objpfx)tst-prelink-conflict.out
+	cmp $^ > $@; \
 	$(evaluate-test)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -34,18 +34,12 @@ int
 __xmknodat (int vers, int fd, const char *file, mode_t mode, dev_t *dev)
 {
   if (vers != _MKNOD_VER)
-    {
-      __set_errno (EINVAL);
-      return -1;
-    }
+    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
 
   /* We must convert the value to dev_t type used by the kernel.  */
   unsigned long long int k_dev =  (*dev) & ((1ULL << 32) - 1);
   if (k_dev != *dev)
-    {
-      __set_errno (EINVAL);
-      return -1;
-    }
+    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
 
   return INLINE_SYSCALL (mknodat, 4, fd, file, mode, (unsigned int) k_dev);
 }

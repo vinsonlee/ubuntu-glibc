@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,8 +20,7 @@
 
 /* Sleep USECONDS microseconds, or until a previously set timer goes off.  */
 int
-usleep (useconds)
-     useconds_t useconds;
+usleep (useconds_t useconds)
 {
   __set_errno (ENOSYS);
   return -1;
