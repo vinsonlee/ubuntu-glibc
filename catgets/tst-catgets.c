@@ -22,7 +22,7 @@ do_bz17905 (void)
 {
   char *buf;
   struct rlimit rl;
-  nl_catd result __attribute__ ((unused));
+  nl_catd result;
 
   const int sz = 1024 * 1024;
 

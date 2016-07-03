@@ -88,7 +88,6 @@ ENTRY(__asinhl)
 4:	ret
 
 7:	fldt	4(%esp)
-	fadd	%st
 	ret
 
 6:	faddl	MO(one)

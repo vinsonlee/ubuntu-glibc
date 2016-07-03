@@ -1564,11 +1564,6 @@ vfprintf (FILE *s, const CHAR_T *format, va_list ap)
 	prec = 0;
       if (prec > width && prec > WORK_BUFFER_SIZE - 32)
 	{
-	  /* Deallocate any previously allocated buffer because it is
-	     too small.  */
-	  if (__glibc_unlikely (workstart != NULL))
-	    free (workstart);
-	  workstart = NULL;
 	  if (__glibc_unlikely (prec >= INT_MAX / sizeof (CHAR_T) - 32))
 	    {
 	      __set_errno (EOVERFLOW);
@@ -2240,7 +2235,7 @@ _IO_helper_overflow (_IO_FILE *s, int c)
 }
 
 #ifdef COMPILE_WPRINTF
-static const struct _IO_jump_t _IO_helper_jumps libio_vtable =
+static const struct _IO_jump_t _IO_helper_jumps =
 {
   JUMP_INIT_DUMMY,
   JUMP_INIT (finish, _IO_wdefault_finish),
@@ -2262,7 +2257,7 @@ static const struct _IO_jump_t _IO_helper_jumps libio_vtable =
   JUMP_INIT (stat, _IO_default_stat)
 };
 #else
-static const struct _IO_jump_t _IO_helper_jumps libio_vtable =
+static const struct _IO_jump_t _IO_helper_jumps =
 {
   JUMP_INIT_DUMMY,
   JUMP_INIT (finish, _IO_default_finish),

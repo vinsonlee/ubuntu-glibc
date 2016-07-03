@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nss_hesiod.h"
+
 /* Get the declaration of the parser function.  */
 #define ENTNAME pwent
 #define STRUCTURE passwd
@@ -54,7 +56,8 @@ lookup (const char *name, const char *type, struct passwd *pwd,
   size_t len;
   int olderr = errno;
 
-  if (hesiod_init (&context) < 0)
+  context = _nss_hesiod_init ();
+  if (context == NULL)
     return NSS_STATUS_UNAVAIL;
 
   list = hesiod_resolve (context, name, type);

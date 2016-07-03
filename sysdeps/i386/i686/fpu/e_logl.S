@@ -64,7 +64,6 @@ ENTRY(__ieee754_logl)
 	ret
 
 3:	fstp	%st(1)
-	fadd	%st(0)
 	ret
 END (__ieee754_logl)
 

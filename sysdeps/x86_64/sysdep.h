@@ -90,13 +90,9 @@ lose:									      \
 
 #undef JUMPTARGET
 #ifdef PIC
-# ifdef BIND_NOW
-#  define JUMPTARGET(name)	*name##@GOTPCREL(%rip)
-# else
-#  define JUMPTARGET(name)	name##@PLT
-# endif
+#define JUMPTARGET(name)	name##@PLT
 #else
-# define JUMPTARGET(name)	name
+#define JUMPTARGET(name)	name
 #endif
 
 /* Local label name for asm code. */
