@@ -79,11 +79,9 @@ endef
 # the headers we want to search for Mach error codes, listed above (and
 # incidentally, all other headers those include).
 -include $(common-objpfx)errnos.d
-$(common-objpfx)errnos.d: $(mach-errnos-deps)
+$(common-objpfx)errnos.d: $(mach-errnos-deps) libc-modules.h
 	$(mach-errno-h) | \
-	$(CC) $(CFLAGS) \
-	    $(subst -include $(common-objpfx)libc-modules.h,,$(CPPFLAGS)) \
-	    -M -x c - | \
+	$(CC) $(CFLAGS) $(CPPFLAGS) -M -x c - | \
 	sed $(sed-remove-objpfx) -e 's,- *:,mach-errnos-deps :=,' \
 	    -e 's, \.\./, $(..),g' > $@t
 	mv -f $@t $@

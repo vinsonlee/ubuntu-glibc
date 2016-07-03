@@ -4,8 +4,10 @@ This dates when libpthread was moved to glibc and some features were added.
 TODO: _DEBIAN_ in versions however pose problem. Remove the _DEBIAN_ version
 once packages are rebuilt against 2.21.
 
---- a/libpthread/Versions
-+++ b/libpthread/Versions
+Index: glibc-2.21/libpthread/Versions
+===================================================================
+--- glibc-2.21.orig/libpthread/Versions
++++ glibc-2.21/libpthread/Versions
 @@ -1,5 +1,5 @@
  libc {
 -  GLIBC_2.13 {
@@ -54,8 +56,10 @@ once packages are rebuilt against 2.21.
      pthread_hurd_cond_wait_np;
      pthread_hurd_cond_timedwait_np;
    }
---- a/libpthread/sysdeps/mach/hurd/pt-hurd-cond-timedwait.c
-+++ b/libpthread/sysdeps/mach/hurd/pt-hurd-cond-timedwait.c
+Index: glibc-2.21/libpthread/sysdeps/mach/hurd/pt-hurd-cond-timedwait.c
+===================================================================
+--- glibc-2.21.orig/libpthread/sysdeps/mach/hurd/pt-hurd-cond-timedwait.c
++++ glibc-2.21/libpthread/sysdeps/mach/hurd/pt-hurd-cond-timedwait.c
 @@ -23,6 +23,8 @@
  
  #include <pt-internal.h>
@@ -85,8 +89,10 @@ once packages are rebuilt against 2.21.
  
  int
  __pthread_hurd_cond_timedwait_internal (pthread_cond_t *cond,
---- a/libpthread/sysdeps/mach/hurd/pt-hurd-cond-wait.c
-+++ b/libpthread/sysdeps/mach/hurd/pt-hurd-cond-wait.c
+Index: glibc-2.21/libpthread/sysdeps/mach/hurd/pt-hurd-cond-wait.c
+===================================================================
+--- glibc-2.21.orig/libpthread/sysdeps/mach/hurd/pt-hurd-cond-wait.c
++++ glibc-2.21/libpthread/sysdeps/mach/hurd/pt-hurd-cond-wait.c
 @@ -23,6 +23,8 @@
  
  #include <pt-internal.h>
@@ -115,8 +121,10 @@ once packages are rebuilt against 2.21.
 +}
 +compat_symbol (libpthread, __pthread_hurd_cond_wait_np_2_13, pthread_hurd_cond_wait_np, GLIBC_2_13_DEBIAN_38);
 +#endif
---- a/libpthread/forward.c
-+++ b/libpthread/forward.c
+Index: glibc-2.21/libpthread/forward.c
+===================================================================
+--- glibc-2.21.orig/libpthread/forward.c
++++ glibc-2.21/libpthread/forward.c
 @@ -23,20 +23,37 @@
  #include <shlib-compat.h>
  #include <pthread-functions.h>
@@ -191,7 +199,7 @@ once packages are rebuilt against 2.21.
  
  
  FORWARD (pthread_getschedparam,
-@@ -130,16 +159,21 @@ FORWARD (pthread_mutex_unlock, (pthread_
+@@ -130,6 +159,7 @@ FORWARD (pthread_mutex_unlock, (pthread_
  
  
  FORWARD2 (pthread_self, pthread_t, (void), (), return 0)
@@ -199,14 +207,7 @@ once packages are rebuilt against 2.21.
  
  
  FORWARD (__pthread_setcancelstate, (int state, int *oldstate), (state, oldstate),
- 	 0)
--strong_alias (__pthread_setcancelstate, pthread_setcancelstate);
-+versioned_symbol (libc, __pthread_setcancelstate, pthread_setcancelstate, GLIBC_2_21);
-+#if SHLIB_COMPAT (libc, GLIBC_2_13, GLIBC_2_21)
-+compat_symbol (libc, __pthread_setcancelstate_2_13, pthread_setcancelstate, GLIBC_2_13_DEBIAN_31);
-+#endif
- 
- FORWARD (pthread_setcanceltype, (int type, int *oldtype), (type, oldtype), 0)
+@@ -139,6 +169,7 @@ FORWARD (pthread_setcanceltype, (int typ
  
  struct __pthread_cancelation_handler *dummy_list;
  FORWARD2 (__pthread_get_cleanup_stack, struct __pthread_cancelation_handler **, (void), (), return &dummy_list);
