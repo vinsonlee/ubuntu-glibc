@@ -1,6 +1,6 @@
 /* Round argument to nearest integral value according to current rounding
    direction.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -18,9 +18,12 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#include <fenv.h>
+#include <limits.h>
 #include <math.h>
 
 #include <math_private.h>
+#include <fix-fp-int-convert-overflow.h>
 
 static const double two52[2] =
 {
@@ -35,7 +38,7 @@ __llrint (double x)
   int32_t j0;
   u_int32_t i1, i0;
   long long int result;
-  volatile double w;
+  double w;
   double t;
   int sx;
 
@@ -47,7 +50,7 @@ __llrint (double x)
 
   if (j0 < 20)
     {
-      w = two52[sx] + x;
+      w = math_narrow_eval (two52[sx] + x);
       t = w - two52[sx];
       EXTRACT_WORDS (i0, i1, t);
       j0 = ((i0 >> 20) & 0x7ff) - 0x3ff;
@@ -62,7 +65,7 @@ __llrint (double x)
 	result = (((long long int) i0 << 32) | i1) << (j0 - 52);
       else
 	{
-	  w = two52[sx] + x;
+	  w = math_narrow_eval (two52[sx] + x);
 	  t = w - two52[sx];
 	  EXTRACT_WORDS (i0, i1, t);
 	  j0 = ((i0 >> 20) & 0x7ff) - 0x3ff;
@@ -77,8 +80,16 @@ __llrint (double x)
     }
   else
     {
-      /* The number is too large.  It is left implementation defined
-	 what happens.  */
+#ifdef FE_INVALID
+      /* The number is too large.  Unless it rounds to LLONG_MIN,
+	 FE_INVALID must be raised and the return value is
+	 unspecified.  */
+      if (FIX_DBL_LLONG_CONVERT_OVERFLOW && x != (double) LLONG_MIN)
+	{
+	  feraiseexcept (FE_INVALID);
+	  return sx == 0 ? LLONG_MAX : LLONG_MIN;
+	}
+#endif
       return (long long int) x;
     }
 

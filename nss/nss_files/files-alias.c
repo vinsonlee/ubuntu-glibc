@@ -1,5 +1,5 @@
 /* Mail alias file parser in nss_files module.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -21,7 +21,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

@@ -1,5 +1,5 @@
 /* Implementation of gamma function according to ISO C.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -69,11 +69,7 @@ gammaf_positive (float x, int *exp2_adj)
 	  /* Adjust into the range for applying Stirling's
 	     approximation.  */
 	  float n = __ceilf (4.0f - x);
-#if FLT_EVAL_METHOD != 0
-	  volatile
-#endif
-	  float x_tmp = x + n;
-	  x_adj = x_tmp;
+	  x_adj = math_narrow_eval (x + n);
 	  x_eps = (x - (x_adj - n));
 	  prod = __gamma_productf (x_adj - n, x_eps, n, &eps);
 	}
@@ -111,9 +107,6 @@ float
 __ieee754_gammaf_r (float x, int *signgamp)
 {
   int32_t hx;
-#if FLT_EVAL_METHOD != 0
-  volatile
-#endif
   float ret;
 
   GET_FLOAT_WORD (hx, x);
@@ -149,7 +142,7 @@ __ieee754_gammaf_r (float x, int *signgamp)
     {
       /* Overflow.  */
       *signgamp = 0;
-      ret = FLT_MAX * FLT_MAX;
+      ret = math_narrow_eval (FLT_MAX * FLT_MAX);
       return ret;
     }
   else
@@ -186,29 +179,31 @@ __ieee754_gammaf_r (float x, int *signgamp)
 	      float tret = (float) M_PI / (-x * sinpix
 					   * gammaf_positive (-x, &exp2_adj));
 	      ret = __scalbnf (tret, -exp2_adj);
+	      math_check_force_underflow_nonneg (ret);
 	    }
 	}
+      ret = math_narrow_eval (ret);
     }
   if (isinf (ret) && x != 0)
     {
       if (*signgamp < 0)
 	{
-	  ret = -__copysignf (FLT_MAX, ret) * FLT_MAX;
+	  ret = math_narrow_eval (-__copysignf (FLT_MAX, ret) * FLT_MAX);
 	  ret = -ret;
 	}
       else
-	ret = __copysignf (FLT_MAX, ret) * FLT_MAX;
+	ret = math_narrow_eval (__copysignf (FLT_MAX, ret) * FLT_MAX);
       return ret;
     }
   else if (ret == 0)
     {
       if (*signgamp < 0)
 	{
-	  ret = -__copysignf (FLT_MIN, ret) * FLT_MIN;
+	  ret = math_narrow_eval (-__copysignf (FLT_MIN, ret) * FLT_MIN);
 	  ret = -ret;
 	}
       else
-	ret = __copysignf (FLT_MIN, ret) * FLT_MIN;
+	ret = math_narrow_eval (__copysignf (FLT_MIN, ret) * FLT_MIN);
       return ret;
     }
   else

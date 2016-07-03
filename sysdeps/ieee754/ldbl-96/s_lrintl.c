@@ -1,6 +1,6 @@
 /* Round argument to nearest integral value according to current rounding
    direction.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -18,6 +18,8 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#include <fenv.h>
+#include <limits.h>
 #include <math.h>
 
 #include <math_private.h>
@@ -35,7 +37,7 @@ __lrintl (long double x)
   int32_t se,j0;
   u_int32_t i0, i1;
   long int result;
-  volatile long double w;
+  long double w;
   long double t;
   int sx;
 
@@ -46,8 +48,22 @@ __lrintl (long double x)
 
   if (j0 < 31)
     {
-      w = two63[sx] + x;
-      t = w - two63[sx];
+#if defined FE_INVALID || defined FE_INEXACT
+      /* X < LONG_MAX + 1 implied by J0 < 31.  */
+      if (sizeof (long int) == 4
+	  && x > (long double) LONG_MAX)
+	{
+	  /* In the event of overflow we must raise the "invalid"
+	     exception, but not "inexact".  */
+	  t = __nearbyintl (x);
+	  feraiseexcept (t == LONG_MAX ? FE_INEXACT : FE_INVALID);
+	}
+      else
+#endif
+	{
+	  w = two63[sx] + x;
+	  t = w - two63[sx];
+	}
       GET_LDOUBLE_WORDS (se, i0, i1, t);
       j0 = (se & 0x7fff) - 0x3fff;
 
@@ -59,8 +75,22 @@ __lrintl (long double x)
 	result = ((long int) i0 << (j0 - 31)) | (i1 << (j0 - 63));
       else
 	{
-	  w = two63[sx] + x;
-	  t = w - two63[sx];
+#if defined FE_INVALID || defined FE_INEXACT
+	  /* X < LONG_MAX + 1 implied by J0 < 63.  */
+	  if (sizeof (long int) == 8
+	      && x > (long double) LONG_MAX)
+	    {
+	      /* In the event of overflow we must raise the "invalid"
+		 exception, but not "inexact".  */
+	      t = __nearbyintl (x);
+	      feraiseexcept (t == LONG_MAX ? FE_INEXACT : FE_INVALID);
+	    }
+	  else
+#endif
+	    {
+	      w = two63[sx] + x;
+	      t = w - two63[sx];
+	    }
 	  GET_LDOUBLE_WORDS (se, i0, i1, t);
 	  j0 = (se & 0x7fff) - 0x3fff;
 
@@ -72,8 +102,21 @@ __lrintl (long double x)
     }
   else
     {
-      /* The number is too large.  It is left implementation defined
-	 what happens.  */
+      /* The number is too large.  Unless it rounds to LONG_MIN,
+	 FE_INVALID must be raised and the return value is
+	 unspecified.  */
+#if defined FE_INVALID || defined FE_INEXACT
+      if (sizeof (long int) == 4
+	  && x < (long double) LONG_MIN
+	  && x > (long double) LONG_MIN - 1.0L)
+	{
+	  /* If truncation produces LONG_MIN, the cast will not raise
+	     the exception, but may raise "inexact".  */
+	  t = __nearbyintl (x);
+	  feraiseexcept (t == LONG_MIN ? FE_INEXACT : FE_INVALID);
+	  return LONG_MIN;
+	}
+#endif
       return (long int) x;
     }
 

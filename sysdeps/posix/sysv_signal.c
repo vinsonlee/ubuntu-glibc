@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -34,9 +34,7 @@
 /* Set the handler for the signal SIG to HANDLER,
    returning the old handler, or SIG_ERR on error.  */
 __sighandler_t
-__sysv_signal (sig, handler)
-     int sig;
-     __sighandler_t handler;
+__sysv_signal (int sig, __sighandler_t handler)
 {
   struct sigaction act, oact;
 
