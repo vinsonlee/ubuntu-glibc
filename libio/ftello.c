@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,8 +31,7 @@
 
 
 off_t
-__ftello (fp)
-     _IO_FILE *fp;
+__ftello (_IO_FILE *fp)
 {
   _IO_off64_t pos;
   CHECK_FILE (fp, -1L);

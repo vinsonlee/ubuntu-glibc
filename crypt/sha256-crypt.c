@@ -1,5 +1,5 @@
 /* One way encryption based on SHA256 sum.
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2007.
 
@@ -99,11 +99,7 @@ extern char *__sha256_crypt (const char *key, const char *salt);
 
 
 char *
-__sha256_crypt_r (key, salt, buffer, buflen)
-     const char *key;
-     const char *salt;
-     char *buffer;
-     int buflen;
+__sha256_crypt_r (const char *key, const char *salt, char *buffer, int buflen)
 {
   unsigned char alt_result[32]
     __attribute__ ((__aligned__ (__alignof__ (uint32_t))));

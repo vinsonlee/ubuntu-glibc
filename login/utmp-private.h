@@ -1,5 +1,5 @@
 /* Internal definitions and declarations for UTMP functions.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>
    and Paul Janzen <pcj@primenet.com>, 1996.
@@ -22,7 +22,7 @@
 #define _UTMP_PRIVATE_H	1
 
 #include <utmp.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 
 /* The structure describing the functions in a backend.  */
 struct utfuncs

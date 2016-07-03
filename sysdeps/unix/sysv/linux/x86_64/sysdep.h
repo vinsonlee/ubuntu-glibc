@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,6 +19,7 @@
 #define _LINUX_X86_64_SYSDEP_H 1
 
 /* There is some commonality.  */
+#include <sysdeps/unix/sysv/linux/sysdep.h>
 #include <sysdeps/unix/x86_64/sysdep.h>
 #include <tls.h>
 
@@ -217,6 +218,9 @@
 # undef INTERNAL_SYSCALL_DECL
 # define INTERNAL_SYSCALL_DECL(err) do { } while (0)
 
+/* Registers clobbered by syscall.  */
+# define REGISTERS_CLOBBERED_BY_SYSCALL "cc", "r11", "cx"
+
 # define INTERNAL_SYSCALL_NCS(name, err, nr, args...) \
   ({									      \
     unsigned long int resultvar;					      \
@@ -225,7 +229,7 @@
     asm volatile (							      \
     "syscall\n\t"							      \
     : "=a" (resultvar)							      \
-    : "0" (name) ASM_ARGS_##nr : "memory", "cc", "r11", "cx");		      \
+    : "0" (name) ASM_ARGS_##nr : "memory", REGISTERS_CLOBBERED_BY_SYSCALL);   \
     (long int) resultvar; })
 # undef INTERNAL_SYSCALL
 # define INTERNAL_SYSCALL(name, err, nr, args...) \
@@ -239,7 +243,7 @@
     asm volatile (							      \
     "syscall\n\t"							      \
     : "=a" (resultvar)							      \
-    : "0" (name) ASM_ARGS_##nr : "memory", "cc", "r11", "cx");		      \
+    : "0" (name) ASM_ARGS_##nr : "memory", REGISTERS_CLOBBERED_BY_SYSCALL);   \
     (long int) resultvar; })
 # undef INTERNAL_SYSCALL_TYPES
 # define INTERNAL_SYSCALL_TYPES(name, err, nr, args...) \

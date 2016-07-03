@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,10 +23,7 @@
 /* Replace the current process, executing PATH with arguments ARGV and
    environment ENVP.  ARGV and ENVP are terminated by NULL pointers.  */
 int
-__execve (path, argv, envp)
-     const char *path;
-     char *const argv[];
-     char *const envp[];
+__execve (const char *path, char *const argv[], char *const envp[])
 {
   if (path == NULL || argv == NULL || envp == NULL)
     {

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,8 +27,7 @@
    and effective group IDs, and the saved set-group-ID to UID;
    if not, the effective group ID is set to GID.  */
 int
-__setgid (gid)
-     gid_t gid;
+__setgid (gid_t gid)
 {
   auth_t newauth;
   error_t err;

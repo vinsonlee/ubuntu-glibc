@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <fenv.h>
+#include <float.h>
 #include <get-rounding-mode.h>
 
 /* The original fdlibm code used statements like:
@@ -364,8 +365,8 @@ extern double __slowpow (double __x, double __y, double __z);
 extern void __docos (double __x, double __dx, double __v[]);
 
 /* Return X^2 + Y^2 - 1, computed without large cancellation error.
-   It is given that 1 > X >= Y >= epsilon / 2, and that either X >=
-   0.75 or Y >= 0.5.  */
+   It is given that 1 > X >= Y >= epsilon / 2, and that X^2 + Y^2 >=
+   0.5.  */
 extern float __x2y2m1f (float x, float y);
 extern double __x2y2m1 (double x, double y);
 extern long double __x2y2m1l (long double x, long double y);
@@ -382,6 +383,22 @@ extern double __gamma_product (double x, double x_eps, int n, double *eps);
 extern long double __gamma_productl (long double x, long double x_eps,
 				     int n, long double *eps);
 
+/* Compute lgamma of a negative argument X, if it is in a range
+   (depending on the floating-point format) for which expansion around
+   zeros is used, setting *SIGNGAMP accordingly.  */
+extern float __lgamma_negf (float x, int *signgamp);
+extern double __lgamma_neg (double x, int *signgamp);
+extern long double __lgamma_negl (long double x, int *signgamp);
+
+/* Compute the product of 1 + (T / (X + X_EPS)), 1 + (T / (X + X_EPS +
+   1)), ..., 1 + (T / (X + X_EPS + N - 1)), minus 1.  X is such that
+   all the values X + 1, ..., X + N - 1 are exactly representable, and
+   X_EPS / X is small enough that factors quadratic in it can be
+   neglected.  */
+extern double __lgamma_product (double t, double x, double x_eps, int n);
+extern long double __lgamma_productl (long double t, long double x,
+				      long double x_eps, int n);
+
 #ifndef math_opt_barrier
 # define math_opt_barrier(x) \
 ({ __typeof (x) __x = (x); __asm ("" : "+m" (__x)); __x; })
@@ -389,6 +406,81 @@ extern long double __gamma_productl (long double x, long double x_eps,
 ({ __typeof (x) __x = (x); __asm __volatile__ ("" : : "m" (__x)); })
 #endif
 
+/* math_narrow_eval reduces its floating-point argument to the range
+   and precision of its semantic type.  (The original evaluation may
+   still occur with excess range and precision, so the result may be
+   affected by double rounding.)  */
+#if FLT_EVAL_METHOD == 0
+# define math_narrow_eval(x) (x)
+#else
+# if FLT_EVAL_METHOD == 1
+#  define excess_precision(type) __builtin_types_compatible_p (type, float)
+# else
+#  define excess_precision(type) (__builtin_types_compatible_p (type, float) \
+				  || __builtin_types_compatible_p (type, \
+								   double))
+# endif
+# define math_narrow_eval(x)					\
+  ({								\
+    __typeof (x) math_narrow_eval_tmp = (x);			\
+    if (excess_precision (__typeof (math_narrow_eval_tmp)))	\
+      __asm__ ("" : "+m" (math_narrow_eval_tmp));		\
+    math_narrow_eval_tmp;					\
+   })
+#endif
+
+#define fabs_tg(x) __builtin_choose_expr			\
+  (__builtin_types_compatible_p (__typeof (x), float),		\
+   __builtin_fabsf (x),						\
+   __builtin_choose_expr					\
+   (__builtin_types_compatible_p (__typeof (x), double),	\
+    __builtin_fabs (x), __builtin_fabsl (x)))
+#define min_of_type(type) __builtin_choose_expr		\
+  (__builtin_types_compatible_p (type, float),		\
+   FLT_MIN,						\
+   __builtin_choose_expr				\
+   (__builtin_types_compatible_p (type, double),	\
+    DBL_MIN, LDBL_MIN))
+
+/* If X (which is not a NaN) is subnormal, force an underflow
+   exception.  */
+#define math_check_force_underflow(x)				\
+  do								\
+    {								\
+      __typeof (x) force_underflow_tmp = (x);			\
+      if (fabs_tg (force_underflow_tmp)				\
+	  < min_of_type (__typeof (force_underflow_tmp)))	\
+	{							\
+	  __typeof (force_underflow_tmp) force_underflow_tmp2	\
+	    = force_underflow_tmp * force_underflow_tmp;	\
+	  math_force_eval (force_underflow_tmp2);		\
+	}							\
+    }								\
+  while (0)
+/* Likewise, but X is also known to be nonnegative.  */
+#define math_check_force_underflow_nonneg(x)			\
+  do								\
+    {								\
+      __typeof (x) force_underflow_tmp = (x);			\
+      if (force_underflow_tmp					\
+	  < min_of_type (__typeof (force_underflow_tmp)))	\
+	{							\
+	  __typeof (force_underflow_tmp) force_underflow_tmp2	\
+	    = force_underflow_tmp * force_underflow_tmp;	\
+	  math_force_eval (force_underflow_tmp2);		\
+	}							\
+    }								\
+  while (0)
+/* Likewise, for both real and imaginary parts of a complex
+   result.  */
+#define math_check_force_underflow_complex(x)				\
+  do									\
+    {									\
+      __typeof (x) force_underflow_complex_tmp = (x);			\
+      math_check_force_underflow (__real__ force_underflow_complex_tmp); \
+      math_check_force_underflow (__imag__ force_underflow_complex_tmp); \
+    }									\
+  while (0)
 
 /* The standards only specify one variant of the fenv.h interfaces.
    But at least for some architectures we can be more efficient if we

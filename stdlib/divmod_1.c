@@ -6,7 +6,7 @@
 
    QUOT_PTR and DIVIDEND_PTR might point to the same limb.
 
-Copyright (C) 1991-2015 Free Software Foundation, Inc.
+Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -40,17 +40,9 @@ along with the GNU MP Library; see the file COPYING.LIB.  If not, see
    here (not udiv_qrnnd).  */
 
 mp_limb_t
-#if __STDC__
 mpn_divmod_1 (mp_ptr quot_ptr,
 	      mp_srcptr dividend_ptr, mp_size_t dividend_size,
 	      mp_limb_t divisor_limb)
-#else
-mpn_divmod_1 (quot_ptr, dividend_ptr, dividend_size, divisor_limb)
-     mp_ptr quot_ptr;
-     mp_srcptr dividend_ptr;
-     mp_size_t dividend_size;
-     mp_limb_t divisor_limb;
-#endif
 {
   mp_size_t i;
   mp_limb_t n1, n0, r;

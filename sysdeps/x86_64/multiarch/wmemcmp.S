@@ -1,6 +1,6 @@
 /* Multiple versions of wmemcmp
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -26,16 +26,13 @@
 	.text
 ENTRY(wmemcmp)
 	.type	wmemcmp, @gnu_indirect_function
-	cmpl	$0, KIND_OFFSET+__cpu_features(%rip)
-	jne	1f
-	call	__init_cpu_features
-
-1:	testl	$bit_SSSE3, __cpu_features+CPUID_OFFSET+index_SSSE3(%rip)
+	LOAD_RTLD_GLOBAL_RO_RDX
+	HAS_CPU_FEATURE (SSSE3)
 	jnz	2f
 	leaq	__wmemcmp_sse2(%rip), %rax
 	ret
 
-2:	testl	$bit_SSE4_1, __cpu_features+CPUID_OFFSET+index_SSE4_1(%rip)
+2:	HAS_CPU_FEATURE (SSE4_1)
 	jz	3f
 	leaq	__wmemcmp_sse4_1(%rip), %rax
 	ret

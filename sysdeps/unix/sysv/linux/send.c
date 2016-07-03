@@ -1,4 +1,4 @@
-/* Copyright (C) 2015 Free Software Foundation, Inc.
+/* Copyright (C) 2015-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,11 +21,19 @@
 
 #include <sysdep-cancel.h>
 #include <socketcall.h>
+#include <kernel-features.h>
+#include <sys/syscall.h>
 
 ssize_t
 __libc_send (int fd, const void *buf, size_t len, int flags)
 {
+#ifdef __ASSUME_SEND_SYSCALL
+  return SYSCALL_CANCEL (send, fd, buf, len, flags);
+#elif defined __ASSUME_SENDTO_FOR_SEND_SYSCALL
+  return SYSCALL_CANCEL (sendto, fd, buf, len, flags, NULL, 0);
+#else
   return SOCKETCALL_CANCEL (send, fd, buf, len, flags);
+#endif
 }
 weak_alias (__libc_send, send)
 weak_alias (__libc_send, __send)

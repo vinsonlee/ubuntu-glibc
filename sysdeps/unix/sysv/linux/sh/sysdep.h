@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper, <drepper@gnu.ai.mit.edu>, August 1995.
    Changed by Kaz Kojima, <kkojima@rr.iij4u.or.jp>.
@@ -21,6 +21,7 @@
 #define _LINUX_SH_SYSDEP_H 1
 
 /* There is some commonality.  */
+#include <sysdeps/unix/sysv/linux/sysdep.h>
 #include <sysdeps/unix/sh/sysdep.h>
 #include <tls.h>
 

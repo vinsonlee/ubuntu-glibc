@@ -1,6 +1,6 @@
 /* Data structure for communication from the run-time dynamic linker for
    loaded ELF shared objects.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -39,11 +39,11 @@ extern unsigned int la_objopen (struct link_map *__map, Lmid_t __lmid,
 
 #include <stdint.h>
 #include <stddef.h>
-#include <bits/linkmap.h>
+#include <linkmap.h>
 #include <dl-fileid.h>
 #include <dl-lookupcfg.h>
 #include <tls.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 
 
 /* Some internal data structures of the dynamic linker used in the
