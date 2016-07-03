@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -29,9 +29,8 @@ static const struct pthread_rwlockattr default_rwlockattr =
 
 
 int
-__pthread_rwlock_init (rwlock, attr)
-     pthread_rwlock_t *rwlock;
-     const pthread_rwlockattr_t *attr;
+__pthread_rwlock_init (pthread_rwlock_t *rwlock,
+		       const pthread_rwlockattr_t *attr)
 {
   const struct pthread_rwlockattr *iattr;
 

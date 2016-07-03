@@ -106,6 +106,8 @@ if test -z "$libc_mips_float"; then
 fi
 
 libc_mips_o32_fp=
+libc_cv_mips_fp64=
+libc_cv_mips_modd_spreg=
 
 if test x"$libc_mips_abi" = xo32 -a x"$libc_mips_float" = xhard; then
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -219,9 +221,34 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+  if { ac_try='${CC-cc} -mfp64 -xc /dev/null -S -o /dev/null'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }; then :
+  libc_cv_mips_fp64=yes
+else
+  libc_cv_mips_fp64=no
+fi
+  if { ac_try='${CC-cc} -Werror -modd-spreg -xc /dev/null -S -o /dev/null'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }; then :
+  libc_cv_mips_modd_spreg=yes
+else
+  libc_cv_mips_modd_spreg=no
+fi
 fi
 config_vars="$config_vars
 o32-fpabi = ${libc_mips_o32_fp}"
+config_vars="$config_vars
+has-mpf64 = ${libc_cv_mips_fp64}"
+config_vars="$config_vars
+has-modd-spreg = ${libc_cv_mips_modd_spreg}"
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -420,7 +447,7 @@ case "$prefix" in
   if test "$libdir" = '${exec_prefix}/lib'; then
     libdir='${exec_prefix}/lib64';
     # Locale data can be shared between 32-bit and 64-bit libraries.
-    libc_cv_localedir='${exec_prefix}/lib/locale'
+    libc_cv_complocaledir='${exec_prefix}/lib/locale'
   fi
   ;;
 esac
@@ -434,7 +461,7 @@ case "$prefix" in
   if test "$libdir" = '${exec_prefix}/lib'; then
     libdir='${exec_prefix}/lib32';
     # Locale data can be shared between 32-bit and 64-bit libraries.
-    libc_cv_localedir='${exec_prefix}/lib/locale'
+    libc_cv_complocaledir='${exec_prefix}/lib/locale'
   fi
   ;;
 esac
@@ -445,9 +472,6 @@ libc_cv_gcc_unwind_find_fde=yes
 
 if test -z "$arch_minimum_kernel"; then
   if test x$libc_cv_mips_nan2008 = xyes; then
-    # FIXME: Adjust this setting to the actual first upstream kernel
-    # version to support the 2008 NaN encoding and then remove this
-    # comment.
-    arch_minimum_kernel=10.0.0
+    arch_minimum_kernel=4.5.0
   fi
 fi

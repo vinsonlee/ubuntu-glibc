@@ -1,5 +1,5 @@
 /* Get the symbol address.  HPPA version.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -33,3 +33,4 @@ _dl_symbol_address (struct link_map *map, const ElfW(Sym) *ref)
   else
     return (void *) value;
 }
+rtld_hidden_def (_dl_symbol_address)

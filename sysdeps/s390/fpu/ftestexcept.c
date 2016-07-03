@@ -1,5 +1,5 @@
 /* Test exception in current environment.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Denis Joseph Barrow (djbarrow@de.ibm.com).
 
@@ -23,11 +23,17 @@
 int
 fetestexcept (int excepts)
 {
-  fexcept_t temp;
+  fexcept_t temp, res;
 
   /* Get current exceptions.  */
   _FPU_GETCW (temp);
-  temp = (temp >> FPC_DXC_SHIFT) | (temp >> FPC_FLAGS_SHIFT);
-  return temp & excepts & FE_ALL_EXCEPT;
+  res = temp >> FPC_FLAGS_SHIFT;
+  if ((temp & FPC_NOT_FPU_EXCEPTION) == 0)
+    /* Bits 6, 7 of dxc-byte are zero,
+       thus bits 0-5 of dxc-byte correspond to the flag-bits.
+       Evaluate flags and last dxc-exception-code.  */
+    res |= temp >> FPC_DXC_SHIFT;
+
+  return res & excepts & FE_ALL_EXCEPT;
 }
 libm_hidden_def (fetestexcept)

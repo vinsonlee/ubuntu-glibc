@@ -1,5 +1,5 @@
 /* Definitions for POSIX memory map interface.  Linux/Alpha version.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -41,6 +41,7 @@
 /* Flags for `mlockall'.  */
 #define MCL_CURRENT	  8192
 #define MCL_FUTURE	  16384
+#define MCL_ONFAULT	  32768
 
 #include <bits/mman-linux.h>
 
