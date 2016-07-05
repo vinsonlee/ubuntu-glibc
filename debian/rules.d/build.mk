@@ -126,7 +126,7 @@ $(stamp)check_%: $(stamp)build_%
 	  echo "Testsuite disabled for $(curpass), skipping tests."; \
 	else \
 	  find $(DEB_BUILDDIR) -name '*.out' -delete ; \
-	  LD_PRELOAD="" LANG="" TIMEOUTFACTOR="50" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) check 2>&1 | tee $(log_test) ; \
+	  LD_PRELOAD="" LANG="" TIMEOUTFACTOR="15" $(MAKE) -C $(DEB_BUILDDIR) $(NJOBS) check 2>&1 | tee $(log_test) ; \
 	  if ! test -f $(DEB_BUILDDIR)/tests.sum ; then \
 	    echo "+---------------------------------------------------------------------+" ; \
 	    echo "|                     Testsuite failed to build.                      |" ; \
@@ -140,13 +140,16 @@ $(stamp)check_%: $(stamp)build_%
 	  for test in $$(sed -e '/^\(FAIL\|XFAIL\): /!d;s/^.*: //' $(DEB_BUILDDIR)/tests.sum) ; do \
 	    echo "----------" ; \
 	    cat $(DEB_BUILDDIR)/$$test.test-result ; \
-	    cat $(DEB_BUILDDIR)/$$test.out ; \
+	    if test -f $(DEB_BUILDDIR)/$$test.out ; then \
+	      cat $(DEB_BUILDDIR)/$$test.out ; \
+	    fi ; \
 	    echo "----------" ; \
 	  done ; \
 	  if grep -q '^FAIL:' $(DEB_BUILDDIR)/tests.sum ; then \
 	    echo "+---------------------------------------------------------------------+" ; \
 	    echo "|     Encountered regressions that don't match expected failures.     |" ; \
 	    echo "+---------------------------------------------------------------------+" ; \
+	    grep -E '^FAIL:' $(DEB_BUILDDIR)/tests.sum | sort ; \
 	    exit 1 ; \
 	  else \
 	    echo "+---------------------------------------------------------------------+" ; \
