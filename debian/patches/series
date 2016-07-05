@@ -40,6 +40,7 @@ alpha/local-string-functions.diff
 alpha/submitted-fegetenv-namespace.diff
 alpha/submitted-termios_h.diff
 alpha/submitted-fts64.diff
+alpha/submitted-trunc.diff
 
 amd64/local-blacklist-for-Intel-TSX.diff
 
@@ -57,6 +58,8 @@ hppa/local-elf-make-cflags.diff
 hppa/local-shmlba.diff
 hppa/local-fptr-table-size.diff
 hppa/submitted-gmon-start.diff
+hppa/submitted-dladdr.diff
+hppa/submitted-libm-test-ulps.diff
 
 hurd-i386/local-enable-ldconfig.diff
 hurd-i386/tg-context_functions.diff
@@ -138,18 +141,21 @@ hurd-i386/cvs-aio_sigqueue.diff
 hurd-i386/cvs-pt-kill.diff
 hurd-i386/cvs-open.diff
 hurd-i386/cvs-c++-types.diff
-hurd-i386/local-ihash-use.diff
 hurd-i386/cvs-errnos.d.diff
 hurd-i386/cvs-mach-syscalls.mk.diff
 hurd-i386/local-versions.diff
-hurd-i386/cvs-libpthread.so.diff
-hurd-i386/submitted-auxv.diff
-hurd-i386/submitted-anon-mmap-shared.diff
+hurd-i386/cvs-auxv.diff
+#hurd-i386/submitted-anon-mmap-shared.diff
+hurd-i386/cvs-gprof-tick.diff
+hurd-i386/cvs-IPV6_PKTINFO.diff
+hurd-i386/cvs-i686-link.diff
+hurd-i386/cvs-check-local-headers.diff
+hurd-i386/tg-faccessat.diff
+hurd-i386/tg-eintr.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
 i386/local-cpuid-level2.diff
-i386/submitted-i686-timing.diff
 i386/unsubmitted-quiet-ldconfig.diff
 
 kfreebsd/submitted-waitid.diff
@@ -175,6 +181,7 @@ sh4/local-fpscr_values.diff
 
 sparc/local-sparcv9-target.diff
 sparc/submitted-sparc64-socketcall.diff
+sparc/cvs-sparc-nearbyint.diff
 
 all/local-alias-et_EE.diff
 all/local-remove-manual.diff
@@ -229,7 +236,6 @@ ubuntu/local-disable-ld_audit.diff
 ubuntu/local-disable-nscd-netgroup-caching.diff
 ubuntu/submitted-no-sprintf-pre-truncate.diff
 ubuntu/submitted-no-stack-backtrace.diff
-ubuntu/local-warn-bsd-source.diff
 ubuntu/localedata/bn-language.diff
 ubuntu/localedata/ckb_IQ-new_locale.diff
 ubuntu/localedata/en_CA-dateformat.diff
