@@ -1,5 +1,6 @@
 ifeq ($(subdir),csu)
 tests += test-multiarch
+gen-as-const-headers += ifunc-defines.sym
 endif
 
 ifeq ($(subdir),string)

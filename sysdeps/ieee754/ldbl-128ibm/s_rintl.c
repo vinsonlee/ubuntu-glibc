@@ -26,11 +26,6 @@
 #include <float.h>
 #include <ieee754.h>
 
-#ifdef USE_AS_NEARBYINTL
-# define rintl nearbyintl
-# define __rintl __nearbyintl
-#endif
-
 
 long double
 __rintl (long double x)
@@ -49,11 +44,7 @@ __rintl (long double x)
 
       /* Long double arithmetic, including the canonicalisation below,
 	 only works in round-to-nearest mode.  */
-#ifdef USE_AS_NEARBYINTL
-      SET_RESTORE_ROUND_NOEX (FE_TONEAREST);
-#else
       fesetround (FE_TONEAREST);
-#endif
 
       /* Convert the high double to integer.  */
       orig_xh = xh;
@@ -112,16 +103,8 @@ __rintl (long double x)
       if (orig_xh < 0.0)
 	xh = -__builtin_fabs (xh);
 
-#ifdef USE_AS_NEARBYINTL
-      math_force_eval (xh);
-      math_force_eval (xl);
-#else
       fesetround (save_round);
-#endif
     }
-  else
-    /* Quiet signaling NaN arguments.  */
-    xh += xh;
 
   return ldbl_pack (xh, xl);
 }

@@ -199,10 +199,10 @@ inst_complocaledir = $(install_root)$(complocaledir)
 
 # Where to install the message catalog data files (which are
 # machine-independent).
-ifndef localedir
-localedir = $(datadir)/locale
+ifndef msgcatdir
+msgcatdir = $(datadir)/locale
 endif
-inst_localedir = $(install_root)$(localedir)
+inst_msgcatdir = $(install_root)$(msgcatdir)
 
 # Where to install the locale charmap source files.
 ifndef i18ndir
@@ -889,8 +889,7 @@ override CFLAGS	= -std=gnu11 -fgnu89-inline $(config-extra-cflags) \
 		  $(CFLAGS-$(@F)) $(tls-model) \
 		  $(foreach lib,$(libof-$(basename $(@F))) \
 				$(libof-$(<F)) $(libof-$(@F)),$(CFLAGS-$(lib)))
-# Use our copies of cstdlib and cmath.
-override CXXFLAGS = -I$(common-objpfx) $(c++-sysincludes) \
+override CXXFLAGS = $(c++-sysincludes) \
 		    $(filter-out %frame-pointer,$(+cflags)) $(sysdep-CFLAGS) \
 		    $(CFLAGS-$(suffix $@)) $(CFLAGS-$(<F)) $(CFLAGS-$(@F))
 

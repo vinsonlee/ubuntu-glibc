@@ -6,7 +6,7 @@
     # Get the list of optimized packages for a given architecture
     # Before removing a package from this list, make sure it appears
     # in the Conflicts: line of libc.
-    case ${DPKG_MAINTSCRIPT_ARCH} in
+    case $(dpkg --print-architecture) in
         alpha)
             hwcappkgs="libc6-alphaev67"
             ;;

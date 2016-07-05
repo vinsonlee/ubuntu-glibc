@@ -1,13 +1,6 @@
 comment_char %
-escape_char /
-
-% This file is part of the GNU C Library and contains locale data.
-% The Free Software Foundation does not claim any copyright interest
-% in the locale data contained in this file.  The foregoing does not
-% affect the license of the GNU C Library as a whole.  It does not
-% exempt you from the conditions of the license if your use would
-% otherwise be governed by that license.
-
+escape_char  /
+%
 % Tajik Language Locale for Tajikistan
 % Source:
 % Contact: Pablo Saratxaga, Roger Kovacs
@@ -19,6 +12,8 @@ escape_char /
 % Application: general
 % Users: general
 % Charset: UTF-8
+% Distribution and use is free, also
+% for commercial purposes.
 
 %
 % TODO: check LC_COLLATE
@@ -39,17 +34,18 @@ territory "Tajikistan"
 revision "0.4"
 date "2004-01-09"
 
-category "i18n:2012";LC_IDENTIFICATION
-category "i18n:2012";LC_CTYPE
-category "i18n:2012";LC_COLLATE
-category "i18n:2012";LC_TIME
-category "i18n:2012";LC_NUMERIC
-category "i18n:2012";LC_PAPER
-category "i18n:2012";LC_TELEPHONE
-category "i18n:2012";LC_MEASUREMENT
-category "i18n:2012";LC_ADDRESS
-category "i18n:2012";LC_MONETARY
-category "i18n:2012";LC_MESSAGES
+category "tg_TJ:2000";LC_IDENTIFICATION
+category "tg_TJ:2000";LC_CTYPE
+category "tg_TJ:2000";LC_COLLATE
+category "tg_TJ:2000";LC_TIME
+category "tg_TJ:2000";LC_NUMERIC
+category "tg_TJ:2000";LC_PAPER
+category "tg_TJ:2000";LC_TELEPHONE
+category "tg_TJ:2000";LC_MEASUREMENT
+category "tg_TJ:2000";LC_ADDRESS
+category "tg_TJ:2000";LC_MONETARY
+category "tg_TJ:2000";LC_MESSAGES
+
 END LC_IDENTIFICATION
 
 LC_CTYPE
@@ -127,10 +123,10 @@ reorder-end
 END LC_COLLATE
 
 LC_MESSAGES
-yesexpr "<U005E><U005B><U002B><U0031><U04B2><U04B3><U0425><U0445><U0414><U0434><U0059><U0079><U005D>"
-noexpr  "<U005E><U005B><U002D><U0030><U041D><U043D><U004E><U006E><U005D>"
 yesstr  "<U0434><U0430>"
 nostr   "<U043D><U0435><U0442>"
+yesexpr "<U005E><U005B><U04B2><U04B3><U0425><U0445><U0414><U0434><U0059><U0079><U005D><U002E><U002A>"
+noexpr  "<U005E><U005B><U041D><U043D><U004E><U006E><U005D><U002E><U002A>"
 END LC_MESSAGES
 
 LC_MONETARY
@@ -202,16 +198,16 @@ d_fmt     "<U0025><U0064><U002E><U0025><U006D><U002E><U0025><U0059>"
 t_fmt     "<U0025><U0054>"
 am_pm     "";""
 t_fmt_ampm ""
-week 7;19971130;1
-first_weekday 2
 END LC_TIME
 
 LC_PAPER
-copy "i18n"
+height      297
+width       210
 END LC_PAPER
 
 LC_MEASUREMENT
-copy "i18n"
+% metric
+measurement 1
 END LC_MEASUREMENT
 
 LC_NAME
@@ -226,6 +222,7 @@ postal_fmt    "<U0025><U0061><U0025><U004E><U0025><U0066><U0025><U004E>/
 <U0020><U0025><U0073><U0020><U0025><U0065><U0020><U0025><U0072><U0025>/
 <U004E><U0025><U0054><U0020><U0025><U007A><U0025>/
 <U004E><U0025><U0063><U0025><U004E>"
+
 country_ab2 "<U0054><U004A>"
 country_ab3 "<U0054><U004A><U004B>"
 country_num 762
@@ -240,8 +237,6 @@ lang_lib    "<U0074><U0067><U006B>"
 END LC_ADDRESS
 
 LC_TELEPHONE
-tel_int_fmt "<U002B><U0025><U0063><U0020><U0025><U0061><U0025><U0074><U0025>/
-<U006C>"
-int_prefix "<U0039><U0039><U0032>"
-int_select "<U0030><U0030>"
+% FIXME
+copy "en_DK"
 END LC_TELEPHONE
