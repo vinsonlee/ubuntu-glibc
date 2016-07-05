@@ -4,6 +4,7 @@ MIN_KERNEL_SUPPORTED := 2.6.32
 
 # main library
 libc_mvec = yes
+libc_extra_cflags = -O3
 libc_rtlddir = /lib64
 
 # build 32-bit (i386) alternative library
@@ -11,8 +12,8 @@ GLIBC_MULTILIB_PASSES += i386
 DEB_ARCH_MULTILIB_PACKAGES += libc6-i386 libc6-dev-i386
 libc6-i386_shlib_dep = libc6-i386 (>= $(shlib_dep_ver))
 i386_configure_target = i686-linux-gnu
-i386_CC = $(CC) -m32 -march=pentium4 -mtune=generic
-i386_CXX = $(CXX) -m32 -march=pentium4 -mtune=generic
+i386_CC = $(CC) -m32 -march=pentium4 -mtune=generic -fno-regmove
+i386_CXX = $(CXX) -m32 -march=pentium4 -mtune=generic -fno-regmove
 i386_slibdir = /lib32
 i386_libdir = /usr/lib32
 

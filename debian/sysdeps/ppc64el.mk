@@ -3,3 +3,4 @@ extra_config_options = --enable-multi-arch --enable-lock-elision --with-cpu=powe
 
 # main library
 libc_rtlddir = /lib64
+libc_extra_cflags = -O3 -fno-tree-vectorize
