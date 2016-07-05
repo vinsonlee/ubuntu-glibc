@@ -1,3 +1,84 @@
+glibc (2.23.90+20160507.87523e9-1) experimental; urgency=medium
+
+  * New upstream snapshot from 20160705:
+    - Fix locales license.  Closes: #555168.
+    - Fix Spanish locale 1st week definition.  Closes: #826888.
+    - debian/patches/localedata/sort-UTF8-first.diff: rebased.
+    - debian/patches/localedata/locale-eo_EO.diff: upstreamed.
+    - debian/patches/localedata/locale-ku_TR.diff: rebased.
+    - debian/patches/localedata/fo_FO-date_fmt.diff: rebased.
+    - debian/patches/localedata/locales-fr.diff: rebased.
+    - debian/patches/localedata/locale-en_DK.diff: rebased.
+    - debian/patches/localedata/locale-hsb_DE.diff: rebased.
+    - debian/patches/localedata/fr_CH-first_weekday.diff: upstreamed.
+    - debian/patches/localedata/locale-de_LI.diff: rebased.
+    - debian/patches/localedata/submitted-bz9725-locale-sv_SE.diff: rebased.
+    - debian/patches/localedata/first_weekday.diff: upstreamed.
+    - debian/patches/localedata/submitted-en_AU-date_fmt.diff: rebased.
+    - debian/patches/amd64/local-blacklist-for-Intel-TSX.diff
+    - debian/patches/arm/local-arm-futex.diff: rebased.
+    - debian/patches/hppa/local-stack-grows-up.diff: dropped, obsolete.
+    - debian/patches/hurd-i386/local-enable-ldconfig.diff: rebased.
+    - debian/patches/hurd-i386/tg-tls-threadvar.diff: rebased.
+    - debian/patches/hurd-i386/tg-hooks.diff: rebased.
+    - debian/patches/hurd-i386/cvs-openat.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-gai_sigqueue.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-aio_sigqueue.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-open.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-c++-types.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-errnos.d.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-mach-syscalls.mk.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-auxv.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-gprof-tick.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-IPV6_PKTINFO.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-i686-link.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-check-local-headers.diff: upstreamed.
+    - debian/patches/i386/local-cpuid-level2.diff: rebased.
+    - debian/patches/sparc/submitted-sparc64-socketcall.diff: rebased.
+    - debian/patches/sparc/cvs-sparc-nearbyint.diff: upstreamed.
+    - debian/patches/any/local-libgcc-compat-ports.diff: rebased.
+    - debian/patches/any/submitted-longdouble.diff: rebased.
+    - debian/patches/any/submitted-string2-strcmp.diff: rebased.
+    - debian/patches/any/local-dynamic-resolvconf.diff: rebased.
+    - debian/patches/any/cvs-tst-malloc-thread-exit.diff: upstreamed.
+    - debian/patches/any/cvs-sys-personality-h.diff: upstreamed.
+  * debian/patches/localedata/{locale-C.diff,locale-de_LI.diff,
+    locale-eu_FR.diff,new-valencian-locale.diff}: change LC_IDENTIFICATION
+    to i18n:2012.
+  * debian/debhelper.in/locales.config: convert iw_IL into he_IL, as the
+    former was deprecated and has been removed.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 05 Jul 2016 20:47:21 +0200
+
+glibc (2.23-1) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/patches/git-updates.diff: update from upstream stable branch:
+    - debian/patches/hppa/submitted-start.diff: drop, upstreamed.
+  * debian/patches/localedata/locale-C.diff: update comment about the week
+    entry.  Closes: #829093.
+  * debian/testsuite-xfail-debian.mk: allow malloc/tst-mallocfork2 to fail
+    on hurd-i386, this is not a regression but a new test.
+  * debian/patches/sparc/cvs-sparc-nearbyint.diff: new patch from upstream
+    to fix nearbyint* functions with a sNaN input on SPARC.
+  * debian/testsuite-xfail-debian.mk: allow math/test-double-finite and
+    math/test-float-finite to fail on alpha, as this architecture do not
+    fully support IEEE flags.
+  * debian/patches/alpha/submitted-trunc.diff: new patch to fix trunc and
+    truncf results for big values on alpha.
+  * debian/testsuite-xfail-debian.mk: allow nptl/tst-cancel9 and
+    nptl/tst-cancelx9 to fail on hppa, they are not regressions.
+
+  [ John David Anglin ]
+  * debian/patches/hppa/submitted-libm-test-ulps.diff: new patch to update
+    the math test ULPs on hppa.
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/tg-poll_errors_fixes.diff: Update from tg branch, fixes
+    gettimeofday call from select.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 03 Jul 2016 21:59:34 +0200
+
 glibc (2.23-0experimental4) experimental; urgency=medium
 
   [ Aurelien Jarno ]
