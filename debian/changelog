@@ -1,3 +1,34 @@
+glibc (2.23.90+20160711.c10f90d-1) experimental; urgency=medium
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/submitted-malloc-setstate.diff: New patch to fix
+    malloc_setstate.
+  * testsuite-xfail-debian.mk: Update hurd-i386 testsuite results, no actual
+    regression.
+
+  [ Aurelien Jarno ]
+  * New upstream snapshot from 20160711:
+    - debian/patches/localedata/locale-de_LI.diff: upstreamed.
+    - debian/patches/hppa/submitted-libm-test-ulps.diff: upstreamed.
+  * debian/testsuite-xfail-debian.mk: allow conform/XPG3/sys/stat.h
+    and conform/XPG4/sys/stat.h to fail on mips and mipsel, similarly
+    to the others sys/stat.h conform tests. Group all theses entries
+    and an explanation.
+  * debian/testsuite-xfail-debian.mk: do not allow math/test-fenv to
+    fail now that we do not have Loongson 2 buildds anymore.
+  * debian/patches/kfreebsd/local-sysdeps.diff, local-fbtl.diff:
+    update to revision 6087 (from glibc-bsd).
+  * debian/testsuite-xfail-debian.mk: allow more failures on kfreebsd-*,
+    mostly due to the fsid_t type, and which are not regressions.
+  * testsuite-xfail-debian.mk: Update x32 testsuite results, no actual
+    regression.
+  * Replace debian/patches/alpha/submitted-trunc.diff by
+    debian/patches/alpha/submitted-math-fixes.diff containing additional
+    math fixes.
+  * debian/rules: better glibc version detection for snapshots.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 11 Jul 2016 22:45:50 +0200
+
 glibc (2.23.90+20160507.87523e9-1) experimental; urgency=medium
 
   * New upstream snapshot from 20160705:
