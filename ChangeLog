@@ -1,3 +1,123 @@
+2016-07-11  Szabolcs Nagy  <szabolcs.nagy@arm.com>
+
+	[BZ #18707]
+	* sysdeps/aarch64/Makefile (CFLAGS-mcount.c): Add -mgeneral-regs-only.
+	* sysdeps/aarch64/sysdep.h (CALL_MCOUNT): Save argument registers.
+
+2016-07-08  Adhemerval Zanella  <adhemerval.zanella@linaro.org>
+
+	* sysdeps/unix/sysv/linux/sysdep.h
+	[__WORDSIZE == 64 || __ASSUME_WORDSIZE64_ILP32] (LO_HI_LONG): Remove
+	guards.
+	* misc/tst-preadvwritev-common.c: New file.
+	* misc/tst-preadvwritev.c: Use tst-preadvwritev-common.c.
+	* misc/tst-preadvwritev64.c: Use tst-preadwritev-common.c and add
+	a check for files larger than 2GB.
+
+	* sysdeps/unix/sysv/linux/mips/kernel-features.h
+	(__ASSUME_OFF_DIFF_OFF64): Remove define.
+	* sysdeps/unix/sysv/linux/pread.c
+	[__WORDSIZE != 64 || __ASSUME_OFF_DIFF_OFF64] (pread): Replace by
+	__OFF_T_MATCHES_OFF64_T.
+	* sysdeps/unix/sysv/linux/pread64.c
+	[__WORDSIZE != 64 || __ASSUME_OFF_DIFF_OFF64] (pread64): Likewise.
+	* sysdeps/unix/sysv/linux/preadv.c
+	[__WORDSIZE != 64 || __ASSUME_OFF_DIFF_OFF64] (preadv): Likewise.
+	* sysdeps/unix/sysv/linux/preadv64.c
+	[__WORDSIZE != 64 || __ASSUME_OFF_DIFF_OFF64] (preadv64): Likewise.
+	* sysdeps/unix/sysv/linux/pwrite.c
+	[__WORDSIZE != 64 || __ASSUME_OFF_DIFF_OFF64] (pwrite): Likewise.
+	* sysdeps/unix/sysv/linux/pwrite64.c
+	[__WORDSIZE != 64 || __ASSUME_OFF_DIFF_OFF64] (pwrite64): Likewise.
+	* sysdeps/unix/sysv/linux/pwritev.c
+	[__WORDSIZE != 64 || __ASSUME_OFF_DIFF_OFF64] (pwritev): Likewise.
+	* sysdeps/unix/sysv/linux/pwritev64.c
+	[__WORDSIZE != 64 || __ASSUME_OFF_DIFF_OFF64] (pwritev64): Likewise.
+
+2016-07-08  Chris Metcalf  <cmetcalf@mellanox.com>
+
+	* sysdeps/unix/sysv/linux/tile/kernel-features.h
+	(__ASSUME_ALIGNED_REGISTER_PAIRS): Only define if !_LP64.
+
+2016-07-08  Aurelien Jarno  <aurelien@aurel32.net>
+
+	* bits/in.h (__USE_KERNEL_IPV6_DEFS): Define to 0.
+
+2016-07-08  Aurelien Jarno  <aurelien@aurel32.net>
+
+	[BZ #20240]
+	* sysdeps/powerpc/powerpc32/power4/fpu/multiarch/Makefile
+	(CFLAGS-s_modf-ppc32.c): New variable.
+	(CFLAGS-s_modff-ppc32.c): Likewise.
+	* sysdeps/powerpc/powerpc64/fpu/multiarch/Makefile
+	(CFLAGS-s_modf-ppc64.c): Likewise.
+	(CFLAGS-s_modff-ppc64.c): Likewise.
+
+2016-07-07  Andreas Schwab  <schwab@suse.de>
+
+	[BZ #20263]
+	* nptl/tst-robust10.c: New test.
+	* nptl/Makefile (tests): Add tst-robust10.
+
+2016-07-07  Jiyoung Yun  <t2wish@gmail.com>
+
+	[BZ #20263]
+	* nptl/lowlevelrobustlock.c: Implement ETIMEDOUT logic.
+
+2016-07-06  Stefan Liebler  <stli@linux.vnet.ibm.com>
+
+	* sysdeps/s390/linkmap.h (struct link_map_machine):
+	Remove member gotplt and add member jmprel.
+	* sysdeps/s390/s390-32/dl-machine.h
+	(elf_machine_runtime_setup): Setup member jmprel with DT_JMPREL
+	instead of gotplt with &got[3].
+	(elf_machine_lazy_rel): Calculate address with reloc and jmprel.
+	* sysdeps/s390/s390-64/dl-machine.h: Likewise.
+
+2016-07-06  John David Anglin  <danglin@gcc.gnu.org>
+
+	* sysdeps/hppa/fpu/libm-test-ulps: Regenerate.
+
+2016-07-06  Samuel Thibault  <samuel.thibault@ens-lyon.org>
+
+	* libio/iofopncook.c (_IO_cookie_read, _IO_cookie_write,
+	_IO_cookie_seek, _IO_cookie_close, _IO_old_cookie_seek)
+	[!PTR_DEMANGLE]: Do not call PTR_DEMANGLE.
+	(set_callbacks) [!PTR_MANGLE]: Do not call PTR_MANGLE.
+	* libio/vtables.c (_IO_vtable_check)
+	[!PTR_DEMANGLE]: Do not call PTR_DEMANGLE.
+	* libio/libioP.h (IO_set_accept_foreign_vtables)
+	[!PTR_MANGLE]: Do not call PTR_MANGLE.
+
+2016-07-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	[BZ #20314]
+	* Makeconfig (CXXFLAGS): Prepend -I$(common-objpfx).
+	* Makerules (before-compile): Add $(common-objpfx)cstdlib and
+	$(common-objpfx)cmath.
+	($(common-objpfx)cstdlib): New target.
+	($(common-objpfx)cmath): Likewise.
+
+2016-07-05  Chris Metcalf  <cmetcalf@mellanox.com>
+
+	* malloc/tst-malloc-thread-fail.c (TIMEOUT): Bump up to 30s.
+
+2016-07-05  Rajalakshmi Srinivasaraghavan  <raji@linux.vnet.ibm.com>
+
+	[BZ #20327]
+	* sysdeps/powerpc/powerpc64/power8/strcasecmp.S: Mask bits that
+	are not part of the string.
+
+2016-07-05  Adhemerval Zanella  <adhemerval.zanella@linaro.org>
+
+	* nptl/tst-cancel4-common.c (do_test): Add temporary fifo creation.
+	* nptl/tst-cancel4-common.h (fifoname): New variable.
+	(fifofd): Likewise.
+	(cl_fifo): New function.
+	* nptl/tst-cancel4.c (tf_sigpause): Replace SIGCANCEL usage by
+	SIGINT.
+	(tf_open): Add early cancel test.
+
 2016-07-04  Andreas Schwab  <schwab@linux-m68k.org>
 
 	* sysdeps/m68k/Makefile (CFLAGS-mcount.c): Define.
