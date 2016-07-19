@@ -12,7 +12,3 @@ endif
 ifeq ($(subdir),csu)
 gen-as-const-headers += tlsdesc.sym
 endif
-
-ifeq ($(subdir),gmon)
-CFLAGS-mcount.c += -mgeneral-regs-only
-endif

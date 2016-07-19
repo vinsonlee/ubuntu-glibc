@@ -21,7 +21,7 @@
 
 	.text
 	.globl	__syscall_error
-ENTRY(__libc_vfork)
+ENTRY(__vfork)
 	ld	[%g7 + PID], %o5
 	sethi	%hi(0x80000000), %o3
 	cmp	%o5, 0
@@ -42,10 +42,8 @@ ENTRY(__libc_vfork)
 	 st	%o5, [%g7 + PID]
 1:	retl
 	 nop
-END(__libc_vfork)
+END(__vfork)
 
-#if IS_IN (libc)
-weak_alias (__libc_vfork, vfork)
-strong_alias (__libc_vfork, __vfork)
 libc_hidden_def (__vfork)
-#endif
+weak_alias (__vfork, vfork)
+strong_alias (__vfork, __libc_vfork)

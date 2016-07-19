@@ -98,7 +98,4 @@ END(__memcmp_z10)
 .set     memcmp,__memcmp_default
 .weak    bcmp
 .set	 bcmp,__memcmp_default
-#elif defined SHARED && IS_IN (libc)
-.globl   __GI_memcmp
-.set     __GI_memcmp,__memcmp_default
 #endif

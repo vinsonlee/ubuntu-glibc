@@ -9,10 +9,10 @@ RCSID("$NetBSD: s_ceil.S,v 1.4 1995/05/08 23:52:13 jtc Exp $")
 
 ENTRY(__ceil)
 	fldl	4(%esp)
-	subl	$32,%esp
-	cfi_adjust_cfa_offset (32)
+	subl	$8,%esp
+	cfi_adjust_cfa_offset (8)
 
-	fnstenv	4(%esp)			/* store fpu environment */
+	fstcw	4(%esp)			/* store fpu control word */
 
 	/* We use here %edx although only the low 1 bits are defined.
 	   But none of the operations should care and they are faster
@@ -25,10 +25,10 @@ ENTRY(__ceil)
 
 	frndint				/* round */
 
-	fldenv	4(%esp)			/* restore original environment */
+	fldcw	4(%esp)			/* restore original control word */
 
-	addl	$32,%esp
-	cfi_adjust_cfa_offset (-32)
+	addl	$8,%esp
+	cfi_adjust_cfa_offset (-8)
 	ret
 END (__ceil)
 weak_alias (__ceil, ceil)

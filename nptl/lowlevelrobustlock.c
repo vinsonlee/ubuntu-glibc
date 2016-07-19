@@ -118,11 +118,8 @@ __lll_robust_timedlock_wait (int *futex, const struct timespec *abstime,
      || !defined lll_futex_timed_wait_bitset)
       lll_futex_timed_wait (futex, newval, &rt, private);
 #else
-      int err = lll_futex_timed_wait_bitset (futex, newval, abstime,
-					     FUTEX_CLOCK_REALTIME, private);
-      /* The futex call timed out.  */
-      if (err == -ETIMEDOUT)
-         return -err;
+      lll_futex_timed_wait_bitset (futex, newval, abstime,
+				   FUTEX_CLOCK_REALTIME, private);
 #endif
 
     try:

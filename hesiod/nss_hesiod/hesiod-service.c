@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nss_hesiod.h"
+
 /* Hesiod uses a format for service entries that differs from the
    traditional format.  We therefore declare our own parser.  */
 
@@ -67,7 +69,8 @@ lookup (const char *name, const char *type, const char *protocol,
   int found;
   int olderr = errno;
 
-  if (hesiod_init (&context) < 0)
+  context = _nss_hesiod_init ();
+  if (context == NULL)
     return NSS_STATUS_UNAVAIL;
 
   list = hesiod_resolve (context, name, type);

@@ -64,6 +64,11 @@
  * SOFTWARE.
  */
 
+#if defined(LIBC_SCCS) && !defined(lint)
+static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
+static const char rcsid[] = "$BINDId: res_init.c,v 8.16 2000/05/09 07:10:12 vixie Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 #include <ctype.h>
 #include <netdb.h>
 #include <resolv.h>
@@ -85,16 +90,26 @@
 #include <not-cancel.h>
 
 /* Options.  Should all be left alone. */
+#define RESOLVSORT
+#define RFC1535
 /* #undef DEBUG */
 
 static void res_setoptions (res_state, const char *, const char *)
      internal_function;
 
+#ifdef RESOLVSORT
 static const char sort_mask_chars[] = "/&";
 #define ISSORTMASK(ch) (strchr(sort_mask_chars, ch) != NULL)
 static u_int32_t net_mask (struct in_addr) __THROW;
+#endif
 
+#if !defined(isascii)	/* XXX - could be a function */
+# define isascii(c) (!(c & 0200))
+#endif
+
+#ifdef _LIBC
 unsigned long long int __res_initstamp attribute_hidden;
+#endif
 
 /*
  * Resolver state default settings.
@@ -103,7 +118,21 @@ unsigned long long int __res_initstamp attribute_hidden;
 /*
  * Set up default settings.  If the configuration file exist, the values
  * there will have precedence.  Otherwise, the server address is set to
- * INADDR_LOOPBACK and the default domain name comes from gethostname.
+ * INADDR_ANY and the default domain name comes from the gethostname().
+ *
+ * An interrim version of this code (BIND 4.9, pre-4.4BSD) used 127.0.0.1
+ * rather than INADDR_ANY ("0.0.0.0") as the default name server address
+ * since it was noted that INADDR_ANY actually meant ``the first interface
+ * you "ifconfig"'d at boot time'' and if this was a SLIP or PPP interface,
+ * it had to be "up" in order for you to reach your own name server.  It
+ * was later decided that since the recommended practice is to always
+ * install local static routes through 127.0.0.1 for all your network
+ * interfaces, that we could solve this problem without a code change.
+ *
+ * The configuration file should always be used, since it is the only way
+ * to specify a default domain.  If you are running a server on your local
+ * machine, you should say "nameserver 0.0.0.0" or "nameserver 127.0.0.1"
+ * in the configuration file.
  *
  * Return 0 if completes successfully, -1 on error
  */
@@ -113,7 +142,9 @@ res_ninit(res_state statp) {
 
 	return (__res_vinit(statp, 0));
 }
+#ifdef _LIBC
 libc_hidden_def (__res_ninit)
+#endif
 
 /* This function has to be reachable by res_data.c but not publically. */
 int
@@ -126,9 +157,16 @@ __res_vinit(res_state statp, int preinit) {
 	int have_serv6 = 0;
 	int haveenv = 0;
 	int havesearch = 0;
+#ifdef RESOLVSORT
 	int nsort = 0;
 	char *net;
+#endif
+#ifndef RFC1535
+	int dots;
+#endif
+#ifdef _LIBC
 	statp->_u._ext.initstamp = __res_initstamp;
+#endif
 
 	if (!preinit) {
 		statp->retrans = RES_TIMEOUT;
@@ -264,6 +302,7 @@ __res_vinit(res_state statp, int preinit) {
 			statp->nsaddr_list[nserv].sin_port =
 				htons(NAMESERVER_PORT);
 			nserv++;
+#ifdef _LIBC
 		    } else {
 			struct in6_addr a6;
 			char *el;
@@ -312,9 +351,11 @@ __res_vinit(res_state statp, int preinit) {
 				nserv++;
 			    }
 			}
+#endif
 		    }
 		    continue;
 		}
+#ifdef RESOLVSORT
 		if (MATCH(buf, "sortlist")) {
 		    struct in_addr a;
 
@@ -356,17 +397,22 @@ __res_vinit(res_state statp, int preinit) {
 		    }
 		    continue;
 		}
+#endif
 		if (MATCH(buf, "options")) {
 		    res_setoptions(statp, buf + sizeof("options") - 1, "conf");
 		    continue;
 		}
 	    }
 	    statp->nscount = nserv;
+#ifdef _LIBC
 	    if (have_serv6) {
 		/* We try IPv6 servers again.  */
 		statp->ipv6_unavail = false;
 	    }
+#endif
+#ifdef RESOLVSORT
 	    statp->nsort = nsort;
+#endif
 	    (void) fclose(fp);
 	}
 	if (__builtin_expect(statp->nscount == 0, 0)) {
@@ -386,6 +432,29 @@ __res_vinit(res_state statp, int preinit) {
 		*pp++ = statp->defdname;
 		*pp = NULL;
 
+#ifndef RFC1535
+		dots = 0;
+		for (cp = statp->defdname; *cp; cp++)
+			dots += (*cp == '.');
+
+		cp = statp->defdname;
+		while (pp < statp->dnsrch + MAXDFLSRCH) {
+			if (dots < LOCALDOMAINPARTS)
+				break;
+			cp = __rawmemchr(cp, '.') + 1;    /* we know there is one */
+			*pp++ = cp;
+			dots--;
+		}
+		*pp = NULL;
+#ifdef DEBUG
+		if (statp->options & RES_DEBUG) {
+			printf(";; res_init()... default dnsrch list:\n");
+			for (pp = statp->dnsrch; *pp; pp++)
+				printf(";;\t%s\n", *pp);
+			printf(";;\t..END..\n");
+		}
+#endif
+#endif /* !RFC1535 */
 	}
 
 	if ((cp = getenv("RES_OPTIONS")) != NULL)
@@ -484,6 +553,7 @@ res_setoptions(res_state statp, const char *options, const char *source) {
 	}
 }
 
+#ifdef RESOLVSORT
 /* XXX - should really support CIDR which means explicit masks always. */
 /* XXX - should really use system's version of this */
 static u_int32_t
@@ -497,12 +567,15 @@ net_mask (struct in_addr in)
 		return (htonl(IN_CLASSB_NET));
 	return (htonl(IN_CLASSC_NET));
 }
+#endif
 
 u_int
 res_randomid(void) {
 	return 0xffff & __getpid();
 }
+#ifdef _LIBC
 libc_hidden_def (__res_randomid)
+#endif
 
 
 /*
@@ -521,7 +594,7 @@ __res_iclose(res_state statp, bool free_addr) {
 		statp->_vcsock = -1;
 		statp->_flags &= ~(RES_F_VC | RES_F_CONN);
 	}
-	for (ns = 0; ns < statp->nscount; ns++)
+	for (ns = 0; ns < statp->_u._ext.nscount; ns++)
 		if (statp->_u._ext.nsaddrs[ns]) {
 			if (statp->_u._ext.nssocks[ns] != -1) {
 				close_not_cancel_no_status(statp->_u._ext.nssocks[ns]);
@@ -540,9 +613,12 @@ res_nclose(res_state statp)
 {
   __res_iclose (statp, true);
 }
+#ifdef _LIBC
 libc_hidden_def (__res_nclose)
+#endif
 
-#ifdef _LIBC_REENTRANT
+#ifdef _LIBC
+# ifdef _LIBC_REENTRANT
 /* This is called when a thread is exiting to free resources held in _res.  */
 static void __attribute__ ((section ("__libc_thread_freeres_fn")))
 res_thread_freeres (void)
@@ -558,4 +634,5 @@ res_thread_freeres (void)
 }
 text_set_element (__libc_thread_subfreeres, res_thread_freeres);
 text_set_element (__libc_subfreeres, res_thread_freeres);
+# endif
 #endif

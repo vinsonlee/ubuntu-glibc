@@ -22,6 +22,9 @@
 #include <ldsodefs.h>
 #include <sysdep.h>	/* This defines the PPC_FEATURE[2]_* macros.  */
 
+/* There are 28 bits used, but they are bits 4..31.  */
+#define _DL_HWCAP_FIRST		4
+
 /* The total number of available bits (including those prior to
    _DL_HWCAP_FIRST).  Some of these bits might not be used.  */
 #define _DL_HWCAP_COUNT		64
@@ -65,7 +68,7 @@ static inline const char *
 __attribute__ ((unused))
 _dl_hwcap_string (int idx)
 {
-  return GLRO(dl_powerpc_cap_flags)[idx];
+  return GLRO(dl_powerpc_cap_flags)[idx - _DL_HWCAP_FIRST];
 }
 
 static inline const char *
@@ -79,7 +82,7 @@ static inline int
 __attribute__ ((unused))
 _dl_string_hwcap (const char *str)
 {
-  for (int i = 0; i < _DL_HWCAP_COUNT; ++i)
+  for (int i = _DL_HWCAP_FIRST; i < _DL_HWCAP_COUNT; ++i)
     if (strcmp (str, _dl_hwcap_string (i)) == 0)
       return i;
   return -1;
@@ -177,7 +180,7 @@ _dl_procinfo (unsigned int type, unsigned long int word)
     case AT_HWCAP:
       _dl_printf ("AT_HWCAP:       ");
 
-      for (int i = 0; i <= _DL_HWCAP_LAST; ++i)
+      for (int i = _DL_HWCAP_FIRST; i <= _DL_HWCAP_LAST; ++i)
        if (word & (1 << i))
          _dl_printf (" %s", _dl_hwcap_string (i));
       break;

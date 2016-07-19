@@ -32,10 +32,8 @@
    warning when __excepts is not a constant.  Otherwise, they mean the
    same as just plain 'i'.  */
 
-#  if __GNUC_PREREQ(3, 4)
-
 /* Inline definition for feraiseexcept.  */
-#   define feraiseexcept(__excepts) \
+#  define feraiseexcept(__excepts) \
   (__extension__  ({ 							      \
     int __e = __excepts;						      \
     int __ret;								      \
@@ -44,8 +42,8 @@
         && __e != FE_INVALID)						      \
       {									      \
 	if (__e != 0)							      \
-	  __asm__ __volatile__ ("mtfsb1 %0"				      \
-				: : "i#*X" (__builtin_clz (__e)));	      \
+	  __asm__ __volatile__ ("mtfsb1 %s0"				      \
+				: : "i#*X" (__builtin_ffs (__e)));	      \
         __ret = 0;							      \
       }									      \
     else								      \
@@ -54,7 +52,7 @@
   }))
 
 /* Inline definition for feclearexcept.  */
-#   define feclearexcept(__excepts) \
+#  define feclearexcept(__excepts) \
   (__extension__  ({ 							      \
     int __e = __excepts;						      \
     int __ret;								      \
@@ -63,16 +61,14 @@
         && __e != FE_INVALID)						      \
       {									      \
 	if (__e != 0)							      \
-	  __asm__ __volatile__ ("mtfsb0 %0"				      \
-				: : "i#*X" (__builtin_clz (__e)));	      \
+	  __asm__ __volatile__ ("mtfsb0 %s0"				      \
+				: : "i#*X" (__builtin_ffs (__e)));	      \
         __ret = 0;							      \
       }									      \
     else								      \
       __ret = feclearexcept (__e);					      \
     __ret;								      \
   }))
-
-#  endif /* __GNUC_PREREQ(3, 4).  */
 
 # endif /* !__NO_MATH_INLINES.  */
 

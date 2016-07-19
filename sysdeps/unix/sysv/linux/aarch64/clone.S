@@ -72,15 +72,17 @@ thread_start:
 	cfi_undefined (x30)
 	mov	x29, 0
 
-	tbnz	x11, #CLONE_VM_BIT, 1f
-
+	tbnz	x11, #CLONE_THREAD_BIT, 3f
+	mov	x0, #-1
+	tbnz	x11, #CLONE_VM_BIT, 2f
 	mov	x8, #SYS_ify(getpid)
 	svc	0x0
+2:
 	mrs	x1, tpidr_el0
 	sub	x1, x1, #PTHREAD_SIZEOF
 	str	w0, [x1, #PTHREAD_PID_OFFSET]
 	str	w0, [x1, #PTHREAD_TID_OFFSET]
-1:
+3:
 
 	/* Pick the function arg and execute.  */
 	mov	x0, x12
@@ -91,5 +93,4 @@ thread_start:
 	cfi_endproc
 	.size thread_start, .-thread_start
 
-libc_hidden_def (__clone)
 weak_alias (__clone, clone)

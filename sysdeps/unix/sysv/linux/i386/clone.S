@@ -40,6 +40,7 @@
 #define SYS_clone 120
 
 #define CLONE_VM	0x00000100
+#define CLONE_THREAD	0x00010000
 
         .text
 ENTRY (__clone)
@@ -107,7 +108,7 @@ L(thread_start):
 	cfi_undefined (eip);
 	/* Note: %esi is zero.  */
 	movl	%esi,%ebp	/* terminate the stack frame */
-	testl	$CLONE_VM, %edi
+	testl	$CLONE_THREAD, %edi
 	je	L(newpid)
 L(haspid):
 	call	*%ebx
@@ -123,6 +124,9 @@ L(here):
 
 	.subsection 2
 L(newpid):
+	testl	$CLONE_VM, %edi
+	movl	$-1, %eax
+	jne	L(nomoregetpid)
 	movl	$SYS_ify(getpid), %eax
 	ENTER_KERNEL
 L(nomoregetpid):
@@ -135,5 +139,4 @@ L(nomoregetpid):
 	cfi_startproc
 PSEUDO_END (__clone)
 
-libc_hidden_def (__clone)
 weak_alias (__clone, clone)
