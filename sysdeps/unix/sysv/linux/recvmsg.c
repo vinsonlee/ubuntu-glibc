@@ -1,4 +1,4 @@
-/* Copyright (C) 2015 Free Software Foundation, Inc.
+/* Copyright (C) 2015-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,11 +21,17 @@
 
 #include <sysdep-cancel.h>
 #include <socketcall.h>
+#include <kernel-features.h>
+#include <sys/syscall.h>
 
 ssize_t
 __libc_recvmsg (int fd, struct msghdr *msg, int flags)
 {
+#ifdef __ASSUME_RECVMSG_SYSCALL
+  return SYSCALL_CANCEL (recvmsg, fd, msg, flags);
+#else
   return SOCKETCALL_CANCEL (recvmsg, fd, msg, flags);
+#endif
 }
 weak_alias (__libc_recvmsg, recvmsg)
 weak_alias (__libc_recvmsg, __recvmsg)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -40,8 +40,7 @@ walker (const void *inodep, const VISIT which, const int depth)
 
 
 int
-sem_close (sem)
-     sem_t *sem;
+sem_close (sem_t *sem)
 {
   int result = 0;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Kaz Kylheku <kaz@ashi.footprints.net>.
 
@@ -25,9 +25,7 @@
 
 /* Get current value of timer TIMERID and store it in VLAUE.  */
 int
-timer_gettime (timerid, value)
-     timer_t timerid;
-     struct itimerspec *value;
+timer_gettime (timer_t timerid, struct itimerspec *value)
 {
   struct timer_node *timer;
   struct timespec now, expiry;

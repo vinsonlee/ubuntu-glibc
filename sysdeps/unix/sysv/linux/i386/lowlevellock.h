@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -317,7 +317,7 @@ extern int __lll_trylock_elision(int *lock, short *adapt_count)
 
 #define lll_lock_elision(futex, adapt_count, private) \
   __lll_lock_elision (&(futex), &(adapt_count), private)
-#define lll_unlock_elision(futex, private) \
+#define lll_unlock_elision(futex, adapt_count, private) \
   __lll_unlock_elision (&(futex), private)
 #define lll_trylock_elision(futex, adapt_count) \
   __lll_trylock_elision(&(futex), &(adapt_count))

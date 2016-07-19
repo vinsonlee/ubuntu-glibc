@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -36,8 +36,8 @@ do_fcntl (int fd, int cmd, void *arg)
   if (!INTERNAL_SYSCALL_ERROR_P (res, err))
     return fex.type == F_OWNER_GID ? -fex.pid : fex.pid;
 
-  __set_errno (INTERNAL_SYSCALL_ERRNO (res, err));
-  return -1;
+  return INLINE_SYSCALL_ERROR_RETURN_VALUE (INTERNAL_SYSCALL_ERRNO (res,
+								    err));
 }
 
 

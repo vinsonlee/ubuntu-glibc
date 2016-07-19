@@ -6,6 +6,11 @@ if test "x$MIG" = xMISSING; then
 fi
 LIBC_CONFIG_VAR([MIG], [$MIG])
 
+if test -n "$sysheaders"; then
+  OLD_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="$CPPFLAGS $SYSINCLUDES"
+fi
+
 ### Sanity checks for Mach header installation
 AC_CHECK_HEADER(mach/mach_types.h,,
                 [AC_MSG_ERROR([cannot find Mach headers])], -)
@@ -56,7 +61,7 @@ dnl
 mach_interface_list=
 for ifc in mach mach4 \
 	   clock clock_priv host_priv host_security ledger lock_set \
-	   processor processor_set task thread_act vm_map \
+	   processor processor_set task task_notify thread_act vm_map \
 	   memory_object memory_object_default default_pager \
 	   i386/mach_i386 \
 	   ; do
@@ -124,3 +129,7 @@ if test $hurd_cv_mig_retcode = yes; then
 fi])
 
 hurd_MIG_RETCODE
+
+if test -n "$sysheaders"; then
+  CPPFLAGS=$OLD_CPPFLAGS
+fi
