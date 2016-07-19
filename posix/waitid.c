@@ -1,5 +1,5 @@
 /* Stub version of waitid.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -22,11 +22,7 @@
 #include <sys/wait.h>
 
 int
-__waitid (idtype, id, infop, options)
-     idtype_t idtype;
-     id_t id;
-     siginfo_t *infop;
-     int options;
+__waitid (idtype_t idtype, id_t id, siginfo_t *infop, int options)
 {
   __set_errno (ENOSYS);
   return -1;

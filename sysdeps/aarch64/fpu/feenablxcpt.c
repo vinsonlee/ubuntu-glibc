@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -24,24 +24,22 @@ feenableexcept (int excepts)
 {
   fpu_control_t fpcr;
   fpu_control_t fpcr_new;
+  fpu_control_t updated_fpcr;
 
   _FPU_GETCW (fpcr);
   excepts &= FE_ALL_EXCEPT;
   fpcr_new = fpcr | (excepts << FE_EXCEPT_SHIFT);
 
   if (fpcr != fpcr_new)
-    _FPU_SETCW (fpcr_new);
-
-  /* Trapping exceptions are optional in AArch64 the relevant enable
-     bits in FPCR are RES0 hence the absence of support can be
-     detected by reading back the FPCR and comparing with the required
-     value.  */
-  if (excepts)
     {
-      fpu_control_t updated_fpcr;
+      _FPU_SETCW (fpcr_new);
 
+      /* Trapping exceptions are optional in AArch64; the relevant enable
+	 bits in FPCR are RES0 hence the absence of support can be detected
+	 by reading back the FPCR and comparing with the required value.  */
       _FPU_GETCW (updated_fpcr);
-      if (((updated_fpcr >> FE_EXCEPT_SHIFT) & excepts) != excepts)
+
+      if (fpcr_new & ~updated_fpcr)
 	return -1;
     }
 

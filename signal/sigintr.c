@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,9 +22,7 @@
    (causing them to fail with EINTR); if INTERRUPT is zero, make system
    calls be restarted after signal SIG.  */
 int
-siginterrupt (sig, interrupt)
-     int sig;
-     int interrupt;
+siginterrupt (int sig, int interrupt)
 {
   __set_errno (ENOSYS);
   return -1;

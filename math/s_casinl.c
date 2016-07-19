@@ -1,5 +1,5 @@
 /* Return arc sine of complex long double value.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -33,7 +33,7 @@ __casinl (__complex__ long double x)
 	{
 	  res = x;
 	}
-      else if (__isinf_nsl (__real__ x) || __isinf_nsl (__imag__ x))
+      else if (isinf (__real__ x) || isinf (__imag__ x))
 	{
 	  __real__ res = __nanl ("");
 	  __imag__ res = __copysignl (HUGE_VALL, __imag__ x);

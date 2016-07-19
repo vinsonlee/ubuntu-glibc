@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
 
 #include <ctype.h>
 #include <errno.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -394,9 +394,7 @@ __tzset_parse_tz (const char *tz)
 /* Interpret the TZ envariable.  */
 static void
 internal_function
-tzset_internal (always, explicit)
-     int always;
-     int explicit;
+tzset_internal (int always, int explicit)
 {
   static int is_initialized;
   const char *tz;
@@ -466,9 +464,7 @@ tzset_internal (always, explicit)
    put it in RULE->change, saving YEAR in RULE->computed_for.  */
 static void
 internal_function
-compute_change (rule, year)
-     tz_rule *rule;
-     int year;
+compute_change (tz_rule *rule, int year)
 {
   time_t t;
 
@@ -557,10 +553,7 @@ compute_change (rule, year)
    `__timezone', and `__daylight' accordingly.  */
 void
 internal_function
-__tz_compute (timer, tm, use_localtime)
-     time_t timer;
-     struct tm *tm;
-     int use_localtime;
+__tz_compute (time_t timer, struct tm *tm, int use_localtime)
 {
   compute_change (&tz_rules[0], 1900 + tm->tm_year);
   compute_change (&tz_rules[1], 1900 + tm->tm_year);

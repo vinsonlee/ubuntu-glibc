@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -25,9 +25,7 @@
 
 
 int
-pthread_setschedprio (threadid, prio)
-     pthread_t threadid;
-     int prio;
+pthread_setschedprio (pthread_t threadid, int prio)
 {
   struct pthread *pd = (struct pthread *) threadid;
 

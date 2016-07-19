@@ -1,5 +1,5 @@
 /* Compute sine and cosine of argument.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997 and
 		  Jakub Jelinek <jj@ultra.linux.cz>.
@@ -39,7 +39,7 @@ __sincosl (long double x, long double *sinx, long double *cosx)
     {
       /* sin(Inf or NaN) is NaN */
       *sinx = *cosx = x - x;
-      if (__isinf_nsl (x))
+      if (isinf (x))
 	__set_errno (EDOM);
     }
   else

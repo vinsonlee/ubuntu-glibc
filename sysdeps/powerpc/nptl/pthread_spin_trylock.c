@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Paul Mackerras <paulus@au.ibm.com>, 2003.
 
@@ -20,19 +20,18 @@
 #include "pthreadP.h"
 
 int
-pthread_spin_trylock (lock)
-     pthread_spinlock_t *lock;
+pthread_spin_trylock (pthread_spinlock_t *lock)
 {
   unsigned int old;
   int err = EBUSY;
 
-  asm ("1:	lwarx	%0,0,%2\n"
+  asm ("1:	lwarx	%0,0,%2" MUTEX_HINT_ACQ "\n"
        "	cmpwi	0,%0,0\n"
        "	bne	2f\n"
        "	stwcx.	%3,0,%2\n"
        "	bne-	1b\n"
        "	li	%1,0\n"
-       "	isync\n"
+                __ARCH_ACQ_INSTR "\n"
        "2:	"
        : "=&r" (old), "=&r" (err)
        : "r" (lock), "r" (1), "1" (err)
