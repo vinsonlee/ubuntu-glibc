@@ -27,7 +27,17 @@
 # include <stdlib.h>
 # include <list.h>
 # include <kernel-features.h>
-# include <dl-dtv.h>
+
+/* Type for the dtv.  */
+typedef union dtv
+{
+  size_t counter;
+  struct
+  {
+    void *val;
+    bool is_static;
+  } pointer;
+} dtv_t;
 
 typedef struct
 {
