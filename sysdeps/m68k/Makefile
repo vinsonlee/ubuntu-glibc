@@ -26,11 +26,6 @@ asm-CPPFLAGS += $(m68k-syntax-flag)
 
 pic-ccflag = -fpic
 
-ifeq ($(subdir),csu)
-# Make sure gcrt1.o uses the large PIC model
-CFLAGS-gmon-start.c := -fPIC
-endif
-
 ifeq ($(subdir),setjmp)
 # Make sure setjmp.c is compiled with a frame pointer
 CFLAGS-setjmp.c := -fno-omit-frame-pointer
@@ -42,8 +37,4 @@ endif
 
 ifeq ($(subdir),elf)
 CFLAGS-rtld.c += -Wno-uninitialized -Wno-unused
-endif
-
-ifeq ($(subdir),gmon)
-CFLAGS-mcount.c += -Wno-frame-address
 endif

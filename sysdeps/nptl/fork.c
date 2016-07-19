@@ -31,7 +31,7 @@
 #include <fork.h>
 #include <arch-fork.h>
 #include <futex-internal.h>
-#include <malloc/malloc-internal.h>
+
 
 static void
 fresetlockfiles (void)
@@ -53,12 +53,6 @@ __libc_fork (void)
     struct fork_handler *handler;
     struct used_handler *next;
   } *allp = NULL;
-
-  /* Determine if we are running multiple threads.  We skip some fork
-     handlers in the single-thread case, to make fork safer to use in
-     signal handlers.  POSIX requires that fork is async-signal-safe,
-     but our current fork implementation is not.  */
-  bool multiple_threads = THREAD_GETMEM (THREAD_SELF, header.multiple_threads);
 
   /* Run all the registered preparation handlers.  In reverse order.
      While doing this we build up a list of all the entries.  */
@@ -115,21 +109,7 @@ __libc_fork (void)
       break;
     }
 
-  /* If we are not running multiple threads, we do not have to
-     preserve lock state.  If fork runs from a signal handler, only
-     async-signal-safe functions can be used in the child.  These data
-     structures are only used by unsafe functions, so their state does
-     not matter if fork was called from a signal handler.  */
-  if (multiple_threads)
-    {
-      _IO_list_lock ();
-
-      /* Acquire malloc locks.  This needs to come last because fork
-	 handlers may use malloc, and the libio list lock has an
-	 indirect malloc dependency as well (via the getdelim
-	 function).  */
-      __malloc_fork_lock_parent ();
-    }
+  _IO_list_lock ();
 
 #ifndef NDEBUG
   pid_t ppid = THREAD_GETMEM (THREAD_SELF, tid);
@@ -188,18 +168,11 @@ __libc_fork (void)
 # endif
 #endif
 
-      /* Reset the lock state in the multi-threaded case.  */
-      if (multiple_threads)
-	{
-	  /* Release malloc locks.  */
-	  __malloc_fork_unlock_child ();
+      /* Reset the file list.  These are recursive mutexes.  */
+      fresetlockfiles ();
 
-	  /* Reset the file list.  These are recursive mutexes.  */
-	  fresetlockfiles ();
-
-	  /* Reset locks in the I/O code.  */
-	  _IO_list_resetlock ();
-	}
+      /* Reset locks in the I/O code.  */
+      _IO_list_resetlock ();
 
       /* Reset the lock the dynamic loader uses to protect its data.  */
       __rtld_lock_initialize (GL(dl_load_lock));
@@ -236,15 +209,8 @@ __libc_fork (void)
       /* Restore the PID value.  */
       THREAD_SETMEM (THREAD_SELF, pid, parentpid);
 
-      /* Release acquired locks in the multi-threaded case.  */
-      if (multiple_threads)
-	{
-	  /* Release malloc locks, parent process variant.  */
-	  __malloc_fork_unlock_parent ();
-
-	  /* We execute this even if the 'fork' call failed.  */
-	  _IO_list_unlock ();
-	}
+      /* We execute this even if the 'fork' call failed.  */
+      _IO_list_unlock ();
 
       /* Run the handlers registered for the parent.  */
       while (allp != NULL)

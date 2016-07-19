@@ -22,6 +22,9 @@
 #include <math_private.h>
 
 
+static const double huge = 1.0e300;
+
+
 double
 __round (double x)
 {
@@ -34,6 +37,8 @@ __round (double x)
     {
       if (j0 < 0)
 	{
+	  math_force_eval (huge + x);
+
 	  i0 &= 0x80000000;
 	  if (j0 == -1)
 	    i0 |= 0x3ff00000;
@@ -45,7 +50,9 @@ __round (double x)
 	  if (((i0 & i) | i1) == 0)
 	    /* X is integral.  */
 	    return x;
+	  math_force_eval (huge + x);
 
+	  /* Raise inexact if x != 0.  */
 	  i0 += 0x00080000 >> j0;
 	  i0 &= ~i;
 	  i1 = 0;
@@ -66,6 +73,9 @@ __round (double x)
 	/* X is integral.  */
 	return x;
 
+      math_force_eval (huge + x);
+
+      /* Raise inexact if x != 0.  */
       u_int32_t j = i1 + (1 << (51 - j0));
       if (j < i1)
 	i0 += 1;

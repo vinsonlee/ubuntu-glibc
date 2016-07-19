@@ -22,7 +22,6 @@
 #include <aio_misc.h>
 
 int
-attribute_hidden internal_function
 __aio_sigqueue (int sig, const union sigval val, pid_t caller_pid)
 {
   __set_errno (ENOSYS);
