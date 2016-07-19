@@ -1,3 +1,126 @@
+2016-07-19   Will Newton  <will.newton@gmail.com>
+
+	* elf/elf.h (R_METAG_REL8, R_METAG_REL16, R_METAG_TLS_GD
+	R_METAG_TLS_LDM, R_METAG_TLS_LDO_HI16, R_METAG_TLS_LDO_LO16,
+	R_METAG_TLS_LDO, R_METAG_TLS_IE, R_METAG_TLS_IENONPIC,
+	R_METAG_TLS_IENONPIC_HI16, R_METAG_TLS_IENONPIC_LO16,
+	R_METAG_TLS_LE, R_METAG_TLS_LE_HI16, R_METAG_TLS_LE_LO16): New.
+
+2016-07-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* sysdeps/i386/Makefile (rtld-CFLAGS): New.
+	[subdir == elf] (CFLAGS-.os): Replace -mno-sse -mno-mmx
+	-mfpmath=387 with $(rtld-CFLAGS).
+	[subdir != elf] (CFLAGS-.os): Compile rtld-*.os with
+	$(rtld-CFLAGS).
+
+2016-07-18   Ross Burton  <ross.burton@intel.com>
+	     Khem Raj  <raj.khem@gmail.com>
+
+	* elf/elf.h (R_METAG_HIADDR16, R_METAG_LOADDR16,
+	R_METAG_ADDR32, R_METAG_NONE, R_METAG_RELBRANCH,
+	R_METAG_GETSETOFF, R_METAG_REG32OP1, R_METAG_REG32OP2,
+	R_METAG_REG32OP3, R_METAG_REG16OP1, R_METAG_REG16OP2,
+	R_METAG_REG16OP3, R_METAG_REG32OP4, R_METAG_HIOG,
+	R_METAG_LOOG, R_METAG_GNU_VTINHERIT, R_METAG_GNU_VTENTRY,
+	R_METAG_HI16_GOTOFF, R_METAG_LO16_GOTOFF,
+	R_METAG_GETSET_GOTOFF, R_METAG_GETSET_GOT, R_METAG_HI16_GOTPC,
+	R_METAG_LO16_GOTPC, R_METAG_HI16_PLT, R_METAG_LO16_PLT,
+	R_METAG_RELBRANCH_PLT, R_METAG_GOTOFF, R_METAG_PLT,
+	R_METAG_COPY, R_METAG_JMP_SLOT, R_METAG_RELATIVE,
+	R_METAG_GLOB_DAT, R_METAG_TLS_TPOFF, R_METAG_TLS_DTPMOD,
+	R_METAG_TLS_DTPOFF): New.
+
+2016-07-18  Siddhesh Poyarekar  <siddhesh@sourceware.org>
+	    Matt Clay  <mclay@lycos.com>
+
+	[BZ #20357]
+	* sysdeps/ieee754/dbl-64/s_sin.c (sloww): Fix up condition
+	to call __mpsin/__mpcos and to negate values.
+	* math/auto-libm-test-in: Add test.
+	* math/auto-libm-test-out: Regenerate.
+
+2016-07-18  Zack Weinberg  <zackw@panix.com>
+
+	* grp/Makefile: Don't install the internal header grp-merge.h.
+
+2016-07-18  Szabolcs Nagy  <szabolcs.nagy@arm.com>
+
+	* sysdeps/aarch64/libm-test-ulps: Regenerated.
+
+2016-07-13  Samuel Thibault  <samuel.thibault@ens-lyon.org>
+
+	* bits/termios.h (TABDLY): Change macro to include TAB3 bit too.
+
+2016-07-13  Adhemerval Zanella  <adhemerval.zanella@linaro.org>
+
+	[BZ #15368]
+	* sysdeps/unix/sysv/linux/nptl-signals.h
+	(__nptl_clear_internal_signals): New function.
+	(__libc_signal_block_all): Likewise.
+	(__libc_signal_block_app): Likewise.
+	(__libc_signal_restore_set): Likewise.
+	* sysdeps/unix/sysv/linux/pt-raise.c (raise): Use Linux raise.c
+	implementation.
+	* sysdeps/unix/sysv/linux/raise.c (raise): Reimplement to not use
+	the cached pid/tid value in pthread structure.
+
+2016-07-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	[BZ #20347]
+	* sysdeps/i386/i686/fpu/multiarch/libm-test-ulps: Regenerated.
+
+2016-07-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	[BZ #20348]
+	* sysdeps/unix/sysv/linux/x86_64/syscalls.list: Add pread64,
+	preadv64, pwrite64 and pwritev64.
+
+2016-07-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	[BZ #20350]
+	* posix/tst-preadwrite.c: Renamed to ...
+	* posix/tst-preadwrite-common.c: This.
+	(PREAD): Removed.
+	(PWRITE): Likewise.
+	(STRINGIFY): Likewise.
+	(STRINGIFY2): Likewise.
+	(do_prepare): Make it static and remove function arguments.
+	(do_test): Likewise.
+	(PREPARE): Updated.
+	(TEST_FUNCTION): New.
+	(name): Make it static.
+	(fd): Likewise.
+	(do_prepare): Use create_temp_file.
+	(do_test): Renamed to ...
+	(do_test_with_offset): This.  Make it static and accept offset.
+	Properly check return value of PWRITE and PREAD.  Return bytes
+	read.  Don't close fd nor unlink name.
+	* posix/tst-preadwrite.c: Rewrite.
+	* posix/tst-preadwrite64.c: Likewise.
+
+2016-07-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	[BZ #20309]
+	* configure.ac (have-mtls-dialect-gnu2): Set to yes if
+	-mtls-dialect=gnu2 works.
+	* configure: Regenerated.
+	* elf/Makefile [have-mtls-dialect-gnu2 = yes]
+	(tests): Add tst-gnu2-tls1.
+	(modules-names): Add tst-gnu2-tls1mod.
+	($(objpfx)tst-gnu2-tls1): New.
+	(tst-gnu2-tls1mod.so-no-z-defs): Likewise.
+	(CFLAGS-tst-gnu2-tls1mod.c): Likewise.
+	* elf/tst-gnu2-tls1.c: New file.
+	* elf/tst-gnu2-tls1mod.c: Likewise.
+	* sysdeps/x86_64/dl-tlsdesc.S (_dl_tlsdesc_dynamic): Add 8
+	bytes for push in the PLT entry to align the stack.
+
+2016-07-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	[BZ #20349]
+	* sysdeps/unix/sysv/linux/x86_64/sysdep.h (LO_HI_LONG): New.
+
 2016-07-11  Szabolcs Nagy  <szabolcs.nagy@arm.com>
 
 	[BZ #18707]
