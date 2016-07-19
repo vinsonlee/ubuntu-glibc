@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -127,7 +127,7 @@ static const struct pthread_functions pthread_functions =
     .ptr_pthread_mutex_lock = __pthread_mutex_lock,
     .ptr_pthread_mutex_unlock = __pthread_mutex_unlock,
     .ptr_pthread_self = __pthread_self,
-    .ptr_pthread_setcancelstate = __pthread_setcancelstate,
+    .ptr___pthread_setcancelstate = __pthread_setcancelstate,
     .ptr_pthread_setcanceltype = __pthread_setcanceltype,
     .ptr___pthread_cleanup_upto = __pthread_cleanup_upto,
     .ptr___pthread_once = __pthread_once,

@@ -1,5 +1,5 @@
 /* Functions to read locale data files.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -121,9 +121,10 @@ _nl_intern_locale_data (int category, const void *data, size_t datasize)
       switch (category)
 	{
 #define CATTEST(cat) \
-	case LC_##cat:							      \
-	  assert (cnt < (sizeof (_nl_value_type_LC_##cat)		      \
-			 / sizeof (_nl_value_type_LC_##cat[0])));	      \
+	case LC_##cat:						\
+	  if (cnt >= (sizeof (_nl_value_type_LC_##cat)		\
+		      / sizeof (_nl_value_type_LC_##cat[0])))	\
+	    goto puntdata;					\
 	  break
 	  CATTEST (NUMERIC);
 	  CATTEST (TIME);

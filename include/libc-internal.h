@@ -34,6 +34,10 @@ extern void __libc_thread_freeres (void);
 /* Define and initialize `__progname' et. al.  */
 extern void __init_misc (int, char **, char **);
 
+# if IS_IN (rtld)
+extern __typeof (__profile_frequency) __profile_frequency attribute_hidden;
+# endif
+
 /* 1 if 'type' is a pointer type, 0 otherwise.  */
 # define __pointer_type(type) (__builtin_classify_type ((type) 0) == 5)
 
@@ -106,14 +110,5 @@ extern void __init_misc (int, char **, char **);
    example, optimization-related false positives).  */
 #define DIAG_IGNORE_NEEDS_COMMENT(version, option)	\
   _Pragma (_DIAG_STR (GCC diagnostic ignored option))
-
-/* This mirrors the C11 max_align_t type provided by GCC, but it is
-   also available in C99 mode.  The aligned attributes are required
-   because some ABIs have reduced alignment requirements for struct
-   and union members.  */
-typedef struct {
-  long long ll __attribute__ ((__aligned__ (__alignof__ (long long))));
-  long double ld __attribute__ ((__aligned__ (__alignof__ (long double))));
-} libc_max_align_t;
 
 #endif /* _LIBC_INTERNAL  */

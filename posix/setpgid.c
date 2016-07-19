@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,9 +22,7 @@
    If PID is zero, the current process's process group ID is set.
    If PGID is zero, the process ID of the process is used.  */
 int
-__setpgid (pid, pgid)
-     int pid;
-     int pgid;
+__setpgid (int pid, int pgid)
 {
   __set_errno (ENOSYS);
   return -1;

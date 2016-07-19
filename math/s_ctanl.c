@@ -1,5 +1,5 @@
 /* Complex tangent function for long double.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -37,9 +37,16 @@ __ctanl (__complex__ long double x)
 
   if (__glibc_unlikely (!isfinite (__real__ x) || !isfinite (__imag__ x)))
     {
-      if (__isinf_nsl (__imag__ x))
+      if (isinf (__imag__ x))
 	{
-	  __real__ res = __copysignl (0.0, __real__ x);
+	  if (isfinite (__real__ x) &&  fabsl (__real__ x) > 1.0L)
+	    {
+	      long double sinrx, cosrx;
+	      __sincosl (__real__ x, &sinrx, &cosrx);
+	      __real__ res = __copysignl (0.0L, sinrx * cosrx);
+	    }
+	  else
+	    __real__ res = __copysignl (0.0, __real__ x);
 	  __imag__ res = __copysignl (1.0, __imag__ x);
 	}
       else if (__real__ x == 0.0)
@@ -51,7 +58,7 @@ __ctanl (__complex__ long double x)
 	  __real__ res = __nanl ("");
 	  __imag__ res = __nanl ("");
 
-	  if (__isinf_nsl (__real__ x))
+	  if (isinf (__real__ x))
 	    feraiseexcept (FE_INVALID);
 	}
     }
@@ -117,6 +124,7 @@ __ctanl (__complex__ long double x)
 	  __real__ res = sinrx * cosrx / den;
 	  __imag__ res = sinhix * coshix / den;
 	}
+      math_check_force_underflow_complex (res);
     }
 
   return res;

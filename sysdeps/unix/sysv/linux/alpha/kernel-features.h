@@ -1,6 +1,6 @@
 /* Set flags signalling availability of kernel features based on given
    kernel version number.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -43,9 +43,6 @@
 /* There never has been support for fstat64.  */
 #undef __ASSUME_STATFS64
 #define __ASSUME_STATFS64 0
-
-/* Support for fsyncdata was added for alpha after 2.6.21.  */
-#define __ASSUME_FDATASYNC	1
 
 /* Support for various syscalls was added for alpha in 2.6.33.  */
 #if __LINUX_KERNEL_VERSION < 0x020621

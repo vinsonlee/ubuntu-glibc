@@ -243,14 +243,15 @@ __ieee754_jn (int n, double x)
       ret = -b;
     else
       ret = b;
+    ret = math_narrow_eval (ret);
   }
   if (ret == 0)
-    ret = __copysign (DBL_MIN, ret) * DBL_MIN;
-  else if (fabs (ret) < DBL_MIN)
     {
-      double force_underflow = ret * ret;
-      math_force_eval (force_underflow);
+      ret = math_narrow_eval (__copysign (DBL_MIN, ret) * DBL_MIN);
+      __set_errno (ERANGE);
     }
+  else
+    math_check_force_underflow (ret);
   return ret;
 }
 strong_alias (__ieee754_jn, __jn_finite)
