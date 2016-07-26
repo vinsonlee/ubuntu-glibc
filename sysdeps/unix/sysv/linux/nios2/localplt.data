@@ -1,4 +1,5 @@
 libc.so: realloc
+libc.so: __eqsf2
 libc.so: __floatsisf
 libc.so: __gtdf2
 libc.so: __ltdf2

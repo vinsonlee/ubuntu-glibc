@@ -31,13 +31,13 @@
 LOCALSZ= 1
 FRAMESZ= (((NARGSAVE+LOCALSZ)*SZREG)+ALSZ)&ALMASK
 GPOFF= FRAMESZ-(1*SZREG)
-NESTED(__libc_vfork,FRAMESZ,sp)
+NESTED(__vfork,FRAMESZ,sp)
 #ifdef __PIC__
 	SETUP_GP
 #endif
 	PTR_SUBU sp, FRAMESZ
 	cfi_adjust_cfa_offset (FRAMESZ)
-	SETUP_GP64_REG (a5, __libc_vfork)
+	SETUP_GP64_REG (a5, __vfork)
 #ifdef __PIC__
 	SAVE_GP (GPOFF)
 #endif
@@ -104,10 +104,8 @@ L(error):
 	RESTORE_GP64_REG
 	j		__syscall_error
 #endif
-	END(__libc_vfork)
+	END(__vfork)
 
-#if IS_IN (libc)
-weak_alias (__libc_vfork, vfork)
-strong_alias (__libc_vfork, __vfork)
-libc_hidden_def (__vfork)
-#endif
+libc_hidden_def(__vfork)
+weak_alias (__vfork, vfork)
+strong_alias (__vfork, __libc_vfork)

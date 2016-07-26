@@ -1,5 +1,4 @@
-/* Linux recvmsg syscall wrapper.
-   Copyright (C) 2016 Free Software Foundation, Inc.
+/* Copyright (C) 2015-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,19 +15,23 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#include <errno.h>
+#include <signal.h>
 #include <sys/socket.h>
+
 #include <sysdep-cancel.h>
 #include <socketcall.h>
-#include <shlib-compat.h>
+#include <kernel-features.h>
+#include <sys/syscall.h>
 
 ssize_t
 __libc_recvmsg (int fd, struct msghdr *msg, int flags)
 {
-# ifdef __ASSUME_RECVMSG_SYSCALL
+#ifdef __ASSUME_RECVMSG_SYSCALL
   return SYSCALL_CANCEL (recvmsg, fd, msg, flags);
-# else
+#else
   return SOCKETCALL_CANCEL (recvmsg, fd, msg, flags);
-# endif
+#endif
 }
 weak_alias (__libc_recvmsg, recvmsg)
 weak_alias (__libc_recvmsg, __recvmsg)

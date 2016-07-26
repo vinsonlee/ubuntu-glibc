@@ -21,11 +21,9 @@
 #include <kernel-features.h>
 #include "lowlevellock.h"
 
-#define PTHREAD_UNWIND JUMPTARGET(__pthread_unwind)
 #if IS_IN (libpthread)
 # if defined SHARED && !defined NO_HIDDEN
-#  undef PTHREAD_UNWIND
-#  define PTHREAD_UNWIND __GI___pthread_unwind
+#  define __pthread_unwind __GI___pthread_unwind
 # endif
 #else
 # ifndef SHARED
@@ -78,7 +76,11 @@ ENTRY(__pthread_enable_asynccancel)
 	lock
 	orl	$TCB_EXITING_BITMASK, %fs:CANCELHANDLING
 	mov	%fs:CLEANUP_JMP_BUF, %RDI_LP
-	call	PTHREAD_UNWIND
+#ifdef SHARED
+	call	__pthread_unwind@PLT
+#else
+	call	__pthread_unwind
+#endif
 	hlt
 END(__pthread_enable_asynccancel)
 

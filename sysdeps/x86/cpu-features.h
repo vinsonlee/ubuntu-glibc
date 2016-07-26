@@ -18,52 +18,48 @@
 #ifndef cpu_features_h
 #define cpu_features_h
 
-#define bit_arch_Fast_Rep_String		(1 << 0)
-#define bit_arch_Fast_Copy_Backward		(1 << 1)
-#define bit_arch_Slow_BSF			(1 << 2)
-#define bit_arch_Fast_Unaligned_Load		(1 << 4)
-#define bit_arch_Prefer_PMINUB_for_stringop	(1 << 5)
-#define bit_arch_AVX_Usable			(1 << 6)
-#define bit_arch_FMA_Usable			(1 << 7)
-#define bit_arch_FMA4_Usable			(1 << 8)
-#define bit_arch_Slow_SSE4_2			(1 << 9)
-#define bit_arch_AVX2_Usable			(1 << 10)
-#define bit_arch_AVX_Fast_Unaligned_Load	(1 << 11)
-#define bit_arch_AVX512F_Usable			(1 << 12)
-#define bit_arch_AVX512DQ_Usable		(1 << 13)
-#define bit_arch_I586				(1 << 14)
-#define bit_arch_I686				(1 << 15)
-#define bit_arch_Prefer_MAP_32BIT_EXEC		(1 << 16)
-#define bit_arch_Prefer_No_VZEROUPPER		(1 << 17)
-#define bit_arch_Fast_Unaligned_Copy		(1 << 18)
-#define bit_arch_Prefer_ERMS			(1 << 19)
+#define bit_Fast_Rep_String		(1 << 0)
+#define bit_Fast_Copy_Backward		(1 << 1)
+#define bit_Slow_BSF			(1 << 2)
+#define bit_Fast_Unaligned_Load		(1 << 4)
+#define bit_Prefer_PMINUB_for_stringop	(1 << 5)
+#define bit_AVX_Usable			(1 << 6)
+#define bit_FMA_Usable			(1 << 7)
+#define bit_FMA4_Usable			(1 << 8)
+#define bit_Slow_SSE4_2			(1 << 9)
+#define bit_AVX2_Usable			(1 << 10)
+#define bit_AVX_Fast_Unaligned_Load	(1 << 11)
+#define bit_AVX512F_Usable		(1 << 12)
+#define bit_AVX512DQ_Usable		(1 << 13)
+#define bit_I586			(1 << 14)
+#define bit_I686			(1 << 15)
+#define bit_Prefer_MAP_32BIT_EXEC	(1 << 16)
+#define bit_Prefer_No_VZEROUPPER	(1 << 17)
 
 /* CPUID Feature flags.  */
 
 /* COMMON_CPUID_INDEX_1.  */
-#define bit_cpu_CX8		(1 << 8)
-#define bit_cpu_CMOV		(1 << 15)
-#define bit_cpu_SSE2		(1 << 26)
-#define bit_cpu_SSSE3		(1 << 9)
-#define bit_cpu_SSE4_1		(1 << 19)
-#define bit_cpu_SSE4_2		(1 << 20)
-#define bit_cpu_OSXSAVE		(1 << 27)
-#define bit_cpu_AVX		(1 << 28)
-#define bit_cpu_POPCOUNT	(1 << 23)
-#define bit_cpu_FMA		(1 << 12)
-#define bit_cpu_FMA4		(1 << 16)
-#define bit_cpu_HTT		(1 << 28)
+#define bit_CX8		(1 << 8)
+#define bit_CMOV	(1 << 15)
+#define bit_SSE2	(1 << 26)
+#define bit_SSSE3	(1 << 9)
+#define bit_SSE4_1	(1 << 19)
+#define bit_SSE4_2	(1 << 20)
+#define bit_OSXSAVE	(1 << 27)
+#define bit_AVX		(1 << 28)
+#define bit_POPCOUNT	(1 << 23)
+#define bit_FMA		(1 << 12)
+#define bit_FMA4	(1 << 16)
 
 /* COMMON_CPUID_INDEX_7.  */
-#define bit_cpu_ERMS		(1 << 9)
-#define bit_cpu_RTM		(1 << 11)
-#define bit_cpu_AVX2		(1 << 5)
-#define bit_cpu_AVX512F		(1 << 16)
-#define bit_cpu_AVX512DQ	(1 << 17)
+#define bit_RTM		(1 << 11)
+#define bit_AVX2	(1 << 5)
+#define bit_AVX512F	(1 << 16)
+#define bit_AVX512DQ	(1 << 17)
 
 /* XCR0 Feature flags.  */
-#define bit_XMM_state		(1 << 1)
-#define bit_YMM_state		(2 << 1)
+#define bit_XMM_state  (1 << 1)
+#define bit_YMM_state  (2 << 1)
 #define bit_Opmask_state	(1 << 5)
 #define bit_ZMM0_15_state	(1 << 6)
 #define bit_ZMM16_31_state	(1 << 7)
@@ -76,37 +72,35 @@
 
 #ifdef	__ASSEMBLER__
 
-# include <cpu-features-offsets.h>
+# include <ifunc-defines.h>
+# include <rtld-global-offsets.h>
 
-# define index_cpu_CX8	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_EDX_OFFSET
-# define index_cpu_CMOV	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_EDX_OFFSET
-# define index_cpu_SSE2	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_EDX_OFFSET
-# define index_cpu_SSSE3 COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_ECX_OFFSET
-# define index_cpu_SSE4_1 COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_ECX_OFFSET
-# define index_cpu_SSE4_2 COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_ECX_OFFSET
-# define index_cpu_AVX	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_ECX_OFFSET
-# define index_cpu_AVX2	COMMON_CPUID_INDEX_7*CPUID_SIZE+CPUID_EBX_OFFSET
-# define index_cpu_ERMS	COMMON_CPUID_INDEX_7*CPUID_SIZE+CPUID_EBX_OFFSET
+# define index_CX8	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_EDX_OFFSET
+# define index_CMOV	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_EDX_OFFSET
+# define index_SSE2	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_EDX_OFFSET
+# define index_SSSE3	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_ECX_OFFSET
+# define index_SSE4_1	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_ECX_OFFSET
+# define index_SSE4_2	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_ECX_OFFSET
+# define index_AVX	COMMON_CPUID_INDEX_1*CPUID_SIZE+CPUID_ECX_OFFSET
+# define index_AVX2	COMMON_CPUID_INDEX_7*CPUID_SIZE+CPUID_EBX_OFFSET
 
-# define index_arch_Fast_Rep_String	FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_Fast_Copy_Backward	FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_Slow_BSF		FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_Fast_Unaligned_Load	FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_Prefer_PMINUB_for_stringop FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_AVX_Usable		FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_FMA_Usable		FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_FMA4_Usable		FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_Slow_SSE4_2		FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_AVX2_Usable		FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_AVX_Fast_Unaligned_Load FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_AVX512F_Usable	FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_AVX512DQ_Usable	FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_I586		FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_I686		FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_Prefer_MAP_32BIT_EXEC FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_Prefer_No_VZEROUPPER FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_Fast_Unaligned_Copy	FEATURE_INDEX_1*FEATURE_SIZE
-# define index_arch_Prefer_ERMS		FEATURE_INDEX_1*FEATURE_SIZE
+# define index_Fast_Rep_String		FEATURE_INDEX_1*FEATURE_SIZE
+# define index_Fast_Copy_Backward	FEATURE_INDEX_1*FEATURE_SIZE
+# define index_Slow_BSF			FEATURE_INDEX_1*FEATURE_SIZE
+# define index_Fast_Unaligned_Load	FEATURE_INDEX_1*FEATURE_SIZE
+# define index_Prefer_PMINUB_for_stringop FEATURE_INDEX_1*FEATURE_SIZE
+# define index_AVX_Usable		FEATURE_INDEX_1*FEATURE_SIZE
+# define index_FMA_Usable		FEATURE_INDEX_1*FEATURE_SIZE
+# define index_FMA4_Usable		FEATURE_INDEX_1*FEATURE_SIZE
+# define index_Slow_SSE4_2		FEATURE_INDEX_1*FEATURE_SIZE
+# define index_AVX2_Usable		FEATURE_INDEX_1*FEATURE_SIZE
+# define index_AVX_Fast_Unaligned_Load	FEATURE_INDEX_1*FEATURE_SIZE
+# define index_AVX512F_Usable		FEATURE_INDEX_1*FEATURE_SIZE
+# define index_AVX512DQ_Usable		FEATURE_INDEX_1*FEATURE_SIZE
+# define index_I586			FEATURE_INDEX_1*FEATURE_SIZE
+# define index_I686			FEATURE_INDEX_1*FEATURE_SIZE
+# define index_Prefer_MAP_32BIT_EXEC	FEATURE_INDEX_1*FEATURE_SIZE
+# define index_Prefer_No_VZEROUPPER	FEATURE_INDEX_1*FEATURE_SIZE
 
 
 # if defined (_LIBC) && !IS_IN (nonlib)
@@ -114,21 +108,19 @@
 #   ifdef SHARED
 #    if IS_IN (rtld)
 #     define LOAD_RTLD_GLOBAL_RO_RDX
-#     define HAS_FEATURE(offset, field, name) \
-  testl $(bit_##field##_##name), \
-	_rtld_local_ro+offset+(index_##field##_##name)(%rip)
+#     define HAS_FEATURE(offset, name) \
+  testl $(bit_##name), _rtld_local_ro+offset+(index_##name)(%rip)
 #    else
 #      define LOAD_RTLD_GLOBAL_RO_RDX \
   mov _rtld_global_ro@GOTPCREL(%rip), %RDX_LP
-#     define HAS_FEATURE(offset, field, name) \
-  testl $(bit_##field##_##name), \
-	RTLD_GLOBAL_RO_DL_X86_CPU_FEATURES_OFFSET+offset+(index_##field##_##name)(%rdx)
+#     define HAS_FEATURE(offset, name) \
+  testl $(bit_##name), \
+	RTLD_GLOBAL_RO_DL_X86_CPU_FEATURES_OFFSET+offset+(index_##name)(%rdx)
 #    endif
 #   else /* SHARED */
 #    define LOAD_RTLD_GLOBAL_RO_RDX
-#    define HAS_FEATURE(offset, field, name) \
-  testl $(bit_##field##_##name), \
-	_dl_x86_cpu_features+offset+(index_##field##_##name)(%rip)
+#    define HAS_FEATURE(offset, name) \
+  testl $(bit_##name), _dl_x86_cpu_features+offset+(index_##name)(%rip)
 #   endif /* !SHARED */
 #  else  /* __x86_64__ */
 #   ifdef SHARED
@@ -137,24 +129,22 @@
 #    if IS_IN (rtld)
 #    define LOAD_GOT_AND_RTLD_GLOBAL_RO \
   LOAD_PIC_REG(dx)
-#     define HAS_FEATURE(offset, field, name) \
-  testl $(bit_##field##_##name), \
-	offset+(index_##field##_##name)+_rtld_local_ro@GOTOFF(%edx)
+#     define HAS_FEATURE(offset, name) \
+  testl $(bit_##name), offset+(index_##name)+_rtld_local_ro@GOTOFF(%edx)
 #    else
 #     define LOAD_GOT_AND_RTLD_GLOBAL_RO \
   LOAD_PIC_REG(dx); \
   mov _rtld_global_ro@GOT(%edx), %ecx
-#     define HAS_FEATURE(offset, field, name) \
-  testl $(bit_##field##_##name), \
-	RTLD_GLOBAL_RO_DL_X86_CPU_FEATURES_OFFSET+offset+(index_##field##_##name)(%ecx)
+#     define HAS_FEATURE(offset, name) \
+  testl $(bit_##name), \
+	RTLD_GLOBAL_RO_DL_X86_CPU_FEATURES_OFFSET+offset+(index_##name)(%ecx)
 #    endif
 #   else  /* SHARED */
 #    define LOAD_FUNC_GOT_EAX(func) \
   leal func, %eax
 #    define LOAD_GOT_AND_RTLD_GLOBAL_RO
-#    define HAS_FEATURE(offset, field, name) \
-  testl $(bit_##field##_##name), \
-	_dl_x86_cpu_features+offset+(index_##field##_##name)
+#    define HAS_FEATURE(offset, name) \
+  testl $(bit_##name), _dl_x86_cpu_features+offset+(index_##name)
 #   endif /* !SHARED */
 #  endif /* !__x86_64__ */
 # else /* _LIBC && !nonlib */
@@ -162,8 +152,8 @@
 # endif /* !_LIBC || nonlib */
 
 /* HAS_* evaluates to true if we may use the feature at runtime.  */
-# define HAS_CPU_FEATURE(name)	HAS_FEATURE (CPUID_OFFSET, cpu, name)
-# define HAS_ARCH_FEATURE(name) HAS_FEATURE (FEATURE_OFFSET, arch, name)
+# define HAS_CPU_FEATURE(name)	HAS_FEATURE (CPUID_OFFSET, name)
+# define HAS_ARCH_FEATURE(name) HAS_FEATURE (FEATURE_OFFSET, name)
 
 #else	/* __ASSEMBLER__ */
 
@@ -210,35 +200,27 @@ extern const struct cpu_features *__get_cpu_features (void)
 # endif
 
 
-/* Only used directly in cpu-features.c.  */
-# define CPU_FEATURES_CPU_P(ptr, name) \
-  ((ptr->cpuid[index_cpu_##name].reg_##name & (bit_cpu_##name)) != 0)
-# define CPU_FEATURES_ARCH_P(ptr, name) \
-  ((ptr->feature[index_arch_##name] & (bit_arch_##name)) != 0)
-
 /* HAS_* evaluates to true if we may use the feature at runtime.  */
 # define HAS_CPU_FEATURE(name) \
-   CPU_FEATURES_CPU_P (__get_cpu_features (), name)
+  ((__get_cpu_features ()->cpuid[index_##name].reg_##name & (bit_##name)) != 0)
 # define HAS_ARCH_FEATURE(name) \
-   CPU_FEATURES_ARCH_P (__get_cpu_features (), name)
+  ((__get_cpu_features ()->feature[index_##name] & (bit_##name)) != 0)
 
-# define index_cpu_CX8		COMMON_CPUID_INDEX_1
-# define index_cpu_CMOV		COMMON_CPUID_INDEX_1
-# define index_cpu_SSE2		COMMON_CPUID_INDEX_1
-# define index_cpu_SSSE3	COMMON_CPUID_INDEX_1
-# define index_cpu_SSE4_1	COMMON_CPUID_INDEX_1
-# define index_cpu_SSE4_2	COMMON_CPUID_INDEX_1
-# define index_cpu_AVX		COMMON_CPUID_INDEX_1
-# define index_cpu_AVX2		COMMON_CPUID_INDEX_7
-# define index_cpu_AVX512F	COMMON_CPUID_INDEX_7
-# define index_cpu_AVX512DQ	COMMON_CPUID_INDEX_7
-# define index_cpu_ERMS		COMMON_CPUID_INDEX_7
-# define index_cpu_RTM		COMMON_CPUID_INDEX_7
-# define index_cpu_FMA		COMMON_CPUID_INDEX_1
-# define index_cpu_FMA4		COMMON_CPUID_INDEX_80000001
-# define index_cpu_POPCOUNT	COMMON_CPUID_INDEX_1
-# define index_cpu_OSXSAVE	COMMON_CPUID_INDEX_1
-# define index_cpu_HTT		COMMON_CPUID_INDEX_1
+# define index_CX8		COMMON_CPUID_INDEX_1
+# define index_CMOV		COMMON_CPUID_INDEX_1
+# define index_SSE2		COMMON_CPUID_INDEX_1
+# define index_SSSE3		COMMON_CPUID_INDEX_1
+# define index_SSE4_1		COMMON_CPUID_INDEX_1
+# define index_SSE4_2		COMMON_CPUID_INDEX_1
+# define index_AVX		COMMON_CPUID_INDEX_1
+# define index_AVX2		COMMON_CPUID_INDEX_7
+# define index_AVX512F		COMMON_CPUID_INDEX_7
+# define index_AVX512DQ		COMMON_CPUID_INDEX_7
+# define index_RTM		COMMON_CPUID_INDEX_7
+# define index_FMA		COMMON_CPUID_INDEX_1
+# define index_FMA4		COMMON_CPUID_INDEX_80000001
+# define index_POPCOUNT		COMMON_CPUID_INDEX_1
+# define index_OSXSAVE		COMMON_CPUID_INDEX_1
 
 # define reg_CX8		edx
 # define reg_CMOV		edx
@@ -250,33 +232,29 @@ extern const struct cpu_features *__get_cpu_features (void)
 # define reg_AVX2		ebx
 # define reg_AVX512F		ebx
 # define reg_AVX512DQ		ebx
-# define reg_ERMS		ebx
 # define reg_RTM		ebx
 # define reg_FMA		ecx
 # define reg_FMA4		ecx
 # define reg_POPCOUNT		ecx
 # define reg_OSXSAVE		ecx
-# define reg_HTT		edx
 
-# define index_arch_Fast_Rep_String	FEATURE_INDEX_1
-# define index_arch_Fast_Copy_Backward	FEATURE_INDEX_1
-# define index_arch_Slow_BSF		FEATURE_INDEX_1
-# define index_arch_Fast_Unaligned_Load	FEATURE_INDEX_1
-# define index_arch_Prefer_PMINUB_for_stringop FEATURE_INDEX_1
-# define index_arch_AVX_Usable		FEATURE_INDEX_1
-# define index_arch_FMA_Usable		FEATURE_INDEX_1
-# define index_arch_FMA4_Usable		FEATURE_INDEX_1
-# define index_arch_Slow_SSE4_2		FEATURE_INDEX_1
-# define index_arch_AVX2_Usable		FEATURE_INDEX_1
-# define index_arch_AVX_Fast_Unaligned_Load FEATURE_INDEX_1
-# define index_arch_AVX512F_Usable	FEATURE_INDEX_1
-# define index_arch_AVX512DQ_Usable	FEATURE_INDEX_1
-# define index_arch_I586		FEATURE_INDEX_1
-# define index_arch_I686		FEATURE_INDEX_1
-# define index_arch_Prefer_MAP_32BIT_EXEC FEATURE_INDEX_1
-# define index_arch_Prefer_No_VZEROUPPER FEATURE_INDEX_1
-# define index_arch_Fast_Unaligned_Copy	FEATURE_INDEX_1
-# define index_arch_Prefer_ERMS		FEATURE_INDEX_1
+# define index_Fast_Rep_String		FEATURE_INDEX_1
+# define index_Fast_Copy_Backward	FEATURE_INDEX_1
+# define index_Slow_BSF			FEATURE_INDEX_1
+# define index_Fast_Unaligned_Load	FEATURE_INDEX_1
+# define index_Prefer_PMINUB_for_stringop FEATURE_INDEX_1
+# define index_AVX_Usable		FEATURE_INDEX_1
+# define index_FMA_Usable		FEATURE_INDEX_1
+# define index_FMA4_Usable		FEATURE_INDEX_1
+# define index_Slow_SSE4_2		FEATURE_INDEX_1
+# define index_AVX2_Usable		FEATURE_INDEX_1
+# define index_AVX_Fast_Unaligned_Load	FEATURE_INDEX_1
+# define index_AVX512F_Usable		FEATURE_INDEX_1
+# define index_AVX512DQ_Usable		FEATURE_INDEX_1
+# define index_I586			FEATURE_INDEX_1
+# define index_I686			FEATURE_INDEX_1
+# define index_Prefer_MAP_32BIT_EXEC	FEATURE_INDEX_1
+# define index_Prefer_No_VZEROUPPER     FEATURE_INDEX_1
 
 #endif	/* !__ASSEMBLER__ */
 
