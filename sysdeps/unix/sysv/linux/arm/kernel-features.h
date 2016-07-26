@@ -17,16 +17,28 @@
    License along with the GNU C Library.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
+/* Support for the recvmmsg syscall was added in 2.6.33.  */
+#if __LINUX_KERNEL_VERSION >= 0x020621
+# define __ASSUME_RECVMMSG_SYSCALL	1
+#endif
+
+/* Support for the accept4 syscall was added in 2.6.36.  */
+#if __LINUX_KERNEL_VERSION >= 0x020624
+# define __ASSUME_ACCEPT4_SYSCALL	1
+#endif
+
+/* Support for the sendmmsg syscall was added in 3.0.  */
+#if __LINUX_KERNEL_VERSION >= 0x030000
+# define __ASSUME_SENDMMSG_SYSCALL	1
+#endif
+
 #include_next <kernel-features.h>
 
 /* The ARM kernel before 3.14.3 may or may not support
    futex_atomic_cmpxchg_inatomic, depending on kernel
    configuration.  */
 #if __LINUX_KERNEL_VERSION < 0x030E03
+# undef __ASSUME_FUTEX_LOCK_PI
 # undef __ASSUME_REQUEUE_PI
 # undef __ASSUME_SET_ROBUST_LIST
 #endif
-
-/* Define this if your 32-bit syscall API requires 64-bit register
-   pairs to start with an even-number register.  */
-#define __ASSUME_ALIGNED_REGISTER_PAIRS	1

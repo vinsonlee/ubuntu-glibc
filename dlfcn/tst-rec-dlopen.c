@@ -18,12 +18,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <malloc.h>
 #include <dlfcn.h>
-#include <stdbool.h>
-#include <stdalign.h>
-#include <sys/mman.h>
-#include <unistd.h>
-#include <string.h>
 
 #define DSO "moddummy1.so"
 #define FUNC "dummy1"
@@ -33,6 +29,12 @@
 
 /* Result of the called function.  */
 int func_result;
+
+/* Prototype for my hook.  */
+void *custom_malloc_hook (size_t, const void *);
+
+/* Pointer to old malloc hooks.  */
+void *(*old_malloc_hook) (size_t, const void *);
 
 /* Call function func_name in DSO dso_name via dlopen.  */
 void
@@ -79,67 +81,29 @@ call_func (const char *dso_name, const char *func_name)
 
 }
 
-/* If true, call another function from malloc.  */
-static bool call_function;
-
-/* Set to true to indicate that the interposed malloc was called.  */
-static bool interposed_malloc_called;
-
-/* Interposed malloc which optionally calls another function.  */
+/* Empty hook that does nothing.  */
 void *
-malloc (size_t size)
+custom_malloc_hook (size_t size, const void *caller)
 {
-  interposed_malloc_called = true;
-  static void *(*original_malloc) (size_t);
-
-  if (original_malloc == NULL)
-    {
-      static bool in_initialization;
-      if (in_initialization)
-	{
-	  const char *message
-	    = "error: malloc called recursively during initialization\n";
-	  (void) write (STDOUT_FILENO, message, strlen (message));
-	  _exit (2);
-	}
-      in_initialization = true;
-
-      original_malloc
-	= (__typeof (original_malloc)) dlsym (RTLD_NEXT, "malloc");
-      if (original_malloc == NULL)
-	{
-	  const char *message
-	    = "error: dlsym for malloc failed\n";
-	  (void) write (STDOUT_FILENO, message, strlen (message));
-	  _exit (2);
-	}
-    }
-
-  if (call_function)
-    {
-      call_function = false;
-      call_func (DSO1, FUNC1);
-      call_function = true;
-    }
-  return original_malloc (size);
+  void *result;
+  /* Restore old hooks.  */
+  __malloc_hook = old_malloc_hook;
+  /* First call a function in another library via dlopen.  */
+  call_func (DSO1, FUNC1);
+  /* Called recursively.  */
+  result = malloc (size);
+  /* Restore new hooks.  */
+  __malloc_hook = custom_malloc_hook;
+  return result;
 }
 
 static int
 do_test (void)
 {
-  /* Ensure initialization.  */
-  {
-    void *volatile ptr = malloc (1);
-    free (ptr);
-  }
-
-  if (!interposed_malloc_called)
-    {
-      printf ("error: interposed malloc not called during initialization\n");
-      return 1;
-    }
-
-  call_function = true;
+  /* Save old hook.  */
+  old_malloc_hook = __malloc_hook;
+  /* Install new hook.  */
+  __malloc_hook = custom_malloc_hook;
 
   /* Bug 17702 fixes two things:
        * A recursive dlopen unmapping the ld.so.cache.
@@ -152,7 +116,8 @@ do_test (void)
      will abort because of the assert described in detail below.  */
   call_func (DSO, FUNC);
 
-  call_function = false;
+  /* Restore old hook.  */
+  __malloc_hook = old_malloc_hook;
 
   /* The function dummy2() is called by the malloc hook. Check to
      see that it was called. This ensures the second recursive

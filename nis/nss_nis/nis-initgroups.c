@@ -266,7 +266,7 @@ _nss_nis_initgroups_dyn (const char *user, gid_t group, long int *start,
 
   tmpbuf = __alloca (buflen);
 
-  while (1)
+  do
     {
       while ((status =
 	      internal_getgrent_r (&grpbuf, tmpbuf, buflen, errnop,
@@ -275,11 +275,8 @@ _nss_nis_initgroups_dyn (const char *user, gid_t group, long int *start,
 	tmpbuf = extend_alloca (tmpbuf, buflen, 2 * buflen);
 
       if (status != NSS_STATUS_SUCCESS)
-	{
-	  if (status == NSS_STATUS_NOTFOUND)
-	    status = NSS_STATUS_SUCCESS;
-	  goto done;
-	}
+	goto done;
+
 
       g = &grpbuf;
       if (g->gr_gid != group)
@@ -307,11 +304,7 @@ _nss_nis_initgroups_dyn (const char *user, gid_t group, long int *start,
 
 		    newgroups = realloc (groups, newsize * sizeof (*groups));
 		    if (newgroups == NULL)
-		      {
-			status = NSS_STATUS_TRYAGAIN;
-			*errnop = errno;
-			goto done;
-		      }
+		      goto done;
 		    *groupsp = groups = newgroups;
                     *size = newsize;
                   }
@@ -323,6 +316,7 @@ _nss_nis_initgroups_dyn (const char *user, gid_t group, long int *start,
               }
         }
     }
+  while (status == NSS_STATUS_SUCCESS);
 
 done:
   while (intern.start != NULL)

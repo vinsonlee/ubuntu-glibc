@@ -45,7 +45,7 @@ include ../Rules
 # On systems where `profil' is not a system call, the same
 # problem exists for the internal functions in profil.c.
 
-noprof := mcount $(sysdep_noprof)
+noprof := mcount
 ifeq (,$(filter profil,$(unix-syscalls)))
 noprof += profil sprofil
 endif

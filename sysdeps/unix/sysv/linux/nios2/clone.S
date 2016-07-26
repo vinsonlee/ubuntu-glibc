@@ -26,6 +26,7 @@
 #include <tcb-offsets.h>
 
 #define CLONE_VM      0x00000100
+#define CLONE_THREAD  0x00010000
 
 /* int clone(int (*fn)(void *arg), void *child_stack, int flags, void *arg,
 	     void *parent_tidptr, void *tls, void *child_tidptr) */
@@ -70,9 +71,13 @@ thread_start:
 
 	/* We expect the argument registers to be preserved across system
 	   calls and across task cloning, so flags should be in r4 here.  */
-	andi	r2, r4, CLONE_VM
+	andhi	r2, r4, %hi(CLONE_THREAD)
 	bne	r2, zero, 2f
+	andi	r3, r4, CLONE_VM
+	movi	r2, -1
+	bne	r3, zero, 3f
         DO_CALL (getpid, 0)
+3:
 	stw	r2, PID_OFFSET(r23)
 	stw	r2, TID_OFFSET(r23)
 2:
@@ -99,5 +104,4 @@ thread_start:
 
 	cfi_startproc
 PSEUDO_END (__clone)
-libc_hidden_def (__clone)
 weak_alias (__clone, clone)

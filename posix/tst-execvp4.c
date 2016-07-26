@@ -5,10 +5,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#ifndef EXECVP
-# define EXECVP(file, argv)  execvp (file, argv)
-#endif
-
 static int
 do_test (void)
 {
@@ -31,7 +27,7 @@ do_test (void)
 
   unsetenv ("PATH");
   char *argv[] = { buf + 9, NULL };
-  EXECVP (argv[0], argv);
+  execvp (argv[0], argv);
   return 0;
 }
 
