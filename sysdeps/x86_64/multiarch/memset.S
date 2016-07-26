@@ -26,44 +26,35 @@
 ENTRY(memset)
 	.type	memset, @gnu_indirect_function
 	LOAD_RTLD_GLOBAL_RO_RDX
-	lea	__memset_erms(%rip), %RAX_LP
-	HAS_ARCH_FEATURE (Prefer_ERMS)
-	jnz	2f
-	lea	__memset_sse2_unaligned_erms(%rip), %RAX_LP
-	HAS_CPU_FEATURE (ERMS)
-	jnz	1f
-	lea	__memset_sse2_unaligned(%rip), %RAX_LP
-1:
+	leaq	__memset_sse2(%rip), %rax
 	HAS_ARCH_FEATURE (AVX2_Usable)
 	jz	2f
-	lea	__memset_avx2_unaligned_erms(%rip), %RAX_LP
-	HAS_CPU_FEATURE (ERMS)
-	jnz	L(AVX512F)
-	lea	__memset_avx2_unaligned(%rip), %RAX_LP
-L(AVX512F):
+	leaq	__memset_avx2(%rip), %rax
+#ifdef HAVE_AVX512_ASM_SUPPORT
 	HAS_ARCH_FEATURE (AVX512F_Usable)
 	jz	2f
-	lea	__memset_avx512_no_vzeroupper(%rip), %RAX_LP
 	HAS_ARCH_FEATURE (Prefer_No_VZEROUPPER)
-	jnz	2f
-	lea	__memset_avx512_unaligned_erms(%rip), %RAX_LP
-	HAS_CPU_FEATURE (ERMS)
-	jnz	2f
-	lea	__memset_avx512_unaligned(%rip), %RAX_LP
+	jz	2f
+	leaq	__memset_avx512_no_vzeroupper(%rip), %rax
+#endif
 2:	ret
 END(memset)
 #endif
 
 #if IS_IN (libc)
-# define MEMSET_SYMBOL(p,s)	p##_sse2_##s
+# undef memset
+# define memset __memset_sse2
+
+# undef __memset_chk
+# define __memset_chk __memset_chk_sse2
 
 # ifdef SHARED
 # undef libc_hidden_builtin_def
 /* It doesn't make sense to send libc-internal memset calls through a PLT.
-   The speedup we get from using SSE2 instructions is likely eaten away
+   The speedup we get from using GPR instruction is likely eaten away
    by the indirect call in the PLT.  */
 # define libc_hidden_builtin_def(name) \
-	.globl __GI_memset; __GI_memset = __memset_sse2_unaligned
+	.globl __GI_memset; __GI_memset = __memset_sse2
 # endif
 
 # undef strong_alias
