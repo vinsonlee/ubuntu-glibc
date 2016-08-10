@@ -7,7 +7,7 @@ Index: langpack-locales/locales/sd_PK
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
 +++ a/localedata/locales/sd_PK	2011-11-16 08:42:42.133335987 +0100
-@@ -0,0 +1,216 @@
+@@ -0,0 +1,217 @@
 +comment_char    %
 +escape_char     /
 +% Sindhi language locale for Pakistan.
@@ -28,17 +28,18 @@ Index: langpack-locales/locales/sd_PK
 +revision    "1.0"
 +date        "2010,June,5"
 +%
-+category  "sd_PK:2008";LC_IDENTIFICATION
-+category  "sd_PK:2008";LC_CTYPE
-+category  "sd_PK:2008";LC_COLLATE
-+category  "sd_PK:2008";LC_TIME
-+category  "sd_PK:2008";LC_NUMERIC
-+category  "sd_PK:2008";LC_MONETARY
-+category  "sd_PK:2008";LC_MESSAGES
-+category  "sd_PK:2008";LC_PAPER
-+category  "sd_PK:2008";LC_NAME
-+category  "sd_PK:2008";LC_ADDRESS
-+category  "sd_PK:2008";LC_TELEPHONE
++category "i18n:2012";LC_IDENTIFICATION
++category "i18n:2012";LC_CTYPE
++category "i18n:2012";LC_COLLATE
++category "i18n:2012";LC_TIME
++category "i18n:2012";LC_NUMERIC
++category "i18n:2012";LC_MONETARY
++category "i18n:2012";LC_MESSAGES
++category "i18n:2012";LC_PAPER
++category "i18n:2012";LC_NAME
++category "i18n:2012";LC_ADDRESS
++category "i18n:2012";LC_TELEPHONE
++category "i18n:2012";LC_MEASUREMENT
 +
 +END LC_IDENTIFICATION
 +
@@ -234,5 +235,5 @@ Index: langpack-locales/SUPPORTED
  sd_IN@devanagari/UTF-8 \
 +sd_PK/UTF-8 \
  se_NO/UTF-8 \
+ sgs_LT/UTF-8 \
  shs_CA/UTF-8 \
- si_LK/UTF-8 \
