@@ -63,17 +63,17 @@ do_prepare (int argc, char *argv[])
    size_t name_len;
 
    name_len = strlen (test_dir);
-   name1 = (char *) malloc (name_len + sizeof ("/spawnXXXXXX"));
+   name1 = (char *) xmalloc (name_len + sizeof ("/spawnXXXXXX"));
    mempcpy (mempcpy (name1, test_dir, name_len),
 	    "/spawnXXXXXX", sizeof ("/spawnXXXXXX"));
    add_temp_file (name1);
 
-   name2 = (char *) malloc (name_len + sizeof ("/spawnXXXXXX"));
+   name2 = (char *) xmalloc (name_len + sizeof ("/spawnXXXXXX"));
    mempcpy (mempcpy (name2, test_dir, name_len),
 	    "/spawnXXXXXX", sizeof ("/spawnXXXXXX"));
    add_temp_file (name2);
 
-   name3 = (char *) malloc (name_len + sizeof ("/spawnXXXXXX"));
+   name3 = (char *) xmalloc (name_len + sizeof ("/spawnXXXXXX"));
    mempcpy (mempcpy (name3, test_dir, name_len),
 	    "/spawnXXXXXX", sizeof ("/spawnXXXXXX"));
    add_temp_file (name3);
@@ -255,6 +255,10 @@ do_test (int argc, char *argv[])
    spargv[i] = NULL;
 
    if (posix_spawn (&pid, argv[1], &actions, NULL, spargv, environ) != 0)
+     error (EXIT_FAILURE, errno, "posix_spawn");
+
+   /* Same test but with a NULL pid argument.  */
+   if (posix_spawn (NULL, argv[1], &actions, NULL, spargv, environ) != 0)
      error (EXIT_FAILURE, errno, "posix_spawn");
 
    /* Cleanup.  */

@@ -89,6 +89,11 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 {
   extern void _dl_runtime_resolve (Elf32_Word);
   extern void _dl_runtime_profile (Elf32_Word);
+#if defined HAVE_S390_VX_ASM_SUPPORT
+  extern void _dl_runtime_resolve_vx (Elf32_Word);
+  extern void _dl_runtime_profile_vx (Elf32_Word);
+#endif
+
 
   if (l->l_info[DT_JMPREL] && lazy)
     {
@@ -104,7 +109,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
       if (got[1])
 	{
 	  l->l_mach.plt = got[1] + l->l_addr;
-	  l->l_mach.gotplt = (Elf32_Addr) &got[3];
+	  l->l_mach.jmprel = (const Elf32_Rela *) D_PTR (l, l_info[DT_JMPREL]);
 	}
       got[1] = (Elf32_Addr) l;	/* Identify this shared object.  */
 
@@ -116,7 +121,14 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 	 end in this function.  */
       if (__glibc_unlikely (profile))
 	{
+#if defined HAVE_S390_VX_ASM_SUPPORT
+	  if (GLRO(dl_hwcap) & HWCAP_S390_VX)
+	    got[2] = (Elf32_Addr) &_dl_runtime_profile_vx;
+	  else
+	    got[2] = (Elf32_Addr) &_dl_runtime_profile;
+#else
 	  got[2] = (Elf32_Addr) &_dl_runtime_profile;
+#endif
 
 	  if (GLRO(dl_profile) != NULL
 	      && _dl_name_match_p (GLRO(dl_profile), l))
@@ -125,9 +137,18 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 	    GL(dl_profile_map) = l;
 	}
       else
-	/* This function will get called to fix up the GOT entry indicated by
-	   the offset on the stack, and then jump to the resolved address.  */
-	got[2] = (Elf32_Addr) &_dl_runtime_resolve;
+	{
+	  /* This function will get called to fix up the GOT entry indicated by
+	     the offset on the stack, and then jump to the resolved address.  */
+#if defined HAVE_S390_VX_ASM_SUPPORT
+	  if (GLRO(dl_hwcap) & HWCAP_S390_VX)
+	    got[2] = (Elf32_Addr) &_dl_runtime_resolve_vx;
+	  else
+	    got[2] = (Elf32_Addr) &_dl_runtime_resolve;
+#else
+	  got[2] = (Elf32_Addr) &_dl_runtime_resolve;
+#endif
+	}
     }
 
   return lazy;
@@ -485,9 +506,7 @@ elf_machine_lazy_rel (struct link_map *map,
       if (__builtin_expect (map->l_mach.plt, 0) == 0)
 	*reloc_addr += l_addr;
       else
-	*reloc_addr =
-	  map->l_mach.plt
-	  + (((Elf32_Addr) reloc_addr) - map->l_mach.gotplt) * 8;
+	*reloc_addr = map->l_mach.plt + (reloc - map->l_mach.jmprel) * 32;
     }
   else if (__glibc_likely (r_type == R_390_IRELATIVE))
     {
