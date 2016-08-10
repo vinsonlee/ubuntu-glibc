@@ -76,10 +76,21 @@ tests		:= tst-strtol tst-strtod testmb testrand testsort testdiv   \
 		   tst-secure-getenv tst-strtod-overflow tst-strtod-round   \
 		   tst-tininess tst-strtod-underflow tst-tls-atexit	    \
 		   tst-setcontext3 tst-tls-atexit-nodelete		    \
-		   tst-strtol-locale tst-strtod-nan-locale
+		   tst-strtol-locale tst-strtod-nan-locale tst-strfmon_l    \
+		   tst-quick_exit tst-thread-quick_exit
 tests-static	:= tst-secure-getenv
+ifeq ($(have-cxx-thread_local),yes)
+CFLAGS-tst-quick_exit.o = -std=c++11
+LDLIBS-tst-quick_exit = -lstdc++
+CFLAGS-tst-thread-quick_exit.o = -std=c++11
+LDLIBS-tst-thread-quick_exit = -lstdc++
+$(objpfx)tst-thread-quick_exit: $(shared-thread-library)
+else
+tests-unsupported += tst-quick_exit tst-thread-quick_exit
+endif
 
 modules-names	= tst-tls-atexit-lib
+extra-test-objs += $(addsuffix .os, $(modules-names))
 
 ifeq ($(build-shared),yes)
 tests		+= tst-putenv
@@ -126,7 +137,8 @@ include ../Rules
 
 ifeq ($(run-built-tests),yes)
 LOCALES := cs_CZ.UTF-8 de_DE.UTF-8 en_US.ISO-8859-1 tr_TR.UTF-8 \
-	   tr_TR.ISO-8859-9
+	   tr_TR.ISO-8859-9 tg_TJ.UTF-8 te_IN.UTF-8 bn_IN.UTF-8 \
+	   el_GR.UTF-8
 include ../gen-locales.mk
 
 $(objpfx)bug-strtod2.out: $(gen-locales)
@@ -137,6 +149,7 @@ $(objpfx)tst-strtod4.out: $(gen-locales)
 $(objpfx)tst-strtod5.out: $(gen-locales)
 $(objpfx)tst-strtol-locale.out: $(gen-locales)
 $(objpfx)tst-strtod-nan-locale.out: $(gen-locales)
+$(objpfx)tst-strfmon_l.out: $(gen-locales)
 endif
 
 # Testdir has to be named stdlib and needs to be writable

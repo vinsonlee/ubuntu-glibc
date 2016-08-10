@@ -231,6 +231,9 @@ AC_ARG_ENABLE([bind-now],
 	      [bindnow=$enableval],
 	      [bindnow=no])
 AC_SUBST(bindnow)
+if test "x$bindnow" = xyes; then
+  AC_DEFINE(BIND_NOW)
+fi
 
 dnl On some platforms we cannot use dynamic loading.  We must provide
 dnl static NSS modules.
@@ -1408,6 +1411,26 @@ elif test "$libc_cv_ssp" = "yes"; then
   stack_protector="-fstack-protector"
 fi
 AC_SUBST(stack_protector)
+
+AC_CACHE_CHECK([for -mtls-dialect=gnu2], libc_cv_mtls_dialect_gnu2,
+[dnl
+cat > conftest.c <<EOF
+__thread int i;
+void foo (void)
+{
+  i = 10;
+}
+EOF
+if AC_TRY_COMMAND([${CC-cc} $CFLAGS $CPPFLAGS -S -fPIC -mtls-dialect=gnu2
+		   conftest.c 1>&AS_MESSAGE_LOG_FD])
+then
+  libc_cv_mtls_dialect_gnu2=yes
+else
+  libc_cv_mtls_dialect_gnu2=no
+fi
+rm -f conftest*])
+AC_SUBST(libc_cv_mtls_dialect_gnu2)
+LIBC_CONFIG_VAR([have-mtls-dialect-gnu2], [$libc_cv_mtls_dialect_gnu2])
 
 AC_CACHE_CHECK(whether cc puts quotes around section names,
 	       libc_cv_have_section_quotes,
