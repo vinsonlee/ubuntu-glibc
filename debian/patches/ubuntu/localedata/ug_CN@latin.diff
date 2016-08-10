@@ -4,7 +4,7 @@ Index: langpack-locales/locales/ug_CN@latin
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
 +++ b/localedata/locales/ug_CN@latin	2012-04-04 12:01:25.459348798 +0200
-@@ -0,0 +1,144 @@
+@@ -0,0 +1,145 @@
 +escape_char /
 +comment_char %
 +%
@@ -34,17 +34,18 @@ Index: langpack-locales/locales/ug_CN@latin
 +revision  "1.00"
 +date      "2012-03-17"
 +
-+category "ug_CN@latin:2012";LC_IDENTIFICATION
-+category "ug_CN@latin:2012";LC_CTYPE
-+category "ug_CN@latin:2012";LC_COLLATE
-+category "ug_CN@latin:2012";LC_TIME
-+category "ug_CN@latin:2012";LC_NUMERIC
-+category "ug_CN@latin:2012";LC_MONETARY
-+category "ug_CN@latin:2012";LC_MESSAGES
-+category "ug_CN@latin:2012";LC_PAPER
-+category "ug_CN@latin:2012";LC_NAME
-+category "ug_CN@latin:2012";LC_ADDRESS
-+category "ug_CN@latin:2012";LC_TELEPHONE
++category "i18n:2012";LC_IDENTIFICATION
++category "i18n:2012";LC_CTYPE
++category "i18n:2012";LC_COLLATE
++category "i18n:2012";LC_TIME
++category "i18n:2012";LC_NUMERIC
++category "i18n:2012";LC_MONETARY
++category "i18n:2012";LC_MESSAGES
++category "i18n:2012";LC_PAPER
++category "i18n:2012";LC_NAME
++category "i18n:2012";LC_ADDRESS
++category "i18n:2012";LC_TELEPHONE
++category "i18n:2012";LC_MEASUREMENT
 +
 +END LC_IDENTIFICATION
 +

@@ -1,3 +1,221 @@
+glibc (2.24-0ubuntu1) yakkety; urgency=medium
+
+  * Merge with current 2.24 from Debian experimental git, remaining changes:
+    - Enable libc6{,-dev}-armel on armhf and libc6{-dev}-armhf on armel.
+    - Heavily mangle the way we do service restarting on major upgrades.
+    - Build i386 variants as -march=i686, build amd64 with -O3, and build
+      ppc64 variants (both 64-bit and 32-bit) with -O3 -fno-tree-vectorize.
+    - Build generic i386 flavour with -mno-tls-direct-seg-refs for Xen.
+    - Drop the libc6-xen flavour, as the above change covers Xen's needs.
+    - Enable systemtap support, which is currently disabled in Debian.
+    - Don't build libc-l10n, its contents get stripped for language-packs.
+    - debian/control.in/libc: Remove a Breaks on s390x against a binary
+      NMU version of check that will never exist in the Ubuntu archive.
+    - Drop libc-bin manpages Recommends to Suggests to keep it in standard.
+    - Revert dropping the ldconfig wrapper, xenial still has a lot of
+      packages that don't ship a trigger but instead call in postinst.
+    - Use DH_COMPAT=8 for dh_strip to fix debug sections for valgrind.
+    - Mangle locales package to support Ubuntu language packs seamlessly.
+    - Evaluate and merge localedata patches from the old langpack-locales.
+  * debian/sysdeps/{amd64,i386}.mk: Don't build i386 libc with -fno-regmove.
+  * debian/patches/ubuntu/localedata/bn-language.diff: Rebased to 2.24.
+  * debian/patches/ubuntu/localedata/ckb_IQ-new_locale.diff: Rebased to 2.24.
+  * debian/patches/ubuntu/localedata/en_IE-am_pm.diff: Rebased to 2.24.
+  * debian/patches/ubuntu/localedata/eo_US.diff: Rebased to 2.24.
+  * debian/patches/ubuntu/localedata/es_DO-am_pm.diff: Rebased to 2.24.
+  * debian/patches/ubuntu/localedata/ln_CD-new_locale.diff: Applied upstream.
+  * debian/patches/ubuntu/localedata/lv_LV-currency.diff: Rebased to 2.24.
+  * debian/patches/ubuntu/localedata/sd_PK.diff: Rebased to 2.24.
+  * debian/patches/ubuntu/localedata/ug_CN@latin.diff: Rebased to 2.24.
+  * debian/testsuite-xfail-debian.mk: Drop now unnecessary s390x Ubuntu delta.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 10 Aug 2016 15:29:00 -0600
+
+glibc (2.24-0experimental1) UNRELEASED; urgency=medium
+
+  [ Samuel Thibault ]
+  * testsuite-xfail-debian.mk: Update with hurd-i386 non-regressions.
+
+  [ Aurelien Jarno ]
+  * debian/patches/git-updates.diff: update from upstream stable branch.
+  * debian/patches/sparc/cvs-test-strncmp.diff: new patch from upstream to
+    fix wcsmbs/test-wcsncmp on architecture with strong alignment.  Closes:
+    #825865.
+  * debian/patches/testsuite-xfail-debian.mk: remove xfail-test-wcsncmp on
+    sparc.
+  * debian/sysdeps/{sparc,sparc64}.mk: force target to sparcv9-linux-gnu.
+  * debian/patches/sparc/local-sparcv9-target.diff: drop, obsolete.
+  * patches/hppa/local-stack-grows-up.diff: restore one hunk that has not been
+    merged upstream from the 2.23 version.
+  * patches/localedata/locale-C.diff: update to unicode 8.0.0, add missing
+    categories, use the copy directive when possible.
+
+ -- Samuel Thibault <sthibault@debian.org>  Thu, 04 Aug 2016 09:20:04 +0200
+
+glibc (2.24-0experimental0) experimental; urgency=medium
+
+  * New upstream release: version 2.24.
+  * debian/patches/hurd-i386/submitted-malloc-setstate.diff: only apply on
+    hurd-i386, as it causes regressions on at least x32.
+  * debian/rules.d/tarball.mk: make the orig tarball generation a bit more
+    reproducible.
+  * debian/sysdeps/sparc64.mk: compile all flavours with -mcpu=ultrasparc.
+  * debian/patches/submitted-sparc-fdim.diff: new patch to fix fdimf and
+    fdim function on SPARC.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 04 Aug 2016 03:13:12 +0200
+
+glibc (2.23.90+20160725.b898b64-1) experimental; urgency=medium
+
+  [ Aurelien Jarno ]
+  * New upstream snapshot from 20160725.
+  * debian/testsuite-xfail-debian.mk: remove HPPA math tests from XFAIL,
+    the problem is fixed from some time already.
+  * debian/patches/powerpc/submitted-powerpc-ifunc-sel.diff: new patch to
+    fix the ifunc tests with GCC 6 on PowerPC.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 25 Jul 2016 23:38:37 +0200
+
+glibc (2.23.90+20160719.2c3d888-1) experimental; urgency=medium
+
+  [ Samuel Thibault ]
+  * testsuite-xfail-debian.mk: Add missing test failure (no actual
+    regression).
+
+  [ Aurelien Jarno ]
+  * New upstream snapshot from 20160719:
+    - debian/patches/hurd-i386/cvs-tabdly.diff: upstreamed.
+  * debian/control.in/main, debian/rules: build with GCC 6.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 19 Jul 2016 23:34:49 +0200
+
+glibc (2.23.90+20160711.c10f90d-1) experimental; urgency=medium
+
+  [ Samuel Thibault ]
+  * patches/hurd-i386/submitted-malloc-setstate.diff: New patch to fix
+    malloc_setstate.
+  * testsuite-xfail-debian.mk: Update hurd-i386 testsuite results, no actual
+    regression.
+
+  [ Aurelien Jarno ]
+  * New upstream snapshot from 20160711:
+    - debian/patches/localedata/locale-de_LI.diff: upstreamed.
+    - debian/patches/hppa/submitted-libm-test-ulps.diff: upstreamed.
+  * debian/testsuite-xfail-debian.mk: allow conform/XPG3/sys/stat.h
+    and conform/XPG4/sys/stat.h to fail on mips and mipsel, similarly
+    to the others sys/stat.h conform tests. Group all theses entries
+    and an explanation.
+  * debian/testsuite-xfail-debian.mk: do not allow math/test-fenv to
+    fail now that we do not have Loongson 2 buildds anymore.
+  * debian/patches/kfreebsd/local-sysdeps.diff, local-fbtl.diff:
+    update to revision 6087 (from glibc-bsd).
+  * debian/testsuite-xfail-debian.mk: allow more failures on kfreebsd-*,
+    mostly due to the fsid_t type, and which are not regressions.
+  * testsuite-xfail-debian.mk: Update x32 testsuite results, no actual
+    regression.
+  * Replace debian/patches/alpha/submitted-trunc.diff by
+    debian/patches/alpha/submitted-math-fixes.diff containing additional
+    math fixes.
+  * debian/rules: better glibc version detection for snapshots.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 11 Jul 2016 22:45:50 +0200
+
+glibc (2.23.90+20160507.87523e9-1) experimental; urgency=medium
+
+  * New upstream snapshot from 20160705:
+    - Fix locales license.  Closes: #555168.
+    - Fix Spanish locale 1st week definition.  Closes: #826888.
+    - debian/patches/localedata/sort-UTF8-first.diff: rebased.
+    - debian/patches/localedata/locale-eo_EO.diff: upstreamed.
+    - debian/patches/localedata/locale-ku_TR.diff: rebased.
+    - debian/patches/localedata/fo_FO-date_fmt.diff: rebased.
+    - debian/patches/localedata/locales-fr.diff: rebased.
+    - debian/patches/localedata/locale-en_DK.diff: rebased.
+    - debian/patches/localedata/locale-hsb_DE.diff: rebased.
+    - debian/patches/localedata/fr_CH-first_weekday.diff: upstreamed.
+    - debian/patches/localedata/locale-de_LI.diff: rebased.
+    - debian/patches/localedata/submitted-bz9725-locale-sv_SE.diff: rebased.
+    - debian/patches/localedata/first_weekday.diff: upstreamed.
+    - debian/patches/localedata/submitted-en_AU-date_fmt.diff: rebased.
+    - debian/patches/amd64/local-blacklist-for-Intel-TSX.diff
+    - debian/patches/arm/local-arm-futex.diff: rebased.
+    - debian/patches/hppa/local-stack-grows-up.diff: dropped, obsolete.
+    - debian/patches/hurd-i386/local-enable-ldconfig.diff: rebased.
+    - debian/patches/hurd-i386/tg-tls-threadvar.diff: rebased.
+    - debian/patches/hurd-i386/tg-hooks.diff: rebased.
+    - debian/patches/hurd-i386/cvs-openat.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-gai_sigqueue.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-aio_sigqueue.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-open.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-c++-types.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-errnos.d.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-mach-syscalls.mk.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-auxv.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-gprof-tick.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-IPV6_PKTINFO.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-i686-link.diff: upstreamed.
+    - debian/patches/hurd-i386/cvs-check-local-headers.diff: upstreamed.
+    - debian/patches/i386/local-cpuid-level2.diff: rebased.
+    - debian/patches/sparc/submitted-sparc64-socketcall.diff: rebased.
+    - debian/patches/sparc/cvs-sparc-nearbyint.diff: upstreamed.
+    - debian/patches/any/local-libgcc-compat-ports.diff: rebased.
+    - debian/patches/any/submitted-longdouble.diff: rebased.
+    - debian/patches/any/submitted-string2-strcmp.diff: rebased.
+    - debian/patches/any/local-dynamic-resolvconf.diff: rebased.
+    - debian/patches/any/cvs-tst-malloc-thread-exit.diff: upstreamed.
+    - debian/patches/any/cvs-sys-personality-h.diff: upstreamed.
+  * debian/patches/localedata/{locale-C.diff,locale-de_LI.diff,
+    locale-eu_FR.diff,new-valencian-locale.diff}: change LC_IDENTIFICATION
+    to i18n:2012.
+  * debian/debhelper.in/locales.config: convert iw_IL into he_IL, as the
+    former was deprecated and has been removed.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 05 Jul 2016 20:47:21 +0200
+
+glibc (2.23-4) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * patches/kfreebsd/local-sysdeps.diff: update to revision 6098 (from
+    glibc-bsd).
+  * debian/debhelper.in/libc.postinst: drop code to handle the /var/mail
+    transition for pre-Potato installations.
+  * debian/debhelper.in/libc.{preinst,postinst}, debian/script.in/nohwcap.sh:
+    Remove fallback to dpkg --print-architecture for pre-multiarch systems.
+  * debian/debhelper.in/libc.{preinst,postinst}: do not run the NSS check
+    code from a chroot as it might not have an init system installed.
+  * debian/testsuite-xfail-debian.mk: allow tst-robust8 to fail on amd64, it
+    is an intermittent failure that might be due to a kernel issue.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 27 Jul 2016 00:39:51 +0200
+
+glibc (2.23-3) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * hurd-i386/libpthread_version.diff: Update with pthread_setcancelstate
+    aliasing.
+
+  [ Aurelien Jarno ]
+  * patches/kfreebsd/local-sysdeps.diff: update to revision 6097 (from
+    glibc-bsd).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 25 Jul 2016 23:23:29 +0200
+
+glibc (2.23-2) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * Danish debconf translation update from Joe Hansen.  Closes: #830589.
+  * patches/kfreebsd/local-sysdeps.diff: update to revision 6096 (from
+    glibc-bsd).
+
+  [ Samuel Thibault ]
+  * hurd-i386/cvs-libpthread-2.23.diff: Update, adds pthread_setcancelstate
+    alias, fixes rsyslog start.
+  * hurd-i386/cvs-tabdly.diff: New patch.  Closes: #830584.
+  * hurd-i386/local-clock_gettime_MONOTONIC.diff: Complete patch with
+    timer_create, to fix ghc 8 build.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 19 Jul 2016 20:22:37 +0200
+
 glibc (2.23-1ubuntu1) yakkety; urgency=medium
 
   * Merge with most recent upload from Debian unstable, remaining changes:
@@ -500,7 +718,7 @@ glibc (2.22-4) unstable; urgency=medium
 
   [ Aurelien Jarno ]
   * Update from upstream stable branch:
-    - Fix a memory leak in the resolver.  Closes: #818178.
+    - Fix a memory leak in the resolver (CVE-2016-5417).  Closes: #818178.
   * debian/patches/localedata/fr_CA-first_weekday.diff: drop.  Closes:
     #769051.
   * debian/rules, debian/rules.d/build.mk: move the C.UTF-8 locale and
