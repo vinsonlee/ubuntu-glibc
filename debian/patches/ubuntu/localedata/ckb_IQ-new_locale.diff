@@ -44,18 +44,18 @@ diff -Nru langpack-locales.orig/locales/ckb_IQ langpack-locales/locales/ckb_IQ
 +revision   "0.8"
 +date	   "2014-09-20"
 +
-+category  "ckb_IQ:2000";LC_IDENTIFICATION
-+category  "ckb_IQ:2000";LC_CTYPE
-+category  "ckb_IQ:2000";LC_COLLATE
-+category  "ckb_IQ:2000";LC_MONETARY
-+category  "ckb_IQ:2000";LC_NUMERIC
-+category  "ckb_IQ:2000";LC_TIME
-+category  "ckb_IQ:2000";LC_MESSAGES
-+category  "ckb_IQ:2000";LC_PAPER
-+category  "ckb_IQ:2000";LC_NAME
-+category  "ckb_IQ:2000";LC_ADDRESS
-+category  "ckb_IQ:2000";LC_TELEPHONE
-+category  "ckb_IQ:2000";LC_MEASUREMENT
++category "i18n:2012";LC_IDENTIFICATION
++category "i18n:2012";LC_CTYPE
++category "i18n:2012";LC_COLLATE
++category "i18n:2012";LC_TIME
++category "i18n:2012";LC_NUMERIC
++category "i18n:2012";LC_MONETARY
++category "i18n:2012";LC_MESSAGES
++category "i18n:2012";LC_PAPER
++category "i18n:2012";LC_NAME
++category "i18n:2012";LC_ADDRESS
++category "i18n:2012";LC_TELEPHONE
++category "i18n:2012";LC_MEASUREMENT
 +
 +END LC_IDENTIFICATION
 +
@@ -483,6 +483,6 @@ diff -Nru langpack-locales.orig/SUPPORTED langpack-locales/SUPPORTED
  ca_IT/ISO-8859-15 \
  ce_RU/UTF-8 \
 +ckb_IQ/UTF-8 \
+ chr_US/UTF-8 \
  cmn_TW/UTF-8 \
  crh_UA/UTF-8 \
- cs_CZ.UTF-8/UTF-8 \
