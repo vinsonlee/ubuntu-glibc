@@ -1,3 +1,32 @@
+glibc (2.24-0experimental1) experimental; urgency=medium
+
+  [ Samuel Thibault ]
+  * testsuite-xfail-debian.mk: Update with hurd-i386 non-regressions.
+
+  [ Aurelien Jarno ]
+  * debian/patches/git-updates.diff: update from upstream stable branch:
+    - debian/patches/powerpc/submitted-powerpc-ifunc-sel.diff: upstreamed.
+    - debian/patches/sparc/submitted-sparc-fdim.diff: upstreamed.
+  * debian/patches/sparc/cvs-test-strncmp.diff: new patch from upstream to
+    fix wcsmbs/test-wcsncmp on architecture with strong alignment.  Closes:
+    #825865.
+  * debian/patches/testsuite-xfail-debian.mk: remove xfail-test-wcsncmp on
+    sparc.
+  * debian/sysdeps/{sparc,sparc64}.mk: force target to sparcv9-linux-gnu.
+  * debian/patches/sparc/local-sparcv9-target.diff: drop, obsolete.
+  * patches/hppa/local-stack-grows-up.diff: restore one hunk that has not been
+    merged upstream from the 2.23 version.
+  * patches/localedata/locale-C.diff: update to unicode 8.0.0, add missing
+    categories, use the copy directive when possible.
+  * debian/rules.d/build.mk: disable the C++ compiler when tests are disabled,
+    based on a patch from Matthias Klose.  Closes: #834138.
+  * rules.d/build.mk: test for DEB_BUILD_OPTIONS="nocheck" using filter
+    instead of findstring.
+  * patches/kfreebsd/local-sysdeps.diff: update to revision 6101 (from
+    glibc-bsd).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 15 Aug 2016 16:55:38 +0200
+
 glibc (2.24-0experimental0) experimental; urgency=medium
 
   * New upstream release: version 2.24.
