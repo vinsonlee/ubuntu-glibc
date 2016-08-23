@@ -1,0 +1,174 @@
+From: Samuel Thibault <samuel.thibault@ens-lyon.org>
+Subject: [PATCH] Fix lockf64 support
+
+struct flock64 uses 64bit values.  This introduces other values for F_GETLK,
+F_SETLK, F_SETLKW to distinguish between both.
+
+* sysdeps/mach/hurd/bits/fcntl.h (F_GETLK64, F_SETLK64, F_SETLKW64): New macros
+[__USE_FILE_OFFSET64] (F_GETLK, F_SETLK, F_SETLKW): Define to F_GETLK64,
+F_SETLK64, F_SETLKW64, respectively.
+* sysdeps/mach/hurd/flockconv.c: New file.
+* sysdeps/mach/hurd/fcntl.c (__libc_fcntl): Include "flockconv.c", handle
+F_GETLK64, F_SETLK64, F_SETLKW64 cases.
+
+Signed-off-by: Samuel Thibault <samuel.thibault@ens-lyon.org>
+
+---
+ sysdeps/mach/hurd/bits/fcntl.h | 11 ++++++-
+ sysdeps/mach/hurd/fcntl.c      | 37 +++++++++++++++++++++-
+ sysdeps/mach/hurd/flockconv.c  | 69 ++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 115 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/mach/hurd/bits/fcntl.h b/sysdeps/mach/hurd/bits/fcntl.h
+index 9d598a1..3202971 100644
+--- a/sysdeps/mach/hurd/bits/fcntl.h
++++ b/sysdeps/mach/hurd/bits/fcntl.h
+@@ -163,9 +163,18 @@
+ # define F_GETOWN	5	/* Get owner (receiver of SIGIO).  */
+ # define F_SETOWN	6	/* Set owner (receiver of SIGIO).  */
+ #endif
++#ifdef __USE_FILE_OFFSET64
++#define	F_GETLK		F_GETLK64
++#define	F_SETLK		F_SETLK64
++#define	F_SETLKW	F_SETLKW64
++#else
+ #define	F_GETLK		7	/* Get record locking info.  */
+ #define	F_SETLK		8	/* Set record locking info (non-blocking).  */
+ #define	F_SETLKW	9	/* Set record locking info (blocking).  */
++#endif
++#define	F_GETLK64	10	/* Get record locking info.  */
++#define	F_SETLK64	11	/* Set record locking info (non-blocking).  */
++#define	F_SETLKW64	12	/* Set record locking info (blocking).  */
+ 
+ #ifdef __USE_XOPEN2K8
+ # define F_DUPFD_CLOEXEC 1030	/* Duplicate, set FD_CLOEXEC on new one.  */
+diff --git a/sysdeps/mach/hurd/fcntl.c b/sysdeps/mach/hurd/fcntl.c
+index 70180fa..7ab58c0 100644
+--- a/sysdeps/mach/hurd/fcntl.c
++++ b/sysdeps/mach/hurd/fcntl.c
+@@ -22,6 +22,8 @@
+ #include <stdarg.h>
+ #include <sys/file.h>		/* XXX for LOCK_* */
+ 
++#include "flockconv.c"
++
+ /* Perform file control operations on FD.  */
+ int
+ __libc_fcntl (int fd, int cmd, ...)
+@@ -180,6 +182,39 @@ __libc_fcntl (int fd, int cmd, ...)
+ 	return __flock (fd, cmd);
+       }
+ 
++    case F_GETLK64:
++    case F_SETLK64:
++    case F_SETLKW64:
++      {
++	struct flock64 *fl64 = va_arg (ap, struct flock64 *);
++	struct flock fl;
++
++	if (flock64_conv (&fl, fl64))
++	  {
++	    result = -1;
++	    break;
++	  }
++
++	switch (cmd)
++	  {
++	  case F_GETLK64:
++	    result = fcntl (fd, F_GETLK, &fl);
++	    if (flock_conv (fl64, &fl))
++	      result = -1;
++	    break;
++
++	  case F_SETLK64:
++	    result = fcntl (fd, F_SETLK, &fl);
++	    break;
++
++	  case F_SETLKW64:
++	    result = fcntl (fd, F_SETLKW, &fl);
++	    break;
++	  }
++
++	break;
++      }
++
+     case F_GETFL:		/* Get per-open flags.  */
+       if (err = HURD_FD_PORT_USE (d, __io_get_openmodes (port, &result)))
+ 	result = __hurd_dfail (fd, err);
+diff --git a/sysdeps/mach/hurd/flockconv.c b/sysdeps/mach/hurd/flockconv.c
+new file mode 100644
+index 0000000..75e15d8
+--- /dev/null
++++ b/sysdeps/mach/hurd/flockconv.c
+@@ -0,0 +1,69 @@
++/* Convert between `struct stat' format, and `struct stat64' format.
++   Copyright (C) 2014 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#include <errno.h>
++#include <fcntl.h>
++
++static inline int
++flock64_conv (struct flock *buf, const struct flock64 *buf64)
++{
++  if (sizeof *buf == sizeof *buf64
++      && sizeof buf->l_start == sizeof buf64->l_start
++      && sizeof buf->l_len == sizeof buf64->l_len)
++    {
++      *buf = *(struct flock *) buf64;
++      return 0;
++    }
++
++  buf->l_type = buf64->l_type;
++  buf->l_whence = buf64->l_whence;
++  buf->l_start = buf64->l_start;
++  buf->l_len = buf64->l_len;
++  buf->l_pid = buf64->l_pid;
++
++  if ((sizeof buf->l_start != sizeof buf64->l_start
++       && buf->l_start != buf64->l_start)
++      || (sizeof buf->l_len != sizeof buf64->l_len
++	  && buf->l_len != buf64->l_len))
++    {
++      __set_errno (EOVERFLOW);
++      return -1;
++    }
++
++  return 0;
++}
++
++static inline int
++flock_conv (struct flock64 *buf64, const struct flock *buf)
++{
++  if (sizeof *buf == sizeof *buf64
++      && sizeof buf->l_start == sizeof buf64->l_start
++      && sizeof buf->l_len == sizeof buf64->l_len)
++    {
++      *buf64 = *(struct flock64 *) buf;
++      return 0;
++    }
++
++  buf64->l_type = buf->l_type;
++  buf64->l_whence = buf->l_whence;
++  buf64->l_start = buf->l_start;
++  buf64->l_len = buf->l_len;
++  buf64->l_pid = buf->l_pid;
++
++  return 0;
++}
+-- 
+tg: (9a079e2..) t/lockf64 (depends on: baseline)
