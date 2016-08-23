@@ -1,0 +1,12 @@
+and that these are for later:
+
+t/cancellation
+t/cpuclock
+t/no_hidden
+t/pagesize
+
+and those are WIP or not to be applied:
+
+t/host-independency
+t/verify.h
+
