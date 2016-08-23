@@ -1,0 +1,15 @@
+t/bits_socket.h
+t/cancellation
+t/cpuclock
+t/fcntl-internal.h
+t/kernel-features.h_includes
+t/pipe2
+
+t/no_hidden
+t/pagesize
+
+No:
+t/host-independency
+t/verify.h
+
+debian/patches/any/local-stdio-lock.diff is t/bits_stdio-lock.h
