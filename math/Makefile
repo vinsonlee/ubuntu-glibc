@@ -63,7 +63,7 @@ libm-calls = e_acos e_acosh e_asin e_atan2 e_atanh e_cosh e_exp e_fmod	\
 	     s_fma s_lrint s_llrint s_lround s_llround e_exp10 w_log2	\
 	     s_issignaling $(calls:s_%=m_%) x2y2m1 k_casinh	\
 	     gamma_product k_standard lgamma_neg lgamma_product		\
-	     w_lgamma_compat
+	     w_lgamma_compat s_nextup s_nextdown
 
 dbl-only-routines := branred doasin dosincos halfulp mpa mpatan2	\
 		     mpatan mpexp mplog mpsqrt mptan sincos32 slowexp	\
@@ -100,7 +100,8 @@ $(inst_libdir)/libm.so: $(common-objpfx)format.lds \
 	 cat $<; \
 	 echo 'GROUP ( $(slibdir)/libm.so$(libm.so-version) ' \
 	      'AS_NEEDED ( $(libdir)/libmvec_nonshared.a $(slibdir)/libmvec.so$(libmvec.so-version) ) )' \
-	) > $@
+	) > $@.new
+	mv -f $@.new $@
 endif
 
 # Rules for the test suite.
@@ -114,7 +115,6 @@ tests = test-matherr test-fenv atest-exp atest-sincos atest-exp2 basic-test \
 	test-nearbyint-except-2 test-signgam-uchar test-signgam-uchar-init \
 	test-signgam-uint test-signgam-uint-init test-signgam-ullong \
 	test-signgam-ullong-init test-nan-overflow test-nan-payload \
-	test-math-isinff \
 	$(tests-static)
 tests-static = test-fpucw-static test-fpucw-ieee-static \
 	       test-signgam-uchar-static test-signgam-uchar-init-static \
@@ -124,6 +124,10 @@ tests-static = test-fpucw-static test-fpucw-ieee-static \
 # distinct from `double'.
 test-longdouble-yes = test-ldouble test-ildoubl test-ldouble-finite
 
+ifneq (,$(CXX))
+tests += test-math-isinff
+endif
+
 ifneq (no,$(PERL))
 libm-vec-tests = $(addprefix test-,$(libmvec-tests))
 libm-tests = test-float test-double $(test-longdouble-$(long-double-fcts)) \
@@ -132,6 +136,9 @@ libm-tests = test-float test-double $(test-longdouble-$(long-double-fcts)) \
 libm-tests.o = $(addsuffix .o,$(libm-tests))
 
 tests += $(libm-tests)
+libm-vec-test-wrappers = $(addsuffix -wrappers, $(libm-vec-tests))
+test-extras += $(libm-vec-test-wrappers)
+extra-test-objs += $(addsuffix .o, $(libm-vec-test-wrappers))
 libm-tests-generated = libm-test-ulps.h libm-have-vector-test.h libm-test.c
 generated += $(libm-tests-generated) libm-test.stmp
 
@@ -180,7 +187,14 @@ CFLAGS-test-float-vlen8-wrappers.c = $(float-vlen8-arch-ext-cflags)
 CFLAGS-test-float-vlen16.c = $(libm-test-vec-cflags)
 CFLAGS-test-float-vlen16-wrappers.c = $(float-vlen16-arch-ext-cflags)
 
-libm-test-no-inline-cflags = -fno-inline -ffloat-store -fno-builtin
+# The no-inline tests use -fsignaling-nans, and thereby use the
+# versions of classification macros that support sNaNs.  The inline
+# function tests use the versions of classification macros that may
+# raise spurious exceptions for sNaNs, but also do not test for
+# exceptions.  Thus both versions of the classification macros are
+# validated.
+libm-test-no-inline-cflags = -fno-inline -ffloat-store -fno-builtin \
+			     -fsignaling-nans
 libm-test-finite-cflags = $(libm-test-no-inline-cflags) \
 			  -U__FINITE_MATH_ONLY__ -D__FINITE_MATH_ONLY__=1
 CFLAGS-test-float.c = $(libm-test-no-inline-cflags)
@@ -288,6 +302,12 @@ ifneq ($(long-double-fcts),yes)
 math-CPPFLAGS += -DNO_LONG_DOUBLE -D_Mlong_double_=double
 endif
 
+# These files quiet sNaNs in a way that is optimized away without
+# -fsignaling-nans.
+CFLAGS-s_modf.c += -fsignaling-nans
+CFLAGS-s_modff.c += -fsignaling-nans
+CFLAGS-s_modfl.c += -fsignaling-nans
+
 # The -lieee library is actually an object file.
 # The module just defines the _LIB_VERSION_ variable.
 # It's not a library to make sure it is linked in instead of s_lib_version.o.
@@ -296,10 +316,11 @@ $(objpfx)libieee.a: $(objpfx)ieee-math.o
 	$(patsubst %/,cd % &&,$(objpfx)) \
 	$(LN_S) $(<F) $(@F)
 
-$(addprefix $(objpfx),$(filter-out $(tests-static) $(libm-vec-tests),$(tests))): $(libm)
+$(addprefix $(objpfx),\
+	    $(filter-out $(tests-static) $(libm-vec-tests),$(tests))): $(libm)
 $(addprefix $(objpfx),$(tests-static)): $(objpfx)libm.a
-$(addprefix $(objpfx), $(libm-vec-tests)): $(objpfx)%: $(objpfx)%-wrappers.o $(libm) \
-					   $(libmvec)
+$(addprefix $(objpfx), $(libm-vec-tests)): $(objpfx)%: $(objpfx)%-wrappers.o \
+						       $(libm) $(libmvec)
 
 gmp-objs = $(patsubst %,$(common-objpfx)stdlib/%.o,\
 		      add_n sub_n cmp addmul_1 mul_1 mul_n divmod_1 \
