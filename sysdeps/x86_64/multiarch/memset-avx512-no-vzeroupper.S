@@ -18,7 +18,7 @@
 
 #include <sysdep.h>
 
-#if defined HAVE_AVX512_ASM_SUPPORT && IS_IN (libc)
+#if IS_IN (libc)
 
 #include "asm-syntax.h"
 #ifndef MEMSET
@@ -26,7 +26,7 @@
 # define MEMSET_CHK __memset_chk_avx512_no_vzeroupper
 #endif
 
-	.section .text,"ax",@progbits
+	.section .text.avx512,"ax",@progbits
 #if defined PIC
 ENTRY (MEMSET_CHK)
 	cmpq	%rdx, %rcx
