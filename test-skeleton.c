@@ -46,8 +46,9 @@
 #endif
 
 #ifndef TIMEOUT
-  /* Default timeout is two seconds.  */
-# define TIMEOUT 2
+  /* Default timeout is twenty seconds.  Tests should normally complete faster
+     than this, but if they don't, that's abnormal (a bug) anyways.  */
+# define TIMEOUT 20
 #endif
 
 #define OPT_DIRECT 1000
@@ -69,6 +70,61 @@ static pid_t pid;
 /* Directory to place temporary files in.  */
 static const char *test_dir;
 
+static void
+oom_error (const char *fn, size_t size)
+{
+  printf ("%s: unable to allocate %zu bytes: %m\n", fn, size);
+  exit (1);
+}
+
+/* Allocate N bytes of memory dynamically, with error checking.  */
+__attribute__ ((unused))
+static void *
+xmalloc (size_t n)
+{
+  void *p;
+
+  p = malloc (n);
+  if (p == NULL)
+    oom_error ("malloc", n);
+  return p;
+}
+
+/* Allocate memory for N elements of S bytes, with error checking.  */
+__attribute__ ((unused))
+static void *
+xcalloc (size_t n, size_t s)
+{
+  void *p;
+
+  p = calloc (n, s);
+  if (p == NULL)
+    oom_error ("calloc", n * s);
+  return p;
+}
+
+/* Change the size of an allocated block of memory P to N bytes,
+   with error checking.  */
+__attribute__ ((unused))
+static void *
+xrealloc (void *p, size_t n)
+{
+  void *result = realloc (p, n);
+  if (result == NULL && (n > 0 || p == NULL))
+    oom_error ("realloc", n);
+  return result;
+}
+
+/* Write a message to standard output.  Can be used in signal
+   handlers.  */
+static void
+__attribute__ ((unused))
+write_message (const char *message)
+{
+  ssize_t unused __attribute__ ((unused));
+  unused = write (STDOUT_FILENO, message, strlen (message));
+}
+
 /* List of temporary files.  */
 struct temp_name_list
 {
@@ -82,9 +138,9 @@ __attribute__ ((unused))
 add_temp_file (const char *name)
 {
   struct temp_name_list *newp
-    = (struct temp_name_list *) calloc (sizeof (*newp), 1);
+    = (struct temp_name_list *) xcalloc (sizeof (*newp), 1);
   char *newname = strdup (name);
-  if (newp != NULL && newname != NULL)
+  if (newname != NULL)
     {
       newp->name = newname;
       if (temp_name_list == NULL)
@@ -123,13 +179,8 @@ create_temp_file (const char *base, char **filename)
   char *fname;
   int fd;
 
-  fname = (char *) malloc (strlen (test_dir) + 1 + strlen (base)
-			   + sizeof ("XXXXXX"));
-  if (fname == NULL)
-    {
-      puts ("out of memory");
-      return -1;
-    }
+  fname = (char *) xmalloc (strlen (test_dir) + 1 + strlen (base)
+			    + sizeof ("XXXXXX"));
   strcpy (stpcpy (stpcpy (stpcpy (fname, test_dir), "/"), base), "XXXXXX");
 
   fd = mkstemp (fname);
@@ -426,23 +477,6 @@ main (int argc, char *argv[])
       core_limit.rlim_cur = 0;
       core_limit.rlim_max = 0;
       setrlimit (RLIMIT_CORE, &core_limit);
-#endif
-
-#ifdef RLIMIT_DATA
-      /* Try to avoid eating all memory if a test leaks.  */
-      struct rlimit data_limit;
-      if (getrlimit (RLIMIT_DATA, &data_limit) == 0)
-	{
-	  if (TEST_DATA_LIMIT == RLIM_INFINITY)
-	    data_limit.rlim_cur = data_limit.rlim_max;
-	  else if (data_limit.rlim_cur > (rlim_t) TEST_DATA_LIMIT)
-	    data_limit.rlim_cur = MIN ((rlim_t) TEST_DATA_LIMIT,
-				       data_limit.rlim_max);
-	  if (setrlimit (RLIMIT_DATA, &data_limit) < 0)
-	    printf ("setrlimit: RLIMIT_DATA: %m\n");
-	}
-      else
-	printf ("getrlimit: RLIMIT_DATA: %m\n");
 #endif
 
       /* We put the test process in its own pgrp so that if it bogusly

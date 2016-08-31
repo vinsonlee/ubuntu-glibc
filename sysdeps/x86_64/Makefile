@@ -7,6 +7,10 @@ endif
 
 ifeq ($(subdir),gmon)
 sysdep_routines += _mcount
+# We cannot compile _mcount.S with -pg because that would create
+# recursive calls when ENTRY is used.  Just copy the normal static
+# object.
+sysdep_noprof += _mcount
 endif
 
 ifeq ($(subdir),malloc)
@@ -39,11 +43,15 @@ $(objpfx)tst-quad2: $(objpfx)tst-quadmod2.so
 quad-pie-test += tst-quad1pie tst-quad2pie
 tests += $(quad-pie-test)
 tests-pie += $(quad-pie-test)
+test-extras += tst-quadmod1pie tst-quadmod2pie
+extra-test-objs += tst-quadmod1pie.o tst-quadmod2pie.o
 
 $(objpfx)tst-quad1pie: $(objpfx)tst-quadmod1pie.o
 $(objpfx)tst-quad2pie: $(objpfx)tst-quadmod2pie.o
 
 tests += tst-audit3 tst-audit4 tst-audit5 tst-audit6 tst-audit7 tst-audit10
+test-extras += tst-audit4-aux tst-audit10-aux
+extra-test-objs += tst-audit4-aux.o tst-audit10-aux.o
 
 tests += tst-split-dynreloc
 LDFLAGS-tst-split-dynreloc = -Wl,-T,$(..)sysdeps/x86_64/tst-split-dynreloc.lds
@@ -60,7 +68,7 @@ $(objpfx)tst-audit3: $(objpfx)tst-auditmod3a.so
 $(objpfx)tst-audit3.out: $(objpfx)tst-auditmod3b.so
 tst-audit3-ENV = LD_AUDIT=$(objpfx)tst-auditmod3b.so
 
-$(objpfx)tst-audit4: $(objpfx)tst-auditmod4a.so
+$(objpfx)tst-audit4: $(objpfx)tst-audit4-aux.o $(objpfx)tst-auditmod4a.so
 $(objpfx)tst-audit4.out: $(objpfx)tst-auditmod4b.so
 tst-audit4-ENV = LD_AUDIT=$(objpfx)tst-auditmod4b.so
 
@@ -77,12 +85,12 @@ $(objpfx)tst-audit7: $(objpfx)tst-auditmod7a.so
 $(objpfx)tst-audit7.out: $(objpfx)tst-auditmod7b.so
 tst-audit7-ENV = LD_AUDIT=$(objpfx)tst-auditmod7b.so
 
-$(objpfx)tst-audit10: $(objpfx)tst-auditmod10a.so
+$(objpfx)tst-audit10: $(objpfx)tst-audit10-aux.o $(objpfx)tst-auditmod10a.so
 $(objpfx)tst-audit10.out: $(objpfx)tst-auditmod10b.so
 tst-audit10-ENV = LD_AUDIT=$(objpfx)tst-auditmod10b.so
 
 AVX-CFLAGS=-mavx -mno-vzeroupper
-CFLAGS-tst-audit4.c += $(AVX-CFLAGS)
+CFLAGS-tst-audit4-aux.c += $(AVX-CFLAGS)
 CFLAGS-tst-auditmod4a.c += $(AVX-CFLAGS)
 CFLAGS-tst-auditmod4b.c += $(AVX-CFLAGS)
 CFLAGS-tst-auditmod6b.c += $(AVX-CFLAGS)
@@ -90,7 +98,7 @@ CFLAGS-tst-auditmod6c.c += $(AVX-CFLAGS)
 CFLAGS-tst-auditmod7b.c += $(AVX-CFLAGS)
 ifeq (yes,$(config-cflags-avx512))
 AVX512-CFLAGS = -mavx512f
-CFLAGS-tst-audit10.c += $(AVX512-CFLAGS)
+CFLAGS-tst-audit10-aux.c += $(AVX512-CFLAGS)
 CFLAGS-tst-auditmod10a.c += $(AVX512-CFLAGS)
 CFLAGS-tst-auditmod10b.c += $(AVX512-CFLAGS)
 endif
