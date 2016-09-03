@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,10 @@
    protocol PROTOCOL.  If PROTOCOL is zero, one is chosen automatically.
    Returns a file descriptor for the new socket, or -1 for errors.  */
 int
-__socket (int domain, int type, int protocol)
+__socket (domain, type, protocol)
+     int domain;
+     int type;
+     int protocol;
 {
   error_t err;
   socket_t sock, server;
@@ -61,5 +64,4 @@ __socket (int domain, int type, int protocol)
   return _hurd_intern_fd (sock, O_IGNORE_CTTY, 1);
 }
 
-libc_hidden_def (__socket)
 weak_alias (__socket, socket)

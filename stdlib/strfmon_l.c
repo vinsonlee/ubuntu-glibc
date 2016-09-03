@@ -1,5 +1,5 @@
 /* Formatting a monetary value according to the given locale.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -68,6 +68,9 @@
 #define _NL_CURRENT(category, item) \
   (current->values[_NL_ITEM_INDEX (item)].string)
 
+extern int __printf_fp (FILE *, const struct printf_info *,
+			const void *const *);
+libc_hidden_proto (__printf_fp)
 /* This function determines the number of digit groups in the output.
    The definition is in printf_fp.c.  */
 extern unsigned int __guess_grouping (unsigned int intdig_max,
@@ -512,7 +515,7 @@ __vstrfmon_l (char *s, size_t maxsize, __locale_t loc, const char *format,
 #ifdef _IO_MTSAFE_IO
       f._sbf._f._lock = NULL;
 #endif
-      _IO_init_internal (&f._sbf._f, 0);
+      _IO_init (&f._sbf._f, 0);
       _IO_JUMPS (&f._sbf) = &_IO_str_jumps;
       _IO_str_init_static_internal (&f, dest, (s + maxsize) - dest, dest);
       /* We clear the last available byte so we can find out whether
@@ -529,7 +532,7 @@ __vstrfmon_l (char *s, size_t maxsize, __locale_t loc, const char *format,
       info.extra = 1;		/* This means use values from LC_MONETARY.  */
 
       ptr = &fpnum;
-      done = __printf_fp_l (&f._sbf._f, loc, &info, &ptr);
+      done = __printf_fp (&f._sbf._f, &info, &ptr);
       if (done < 0)
 	return -1;
 

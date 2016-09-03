@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1996.
 
@@ -18,12 +18,12 @@
 
 #include <wchar.h>
 
-#ifdef WMEMSET
-# define __wmemset WMEMSET
-#endif
 
 wchar_t *
-__wmemset (wchar_t *s, wchar_t c, size_t n)
+wmemset (s, c, n)
+     wchar_t *s;
+     wchar_t c;
+     size_t n;
 {
   wchar_t *wp = s;
 
@@ -52,6 +52,4 @@ __wmemset (wchar_t *s, wchar_t c, size_t n)
 
   return s;
 }
-libc_hidden_def (__wmemset)
-weak_alias (__wmemset, wmemset)
-libc_hidden_weak (wmemset)
+libc_hidden_def (wmemset)

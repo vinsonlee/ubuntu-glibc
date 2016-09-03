@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 #include <stddef.h>
 #include <hurd/ifsock.h>
 #include <sys/un.h>
-#include "hurd/hurdsocket.h"
+#include <string.h>
 
 /* Give the socket FD the local address ADDR (which is LEN bytes long).  */
 int
@@ -37,11 +37,13 @@ __bind  (int fd, __CONST_SOCKADDR_ARG addrarg, socklen_t len)
 
   if (addr->sun_family == AF_LOCAL)
     {
-      char *name = _hurd_sun_path_dupa (addr, len);
       /* For the local domain, we must create a node in the filesystem
 	 using the ifsock translator and then fetch the address from it.  */
-      file_t dir, node, ifsock;
-      char *n;
+      file_t dir, node;
+      char name[len - offsetof (struct sockaddr_un, sun_path) + 1], *n;
+
+      strncpy (name, addr->sun_path, sizeof name - 1);
+      name[sizeof name - 1] = '\0'; /* Make sure */
 
       dir = __file_name_split (name, &n);
       if (dir == MACH_PORT_NULL)
@@ -61,32 +63,36 @@ __bind  (int fd, __CONST_SOCKADDR_ARG addrarg, socklen_t len)
 				       MACH_MSG_TYPE_COPY_SEND);
 	  if (! err)
 	    {
-	      enum retry_type doretry;
-	      char retryname[1024];
-	      /* Get a port to the ifsock translator.  */
-	      err = __dir_lookup (node, "", 0, 0, &doretry, retryname, &ifsock);
-	      if (! err && (doretry != FS_RETRY_NORMAL || retryname[0] != '\0'))
+	      /* Link the node, now a socket, into the target directory.  */
+	      err = __dir_link (dir, node, n, 1);
+	      if (err == EEXIST)
 		err = EADDRINUSE;
 	    }
+	  __mach_port_deallocate (__mach_task_self (), node);
 	  if (! err)
 	    {
-	      /* Get the address port.  */
-	      err = __ifsock_getsockaddr (ifsock, &aport);
-	      if (err == MIG_BAD_ID || err == EOPNOTSUPP)
-		err = EGRATUITOUS;
-	      if (! err)
+	      /* Get a port to the ifsock translator.  */
+	      file_t ifsock = __file_name_lookup_under (dir, n, 0, 0);
+	      if (ifsock == MACH_PORT_NULL)
 		{
-		  /* Link the node, now a socket with proper mode, into the
-		     target directory.  */
-		  err = __dir_link (dir, node, n, 1);
-		  if (err == EEXIST)
+		  err = errno;
+		  /* If we failed, get rid of the node we created.  */
+		  __dir_unlink (dir, n);
+		}
+	      else
+		{
+		  /* Get the address port.  */
+		  err = __ifsock_getsockaddr (ifsock, &aport);
+		  if (err == MIG_BAD_ID || err == EOPNOTSUPP)
+		    /* We are not talking to /hurd/ifsock.  Probably
+		       someone came in after we linked our node, unlinked
+		       it, and replaced it with a different node, before we
+		       did our lookup.  Treat it as if our link had failed
+		       with EEXIST.  */
 		    err = EADDRINUSE;
-		  if (err)
-		    __mach_port_deallocate (__mach_task_self (), aport);
 		}
 	      __mach_port_deallocate (__mach_task_self (), ifsock);
 	    }
-	  __mach_port_deallocate (__mach_task_self (), node);
 	}
       __mach_port_deallocate (__mach_task_self (), dir);
 

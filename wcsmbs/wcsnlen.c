@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -18,13 +18,12 @@
 
 #include <wchar.h>
 
-#ifdef WCSNLEN
-# define __wcsnlen WCSNLEN
-#endif
 
-/* Return length of string S at most maxlen.  */
+/* Copy SRC to DEST.  */
 size_t
-__wcsnlen (const wchar_t *s, size_t maxlen)
+__wcsnlen (s, maxlen)
+     const wchar_t *s;
+     size_t maxlen;
 {
   size_t len = 0;
 
@@ -45,6 +44,4 @@ __wcsnlen (const wchar_t *s, size_t maxlen)
 
   return len;
 }
-#ifndef WCSNLEN
 weak_alias (__wcsnlen, wcsnlen)
-#endif

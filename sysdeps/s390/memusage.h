@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -15,6 +15,6 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#define GETSP() ({ register uintptr_t stack_ptr __asm__ ("15"); stack_ptr; })
+#define GETSP() ({ register uintptr_t stack_ptr asm ("15"); stack_ptr; })
 
 #include <sysdeps/generic/memusage.h>

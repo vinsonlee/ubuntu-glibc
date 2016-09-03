@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -22,8 +22,11 @@
 /* Perform user-defined atomical operation of array of semaphores.  */
 
 int
-semtimedop (int semid, struct sembuf *sops, size_t nsops,
-	    const struct timespec *timeout)
+semtimedop (semid, sops, nsops, timeout)
+     int semid;
+     struct sembuf *sops;
+     size_t nsops;
+     const struct timespec *timeout;
 {
   __set_errno (ENOSYS);
   return -1;

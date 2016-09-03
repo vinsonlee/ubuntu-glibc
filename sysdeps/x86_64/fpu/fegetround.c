@@ -1,5 +1,5 @@
 /* Return current rounding direction.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -20,7 +20,7 @@
 #include <fenv.h>
 
 int
-__fegetround (void)
+fegetround (void)
 {
   int cw;
   /* We only check the x87 FPU unit.  The SSE unit should be the same
@@ -30,6 +30,4 @@ __fegetround (void)
 
   return cw & 0xc00;
 }
-libm_hidden_def (__fegetround)
-weak_alias (__fegetround, fegetround)
-libm_hidden_weak (fegetround)
+libm_hidden_def (fegetround)

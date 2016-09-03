@@ -64,6 +64,11 @@
  * SOFTWARE.
  */
 
+#if defined(LIBC_SCCS) && !defined(lint)
+static const char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
+static const char rcsid[] = "$BINDId: res_mkquery.c,v 8.12 1999/10/13 16:39:40 vixie Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <netinet/in.h>
@@ -77,10 +82,12 @@
 /* Options.  Leave them on. */
 /* #define DEBUG */
 
-#include <hp-timing.h>
-#include <stdint.h>
-#if HP_TIMING_AVAIL
-# define RANDOM_BITS(Var) { uint64_t v64; HP_TIMING_NOW (v64); Var = v64; }
+#ifdef _LIBC
+# include <hp-timing.h>
+# include <stdint.h>
+# if HP_TIMING_AVAIL
+#  define RANDOM_BITS(Var) { uint64_t v64; HP_TIMING_NOW (v64); Var = v64; }
+# endif
 #endif
 
 /*
@@ -173,7 +180,7 @@ res_nmkquery(res_state statp,
 		n = ns_name_compress((char *)data, cp, buflen,
 				     (const u_char **) dnptrs,
 				     (const u_char **) lastdnptr);
-		if (__glibc_unlikely (n < 0))
+		if (__builtin_expect (n < 0, 0))
 			return (-1);
 		cp += n;
 		buflen -= n;
@@ -188,7 +195,7 @@ res_nmkquery(res_state statp,
 		/*
 		 * Initialize answer section
 		 */
-		if (__glibc_unlikely (buflen < 1 + RRFIXEDSZ + datalen))
+		if (__builtin_expect (buflen < 1 + RRFIXEDSZ + datalen, 0))
 			return (-1);
 		*cp++ = '\0';	/* no domain name */
 		NS_PUT16 (type, cp);

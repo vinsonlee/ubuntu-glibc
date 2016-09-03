@@ -1,5 +1,5 @@
 /* Startup code compliant to the ELF x86-64 ABI.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 2001.
 
@@ -55,7 +55,11 @@
 
 #include <sysdep.h>
 
-ENTRY (_start)
+	.text
+	.globl _start
+	.type _start,@function
+_start:
+	cfi_startproc
 	/* Clearing frame pointer is insufficient, use CFI.  */
 	cfi_undefined (rip)
 	/* Clear the frame pointer.  The ABI suggests this be done, to mark
@@ -102,25 +106,24 @@ ENTRY (_start)
 	mov __libc_csu_init@GOTPCREL(%rip), %RCX_LP
 
 	mov main@GOTPCREL(%rip), %RDI_LP
+
+	/* Call the user's main function, and exit with its value.
+	   But let the libc call main.	  */
+	call __libc_start_main@PLT
 #else
 	/* Pass address of our own entry points to .fini and .init.  */
 	mov $__libc_csu_fini, %R8_LP
 	mov $__libc_csu_init, %RCX_LP
 
 	mov $main, %RDI_LP
-#endif
 
 	/* Call the user's main function, and exit with its value.
-	   But let the libc call main.  Since __libc_start_main in
-	   libc.so is called very early, lazy binding isn't relevant
-	   here.  Use indirect branch via GOT to avoid extra branch
-	   to PLT slot.  In case of static executable, ld in binutils
-	   2.26 or above can convert indirect branch into direct
-	   branch.  */
-	call *__libc_start_main@GOTPCREL(%rip)
+	   But let the libc call main.	  */
+	call __libc_start_main
+#endif
 
 	hlt			/* Crash if somehow `exit' does return.	 */
-END (_start)
+	cfi_endproc
 
 /* Define a symbol for the first piece of initialized data.  */
 	.data

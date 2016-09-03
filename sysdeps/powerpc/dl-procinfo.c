@@ -1,5 +1,5 @@
 /* Data for processor capability information.  PowerPC version.
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -45,12 +45,11 @@
 #if !defined PROCINFO_DECL && defined SHARED
   ._dl_powerpc_cap_flags
 #else
-PROCINFO_CLASS const char _dl_powerpc_cap_flags[64][10]
+PROCINFO_CLASS const char _dl_powerpc_cap_flags[57][10]
 #endif
 #ifndef PROCINFO_DECL
 = {
-    "ppcle", "true_le", "", "",
-    "", "", "archpmu", "vsx",
+    "vsx",
     "arch_2_06", "power6x", "dfp", "pa6t",
     "arch_2_05", "ic_snoop", "smt", "booke",
     "cellbe", "power5+", "power5", "power4",
@@ -62,8 +61,8 @@ PROCINFO_CLASS const char _dl_powerpc_cap_flags[64][10]
     "", "", "", "",
     "", "", "", "",
     "", "", "", "",
-    "", "", "ieee128", "arch_3_00",
-    "htm-nosc", "vcrypto", "tar", "isel",
+    "", "", "", "",
+    "", "", "tar", "isel",
     "ebb", "dscr", "htm", "arch_2_07",
   }
 #endif
@@ -76,7 +75,7 @@ PROCINFO_CLASS const char _dl_powerpc_cap_flags[64][10]
 #if !defined PROCINFO_DECL && defined SHARED
   ._dl_powerpc_platforms
 #else
-PROCINFO_CLASS const char _dl_powerpc_platforms[15][12]
+PROCINFO_CLASS const char _dl_powerpc_platforms[14][12]
 #endif
 #ifndef PROCINFO_DECL
 = {
@@ -94,7 +93,6 @@ PROCINFO_CLASS const char _dl_powerpc_platforms[15][12]
     [PPC_PLATFORM_PPC464] = "ppc464",
     [PPC_PLATFORM_PPC476] = "ppc476",
     [PPC_PLATFORM_POWER8] = "power8",
-    [PPC_PLATFORM_POWER9] = "power9"
   }
 #endif
 #if !defined SHARED || defined PROCINFO_DECL

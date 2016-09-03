@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,8 +22,6 @@
 /* Flags for eventfd.  */
 enum
   {
-    EFD_SEMAPHORE = 0x000001,
-#define EFD_SEMAPHORE EFD_SEMAPHORE
     EFD_CLOEXEC = 0x400000,
 #define EFD_CLOEXEC EFD_CLOEXEC
     EFD_NONBLOCK = 0x004000

@@ -1,5 +1,5 @@
 /* memset with SSE2 and REP string.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -17,7 +17,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 
 #include <sysdep.h>
 #include "asm-syntax.h"
@@ -79,7 +79,7 @@
 #endif
 
 	.section .text.sse2,"ax",@progbits
-#if defined SHARED && IS_IN (libc) && !defined USE_AS_BZERO
+#if defined SHARED && !defined NOT_IN_libc && !defined USE_AS_BZERO
 ENTRY (__memset_chk_sse2_rep)
 	movl	12(%esp), %eax
 	cmpl	%eax, 16(%esp)

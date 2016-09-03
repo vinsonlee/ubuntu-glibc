@@ -102,3 +102,8 @@ long double __scalbnl (long double x, int n)
 	x = ldbl_pack (xhi, xlo);
 	return x*twolm54;
 }
+#ifdef IS_IN_libm
+long_double_symbol (libm, __scalbnl, scalbnl);
+#else
+long_double_symbol (libc, __scalbnl, scalbnl);
+#endif

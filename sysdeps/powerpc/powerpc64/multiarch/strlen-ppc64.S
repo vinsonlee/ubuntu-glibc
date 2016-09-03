@@ -1,5 +1,5 @@
 /* Default strlen implementation for PowerPC64.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
 
 #include <sysdep.h>
 
-#if defined SHARED && IS_IN (libc)
+#if defined SHARED && !defined NOT_IN_libc
 # undef ENTRY
 # define ENTRY(name)						\
   .section ".text";						\
@@ -35,7 +35,8 @@
   END_2(__strlen_ppc)
 
 # undef libc_hidden_builtin_def
-# define libc_hidden_builtin_def(name)
+# define libc_hidden_builtin_def(name)				\
+    .globl __GI_strlen; __GI_strlen = __strlen_ppc
 #endif
 
 #include <sysdeps/powerpc/powerpc64/strlen.S>

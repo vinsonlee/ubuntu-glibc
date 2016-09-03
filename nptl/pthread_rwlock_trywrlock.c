@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -19,19 +19,12 @@
 #include <errno.h>
 #include "pthreadP.h"
 #include <lowlevellock.h>
-#include <elide.h>
 
 
 int
 __pthread_rwlock_trywrlock (pthread_rwlock_t *rwlock)
 {
   int result = EBUSY;
-
-  if (ELIDE_TRYLOCK (rwlock->__data.__rwelision,
-		     rwlock->__data.__lock == 0
-		     && rwlock->__data.__nr_readers == 0
-		     && rwlock->__data.__writer, 1))
-    return 0;
 
   lll_lock (rwlock->__data.__lock, rwlock->__data.__shared);
 

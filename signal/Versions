@@ -49,6 +49,4 @@ libc {
     # Needed to provide a pointer to the XPG sigpause function.
     __xpg_sigpause;
   }
-  GLIBC_2.21 {
-  }
 }

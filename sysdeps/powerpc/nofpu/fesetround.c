@@ -1,5 +1,5 @@
 /* Set rounding mode (soft-float edition).
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez <aldyh@redhat.com>, 2002.
    This file is part of the GNU C Library.
 
@@ -21,7 +21,7 @@
 #include "soft-supp.h"
 
 int
-__fesetround (int round)
+fesetround (int round)
 {
   if ((unsigned int) round > FE_DOWNWARD)
     return 1;
@@ -31,6 +31,4 @@ __fesetround (int round)
 
   return 0;
 }
-libm_hidden_def (__fesetround)
-weak_alias (__fesetround, fesetround)
-libm_hidden_weak (fesetround)
+libm_hidden_def (fesetround)

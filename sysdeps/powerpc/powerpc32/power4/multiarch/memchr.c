@@ -1,5 +1,5 @@
 /* Multiple versions of memchr.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,26 +16,23 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#if IS_IN (libc)
-# undef memchr
-/* Redefine memchr so that the compiler won't make the weak_alias point
-   to internal hidden definition (__GI_memchr), since PPC32 does not
-   support local IFUNC calls.  */
-# define memchr __redirect_memchr
+#ifndef NOT_IN_libc
 # include <string.h>
+# include <shlib-compat.h>
 # include "init-arch.h"
 
-extern __typeof (__redirect_memchr) __memchr_ppc attribute_hidden;
-extern __typeof (__redirect_memchr) __memchr_power7 attribute_hidden;
+extern __typeof (__memchr) __memchr_ppc attribute_hidden;
+extern __typeof (__memchr) __memchr_power7 attribute_hidden;
 
-extern __typeof (__redirect_memchr) __libc_memchr;
-
-libc_ifunc (__libc_memchr,
+/* Avoid DWARF definition DIE on ifunc symbol so that GDB can handle
+   ifunc symbol properly.  */
+libc_ifunc (__memchr,
 	    (hwcap & PPC_FEATURE_HAS_VSX)
             ? __memchr_power7
             : __memchr_ppc);
-#undef memchr
-weak_alias (__libc_memchr, memchr)
+
+weak_alias (__memchr, memchr)
+libc_hidden_builtin_def (memchr)
 #else
 #include <string/memchr.c>
 #endif

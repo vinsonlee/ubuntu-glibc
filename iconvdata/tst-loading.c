@@ -1,5 +1,5 @@
 /* Tests for loading and unloading of iconv modules.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
@@ -114,8 +114,8 @@ static const char inbuf[] =
 "     function.  Later modifications of the variable have no effect.\n";
 
 
-static int
-do_test (void)
+int
+main (void)
 {
   size_t count = TEST_ROUNDS;
   int result = 0;
@@ -180,7 +180,3 @@ do_test (void)
 
   return result;
 }
-
-#define TIMEOUT 10
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

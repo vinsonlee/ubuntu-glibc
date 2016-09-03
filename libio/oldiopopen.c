@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Per Bothner <bothner@cygnus.com>.
 
@@ -115,7 +115,10 @@ unlock (void *not_used)
 
 _IO_FILE *
 attribute_compat_text_section
-_IO_old_proc_open (_IO_FILE *fp, const char *command, const char *mode)
+_IO_old_proc_open (fp, command, mode)
+     _IO_FILE *fp;
+     const char *command;
+     const char *mode;
 {
   volatile int read_or_write;
   volatile int parent_end, child_end;
@@ -191,7 +194,9 @@ _IO_old_proc_open (_IO_FILE *fp, const char *command, const char *mode)
 
 _IO_FILE *
 attribute_compat_text_section
-_IO_old_popen (const char *command, const char *mode)
+_IO_old_popen (command, mode)
+     const char *command;
+     const char *mode;
 {
   struct locked_FILE
   {
@@ -210,8 +215,8 @@ _IO_old_popen (const char *command, const char *mode)
 #endif
   fp = &new_f->fpx.file.file._file;
   _IO_old_init (fp, 0);
-  _IO_JUMPS_FILE_plus (&new_f->fpx.file) = &_IO_old_proc_jumps;
-  _IO_old_file_init_internal ((struct _IO_FILE_plus *) &new_f->fpx.file);
+  _IO_JUMPS ((struct _IO_FILE_plus *) &new_f->fpx.file) = &_IO_old_proc_jumps;
+  _IO_old_file_init ((struct _IO_FILE_plus *) &new_f->fpx.file);
 #if  !_IO_UNIFIED_JUMPTABLES
   new_f->fpx.file.vtable = NULL;
 #endif
@@ -224,7 +229,8 @@ _IO_old_popen (const char *command, const char *mode)
 
 int
 attribute_compat_text_section
-_IO_old_proc_close (_IO_FILE *fp)
+_IO_old_proc_close (fp)
+     _IO_FILE *fp;
 {
   /* This is not name-space clean. FIXME! */
   int wstatus;
@@ -267,7 +273,7 @@ _IO_old_proc_close (_IO_FILE *fp)
   return wstatus;
 }
 
-const struct _IO_jump_t _IO_old_proc_jumps libio_vtable = {
+const struct _IO_jump_t _IO_old_proc_jumps = {
   JUMP_INIT_DUMMY,
   JUMP_INIT(finish, _IO_old_file_finish),
   JUMP_INIT(overflow, _IO_old_file_overflow),

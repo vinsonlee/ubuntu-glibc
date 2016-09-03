@@ -1,5 +1,5 @@
 /* Measure string and memory functions.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <sys/cdefs.h>
+#define TEST_IFUNC 1
 
 typedef struct
 {
@@ -56,9 +57,7 @@ extern impl_t __start_impls[], __stop_impls[];
 
 
 # define TEST_FUNCTION test_main ()
-# ifndef TIMEOUT
-#  define TIMEOUT (4 * 60)
-# endif
+# define TIMEOUT (4 * 60)
 # define OPT_ITERATIONS 10000
 # define OPT_RANDOM 10001
 # define OPT_SEED 10002
@@ -69,6 +68,8 @@ unsigned char *buf1, *buf2;
 int ret, do_srandom;
 unsigned int seed;
 size_t page_size;
+
+hp_timing_t _dl_hp_timing_overhead;
 
 # ifndef ITERATIONS
 size_t iterations = 100000;
@@ -108,7 +109,7 @@ size_t iterations = 100000;
 # define CALL(impl, ...)	\
     (* (proto_t) (impl)->fn) (__VA_ARGS__)
 
-# ifdef TEST_NAME
+# if defined TEST_IFUNC && defined TEST_NAME
 /* Increase size of FUNC_LIST if assert is triggered at run-time.  */
 static struct libc_ifunc_impl func_list[32];
 static int func_count;
@@ -154,11 +155,11 @@ static impl_t *impl_array;
      impl = impl_array;							      \
      for (count = 0; count < impl_count; ++count, ++impl)		      \
        if (!notall || impl->test)
-# else /* !TEST_NAME */
+# else /* ! (defined TEST_IFUNC && defined TEST_NAME) */
 #  define FOR_EACH_IMPL(impl, notall) \
      for (impl_t *impl = __start_impls; impl < __stop_impls; ++impl)	      \
        if (!notall || impl->test)
-# endif /* !TEST_NAME */
+# endif /* ! (defined TEST_IFUNC && defined TEST_NAME) */
 
 # ifndef BUF1PAGES
 #  define BUF1PAGES 1
@@ -167,7 +168,7 @@ static impl_t *impl_array;
 static void
 test_init (void)
 {
-# ifdef TEST_NAME
+# if defined TEST_IFUNC && defined TEST_NAME
   func_count = __libc_ifunc_impl_list (TEST_NAME, func_list,
 				       (sizeof func_list
 					/ sizeof func_list[0]));

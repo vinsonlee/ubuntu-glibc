@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,8 @@
 
 /* Change the current directory to FILE_NAME.  */
 int
-__chdir (const char *file_name)
+__chdir (file_name)
+     const char *file_name;
 {
   return _hurd_change_directory_port_from_name (&_hurd_ports[INIT_PORT_CWDIR],
 						file_name);

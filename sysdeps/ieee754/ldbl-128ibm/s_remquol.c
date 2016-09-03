@@ -1,5 +1,5 @@
 /* Compute remainder and a congruent to the quotient.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997 and
 		  Jakub Jelinek <jj@ultra.linux.cz>, 1999.
@@ -43,9 +43,7 @@ __remquol (long double x, long double y, int *quo)
   EXTRACT_WORDS64 (ly, ylo);
   sx = hx & 0x8000000000000000ULL;
   qs = sx ^ (hy & 0x8000000000000000ULL);
-  ly ^= hy & 0x8000000000000000ULL;
   hy &= 0x7fffffffffffffffLL;
-  lx ^= sx;
   hx &= 0x7fffffffffffffffLL;
 
   /* Purge off exception values.  */
@@ -68,12 +66,12 @@ __remquol (long double x, long double y, int *quo)
   y  = fabsl (y);
   cquo = 0;
 
-  if (hy <= 0x7fcfffffffffffffLL && x >= 4 * y)
+  if (x >= 4 * y)
     {
       x -= 4 * y;
       cquo += 4;
     }
-  if (hy <= 0x7fdfffffffffffffLL && x >= 2 * y)
+  if (x >= 2 * y)
     {
       x -= 2 * y;
       cquo += 2;
@@ -109,9 +107,6 @@ __remquol (long double x, long double y, int *quo)
 
   *quo = qs ? -cquo : cquo;
 
-  /* Ensure correct sign of zero result in round-downward mode.  */
-  if (x == 0.0L)
-    x = 0.0L;
   if (sx)
     x = -x;
   return x;

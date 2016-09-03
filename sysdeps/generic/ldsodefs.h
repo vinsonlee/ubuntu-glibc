@@ -1,5 +1,5 @@
 /* Run-time dynamic linker data structures for loaded ELF shared objects.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,9 +35,10 @@
 #include <link.h>
 #include <dl-lookupcfg.h>
 #include <dl-sysdep.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <hp-timing.h>
 #include <tls.h>
+#include <kernel-features.h>
 
 __BEGIN_DECLS
 
@@ -88,22 +89,11 @@ typedef struct link_map *lookup_t;
        || (ADDR) < (L)->l_addr + (SYM)->st_value + (SYM)->st_size)	\
    && ((MATCHSYM) == NULL || (MATCHSYM)->st_value < (SYM)->st_value))
 
-/* According to the ELF gABI no STV_HIDDEN or STV_INTERNAL symbols are
-   expected to be present in dynamic symbol tables as they should have
-   been either removed or converted to STB_LOCAL binding by the static
-   linker.  However some GNU binutils versions produce such symbols in
-   some cases.  To prevent such symbols present in a buggy binary from
-   preempting global symbols we filter them out with this predicate.  */
-static __always_inline bool
-dl_symbol_visibility_binds_local_p (const ElfW(Sym) *sym)
-{
-  return (ELFW(ST_VISIBILITY) (sym->st_other) == STV_HIDDEN
-	  || ELFW(ST_VISIBILITY) (sym->st_other) == STV_INTERNAL);
-}
-
 /* Unmap a loaded object, called by _dl_close (). */
 #ifndef DL_UNMAP_IS_SPECIAL
-# define DL_UNMAP(map)	_dl_unmap_segments (map)
+# define DL_UNMAP(map) \
+ __munmap ((void *) (map)->l_map_start,					      \
+	   (map)->l_map_end - (map)->l_map_start)
 #endif
 
 /* By default we do not need special support to initialize DSOs loaded
@@ -118,22 +108,12 @@ dl_symbol_visibility_binds_local_p (const ElfW(Sym) *sym)
    satisfied by any symbol in the executable.  Some architectures do
    not support copy relocations.  In this case we define the macro to
    zero so that the code for handling them gets automatically optimized
-   out.  ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA means address of protected
-   data defined in the shared library may be external, i.e., due to copy
-   relocation.  */
+   out.  */
 #define ELF_RTYPE_CLASS_PLT 1
 #ifndef DL_NO_COPY_RELOCS
 # define ELF_RTYPE_CLASS_COPY 2
 #else
 # define ELF_RTYPE_CLASS_COPY 0
-#endif
-/* If DL_EXTERN_PROTECTED_DATA is defined, address of protected data
-   defined in the shared library may be external, i.e., due to copy
-   relocation.   */
-#ifdef DL_EXTERN_PROTECTED_DATA
-# define ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA 4
-#else
-# define ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA 0
 #endif
 
 /* ELF uses the PF_x macros to specify the segment permissions, mmap
@@ -248,11 +228,11 @@ struct audit_ifaces
 
 /* Test whether given NAME matches any of the names of the given object.  */
 extern int _dl_name_match_p (const char *__name, const struct link_map *__map)
-     internal_function attribute_hidden;
+     internal_function;
 
 /* Compute next higher prime number.  */
 extern unsigned long int _dl_higher_prime_number (unsigned long int n)
-     internal_function attribute_hidden;
+     internal_function;
 
 /* Function used as argument for `_dl_receive_error' function.  The
    arguments are the error code, error string, and the objname the
@@ -273,7 +253,7 @@ typedef void (*receiver_fct) (int, const char *, const char *);
 # define GL(name) _##name
 #else
 # define EXTERN
-# if IS_IN (rtld)
+# ifdef IS_IN_rtld
 #  define GL(name) _rtld_local._##name
 # else
 #  define GL(name) _rtld_global._##name
@@ -342,7 +322,7 @@ struct rtld_global
   /* The object to be initialized first.  */
   EXTERN struct link_map *_dl_initfirst;
 
-#if HP_SMALL_TIMING_AVAIL
+#if HP_TIMING_AVAIL || HP_SMALL_TIMING_AVAIL
   /* Start time on CPU clock.  */
   EXTERN hp_timing_t _dl_cpuclock_offset;
 #endif
@@ -432,7 +412,7 @@ struct rtld_global
 #ifdef SHARED
 };
 # define __rtld_global_attribute__
-# if IS_IN (rtld)
+# ifdef IS_IN_rtld
 #  ifdef HAVE_SDATA_SECTION
 #   define __rtld_local_attribute__ \
 	    __attribute__ ((visibility ("hidden"), section (".sdata")))
@@ -451,7 +431,7 @@ extern struct rtld_global _rtld_global __rtld_global_attribute__;
 #ifndef SHARED
 # define GLRO(name) _##name
 #else
-# if IS_IN (rtld)
+# ifdef IS_IN_rtld
 #  define GLRO(name) _rtld_local_ro._##name
 # else
 #  define GLRO(name) _rtld_global_ro._##name
@@ -522,10 +502,8 @@ struct rtld_global_ro
   /* Mask for important hardware capabilities we honour. */
   EXTERN uint64_t _dl_hwcap_mask;
 
-#ifdef HAVE_AUX_VECTOR
   /* Pointer to the auxv list supplied to the program at startup.  */
   EXTERN ElfW(auxv_t) *_dl_auxv;
-#endif
 
   /* Get architecture specific definitions.  */
 #define PROCINFO_DECL
@@ -556,6 +534,11 @@ struct rtld_global_ro
 
   /* All search directories defined at startup.  */
   EXTERN struct r_search_path_elem *_dl_init_all_dirs;
+
+#if HP_TIMING_AVAIL || HP_SMALL_TIMING_AVAIL
+  /* Overhead of a high-precision timing measurement.  */
+  EXTERN hp_timing_t _dl_hp_timing_overhead;
+#endif
 
 #ifdef NEED_DL_SYSINFO
   /* Syscall handling improvements.  This is very specific to x86.  */
@@ -607,9 +590,12 @@ struct rtld_global_ro
   /* List of auditing interfaces.  */
   struct audit_ifaces *_dl_audit;
   unsigned int _dl_naudit;
+
+  /* 0 if internal pointer values should not be guarded, 1 if they should.  */
+  EXTERN int _dl_pointer_guard;
 };
 # define __rtld_global_attribute__
-# if IS_IN (rtld)
+# ifdef IS_IN_rtld
 #  define __rtld_local_attribute__ __attribute__ ((visibility ("hidden")))
 extern struct rtld_global_ro _rtld_local_ro
     attribute_relro __rtld_local_attribute__;
@@ -632,7 +618,7 @@ extern const ElfW(Phdr) *_dl_phdr;
 extern size_t _dl_phnum;
 #endif
 
-#if IS_IN (rtld)
+#ifdef IS_IN_rtld
 /* This is the initial value of GL(dl_error_catch_tsd).
    A non-TLS libpthread will change it.  */
 extern void **_dl_initial_error_catch_tsd (void) __attribute__ ((const))
@@ -663,8 +649,7 @@ extern char **_dl_argv
      attribute_relro
 #endif
      ;
-rtld_hidden_proto (_dl_argv)
-#if IS_IN (rtld)
+#ifdef IS_IN_rtld
 extern unsigned int _dl_skip_args attribute_hidden
 # ifndef DL_ARGV_NOT_RELRO
      attribute_relro
@@ -675,13 +660,22 @@ extern unsigned int _dl_skip_args_internal attribute_hidden
      attribute_relro
 # endif
      ;
+extern char **_dl_argv_internal attribute_hidden
+# ifndef DL_ARGV_NOT_RELRO
+     attribute_relro
+# endif
+     ;
+# define rtld_progname (INTUSE(_dl_argv)[0])
+#else
+# define rtld_progname _dl_argv[0]
 #endif
-#define rtld_progname _dl_argv[0]
 
 /* Flag set at startup and cleared when the last initializer has run.  */
 extern int _dl_starting_up;
 weak_extern (_dl_starting_up)
-rtld_hidden_proto (_dl_starting_up)
+#ifdef IS_IN_rtld
+extern int _dl_starting_up_internal attribute_hidden;
+#endif
 
 /* Random data provided by the kernel.  */
 extern void *_dl_random attribute_hidden attribute_relro;
@@ -700,7 +694,7 @@ extern void _dl_debug_printf (const char *fmt, ...)
    interpreted as for a `printf' call.  All the lines buf the first
    start with a tag showing the PID.  */
 extern void _dl_debug_printf_c (const char *fmt, ...)
-     __attribute__ ((__format__ (__printf__, 1, 2))) attribute_hidden;
+     __attribute__ ((__format__ (__printf__, 1, 2)));
 
 
 /* Write a message on the specified descriptor FD.  The parameters are
@@ -743,7 +737,7 @@ extern void _dl_signal_error (int errcode, const char *object,
    _dl_receive_error.  */
 extern void _dl_signal_cerror (int errcode, const char *object,
 			       const char *occation, const char *errstring)
-     internal_function attribute_hidden;
+     internal_function;
 
 /* Call OPERATE, receiving errors from `dl_signal_cerror'.  Unlike
    `_dl_catch_error' the operation is resumed after the OPERATE
@@ -751,20 +745,8 @@ extern void _dl_signal_cerror (int errcode, const char *object,
    ARGS is passed as argument to OPERATE.  */
 extern void _dl_receive_error (receiver_fct fct, void (*operate) (void *),
 			       void *args)
-     internal_function attribute_hidden;
+     internal_function;
 
-/* Call OPERATE, catching errors from `dl_signal_error'.  If there is no
-   error, *ERRSTRING is set to null.  If there is an error, *ERRSTRING is
-   set to a string constructed from the strings passed to _dl_signal_error,
-   and the error code passed is the return value and *OBJNAME is set to
-   the object name which experienced the problems.  ERRSTRING if nonzero
-   points to a malloc'ed string which the caller has to free after use.
-   ARGS is passed as argument to OPERATE.  MALLOCEDP is set to true only
-   if the returned string is allocated using the libc's malloc.  */
-extern int _dl_catch_error (const char **objname, const char **errstring,
-			    bool *mallocedp, void (*operate) (void *),
-			    void *args)
-     internal_function attribute_hidden;
 
 /* Open the shared object NAME and map in its segments.
    LOADER's DT_RPATH is used in searching for NAME.
@@ -862,25 +844,24 @@ extern void _dl_protect_relro (struct link_map *map)
    PLT is nonzero if this was a PLT reloc; it just affects the message.  */
 extern void _dl_reloc_bad_type (struct link_map *map,
 				unsigned int type, int plt)
-     internal_function attribute_hidden __attribute__ ((__noreturn__));
+     internal_function __attribute__ ((__noreturn__));
 
 /* Resolve conflicts if prelinking.  */
 extern void _dl_resolve_conflicts (struct link_map *l,
 				   ElfW(Rela) *conflict,
-				   ElfW(Rela) *conflictend)
-     attribute_hidden;
+				   ElfW(Rela) *conflictend);
 
 /* Check the version dependencies of all objects available through
    MAP.  If VERBOSE print some more diagnostics.  */
 extern int _dl_check_all_versions (struct link_map *map, int verbose,
 				   int trace_mode)
-     internal_function attribute_hidden;
+     internal_function;
 
 /* Check the version dependencies for MAP.  If VERBOSE print some more
    diagnostics.  */
 extern int _dl_check_map_versions (struct link_map *map, int verbose,
 				   int trace_mode)
-     internal_function attribute_hidden;
+     internal_function;
 
 /* Initialize the object in SCOPE by calling the constructors with
    ARGC, ARGV, and ENV as the parameters.  */
@@ -894,7 +875,7 @@ extern void _dl_fini (void) internal_function;
 /* Sort array MAPS according to dependencies of the contained objects.  */
 extern void _dl_sort_fini (struct link_map **maps, size_t nmaps, char *used,
 			   Lmid_t ns)
-     internal_function attribute_hidden;
+     internal_function;
 
 /* The dynamic linker calls this function before and having changing
    any shared object mappings.  The `r_state' member of `struct r_debug'
@@ -907,11 +888,10 @@ rtld_hidden_proto (_dl_debug_state)
    argument is the run-time load address of the dynamic linker, to be put
    in the `r_ldbase' member.  Returns the address of the structure.  */
 extern struct r_debug *_dl_debug_initialize (ElfW(Addr) ldbase, Lmid_t ns)
-     internal_function attribute_hidden;
+     internal_function;
 
 /* Initialize the basic data structure for the search paths.  */
-extern void _dl_init_paths (const char *library_path)
-     internal_function attribute_hidden;
+extern void _dl_init_paths (const char *library_path) internal_function;
 
 /* Gather the information needed to install the profiling tables and start
    the timers.  */
@@ -919,7 +899,8 @@ extern void _dl_start_profile (void) internal_function attribute_hidden;
 
 /* The actual functions used to keep book on the calls.  */
 extern void _dl_mcount (ElfW(Addr) frompc, ElfW(Addr) selfpc);
-rtld_hidden_proto (_dl_mcount)
+extern void _dl_mcount_internal (ElfW(Addr) frompc, ElfW(Addr) selfpc)
+     attribute_hidden;
 
 /* This function is simply a wrapper around the _dl_mcount function
    which does not require a FROMPC parameter since this is the
@@ -927,25 +908,23 @@ rtld_hidden_proto (_dl_mcount)
 extern void _dl_mcount_wrapper (void *selfpc);
 
 /* Show the members of the auxiliary array passed up from the kernel.  */
-extern void _dl_show_auxv (void)
-     internal_function attribute_hidden;
+extern void _dl_show_auxv (void) internal_function;
 
 /* Return all environment variables starting with `LD_', one after the
    other.  */
-extern char *_dl_next_ld_env_entry (char ***position)
-     internal_function attribute_hidden;
+extern char *_dl_next_ld_env_entry (char ***position) internal_function;
 
 /* Return an array with the names of the important hardware capabilities.  */
 extern const struct r_strlenpair *_dl_important_hwcaps (const char *platform,
 							size_t paltform_len,
 							size_t *sz,
 							size_t *max_capstrlen)
-     internal_function attribute_hidden;
+     internal_function;
 
 /* Look up NAME in ld.so.cache and return the file name stored there,
-   or null if none is found.  Caller must free returned string.  */
-extern char *_dl_load_cache_lookup (const char *name)
-     internal_function attribute_hidden;
+   or null if none is found.  */
+extern const char *_dl_load_cache_lookup (const char *name)
+     internal_function;
 
 /* If the system does not support MAP_COPY we cannot leave the file open
    all the time since this would create problems when the file is replaced.
@@ -977,9 +956,6 @@ extern void _dl_sysdep_start_cleanup (void)
 
 /* Determine next available module ID.  */
 extern size_t _dl_next_tls_modid (void) internal_function attribute_hidden;
-
-/* Count the modules with TLS segments.  */
-extern size_t _dl_count_modids (void) internal_function attribute_hidden;
 
 /* Calculate offset of the TLS blocks in the static TLS block.  */
 extern void _dl_determine_tlsoffset (void) internal_function attribute_hidden;
@@ -1045,8 +1021,7 @@ extern void _dl_add_to_slotinfo (struct link_map  *l) attribute_hidden;
 
 /* Update slot information data for at least the generation of the
    module with the given index.  */
-extern struct link_map *_dl_update_slotinfo (unsigned long int req_modid)
-     attribute_hidden;
+extern struct link_map *_dl_update_slotinfo (unsigned long int req_modid);
 
 /* Look up the module's TLS block as for __tls_get_addr,
    but never touch anything.  Return null if it's not allocated yet.  */
@@ -1056,8 +1031,7 @@ extern int _dl_addr_inside_object (struct link_map *l, const ElfW(Addr) addr)
      internal_function attribute_hidden;
 
 /* Show show of an object.  */
-extern void _dl_show_scope (struct link_map *new, int from)
-     attribute_hidden;
+extern void _dl_show_scope (struct link_map *new, int from);
 
 extern struct link_map *_dl_find_dso_for_object (const ElfW(Addr) addr)
      internal_function;

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -37,8 +37,14 @@ static int getttyname_r (int fd, char *buf, size_t buflen,
 
 static int
 internal_function
-getttyname_r (int fd, char *buf, size_t buflen, dev_t mydev, ino_t myino,
-	      int save, int *dostat)
+getttyname_r (fd, buf, buflen, mydev, myino, save, dostat)
+     int fd;
+     char *buf;
+     size_t buflen;
+     dev_t mydev;
+     ino_t myino;
+     int save;
+     int *dostat;
 {
   struct stat st;
   DIR *dirstream;
@@ -95,7 +101,10 @@ getttyname_r (int fd, char *buf, size_t buflen, dev_t mydev, ino_t myino,
 /* Store at most BUFLEN character of the pathname of the terminal FD is
    open on in BUF.  Return 0 on success,  otherwise an error number.  */
 int
-__ttyname_r (int fd, char *buf, size_t buflen)
+__ttyname_r (fd, buf, buflen)
+     int fd;
+     char *buf;
+     size_t buflen;
 {
   struct stat st;
   int dostat = 0;

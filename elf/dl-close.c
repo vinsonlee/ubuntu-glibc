@@ -1,5 +1,5 @@
 /* Close a shared object opened by `_dl_open'.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,15 +25,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <ldsodefs.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sysdep-cancel.h>
 #include <tls.h>
 #include <stap-probe.h>
-
-#include <dl-unmap-segments.h>
 
 
 /* Type of the constructor functions.  */
@@ -75,7 +73,7 @@ remove_slotinfo (size_t idx, struct dtv_slotinfo_list *listp, size_t disp,
 
       /* The entry might still be in its unused state if we are closing an
 	 object that wasn't fully set up.  */
-      if (__glibc_likely (old_map != NULL))
+      if (__builtin_expect (old_map != NULL, 1))
 	{
 	  assert (old_map->l_tls_modid == idx);
 
@@ -108,7 +106,7 @@ remove_slotinfo (size_t idx, struct dtv_slotinfo_list *listp, size_t disp,
 
 
 void
-_dl_close_worker (struct link_map *map, bool force)
+_dl_close_worker (struct link_map *map)
 {
   /* One less direct use.  */
   --map->l_direct_opencount;
@@ -125,7 +123,7 @@ _dl_close_worker (struct link_map *map, bool force)
 	dl_close_state = rerun;
 
       /* There are still references to this object.  Do nothing more.  */
-      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES))
+      if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_FILES, 0))
 	_dl_debug_printf ("\nclosing file=%s; direct_opencount=%u\n",
 			  map->l_name, map->l_direct_opencount);
 
@@ -144,14 +142,6 @@ _dl_close_worker (struct link_map *map, bool force)
   char done[nloaded];
   struct link_map *maps[nloaded];
 
-  /* Clear DF_1_NODELETE to force object deletion.  We don't need to touch
-     l_tls_dtor_count because forced object deletion only happens when an
-     error occurs during object load.  Destructor registration for TLS
-     non-POD objects should not have happened till then for this
-     object.  */
-  if (force)
-    map->l_flags_1 &= ~DF_1_NODELETE;
-
   /* Run over the list and assign indexes to the link maps and enter
      them into the MAPS array.  */
   int idx = 0;
@@ -160,7 +150,6 @@ _dl_close_worker (struct link_map *map, bool force)
       l->l_idx = idx;
       maps[idx] = l;
       ++idx;
-
     }
   assert (idx == nloaded);
 
@@ -182,9 +171,6 @@ _dl_close_worker (struct link_map *map, bool force)
       if (l->l_type == lt_loaded
 	  && l->l_direct_opencount == 0
 	  && (l->l_flags_1 & DF_1_NODELETE) == 0
-	  /* See CONCURRENCY NOTES in cxa_thread_atexit_impl.c to know why
-	     acquire is sufficient and correct.  */
-	  && atomic_load_acquire (&l->l_tls_dtor_count) == 0
 	  && !used[done_index])
 	continue;
 
@@ -294,7 +280,7 @@ _dl_close_worker (struct link_map *map, bool force)
 
 #ifdef SHARED
 	  /* Auditing checkpoint: we remove an object.  */
-	  if (__glibc_unlikely (do_audit))
+	  if (__builtin_expect (do_audit, 0))
 	    {
 	      struct audit_ifaces *afct = GLRO(dl_audit);
 	      for (unsigned int cnt = 0; cnt < GLRO(dl_naudit); ++cnt)
@@ -466,7 +452,7 @@ _dl_close_worker (struct link_map *map, bool force)
 
 #ifdef SHARED
   /* Auditing checkpoint: we will start deleting objects.  */
-  if (__glibc_unlikely (do_audit))
+  if (__builtin_expect (do_audit, 0))
     {
       struct link_map *head = ns->_ns_loaded;
       struct audit_ifaces *afct = GLRO(dl_audit);
@@ -550,7 +536,7 @@ _dl_close_worker (struct link_map *map, bool force)
 	     object.  We can unmap it.  */
 
 	  /* Remove the object from the dtv slotinfo array if it uses TLS.  */
-	  if (__glibc_unlikely (imap->l_tls_blocksize > 0))
+	  if (__builtin_expect (imap->l_tls_blocksize > 0, 0))
 	    {
 	      any_tls = true;
 
@@ -647,47 +633,15 @@ _dl_close_worker (struct link_map *map, bool force)
 		}
 	    }
 
-	  /* Reset unique symbols if forced.  */
-	  if (force)
-	    {
-	      struct unique_sym_table *tab = &ns->_ns_unique_sym_table;
-	      __rtld_lock_lock_recursive (tab->lock);
-	      struct unique_sym *entries = tab->entries;
-	      if (entries != NULL)
-		{
-		  size_t idx, size = tab->size;
-		  for (idx = 0; idx < size; ++idx)
-		    {
-		      /* Clear unique symbol entries that belong to this
-			 object.  */
-		      if (entries[idx].name != NULL
-			  && entries[idx].map == imap)
-			{
-			  entries[idx].name = NULL;
-			  entries[idx].hashval = 0;
-			  tab->n_elements--;
-			}
-		    }
-		}
-	      __rtld_lock_unlock_recursive (tab->lock);
-	    }
-
 	  /* We can unmap all the maps at once.  We determined the
 	     start address and length when we loaded the object and
 	     the `munmap' call does the rest.  */
 	  DL_UNMAP (imap);
 
 	  /* Finally, unlink the data structure and free it.  */
-#if DL_NNS == 1
-	  /* The assert in the (imap->l_prev == NULL) case gives
-	     the compiler license to warn that NS points outside
-	     the dl_ns array bounds in that case (as nsid != LM_ID_BASE
-	     is tantamount to nsid >= DL_NNS).  That should be impossible
-	     in this configuration, so just assert about it instead.  */
-	  assert (nsid == LM_ID_BASE);
-	  assert (imap->l_prev != NULL);
-#else
-	  if (imap->l_prev == NULL)
+	  if (imap->l_prev != NULL)
+	    imap->l_prev->l_next = imap->l_next;
+	  else
 	    {
 	      assert (nsid != LM_ID_BASE);
 	      ns->_ns_loaded = imap->l_next;
@@ -696,9 +650,6 @@ _dl_close_worker (struct link_map *map, bool force)
 		 we leave for debuggers to examine.  */
 	      r->r_map = (void *) ns->_ns_loaded;
 	    }
-	  else
-#endif
-	    imap->l_prev->l_next = imap->l_next;
 
 	  --ns->_ns_nloaded;
 	  if (imap->l_next != NULL)
@@ -711,7 +662,7 @@ _dl_close_worker (struct link_map *map, bool force)
 	  free (imap->l_reldeps);
 
 	  /* Print debugging message.  */
-	  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES))
+	  if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_FILES, 0))
 	    _dl_debug_printf ("\nfile=%s [%lu];  destroying link map\n",
 			      imap->l_name, imap->l_ns);
 
@@ -753,7 +704,7 @@ _dl_close_worker (struct link_map *map, bool force)
   /* If we removed any object which uses TLS bump the generation counter.  */
   if (any_tls)
     {
-      if (__glibc_unlikely (++GL(dl_tls_generation) == 0))
+      if (__builtin_expect (++GL(dl_tls_generation) == 0, 0))
 	_dl_fatal_printf ("TLS generation counter wrapped!  Please report as described in "REPORT_BUGS_TO".\n");
 
       if (tls_free_end == GL(dl_tls_static_used))
@@ -762,7 +713,7 @@ _dl_close_worker (struct link_map *map, bool force)
 
 #ifdef SHARED
   /* Auditing checkpoint: we have deleted all objects.  */
-  if (__glibc_unlikely (do_audit))
+  if (__builtin_expect (do_audit, 0))
     {
       struct link_map *head = ns->_ns_loaded;
       /* Do not call the functions for any auditing object.  */
@@ -806,7 +757,7 @@ _dl_close (void *_map)
   struct link_map *map = _map;
 
   /* First see whether we can remove the object at all.  */
-  if (__glibc_unlikely (map->l_flags_1 & DF_1_NODELETE))
+  if (__builtin_expect (map->l_flags_1 & DF_1_NODELETE, 0))
     {
       assert (map->l_init_called);
       /* Nope.  Do nothing.  */
@@ -819,7 +770,7 @@ _dl_close (void *_map)
   /* Acquire the lock.  */
   __rtld_lock_lock_recursive (GL(dl_load_lock));
 
-  _dl_close_worker (map, false);
+  _dl_close_worker (map);
 
   __rtld_lock_unlock_recursive (GL(dl_load_lock));
 }

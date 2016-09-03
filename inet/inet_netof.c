@@ -27,6 +27,10 @@
  * SUCH DAMAGE.
  */
 
+#if defined(LIBC_SCCS) && !defined(lint)
+static char sccsid[] = "@(#)inet_netof.c	8.1 (Berkeley) 6/4/93";
+#endif /* LIBC_SCCS and not lint */
+
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -36,7 +40,8 @@
  * address; handles class a/b/c network #'s.
  */
 in_addr_t
-inet_netof (struct in_addr in)
+inet_netof(in)
+	struct in_addr in;
 {
 	u_int32_t i = ntohl(in.s_addr);
 

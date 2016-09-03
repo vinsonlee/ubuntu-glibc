@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,9 @@
 /* Set the current time of day and timezone information.
    This call is restricted to the super-user.  */
 int
-__settimeofday (const struct timeval *tv, const struct timezone *tz)
+__settimeofday (tv, tz)
+     const struct timeval *tv;
+     const struct timezone *tz;
 {
   __set_errno (ENOSYS);
   return -1;

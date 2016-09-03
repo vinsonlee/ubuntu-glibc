@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2003.
 
@@ -123,6 +123,12 @@ tf (void *arg)
       exit (1);
     }
 
+  /* This will cause the read in the initial thread to return.  */
+  close (fd[0]);
+  close (fd[1]);
+  close (fd[2]);
+  close (fd[3]);
+
   void *ret;
   if (pthread_join (th, &ret) != 0)
     {
@@ -147,15 +153,6 @@ tf (void *arg)
       puts ("barrier destroy failed");
       exit (1);
     }
-
-  /* The pipe closing must be issued after the cancellation handling to avoid
-     a race condition where the cancellation runs after both pipe ends are
-     closed.  In this case the read syscall returns EOF and the cancellation
-     must not act.  */
-  close (fd[0]);
-  close (fd[1]);
-  close (fd[2]);
-  close (fd[3]);
 
   exit (0);
 }
@@ -260,7 +257,6 @@ do_test (void)
   if (do_one_test ())
     return 1;
 
-#ifdef SA_SIGINFO
   sa.sa_sigaction = (void (*)(int, siginfo_t *, void *)) sh;
   sigemptyset (&sa.sa_mask);
   sa.sa_flags = SA_SIGINFO;
@@ -288,7 +284,6 @@ do_test (void)
   puts ("sa_flags = SA_SIGINFO|SA_ONSTACK test");
   if (do_one_test ())
     return 1;
-#endif
 
   return 0;
 }

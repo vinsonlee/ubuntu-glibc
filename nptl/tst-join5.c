@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -22,15 +22,15 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 
 
-static void
-wait_code (void)
-{
-  struct timespec ts = { .tv_sec = 0, .tv_nsec = 200000000 };
-  while (nanosleep (&ts, &ts) < 0)
-    ;
-}
+#define wait_code()							      \
+  do {									      \
+    struct timespec ts = { .tv_sec = 0, .tv_nsec = 200000000 };		      \
+    while (syscall (__NR_nanosleep, &ts, &ts) < 0)			      \
+      /* nothing */;							      \
+  } while (0)
 
 
 #ifdef WAIT_IN_CHILD

@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
    If SS is not NULL it is the sigstate for the calling thread;
    SS->lock is held on entry and released before return.  */
 
-int
+void
 _hurd_raise_signal (struct hurd_sigstate *ss,
 		    int signo, const struct hurd_signal_detail *detail)
 {
@@ -46,5 +46,5 @@ _hurd_raise_signal (struct hurd_sigstate *ss,
      already marked the signal as pending for the particular thread we
      want.  Generating the signal with an RPC might deliver it to some
      other thread.  */
-  return __msg_sig_post (_hurd_msgport, 0, 0, __mach_task_self ());
+  __msg_sig_post (_hurd_msgport, 0, 0, __mach_task_self ());
 }

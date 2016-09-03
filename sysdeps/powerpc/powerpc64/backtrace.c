@@ -1,5 +1,5 @@
 /* Return backtrace of current program state.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <signal.h>
-#include <libc-vdso.h>
+#include <bits/libc-vdso.h>
 
 /* This is the stack layout we see with every stack frame.
    Note that every routine is required by the ABI to lay out the stack

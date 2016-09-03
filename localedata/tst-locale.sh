@@ -1,6 +1,6 @@
-#!/bin/sh
+#! /bin/sh
 # Testing the implementation of localedata.
-# Copyright (C) 1998-2016 Free Software Foundation, Inc.
+# Copyright (C) 1998-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 # Contributed by Andreas Jaeger, <aj@arthur.rhein-neckar.de>, 1998.
 
@@ -21,9 +21,7 @@
 set -e
 
 common_objpfx=$1; shift
-localedef_before_env=$1; shift
-run_program_env=$1; shift
-localedef_after_env=$1; shift
+localedef=$1; shift
 
 test_locale ()
 {
@@ -34,10 +32,9 @@ test_locale ()
     if test $rep; then
       rep="--repertoire-map $rep"
     fi
-    ${localedef_before_env} \
-    ${run_program_env} \
-    I18NPATH=. \
-    ${localedef_after_env} --quiet -c -f $charmap -i $input \
+    I18NPATH=. GCONV_PATH=${common_objpfx}iconvdata \
+    LOCPATH=${common_objpfx}localedata LC_ALL=C LANGUAGE=C \
+    ${localedef} --quiet -c -f $charmap -i $input \
       ${rep} ${common_objpfx}localedata/$out
 
     if [ $? -ne 0 ]; then

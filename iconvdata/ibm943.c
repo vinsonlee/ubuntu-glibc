@@ -1,5 +1,5 @@
 /* Conversion from and to IBM943.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Masahide Washizawa <washi@jp.ibm.com>, 2000.
 
@@ -29,7 +29,6 @@
 #define CHARSET_NAME	"IBM943//"
 #define FROM_LOOP	from_ibm943
 #define TO_LOOP		to_ibm943
-#define ONE_DIRECTION	0
 
 /* Definitions of initialization and destructor function.  */
 #define DEFINE_INIT	1
@@ -66,7 +65,7 @@
 	    __builtin_expect (res == 0, 0) && ch != 0))			      \
       {									      \
 	/* Use the IBM943 table for double byte.  */			      \
-	if (__glibc_unlikely (inptr + 1 >= inend))			      \
+	if (__builtin_expect (inptr + 1 >= inend, 0))			      \
 	  {								      \
 	    /* The second character is not available.			      \
 	       Store the intermediate result.  */			      \
@@ -75,12 +74,11 @@
 	  }								      \
 									      \
 	ch = (ch * 0x100) + inptr[1];					      \
-	/* ch was less than 0xfd.  */					      \
-	assert (ch < 0xfd00);						      \
 	while (ch > rp2->end)						      \
 	  ++rp2;							      \
 									      \
-	if (__builtin_expect (ch < rp2->start, 0)			      \
+	if (__builtin_expect (rp2 == NULL, 0)				      \
+	    || __builtin_expect (ch < rp2->start, 0)			      \
 	    || (res = __ibm943db_to_ucs4[ch + rp2->idx],		      \
 	    __builtin_expect (res, '\1') == 0 && ch !=0))		      \
 	  {								      \
@@ -137,7 +135,7 @@
     uint32_t high;							      \
     uint16_t pccode;							      \
 									      \
-    if (__glibc_unlikely (ch >= 0xffff))				      \
+    if (__builtin_expect (ch >= 0xffff, 0))				      \
       {									      \
 	UNICODE_TAG_HANDLER (ch, 4);					      \
 	rp = NULL;							      \
@@ -159,7 +157,7 @@
 	high = (sizeof (__ucs4_to_ibm943db) >> 1)			      \
 		/ sizeof (__ucs4_to_ibm943db[0][FROM]);			      \
 	pccode = ch;							      \
-	if (__glibc_likely (rp != NULL))				      \
+	if (__builtin_expect (rp != NULL, 1))				      \
 	  while (low < high)						      \
 	    {								      \
 	      i = (low + high) >> 1;					      \
@@ -176,7 +174,7 @@
 	    }								      \
 	if (found) 							      \
 	  {								      \
-	    if (__glibc_unlikely (outptr + 2 > outend))			      \
+	    if (__builtin_expect (outptr + 2 > outend, 0))		      \
 	      {								      \
 		result = __GCONV_FULL_OUTPUT;				      \
 		break;							      \
@@ -192,7 +190,7 @@
       }									      \
     else								      \
       {									      \
-	if (__glibc_unlikely (outptr + 1 > outend))			      \
+	if (__builtin_expect (outptr + 1 > outend, 0))			      \
 	  {								      \
 	    result = __GCONV_FULL_OUTPUT;				      \
 	    break;							      \

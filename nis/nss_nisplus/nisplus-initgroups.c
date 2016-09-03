@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <rpcsvc/nis.h>
 
 #include "nss-nisplus.h"
@@ -67,7 +67,7 @@ _nss_nisplus_initgroups_dyn (const char *user, gid_t group, long int *start,
       return NSS_STATUS_TRYAGAIN;
     }
 
-  if (__glibc_unlikely (niserr2nss (result->status) != NSS_STATUS_SUCCESS))
+  if (__builtin_expect (niserr2nss (result->status) != NSS_STATUS_SUCCESS, 0))
     {
       enum nss_status status = niserr2nss (result->status);
 
@@ -98,7 +98,7 @@ _nss_nisplus_initgroups_dyn (const char *user, gid_t group, long int *start,
 
       gid_t gid;
       char *endp;
-      if (__glibc_unlikely (numstr[len - 1] != '\0'))
+      if (__builtin_expect (numstr[len - 1] != '\0', 0))
 	{
 	  char numstrbuf[len + 1];
 	  memcpy (numstrbuf, numstr, len);

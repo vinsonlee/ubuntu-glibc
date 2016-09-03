@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,9 @@
 
 /* Test for access to FILE by our real user and group IDs.  */
 int
-__access (const char *file, int type)
+__access (file, type)
+     const char *file;
+     int type;
 {
   error_t err;
   file_t rcrdir, rcwdir, io;

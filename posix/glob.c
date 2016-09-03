@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,9 +24,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 
 /* Outcomment the following line for production quality code.  */
 /* #define NDEBUG 1 */
@@ -59,8 +57,10 @@
 
 #if defined HAVE_DIRENT_H || defined __GNU_LIBRARY__
 # include <dirent.h>
+# define NAMLEN(dirent) strlen((dirent)->d_name)
 #else
 # define dirent direct
+# define NAMLEN(dirent) (dirent)->d_namlen
 # ifdef HAVE_SYS_NDIR_H
 #  include <sys/ndir.h>
 # endif
@@ -75,8 +75,82 @@
 # endif /* HAVE_VMSDIR_H */
 #endif
 
+
+/* In GNU systems, <dirent.h> defines this macro for us.  */
+#ifdef _D_NAMLEN
+# undef NAMLEN
+# define NAMLEN(d) _D_NAMLEN(d)
+#endif
+
+/* When used in the GNU libc the symbol _DIRENT_HAVE_D_TYPE is available
+   if the `d_type' member for `struct dirent' is available.
+   HAVE_STRUCT_DIRENT_D_TYPE plays the same role in GNULIB.  */
+#if defined _DIRENT_HAVE_D_TYPE || defined HAVE_STRUCT_DIRENT_D_TYPE
+/* True if the directory entry D must be of type T.  */
+# define DIRENT_MUST_BE(d, t)	((d)->d_type == (t))
+
+/* True if the directory entry D might be a symbolic link.  */
+# define DIRENT_MIGHT_BE_SYMLINK(d) \
+    ((d)->d_type == DT_UNKNOWN || (d)->d_type == DT_LNK)
+
+/* True if the directory entry D might be a directory.  */
+# define DIRENT_MIGHT_BE_DIR(d)	 \
+    ((d)->d_type == DT_DIR || DIRENT_MIGHT_BE_SYMLINK (d))
+
+#else /* !HAVE_D_TYPE */
+# define DIRENT_MUST_BE(d, t)		false
+# define DIRENT_MIGHT_BE_SYMLINK(d)	true
+# define DIRENT_MIGHT_BE_DIR(d)		true
+#endif /* HAVE_D_TYPE */
+
+/* If the system has the `struct dirent64' type we use it internally.  */
+#if defined _LIBC && !defined COMPILE_GLOB64
+# if defined HAVE_DIRENT_H || defined __GNU_LIBRARY__
+#  define CONVERT_D_NAMLEN(d64, d32)
+# else
+#  define CONVERT_D_NAMLEN(d64, d32) \
+  (d64)->d_namlen = (d32)->d_namlen;
+# endif
+
+# if (defined POSIX || defined WINDOWS32) && !defined __GNU_LIBRARY__
+#  define CONVERT_D_INO(d64, d32)
+# else
+#  define CONVERT_D_INO(d64, d32) \
+  (d64)->d_ino = (d32)->d_ino;
+# endif
+
+# ifdef _DIRENT_HAVE_D_TYPE
+#  define CONVERT_D_TYPE(d64, d32) \
+  (d64)->d_type = (d32)->d_type;
+# else
+#  define CONVERT_D_TYPE(d64, d32)
+# endif
+
+# define CONVERT_DIRENT_DIRENT64(d64, d32) \
+  memcpy ((d64)->d_name, (d32)->d_name, NAMLEN (d32) + 1);		      \
+  CONVERT_D_NAMLEN (d64, d32)						      \
+  CONVERT_D_INO (d64, d32)						      \
+  CONVERT_D_TYPE (d64, d32)
+#endif
+
+
+#if (defined POSIX || defined WINDOWS32) && !defined __GNU_LIBRARY__
+/* Posix does not require that the d_ino field be present, and some
+   systems do not provide it. */
+# define REAL_DIR_ENTRY(dp) 1
+#else
+# define REAL_DIR_ENTRY(dp) (dp->d_ino != 0)
+#endif /* POSIX */
+
 #include <stdlib.h>
 #include <string.h>
+
+/* NAME_MAX is usually defined in <dirent.h> or <limits.h>.  */
+#include <limits.h>
+#ifndef NAME_MAX
+# define NAME_MAX (sizeof (((struct dirent *) 0)->d_name))
+#endif
+
 #include <alloca.h>
 
 #ifdef _LIBC
@@ -121,110 +195,7 @@
 
 static const char *next_brace_sub (const char *begin, int flags) __THROWNL;
 
-/* A representation of a directory entry which does not depend on the
-   layout of struct dirent, or the size of ino_t.  */
-struct readdir_result
-{
-  const char *name;
-# if defined _DIRENT_HAVE_D_TYPE || defined HAVE_STRUCT_DIRENT_D_TYPE
-  uint8_t type;
-# endif
-  bool skip_entry;
-};
-
-# if defined _DIRENT_HAVE_D_TYPE || defined HAVE_STRUCT_DIRENT_D_TYPE
-/* Initializer based on the d_type member of struct dirent.  */
-#  define D_TYPE_TO_RESULT(source) (source)->d_type,
-
-/* True if the directory entry D might be a symbolic link.  */
-static bool
-readdir_result_might_be_symlink (struct readdir_result d)
-{
-  return d.type == DT_UNKNOWN || d.type == DT_LNK;
-}
-
-/* True if the directory entry D might be a directory.  */
-static bool
-readdir_result_might_be_dir (struct readdir_result d)
-{
-  return d.type == DT_DIR || readdir_result_might_be_symlink (d);
-}
-# else /* defined _DIRENT_HAVE_D_TYPE || defined HAVE_STRUCT_DIRENT_D_TYPE */
-#  define D_TYPE_TO_RESULT(source)
-
-/* If we do not have type information, symbolic links and directories
-   are always a possibility.  */
-
-static bool
-readdir_result_might_be_symlink (struct readdir_result d)
-{
-  return true;
-}
-
-static bool
-readdir_result_might_be_dir (struct readdir_result d)
-{
-  return true;
-}
-
-# endif /* defined _DIRENT_HAVE_D_TYPE || defined HAVE_STRUCT_DIRENT_D_TYPE */
-
-# if (defined POSIX || defined WINDOWS32) && !defined __GNU_LIBRARY__
-/* Initializer for skip_entry.  POSIX does not require that the d_ino
-   field be present, and some systems do not provide it. */
-#  define D_INO_TO_RESULT(source) false,
-# else
-#  define D_INO_TO_RESULT(source) (source)->d_ino == 0,
-# endif
-
-/* Construct an initializer for a struct readdir_result object from a
-   struct dirent *.  No copy of the name is made.  */
-#define READDIR_RESULT_INITIALIZER(source) \
-  {					   \
-    source->d_name,			   \
-    D_TYPE_TO_RESULT (source)		   \
-    D_INO_TO_RESULT (source)		   \
-  }
-
 #endif /* !defined _LIBC || !defined GLOB_ONLY_P */
-
-/* Call gl_readdir on STREAM.  This macro can be overridden to reduce
-   type safety if an old interface version needs to be supported.  */
-#ifndef GL_READDIR
-# define GL_READDIR(pglob, stream) ((pglob)->gl_readdir (stream))
-#endif
-
-/* Extract name and type from directory entry.  No copy of the name is
-   made.  If SOURCE is NULL, result name is NULL.  Keep in sync with
-   convert_dirent64 below.  */
-static struct readdir_result
-convert_dirent (const struct dirent *source)
-{
-  if (source == NULL)
-    {
-      struct readdir_result result = { NULL, };
-      return result;
-    }
-  struct readdir_result result = READDIR_RESULT_INITIALIZER (source);
-  return result;
-}
-
-#ifndef COMPILE_GLOB64
-/* Like convert_dirent, but works on struct dirent64 instead.  Keep in
-   sync with convert_dirent above.  */
-static struct readdir_result
-convert_dirent64 (const struct dirent64 *source)
-{
-  if (source == NULL)
-    {
-      struct readdir_result result = { NULL, };
-      return result;
-    }
-  struct readdir_result result = READDIR_RESULT_INITIALIZER (source);
-  return result;
-}
-#endif
-
 
 #ifndef attribute_hidden
 # define attribute_hidden
@@ -279,8 +250,11 @@ int
 #ifdef GLOB_ATTRIBUTE
 GLOB_ATTRIBUTE
 #endif
-glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
-      glob_t *pglob)
+glob (pattern, flags, errfunc, pglob)
+     const char *pattern;
+     int flags;
+     int (*errfunc) (const char *, int);
+     glob_t *pglob;
 {
   const char *filename;
   char *dirname = NULL;
@@ -380,7 +354,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 	      /* It is an illegal expression.  */
 	    illegal_brace:
 #ifdef _LIBC
-	      if (__glibc_unlikely (!alloca_onealt))
+	      if (__builtin_expect (!alloca_onealt, 0))
 #endif
 		free (onealt);
 	      return glob (pattern, flags & ~GLOB_BRACE, errfunc, pglob);
@@ -430,7 +404,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 	      if (result && result != GLOB_NOMATCH)
 		{
 #ifdef _LIBC
-		  if (__glibc_unlikely (!alloca_onealt))
+		  if (__builtin_expect (!alloca_onealt, 0))
 #endif
 		    free (onealt);
 		  if (!(flags & GLOB_APPEND))
@@ -451,7 +425,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 	    }
 
 #ifdef _LIBC
-	  if (__glibc_unlikely (!alloca_onealt))
+	  if (__builtin_expect (!alloca_onealt, 0))
 #endif
 	    free (onealt);
 
@@ -514,7 +488,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 	}
       else
 	{
-	  if (__glibc_unlikely (pattern[0] == '\0'))
+	  if (__builtin_expect (pattern[0] == '\0', 0))
 	    {
 	      dirs.gl_pathv = NULL;
 	      goto no_matches;
@@ -645,7 +619,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 		buflen = 20;
 	      name = alloca_account (buflen, alloca_used);
 
-	      success = __getlogin_r (name, buflen) == 0;
+	      success = getlogin_r (name, buflen) == 0;
 	      if (success)
 		{
 		  struct passwd *p;
@@ -697,7 +671,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 						2 * pwbuflen);
 			  if (newp == NULL)
 			    {
-			      if (__glibc_unlikely (malloc_pwtmpbuf))
+			      if (__builtin_expect (malloc_pwtmpbuf, 0))
 				free (pwtmpbuf);
 			      retval = GLOB_NOSPACE;
 			      goto out;
@@ -743,7 +717,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 	    {
 	      if (flags & GLOB_TILDE_CHECK)
 		{
-		  if (__glibc_unlikely (malloc_home_dir))
+		  if (__builtin_expect (malloc_home_dir, 0))
 		    free (home_dir);
 		  retval = GLOB_NOMATCH;
 		  goto out;
@@ -756,7 +730,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 	  /* Now construct the full directory.  */
 	  if (dirname[1] == '\0')
 	    {
-	      if (__glibc_unlikely (malloc_dirname))
+	      if (__builtin_expect (malloc_dirname, 0))
 		free (dirname);
 
 	      dirname = home_dir;
@@ -776,7 +750,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 		  newp = malloc (home_len + dirlen);
 		  if (newp == NULL)
 		    {
-		      if (__glibc_unlikely (malloc_home_dir))
+		      if (__builtin_expect (malloc_home_dir, 0))
 			free (home_dir);
 		      retval = GLOB_NOSPACE;
 		      goto out;
@@ -786,7 +760,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 	      mempcpy (mempcpy (newp, home_dir, home_len),
 		       &dirname[1], dirlen);
 
-	      if (__glibc_unlikely (malloc_dirname))
+	      if (__builtin_expect (malloc_dirname, 0))
 		free (dirname);
 
 	      dirname = newp;
@@ -885,7 +859,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 		if (pwtmpbuf == NULL)
 		  {
 		  nomem_getpw:
-		    if (__glibc_unlikely (malloc_user_name))
+		    if (__builtin_expect (malloc_user_name, 0))
 		      free (user_name);
 		    retval = GLOB_NOSPACE;
 		    goto out;
@@ -910,7 +884,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 					  2 * buflen);
 		    if (newp == NULL)
 		      {
-			if (__glibc_unlikely (malloc_pwtmpbuf))
+			if (__builtin_expect (malloc_pwtmpbuf, 0))
 			  free (pwtmpbuf);
 			goto nomem_getpw;
 		      }
@@ -923,7 +897,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 	    p = getpwnam (user_name);
 #  endif
 
-	    if (__glibc_unlikely (malloc_user_name))
+	    if (__builtin_expect (malloc_user_name, 0))
 	      free (user_name);
 
 	    /* If we found a home directory use this.  */
@@ -932,7 +906,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 		size_t home_len = strlen (p->pw_dir);
 		size_t rest_len = end_name == NULL ? 0 : strlen (end_name);
 
-		if (__glibc_unlikely (malloc_dirname))
+		if (__builtin_expect (malloc_dirname, 0))
 		  free (dirname);
 		malloc_dirname = 0;
 
@@ -944,7 +918,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 		    dirname = malloc (home_len + rest_len + 1);
 		    if (dirname == NULL)
 		      {
-			if (__glibc_unlikely (malloc_pwtmpbuf))
+			if (__builtin_expect (malloc_pwtmpbuf, 0))
 			  free (pwtmpbuf);
 			retval = GLOB_NOSPACE;
 			goto out;
@@ -957,12 +931,12 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 		dirlen = home_len + rest_len;
 		dirname_modified = 1;
 
-		if (__glibc_unlikely (malloc_pwtmpbuf))
+		if (__builtin_expect (malloc_pwtmpbuf, 0))
 		  free (pwtmpbuf);
 	      }
 	    else
 	      {
-		if (__glibc_unlikely (malloc_pwtmpbuf))
+		if (__builtin_expect (malloc_pwtmpbuf, 0))
 		  free (pwtmpbuf);
 
 		if (flags & GLOB_TILDE_CHECK)
@@ -1061,7 +1035,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
 	    *(char *) &dirname[--dirlen] = '\0';
 	}
 
-      if (__glibc_unlikely ((flags & GLOB_ALTDIRFUNC) != 0))
+      if (__builtin_expect ((flags & GLOB_ALTDIRFUNC) != 0, 0))
 	{
 	  /* Use the alternative access functions also in the recursive
 	     call.  */
@@ -1279,7 +1253,7 @@ glob (const char *pattern, int flags, int (*errfunc) (const char *, int),
     }
 
  out:
-  if (__glibc_unlikely (malloc_dirname))
+  if (__builtin_expect (malloc_dirname, 0))
     free (dirname);
 
   return retval;
@@ -1293,7 +1267,8 @@ libc_hidden_def (glob)
 
 /* Free storage allocated in PGLOB by a previous `glob' call.  */
 void
-globfree (glob_t *pglob)
+globfree (pglob)
+     glob_t *pglob;
 {
   if (pglob->gl_pathv != NULL)
     {
@@ -1388,7 +1363,9 @@ prefix_array (const char *dirname, char **array, size_t n)
 /* We must not compile this function twice.  */
 #if !defined _LIBC || !defined NO_GLOB_PATTERN_P
 int
-__glob_pattern_type (const char *pattern, int quote)
+__glob_pattern_type (pattern, quote)
+     const char *pattern;
+     int quote;
 {
   const char *p;
   int ret = 0;
@@ -1425,7 +1402,9 @@ __glob_pattern_type (const char *pattern, int quote)
 /* Return nonzero if PATTERN contains any metacharacters.
    Metacharacters can be quoted with backslashes if QUOTE is nonzero.  */
 int
-__glob_pattern_p (const char *pattern, int quote)
+__glob_pattern_p (pattern, quote)
+     const char *pattern;
+     int quote;
 {
   return __glob_pattern_type (pattern, quote) == 1;
 }
@@ -1551,7 +1530,7 @@ glob_in_dir (const char *pattern, const char *directory, int flags,
 	   of the function to copy this name into the result.  */
 	flags |= GLOB_NOCHECK;
 
-      if (__glibc_unlikely (!alloca_fullname))
+      if (__builtin_expect (!alloca_fullname, 0))
 	free (fullname);
     }
   else
@@ -1582,36 +1561,56 @@ glob_in_dir (const char *pattern, const char *directory, int flags,
 
 	  while (1)
 	    {
-	      struct readdir_result d;
-	      {
-		if (__builtin_expect (flags & GLOB_ALTDIRFUNC, 0))
-		  d = convert_dirent (GL_READDIR (pglob, stream));
-		else
-		  {
-#ifdef COMPILE_GLOB64
-		    d = convert_dirent (__readdir (stream));
+	      const char *name;
+	      size_t len;
+#if defined _LIBC && !defined COMPILE_GLOB64
+	      struct dirent64 *d;
+	      union
+		{
+		  struct dirent64 d64;
+		  char room [offsetof (struct dirent64, d_name[0])
+			     + NAME_MAX + 1];
+		}
+	      d64buf;
+
+	      if (__builtin_expect (flags & GLOB_ALTDIRFUNC, 0))
+		{
+		  struct dirent *d32 = (*pglob->gl_readdir) (stream);
+		  if (d32 != NULL)
+		    {
+		      CONVERT_DIRENT_DIRENT64 (&d64buf.d64, d32);
+		      d = &d64buf.d64;
+		    }
+		  else
+		    d = NULL;
+		}
+	      else
+		d = __readdir64 (stream);
 #else
-		    d = convert_dirent64 (__readdir64 (stream));
+	      struct dirent *d = (__builtin_expect (flags & GLOB_ALTDIRFUNC, 0)
+				  ? ((struct dirent *)
+				     (*pglob->gl_readdir) (stream))
+				  : __readdir (stream));
 #endif
-		  }
-	      }
-	      if (d.name == NULL)
+	      if (d == NULL)
 		break;
-	      if (d.skip_entry)
+	      if (! REAL_DIR_ENTRY (d))
 		continue;
 
 	      /* If we shall match only directories use the information
 		 provided by the dirent call if possible.  */
-	      if ((flags & GLOB_ONLYDIR) && !readdir_result_might_be_dir (d))
+	      if ((flags & GLOB_ONLYDIR) && !DIRENT_MIGHT_BE_DIR (d))
 		continue;
 
-	      if (fnmatch (pattern, d.name, fnm_flags) == 0)
+	      name = d->d_name;
+
+	      if (fnmatch (pattern, name, fnm_flags) == 0)
 		{
 		  /* If the file we found is a symlink we have to
 		     make sure the target file exists.  */
-		  if (!readdir_result_might_be_symlink (d)
-		      || link_exists_p (dfd, directory, dirlen, d.name,
-					pglob, flags))
+		  if (!DIRENT_MIGHT_BE_SYMLINK (d)
+		      || link_exists_p (dfd, directory, dirlen, name, pglob,
+					flags))
 		    {
 		      if (cur == names->count)
 			{
@@ -1631,10 +1630,12 @@ glob_in_dir (const char *pattern, const char *directory, int flags,
 			  names = newnames;
 			  cur = 0;
 			}
-		      names->name[cur] = strdup (d.name);
+		      len = NAMLEN (d);
+		      names->name[cur] = (char *) malloc (len + 1);
 		      if (names->name[cur] == NULL)
 			goto memory_error;
-		      ++cur;
+		      *((char *) mempcpy (names->name[cur++], name, len))
+			= '\0';
 		      ++nfound;
 		    }
 		}
@@ -1731,7 +1732,7 @@ glob_in_dir (const char *pattern, const char *directory, int flags,
   if (stream != NULL)
     {
       save = errno;
-      if (__glibc_unlikely (flags & GLOB_ALTDIRFUNC))
+      if (__builtin_expect (flags & GLOB_ALTDIRFUNC, 0))
 	(*pglob->gl_closedir) (stream);
       else
 	closedir (stream);

@@ -14,7 +14,6 @@
  */
 
 #include <errno.h>
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -27,8 +26,6 @@ static const float zero  =  0.0000000000e+00;
 float
 __ieee754_jnf(int n, float x)
 {
-    float ret;
-    {
 	int32_t i,hx,ix, sgn;
 	float a, b, temp, di;
 	float z, w;
@@ -49,9 +46,8 @@ __ieee754_jnf(int n, float x)
 	if(n==1) return(__ieee754_j1f(x));
 	sgn = (n&1)&(hx>>31);	/* even n -- 0, odd n -- sign(x) */
 	x = fabsf(x);
-	SET_RESTORE_ROUNDF (FE_TONEAREST);
 	if(__builtin_expect(ix==0||ix>=0x7f800000, 0))	/* if x is 0 or inf */
-	    return sgn == 1 ? -zero : zero;
+	    b = zero;
 	else if((float)n<=x) {
 		/* Safe to use J(n+1,x)=2n/x *J(n,x)-J(n-1,x) */
 	    a = __ieee754_j0f(x);
@@ -166,25 +162,13 @@ __ieee754_jnf(int n, float x)
 		  b = (t * w / a);
 	    }
 	}
-	if(sgn==1) ret = -b; else ret = b;
-	ret = math_narrow_eval (ret);
-    }
-    if (ret == 0)
-      {
-	ret = math_narrow_eval (__copysignf (FLT_MIN, ret) * FLT_MIN);
-	__set_errno (ERANGE);
-      }
-    else
-	math_check_force_underflow (ret);
-    return ret;
+	if(sgn==1) return -b; else return b;
 }
 strong_alias (__ieee754_jnf, __jnf_finite)
 
 float
 __ieee754_ynf(int n, float x)
 {
-    float ret;
-    {
 	int32_t i,hx,ix;
 	u_int32_t ib;
 	int32_t sign;
@@ -203,11 +187,7 @@ __ieee754_ynf(int n, float x)
 		sign = 1 - ((n&1)<<1);
 	}
 	if(n==0) return(__ieee754_y0f(x));
-	SET_RESTORE_ROUNDF (FE_TONEAREST);
-	if(n==1) {
-	    ret = sign*__ieee754_y1f(x);
-	    goto out;
-	}
+	if(n==1) return(sign*__ieee754_y1f(x));
 	if(__builtin_expect(ix==0x7f800000, 0)) return zero;
 
 	a = __ieee754_y0f(x);
@@ -221,13 +201,8 @@ __ieee754_ynf(int n, float x)
 	    a = temp;
 	}
 	/* If B is +-Inf, set up errno accordingly.  */
-	if (! isfinite (b))
+	if (! __finitef (b))
 	  __set_errno (ERANGE);
-	if(sign>0) ret = b; else ret = -b;
-    }
- out:
-    if (isinf (ret))
-	ret = __copysignf (FLT_MAX, ret) * FLT_MAX;
-    return ret;
+	if(sign>0) return b; else return -b;
 }
 strong_alias (__ieee754_ynf, __ynf_finite)

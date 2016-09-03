@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -32,8 +32,7 @@
 typedef enum
 {
   NSS_ACTION_CONTINUE,
-  NSS_ACTION_RETURN,
-  NSS_ACTION_MERGE
+  NSS_ACTION_RETURN
 } lookup_actions;
 
 

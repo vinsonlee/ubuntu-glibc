@@ -1,4 +1,4 @@
-# Copyright (C) 1997-2016 Free Software Foundation, Inc.
+# Copyright (C) 1997-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ CFLAGS-charmap.c = -DCHARMAP_PATH='"$(i18ndir)/charmaps"' \
 CFLAGS-linereader.c = -DNO_TRANSLITERATION
 CFLAGS-simple-hash.c = -I../locale
 
-tests	= tst-iconv1 tst-iconv2 tst-iconv3 tst-iconv4 tst-iconv5 tst-iconv6
+tests	= tst-iconv1 tst-iconv2 tst-iconv3 tst-iconv4 tst-iconv5
 
 others		= iconv_prog iconvconfig
 install-others-programs	= $(inst_bindir)/iconv
@@ -52,14 +52,13 @@ CFLAGS-gconv_cache.c += -DGCONV_DIR='"$(gconvdir)"'
 CFLAGS-gconv_conf.c = -DGCONV_PATH='"$(gconvdir)"'
 CFLAGS-iconvconfig.c = -DGCONV_PATH='"$(gconvdir)"' -DGCONV_DIR='"$(gconvdir)"'
 
-# Set libof-* for each routine.
-cpp-srcs-left := $(iconv_prog-modules) $(iconvconfig-modules)
-lib := iconvprogs
-include $(patsubst %,$(..)cppflags-iterator.mk,$(cpp-srcs-left))
-
-ifeq ($(run-built-tests),yes)
-xtests-special += $(objpfx)test-iconvconfig.out
-endif
+CPPFLAGS-iconv_prog = -DNOT_IN_libc
+CPPFLAGS-iconv_charmap = -DNOT_IN_libc
+CPPFLAGS-iconvconfig = -DNOT_IN_libc
+CPPFLAGS-linereader = -DNOT_IN_libc
+CPPFLAGS-strtab = -DNOT_IN_libc
+CPPFLAGS-charmap = -DNOT_IN_libc
+CPPFLAGS-charmap-dir = -DNOT_IN_libc
 
 include ../Rules
 
@@ -69,11 +68,14 @@ $(inst_bindir)/iconv: $(objpfx)iconv_prog $(+force)
 $(objpfx)iconv_prog: $(iconv_prog-modules:%=$(objpfx)%.o)
 $(objpfx)iconvconfig: $(iconvconfig-modules:%=$(objpfx)%.o)
 
-$(objpfx)test-iconvconfig.out: /dev/null $(objpfx)iconvconfig
-	(set -e; \
-	 tmp=$(objpfx)gconv-modules.cache.$$$$; \
-	 rm -f $$tmp; \
-	 $(make-test-out) --output=$$tmp --nostdlib $(inst_gconvdir); \
-	 cmp $$tmp $(inst_gconvdir)/gconv-modules.cache; \
-	 rm -f $$tmp) > $@; \
-	$(evaluate-test)
+ifeq ($(run-built-tests),yes)
+xtests: test-iconvconfig
+endif
+
+.PHONY: test-iconvconfig
+test-iconvconfig: /dev/null $(objpfx)iconvconfig
+	tmp=$(objpfx)gconv-modules.cache.$$$$; \
+	rm -f $$tmp; \
+	$(make-test-out) --output=$$tmp --nostdlib $(inst_gconvdir) && \
+	cmp $$tmp $(inst_gconvdir)/gconv-modules.cache && \
+	rm -f $$tmp

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,10 +27,8 @@
 #include <string.h>
 #include <wchar.h>
 #include <wctype.h>
-#include <libc-internal.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <locale/localeinfo.h>
-#include <scratch_buffer.h>
 
 #ifdef	__GNUC__
 # define HAVE_LONGLONG
@@ -89,6 +87,7 @@
 				    ? ++read_in				      \
 				    : (size_t) (inchar_errno = errno)), c))
 
+# define MEMCPY(d, s, n) __wmemcpy (d, s, n)
 # define ISSPACE(Ch)	  iswspace (Ch)
 # define ISDIGIT(Ch)	  iswdigit (Ch)
 # define ISXDIGIT(Ch)	  iswxdigit (Ch)
@@ -119,6 +118,7 @@
 			    (void) (c != EOF				      \
 				    ? ++read_in				      \
 				    : (size_t) (inchar_errno = errno)), c))
+# define MEMCPY(d, s, n) memcpy (d, s, n)
 # define ISSPACE(Ch)	  __isspace_l (Ch, loc)
 # define ISDIGIT(Ch)	  __isdigit_l (Ch, loc)
 # define ISXDIGIT(Ch)	  __isxdigit_l (Ch, loc)
@@ -192,78 +192,6 @@ struct ptrs_to_free
   char **ptrs[32];
 };
 
-struct char_buffer {
-  CHAR_T *current;
-  CHAR_T *end;
-  struct scratch_buffer scratch;
-};
-
-/* Returns a pointer to the first CHAR_T object in the buffer.  Only
-   valid if char_buffer_add (BUFFER, CH) has been called and
-   char_buffer_error (BUFFER) is false.  */
-static inline CHAR_T *
-char_buffer_start (const struct char_buffer *buffer)
-{
-  return (CHAR_T *) buffer->scratch.data;
-}
-
-/* Returns the number of CHAR_T objects in the buffer.  Only valid if
-   char_buffer_error (BUFFER) is false.  */
-static inline size_t
-char_buffer_size (const struct char_buffer *buffer)
-{
-  return buffer->current - char_buffer_start (buffer);
-}
-
-/* Reinitializes BUFFER->current and BUFFER->end to cover the entire
-   scratch buffer.  */
-static inline void
-char_buffer_rewind (struct char_buffer *buffer)
-{
-  buffer->current = char_buffer_start (buffer);
-  buffer->end = buffer->current + buffer->scratch.length / sizeof (CHAR_T);
-}
-
-/* Returns true if a previous call to char_buffer_add (BUFFER, CH)
-   failed.  */
-static inline bool
-char_buffer_error (const struct char_buffer *buffer)
-{
-  return __glibc_unlikely (buffer->current == NULL);
-}
-
-/* Slow path for char_buffer_add.  */
-static void
-char_buffer_add_slow (struct char_buffer *buffer, CHAR_T ch)
-{
-  if (char_buffer_error (buffer))
-    return;
-  size_t offset = buffer->end - (CHAR_T *) buffer->scratch.data;
-  if (!scratch_buffer_grow_preserve (&buffer->scratch))
-    {
-      buffer->current = NULL;
-      buffer->end = NULL;
-      return;
-    }
-  char_buffer_rewind (buffer);
-  buffer->current += offset;
-  *buffer->current++ = ch;
-}
-
-/* Adds CH to BUFFER.  This function does not report any errors, check
-   for them with char_buffer_error.  */
-static inline void
-char_buffer_add (struct char_buffer *buffer, CHAR_T ch)
-  __attribute__ ((always_inline));
-static inline void
-char_buffer_add (struct char_buffer *buffer, CHAR_T ch)
-{
-  if (__glibc_unlikely (buffer->current == buffer->end))
-    char_buffer_add_slow (buffer, ch);
-  else
-    *buffer->current++ = ch;
-}
-
 /* Read formatted input from S according to the format string
    FORMAT, using the argument list in ARG.
    Return the number of assignments made, or -1 for an input error.  */
@@ -334,8 +262,46 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
   int skip_space = 0;
   /* Workspace.  */
   CHAR_T *tw;			/* Temporary pointer.  */
-  struct char_buffer charbuf;
-  scratch_buffer_init (&charbuf.scratch);
+  CHAR_T *wp = NULL;		/* Workspace.  */
+  size_t wpmax = 0;		/* Maximal size of workspace.  */
+  size_t wpsize;		/* Currently used bytes in workspace.  */
+  bool use_malloc = false;
+#define ADDW(Ch)							    \
+  do									    \
+    {									    \
+      if (__builtin_expect (wpsize == wpmax, 0))			    \
+	{								    \
+	  CHAR_T *old = wp;						    \
+	  size_t newsize = (UCHAR_MAX + 1 > 2 * wpmax			    \
+			    ? UCHAR_MAX + 1 : 2 * wpmax);		    \
+	  if (use_malloc || !__libc_use_alloca (newsize))		    \
+	    {								    \
+	      wp = realloc (use_malloc ? wp : NULL, newsize);		    \
+	      if (wp == NULL)						    \
+		{							    \
+		  if (use_malloc)					    \
+		    free (old);						    \
+		  done = EOF;						    \
+		  goto errout;						    \
+		}							    \
+	      if (! use_malloc)						    \
+		MEMCPY (wp, old, wpsize);				    \
+	      wpmax = newsize;						    \
+	      use_malloc = true;					    \
+	    }								    \
+	  else								    \
+	    {								    \
+	      size_t s = wpmax * sizeof (CHAR_T);			    \
+	      wp = (CHAR_T *) extend_alloca (wp, s,			    \
+					     newsize * sizeof (CHAR_T));    \
+	      wpmax = s / sizeof (CHAR_T);				    \
+	      if (old != NULL)						    \
+		MEMCPY (wp, old, wpsize);				    \
+	    }								    \
+	}								    \
+      wp[wpsize++] = (Ch);						    \
+    }									    \
+  while (0)
 
 #ifdef __va_copy
   __va_copy (arg, argptr);
@@ -426,7 +392,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	      do
 		{
 		  c = inchar ();
-		  if (__glibc_unlikely (c == EOF))
+		  if (__builtin_expect (c == EOF, 0))
 		    input_error ();
 		  else if (c != (unsigned char) *f++)
 		    {
@@ -454,7 +420,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	  c = inchar ();
 
 	  /* Characters other than format specs must just match.  */
-	  if (__glibc_unlikely (c == EOF))
+	  if (__builtin_expect (c == EOF, 0))
 	    input_error ();
 
 	  /* We saw white space char as the last character in the format
@@ -462,12 +428,12 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	  if (skip_space)
 	    {
 	      while (ISSPACE (c))
-		if (__glibc_unlikely (inchar () == EOF))
+		if (__builtin_expect (inchar () == EOF, 0))
 		  input_error ();
 	      skip_space = 0;
 	    }
 
-	  if (__glibc_unlikely (c != fc))
+	  if (__builtin_expect (c != fc, 0))
 	    {
 	      ungetc (c, s);
 	      conv_error ();
@@ -483,7 +449,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
       argpos = 0;
 
       /* Prepare temporary buffer.  */
-      char_buffer_rewind (&charbuf);
+      wpsize = 0;
 
       /* Check for a positional parameter specification.  */
       if (ISDIGIT ((UCHAR_T) *f))
@@ -615,7 +581,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	}
 
       /* End of the format string?  */
-      if (__glibc_unlikely (*f == L_('\0')))
+      if (__builtin_expect (*f == L_('\0'), 0))
 	conv_error ();
 
       /* Find the conversion specifier.  */
@@ -644,9 +610,9 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	{
 	case L_('%'):	/* Must match a literal '%'.  */
 	  c = inchar ();
-	  if (__glibc_unlikely (c == EOF))
+	  if (__builtin_expect (c == EOF, 0))
 	    input_error ();
-	  if (__glibc_unlikely (c != fc))
+	  if (__builtin_expect (c != fc, 0))
 	    {
 	      ungetc_not_eof (c, s);
 	      conv_error ();
@@ -744,7 +710,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 #endif
 
 	      c = inchar ();
-	      if (__glibc_unlikely (c == EOF))
+	      if (__builtin_expect (c == EOF, 0))
 		input_error ();
 
 #ifdef COMPILE_WSCANF
@@ -792,7 +758,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		    }
 
 		  n = __wcrtomb (!(flags & SUPPRESS) ? str : NULL, c, &state);
-		  if (__glibc_unlikely (n == (size_t) -1))
+		  if (__builtin_expect (n == (size_t) -1, 0))
 		    /* No valid wide character.  */
 		    input_error ();
 
@@ -870,7 +836,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	  STRING_ARG (wstr, wchar_t, (width > 1024 ? 1024 : width));
 
 	  c = inchar ();
-	  if (__glibc_unlikely (c == EOF))
+	  if (__builtin_expect (c == EOF, 0))
 	    input_error ();
 
 #ifdef COMPILE_WSCANF
@@ -980,14 +946,14 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		      {
 			/* Possibly correct character, just not enough
 			   input.  */
-			if (__glibc_unlikely (inchar () == EOF))
+			if (__builtin_expect (inchar () == EOF, 0))
 			  encode_error ();
 
 			buf[0] = c;
 			continue;
 		      }
 
-		    if (__glibc_unlikely (n != 1))
+		    if (__builtin_expect (n != 1, 0))
 		      encode_error ();
 
 		    /* We have a match.  */
@@ -1025,7 +991,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	      STRING_ARG (str, char, 100);
 
 	      c = inchar ();
-	      if (__glibc_unlikely (c == EOF))
+	      if (__builtin_expect (c == EOF, 0))
 		input_error ();
 
 #ifdef COMPILE_WSCANF
@@ -1094,7 +1060,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 
 		    n = __wcrtomb (!(flags & SUPPRESS) ? str : NULL, c,
 				   &state);
-		    if (__glibc_unlikely (n == (size_t) -1))
+		    if (__builtin_expect (n == (size_t) -1, 0))
 		      encode_error ();
 
 		    assert (n <= MB_CUR_MAX);
@@ -1296,14 +1262,14 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 			{
 			  /* Possibly correct character, just not enough
 			     input.  */
-			  if (__glibc_unlikely (inchar () == EOF))
+			  if (__builtin_expect (inchar () == EOF, 0))
 			    encode_error ();
 
 			  buf[0] = c;
 			  continue;
 			}
 
-		      if (__glibc_unlikely (n != 1))
+		      if (__builtin_expect (n != 1, 0))
 			encode_error ();
 
 		      /* We have a match.  */
@@ -1402,13 +1368,13 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 
 	number:
 	  c = inchar ();
-	  if (__glibc_unlikely (c == EOF))
+	  if (__builtin_expect (c == EOF, 0))
 	    input_error ();
 
 	  /* Check for a sign.  */
 	  if (c == L_('-') || c == L_('+'))
 	    {
-	      char_buffer_add (&charbuf, c);
+	      ADDW (c);
 	      if (width > 0)
 		--width;
 	      c = inchar ();
@@ -1420,7 +1386,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	      if (width > 0)
 		--width;
 
-	      char_buffer_add (&charbuf, c);
+	      ADDW (c);
 	      c = inchar ();
 
 	      if (width != 0 && TOLOWER (c) == L_('x'))
@@ -1468,7 +1434,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 #endif
 
 	      /* Get the alternative digit forms if there are any.  */
-	      if (__glibc_unlikely (map != NULL))
+	      if (__builtin_expect (map != NULL, 0))
 		{
 		  /*  Adding new level for extra digits set in locale file.  */
 		  ++to_level;
@@ -1536,21 +1502,12 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		    {
 		      /* Get the string for the digits with value N.  */
 #ifdef COMPILE_WSCANF
-
-		      /* wcdigits_extended[] is fully set in the loop
-			 above, but the test for "map != NULL" is done
-			 inside the loop here and outside the loop there.  */
-		      DIAG_PUSH_NEEDS_COMMENT;
-		      DIAG_IGNORE_NEEDS_COMMENT (4.7, "-Wmaybe-uninitialized");
-
-		      if (__glibc_unlikely (map != NULL))
+		      if (__builtin_expect (map != NULL, 0))
 			wcdigits[n] = wcdigits_extended[n];
 		      else
 			wcdigits[n] = (const wchar_t *)
 			  _NL_CURRENT (LC_CTYPE, _NL_CTYPE_INDIGITS0_WC + n);
 		      wcdigits[n] += from_level;
-
-		      DIAG_POP_NEEDS_COMMENT;
 
 		      if (c == (wint_t) *wcdigits[n])
 			{
@@ -1564,7 +1521,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		      const char *cmpp;
 		      int avail = width > 0 ? width : INT_MAX;
 
-		      if (__glibc_unlikely (map != NULL))
+		      if (__builtin_expect (map != NULL, 0))
 			mbdigits[n] = mbdigits_extended[n];
 		      else
 			mbdigits[n]
@@ -1684,7 +1641,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 
 		      while ((unsigned char) *cmpp == c && avail >= 0)
 			{
-			  char_buffer_add (&charbuf, c);
+			  ADDW (c);
 			  if (*++cmpp == '\0')
 			    break;
 			  else
@@ -1695,19 +1652,12 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 			    }
 			}
 
-		      if (char_buffer_error (&charbuf))
-			{
-			  __set_errno (ENOMEM);
-			  done = EOF;
-			  goto errout;
-			}
-
 		      if (*cmpp != '\0')
 			{
 			  /* We are pushing all read characters back.  */
 			  if (cmpp > thousands)
 			    {
-			      charbuf.current -= cmpp - thousands;
+			      wpsize -= cmpp - thousands;
 			      ungetc (c, s);
 			      while (--cmpp > thousands)
 				ungetc_not_eof ((unsigned char) *cmpp, s);
@@ -1720,14 +1670,14 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 			width = avail;
 
 		      /* The last thousands character will be added back by
-			 the char_buffer_add below.  */
-		      --charbuf.current;
+			 the ADDW below.  */
+			--wpsize;
 #endif
 		    }
 		  else
 		    break;
 
-		  char_buffer_add (&charbuf, c);
+		  ADDW (c);
 		  if (width > 0)
 		    --width;
 
@@ -1757,7 +1707,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 
 			while ((unsigned char) *cmpp == c && avail >= 0)
 			  {
-			    char_buffer_add (&charbuf, c);
+			    ADDW (c);
 			    if (*++cmpp == '\0')
 			      break;
 			    else
@@ -1768,19 +1718,12 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 			      }
 			  }
 
-			if (char_buffer_error (&charbuf))
-			  {
-			    __set_errno (ENOMEM);
-			    done = EOF;
-			    goto errout;
-			  }
-
 			if (*cmpp != '\0')
 			  {
 			    /* We are pushing all read characters back.  */
 			    if (cmpp > thousands)
 			      {
-				charbuf.current -= cmpp - thousands;
+				wpsize -= cmpp - thousands;
 				ungetc (c, s);
 				while (--cmpp > thousands)
 				  ungetc_not_eof ((unsigned char) *cmpp, s);
@@ -1793,35 +1736,26 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 			  width = avail;
 
 			/* The last thousands character will be added back by
-			   the char_buffer_add below.  */
-			--charbuf.current;
+			   the ADDW below.  */
+			--wpsize;
 #endif
 		      }
 		    else
 		      break;
 		  }
-		char_buffer_add (&charbuf, c);
+		ADDW (c);
 		if (width > 0)
 		  --width;
 
 		c = inchar ();
 	      }
 
-	  if (char_buffer_error (&charbuf))
-	    {
-	      __set_errno (ENOMEM);
-	      done = EOF;
-	      goto errout;
-	    }
-
-	  if (char_buffer_size (&charbuf) == 0
-	      || (char_buffer_size (&charbuf) == 1
-		  && (char_buffer_start (&charbuf)[0] == L_('+')
-		      || char_buffer_start (&charbuf)[0] == L_('-'))))
+	  if (wpsize == 0
+	      || (wpsize == 1 && (wp[0] == L_('+') || wp[0] == L_('-'))))
 	    {
 	      /* There was no number.  If we are supposed to read a pointer
 		 we must recognize "(nil)" as well.  */
-	      if (__builtin_expect (char_buffer_size (&charbuf) == 0
+	      if (__builtin_expect (wpsize == 0
 				    && (flags & READ_POINTER)
 				    && (width < 0 || width >= 5)
 				    && c == '('
@@ -1831,7 +1765,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 				    && inchar () == L_(')'), 1))
 		/* We must produce the value of a NULL pointer.  A single
 		   '0' digit is enough.  */
-		  char_buffer_add (&charbuf, L_('0'));
+		ADDW (L_('0'));
 	      else
 		{
 		  /* The last read character is not part of the number
@@ -1846,32 +1780,22 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	    ungetc (c, s);
 
 	  /* Convert the number.  */
-	  char_buffer_add (&charbuf, L_('\0'));
-	  if (char_buffer_error (&charbuf))
-	    {
-	      __set_errno (ENOMEM);
-	      done = EOF;
-	      goto errout;
-	    }
+	  ADDW (L_('\0'));
 	  if (need_longlong && (flags & LONGDBL))
 	    {
 	      if (flags & NUMBER_SIGNED)
-		num.q = __strtoll_internal
-		  (char_buffer_start (&charbuf), &tw, base, flags & GROUP);
+		num.q = __strtoll_internal (wp, &tw, base, flags & GROUP);
 	      else
-		num.uq = __strtoull_internal
-		  (char_buffer_start (&charbuf), &tw, base, flags & GROUP);
+		num.uq = __strtoull_internal (wp, &tw, base, flags & GROUP);
 	    }
 	  else
 	    {
 	      if (flags & NUMBER_SIGNED)
-		num.l = __strtol_internal
-		  (char_buffer_start (&charbuf), &tw, base, flags & GROUP);
+		num.l = __strtol_internal (wp, &tw, base, flags & GROUP);
 	      else
-		num.ul = __strtoul_internal
-		  (char_buffer_start (&charbuf), &tw, base, flags & GROUP);
+		num.ul = __strtoul_internal (wp, &tw, base, flags & GROUP);
 	    }
-	  if (__glibc_unlikely (char_buffer_start (&charbuf) == tw))
+	  if (__builtin_expect (wp == tw, 0))
 	    conv_error ();
 
 	  if (!(flags & SUPPRESS))
@@ -1918,7 +1842,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	  c = inchar ();
 	  if (width > 0)
 	    --width;
-	  if (__glibc_unlikely (c == EOF))
+	  if (__builtin_expect (c == EOF, 0))
 	    input_error ();
 
 	  got_digit = got_dot = got_e = 0;
@@ -1927,7 +1851,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	  if (c == L_('-') || c == L_('+'))
 	    {
 	      negative = c == L_('-');
-	      if (__glibc_unlikely (width == 0 || inchar () == EOF))
+	      if (__builtin_expect (width == 0 || inchar () == EOF, 0))
 		/* EOF is only an input error before we read any chars.  */
 		conv_error ();
 	      if (width > 0)
@@ -1940,42 +1864,42 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	  if (TOLOWER (c) == L_('n'))
 	    {
 	      /* Maybe "nan".  */
-	      char_buffer_add (&charbuf, c);
+	      ADDW (c);
 	      if (__builtin_expect (width == 0
 				    || inchar () == EOF
 				    || TOLOWER (c) != L_('a'), 0))
 		conv_error ();
 	      if (width > 0)
 		--width;
-	      char_buffer_add (&charbuf, c);
+	      ADDW (c);
 	      if (__builtin_expect (width == 0
 				    || inchar () == EOF
 				    || TOLOWER (c) != L_('n'), 0))
 		conv_error ();
 	      if (width > 0)
 		--width;
-	      char_buffer_add (&charbuf, c);
+	      ADDW (c);
 	      /* It is "nan".  */
 	      goto scan_float;
 	    }
 	  else if (TOLOWER (c) == L_('i'))
 	    {
 	      /* Maybe "inf" or "infinity".  */
-	      char_buffer_add (&charbuf, c);
+	      ADDW (c);
 	      if (__builtin_expect (width == 0
 				    || inchar () == EOF
 				    || TOLOWER (c) != L_('n'), 0))
 		conv_error ();
 	      if (width > 0)
 		--width;
-	      char_buffer_add (&charbuf, c);
+	      ADDW (c);
 	      if (__builtin_expect (width == 0
 				    || inchar () == EOF
 				    || TOLOWER (c) != L_('f'), 0))
 		conv_error ();
 	      if (width > 0)
 		--width;
-	      char_buffer_add (&charbuf, c);
+	      ADDW (c);
 	      /* It is as least "inf".  */
 	      if (width != 0 && inchar () != EOF)
 		{
@@ -1984,35 +1908,35 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		      if (width > 0)
 			--width;
 		      /* Now we have to read the rest as well.  */
-		      char_buffer_add (&charbuf, c);
+		      ADDW (c);
 		      if (__builtin_expect (width == 0
 					    || inchar () == EOF
 					    || TOLOWER (c) != L_('n'), 0))
 			conv_error ();
 		      if (width > 0)
 			--width;
-		      char_buffer_add (&charbuf, c);
+		      ADDW (c);
 		      if (__builtin_expect (width == 0
 					    || inchar () == EOF
 					    || TOLOWER (c) != L_('i'), 0))
 			conv_error ();
 		      if (width > 0)
 			--width;
-		      char_buffer_add (&charbuf, c);
+		      ADDW (c);
 		      if (__builtin_expect (width == 0
 					    || inchar () == EOF
 					    || TOLOWER (c) != L_('t'), 0))
 			conv_error ();
 		      if (width > 0)
 			--width;
-		      char_buffer_add (&charbuf, c);
+		      ADDW (c);
 		      if (__builtin_expect (width == 0
 					    || inchar () == EOF
 					    || TOLOWER (c) != L_('y'), 0))
 			conv_error ();
 		      if (width > 0)
 			--width;
-		      char_buffer_add (&charbuf, c);
+		      ADDW (c);
 		    }
 		  else
 		    /* Never mind.  */
@@ -2024,14 +1948,14 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	  exp_char = L_('e');
 	  if (width != 0 && c == L_('0'))
 	    {
-	      char_buffer_add (&charbuf, c);
+	      ADDW (c);
 	      c = inchar ();
 	      if (width > 0)
 		--width;
 	      if (width != 0 && TOLOWER (c) == L_('x'))
 		{
 		  /* It is a number in hexadecimal format.  */
-		  char_buffer_add (&charbuf, c);
+		  ADDW (c);
 
 		  flags |= HEXA_FLOAT;
 		  exp_char = L_('p');
@@ -2048,29 +1972,23 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 
 	  while (1)
 	    {
-	      if (char_buffer_error (&charbuf))
-		{
-		  __set_errno (ENOMEM);
-		  done = EOF;
-		  goto errout;
-		}
 	      if (ISDIGIT (c))
 		{
-		  char_buffer_add (&charbuf, c);
+		  ADDW (c);
 		  got_digit = 1;
 		}
 	      else if (!got_e && (flags & HEXA_FLOAT) && ISXDIGIT (c))
 		{
-		  char_buffer_add (&charbuf, c);
+		  ADDW (c);
 		  got_digit = 1;
 		}
-	      else if (got_e && charbuf.current[-1] == exp_char
+	      else if (got_e && wp[wpsize - 1] == exp_char
 		       && (c == L_('-') || c == L_('+')))
-		char_buffer_add (&charbuf, c);
+		ADDW (c);
 	      else if (got_digit && !got_e
 		       && (CHAR_T) TOLOWER (c) == exp_char)
 		{
-		  char_buffer_add (&charbuf, exp_char);
+		  ADDW (exp_char);
 		  got_e = got_dot = 1;
 		}
 	      else
@@ -2078,11 +1996,11 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 #ifdef COMPILE_WSCANF
 		  if (! got_dot && c == decimal)
 		    {
-		      char_buffer_add (&charbuf, c);
+		      ADDW (c);
 		      got_dot = 1;
 		    }
 		  else if ((flags & GROUP) != 0 && ! got_dot && c == thousands)
-		    char_buffer_add (&charbuf, c);
+		    ADDW (c);
 		  else
 		    {
 		      /* The last read character is not part of the number
@@ -2111,7 +2029,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		    {
 		      /* Add all the characters.  */
 		      for (cmpp = decimal; *cmpp != '\0'; ++cmpp)
-			char_buffer_add (&charbuf, (unsigned char) *cmpp);
+			ADDW ((unsigned char) *cmpp);
 		      if (width > 0)
 			width = avail;
 		      got_dot = 1;
@@ -2148,7 +2066,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 			{
 			  /* Add all the characters.  */
 			  for (cmpp = thousands; *cmpp != '\0'; ++cmpp)
-			    char_buffer_add (&charbuf, (unsigned char) *cmpp);
+			    ADDW ((unsigned char) *cmpp);
 			  if (width > 0)
 			    width = avail;
 			}
@@ -2170,20 +2088,13 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		--width;
 	    }
 
-	  if (char_buffer_error (&charbuf))
-	    {
-	      __set_errno (ENOMEM);
-	      done = EOF;
-	      goto errout;
-	    }
-
 	  wctrans_t map;
 	  if (__builtin_expect ((flags & I18N) != 0, 0)
 	      /* Hexadecimal floats make no sense, fixing localized
 		 digits with ASCII letters.  */
 	      && !(flags & HEXA_FLOAT)
 	      /* Minimum requirement.  */
-	      && (char_buffer_size (&charbuf) == 0 || got_dot)
+	      && (wpsize == 0 || got_dot)
 	      && (map = __wctrans ("to_inpunct")) != NULL)
 	    {
 	      /* Reget the first character.  */
@@ -2202,23 +2113,20 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		 for localized FP numbers, then we may have localized
 		 digits.  Note, we test GOT_DOT above.  */
 #ifdef COMPILE_WSCANF
-	      if (char_buffer_size (&charbuf) == 0
-		  || (char_buffer_size (&charbuf) == 1
-		      && wcdigits[11] == decimal))
+	      if (wpsize == 0 || (wpsize == 1 && wcdigits[11] == decimal))
 #else
 	      char mbdigits[12][MB_LEN_MAX + 1];
 
 	      mbstate_t state;
 	      memset (&state, '\0', sizeof (state));
 
-	      bool match_so_far = char_buffer_size (&charbuf) == 0;
+	      bool match_so_far = wpsize == 0;
 	      size_t mblen = __wcrtomb (mbdigits[11], wcdigits[11], &state);
 	      if (mblen != (size_t) -1)
 		{
 		  mbdigits[11][mblen] = '\0';
-		  match_so_far |=
-		    (char_buffer_size (&charbuf) == strlen (decimal)
-		     && strcmp (decimal, mbdigits[11]) == 0);
+		  match_so_far |= (wpsize == strlen (decimal)
+				   && strcmp (decimal, mbdigits[11]) == 0);
 		}
 	      else
 		{
@@ -2227,7 +2135,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		     from a file.  */
 		  if (decimal_len <= MB_LEN_MAX)
 		    {
-		      match_so_far |= char_buffer_size (&charbuf) == decimal_len;
+		      match_so_far |= wpsize == decimal_len;
 		      memcpy (mbdigits[11], decimal, decimal_len + 1);
 		    }
 		  else
@@ -2282,19 +2190,13 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		     conversion is done correctly. */
 		  while (1)
 		    {
-		      if (char_buffer_error (&charbuf))
-			{
-			  __set_errno (ENOMEM);
-			  done = EOF;
-			  goto errout;
-			}
-		      if (got_e && charbuf.current[-1] == exp_char
+		      if (got_e && wp[wpsize - 1] == exp_char
 			  && (c == L_('-') || c == L_('+')))
-			char_buffer_add (&charbuf, c);
-		      else if (char_buffer_size (&charbuf) > 0 && !got_e
+			ADDW (c);
+		      else if (wpsize > 0 && !got_e
 			       && (CHAR_T) TOLOWER (c) == exp_char)
 			{
-			  char_buffer_add (&charbuf, exp_char);
+			  ADDW (exp_char);
 			  got_e = got_dot = 1;
 			}
 		      else
@@ -2308,15 +2210,15 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 			      if (c == wcdigits[n])
 				{
 				  if (n < 10)
-				    char_buffer_add (&charbuf, L_('0') + n);
+				    ADDW (L_('0') + n);
 				  else if (n == 11 && !got_dot)
 				    {
-				      char_buffer_add (&charbuf, decimal);
+				      ADDW (decimal);
 				      got_dot = 1;
 				    }
 				  else if (n == 10 && have_locthousands
 					   && ! got_dot)
-				    char_buffer_add (&charbuf, thousands);
+				    ADDW (thousands);
 				  else
 				    /* The last read character is not part
 				       of the number anymore.  */
@@ -2343,14 +2245,13 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 				    width = avail;
 
 				  if (n < 10)
-				    char_buffer_add (&charbuf, L_('0') + n);
+				    ADDW (L_('0') + n);
 				  else if (n == 11 && !got_dot)
 				    {
 				      /* Add all the characters.  */
 				      for (cmpp = decimal; *cmpp != '\0';
 					   ++cmpp)
-					char_buffer_add (&charbuf,
-							 (unsigned char) *cmpp);
+					ADDW ((unsigned char) *cmpp);
 
 				      got_dot = 1;
 				    }
@@ -2360,8 +2261,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 				      /* Add all the characters.  */
 				      for (cmpp = thousands; *cmpp != '\0';
 					   ++cmpp)
-					char_buffer_add (&charbuf,
-							 (unsigned char) *cmpp);
+					ADDW ((unsigned char) *cmpp);
 				    }
 				  else
 				    /* The last read character is not part
@@ -2405,53 +2305,36 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 #endif
 	    }
 
-	  if (char_buffer_error (&charbuf))
-	    {
-	      __set_errno (ENOMEM);
-	      done = EOF;
-	      goto errout;
-	    }
-
 	  /* Have we read any character?  If we try to read a number
 	     in hexadecimal notation and we have read only the `0x'
 	     prefix this is an error.  */
-	  if (__glibc_unlikely (char_buffer_size (&charbuf) == 0
-				|| ((flags & HEXA_FLOAT)
-				    && char_buffer_size (&charbuf) == 2)))
+	  if (__builtin_expect (wpsize == 0
+				|| ((flags & HEXA_FLOAT) && wpsize == 2), 0))
 	    conv_error ();
 
 	scan_float:
 	  /* Convert the number.  */
-	  char_buffer_add (&charbuf, L_('\0'));
-	  if (char_buffer_error (&charbuf))
-	    {
-	      __set_errno (ENOMEM);
-	      done = EOF;
-	      goto errout;
-	    }
+	  ADDW (L_('\0'));
 	  if ((flags & LONGDBL) && !__ldbl_is_dbl)
 	    {
-	      long double d = __strtold_internal
-		(char_buffer_start (&charbuf), &tw, flags & GROUP);
-	      if (!(flags & SUPPRESS) && tw != char_buffer_start (&charbuf))
+	      long double d = __strtold_internal (wp, &tw, flags & GROUP);
+	      if (!(flags & SUPPRESS) && tw != wp)
 		*ARG (long double *) = negative ? -d : d;
 	    }
 	  else if (flags & (LONG | LONGDBL))
 	    {
-	      double d = __strtod_internal
-		(char_buffer_start (&charbuf), &tw, flags & GROUP);
-	      if (!(flags & SUPPRESS) && tw != char_buffer_start (&charbuf))
+	      double d = __strtod_internal (wp, &tw, flags & GROUP);
+	      if (!(flags & SUPPRESS) && tw != wp)
 		*ARG (double *) = negative ? -d : d;
 	    }
 	  else
 	    {
-	      float d = __strtof_internal
-		(char_buffer_start (&charbuf), &tw, flags & GROUP);
-	      if (!(flags & SUPPRESS) && tw != char_buffer_start (&charbuf))
+	      float d = __strtof_internal (wp, &tw, flags & GROUP);
+	      if (!(flags & SUPPRESS) && tw != wp)
 		*ARG (float *) = negative ? -d : d;
 	    }
 
-	  if (__glibc_unlikely (tw == char_buffer_start (&charbuf)))
+	  if (__builtin_expect (tw == wp, 0))
 	    conv_error ();
 
 	  if (!(flags & SUPPRESS))
@@ -2491,19 +2374,18 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 
 	  while ((fc = *f++) != L'\0' && fc != L']');
 
-	  if (__glibc_unlikely (fc == L'\0'))
+	  if (__builtin_expect (fc == L'\0', 0))
 	    conv_error ();
 	  wchar_t *twend = (wchar_t *) f - 1;
 #else
 	  /* Fill WP with byte flags indexed by character.
 	     We will use this flag map for matching input characters.  */
-	  if (!scratch_buffer_set_array_size
-	      (&charbuf.scratch, UCHAR_MAX + 1, 1))
+	  if (wpmax < UCHAR_MAX + 1)
 	    {
-	      done = EOF;
-	      goto errout;
+	      wpmax = UCHAR_MAX + 1;
+	      wp = (char *) alloca (wpmax);
 	    }
-	  memset (charbuf.scratch.data, '\0', UCHAR_MAX + 1);
+	  memset (wp, '\0', UCHAR_MAX + 1);
 
 	  fc = *f;
 	  if (fc == ']' || fc == '-')
@@ -2511,7 +2393,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	      /* If ] or - appears before any char in the set, it is not
 		 the terminator or separator, but the first char in the
 		 set.  */
-	      ((char *)charbuf.scratch.data)[fc] = 1;
+	      wp[fc] = 1;
 	      ++f;
 	    }
 
@@ -2522,13 +2404,13 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		/* Add all characters from the one before the '-'
 		   up to (but not including) the next format char.  */
 		for (fc = (unsigned char) f[-2]; fc < (unsigned char) *f; ++fc)
-		  ((char *)charbuf.scratch.data)[fc] = 1;
+		  wp[fc] = 1;
 	      }
 	    else
 	      /* Add the character to the flag map.  */
-	      ((char *)charbuf.scratch.data)[fc] = 1;
+	      wp[fc] = 1;
 
-	  if (__glibc_unlikely (fc == '\0'))
+	  if (__builtin_expect (fc == '\0', 0))
 	    conv_error();
 #endif
 
@@ -2536,7 +2418,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	    {
 	      size_t now = read_in;
 #ifdef COMPILE_WSCANF
-	      if (__glibc_unlikely (inchar () == WEOF))
+	      if (__builtin_expect (inchar () == WEOF, 0))
 		input_error ();
 
 	      do
@@ -2648,14 +2530,14 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	      size_t cnt = 0;
 	      mbstate_t cstate;
 
-	      if (__glibc_unlikely (inchar () == EOF))
+	      if (__builtin_expect (inchar () == EOF, 0))
 		input_error ();
 
 	      memset (&cstate, '\0', sizeof (cstate));
 
 	      do
 		{
-		  if (((char *) charbuf.scratch.data)[c] == not_in)
+		  if (wp[c] == not_in)
 		    {
 		      ungetc_not_eof (c, s);
 		      break;
@@ -2731,13 +2613,13 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		}
 	      while (inchar () != EOF);
 
-	      if (__glibc_unlikely (cnt != 0))
+	      if (__builtin_expect (cnt != 0, 0))
 		/* We stopped in the middle of recognizing another
 		   character.  That's a problem.  */
 		encode_error ();
 #endif
 
-	      if (__glibc_unlikely (now == read_in))
+	      if (__builtin_expect (now == read_in, 0))
 		/* We haven't succesfully read any character.  */
 		conv_error ();
 
@@ -2763,7 +2645,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	    {
 	      size_t now = read_in;
 
-	      if (__glibc_unlikely (inchar () == EOF))
+	      if (__builtin_expect (inchar () == EOF, 0))
 		input_error ();
 
 #ifdef COMPILE_WSCANF
@@ -2872,7 +2754,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 		    }
 
 		  n = __wcrtomb (!(flags & SUPPRESS) ? str : NULL, c, &state);
-		  if (__glibc_unlikely (n == (size_t) -1))
+		  if (__builtin_expect (n == (size_t) -1, 0))
 		    encode_error ();
 
 		  assert (n <= MB_CUR_MAX);
@@ -2883,7 +2765,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 #else
 	      do
 		{
-		  if (((char *) charbuf.scratch.data)[c] == not_in)
+		  if (wp[c] == not_in)
 		    {
 		      ungetc_not_eof (c, s);
 		      break;
@@ -2935,7 +2817,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	      while (--width > 0 && inchar () != EOF);
 #endif
 
-	      if (__glibc_unlikely (now == read_in))
+	      if (__builtin_expect (now == read_in, 0))
 		/* We haven't succesfully read any character.  */
 		conv_error ();
 
@@ -3023,13 +2905,15 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
   /* Unlock stream.  */
   UNLOCK_STREAM (s);
 
-  scratch_buffer_free (&charbuf.scratch);
+  if (use_malloc)
+    free (wp);
+
   if (errp != NULL)
     *errp |= errval;
 
-  if (__glibc_unlikely (done == EOF))
+  if (__builtin_expect (done == EOF, 0))
     {
-      if (__glibc_unlikely (ptrs_to_free != NULL))
+      if (__builtin_expect (ptrs_to_free != NULL, 0))
 	{
 	  struct ptrs_to_free *p = ptrs_to_free;
 	  while (p != NULL)
@@ -3044,7 +2928,7 @@ _IO_vfscanf_internal (_IO_FILE *s, const char *format, _IO_va_list argptr,
 	    }
 	}
     }
-  else if (__glibc_unlikely (strptr != NULL))
+  else if (__builtin_expect (strptr != NULL, 0))
     {
       free (*strptr);
       *strptr = NULL;

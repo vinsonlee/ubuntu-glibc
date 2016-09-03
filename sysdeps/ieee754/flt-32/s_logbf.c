@@ -15,7 +15,6 @@
 
 #include <math.h>
 #include <math_private.h>
-#include <fix-int-fp-convert-zero.h>
 
 float
 __logbf (float x)
@@ -28,14 +27,12 @@ __logbf (float x)
     return (float) -1.0 / fabsf (x);
   if (ix >= 0x7f800000)
     return x * x;
-  if (__glibc_unlikely ((rix = ix >> 23) == 0))
+  if (__builtin_expect ((rix = ix >> 23) == 0, 0))
     {
       /* POSIX specifies that denormal number is treated as
          though it were normalized.  */
       rix -= __builtin_clz (ix) - 9;
     }
-  if (FIX_INT_FP_CONVERT_ZERO && rix == 127)
-    return 0.0f;
   return (float) (rix - 127);
 }
 weak_alias (__logbf, logbf)

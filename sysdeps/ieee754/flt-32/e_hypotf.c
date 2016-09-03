@@ -27,9 +27,17 @@ __ieee754_hypotf(float x, float y)
 	GET_FLOAT_WORD(hb,y);
 	hb &= 0x7fffffff;
 	if (ha == 0x7f800000)
-	  return fabsf(x);
+	  {
+	    if (x == y)
+	      return fabsf(y);
+	    return fabsf(x);
+	  }
 	else if (hb == 0x7f800000)
-	  return fabsf(y);
+	  {
+	    if (x == y)
+	      return fabsf(x);
+	    return fabsf(y);
+	  }
 	else if (ha > 0x7f800000 || hb > 0x7f800000)
 	  return fabsf(x) * fabsf(y);
 	else if (ha == 0)
