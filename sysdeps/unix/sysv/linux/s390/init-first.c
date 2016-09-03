@@ -1,5 +1,5 @@
 /* Initialization code run first thing by the ELF startup code.  Linux/s390.
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,40 +18,30 @@
 
 #ifdef SHARED
 # include <dl-vdso.h>
-# include <libc-vdso.h>
+# undef __gettimeofday
+# undef __clock_gettime
+# undef __clock_getres
+# include <bits/libc-vdso.h>
 
-long int (*VDSO_SYMBOL(gettimeofday)) (struct timeval *, void *)
-   attribute_hidden;
+long int (*__vdso_gettimeofday) (struct timeval *, void *) attribute_hidden;
 
-long int (*VDSO_SYMBOL(clock_gettime)) (clockid_t, struct timespec *)
+long int (*__vdso_clock_gettime) (clockid_t, struct timespec *)
   __attribute__ ((nocommon));
+strong_alias (__vdso_clock_gettime, __GI___vdso_clock_gettime attribute_hidden)
 
-long int (*VDSO_SYMBOL(clock_getres)) (clockid_t, struct timespec *)
+long int (*__vdso_clock_getres) (clockid_t, struct timespec *)
   __attribute__ ((nocommon));
+strong_alias (__vdso_clock_getres, __GI___vdso_clock_getres attribute_hidden)
 
-long int (*VDSO_SYMBOL(getcpu)) (unsigned *, unsigned *, void *)
-   attribute_hidden;
 
 static inline void
 _libc_vdso_platform_setup (void)
 {
   PREPARE_VERSION (linux2629, "LINUX_2.6.29", 123718585);
 
-  void *p = _dl_vdso_vsym ("__kernel_gettimeofday", &linux2629);
-  PTR_MANGLE (p);
-  VDSO_SYMBOL (gettimeofday) = p;
-
-  p = _dl_vdso_vsym ("__kernel_clock_gettime", &linux2629);
-  PTR_MANGLE (p);
-  VDSO_SYMBOL (clock_gettime) = p;
-
-  p = _dl_vdso_vsym ("__kernel_clock_getres", &linux2629);
-  PTR_MANGLE (p);
-  VDSO_SYMBOL (clock_getres) = p;
-
-  p = _dl_vdso_vsym ("__kernel_getcpu", &linux2629);
-  PTR_MANGLE (p);
-  VDSO_SYMBOL (getcpu) = p;
+  __vdso_gettimeofday = _dl_vdso_vsym ("__kernel_gettimeofday", &linux2629);
+  __vdso_clock_gettime = _dl_vdso_vsym ("__kernel_clock_gettime", &linux2629);
+  __vdso_clock_getres = _dl_vdso_vsym ("__kernel_clock_getres", &linux2629);
 }
 
 # define VDSO_SETUP _libc_vdso_platform_setup

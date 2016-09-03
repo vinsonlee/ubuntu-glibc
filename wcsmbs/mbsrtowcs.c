@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1996.
 
@@ -24,7 +24,11 @@
 static mbstate_t state;
 
 size_t
-__mbsrtowcs (wchar_t *dst, const char **src, size_t len, mbstate_t *ps)
+__mbsrtowcs (dst, src, len, ps)
+     wchar_t *dst;
+     const char **src;
+     size_t len;
+     mbstate_t *ps;
 {
   return __mbsrtowcs_l (dst, src, len, ps ?: &state, _NL_CURRENT_LOCALE);
 }

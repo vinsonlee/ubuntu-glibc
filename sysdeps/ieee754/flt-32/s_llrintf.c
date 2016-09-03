@@ -1,6 +1,6 @@
 /* Round argument to nearest integral value according to current rounding
    direction.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -18,12 +18,9 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <fenv.h>
-#include <limits.h>
 #include <math.h>
 
 #include <math_private.h>
-#include <fix-fp-int-convert-overflow.h>
 
 static const float two23[2] =
 {
@@ -37,7 +34,7 @@ __llrintf (float x)
 {
   int32_t j0;
   u_int32_t i0;
-  float w;
+  volatile float w;
   float t;
   long long int result;
   int sx;
@@ -55,7 +52,7 @@ __llrintf (float x)
 	result = (long long int) i0 << (j0 - 23);
       else
 	{
-	  w = math_narrow_eval (two23[sx] + x);
+	  w = two23[sx] + x;
 	  t = w - two23[sx];
 	  GET_FLOAT_WORD (i0, t);
 	  j0 = ((i0 >> 23) & 0xff) - 0x7f;
@@ -67,16 +64,8 @@ __llrintf (float x)
     }
   else
     {
-#ifdef FE_INVALID
-      /* The number is too large.  Unless it rounds to LLONG_MIN,
-	 FE_INVALID must be raised and the return value is
-	 unspecified.  */
-      if (FIX_FLT_LLONG_CONVERT_OVERFLOW && x != (float) LLONG_MIN)
-	{
-	  feraiseexcept (FE_INVALID);
-	  return sx == 0 ? LLONG_MAX : LLONG_MIN;
-	}
-#endif
+      /* The number is too large.  It is left implementation defined
+	 what happens.  */
       return (long long int) x;
     }
 

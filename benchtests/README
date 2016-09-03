@@ -8,9 +8,7 @@ basic performance properties of the function.
 Running the benchmark:
 =====================
 
-The benchmark needs python 2.7 or later in addition to the
-dependencies required to build the GNU C Library.  One may run the
-benchmark by invoking make as follows:
+The benchmark can be executed by invoking make as follows:
 
   $ make bench
 
@@ -33,25 +31,6 @@ the benchmark to use clock_gettime by invoking make as follows:
   $ make USE_CLOCK_GETTIME=1 bench
 
 Again, one must run `make bench-clean' before changing the measurement method.
-
-Running benchmarks on another target:
-====================================
-
-If the target where you want to run benchmarks is not capable of building the
-code or you're cross-building, you could build and execute the benchmark in
-separate steps.  On the build system run:
-
-  $ make bench-build
-
-and then copy the source and build directories to the target and run the
-benchmarks from the build directory as usual:
-
-  $ make bench
-
-make sure the copy preserves timestamps by using either rsync or scp -p
-otherwise the above command may try to build the benchmark again.  Benchmarks
-that require generated code to be executed during the build are skipped when
-cross-building.
 
 Adding a function to benchtests:
 ===============================
@@ -79,9 +58,6 @@ one to add `foo' to the bench tests:
   - include-sources: This should be assigned a comma-separated list of source
     files that need to be included to provide definitions of global variables
     and functions (specifically, this includes using "#include "source").
-    See pthread_once-inputs and pthreads_once-source.c for an example of how
-    to use this to benchmark a function that needs state across several calls.
-  - init: Name of an initializer function to call to initialize the benchtest.
   - name: See following section for instructions on how to use this directive.
 
   Lines beginning with a single hash '#' are treated as comments.  See

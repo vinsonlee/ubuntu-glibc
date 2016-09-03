@@ -1,5 +1,5 @@
 /* Dynamic linker system dependencies for Linux.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,9 +22,9 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/param.h>
 #include <sys/utsname.h>
 #include <ldsodefs.h>
+#include <kernel-features.h>
 
 #ifdef SHARED
 # define DL_SYSDEP_INIT frob_brk ()

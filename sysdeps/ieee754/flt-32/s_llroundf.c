@@ -1,5 +1,5 @@
 /* Round float value to long long int.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -17,12 +17,9 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <fenv.h>
-#include <limits.h>
 #include <math.h>
 
 #include <math_private.h>
-#include <fix-fp-int-convert-overflow.h>
 
 
 long long int
@@ -54,16 +51,8 @@ __llroundf (float x)
     }
   else
     {
-#ifdef FE_INVALID
-      /* The number is too large.  Unless it rounds to LLONG_MIN,
-	 FE_INVALID must be raised and the return value is
-	 unspecified.  */
-      if (FIX_FLT_LLONG_CONVERT_OVERFLOW && x != (float) LLONG_MIN)
-	{
-	  feraiseexcept (FE_INVALID);
-	  return sign == 1 ? LLONG_MAX : LLONG_MIN;
-	}
-#endif
+      /* The number is too large.  It is left implementation defined
+	 what happens.  */
       return (long long int) x;
     }
 

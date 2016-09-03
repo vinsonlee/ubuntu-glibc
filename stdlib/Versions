@@ -109,9 +109,6 @@ libc {
   GLIBC_2.18 {
     __cxa_thread_atexit_impl;
   }
-  GLIBC_2.24 {
-    quick_exit;
-  }
   GLIBC_PRIVATE {
     # functions which have an additional interface since they are
     # are cancelable.
@@ -121,6 +118,5 @@ libc {
     # Used from other libraries
     __libc_secure_getenv;
     __call_tls_dtors;
-    __strtof_nan; __strtod_nan; __strtold_nan;
   }
 }

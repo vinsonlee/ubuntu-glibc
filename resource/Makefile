@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2016 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -16,8 +16,6 @@
 # <http://www.gnu.org/licenses/>.
 
 subdir := resource
-
-include ../Makeconfig
 
 headers	  := sys/resource.h bits/resource.h sys/vlimit.h sys/vtimes.h	\
 	     ulimit.h

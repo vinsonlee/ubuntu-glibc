@@ -1,5 +1,5 @@
 /* k_sinf.c -- float version of k_sin.c
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Adhemerval Zanella <azanella@br.ibm.com>, 2011
 
@@ -17,7 +17,6 @@
    License along with the GNU C Library; see the file COPYING.LIB.  If
    not, see <http://www.gnu.org/licenses/>.  */
 
-#include <float.h>
 #include <math.h>
 #include <fenv.h>
 #include <math_private.h>
@@ -41,10 +40,7 @@ __kernel_sinf (float x, float y, int iy)
   ix = __builtin_fabsf (x);
   if (ix < twom27)
     {				/* |x| < 2**-27 */
-      if (ix < FLT_MIN && ix != 0.0f)
-	__feraiseexcept (FE_UNDERFLOW|FE_INEXACT);
-      else
-	__feraiseexcept (FE_INEXACT);
+      __feraiseexcept (FE_INEXACT);
       return x;
     }
   z = x * x;

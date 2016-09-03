@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #include <stdlib.h>
 
 #include <_itoa.h>
+#include <kernel-features.h>
 
 static int getttyname_r (char *buf, size_t buflen,
 			 dev_t mydev, ino64_t myino, int save,
@@ -117,7 +118,7 @@ __ttyname_r (int fd, char *buf, size_t buflen)
   /* isatty check, tcgetattr is used because it sets the correct
      errno (EBADF resp. ENOTTY) on error.  */
   struct termios term;
-  if (__glibc_unlikely (__tcgetattr (fd, &term) < 0))
+  if (__builtin_expect (__tcgetattr (fd, &term) < 0, 0))
     return errno;
 
   if (__fxstat64 (_STAT_VER, fd, &st) < 0)
@@ -127,13 +128,13 @@ __ttyname_r (int fd, char *buf, size_t buflen)
   *_fitoa_word (fd, __stpcpy (procname, "/proc/self/fd/"), 10, 0) = '\0';
 
   ssize_t ret = __readlink (procname, buf, buflen - 1);
-  if (__glibc_unlikely (ret == -1 && errno == ENAMETOOLONG))
+  if (__builtin_expect (ret == -1 && errno == ENAMETOOLONG, 0))
     {
       __set_errno (ERANGE);
       return ERANGE;
     }
 
-  if (__glibc_likely (ret != -1))
+  if (__builtin_expect (ret != -1, 1))
     {
 #define UNREACHABLE_LEN strlen ("(unreachable)")
       if (ret > UNREACHABLE_LEN

@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Per Bothner <bothner@cygnus.com>.
 
@@ -29,11 +29,11 @@
 # define _POSIX_SOURCE
 #endif
 #include "libioP.h"
-#include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
 #ifdef _LIBC
+# include <unistd.h>
 # include <shlib-compat.h>
 # include <not-cancel.h>
 #endif
@@ -106,7 +106,10 @@ unlock (void *not_used)
 #endif
 
 _IO_FILE *
-_IO_new_proc_open (_IO_FILE *fp, const char *command, const char *mode)
+_IO_new_proc_open (fp, command, mode)
+     _IO_FILE *fp;
+     const char *command;
+     const char *mode;
 {
   int read_or_write;
   int parent_end, child_end;
@@ -269,7 +272,9 @@ _IO_new_proc_open (_IO_FILE *fp, const char *command, const char *mode)
 }
 
 _IO_FILE *
-_IO_new_popen (const char *command, const char *mode)
+_IO_new_popen (command, mode)
+     const char *command;
+     const char *mode;
 {
   struct locked_FILE
   {
@@ -287,9 +292,9 @@ _IO_new_popen (const char *command, const char *mode)
   new_f->fpx.file.file._lock = &new_f->lock;
 #endif
   fp = &new_f->fpx.file.file;
-  _IO_init_internal (fp, 0);
+  _IO_init (fp, 0);
   _IO_JUMPS (&new_f->fpx.file) = &_IO_proc_jumps;
-  _IO_new_file_init_internal (&new_f->fpx.file);
+  _IO_new_file_init (&new_f->fpx.file);
 #if  !_IO_UNIFIED_JUMPTABLES
   new_f->fpx.file.vtable = NULL;
 #endif
@@ -301,7 +306,8 @@ _IO_new_popen (const char *command, const char *mode)
 }
 
 int
-_IO_new_proc_close (_IO_FILE *fp)
+_IO_new_proc_close (fp)
+     _IO_FILE *fp;
 {
   /* This is not name-space clean. FIXME! */
   int wstatus;
@@ -344,7 +350,7 @@ _IO_new_proc_close (_IO_FILE *fp)
   return wstatus;
 }
 
-static const struct _IO_jump_t _IO_proc_jumps libio_vtable = {
+static const struct _IO_jump_t _IO_proc_jumps = {
   JUMP_INIT_DUMMY,
   JUMP_INIT(finish, _IO_new_file_finish),
   JUMP_INIT(overflow, _IO_new_file_overflow),

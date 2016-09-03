@@ -48,10 +48,6 @@ $2 == "g" || $2 == "w" && (NF == 7 || NF == 8) {
   symbol = $NF;
   gsub(/[()]/, "", version);
 
-  # binutils versions up through at least 2.23 have some bugs that
-  # caused STV_HIDDEN symbols to appear in .dynsym, though that is useless.
-  if (NF > 7 && $7 == ".hidden") next;
-
   if (version == "GLIBC_PRIVATE") next;
 
   desc = "";
@@ -100,13 +96,17 @@ $2 == "g" || $2 == "w" && (NF == 7 || NF == 8) {
   # Disabled -- weakness should not matter to shared library ABIs any more.
   #if (weak == "w") type = tolower(type);
   if (desc == "")
-    desc = symbol " " type size;
+    desc = " " symbol " " type size;
 
   if (combine)
     version = soname " " version (combine_fullname ? " " sofullname : "");
 
-  # Append to the string which collects the results.
-  descs = descs version " " desc "\n";
+  if (version in versions) {
+    versions[version] = versions[version] "\n" desc;
+  }
+  else {
+    versions[version] = desc;
+  }
   next;
 }
 
@@ -122,20 +122,65 @@ function emit(end) {
     return;
   tofile = parse_names && !combine;
 
+  nverslist = 0;
+  for (version in versions) {
+    if (nverslist == 0) {
+      verslist = version;
+      nverslist = 1;
+      continue;
+    }
+    split(verslist, s, "\n");
+    if (version < s[1]) {
+      verslist = version;
+      for (i = 1; i <= nverslist; ++i) {
+	verslist = verslist "\n" s[i];
+      }
+    }
+    else {
+      verslist = s[1];
+      for (i = 2; i <= nverslist; ++i) {
+	if (version < s[i]) break;
+	verslist = verslist "\n" s[i];
+      }
+      verslist = verslist "\n" version;
+      for (; i <= nverslist; ++i) {
+	verslist = verslist "\n" s[i];
+      }
+    }
+    ++nverslist;
+  }
+
   if (tofile) {
     out = prefix soname ".symlist";
     if (soname in outfiles)
       out = out "." ++outfiles[soname];
     else
       outfiles[soname] = 1;
-    outpipe = "LC_ALL=C sort -u > " out;
-  } else {
-    outpipe = "LC_ALL=C sort -u";
+    printf "" > out;
   }
 
-  printf "%s", descs | outpipe;
+  split(verslist, order, "\n");
+  for (i = 1; i <= nverslist; ++i) {
+    version = order[i];
 
-  descs = "";
+    if (tofile) {
+      print version >> out;
+      close(out);
+      outpipe = "sort >> " out;
+    }
+    else {
+      if (combine)
+	print "";
+      print prefix version;
+      outpipe = "sort";
+    }
+    print versions[version] | outpipe;
+    close(outpipe);
+
+    delete versions[version];
+  }
+  for (version in versions)
+    delete versions[version];
 
   if (tofile)
     print "wrote", out, "for", sofullname;

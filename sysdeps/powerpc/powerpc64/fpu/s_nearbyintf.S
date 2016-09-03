@@ -1,5 +1,5 @@
 /* Round to int floating-point values.  PowerPC64 version.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Adhemerval Zanella <azanella@br.ibm.com>, 2011
 
@@ -37,32 +37,24 @@ EALIGN (__nearbyintf, 4, 0)
 	fabs	fp0,fp1
 	lfs	fp13,.LC0@toc(2)
 	fcmpu	cr7,fp0,fp13	/* if (fabs(x) > TWO52)  */
-	bge	cr7,.L10
+	bgelr	cr7
 	fsubs	fp12,fp13,fp13	/* generate 0.0 */
 	fcmpu	cr7,fp1,fp12	/* if (x > 0.0)  */
 	ble	cr7, L(lessthanzero)
-	mffs	fp11
 	mtfsb0	4*cr7+lt	/* Disable FE_INEXACT exception */
 	fadds	fp1,fp1,fp13	/* x += TWO23 */
 	fsubs	fp1,fp1,fp13	/* x -= TWO23 */
 	fabs	fp1,fp1		/* if (x == 0.0) */
-	mtfsf	0xff,fp11	/* Restore FE_INEXACT state.  */
+	mtfsb0	4*cr1+eq	/* Clear pending FE_INEXACT exception */
 	blr			/* x = 0.0; */
 L(lessthanzero):
 	bgelr	cr7		/* if (x < 0.0) */
-	mffs	fp11
 	mtfsb0	4*cr7+lt	/* Disable FE_INEXACT exception */
 	fsubs	fp1,fp1,fp13	/* x -= TWO23 */
 	fadds	fp1,fp1,fp13	/* x += TWO23 */
 	fnabs	fp1,fp1		/* if (x == 0.0) */
-	mtfsf	0xff,fp11	/* Restore FE_INEXACT state.  */
+	mtfsb0	4*cr1+eq	/* Clear pending FE_INEXACT exception */
 	blr			/* x = -0.0; */
-.L10:
-	/* Ensure sNaN input is converted to qNaN.  */
-	fcmpu	cr7,fp1,fp1
-	beqlr	cr7
-	fadds	fp1,fp1,fp1
-	blr
 END (__nearbyintf)
 
 weak_alias (__nearbyintf, nearbyintf)

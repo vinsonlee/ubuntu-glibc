@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1997.
 
@@ -25,7 +25,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <rpcsvc/nis.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 
 #include "nss-nisplus.h"
 
@@ -376,7 +376,7 @@ _nss_nisplus_getnetbyname_r (const char *name, struct netent *network,
     }
 
   retval = niserr2nss (result->status);
-  if (__glibc_unlikely (retval != NSS_STATUS_SUCCESS))
+  if (__builtin_expect (retval != NSS_STATUS_SUCCESS, 0))
     {
       if (retval == NSS_STATUS_TRYAGAIN)
 	{
@@ -447,7 +447,7 @@ _nss_nisplus_getnetbyaddr_r (uint32_t addr, const int type,
 	    return NSS_STATUS_TRYAGAIN;
 	  }
 	enum nss_status retval = niserr2nss (result->status);
-	if (__glibc_unlikely (retval != NSS_STATUS_SUCCESS))
+	if (__builtin_expect (retval != NSS_STATUS_SUCCESS, 0))
 	  {
 	    if (b2len > 2 && buf2[b2len - 2] == '.' && buf2[b2len - 1] == '0')
 	      {

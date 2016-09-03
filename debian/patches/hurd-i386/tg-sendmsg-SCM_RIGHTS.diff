@@ -4,20 +4,18 @@ Date: Sat, 17 Jul 2010 22:09:13 +0200
 Subject: [PATCH] Add support to send file descriptors over Unix sockets
 
 ---
- sysdeps/mach/hurd/recvmsg.c | 97 ++++++++++++++++++++++++++++++++++++++++++++-
- sysdeps/mach/hurd/sendmsg.c | 73 +++++++++++++++++++++++++++++-----
- 2 files changed, 157 insertions(+), 13 deletions(-)
+ sysdeps/mach/hurd/recvmsg.c |  105 ++++++++++++++++++++++++++++++++++++++++++--
+ sysdeps/mach/hurd/sendmsg.c |   73 +++++++++++++++++++++++++-----
+ 2 files changed, 163 insertions(+), 15 deletions(-)
 
-diff --git a/sysdeps/mach/hurd/recvmsg.c b/sysdeps/mach/hurd/recvmsg.c
-index 5d7b1ee..dfd4145 100644
 --- a/sysdeps/mach/hurd/recvmsg.c
 +++ b/sysdeps/mach/hurd/recvmsg.c
-@@ -32,13 +32,34 @@ __libc_recvmsg (int fd, struct msghdr *message, int flags)
+@@ -32,13 +32,33 @@
    addr_port_t aport;
    char *data = NULL;
    mach_msg_type_number_t len = 0;
 -  mach_port_t *ports;
-+  mach_port_t *ports, *newports = NULL;
++  mach_port_t *ports, *newports;
    mach_msg_type_number_t nports = 0;
 +  struct cmsghdr *cmsg;
    char *cdata = NULL;
@@ -25,9 +23,8 @@ index 5d7b1ee..dfd4145 100644
    size_t amount;
    char *buf;
 -  int i;
-+  int nfds, *opened_fds = NULL;
-+  int i, ii, j;
-+  int newfds;
++  int nfds, *fds;
++  int i, j;
 +
 +  error_t reauthenticate (mach_port_t port, mach_port_t *result)
 +    {
@@ -49,93 +46,95 @@ index 5d7b1ee..dfd4145 100644
  
    /* Find the total number of bytes to be read.  */
    amount = 0;
-@@ -135,9 +156,81 @@ __libc_recvmsg (int fd, struct msghdr *message, int flags)
+@@ -135,6 +155,85 @@
      message->msg_controllen = clen;
    memcpy (message->msg_control, cdata, message->msg_controllen);
  
++  /* SCM_RIGHTS ports.  */
 +  if (nports > 0)
 +    {
 +      newports = __alloca (nports * sizeof (mach_port_t));
-+      opened_fds = __alloca (nports * sizeof (int));
-+    }
 +
-+  /* This counts how many ports we processed completely.  */
-+  i = 0;
-+  /* This counts how many new fds we create.  */
-+  newfds = 0;
++      /* Reauthenticate all ports here.  */
++      for (i = 0; i < nports; i++)
++	{
++	  err = reauthenticate (ports[i], &newports[i]);
++	  __mach_port_deallocate (__mach_task_self (), ports[i]);
++	  if (err)
++	    {
++	      for (j = 0; j < i; j++)
++		__mach_port_deallocate (__mach_task_self (), newports[j]);
++	      for (j = i+1; j < nports; j++)
++		__mach_port_deallocate (__mach_task_self (), ports[j]);
 +
-+  for (cmsg = CMSG_FIRSTHDR (message);
-+       cmsg;
-+       cmsg = CMSG_NXTHDR (message, cmsg))
-+  {
-+    if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS)
-+      {
-+	/* SCM_RIGHTS support.  */
-+	/* The fd's flags are passed in the control data.  */
-+	int *fds = (int *) CMSG_DATA (cmsg);
-+	nfds = (cmsg->cmsg_len - CMSG_ALIGN (sizeof (struct cmsghdr)))
-+	       / sizeof (int);
++	      __vm_deallocate (__mach_task_self (), (vm_address_t) cdata, clen);
++	      __hurd_fail (err);
++	    }
++	}
 +
-+	for (j = 0; j < nfds; j++)
-+	  {
-+	    err = reauthenticate (ports[i], &newports[newfds]);
-+	    if (err)
-+	      goto cleanup;
-+	    fds[j] = opened_fds[newfds] = _hurd_intern_fd (newports[newfds],
-+							   fds[j], 0);
-+	    if (fds[j] == -1)
-+	      {
-+		err = errno;
-+		__mach_port_deallocate (__mach_task_self (), newports[newfds]);
-+		goto cleanup;
-+	      }
-+	    i++;
-+	    newfds++;
-+	  }
-+      }
-+  }
-+
-+  for (i = 0; i < nports; i++)
-+    __mach_port_deallocate (mach_task_self (), ports[i]);
-+
-   __vm_deallocate (__mach_task_self (), (vm_address_t) cdata, clen);
- 
-   return (buf - data);
-+
-+cleanup:
-+  /* Clean up all the file descriptors from port 0 to i-1.  */
-+  if (nports > 0)
-+    {
-+      ii = 0;
-+      newfds = 0;
++      j = 0;
 +      for (cmsg = CMSG_FIRSTHDR (message);
 +	   cmsg;
 +	   cmsg = CMSG_NXTHDR (message, cmsg))
 +	{
 +	  if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS)
 +	    {
++	      fds = (int *) CMSG_DATA (cmsg);
 +	      nfds = (cmsg->cmsg_len - CMSG_ALIGN (sizeof (struct cmsghdr)))
 +		     / sizeof (int);
-+	      for (j = 0; j < nfds && ii < i; j++, ii++, newfds++)
-+	      {
-+		_hurd_fd_close (_hurd_fd_get (opened_fds[newfds]));
-+		__mach_port_deallocate (__mach_task_self (), newports[newfds]);
-+		__mach_port_deallocate (__mach_task_self (), ports[ii]);
-+	      }
++
++	      for (i = 0; i < nfds && j < nports; i++)
++		{
++		  /* The fd's flags are passed in the control data.  */
++		  fds[i] = _hurd_intern_fd (newports[j++], fds[i], 0);
++		  if (fds[i] == -1)
++		    {
++		      err = errno;
++		      goto cleanup;
++		    }
++		}
 +	    }
++	}
++
++      if (j != nports)
++	err = EGRATUITOUS;
++
++      if (err)
++      cleanup:
++	{
++	  /* Clean up all the file descriptors.  */
++	  nports = j;
++	  j = 0;
++	  for (cmsg = CMSG_FIRSTHDR (message);
++	       cmsg;
++	       cmsg = CMSG_NXTHDR (message, cmsg))
++	    {
++	      if (cmsg->cmsg_level == SOL_SOCKET
++		  && cmsg->cmsg_type == SCM_RIGHTS)
++		{
++		  fds = (int *) CMSG_DATA (cmsg);
++		  nfds = (cmsg->cmsg_len
++			  - CMSG_ALIGN (sizeof (struct cmsghdr)))
++			 / sizeof (int);
++		  for (i = 0; i < nfds && j < nports; i++, j++)
++		    _hurd_fd_close (_hurd_fd_get (fds[i]));
++		}
++	    }
++
++	  for (; j < nports; j++)
++	    __mach_port_deallocate (__mach_task_self (), newports[j]);
++
++	  __vm_deallocate (__mach_task_self (), (vm_address_t) cdata, clen);
++	  __hurd_fail (err);
 +	}
 +    }
 +
-+  __vm_deallocate (__mach_task_self (), (vm_address_t) cdata, clen);
-+  return __hurd_fail (err);
- }
+   __vm_deallocate (__mach_task_self (), (vm_address_t) cdata, clen);
  
- weak_alias (__libc_recvmsg, recvmsg)
-diff --git a/sysdeps/mach/hurd/sendmsg.c b/sysdeps/mach/hurd/sendmsg.c
-index 5a93c63..612581c 100644
+   return (buf - data);
 --- a/sysdeps/mach/hurd/sendmsg.c
 +++ b/sysdeps/mach/hurd/sendmsg.c
-@@ -31,6 +31,10 @@ ssize_t
+@@ -31,6 +31,10 @@
  __libc_sendmsg (int fd, const struct msghdr *message, int flags)
  {
    error_t err = 0;
@@ -146,7 +145,7 @@ index 5a93c63..612581c 100644
    struct sockaddr_un *addr = message->msg_name;
    socklen_t addr_len = message->msg_namelen;
    addr_port_t aport = MACH_PORT_NULL;
-@@ -43,6 +47,7 @@ __libc_sendmsg (int fd, const struct msghdr *message, int flags)
+@@ -43,6 +47,7 @@
    mach_msg_type_number_t len;
    mach_msg_type_number_t amount;
    int dealloc = 0;
@@ -154,11 +153,11 @@ index 5a93c63..612581c 100644
    int i;
  
    /* Find the total number of bytes to be written.  */
-@@ -100,6 +105,48 @@ __libc_sendmsg (int fd, const struct msghdr *message, int flags)
+@@ -100,6 +105,47 @@
  	}
      }
  
-+  /* Allocate enough room for ports.  */
++  /* SCM_RIGHTS support: get the number of fds to send.  */
 +  cmsg = CMSG_FIRSTHDR (message);
 +  for (; cmsg; cmsg = CMSG_NXTHDR (message, cmsg))
 +    if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS)
@@ -175,7 +174,6 @@ index 5a93c63..612581c 100644
 +    {
 +      if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS)
 +	{
-+	  /* SCM_RIGHTS support: send FDs.   */
 +	  fds = (int *) CMSG_DATA (cmsg);
 +	  nfds = (cmsg->cmsg_len - CMSG_ALIGN (sizeof (struct cmsghdr)))
 +		 / sizeof (int);
@@ -203,8 +201,8 @@ index 5a93c63..612581c 100644
    if (addr)
      {
        if (addr->sun_family == AF_LOCAL)
-@@ -109,9 +156,8 @@ __libc_sendmsg (int fd, const struct msghdr *message, int flags)
- 	  file_t file = __file_name_lookup (name, 0, 0);
+@@ -109,9 +154,8 @@
+ 	  file_t file = __file_name_lookup (addr->sun_path, 0, 0);
  	  if (file == MACH_PORT_NULL)
  	    {
 -	      if (dealloc)
@@ -215,7 +213,7 @@ index 5a93c63..612581c 100644
  	    }
  	  err = __ifsock_getsockaddr (file, &aport);
  	  __mach_port_deallocate (__mach_task_self (), file);
-@@ -119,11 +165,7 @@ __libc_sendmsg (int fd, const struct msghdr *message, int flags)
+@@ -119,11 +163,7 @@
  	    /* The file did not grok the ifsock protocol.  */
  	    err = ENOTSOCK;
  	  if (err)
@@ -228,7 +226,7 @@ index 5a93c63..612581c 100644
  	}
        else
  	err = EIEIO;
-@@ -142,8 +184,9 @@ __libc_sendmsg (int fd, const struct msghdr *message, int flags)
+@@ -142,8 +182,9 @@
  			      /* Send the data.  */
  			      err = __socket_send (port, aport,
  						   flags, data.ptr, len,
@@ -240,7 +238,7 @@ index 5a93c63..612581c 100644
  						   message->msg_control,
  						   message->msg_controllen,
  						   &amount);
-@@ -152,11 +195,19 @@ __libc_sendmsg (int fd, const struct msghdr *message, int flags)
+@@ -152,11 +193,19 @@
  			    }
  			  err;
  			}));
@@ -261,5 +259,3 @@ index 5a93c63..612581c 100644
  }
  
  weak_alias (__libc_sendmsg, sendmsg)
--- 
-tg: (b4578ba..) t/sendmsg-SCM_RIGHTS (depends on: 64a17f1adde4715bb6607f64decd73b2df9e6852)

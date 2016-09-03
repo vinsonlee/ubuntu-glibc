@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,7 +27,9 @@
 #include "libioP.h"
 
 int
-_IO_ungetc (int c, _IO_FILE *fp)
+_IO_ungetc (c, fp)
+     int c;
+     _IO_FILE *fp;
 {
   int result;
   CHECK_FILE (fp, EOF);

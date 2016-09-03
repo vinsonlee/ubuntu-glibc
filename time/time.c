@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,8 @@
 
 /* Return the time now, and store it in *TIMER if not NULL.  */
 time_t
-time (time_t *timer)
+time (timer)
+     time_t *timer;
 {
   __set_errno (ENOSYS);
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2000-2016 Free Software Foundation, Inc.
+# Copyright (C) 2000-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 # Contributed by Bruno Haible <haible@clisp.cons.org>, 2000.
 #
@@ -261,7 +261,7 @@ EOF
 while read charset charmap; do
   if test "$charset" = GB18030; then echo "This might take a while" 1>&2; fi
   case ${charset} in \#*) continue;; esac
-  printf %s "Testing ${charset}" 1>&2
+  echo -n "Testing ${charset}" 1>&2
   if ./tst-table.sh ${common_objpfx} ${objpfx} "${test_program_prefix}" \
       ${charset} ${charmap} < /dev/null; then
     echo 1>&2

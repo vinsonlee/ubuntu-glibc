@@ -1,5 +1,5 @@
 /* Store current floating-point environment.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Denis Joseph Barrow (djbarrow@de.ibm.com).
 
@@ -21,13 +21,11 @@
 #include <fpu_control.h>
 
 int
-__fegetenv (fenv_t *envp)
+fegetenv (fenv_t *envp)
 {
   _FPU_GETCW (envp->__fpc);
 
   /* Success.  */
   return 0;
 }
-libm_hidden_def (__fegetenv)
-weak_alias (__fegetenv, fegetenv)
-libm_hidden_weak (fegetenv)
+libm_hidden_def (fegetenv)

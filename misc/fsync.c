@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,8 @@
 
 /* Make all changes done to FD actually appear on disk.  */
 int
-fsync (int fd)
+fsync (fd)
+     int fd;
 {
   __set_errno (ENOSYS);
   return -1;

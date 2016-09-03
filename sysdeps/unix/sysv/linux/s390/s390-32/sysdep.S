@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
    This file is part of the GNU C Library.
 
@@ -31,7 +31,7 @@
 	.text
 ENTRY(__syscall_error)
 #ifndef PIC
-# if IS_IN (libc)
+# ifndef NOT_IN_libc
 #  define SYSCALL_ERROR_ERRNO __libc_errno
 # else
 #  define SYSCALL_ERROR_ERRNO errno
@@ -54,7 +54,7 @@ ENTRY(__syscall_error)
 	br	%r14
 1:	.long	rtld_errno - 0b
 # else
-#  if IS_IN (libc)
+#  ifndef NOT_IN_libc
 #   define SYSCALL_ERROR_ERRNO __libc_errno
 #  else
 #   define SYSCALL_ERROR_ERRNO errno

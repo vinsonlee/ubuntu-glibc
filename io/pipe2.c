@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,9 @@
    PIPEDES[1] can be read from PIPEDES[0].  Apply FLAGS to the new
    file descriptors.  Returns 0 if successful, -1 if not.  */
 int
-__pipe2 (int pipedes[2], int flags)
+__pipe2 (pipedes, flags)
+     int pipedes[2];
+     int flags;
 {
   if (pipedes == NULL)
     {

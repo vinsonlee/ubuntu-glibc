@@ -1,5 +1,5 @@
 /* Convert string representation of a number into an integer value.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -82,18 +82,17 @@
 #define INTERNAL(X) INTERNAL1(X)
 #define INTERNAL1(X) __##X##_internal
 
-#define SYM__(X) SYM__1 (X)
-#define SYM__1(X) __ ## X
-#define __strtol SYM__ (strtol)
-
 
 extern INT INTERNAL (__strtol_l) (const STRING_TYPE *, STRING_TYPE **, int,
 				  int, __locale_t);
 
 
 INT
-INTERNAL (strtol) (const STRING_TYPE *nptr, STRING_TYPE **endptr,
-		   int base, int group)
+INTERNAL (strtol) (nptr, endptr, base, group)
+     const STRING_TYPE *nptr;
+     STRING_TYPE **endptr;
+     int base;
+     int group;
 {
   return INTERNAL (__strtol_l) (nptr, endptr, base, group, _NL_CURRENT_LOCALE);
 }
@@ -101,9 +100,11 @@ libc_hidden_def (INTERNAL (strtol))
 
 
 INT
-__strtol (const STRING_TYPE *nptr, STRING_TYPE **endptr, int base)
+strtol (nptr, endptr, base)
+     const STRING_TYPE *nptr;
+     STRING_TYPE **endptr;
+     int base;
 {
   return INTERNAL (__strtol_l) (nptr, endptr, base, 0, _NL_CURRENT_LOCALE);
 }
-weak_alias (__strtol, strtol)
-libc_hidden_weak (strtol)
+libc_hidden_def (strtol)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,10 @@
 
 /* Put the local address of FD into *ADDR and its length in *LEN.  */
 int
-__getsockname (int fd, __SOCKADDR_ARG addrarg, socklen_t *len)
+__getsockname (fd, addrarg, len)
+     int fd;
+     __SOCKADDR_ARG addrarg;
+     socklen_t *len;
 {
   error_t err;
   struct sockaddr *addr = addrarg.__sockaddr__;

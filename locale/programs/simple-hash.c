@@ -1,5 +1,5 @@
 /* Implement simple hashing table with string based keys.
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Ulrich Drepper <drepper@gnu.ai.mit.edu>, October 1994.
 
@@ -27,7 +27,11 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include <obstack.h>
+#if HAVE_OBSTACK
+# include <obstack.h>
+#else
+# include "obstack.h"
+#endif
 
 #ifdef HAVE_VALUES_H
 # include <values.h>
@@ -40,6 +44,10 @@
 
 #ifndef BITSPERBYTE
 # define BITSPERBYTE 8
+#endif
+
+#ifndef bcopy
+# define bcopy(s, d, n)	memcpy ((d), (s), (n))
 #endif
 
 #define hashval_t uint32_t
@@ -66,7 +74,9 @@ static int is_prime (unsigned long int candidate);
 
 
 int
-init_hash (hash_table *htab, unsigned long int init_size)
+init_hash (htab, init_size)
+     hash_table *htab;
+     unsigned long int init_size;
 {
   /* We need the size to be a prime.  */
   init_size = next_prime (init_size);
@@ -86,7 +96,8 @@ init_hash (hash_table *htab, unsigned long int init_size)
 
 
 int
-delete_hash (hash_table *htab)
+delete_hash (htab)
+     hash_table *htab;
 {
   free (htab->table);
   obstack_free (&htab->mem_pool, NULL);
@@ -95,7 +106,11 @@ delete_hash (hash_table *htab)
 
 
 int
-insert_entry (hash_table *htab, const void *key, size_t keylen, void *data)
+insert_entry (htab, key, keylen, data)
+     hash_table *htab;
+     const void *key;
+     size_t keylen;
+     void *data;
 {
   unsigned long int hval = compute_hashval (key, keylen);
   hash_entry *table = (hash_entry *) htab->table;
@@ -114,8 +129,13 @@ insert_entry (hash_table *htab, const void *key, size_t keylen, void *data)
 }
 
 static void
-insert_entry_2 (hash_table *htab, const void *key, size_t keylen,
-		unsigned long int hval, size_t idx, void *data)
+insert_entry_2 (htab, key, keylen, hval, idx, data)
+     hash_table *htab;
+     const void *key;
+     size_t keylen;
+     unsigned long int hval;
+     size_t idx;
+     void *data;
 {
   hash_entry *table = (hash_entry *) htab->table;
 
@@ -164,8 +184,11 @@ insert_entry_2 (hash_table *htab, const void *key, size_t keylen,
 
 
 int
-find_entry (const hash_table *htab, const void *key, size_t keylen,
-	    void **result)
+find_entry (htab, key, keylen, result)
+     const hash_table *htab;
+     const void *key;
+     size_t keylen;
+     void **result;
 {
   hash_entry *table = (hash_entry *) htab->table;
   size_t idx = lookup (htab, key, keylen, compute_hashval (key, keylen));
@@ -179,7 +202,11 @@ find_entry (const hash_table *htab, const void *key, size_t keylen,
 
 
 int
-set_entry (hash_table *htab, const void *key, size_t keylen, void *newval)
+set_entry (htab, key, keylen, newval)
+     hash_table *htab;
+     const void *key;
+     size_t keylen;
+     void *newval;
 {
   hash_entry *table = (hash_entry *) htab->table;
   size_t idx = lookup (htab, key, keylen, compute_hashval (key, keylen));
@@ -193,8 +220,12 @@ set_entry (hash_table *htab, const void *key, size_t keylen, void *newval)
 
 
 int
-iterate_table (const hash_table *htab, void **ptr, const void **key,
-	       size_t *keylen, void **data)
+iterate_table (htab, ptr, key, keylen, data)
+     const hash_table *htab;
+     void **ptr;
+     const void **key;
+     size_t *keylen;
+     void **data;
 {
   if (*ptr == NULL)
     {
@@ -221,8 +252,11 @@ iterate_table (const hash_table *htab, void **ptr, const void **key,
    [Knuth]	      The Art of Computer Programming, part3 (6.4) */
 
 static size_t
-lookup (const hash_table *htab, const void *key, size_t keylen,
-	unsigned long int hval)
+lookup (htab, key, keylen, hval)
+     const hash_table *htab;
+     const void *key;
+     size_t keylen;
+     unsigned long int hval;
 {
   unsigned long int hash;
   size_t idx;
@@ -261,7 +295,8 @@ lookup (const hash_table *htab, const void *key, size_t keylen,
 
 
 unsigned long int
-next_prime (unsigned long int seed)
+next_prime (seed)
+     unsigned long int seed;
 {
   /* Make it definitely odd.  */
   seed |= 1;
@@ -274,7 +309,8 @@ next_prime (unsigned long int seed)
 
 
 static int
-is_prime (unsigned long int candidate)
+is_prime (candidate)
+     unsigned long int candidate;
 {
   /* No even number and none less than 10 will be passed here.  */
   unsigned long int divn = 3;

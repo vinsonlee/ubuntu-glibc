@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 1999.
 
@@ -100,8 +100,7 @@ int opt_format = 1;
 /* Build cache.  */
 static int opt_build_cache = 1;
 
-/* Enable symbolic link processing.  If set, create or update symbolic
-   links, and remove stale symbolic links.  */
+/* Generate links.  */
 static int opt_link = 1;
 
 /* Only process directories specified on the command line.  */
@@ -142,7 +141,7 @@ static const struct argp_option options[] =
   { "print-cache", 'p', NULL, 0, N_("Print cache"), 0},
   { "verbose", 'v', NULL, 0, N_("Generate verbose messages"), 0},
   { NULL, 'N', NULL, 0, N_("Don't build cache"), 0},
-  { NULL, 'X', NULL, 0, N_("Don't update symbolic links"), 0},
+  { NULL, 'X', NULL, 0, N_("Don't generate links"), 0},
   { NULL, 'r', N_("ROOT"), 0, N_("Change to and use ROOT as root directory"), 0},
   { NULL, 'C', N_("CACHE"), 0, N_("Use CACHE as cache file"), 0},
   { NULL, 'f', N_("CONF"), 0, N_("Use CONF as configuration file"), 0},
@@ -325,7 +324,7 @@ print_version (FILE *stream, struct argp_state *state)
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
-"), "2016");
+"), "2014");
   fprintf (stream, gettext ("Written by %s.\n"),
 	   "Andreas Jaeger");
 }
@@ -771,7 +770,7 @@ search_dir (const struct dir_entry *entry)
 	lstat_buf.st_mode = DTTOIF (direntry->d_type);
       else
 #endif
-	if (__glibc_unlikely (lstat64 (real_file_name, &lstat_buf)))
+	if (__builtin_expect (lstat64 (real_file_name, &lstat_buf), 0))
 	  {
 	    error (0, errno, _("Cannot lstat %s"), file_name);
 	    continue;
@@ -795,13 +794,13 @@ search_dir (const struct dir_entry *entry)
 		  continue;
 		}
 	    }
-	  if (__glibc_unlikely (stat64 (target_name, &stat_buf)))
+	  if (__builtin_expect (stat64 (target_name, &stat_buf), 0))
 	    {
 	      if (opt_verbose)
 		error (0, errno, _("Cannot stat %s"), file_name);
 
 	      /* Remove stale symlinks.  */
-	      if (opt_link && strstr (direntry->d_name, ".so."))
+	      if (strstr (direntry->d_name, ".so."))
 		unlink (real_file_name);
 	      continue;
 	    }
@@ -894,30 +893,8 @@ search_dir (const struct dir_entry *entry)
       /* A link may just point to itself.  */
       if (is_link)
 	{
-	  /* If the path the link points to isn't its soname or it is not
-	     the .so symlink for ld(1), we treat it as a normal file.
-
-	     You should always do this:
-
-		libfoo.so -> SONAME -> Arbitrary package-chosen name.
-
-	     e.g. libfoo.so -> libfoo.so.1 -> libfooimp.so.9.99.
-	     Given a SONAME of libfoo.so.1.
-
-	     You should *never* do this:
-
-		libfoo.so -> libfooimp.so.9.99
-
-	     If you do, and your SONAME is libfoo.so.1, then libfoo.so
-	     fails to point at the SONAME. In that case ldconfig may consider
-	     libfoo.so as another implementation of SONAME and will create
-	     symlinks against it causing problems when you try to upgrade
-	     or downgrade. The problems will arise because ldconfig will,
-	     depending on directory ordering, creat symlinks against libfoo.so
-	     e.g. libfoo.so.1.2 -> libfoo.so, but when libfoo.so is removed
-	     (typically by the removal of a development pacakge not required
-	     for the runtime) it will break the libfoo.so.1.2 symlink and the
-	     application will fail to start.  */
+	  /* If the path the link points to isn't its soname and it is not
+	     .so symlink for ld(1) only, we treat it as a normal file.  */
 	  const char *real_base_name = basename (real_file_name);
 
 	  if (strcmp (real_base_name, soname) != 0)

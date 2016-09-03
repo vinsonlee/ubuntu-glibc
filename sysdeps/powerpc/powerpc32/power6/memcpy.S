@@ -1,5 +1,5 @@
 /* Optimized memcpy implementation for PowerPC32 on POWER6.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -46,8 +46,8 @@ EALIGN (memcpy, 5, 0)
     ble-   cr1,L(word_unaligned_short)	/* If move < 32 bytes.  */
     cmplw  cr6,10,11
     stw    31,24(1)
-    stw    30,20(1)
     cfi_offset(31,(24-32))
+    stw    30,20(1)
     cfi_offset(30,(20-32))
     mr     30,3
     beq    .L0

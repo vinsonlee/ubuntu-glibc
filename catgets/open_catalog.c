@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper, <drepper@gnu.org>.
 
@@ -47,7 +47,6 @@ __open_catalog (const char *cat_name, const char *nlspath, const char *env_var,
   size_t tab_size;
   const char *lastp;
   int result = -1;
-  char *buf = NULL;
 
   if (strchr (cat_name, '/') != NULL || nlspath == NULL)
     fd = open_not_cancel_2 (cat_name, O_RDONLY);
@@ -55,25 +54,25 @@ __open_catalog (const char *cat_name, const char *nlspath, const char *env_var,
     {
       const char *run_nlspath = nlspath;
 #define ENOUGH(n)							      \
-  if (__glibc_unlikely (bufact + (n) >= bufmax))			      \
+  if (__builtin_expect (bufact + (n) >= bufmax, 0))			      \
     {									      \
       char *old_buf = buf;						      \
-      bufmax += (bufmax < 256 + (n)) ? 256 + (n) : bufmax;		      \
-      buf = realloc (buf, bufmax);					      \
-      if (__glibc_unlikely (buf == NULL))				      \
-	{								      \
-	  free (old_buf);						      \
-	  return -1;							      \
-	}								      \
+      bufmax += 256 + (n);						      \
+      buf = (char *) alloca (bufmax);					      \
+      memcpy (buf, old_buf, bufact);					      \
     }
 
       /* The RUN_NLSPATH variable contains a colon separated list of
 	 descriptions where we expect to find catalogs.  We have to
 	 recognize certain % substitutions and stop when we found the
 	 first existing file.  */
+      char *buf;
       size_t bufact;
-      size_t bufmax = 0;
+      size_t bufmax;
       size_t len;
+
+      buf = NULL;
+      bufmax = 0;
 
       fd = -1;
       while (*run_nlspath != '\0')
@@ -189,10 +188,7 @@ __open_catalog (const char *cat_name, const char *nlspath, const char *env_var,
 
   /* Avoid dealing with directories and block devices */
   if (__builtin_expect (fd, 0) < 0)
-    {
-      free (buf);
-      return -1;
-    }
+    return -1;
 
   if (__builtin_expect (__fxstat64 (_STAT_VER, fd, &st), 0) < 0)
     goto close_unlock_return;
@@ -257,7 +253,7 @@ __open_catalog (const char *cat_name, const char *nlspath, const char *env_var,
   /* Determine whether the file is a catalog file and if yes whether
      it is written using the correct byte order.  Else we have to swap
      the values.  */
-  if (__glibc_likely (catalog->file_ptr->magic == CATGETS_MAGIC))
+  if (__builtin_expect (catalog->file_ptr->magic == CATGETS_MAGIC, 1))
     swapping = 0;
   else if (catalog->file_ptr->magic == SWAPU32 (CATGETS_MAGIC))
     swapping = 1;
@@ -329,7 +325,6 @@ __open_catalog (const char *cat_name, const char *nlspath, const char *env_var,
   /* Release the lock again.  */
  close_unlock_return:
   close_not_cancel_no_status (fd);
-  free (buf);
 
   return result;
 }

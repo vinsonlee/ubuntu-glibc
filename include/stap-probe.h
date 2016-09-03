@@ -1,5 +1,5 @@
 /* Macros for defining Systemtap <sys/sdt.h> static probe points.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,18 +30,22 @@
 
    Systemtap's header defines the macros STAP_PROBE (provider, name) and
    STAP_PROBEn (provider, name, arg1, ..., argn).  For "provider" we paste
-   in MODULE_NAME (libc, libpthread, etc.) automagically.
+   in the IN_LIB name (libc, libpthread, etc.) automagically.  */
 
-   The format of the arg parameters is discussed here:
-
-   https://sourceware.org/systemtap/wiki/UserSpaceProbeImplementation
-
-   The precise details of how register names are specified is
-   architecture specific and can be found in the gdb and SystemTap
-   source code.  */
+# ifndef NOT_IN_libc
+#  define IN_LIB	libc
+# elif !defined IN_LIB
+/* This is intentionally defined with extra unquoted commas in it so
+   that macro substitution will bomb out when it is used.  We don't
+   just use #error here, so that this header can be included by
+   other headers that use LIBC_PROBE inside their own macros.  We
+   only want such headers to fail to compile if those macros are
+   actually used in a context where IN_LIB has not been defined.  */
+#  define IN_LIB	,,,missing -DIN_LIB=... -- not extra-lib.mk?,,,
+# endif
 
 # define LIBC_PROBE(name, n, ...)	\
-  LIBC_PROBE_1 (MODULE_NAME, name, n, ## __VA_ARGS__)
+  LIBC_PROBE_1 (IN_LIB, name, n, ## __VA_ARGS__)
 
 # define LIBC_PROBE_1(lib, name, n, ...) \
   STAP_PROBE##n (lib, name, ## __VA_ARGS__)
@@ -49,7 +53,7 @@
 # define STAP_PROBE0		STAP_PROBE
 
 # define LIBC_PROBE_ASM(name, template) \
-  STAP_PROBE_ASM (MODULE_NAME, name, template)
+  STAP_PROBE_ASM (IN_LIB, name, template)
 
 # define LIBC_PROBE_ASM_OPERANDS STAP_PROBE_ASM_OPERANDS
 
@@ -57,13 +61,13 @@
 
 # ifndef __ASSEMBLER__
 /* Evaluate all the arguments and verify that N matches their number.  */
-#  define LIBC_PROBE(name, n, ...) STAP_PROBE##n (__VA_ARGS__)
+#define LIBC_PROBE(name, n, ...) STAP_PROBE##n (__VA_ARGS__)
 
-#  define STAP_PROBE0()
-#  define STAP_PROBE1(a1)
-#  define STAP_PROBE2(a1, a2)
-#  define STAP_PROBE3(a1, a2, a3)
-#  define STAP_PROBE4(a1, a2, a3, a4)
+#define STAP_PROBE0()
+#define STAP_PROBE1(a1)
+#define STAP_PROBE2(a1, a2)
+#define STAP_PROBE3(a1, a2, a3)
+#define STAP_PROBE4(a1, a2, a3, a4)
 
 # else
 #  define LIBC_PROBE(name, n, ...)		/* Nothing.  */

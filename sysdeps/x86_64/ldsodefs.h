@@ -1,5 +1,5 @@
 /* Run-time dynamic linker data structures for loaded ELF shared objects.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,6 @@
 #define	_X86_64_LDSODEFS_H	1
 
 #include <elf.h>
-#include <cpu-features.h>
 
 struct La_x86_64_regs;
 struct La_x86_64_retval;

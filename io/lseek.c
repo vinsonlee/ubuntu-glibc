@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,10 @@
 
 /* Seek to OFFSET on FD, starting from WHENCE.  */
 off_t
-__libc_lseek (int fd, off_t offset, int whence)
+__libc_lseek (fd, offset, whence)
+     int fd;
+     off_t offset;
+     int whence;
 {
   if (fd < 0)
     {

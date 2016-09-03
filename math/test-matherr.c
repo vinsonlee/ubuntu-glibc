@@ -1,3 +1,5 @@
+#undef _SVID_SOURCE
+#define _SVID_SOURCE
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,13 +14,10 @@ matherr (struct exception *s)
   return 1;
 }
 
-static int
-do_test (void)
+int
+main (void)
 {
   _LIB_VERSION = _SVID_;
   acos (2.0);
   return fail;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

@@ -1,5 +1,5 @@
 /* Configuration of lookup functions.
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,13 +20,8 @@
 
 #include_next <dl-lookupcfg.h>
 
-/* Address of protected data defined in the shared library may be
-   external due to copy relocation.   */
-#define DL_EXTERN_PROTECTED_DATA
-
 struct link_map;
 
-extern void _dl_unmap (struct link_map *map)
-  internal_function attribute_hidden;
+extern void internal_function _dl_unmap (struct link_map *map);
 
 #define DL_UNMAP(map) _dl_unmap (map)

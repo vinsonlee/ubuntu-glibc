@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,13 +29,11 @@ __times (struct tms *buf)
       && __builtin_expect (INTERNAL_SYSCALL_ERRNO (ret, err) == EFAULT, 0)
       && buf)
     {
-      /* This might be an error or not.  For architectures which have no
-	 separate return value and error indicators we cannot
-	 distinguish a return value of e.g. (clock_t) -14 from -EFAULT.
-	 Therefore the only course of action is to dereference the user
-	 -supplied structure on a return of (clock_t) -14.  This will crash
-	 applications which pass in an invalid non-NULL BUF pointer.
-	 Note that Linux allows BUF to be NULL in which case we skip this.  */
+      /* This might be an error or not.  For architectures which have
+	 no separate return value and error indicators we cannot
+	 distinguish a return value of -1 from an error.  Do it the
+	 hard way.  We crash applications which pass in an invalid
+	 non-NULL BUF pointer.  Linux allows BUF to be NULL. */
 #define touch(v) \
       do {								      \
 	clock_t temp = v;						      \
@@ -47,18 +45,13 @@ __times (struct tms *buf)
       touch (buf->tms_cutime);
       touch (buf->tms_cstime);
 
-      /* If we come here the memory is valid and the kernel did not
-	 return an EFAULT error, but rather e.g. (clock_t) -14.
-	 Return the value given by the kernel.  */
+      /* If we come here the memory is valid (or BUF is NULL, which is
+         a valid condition for the kernel syscall) and the kernel did not
+	 return an EFAULT error.  Return the value given by the kernel.  */
     }
 
-  /* On Linux this function never fails except with EFAULT.
-     POSIX says that returning a value (clock_t) -1 indicates an error,
-     but on Linux this is simply one of the valid clock values after
-     clock_t wraps.  Therefore when we would return (clock_t) -1, we
-     instead return (clock_t) 0, and loose a tick of accuracy (having
-     returned 0 for two consecutive calls even though the clock
-     advanced).  */
+  /* Return value (clock_t) -1 signals an error, but if there wasn't any,
+     return the following value.  */
   if (ret == (clock_t) -1)
     return (clock_t) 0;
 

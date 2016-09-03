@@ -1,5 +1,5 @@
 /* isnan().  PowerPC32/POWER7 version.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Luis Machado <luisgpm@br.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -82,7 +82,7 @@ strong_alias (__isnan, __isnanl)
 weak_alias (__isnan, isnanl)
 #endif
 
-#if !IS_IN (libm)
+#ifndef IS_IN_libm
 # if LONG_DOUBLE_COMPAT(libc, GLIBC_2_0)
 compat_symbol (libc, __isnan, __isnanl, GLIBC_2_0);
 compat_symbol (libc, isnan, isnanl, GLIBC_2_0);

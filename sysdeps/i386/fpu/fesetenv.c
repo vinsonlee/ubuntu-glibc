@@ -1,5 +1,5 @@
 /* Install given floating-point environment.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -18,16 +18,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
-#include <fpu_control.h>
 #include <assert.h>
-#include <unistd.h>
-#include <ldsodefs.h>
-#include <dl-procinfo.h>
-
-
-/* All exceptions, including the x86-specific "denormal operand"
-   exception.  */
-#define FE_ALL_EXCEPT_X86 (FE_ALL_EXCEPT | __FE_DENORM)
 
 
 int
@@ -46,75 +37,40 @@ __fesetenv (const fenv_t *envp)
 
   if (envp == FE_DFL_ENV)
     {
-      temp.__control_word |= FE_ALL_EXCEPT_X86;
+      temp.__control_word |= FE_ALL_EXCEPT;
       temp.__control_word &= ~FE_TOWARDZERO;
-      temp.__control_word |= _FPU_EXTENDED;
-      temp.__status_word &= ~FE_ALL_EXCEPT_X86;
+      temp.__status_word &= ~FE_ALL_EXCEPT;
+      temp.__eip = 0;
+      temp.__cs_selector = 0;
+      temp.__opcode = 0;
+      temp.__data_offset = 0;
+      temp.__data_selector = 0;
     }
   else if (envp == FE_NOMASK_ENV)
     {
       temp.__control_word &= ~(FE_ALL_EXCEPT | FE_TOWARDZERO);
-      /* Keep the "denormal operand" exception masked.  */
-      temp.__control_word |= __FE_DENORM;
-      temp.__control_word |= _FPU_EXTENDED;
-      temp.__status_word &= ~FE_ALL_EXCEPT_X86;
+      temp.__status_word &= ~FE_ALL_EXCEPT;
+      temp.__eip = 0;
+      temp.__cs_selector = 0;
+      temp.__opcode = 0;
+      temp.__data_offset = 0;
+      temp.__data_selector = 0;
     }
   else
     {
-      temp.__control_word &= ~(FE_ALL_EXCEPT_X86
-			       | FE_TOWARDZERO
-			       | _FPU_EXTENDED);
+      temp.__control_word &= ~(FE_ALL_EXCEPT | FE_TOWARDZERO);
       temp.__control_word |= (envp->__control_word
-			      & (FE_ALL_EXCEPT_X86
-				 | FE_TOWARDZERO
-				 | _FPU_EXTENDED));
-      temp.__status_word &= ~FE_ALL_EXCEPT_X86;
-      temp.__status_word |= envp->__status_word & FE_ALL_EXCEPT_X86;
+			      & (FE_ALL_EXCEPT | FE_TOWARDZERO));
+      temp.__status_word &= ~FE_ALL_EXCEPT;
+      temp.__status_word |= envp->__status_word & FE_ALL_EXCEPT;
+      temp.__eip = envp->__eip;
+      temp.__cs_selector = envp->__cs_selector;
+      temp.__opcode = envp->__opcode;
+      temp.__data_offset = envp->__data_offset;
+      temp.__data_selector = envp->__data_selector;
     }
-  temp.__eip = 0;
-  temp.__cs_selector = 0;
-  temp.__opcode = 0;
-  temp.__data_offset = 0;
-  temp.__data_selector = 0;
 
   __asm__ ("fldenv %0" : : "m" (temp));
-
-  if ((GLRO(dl_hwcap) & HWCAP_I386_XMM) != 0)
-    {
-      unsigned int mxcsr;
-      __asm__ ("stmxcsr %0" : "=m" (mxcsr));
-
-      if (envp == FE_DFL_ENV)
-	{
-	  /* Clear SSE exceptions.  */
-	  mxcsr &= ~FE_ALL_EXCEPT_X86;
-	  /* Set mask for SSE MXCSR.  */
-	  mxcsr |= (FE_ALL_EXCEPT_X86 << 7);
-	  /* Set rounding to FE_TONEAREST.  */
-	  mxcsr &= ~0x6000;
-	  mxcsr |= (FE_TONEAREST << 3);
-	  /* Clear the FZ and DAZ bits.  */
-	  mxcsr &= ~0x8040;
-	}
-      else if (envp == FE_NOMASK_ENV)
-	{
-	  /* Clear SSE exceptions.  */
-	  mxcsr &= ~FE_ALL_EXCEPT_X86;
-	  /* Do not mask exceptions.  */
-	  mxcsr &= ~(FE_ALL_EXCEPT << 7);
-	  /* Keep the "denormal operand" exception masked.  */
-	  mxcsr |= (__FE_DENORM << 7);
-	  /* Set rounding to FE_TONEAREST.  */
-	  mxcsr &= ~0x6000;
-	  mxcsr |= (FE_TONEAREST << 3);
-	  /* Clear the FZ and DAZ bits.  */
-	  mxcsr &= ~0x8040;
-	}
-      else
-	mxcsr = envp->__eip;
-
-      __asm__ ("ldmxcsr %0" : : "m" (mxcsr));
-    }
 
   /* Success.  */
   return 0;
@@ -126,6 +82,5 @@ strong_alias (__fesetenv, __old_fesetenv)
 compat_symbol (libm, __old_fesetenv, fesetenv, GLIBC_2_1);
 #endif
 
-libm_hidden_def (__fesetenv)
 libm_hidden_ver (__fesetenv, fesetenv)
 versioned_symbol (libm, __fesetenv, fesetenv, GLIBC_2_2);

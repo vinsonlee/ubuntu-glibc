@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1996.
 
@@ -21,7 +21,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 
@@ -185,7 +185,7 @@ _nss_nis_getprotobyname_r (const char *name, struct protoent *proto,
     }
 
   char *domain;
-  if (__glibc_unlikely (yp_get_default_domain (&domain)))
+  if (__builtin_expect (yp_get_default_domain (&domain), 0))
     return NSS_STATUS_UNAVAIL;
 
   char *result;
@@ -193,7 +193,7 @@ _nss_nis_getprotobyname_r (const char *name, struct protoent *proto,
   int yperr = yp_match (domain, "protocols.byname", name, strlen (name),
 			&result, &len);
 
-  if (__glibc_unlikely (yperr != YPERR_SUCCESS))
+  if (__builtin_expect (yperr != YPERR_SUCCESS, 0))
     {
       enum nss_status retval = yperr2nss (yperr);
 
@@ -202,7 +202,7 @@ _nss_nis_getprotobyname_r (const char *name, struct protoent *proto,
       return retval;
     }
 
-  if (__glibc_unlikely ((size_t) (len + 1) > buflen))
+  if (__builtin_expect ((size_t) (len + 1) > buflen, 0))
     {
       free (result);
       *errnop = ERANGE;
@@ -217,7 +217,7 @@ _nss_nis_getprotobyname_r (const char *name, struct protoent *proto,
 
   int parse_res = _nss_files_parse_protoent (p, proto, (void *) buffer, buflen,
 					     errnop);
-  if (__glibc_unlikely (parse_res < 1))
+  if (__builtin_expect (parse_res < 1, 0))
     {
       if (parse_res == -1)
 	return NSS_STATUS_TRYAGAIN;
@@ -232,7 +232,7 @@ _nss_nis_getprotobynumber_r (int number, struct protoent *proto,
 			     char *buffer, size_t buflen, int *errnop)
 {
   char *domain;
-  if (__glibc_unlikely (yp_get_default_domain (&domain)))
+  if (__builtin_expect (yp_get_default_domain (&domain), 0))
     return NSS_STATUS_UNAVAIL;
 
   char buf[32];
@@ -243,7 +243,7 @@ _nss_nis_getprotobynumber_r (int number, struct protoent *proto,
   int yperr = yp_match (domain, "protocols.bynumber", buf, nlen, &result,
 			&len);
 
-  if (__glibc_unlikely (yperr != YPERR_SUCCESS))
+  if (__builtin_expect (yperr != YPERR_SUCCESS, 0))
     {
       enum nss_status retval = yperr2nss (yperr);
 
@@ -252,7 +252,7 @@ _nss_nis_getprotobynumber_r (int number, struct protoent *proto,
       return retval;
     }
 
-  if (__glibc_unlikely ((size_t) (len + 1) > buflen))
+  if (__builtin_expect ((size_t) (len + 1) > buflen, 0))
     {
       free (result);
       *errnop = ERANGE;
@@ -267,7 +267,7 @@ _nss_nis_getprotobynumber_r (int number, struct protoent *proto,
 
   int parse_res = _nss_files_parse_protoent (p, proto, (void *) buffer, buflen,
 					     errnop);
-  if (__glibc_unlikely (parse_res < 1))
+  if (__builtin_expect (parse_res < 1, 0))
     {
       if (parse_res == -1)
 	return NSS_STATUS_TRYAGAIN;

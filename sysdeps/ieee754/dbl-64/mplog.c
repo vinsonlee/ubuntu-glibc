@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2014 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -58,7 +58,7 @@ __mplog (mp_no *x, mp_no *y, int p)
       mpt1.d[0] = -mpt1.d[0];
       __mpexp (&mpt1, &mpt2, p);
       __mul (x, &mpt2, &mpt1, p);
-      __sub (&mpt1, &__mpone, &mpt2, p);
+      __sub (&mpt1, &mpone, &mpt2, p);
       __add (y, &mpt2, &mpt1, p);
       __cpy (&mpt1, y, p);
     }

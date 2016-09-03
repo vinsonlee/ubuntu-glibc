@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Maciej W. Rozycki <macro@ds2.pg.gda.pl>, 2000.
    This file is part of the GNU C Library.
 
@@ -25,8 +25,8 @@
 #include <stddef.h>
 #include <sys/stat.h>
 
-static int
-do_test (void)
+int
+main (void)
 {
   /* With _FILE_OFFSET_BITS=64 struct stat and struct stat64 should
      be identical.  */
@@ -65,6 +65,3 @@ do_test (void)
 #endif
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

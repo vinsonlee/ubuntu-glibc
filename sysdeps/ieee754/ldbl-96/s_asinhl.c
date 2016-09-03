@@ -29,7 +29,6 @@ static char rcsid[] = "$NetBSD: $";
  *		  := signl(x)*log1pl(|x| + x^2/(1 + sqrtl(1+x^2)))
  */
 
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -45,7 +44,6 @@ long double __asinhl(long double x)
 	GET_LDOUBLE_EXP(hx,x);
 	ix = hx&0x7fff;
 	if(__builtin_expect(ix< 0x3fde, 0)) {	/* |x|<2**-34 */
-	    math_check_force_underflow (x);
 	    if(huge+x>one) return x;	/* return x inexact except 0 */
 	}
 	if(__builtin_expect(ix>0x4020,0)) {		/* |x| > 2**34 */

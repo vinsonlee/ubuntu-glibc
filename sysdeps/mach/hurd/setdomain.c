@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,9 @@
 /* Set the name of the current YP domain to NAME, which is LEN bytes long.
    This call is restricted to the super-user.  */
 int
-setdomainname (const char *name, size_t len)
+setdomainname (name, len)
+     const char *name;
+     size_t len;
 {
   /* The NIS domain name is just the contents of the file /etc/nisdomain.  */
   ssize_t n = _hurd_set_host_config ("/etc/nisdomain", name, len);

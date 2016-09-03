@@ -1,6 +1,6 @@
 /* memset/bzero -- set memory area to CH/0
    Optimized version for x86-64.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,32 +19,113 @@
 
 #include <sysdep.h>
 
-#define VEC_SIZE	16
-#define VEC(i)		xmm##i
-/* Don't use movups and movaps since it will get larger nop paddings for
-   alignment.  */
-#define VMOVU		movdqu
-#define VMOVA		movdqa
+	.text
+#if !defined NOT_IN_libc
+ENTRY(__bzero)
+	movq	%rdi, %rax /* Set return value.  */
+	movq	%rsi, %rdx /* Set n.  */
+	pxor	%xmm8, %xmm8
+	jmp	L(entry_from_bzero)
+END(__bzero)
+weak_alias (__bzero, bzero)
 
-#define VDUP_TO_VEC0_AND_SET_RETURN(d, r) \
-  movd d, %xmm0; \
-  movq r, %rax; \
-  punpcklbw %xmm0, %xmm0; \
-  punpcklwd %xmm0, %xmm0; \
-  pshufd $0, %xmm0, %xmm0
+/* Like memset but takes additional parameter with return value.  */
+ENTRY(__memset_tail)
+	movq	%rcx, %rax /* Set return value.  */
 
-#define SECTION(p)		p
+	movd	%esi, %xmm8
+	punpcklbw	%xmm8, %xmm8
+	punpcklwd	%xmm8, %xmm8
+	pshufd	$0, %xmm8, %xmm8
 
-#ifndef MEMSET_SYMBOL
-# define MEMSET_CHK_SYMBOL(p,s)	p
-# define MEMSET_SYMBOL(p,s)	memset
+	jmp	L(entry_from_bzero)
+END(__memset_tail)
 #endif
 
-#include "multiarch/memset-vec-unaligned-erms.S"
+#if defined PIC && !defined NOT_IN_libc
+ENTRY_CHK (__memset_chk)
+	cmpq	%rdx, %rcx
+	jb	HIDDEN_JUMPTARGET (__chk_fail)
+END_CHK (__memset_chk)
+#endif
 
+ENTRY (memset)
+	movd	%esi, %xmm8
+	movq	%rdi, %rax
+	punpcklbw	%xmm8, %xmm8
+	punpcklwd	%xmm8, %xmm8
+	pshufd	$0, %xmm8, %xmm8
+L(entry_from_bzero):
+	cmpq	$64, %rdx
+	ja	L(loop_start)
+	cmpq	$16, %rdx
+	jbe	L(less_16_bytes)
+	cmpq	$32, %rdx
+	movdqu	%xmm8, (%rdi)
+	movdqu	%xmm8, -16(%rdi,%rdx)
+	ja	L(between_32_64_bytes)
+L(return):
+	rep
+	ret
+	.p2align 4
+L(between_32_64_bytes):
+	movdqu	%xmm8, 16(%rdi)
+	movdqu	%xmm8, -32(%rdi,%rdx)
+	ret
+	.p2align 4
+L(loop_start):
+	leaq	64(%rdi), %rcx
+	movdqu	%xmm8, (%rdi)
+	andq	$-64, %rcx
+	movdqu	%xmm8, -16(%rdi,%rdx)
+	movdqu	%xmm8, 16(%rdi)
+	movdqu	%xmm8, -32(%rdi,%rdx)
+	movdqu	%xmm8, 32(%rdi)
+	movdqu	%xmm8, -48(%rdi,%rdx)
+	movdqu	%xmm8, 48(%rdi)
+	movdqu	%xmm8, -64(%rdi,%rdx)
+	addq	%rdi, %rdx
+	andq	$-64, %rdx
+	cmpq	%rdx, %rcx
+	je	L(return)
+	.p2align 4
+L(loop):
+	movdqa	%xmm8, (%rcx)
+	movdqa	%xmm8, 16(%rcx)
+	movdqa	%xmm8, 32(%rcx)
+	movdqa	%xmm8, 48(%rcx)
+	addq	$64, %rcx
+	cmpq	%rcx, %rdx
+	jne	L(loop)
+	rep
+	ret
+L(less_16_bytes):
+	movq %xmm8, %rcx
+	testb	$24, %dl
+	jne	L(between8_16bytes)
+	testb	$4, %dl
+	jne	L(between4_7bytes)
+	testb	$1, %dl
+	je	L(odd_byte)
+	movb	%cl, (%rdi)
+L(odd_byte):
+	testb	$2, %dl
+	je	L(return)
+	movw	%cx, -2(%rax,%rdx)
+	ret
+L(between4_7bytes):
+	movl	%ecx, (%rdi)
+	movl	%ecx, -4(%rdi,%rdx)
+	ret
+L(between8_16bytes):
+	movq	%rcx, (%rdi)
+	movq	%rcx, -8(%rdi,%rdx)
+	ret
+
+END (memset)
 libc_hidden_builtin_def (memset)
 
-#if defined SHARED && IS_IN (libc) && !defined USE_MULTIARCH
+#if defined PIC && !defined NOT_IN_libc && !defined USE_MULTIARCH
 strong_alias (__memset_chk, __memset_zero_constant_len_parameter)
 	.section .gnu.warning.__memset_zero_constant_len_parameter
 	.string "memset used with constant zero length parameter; this could be due to transposed parameters"

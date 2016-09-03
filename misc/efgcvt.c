@@ -1,5 +1,5 @@
 /* Compatibility functions for floating point formatting.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <sys/param.h>
 #include <float.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <math_ldbl_opt.h>
 
 #ifndef FLOAT_TYPE
@@ -64,8 +64,9 @@ static char ECVT_BUFFER[MAXDIG];
 libc_freeres_ptr (static char *FCVT_BUFPTR);
 
 char *
-__APPEND (FUNC_PREFIX, fcvt) (FLOAT_TYPE value, int ndigit, int *decpt,
-			      int *sign)
+__APPEND (FUNC_PREFIX, fcvt) (value, ndigit, decpt, sign)
+     FLOAT_TYPE value;
+     int ndigit, *decpt, *sign;
 {
   if (FCVT_BUFPTR == NULL)
     {
@@ -86,8 +87,9 @@ __APPEND (FUNC_PREFIX, fcvt) (FLOAT_TYPE value, int ndigit, int *decpt,
 
 
 char *
-__APPEND (FUNC_PREFIX, ecvt) (FLOAT_TYPE value, int ndigit, int *decpt,
-			      int *sign)
+__APPEND (FUNC_PREFIX, ecvt) (value, ndigit, decpt, sign)
+     FLOAT_TYPE value;
+     int ndigit, *decpt, *sign;
 {
   (void) __APPEND (FUNC_PREFIX, ecvt_r) (value, ndigit, decpt, sign,
 					 ECVT_BUFFER, MAXDIG);
@@ -96,7 +98,10 @@ __APPEND (FUNC_PREFIX, ecvt) (FLOAT_TYPE value, int ndigit, int *decpt,
 }
 
 char *
-__APPEND (FUNC_PREFIX, gcvt) (FLOAT_TYPE value, int ndigit, char *buf)
+__APPEND (FUNC_PREFIX, gcvt) (value, ndigit, buf)
+     FLOAT_TYPE value;
+     int ndigit;
+     char *buf;
 {
   sprintf (buf, "%.*" FLOAT_FMT_FLAG "g", MIN (ndigit, NDIGIT_MAX), value);
   return buf;

@@ -10,10 +10,9 @@ RCSID("$NetBSD: $")
 
 ENTRY(__ceill)
 	fldt	4(%esp)
-	subl	$32,%esp
-	cfi_adjust_cfa_offset (32)
+	subl	$8,%esp
 
-	fnstenv	4(%esp)			/* store fpu environment */
+	fstcw	4(%esp)			/* store fpu control word */
 
 	/* We use here %edx although only the low 1 bits are defined.
 	   But none of the operations should care and they are faster
@@ -26,15 +25,9 @@ ENTRY(__ceill)
 
 	frndint				/* round */
 
-	/* Preserve "invalid" exceptions from sNaN input.  */
-	fnstsw
-	andl	$0x1, %eax
-	orl	%eax, 8(%esp)
+	fldcw	4(%esp)			/* restore original control word */
 
-	fldenv	4(%esp)			/* restore original environment */
-
-	addl	$32,%esp
-	cfi_adjust_cfa_offset (-32)
+	addl	$8,%esp
 	ret
 END (__ceill)
 weak_alias (__ceill, ceill)

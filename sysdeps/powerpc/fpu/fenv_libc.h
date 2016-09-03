@@ -1,5 +1,5 @@
 /* Internal libc stuff for floating point environment routines.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -76,7 +76,16 @@ typedef union
 
 
 static inline int
-__fesetround_inline (int round)
+__fegetround (void)
+{
+  int result;
+  asm volatile ("mcrfs 7,7\n\t"
+		"mfcr  %0" : "=r"(result) : : "cr7");
+  return result & 3;
+}
+
+static inline int
+__fesetround (int round)
 {
   if ((unsigned int) round < 2)
     {
@@ -136,23 +145,6 @@ enum {
 #endif /* _ARCH_PWR6 */
   /* the remaining two least-significant bits keep the rounding mode */
 };
-
-static inline int
-fenv_reg_to_exceptions (unsigned long long l)
-{
-  int result = 0;
-  if (l & (1 << (31 - FPSCR_XE)))
-    result |= FE_INEXACT;
-  if (l & (1 << (31 - FPSCR_ZE)))
-    result |= FE_DIVBYZERO;
-  if (l & (1 << (31 - FPSCR_UE)))
-    result |= FE_UNDERFLOW;
-  if (l & (1 << (31 - FPSCR_OE)))
-    result |= FE_OVERFLOW;
-  if (l & (1 << (31 - FPSCR_VE)))
-    result |= FE_INVALID;
-  return result;
-}
 
 #ifdef _ARCH_PWR6
   /* Not supported in ISA 2.05.  Provided for source compat only.  */

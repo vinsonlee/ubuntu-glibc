@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -19,14 +19,16 @@
 #include <wchar.h>
 
 #ifndef WCSCMP
-# define WCSCMP __wcscmp
+# define WCSCMP wcscmp
 #endif
 
 /* Compare S1 and S2, returning less than, equal to or
    greater than zero if S1 is lexicographically less than,
    equal to or greater than S2.	 */
 int
-WCSCMP (const wchar_t *s1, const wchar_t *s2)
+WCSCMP (s1, s2)
+     const wchar_t *s1;
+     const wchar_t *s2;
 {
   wchar_t c1, c2;
 
@@ -42,4 +44,3 @@ WCSCMP (const wchar_t *s1, const wchar_t *s2)
   return c1 < c2 ? -1 : 1;
 }
 libc_hidden_def (WCSCMP)
-weak_alias (WCSCMP, wcscmp)

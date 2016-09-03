@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,22 +23,14 @@
 
 /* If the application has already included linux/in6.h from a linux-based
    kernel then we will not define the IPv6 IPPROTO_* defines, in6_addr (nor the
-   defines), sockaddr_in6, or ipv6_mreq. Same for in6_ptkinfo or ip6_mtuinfo
-   in linux/ipv6.h. The ABI used by the linux-kernel and glibc match exactly.
-   Neither the linux kernel nor glibc should break this ABI without coordination.
-   In upstream kernel 56c176c9 the _UAPI prefix was stripped so we need to check
-   for _LINUX_IN6_H and _IPV6_H now, and keep checking the old versions for
-   maximum backwards compatibility.  */
-#if defined _UAPI_LINUX_IN6_H \
-    || defined _UAPI_IPV6_H \
-    || defined _LINUX_IN6_H \
-    || defined _IPV6_H
+   defines), sockaddr_in6, or ipv6_mreq.  The ABI used by the linux-kernel and
+   glibc match exactly.  Neither the linux kernel nor glibc should break this
+   ABI without coordination.  */
+#ifdef _UAPI_LINUX_IN6_H
 /* This is not quite the same API since the kernel always defines s6_addr16 and
    s6_addr32. This is not a violation of POSIX since POSIX says "at least the
    following member" and that holds true.  */
-# define __USE_KERNEL_IPV6_DEFS 1
-#else
-# define __USE_KERNEL_IPV6_DEFS 0
+# define __USE_KERNEL_IPV6_DEFS
 #endif
 
 /* Options for use with `getsockopt' and `setsockopt' at the IP level.
@@ -62,7 +54,7 @@
 #define IP_ADD_SOURCE_MEMBERSHIP 39 /* ip_mreq_source: join source group */
 #define IP_DROP_SOURCE_MEMBERSHIP 40 /* ip_mreq_source: leave source group */
 #define IP_MSFILTER 41
-#ifdef __USE_MISC
+#if defined __USE_MISC || defined __USE_GNU
 # define MCAST_JOIN_GROUP 42	/* group_req: join any-source group */
 # define MCAST_BLOCK_SOURCE 43	/* group_source_req: block from given group */
 # define MCAST_UNBLOCK_SOURCE 44 /* group_source_req: unblock from given group*/
@@ -98,34 +90,13 @@
 #define IP_RECVORIGDSTADDR   IP_ORIGDSTADDR
 
 #define IP_MINTTL       21
-#define IP_NODEFRAG     22
-#define IP_CHECKSUM     23
-#define IP_BIND_ADDRESS_NO_PORT 24
+
 
 /* IP_MTU_DISCOVER arguments.  */
 #define IP_PMTUDISC_DONT   0	/* Never send DF frames.  */
 #define IP_PMTUDISC_WANT   1	/* Use per route hints.  */
 #define IP_PMTUDISC_DO     2	/* Always DF.  */
 #define IP_PMTUDISC_PROBE  3	/* Ignore dst pmtu.  */
-/* Always use interface mtu (ignores dst pmtu) but don't set DF flag.
-   Also incoming ICMP frag_needed notifications will be ignored on
-   this socket to prevent accepting spoofed ones.  */
-#define IP_PMTUDISC_INTERFACE           4
-/* Like IP_PMTUDISC_INTERFACE but allow packets to be fragmented.  */
-#define IP_PMTUDISC_OMIT		5
-
-#define IP_MULTICAST_IF			32
-#define IP_MULTICAST_TTL 		33
-#define IP_MULTICAST_LOOP 		34
-#define IP_ADD_MEMBERSHIP		35
-#define IP_DROP_MEMBERSHIP		36
-#define IP_UNBLOCK_SOURCE		37
-#define IP_BLOCK_SOURCE			38
-#define IP_ADD_SOURCE_MEMBERSHIP	39
-#define IP_DROP_SOURCE_MEMBERSHIP	40
-#define IP_MSFILTER			41
-#define IP_MULTICAST_ALL		49
-#define IP_UNICAST_IF			50
 
 /* To select the IP level.  */
 #define SOL_IP	0
@@ -134,7 +105,7 @@
 #define IP_DEFAULT_MULTICAST_LOOP       1
 #define IP_MAX_MEMBERSHIPS              20
 
-#ifdef __USE_MISC
+#if defined __USE_MISC || defined __USE_GNU
 /* Structure used to describe IP options for IP_OPTIONS and IP_RETOPTS.
    The `ip_dst' field is used for the first-hop gateway when using a
    source route (this gets put into the header proper).  */
@@ -192,9 +163,7 @@ struct in_pktinfo
 #define IPV6_LEAVE_ANYCAST	28
 #define IPV6_IPSEC_POLICY	34
 #define IPV6_XFRM_POLICY	35
-#define IPV6_HDRINCL		36
 
-/* Advanced API (RFC3542) (1).  */
 #define IPV6_RECVPKTINFO	49
 #define IPV6_PKTINFO		50
 #define IPV6_RECVHOPLIMIT	51
@@ -206,19 +175,13 @@ struct in_pktinfo
 #define IPV6_RTHDR		57
 #define IPV6_RECVDSTOPTS	58
 #define IPV6_DSTOPTS		59
-#define IPV6_RECVPATHMTU	60
-#define IPV6_PATHMTU		61
-#define IPV6_DONTFRAG		62
 
-/* Advanced API (RFC3542) (2).  */
 #define IPV6_RECVTCLASS		66
 #define IPV6_TCLASS		67
 
 /* Obsolete synonyms for the above.  */
-#if !__USE_KERNEL_IPV6_DEFS
-# define IPV6_ADD_MEMBERSHIP	IPV6_JOIN_GROUP
-# define IPV6_DROP_MEMBERSHIP	IPV6_LEAVE_GROUP
-#endif
+#define IPV6_ADD_MEMBERSHIP	IPV6_JOIN_GROUP
+#define IPV6_DROP_MEMBERSHIP	IPV6_LEAVE_GROUP
 #define IPV6_RXHOPOPTS		IPV6_HOPOPTS
 #define IPV6_RXDSTOPTS		IPV6_DSTOPTS
 
@@ -227,8 +190,6 @@ struct in_pktinfo
 #define IPV6_PMTUDISC_WANT	1	/* Use per route hints.  */
 #define IPV6_PMTUDISC_DO	2	/* Always DF.  */
 #define IPV6_PMTUDISC_PROBE	3	/* Ignore dst pmtu.  */
-#define IPV6_PMTUDISC_INTERFACE	4	/* See IP_PMTUDISC_INTERFACE.  */
-#define IPV6_PMTUDISC_OMIT	5	/* See IP_PMTUDISC_OMIT.  */
 
 /* Socket level values for IPv6.  */
 #define SOL_IPV6        41

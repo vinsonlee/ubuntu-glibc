@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@ ifree (char **ptrp)
    Operates just like 'read' (see <unistd.h>) except that data are
    put in VECTOR instead of a contiguous buffer.  */
 ssize_t
-__readv (int fd, const struct iovec *vector, int count)
+__libc_readv (int fd, const struct iovec *vector, int count)
 {
   /* Find the total number of bytes to be read.  */
   size_t bytes = 0;
@@ -88,4 +88,7 @@ __readv (int fd, const struct iovec *vector, int count)
 
   return bytes_read;
 }
-weak_alias (__readv, readv)
+#ifndef __libc_readv
+strong_alias (__libc_readv, __readv)
+weak_alias (__libc_readv, readv)
+#endif

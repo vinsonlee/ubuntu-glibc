@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2000-2016 Free Software Foundation, Inc.
+# Copyright (C) 2000-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 # Contributed by Bruno Haible <haible@clisp.cons.org>, 2000.
 #
@@ -27,7 +27,8 @@ test_program_prefix=$3
 charset=$4
 charmap=$5
 
-# sort is used on the build system.
+GCONV_PATH=${common_objpfx}iconvdata
+export GCONV_PATH
 LC_ALL=C
 export LC_ALL
 

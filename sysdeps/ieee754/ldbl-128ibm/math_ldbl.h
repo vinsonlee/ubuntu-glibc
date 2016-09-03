@@ -215,51 +215,18 @@ ldbl_nearbyint (double a)
 {
   double two52 = 0x1p52;
 
-  if (__glibc_likely ((__builtin_fabs (a) < two52)))
+  if (__builtin_expect ((__builtin_fabs (a) < two52), 1))
     {
-      if (__glibc_likely ((a > 0.0)))
+      if (__builtin_expect ((a > 0.0), 1))
 	{
 	  a += two52;
 	  a -= two52;
 	}
-      else if (__glibc_likely ((a < 0.0)))
+      else if (__builtin_expect ((a < 0.0), 1))
 	{
 	  a = two52 - a;
 	  a = -(a - two52);
 	}
     }
   return a;
-}
-
-/* Canonicalize a result from an integer rounding function, in any
-   rounding mode.  *A and *AA are finite and integers, with *A being
-   nonzero; if the result is not already canonical, *AA is plus or
-   minus a power of 2 that does not exceed the least set bit in
-   *A.  */
-static inline void
-ldbl_canonicalize_int (double *a, double *aa)
-{
-  int64_t ax, aax;
-  EXTRACT_WORDS64 (ax, *a);
-  EXTRACT_WORDS64 (aax, *aa);
-  int expdiff = ((ax >> 52) & 0x7ff) - ((aax >> 52) & 0x7ff);
-  if (expdiff <= 53)
-    {
-      if (expdiff == 53)
-	{
-	  /* Half way between two double values; noncanonical iff the
-	     low bit of A's mantissa is 1.  */
-	  if ((ax & 1) != 0)
-	    {
-	      *a += 2 * *aa;
-	      *aa = -*aa;
-	    }
-	}
-      else
-	{
-	  /* The sum can be represented in a single double.  */
-	  *a += *aa;
-	  *aa = 0;
-	}
-    }
 }

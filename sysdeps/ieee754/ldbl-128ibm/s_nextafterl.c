@@ -24,15 +24,14 @@ static char rcsid[] = "$NetBSD: $";
  *   Special cases:
  */
 
-#include <errno.h>
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 #include <math_ldbl_opt.h>
 
 long double __nextafterl(long double x, long double y)
 {
-	int64_t hx, hy, ihx, ihy, lx;
+	int64_t hx,hy,ihx,ihy;
+	uint64_t lx;
 	double xhi, xlo, yhi;
 
 	ldbl_unpack (x, &xhi, &xlo);
@@ -67,89 +66,58 @@ long double __nextafterl(long double x, long double y)
 	       long double with a 106 bit mantissa, and nextafterl
 	       is insane with variable precision.  So to make
 	       nextafterl sane we assume 106 bit precision.  */
-	    if((hx==0xffefffffffffffffLL)&&(lx==0xfc8ffffffffffffeLL)) {
-	      u = x+x;	/* overflow, return -inf */
-	      math_force_eval (u);
-	      __set_errno (ERANGE);
-	      return y;
-	    }
+	    if((hx==0xffefffffffffffffLL)&&(lx==0xfc8ffffffffffffeLL))
+	      return x+x;	/* overflow, return -inf */
 	    if (hx >= 0x7ff0000000000000LL) {
 	      u = 0x1.fffffffffffff7ffffffffffff8p+1023L;
 	      return u;
 	    }
 	    if(ihx <= 0x0360000000000000LL) {  /* x <= LDBL_MIN */
 	      u = math_opt_barrier (x);
-	      x -= LDBL_TRUE_MIN;
+	      x -= __LDBL_DENORM_MIN__;
 	      if (ihx < 0x0360000000000000LL
-		  || (hx > 0 && lx <= 0)
-		  || (hx < 0 && lx > 1)) {
+		  || (hx > 0 && (int64_t) lx <= 0)
+		  || (hx < 0 && (int64_t) lx > 1)) {
 		u = u * u;
 		math_force_eval (u);		/* raise underflow flag */
-		__set_errno (ERANGE);
 	      }
-	      /* Avoid returning -0 in FE_DOWNWARD mode.  */
-	      if (x == 0.0L)
-		return 0.0L;
 	      return x;
 	    }
-	    /* If the high double is an exact power of two and the low
-	       double is the opposite sign, then 1ulp is one less than
-	       what we might determine from the high double.  Similarly
-	       if X is an exact power of two, and positive, because
-	       making it a little smaller will result in the exponent
-	       decreasing by one and normalisation of the mantissa.   */
-	    if ((hx & 0x000fffffffffffffLL) == 0
-		&& ((lx != 0 && (hx ^ lx) < 0)
-		    || (lx == 0 && hx >= 0)))
-	      ihx -= 1LL << 52;
-	    if (ihx < (106LL << 52)) { /* ulp will denormal */
-	      INSERT_WORDS64 (yhi, ihx & (0x7ffLL<<52));
-	      u = yhi * 0x1p-105;
+	    if (ihx < 0x06a0000000000000LL) { /* ulp will denormal */
+	      INSERT_WORDS64 (yhi, hx & (0x7ffLL<<52));
+	      u = yhi;
+	      u *= 0x1.0000000000000p-105L;
 	    } else {
-	      INSERT_WORDS64 (yhi, (ihx & (0x7ffLL<<52))-(105LL<<52));
+	      INSERT_WORDS64 (yhi, (hx & (0x7ffLL<<52))-(0x069LL<<52));
 	      u = yhi;
 	    }
 	    return x - u;
 	} else {				/* x < y, x += ulp */
-	    if((hx==0x7fefffffffffffffLL)&&(lx==0x7c8ffffffffffffeLL)) {
-	      u = x+x;	/* overflow, return +inf */
-	      math_force_eval (u);
-	      __set_errno (ERANGE);
-	      return y;
-	    }
+	    if((hx==0x7fefffffffffffffLL)&&(lx==0x7c8ffffffffffffeLL))
+	      return x+x;	/* overflow, return +inf */
 	    if ((uint64_t) hx >= 0xfff0000000000000ULL) {
 	      u = -0x1.fffffffffffff7ffffffffffff8p+1023L;
 	      return u;
 	    }
 	    if(ihx <= 0x0360000000000000LL) {  /* x <= LDBL_MIN */
 	      u = math_opt_barrier (x);
-	      x += LDBL_TRUE_MIN;
+	      x += __LDBL_DENORM_MIN__;
 	      if (ihx < 0x0360000000000000LL
-		  || (hx > 0 && lx < 0 && lx != 0x8000000000000001LL)
-		  || (hx < 0 && lx >= 0)) {
+		  || (hx > 0 && (int64_t) lx < 0 && lx != 0x8000000000000001LL)
+		  || (hx < 0 && (int64_t) lx >= 0)) {
 		u = u * u;
 		math_force_eval (u);		/* raise underflow flag */
-		__set_errno (ERANGE);
 	      }
-	      if (x == 0.0L)	/* handle negative LDBL_TRUE_MIN case */
+	      if (x == 0.0L)	/* handle negative __LDBL_DENORM_MIN__ case */
 		x = -0.0L;
 	      return x;
 	    }
-	    /* If the high double is an exact power of two and the low
-	       double is the opposite sign, then 1ulp is one less than
-	       what we might determine from the high double.  Similarly
-	       if X is an exact power of two, and negative, because
-	       making it a little larger will result in the exponent
-	       decreasing by one and normalisation of the mantissa.   */
-	    if ((hx & 0x000fffffffffffffLL) == 0
-		&& ((lx != 0 && (hx ^ lx) < 0)
-		    || (lx == 0 && hx < 0)))
-	      ihx -= 1LL << 52;
-	    if (ihx < (106LL << 52)) { /* ulp will denormal */
-	      INSERT_WORDS64 (yhi, ihx & (0x7ffLL<<52));
-	      u = yhi * 0x1p-105;
+	    if (ihx < 0x06a0000000000000LL) { /* ulp will denormal */
+	      INSERT_WORDS64 (yhi, hx & (0x7ffLL<<52));
+	      u = yhi;
+	      u *= 0x1.0000000000000p-105L;
 	    } else {
-	      INSERT_WORDS64 (yhi, (ihx & (0x7ffLL<<52))-(105LL<<52));
+	      INSERT_WORDS64 (yhi, (hx & (0x7ffLL<<52))-(0x069LL<<52));
 	      u = yhi;
 	    }
 	    return x + u;

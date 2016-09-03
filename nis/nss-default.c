@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 #include <stdio_ext.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 
 #include <libnsl.h>
 

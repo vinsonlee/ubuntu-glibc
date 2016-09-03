@@ -1,5 +1,5 @@
 /* Truncate long double value.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -21,20 +21,15 @@
 
 ENTRY(__truncl)
 	fldt	4(%esp)
-	subl	$32, %esp
-	cfi_adjust_cfa_offset (32)
-	fnstenv	4(%esp)
+	subl	$8, %esp
+	fstcw	4(%esp)
 	movl	$0xc00, %edx
 	orl	4(%esp), %edx
 	movl	%edx, (%esp)
 	fldcw	(%esp)
 	frndint
-	fnstsw
-	andl	$0x1, %eax
-	orl	%eax, 8(%esp)
-	fldenv	4(%esp)
-	addl	$32, %esp
-	cfi_adjust_cfa_offset (-32)
+	fldcw	4(%esp)
+	addl	$8, %esp
 	ret
 END(__truncl)
 weak_alias (__truncl, truncl)

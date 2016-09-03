@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1996.
 
@@ -29,7 +29,8 @@
 
 
 wint_t
-__btowc (int c)
+__btowc (c)
+     int c;
 {
   const struct gconv_fcts *fcts;
 
@@ -74,6 +75,7 @@ __btowc (int c)
       data.__internal_use = 1;
       data.__flags = __GCONV_IS_LAST;
       data.__statep = &data.__state;
+      data.__trans = NULL;
 
       /* Make sure we start in the initial state.  */
       memset (&data.__state, '\0', sizeof (mbstate_t));

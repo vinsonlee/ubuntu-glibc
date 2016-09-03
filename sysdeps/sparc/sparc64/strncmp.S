@@ -2,7 +2,7 @@
    equal to or greater than zero if S1 is lexicographically less than,
    equal to or greater than S2.
    For SPARC v9.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jan Vondrak <jvon4518@ss1000.ms.mff.cuni.cz> and
                   Jakub Jelinek <jj@ultra.linux.cz>.
@@ -72,7 +72,7 @@ ENTRY(strncmp)
 
 	add		%o0, 8, %o0			/* IEU1				*/
 2:	subcc		%o2, 8, %o2			/* IEU1		Group		*/
-	bcs,pn		%XCC, 5f			/* CTI				*/
+	bl,pn		%XCC, 5f			/* CTI				*/
 	 add		%o1, 8, %o1			/* IEU0				*/
 
 	sub		%g4, %g1, %g3			/* IEU0		Group		*/
@@ -310,7 +310,7 @@ ENTRY(strncmp)
 	addcc		%o0, 8, %o0			/* IEU1				*/
 	srlx		%o4, %g6, %o5			/* IEU0				*/
 	subcc		%o2, 8, %o2			/* IEU1		Group		*/
-	bcs,pn		%XCC, 5b			/* CTI				*/
+	bl,pn		%XCC, 5b			/* CTI				*/
 
 	 or		%o3, %o5, %o3			/* IEU0				*/
 	cmp		%g4, %o3			/* IEU1		Group		*/

@@ -1,5 +1,5 @@
 /* Return arc tangent of complex double value.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -29,7 +29,7 @@ __catan (__complex__ double x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (__glibc_unlikely (rcls <= FP_INFINITE || icls <= FP_INFINITE))
+  if (__builtin_expect (rcls <= FP_INFINITE || icls <= FP_INFINITE, 0))
     {
       if (rcls == FP_INFINITE)
 	{
@@ -55,7 +55,7 @@ __catan (__complex__ double x)
 	  __imag__ res = __nan ("");
 	}
     }
-  else if (__glibc_unlikely (rcls == FP_ZERO && icls == FP_ZERO))
+  else if (__builtin_expect (rcls == FP_ZERO && icls == FP_ZERO, 0))
     {
       res = x;
     }
@@ -89,11 +89,7 @@ __catan (__complex__ double x)
 	    }
 
 	  if (absy < DBL_EPSILON / 2.0)
-	    {
-	      den = (1.0 - absx) * (1.0 + absx);
-	      if (den == -0.0)
-		den = 0.0;
-	    }
+	    den = (1.0 - absx) * (1.0 + absx);
 	  else if (absx >= 1.0)
 	    den = (1.0 - absx) * (1.0 + absx) - absy * absy;
 	  else if (absx >= 0.75 || absy >= 0.5)
@@ -131,7 +127,16 @@ __catan (__complex__ double x)
 	    }
 	}
 
-      math_check_force_underflow_complex (res);
+      if (fabs (__real__ res) < DBL_MIN)
+	{
+	  volatile double force_underflow = __real__ res * __real__ res;
+	  (void) force_underflow;
+	}
+      if (fabs (__imag__ res) < DBL_MIN)
+	{
+	  volatile double force_underflow = __imag__ res * __imag__ res;
+	  (void) force_underflow;
+	}
     }
 
   return res;

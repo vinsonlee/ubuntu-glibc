@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2016 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,6 @@
 #	Sub-makefile for POSIX portion of the library.
 #
 subdir	:= posix
-
-include ../Makeconfig
 
 headers	:= sys/utsname.h sys/times.h sys/wait.h sys/types.h unistd.h	      \
 	   glob.h regex.h wordexp.h fnmatch.h getopt.h			      \
@@ -51,7 +49,7 @@ routines :=								      \
 	getaddrinfo gai_strerror wordexp				      \
 	pread pwrite pread64 pwrite64					      \
 	spawn_faction_init spawn_faction_destroy spawn_faction_addclose	      \
-	spawn_faction_addopen spawn_faction_adddup2 spawn_valid_fd	      \
+	spawn_faction_addopen spawn_faction_adddup2			      \
 	spawnattr_init spawnattr_destroy				      \
 	spawnattr_getdefault spawnattr_setdefault			      \
 	spawnattr_getflags spawnattr_setflags				      \
@@ -61,10 +59,12 @@ routines :=								      \
 	posix_madvise							      \
 	get_child_max sched_cpucount sched_cpualloc sched_cpufree
 
+include ../Makeconfig
+
 aux		:= init-posix environ
 tests		:= tstgetopt testfnm runtests runptests	     \
 		   tst-preadwrite tst-preadwrite64 test-vfork regexbug1 \
-		   tst-mmap tst-mmap-offset tst-getaddrinfo tst-truncate \
+		   tst-getlogin tst-mmap tst-getaddrinfo tst-truncate \
 		   tst-truncate64 tst-fork tst-fnmatch tst-regexloc tst-dir \
 		   tst-chmod bug-regex1 bug-regex2 bug-regex3 bug-regex4 \
 		   tst-gnuglob tst-regex bug-regex5 bug-regex6 bug-regex7 \
@@ -82,19 +82,15 @@ tests		:= tstgetopt testfnm runtests runptests	     \
 		   tst-execv1 tst-execv2 tst-execl1 tst-execl2 \
 		   tst-execve1 tst-execve2 tst-execle1 tst-execle2 \
 		   tst-execvp3 tst-execvp4 tst-rfc3484 tst-rfc3484-2 \
-		   tst-execvpe1 tst-execvpe2 tst-execvpe3 tst-execvpe4 \
-		   tst-execvpe5 tst-execvpe6 \
 		   tst-rfc3484-3 \
 		   tst-getaddrinfo3 tst-fnmatch2 tst-cpucount tst-cpuset \
 		   bug-getopt1 bug-getopt2 bug-getopt3 bug-getopt4 \
 		   bug-getopt5 tst-getopt_long1 bug-regex34 bug-regex35 \
-		   tst-pathconf tst-getaddrinfo4 tst-rxspencer-no-utf8 \
-		   tst-fnmatch3 bug-regex36 tst-getaddrinfo5 \
-		   tst-posix_spawn-fd
+		   tst-pathconf tst-getaddrinfo4
 xtests		:= bug-ga2
 ifeq (yes,$(build-shared))
 test-srcs	:= globtest
-tests           += wordexp-test tst-exec tst-spawn tst-spawn2
+tests           += wordexp-test tst-exec tst-spawn
 endif
 tests-static	= tst-exec-static tst-spawn-static
 tests		+= $(tests-static)
@@ -102,85 +98,32 @@ others		:= getconf
 install-bin	:= getconf
 install-others-programs	:= $(inst_libexecdir)/getconf
 
-before-compile	+= testcases.h ptestcases.h $(objpfx)posix-conf-vars-def.h
+before-compile	:= testcases.h ptestcases.h
 
 # So they get cleaned up.
-generated += $(addprefix wordexp-test-result, 1 2 3 4 5 6 7 8 9 10) \
-	     annexc annexc.out wordexp-tst.out bug-regex2-mem.out \
-	     bug-regex2.mtrace bug-regex14-mem.out bug-regex14.mtrace \
-	     bug-regex21-mem.out bug-regex21.mtrace \
-	     bug-regex31-mem.out bug-regex31.mtrace \
-	     tst-rxspencer-no-utf8-mem.out tst-rxspencer-no-utf8.mtrace \
-	     tst-getconf.out \
-	     tst-pcre-mem.out tst-pcre.mtrace tst-boost-mem.out \
-	     tst-boost.mtrace bug-ga2.mtrace bug-ga2-mem.out \
-	     bug-glob2.mtrace bug-glob2-mem.out tst-vfork3-mem.out \
-	     tst-vfork3.mtrace getconf.speclist tst-fnmatch-mem.out \
-	     tst-fnmatch.mtrace bug-regex36.mtrace
-
-ifeq ($(run-built-tests),yes)
-ifeq (yes,$(build-shared))
-tests-special += $(objpfx)globtest.out $(objpfx)wordexp-tst.out
-endif
-endif
-
-# Run a test on the header files we use.
-# XXX Please note that for now we ignore the result of this test.
-tests-special += $(objpfx)annexc.out
-ifeq ($(run-built-tests),yes)
-tests-special += $(objpfx)bug-regex2-mem.out $(objpfx)bug-regex14-mem.out \
-		 $(objpfx)bug-regex21-mem.out $(objpfx)bug-regex31-mem.out \
-		 $(objpfx)tst-rxspencer-no-utf8-mem.out $(objpfx)tst-pcre-mem.out \
-		 $(objpfx)tst-boost-mem.out $(objpfx)tst-getconf.out \
-		 $(objpfx)bug-glob2-mem.out $(objpfx)tst-vfork3-mem.out \
-		 $(objpfx)tst-fnmatch-mem.out $(objpfx)bug-regex36-mem.out
-xtests-special += $(objpfx)bug-ga2-mem.out
-endif
+generated := $(addprefix wordexp-test-result, 1 2 3 4 5 6 7 8 9 10) \
+	     annexc annexc.out wordexp-tst.out bug-regex2-mem \
+	     bug-regex2.mtrace bug-regex14-mem bug-regex14.mtrace \
+	     bug-regex21-mem bug-regex21.mtrace \
+	     bug-regex31-mem bug-regex31.mtrace \
+	     tst-rxspencer-mem tst-rxspencer.mtrace tst-getconf.out \
+	     tst-pcre-mem tst-pcre.mtrace tst-boost-mem tst-boost.mtrace \
+	     bug-ga2.mtrace bug-ga2-mem bug-glob2.mtrace bug-glob2-mem \
+	     tst-vfork3-mem tst-vfork3.mtrace getconf.speclist \
+	     tst-fnmatch-mem tst-fnmatch.mtrace
 
 include ../Rules
 
 ifeq ($(run-built-tests),yes)
 # globtest and wordexp-test currently only works with shared libraries
 ifeq (yes,$(build-shared))
+tests: $(objpfx)globtest.out $(objpfx)wordexp-tst.out
 $(objpfx)globtest.out: globtest.sh $(objpfx)globtest
 	$(SHELL) $< $(common-objpfx) '$(test-via-rtld-prefix)' \
-		'$(test-program-prefix)' '$(test-wrapper-env)'; \
-	$(evaluate-test)
+		'$(test-program-prefix)' '$(test-wrapper-env)'
 $(objpfx)wordexp-tst.out: wordexp-tst.sh $(objpfx)wordexp-test
-	$(SHELL) $< $(common-objpfx) '$(test-program-prefix-before-env)' \
-		 '$(run-program-env)' '$(test-program-prefix-after-env)'; \
-	$(evaluate-test)
+	$(SHELL) $< $(common-objpfx) '$(test-program-prefix)'
 endif
-
-LOCALES := cs_CZ.UTF-8 da_DK.ISO-8859-1 de_DE.ISO-8859-1 de_DE.UTF-8 \
-	   en_US.UTF-8 es_US.ISO-8859-1 es_US.UTF-8 ja_JP.EUC-JP tr_TR.UTF-8
-include ../gen-locales.mk
-
-$(objpfx)bug-regex1.out: $(gen-locales)
-$(objpfx)bug-regex4.out: $(gen-locales)
-$(objpfx)bug-regex5.out: $(gen-locales)
-$(objpfx)bug-regex6.out: $(gen-locales)
-$(objpfx)bug-regex17.out: $(gen-locales)
-$(objpfx)bug-regex18.out: $(gen-locales)
-$(objpfx)bug-regex19.out: $(gen-locales)
-$(objpfx)bug-regex20.out: $(gen-locales)
-$(objpfx)bug-regex22.out: $(gen-locales)
-$(objpfx)bug-regex23.out: $(gen-locales)
-$(objpfx)bug-regex25.out: $(gen-locales)
-$(objpfx)bug-regex26.out: $(gen-locales)
-$(objpfx)bug-regex30.out: $(gen-locales)
-$(objpfx)bug-regex32.out: $(gen-locales)
-$(objpfx)bug-regex33.out: $(gen-locales)
-$(objpfx)bug-regex34.out: $(gen-locales)
-$(objpfx)bug-regex35.out: $(gen-locales)
-$(objpfx)tst-fnmatch.out: $(gen-locales)
-$(objpfx)tst-fnmatch4.out: $(gen-locales)
-$(objpfx)tst-fnmatch5.out: $(gen-locales)
-$(objpfx)tst-regex.out: $(gen-locales)
-$(objpfx)tst-regex2.out: $(gen-locales)
-$(objpfx)tst-regexloc.out: $(gen-locales)
-$(objpfx)tst-rxspencer.out: $(gen-locales)
-$(objpfx)tst-rxspencer-no-utf8.out: $(gen-locales)
 endif
 
 # If we will use the generic uname implementation, we must figure out what
@@ -192,6 +135,7 @@ $(objpfx)config-name.h: $(..)scripts/config-uname.sh $(common-objpfx)config.make
 	   '$(config-machine)-$(config-vendor)' > $@.new
 	mv -f $@.new $@
 
+CFLAGS-regex.c = -Wno-strict-prototypes
 CFLAGS-getaddrinfo.c = -DRESOLVER -fexceptions
 CFLAGS-pause.c = -fexceptions -fasynchronous-unwind-tables
 CFLAGS-pread.c = -fexceptions -fasynchronous-unwind-tables
@@ -231,15 +175,34 @@ tstgetopt-ARGS = -a -b -cfoobar --required foobar --optional=bazbug \
 
 tst-exec-ARGS = -- $(host-test-program-cmd)
 tst-exec-static-ARGS = $(tst-exec-ARGS)
-tst-execvpe5-ARGS = -- $(host-test-program-cmd)
 tst-spawn-ARGS = -- $(host-test-program-cmd)
 tst-spawn-static-ARGS = $(tst-spawn-ARGS)
 tst-dir-ARGS = `pwd` `cd $(common-objdir)/$(subdir); pwd` `cd $(common-objdir); pwd` $(objpfx)tst-dir
 tst-chmod-ARGS = $(objdir)
 tst-vfork3-ARGS = --test-dir=$(objpfx)
 
+tst-fnmatch-ENV = LOCPATH=$(common-objpfx)localedata
+tst-regexloc-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex1-ENV = LOCPATH=$(common-objpfx)localedata
+tst-regex-ENV = LOCPATH=$(common-objpfx)localedata
+tst-regex2-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex5-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex6-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex17-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex18-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex19-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex20-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex22-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex23-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex25-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex26-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex30-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex32-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex33-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex34-ENV = LOCPATH=$(common-objpfx)localedata
+bug-regex35-ENV = LOCPATH=$(common-objpfx)localedata
 tst-rxspencer-ARGS = --utf8 rxspencer/tests
-tst-rxspencer-no-utf8-ARGS = rxspencer/tests
+tst-rxspencer-ENV = LOCPATH=$(common-objpfx)localedata
 tst-pcre-ARGS = PCRE.tests
 tst-boost-ARGS = BOOST.tests
 bug-glob1-ARGS = "$(objpfx)"
@@ -253,11 +216,20 @@ ptestcases.h: PTESTS PTESTS2C.sed
 	LC_ALL=C sed -f PTESTS2C.sed < $< > $@T
 	mv -f $@T $@
 
-test-xfail-annexc = yes
+# Run a test on the header files we use.
+# XXX Please note that for now we ignore the result of this test.
+tests: $(objpfx)annexc.out
+ifeq ($(run-built-tests),yes)
+tests: $(objpfx)bug-regex2-mem $(objpfx)bug-regex14-mem \
+  $(objpfx)bug-regex21-mem $(objpfx)bug-regex31-mem $(objpfx)tst-rxspencer-mem\
+  $(objpfx)tst-pcre-mem $(objpfx)tst-boost-mem $(objpfx)tst-getconf.out \
+  $(objpfx)bug-glob2-mem $(objpfx)tst-vfork3-mem $(objpfx)tst-fnmatch-mem
+xtests: $(objpfx)bug-ga2-mem
+endif
+
 $(objpfx)annexc.out: $(objpfx)annexc
-	$(dir $<)$(notdir $<) '$(CC)' \
-	  '$(patsubst %,-I../%,$(sorted-subdirs)) -I../include $(+sysdep-includes) $(sysincludes) -I..' > $@; \
-	$(evaluate-test)
+	-$(dir $<)$(notdir $<) '$(CC)' \
+	  '$(patsubst %,-I../%,$(sorted-subdirs)) -I../include $(+sysdep-includes) $(sysincludes) -I..' > $@
 
 annexc-CFLAGS = -O
 $(objpfx)annexc: annexc.c
@@ -265,80 +237,63 @@ $(objpfx)annexc: annexc.c
 
 tst-fnmatch-ENV += MALLOC_TRACE=$(objpfx)tst-fnmatch.mtrace
 
-$(objpfx)tst-fnmatch-mem.out: $(objpfx)tst-fnmatch.out
-	$(common-objpfx)malloc/mtrace $(objpfx)tst-fnmatch.mtrace > $@; \
-	$(evaluate-test)
+$(objpfx)tst-fnmatch-mem: $(objpfx)tst-fnmatch.out
+	$(common-objpfx)malloc/mtrace $(objpfx)tst-fnmatch.mtrace > $@
 
 bug-regex2-ENV = MALLOC_TRACE=$(objpfx)bug-regex2.mtrace
 
-$(objpfx)bug-regex2-mem.out: $(objpfx)bug-regex2.out
-	$(common-objpfx)malloc/mtrace $(objpfx)bug-regex2.mtrace > $@; \
-	$(evaluate-test)
+$(objpfx)bug-regex2-mem: $(objpfx)bug-regex2.out
+	$(common-objpfx)malloc/mtrace $(objpfx)bug-regex2.mtrace > $@
 
 bug-regex14-ENV = MALLOC_TRACE=$(objpfx)bug-regex14.mtrace
 
-$(objpfx)bug-regex14-mem.out: $(objpfx)bug-regex14.out
-	$(common-objpfx)malloc/mtrace $(objpfx)bug-regex14.mtrace > $@; \
-	$(evaluate-test)
+$(objpfx)bug-regex14-mem: $(objpfx)bug-regex14.out
+	$(common-objpfx)malloc/mtrace $(objpfx)bug-regex14.mtrace > $@
 
 bug-regex21-ENV = MALLOC_TRACE=$(objpfx)bug-regex21.mtrace
 
-$(objpfx)bug-regex21-mem.out: $(objpfx)bug-regex21.out
-	$(common-objpfx)malloc/mtrace $(objpfx)bug-regex21.mtrace > $@; \
-	$(evaluate-test)
+$(objpfx)bug-regex21-mem: $(objpfx)bug-regex21.out
+	$(common-objpfx)malloc/mtrace $(objpfx)bug-regex21.mtrace > $@
 
 bug-regex31-ENV = MALLOC_TRACE=$(objpfx)bug-regex31.mtrace
 
-$(objpfx)bug-regex31-mem.out: $(objpfx)bug-regex31.out
-	$(common-objpfx)malloc/mtrace $(objpfx)bug-regex31.mtrace > $@; \
-	$(evaluate-test)
-
-bug-regex36-ENV = MALLOC_TRACE=$(objpfx)bug-regex36.mtrace
-
-$(objpfx)bug-regex36-mem.out: $(objpfx)bug-regex36.out
-	$(common-objpfx)malloc/mtrace $(objpfx)bug-regex36.mtrace > $@; \
-	$(evaluate-test)
+$(objpfx)bug-regex31-mem: $(objpfx)bug-regex31.out
+	$(common-objpfx)malloc/mtrace $(objpfx)bug-regex31.mtrace > $@
 
 tst-vfork3-ENV = MALLOC_TRACE=$(objpfx)tst-vfork3.mtrace
 
-$(objpfx)tst-vfork3-mem.out: $(objpfx)tst-vfork3.out
-	$(common-objpfx)malloc/mtrace $(objpfx)tst-vfork3.mtrace > $@; \
-	$(evaluate-test)
+$(objpfx)tst-vfork3-mem: $(objpfx)tst-vfork3.out
+	$(common-objpfx)malloc/mtrace $(objpfx)tst-vfork3.mtrace > $@
 
-# tst-rxspencer.mtrace is not generated, only
-# tst-rxspencer-no-utf8.mtrace, since otherwise the file has almost
-# 100M and takes very long time to process.
-tst-rxspencer-no-utf8-ENV += MALLOC_TRACE=$(objpfx)tst-rxspencer-no-utf8.mtrace
-$(objpfx)tst-rxspencer-no-utf8-mem.out: $(objpfx)tst-rxspencer-no-utf8.out
-	$(common-objpfx)malloc/mtrace $(objpfx)tst-rxspencer-no-utf8.mtrace \
-				      > $@; \
-	$(evaluate-test)
+# tst-rxspencer.mtrace is generated only when run without --utf8
+# option, since otherwise the file has almost 100M and takes very long
+# time to process.
+$(objpfx)tst-rxspencer-mem: $(objpfx)tst-rxspencer.out
+	MALLOC_TRACE=$(objpfx)tst-rxspencer.mtrace $(tst-rxspencer-ENV) \
+	  $(test-program-prefix) $(objpfx)tst-rxspencer rxspencer/tests \
+	  > /dev/null
+	$(common-objpfx)malloc/mtrace $(objpfx)tst-rxspencer.mtrace > $@
 
 tst-pcre-ENV = MALLOC_TRACE=$(objpfx)tst-pcre.mtrace
-$(objpfx)tst-pcre-mem.out: $(objpfx)tst-pcre.out
-	$(common-objpfx)malloc/mtrace $(objpfx)tst-pcre.mtrace > $@; \
-	$(evaluate-test)
+$(objpfx)tst-pcre-mem: $(objpfx)tst-pcre.out
+	$(common-objpfx)malloc/mtrace $(objpfx)tst-pcre.mtrace > $@
 
 tst-boost-ENV = MALLOC_TRACE=$(objpfx)tst-boost.mtrace
-$(objpfx)tst-boost-mem.out: $(objpfx)tst-boost.out
-	$(common-objpfx)malloc/mtrace $(objpfx)tst-boost.mtrace > $@; \
-	$(evaluate-test)
+$(objpfx)tst-boost-mem: $(objpfx)tst-boost.out
+	$(common-objpfx)malloc/mtrace $(objpfx)tst-boost.mtrace > $@
 
 $(objpfx)tst-getconf.out: tst-getconf.sh $(objpfx)getconf
-	$(SHELL) $< $(common-objpfx) '$(built-program-cmd)'; \
-	$(evaluate-test)
+	$(SHELL) $< $(common-objpfx) '$(built-program-cmd)'
 
-$(objpfx)bug-ga2-mem.out: $(objpfx)bug-ga2.out
-	$(common-objpfx)malloc/mtrace $(objpfx)bug-ga2.mtrace > $@; \
-	$(evaluate-test)
+$(objpfx)bug-ga2-mem: $(objpfx)bug-ga2.out
+	$(common-objpfx)malloc/mtrace $(objpfx)bug-ga2.mtrace > $@
 
 bug-ga2-ENV = MALLOC_TRACE=$(objpfx)bug-ga2.mtrace
 
 bug-glob2-ENV = MALLOC_TRACE=$(objpfx)bug-glob2.mtrace
 
-$(objpfx)bug-glob2-mem.out: $(objpfx)bug-glob2.out
-	$(common-objpfx)malloc/mtrace $(objpfx)bug-glob2.mtrace > $@; \
-	$(evaluate-test)
+$(objpfx)bug-glob2-mem: $(objpfx)bug-glob2.out
+	$(common-objpfx)malloc/mtrace $(objpfx)bug-glob2.mtrace > $@
 
 $(inst_libexecdir)/getconf: $(inst_bindir)/getconf \
 			    $(objpfx)getconf.speclist FORCE
@@ -358,9 +313,3 @@ $(objpfx)getconf.speclist: getconf-speclist.c posix-envs.def
 # be built both makes it available for eyeball inspection and avoids the
 # surprise of things that look like compilation being done by 'make install'.
 others: $(objpfx)getconf.speclist
-
-$(objpfx)posix-conf-vars-def.h: $(..)scripts/gen-posix-conf-vars.awk \
-				posix-conf-vars.list Makefile
-	$(make-target-directory)
-	$(AWK) -f $(filter-out Makefile, $^) > $@.tmp
-	mv -f $@.tmp $@
