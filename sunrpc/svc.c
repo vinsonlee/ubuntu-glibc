@@ -4,7 +4,7 @@
  * There are two sets of procedures here.  The xprt routines are
  * for handling transport handles.  The svc routines handle the
  * list of service routines.
- *  Copyright (C) 2002-2016 Free Software Foundation, Inc.
+ *  Copyright (C) 2002-2014 Free Software Foundation, Inc.
  *  This file is part of the GNU C Library.
  *  Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
  *
@@ -97,8 +97,8 @@ xprt_register (SVCXPRT *xprt)
 
   if (xports == NULL)
     {
-      xports = (SVCXPRT **) calloc (_rpc_dtablesize (), sizeof (SVCXPRT *));
-      if (xports == NULL) /* Don't add handle */
+      xports = (SVCXPRT **) malloc (_rpc_dtablesize () * sizeof (SVCXPRT *));
+      if (xports == NULL) /* Don´t add handle */
 	return;
     }
 

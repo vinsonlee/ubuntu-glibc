@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -55,12 +55,31 @@
 
 /* Modified for GNU iostream by Per Bothner 1991, 1992. */
 
+#ifndef _POSIX_SOURCE
+# define _POSIX_SOURCE
+#endif
 #include "libioP.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-/* Allocate a file buffer, or switch to unbuffered I/O.  */
+#ifdef _LIBC
+# undef isatty
+# define isatty(Fd) __isatty (Fd)
+#endif
+
+/*
+ * Allocate a file buffer, or switch to unbuffered I/O.
+ * Per the ANSI C standard, ALL tty devices default to line buffered.
+ *
+ * As a side effect, we set __SOPT or __SNPT (en/dis-able fseek
+ * optimisation) right after the _fstat() that finds the buffer size.
+ */
+
 int
-_IO_wfile_doallocate (_IO_FILE *fp)
+_IO_wfile_doallocate (fp)
+     _IO_FILE *fp;
 {
   _IO_size_t size;
   wchar_t *p;
@@ -76,9 +95,7 @@ _IO_wfile_doallocate (_IO_FILE *fp)
   size = fp->_IO_buf_end - fp->_IO_buf_base;
   if ((fp->_flags & _IO_USER_BUF))
     size = (size + sizeof (wchar_t) - 1) / sizeof (wchar_t);
-  p = malloc (size * sizeof (wchar_t));
-  if (__glibc_unlikely (p == NULL))
-    return EOF;
+  ALLOC_WBUF (p, size * sizeof (wchar_t), EOF);
   _IO_wsetb (fp, p, p + size, 1);
   return 1;
 }

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ __closedir (DIR *dirp)
 
   fd = dirp->fd;
 
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
   __libc_lock_fini (dirp->lock);
 #endif
 

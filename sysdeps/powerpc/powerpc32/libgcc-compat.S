@@ -1,5 +1,5 @@
 /* pre-.hidden libgcc compatibility
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,6 +21,20 @@
 #include <shlib-compat.h>
 
 #if SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_2_6)
+
+#define __ashldi3_v_glibc20	INTUSE (__ashldi3)
+#define __ashrdi3_v_glibc20	INTUSE (__ashrdi3)
+#define __lshrdi3_v_glibc20	INTUSE (__lshrdi3)
+#define __cmpdi2_v_glibc20	INTUSE (__cmpdi2)
+#define __ucmpdi2_v_glibc20	INTUSE (__ucmpdi2)
+#if !defined _SOFT_FLOAT && !defined __NO_FPRS__
+# define __fixdfdi_v_glibc20	INTUSE (__fixdfdi)
+# define __fixsfdi_v_glibc20	INTUSE (__fixsfdi)
+# define __fixunsdfdi_v_glibc20	INTUSE (__fixunsdfdi)
+# define __fixunssfdi_v_glibc20	INTUSE (__fixunssfdi)
+# define __floatdidf_v_glibc20	INTUSE (__floatdidf)
+# define __floatdisf_v_glibc20	INTUSE (__floatdisf)
+#endif
 
 	.symver __ashldi3_v_glibc20,__ashldi3@GLIBC_2.0
 	.symver __ashrdi3_v_glibc20,__ashrdi3@GLIBC_2.0

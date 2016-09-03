@@ -1,5 +1,5 @@
 /* Return information about the filesystem on which FILE resides.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 
 
 extern void __internal_statvfs64 (const char *name, struct statvfs64 *buf,
-				  struct statfs64 *fsbuf, int fd);
+				  struct statfs64 *fsbuf, struct stat64 *st);
 
 
 /* Return information about the filesystem on which FILE resides.  */
@@ -61,8 +61,12 @@ __statvfs64 (const char *file, struct statvfs64 *buf)
 #endif
 
   if (res == 0)
-    /* Convert the result.  */
-    __internal_statvfs64 (file, buf, &fsbuf, -1);
+    {
+      /* Convert the result.  */
+      struct stat64 st;
+      __internal_statvfs64 (file, buf, &fsbuf,
+			    stat64 (file, &st) == -1 ? NULL : &st);
+    }
 
   return res;
 }

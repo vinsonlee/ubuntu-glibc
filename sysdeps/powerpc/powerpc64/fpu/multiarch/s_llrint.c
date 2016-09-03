@@ -1,5 +1,5 @@
 /* Multiple versions of llrint.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,13 +30,10 @@
 
 extern __typeof (__llrint) __llrint_ppc64 attribute_hidden;
 extern __typeof (__llrint) __llrint_power6x attribute_hidden;
-extern __typeof (__llrint) __llrint_power8 attribute_hidden;
 
 libc_ifunc (__llrint,
-	    (hwcap2 & PPC_FEATURE2_ARCH_2_07)
-	    ? __llrint_power8 :
-	      (hwcap & PPC_FEATURE_POWER6_EXT)
-	      ? __llrint_power6x
+	    (hwcap & PPC_FEATURE_POWER6_EXT)
+	    ? __llrint_power6x
             : __llrint_ppc64);
 
 weak_alias (__llrint, llrint)

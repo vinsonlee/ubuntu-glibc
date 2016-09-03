@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,7 +23,11 @@
    descriptors for them in FDS[0] and FDS[1].  If PROTOCOL is zero,
    one will be chosen automatically.  Returns 0 on success, -1 for errors.  */
 int
-socketpair (int domain, int type, int protocol, int fds[2])
+socketpair (domain, type, protocol, fds)
+     int domain;
+     int type;
+     int protocol;
+     int fds[2];
 {
   __set_errno (ENOSYS);
   return -1;

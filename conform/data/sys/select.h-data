@@ -1,4 +1,4 @@
-#if !defined ISO && !defined ISO99 && !defined ISO11 && !defined POSIX && !defined XPG3 && !defined XPG4 && !defined UNIX98
+#if !defined ISO && !defined ISO99 && !defined ISO11 && !defined POSIX
 type time_t
 type suseconds_t
 
@@ -24,7 +24,7 @@ macro FD_ZERO
 
 macro FD_SETSIZE
 
-#if defined XOPEN2K || defined POSIX2008 || defined XOPEN2K8
+#if defined XOPEN2K || defined POSIX2008
 function int pselect (int, fd_set*, fd_set*, fd_set*, const struct timespec*, const sigset_t*)
 #endif
 function int select (int, fd_set*, fd_set*, fd_set*, struct timeval*)

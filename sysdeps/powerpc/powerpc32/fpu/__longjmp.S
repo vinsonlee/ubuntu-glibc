@@ -1,5 +1,5 @@
 /* AltiVec/VMX (new) version of __longjmp for PowerPC.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,12 +20,12 @@
 #include <rtld-global-offsets.h>
 #include <shlib-compat.h>
 
-#if !IS_IN (libc)
+#if defined NOT_IN_libc
 /* Build a non-versioned object for rtld-*.  */
 # define __longjmp_symbol __longjmp
 # include "__longjmp-common.S"
 
-#else /* IS_IN (libc) */
+#else /* !NOT_IN_libc */
 /* Build a versioned object for libc.  */
 versioned_symbol (libc, __vmx__longjmp, __longjmp, GLIBC_2_3_4);
 # define __longjmp_symbol  __vmx__longjmp
@@ -39,4 +39,4 @@ compat_symbol (libc, __novmx__longjmp, __longjmp, GLIBC_2_0);
 #  define __longjmp_symbol  __novmx__longjmp
 #  include "__longjmp-common.S"
 # endif
-#endif /* IS_IN (libc) */
+#endif /* !NOT_IN_libc */

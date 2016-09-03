@@ -1,5 +1,5 @@
 /* Tests for spawn.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
@@ -63,17 +63,17 @@ do_prepare (int argc, char *argv[])
    size_t name_len;
 
    name_len = strlen (test_dir);
-   name1 = (char *) xmalloc (name_len + sizeof ("/spawnXXXXXX"));
+   name1 = (char *) malloc (name_len + sizeof ("/spawnXXXXXX"));
    mempcpy (mempcpy (name1, test_dir, name_len),
 	    "/spawnXXXXXX", sizeof ("/spawnXXXXXX"));
    add_temp_file (name1);
 
-   name2 = (char *) xmalloc (name_len + sizeof ("/spawnXXXXXX"));
+   name2 = (char *) malloc (name_len + sizeof ("/spawnXXXXXX"));
    mempcpy (mempcpy (name2, test_dir, name_len),
 	    "/spawnXXXXXX", sizeof ("/spawnXXXXXX"));
    add_temp_file (name2);
 
-   name3 = (char *) xmalloc (name_len + sizeof ("/spawnXXXXXX"));
+   name3 = (char *) malloc (name_len + sizeof ("/spawnXXXXXX"));
    mempcpy (mempcpy (name3, test_dir, name_len),
 	    "/spawnXXXXXX", sizeof ("/spawnXXXXXX"));
    add_temp_file (name3);
@@ -168,7 +168,6 @@ do_test (int argc, char *argv[])
   char fd2name[18];
   char fd3name[18];
   char fd4name[18];
-  char *name3_copy;
   char *spargv[12];
   int i;
 
@@ -223,15 +222,9 @@ do_test (int argc, char *argv[])
    if (posix_spawn_file_actions_addclose (&actions, fd1) != 0)
      error (EXIT_FAILURE, errno, "posix_spawn_file_actions_addclose");
    /* We want to open the third file.  */
-   name3_copy = strdup (name3);
-   if (name3_copy == NULL)
-     error (EXIT_FAILURE, errno, "strdup");
-   if (posix_spawn_file_actions_addopen (&actions, fd3, name3_copy,
+   if (posix_spawn_file_actions_addopen (&actions, fd3, name3,
 					 O_RDONLY, 0666) != 0)
      error (EXIT_FAILURE, errno, "posix_spawn_file_actions_addopen");
-   /* Overwrite the name to check that a copy has been made.  */
-   memset (name3_copy, 'X', strlen (name3_copy));
-
    /* We dup the second descriptor.  */
    fd4 = MAX (2, MAX (fd1, MAX (fd2, fd3))) + 1;
    if (posix_spawn_file_actions_adddup2 (&actions, fd2, fd4) != 0)
@@ -257,14 +250,9 @@ do_test (int argc, char *argv[])
    if (posix_spawn (&pid, argv[1], &actions, NULL, spargv, environ) != 0)
      error (EXIT_FAILURE, errno, "posix_spawn");
 
-   /* Same test but with a NULL pid argument.  */
-   if (posix_spawn (NULL, argv[1], &actions, NULL, spargv, environ) != 0)
-     error (EXIT_FAILURE, errno, "posix_spawn");
-
    /* Cleanup.  */
    if (posix_spawn_file_actions_destroy (&actions) != 0)
      error (EXIT_FAILURE, errno, "posix_spawn_file_actions_destroy");
-   free (name3_copy);
 
   /* Wait for the child.  */
   if (waitpid (pid, &status, 0) != pid)

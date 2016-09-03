@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2016 Free Software Foundation, Inc.
+# Copyright (C) 1998-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -79,20 +79,23 @@ CFLAGS-nscd_gethst_r.c = -fexceptions
 CFLAGS-nscd_getai.c = -fexceptions
 CFLAGS-nscd_initgroups.c = -fexceptions
 
-CPPFLAGS-nscd += -D_FORTIFY_SOURCE=2
+CPPFLAGS-nonlib += -DIS_IN_nscd=1 -D_FORTIFY_SOURCE=2
 
 ifeq (yesyes,$(have-fpie)$(build-shared))
-CFLAGS-nscd += $(pie-ccflag)
+CFLAGS-nonlib += $(pie-ccflag)
 endif
-CFLAGS-nscd += $(stack-protector)
+ifeq (yes,$(have-ssp))
+CFLAGS-nonlib += -fstack-protector
+endif
 
 ifeq (yesyes,$(have-fpie)$(build-shared))
 LDFLAGS-nscd = -Wl,-z,now
 endif
 
-# Set libof-nscd.
-cpp-srcs-left := $(nscd-modules)
-lib := nscd
+# This makes sure CPPFLAGS-nonlib and CFLAGS-nonlib are passed
+# for all these modules.
+cpp-srcs-left := $(nscd-modules:=.c)
+lib := nonlib
 include $(patsubst %,$(..)cppflags-iterator.mk,$(cpp-srcs-left))
 
 $(objpfx)nscd: $(nscd-modules:%=$(objpfx)%.o)

@@ -1,18 +1,20 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Lesser General Public License as published by
-   the Free Software Foundation; either version 2.1 of the License, or
-   (at your option) any later version.
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   The GNU C Library is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Lesser General Public License for more details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
 
-   You should have received a copy of the GNU Lesser General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* Tell glibc's <string.h> to provide a prototype for stpcpy().
    This must come before <config.h> because <config.h> may include
@@ -56,19 +58,20 @@
 # endif
 #else
 # ifndef HAVE_STPCPY
-static char *stpcpy (char *dest, const char *src);
+static char *stpcpy PARAMS ((char *dest, const char *src));
 # endif
 #endif
 
 /* Define function which are usually not available.  */
 
-#if defined HAVE_ARGZ_COUNT
-# undef __argz_count
-# define __argz_count argz_count
-#else
+#if !defined _LIBC && !defined HAVE___ARGZ_COUNT
 /* Returns the number of strings in ARGZ.  */
+static size_t argz_count__ PARAMS ((const char *argz, size_t len));
+
 static size_t
-argz_count__ (const char *argz, size_t len)
+argz_count__ (argz, len)
+     const char *argz;
+     size_t len;
 {
   size_t count = 0;
   while (len > 0)
@@ -82,16 +85,18 @@ argz_count__ (const char *argz, size_t len)
 }
 # undef __argz_count
 # define __argz_count(argz, len) argz_count__ (argz, len)
-#endif	/* !_LIBC && !HAVE_ARGZ_COUNT */
+#endif	/* !_LIBC && !HAVE___ARGZ_COUNT */
 
-#if defined HAVE_ARGZ_STRINGIFY
-# undef __argz_stringify
-# define __argz_stringify argz_stringify
-#else
+#if !defined _LIBC && !defined HAVE___ARGZ_STRINGIFY
 /* Make '\0' separated arg vector ARGZ printable by converting all the '\0's
    except the last into the character SEP.  */
+static void argz_stringify__ PARAMS ((char *argz, size_t len, int sep));
+
 static void
-argz_stringify__ (char *argz, size_t len, int sep)
+argz_stringify__ (argz, len, sep)
+     char *argz;
+     size_t len;
+     int sep;
 {
   while (len > 0)
     {
@@ -104,20 +109,22 @@ argz_stringify__ (char *argz, size_t len, int sep)
 }
 # undef __argz_stringify
 # define __argz_stringify(argz, len, sep) argz_stringify__ (argz, len, sep)
-#endif	/* !_LIBC && !HAVE_ARGZ_STRINGIFY */
+#endif	/* !_LIBC && !HAVE___ARGZ_STRINGIFY */
 
-#ifdef _LIBC
-#elif defined HAVE_ARGZ_NEXT
-# undef __argz_next
-# define __argz_next argz_next
-#else
+#if !defined _LIBC && !defined HAVE___ARGZ_NEXT
+static char *argz_next__ PARAMS ((char *argz, size_t argz_len,
+				  const char *entry));
+
 static char *
-argz_next__ (char *argz, size_t argz_len, const char *entry)
+argz_next__ (argz, argz_len, entry)
+     char *argz;
+     size_t argz_len;
+     const char *entry;
 {
   if (entry)
     {
       if (entry < argz + argz_len)
-        entry = strchr (entry, '\0') + 1;
+	entry = strchr (entry, '\0') + 1;
 
       return entry >= argz + argz_len ? NULL : (char *) entry;
     }
@@ -129,12 +136,16 @@ argz_next__ (char *argz, size_t argz_len, const char *entry)
 }
 # undef __argz_next
 # define __argz_next(argz, len, entry) argz_next__ (argz, len, entry)
-#endif	/* !_LIBC && !HAVE_ARGZ_NEXT */
+#endif	/* !_LIBC && !HAVE___ARGZ_NEXT */
+
 
 /* Return number of bits set in X.  */
 #ifndef ARCH_POP
+static int pop PARAMS ((int x));
+
 static inline int
-pop (int x)
+pop (x)
+     int x;
 {
   /* We assume that no more than 16 bits are used.  */
   x = ((x & ~0x5555) >> 1) + (x & 0x5555);
@@ -148,12 +159,20 @@ pop (int x)
 
 
 struct loaded_l10nfile *
-_nl_make_l10nflist (struct loaded_l10nfile **l10nfile_list,
-		    const char *dirlist, size_t dirlist_len,
-		    int mask, const char *language, const char *territory,
-		    const char *codeset, const char *normalized_codeset,
-		    const char *modifier,
-		    const char *filename, int do_allocate)
+_nl_make_l10nflist (l10nfile_list, dirlist, dirlist_len, mask, language,
+		    territory, codeset, normalized_codeset, modifier,
+		    filename, do_allocate)
+     struct loaded_l10nfile **l10nfile_list;
+     const char *dirlist;
+     size_t dirlist_len;
+     int mask;
+     const char *language;
+     const char *territory;
+     const char *codeset;
+     const char *normalized_codeset;
+     const char *modifier;
+     const char *filename;
+     int do_allocate;
 {
   char *abs_filename;
   struct loaded_l10nfile *last = NULL;
@@ -296,14 +315,16 @@ _nl_make_l10nflist (struct loaded_l10nfile **l10nfile_list,
    names.  The return value is dynamically allocated and has to be
    freed by the caller.  */
 const char *
-_nl_normalize_codeset (const char *codeset, size_t name_len)
+_nl_normalize_codeset (codeset, name_len)
+     const char *codeset;
+     size_t name_len;
 {
-  size_t len = 0;
+  int len = 0;
   int only_digit = 1;
   char *retval;
   char *wp;
   size_t cnt;
-#if !IS_IN (libc)
+#ifdef NOT_IN_libc
   locale_t locale = newlocale (0, "C", NULL);
 #else
 # define locale _nl_C_locobj_ptr
@@ -322,10 +343,9 @@ _nl_normalize_codeset (const char *codeset, size_t name_len)
 
   if (retval != NULL)
     {
+      wp = retval;
       if (only_digit)
-	wp = stpcpy (retval, "iso");
-      else
-	wp = retval;
+	wp = stpcpy (wp, "iso");
 
       for (cnt = 0; cnt < name_len; ++cnt)
 	if (__isalpha_l ((unsigned char) codeset[cnt], locale))
@@ -348,7 +368,9 @@ _nl_normalize_codeset (const char *codeset, size_t name_len)
    to be defined.  */
 #if !_LIBC && !HAVE_STPCPY
 static char *
-stpcpy (char *dest, const char *src)
+stpcpy (dest, src)
+     char *dest;
+     const char *src;
 {
   while ((*dest++ = *src++) != '\0')
     /* Do nothing. */ ;

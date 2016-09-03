@@ -44,7 +44,7 @@ ENTRY(__ieee754_scalbl)
 	fnstsw
 	andl	$0x4500, %eax
 	cmpl	$0x0100, %eax
-	je	2f
+	je	3f
 	fld	%st(1)
 	frndint
 	fcomip	%st(2), %st
@@ -61,10 +61,8 @@ ENTRY(__ieee754_scalbl)
 	fstp	%st
 	fstp	%st
 	andl	$0x8000, %edx
-	andl	$0x0228, %eax
-	cmpl	$0x0028, %eax
-	je	4f
 	andl	$8, %eax
+	jnz	4f
 	shrl	$11, %edx
 	addl	%edx, %eax
 #ifdef PIC
@@ -75,8 +73,15 @@ ENTRY(__ieee754_scalbl)
 #endif
 	ret
 
-	/* The result is NaN; raise an exception for sNaN arguments.  */
-2:	faddp
+	/* The result is NaN, but we must not raise an exception.
+	   So use a variable.  */
+2:	fstp	%st
+	fstp	%st
+	fldl	MO(nan)
+	ret
+
+	/* The first parameter is a NaN.  Return it.  */
+3:	fstp	%st(1)
 	ret
 
 	/* Return NaN and raise the invalid exception.  */

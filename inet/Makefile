@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2016 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,8 +20,6 @@
 #
 subdir	:= inet
 
-include ../Makeconfig
-
 headers	:= netinet/ether.h netinet/in.h netinet/in_systm.h \
 	   netinet/if_ether.h netinet/igmp.h \
 	   netinet/tcp.h netinet/ip.h $(wildcard arpa/*.h protocols/*.h) \
@@ -37,6 +35,8 @@ routines := htonl htons		\
 	    getproto getproto_r getprtent getprtent_r getprtname getprtname_r \
 	    getsrvbynm getsrvbynm_r getsrvbypt getsrvbypt_r getservent \
 	    getservent_r	\
+	    getrpcent getrpcbyname getrpcbynumber \
+	    getrpcent_r getrpcbyname_r getrpcbynumber_r \
 	    ether_aton ether_aton_r ether_hton ether_line \
 	    ether_ntoa ether_ntoa_r ether_ntoh \
 	    rcmd rexec ruserpass \
@@ -50,7 +50,7 @@ aux := check_pf check_native ifreq
 
 tests := htontest test_ifindex tst-ntoa tst-ether_aton tst-network \
 	 tst-gethnm test-ifaddrs bug-if1 test-inet6_opt tst-ether_line \
-	 tst-getni1 tst-getni2 tst-inet6_rth tst-checks tst-sockaddr
+	 tst-getni1 tst-getni2 tst-inet6_rth tst-checks
 
 include ../Rules
 
@@ -83,8 +83,6 @@ CFLAGS-either_ntoh.c = -fexceptions
 CFLAGS-either_hton.c = -fexceptions
 CFLAGS-getnetgrent.c = -fexceptions
 CFLAGS-getnetgrent_r.c = -fexceptions
-
-CFLAGS-tst-sockaddr.c = -fno-strict-aliasing
 
 endif
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -21,7 +21,9 @@
 
 
 int
-pthread_rwlockattr_setkind_np (pthread_rwlockattr_t *attr, int pref)
+pthread_rwlockattr_setkind_np (attr, pref)
+     pthread_rwlockattr_t *attr;
+     int pref;
 {
   struct pthread_rwlockattr *iattr;
 

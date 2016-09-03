@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,8 +22,10 @@
 #include <gai_misc.h>
 
 int
-internal_function
-__gai_sigqueue (int sig, const union sigval val, pid_t caller_pid)
+__gai_sigqueue (sig, val, caller_pid)
+     int sig;
+     const union sigval val;
+     pid_t caller_pid;
 {
   __set_errno (ENOSYS);
   return -1;

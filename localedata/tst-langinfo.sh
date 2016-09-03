@@ -1,6 +1,6 @@
-#!/bin/sh
+#! /bin/sh
 # Test nl_langinfo.
-# Copyright (C) 2000-2016 Free Software Foundation, Inc.
+# Copyright (C) 2000-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,9 +20,7 @@
 set -e
 
 common_objpfx=$1
-tst_langinfo_before_env=$2
-run_program_env=$3
-tst_langinfo_after_env=$4
+tst_langinfo=$2
 
 # Run the test program.
 cat <<"EOF" |
@@ -121,8 +119,8 @@ en_US.ANSI_X3.4-1968 T_FMT       "%r"
 en_US.ANSI_X3.4-1968 T_FMT_AMPM  "%I:%M:%S %p"
 en_US.ANSI_X3.4-1968 RADIXCHAR   .
 en_US.ANSI_X3.4-1968 THOUSEP     ,
-en_US.ANSI_X3.4-1968 YESEXPR     ^[+1yY]
-en_US.ANSI_X3.4-1968 NOEXPR      ^[-0nN]
+en_US.ANSI_X3.4-1968 YESEXPR     ^[yY].*
+en_US.ANSI_X3.4-1968 NOEXPR      ^[nN].*
 en_US.ISO-8859-1     ABMON_1     Jan
 en_US.ISO-8859-1     ABMON_2     Feb
 en_US.ISO-8859-1     ABMON_3     Mar
@@ -155,8 +153,8 @@ en_US.ISO-8859-1     T_FMT       "%r"
 en_US.ISO-8859-1     T_FMT_AMPM  "%I:%M:%S %p"
 en_US.ISO-8859-1     RADIXCHAR   .
 en_US.ISO-8859-1     THOUSEP     ,
-en_US.ISO-8859-1     YESEXPR     ^[+1yY]
-en_US.ISO-8859-1     NOEXPR      ^[-0nN]
+en_US.ISO-8859-1     YESEXPR     ^[yY].*
+en_US.ISO-8859-1     NOEXPR      ^[nN].*
 de_DE.ISO-8859-1     ABDAY_1     So
 de_DE.ISO-8859-1     ABDAY_2     Mo
 de_DE.ISO-8859-1     ABDAY_3     Di
@@ -200,8 +198,8 @@ de_DE.ISO-8859-1     D_FMT       "%d.%m.%Y"
 de_DE.ISO-8859-1     T_FMT       "%T"
 de_DE.ISO-8859-1     RADIXCHAR   ,
 de_DE.ISO-8859-1     THOUSEP     .
-de_DE.ISO-8859-1     YESEXPR     ^[+1jJyY]
-de_DE.ISO-8859-1     NOEXPR      ^[-0nN]
+de_DE.ISO-8859-1     YESEXPR     ^[jJyY].*
+de_DE.ISO-8859-1     NOEXPR      ^[nN].*
 de_DE.UTF-8          ABDAY_1     So
 de_DE.UTF-8          ABDAY_2     Mo
 de_DE.UTF-8          ABDAY_3     Di
@@ -245,8 +243,8 @@ de_DE.UTF-8          D_FMT       "%d.%m.%Y"
 de_DE.UTF-8          T_FMT       "%T"
 de_DE.UTF-8          RADIXCHAR   ,
 de_DE.UTF-8          THOUSEP     .
-de_DE.UTF-8          YESEXPR     ^[+1jJyY]
-de_DE.UTF-8          NOEXPR      ^[-0nN]
+de_DE.UTF-8          YESEXPR     ^[jJyY].*
+de_DE.UTF-8          NOEXPR      ^[nN].*
 fr_FR.ISO-8859-1     ABDAY_1     dim.
 fr_FR.ISO-8859-1     ABDAY_2     lun.
 fr_FR.ISO-8859-1     ABDAY_3     mar.
@@ -290,8 +288,8 @@ fr_FR.ISO-8859-1     D_FMT       "%d/%m/%Y"
 fr_FR.ISO-8859-1     T_FMT       "%T"
 fr_FR.ISO-8859-1     RADIXCHAR   ,
 fr_FR.ISO-8859-1     THOUSEP     " "
-fr_FR.ISO-8859-1     YESEXPR     ^[+1oOyY]
-fr_FR.ISO-8859-1     NOEXPR      ^[-0nN]
+fr_FR.ISO-8859-1     YESEXPR     ^[oOyY].*
+fr_FR.ISO-8859-1     NOEXPR      ^[nN].*
 ja_JP.EUC-JP         ABDAY_1     日
 ja_JP.EUC-JP         ABDAY_2     月
 ja_JP.EUC-JP         ABDAY_3     火
@@ -335,14 +333,14 @@ ja_JP.EUC-JP         ERA_D_FMT   "%EY%m月%d日"
 ja_JP.EUC-JP         ERA_D_T_FMT "%EY%m月%d日 %H時%M分%S秒"
 ja_JP.EUC-JP         RADIXCHAR   .
 ja_JP.EUC-JP         THOUSEP     ,
-ja_JP.EUC-JP         YESEXPR     ^([+1yYｙＹ]|はい|ハイ)
-ja_JP.EUC-JP         NOEXPR      ^([-0nNｎＮ]|いいえ|イイエ)
+ja_JP.EUC-JP         YESEXPR     ^([yYｙＹ]|はい|ハイ)
+ja_JP.EUC-JP         NOEXPR      ^([nNｎＮ]|いいえ|イイエ)
 # Is CRNCYSTR supposed to be the national or international sign?
 # ja_JP.EUC-JP         CRNCYSTR    JPY
 ja_JP.EUC-JP         CODESET     EUC-JP
 EOF
-${tst_langinfo_before_env} \
-${run_program_env} \
-LC_ALL=tt_TT ${tst_langinfo_after_env}
+LOCPATH=${common_objpfx}localedata GCONV_PATH=${common_objpfx}iconvdata \
+LC_ALL=tt_TT ${tst_langinfo} \
+    > ${common_objpfx}localedata/tst-langinfo.out
 
 exit $?

@@ -1,5 +1,5 @@
 /* Return current rounding direction.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -20,7 +20,7 @@
 #include <fenv.h>
 
 int
-__fegetround (void)
+fegetround (void)
 {
 #ifdef FE_TONEAREST
   return FE_TONEAREST;
@@ -28,7 +28,5 @@ __fegetround (void)
   return 0;
 #endif
 }
-libm_hidden_def (__fegetround)
-weak_alias (__fegetround, fegetround)
-libm_hidden_weak (fegetround)
+libm_hidden_def (fegetround)
 stub_warning (fegetround)

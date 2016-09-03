@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,13 +17,12 @@
 
 #include <wchar.h>
 
-#ifdef WCSCHRNUL
-# define __wcschrnul WCSCHRNUL
-#endif
 
 /* Find the first occurrence of WC in WCS.  */
 wchar_t *
-__wcschrnul (const wchar_t *wcs, const wchar_t wc)
+__wcschrnul (wcs, wc)
+     const wchar_t *wcs;
+     const wchar_t wc;
 {
   while (*wcs != L'\0')
     if (*wcs == wc)
@@ -33,6 +32,4 @@ __wcschrnul (const wchar_t *wcs, const wchar_t wc)
 
   return (wchar_t *) wcs;
 }
-#ifndef WCSCHRNUL
 weak_alias (__wcschrnul, wcschrnul)
-#endif

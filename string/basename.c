@@ -1,5 +1,5 @@
 /* Return the name-within-directory of a file name.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,14 +16,26 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include <string.h>
 
+#ifndef _LIBC
+/* We cannot generally use the name `basename' since XPG defines an unusable
+   variant of the function but we cannot use it.  */
+# define basename gnu_basename
+#endif
+
+
 char *
-__basename (const char *filename)
+basename (filename)
+     const char *filename;
 {
   char *p = strrchr (filename, '/');
   return p ? p + 1 : (char *) filename;
 }
-libc_hidden_def (__basename)
-weak_alias (__basename, basename)
-libc_hidden_weak (basename)
+#ifdef _LIBC
+libc_hidden_def (basename)
+#endif

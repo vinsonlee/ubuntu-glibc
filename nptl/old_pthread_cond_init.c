@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -23,8 +23,9 @@
 
 #if SHLIB_COMPAT(libpthread, GLIBC_2_0, GLIBC_2_3_2)
 int
-__pthread_cond_init_2_0 (pthread_cond_2_0_t *cond,
-			 const pthread_condattr_t *cond_attr)
+__pthread_cond_init_2_0 (cond, cond_attr)
+     pthread_cond_2_0_t *cond;
+     const pthread_condattr_t *cond_attr;
 {
   struct pthread_condattr *icond_attr = (struct pthread_condattr *) cond_attr;
 

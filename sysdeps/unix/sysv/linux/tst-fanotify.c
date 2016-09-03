@@ -1,5 +1,5 @@
 /* Basic fanotify test.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,6 +20,18 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+
+#ifndef HAVE_LINUX_FANOTIFY_H
+
+static int
+do_test (void)
+{
+  puts ("SKIP: missing support for fanotify due to old kernel headers");
+  return 0;
+}
+
+#else
+
 #include <sys/fanotify.h>
 
 static int
@@ -56,6 +68,8 @@ do_test (void)
   puts ("All OK");
   return 0;
 }
+
+#endif
 
 #define TEST_FUNCTION do_test ()
 #include "../test-skeleton.c"

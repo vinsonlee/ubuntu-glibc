@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -392,13 +392,6 @@
    prevailing rounding mode.  */
 #define rint(Val) __TGMATH_UNARY_REAL_ONLY (Val, rint)
 
-#ifdef __USE_GNU
-/* Return X - epsilon.  */
-# define nextdown(Val) __TGMATH_UNARY_REAL_ONLY (Val, nextdown)
-/* Return X + epsilon.  */
-# define nextup(Val) __TGMATH_UNARY_REAL_ONLY (Val, nextup)
-#endif
-
 /* Return X + epsilon if X < Y, X - epsilon if X > Y.  */
 #define nextafter(Val1, Val2) __TGMATH_BINARY_REAL_ONLY (Val1, Val2, nextafter)
 #define nexttoward(Val1, Val2) \
@@ -408,7 +401,7 @@
 #define remainder(Val1, Val2) __TGMATH_BINARY_REAL_ONLY (Val1, Val2, remainder)
 
 /* Return X times (2 to the Nth power).  */
-#ifdef __USE_MISC
+#if defined __USE_MISC || defined __USE_XOPEN_EXTENDED
 # define scalb(Val1, Val2) __TGMATH_BINARY_REAL_ONLY (Val1, Val2, scalb)
 #endif
 

@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)syslog.c	8.4 (Berkeley) 3/18/94";
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <signal.h>
 #include <locale.h>
 
@@ -164,7 +164,7 @@ __vsyslog_chk(int pri, int flag, const char *fmt, va_list ap)
 		pri |= LogFacility;
 
 	/* Build the message in a memory-buffer stream.  */
-	f = __open_memstream (&buf, &bufsize);
+	f = open_memstream (&buf, &bufsize);
 	if (f == NULL)
 	  {
 	    /* We cannot get a stream.  There is not much we can do but
@@ -202,7 +202,7 @@ __vsyslog_chk(int pri, int flag, const char *fmt, va_list ap)
 	    if (LogTag == NULL)
 	      LogTag = __progname;
 	    if (LogTag != NULL)
-	      __fputs_unlocked (LogTag, f);
+	      fputs_unlocked (LogTag, f);
 	    if (LogStat & LOG_PID)
 	      fprintf (f, "[%d]", (int) __getpid ());
 	    if (LogTag != NULL)
@@ -298,7 +298,7 @@ __vsyslog_chk(int pri, int flag, const char *fmt, va_list ap)
 		if (LogStat & LOG_CONS &&
 		    (fd = __open(_PATH_CONSOLE, O_WRONLY|O_NOCTTY, 0)) >= 0)
 		  {
-		    __dprintf (fd, "%s\r\n", buf + msgoff);
+		    dprintf (fd, "%s\r\n", buf + msgoff);
 		    (void)__close(fd);
 		  }
 	      }
@@ -324,7 +324,7 @@ __vsyslog(int pri, const char *fmt, va_list ap)
   __vsyslog_chk (pri, -1, fmt, ap);
 }
 ldbl_hidden_def (__vsyslog, vsyslog)
-ldbl_weak_alias (__vsyslog, vsyslog)
+ldbl_strong_alias (__vsyslog, vsyslog)
 
 static struct sockaddr_un SyslogAddr;	/* AF_UNIX address of local logger */
 
@@ -346,9 +346,36 @@ openlog_internal(const char *ident, int logstat, int logfac)
 			(void)strncpy(SyslogAddr.sun_path, _PATH_LOG,
 				      sizeof(SyslogAddr.sun_path));
 			if (LogStat & LOG_NDELAY) {
-			  LogFile = __socket(AF_UNIX, LogType | SOCK_CLOEXEC, 0);
-			  if (LogFile == -1)
-			    return;
+#ifdef SOCK_CLOEXEC
+# ifndef __ASSUME_SOCK_CLOEXEC
+				if (__have_sock_cloexec >= 0) {
+# endif
+					LogFile = __socket(AF_UNIX,
+							   LogType
+							   | SOCK_CLOEXEC, 0);
+# ifndef __ASSUME_SOCK_CLOEXEC
+					if (__have_sock_cloexec == 0)
+						__have_sock_cloexec
+						  = ((LogFile != -1
+						      || errno != EINVAL)
+						     ? 1 : -1);
+				}
+# endif
+#endif
+#ifndef __ASSUME_SOCK_CLOEXEC
+# ifdef SOCK_CLOEXEC
+				if (__have_sock_cloexec < 0)
+# endif
+				  LogFile = __socket(AF_UNIX, LogType, 0);
+#endif
+				if (LogFile == -1)
+					return;
+#ifndef __ASSUME_SOCK_CLOEXEC
+# ifdef SOCK_CLOEXEC
+				if (__have_sock_cloexec < 0)
+# endif
+					__fcntl(LogFile, F_SETFD, FD_CLOEXEC);
+#endif
 			}
 		}
 		if (LogFile != -1 && !connected)
@@ -425,7 +452,8 @@ closelog (void)
 
 /* setlogmask -- set the log mask level */
 int
-setlogmask (int pmask)
+setlogmask(pmask)
+	int pmask;
 {
 	int omask;
 

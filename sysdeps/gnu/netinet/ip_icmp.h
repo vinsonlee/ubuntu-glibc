@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -90,7 +90,7 @@ struct icmphdr
 #define ICMP_EXC_FRAGTIME	1	/* Fragment Reass time exceeded	*/
 
 
-#ifdef __USE_MISC
+#ifdef __USE_BSD
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -275,7 +275,7 @@ struct icmp
 	(type) == ICMP_IREQ || (type) == ICMP_IREQREPLY || \
 	(type) == ICMP_MASKREQ || (type) == ICMP_MASKREPLY)
 
-#endif /* __USE_MISC */
+#endif /* __USE_BSD */
 
 __END_DECLS
 

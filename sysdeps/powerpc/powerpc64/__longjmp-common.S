@@ -1,5 +1,5 @@
 /* longjmp for PowerPC64.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 	.section	".toc","aw"
 .LC__dl_hwcap:
 # ifdef SHARED
-#  if IS_IN (rtld)
+#  ifdef IS_IN_rtld
 	/* Inside ld.so we use the local alias to avoid runtime GOT
 	   relocations.  */
 	.tc _rtld_local_ro[TC],_rtld_local_ro
@@ -130,7 +130,7 @@ L(no_vmx):
 	ld r0,(JB_LR*8)(r3)
 	ld r14,((JB_GPRS+0)*8)(r3)
 	lfd fp14,((JB_FPRS+0)*8)(r3)
-#if defined SHARED && !IS_IN (rtld)
+#if defined SHARED && !defined IS_IN_rtld
 	std r2,FRAME_TOC_SAVE(r1)	/* Restore the callers TOC save area.  */
 #endif
 	ld r15,((JB_GPRS+1)*8)(r3)

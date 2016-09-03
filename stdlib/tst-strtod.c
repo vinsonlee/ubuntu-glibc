@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -81,8 +81,8 @@ static void expand (char *dst, int c);
 static int long_dbl (void);
 static int locale_test (void);
 
-static int
-do_test (void)
+int
+main (int argc, char ** argv)
 {
   char buf[100];
   const struct ltest *lt;
@@ -182,7 +182,9 @@ do_test (void)
 }
 
 static void
-expand (char *dst, int c)
+expand (dst, c)
+     char *dst;
+     int c;
 {
   if (isprint (c))
     {
@@ -274,6 +276,3 @@ locale_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

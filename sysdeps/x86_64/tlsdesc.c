@@ -1,5 +1,5 @@
 /* Manage TLS descriptors.  x86_64 version.
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@
 #include <elf/dynamic-link.h>
 #include <tls.h>
 #include <dl-tlsdesc.h>
-#include <dl-unmap-segments.h>
 #include <tlsdeschtab.h>
 
 /* The following 2 functions take a caller argument, that contains the
@@ -137,9 +136,10 @@ void
 internal_function
 _dl_unmap (struct link_map *map)
 {
-  _dl_unmap_segments (map);
+  __munmap ((void *) (map)->l_map_start,
+	    (map)->l_map_end - (map)->l_map_start);
 
-#ifdef SHARED
+#if SHARED
   /* _dl_unmap is only called for dlopen()ed libraries, for which
      calling free() is safe, or before we've completed the initial
      relocation, in which case calling free() is probably pointless,

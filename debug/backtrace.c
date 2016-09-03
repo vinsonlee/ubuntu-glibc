@@ -1,5 +1,5 @@
 /* Return backtrace of current program state.  Generic version.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -58,7 +58,9 @@
 #endif
 
 int
-__backtrace (void **array, int size)
+__backtrace (array, size)
+     void **array;
+     int size;
 {
   struct layout *current;
   void *top_frame;

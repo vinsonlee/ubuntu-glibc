@@ -1,5 +1,5 @@
 /* Compute remainder and a congruent to the quotient.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -59,12 +59,12 @@ __remquof (float x, float y, int *quo)
   y  = fabsf (y);
   cquo = 0;
 
-  if (hy <= 0x7e7fffff && x >= 4 * y)
+  if (x >= 4 * y)
     {
       x -= 4 * y;
       cquo += 4;
     }
-  if (hy <= 0x7effffff && x >= 2 * y)
+  if (x >= 2 * y)
     {
       x -= 2 * y;
       cquo += 2;
@@ -100,9 +100,6 @@ __remquof (float x, float y, int *quo)
 
   *quo = qs ? -cquo : cquo;
 
-  /* Ensure correct sign of zero result in round-downward mode.  */
-  if (x == 0.0f)
-    x = 0.0f;
   if (sx)
     x = -x;
   return x;

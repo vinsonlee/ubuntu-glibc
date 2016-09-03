@@ -1,4 +1,4 @@
-# Copyright (C) 1997-2016 Free Software Foundation, Inc.
+# Copyright (C) 1997-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,15 +20,13 @@
 #
 subdir	:= hesiod
 
-include ../Makeconfig
-
 extra-libs := libnss_hesiod
 extra-libs-others = $(extra-libs)
 
 subdir-dirs = nss_hesiod
 vpath %.c nss_hesiod
 
-libnss_hesiod-routines	:= hesiod hesiod-grp hesiod-proto \
+libnss_hesiod-routines	:= hesiod hesiod-grp hesiod-init hesiod-proto \
 			   hesiod-pwd hesiod-service
 # Build only shared library
 libnss_hesiod-inhibit-o	= $(filter-out .os,$(object-suffixes))

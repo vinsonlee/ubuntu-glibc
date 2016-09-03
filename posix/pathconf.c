@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,9 @@
 
 /* Get file-specific information about PATH.  */
 long int
-__pathconf (const char *path, int name)
+__pathconf (path, name)
+     const char *path;
+     int name;
 {
   if (path == NULL)
     {

@@ -1,5 +1,5 @@
 /* Test for ,ccs= handling in fopen.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2001.
 
@@ -24,43 +24,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-#include <sys/resource.h>
+
 
 static const char inputfile[] = "../iconvdata/testdata/ISO-8859-1";
 
-static int do_test(void);
 
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"
-
-static int
-do_bz17916 (void)
-{
-  /* BZ #17916 -- check invalid large ccs= case.  */
-  struct rlimit rl;
-  getrlimit (RLIMIT_STACK, &rl);
-  rl.rlim_cur = 1024 * 1024;
-  setrlimit (RLIMIT_STACK, &rl);
-
-  const size_t sz = 2 * 1024 * 1024;
-  char *ccs = xmalloc (sz);
-  strcpy (ccs, "r,ccs=");
-  memset (ccs + 6, 'A', sz - 6 - 1);
-  ccs[sz - 1] = '\0';
-
-  FILE *fp = fopen (inputfile, ccs);
-  if (fp != NULL)
-    {
-      printf ("unxpected success\n");
-      return 1;
-    }
-  free (ccs);
-
-  return 0;
-}
-
-static int
-do_test (void)
+int
+main (void)
 {
   FILE *fp;
 
@@ -87,5 +57,5 @@ do_test (void)
 
   fclose (fp);
 
-  return do_bz17916 ();
+  return 0;
 }

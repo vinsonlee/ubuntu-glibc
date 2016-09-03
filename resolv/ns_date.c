@@ -15,6 +15,10 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#if !defined(_LIBC) && !defined(lint)
+static const char rcsid[] = "$Id$";
+#endif
+
 /* Import. */
 
 #include <arpa/nameser.h>

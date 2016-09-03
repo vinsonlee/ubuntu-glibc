@@ -10,8 +10,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-static int
-do_test (void)
+int
+main (void)
 {
   struct hostent *ent;
   struct in_addr hostaddr;
@@ -62,6 +62,3 @@ do_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

@@ -1,6 +1,6 @@
 /* Multiple versions of memset and bzero
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by David S. Miller (davem@davemloft.net)
    This file is part of the GNU C Library.
 
@@ -20,7 +20,7 @@
 
 #include <sysdep.h>
 
-#if IS_IN (libc)
+#if !defined NOT_IN_libc
 	.text
 ENTRY(memset)
 	.type	memset, @gnu_indirect_function

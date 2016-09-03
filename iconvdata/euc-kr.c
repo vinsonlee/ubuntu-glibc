@@ -1,5 +1,5 @@
 /* Mapping tables for EUC-KR handling.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jungshik Shin <jshin@pantheon.yale.edu>
    and Ulrich Drepper <drepper@cygnus.com>, 1998.
@@ -66,7 +66,6 @@ euckr_from_ucs4 (uint32_t ch, unsigned char *cp)
 #define MIN_NEEDED_FROM		1
 #define MAX_NEEDED_FROM		2
 #define MIN_NEEDED_TO		4
-#define ONE_DIRECTION		0
 
 
 /* First define the conversion function from EUC-KR to UCS4.  */
@@ -94,13 +93,13 @@ euckr_from_ucs4 (uint32_t ch, unsigned char *cp)
 	/* Two-byte character.  First test whether the next byte	      \
 	   is also available.  */					      \
 	ch = ksc5601_to_ucs4 (&inptr, inend - inptr, 0x80);		      \
-	if (__glibc_unlikely (ch == 0))					      \
+	if (__builtin_expect (ch == 0, 0))				      \
 	  {								      \
 	    /* The second byte is not available.  */			      \
 	    result = __GCONV_INCOMPLETE_INPUT;				      \
 	    break;							      \
 	  }								      \
-	if (__glibc_unlikely (ch == __UNKNOWN_10646_CHAR))		      \
+	if (__builtin_expect (ch == __UNKNOWN_10646_CHAR, 0))		      \
 	  /* This is an illegal character.  */				      \
 	  STANDARD_FROM_LOOP_ERR_HANDLER (2);				      \
       }									      \
@@ -145,7 +144,7 @@ euckr_from_ucs4 (uint32_t ch, unsigned char *cp)
     /* Now test for a possible second byte and write this if possible.  */    \
     if (cp[1] != '\0')							      \
       {									      \
-	if (__glibc_unlikely (outptr >= outend))			      \
+	if (__builtin_expect (outptr >= outend, 0))			      \
 	  {								      \
 	    /* The result does not fit into the buffer.  */		      \
 	    --outptr;							      \

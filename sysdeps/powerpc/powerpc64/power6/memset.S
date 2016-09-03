@@ -1,5 +1,5 @@
 /* Optimized 64-bit memset implementation for POWER6.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -379,6 +379,7 @@ L(medium_28t):
 END_GEN_TB (memset,TB_TOCLESS)
 libc_hidden_builtin_def (memset)
 
+#ifndef NO_BZERO_IMPL
 /* Copied from bzero.S to prevent the linker from inserting a stub
    between bzero and memset.  */
 ENTRY (__bzero)
@@ -386,7 +387,7 @@ ENTRY (__bzero)
 	mr	r5,r4
 	li	r4,0
 	b	L(_memset)
-END (__bzero)
-#ifndef __bzero
+END_GEN_TB (__bzero,TB_TOCLESS)
+
 weak_alias (__bzero, bzero)
 #endif

@@ -1,5 +1,5 @@
 /* Generate expected output for libm tests with MPFR and MPC.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
 
 /* Compile this program as:
 
-   gcc -std=gnu11 -O2 -Wall -Wextra gen-auto-libm-tests.c -lmpc -lmpfr -lgmp \
+   gcc -std=gnu99 -O2 -Wall -Wextra gen-auto-libm-tests.c -lmpc -lmpfr -lgmp \
      -o gen-auto-libm-tests
 
    (use of current MPC and MPFR versions recommended) and run it as:
@@ -84,16 +84,15 @@
    permitted), errno is expected to be left unchanged.
 
    The flag "no-test-inline" indicates a test is disabled for inline
-   function testing; "ignore-zero-inf-sign" indicates the the signs of
-   zero and infinite results should be ignored; "xfail" indicates the
-   test is disabled as expected to produce incorrect results,
-   "xfail-rounding" indicates the test is disabled only in rounding
-   modes other than round-to-nearest.  Otherwise, test flags are of
-   the form "spurious-<exception>" and "missing-<exception>", for any
-   exception ("overflow", "underflow", "inexact", "invalid",
-   "divbyzero"), "spurious-errno" and "missing-errno", to indicate
-   when tests are expected to deviate from the exception and errno
-   settings corresponding to the mathematical results.  "xfail",
+   function testing; "xfail" indicates the test is disabled as
+   expected to produce incorrect results, "xfail-rounding" indicates
+   the test is disabled only in rounding modes other than
+   round-to-nearest.  Otherwise, test flags are of the form
+   "spurious-<exception>" and "missing-<exception>", for any exception
+   ("overflow", "underflow", "inexact", "invalid", "divbyzero"),
+   "spurious-errno" and "missing-errno", to indicate when tests are
+   expected to deviate from the exception and errno settings
+   corresponding to the mathematical results.  "xfail",
    "xfail-rounding", "spurious-" and "missing-" flags should be
    accompanied by a comment referring to an open bug in glibc
    Bugzilla.
@@ -105,22 +104,22 @@
    ... : flags".  rounding-mode is "tonearest", "towardzero", "upward"
    or "downward".  format is a name from the floating_point_formats
    array, possibly followed by a sequence of ":flag" for flags from
-   "long32" and "long64".  Inputs and outputs are specified as hex
-   floats with the required suffix for the floating-point type, or
-   plus_infty or minus_infty for infinite expected results, or as
-   integer constant expressions (not necessarily with the right type)
-   or IGNORE for integer inputs and outputs.  Flags are
-   "no-test-inline", "ignore-zero-info-sign", "xfail", "<exception>",
-   "<exception>-ok", "errno-<value>", "errno-<value>-ok", which may be
-   unconditional or conditional.  "<exception>" indicates that a
-   correct result means the given exception should be raised.
-   "errno-<value>" indicates that a correct result means errno should
-   be set to the given value.  "-ok" means not to test for the given
+   "long32", "long64", "before-rounding" and "after-rounding" (the
+   last two indicating tests where expectations for underflow
+   exceptions depend on how the architecture detects tininess).
+   Inputs and outputs are specified as hex floats with the required
+   suffix for the floating-point type, or plus_infty or minus_infty
+   for infinite expected results, or as integer constant expressions
+   (not necessarily with the right type) or IGNORE for integer inputs
+   and outputs.  Flags are "no-test-inline", "xfail", "<exception>",
+   "<exception>-ok", "errno-<value>", "errno-<value>-ok", where
+   "<exception>" and "errno-<value>" are unconditional, indicating
+   that a correct result means the given exception should be raised or
+   errno should be set to the given value, and other settings may be
+   conditional or unconditional; "-ok" means not to test for the given
    exception or errno value (whether because it was marked as possibly
    missing or spurious, or because the calculation of correct results
-   indicated it was optional).  Conditions "before-rounding" and
-   "after-rounding" indicate tests where expectations for underflow
-   exceptions depend on how the architecture detects tininess.  */
+   indicated it was optional).  */
 
 #define _GNU_SOURCE
 
@@ -158,6 +157,9 @@ typedef struct
 {
   /* The name of the format.  */
   const char *name;
+  /* The suffix to use on floating-point constants with this
+     format.  */
+  const char *suffix;
   /* A string for the largest normal value, or NULL for IEEE formats
      where this can be determined automatically.  */
   const char *max_string;
@@ -169,8 +171,6 @@ typedef struct
   int min_exp;
   /* The largest normal value.  */
   mpfr_t max;
-  /* The value 0.5ulp above the least positive normal value.  */
-  mpfr_t min_plus_half;
   /* The least positive normal value, 2^(MIN_EXP-1).  */
   mpfr_t min;
   /* The greatest positive subnormal value.  */
@@ -183,13 +183,13 @@ typedef struct
    enumeration.  */
 static fp_format_desc fp_formats[fp_num_formats] =
   {
-    { "binary32", NULL, 24, 128, -125, {}, {}, {}, {}, {} },
-    { "binary64", NULL, 53, 1024, -1021, {}, {}, {}, {}, {} },
-    { "intel96", NULL, 64, 16384, -16381, {}, {}, {}, {}, {} },
-    { "m68k96", NULL, 64, 16384, -16382, {}, {}, {}, {}, {} },
-    { "binary128", NULL, 113, 16384, -16381, {}, {}, {}, {}, {} },
-    { "ibm128", "0x1.fffffffffffff7ffffffffffff8p+1023",
-      106, 1024, -968, {}, {}, {}, {}, {} },
+    { "flt-32", "f", NULL, 24, 128, -125, {}, {}, {}, {} },
+    { "dbl-64", "", NULL, 53, 1024, -1021, {}, {}, {}, {} },
+    { "ldbl-96-intel", "L", NULL, 64, 16384, -16381, {}, {}, {}, {} },
+    { "ldbl-96-m68k", "L", NULL, 64, 16384, -16382, {}, {}, {}, {} },
+    { "ldbl-128", "L", NULL, 113, 16384, -16381, {}, {}, {}, {} },
+    { "ldbl-128ibm", "L", "0x1.fffffffffffff7ffffffffffff8p+1023",
+      106, 1024, -968, {}, {}, {}, {} },
   };
 
 /* The supported rounding modes.  */
@@ -210,18 +210,16 @@ typedef struct
   const char *name;
   /* The MPFR rounding mode.  */
   mpfr_rnd_t mpfr_mode;
-  /* The MPC rounding mode.  */
-  mpc_rnd_t mpc_mode;
 } rounding_mode_desc;
 
 /* List of rounding modes, in the same order as the rounding_mode
    enumeration.  */
 static const rounding_mode_desc rounding_modes[rm_num_modes] =
   {
-    { "downward", MPFR_RNDD, MPC_RNDDD },
-    { "tonearest", MPFR_RNDN, MPC_RNDNN },
-    { "towardzero", MPFR_RNDZ, MPC_RNDZZ },
-    { "upward", MPFR_RNDU, MPC_RNDUU },
+    { "downward", MPFR_RNDD },
+    { "tonearest", MPFR_RNDN },
+    { "towardzero", MPFR_RNDZ },
+    { "upward", MPFR_RNDU },
   };
 
 /* The supported exceptions.  */
@@ -313,7 +311,6 @@ typedef struct
 typedef enum
   {
     flag_no_test_inline,
-    flag_ignore_zero_inf_sign,
     flag_xfail,
     flag_xfail_rounding,
     /* The "spurious" and "missing" flags must be in the same order as
@@ -341,7 +338,6 @@ typedef enum
 static const char *const input_flags[num_input_flag_types] =
   {
     "no-test-inline",
-    "ignore-zero-inf-sign",
     "xfail",
     "xfail-rounding",
     "spurious-divbyzero",
@@ -398,8 +394,6 @@ typedef enum
     mpfr_f_f,
     /* MPFR function with two arguments and one result.  */
     mpfr_ff_f,
-    /* MPFR function with three arguments and one result.  */
-    mpfr_fff_f,
     /* MPFR function with a single argument and floating-point and
        integer results.  */
     mpfr_f_f1,
@@ -430,8 +424,6 @@ typedef struct
   {
     int (*mpfr_f_f) (mpfr_t, const mpfr_t, mpfr_rnd_t);
     int (*mpfr_ff_f) (mpfr_t, const mpfr_t, const mpfr_t, mpfr_rnd_t);
-    int (*mpfr_fff_f) (mpfr_t, const mpfr_t, const mpfr_t, const mpfr_t,
-		       mpfr_rnd_t);
     int (*mpfr_f_f1) (mpfr_t, int *, const mpfr_t, mpfr_rnd_t);
     int (*mpfr_if_f) (mpfr_t, long, const mpfr_t, mpfr_rnd_t);
     int (*mpfr_f_11) (mpfr_t, mpfr_t, const mpfr_t, mpfr_rnd_t);
@@ -460,10 +452,6 @@ typedef struct
   /* Whether the function is a complex function, so errno setting is
      optional.  */
   bool complex_fn;
-  /* Whether to treat arguments given as floating-point constants as
-     exact only, rather than rounding them up and down to all
-     formats.  */
-  bool exact_args;
   /* How to calculate this function.  */
   func_calc_desc calc;
   /* The number of tests allocated for this function.  */
@@ -481,26 +469,26 @@ typedef struct
 #define RET1(T1) 1, { T1 }
 #define RET2(T1, T2) 2, { T1, T2 }
 #define CALC(TYPE, FN) { TYPE, { .TYPE = FN } }
-#define FUNC(NAME, ARGS, RET, EXACT, COMPLEX_FN, EXACT_ARGS, CALC)	\
-  {									\
-    NAME, ARGS, RET, EXACT, COMPLEX_FN, EXACT_ARGS, CALC, 0, 0, NULL	\
+#define FUNC(NAME, ARGS, RET, EXACT, COMPLEX_FN, CALC)		\
+  {								\
+    NAME, ARGS, RET, EXACT, COMPLEX_FN, CALC, 0, 0, NULL	\
   }
 
-#define FUNC_mpfr_f_f(NAME, MPFR_FUNC, EXACT)				\
-  FUNC (NAME, ARGS1 (type_fp), RET1 (type_fp), EXACT, false, false,	\
+#define FUNC_mpfr_f_f(NAME, MPFR_FUNC, EXACT)			\
+  FUNC (NAME, ARGS1 (type_fp), RET1 (type_fp), EXACT, false,	\
 	CALC (mpfr_f_f, MPFR_FUNC))
 #define FUNC_mpfr_ff_f(NAME, MPFR_FUNC, EXACT)				\
   FUNC (NAME, ARGS2 (type_fp, type_fp), RET1 (type_fp), EXACT, false,	\
-	false, CALC (mpfr_ff_f, MPFR_FUNC))
+	CALC (mpfr_ff_f, MPFR_FUNC))
 #define FUNC_mpfr_if_f(NAME, MPFR_FUNC, EXACT)				\
   FUNC (NAME, ARGS2 (type_int, type_fp), RET1 (type_fp), EXACT, false,	\
-	false, CALC (mpfr_if_f, MPFR_FUNC))
+	CALC (mpfr_if_f, MPFR_FUNC))
 #define FUNC_mpc_c_f(NAME, MPFR_FUNC, EXACT)				\
   FUNC (NAME, ARGS2 (type_fp, type_fp), RET1 (type_fp), EXACT, true,	\
-	false, CALC (mpc_c_f, MPFR_FUNC))
+	CALC (mpc_c_f, MPFR_FUNC))
 #define FUNC_mpc_c_c(NAME, MPFR_FUNC, EXACT)				\
   FUNC (NAME, ARGS2 (type_fp, type_fp), RET2 (type_fp, type_fp), EXACT, \
-	true, false, CALC (mpc_c_c, MPFR_FUNC))
+	true, CALC (mpc_c_c, MPFR_FUNC))
 
 /* List of functions handled by this program.  */
 static test_function test_functions[] =
@@ -529,8 +517,7 @@ static test_function test_functions[] =
     FUNC_mpfr_f_f ("cos", mpfr_cos, false),
     FUNC_mpfr_f_f ("cosh", mpfr_cosh, false),
     FUNC ("cpow", ARGS4 (type_fp, type_fp, type_fp, type_fp),
-	  RET2 (type_fp, type_fp), false, true, false,
-	  CALC (mpc_cc_c, mpc_pow)),
+	  RET2 (type_fp, type_fp), false, true, CALC (mpc_cc_c, mpc_pow)),
     FUNC_mpc_c_c ("csin", mpc_sin, false),
     FUNC_mpc_c_c ("csinh", mpc_sinh, false),
     FUNC_mpc_c_c ("csqrt", mpc_sqrt, false),
@@ -542,14 +529,12 @@ static test_function test_functions[] =
     FUNC_mpfr_f_f ("exp10", mpfr_exp10, false),
     FUNC_mpfr_f_f ("exp2", mpfr_exp2, false),
     FUNC_mpfr_f_f ("expm1", mpfr_expm1, false),
-    FUNC ("fma", ARGS3 (type_fp, type_fp, type_fp), RET1 (type_fp),
-	  true, false, true, CALC (mpfr_fff_f, mpfr_fma)),
     FUNC_mpfr_ff_f ("hypot", mpfr_hypot, false),
     FUNC_mpfr_f_f ("j0", mpfr_j0, false),
     FUNC_mpfr_f_f ("j1", mpfr_j1, false),
     FUNC_mpfr_if_f ("jn", mpfr_jn, false),
     FUNC ("lgamma", ARGS1 (type_fp), RET2 (type_fp, type_int), false, false,
-	  false, CALC (mpfr_f_f1, mpfr_lgamma)),
+	  CALC (mpfr_f_f1, mpfr_lgamma)),
     FUNC_mpfr_f_f ("log", mpfr_log, false),
     FUNC_mpfr_f_f ("log10", mpfr_log10, false),
     FUNC_mpfr_f_f ("log1p", mpfr_log1p, false),
@@ -557,7 +542,7 @@ static test_function test_functions[] =
     FUNC_mpfr_ff_f ("pow", mpfr_pow, false),
     FUNC_mpfr_f_f ("sin", mpfr_sin, false),
     FUNC ("sincos", ARGS1 (type_fp), RET2 (type_fp, type_fp), false, false,
-	  false, CALC (mpfr_f_11, mpfr_sin_cos)),
+	  CALC (mpfr_f_11, mpfr_sin_cos)),
     FUNC_mpfr_f_f ("sinh", mpfr_sinh, false),
     FUNC_mpfr_f_f ("sqrt", mpfr_sqrt, true),
     FUNC_mpfr_f_f ("tan", mpfr_tan, false),
@@ -672,7 +657,7 @@ generic_value_copy (generic_value *dest, const generic_value *src)
 /* Initialize data for floating-point formats.  */
 
 static void
-init_fp_formats (void)
+init_fp_formats ()
 {
   int global_max_exp = 0, global_min_subnorm_exp = 0;
   for (fp_format f = fp_first_format; f < fp_num_formats; f++)
@@ -704,10 +689,6 @@ init_fp_formats (void)
       assert_exact (mpfr_set_ui_2exp (fp_formats[f].min, 1,
 				      fp_formats[f].min_exp - 1,
 				      MPFR_RNDN));
-      mpfr_init2 (fp_formats[f].min_plus_half, fp_formats[f].mant_dig + 1);
-      assert_exact (mpfr_set (fp_formats[f].min_plus_half,
-			      fp_formats[f].min, MPFR_RNDN));
-      mpfr_nextabove (fp_formats[f].min_plus_half);
       mpfr_init2 (fp_formats[f].subnorm_max, fp_formats[f].mant_dig);
       assert_exact (mpfr_set (fp_formats[f].subnorm_max, fp_formats[f].min,
 			      MPFR_RNDN));
@@ -1006,14 +987,7 @@ adjust_real (mpfr_t r, bool inexact)
       mpz_t tmp;
       mpz_init (tmp);
       mpfr_exp_t e = mpfr_get_z_2exp (tmp, r);
-      if (mpz_sgn (tmp) < 0)
-	{
-	  mpz_neg (tmp, tmp);
-	  mpz_setbit (tmp, 0);
-	  mpz_neg (tmp, tmp);
-	}
-      else
-	mpz_setbit (tmp, 0);
+      mpz_setbit (tmp, 0);
       assert_exact (mpfr_set_z_2exp (r, tmp, e, MPFR_RNDN));
       mpz_clear (tmp);
     }
@@ -1111,19 +1085,16 @@ round_real (mpfr_t res[rm_num_modes],
 
 /* Handle the input argument at ARG (NUL-terminated), updating the
    lists of test inputs in IT accordingly.  NUM_PREV_ARGS arguments
-   are already in those lists.  If EXACT_ARGS, interpret a value given
-   as a floating-point constant exactly (it must be exact for some
-   supported format) rather than rounding up and down.  The argument,
-   of type GTYPE, comes from file FILENAME, line LINENO.  */
+   are already in those lists.  The argument, of type GTYPE, comes
+   from file FILENAME, line LINENO.  */
 
 static void
 handle_input_arg (const char *arg, input_test *it, size_t num_prev_args,
-		  generic_value_type gtype, bool exact_args,
+		  generic_value_type gtype,
 		  const char *filename, unsigned int lineno)
 {
   size_t num_values = 0;
   generic_value values[2 * fp_num_formats];
-  bool check_empty_list = false;
   switch (gtype)
     {
     case gtype_fp:
@@ -1147,8 +1118,6 @@ handle_input_arg (const char *arg, input_test *it, size_t num_prev_args,
 	    {
 	      mpfr_t tmp;
 	      char *ep;
-	      if (exact_args)
-		check_empty_list = true;
 	      mpfr_init (tmp);
 	      bool inexact = mpfr_strtofr (tmp, arg, &ep, 0, MPFR_RNDZ);
 	      if (*ep != 0 || !mpfr_number_p (tmp))
@@ -1160,9 +1129,7 @@ handle_input_arg (const char *arg, input_test *it, size_t num_prev_args,
 	      unsigned int exc_after[rm_num_modes];
 	      round_real (rounded, exc_before, exc_after, tmp, f);
 	      mpfr_clear (tmp);
-	      if (mpfr_number_p (rounded[rm_upward])
-		  && (!exact_args || mpfr_equal_p (rounded[rm_upward],
-						   rounded[rm_downward])))
+	      if (mpfr_number_p (rounded[rm_upward]))
 		{
 		  mpfr_init2 (extra_values[num_extra_values],
 			      fp_formats[f].mant_dig);
@@ -1170,7 +1137,7 @@ handle_input_arg (const char *arg, input_test *it, size_t num_prev_args,
 					  rounded[rm_upward], MPFR_RNDN));
 		  num_extra_values++;
 		}
-	      if (mpfr_number_p (rounded[rm_downward]) && !exact_args)
+	      if (mpfr_number_p (rounded[rm_downward]))
 		{
 		  mpfr_init2 (extra_values[num_extra_values],
 			      fp_formats[f].mant_dig);
@@ -1221,10 +1188,6 @@ handle_input_arg (const char *arg, input_test *it, size_t num_prev_args,
     default:
       abort ();
     }
-  if (check_empty_list && num_values == 0)
-    error_at_line (EXIT_FAILURE, 0, filename, lineno,
-		   "floating-point argument not exact for any format: '%s'",
-		   arg);
   assert (num_values > 0 && num_values <= ARRAY_SIZE (values));
   if (it->num_input_cases >= SIZE_MAX / num_values)
     error_at_line (EXIT_FAILURE, 0, filename, lineno, "too many input cases");
@@ -1349,7 +1312,7 @@ add_test (char *line, const char *filename, unsigned int lineno)
 	      *ep = 0;
 	      handle_input_arg (p, it, j,
 				generic_arg_ret_type (tf->arg_types[j]),
-				tf->exact_args, filename, lineno);
+				filename, lineno);
 	      *ep = c;
 	      p = ep + 1;
 	    }
@@ -1413,19 +1376,15 @@ read_input (const char *filename)
 }
 
 /* Calculate the generic results (round-to-zero with sticky bit) for
-   the function described by CALC, with inputs INPUTS, if MODE is
-   rm_towardzero; for other modes, calculate results in that mode,
-   which must be exact zero results.  */
+   the function described by CALC, with inputs INPUTS.  */
 
 static void
 calc_generic_results (generic_value *outputs, generic_value *inputs,
-		      const func_calc_desc *calc, rounding_mode mode)
+		      const func_calc_desc *calc)
 {
   bool inexact;
   int mpc_ternary;
   mpc_t ci1, ci2, co;
-  mpfr_rnd_t mode_mpfr = rounding_modes[mode].mpfr_mode;
-  mpc_rnd_t mode_mpc = rounding_modes[mode].mpc_mode;
 
   switch (calc->method)
     {
@@ -1434,9 +1393,7 @@ calc_generic_results (generic_value *outputs, generic_value *inputs,
       outputs[0].type = gtype_fp;
       mpfr_init (outputs[0].value.f);
       inexact = calc->func.mpfr_f_f (outputs[0].value.f, inputs[0].value.f,
-				     mode_mpfr);
-      if (mode != rm_towardzero)
-	assert (!inexact && mpfr_zero_p (outputs[0].value.f));
+				     MPFR_RNDZ);
       adjust_real (outputs[0].value.f, inexact);
       break;
 
@@ -1446,23 +1403,7 @@ calc_generic_results (generic_value *outputs, generic_value *inputs,
       outputs[0].type = gtype_fp;
       mpfr_init (outputs[0].value.f);
       inexact = calc->func.mpfr_ff_f (outputs[0].value.f, inputs[0].value.f,
-				      inputs[1].value.f, mode_mpfr);
-      if (mode != rm_towardzero)
-	assert (!inexact && mpfr_zero_p (outputs[0].value.f));
-      adjust_real (outputs[0].value.f, inexact);
-      break;
-
-    case mpfr_fff_f:
-      assert (inputs[0].type == gtype_fp);
-      assert (inputs[1].type == gtype_fp);
-      assert (inputs[2].type == gtype_fp);
-      outputs[0].type = gtype_fp;
-      mpfr_init (outputs[0].value.f);
-      inexact = calc->func.mpfr_fff_f (outputs[0].value.f, inputs[0].value.f,
-				       inputs[1].value.f, inputs[2].value.f,
-				       mode_mpfr);
-      if (mode != rm_towardzero)
-	assert (!inexact && mpfr_zero_p (outputs[0].value.f));
+				      inputs[1].value.f, MPFR_RNDZ);
       adjust_real (outputs[0].value.f, inexact);
       break;
 
@@ -1473,9 +1414,7 @@ calc_generic_results (generic_value *outputs, generic_value *inputs,
       mpfr_init (outputs[0].value.f);
       int i = 0;
       inexact = calc->func.mpfr_f_f1 (outputs[0].value.f, &i,
-				      inputs[0].value.f, mode_mpfr);
-      if (mode != rm_towardzero)
-	assert (!inexact && mpfr_zero_p (outputs[0].value.f));
+				      inputs[0].value.f, MPFR_RNDZ);
       adjust_real (outputs[0].value.f, inexact);
       mpz_init_set_si (outputs[1].value.i, i);
       break;
@@ -1488,9 +1427,7 @@ calc_generic_results (generic_value *outputs, generic_value *inputs,
       assert (mpz_fits_slong_p (inputs[0].value.i));
       long l = mpz_get_si (inputs[0].value.i);
       inexact = calc->func.mpfr_if_f (outputs[0].value.f, l,
-				      inputs[1].value.f, mode_mpfr);
-      if (mode != rm_towardzero)
-	assert (!inexact && mpfr_zero_p (outputs[0].value.f));
+				      inputs[1].value.f, MPFR_RNDZ);
       adjust_real (outputs[0].value.f, inexact);
       break;
 
@@ -1503,12 +1440,7 @@ calc_generic_results (generic_value *outputs, generic_value *inputs,
       int comb_ternary = calc->func.mpfr_f_11 (outputs[0].value.f,
 					       outputs[1].value.f,
 					       inputs[0].value.f,
-					       mode_mpfr);
-      if (mode != rm_towardzero)
-	assert (((comb_ternary & 0x3) == 0
-		 && mpfr_zero_p (outputs[0].value.f))
-		|| ((comb_ternary & 0xc) == 0
-		    && mpfr_zero_p (outputs[1].value.f)));
+					       MPFR_RNDZ);
       adjust_real (outputs[0].value.f, (comb_ternary & 0x3) != 0);
       adjust_real (outputs[1].value.f, (comb_ternary & 0xc) != 0);
       break;
@@ -1521,9 +1453,7 @@ calc_generic_results (generic_value *outputs, generic_value *inputs,
       mpc_init2 (ci1, internal_precision);
       assert_exact (mpc_set_fr_fr (ci1, inputs[0].value.f, inputs[1].value.f,
 				   MPC_RNDNN));
-      inexact = calc->func.mpc_c_f (outputs[0].value.f, ci1, mode_mpfr);
-      if (mode != rm_towardzero)
-	assert (!inexact && mpfr_zero_p (outputs[0].value.f));
+      inexact = calc->func.mpc_c_f (outputs[0].value.f, ci1, MPFR_RNDZ);
       adjust_real (outputs[0].value.f, inexact);
       mpc_clear (ci1);
       break;
@@ -1539,12 +1469,7 @@ calc_generic_results (generic_value *outputs, generic_value *inputs,
       mpc_init2 (co, internal_precision);
       assert_exact (mpc_set_fr_fr (ci1, inputs[0].value.f, inputs[1].value.f,
 				   MPC_RNDNN));
-      mpc_ternary = calc->func.mpc_c_c (co, ci1, mode_mpc);
-      if (mode != rm_towardzero)
-	assert ((!MPC_INEX_RE (mpc_ternary)
-		 && mpfr_zero_p (mpc_realref (co)))
-		|| (!MPC_INEX_IM (mpc_ternary)
-		    && mpfr_zero_p (mpc_imagref (co))));
+      mpc_ternary = calc->func.mpc_c_c (co, ci1, MPC_RNDZZ);
       assert_exact (mpfr_set (outputs[0].value.f, mpc_realref (co),
 			      MPFR_RNDN));
       assert_exact (mpfr_set (outputs[1].value.f, mpc_imagref (co),
@@ -1571,12 +1496,7 @@ calc_generic_results (generic_value *outputs, generic_value *inputs,
 				   MPC_RNDNN));
       assert_exact (mpc_set_fr_fr (ci2, inputs[2].value.f, inputs[3].value.f,
 				   MPC_RNDNN));
-      mpc_ternary = calc->func.mpc_cc_c (co, ci1, ci2, mode_mpc);
-      if (mode != rm_towardzero)
-	assert ((!MPC_INEX_RE (mpc_ternary)
-		 && mpfr_zero_p (mpc_realref (co)))
-		|| (!MPC_INEX_IM (mpc_ternary)
-		    && mpfr_zero_p (mpc_imagref (co))));
+      mpc_ternary = calc->func.mpc_cc_c (co, ci1, ci2, MPC_RNDZZ);
       assert_exact (mpfr_set (outputs[0].value.f, mpc_realref (co),
 			      MPFR_RNDN));
       assert_exact (mpfr_set (outputs[1].value.f, mpc_imagref (co),
@@ -1640,12 +1560,13 @@ int_fits_type (mpz_t z, arg_ret_type type, int long_bits)
 }
 
 /* Print a generic value V to FP (name FILENAME), preceded by a space,
-   for type TYPE, LONG_BITS bits per long, printing " IGNORE" instead
-   if IGNORE.  */
+   for type TYPE, floating-point format FORMAT, LONG_BITS bits per
+   long, printing " IGNORE" instead if IGNORE.  */
 
 static void
 output_generic_value (FILE *fp, const char *filename, const generic_value *v,
-		      bool ignore, arg_ret_type type, int long_bits)
+		      bool ignore, arg_ret_type type, fp_format format,
+		      int long_bits)
 {
   if (ignore)
     {
@@ -1658,7 +1579,7 @@ output_generic_value (FILE *fp, const char *filename, const generic_value *v,
   switch (type)
     {
     case type_fp:
-      suffix = "";
+      suffix = fp_formats[format].suffix;
       break;
 
     case type_int:
@@ -1746,7 +1667,7 @@ output_for_one_input_case (FILE *fp, const char *filename, test_function *tf,
 	}
     }
   generic_value generic_outputs[MAX_NRET];
-  calc_generic_results (generic_outputs, inputs, &tf->calc, rm_towardzero);
+  calc_generic_results (generic_outputs, inputs, &tf->calc);
   bool ignore_output_long32[MAX_NRET] = { false };
   bool ignore_output_long64[MAX_NRET] = { false };
   for (size_t i = 0; i < tf->num_ret; i++)
@@ -1846,24 +1767,8 @@ output_for_one_input_case (FILE *fp, const char *filename, test_function *tf,
 				    <= 0));
 			  may_underflow
 			    |= (!mpfr_zero_p (generic_outputs[i].value.f)
-				&& (mpfr_cmpabs (generic_outputs[i].value.f,
-						 fp_formats[f].min_plus_half)
-				    <= 0));
-			}
-		      /* If the result is an exact zero, the sign may
-			 depend on the rounding mode, so recompute it
-			 directly in that mode.  */
-		      if (mpfr_zero_p (all_res[i][m])
-			  && (all_exc_before[i][m] & (1U << exc_inexact)) == 0)
-			{
-			  generic_value outputs_rm[MAX_NRET];
-			  calc_generic_results (outputs_rm, inputs,
-						&tf->calc, m);
-			  assert_exact (mpfr_set (all_res[i][m],
-						  outputs_rm[i].value.f,
-						  MPFR_RNDN));
-			  for (size_t j = 0; j < tf->num_ret; j++)
-			    generic_value_free (&outputs_rm[j]);
+				&& mpfr_cmpabs (generic_outputs[i].value.f,
+						fp_formats[f].min) <= 0);
 			}
 		    }
 		  break;
@@ -1888,247 +1793,224 @@ output_for_one_input_case (FILE *fp, const char *filename, test_function *tf,
 	    {
 	      bool before_after_matters
 		= tf->exact && merged_exc_before[m] != merged_exc_after[m];
-	      if (before_after_matters)
+	      for (int after = 0; after <= 1; after++)
 		{
-		  assert ((merged_exc_before[m] ^ merged_exc_after[m])
-			  == (1U << exc_underflow));
-		  assert ((merged_exc_before[m] & (1U << exc_underflow)) != 0);
-		}
-	      unsigned int merged_exc = merged_exc_before[m];
-	      if (fprintf (fp, "= %s %s %s%s", tf->name,
-			   rounding_modes[m].name, fp_formats[f].name,
-			   long_cond) < 0)
-		error (EXIT_FAILURE, errno, "write to '%s'", filename);
-	      /* Print inputs.  */
-	      for (size_t i = 0; i < tf->num_args; i++)
-		output_generic_value (fp, filename, &inputs[i], false,
-				      tf->arg_types[i], long_bits);
-	      if (fputs (" :", fp) < 0)
-		error (EXIT_FAILURE, errno, "write to '%s'", filename);
-	      /* Print outputs.  */
-	      bool must_erange = false;
-	      for (size_t i = 0; i < tf->num_ret; i++)
-		{
-		  generic_value g;
-		  g.type = generic_outputs[i].type;
-		  switch (g.type)
+		  if (after == 1 && !before_after_matters)
+		    continue;
+		  const char *after_cond;
+		  if (before_after_matters)
+		    after_cond = (after
+				  ? ":after-rounding"
+				  : ":before-rounding");
+		  else
+		    after_cond = "";
+		  unsigned int merged_exc = (after
+					     ? merged_exc_after[m]
+					     : merged_exc_before[m]);
+		  if (fprintf (fp, "= %s %s %s%s%s", tf->name,
+			       rounding_modes[m].name, fp_formats[f].name,
+			       long_cond, after_cond) < 0)
+		    error (EXIT_FAILURE, errno, "write to '%s'", filename);
+		  /* Print inputs.  */
+		  for (size_t i = 0; i < tf->num_args; i++)
+		    output_generic_value (fp, filename, &inputs[i], false,
+					  tf->arg_types[i], f, long_bits);
+		  if (fputs (" :", fp) < 0)
+		    error (EXIT_FAILURE, errno, "write to '%s'", filename);
+		  /* Print outputs.  */
+		  bool must_erange = false;
+		  for (size_t i = 0; i < tf->num_ret; i++)
 		    {
-		    case gtype_fp:
-		      if (mpfr_inf_p (all_res[i][m])
-			  && (all_exc_before[i][m]
-			      & (1U << exc_overflow)) != 0)
-			must_erange = true;
-		      if (mpfr_zero_p (all_res[i][m])
-			  && (tf->exact
-			      || mpfr_zero_p (all_res[i][rm_tonearest]))
-			  && (all_exc_before[i][m]
-			      & (1U << exc_underflow)) != 0)
-			must_erange = true;
-		      mpfr_init2 (g.value.f, fp_formats[f].mant_dig);
-		      assert_exact (mpfr_set (g.value.f, all_res[i][m],
-					      MPFR_RNDN));
-		      break;
+		      generic_value g;
+		      g.type = generic_outputs[i].type;
+		      switch (g.type)
+			{
+			case gtype_fp:
+			  if (mpfr_inf_p (all_res[i][m])
+			      && (all_exc_before[i][m]
+				  & (1U << exc_overflow)) != 0)
+			    must_erange = true;
+			  if (mpfr_zero_p (all_res[i][m])
+			      && (tf->exact
+				  || mpfr_zero_p (all_res[i][rm_tonearest]))
+			      && (all_exc_before[i][m]
+				  & (1U << exc_underflow)) != 0)
+			    must_erange = true;
+			  mpfr_init2 (g.value.f, fp_formats[f].mant_dig);
+			  assert_exact (mpfr_set (g.value.f, all_res[i][m],
+						  MPFR_RNDN));
+			  break;
 
-		    case gtype_int:
-		      mpz_init (g.value.i);
-		      mpz_set (g.value.i, generic_outputs[i].value.i);
-		      break;
+			case gtype_int:
+			  mpz_init (g.value.i);
+			  mpz_set (g.value.i, generic_outputs[i].value.i);
+			  break;
 
-		    default:
-		      abort ();
+			default:
+			  abort ();
+			}
+		      output_generic_value (fp, filename, &g, ignore_output[i],
+					    tf->ret_types[i], f, long_bits);
+		      generic_value_free (&g);
 		    }
-		  output_generic_value (fp, filename, &g, ignore_output[i],
-					tf->ret_types[i], long_bits);
-		  generic_value_free (&g);
-		}
-	      if (fputs (" :", fp) < 0)
-		error (EXIT_FAILURE, errno, "write to '%s'", filename);
-	      /* Print miscellaneous flags (passed through from
-		 input).  */
-	      for (size_t i = 0; i < it->num_flags; i++)
-		switch (it->flags[i].type)
-		  {
-		  case flag_no_test_inline:
-		  case flag_ignore_zero_inf_sign:
-		  case flag_xfail:
-		    if (fprintf (fp, " %s%s",
-				 input_flags[it->flags[i].type],
-				 (it->flags[i].cond
-				  ? it->flags[i].cond
-				  : "")) < 0)
-		      error (EXIT_FAILURE, errno, "write to '%s'",
-			     filename);
-		    break;
-		  case flag_xfail_rounding:
-		    if (m != rm_tonearest)
-		      if (fprintf (fp, " xfail%s",
-				   (it->flags[i].cond
-				    ? it->flags[i].cond
-				    : "")) < 0)
-			error (EXIT_FAILURE, errno, "write to '%s'",
-			       filename);
-		    break;
-		  default:
-		    break;
-		  }
-	      /* Print exception flags and compute errno
-		 expectations where not already computed.  */
-	      bool may_edom = false;
-	      bool must_edom = false;
-	      bool may_erange = must_erange || may_underflow;
-	      for (fp_exception e = exc_first_exception;
-		   e < exc_num_exceptions;
-		   e++)
-		{
-		  bool expect_e = (merged_exc & (1U << e)) != 0;
-		  bool e_optional = false;
-		  switch (e)
+		  if (fputs (" :", fp) < 0)
+		    error (EXIT_FAILURE, errno, "write to '%s'", filename);
+		  /* Print miscellaneous flags (passed through from
+		     input).  */
+		  for (size_t i = 0; i < it->num_flags; i++)
+		    switch (it->flags[i].type)
+		      {
+		      case flag_no_test_inline:
+		      case flag_xfail:
+			if (fprintf (fp, " %s%s",
+				     input_flags[it->flags[i].type],
+				     (it->flags[i].cond
+				      ? it->flags[i].cond
+				      : "")) < 0)
+			  error (EXIT_FAILURE, errno, "write to '%s'",
+				 filename);
+			break;
+		      case flag_xfail_rounding:
+			if (m != rm_tonearest)
+			  if (fprintf (fp, " xfail%s",
+				       (it->flags[i].cond
+					? it->flags[i].cond
+					: "")) < 0)
+			    error (EXIT_FAILURE, errno, "write to '%s'",
+				   filename);
+			break;
+		      default:
+			break;
+		      }
+		  /* Print exception flags and compute errno
+		     expectations where not already computed.  */
+		  bool may_edom = false;
+		  bool must_edom = false;
+		  bool may_erange = must_erange || may_underflow;
+		  for (fp_exception e = exc_first_exception;
+		       e < exc_num_exceptions;
+		       e++)
 		    {
-		    case exc_divbyzero:
-		      if (expect_e)
-			may_erange = must_erange = true;
-		      break;
+		      bool expect_e = (merged_exc & (1U << e)) != 0;
+		      bool e_optional = false;
+		      switch (e)
+			{
+			case exc_divbyzero:
+			  if (expect_e)
+			    may_erange = must_erange = true;
+			  break;
 
-		    case exc_inexact:
-		      if (!tf->exact)
-			e_optional = true;
-		      break;
+			case exc_inexact:
+			  if (!tf->exact)
+			    e_optional = true;
+			  break;
 
-		    case exc_invalid:
-		      if (expect_e)
-			may_edom = must_edom = true;
-		      break;
+			case exc_invalid:
+			  if (expect_e)
+			    may_edom = must_edom = true;
+			  break;
 
-		    case exc_overflow:
-		      if (expect_e)
-			may_erange = true;
-		      break;
+			case exc_overflow:
+			  if (expect_e)
+			    may_erange = true;
+			  break;
 
-		    case exc_underflow:
-		      if (expect_e)
-			may_erange = true;
-		      if (must_underflow)
-			assert (expect_e);
-		      if (may_underflow && !must_underflow)
-			e_optional = true;
-		      break;
+			case exc_underflow:
+			  if (expect_e)
+			    may_erange = true;
+			  if (must_underflow)
+			    assert (expect_e);
+			  if (may_underflow && !must_underflow)
+			    e_optional = true;
+			  break;
 
-		    default:
-		      abort ();
+			default:
+			  abort ();
+			}
+		      if (e_optional)
+			{
+			  if (fprintf (fp, " %s-ok", exceptions[e]) < 0)
+			    error (EXIT_FAILURE, errno, "write to '%s'",
+				   filename);
+			}
+		      else
+			{
+			  if (expect_e)
+			    if (fprintf (fp, " %s", exceptions[e]) < 0)
+			      error (EXIT_FAILURE, errno, "write to '%s'",
+				     filename);
+			  input_flag_type okflag;
+			  okflag = (expect_e
+				    ? flag_missing_first
+				    : flag_spurious_first) + e;
+			  for (size_t i = 0; i < it->num_flags; i++)
+			    if (it->flags[i].type == okflag)
+			      if (fprintf (fp, " %s-ok%s",
+					   exceptions[e],
+					   (it->flags[i].cond
+					    ? it->flags[i].cond
+					    : "")) < 0)
+				error (EXIT_FAILURE, errno, "write to '%s'",
+				       filename);
+			}
 		    }
-		  if (e_optional)
+		  /* Print errno expectations.  */
+		  if (tf->complex_fn)
 		    {
-		      assert (!before_after_matters);
-		      if (fprintf (fp, " %s-ok", exceptions[e]) < 0)
+		      must_edom = false;
+		      must_erange = false;
+		    }
+		  if (may_edom && !must_edom)
+		    {
+		      if (fputs (" errno-edom-ok", fp) < 0)
 			error (EXIT_FAILURE, errno, "write to '%s'",
 			       filename);
 		    }
 		  else
 		    {
-		      if (expect_e)
-			if (fprintf (fp, " %s", exceptions[e]) < 0)
+		      if (must_edom)
+			if (fputs (" errno-edom", fp) < 0)
 			  error (EXIT_FAILURE, errno, "write to '%s'",
 				 filename);
-		      if (before_after_matters && e == exc_underflow)
-			if (fputs (":before-rounding", fp) < 0)
-			  error (EXIT_FAILURE, errno, "write to '%s'",
-				 filename);
-		      for (int after = 0; after <= 1; after++)
-			{
-			  bool expect_e_here = expect_e;
-			  if (after == 1 && (!before_after_matters
-					     || e != exc_underflow))
-			    continue;
-			  const char *after_cond;
-			  if (before_after_matters && e == exc_underflow)
-			    {
-			      after_cond = (after
-					    ? ":after-rounding"
-					    : ":before-rounding");
-			      expect_e_here = !after;
-			    }
-			  else
-			    after_cond = "";
-			  input_flag_type okflag;
-			  okflag = (expect_e_here
-				    ? flag_missing_first
-				    : flag_spurious_first) + e;
-			  for (size_t i = 0; i < it->num_flags; i++)
-			    if (it->flags[i].type == okflag)
-			      if (fprintf (fp, " %s-ok%s%s",
-					   exceptions[e],
-					   (it->flags[i].cond
-					    ? it->flags[i].cond
-					    : ""), after_cond) < 0)
-				error (EXIT_FAILURE, errno, "write to '%s'",
-				       filename);
-			}
+		      input_flag_type okflag = (must_edom
+						? flag_missing_errno
+						: flag_spurious_errno);
+		      for (size_t i = 0; i < it->num_flags; i++)
+			if (it->flags[i].type == okflag)
+			  if (fprintf (fp, " errno-edom-ok%s",
+				       (it->flags[i].cond
+					? it->flags[i].cond
+					: "")) < 0)
+			    error (EXIT_FAILURE, errno, "write to '%s'",
+				   filename);
 		    }
-		}
-	      /* Print errno expectations.  */
-	      if (tf->complex_fn)
-		{
-		  must_edom = false;
-		  must_erange = false;
-		}
-	      if (may_edom && !must_edom)
-		{
-		  if (fputs (" errno-edom-ok", fp) < 0)
-		    error (EXIT_FAILURE, errno, "write to '%s'",
-			   filename);
-		}
-	      else
-		{
-		  if (must_edom)
-		    if (fputs (" errno-edom", fp) < 0)
-		      error (EXIT_FAILURE, errno, "write to '%s'",
-			     filename);
-		  input_flag_type okflag = (must_edom
-					    ? flag_missing_errno
-					    : flag_spurious_errno);
-		  for (size_t i = 0; i < it->num_flags; i++)
-		    if (it->flags[i].type == okflag)
-		      if (fprintf (fp, " errno-edom-ok%s",
-				   (it->flags[i].cond
-				    ? it->flags[i].cond
-				    : "")) < 0)
+		  if (may_erange && !must_erange)
+		    {
+		      if (fputs (" errno-erange-ok", fp) < 0)
 			error (EXIT_FAILURE, errno, "write to '%s'",
 			       filename);
+		    }
+		  else
+		    {
+		      if (must_erange)
+			if (fputs (" errno-erange", fp) < 0)
+			  error (EXIT_FAILURE, errno, "write to '%s'",
+				 filename);
+		      input_flag_type okflag = (must_erange
+						? flag_missing_errno
+						: flag_spurious_errno);
+		      for (size_t i = 0; i < it->num_flags; i++)
+			if (it->flags[i].type == okflag)
+			  if (fprintf (fp, " errno-erange-ok%s",
+				       (it->flags[i].cond
+					? it->flags[i].cond
+					: "")) < 0)
+			    error (EXIT_FAILURE, errno, "write to '%s'",
+				   filename);
+		    }
+		  if (putc ('\n', fp) < 0)
+		    error (EXIT_FAILURE, errno, "write to '%s'", filename);
 		}
-	      if (before_after_matters)
-		assert (may_erange && !must_erange);
-	      if (may_erange && !must_erange)
-		{
-		  if (fprintf (fp, " errno-erange-ok%s",
-			       (before_after_matters
-				? ":before-rounding"
-				: "")) < 0)
-		    error (EXIT_FAILURE, errno, "write to '%s'",
-			   filename);
-		}
-	      if (before_after_matters || !(may_erange && !must_erange))
-		{
-		  if (must_erange)
-		    if (fputs (" errno-erange", fp) < 0)
-		      error (EXIT_FAILURE, errno, "write to '%s'",
-			     filename);
-		  input_flag_type okflag = (must_erange
-					    ? flag_missing_errno
-					    : flag_spurious_errno);
-		  for (size_t i = 0; i < it->num_flags; i++)
-		    if (it->flags[i].type == okflag)
-		      if (fprintf (fp, " errno-erange-ok%s%s",
-				   (it->flags[i].cond
-				    ? it->flags[i].cond
-				    : ""),
-				   (before_after_matters
-				    ? ":after-rounding"
-				    : "")) < 0)
-			error (EXIT_FAILURE, errno, "write to '%s'",
-			       filename);
-		}
-	      if (putc ('\n', fp) < 0)
-		error (EXIT_FAILURE, errno, "write to '%s'", filename);
 	    }
 	  for (size_t i = 0; i < tf->num_ret; i++)
 	    {

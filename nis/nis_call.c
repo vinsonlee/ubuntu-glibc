@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1997.
 
@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 
 #include "nis_xdr.h"
 #include "nis_intern.h"
@@ -680,18 +680,16 @@ nis_server_cache_add (const_nis_name name, int search_parent,
   /* Choose which entry should be evicted from the cache.  */
   loc = &nis_server_cache[0];
   if (*loc != NULL)
-    {
-      for (i = 1; i < 16; ++i)
-	if (nis_server_cache[i] == NULL)
-	  {
-	    loc = &nis_server_cache[i];
-	    break;
-	  }
-	else if ((*loc)->uses > nis_server_cache[i]->uses
-		 || ((*loc)->uses == nis_server_cache[i]->uses
-		     && (*loc)->expires > nis_server_cache[i]->expires))
+    for (i = 1; i < 16; ++i)
+      if (nis_server_cache[i] == NULL)
+	{
 	  loc = &nis_server_cache[i];
-    }
+	  break;
+	}
+      else if ((*loc)->uses > nis_server_cache[i]->uses
+	       || ((*loc)->uses == nis_server_cache[i]->uses
+		   && (*loc)->expires > nis_server_cache[i]->expires))
+	loc = &nis_server_cache[i];
   old = *loc;
   *loc = new;
 
@@ -799,7 +797,7 @@ __prepare_niscall (const_nis_name name, directory_obj **dirp,
 		   dir_binding *bptrp, unsigned int flags)
 {
   nis_error retcode = __nisfind_server (name, 1, dirp, bptrp, flags);
-  if (__glibc_unlikely (retcode != NIS_SUCCESS))
+  if (__builtin_expect (retcode != NIS_SUCCESS, 0))
     return retcode;
 
   do
