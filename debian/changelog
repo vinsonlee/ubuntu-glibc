@@ -1,3 +1,35 @@
+glibc (2.19-18+deb8u6) stable; urgency=medium
+
+  * Update from upstream stable branch:
+    - Fix backtrace hang on armel/armhf, possibly causing a minor
+      denial-of-service vulnerability (CVE-2016-6323).  Closes: #834752.
+    - Fix open and openat functions with O_TMPFILE.  Closes: #832521.
+    - Drop debian/patches/any/cvs-ld_pointer_guard.diff (merged upstream).
+    - Drop debian/patches/any/cvs-mangle-tls_dtor_list.diff (merged upstream).
+    - Drop debian/patches/any/cvs-strxfrm-buffer-overflows.diff (merged
+      upstream).
+  * debian/patches/any/submitted-resolv-ipv6-nameservers.diff: replace by
+    patch cvs-resolv-ipv6-nameservers.diff taken from upstream. This fixes
+    mtr on systems using only IPv6 nameservers.  Closes: #818281.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 03 Sep 2016 22:39:43 +0200
+
+glibc (2.19-18+deb8u5) stable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+    - Drop debian/patches/any/local-CVE-2015-7547.diff.
+    - Refresh debian/patches/any/cvs-resolv-first-query-failure.diff.
+    - Fix assertion failure with unconnectable name server addresses.
+      (regression introduced by CVE-2015-7547).  Closes: #816669.
+    - Fix *context functions on s390x.
+    - Fix a buffer overflow in the glob function (CVE-2016-1234).
+    - Fix a stack overflow in nss_dns_getnetbyname_r (CVE-2016-3075).
+    - Fix a stack overflow in getaddrinfo function (CVE-2016-3706).
+    - Fix a stack overflow in Sun RPC clntudp_call() (CVE-2016-4429).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 13 Jul 2016 00:03:52 +0200
+
 glibc (2.19-18+deb8u4) stable; urgency=medium
 
   [ Aurelien Jarno ]
