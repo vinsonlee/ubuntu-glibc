@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -284,8 +284,10 @@ _hurd_canonicalize_directory_name_internal (file_t thisdir,
 }
 
 char *
-__canonicalize_directory_name_internal (const char *thisdir, char *buf,
-					size_t size)
+__canonicalize_directory_name_internal (thisdir, buf, size)
+     const char *thisdir;
+     char *buf;
+     size_t size;
 {
   char *result;
   file_t port = __file_name_lookup (thisdir, 0, 0);

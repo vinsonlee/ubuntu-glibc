@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,8 @@ void *__curbrk;
 /* Set the end of the process's data space to ADDR.
    Return 0 if successful, -1 if not.  */
 int
-__brk (void *addr)
+__brk (addr)
+     void *addr;
 {
   __set_errno (ENOSYS);
   return -1;

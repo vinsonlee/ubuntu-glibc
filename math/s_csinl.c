@@ -1,5 +1,5 @@
 /* Complex sine function for long double.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -33,16 +33,16 @@ __csinl (__complex__ long double x)
 
   __real__ x = fabsl (__real__ x);
 
-  if (__glibc_likely (icls >= FP_ZERO))
+  if (__builtin_expect (icls >= FP_ZERO, 1))
     {
       /* Imaginary part is finite.  */
-      if (__glibc_likely (rcls >= FP_ZERO))
+      if (__builtin_expect (rcls >= FP_ZERO, 1))
 	{
 	  /* Real part is finite.  */
 	  const int t = (int) ((LDBL_MAX_EXP - 1) * M_LN2l);
 	  long double sinix, cosix;
 
-	  if (__glibc_likely (__real__ x > LDBL_MIN))
+	  if (__builtin_expect (rcls != FP_SUBNORMAL, 1))
 	    {
 	      __sincosl (__real__ x, &sinix, &cosix);
 	    }
@@ -51,9 +51,6 @@ __csinl (__complex__ long double x)
 	      sinix = __real__ x;
 	      cosix = 1.0;
 	    }
-
-	  if (negate)
-	    sinix = -sinix;
 
 	  if (fabsl (__imag__ x) > t)
 	    {
@@ -89,7 +86,21 @@ __csinl (__complex__ long double x)
 	      __imag__ retval = __ieee754_sinhl (__imag__ x) * cosix;
 	    }
 
-	  math_check_force_underflow_complex (retval);
+	  if (negate)
+	    __real__ retval = -__real__ retval;
+
+	  if (fabsl (__real__ retval) < LDBL_MIN)
+	    {
+	      volatile long double force_underflow
+		= __real__ retval * __real__ retval;
+	      (void) force_underflow;
+	    }
+	  if (fabsl (__imag__ retval) < LDBL_MIN)
+	    {
+	      volatile long double force_underflow
+		= __imag__ retval * __imag__ retval;
+	      (void) force_underflow;
+	    }
 	}
       else
 	{
@@ -125,7 +136,7 @@ __csinl (__complex__ long double x)
 	  /* Real part is finite.  */
 	  long double sinix, cosix;
 
-	  if (__glibc_likely (__real__ x > LDBL_MIN))
+	  if (__builtin_expect (rcls != FP_SUBNORMAL, 1))
 	    {
 	      __sincosl (__real__ x, &sinix, &cosix);
 	    }

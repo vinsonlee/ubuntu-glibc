@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -24,7 +24,10 @@
    and where the segment is attached.  */
 
 void *
-shmat (int shmid, const void *shmaddr, int shmflg)
+shmat (shmid, shmaddr, shmflg)
+     int shmid;
+     const void *shmaddr;
+     int shmflg;
 {
   __set_errno (ENOSYS);
   return (void *) -1;

@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,8 @@
 
 #ifdef SET_PROCEDURE
 int
-sethostid (long int id)
+sethostid (id)
+     long int id;
 {
   int fd;
   ssize_t written;

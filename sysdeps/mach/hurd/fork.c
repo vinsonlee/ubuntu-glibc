@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include <assert.h>
 #include "hurdmalloc.h"		/* XXX */
 #include <tls.h>
-#include <malloc/malloc-internal.h>
 
 #undef __fork
 
@@ -108,12 +107,6 @@ __fork (void)
       /* Run things that prepare for forking before we create the task.  */
       RUN_HOOK (_hurd_fork_prepare_hook, ());
 
-      /* Acquire malloc locks.  This needs to come last because fork
-	 handlers may use malloc, and the libio list lock has an
-	 indirect malloc dependency as well (via the getdelim
-	 function).  */
-      __malloc_fork_lock_parent ();
-
       /* Lock things that want to be locked before we fork.  */
       {
 	void *const *p;
@@ -136,13 +129,9 @@ __fork (void)
       ports_locked = 1;
 
 
-      /* Keep our SS locked while stopping other threads, so they don't get a
-         chance to have it locked in the copied space.  */
-      __spin_lock (&ss->lock);
       /* Stop all other threads while copying the address space,
 	 so nothing changes.  */
       err = __proc_dostop (_hurd_ports[INIT_PORT_PROC].port, ss->thread);
-      __spin_unlock (&ss->lock);
       if (!err)
 	{
 	  stopped = 1;
@@ -471,10 +460,14 @@ __fork (void)
 	  (err = __mach_port_insert_right (newtask, ss->thread,
 					   thread, MACH_MSG_TYPE_COPY_SEND)))
 	LOSE;
+      /* We have one extra user reference created at the beginning of this
+	 function, accounted for by mach_port_names (and which will thus be
+	 accounted for in the child below).  This extra right gets consumed
+	 in the child by the store into _hurd_sigthread in the child fork.  */
       if (thread_refs > 1 &&
 	  (err = __mach_port_mod_refs (newtask, ss->thread,
 				       MACH_PORT_RIGHT_SEND,
-				       thread_refs - 1)))
+				       thread_refs)))
 	LOSE;
       if ((_hurd_msgport_thread != MACH_PORT_NULL) /* Let user have none.  */
 	  && ((err = __mach_port_deallocate (newtask, _hurd_msgport_thread)) ||
@@ -510,7 +503,7 @@ __fork (void)
 				    MACHINE_THREAD_STATE_FLAVOR,
 				    (natural_t *) &state, &statecount))
 	LOSE;
-#ifdef STACK_GROWTH_UP
+#if STACK_GROWTH_UP
 #define THREADVAR_SPACE (__hurd_threadvar_max \
 			 * sizeof *__hurd_sightread_variables)
       if (__hurd_sigthread_stack_base == 0)
@@ -611,9 +604,6 @@ __fork (void)
 			   nthreads * sizeof (*threads));
 	}
 
-      /* Release malloc locks.  */
-      __malloc_fork_unlock_parent ();
-
       /* Run things that want to run in the parent to restore it to
 	 normality.  Usually prepare hooks and parent hooks are
 	 symmetrical: the prepare hook arrests state in some way for the
@@ -664,9 +654,6 @@ __fork (void)
 
       /* Forking clears the trace flag.  */
       __sigemptyset (&_hurdsig_traced);
-
-      /* Release malloc locks.  */
-      __malloc_fork_unlock_child ();
 
       /* Run things that want to run in the child task to set up.  */
       RUN_HOOK (_hurd_fork_child_hook, ());

@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <kernel-features.h>
 
 /* Return a socket of any type.  The socket can be used in subsequent
    ioctl calls to talk to the kernel.  */
@@ -62,7 +63,24 @@ __opensock (void)
     {
       assert (last_type != 0);
 
-      result = __socket (last_family, last_type | SOCK_CLOEXEC, 0);
+#ifdef SOCK_CLOEXEC
+# ifndef __ASSUME_SOCK_CLOEXEC
+      if (__have_sock_cloexec >= 0)
+# endif
+	{
+	  result = __socket (last_family, last_type | SOCK_CLOEXEC, 0);
+# ifndef __ASSUME_SOCK_CLOEXEC
+	  if (__have_sock_cloexec == 0)
+	    __have_sock_cloexec = result != -1 || errno != EINVAL ? 1 : -1;
+# endif
+	}
+#endif
+#ifndef __ASSUME_SOCK_CLOEXEC
+# ifdef SOCK_CLOEXEC
+      if (__have_sock_cloexec < 0)
+# endif
+	result = __socket (last_family, last_type, 0);
+#endif
       if (result != -1 || errno != EAFNOSUPPORT)
 	/* Maybe the socket type isn't supported anymore (module is
 	   unloaded).  In this case again try to find the type.  */
@@ -97,7 +115,24 @@ __opensock (void)
       if (afs[cnt].family == AF_NETROM || afs[cnt].family == AF_X25)
 	type = SOCK_SEQPACKET;
 
-      result = __socket (afs[cnt].family, type | SOCK_CLOEXEC, 0);
+#ifdef SOCK_CLOEXEC
+# ifndef __ASSUME_SOCK_CLOEXEC
+      if (__have_sock_cloexec >= 0)
+# endif
+	{
+	  result = __socket (afs[cnt].family, type | SOCK_CLOEXEC, 0);
+# ifndef __ASSUME_SOCK_CLOEXEC
+	  if (__have_sock_cloexec == 0)
+	    __have_sock_cloexec = result != -1 || errno != EINVAL ? 1 : -1;
+# endif
+	}
+#endif
+#ifndef __ASSUME_SOCK_CLOEXEC
+# ifdef SOCK_CLOEXEC
+      if (__have_sock_cloexec < 0)
+# endif
+	result = __socket (afs[cnt].family, type, 0);
+#endif
       if (result != -1)
 	{
 	  /* Found an available family.  */

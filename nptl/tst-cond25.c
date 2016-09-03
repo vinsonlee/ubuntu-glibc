@@ -1,6 +1,6 @@
 /* Verify that condition variables synchronized by PI mutexes don't hang on
    on cancellation.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -40,15 +40,7 @@ pthread_cond_t cond;
 
 void cleanup (void *u)
 {
-  /* pthread_cond_wait should always return with the mutex locked.  The
-     pthread_mutex_unlock implementation does not actually check whether we
-     own the mutex for several mutex kinds, so check this explicitly.  */
-  int ret = pthread_mutex_trylock (&mutex);
-  if (ret != EDEADLK && ret != EBUSY)
-    {
-      printf ("mutex not locked in cleanup %d\n", ret);
-      abort ();
-    }
+  /* pthread_cond_wait should always return with the mutex locked.  */
   if (pthread_mutex_unlock (&mutex))
     abort ();
 }

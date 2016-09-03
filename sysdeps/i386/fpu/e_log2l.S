@@ -47,13 +47,7 @@ ENTRY(__ieee754_log2l)
 	fnstsw			// x-1 : x : 1
 	andb	$0x45, %ah
 	jz	2f
-	fxam
-	fnstsw
-	andb	$0x45, %ah
-	cmpb	$0x40, %ah
-	jne	5f
-	fabs			// log2(1) is +0 in all rounding modes.
-5:	fstp	%st(1)		// x-1 : 1
+	fstp	%st(1)		// x-1 : 1
 	fyl2xp1			// log(x)
 	ret
 
@@ -64,7 +58,6 @@ ENTRY(__ieee754_log2l)
 3:	jp	4b		// in case x is ±Inf
 	fstp	%st(1)
 	fstp	%st(1)
-	fadd	%st(0)
 	ret
 END (__ieee754_log2l)
 strong_alias (__ieee754_log2l, __log2l_finite)

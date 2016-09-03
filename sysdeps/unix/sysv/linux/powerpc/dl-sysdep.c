@@ -1,5 +1,5 @@
 /* Operating system support for run-time dynamic linker.  Linux/PPC version.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
+#include <kernel-features.h>
 #include <ldsodefs.h>
 
 int __cache_line_size attribute_hidden;

@@ -1,5 +1,5 @@
 /* Multiple versions of isinf.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,13 +23,10 @@
 
 extern __typeof (__isinf) __isinf_ppc64 attribute_hidden;
 extern __typeof (__isinf) __isinf_power7 attribute_hidden;
-extern __typeof (__isinf) __isinf_power8 attribute_hidden;
 
 libc_ifunc (__isinf,
-	    (hwcap2 & PPC_FEATURE2_ARCH_2_07)
-	    ? __isinf_power8 :
-	      (hwcap & PPC_FEATURE_ARCH_2_06)
-	      ? __isinf_power7
+	    (hwcap & PPC_FEATURE_ARCH_2_06)
+	    ? __isinf_power7
             : __isinf_ppc64);
 
 weak_alias (__isinf, isinf)
@@ -39,7 +36,7 @@ strong_alias (__isinf, __isinfl)
 weak_alias (__isinf, isinfl)
 #endif
 
-#if !IS_IN (libm)
+#ifndef IS_IN_libm
 # if LONG_DOUBLE_COMPAT (libc, GLIBC_2_0)
 compat_symbol (libc, __isinf, __isinfl, GLIBC_2_0);
 compat_symbol (libc, isinf, isinfl, GLIBC_2_0);

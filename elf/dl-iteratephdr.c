@@ -1,5 +1,5 @@
 /* Get loaded objects program headers.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2001.
 
@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <ldsodefs.h>
 #include <stddef.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 
 static void
 cancel_handler (void *arg __attribute__((unused)))

@@ -1,5 +1,5 @@
 /* Common code for DB-based databases in nss_db module.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <sys/mman.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include "nsswitch.h"
 #include "nss_db.h"
 
@@ -77,7 +77,7 @@ CONCAT(_nss_db_set,ENTNAME) (int stayopen)
       keep_db |= stayopen;
 
       /* Reset the sequential index.  */
-      entidx  = NULL;
+      entidx  = (const char *) state.header + state.header->valstroffset;
     }
 
   __libc_lock_unlock (lock);
@@ -191,12 +191,6 @@ enum nss_status								      \
       char *p = memcpy (buffer, valstr, len);				      \
 									      \
       int err = parse_line (p, result, data, buflen, errnop EXTRA_ARGS);      \
-									      \
-      /* Advance before break_if_match, lest it uses continue to skip
-	 to the next entry.  */						      \
-      if ((hidx += hval2) >= header->dbs[i].hashsize)			      \
-	hidx -= header->dbs[i].hashsize;				      \
-									      \
       if (err > 0)							      \
 	{								      \
 	  status = NSS_STATUS_SUCCESS;					      \
@@ -209,6 +203,9 @@ enum nss_status								      \
 	  status = NSS_STATUS_TRYAGAIN;					      \
 	  break;							      \
 	}								      \
+									      \
+      if ((hidx += hval2) >= header->dbs[i].hashsize)			      \
+	hidx -= header->dbs[i].hashsize;				      \
     }									      \
 									      \
   if (status == NSS_STATUS_NOTFOUND)					      \
@@ -253,13 +250,7 @@ CONCAT(_nss_db_get,ENTNAME_r) (struct STRUCTURE *result, char *buffer,
 	  H_ERRNO_SET (NETDB_INTERNAL);
 	  goto out;
 	}
-      entidx = NULL;
     }
-
-  /* Start from the beginning if freshly initialized or reset
-     requested by set*ent.  */
-  if (entidx == NULL)
-    entidx = (const char *) state.header + state.header->valstroffset;
 
   status = NSS_STATUS_UNAVAIL;
   if (state.header != MAP_FAILED)
@@ -294,8 +285,8 @@ CONCAT(_nss_db_get,ENTNAME_r) (struct STRUCTURE *result, char *buffer,
 	    }
 	  if (err < 0)
 	    {
-	      H_ERRNO_SET (NETDB_INTERNAL);
-	      status = NSS_STATUS_TRYAGAIN;
+	      H_ERRNO_SET (HOST_NOT_FOUND);
+	      status = NSS_STATUS_NOTFOUND;
 	      break;
 	    }
 

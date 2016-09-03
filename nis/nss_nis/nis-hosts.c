@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1996.
 
@@ -28,7 +28,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <resolv.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 
@@ -136,14 +136,14 @@ internal_nis_gethostent_r (struct hostent *host, char *buffer,
 			   int af, int flags)
 {
   char *domain;
-  if (__glibc_unlikely (yp_get_default_domain (&domain)))
+  if (__builtin_expect (yp_get_default_domain (&domain), 0))
     return NSS_STATUS_UNAVAIL;
 
   uintptr_t pad = -(uintptr_t) buffer % __alignof__ (struct parser_data);
   buffer += pad;
 
   struct parser_data *data = (void *) buffer;
-  if (__glibc_unlikely (buflen < sizeof *data + 1 + pad))
+  if (__builtin_expect (buflen < sizeof *data + 1 + pad, 0))
     {
       *errnop = ERANGE;
       *h_errnop = NETDB_INTERNAL;
@@ -168,7 +168,7 @@ internal_nis_gethostent_r (struct hostent *host, char *buffer,
 	yperr = yp_next (domain, "hosts.byname", oldkey, oldkeylen, &outkey,
 			 &keylen, &result, &len);
 
-      if (__glibc_unlikely (yperr != YPERR_SUCCESS))
+      if (__builtin_expect (yperr != YPERR_SUCCESS, 0))
 	{
 	  enum nss_status retval = yperr2nss (yperr);
 
@@ -188,7 +188,7 @@ internal_nis_gethostent_r (struct hostent *host, char *buffer,
 	  return retval;
 	}
 
-      if (__glibc_unlikely ((size_t) (len + 1) > linebuflen))
+      if (__builtin_expect ((size_t) (len + 1) > linebuflen, 0))
 	{
 	  free (result);
 	  *h_errnop = NETDB_INTERNAL;
@@ -203,7 +203,7 @@ internal_nis_gethostent_r (struct hostent *host, char *buffer,
       free (result);
 
       parse_res = parse_line (p, host, data, buflen, errnop, af, flags);
-      if (__glibc_unlikely (parse_res == -1))
+      if (__builtin_expect (parse_res == -1, 0))
 	{
 	  free (outkey);
 	  *h_errnop = NETDB_INTERNAL;
@@ -270,13 +270,6 @@ internal_gethostbyname2_r (const char *name, int af, struct hostent *host,
 
   /* Convert name to lowercase.  */
   size_t namlen = strlen (name);
-  /* Limit name length to the maximum size of an RPC packet.  */
-  if (namlen > UDPMSGSIZE)
-    {
-      *errnop = ERANGE;
-      return NSS_STATUS_UNAVAIL;
-    }
-
   char name2[namlen + 1];
   size_t i;
 
@@ -288,7 +281,7 @@ internal_gethostbyname2_r (const char *name, int af, struct hostent *host,
   int len;
   int yperr = yp_match (domain, "hosts.byname", name2, namlen, &result, &len);
 
-  if (__glibc_unlikely (yperr != YPERR_SUCCESS))
+  if (__builtin_expect (yperr != YPERR_SUCCESS, 0))
     {
       enum nss_status retval = yperr2nss (yperr);
 
@@ -303,7 +296,7 @@ internal_gethostbyname2_r (const char *name, int af, struct hostent *host,
     }
 
   const size_t linebuflen = buffer + buflen - data->linebuffer;
-  if (__glibc_unlikely ((size_t) (len + 1) > linebuflen))
+  if (__builtin_expect ((size_t) (len + 1) > linebuflen, 0))
     {
       free (result);
       *h_errnop = NETDB_INTERNAL;
@@ -319,7 +312,7 @@ internal_gethostbyname2_r (const char *name, int af, struct hostent *host,
 
   int parse_res = parse_line (p, host, data, buflen, errnop, af, flags);
 
-  if (__glibc_unlikely (parse_res < 1 || host->h_addrtype != af))
+  if (__builtin_expect (parse_res < 1 || host->h_addrtype != af, 0))
     {
       if (parse_res == -1)
 	{
@@ -380,14 +373,14 @@ _nss_nis_gethostbyaddr_r (const void *addr, socklen_t addrlen, int af,
 			  int *errnop, int *h_errnop)
 {
   char *domain;
-  if (__glibc_unlikely (yp_get_default_domain (&domain)))
+  if (__builtin_expect (yp_get_default_domain (&domain), 0))
     return NSS_STATUS_UNAVAIL;
 
   uintptr_t pad = -(uintptr_t) buffer % __alignof__ (struct parser_data);
   buffer += pad;
 
   struct parser_data *data = (void *) buffer;
-  if (__glibc_unlikely (buflen < sizeof *data + 1 + pad))
+  if (__builtin_expect (buflen < sizeof *data + 1 + pad, 0))
     {
       *errnop = ERANGE;
       *h_errnop = NETDB_INTERNAL;
@@ -402,7 +395,7 @@ _nss_nis_gethostbyaddr_r (const void *addr, socklen_t addrlen, int af,
   int yperr = yp_match (domain, "hosts.byaddr", buf, strlen (buf), &result,
 			&len);
 
-  if (__glibc_unlikely (yperr != YPERR_SUCCESS))
+  if (__builtin_expect (yperr != YPERR_SUCCESS, 0))
     {
       enum nss_status retval = yperr2nss (yperr);
 
@@ -418,7 +411,7 @@ _nss_nis_gethostbyaddr_r (const void *addr, socklen_t addrlen, int af,
     }
 
   const size_t linebuflen = buffer + buflen - data->linebuffer;
-  if (__glibc_unlikely ((size_t) (len + 1) > linebuflen))
+  if (__builtin_expect ((size_t) (len + 1) > linebuflen, 0))
     {
       free (result);
       *errnop = ERANGE;
@@ -435,7 +428,7 @@ _nss_nis_gethostbyaddr_r (const void *addr, socklen_t addrlen, int af,
   int parse_res = parse_line (p, host, data, buflen, errnop, af,
 			      ((_res.options & RES_USE_INET6)
 			       ? AI_V4MAPPED : 0));
-  if (__glibc_unlikely (parse_res < 1))
+  if (__builtin_expect (parse_res < 1, 0))
     {
       if (parse_res == -1)
 	{
@@ -468,13 +461,6 @@ _nss_nis_gethostbyname4_r (const char *name, struct gaih_addrtuple **pat,
 
   /* Convert name to lowercase.  */
   size_t namlen = strlen (name);
-  /* Limit name length to the maximum size of an RPC packet.  */
-  if (namlen > UDPMSGSIZE)
-    {
-      *errnop = ERANGE;
-      return NSS_STATUS_UNAVAIL;
-    }
-
   char name2[namlen + 1];
   size_t i;
 
@@ -486,7 +472,7 @@ _nss_nis_gethostbyname4_r (const char *name, struct gaih_addrtuple **pat,
   int len;
   int yperr = yp_match (domain, "hosts.byname", name2, namlen, &result, &len);
 
-  if (__glibc_unlikely (yperr != YPERR_SUCCESS))
+  if (__builtin_expect (yperr != YPERR_SUCCESS, 0))
     {
       enum nss_status retval = yperr2nss (yperr);
 
@@ -507,7 +493,7 @@ _nss_nis_gethostbyname4_r (const char *name, struct gaih_addrtuple **pat,
       buffer += pad;
       buflen = buflen > pad ? buflen - pad : 0;
 
-      if (__glibc_unlikely (buflen < sizeof (struct gaih_addrtuple)))
+      if (__builtin_expect (buflen < sizeof (struct gaih_addrtuple), 0))
 	{
 	erange:
 	  free (result);
@@ -526,14 +512,14 @@ _nss_nis_gethostbyname4_r (const char *name, struct gaih_addrtuple **pat,
 
   struct parser_data *data = (void *) buffer;
 
-  if (__glibc_unlikely (buflen < sizeof *data + 1 + pad))
+  if (__builtin_expect (buflen < sizeof *data + 1 + pad, 0))
     goto erange;
   buflen -= pad;
 
   struct hostent host;
   int parse_res = parse_line (result, &host, data, buflen, errnop, AF_UNSPEC,
 			      0);
-  if (__glibc_unlikely (parse_res < 1))
+  if (__builtin_expect (parse_res < 1, 0))
     {
       if (parse_res == -1)
 	{

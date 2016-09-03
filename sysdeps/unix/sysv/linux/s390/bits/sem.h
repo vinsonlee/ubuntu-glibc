@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,8 @@
 # error "Never include <bits/sem.h> directly; use <sys/sem.h> instead."
 #endif
 
-#include <sys/types.h>
+#include <bits/types.h>
+#include <bits/wordsize.h>
 
 /* Flags for `semop'.  */
 #define SEM_UNDO	0x1000		/* undo the operation on exit */

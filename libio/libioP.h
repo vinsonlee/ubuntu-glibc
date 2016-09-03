@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -32,14 +32,12 @@
 
    FIXME: All of the C++ cruft eventually needs to go away.  */
 
-#include <stddef.h>
-
 #include <errno.h>
 #ifndef __set_errno
 # define __set_errno(Val) errno = (Val)
 #endif
 #if defined __GLIBC__ && __GLIBC__ >= 2
-# include <libc-lock.h>
+# include <bits/libc-lock.h>
 #else
 /*# include <comthread.h>*/
 #endif
@@ -102,35 +100,19 @@ extern "C" {
 #if (!defined _IO_USE_OLD_IO_FILE \
      && (!defined _G_IO_NO_BACKWARD_COMPAT || _G_IO_NO_BACKWARD_COMPAT == 0))
 # define _IO_JUMPS_OFFSET 1
-#else
-# define _IO_JUMPS_OFFSET 0
 #endif
 
-/* Type of MEMBER in struct type TYPE.  */
-#define _IO_MEMBER_TYPE(TYPE, MEMBER) __typeof__ (((TYPE){}).MEMBER)
-
-/* Essentially ((TYPE *) THIS)->MEMBER, but avoiding the aliasing
-   violation in case THIS has a different pointer type.  */
-#define _IO_CAST_FIELD_ACCESS(THIS, TYPE, MEMBER) \
-  (*(_IO_MEMBER_TYPE (TYPE, MEMBER) *)(((char *) (THIS)) \
-				       + offsetof(TYPE, MEMBER)))
-
 #define _IO_JUMPS(THIS) (THIS)->vtable
-#define _IO_JUMPS_FILE_plus(THIS) \
-  _IO_CAST_FIELD_ACCESS ((THIS), struct _IO_FILE_plus, vtable)
-#define _IO_WIDE_JUMPS(THIS) \
-  _IO_CAST_FIELD_ACCESS ((THIS), struct _IO_FILE, _wide_data)->_wide_vtable
-#define _IO_CHECK_WIDE(THIS) \
-  (_IO_CAST_FIELD_ACCESS ((THIS), struct _IO_FILE, _wide_data) != NULL)
+#define _IO_WIDE_JUMPS(THIS) ((struct _IO_FILE *) (THIS))->_wide_data->_wide_vtable
+#define _IO_CHECK_WIDE(THIS) (((struct _IO_FILE *) (THIS))->_wide_data != NULL)
 
 #if _IO_JUMPS_OFFSET
 # define _IO_JUMPS_FUNC(THIS) \
-  (IO_validate_vtable                                                   \
-   (*(struct _IO_jump_t **) ((void *) &_IO_JUMPS_FILE_plus (THIS)	\
-			     + (THIS)->_vtable_offset)))
+ (*(struct _IO_jump_t **) ((void *) &_IO_JUMPS ((struct _IO_FILE_plus *) (THIS)) \
+			   + (THIS)->_vtable_offset))
 # define _IO_vtable_offset(THIS) (THIS)->_vtable_offset
 #else
-# define _IO_JUMPS_FUNC(THIS) (IO_validate_vtable (_IO_JUMPS_FILE_plus (THIS)))
+# define _IO_JUMPS_FUNC(THIS) _IO_JUMPS ((struct _IO_FILE_plus *) (THIS))
 # define _IO_vtable_offset(THIS) 0
 #endif
 #define _IO_WIDE_JUMPS_FUNC(THIS) _IO_WIDE_JUMPS(THIS)
@@ -379,7 +361,8 @@ extern void _IO_switch_to_main_get_area (_IO_FILE *) __THROW;
 extern void _IO_switch_to_backup_area (_IO_FILE *) __THROW;
 extern int _IO_switch_to_get_mode (_IO_FILE *);
 libc_hidden_proto (_IO_switch_to_get_mode)
-extern void _IO_init_internal (_IO_FILE *, int) attribute_hidden;
+extern void _IO_init (_IO_FILE *, int) __THROW;
+libc_hidden_proto (_IO_init)
 extern int _IO_sputbackc (_IO_FILE *, int) __THROW;
 libc_hidden_proto (_IO_sputbackc)
 extern int _IO_sungetc (_IO_FILE *) __THROW;
@@ -414,7 +397,6 @@ extern void _IO_wdoallocbuf (_IO_FILE *) __THROW;
 libc_hidden_proto (_IO_wdoallocbuf)
 extern void _IO_unsave_wmarkers (_IO_FILE *) __THROW;
 extern unsigned _IO_adjust_wcolumn (unsigned, const wchar_t *, int) __THROW;
-extern _IO_off64_t get_file_offset (_IO_FILE *fp);
 
 /* Marker-related function. */
 
@@ -587,6 +569,8 @@ extern int _IO_file_underflow_maybe_mmap (_IO_FILE *);
 extern int _IO_file_overflow (_IO_FILE *, int);
 libc_hidden_proto (_IO_file_overflow)
 #define _IO_file_is_open(__fp) ((__fp)->_fileno != -1)
+extern void _IO_file_init (struct _IO_FILE_plus *) __THROW;
+libc_hidden_proto (_IO_file_init)
 extern _IO_FILE* _IO_file_attach (_IO_FILE *, int);
 libc_hidden_proto (_IO_file_attach)
 extern _IO_FILE* _IO_file_open (_IO_FILE *, const char *, int, int, int, int);
@@ -612,8 +596,7 @@ extern _IO_FILE* _IO_new_file_fopen (_IO_FILE *, const char *, const char *,
 				     int);
 extern void _IO_no_init (_IO_FILE *, int, int, struct _IO_wide_data *,
 			 const struct _IO_jump_t *) __THROW;
-extern void _IO_new_file_init_internal (struct _IO_FILE_plus *)
-  __THROW attribute_hidden;
+extern void _IO_new_file_init (struct _IO_FILE_plus *) __THROW;
 extern _IO_FILE* _IO_new_file_setbuf (_IO_FILE *, char *, _IO_ssize_t);
 extern _IO_FILE* _IO_file_setbuf_mmap (_IO_FILE *, char *, _IO_ssize_t);
 extern int _IO_new_file_sync (_IO_FILE *);
@@ -628,8 +611,7 @@ extern _IO_off64_t _IO_old_file_seekoff (_IO_FILE *, _IO_off64_t, int, int);
 extern _IO_size_t _IO_old_file_xsputn (_IO_FILE *, const void *, _IO_size_t);
 extern int _IO_old_file_underflow (_IO_FILE *);
 extern int _IO_old_file_overflow (_IO_FILE *, int);
-extern void _IO_old_file_init_internal (struct _IO_FILE_plus *)
-  __THROW attribute_hidden;
+extern void _IO_old_file_init (struct _IO_FILE_plus *) __THROW;
 extern _IO_FILE* _IO_old_file_attach (_IO_FILE *, int);
 extern _IO_FILE* _IO_old_file_fopen (_IO_FILE *, const char *, const char *);
 extern _IO_ssize_t _IO_old_file_write (_IO_FILE *, const void *, _IO_ssize_t);
@@ -673,6 +655,10 @@ extern void _IO_str_finish (_IO_FILE *, int) __THROW;
 
 /* Other strfile functions */
 struct _IO_strfile_;
+extern void _IO_str_init_static (struct _IO_strfile_ *, char *, int, char *)
+     __THROW;
+extern void _IO_str_init_readonly (struct _IO_strfile_ *, const char *, int)
+     __THROW;
 extern _IO_ssize_t _IO_str_count (_IO_FILE *) __THROW;
 
 /* And the wide character versions.  */
@@ -756,6 +742,46 @@ extern _IO_off64_t _IO_seekpos_unlocked (_IO_FILE *, _IO_off64_t, int)
 #  define munmap __munmap
 #  define ftruncate __ftruncate
 # endif
+
+# define ROUND_TO_PAGE(_S) \
+       (((_S) + EXEC_PAGESIZE - 1) & ~(EXEC_PAGESIZE - 1))
+
+# define FREE_BUF(_B, _S) \
+       munmap ((_B), ROUND_TO_PAGE (_S))
+# define ALLOC_BUF(_B, _S, _R) \
+       do {								      \
+	  (_B) = (char *) mmap (0, ROUND_TO_PAGE (_S),			      \
+				PROT_READ | PROT_WRITE,			      \
+				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);	      \
+	  if ((_B) == (char *) MAP_FAILED)				      \
+	    return (_R);						      \
+       } while (0)
+# define ALLOC_WBUF(_B, _S, _R) \
+       do {								      \
+	  (_B) = (wchar_t *) mmap (0, ROUND_TO_PAGE (_S),		      \
+				   PROT_READ | PROT_WRITE,		      \
+				   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);	      \
+	  if ((_B) == (wchar_t *) MAP_FAILED)				      \
+	    return (_R);						      \
+       } while (0)
+
+#else /* _G_HAVE_MMAP */
+
+# define FREE_BUF(_B, _S) \
+       free(_B)
+# define ALLOC_BUF(_B, _S, _R) \
+       do {								      \
+	  (_B) = (char*)malloc(_S);					      \
+	  if ((_B) == NULL)						      \
+	    return (_R);						      \
+       } while (0)
+# define ALLOC_WBUF(_B, _S, _R) \
+       do {								      \
+	  (_B) = (wchar_t *)malloc(_S);					      \
+	  if ((_B) == NULL)						      \
+	    return (_R);						      \
+       } while (0)
+
 #endif /* _G_HAVE_MMAP */
 
 #ifndef OS_FSTAT
@@ -873,7 +899,7 @@ _IO_acquire_lock_clear_flags2_fct (_IO_FILE **p)
     _IO_funlockfile (fp);
 }
 
-#if !defined _IO_MTSAFE_IO && IS_IN (libc)
+#if !defined _IO_MTSAFE_IO && !defined NOT_IN_libc
 # define _IO_acquire_lock(_fp)						      \
   do {									      \
     _IO_FILE *_IO_acquire_lock_file = NULL
@@ -886,59 +912,3 @@ _IO_acquire_lock_clear_flags2_fct (_IO_FILE **p)
                                           | _IO_FLAGS2_SCANF_STD);	      \
   } while (0)
 #endif
-
-/* Collect all vtables in a special section for vtable verification.
-   These symbols cover the extent of this section.  */
-symbol_set_declare (__libc_IO_vtables)
-
-/* libio vtables need to carry this attribute so that they pass
-   validation.  */
-#define libio_vtable __attribute__ ((section ("__libc_IO_vtables")))
-
-#ifdef SHARED
-/* If equal to &_IO_vtable_check (with pointer guard protection),
-   unknown vtable pointers are valid.  This function pointer is solely
-   used as a flag.  */
-extern void (*IO_accept_foreign_vtables) (void) attribute_hidden;
-
-/* Assigns the passed function pointer (either NULL or
-   &_IO_vtable_check) to IO_accept_foreign_vtables.  */
-static inline void
-IO_set_accept_foreign_vtables (void (*flag) (void))
-{
-#ifdef PTR_MANGLE
-  PTR_MANGLE (flag);
-#endif
-  atomic_store_relaxed (&IO_accept_foreign_vtables, flag);
-}
-
-#else  /* !SHARED */
-
-/* The statically-linked version does nothing. */
-static inline void
-IO_set_accept_foreign_vtables (void (*flag) (void))
-{
-}
-
-#endif
-
-/* Check if unknown vtable pointers are permitted; otherwise,
-   terminate the process.  */
-void _IO_vtable_check (void) attribute_hidden;
-
-/* Perform vtable pointer validation.  If validation fails, terminate
-   the process.  */
-static inline const struct _IO_jump_t *
-IO_validate_vtable (const struct _IO_jump_t *vtable)
-{
-  /* Fast path: The vtable pointer is within the __libc_IO_vtables
-     section.  */
-  uintptr_t section_length = __stop___libc_IO_vtables - __start___libc_IO_vtables;
-  const char *ptr = (const char *) vtable;
-  uintptr_t offset = ptr - __start___libc_IO_vtables;
-  if (__glibc_unlikely (offset >= section_length))
-    /* The vtable pointer is not in the expected section.  Use the
-       slow path, which will terminate the process if necessary.  */
-    _IO_vtable_check ();
-  return vtable;
-}

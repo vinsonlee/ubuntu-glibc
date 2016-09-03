@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -16,22 +16,58 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#include <assert.h>
+#include <errno.h>
+#include <endian.h>
 #include <unistd.h>
+
 #include <sysdep-cancel.h>
+#include <sys/syscall.h>
 
-#ifndef __OFF_T_MATCHES_OFF64_T
+#include <kernel-features.h>
 
-# ifndef __NR_pread
-#  define __NR_pread __NR_pread64
+#ifdef __NR_pread64		/* Newer kernels renamed but it's the same.  */
+# ifdef __NR_pread
+#  error "__NR_pread and __NR_pread64 both defined???"
 # endif
+# define __NR_pread __NR_pread64
+#endif
+
+
+static ssize_t
+#ifdef NO_CANCELLATION
+inline __attribute ((always_inline))
+#endif
+do_pread (int fd, void *buf, size_t count, off_t offset)
+{
+  ssize_t result;
+
+  assert (sizeof (offset) == 4);
+  result = INLINE_SYSCALL (pread, 5, fd, buf, count,
+			   __LONG_LONG_PAIR (offset >> 31, offset));
+
+  return result;
+}
+
 
 ssize_t
-__libc_pread (int fd, void *buf, size_t count, off_t offset)
+__libc_pread (fd, buf, count, offset)
+     int fd;
+     void *buf;
+     size_t count;
+     off_t offset;
 {
-  return SYSCALL_CANCEL (pread, fd, buf, count,
-			 __ALIGNMENT_ARG SYSCALL_LL (offset));
+  if (SINGLE_THREAD_P)
+    return do_pread (fd, buf, count, offset);
+
+  int oldtype = LIBC_CANCEL_ASYNC ();
+
+  ssize_t result = do_pread (fd, buf, count, offset);
+
+  LIBC_CANCEL_RESET (oldtype);
+
+  return result;
 }
 
 strong_alias (__libc_pread, __pread)
 weak_alias (__libc_pread, pread)
-#endif

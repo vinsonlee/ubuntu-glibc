@@ -1,5 +1,5 @@
 /* ix87 specific implementation of arcsinh.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -100,16 +100,7 @@ ENTRY(__asinh)
 4:	fld	%st			// x : x
 	faddl	MO(huge)		// huge+x : x
 	fstp	%st(0)			// x
-	cmpl	$0x00100000, %eax
-	jae	8f
-	subl	$8, %esp
-	cfi_adjust_cfa_offset (8)
-	fld	%st(0)
-	fmul	%st(0)
-	fstpl	(%esp)
-	addl	$8, %esp
-	cfi_adjust_cfa_offset (-8)
-8:	ret
+	ret
 
 	// |x| > 2^28 => y = sign(x) * (log(|x|) + log(2))
 	.align ALIGNARG(4)

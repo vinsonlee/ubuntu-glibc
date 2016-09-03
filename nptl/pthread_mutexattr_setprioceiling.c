@@ -1,5 +1,5 @@
 /* Change priority ceiling setting in pthread_mutexattr_t.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2006.
 
@@ -19,25 +19,22 @@
 
 #include <errno.h>
 #include <pthreadP.h>
-#include <atomic.h>
 
 
 int
-pthread_mutexattr_setprioceiling (pthread_mutexattr_t *attr, int prioceiling)
+pthread_mutexattr_setprioceiling (attr, prioceiling)
+     pthread_mutexattr_t *attr;
+     int prioceiling;
 {
-  /* See __init_sched_fifo_prio.  */
-  if (atomic_load_relaxed (&__sched_fifo_min_prio) == -1
-      || atomic_load_relaxed (&__sched_fifo_max_prio) == -1)
+  if (__sched_fifo_min_prio == -1)
     __init_sched_fifo_prio ();
 
-  if (__glibc_unlikely (prioceiling
-			< atomic_load_relaxed (&__sched_fifo_min_prio))
-      || __glibc_unlikely (prioceiling
-			   > atomic_load_relaxed (&__sched_fifo_max_prio))
-      || __glibc_unlikely ((prioceiling
+  if (__builtin_expect (prioceiling < __sched_fifo_min_prio, 0)
+      || __builtin_expect (prioceiling > __sched_fifo_max_prio, 0)
+      || __builtin_expect ((prioceiling
 			    & (PTHREAD_MUTEXATTR_PRIO_CEILING_MASK
 			       >> PTHREAD_MUTEXATTR_PRIO_CEILING_SHIFT))
-			   != prioceiling))
+			   != prioceiling, 0))
     return EINVAL;
 
   struct pthread_mutexattr *iattr = (struct pthread_mutexattr *) attr;

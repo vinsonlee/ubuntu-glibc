@@ -1,5 +1,5 @@
 /* Definitions for thread-local data handling.  Hurd/i386 version.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,34 +23,9 @@
 /* Some things really need not be machine-dependent.  */
 #include <sysdeps/mach/hurd/tls.h>
 
-
-#ifndef __ASSEMBLER__
-# include <dl-dtv.h>
-
-/* Type of the TCB.  */
-typedef struct
-{
-  void *tcb;			/* Points to this structure.  */
-  dtv_t *dtv;			/* Vector of pointers to TLS data.  */
-  thread_t self;		/* This thread's control port.  */
-  int multiple_threads;
-  uintptr_t sysinfo;
-  uintptr_t stack_guard;
-  uintptr_t pointer_guard;
-  int gscope_flag;
-  int private_futex;
-  /* Reservation of some values for the TM ABI.  */
-  void *__private_tm[4];
-  /* GCC split stack support.  */
-  void *__private_ss;
-} tcbhead_t;
-#endif
-
-
 /* The TCB can have any size and the memory following the address the
    thread pointer points to is unspecified.  Allocate the TCB there.  */
 #define TLS_TCB_AT_TP	1
-#define TLS_DTV_AT_TP	0
 
 #ifndef __ASSEMBLER__
 
@@ -80,37 +55,60 @@ typedef struct
 
 
 static inline const char * __attribute__ ((unused))
-_hurd_tls_init (tcbhead_t *tcb)
+_hurd_tls_init (tcbhead_t *tcb, int secondcall)
 {
   HURD_TLS_DESC_DECL (desc, tcb);
 
-  /* This field is used by TLS accesses to get our "thread pointer"
-     from the TLS point of view.  */
-  tcb->tcb = tcb;
-
-  /* Cache our thread port.  */
-  tcb->self = __mach_thread_self ();
-
-  /* Get the first available selector.  */
-  int sel = -1;
-  error_t err = __i386_set_gdt (tcb->self, &sel, desc);
-  if (err == MIG_BAD_ID)
+  if (!secondcall)
     {
-      /* Old kernel, use a per-thread LDT.  */
-      sel = 0x27;
-      err = __i386_set_ldt (tcb->self, sel, &desc, 1);
-      assert_perror (err);
-      if (err)
-	return "i386_set_ldt failed";
-    }
-  else if (err)
-    {
-      assert_perror (err); /* Separate from above with different line #. */
-      return "i386_set_gdt failed";
-    }
+      /* This field is used by TLS accesses to get our "thread pointer"
+	 from the TLS point of view.  */
+      tcb->tcb = tcb;
 
-  /* Now install the new selector.  */
-  asm volatile ("mov %w0, %%gs" :: "q" (sel));
+      /* Cache our thread port.  */
+      tcb->self = __mach_thread_self ();
+
+      /* Get the first available selector.  */
+      int sel = -1;
+      error_t err = __i386_set_gdt (tcb->self, &sel, desc);
+      if (err == MIG_BAD_ID)
+	{
+	  /* Old kernel, use a per-thread LDT.  */
+	  sel = 0x27;
+	  err = __i386_set_ldt (tcb->self, sel, &desc, 1);
+	  assert_perror (err);
+	  if (err)
+	    return "i386_set_ldt failed";
+	}
+      else if (err)
+	{
+	  assert_perror (err); /* Separate from above with different line #. */
+	  return "i386_set_gdt failed";
+	}
+
+      /* Now install the new selector.  */
+      asm volatile ("mov %w0, %%gs" :: "q" (sel));
+    }
+  else
+    {
+      /* Fetch the selector set by the first call.  */
+      int sel;
+      asm ("mov %%gs, %w0" : "=q" (sel) : "0" (0));
+      if (__builtin_expect (sel, 0x50) & 4) /* LDT selector */
+	{
+	  error_t err = __i386_set_ldt (tcb->self, sel, &desc, 1);
+	  assert_perror (err);
+	  if (err)
+	    return "i386_set_ldt failed";
+	}
+      else
+	{
+	  error_t err = __i386_set_gdt (tcb->self, &sel, desc);
+	  assert_perror (err);
+	  if (err)
+	    return "i386_set_gdt failed";
+	}
+    }
 
   return 0;
 }
@@ -118,8 +116,8 @@ _hurd_tls_init (tcbhead_t *tcb)
 /* Code to initially initialize the thread pointer.  This might need
    special attention since 'errno' is not yet available and if the
    operation can cause a failure 'errno' must not be touched.  */
-# define TLS_INIT_TP(descr) \
-    _hurd_tls_init ((tcbhead_t *) (descr))
+# define TLS_INIT_TP(descr, secondcall) \
+    _hurd_tls_init ((tcbhead_t *) (descr), (secondcall))
 
 /* Return the TCB address of the current thread.  */
 # define THREAD_SELF							      \

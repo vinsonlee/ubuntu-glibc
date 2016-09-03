@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,19 +26,23 @@ int
 mq_unlink (const char *name)
 {
   if (name[0] != '/')
-    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+    {
+      __set_errno (EINVAL);
+      return -1;
+    }
 
   INTERNAL_SYSCALL_DECL (err);
   int ret = INTERNAL_SYSCALL (mq_unlink, err, 1, name + 1);
 
   /* While unlink can return either EPERM or EACCES, mq_unlink should
      return just EACCES.  */
-  if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (ret, err)))
+  if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (ret, err), 0))
     {
       ret = INTERNAL_SYSCALL_ERRNO (ret, err);
       if (ret == EPERM)
 	ret = EACCES;
-      return INLINE_SYSCALL_ERROR_RETURN_VALUE (ret);
+      __set_errno (ret);
+      ret = -1;
     }
 
   return ret;

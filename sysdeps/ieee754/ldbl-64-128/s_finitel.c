@@ -8,7 +8,7 @@
 #undef __finitel
 hidden_ver (___finitel, __finitel)
 _weak_alias (___finitel, ____finitel)
-#if IS_IN (libm)
+#ifdef IS_IN_libm
 long_double_symbol (libm, ____finitel, finitel);
 long_double_symbol (libm, ___finitel, __finitel);
 #else

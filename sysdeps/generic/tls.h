@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  Generic version.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -59,11 +59,12 @@
      use the value.
 
 
-     TLS_INIT_TP(tcb)
+     TLS_INIT_TP(tcb, firstcall)
 
      This macro must initialize the thread pointer to enable normal TLS
-     operation.  The parameter is a pointer to the thread control block.
-     ld.so calls this macro once.
+     operation.  The first parameter is a pointer to the thread control
+     block.  The second parameter specifies whether this is the first
+     call for the TCB.  ld.so calls this macro more than once.
 
 
      THREAD_DTV()

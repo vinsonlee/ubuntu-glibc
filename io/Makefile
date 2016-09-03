@@ -1,4 +1,4 @@
-# Copyright (C) 1992-2016 Free Software Foundation, Inc.
+# Copyright (C) 1992-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,6 @@
 #	Sub-makefile for I/O portion of the library.
 #
 subdir	:= io
-
-include ../Makeconfig
 
 headers := sys/stat.h bits/stat.h sys/statfs.h bits/statfs.h sys/vfs.h \
 	   sys/statvfs.h bits/statvfs.h fcntl.h sys/fcntl.h bits/fcntl.h \
@@ -49,7 +47,7 @@ routines :=								\
 	ttyname ttyname_r isatty					\
 	link linkat symlink symlinkat readlink readlinkat		\
 	unlink unlinkat rmdir						\
-	ftw ftw64 fts fts64 poll ppoll					\
+	ftw ftw64 fts poll ppoll					\
 	posix_fadvise posix_fadvise64					\
 	posix_fallocate posix_fallocate64				\
 	sendfile sendfile64 \
@@ -71,11 +69,7 @@ tests		:= test-utime test-stat test-stat2 test-lfs tst-getcwd \
 		   tst-renameat tst-fchownat tst-fchmodat tst-faccessat \
 		   tst-symlinkat tst-linkat tst-readlinkat tst-mkdirat \
 		   tst-mknodat tst-mkfifoat tst-ttyname_r bug-ftw5 \
-		   tst-posix_fallocate tst-fts tst-fts-lfs
-
-ifeq ($(run-built-tests),yes)
-tests-special += $(objpfx)ftwtest.out
-endif
+		   tst-posix_fallocate
 
 include ../Rules
 
@@ -90,7 +84,6 @@ CFLAGS-fstatfs.c = -fexceptions
 CFLAGS-statvfs.c = -fexceptions
 CFLAGS-fstatvfs.c = -fexceptions
 CFLAGS-fts.c = -Wno-uninitialized $(uses-callbacks) -fexceptions
-CFLAGS-fts64.c = -Wno-uninitialized $(uses-callbacks) -fexceptions
 CFLAGS-ftw.c = $(uses-callbacks) -fexceptions
 CFLAGS-ftw64.c = $(uses-callbacks) -fexceptions
 CFLAGS-lockf.c = -fexceptions
@@ -108,7 +101,8 @@ test-stat2-ARGS = Makefile . $(objpfx)test-stat2
 tst-statvfs-ARGS = $(objpfx)tst-statvfs tst-statvfs.c /tmp
 
 ifeq ($(run-built-tests),yes)
+tests: $(objpfx)ftwtest.out
+
 $(objpfx)ftwtest.out: ftwtest-sh $(objpfx)ftwtest
-	$(SHELL) $< $(common-objpfx) '$(test-program-cmd)' > $@; \
-	$(evaluate-test)
+	$(SHELL) $< $(common-objpfx) '$(test-program-cmd)' > $@
 endif

@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -56,17 +56,8 @@ do_test (void)
       return 1;
     }
 
-  /* BZ #18086. Make sure we don't reset errno.  */
-  errno = EBADF;
-  nice (0);
-  if (errno != EBADF)
-    {
-      printf ("FAIL: errno = %i, but wanted EBADF (%i)\n", errno, EBADF);
-      return 1;
-    }
-
-
   printf ("PASS: nice(%d) from %d return: %d\n", incr, old, ret);
+
   return 0;
 }
 

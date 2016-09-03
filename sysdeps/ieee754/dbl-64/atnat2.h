@@ -2,7 +2,7 @@
 /*
  * IBM Accurate Mathematical Library
  * Written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2014 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -65,8 +65,10 @@
 /**/ hpi1           = {{0x3c91a626, 0x33145c07} }, /*  pi/2-hpi     */
 /**/ mhpi           = {{0xbff921fb, 0x54442d18} }, /* -pi/2         */
 /**/ qpi            = {{0x3fe921fb, 0x54442d18} }, /*  pi/4         */
+/**/ qpi1           = {{0x3c81a626, 0x33145c07} }, /*  pi/4-qpi     */
 /**/ mqpi           = {{0xbfe921fb, 0x54442d18} }, /* -pi/4         */
 /**/ tqpi           = {{0x4002d97c, 0x7f3321d2} }, /*  3pi/4        */
+/**/ tqpi1          = {{0x3c9a7939, 0x4c9e8a0a} }, /*  3pi/4-tqpi   */
 /**/ mtqpi          = {{0xc002d97c, 0x7f3321d2} }, /* -3pi/4        */
 /**/ u1             = {{0x3c314c2a, 0x00000000} }, /*  9.377e-19    */
 /**/ u2             = {{0x3bf955e4, 0x00000000} }, /*  8.584e-20    */
@@ -127,8 +129,10 @@
 /**/ hpi1           = {{0x33145c07, 0x3c91a626} }, /*  pi/2-hpi     */
 /**/ mhpi           = {{0x54442d18, 0xbff921fb} }, /* -pi/2         */
 /**/ qpi            = {{0x54442d18, 0x3fe921fb} }, /*  pi/4         */
+/**/ qpi1           = {{0x33145c07, 0x3c81a626} }, /*  pi/4-qpi     */
 /**/ mqpi           = {{0x54442d18, 0xbfe921fb} }, /* -pi/4         */
 /**/ tqpi           = {{0x7f3321d2, 0x4002d97c} }, /*  3pi/4        */
+/**/ tqpi1          = {{0x4c9e8a0a, 0x3c9a7939} }, /*  3pi/4-tqpi   */
 /**/ mtqpi          = {{0x7f3321d2, 0xc002d97c} }, /* -3pi/4        */
 /**/ u1             = {{0x00000000, 0x3c314c2a} }, /*  9.377e-19    */
 /**/ u2             = {{0x00000000, 0x3bf955e4} }, /*  8.584e-20    */

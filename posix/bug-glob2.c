@@ -1,6 +1,6 @@
 /* Test glob memory management.
    for the filesystem access functions.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -40,17 +40,6 @@
 # define PRINTF(fmt, args...)
 #endif
 
-#define LONG_NAME \
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 static struct
 {
@@ -69,7 +58,6 @@ static struct
       { ".", 3, DT_DIR, 0755 },
       { "..", 3, DT_DIR, 0755 },
       { "a", 3, DT_REG, 0644 },
-      { LONG_NAME, 3, DT_REG, 0644 },
     { "unreadable", 2, DT_DIR, 0111 },
       { ".", 3, DT_DIR, 0111 },
       { "..", 3, DT_DIR, 0755 },
@@ -87,7 +75,7 @@ typedef struct
   int level;
   int idx;
   struct dirent d;
-  char room_for_dirent[sizeof (LONG_NAME)];
+  char room_for_dirent[NAME_MAX];
 } my_DIR;
 
 
@@ -205,7 +193,7 @@ my_readdir (void *gdir)
       return NULL;
     }
 
-  dir->d.d_ino = 1;		/* glob should not skip this entry.  */
+  dir->d.d_ino = dir->idx;
 
 #ifdef _DIRENT_HAVE_D_TYPE
   dir->d.d_type = filesystem[dir->idx].type;

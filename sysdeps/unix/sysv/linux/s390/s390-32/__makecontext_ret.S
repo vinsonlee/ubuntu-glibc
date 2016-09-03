@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,14 +16,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
-
-/* We do not want .eh_frame info so that __makecontext_ret stops unwinding
-   if backtrace was called within a context created by makecontext. (There
-   is also no .eh_frame info for _start or thread_start.)  */
-#undef cfi_startproc
-#define cfi_startproc
-#undef cfi_endproc
-#define cfi_endproc
 
 ENTRY(__makecontext_ret)
 	basr  %r14,%r7

@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/sh
 
 # Usage: make-syscalls.sh ../sysdeps/unix/common
 # Expects $sysdirs in environment.
@@ -81,9 +81,12 @@ emit_weak_aliases()
 
   # We use the <shlib-compat.h> macros to generate the versioned aliases
   # so that the version sets can be mapped to the configuration's
-  # minimum version set as per shlib-versions DEFAULT lines.  If an
-  # entry point is specified in the form NAME@VERSION:OBSOLETED, a
-  # SHLIB_COMPAT conditional is generated.
+  # minimum version set as per shlib-versions DEFAULT lines.  But note
+  # we don't generate any "#if SHLIB_COMPAT (...)" conditionals.  To do
+  # that we'd need to change the syscalls.list format so that it can
+  # list the "obsoleted" version set too.  If it ever arises that we
+  # have a syscall entry point that is obsoleted by a newer version set,
+  # we'll have to revamp all this.
   if [ $any_versioned = t ]; then
     echo "	 echo '#include <shlib-compat.h>'; \\"
   fi
@@ -93,7 +96,7 @@ emit_weak_aliases()
       *@@*)
 	base=`echo $name | sed 's/@@.*//'`
 	ver=`echo $name | sed 's/.*@@//;s/\./_/g'`
-	echo "	 echo '#if IS_IN (libc)'; \\"
+	echo "	 echo '#ifndef NOT_IN_libc'; \\"
 	if test -z "$vcount" ; then
 	  source=$strong
 	  vcount=1
@@ -110,17 +113,7 @@ emit_weak_aliases()
       *@*)
 	base=`echo $name | sed 's/@.*//'`
 	ver=`echo $name | sed 's/.*@//;s/\./_/g'`
-	case $ver in
-	  *:*)
-	    compat_ver=${ver#*:}
-	    ver=${ver%%:*}
-	    compat_cond=" && SHLIB_COMPAT (libc, $ver, $compat_ver)"
-	    ;;
-	  *)
-	    compat_cond=
-	    ;;
-	esac
-	echo "	 echo '#if defined SHARED && IS_IN (libc)$compat_cond'; \\"
+	echo "	 echo '#ifndef NOT_IN_libc'; \\"
 	if test -z "$vcount" ; then
 	  source=$strong
 	  vcount=1
@@ -135,11 +128,11 @@ emit_weak_aliases()
       !*)
 	name=`echo $name | sed 's/.//'`
 	echo "	 echo 'strong_alias ($strong, $name)'; \\"
-	echo "	 echo 'hidden_def ($name)'; \\"
+	echo "	 echo 'libc_hidden_def ($name)'; \\"
 	;;
       *)
 	echo "	 echo 'weak_alias ($strong, $name)'; \\"
-	echo "	 echo 'hidden_weak ($name)'; \\"
+	echo "	 echo 'libc_hidden_weak ($name)'; \\"
 	;;
     esac
   done
@@ -257,10 +250,14 @@ while read file srcfile caller syscall args strong weak; do
 	\$(make-target-directory)
 	(echo '#define SYSCALL_NAME $syscall'; \\
 	 echo '#define SYSCALL_NARGS $nargs'; \\
-	 echo '#define SYSCALL_SYMBOL $strong'; \\
-	 echo '#define SYSCALL_CANCELLABLE $cancellable'; \\
-	 echo '#define SYSCALL_NOERRNO $noerrno'; \\
-	 echo '#define SYSCALL_ERRVAL $errval'; \\
+	 echo '#define SYSCALL_SYMBOL $strong'; \\"
+  [ $cancellable = 0 ] || echo "\
+	 echo '#define SYSCALL_CANCELLABLE 1'; \\"
+  [ $noerrno = 0 ] || echo "\
+	 echo '#define SYSCALL_NOERRNO 1'; \\"
+  [ $errval = 0 ] || echo "\
+	 echo '#define SYSCALL_ERRVAL 1'; \\"
+  echo "\
 	 echo '#include <syscall-template.S>'; \\"
   ;;
   esac
@@ -279,33 +276,28 @@ while read file srcfile caller syscall args strong weak; do
     vdso_symbol="${vdso_syscall%@*}"
     vdso_symver="${vdso_syscall#*@}"
     vdso_symver=`echo "$vdso_symver" | sed 's/\./_/g'`
-    cat <<EOF
-
+    echo "\
 \$(foreach p,\$(sysd-rules-targets),\$(objpfx)\$(patsubst %,\$p,$file).os): \\
-		\$(..)sysdeps/unix/make-syscalls.sh
+		\$(..)sysdeps/unix/make-syscalls.sh\
 	\$(make-target-directory)
 	(echo '#include <dl-vdso.h>'; \\
-	 echo 'extern void *${strong}_ifunc (void) __asm ("${strong}");'; \\
+	 echo 'extern void *${strong}_ifunc (void) __asm (\"${strong}\");'; \\
 	 echo 'void *'; \\
 	 echo '${strong}_ifunc (void)'; \\
 	 echo '{'; \\
 	 echo '  PREPARE_VERSION_KNOWN (symver, ${vdso_symver});'; \\
-	 echo '  return _dl_vdso_vsym ("${vdso_symbol}", &symver);'; \\
+	 echo '  return _dl_vdso_vsym (\"${vdso_symbol}\", &symver);'; \\
 	 echo '}'; \\
-	 echo 'asm (".type ${strong}, %gnu_indirect_function");'; \\
-EOF
-    # This is doing "hidden_def (${strong})", but the compiler
+	 echo 'asm (\".type ${strong}, %gnu_indirect_function\");'; \\"
+    # This is doing "libc_hidden_def (${strong})", but the compiler
     # doesn't know that we've defined ${strong} in the same file, so
     # we can't do it the normal way.
-    cat <<EOF
-	 echo 'asm (".globl __GI_${strong}");'; \\
-	 echo 'asm ("__GI_${strong} = ${strong}");'; \\
-EOF
+    echo "\
+	 echo 'asm (\".globl __GI_${strong}\\n\"'; \\
+	 echo '     \"__GI_${strong} = ${strong}\");'; \\"
     emit_weak_aliases
-    cat <<EOF
-	) | \$(compile-stdin.c) \
-\$(foreach p,\$(patsubst %$file,%,\$(basename \$(@F))),\$(\$(p)CPPFLAGS))
-EOF
+    echo '	) | $(compile-stdin.c) '"\
+\$(foreach p,\$(patsubst %$file,%,\$(basename \$(@F))),\$(\$(p)CPPFLAGS))"
   fi
 
   if test $shared_only = t; then

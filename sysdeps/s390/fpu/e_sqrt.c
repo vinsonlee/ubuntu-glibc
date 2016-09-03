@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2014 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky <schwidefsky@de.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -23,7 +23,7 @@ __ieee754_sqrt (double x)
 {
   double res;
 
-  __asm__ ( "sqdbr %0,%1" : "=f" (res) : "f" (x) );
+  asm ( "sqdbr %0,%1" : "=f" (res) : "f" (x) );
   return res;
 }
 strong_alias (__ieee754_sqrt, __sqrt_finite)

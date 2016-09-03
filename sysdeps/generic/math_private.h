@@ -20,8 +20,6 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <fenv.h>
-#include <float.h>
-#include <get-rounding-mode.h>
 
 /* The original fdlibm code used statements like:
 	n0 = ((*(int*)&one)>>29)^1;		* index of high word *
@@ -365,8 +363,8 @@ extern double __slowpow (double __x, double __y, double __z);
 extern void __docos (double __x, double __dx, double __v[]);
 
 /* Return X^2 + Y^2 - 1, computed without large cancellation error.
-   It is given that 1 > X >= Y >= epsilon / 2, and that X^2 + Y^2 >=
-   0.5.  */
+   It is given that 1 > X >= Y >= epsilon / 2, and that either X >=
+   0.75 or Y >= 0.5.  */
 extern float __x2y2m1f (float x, float y);
 extern double __x2y2m1 (double x, double y);
 extern long double __x2y2m1l (long double x, long double y);
@@ -383,22 +381,6 @@ extern double __gamma_product (double x, double x_eps, int n, double *eps);
 extern long double __gamma_productl (long double x, long double x_eps,
 				     int n, long double *eps);
 
-/* Compute lgamma of a negative argument X, if it is in a range
-   (depending on the floating-point format) for which expansion around
-   zeros is used, setting *SIGNGAMP accordingly.  */
-extern float __lgamma_negf (float x, int *signgamp);
-extern double __lgamma_neg (double x, int *signgamp);
-extern long double __lgamma_negl (long double x, int *signgamp);
-
-/* Compute the product of 1 + (T / (X + X_EPS)), 1 + (T / (X + X_EPS +
-   1)), ..., 1 + (T / (X + X_EPS + N - 1)), minus 1.  X is such that
-   all the values X + 1, ..., X + N - 1 are exactly representable, and
-   X_EPS / X is small enough that factors quadratic in it can be
-   neglected.  */
-extern double __lgamma_product (double t, double x, double x_eps, int n);
-extern long double __lgamma_productl (long double t, long double x,
-				      long double x_eps, int n);
-
 #ifndef math_opt_barrier
 # define math_opt_barrier(x) \
 ({ __typeof (x) __x = (x); __asm ("" : "+m" (__x)); __x; })
@@ -406,81 +388,6 @@ extern long double __lgamma_productl (long double t, long double x,
 ({ __typeof (x) __x = (x); __asm __volatile__ ("" : : "m" (__x)); })
 #endif
 
-/* math_narrow_eval reduces its floating-point argument to the range
-   and precision of its semantic type.  (The original evaluation may
-   still occur with excess range and precision, so the result may be
-   affected by double rounding.)  */
-#if FLT_EVAL_METHOD == 0
-# define math_narrow_eval(x) (x)
-#else
-# if FLT_EVAL_METHOD == 1
-#  define excess_precision(type) __builtin_types_compatible_p (type, float)
-# else
-#  define excess_precision(type) (__builtin_types_compatible_p (type, float) \
-				  || __builtin_types_compatible_p (type, \
-								   double))
-# endif
-# define math_narrow_eval(x)					\
-  ({								\
-    __typeof (x) math_narrow_eval_tmp = (x);			\
-    if (excess_precision (__typeof (math_narrow_eval_tmp)))	\
-      __asm__ ("" : "+m" (math_narrow_eval_tmp));		\
-    math_narrow_eval_tmp;					\
-   })
-#endif
-
-#define fabs_tg(x) __builtin_choose_expr			\
-  (__builtin_types_compatible_p (__typeof (x), float),		\
-   __builtin_fabsf (x),						\
-   __builtin_choose_expr					\
-   (__builtin_types_compatible_p (__typeof (x), double),	\
-    __builtin_fabs (x), __builtin_fabsl (x)))
-#define min_of_type(type) __builtin_choose_expr		\
-  (__builtin_types_compatible_p (type, float),		\
-   FLT_MIN,						\
-   __builtin_choose_expr				\
-   (__builtin_types_compatible_p (type, double),	\
-    DBL_MIN, LDBL_MIN))
-
-/* If X (which is not a NaN) is subnormal, force an underflow
-   exception.  */
-#define math_check_force_underflow(x)				\
-  do								\
-    {								\
-      __typeof (x) force_underflow_tmp = (x);			\
-      if (fabs_tg (force_underflow_tmp)				\
-	  < min_of_type (__typeof (force_underflow_tmp)))	\
-	{							\
-	  __typeof (force_underflow_tmp) force_underflow_tmp2	\
-	    = force_underflow_tmp * force_underflow_tmp;	\
-	  math_force_eval (force_underflow_tmp2);		\
-	}							\
-    }								\
-  while (0)
-/* Likewise, but X is also known to be nonnegative.  */
-#define math_check_force_underflow_nonneg(x)			\
-  do								\
-    {								\
-      __typeof (x) force_underflow_tmp = (x);			\
-      if (force_underflow_tmp					\
-	  < min_of_type (__typeof (force_underflow_tmp)))	\
-	{							\
-	  __typeof (force_underflow_tmp) force_underflow_tmp2	\
-	    = force_underflow_tmp * force_underflow_tmp;	\
-	  math_force_eval (force_underflow_tmp2);		\
-	}							\
-    }								\
-  while (0)
-/* Likewise, for both real and imaginary parts of a complex
-   result.  */
-#define math_check_force_underflow_complex(x)				\
-  do									\
-    {									\
-      __typeof (x) force_underflow_complex_tmp = (x);			\
-      math_check_force_underflow (__real__ force_underflow_complex_tmp); \
-      math_check_force_underflow (__imag__ force_underflow_complex_tmp); \
-    }									\
-  while (0)
 
 /* The standards only specify one variant of the fenv.h interfaces.
    But at least for some architectures we can be more efficient if we
@@ -491,7 +398,7 @@ extern long double __lgamma_productl (long double t, long double x,
 static __always_inline void
 default_libc_feholdexcept (fenv_t *e)
 {
-  (void) __feholdexcept (e);
+  (void) feholdexcept (e);
 }
 
 #ifndef libc_feholdexcept
@@ -507,7 +414,7 @@ default_libc_feholdexcept (fenv_t *e)
 static __always_inline void
 default_libc_fesetround (int r)
 {
-  (void) __fesetround (r);
+  (void) fesetround (r);
 }
 
 #ifndef libc_fesetround
@@ -523,8 +430,8 @@ default_libc_fesetround (int r)
 static __always_inline void
 default_libc_feholdexcept_setround (fenv_t *e, int r)
 {
-  __feholdexcept (e);
-  __fesetround (r);
+  feholdexcept (e);
+  fesetround (r);
 }
 
 #ifndef libc_feholdexcept_setround
@@ -554,7 +461,7 @@ default_libc_feholdexcept_setround (fenv_t *e, int r)
 static __always_inline void
 default_libc_fesetenv (fenv_t *e)
 {
-  (void) __fesetenv (e);
+  (void) fesetenv (e);
 }
 
 #ifndef libc_fesetenv
@@ -570,7 +477,7 @@ default_libc_fesetenv (fenv_t *e)
 static __always_inline void
 default_libc_feupdateenv (fenv_t *e)
 {
-  (void) __feupdateenv (e);
+  (void) feupdateenv (e);
 }
 
 #ifndef libc_feupdateenv
@@ -591,7 +498,7 @@ static __always_inline int
 default_libc_feupdateenv_test (fenv_t *e, int ex)
 {
   int ret = fetestexcept (ex);
-  __feupdateenv (e);
+  feupdateenv (e);
   return ret;
 }
 
@@ -644,25 +551,11 @@ default_libc_feupdateenv_test (fenv_t *e, int ex)
 # define libc_feresetround_noexl libc_fesetenvl
 #endif
 
-#ifndef HAVE_RM_CTX
-# define HAVE_RM_CTX 0
-#endif
-
 #if HAVE_RM_CTX
 /* Set/Restore Rounding Modes only when necessary.  If defined, these functions
    set/restore floating point state only if the state needed within the lexical
    block is different from the current state.  This saves a lot of time when
    the floating point unit is much slower than the fixed point units.  */
-
-# ifndef libc_feholdsetround_noex_ctx
-#   define libc_feholdsetround_noex_ctx  libc_feholdsetround_ctx
-# endif
-# ifndef libc_feholdsetround_noexf_ctx
-#   define libc_feholdsetround_noexf_ctx libc_feholdsetroundf_ctx
-# endif
-# ifndef libc_feholdsetround_noexl_ctx
-#   define libc_feholdsetround_noexl_ctx libc_feholdsetroundl_ctx
-# endif
 
 # ifndef libc_feresetround_noex_ctx
 #   define libc_feresetround_noex_ctx  libc_fesetenv_ctx
@@ -674,80 +567,24 @@ default_libc_feupdateenv_test (fenv_t *e, int ex)
 #   define libc_feresetround_noexl_ctx libc_fesetenvl_ctx
 # endif
 
-#else
+# ifndef libc_feholdsetround_53bit_ctx
+#   define libc_feholdsetround_53bit_ctx libc_feholdsetround_ctx
+# endif
 
-/* Default implementation using standard fenv functions.
-   Avoid unnecessary rounding mode changes by first checking the
-   current rounding mode.  Note the use of __glibc_unlikely is
-   important for performance.  */
+# ifndef libc_feresetround_53bit_ctx
+#   define libc_feresetround_53bit_ctx libc_feresetround_ctx
+# endif
 
-static __always_inline void
-libc_feholdsetround_ctx (struct rm_ctx *ctx, int round)
-{
-  ctx->updated_status = false;
-
-  /* Update rounding mode only if different.  */
-  if (__glibc_unlikely (round != get_rounding_mode ()))
-    {
-      ctx->updated_status = true;
-      __fegetenv (&ctx->env);
-      __fesetround (round);
-    }
-}
-
-static __always_inline void
-libc_feresetround_ctx (struct rm_ctx *ctx)
-{
-  /* Restore the rounding mode if updated.  */
-  if (__glibc_unlikely (ctx->updated_status))
-    __feupdateenv (&ctx->env);
-}
-
-static __always_inline void
-libc_feholdsetround_noex_ctx (struct rm_ctx *ctx, int round)
-{
-  /* Save exception flags and rounding mode.  */
-  __fegetenv (&ctx->env);
-
-  /* Update rounding mode only if different.  */
-  if (__glibc_unlikely (round != get_rounding_mode ()))
-    __fesetround (round);
-}
-
-static __always_inline void
-libc_feresetround_noex_ctx (struct rm_ctx *ctx)
-{
-  /* Restore exception flags and rounding mode.  */
-  __fesetenv (&ctx->env);
-}
-
-# define libc_feholdsetroundf_ctx libc_feholdsetround_ctx
-# define libc_feholdsetroundl_ctx libc_feholdsetround_ctx
-# define libc_feresetroundf_ctx   libc_feresetround_ctx
-# define libc_feresetroundl_ctx   libc_feresetround_ctx
-
-# define libc_feholdsetround_noexf_ctx libc_feholdsetround_noex_ctx
-# define libc_feholdsetround_noexl_ctx libc_feholdsetround_noex_ctx
-# define libc_feresetround_noexf_ctx   libc_feresetround_noex_ctx
-# define libc_feresetround_noexl_ctx   libc_feresetround_noex_ctx
-
-#endif
-
-#ifndef libc_feholdsetround_53bit_ctx
-#  define libc_feholdsetround_53bit_ctx libc_feholdsetround_ctx
-#endif
-#ifndef libc_feresetround_53bit_ctx
-#  define libc_feresetround_53bit_ctx libc_feresetround_ctx
-#endif
-
-#define SET_RESTORE_ROUND_GENERIC(RM,ROUNDFUNC,CLEANUPFUNC) \
-  struct rm_ctx ctx __attribute__((cleanup (CLEANUPFUNC ## _ctx))); \
+# define SET_RESTORE_ROUND_GENERIC(RM,ROUNDFUNC,CLEANUPFUNC) \
+  struct rm_ctx ctx __attribute__((cleanup(CLEANUPFUNC ## _ctx)));	      \
   ROUNDFUNC ## _ctx (&ctx, (RM))
+#else
+# define SET_RESTORE_ROUND_GENERIC(RM, ROUNDFUNC, CLEANUPFUNC) \
+  fenv_t __libc_save_rm __attribute__((cleanup(CLEANUPFUNC)));	\
+  ROUNDFUNC (&__libc_save_rm, (RM))
+#endif
 
-/* Set the rounding mode within a lexical block.  Restore the rounding mode to
-   the value at the start of the block.  The exception mode must be preserved.
-   Exceptions raised within the block must be set in the exception flags.
-   Non-stop mode may be enabled inside the block.  */
+/* Save and restore the rounding mode within a lexical block.  */
 
 #define SET_RESTORE_ROUND(RM) \
   SET_RESTORE_ROUND_GENERIC (RM, libc_feholdsetround, libc_feresetround)
@@ -756,21 +593,15 @@ libc_feresetround_noex_ctx (struct rm_ctx *ctx)
 #define SET_RESTORE_ROUNDL(RM) \
   SET_RESTORE_ROUND_GENERIC (RM, libc_feholdsetroundl, libc_feresetroundl)
 
-/* Set the rounding mode within a lexical block.  Restore the rounding mode to
-   the value at the start of the block.  The exception mode must be preserved.
-   Exceptions raised within the block must be discarded, and exception flags
-   are restored to the value at the start of the block.
-   Non-stop mode may be enabled inside the block.  */
+/* Save and restore the rounding mode within a lexical block, and also
+   the set of exceptions raised within the block may be discarded.  */
 
 #define SET_RESTORE_ROUND_NOEX(RM) \
-  SET_RESTORE_ROUND_GENERIC (RM, libc_feholdsetround_noex, \
-			     libc_feresetround_noex)
+  SET_RESTORE_ROUND_GENERIC (RM, libc_feholdsetround, libc_feresetround_noex)
 #define SET_RESTORE_ROUND_NOEXF(RM) \
-  SET_RESTORE_ROUND_GENERIC (RM, libc_feholdsetround_noexf, \
-			     libc_feresetround_noexf)
+  SET_RESTORE_ROUND_GENERIC (RM, libc_feholdsetroundf, libc_feresetround_noexf)
 #define SET_RESTORE_ROUND_NOEXL(RM) \
-  SET_RESTORE_ROUND_GENERIC (RM, libc_feholdsetround_noexl, \
-			     libc_feresetround_noexl)
+  SET_RESTORE_ROUND_GENERIC (RM, libc_feholdsetroundl, libc_feresetround_noexl)
 
 /* Like SET_RESTORE_ROUND, but also set rounding precision to 53 bits.  */
 #define SET_RESTORE_ROUND_53BIT(RM) \

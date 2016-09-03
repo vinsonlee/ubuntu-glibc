@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky <schwidefsky@de.ibm.com>, 2003.
 
@@ -19,22 +19,17 @@
 #include <errno.h>
 #include <sysdep.h>
 #include <lowlevellock.h>
-#include <futex-internal.h>
 #include <pthread.h>
 #include <pthreadP.h>
-#include <sys/time.h>
-#include <stdbool.h>
 
 
 /* Try to acquire read lock for RWLOCK or return after specfied time.  */
 int
-pthread_rwlock_timedrdlock (pthread_rwlock_t *rwlock,
-			    const struct timespec *abstime)
+pthread_rwlock_timedrdlock (rwlock, abstime)
+     pthread_rwlock_t *rwlock;
+     const struct timespec *abstime;
 {
   int result = 0;
-  bool wake = false;
-  int futex_shared =
-      rwlock->__data.__shared == LLL_PRIVATE ? FUTEX_PRIVATE : FUTEX_SHARED;
 
   /* Make sure we are alone.  */
   lll_lock(rwlock->__data.__lock, rwlock->__data.__shared);
@@ -55,17 +50,6 @@ pthread_rwlock_timedrdlock (pthread_rwlock_t *rwlock,
 	      /* Overflow on number of readers.	 */
 	      --rwlock->__data.__nr_readers;
 	      result = EAGAIN;
-	    }
-	  else
-	    {
-	      /* See pthread_rwlock_rdlock.  */
-	      if (rwlock->__data.__nr_readers == 1
-		  && rwlock->__data.__nr_readers_queued > 0
-		  && rwlock->__data.__nr_writers_queued > 0)
-		{
-		  ++rwlock->__data.__readers_wakeup;
-		  wake = true;
-		}
 	    }
 
 	  break;
@@ -92,6 +76,38 @@ pthread_rwlock_timedrdlock (pthread_rwlock_t *rwlock,
 	  break;
 	}
 
+      /* Work around the fact that the kernel rejects negative timeout values
+	 despite them being valid.  */
+      if (__builtin_expect (abstime->tv_sec < 0, 0))
+	{
+	  result = ETIMEDOUT;
+	  break;
+	}
+
+#if (!defined __ASSUME_FUTEX_CLOCK_REALTIME \
+     || !defined lll_futex_timed_wait_bitset)
+      /* Get the current time.  So far we support only one clock.  */
+      struct timeval tv;
+      (void) gettimeofday (&tv, NULL);
+
+      /* Convert the absolute timeout value to a relative timeout.  */
+      struct timespec rt;
+      rt.tv_sec = abstime->tv_sec - tv.tv_sec;
+      rt.tv_nsec = abstime->tv_nsec - tv.tv_usec * 1000;
+      if (rt.tv_nsec < 0)
+	{
+	  rt.tv_nsec += 1000000000;
+	  --rt.tv_sec;
+	}
+      /* Did we already time out?  */
+      if (rt.tv_sec < 0)
+	{
+	  /* Yep, return with an appropriate error.  */
+	  result = ETIMEDOUT;
+	  break;
+	}
+#endif
+
       /* Remember that we are a reader.  */
       if (++rwlock->__data.__nr_readers_queued == 0)
 	{
@@ -106,11 +122,17 @@ pthread_rwlock_timedrdlock (pthread_rwlock_t *rwlock,
       /* Free the lock.  */
       lll_unlock (rwlock->__data.__lock, rwlock->__data.__shared);
 
-      /* Wait for the writer to finish.  We handle ETIMEDOUT below; on other
-	 return values, we decide how to continue based on the state of the
-	 rwlock.  */
-      err = futex_abstimed_wait (&rwlock->__data.__readers_wakeup, waitval,
-				 abstime, futex_shared);
+      /* Wait for the writer to finish.  */
+#if (!defined __ASSUME_FUTEX_CLOCK_REALTIME \
+     || !defined lll_futex_timed_wait_bitset)
+      err = lll_futex_timed_wait (&rwlock->__data.__readers_wakeup,
+				  waitval, &rt, rwlock->__data.__shared);
+#else
+      err = lll_futex_timed_wait_bitset (&rwlock->__data.__readers_wakeup,
+					 waitval, abstime,
+					 FUTEX_CLOCK_REALTIME,
+					 rwlock->__data.__shared);
+#endif
 
       /* Get the lock.  */
       lll_lock (rwlock->__data.__lock, rwlock->__data.__shared);
@@ -118,7 +140,7 @@ pthread_rwlock_timedrdlock (pthread_rwlock_t *rwlock,
       --rwlock->__data.__nr_readers_queued;
 
       /* Did the futex call time out?  */
-      if (err == ETIMEDOUT)
+      if (err == -ETIMEDOUT)
 	{
 	  /* Yep, report it.  */
 	  result = ETIMEDOUT;
@@ -128,9 +150,6 @@ pthread_rwlock_timedrdlock (pthread_rwlock_t *rwlock,
 
   /* We are done, free the lock.  */
   lll_unlock (rwlock->__data.__lock, rwlock->__data.__shared);
-
-  if (wake)
-    futex_wake (&rwlock->__data.__readers_wakeup, INT_MAX, futex_shared);
 
   return result;
 }

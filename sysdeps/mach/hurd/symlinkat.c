@@ -1,5 +1,5 @@
 /* Create a symbolic link named relative to an open directory.  Hurd version.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,7 +28,10 @@
 
 /* Make a link to FROM called TO relative to FD.  */
 int
-symlinkat (const char *from, int fd, const char *to)
+symlinkat (from, fd, to)
+     const char *from;
+     int fd;
+     const char *to;
 {
   error_t err;
   file_t dir, node;

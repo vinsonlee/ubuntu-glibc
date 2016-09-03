@@ -1,5 +1,5 @@
 /* Determine various system internal values, Linux version.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -34,6 +34,7 @@
 
 #include <atomic.h>
 #include <not-cancel.h>
+#include <kernel-features.h>
 
 
 /* How we can determine the number of available processors depends on
@@ -125,13 +126,13 @@ next_line (int fd, char *const buffer, char **cp, char **re,
 int
 __get_nprocs (void)
 {
-  static int cached_result = -1;
+  static int cached_result;
   static time_t timestamp;
 
   time_t now = time (NULL);
   time_t prev = timestamp;
   atomic_read_barrier ();
-  if (now == prev && cached_result > -1)
+  if (now == prev)
     return cached_result;
 
   /* XXX Here will come a test for the new system call.  */
@@ -142,7 +143,11 @@ __get_nprocs (void)
   char *cp = buffer_end;
   char *re = buffer_end;
 
+#ifdef O_CLOEXEC
   const int flags = O_RDONLY | O_CLOEXEC;
+#else
+  const int flags = O_RDONLY;
+#endif
   int fd = open_not_cancel_2 ("/sys/devices/system/cpu/online", flags);
   char *l;
   int result = 0;
@@ -278,53 +283,81 @@ __get_nprocs_conf (void)
 }
 weak_alias (__get_nprocs_conf, get_nprocs_conf)
 
-
-/* Compute (num*mem_unit)/pagesize, but avoid overflowing long int.
-   In practice, mem_unit is never bigger than the page size, so after
-   the first loop it is 1.  [In the kernel, it is initialized to
-   PAGE_SIZE in mm/page_alloc.c:si_meminfo(), and then in
-   kernel.sys.c:do_sysinfo() it is set to 1 if unsigned long can
-   represent all the sizes measured in bytes].  */
+/* General function to get information about memory status from proc
+   filesystem.  */
 static long int
-sysinfo_mempages (unsigned long int num, unsigned int mem_unit)
+internal_function
+phys_pages_info (const char *format)
 {
-  unsigned long int ps = __getpagesize ();
+  char buffer[8192];
+  long int result = -1;
 
-  while (mem_unit > 1 && ps > 1)
+  /* If we haven't found an appropriate entry return 1.  */
+  FILE *fp = fopen ("/proc/meminfo", "rce");
+  if (fp != NULL)
     {
-      mem_unit >>= 1;
-      ps >>= 1;
+      /* No threads use this stream.  */
+      __fsetlocking (fp, FSETLOCKING_BYCALLER);
+
+      result = 0;
+      /* Read all lines and count the lines starting with the
+	 string "processor".  We don't have to fear extremely long
+	 lines since the kernel will not generate them.  8192
+	 bytes are really enough.  */
+      while (fgets_unlocked (buffer, sizeof buffer, fp) != NULL)
+	if (sscanf (buffer, format, &result) == 1)
+	  {
+	    result /= (__getpagesize () / 1024);
+	    break;
+	  }
+
+      fclose (fp);
     }
-  num *= mem_unit;
-  while (ps > 1)
-    {
-      ps >>= 1;
-      num >>= 1;
-    }
-  return num;
+
+  if (result == -1)
+    /* We cannot get the needed value: signal an error.  */
+    __set_errno (ENOSYS);
+
+  return result;
 }
 
-/* Return the number of pages of total/available physical memory in
-   the system.  This used to be done by parsing /proc/meminfo, but
-   that's unnecessarily expensive (and /proc is not always available).
-   The sysinfo syscall provides the same information, and has been
-   available at least since kernel 2.3.48.  */
+
+/* Return the number of pages of physical memory in the system.  There
+   is currently (as of version 2.0.21) no system call to determine the
+   number.  It is planned for the 2.1.x series to add this, though.
+
+   One possibility to implement it for systems using Linux 2.0 is to
+   examine the pseudo file /proc/cpuinfo.  Here we have one entry for
+   each processor.
+
+   But not all systems have support for the /proc filesystem.  If it
+   is not available we return -1 as an error signal.  */
 long int
 __get_phys_pages (void)
 {
-  struct sysinfo info;
+  /* XXX Here will come a test for the new system call.  */
 
-  __sysinfo (&info);
-  return sysinfo_mempages (info.totalram, info.mem_unit);
+  return phys_pages_info ("MemTotal: %ld kB");
 }
 weak_alias (__get_phys_pages, get_phys_pages)
 
+
+/* Return the number of available pages of physical memory in the
+   system.  There is currently (as of version 2.0.21) no system call
+   to determine the number.  It is planned for the 2.1.x series to add
+   this, though.
+
+   One possibility to implement it for systems using Linux 2.0 is to
+   examine the pseudo file /proc/cpuinfo.  Here we have one entry for
+   each processor.
+
+   But not all systems have support for the /proc filesystem.  If it
+   is not available we return -1 as an error signal.  */
 long int
 __get_avphys_pages (void)
 {
-  struct sysinfo info;
+  /* XXX Here will come a test for the new system call.  */
 
-  __sysinfo (&info);
-  return sysinfo_mempages (info.freeram, info.mem_unit);
+  return phys_pages_info ("MemFree: %ld kB");
 }
 weak_alias (__get_avphys_pages, get_avphys_pages)

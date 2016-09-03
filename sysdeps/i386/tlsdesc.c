@@ -1,5 +1,5 @@
 /* Manage TLS descriptors.  i386 version.
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@
 #include <elf/dynamic-link.h>
 #include <tls.h>
 #include <dl-tlsdesc.h>
-#include <dl-unmap-segments.h>
 #include <tlsdeschtab.h>
 
 /* The following 4 functions take an entry_check_offset argument.
@@ -259,9 +258,10 @@ void
 internal_function
 _dl_unmap (struct link_map *map)
 {
-  _dl_unmap_segments (map);
+  __munmap ((void *) (map)->l_map_start,
+	    (map)->l_map_end - (map)->l_map_start);
 
-#ifdef SHARED
+#if SHARED
   if (map->l_mach.tlsdesc_table)
     htab_delete (map->l_mach.tlsdesc_table);
 #endif

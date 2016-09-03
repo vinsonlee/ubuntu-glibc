@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@
 #include <hurd/socket.h>
 #include <sys/un.h>
 #include <hurd/ifsock.h>
-#include "hurd/hurdsocket.h"
 
 /* Open a connection on socket FD to peer at ADDR (which LEN bytes long).
    For connectionless socket types, just set the default address to send to
@@ -37,10 +36,9 @@ __connect (int fd, __CONST_SOCKADDR_ARG addrarg, socklen_t len)
 
   if (addr->sun_family == AF_LOCAL)
     {
-      char *name = _hurd_sun_path_dupa (addr, len);
       /* For the local domain, we must look up the name as a file and talk
 	 to it with the ifsock protocol.  */
-      file_t file = __file_name_lookup (name, 0, 0);
+      file_t file = __file_name_lookup (addr->sun_path, 0, 0);
       if (file == MACH_PORT_NULL)
 	return -1;
       err = __ifsock_getsockaddr (file, &aport);

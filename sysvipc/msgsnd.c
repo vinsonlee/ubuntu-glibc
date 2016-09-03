@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, August 1995.
 
@@ -26,7 +26,11 @@
    when the limit of the message queue length is reached.  */
 
 int
-msgsnd (int msqid, const void *msgp, size_t msgsz, int msgflg)
+msgsnd (msqid, msgp, msgsz, msgflg)
+     int msqid;
+     const void *msgp;
+     size_t msgsz;
+     int msgflg;
 {
   __set_errno (ENOSYS);
   return -1;
