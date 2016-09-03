@@ -6,7 +6,9 @@
 /* Now define the internal interfaces.  */
 extern int __matherr (struct exception *__exc);
 
-# if !defined NOT_IN_libc || defined IS_IN_libm
+extern int __signgam;
+
+# if IS_IN (libc) || IS_IN (libm)
 hidden_proto (__finite)
 hidden_proto (__isinf)
 hidden_proto (__isnan)
@@ -34,10 +36,6 @@ libm_hidden_proto (__issignalingl)
 libm_hidden_proto (__expl)
 libm_hidden_proto (__expm1l)
 # endif
-
-extern int __isinf_ns (double);
-extern int __isinf_nsf (float);
-extern int __isinf_nsl (long double);
 
 #endif
 #endif

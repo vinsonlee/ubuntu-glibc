@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,9 +22,7 @@
 
 /* Change the protections of FILE to MODE.  */
 int
-__chmod (file, mode)
-     const char *file;
-     mode_t mode;
+__chmod (const char *file, mode_t mode)
 {
   error_t err;
   file_t port = __file_name_lookup (file, 0, 0);

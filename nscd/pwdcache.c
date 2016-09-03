@@ -1,5 +1,5 @@
 /* Cache handling for passwd lookup.
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -135,14 +135,10 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	  else if ((dataset = mempool_alloc (db, (sizeof (struct dataset)
 						  + req->key_len), 1)) != NULL)
 	    {
-	      dataset->head.allocsize = sizeof (struct dataset) + req->key_len;
-	      dataset->head.recsize = total;
-	      dataset->head.notfound = true;
-	      dataset->head.nreloads = 0;
-	      dataset->head.usable = true;
-
-	      /* Compute the timeout time.  */
-	      timeout = dataset->head.timeout = t + db->negtimeout;
+	      timeout = datahead_init_neg (&dataset->head,
+					   (sizeof (struct dataset)
+					    + req->key_len), total,
+					   db->negtimeout);
 
 	      /* This is the reply.  */
 	      memcpy (&dataset->resp, &notfound, total);
@@ -202,10 +198,19 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
       dataset = NULL;
 
       if (he == NULL)
-	dataset = (struct dataset *) mempool_alloc (db, total + n, 1);
+	{
+	  /* Prevent an INVALIDATE request from pruning the data between
+	     the two calls to cache_add.  */
+	  if (db->propagate)
+	    pthread_mutex_lock (&db->prune_run_lock);
+	  dataset = (struct dataset *) mempool_alloc (db, total + n, 1);
+	}
 
       if (dataset == NULL)
 	{
+	  if (he == NULL && db->propagate)
+	    pthread_mutex_unlock (&db->prune_run_lock);
+
 	  /* We cannot permanently add the result in the moment.  But
 	     we can provide the result as is.  Store the data in some
 	     temporary memory.  */
@@ -215,14 +220,10 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	  alloca_used = true;
 	}
 
-      dataset->head.allocsize = total + n;
-      dataset->head.recsize = total - offsetof (struct dataset, resp);
-      dataset->head.notfound = false;
-      dataset->head.nreloads = he == NULL ? 0 : (dh->nreloads + 1);
-      dataset->head.usable = true;
-
-      /* Compute the timeout time.  */
-      timeout = dataset->head.timeout = t + db->postimeout;
+      timeout = datahead_init_pos (&dataset->head, total + n,
+				   total - offsetof (struct dataset, resp),
+				   he == NULL ? 0 : dh->nreloads + 1,
+				   db->postimeout);
 
       dataset->resp.version = NSCD_VERSION;
       dataset->resp.found = 1;
@@ -382,6 +383,8 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 
 	out:
 	  pthread_rwlock_unlock (&db->lock);
+	  if (he == NULL && db->propagate)
+	    pthread_mutex_unlock (&db->prune_run_lock);
 	}
     }
 
@@ -430,7 +433,7 @@ addpwbyX (struct database_dyn *db, int fd, request_header *req,
   bool use_malloc = false;
   int errval = 0;
 
-  if (__builtin_expect (debug_level > 0, 0))
+  if (__glibc_unlikely (debug_level > 0))
     {
       if (he == NULL)
 	dbg_log (_("Haven't found \"%s\" in password cache!"), keystr);
@@ -443,7 +446,7 @@ addpwbyX (struct database_dyn *db, int fd, request_header *req,
     {
       errno = 0;
 
-      if (__builtin_expect (buflen > 32768, 0))
+      if (__glibc_unlikely (buflen > 32768))
 	{
 	  char *old_buffer = buffer;
 	  buflen *= 2;

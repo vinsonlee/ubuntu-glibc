@@ -21,6 +21,7 @@ static char rcsid[] = "$NetBSD: s_erff.c,v 1.4 1995/05/10 20:47:07 jtc Exp $";
 #include <float.h>
 #include <math.h>
 #include <math_private.h>
+#include <fix-int-fp-convert-zero.h>
 
 static const float
 tiny	    = 1e-30,
@@ -33,7 +34,6 @@ erx =  8.4506291151e-01, /* 0x3f58560b */
  * Coefficients for approximation to  erf on [0,0.84375]
  */
 efx =  1.2837916613e-01, /* 0x3e0375d4 */
-efx8=  1.0270333290e+00, /* 0x3f8375d4 */
 pp0  =  1.2837916613e-01, /* 0x3e0375d4 */
 pp1  = -3.2504209876e-01, /* 0xbea66beb */
 pp2  = -2.8481749818e-02, /* 0xbce9528f */
@@ -111,8 +111,12 @@ float __erff(float x)
 	if(ix < 0x3f580000) {		/* |x|<0.84375 */
 	    if(ix < 0x31800000) { 	/* |x|<2**-28 */
 	        if (ix < 0x04000000)
-		    /*avoid underflow */
-		    return (float)0.125*((float)8.0*x+efx8*x);
+		  {
+		    /* Avoid spurious underflow.  */
+		    float ret = 0.0625f * (16.0f * x + (16.0f * efx) * x);
+		    math_check_force_underflow (ret);
+		    return ret;
+		  }
 		return x + efx*x;
 	    }
 	    z = x*x;
@@ -158,11 +162,14 @@ float __erfcf(float x)
 	ix = hx&0x7fffffff;
 	if(ix>=0x7f800000) {			/* erfc(nan)=nan */
 						/* erfc(+-inf)=0,2 */
-	    return (float)(((u_int32_t)hx>>31)<<1)+one/x;
+	    float ret = (float)(((u_int32_t)hx>>31)<<1)+one/x;
+	    if (FIX_INT_FP_CONVERT_ZERO && ret == 0.0f)
+	      return 0.0f;
+	    return ret;
 	}
 
 	if(ix < 0x3f580000) {		/* |x|<0.84375 */
-	    if(ix < 0x23800000)  	/* |x|<2**-56 */
+	    if(ix < 0x32800000)  	/* |x|<2**-26 */
 		return one-x;
 	    z = x*x;
 	    r = pp0+z*(pp1+z*(pp2+z*(pp3+z*pp4)));
@@ -206,10 +213,7 @@ float __erfcf(float x)
 	    r  =  __ieee754_expf(-z*z-(float)0.5625)*
 			__ieee754_expf((z-x)*(z+x)+R/S);
 	    if(hx>0) {
-#if FLT_EVAL_METHOD != 0
-		volatile
-#endif
-		float ret = r/x;
+		float ret = math_narrow_eval (r/x);
 		if (ret == 0)
 		    __set_errno (ERANGE);
 		return ret;

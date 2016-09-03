@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,9 +19,7 @@
 
 /* Return 1 if SIGNO is in SET, 0 if not.  */
 int
-sigismember (set, signo)
-     const sigset_t *set;
-     int signo;
+sigismember (const sigset_t *set, int signo)
 {
   if (set == NULL || signo <= 0 || signo >= NSIG)
     {

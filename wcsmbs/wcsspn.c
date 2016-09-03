@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -18,13 +18,14 @@
 
 #include <wchar.h>
 
+#ifdef WCSSPN
+# define wcsspn WCSSPN
+#endif
 
 /* Return the length of the maximum initial segment
    of WCS which contains only wide-characters in ACCEPT.  */
 size_t
-wcsspn (wcs, accept)
-     const wchar_t *wcs;
-     const wchar_t *accept;
+wcsspn (const wchar_t *wcs, const wchar_t *accept)
 {
   const wchar_t *p;
   const wchar_t *a;

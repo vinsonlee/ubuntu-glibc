@@ -1,5 +1,5 @@
 /* ix87 specific implementation of exp(x)-1.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
    Based on code by John C. Bowman <bowman@ipp-garching.mpg.de>.
@@ -23,6 +23,7 @@
 
 #include <sysdep.h>
 #include <machine/asm.h>
+#include <i386-math-asm.h>
 
 	.section .rodata
 
@@ -36,6 +37,8 @@ one:	.double 1.0
 	.type l2e,@object
 l2e:	.tfloat 1.442695040888963407359924681002
 	ASM_SIZE_DIRECTIVE(l2e)
+
+DEFINE_DBL_MIN
 
 #ifdef PIC
 #define MO(op) op##@GOTOFF(%edx)
@@ -100,6 +103,7 @@ ENTRY(__expm1)
 	fsubrl	MO(one)		// 1-2^int(log2(e)*x) : int(log2(e)*x) : 2^(log2(e)*x)-2^int(log2(e)*x)
 	fstp	%st(1)		// 1-2^int(log2(e)*x) : 2^(log2(e)*x)-2^int(log2(e)*x)
 	fsubrp	%st, %st(1)	// 2^(log2(e)*x)
+	DBL_CHECK_FORCE_UFLOW
 	ret
 
 2:	fstp	%st

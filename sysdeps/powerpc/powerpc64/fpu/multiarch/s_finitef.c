@@ -1,5 +1,5 @@
 /* Multiple versions of finitef.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,10 +23,13 @@
 extern __typeof (__finitef) __finitef_ppc64 attribute_hidden;
 /* The double-precision version also works for single-precision.  */
 extern __typeof (__finitef) __finite_power7 attribute_hidden;
+extern __typeof (__finitef) __finite_power8 attribute_hidden;
 
 libc_ifunc (__finitef,
-	    (hwcap & PPC_FEATURE_ARCH_2_06)
-	    ? __finite_power7
+	    (hwcap2 & PPC_FEATURE2_ARCH_2_07)
+	    ? __finite_power8 :
+	      (hwcap & PPC_FEATURE_ARCH_2_06)
+	      ? __finite_power7
             : __finitef_ppc64);
 
 weak_alias (__finitef, finitef)

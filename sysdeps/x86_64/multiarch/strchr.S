@@ -1,5 +1,5 @@
 /* Multiple versions of strchr
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,15 +21,13 @@
 
 
 /* Define multiple versions only for the definition in libc.  */
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 	.text
 ENTRY(strchr)
 	.type	strchr, @gnu_indirect_function
-	cmpl	$0, __cpu_features+KIND_OFFSET(%rip)
-	jne	1f
-	call	__init_cpu_features
-1:	leaq	__strchr_sse2(%rip), %rax
-2:	testl	$bit_Slow_BSF, __cpu_features+FEATURE_OFFSET+index_Slow_BSF(%rip)
+	LOAD_RTLD_GLOBAL_RO_RDX
+	leaq	__strchr_sse2(%rip), %rax
+2:	HAS_ARCH_FEATURE (Slow_BSF)
 	jz	3f
 	leaq    __strchr_sse2_no_bsf(%rip), %rax
 3:	ret

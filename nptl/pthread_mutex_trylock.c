@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -26,16 +26,12 @@
 #define lll_trylock_elision(a,t) lll_trylock(a)
 #endif
 
-#ifndef DO_ELISION
-#define DO_ELISION(m) 0
+#ifndef FORCE_ELISION
+#define FORCE_ELISION(m, s)
 #endif
 
-/* We don't force elision in trylock, because this can lead to inconsistent
-   lock state if the lock was actually busy.  */
-
 int
-__pthread_mutex_trylock (mutex)
-     pthread_mutex_t *mutex;
+__pthread_mutex_trylock (pthread_mutex_t *mutex)
 {
   int oldval;
   pid_t id = THREAD_GETMEM (THREAD_SELF, tid);
@@ -50,7 +46,7 @@ __pthread_mutex_trylock (mutex)
       if (mutex->__data.__owner == id)
 	{
 	  /* Just bump the counter.  */
-	  if (__builtin_expect (mutex->__data.__count + 1 == 0, 0))
+	  if (__glibc_unlikely (mutex->__data.__count + 1 == 0))
 	    /* Overflow of the counter.  */
 	    return EAGAIN;
 
@@ -69,16 +65,15 @@ __pthread_mutex_trylock (mutex)
       break;
 
     case PTHREAD_MUTEX_TIMED_ELISION_NP:
-    elision:
+    elision: __attribute__((unused))
       if (lll_trylock_elision (mutex->__data.__lock,
 			       mutex->__data.__elision) != 0)
-        break;
+	break;
       /* Don't record the ownership.  */
       return 0;
 
     case PTHREAD_MUTEX_TIMED_NP:
-      if (DO_ELISION (mutex))
-	goto elision;
+      FORCE_ELISION (mutex, goto elision);
       /*FALL THROUGH*/
     case PTHREAD_MUTEX_ADAPTIVE_NP:
     case PTHREAD_MUTEX_ERRORCHECK_NP:
@@ -133,7 +128,7 @@ __pthread_mutex_trylock (mutex)
 	    }
 
 	  /* Check whether we already hold the mutex.  */
-	  if (__builtin_expect ((oldval & FUTEX_TID_MASK) == id, 0))
+	  if (__glibc_unlikely ((oldval & FUTEX_TID_MASK) == id))
 	    {
 	      int kind = PTHREAD_MUTEX_TYPE (mutex);
 	      if (kind == PTHREAD_MUTEX_ROBUST_ERRORCHECK_NP)
@@ -149,7 +144,7 @@ __pthread_mutex_trylock (mutex)
 				 NULL);
 
 		  /* Just bump the counter.  */
-		  if (__builtin_expect (mutex->__data.__count + 1 == 0, 0))
+		  if (__glibc_unlikely (mutex->__data.__count + 1 == 0))
 		    /* Overflow of the counter.  */
 		    return EAGAIN;
 
@@ -159,7 +154,8 @@ __pthread_mutex_trylock (mutex)
 		}
 	    }
 
-	  oldval = lll_robust_trylock (mutex->__data.__lock, id);
+	  oldval = atomic_compare_and_exchange_val_acq (&mutex->__data.__lock,
+							id, 0);
 	  if (oldval != 0 && (oldval & FUTEX_OWNER_DIED) == 0)
 	    {
 	      THREAD_SETMEM (THREAD_SELF, robust_head.list_op_pending, NULL);
@@ -190,6 +186,10 @@ __pthread_mutex_trylock (mutex)
 
       return 0;
 
+    /* The PI support requires the Linux futex system call.  If that's not
+       available, pthread_mutex_init should never have allowed the type to
+       be set.  So it will get the default case for an invalid type.  */
+#ifdef __NR_futex
     case PTHREAD_MUTEX_PI_RECURSIVE_NP:
     case PTHREAD_MUTEX_PI_ERRORCHECK_NP:
     case PTHREAD_MUTEX_PI_NORMAL_NP:
@@ -211,7 +211,7 @@ __pthread_mutex_trylock (mutex)
 	oldval = mutex->__data.__lock;
 
 	/* Check whether we already hold the mutex.  */
-	if (__builtin_expect ((oldval & FUTEX_TID_MASK) == id, 0))
+	if (__glibc_unlikely ((oldval & FUTEX_TID_MASK) == id))
 	  {
 	    if (kind == PTHREAD_MUTEX_ERRORCHECK_NP)
 	      {
@@ -224,7 +224,7 @@ __pthread_mutex_trylock (mutex)
 		THREAD_SETMEM (THREAD_SELF, robust_head.list_op_pending, NULL);
 
 		/* Just bump the counter.  */
-		if (__builtin_expect (mutex->__data.__count + 1 == 0, 0))
+		if (__glibc_unlikely (mutex->__data.__count + 1 == 0))
 		  /* Overflow of the counter.  */
 		  return EAGAIN;
 
@@ -270,7 +270,7 @@ __pthread_mutex_trylock (mutex)
 	    oldval = mutex->__data.__lock;
 	  }
 
-	if (__builtin_expect (oldval & FUTEX_OWNER_DIED, 0))
+	if (__glibc_unlikely (oldval & FUTEX_OWNER_DIED))
 	  {
 	    atomic_and (&mutex->__data.__lock, ~FUTEX_OWNER_DIED);
 
@@ -318,6 +318,7 @@ __pthread_mutex_trylock (mutex)
 
 	return 0;
       }
+#endif  /* __NR_futex.  */
 
     case PTHREAD_MUTEX_PP_RECURSIVE_NP:
     case PTHREAD_MUTEX_PP_ERRORCHECK_NP:
@@ -337,7 +338,7 @@ __pthread_mutex_trylock (mutex)
 	    if (kind == PTHREAD_MUTEX_RECURSIVE_NP)
 	      {
 		/* Just bump the counter.  */
-		if (__builtin_expect (mutex->__data.__count + 1 == 0, 0))
+		if (__glibc_unlikely (mutex->__data.__count + 1 == 0))
 		  /* Overflow of the counter.  */
 		  return EAGAIN;
 

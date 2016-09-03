@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Zack Weinberg <zack@rabi.phys.columbia.edu>, 1998.
 
@@ -35,8 +35,7 @@ int __bsd_getpt (void);
 
 /* Open a master pseudo terminal and return its file descriptor.  */
 int
-__posix_openpt (oflag)
-     int oflag;
+__posix_openpt (int oflag)
 {
   static int have_no_dev_ptmx;
   int fd;

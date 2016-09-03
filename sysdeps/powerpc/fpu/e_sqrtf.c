@@ -1,5 +1,5 @@
 /* Single-precision floating point square root.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #include <sysdep.h>
 #include <ldsodefs.h>
 
+#ifndef _ARCH_PPCSQ
 static const float almost_half = 0.50000006;	/* 0.5 + 2^-24 */
 static const ieee_float_shape_type a_nan = {.word = 0x7fc00000 };
 static const ieee_float_shape_type a_inf = {.word = 0x7f800000 };
@@ -86,26 +87,28 @@ __slow_ieee754_sqrtf (float x)
 	  /* Here we have three Newton-Raphson iterations each of a
 	     division and a square root and the remainder of the
 	     argument reduction, all interleaved.   */
-	  sd = -(sg * sg - sx);
+	  sd = -__builtin_fmaf (sg, sg, -sx);
 	  fsgi = (xi + 0x40000000) >> 1 & 0x7f800000;
 	  sy2 = sy + sy;
-	  sg = sy * sd + sg;	/* 16-bit approximation to sqrt(sx). */
-	  e = -(sy * sg - almost_half);
+	  sg = __builtin_fmaf (sy, sd, sg);	/* 16-bit approximation to
+						   sqrt(sx). */
+	  e = -__builtin_fmaf (sy, sg, -almost_half);
 	  SET_FLOAT_WORD (fsg, fsgi);
-	  sd = -(sg * sg - sx);
-	  sy = sy + e * sy2;
+	  sd = -__builtin_fmaf (sg, sg, -sx);
+	  sy = __builtin_fmaf (e, sy2, sy);
 	  if ((xi & 0x7f800000) == 0)
 	    goto denorm;
 	  shx = sx * fsg;
-	  sg = sg + sy * sd;	/* 32-bit approximation to sqrt(sx),
-				   but perhaps rounded incorrectly.  */
+	  sg = __builtin_fmaf (sy, sd, sg);	/* 32-bit approximation to
+						   sqrt(sx), but perhaps
+						   rounded incorrectly.  */
 	  sy2 = sy + sy;
 	  g = sg * fsg;
-	  e = -(sy * sg - almost_half);
-	  d = -(g * sg - shx);
-	  sy = sy + e * sy2;
+	  e = -__builtin_fmaf (sy, sg, -almost_half);
+	  d = -__builtin_fmaf (g, sg, -shx);
+	  sy = __builtin_fmaf (e, sy2, sy);
 	  fesetenv_register (fe);
-	  return g + sy * d;
+	  return __builtin_fmaf (sy, d, g);
 	denorm:
 	  /* For denormalised numbers, we normalise, calculate the
 	     square root, and return an adjusted result.  */
@@ -128,6 +131,7 @@ __slow_ieee754_sqrtf (float x)
     }
   return f_washf (x);
 }
+#endif /* _ARCH_PPCSQ  */
 
 #undef __ieee754_sqrtf
 float
@@ -135,16 +139,11 @@ __ieee754_sqrtf (float x)
 {
   double z;
 
-  /* If the CPU is 64-bit we can use the optional FP instructions.  */
-  if (__CPU_HAS_FSQRT)
-    {
-      /* Volatile is required to prevent the compiler from moving the
-	 fsqrt instruction above the branch.  */
-      __asm __volatile ("	fsqrts	%0,%1\n"
-				:"=f" (z):"f" (x));
-    }
-  else
-    z = __slow_ieee754_sqrtf (x);
+#ifdef _ARCH_PPCSQ
+  asm ("fsqrts	%0,%1\n" :"=f" (z):"f" (x));
+#else
+  z = __slow_ieee754_sqrtf (x);
+#endif
 
   return z;
 }

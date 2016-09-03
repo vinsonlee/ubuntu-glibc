@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,15 +18,16 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/reboot.h>
+#include <libc-internal.h>
 
 /* Reboot the system.  */
 int
-reboot (howto)
-     int howto;
+reboot (int howto)
 {
+  ignore_value (howto);
+
   __set_errno (ENOSYS);
   return -1;
 }
-
 
 stub_warning (reboot)

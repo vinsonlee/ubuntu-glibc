@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,9 +31,7 @@
 static wint_t _IO_wstrn_overflow (_IO_FILE *fp, wint_t c) __THROW;
 
 static wint_t
-_IO_wstrn_overflow (fp, c)
-     _IO_FILE *fp;
-     wint_t c;
+_IO_wstrn_overflow (_IO_FILE *fp, wint_t c)
 {
   /* When we come to here this means the user supplied buffer is
      filled.  But since we must return the number of characters which
@@ -65,7 +63,7 @@ _IO_wstrn_overflow (fp, c)
 }
 
 
-const struct _IO_jump_t _IO_wstrn_jumps attribute_hidden =
+const struct _IO_jump_t _IO_wstrn_jumps libio_vtable attribute_hidden =
 {
   JUMP_INIT_DUMMY,
   JUMP_INIT(finish, _IO_wstr_finish),
@@ -91,11 +89,8 @@ const struct _IO_jump_t _IO_wstrn_jumps attribute_hidden =
 
 
 int
-_IO_vswprintf (string, maxlen, format, args)
-     wchar_t *string;
-     _IO_size_t maxlen;
-     const wchar_t *format;
-     _IO_va_list args;
+_IO_vswprintf (wchar_t *string, _IO_size_t maxlen, const wchar_t *format,
+	       _IO_va_list args)
 {
   _IO_wstrnfile sf;
   int ret;

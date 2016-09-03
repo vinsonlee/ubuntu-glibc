@@ -1,5 +1,5 @@
 /* Copy a sign bit between floating-point values.  PowerPC64 version.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,11 +27,11 @@ ENTRY(__copysign)
 /* double [f1] copysign (double [f1] x, double [f2] y);
    copysign(x,y) returns a value with the magnitude of x and
    with the sign bit of y.  */
-	stfd	fp2,56(r1)
+	stfd	fp2,-8(r1)
 	nop
 	nop
 	nop
-	ld	r3,56(r1)
+	ld	r3,-8(r1)
 	cmpdi   r3,0
 	blt     L(0)
 	fabs    fp1,fp1
@@ -50,7 +50,7 @@ strong_alias(__copysign,__copysignf)
 weak_alias (__copysign,copysignl)
 strong_alias(__copysign,__copysignl)
 #endif
-#ifdef IS_IN_libm
+#if IS_IN (libm)
 # if LONG_DOUBLE_COMPAT(libm, GLIBC_2_0)
 compat_symbol (libm, __copysign, copysignl, GLIBC_2_0)
 # endif

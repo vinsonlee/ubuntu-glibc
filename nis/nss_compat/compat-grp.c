@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1996.
 
@@ -25,7 +25,7 @@
 #include <stdio_ext.h>
 #include <string.h>
 #include <rpc/types.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <kernel-features.h>
 
 static service_user *ni;
@@ -194,9 +194,6 @@ _nss_compat_setgrent (int stayopen)
 static enum nss_status
 internal_endgrent (ent_t *ent)
 {
-  if (nss_endgrent)
-    nss_endgrent ();
-
   if (ent->stream != NULL)
     {
       fclose (ent->stream);
@@ -221,6 +218,9 @@ _nss_compat_endgrent (void)
   enum nss_status result;
 
   __libc_lock_lock (lock);
+
+  if (nss_endgrent)
+    nss_endgrent ();
 
   result = internal_endgrent (&ext_ent);
 
@@ -288,7 +288,7 @@ getgrent_next_file (struct group *result, ent_t *ent,
       do
 	{
 	  /* We need at least 3 characters for one line.  */
-	  if (__builtin_expect (buflen < 3, 0))
+	  if (__glibc_unlikely (buflen < 3))
 	    {
 	    erange:
 	      *errnop = ERANGE;
@@ -321,7 +321,7 @@ getgrent_next_file (struct group *result, ent_t *ent,
 	     !(parse_res = _nss_files_parse_grent (p, result, data, buflen,
 						   errnop)));
 
-      if (__builtin_expect (parse_res == -1, 0))
+      if (__glibc_unlikely (parse_res == -1))
 	/* The parser ran out of space.  */
 	goto erange_reset;
 
@@ -421,7 +421,7 @@ internal_getgrnam_r (const char *name, struct group *result, ent_t *ent,
       do
 	{
 	  /* We need at least 3 characters for one line.  */
-	  if (__builtin_expect (buflen < 3, 0))
+	  if (__glibc_unlikely (buflen < 3))
 	    {
 	    erange:
 	      *errnop = ERANGE;
@@ -454,7 +454,7 @@ internal_getgrnam_r (const char *name, struct group *result, ent_t *ent,
 	     !(parse_res = _nss_files_parse_grent (p, result, data, buflen,
 						   errnop)));
 
-      if (__builtin_expect (parse_res == -1, 0))
+      if (__glibc_unlikely (parse_res == -1))
 	/* The parser ran out of space.  */
 	goto erange_reset;
 
@@ -552,7 +552,7 @@ internal_getgrgid_r (gid_t gid, struct group *result, ent_t *ent,
       do
 	{
 	  /* We need at least 3 characters for one line.  */
-	  if (__builtin_expect (buflen < 3, 0))
+	  if (__glibc_unlikely (buflen < 3))
 	    {
 	    erange:
 	      *errnop = ERANGE;
@@ -585,7 +585,7 @@ internal_getgrgid_r (gid_t gid, struct group *result, ent_t *ent,
 	     !(parse_res = _nss_files_parse_grent (p, result, data, buflen,
 						   errnop)));
 
-      if (__builtin_expect (parse_res == -1, 0))
+      if (__glibc_unlikely (parse_res == -1))
 	/* The parser ran out of space.  */
 	goto erange_reset;
 

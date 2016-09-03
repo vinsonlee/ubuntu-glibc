@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Schwab <schwab@redhat.com>, 2010.
 
@@ -23,39 +23,42 @@
 #include <sys/syscall.h>
 #include <kernel-features.h>
 
+/* Do not use the recvmmsg syscall on socketcall architectures unless
+   it was added at the same time as the socketcall support or can be
+   assumed to be present.  */
+#if defined __ASSUME_SOCKETCALL \
+    && !defined __ASSUME_RECVMMSG_SYSCALL_WITH_SOCKETCALL \
+    && !defined __ASSUME_RECVMMSG_SYSCALL
+# undef __NR_recvmmsg
+#endif
 
 #ifdef __NR_recvmmsg
 int
 recvmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags,
-	  const struct timespec *tmo)
+	  struct timespec *tmo)
 {
-  if (SINGLE_THREAD_P)
-    return INLINE_SYSCALL (recvmmsg, 5, fd, vmessages, vlen, flags, tmo);
-
-  int oldtype = LIBC_CANCEL_ASYNC ();
-
-  int result = INLINE_SYSCALL (recvmmsg, 5, fd, vmessages, vlen, flags, tmo);
-
-  LIBC_CANCEL_RESET (oldtype);
-
-  return result;
+  return SYSCALL_CANCEL (recvmmsg, fd, vmessages, vlen, flags, tmo);
 }
 #elif defined __NR_socketcall
-# ifndef __ASSUME_RECVMMSG
-extern int __internal_recvmmsg (int fd, struct mmsghdr *vmessages,
-				unsigned int vlen, int flags,
-				const struct timespec *tmo)
-     attribute_hidden;
-
+# include <socketcall.h>
+# ifdef __ASSUME_RECVMMSG_SOCKETCALL
+int
+recvmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags,
+	  struct timespec *tmo)
+{
+  return SOCKETCALL_CANCEL (recvmmsg, fd, vmessages, vlen, flags, tmo);
+}
+# else
 static int have_recvmmsg;
 
 int
 recvmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags,
-	  const struct timespec *tmo)
+	  struct timespec *tmo)
 {
-  if (__builtin_expect (have_recvmmsg >= 0, 1))
+  if (__glibc_likely (have_recvmmsg >= 0))
     {
-      int ret = __internal_recvmmsg (fd, vmessages, vlen, flags, tmo);
+      int ret = SOCKETCALL_CANCEL (recvmmsg, fd, vmessages, vlen, flags,
+				   tmo);
       /* The kernel returns -EINVAL for unknown socket operations.
 	 We need to convert that error to an ENOSYS error.  */
       if (__builtin_expect (ret < 0, 0)
@@ -66,7 +69,7 @@ recvmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags,
 	     descriptor and all other parameters cleared.  This call
 	     will not cause any harm and it will return
 	     immediately.  */
-	  ret = __internal_recvmmsg (-1, 0, 0, 0, 0);
+	  ret = SOCKETCALL_CANCEL (invalid, -1);
 	  if (errno == EINVAL)
 	    {
 	      have_recvmmsg = -1;
@@ -84,9 +87,7 @@ recvmmsg (int fd, struct mmsghdr *vmessages, unsigned int vlen, int flags,
   __set_errno (ENOSYS);
   return -1;
 }
-# else
-/* When __ASSUME_RECVMMSG recvmmsg is defined in internal_recvmmsg.S.  */
-# endif
+# endif /* __ASSUME_RECVMMSG_SOCKETCALL  */
 #else
 # include <socket/recvmmsg.c>
 #endif

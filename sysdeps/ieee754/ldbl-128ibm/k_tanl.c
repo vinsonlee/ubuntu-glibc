@@ -56,6 +56,8 @@
  *		       = 1 - 2*(tan(y) - (tan(y)^2)/(1+tan(y)))
  */
 
+#include <float.h>
+#include <libc-internal.h>
 #include <math.h>
 #include <math_private.h>
 static const long double
@@ -97,8 +99,13 @@ __kernel_tanl (long double x, long double y, int iy)
 	{
 	  if ((ix | lx | (iy + 1)) == 0)
 	    return one / fabs (x);
+	  else if (iy == 1)
+	    {
+	      math_check_force_underflow (x);
+	      return x;
+	    }
 	  else
-	    return (iy == 1) ? x : -one / x;
+	    return -one / x;
 	}
     }
   if (ix >= 0x3fe59420) /* |x| >= 0.6743316650390625 */
@@ -129,8 +136,15 @@ __kernel_tanl (long double x, long double y, int iy)
     {
       v = (long double) iy;
       w = (v - 2.0 * (x - (w * w / (w + v) - r)));
+      /* SIGN is set for arguments that reach this code, but not
+	 otherwise, resulting in warnings that it may be used
+	 uninitialized although in the cases where it is used it has
+	 always been set.  */
+      DIAG_PUSH_NEEDS_COMMENT;
+      DIAG_IGNORE_NEEDS_COMMENT (5, "-Wmaybe-uninitialized");
       if (sign < 0)
 	w = -w;
+      DIAG_POP_NEEDS_COMMENT;
       return w;
     }
   if (iy == 1)

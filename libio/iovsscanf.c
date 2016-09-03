@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,10 +28,7 @@
 #include "strfile.h"
 
 int
-_IO_vsscanf (string, format, args)
-     const char *string;
-     const char *format;
-     _IO_va_list args;
+_IO_vsscanf (const char *string, const char *format, _IO_va_list args)
 {
   int ret;
   _IO_strfile sf;

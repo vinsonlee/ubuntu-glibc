@@ -1,6 +1,6 @@
 /* Copy memory to memory until the specified number of bytes
    has been copied with error checking.  Overlap is handled correctly.
-   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Torbjorn Granlund (tege@sics.se).
 
@@ -20,20 +20,15 @@
 
 #include <string.h>
 #include <memcopy.h>
-#include <pagecopy.h>
 
 #ifndef MEMMOVE_CHK
 # define MEMMOVE_CHK __memmove_chk
 #endif
 
 void *
-MEMMOVE_CHK (dest, src, len, destlen)
-     void *dest;
-     const void *src;
-     size_t len;
-     size_t destlen;
+MEMMOVE_CHK (void *dest, const void *src, size_t len, size_t destlen)
 {
-  if (__builtin_expect (destlen < len, 0))
+  if (__glibc_unlikely (destlen < len))
     __chk_fail ();
 
   return memmove (dest, src, len);

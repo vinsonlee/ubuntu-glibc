@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,8 +22,7 @@
 
 /* Remove the directory FILE_NAME.  */
 int
-__rmdir (file_name)
-     const char *file_name;
+__rmdir (const char *file_name)
 {
   error_t err;
   const char *name;

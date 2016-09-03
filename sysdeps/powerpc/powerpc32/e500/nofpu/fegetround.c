@@ -1,5 +1,5 @@
 /* Return current rounding direction.  e500 version.
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,13 +18,14 @@
 
 #include <fenv_libc.h>
 
-#undef fegetround
 int
-fegetround (void)
+__fegetround (void)
 {
   unsigned long fpescr;
 
   fpescr = fegetenv_register ();
   return fpescr & 3;
 }
-libm_hidden_def (fegetround)
+libm_hidden_def (__fegetround)
+weak_alias (__fegetround, fegetround)
+libm_hidden_weak (fegetround)

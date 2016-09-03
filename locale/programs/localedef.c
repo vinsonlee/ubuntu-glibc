@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1995.
 
@@ -24,7 +24,6 @@
 #include <fcntl.h>
 #include <libintl.h>
 #include <locale.h>
-#include <mcheck.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,10 +53,6 @@ int verbose;
 
 /* If not zero suppress warnings and information messages.  */
 int be_quiet;
-
-/* If not zero, produce old-style hash table instead of 3-level access
-   tables.  */
-int oldstyle_tables;
 
 /* If not zero force output even if warning were issued.  */
 static int force_output;
@@ -105,7 +100,6 @@ void (*argp_program_version_hook) (FILE *, struct argp_state *) = print_version;
 
 #define OPT_POSIX 301
 #define OPT_QUIET 302
-#define OPT_OLDSTYLE 303
 #define OPT_PREFIX 304
 #define OPT_NO_ARCHIVE 305
 #define OPT_ADD_TO_ARCHIVE 306
@@ -129,7 +123,6 @@ static const struct argp_option options[] =
   { NULL, 0, NULL, 0, N_("Output control:") },
   { "force", 'c', NULL, 0,
     N_("Create output even if warning messages were issued") },
-  { "old-style", OPT_OLDSTYLE, NULL, 0, N_("Create old-style tables") },
   { "prefix", OPT_PREFIX, N_("PATH"), 0, N_("Optional output file prefix") },
   { "posix", OPT_POSIX, NULL, 0, N_("Strictly conform to POSIX") },
   { "quiet", OPT_QUIET, NULL, 0,
@@ -286,7 +279,7 @@ cannot open locale definition file `%s'"), runp->name));
     {
       if (cannot_write_why != 0)
 	WITH_CUR_LOCALE (error (4, cannot_write_why, _("\
-cannot write output files to `%s'"), output_path));
+cannot write output files to `%s'"), output_path ? : argv[remaining]));
       else
 	write_all_categories (locales, charmap, argv[remaining], output_path);
     }
@@ -310,9 +303,6 @@ parse_opt (int key, char *arg, struct argp_state *state)
       break;
     case OPT_POSIX:
       posix_conformance = 1;
-      break;
-    case OPT_OLDSTYLE:
-      oldstyle_tables = 1;
       break;
     case OPT_PREFIX:
       output_prefix = arg;
@@ -403,7 +393,7 @@ print_version (FILE *stream, struct argp_state *state)
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
-"), "2014");
+"), "2016");
   fprintf (stream, gettext ("Written by %s.\n"), "Ulrich Drepper");
 }
 
@@ -457,11 +447,11 @@ construct_output_path (char *path)
 	 '/'.  */
       ssize_t n;
       if (normal == NULL)
-	n = asprintf (&result, "%s%s/%s%c",
-		      output_prefix ?: "", LOCALEDIR, path, '\0');
+	n = asprintf (&result, "%s%s/%s%c", output_prefix ?: "",
+		      COMPLOCALEDIR, path, '\0');
       else
 	n = asprintf (&result, "%s%s/%.*s%s%s%c",
-		      output_prefix ?: "", LOCALEDIR,
+		      output_prefix ?: "", COMPLOCALEDIR,
 		      (int) (startp - path), path, normal, endp, '\0');
 
       if (n < 0)
@@ -504,9 +494,7 @@ construct_output_path (char *path)
    names.  Normalization allows the user to use any of the common
    names.  */
 static const char *
-normalize_codeset (codeset, name_len)
-     const char *codeset;
-     size_t name_len;
+normalize_codeset (const char *codeset, size_t name_len)
 {
   int len = 0;
   int only_digit = 1;
@@ -636,14 +624,3 @@ cannot open locale definition file `%s'"), result->name));
 
   return result;
 }
-
-static void
-turn_on_mcheck (void)
-{
-  /* Enable `malloc' debugging.  */
-  mcheck (NULL);
-  /* Use the following line for a more thorough but much slower testing.  */
-  /* mcheck_pedantic (NULL); */
-}
-
-void (*__malloc_initialize_hook) (void) = turn_on_mcheck;

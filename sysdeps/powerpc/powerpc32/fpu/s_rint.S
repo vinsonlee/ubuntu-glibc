@@ -1,5 +1,5 @@
 /* Round to int floating-point values.  PowerPC32 version.
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@ ENTRY (__rint)
 	fsub	fp12,fp13,fp13	/* generate 0.0  */
 	fcmpu	cr7,fp0,fp13	/* if (fabs(x) > TWO52)  */
 	fcmpu	cr6,fp1,fp12	/* if (x > 0.0)  */
-	bnllr	cr7
+	bnl	cr7,.L10
 	bng	cr6,.L4
 	fadd	fp1,fp1,fp13	/* x+= TWO52;  */
 	fsub	fp1,fp1,fp13	/* x-= TWO52;  */
@@ -57,6 +57,12 @@ ENTRY (__rint)
 	fadd	fp1,fp1,fp13	/* x+= TWO52;  */
 	fnabs	fp1,fp1		/* if (x == 0.0)  */
 	blr			/* x = -0.0; */
+.L10:
+	/* Ensure sNaN input is converted to qNaN.  */
+	fcmpu	cr7,fp1,fp1
+	beqlr	cr7
+	fadd	fp1,fp1,fp1
+	blr
 	END (__rint)
 
 weak_alias (__rint, rint)

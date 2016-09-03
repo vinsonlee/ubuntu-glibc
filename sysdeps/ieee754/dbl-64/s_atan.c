@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2014 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2016 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -41,7 +41,10 @@
 #include "MathLib.h"
 #include "uatan.tbl"
 #include "atnat.h"
+#include <fenv.h>
+#include <float.h>
 #include <math.h>
+#include <math_private.h>
 #include <stap-probe.h>
 
 void __mpatan (mp_no *, mp_no *, int);	/* see definition in mpatan.c */
@@ -79,13 +82,17 @@ atan (double x)
     return x + x;
 
   /* Regular values of x, including denormals +-0 and +-INF */
+  SET_RESTORE_ROUND (FE_TONEAREST);
   u = (x < 0) ? -x : x;
   if (u < C)
     {
       if (u < B)
 	{
 	  if (u < A)
-	    return x;
+	    {
+	      math_check_force_underflow_nonneg (u);
+	      return x;
+	    }
 	  else
 	    {			/* A <= u < B */
 	      v = x * x;

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -29,7 +29,9 @@
 #include <tls.h>
 #include <list.h>
 #include <lowlevellock.h>
+#include <futex-internal.h>
 #include <kernel-features.h>
+#include <stack-aliasing.h>
 
 
 #ifndef NEED_SEPARATE_REGISTER_STACK
@@ -306,7 +308,7 @@ queue_stack (struct pthread *stack)
   stack_list_add (&stack->list, &stack_cache);
 
   stack_cache_actsize += stack->stackblock_size;
-  if (__builtin_expect (stack_cache_actsize > stack_cache_maxsize, 0))
+  if (__glibc_unlikely (stack_cache_actsize > stack_cache_maxsize))
     __free_stacks (stack_cache_maxsize);
 }
 
@@ -351,7 +353,6 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
   struct pthread *pd;
   size_t size;
   size_t pagesize_m1 = __getpagesize () - 1;
-  void *stacktop;
 
   assert (powerof2 (pagesize_m1 + 1));
   assert (TCB_ALIGNMENT >= STACK_ALIGN);
@@ -368,9 +369,16 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
     }
 
   /* Get memory for the stack.  */
-  if (__builtin_expect (attr->flags & ATTR_FLAG_STACKADDR, 0))
+  if (__glibc_unlikely (attr->flags & ATTR_FLAG_STACKADDR))
     {
       uintptr_t adj;
+      char *stackaddr = (char *) attr->stackaddr;
+
+      /* Assume the same layout as the _STACK_GROWS_DOWN case, with struct
+	 pthread at the top of the stack block.  Later we adjust the guard
+	 location and stack address to match the _STACK_GROWS_UP case.  */
+      if (_STACK_GROWS_UP)
+	stackaddr += attr->stacksize;
 
       /* If the user also specified the size of the stack make sure it
 	 is large enough.  */
@@ -380,11 +388,11 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 
       /* Adjust stack size for alignment of the TLS block.  */
 #if TLS_TCB_AT_TP
-      adj = ((uintptr_t) attr->stackaddr - TLS_TCB_SIZE)
+      adj = ((uintptr_t) stackaddr - TLS_TCB_SIZE)
 	    & __static_tls_align_m1;
       assert (size > adj + TLS_TCB_SIZE);
 #elif TLS_DTV_AT_TP
-      adj = ((uintptr_t) attr->stackaddr - __static_tls_size)
+      adj = ((uintptr_t) stackaddr - __static_tls_size)
 	    & __static_tls_align_m1;
       assert (size > adj);
 #endif
@@ -394,10 +402,10 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 	 the stack.  It is the user's responsibility to do this if it
 	 is wanted.  */
 #if TLS_TCB_AT_TP
-      pd = (struct pthread *) ((uintptr_t) attr->stackaddr
+      pd = (struct pthread *) ((uintptr_t) stackaddr
 			       - TLS_TCB_SIZE - adj);
 #elif TLS_DTV_AT_TP
-      pd = (struct pthread *) (((uintptr_t) attr->stackaddr
+      pd = (struct pthread *) (((uintptr_t) stackaddr
 				- __static_tls_size - adj)
 			       - TLS_PRE_TCB_SIZE);
 #endif
@@ -409,7 +417,7 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
       pd->specific[0] = pd->specific_1stblock;
 
       /* Remember the stack-related values.  */
-      pd->stackblock = (char *) attr->stackaddr - size;
+      pd->stackblock = (char *) stackaddr - size;
       pd->stackblock_size = size;
 
       /* This is a user-provided stack.  It will not be queued in the
@@ -429,8 +437,7 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 #endif
 
 #ifdef NEED_DL_SYSINFO
-      /* Copy the sysinfo value from the parent.  */
-      THREAD_SYSINFO(pd) = THREAD_SELF_SYSINFO;
+      SETUP_THREAD_SYSINFO (pd);
 #endif
 
       /* The process ID is also the same as that of the caller.  */
@@ -504,7 +511,7 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 	  mem = mmap (NULL, size, prot,
 		      MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
 
-	  if (__builtin_expect (mem == MAP_FAILED, 0))
+	  if (__glibc_unlikely (mem == MAP_FAILED))
 	    return errno;
 
 	  /* SIZE is guaranteed to be greater than zero.
@@ -525,7 +532,7 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 
 	  /* Make sure the coloring offsets does not disturb the alignment
 	     of the TCB and static TLS block.  */
-	  if (__builtin_expect ((coloring & __static_tls_align_m1) != 0, 0))
+	  if (__glibc_unlikely ((coloring & __static_tls_align_m1) != 0))
 	    coloring = (((coloring + __static_tls_align_m1)
 			 & ~(__static_tls_align_m1))
 			& ~pagesize_m1);
@@ -566,8 +573,7 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 #endif
 
 #ifdef NEED_DL_SYSINFO
-	  /* Copy the sysinfo value from the parent.  */
-	  THREAD_SYSINFO(pd) = THREAD_SELF_SYSINFO;
+	  SETUP_THREAD_SYSINFO (pd);
 #endif
 
 	  /* Don't allow setxid until cloned.  */
@@ -629,13 +635,13 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 	}
 
       /* Create or resize the guard area if necessary.  */
-      if (__builtin_expect (guardsize > pd->guardsize, 0))
+      if (__glibc_unlikely (guardsize > pd->guardsize))
 	{
 #ifdef NEED_SEPARATE_REGISTER_STACK
 	  char *guard = mem + (((size - guardsize) / 2) & ~pagesize_m1);
 #elif _STACK_GROWS_DOWN
 	  char *guard = mem;
-# elif _STACK_GROWS_UP
+#elif _STACK_GROWS_UP
 	  char *guard = (char *) (((uintptr_t) pd - guardsize) & ~pagesize_m1);
 #endif
 	  if (mprotect (guard, guardsize, PROT_NONE) != 0)
@@ -717,21 +723,24 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
   /* We place the thread descriptor at the end of the stack.  */
   *pdp = pd;
 
-#if TLS_TCB_AT_TP
+#if _STACK_GROWS_DOWN
+  void *stacktop;
+
+# if TLS_TCB_AT_TP
   /* The stack begins before the TCB and the static TLS block.  */
   stacktop = ((char *) (pd + 1) - __static_tls_size);
-#elif TLS_DTV_AT_TP
+# elif TLS_DTV_AT_TP
   stacktop = (char *) (pd - 1);
-#endif
+# endif
 
-#ifdef NEED_SEPARATE_REGISTER_STACK
+# ifdef NEED_SEPARATE_REGISTER_STACK
   *stack = pd->stackblock;
   *stacksize = stacktop - *stack;
-#elif _STACK_GROWS_DOWN
+# else
   *stack = stacktop;
-#elif _STACK_GROWS_UP
+# endif
+#else
   *stack = pd->stackblock;
-  assert (*stack > 0);
 #endif
 
   return 0;
@@ -752,7 +761,7 @@ __deallocate_stack (struct pthread *pd)
      not reset the 'used' flag in the 'tid' field.  This is done by
      the kernel.  If no thread has been created yet this field is
      still zero.  */
-  if (__builtin_expect (! pd->user_stack, 1))
+  if (__glibc_likely (! pd->user_stack))
     (void) queue_stack (pd);
   else
     /* Free the memory associated with the ELF TLS.  */
@@ -830,26 +839,23 @@ __reclaim_stacks (void)
 
       if (add_p)
 	{
-	  /* We always add at the beginning of the list.  So in this
-	     case we only need to check the beginning of these lists.  */
-	  int check_list (list_t *l)
-	  {
-	    if (l->next->prev != l)
-	      {
-		assert (l->next->prev == elem);
+	  /* We always add at the beginning of the list.  So in this case we
+	     only need to check the beginning of these lists to see if the
+	     pointers at the head of the list are inconsistent.  */
+	  list_t *l = NULL;
 
-		elem->next = l->next;
-		elem->prev = l;
-		l->next = elem;
+	  if (stack_used.next->prev != &stack_used)
+	    l = &stack_used;
+	  else if (stack_cache.next->prev != &stack_cache)
+	    l = &stack_cache;
 
-		return 1;
-	      }
-
-	    return 0;
-	  }
-
-	  if (check_list (&stack_used) == 0)
-	    (void) check_list (&stack_cache);
+	  if (l != NULL)
+	    {
+	      assert (l->next->prev == elem);
+	      elem->next = l->next;
+	      elem->prev = l;
+	      l->next = elem;
+	    }
 	}
       else
 	{
@@ -916,7 +922,7 @@ __reclaim_stacks (void)
   INIT_LIST_HEAD (&stack_used);
   INIT_LIST_HEAD (&__stack_user);
 
-  if (__builtin_expect (THREAD_GETMEM (self, user_stack), 0))
+  if (__glibc_unlikely (THREAD_GETMEM (self, user_stack)))
     list_add (&self->list, &__stack_user);
   else
     list_add (&self->list, &stack_used);
@@ -980,6 +986,7 @@ __find_thread_by_id (pid_t tid)
 #endif
 
 
+#ifdef SIGSETXID
 static void
 internal_function
 setxid_mark_thread (struct xid_command *cmdp, struct pthread *t)
@@ -990,7 +997,7 @@ setxid_mark_thread (struct xid_command *cmdp, struct pthread *t)
   if (t->setxid_futex == -1
       && ! atomic_compare_and_exchange_bool_acq (&t->setxid_futex, -2, -1))
     do
-      lll_futex_wait (&t->setxid_futex, -2, LLL_PRIVATE);
+      futex_wait_simple (&t->setxid_futex, -2, FUTEX_PRIVATE);
     while (t->setxid_futex == -2);
 
   /* Don't let the thread exit before the setxid handler runs.  */
@@ -1008,7 +1015,7 @@ setxid_mark_thread (struct xid_command *cmdp, struct pthread *t)
 	  if ((ch & SETXID_BITMASK) == 0)
 	    {
 	      t->setxid_futex = 1;
-	      lll_futex_wake (&t->setxid_futex, 1, LLL_PRIVATE);
+	      futex_wake (&t->setxid_futex, 1, FUTEX_PRIVATE);
 	    }
 	  return;
 	}
@@ -1035,7 +1042,7 @@ setxid_unmark_thread (struct xid_command *cmdp, struct pthread *t)
 
   /* Release the futex just in case.  */
   t->setxid_futex = 1;
-  lll_futex_wake (&t->setxid_futex, 1, LLL_PRIVATE);
+  futex_wake (&t->setxid_futex, 1, FUTEX_PRIVATE);
 }
 
 
@@ -1061,6 +1068,25 @@ setxid_signal_thread (struct xid_command *cmdp, struct pthread *t)
     return 0;
 }
 
+/* Check for consistency across set*id system call results.  The abort
+   should not happen as long as all privileges changes happen through
+   the glibc wrappers.  ERROR must be 0 (no error) or an errno
+   code.  */
+void
+attribute_hidden
+__nptl_setxid_error (struct xid_command *cmdp, int error)
+{
+  do
+    {
+      int olderror = cmdp->error;
+      if (olderror == error)
+	break;
+      if (olderror != -1)
+	/* Mismatch between current and previous results.  */
+	abort ();
+    }
+  while (atomic_compare_and_exchange_bool_acq (&cmdp->error, error, -1));
+}
 
 int
 attribute_hidden
@@ -1072,6 +1098,7 @@ __nptl_setxid (struct xid_command *cmdp)
 
   __xidcmd = cmdp;
   cmdp->cntr = 0;
+  cmdp->error = -1;
 
   struct pthread *self = THREAD_SELF;
 
@@ -1124,7 +1151,8 @@ __nptl_setxid (struct xid_command *cmdp)
       int cur = cmdp->cntr;
       while (cur != 0)
 	{
-	  lll_futex_wait (&cmdp->cntr, cur, LLL_PRIVATE);
+	  futex_wait_simple ((unsigned int *) &cmdp->cntr, cur,
+			     FUTEX_PRIVATE);
 	  cur = cmdp->cntr;
 	}
     }
@@ -1155,20 +1183,24 @@ __nptl_setxid (struct xid_command *cmdp)
   INTERNAL_SYSCALL_DECL (err);
   result = INTERNAL_SYSCALL_NCS (cmdp->syscall_no, err, 3,
 				 cmdp->id[0], cmdp->id[1], cmdp->id[2]);
-  if (INTERNAL_SYSCALL_ERROR_P (result, err))
+  int error = 0;
+  if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (result, err)))
     {
-      __set_errno (INTERNAL_SYSCALL_ERRNO (result, err));
+      error = INTERNAL_SYSCALL_ERRNO (result, err);
+      __set_errno (error);
       result = -1;
     }
+  __nptl_setxid_error (cmdp, error);
 
   lll_unlock (stack_cache_lock, LLL_PRIVATE);
   return result;
 }
+#endif  /* SIGSETXID.  */
+
 
 static inline void __attribute__((always_inline))
 init_one_static_tls (struct pthread *curp, struct link_map *map)
 {
-  dtv_t *dtv = GET_DTV (TLS_TPADJ (curp));
 # if TLS_TCB_AT_TP
   void *dest = (char *) curp - map->l_tls_offset;
 # elif TLS_DTV_AT_TP
@@ -1177,11 +1209,9 @@ init_one_static_tls (struct pthread *curp, struct link_map *map)
 #  error "Either TLS_TCB_AT_TP or TLS_DTV_AT_TP must be defined"
 # endif
 
-  /* Fill in the DTV slot so that a later LD/GD access will find it.  */
-  dtv[map->l_tls_modid].pointer.val = dest;
-  dtv[map->l_tls_modid].pointer.is_static = true;
-
-  /* Initialize the memory.  */
+  /* We cannot delay the initialization of the Static TLS area, since
+     it can be accessed with LE or IE, but since the DTV is only used
+     by GD and LD, we can delay its update to avoid a race.  */
   memset (__mempcpy (dest, map->l_tls_initimage, map->l_tls_initimage_size),
 	  '\0', map->l_tls_blocksize - map->l_tls_initimage_size);
 }
@@ -1232,7 +1262,8 @@ __wait_lookup_done (void)
 	continue;
 
       do
-	lll_futex_wait (gscope_flagp, THREAD_GSCOPE_FLAG_WAIT, LLL_PRIVATE);
+	futex_wait_simple ((unsigned int *) gscope_flagp,
+			   THREAD_GSCOPE_FLAG_WAIT, FUTEX_PRIVATE);
       while (*gscope_flagp == THREAD_GSCOPE_FLAG_WAIT);
     }
 
@@ -1254,7 +1285,8 @@ __wait_lookup_done (void)
 	continue;
 
       do
-	lll_futex_wait (gscope_flagp, THREAD_GSCOPE_FLAG_WAIT, LLL_PRIVATE);
+	futex_wait_simple ((unsigned int *) gscope_flagp,
+			   THREAD_GSCOPE_FLAG_WAIT, FUTEX_PRIVATE);
       while (*gscope_flagp == THREAD_GSCOPE_FLAG_WAIT);
     }
 

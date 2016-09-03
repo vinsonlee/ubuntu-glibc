@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -38,6 +38,8 @@ typedef struct La_i86_retval
   uint32_t lrv_edx;
   long double lrv_st0;
   long double lrv_st1;
+  uint64_t lrv_bnd0;
+  uint64_t lrv_bnd1;
 } La_i86_retval;
 
 
@@ -66,6 +68,8 @@ __END_DECLS
 typedef float La_x86_64_xmm __attribute__ ((__vector_size__ (16)));
 typedef float La_x86_64_ymm
     __attribute__ ((__vector_size__ (32), __aligned__ (16)));
+typedef double La_x86_64_zmm
+    __attribute__ ((__vector_size__ (64), __aligned__ (16)));
 # else
 typedef float La_x86_64_xmm __attribute__ ((__mode__ (__V4SF__)));
 # endif
@@ -74,6 +78,7 @@ typedef union
 {
 # if __GNUC_PREREQ (4,0)
   La_x86_64_ymm ymm[2];
+  La_x86_64_zmm zmm[1];
 # endif
   La_x86_64_xmm xmm[4];
 } La_x86_64_vector __attribute__ ((__aligned__ (16)));
@@ -90,6 +95,9 @@ typedef struct La_x86_64_regs
   uint64_t lr_rsp;
   La_x86_64_xmm lr_xmm[8];
   La_x86_64_vector lr_vector[8];
+#ifndef __ILP32__
+  __int128_t lr_bnd[4];
+#endif
 } La_x86_64_regs;
 
 /* Return values for calls from PLT on x86-64.  */
@@ -103,6 +111,10 @@ typedef struct La_x86_64_retval
   long double lrv_st1;
   La_x86_64_vector lrv_vector0;
   La_x86_64_vector lrv_vector1;
+#ifndef __ILP32__
+  __int128_t lrv_bnd0;
+  __int128_t lrv_bnd1;
+#endif
 } La_x86_64_retval;
 
 #define La_x32_regs La_x86_64_regs

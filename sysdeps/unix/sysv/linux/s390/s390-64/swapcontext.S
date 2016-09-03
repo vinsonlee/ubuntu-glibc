@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
@@ -24,7 +24,7 @@
 /*  __swapcontext (ucontext_t *oucp, const ucontext_t *ucp)
 
   Saves the machine context in oucp such that when it is activated,
-  it appears as if __swapcontextt() returned again, restores the
+  it appears as if __swapcontext() returned again, restores the
   machine context in ucp and thereby resumes execution in that
   context.
 
@@ -38,13 +38,6 @@ ENTRY(__swapcontext)
 	   rt_sigprocmask is ok.  */
 	lgr	%r1,%r2
 	lgr     %r0,%r3
-
-	/* sigprocmask (SIG_BLOCK, NULL, &sc->sc_mask).  */
-	la      %r2,SIG_BLOCK
-	slgr	%r3,%r3
-	la	%r4,SC_MASK(%r1)
-	lghi	%r5,_NSIG8
-	svc	SYS_ify(rt_sigprocmask)
 
 	/* Store fpu context.  */
 	stfpc   SC_FPC(%r1)
@@ -65,24 +58,21 @@ ENTRY(__swapcontext)
 	std     %f14,SC_FPRS+112(%r1)
 	std     %f15,SC_FPRS+120(%r1)
 
+	/* Set __swapcontext return value to 0.  */
+	slgr     %r2,%r2
+
 	/* Store access registers.  */
 	stam    %a0,%a15,SC_ACRS(%r1)
-
-	/* Set __swapcontext return value to 0.  */
-	slgr	%r2,%r2
 
 	/* Store general purpose registers.  */
 	stmg    %r0,%r15,SC_GPRS(%r1)
 
-	/* Copy uc_flags into the new ucontext_t.  */
+	/* rt_sigprocmask (SIG_SETMASK, &ucp->uc_sigmask, &oucp->uc_sigmask,
+	   sigsetsize).  */
+	la      %r2,SIG_SETMASK
 	lgr	%r5,%r0
-	lg	%r2,SC_FLGS(%r5)
-	stg	%r2,SC_FLGS(%r1)
-
-	/* rt_sigprocmask (SIG_SETMASK, &sc->sc_mask, NULL, sigsetsize).  */
-	la      %r2,SIG_BLOCK
 	la	%r3,SC_MASK(%r5)
-	slgr	%r4,%r4
+	la	%r4,SC_MASK(%r1)
 	lghi	%r5,_NSIG8
 	svc	SYS_ify(rt_sigprocmask)
 

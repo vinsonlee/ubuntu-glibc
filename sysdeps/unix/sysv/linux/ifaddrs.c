@@ -1,5 +1,5 @@
 /* getifaddrs -- get names and addresses of all network interfaces
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@
 #include <sysdep.h>
 #include <time.h>
 #include <unistd.h>
-#include <kernel-features.h>
 
 #include "netlinkaccess.h"
 
@@ -162,20 +161,24 @@ __netlink_request (struct netlink_handle *h, int type)
     {
       struct msghdr msg =
 	{
-	  (void *) &nladdr, sizeof (nladdr),
-	  &iov, 1,
-	  NULL, 0,
-	  0
+	  .msg_name = (void *) &nladdr,
+	  .msg_namelen =  sizeof (nladdr),
+	  .msg_iov = &iov,
+	  .msg_iovlen = 1,
+	  .msg_control = NULL,
+	  .msg_controllen = 0,
+	  .msg_flags = 0
 	};
 
       read_len = TEMP_FAILURE_RETRY (__recvmsg (h->fd, &msg, 0));
+      __netlink_assert_response (h->fd, read_len);
       if (read_len < 0)
 	goto out_fail;
 
       if (nladdr.nl_pid != 0)
 	continue;
 
-      if (__builtin_expect (msg.msg_flags & MSG_TRUNC, 0))
+      if (__glibc_unlikely (msg.msg_flags & MSG_TRUNC))
 	goto out_fail;
 
       size_t count = 0;
@@ -459,7 +462,7 @@ getifaddrs_internal (struct ifaddrs **ifap)
 		 kernel.  */
 	      ifa_index = map_newlink (ifim->ifi_index - 1, ifas,
 				       map_newlink_data, newlink);
-	      if (__builtin_expect (ifa_index == -1, 0))
+	      if (__glibc_unlikely (ifa_index == -1))
 		{
 		try_again:
 		  result = -EAGAIN;
@@ -552,7 +555,7 @@ getifaddrs_internal (struct ifaddrs **ifap)
 	      ifa_index = newlink + newaddr_idx;
 	      int idx = map_newlink (ifam->ifa_index - 1, ifas,
 				     map_newlink_data, newlink);
-	      if (__builtin_expect (idx == -1, 0))
+	      if (__glibc_unlikely (idx == -1))
 		goto try_again;
 	      ifas[ifa_index].ifa.ifa_flags = ifas[idx].ifa.ifa_flags;
 	      if (ifa_index > 0)
@@ -737,7 +740,7 @@ getifaddrs_internal (struct ifaddrs **ifap)
 		{
 		  int idx = map_newlink (ifam->ifa_index - 1, ifas,
 					 map_newlink_data, newlink);
-		  if (__builtin_expect (idx == -1, 0))
+		  if (__glibc_unlikely (idx == -1))
 		    goto try_again;
 		  ifas[ifa_index].ifa.ifa_name = ifas[idx].ifa.ifa_name;
 		}
@@ -771,20 +774,17 @@ getifaddrs_internal (struct ifaddrs **ifap)
 
 		  if (cp != NULL)
 		    {
-		      char c;
 		      unsigned int preflen;
 
-		      if ((max_prefixlen > 0) &&
-			  (ifam->ifa_prefixlen > max_prefixlen))
+		      if (ifam->ifa_prefixlen > max_prefixlen)
 			preflen = max_prefixlen;
 		      else
 			preflen = ifam->ifa_prefixlen;
 
-		      for (i = 0; i < (preflen / 8); i++)
+		      for (i = 0; i < preflen / 8; i++)
 			*cp++ = 0xff;
-		      c = 0xff;
-		      c <<= (8 - (preflen % 8));
-		      *cp = c;
+		      if (preflen % 8)
+			*cp = 0xff << (8 - preflen % 8);
 		    }
 		}
 	    }
@@ -823,7 +823,7 @@ getifaddrs_internal (struct ifaddrs **ifap)
    network interface on the host machine.  If successful, store the
    list in *IFAP and return 0.  On errors, return -1 and set `errno'.  */
 int
-getifaddrs (struct ifaddrs **ifap)
+__getifaddrs (struct ifaddrs **ifap)
 {
   int res;
 
@@ -833,12 +833,14 @@ getifaddrs (struct ifaddrs **ifap)
 
   return res;
 }
-libc_hidden_def (getifaddrs)
+weak_alias (__getifaddrs, getifaddrs)
+libc_hidden_weak (getifaddrs)
 
 
 void
-freeifaddrs (struct ifaddrs *ifa)
+__freeifaddrs (struct ifaddrs *ifa)
 {
   free (ifa);
 }
-libc_hidden_def (freeifaddrs)
+weak_alias (__freeifaddrs, freeifaddrs)
+libc_hidden_weak (freeifaddrs)

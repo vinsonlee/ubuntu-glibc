@@ -1,7 +1,7 @@
 /* Software floating-point emulation.
    Compare (*a) and (*b), return float condition code.
    Signal exception (unless masked) if unordered.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson (rth@cygnus.com) and
 		  Jakub Jelinek (jj@ultra.linux.cz).
@@ -32,10 +32,8 @@ int _Qp_cmpe(const long double *a, const long double *b)
   FP_INIT_ROUNDMODE;
   FP_UNPACK_RAW_QP(A, a);
   FP_UNPACK_RAW_QP(B, b);
-  FP_CMP_Q(r, B, A, 3);
+  FP_CMP_Q(r, B, A, 3, 2);
   if (r == -1) r = 2;
-  if (r == 3)
-    FP_SET_EXCEPTION(FP_EX_INVALID);
   QP_HANDLE_EXCEPTIONS(
 	__asm (
 "	ldd [%0], %%f52\n"

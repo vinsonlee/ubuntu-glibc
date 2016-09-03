@@ -1,6 +1,6 @@
-#! /bin/sh
+#!/bin/sh
 # Test escape character handling in gencat.
-# Copyright (C) 2000-2014 Free Software Foundation, Inc.
+# Copyright (C) 2000-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,12 +20,15 @@
 set -e
 
 common_objpfx=$1
-test_program_cmd=$2
+test_program_cmd_before_env=$2
+run_program_env=$3
+test_program_cmd_after_env=$4
 
 # Run the test program.
-LOCPATH=${common_objpfx}localedata GCONV_PATH=${common_objpfx}iconvdata \
-NLSPATH=${common_objpfx}catgets/%N.%c.cat LC_ALL=ja_JP.SJIS \
-  ${test_program_cmd} \
+${test_program_cmd_before_env} \
+  ${run_program_env} \
+  NLSPATH=${common_objpfx}catgets/%N.%c.cat LC_ALL=ja_JP.SJIS \
+  ${test_program_cmd_after_env} \
     > ${common_objpfx}catgets/test-gencat.out
 
 # Compare with the expected result.

@@ -171,8 +171,7 @@ deval (long double x, const long double *p, int n)
 
 
 long double
-__ieee754_log2l (x)
-     long double x;
+__ieee754_log2l (long double x)
 {
   long double z;
   long double y;
@@ -189,6 +188,9 @@ __ieee754_log2l (x)
     return (x - x) / (x - x);
   if (hx >= 0x7ff0000000000000LL)
     return (x + x);
+
+  if (x == 1.0L)
+    return 0.0L;
 
 /* separate mantissa from exponent */
 

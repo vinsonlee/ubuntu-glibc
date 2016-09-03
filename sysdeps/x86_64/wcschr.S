@@ -1,5 +1,5 @@
 /* wcschr with SSSE3
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -20,7 +20,7 @@
 #include <sysdep.h>
 
 	.text
-ENTRY (wcschr)
+ENTRY (__wcschr)
 
 	movd	%rsi, %xmm1
 	pxor	%xmm2, %xmm2
@@ -149,6 +149,8 @@ L(return_null):
 	xor	%rax, %rax
 	ret
 
-END (wcschr)
+END (__wcschr)
 
-libc_hidden_def(wcschr)
+libc_hidden_def(__wcschr)
+weak_alias (__wcschr, wcschr)
+libc_hidden_weak (wcschr)

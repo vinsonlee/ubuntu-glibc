@@ -1,4 +1,4 @@
-/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -138,7 +138,7 @@ cache_add (int type, const void *key, size_t len, struct datahead *packet,
 	   bool first, struct database_dyn *table,
 	   uid_t owner, bool prune_wakeup)
 {
-  if (__builtin_expect (debug_level >= 2, 0))
+  if (__glibc_unlikely (debug_level >= 2))
     {
       const char *str;
       char buf[INET6_ADDRSTRLEN + 1];
@@ -178,12 +178,12 @@ cache_add (int type, const void *key, size_t len, struct datahead *packet,
   assert ((newp->packet & BLOCK_ALIGN_M1) == 0);
 
   /* Put the new entry in the first position.  */
-  do
-    newp->next = table->head->array[hash];
-  while (atomic_compare_and_exchange_bool_rel (&table->head->array[hash],
-					       (ref_t) ((char *) newp
-							- table->data),
-					       (ref_t) newp->next));
+  /* TODO Review concurrency.  Use atomic_exchange_release.  */
+  newp->next = atomic_load_relaxed (&table->head->array[hash]);
+  while (!atomic_compare_exchange_weak_release (&table->head->array[hash],
+						(ref_t *) &newp->next,
+						(ref_t) ((char *) newp
+							 - table->data)));
 
   /* Update the statistics.  */
   if (packet->notfound)
@@ -272,28 +272,38 @@ prune_cache (struct database_dyn *table, time_t now, int fd)
       while (runp != NULL)
 	{
 #ifdef HAVE_INOTIFY
-	  if (runp->inotify_descr == -1)
+	  if (runp->inotify_descr[TRACED_FILE] == -1)
 #endif
 	    {
 	      struct stat64 st;
 
 	      if (stat64 (runp->fname, &st) < 0)
 		{
+		  /* Print a diagnostic that the traced file was missing.
+		     We must not disable tracing since the file might return
+		     shortly and we want to reload it at the next pruning.
+		     Disabling tracing here would go against the configuration
+		     as specified by the user via check-files.  */
 		  char buf[128];
-		  /* We cannot stat() the file, disable file checking if the
-		     file does not exist.  */
-		  dbg_log (_("cannot stat() file `%s': %s"),
+		  dbg_log (_("checking for monitored file `%s': %s"),
 			   runp->fname, strerror_r (errno, buf, sizeof (buf)));
-		  if (errno == ENOENT)
-		    table->check_file = 0;
 		}
 	      else
 		{
-		  if (st.st_mtime != table->file_mtime)
+		  /* This must be `!=` to catch cases where users turn the
+		     clocks back and we still want to detect any time difference
+		     in mtime.  */
+		  if (st.st_mtime != runp->mtime)
 		    {
-		      /* The file changed.  Invalidate all entries.  */
+		      dbg_log (_("monitored file `%s` changed (mtime)"),
+			       runp->fname);
+		      /* The file changed. Invalidate all entries.  */
 		      now = LONG_MAX;
-		      table->file_mtime = st.st_mtime;
+		      runp->mtime = st.st_mtime;
+#ifdef HAVE_INOTIFY
+		      /* Attempt to install a watch on the file.  */
+		      install_watches (runp);
+#endif
 		    }
 		}
 	    }
@@ -311,7 +321,7 @@ prune_cache (struct database_dyn *table, time_t now, int fd)
   bool *mark;
   size_t memory_needed = cnt * sizeof (bool);
   bool mark_use_alloca;
-  if (__builtin_expect (memory_needed <= MAX_STACK_USE, 1))
+  if (__glibc_likely (memory_needed <= MAX_STACK_USE))
     {
       mark = alloca (cnt * sizeof (bool));
       memset (mark, '\0', memory_needed);
@@ -327,7 +337,7 @@ prune_cache (struct database_dyn *table, time_t now, int fd)
   char *const data = table->data;
   bool any = false;
 
-  if (__builtin_expect (debug_level > 2, 0))
+  if (__glibc_unlikely (debug_level > 2))
     dbg_log (_("pruning %s cache; time %ld"),
 	     dbnames[table - dbs], (long int) now);
 
@@ -343,7 +353,7 @@ prune_cache (struct database_dyn *table, time_t now, int fd)
 	  struct datahead *dh = (struct datahead *) (data + runp->packet);
 
 	  /* Some debug support.  */
-	  if (__builtin_expect (debug_level > 2, 0))
+	  if (__glibc_unlikely (debug_level > 2))
 	    {
 	      char buf[INET6_ADDRSTRLEN];
 	      const char *str;
@@ -422,7 +432,7 @@ prune_cache (struct database_dyn *table, time_t now, int fd)
     }
   while (cnt > 0);
 
-  if (__builtin_expect (fd != -1, 0))
+  if (__glibc_unlikely (fd != -1))
     {
       /* Reply to the INVALIDATE initiator that the cache has been
 	 invalidated.  */
@@ -436,7 +446,7 @@ prune_cache (struct database_dyn *table, time_t now, int fd)
 
       /* Now we have to get the write lock since we are about to modify
 	 the table.  */
-      if (__builtin_expect (pthread_rwlock_trywrlock (&table->lock) != 0, 0))
+      if (__glibc_unlikely (pthread_rwlock_trywrlock (&table->lock) != 0))
 	{
 	  ++table->head->wrlockdelayed;
 	  pthread_rwlock_wrlock (&table->lock);
@@ -492,7 +502,7 @@ prune_cache (struct database_dyn *table, time_t now, int fd)
 	       MS_ASYNC);
 
       /* One extra pass if we do debugging.  */
-      if (__builtin_expect (debug_level > 0, 0))
+      if (__glibc_unlikely (debug_level > 0))
 	{
 	  struct hashentry *runp = head;
 
@@ -517,7 +527,7 @@ prune_cache (struct database_dyn *table, time_t now, int fd)
 	}
     }
 
-  if (__builtin_expect (! mark_use_alloca, 0))
+  if (__glibc_unlikely (! mark_use_alloca))
     free (mark);
 
   /* Run garbage collection if any entry has been removed or replaced.  */

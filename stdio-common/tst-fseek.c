@@ -1,5 +1,5 @@
 /* Tests of fseek and fseeko.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2000.
 
@@ -27,8 +27,8 @@
 #include <sys/stat.h>
 
 
-int
-main (void)
+static int
+do_test (void)
 {
   const char *tmpdir;
   char *fname;
@@ -476,3 +476,7 @@ main (void)
 
   return result;
 }
+
+#define TIMEOUT 3
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

@@ -1,5 +1,5 @@
 /* Load the dependencies of a mapped object.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -108,7 +108,7 @@ struct list
 	char *__newp;							      \
 									      \
 	/* DST must not appear in SUID/SGID programs.  */		      \
-	if (INTUSE(__libc_enable_secure))				      \
+	if (__libc_enable_secure)					      \
 	  _dl_signal_error (0, __str, NULL, N_("\
 DST not allowed in SUID/SGID programs"));				      \
 									      \
@@ -127,7 +127,7 @@ empty dynamic string token substitution"));				      \
 	    else							      \
 	      {								      \
 		/* This is for DT_AUXILIARY.  */			      \
-		if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_LIBS, 0))\
+		if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_LIBS))   \
 		  _dl_debug_printf (N_("\
 cannot load auxiliary `%s' because of empty dynamic string token "	      \
 					    "substitution\n"), __str);	      \
@@ -138,6 +138,19 @@ cannot load auxiliary `%s' because of empty dynamic string token "	      \
 									      \
     __result; })
 
+static void
+preload (struct list *known, unsigned int *nlist, struct link_map *map)
+{
+  known[*nlist].done = 0;
+  known[*nlist].map = map;
+  known[*nlist].next = &known[*nlist + 1];
+
+  ++*nlist;
+  /* We use `l_reserved' as a mark bit to detect objects we have
+     already put in the search list and avoid adding duplicate
+     elements later in the list.  */
+  map->l_reserved = 1;
+}
 
 void
 internal_function
@@ -155,28 +168,15 @@ _dl_map_object_deps (struct link_map *map,
   const char *errstring;
   const char *objname;
 
-  void preload (struct link_map *map)
-    {
-      known[nlist].done = 0;
-      known[nlist].map = map;
-      known[nlist].next = &known[nlist + 1];
-
-      ++nlist;
-      /* We use `l_reserved' as a mark bit to detect objects we have
-	 already put in the search list and avoid adding duplicate
-	 elements later in the list.  */
-      map->l_reserved = 1;
-    }
-
   /* No loaded object so far.  */
   nlist = 0;
 
   /* First load MAP itself.  */
-  preload (map);
+  preload (known, &nlist, map);
 
   /* Add the preloaded items after MAP but before any of its dependencies.  */
   for (i = 0; i < npreloads; ++i)
-    preload (preloads[i]);
+    preload (known, &nlist, preloads[i]);
 
   /* Terminate the lists.  */
   known[nlist - 1].next = NULL;
@@ -253,7 +253,7 @@ _dl_map_object_deps (struct link_map *map,
 		bool malloced;
 		int err = _dl_catch_error (&objname, &errstring, &malloced,
 					   openaux, &args);
-		if (__builtin_expect (errstring != NULL, 0))
+		if (__glibc_unlikely (errstring != NULL))
 		  {
 		    char *new_errstring = strdupa (errstring);
 		    objname = strdupa (objname);
@@ -302,22 +302,24 @@ _dl_map_object_deps (struct link_map *map,
 		/* Store the tag in the argument structure.  */
 		args.name = name;
 
-		if (d->d_tag == DT_AUXILIARY)
-		  {
-		    /* Say that we are about to load an auxiliary library.  */
-		    if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_LIBS,
-					  0))
-		      _dl_debug_printf ("load auxiliary object=%s"
-					" requested by file=%s\n",
-					name,
-					DSO_FILENAME (l->l_name));
+		/* Say that we are about to load an auxiliary library.  */
+		if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_LIBS,
+				      0))
+		  _dl_debug_printf ("load auxiliary object=%s"
+				    " requested by file=%s\n",
+				    name,
+				    DSO_FILENAME (l->l_name));
 
-		    /* We must be prepared that the addressed shared
-		       object is not available.  */
-		    bool malloced;
-		    (void) _dl_catch_error (&objname, &errstring, &malloced,
-					    openaux, &args);
-		    if (__builtin_expect (errstring != NULL, 0))
+		/* We must be prepared that the addressed shared
+		   object is not available.  For filter objects the dependency
+		   must be available.  */
+		bool malloced;
+		int err = _dl_catch_error (&objname, &errstring, &malloced,
+					openaux, &args);
+
+		if (__glibc_unlikely (errstring != NULL))
+		  {
+		    if (d->d_tag == DT_AUXILIARY)
 		      {
 			/* We are not interested in the error message.  */
 			assert (errstring != NULL);
@@ -327,23 +329,9 @@ _dl_map_object_deps (struct link_map *map,
 			/* Simply ignore this error and continue the work.  */
 			continue;
 		      }
-		  }
-		else
-		  {
-		    /* Say that we are about to load an auxiliary library.  */
-		    if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_LIBS,
-					  0))
-		      _dl_debug_printf ("load filtered object=%s"
-					" requested by file=%s\n",
-					name,
-					DSO_FILENAME (l->l_name));
-
-		    /* For filter objects the dependency must be available.  */
-		    bool malloced;
-		    int err = _dl_catch_error (&objname, &errstring, &malloced,
-					       openaux, &args);
-		    if (__builtin_expect (errstring != NULL, 0))
+		    else
 		      {
+
 			char *new_errstring = strdupa (errstring);
 			objname = strdupa (objname);
 			if (malloced)
@@ -622,7 +610,7 @@ Filters not supported with LD_TRACE_PRELINKING"));
      itself will always be initialize last.  */
   memcpy (l_initfini, map->l_searchlist.r_list,
 	  nlist * sizeof (struct link_map *));
-  if (__builtin_expect (nlist > 1, 1))
+  if (__glibc_likely (nlist > 1))
     {
       /* We can skip looking for the binary itself which is at the front
 	 of the search list.  */
@@ -645,7 +633,7 @@ Filters not supported with LD_TRACE_PRELINKING"));
 	      if (runp != NULL)
 		/* Look through the dependencies of the object.  */
 		while (*runp != NULL)
-		  if (__builtin_expect (*runp++ == thisp, 0))
+		  if (__glibc_unlikely (*runp++ == thisp))
 		    {
 		      /* Move the current object to the back past the last
 			 object with it as the dependency.  */

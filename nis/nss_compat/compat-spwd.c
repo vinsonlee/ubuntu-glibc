@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1996.
 
@@ -27,7 +27,7 @@
 #include <string.h>
 #include <rpc/types.h>
 #include <rpcsvc/ypclnt.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <kernel-features.h>
 
 #include "netgroup.h"
@@ -169,7 +169,7 @@ copy_spwd_changes (struct spwd *dest, struct spwd *src,
 }
 
 static enum nss_status
-internal_setspent (ent_t *ent, int stayopen)
+internal_setspent (ent_t *ent, int stayopen, int needent)
 {
   enum nss_status status = NSS_STATUS_SUCCESS;
 
@@ -239,7 +239,7 @@ internal_setspent (ent_t *ent, int stayopen)
 
   give_spwd_free (&ent->pwd);
 
-  if (status == NSS_STATUS_SUCCESS && nss_setspent)
+  if (needent && status == NSS_STATUS_SUCCESS && nss_setspent)
     ent->setent_status = nss_setspent (stayopen);
 
   return status;
@@ -256,7 +256,7 @@ _nss_compat_setspent (int stayopen)
   if (ni == NULL)
     init_nss_interface ();
 
-  result = internal_setspent (&ext_ent, stayopen);
+  result = internal_setspent (&ext_ent, stayopen, 1);
 
   __libc_lock_unlock (lock);
 
@@ -267,9 +267,6 @@ _nss_compat_setspent (int stayopen)
 static enum nss_status
 internal_endspent (ent_t *ent)
 {
-  if (nss_endspent)
-    nss_endspent ();
-
   if (ent->stream != NULL)
     {
       fclose (ent->stream);
@@ -302,6 +299,9 @@ _nss_compat_endspent (void)
   enum nss_status result;
 
   __libc_lock_lock (lock);
+
+  if (nss_endspent)
+    nss_endspent ();
 
   result = internal_endspent (&ext_ent);
 
@@ -485,7 +485,7 @@ getspent_next_file (struct spwd *result, ent_t *ent,
       do
 	{
 	  /* We need at least 3 characters for one line.  */
-	  if (__builtin_expect (buflen < 3, 0))
+	  if (__glibc_unlikely (buflen < 3))
 	    {
 	    erange:
 	      *errnop = ERANGE;
@@ -515,7 +515,7 @@ getspent_next_file (struct spwd *result, ent_t *ent,
 	     || !(parse_res = _nss_files_parse_spent (p, result, data,
 						      buflen, errnop)));
 
-      if (__builtin_expect (parse_res == -1, 0))
+      if (__glibc_unlikely (parse_res == -1))
 	/* The parser ran out of space.  */
 	goto erange_reset;
 
@@ -532,7 +532,7 @@ getspent_next_file (struct spwd *result, ent_t *ent,
 	  char *user, *host, *domain;
 	  struct __netgrent netgrdata;
 
-	  bzero (&netgrdata, sizeof (struct __netgrent));
+	  memset (&netgrdata, 0, sizeof (struct __netgrent));
 	  __internal_setnetgrent (&result->sp_namp[2], &netgrdata);
 	  while (__internal_getnetgrent_r (&host, &user, &domain,
 					   &netgrdata, buf2, sizeof (buf2),
@@ -658,7 +658,7 @@ _nss_compat_getspent_r (struct spwd *pwd, char *buffer, size_t buflen,
     init_nss_interface ();
 
   if (ext_ent.stream == NULL)
-    result = internal_setspent (&ext_ent, 1);
+    result = internal_setspent (&ext_ent, 1, 1);
 
   if (result == NSS_STATUS_SUCCESS)
     result = internal_getspent_r (pwd, &ext_ent, buffer, buflen, errnop);
@@ -685,7 +685,7 @@ internal_getspnam_r (const char *name, struct spwd *result, ent_t *ent,
       do
 	{
 	  /* We need at least 3 characters for one line.  */
-	  if (__builtin_expect (buflen < 3, 0))
+	  if (__glibc_unlikely (buflen < 3))
 	    {
 	    erange:
 	      *errnop = ERANGE;
@@ -718,7 +718,7 @@ internal_getspnam_r (const char *name, struct spwd *result, ent_t *ent,
 	     !(parse_res = _nss_files_parse_spent (p, result, data, buflen,
 						   errnop)));
 
-      if (__builtin_expect (parse_res == -1, 0))
+      if (__glibc_unlikely (parse_res == -1))
 	/* The parser ran out of space.  */
 	goto erange_reset;
 
@@ -830,7 +830,7 @@ _nss_compat_getspnam_r (const char *name, struct spwd *pwd,
 
   __libc_lock_unlock (lock);
 
-  result = internal_setspent (&ent, 0);
+  result = internal_setspent (&ent, 0, 0);
 
   if (result == NSS_STATUS_SUCCESS)
     result = internal_getspnam_r (name, pwd, &ent, buffer, buflen, errnop);

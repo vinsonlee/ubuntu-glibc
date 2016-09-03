@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,6 +18,7 @@
 #include <sysdep.h>
 
 ENTRY (syscall)
+	ABORT_TRANSACTION
 	mr   r0,r3
 	mr   r3,r4
 	mr   r4,r5

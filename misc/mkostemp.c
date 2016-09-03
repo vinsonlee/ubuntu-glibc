@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,9 +27,7 @@
    they are replaced with a string that makes the filename unique.
    Then open the file and return a fd. */
 int
-mkostemp (template, flags)
-     char *template;
-     int flags;
+mkostemp (char *template, int flags)
 {
   return __gen_tempname (template, 0, flags, __GT_FILE);
 }
