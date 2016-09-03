@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,9 +22,7 @@
    N connection requests will be queued before further requests are refused.
    Returns 0 on success, -1 for errors.  */
 int
-__listen (fd, n)
-     int fd;
-     int n;
+__listen (int fd, int n)
 {
   __set_errno (ENOSYS);
   return -1;

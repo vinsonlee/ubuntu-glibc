@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmain.com>, 2003.
 
@@ -23,17 +23,9 @@
 
 
 int
-openat64 (dfd, file, oflag)
-     int dfd;
-     const char *file;
-     int oflag;
+openat64 (int dfd, const char *file, int oflag, ...)
 {
-  assert ((oflag & O_CREAT) == 0);
+  assert (!__OPEN_NEEDS_MODE (oflag));
 
-#ifdef __NR_openat
   return INLINE_SYSCALL (openat, 3, dfd, file, oflag | O_LARGEFILE);
-#else
-  __set_errno (ENOSYS);
-  return -1;
-#endif
 }

@@ -1,5 +1,5 @@
 /* Multiple versions of modf.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ weak_alias (__modf, modf)
 strong_alias (__modf, __modfl)
 weak_alias (__modf, modfl)
 #endif
-#ifdef IS_IN_libm
+#if IS_IN (libm)
 # if LONG_DOUBLE_COMPAT(libm, GLIBC_2_0)
 compat_symbol (libm, __modf, modfl, GLIBC_2_0);
 # endif

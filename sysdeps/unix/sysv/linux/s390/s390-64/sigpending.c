@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,8 +28,7 @@
 /* Change the set of blocked signals to SET,
    wait until a signal arrives, and restore the set of blocked signals.  */
 int
-sigpending (set)
-     sigset_t *set;
+sigpending (sigset_t *set)
 {
   /* XXX The size argument hopefully will have to be changed to the
      real size of the user-level sigset_t.  */

@@ -1,6 +1,6 @@
 /* Multiple versions of strlen
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -24,28 +24,19 @@
 /* Define multiple versions only for the definition in libc and for the
    DSO.  In static binaries, we need strlen before the initialization
    happened.  */
-#if defined SHARED && !defined NOT_IN_libc
+#if defined SHARED && IS_IN (libc)
 	.text
 ENTRY(strlen)
 	.type	strlen, @gnu_indirect_function
-	pushl	%ebx
-	cfi_adjust_cfa_offset (4)
-	cfi_rel_offset (ebx, 0)
-	LOAD_PIC_REG(bx)
-	cmpl	$0, KIND_OFFSET+__cpu_features@GOTOFF(%ebx)
-	jne	1f
-	call	__init_cpu_features
-1:	leal	__strlen_ia32@GOTOFF(%ebx), %eax
-	testl	$bit_SSE2, CPUID_OFFSET+index_SSE2+__cpu_features@GOTOFF(%ebx)
+	LOAD_GOT_AND_RTLD_GLOBAL_RO
+	LOAD_FUNC_GOT_EAX (__strlen_ia32)
+	HAS_CPU_FEATURE (SSE2)
 	jz	2f
-	leal	__strlen_sse2_bsf@GOTOFF(%ebx), %eax
-	testl	$bit_Slow_BSF, FEATURE_OFFSET+index_Slow_BSF+__cpu_features@GOTOFF(%ebx)
+	LOAD_FUNC_GOT_EAX (__strlen_sse2_bsf)
+	HAS_ARCH_FEATURE (Slow_BSF)
 	jz	2f
-	leal	__strlen_sse2@GOTOFF(%ebx), %eax
-2:	popl	%ebx
-	cfi_adjust_cfa_offset (-4);
-	cfi_restore (ebx)
-	ret
+	LOAD_FUNC_GOT_EAX (__strlen_sse2)
+2:	ret
 END(strlen)
 
 # undef ENTRY

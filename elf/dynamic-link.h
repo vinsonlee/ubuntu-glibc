@@ -1,5 +1,5 @@
 /* Inline functions for dynamic linking.
-   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,11 +25,14 @@
    an attempt to allocate it in surplus space on the fly.  If that
    can't be done, we fall back to the error that DF_STATIC_TLS is
    intended to produce.  */
+#define HAVE_STATIC_TLS(map, sym_map)					\
+    (__builtin_expect ((sym_map)->l_tls_offset != NO_TLS_OFFSET		\
+		       && ((sym_map)->l_tls_offset			\
+			   != FORCED_DYNAMIC_TLS_OFFSET), 1))
+
 #define CHECK_STATIC_TLS(map, sym_map)					\
     do {								\
-      if (__builtin_expect ((sym_map)->l_tls_offset == NO_TLS_OFFSET	\
-			    || ((sym_map)->l_tls_offset			\
-				== FORCED_DYNAMIC_TLS_OFFSET), 0))	\
+      if (!HAVE_STATIC_TLS (map, sym_map))				\
 	_dl_allocate_static_tls (sym_map);				\
     } while (0)
 
@@ -39,7 +42,8 @@
      && (__builtin_expect ((sym_map)->l_tls_offset != NO_TLS_OFFSET, 1)	\
 	 || _dl_try_allocate_static_tls (sym_map) == 0))
 
-int internal_function _dl_try_allocate_static_tls (struct link_map *map);
+int internal_function attribute_hidden
+  _dl_try_allocate_static_tls (struct link_map *map);
 
 #include <elf.h>
 
@@ -122,8 +126,7 @@ elf_machine_lazy_rel (struct link_map *map,
 	ranges[0].size = (map)->l_info[DT_##RELOC##SZ]->d_un.d_val;	      \
 	if (map->l_info[VERSYMIDX (DT_##RELOC##COUNT)] != NULL)		      \
 	  ranges[0].nrelative						      \
-	    = MIN (map->l_info[VERSYMIDX (DT_##RELOC##COUNT)]->d_un.d_val,    \
-		   ranges[0].size / sizeof (ElfW(reloc)));		      \
+	    = map->l_info[VERSYMIDX (DT_##RELOC##COUNT)]->d_un.d_val;	      \
       }									      \
     if ((map)->l_info[DT_PLTREL]					      \
 	&& (!test_rel || (map)->l_info[DT_PLTREL]->d_un.d_val == DT_##RELOC)) \
@@ -133,16 +136,18 @@ elf_machine_lazy_rel (struct link_map *map,
 									      \
 	if (ranges[0].start + ranges[0].size == (start + size))		      \
 	  ranges[0].size -= size;					      \
-	if (! ELF_DURING_STARTUP && ((do_lazy) || ranges[0].size == 0))	      \
+	if (ELF_DURING_STARTUP						      \
+	    || (!(do_lazy)						      \
+		&& (ranges[0].start + ranges[0].size) == start))	      \
+	  {								      \
+	    /* Combine processing the sections.  */			      \
+	    ranges[0].size += size;					      \
+	  }								      \
+	else								      \
 	  {								      \
 	    ranges[1].start = start;					      \
 	    ranges[1].size = size;					      \
 	    ranges[1].lazy = (do_lazy);					      \
-	  }								      \
-	else								      \
-	  {								      \
-	    /* Combine processing the sections.  */			      \
-	    ranges[0].size += size;					      \
 	  }								      \
       }									      \
 									      \

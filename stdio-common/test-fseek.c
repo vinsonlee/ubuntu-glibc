@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,8 +19,8 @@
 
 #define TESTFILE "/tmp/test.dat"
 
-int
-main (void)
+static int
+do_test (void)
 {
   FILE *fp;
   int i, j;
@@ -82,3 +82,6 @@ main (void)
   puts ((i > 255) ? "Test succeeded." : "Test FAILED!");
   return (i > 255) ? 0 : 1;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

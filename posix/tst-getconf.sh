@@ -1,6 +1,6 @@
-#! /bin/sh
+#!/bin/sh
 # Test for getconf(1).
-# Copyright (C) 2001-2014 Free Software Foundation, Inc.
+# Copyright (C) 2001-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -24,16 +24,10 @@ run_getconf=$1; shift
 
 logfile=$common_objpfx/posix/tst-getconf.out
 
-# Since we use `sort' we must make sure to use the same locale everywhere.
-LC_ALL=C
-export LC_ALL
-LANG=C
-export LANG
-
 rm -f $logfile
 result=0
 while read name; do
-  echo -n "getconf $name: " >> $logfile
+  printf %s "getconf $name: " >> $logfile
   ${run_getconf} "$name" < /dev/null 2>> $logfile >> $logfile
   if test $? -ne 0; then
     echo "*** $name FAILED" >> $logfile
@@ -211,7 +205,7 @@ XBS5_LPBIG_OFFBIG_LINTFLAGS
 EOF
 
 while read name; do
-  echo -n "getconf $name /: " >> $logfile
+  printf %s "getconf $name /: " >> $logfile
   ${run_getconf} "$name" / < /dev/null 2>> $logfile >> $logfile
   if test $? -ne 0; then
     echo "*** $name FAILED" >> $logfile

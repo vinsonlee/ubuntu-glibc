@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include "exit.h"
 #include <atomic.h>
 #include <sysdep.h>
@@ -57,7 +57,7 @@ __cxa_atexit (void (*func) (void *), void *arg, void *d)
 {
   return __internal_atexit (func, arg, d, &__exit_funcs);
 }
-INTDEF(__cxa_atexit)
+libc_hidden_def (__cxa_atexit)
 
 
 /* We change global data, so we need locking.  */

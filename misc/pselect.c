@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -45,7 +45,7 @@ __pselect (int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
     {
       /* Catch bugs which would be hidden by the TIMESPEC_TO_TIMEVAL
 	 computations.  The division by 1000 truncates values.  */
-      if (__builtin_expect (timeout->tv_nsec < 0, 0))
+      if (__glibc_unlikely (timeout->tv_nsec < 0))
 	{
 	  __set_errno (EINVAL);
 	  return -1;
@@ -73,7 +73,6 @@ __pselect (int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 }
 #ifndef __pselect
 weak_alias (__pselect, pselect)
-strong_alias (__pselect, __libc_pselect)
 /* __select handles cancellation.  */
 LIBC_CANCEL_HANDLED ();
 #endif

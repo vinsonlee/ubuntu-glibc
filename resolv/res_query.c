@@ -64,11 +64,6 @@
  * SOFTWARE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "$BINDId: res_query.c,v 8.20 2000/02/29 05:39:12 vixie Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,7 +93,7 @@ static int
 __libc_res_nquerydomain(res_state statp, const char *name, const char *domain,
 			int class, int type, u_char *answer, int anslen,
 			u_char **answerp, u_char **answerp2, int *nanswerp2,
-			int *resplen2);
+			int *resplen2, int *answerp2_malloced);
 
 /*
  * Formulate a normal query, send, and await answer.
@@ -119,7 +114,8 @@ __libc_res_nquery(res_state statp,
 		  u_char **answerp,	/* if buffer needs to be enlarged */
 		  u_char **answerp2,
 		  int *nanswerp2,
-		  int *resplen2)
+		  int *resplen2,
+		  int *answerp2_malloced)
 {
 	HEADER *hp = (HEADER *) answer;
 	HEADER *hp2;
@@ -202,7 +198,7 @@ __libc_res_nquery(res_state statp,
 			goto again;
 		}
 	}
-	if (__builtin_expect (n <= 0, 0)) {
+	if (__glibc_unlikely (n <= 0))       {
 		/* If the query choked with EDNS0, retry without EDNS0.  */
 		if ((statp->options & (RES_USE_EDNS0|RES_USE_DNSSEC)) != 0
 		    && ((oflags ^ statp->_flags) & RES_F_EDNS0ERR) != 0) {
@@ -224,7 +220,8 @@ __libc_res_nquery(res_state statp,
 	}
 	assert (answerp == NULL || (void *) *answerp == (void *) answer);
 	n = __libc_res_nsend(statp, query1, nquery1, query2, nquery2, answer,
-			     anslen, answerp, answerp2, nanswerp2, resplen2);
+			     anslen, answerp, answerp2, nanswerp2, resplen2,
+			     answerp2_malloced);
 	if (use_malloc)
 		free (buf);
 	if (n < 0) {
@@ -316,7 +313,7 @@ res_nquery(res_state statp,
 	   int anslen)		/* size of answer buffer */
 {
 	return __libc_res_nquery(statp, name, class, type, answer, anslen,
-				 NULL, NULL, NULL, NULL);
+				 NULL, NULL, NULL, NULL, NULL);
 }
 libresolv_hidden_def (res_nquery)
 
@@ -335,7 +332,8 @@ __libc_res_nsearch(res_state statp,
 		   u_char **answerp,
 		   u_char **answerp2,
 		   int *nanswerp2,
-		   int *resplen2)
+		   int *resplen2,
+		   int *answerp2_malloced)
 {
 	const char *cp, * const *domain;
 	HEADER *hp = (HEADER *) answer;
@@ -360,7 +358,7 @@ __libc_res_nsearch(res_state statp,
 	if (!dots && (cp = res_hostalias(statp, name, tmp, sizeof tmp))!= NULL)
 		return (__libc_res_nquery(statp, cp, class, type, answer,
 					  anslen, answerp, answerp2,
-					  nanswerp2, resplen2));
+					  nanswerp2, resplen2, answerp2_malloced));
 
 #ifdef DEBUG
 	if (statp->options & RES_DEBUG)
@@ -377,8 +375,11 @@ __libc_res_nsearch(res_state statp,
 	if (dots >= statp->ndots || trailing_dot) {
 		ret = __libc_res_nquerydomain(statp, name, NULL, class, type,
 					      answer, anslen, answerp,
-					      answerp2, nanswerp2, resplen2);
-		if (ret > 0 || trailing_dot)
+					      answerp2, nanswerp2, resplen2,
+					      answerp2_malloced);
+		if (ret > 0 || trailing_dot
+		    /* If the second response is valid then we use that.  */
+		    || (ret == 0 && resplen2 != NULL && *resplen2 > 0))
 			return (ret);
 		saved_herrno = h_errno;
 		tried_as_is++;
@@ -386,11 +387,12 @@ __libc_res_nsearch(res_state statp,
 			answer = *answerp;
 			anslen = MAXPACKET;
 		}
-		if (answerp2
-		    && (*answerp2 < answer || *answerp2 >= answer + anslen))
+		if (answerp2 && *answerp2_malloced)
 		  {
 		    free (*answerp2);
 		    *answerp2 = NULL;
+		    *nanswerp2 = 0;
+		    *answerp2_malloced = 0;
 		  }
 	}
 
@@ -407,30 +409,42 @@ __libc_res_nsearch(res_state statp,
 		for (domain = (const char * const *)statp->dnsrch;
 		     *domain && !done;
 		     domain++) {
+			const char *dname = domain[0];
 			searched = 1;
 
-			if (domain[0][0] == '\0' ||
-			    (domain[0][0] == '.' && domain[0][1] == '\0'))
+			/* __libc_res_nquerydoman concatenates name
+			   with dname with a "." in between.  If we
+			   pass it in dname the "." we got from the
+			   configured default search path, we'll end
+			   up with "name..", which won't resolve.
+			   OTOH, passing it "" will result in "name.",
+			   which has the intended effect for both
+			   possible representations of the root
+			   domain.  */
+			if (dname[0] == '.')
+				dname++;
+			if (dname[0] == '\0')
 				root_on_list++;
 
-			ret = __libc_res_nquerydomain(statp, name, *domain,
+			ret = __libc_res_nquerydomain(statp, name, dname,
 						      class, type,
 						      answer, anslen, answerp,
 						      answerp2, nanswerp2,
-						      resplen2);
-			if (ret > 0)
+						      resplen2, answerp2_malloced);
+			if (ret > 0 || (ret == 0 && resplen2 != NULL
+					&& *resplen2 > 0))
 				return (ret);
 
 			if (answerp && *answerp != answer) {
 				answer = *answerp;
 				anslen = MAXPACKET;
 			}
-			if (answerp2
-			    && (*answerp2 < answer
-				|| *answerp2 >= answer + anslen))
+			if (answerp2 && *answerp2_malloced)
 			  {
 			    free (*answerp2);
 			    *answerp2 = NULL;
+			    *nanswerp2 = 0;
+			    *answerp2_malloced = 0;
 			  }
 
 			/*
@@ -479,15 +493,17 @@ __libc_res_nsearch(res_state statp,
 	}
 
 	/*
-	 * f the query has not already been tried as is then try it
+	 * If the query has not already been tried as is then try it
 	 * unless RES_NOTLDQUERY is set and there were no dots.
 	 */
 	if ((dots || !searched || (statp->options & RES_NOTLDQUERY) == 0)
 	    && !(tried_as_is || root_on_list)) {
 		ret = __libc_res_nquerydomain(statp, name, NULL, class, type,
 					      answer, anslen, answerp,
-					      answerp2, nanswerp2, resplen2);
-		if (ret > 0)
+					      answerp2, nanswerp2, resplen2,
+					      answerp2_malloced);
+		if (ret > 0 || (ret == 0 && resplen2 != NULL
+				&& *resplen2 > 0))
 			return (ret);
 	}
 
@@ -498,10 +514,12 @@ __libc_res_nsearch(res_state statp,
 	 * else send back meaningless H_ERRNO, that being the one from
 	 * the last DNSRCH we did.
 	 */
-	if (answerp2 && (*answerp2 < answer || *answerp2 >= answer + anslen))
+	if (answerp2 && *answerp2_malloced)
 	  {
 	    free (*answerp2);
 	    *answerp2 = NULL;
+	    *nanswerp2 = 0;
+	    *answerp2_malloced = 0;
 	  }
 	if (saved_herrno != -1)
 		RES_SET_H_ERRNO(statp, saved_herrno);
@@ -521,13 +539,12 @@ res_nsearch(res_state statp,
 	    int anslen)		/* size of answer */
 {
 	return __libc_res_nsearch(statp, name, class, type, answer,
-				  anslen, NULL, NULL, NULL, NULL);
+				  anslen, NULL, NULL, NULL, NULL, NULL);
 }
 libresolv_hidden_def (res_nsearch)
 
 /*
- * Perform a call on res_query on the concatenation of name and domain,
- * removing a trailing dot from name if domain is NULL.
+ * Perform a call on res_query on the concatenation of name and domain.
  */
 static int
 __libc_res_nquerydomain(res_state statp,
@@ -539,7 +556,8 @@ __libc_res_nquerydomain(res_state statp,
 			u_char **answerp,
 			u_char **answerp2,
 			int *nanswerp2,
-			int *resplen2)
+			int *resplen2,
+			int *answerp2_malloced)
 {
 	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
@@ -551,10 +569,6 @@ __libc_res_nquerydomain(res_state statp,
 		       name, domain?domain:"<Nil>", class, type);
 #endif
 	if (domain == NULL) {
-		/*
-		 * Check for trailing '.';
-		 * copy without '.' if present.
-		 */
 		n = strlen(name);
 
 		/* Decrement N prior to checking it against MAXDNAME
@@ -565,11 +579,7 @@ __libc_res_nquerydomain(res_state statp,
 			RES_SET_H_ERRNO(statp, NO_RECOVERY);
 			return (-1);
 		}
-		if (name[n] == '.') {
-			strncpy(nbuf, name, n);
-			nbuf[n] = '\0';
-		} else
-			longname = name;
+		longname = name;
 	} else {
 		n = strlen(name);
 		d = strlen(domain);
@@ -581,7 +591,7 @@ __libc_res_nquerydomain(res_state statp,
 	}
 	return (__libc_res_nquery(statp, longname, class, type, answer,
 				  anslen, answerp, answerp2, nanswerp2,
-				  resplen2));
+				  resplen2, answerp2_malloced));
 }
 
 int
@@ -593,7 +603,8 @@ res_nquerydomain(res_state statp,
 	    int anslen)		/* size of answer */
 {
 	return __libc_res_nquerydomain(statp, name, domain, class, type,
-				       answer, anslen, NULL, NULL, NULL, NULL);
+				       answer, anslen, NULL, NULL, NULL, NULL,
+				       NULL);
 }
 libresolv_hidden_def (res_nquerydomain)
 

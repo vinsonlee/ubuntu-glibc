@@ -1,4 +1,4 @@
-/* Copyright (C) 2004-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2004.
 
@@ -16,7 +16,6 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include <alloca.h>
-#include <kernel-features.h>
 
 /* This file uses the getaddrinfo code but it compiles it without NSCD
    support.  We just need a few symbol renames.  */
@@ -29,6 +28,7 @@
 #define __sendto sendto
 #define __strchrnul strchrnul
 #define __getline getline
+#define __qsort_r qsort_r
 /* nscd uses 1MB or 2MB thread stacks.  */
 #define __libc_use_alloca(size) (size <= __MAX_ALLOCA_CUTOFF)
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -23,8 +23,7 @@
 
 /* Duplicate S, returning an identical malloc'd string.	 */
 wchar_t *
-wcsdup (s)
-     const wchar_t *s;
+wcsdup (const wchar_t *s)
 {
   size_t len = (__wcslen (s) + 1) * sizeof (wchar_t);
   void *new = malloc (len);

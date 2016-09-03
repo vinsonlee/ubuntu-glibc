@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,10 +20,7 @@
 
 /* Give the socket FD the local address ADDR (which is LEN bytes long).  */
 int
-__bind (fd, addr, len)
-     int fd;
-     __CONST_SOCKADDR_ARG addr;
-     socklen_t len;
+__bind (int fd, __CONST_SOCKADDR_ARG addr, socklen_t len)
 {
   __set_errno (ENOSYS);
   return -1;

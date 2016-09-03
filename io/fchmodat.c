@@ -1,5 +1,5 @@
 /* Change the protections of file relative to open directory.  Stub version.
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,11 +24,7 @@
 #include <sys/stat.h>
 
 int
-fchmodat (fd, file, mode, flag)
-     int fd;
-     const char *file;
-     mode_t mode;
-     int flag;
+fchmodat (int fd, const char *file, mode_t mode, int flag)
 {
   if (file == NULL || (flag & ~AT_SYMLINK_NOFOLLOW) != 0)
     {

@@ -1,5 +1,5 @@
 /* Testing the implementation of LC_NUMERIC and snprintf().
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Petter Reinholdtsen <pere@hungry.com>, 2003
 
@@ -41,7 +41,7 @@
 int
 main (int argc, char *argv[])
 {
-  char *s = malloc (201);
+  char s[200];
   double val;
 
   /* Make sure to read the value before setting of the locale, as
@@ -54,7 +54,7 @@ main (int argc, char *argv[])
       exit (EXIT_SETLOCALE);
     }
 
-  if (snprintf (s, 200, argv[2], val) == -1)
+  if (snprintf (s, sizeof (s), argv[2], val) == -1)
     {
       perror ("snprintf");
       exit (EXIT_SNPRINTF);

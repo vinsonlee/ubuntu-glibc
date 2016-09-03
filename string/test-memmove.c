@@ -1,5 +1,5 @@
 /* Test and measure memmove functions.
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Jakub Jelinek <jakub@redhat.com>, 1999.
 
@@ -68,6 +68,7 @@ static void
 do_one_test (impl_t *impl, char *dst, char *src, const char *orig_src,
 	     size_t len)
 {
+  /* This also clears the destination buffer set by the previous run.  */
   memcpy (src, orig_src, len);
 #ifdef TEST_BCOPY
   CALL (impl, src, dst, len);

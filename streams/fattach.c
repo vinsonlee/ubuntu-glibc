@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,9 +19,7 @@
 #include <stropts.h>
 
 int
-fattach (fildes, path)
-     int fildes;
-     const char *path;
+fattach (int fildes, const char *path)
 {
   __set_errno (ENOSYS);
   return -1;

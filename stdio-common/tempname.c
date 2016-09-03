@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,12 +24,8 @@
    template suitable for use in __gen_tempname into TMPL, bounded
    by TMPL_LEN. */
 int
-__path_search (tmpl, tmpl_len, dir, pfx, try_tmpdir)
-     char *tmpl;
-     size_t tmpl_len;
-     const char *dir;
-     const char *pfx;
-     int try_tmpdir;
+__path_search (char *tmpl, size_t tmpl_len, const char *dir, const char *pfx,
+	       int try_tmpdir)
 {
   __set_errno (ENOSYS);
   return -1;
@@ -46,11 +42,7 @@ stub_warning (__path_search)
  */
 
 int
-__gen_tempname (tmpl, suffixlen, flags, kind)
-     char *tmpl;
-     int suffixlen;
-     int flags;
-     int kind;
+__gen_tempname (char *tmpl, int suffixlen, int flags, int kind)
 {
   __set_errno (ENOSYS);
   return -1;

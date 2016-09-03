@@ -1,5 +1,5 @@
 /* The lseek system call with 64-bit offset.  Linux/x32 version.
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,7 +16,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <sysdep-cancel.h>
+#include <sysdep.h>
 
 /* Return -1LL in a full 64 bits.  */
 #undef SYSCALL_ERROR_HANDLER

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Based on strlen implementation by Torbjorn Granlund (tege@sics.se),
    with help from Dan Sahlin (dan@sics.se) and
@@ -21,16 +21,17 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <string.h>
-#include <memcopy.h>
 #include <stdlib.h>
 
 #undef strchr
 
+#ifndef STRCHR
+# define STRCHR strchr
+#endif
+
 /* Find the first occurrence of C in S.  */
 char *
-strchr (s, c_in)
-     const char *s;
-     int c_in;
+STRCHR (const char *s, int c_in)
 {
   const unsigned char *char_ptr;
   const unsigned long int *longword_ptr;
@@ -63,13 +64,8 @@ strchr (s, c_in)
 
      The 1-bits make sure that carries propagate to the next 0-bit.
      The 0-bits provide holes for carries to fall into.  */
-  switch (sizeof (longword))
-    {
-    case 4: magic_bits = 0x7efefeffL; break;
-    case 8: magic_bits = ((0x7efefefeL << 16) << 16) | 0xfefefeffL; break;
-    default:
-      abort ();
-    }
+  magic_bits = -1;
+  magic_bits = magic_bits / 0xff * 0xfe << 1 >> 1 | 1;
 
   /* Set up a longword, each of whose bytes is C.  */
   charmask = c | (c << 8);
@@ -183,7 +179,7 @@ strchr (s, c_in)
 }
 
 #ifdef weak_alias
-#undef index
+# undef index
 weak_alias (strchr, index)
 #endif
 libc_hidden_builtin_def (strchr)

@@ -1,5 +1,5 @@
 /* termios type and macro definitions.  Linux/SPARC version.
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -107,8 +107,11 @@ struct termios
 #define VTDLY	0x00004000
 #define   VT0	0x00000000
 #define   VT1	0x00004000
+
+# if defined __USE_GNU
 #define PAGEOUT 0x00010000	/* SUNOS specific */
 #define WRAP    0x00020000	/* SUNOS specific */
+# endif
 
 #ifdef __USE_MISC
 # define   XTABS	0x00001800
@@ -178,7 +181,7 @@ struct termios
 /* c_lflag bits */
 #define ISIG	0x00000001
 #define ICANON	0x00000002
-#if defined __USE_MISC || defined __USE_XOPEN
+#if defined __USE_MISC || (defined __USE_XOPEN && !defined __USE_XOPEN2K)
 # define XCASE	0x00000004
 #endif
 #define ECHO	0x00000008
@@ -196,26 +199,14 @@ struct termios
 # define PENDIN		0x00004000
 #endif
 #define IEXTEN	0x00008000
-#ifdef __USE_BSD
+#ifdef __USE_MISC
 # define EXTPROC 0x00010000
 #endif
 
-/* modem lines */
-#define TIOCM_LE	0x001
-#define TIOCM_DTR	0x002
-#define TIOCM_RTS	0x004
-#define TIOCM_ST	0x008
-#define TIOCM_SR	0x010
-#define TIOCM_CTS	0x020
-#define TIOCM_CAR	0x040
-#define TIOCM_RNG	0x080
-#define TIOCM_DSR	0x100
-#define TIOCM_CD	TIOCM_CAR
-#define TIOCM_RI	TIOCM_RNG
-
+# if defined __USE_GNU
 /* ioctl (fd, TIOCSERGETLSR, &result) where result may be as below */
 #define TIOCSER_TEMT    0x01	/* Transmitter physically empty */
-
+#endif
 
 /* tcflow() and TCXONC use these */
 #define	TCOOFF		0

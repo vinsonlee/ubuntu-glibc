@@ -1,6 +1,6 @@
 /* Copy memory to memory until the specified number of bytes
    has been copied.  Overlap is handled correctly.
-   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Torbjorn Granlund (tege@sics.se).
 
@@ -20,7 +20,6 @@
 
 #include <string.h>
 #include <memcopy.h>
-#include <pagecopy.h>
 
 /* All this is so that bcopy.c can #include
    this file after defining some things.  */
@@ -42,10 +41,7 @@
 
 rettype
 inhibit_loop_to_libcall
-MEMMOVE (a1, a2, len)
-     a1const void *a1;
-     a2const void *a2;
-     size_t len;
+MEMMOVE (a1const void *a1, a2const void *a2, size_t len)
 {
   unsigned long int dstp = (long int) dest;
   unsigned long int srcp = (long int) src;

@@ -1,5 +1,5 @@
 /* Handle general operations.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -311,7 +311,10 @@ __aio_enqueue_request (aiocb_union *aiocbp, int operation)
   if (operation == LIO_SYNC || operation == LIO_DSYNC)
     aiocbp->aiocb.aio_reqprio = 0;
   else if (aiocbp->aiocb.aio_reqprio < 0
-	   || aiocbp->aiocb.aio_reqprio > AIO_PRIO_DELTA_MAX)
+#ifdef AIO_PRIO_DELTA_MAX
+	   || aiocbp->aiocb.aio_reqprio > AIO_PRIO_DELTA_MAX
+#endif
+	   )
     {
       /* Invalid priority value.  */
       __set_errno (EINVAL);
@@ -533,10 +536,11 @@ handle_fildes_io (void *arg)
 						 aiocbp->aiocb64.aio_offset));
 	      else
 		aiocbp->aiocb.__return_value =
-		  TEMP_FAILURE_RETRY (pread (fildes,
-					     (void *) aiocbp->aiocb.aio_buf,
-					     aiocbp->aiocb.aio_nbytes,
-					     aiocbp->aiocb.aio_offset));
+		  TEMP_FAILURE_RETRY (__libc_pread (fildes,
+						    (void *)
+						    aiocbp->aiocb.aio_buf,
+						    aiocbp->aiocb.aio_nbytes,
+						    aiocbp->aiocb.aio_offset));
 
 	      if (aiocbp->aiocb.__return_value == -1 && errno == ESPIPE)
 		/* The Linux kernel is different from others.  It returns
@@ -590,14 +594,6 @@ handle_fildes_io (void *arg)
 	  /* Get the mutex.  */
 	  pthread_mutex_lock (&__aio_requests_mutex);
 
-	  /* In theory we would need here a write memory barrier since the
-	     callers test using aio_error() whether the request finished
-	     and once this value != EINPROGRESS the field __return_value
-	     must be committed to memory.
-
-	     But since the pthread_mutex_lock call involves write memory
-	     barriers as well it is not necessary.  */
-
 	  if (aiocbp->aiocb.__return_value == -1)
 	    aiocbp->aiocb.__error_code = errno;
 	  else
@@ -631,7 +627,7 @@ handle_fildes_io (void *arg)
 	  struct timespec wakeup_time;
 
 	  ++idle_thread_count;
-	  gettimeofday (&now, NULL);
+	  __gettimeofday (&now, NULL);
 	  wakeup_time.tv_sec = now.tv_sec + optim.aio_idle_time;
 	  wakeup_time.tv_nsec = now.tv_usec * 1000;
 	  if (wakeup_time.tv_nsec >= 1000000000)

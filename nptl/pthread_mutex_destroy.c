@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -23,8 +23,7 @@
 
 
 int
-__pthread_mutex_destroy (mutex)
-     pthread_mutex_t *mutex;
+__pthread_mutex_destroy (pthread_mutex_t *mutex)
 {
   LIBC_PROBE (mutex_destroy, 1, mutex);
 

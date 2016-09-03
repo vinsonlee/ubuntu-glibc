@@ -1,5 +1,5 @@
 /* Message-writing for the dynamic linker.  Generic version.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
 
 #include <sys/uio.h>
 #include <ldsodefs.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 
 /* This is used from only one place: dl-misc.c:_dl_debug_vdprintf.
    Hence it's in a header with the expectation it will be inlined.
@@ -42,7 +42,7 @@ _dl_writev (int fd, const struct iovec *iov, size_t niov)
      errno when it's being used by another thread that cares about it.
      Yet we must be sure not to try calling the lock functions before
      the thread library is fully initialized.  */
-  if (__builtin_expect (INTUSE (_dl_starting_up), 0))
+  if (__glibc_unlikely (_dl_starting_up))
     __writev (fd, iov, niov);
   else
     {

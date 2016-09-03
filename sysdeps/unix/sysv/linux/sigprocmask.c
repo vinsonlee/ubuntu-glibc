@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,21 +17,18 @@
 
 #include <errno.h>
 #include <signal.h>
-#include <string.h>	/* Neede for string function builtin redirection.  */
+#include <string.h>  /* Needed for string function builtin redirection.  */
 #include <unistd.h>
 
 #include <sysdep.h>
 #include <sys/syscall.h>
 
-#include <kernel-features.h>
+#include <nptl/pthreadP.h>              /* SIGCANCEL, SIGSETXID */
 
 
 /* Get and/or change the set of blocked signals.  */
 int
-__sigprocmask (how, set, oset)
-     int how;
-     const sigset_t *set;
-     sigset_t *oset;
+__sigprocmask (int how, const sigset_t *set, sigset_t *oset)
 {
 #ifdef SIGCANCEL
   sigset_t local_newmask;

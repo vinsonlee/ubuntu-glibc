@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,12 +29,14 @@ __ieee754_exp10l (long double arg)
   long double arg_high, arg_low;
   long double exp_high, exp_low;
 
-  if (!__finitel (arg))
+  if (!isfinite (arg))
     return __ieee754_expl (arg);
   if (arg < LDBL_MIN_10_EXP - LDBL_DIG - 10)
     return LDBL_MIN * LDBL_MIN;
   else if (arg > LDBL_MAX_10_EXP + 1)
     return LDBL_MAX * LDBL_MAX;
+  else if (fabsl (arg) < 0x1p-116L)
+    return 1.0L;
 
   u.value = arg;
   u.parts64.lsw &= 0xfe00000000000000LL;

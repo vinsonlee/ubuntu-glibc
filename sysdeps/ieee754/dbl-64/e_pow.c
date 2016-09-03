@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2014 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2016 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -34,6 +34,7 @@
 /* round to nearest mode of IEEE 754 standard.                             */
 /*                                                                         */
 /***************************************************************************/
+#include <math.h>
 #include "endian.h"
 #include "upow.h"
 #include <dla.h>
@@ -91,27 +92,35 @@ __ieee754_pow (double x, double y)
     {				/* if y<-1 or y>1   */
       double retval;
 
-      SET_RESTORE_ROUND (FE_TONEAREST);
+      {
+	SET_RESTORE_ROUND (FE_TONEAREST);
 
-      /* Avoid internal underflow for tiny y.  The exact value of y does
-         not matter if |y| <= 2**-64.  */
-      if (ABS (y) < 0x1p-64)
-	y = y < 0 ? -0x1p-64 : 0x1p-64;
-      z = log1 (x, &aa, &error);	/* x^y  =e^(y log (X)) */
-      t = y * CN;
-      y1 = t - (t - y);
-      y2 = y - y1;
-      t = z * CN;
-      a1 = t - (t - z);
-      a2 = (z - a1) + aa;
-      a = y1 * a1;
-      aa = y2 * a1 + y * a2;
-      a1 = a + aa;
-      a2 = (a - a1) + aa;
-      error = error * ABS (y);
-      t = __exp1 (a1, a2, 1.9e16 * error);	/* return -10 or 0 if wasn't computed exactly */
-      retval = (t > 0) ? t : power1 (x, y);
+	/* Avoid internal underflow for tiny y.  The exact value of y does
+	   not matter if |y| <= 2**-64.  */
+	if (fabs (y) < 0x1p-64)
+	  y = y < 0 ? -0x1p-64 : 0x1p-64;
+	z = log1 (x, &aa, &error);	/* x^y  =e^(y log (X)) */
+	t = y * CN;
+	y1 = t - (t - y);
+	y2 = y - y1;
+	t = z * CN;
+	a1 = t - (t - z);
+	a2 = (z - a1) + aa;
+	a = y1 * a1;
+	aa = y2 * a1 + y * a2;
+	a1 = a + aa;
+	a2 = (a - a1) + aa;
+	error = error * fabs (y);
+	t = __exp1 (a1, a2, 1.9e16 * error);	/* return -10 or 0 if wasn't computed exactly */
+	retval = (t > 0) ? t : power1 (x, y);
+      }
 
+      if (isinf (retval))
+	retval = huge * huge;
+      else if (retval == 0)
+	retval = tiny * tiny;
+      else
+	math_check_force_underflow_nonneg (retval);
       return retval;
     }
 
@@ -120,7 +129,7 @@ __ieee754_pow (double x, double y)
       if (((v.i[HIGH_HALF] & 0x7fffffff) == 0x7ff00000 && v.i[LOW_HALF] != 0)
 	  || (v.i[HIGH_HALF] & 0x7fffffff) > 0x7ff00000)	/* NaN */
 	return y;
-      if (ABS (y) > 1.0e20)
+      if (fabs (y) > 1.0e20)
 	return (y > 0) ? 0 : 1.0 / 0.0;
       k = checkint (y);
       if (k == -1)
@@ -164,7 +173,21 @@ __ieee754_pow (double x, double y)
 	    return y < 0 ? 0.0 : INF.x;
 	}
       /* if y even or odd */
-      return (k == 1) ? __ieee754_pow (-x, y) : -__ieee754_pow (-x, y);
+      if (k == 1)
+	return __ieee754_pow (-x, y);
+      else
+	{
+	  double retval;
+	  {
+	    SET_RESTORE_ROUND (FE_TONEAREST);
+	    retval = -__ieee754_pow (-x, y);
+	  }
+	  if (isinf (retval))
+	    retval = -huge * huge;
+	  else if (retval == 0)
+	    retval = -tiny * tiny;
+	  return retval;
+	}
     }
   /* x>0 */
 
@@ -211,7 +234,7 @@ power1 (double x, double y)
   aa = ((y1 * a1 - a) + y1 * a2 + y2 * a1) + y2 * a2 + aa * y;
   a1 = a + aa;
   a2 = (a - a1) + aa;
-  error = error * ABS (y);
+  error = error * fabs (y);
   t = __exp1 (a1, a2, 1.9e16 * error);
   return (t >= 0) ? t : __slowpow (x, y, z);
 }
@@ -222,7 +245,8 @@ static double
 SECTION
 log1 (double x, double *delta, double *error)
 {
-  int i, j, m;
+  unsigned int i, j;
+  int m;
   double uu, vv, eps, nx, e, e1, e2, t, t1, t2, res, add = 0;
   mynumber u, v;
 #ifdef BIG_ENDI
@@ -271,7 +295,7 @@ log1 (double x, double *delta, double *error)
 							   * (r7 + t * r8)))))
 		- 0.5 * t2 * (t + t1));
 	  res = e1 + e2;
-	  *error = 1.0e-21 * ABS (t);
+	  *error = 1.0e-21 * fabs (t);
 	  *delta = (e1 - res) + e2;
 	  return res;
 	}			/* |x-1| < 1.5*2**-10  */
@@ -321,7 +345,8 @@ static double
 SECTION
 my_log2 (double x, double *delta, double *error)
 {
-  int i, j, m;
+  unsigned int i, j;
+  int m;
   double uu, vv, eps, nx, e, e1, e2, t, t1, t2, res, add = 0;
   double ou1, ou2, lu1, lu2, ov, lv1, lv2, a, a1, a2;
   double y, yy, z, zz, j1, j2, j7, j8;
@@ -377,7 +402,7 @@ my_log2 (double x, double *delta, double *error)
       e2 = ((((t - e1) + z) + zz) + t * t * t
 	    * (ss3 + t * (s4 + t * (s5 + t * (s6 + t * (s7 + t * s8))))));
       res = e1 + e2;
-      *error = 1.0e-25 * ABS (t);
+      *error = 1.0e-25 * fabs (t);
       *delta = (e1 - res) + e2;
       return res;
     }

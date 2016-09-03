@@ -1,5 +1,5 @@
 /* FMA version of fma.
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -21,8 +21,6 @@
 #include <math.h>
 #include <init-arch.h>
 
-#ifdef HAVE_AVX_SUPPORT
-
 extern double __fma_sse2 (double x, double y, double z) attribute_hidden;
 
 
@@ -34,25 +32,19 @@ __fma_fma3 (double x, double y, double z)
 }
 
 
-# ifdef HAVE_FMA4_SUPPORT
 static double
 __fma_fma4 (double x, double y, double z)
 {
   asm ("vfmaddsd %3, %2, %1, %0" : "=x" (x) : "x" (x), "x" (y), "x" (z));
   return x;
 }
-# else
-#  undef HAS_FMA4
-#  define HAS_FMA4 0
-#  define __fma_fma4 ((void *) 0)
-# endif
 
 
-libm_ifunc (__fma, HAS_FMA
-	    ? __fma_fma3 : (HAS_FMA4 ? __fma_fma4 : __fma_sse2));
+libm_ifunc (__fma, HAS_ARCH_FEATURE (FMA_Usable)
+	    ? __fma_fma3 : (HAS_ARCH_FEATURE (FMA4_Usable)
+			    ? __fma_fma4 : __fma_sse2));
 weak_alias (__fma, fma)
 
-# define __fma __fma_sse2
-#endif
+#define __fma __fma_sse2
 
 #include <sysdeps/ieee754/dbl-64/s_fma.c>

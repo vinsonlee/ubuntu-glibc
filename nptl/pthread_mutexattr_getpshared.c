@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -20,9 +20,7 @@
 
 
 int
-pthread_mutexattr_getpshared (attr, pshared)
-     const pthread_mutexattr_t *attr;
-     int *pshared;
+pthread_mutexattr_getpshared (const pthread_mutexattr_t *attr, int *pshared)
 {
   const struct pthread_mutexattr *iattr;
 

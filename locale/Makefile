@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2014 Free Software Foundation, Inc.
+# Copyright (C) 1991-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,6 +19,8 @@
 #	Makefile for locales.
 #
 subdir	:= locale
+
+include ../Makeconfig
 
 headers		= locale.h bits/locale.h langinfo.h xlocale.h
 routines	= setlocale findlocale loadlocale loadarchive \
@@ -74,27 +76,29 @@ C-translit.h: C-translit.h.in gen-translit.pl
 	$(PERL) gen-translit.pl < $< > $@.tmp
 	mv -f $@.tmp $@
 
-localepath = "$(localedir):$(i18ndir)"
+# The path to the compiled binary locale archive or compiled locales,
+# along with the parent path to the source locales and source
+# charmaps.
+localepath = "$(complocaledir):$(i18ndir)"
 
 # -Iprograms doesn't really belong here, but this gets it at the head
 # of the list instead of the tail, where CPPFLAGS-$(lib) gets added.
 # We need it before the standard -I's to see programs/config.h first.
-locale-CPPFLAGS = -DLOCALEDIR='"$(localedir)"' \
-		  -DLOCALE_ALIAS_PATH='"$(msgcatdir)"' \
+locale-CPPFLAGS = -DCOMPLOCALEDIR='"$(complocaledir)"' \
+		  -DLOCALE_ALIAS_PATH='"$(localedir)"' \
 		  -Iprograms
 
 CPPFLAGS-locale-programs = -DLOCALE_PATH='$(localepath)' \
 			   -DCHARMAP_PATH='"$(i18ndir)/charmaps"' \
 			   -DREPERTOIREMAP_PATH='"$(i18ndir)/repertoiremaps"' \
-			   -DLOCSRCDIR='"$(i18ndir)/locales"' \
-			   -DHAVE_CONFIG_H -DNOT_IN_libc
+			   -DLOCSRCDIR='"$(i18ndir)/locales"'
 
 CFLAGS-charmap.c = -Wno-write-strings -Wno-char-subscripts
 CFLAGS-locfile.c = -Wno-write-strings -Wno-char-subscripts
 CFLAGS-charmap-dir.c = -Wno-write-strings
 
-# This makes sure -DNOT_IN_libc et al are passed for all these modules.
-cpp-srcs-left := $(addsuffix .c,$(localedef-modules) $(localedef-aux) \
-				$(locale-modules) $(lib-modules))
+# Set libof-* for each routine.
+cpp-srcs-left := $(localedef-modules) $(localedef-aux) $(locale-modules) \
+		 $(lib-modules)
 lib := locale-programs
 include $(patsubst %,$(..)cppflags-iterator.mk,$(cpp-srcs-left))

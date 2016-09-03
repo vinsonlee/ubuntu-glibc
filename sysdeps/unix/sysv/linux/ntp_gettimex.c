@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,9 +22,6 @@
 #endif
 
 
-extern int INTUSE(__adjtimex) (struct timex *__ntx);
-
-
 int
 ntp_gettimex (struct ntptimeval *ntv)
 {
@@ -32,7 +29,7 @@ ntp_gettimex (struct ntptimeval *ntv)
   int result;
 
   tntx.modes = 0;
-  result = INTUSE(__adjtimex) (&tntx);
+  result = __adjtimex (&tntx);
   ntv->time = tntx.time;
   ntv->maxerror = tntx.maxerror;
   ntv->esterror = tntx.esterror;

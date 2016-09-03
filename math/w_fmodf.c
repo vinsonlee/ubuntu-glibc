@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -23,8 +23,8 @@
 float
 __fmodf (float x, float y)
 {
-  if (__builtin_expect (__isinf_nsf (x) || y == 0.0f, 0)
-      && _LIB_VERSION != _IEEE_ && !__isnanf (y) && !__isnanf (x))
+  if (__builtin_expect (isinf (x) || y == 0.0f, 0)
+      && _LIB_VERSION != _IEEE_ && !isnan (y) && !isnan (x))
     /* fmod(+-Inf,y) or fmod(x,0) */
     return __kernel_standard_f (x, y, 127);
 

@@ -1,6 +1,6 @@
 /* Make sure dlopen/dlclose are not marked as leaf functions.
 
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Mike Frysinger <vapier@gentoo.org>
 
@@ -50,7 +50,7 @@ void check_val_fini (void)
 
 int lib_main (void)
 {
-  int ret;
+  int ret __attribute__ ((unused));
   void *hdl;
 
   /* Make sure the constructor sees the updated val.  */

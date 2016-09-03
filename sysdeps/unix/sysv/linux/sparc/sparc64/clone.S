@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson (rth@tamu.edu).
 
@@ -25,7 +25,6 @@
 #include <sysdep.h>
 
 #define CLONE_VM	0x00000100
-#define CLONE_THREAD	0x00010000
 
 /* int clone(int (*fn)(void *arg), void *child_stack, int flags, void *arg,
 	     pid_t *ptid, void *tls, pid_t *ctid); */
@@ -77,19 +76,13 @@ END(__clone)
 
 	.type __thread_start,@function
 __thread_start:
-#ifdef RESET_PID
-	sethi	%hi(CLONE_THREAD), %l0
-	andcc	%g4, %l0, %g0
+	andcc	%g4, CLONE_VM, %g0
 	bne,pt	%icc, 1f
-	 andcc	%g4, CLONE_VM, %g0
-	bne,a,pn %icc, 2f
-	 mov	-1,%o0
 	set	__NR_getpid,%g1
 	ta	0x6d
-2:	st	%o0,[%g7 + PID]
+	st	%o0,[%g7 + PID]
 	st	%o0,[%g7 + TID]
 1:
-#endif
 	mov	%g0, %fp	/* terminate backtrace */
 	call	%g2
 	 mov	%g3,%o0
@@ -98,4 +91,5 @@ __thread_start:
 
 	.size	__thread_start, .-__thread_start
 
+libc_hidden_def (__clone)
 weak_alias (__clone, clone)

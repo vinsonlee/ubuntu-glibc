@@ -102,9 +102,11 @@
  */
 
 #include <errno.h>
+#include <float.h>
 #include <math.h>
 #include <math_private.h>
 #include <math_ldbl_opt.h>
+#include <fix-int-fp-convert-zero.h>
 
 /* Evaluate P[n] x^n  +  P[n-1] x^(n-1)  +  ...  +  P[0] */
 
@@ -145,13 +147,10 @@ deval (long double x, const long double *p, int n)
 
 static const long double
 tiny = 1e-300L,
-  half = 0.5L,
   one = 1.0L,
   two = 2.0L,
   /* 2/sqrt(pi) - 1 */
-  efx = 1.2837916709551257389615890312154517168810E-1L,
-  /* 8 * (2/sqrt(pi) - 1) */
-  efx8 = 1.0270333367641005911692712249723613735048E0L;
+  efx = 1.2837916709551257389615890312154517168810E-1L;
 
 
 /* erf(x)  = x  + x R(x^2)
@@ -801,10 +800,13 @@ __erfl (long double x)
 	  if (ix < 0x00800000)
 	    {
 	      /* erf (-0) = -0.  Unfortunately, for IBM extended double
-		 0.125 * (8.0 * x + efx8 * x) for x = -0 evaluates to 0.  */
+		 0.0625 * (16.0 * x + (16.0 * efx) * x) for x = -0
+		 evaluates to 0.  */
 	      if (x == 0)
 		return x;
-	      return 0.125 * (8.0 * x + efx8 * x);	/*avoid underflow */
+	      long double ret = 0.0625 * (16.0 * x + (16.0 * efx) * x);
+	      math_check_force_underflow (ret);
+	      return ret;
 	    }
 	  return x + efx * x;
 	}
@@ -837,7 +839,10 @@ __erfcl (long double x)
   if (ix >= 0x7ff00000)
     {				/* erfc(nan)=nan */
       /* erfc(+-inf)=0,2 */
-      return (long double) ((hx >> 31) << 1) + one / x;
+      long double ret = (long double) ((hx >> 31) << 1) + one / x;
+      if (FIX_INT_FP_CONVERT_ZERO && ret == 0.0L)
+	return 0.0L;
+      return ret;
     }
 
   if (ix < 0x3fd00000) /* |x| <1/4 */
@@ -888,7 +893,7 @@ __erfcl (long double x)
 	  y = C19b + z * neval (z, RNr19, NRNr19) / deval (z, RDr19, NRDr19);
 	  y += C19a;
 	  break;
-	case 9:
+	default: /* i == 9.  */
 	  z = x - 1.125L;
 	  y = C20b + z * neval (z, RNr20, NRNr20) / deval (z, RDr20, NRDr20);
 	  y += C20a;

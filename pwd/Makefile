@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2014 Free Software Foundation, Inc.
+# Copyright (C) 1991-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,13 +19,16 @@
 #	Sub-makefile for pwd portion of the library.
 #
 subdir	:= pwd
+
+include ../Makeconfig
+
 headers := pwd.h
 
 routines := fgetpwent getpw putpwent \
 	    getpwent getpwnam getpwuid \
 	    getpwent_r getpwnam_r getpwuid_r fgetpwent_r
 
-tests := tst-getpw
+tests := tst-getpw tst-putpwent
 
 include ../Rules
 

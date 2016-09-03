@@ -1,5 +1,5 @@
 /* Return backtrace of current program state.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky <schwidefsky@de.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -17,7 +17,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <dlfcn.h>
 #include <execinfo.h>
 #include <stddef.h>
@@ -77,10 +77,6 @@ init (void)
   if (unwind_getip == NULL)
     unwind_backtrace = NULL;
 }
-#else
-# define unwind_backtrace _Unwind_Backtrace
-# define unwind_getip _Unwind_GetIP
-#endif
 
 static int
 __backchain_backtrace (void **array, int size)
@@ -89,7 +85,7 @@ __backchain_backtrace (void **array, int size)
   struct layout *stack;
   int cnt = 0;
 
-  asm ("LR  %0,%%r15" : "=d" (stack) );
+  __asm__ ("LR  %0,%%r15" : "=d" (stack) );
   /* We skip the call to this function, it makes no sense to record it.  */
   stack = (struct layout *) stack->back_chain;
   while (cnt < size)
@@ -107,6 +103,10 @@ __backchain_backtrace (void **array, int size)
 
   return cnt;
 }
+#else
+# define unwind_backtrace _Unwind_Backtrace
+# define unwind_getip _Unwind_GetIP
+#endif
 
 static _Unwind_Reason_Code
 backtrace_helper (struct _Unwind_Context *ctx, void *a)
@@ -126,16 +126,20 @@ int
 __backtrace (void **array, int size)
 {
   struct trace_arg arg = { .array = array, .size = size, .cnt = -1 };
+
+  if (size <= 0)
+    return 0;
+
 #ifdef SHARED
   __libc_once_define (static, once);
 
   __libc_once (once, init);
-#endif
+
   if (unwind_backtrace == NULL)
     return __backchain_backtrace (array, size);
+#endif
 
-  if (size >= 1)
-    unwind_backtrace (backtrace_helper, &arg);
+  unwind_backtrace (backtrace_helper, &arg);
 
   return arg.cnt != -1 ? arg.cnt : 0;
 }

@@ -1,5 +1,5 @@
 /* Print output of stream to given obstack.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -91,7 +91,7 @@ _IO_obstack_xsputn (_IO_FILE *fp, const void *data, _IO_size_t n)
 
 
 /* the jump table.  */
-const struct _IO_jump_t _IO_obstack_jumps attribute_hidden =
+const struct _IO_jump_t _IO_obstack_jumps libio_vtable attribute_hidden =
 {
   JUMP_INIT_DUMMY,
   JUMP_INIT(finish, NULL),

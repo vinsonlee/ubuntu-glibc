@@ -56,6 +56,7 @@
 
 #include <math.h>
 #include <math_private.h>
+#include <fix-int-fp-convert-zero.h>
 
 static const double ln2 = 0.69314718055994530942;
 static const double two54 = 1.80143985094819840000e+16; /* 43500000 00000000 */
@@ -81,15 +82,15 @@ __ieee754_log2 (double x)
   k = 0;
   if (hx < 0x00100000)
     {                           /* x < 2**-1022  */
-      if (__builtin_expect (((hx & 0x7fffffff) | lx) == 0, 0))
+      if (__glibc_unlikely (((hx & 0x7fffffff) | lx) == 0))
 	return -two54 / (x - x);        /* log(+-0)=-inf */
-      if (__builtin_expect (hx < 0, 0))
+      if (__glibc_unlikely (hx < 0))
 	return (x - x) / (x - x);       /* log(-#) = NaN */
       k -= 54;
       x *= two54;               /* subnormal number, scale up x */
       GET_HIGH_WORD (hx, x);
     }
-  if (__builtin_expect (hx >= 0x7ff00000, 0))
+  if (__glibc_unlikely (hx >= 0x7ff00000))
     return x + x;
   k += (hx >> 20) - 1023;
   hx &= 0x000fffff;
@@ -101,7 +102,11 @@ __ieee754_log2 (double x)
   if ((0x000fffff & (2 + hx)) < 3)
     {                           /* |f| < 2**-20 */
       if (f == zero)
-	return dk;
+	{
+	  if (FIX_INT_FP_CONVERT_ZERO && dk == 0.0)
+	    dk = 0.0;
+	  return dk;
+	}
       R = f * f * (0.5 - 0.33333333333333333 * f);
       return dk - (R - f) / ln2;
     }

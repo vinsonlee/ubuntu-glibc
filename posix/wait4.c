@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,8 +20,7 @@
 #include <errno.h>
 
 pid_t
-__wait4 (__pid_t pid, __WAIT_STATUS stat_loc, int options,
-	 struct rusage *usage)
+__wait4 (__pid_t pid, int *stat_loc, int options, struct rusage *usage)
 {
   __set_errno (ENOSYS);
   return (pid_t) -1;

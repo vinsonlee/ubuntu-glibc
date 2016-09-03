@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -25,19 +25,19 @@ double
 __pow (double x, double y)
 {
   double z = __ieee754_pow (x, y);
-  if (__builtin_expect (!__finite (z), 0))
+  if (__glibc_unlikely (!isfinite (z)))
     {
       if (_LIB_VERSION != _IEEE_)
 	{
-	  if (__isnan (x))
+	  if (isnan (x))
 	    {
 	      if (y == 0.0)
 		/* pow(NaN,0.0) */
 		return __kernel_standard (x, y, 42);
 	    }
-	  else if (__finite (x) && __finite (y))
+	  else if (isfinite (x) && isfinite (y))
 	    {
-	      if (__isnan (z))
+	      if (isnan (z))
 		/* pow neg**non-int */
 		return __kernel_standard (x, y, 24);
 	      else if (x == 0.0 && y < 0.0)
@@ -55,7 +55,7 @@ __pow (double x, double y)
 	    }
 	}
     }
-  else if (__builtin_expect (z == 0.0, 0) && __finite (x) && __finite (y)
+  else if (__builtin_expect (z == 0.0, 0) && isfinite (x) && isfinite (y)
 	   && _LIB_VERSION != _IEEE_)
     {
       if (x == 0.0)

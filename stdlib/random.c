@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -50,7 +50,7 @@
    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
    SUCH DAMAGE.*/
 
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -205,8 +205,7 @@ __libc_lock_define_initialized (static, lock)
    introduced by the L.C.R.N.G.  Note that the initialization of randtbl[]
    for default usage relies on values produced by this routine.  */
 void
-__srandom (x)
-     unsigned int x;
+__srandom (unsigned int x)
 {
   __libc_lock_lock (lock);
   (void) __srandom_r (x, &unsafe_state);
@@ -228,10 +227,7 @@ weak_alias (__srandom, srand)
    setstate so that it doesn't matter when initstate is called.
    Returns a pointer to the old state.  */
 char *
-__initstate (seed, arg_state, n)
-     unsigned int seed;
-     char *arg_state;
-     size_t n;
+__initstate (unsigned int seed, char *arg_state, size_t n)
 {
   int32_t *ostate;
   int ret;
@@ -258,8 +254,7 @@ weak_alias (__initstate, initstate)
    same state as the current state
    Returns a pointer to the old state information.  */
 char *
-__setstate (arg_state)
-     char *arg_state;
+__setstate (char *arg_state)
 {
   int32_t *ostate;
 

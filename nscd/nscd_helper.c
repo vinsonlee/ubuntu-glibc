@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -110,7 +111,7 @@ __readvall (int fd, const struct iovec *iov, int iovcnt)
   ssize_t ret = TEMP_FAILURE_RETRY (__readv (fd, iov, iovcnt));
   if (ret <= 0)
     {
-      if (__builtin_expect (ret == 0 || errno != EAGAIN, 1))
+      if (__glibc_likely (ret == 0 || errno != EAGAIN))
 	/* A genuine error or no data to read.  */
 	return ret;
 
@@ -165,41 +166,16 @@ open_socket (request_type type, const char *key, size_t keylen)
 {
   int sock;
 
-#ifdef SOCK_CLOEXEC
-# ifndef __ASSUME_SOCK_CLOEXEC
-  if (__have_sock_cloexec >= 0)
-# endif
-    {
-      sock = __socket (PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
-# ifndef __ASSUME_SOCK_CLOEXEC
-      if (__have_sock_cloexec == 0)
-	__have_sock_cloexec = sock != -1 || errno != EINVAL ? 1 : -1;
-# endif
-    }
-#endif
-#ifndef __ASSUME_SOCK_CLOEXEC
-# ifdef SOCK_CLOEXEC
-  if (__have_sock_cloexec < 0)
-# endif
-    sock = __socket (PF_UNIX, SOCK_STREAM, 0);
-#endif
+  sock = __socket (PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
   if (sock < 0)
     return -1;
 
+  size_t real_sizeof_reqdata = sizeof (request_header) + keylen;
   struct
   {
     request_header req;
-    char key[keylen];
-  } reqdata;
-  size_t real_sizeof_reqdata = sizeof (request_header) + keylen;
-
-#ifndef __ASSUME_SOCK_CLOEXEC
-# ifdef SOCK_NONBLOCK
-  if (__have_sock_cloexec < 0)
-# endif
-    /* Make socket non-blocking.  */
-    __fcntl (sock, F_SETFL, O_RDWR | O_NONBLOCK);
-#endif
+    char key[];
+  } *reqdata = alloca (real_sizeof_reqdata);
 
   struct sockaddr_un sun;
   sun.sun_family = AF_UNIX;
@@ -208,11 +184,11 @@ open_socket (request_type type, const char *key, size_t keylen)
       && errno != EINPROGRESS)
     goto out;
 
-  reqdata.req.version = NSCD_VERSION;
-  reqdata.req.type = type;
-  reqdata.req.key_len = keylen;
+  reqdata->req.version = NSCD_VERSION;
+  reqdata->req.type = type;
+  reqdata->req.key_len = keylen;
 
-  memcpy (reqdata.key, key, keylen);
+  memcpy (reqdata->key, key, keylen);
 
   bool first_try = true;
   struct timeval tvend;
@@ -223,10 +199,10 @@ open_socket (request_type type, const char *key, size_t keylen)
 #ifndef MSG_NOSIGNAL
 # define MSG_NOSIGNAL 0
 #endif
-      ssize_t wres = TEMP_FAILURE_RETRY (__send (sock, &reqdata,
+      ssize_t wres = TEMP_FAILURE_RETRY (__send (sock, reqdata,
 						 real_sizeof_reqdata,
 						 MSG_NOSIGNAL));
-      if (__builtin_expect (wres == (ssize_t) real_sizeof_reqdata, 1))
+      if (__glibc_likely (wres == (ssize_t) real_sizeof_reqdata))
 	/* We managed to send the request.  */
 	return sock;
 
@@ -339,13 +315,13 @@ __nscd_get_mapping (request_type type, const char *key,
   int *ip = (void *) CMSG_DATA (cmsg);
   mapfd = *ip;
 
-  if (__builtin_expect (n != keylen && n != keylen + sizeof (mapsize), 0))
+  if (__glibc_unlikely (n != keylen && n != keylen + sizeof (mapsize)))
     goto out_close;
 
-  if (__builtin_expect (strcmp (resdata, key) != 0, 0))
+  if (__glibc_unlikely (strcmp (resdata, key) != 0))
     goto out_close;
 
-  if (__builtin_expect (n == keylen, 0))
+  if (__glibc_unlikely (n == keylen))
     {
       struct stat64 st;
       if (__builtin_expect (fstat64 (mapfd, &st) != 0, 0)
@@ -358,7 +334,7 @@ __nscd_get_mapping (request_type type, const char *key,
 
   /* The file is large enough, map it now.  */
   void *mapping = __mmap (NULL, mapsize, PROT_READ, MAP_SHARED, mapfd, 0);
-  if (__builtin_expect (mapping != MAP_FAILED, 1))
+  if (__glibc_likely (mapping != MAP_FAILED))
     {
       /* Check whether the database is correct and up-to-date.  */
       struct database_pers_head *head = mapping;
@@ -383,7 +359,7 @@ __nscd_get_mapping (request_type type, const char *key,
 					       ALIGN)
 		     + head->data_size);
 
-      if (__builtin_expect (mapsize < size, 0))
+      if (__glibc_unlikely (mapsize < size))
 	goto out_unmap;
 
       /* Allocate a record for the mapping.  */
@@ -433,7 +409,7 @@ __nscd_get_map_ref (request_type type, const char *name,
 
   cur = mapptr->mapped;
 
-  if (__builtin_expect (cur != NO_MAPPING, 1))
+  if (__glibc_likely (cur != NO_MAPPING))
     {
       /* If not mapped or timestamp not updated, request new map.  */
       if (cur == NULL
@@ -443,7 +419,7 @@ __nscd_get_map_ref (request_type type, const char *name,
 	cur = __nscd_get_mapping (type, name,
 				  (struct mapped_database **) &mapptr->mapped);
 
-      if (__builtin_expect (cur != NO_MAPPING, 1))
+      if (__glibc_likely (cur != NO_MAPPING))
 	{
 	  if (__builtin_expect (((*gc_cyclep = cur->head->gc_cycle) & 1) != 0,
 				0))
@@ -490,7 +466,7 @@ __nscd_cache_search (request_type type, const char *key, size_t keylen,
       struct hashentry *here = (struct hashentry *) (mapped->data + work);
       ref_t here_key, here_packet;
 
-#ifndef _STRING_ARCH_unaligned
+#if !_STRING_ARCH_unaligned
       /* Although during garbage collection when moving struct hashentry
 	 records around we first copy from old to new location and then
 	 adjust pointer from previous hashentry to it, there is no barrier
@@ -512,7 +488,7 @@ __nscd_cache_search (request_type type, const char *key, size_t keylen,
 	  struct datahead *dh
 	    = (struct datahead *) (mapped->data + here_packet);
 
-#ifndef _STRING_ARCH_unaligned
+#if !_STRING_ARCH_unaligned
 	  if ((uintptr_t) dh & (__alignof__ (*dh) - 1))
 	    return NULL;
 #endif
@@ -536,7 +512,7 @@ __nscd_cache_search (request_type type, const char *key, size_t keylen,
 	  struct hashentry *trailelem;
 	  trailelem = (struct hashentry *) (mapped->data + trail);
 
-#ifndef _STRING_ARCH_unaligned
+#if !_STRING_ARCH_unaligned
 	  /* We have to redo the checks.  Maybe the data changed.  */
 	  if ((uintptr_t) trailelem & (__alignof__ (*trailelem) - 1))
 	    return NULL;

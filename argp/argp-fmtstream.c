@@ -1,5 +1,5 @@
 /* Word-wrapping and line-truncating streams
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Miles Bader <miles@gnu.ai.mit.edu>.
 
@@ -100,7 +100,11 @@ __argp_fmtstream_free (argp_fmtstream_t fs)
   __argp_fmtstream_update (fs);
   if (fs->p > fs->buf)
     {
+#ifdef _LIBC
       __fxprintf (fs->stream, "%.*s", (int) (fs->p - fs->buf), fs->buf);
+#else
+      fwrite_unlocked (fs->buf, 1, fs->p - fs->buf, fs->stream);
+#endif
     }
   free (fs->buf);
   free (fs);
