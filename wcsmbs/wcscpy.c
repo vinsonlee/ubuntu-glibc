@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -26,9 +26,7 @@
 
 /* Copy SRC to DEST.  */
 wchar_t *
-WCSCPY (dest, src)
-     wchar_t *dest;
-     const wchar_t *src;
+WCSCPY (wchar_t *dest, const wchar_t *src)
 {
   wint_t c;
   wchar_t *wcp;

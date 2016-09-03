@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -20,7 +20,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <netdb.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <search.h>
 #include <stdio.h>
 #include <stdio_ext.h>
@@ -712,6 +712,9 @@ nss_parse_service_list (const char *line)
 	      else if (line - name == 8
 		       && __strncasecmp (name, "CONTINUE", 8) == 0)
 		action = NSS_ACTION_CONTINUE;
+	      else if (line - name == 5
+		       && __strncasecmp (name, "MERGE", 5) == 0)
+		action = NSS_ACTION_MERGE;
 	      else
 		goto finish;
 

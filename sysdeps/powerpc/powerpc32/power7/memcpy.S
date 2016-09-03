@@ -1,5 +1,5 @@
 /* Optimized memcpy implementation for PowerPC32/POWER7.
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Luis Machado <luisgpm@br.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -38,8 +38,8 @@ EALIGN (memcpy, 5, 0)
 	ble	cr1, L(copy_LT_32)  /* If move < 32 bytes use short move
 				    code.  */
 
-	andi.   11,3,7	      /* Check alignment of DST.  */
-	clrlwi  10,4,29	      /* Check alignment of SRC.  */
+	andi.   11,3,15	      /* Check alignment of DST.  */
+	clrlwi  10,4,28	      /* Check alignment of SRC.  */
 	cmplw   cr6,10,11     /* SRC and DST alignments match?  */
 	mr	12,4
 	mr	31,5

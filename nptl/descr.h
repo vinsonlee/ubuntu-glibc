@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -32,9 +32,7 @@
 #include <dl-sysdep.h>
 #include "../nptl_db/thread_db.h"
 #include <tls.h>
-#ifdef HAVE_FORCED_UNWIND
-# include <unwind.h>
-#endif
+#include <unwind.h>
 #define __need_res_state
 #include <resolv.h>
 #include <kernel-features.h>
@@ -100,6 +98,7 @@ struct xid_command
   int syscall_no;
   long int id[3];
   volatile int cntr;
+  volatile int error; /* -1: no call yet, 0: success seen, >0: error seen.  */
 };
 
 
@@ -327,7 +326,7 @@ struct pthread
   int lock;
 
   /* Lock for synchronizing setxid calls.  */
-  int setxid_futex;
+  unsigned int setxid_futex;
 
 #if HP_TIMING_AVAIL
   /* Offset of the CPU clock at start thread start time.  */
@@ -361,10 +360,8 @@ struct pthread
   /* Next descriptor with a pending event.  */
   struct pthread *nextevent;
 
-#ifdef HAVE_FORCED_UNWIND
   /* Machine-specific unwind info.  */
   struct _Unwind_Exception exc;
-#endif
 
   /* If nonzero pointer to area allocated for the stack and its
      size.  */

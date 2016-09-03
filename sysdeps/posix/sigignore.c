@@ -1,5 +1,5 @@
 /* Set the disposition of SIG to SIG_IGN.
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -25,8 +25,7 @@
 
 
 int
-sigignore (sig)
-     int sig;
+sigignore (int sig)
 {
   struct sigaction act;
 

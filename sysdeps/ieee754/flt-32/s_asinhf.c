@@ -13,6 +13,7 @@
  * ====================================================
  */
 
+#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -29,6 +30,7 @@ __asinhf(float x)
 	GET_FLOAT_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(__builtin_expect(ix< 0x38000000, 0)) {	/* |x|<2**-14 */
+	    math_check_force_underflow (x);
 	    if(huge+x>one) return x;	/* return x inexact except 0 */
 	}
 	if(__builtin_expect(ix>0x47000000, 0)) {	/* |x| > 2**14 */

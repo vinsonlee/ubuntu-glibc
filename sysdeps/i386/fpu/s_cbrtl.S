@@ -1,5 +1,5 @@
 /* Compute cubic root of long double value.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Dirk Alboth <dirka@uni-paderborn.de> and
    Ulrich Drepper <drepper@cygnus.com>, 1997.
@@ -223,6 +223,7 @@ ENTRY(__cbrtl)
 
 	/* Return the argument.  */
 1:	fldt	4(%esp)
+	fadd	%st
 	ret
 END(__cbrtl)
 weak_alias (__cbrtl, cbrtl)

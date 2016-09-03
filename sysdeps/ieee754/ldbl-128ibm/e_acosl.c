@@ -153,7 +153,7 @@ __ieee754_acosl (long double x)
 {
   long double a, z, r, w, p, q, s, t, f2;
 
-  if (__glibc_unlikely (__isnanl (x)))
+  if (__glibc_unlikely (isnan (x)))
     return x + x;
   a = __builtin_fabsl (x);
   if (a == 1.0L)
@@ -169,7 +169,7 @@ __ieee754_acosl (long double x)
     }
   if (a < 0.5L)
     {
-      if (a < 6.938893903907228e-18L)	/* |x| < 2**-57 */
+      if (a < 0x1p-106L)
 	return pio2_hi + pio2_lo;
       if (a < 0.4375L)
 	{

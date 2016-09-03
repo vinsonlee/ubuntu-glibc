@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,25 +20,22 @@
 #undef __memccpy
 #undef memccpy
 
+#ifdef MEMCCPY
+# define __memccpy MEMCCPY
+#endif
+
 /* Copy no more than N bytes of SRC to DEST, stopping when C is found.
    Return the position in DEST one byte past where C was copied, or
    NULL if C was not found in the first N bytes of SRC.  */
 void *
-__memccpy (dest, src, c, n)
-      void *dest;
-      const void *src;
-      int c;
-      size_t n;
+__memccpy (void *dest, const void *src, int c, size_t n)
 {
-  const char *s = src;
-  char *d = dest;
-  const char x = c;
-  size_t i = n;
+  void *p = memchr (src, c, n);
 
-  while (i-- > 0)
-    if ((*d++ = *s++) == x)
-      return d;
+  if (p != NULL)
+    return __mempcpy (dest, src, p - src + 1);
 
+  memcpy (dest, src, n);
   return NULL;
 }
 

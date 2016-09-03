@@ -18,6 +18,7 @@
 
 #include <math.h>
 #include <math_private.h>
+#include <fix-int-fp-convert-zero.h>
 
 double
 __logb (double x)
@@ -30,7 +31,7 @@ __logb (double x)
     return -1.0 / fabs (x);
   if (ix >= 0x7ff00000)
     return x * x;
-  if (__builtin_expect ((rix = ix >> 20) == 0, 0))
+  if (__glibc_unlikely ((rix = ix >> 20) == 0))
     {
       /* POSIX specifies that denormal number is treated as
          though it were normalized.  */
@@ -41,6 +42,8 @@ __logb (double x)
 	ma = __builtin_clz (ix);
       rix -= ma - 12;
     }
+  if (FIX_INT_FP_CONVERT_ZERO && rix == 1023)
+    return 0.0;
   return (double) (rix - 1023);
 }
 weak_alias (__logb, logb)

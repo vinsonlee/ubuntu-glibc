@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2001.
 
@@ -25,8 +25,8 @@
 #include <string.h>
 
 
-int
-main (void)
+static int
+do_test (void)
 {
   char buf[3];
   const wchar_t wc[1] = L"a";
@@ -97,3 +97,6 @@ main (void)
 
   return result;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

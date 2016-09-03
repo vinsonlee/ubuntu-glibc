@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2005.
 
@@ -20,9 +20,7 @@
 
 
 int
-pthread_mutexattr_getrobust (attr, robustness)
-     const pthread_mutexattr_t *attr;
-     int *robustness;
+pthread_mutexattr_getrobust (const pthread_mutexattr_t *attr, int *robustness)
 {
   const struct pthread_mutexattr *iattr;
 

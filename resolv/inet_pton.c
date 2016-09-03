@@ -15,10 +15,6 @@
  * SOFTWARE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$BINDId: inet_pton.c,v 1.7 1999/10/13 16:39:28 vixie Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -49,10 +45,7 @@ static int inet_pton6 (const char *src, u_char *dst) internal_function;
  *	Paul Vixie, 1996.
  */
 int
-inet_pton(af, src, dst)
-	int af;
-	const char *src;
-	void *dst;
+__inet_pton (int af, const char *src, void *dst)
 {
 	switch (af) {
 	case AF_INET:
@@ -65,7 +58,9 @@ inet_pton(af, src, dst)
 	}
 	/* NOTREACHED */
 }
-libc_hidden_def (inet_pton)
+libc_hidden_def (__inet_pton)
+weak_alias (__inet_pton, inet_pton)
+libc_hidden_weak (inet_pton)
 
 /* int
  * inet_pton4(src, dst)
@@ -80,9 +75,7 @@ libc_hidden_def (inet_pton)
  */
 static int
 internal_function
-inet_pton4(src, dst)
-	const char *src;
-	u_char *dst;
+inet_pton4 (const char *src, u_char *dst)
 {
 	int saw_digit, octets, ch;
 	u_char tmp[NS_INADDRSZ], *tp;
@@ -134,9 +127,7 @@ inet_pton4(src, dst)
  */
 static int
 internal_function
-inet_pton6(src, dst)
-	const char *src;
-	u_char *dst;
+inet_pton6 (const char *src, u_char *dst)
 {
 	static const char xdigits[] = "0123456789abcdef";
 	u_char tmp[NS_IN6ADDRSZ], *tp, *endp, *colonp;

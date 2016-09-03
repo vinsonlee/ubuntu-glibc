@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, August 1995.
 
@@ -26,11 +26,8 @@
 /* Perform user-defined atomical operation of array of semaphores.  */
 
 int
-semtimedop (semid, sops, nsops, timeout)
-     int semid;
-     struct sembuf *sops;
-     size_t nsops;
-     const struct timespec *timeout;
+semtimedop (int semid, struct sembuf *sops, size_t nsops,
+	    const struct timespec *timeout)
 {
   return INLINE_SYSCALL (ipc, 6, IPCOP_semtimedop,
 			 semid, (int) nsops, 0, sops,

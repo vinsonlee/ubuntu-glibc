@@ -1,5 +1,5 @@
 /* Testing the implementation of strfmon(3).
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jochen Hein <jochen.hein@delphi.central.de>, 1997.
 
@@ -40,7 +40,7 @@
 int
 main (int argc, char *argv[])
 {
-  char *s = malloc (201);
+  char s[200];
 
   if (setlocale (LC_MONETARY, argv[1]) == NULL)
     {
@@ -48,7 +48,7 @@ main (int argc, char *argv[])
       exit (EXIT_SETLOCALE);
     }
 
-  if (strfmon (s, 200, argv[2], (double) atof (argv[3])) == -1)
+  if (strfmon (s, sizeof (s), argv[2], (double) atof (argv[3])) == -1)
     {
       perror ("strfmon");
       exit (EXIT_STRFMON);

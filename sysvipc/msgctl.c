@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -23,10 +23,7 @@
    objects.  */
 
 int
-msgctl (msqid, cmd, buf)
-     int msqid;
-     int cmd;
-     struct msqid_ds *buf;
+msgctl (int msqid, int cmd, struct msqid_ds *buf)
 {
   __set_errno (ENOSYS);
   return -1;

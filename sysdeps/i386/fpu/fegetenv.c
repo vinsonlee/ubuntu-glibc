@@ -1,5 +1,5 @@
 /* Store current floating-point environment.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -18,6 +18,9 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
+#include <unistd.h>
+#include <ldsodefs.h>
+#include <dl-procinfo.h>
 
 int
 __fegetenv (fenv_t *envp)
@@ -27,6 +30,9 @@ __fegetenv (fenv_t *envp)
      Intel thought this opcode to be used in interrupt handlers which
      would block all exceptions.  */
   __asm__ ("fldenv %0" : : "m" (*envp));
+
+  if ((GLRO(dl_hwcap) & HWCAP_I386_XMM) != 0)
+    __asm__ ("stmxcsr %0" : "=m" (envp->__eip));
 
   /* Success.  */
   return 0;
@@ -38,5 +44,6 @@ strong_alias (__fegetenv, __old_fegetenv)
 compat_symbol (libm, __old_fegetenv, fegetenv, GLIBC_2_1);
 #endif
 
+libm_hidden_def (__fegetenv)
 libm_hidden_ver (__fegetenv, fegetenv)
 versioned_symbol (libm, __fegetenv, fegetenv, GLIBC_2_2);

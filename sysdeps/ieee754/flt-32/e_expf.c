@@ -1,5 +1,5 @@
 /* Single-precision floating point e^x.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Geoffrey Keating <geoffk@ozemail.com.au>
 
@@ -119,7 +119,7 @@ __ieee754_expf (float x)
   /* Exceptional cases:  */
   else if (isless (x, himark))
     {
-      if (__isinff (x))
+      if (isinf (x))
 	/* e^-inf == 0, with no error.  */
 	return 0;
       else

@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2005.
 
@@ -30,8 +30,8 @@ pthread_rwlock_t rwl_writer
   = PTHREAD_RWLOCK_WRITER_NONRECURSIVE_INITIALIZER_NP;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
-int
-main (void)
+static int
+do_test (void)
 {
   if (mtx_normal.__data.__kind != PTHREAD_MUTEX_TIMED_NP)
     return 1;
@@ -46,12 +46,15 @@ main (void)
   if (rwl_writer.__data.__flags
       != PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP)
     return 6;
-  /* <bits/libc-lock.h> __libc_rwlock_init definition for libc.so
+  /* <libc-lock.h> __libc_rwlock_init definition for libc.so
      relies on PTHREAD_RWLOCK_INITIALIZER being all zeros.  If
-     that ever changes, <bits/libc-lock.h> needs updating.  */
+     that ever changes, <libc-lock.h> needs updating.  */
   size_t i;
   for (i = 0; i < sizeof (rwl_normal); i++)
     if (((char *) &rwl_normal)[i] != '\0')
       return 7;
   return 0;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

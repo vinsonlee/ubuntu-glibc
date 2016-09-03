@@ -1,5 +1,5 @@
 /* Multiple versions of strncmp.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 /* Define multiple versions only for definition in libc.  */
-#if defined SHARED && !defined NOT_IN_libc
+#if defined SHARED && IS_IN (libc)
 # include <string.h>
 # include <shlib-compat.h>
 # include "init-arch.h"
@@ -25,13 +25,16 @@
 extern __typeof (strncmp) __strncmp_ppc attribute_hidden;
 extern __typeof (strncmp) __strncmp_power4 attribute_hidden;
 extern __typeof (strncmp) __strncmp_power7 attribute_hidden;
+extern __typeof (strncmp) __strncmp_power8 attribute_hidden;
 
 /* Avoid DWARF definition DIE on ifunc symbol so that GDB can handle
    ifunc symbol properly.  */
 libc_ifunc (strncmp,
-            (hwcap & PPC_FEATURE_HAS_VSX)
-            ? __strncmp_power7 :
-	      (hwcap & PPC_FEATURE_POWER4)
+            (hwcap2 & PPC_FEATURE2_ARCH_2_07)
+            ? __strncmp_power8 :
+              (hwcap & PPC_FEATURE_HAS_VSX)
+              ? __strncmp_power7 :
+		(hwcap & PPC_FEATURE_POWER4)
 		? __strncmp_power4
             : __strncmp_ppc);
 #endif

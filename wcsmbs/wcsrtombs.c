@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1996.
 
@@ -35,11 +35,7 @@
 static mbstate_t state;
 
 size_t
-__wcsrtombs (dst, src, len, ps)
-     char *dst;
-     const wchar_t **src;
-     size_t len;
-     mbstate_t *ps;
+__wcsrtombs (char *dst, const wchar_t **src, size_t len, mbstate_t *ps)
 {
   struct __gconv_step_data data;
   int status;
@@ -52,7 +48,6 @@ __wcsrtombs (dst, src, len, ps)
   data.__internal_use = 1;
   data.__flags = __GCONV_IS_LAST;
   data.__statep = ps ?: &state;
-  data.__trans = NULL;
 
   /* Get the conversion functions.  */
   fcts = get_gconv_fcts (_NL_CURRENT_DATA (LC_CTYPE));

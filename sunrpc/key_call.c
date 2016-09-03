@@ -48,7 +48,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <rpc/key_prot.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 
 #define KEY_TIMEOUT	5	/* per-try timeout in seconds */
 #define KEY_NRETRY	12	/* number of retries */
@@ -304,7 +304,7 @@ key_call_keyenvoy (u_long proc, xdrproc_t xdr_arg, char *arg,
   FILE *fargs;
   FILE *frslt;
   sigset_t oldmask, mask;
-  union wait status;
+  int status;
   int pid;
   int success;
   uid_t ruid;
@@ -362,7 +362,7 @@ key_call_keyenvoy (u_long proc, xdrproc_t xdr_arg, char *arg,
 	success = 0;
     }
   else
-    if (status.w_retcode)
+    if (status != 0)
       {
 	debug ("wait4 1");
 	success = 0;

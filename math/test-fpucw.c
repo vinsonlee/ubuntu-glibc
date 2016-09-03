@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 2000.
 
@@ -23,8 +23,8 @@
 # define FPU_CONTROL _FPU_DEFAULT
 #endif
 
-int
-main (void)
+static int
+do_test (void)
 {
 #ifdef _FPU_GETCW
 /* Some architectures don't have _FPU_GETCW (e.g. Linux/Alpha).  */
@@ -44,3 +44,6 @@ main (void)
   return 0;
 #endif
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

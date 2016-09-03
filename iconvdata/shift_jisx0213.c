@@ -1,5 +1,5 @@
 /* Conversion from and to Shift_JISX0213.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Bruno Haible <bruno@clisp.org>, 2002.
 
@@ -43,6 +43,7 @@
 #define TO_LOOP			to_shift_jisx0213
 #define DEFINE_INIT		1
 #define DEFINE_FINI		1
+#define ONE_DIRECTION		0
 #define FROM_LOOP_MIN_NEEDED_FROM	1
 #define FROM_LOOP_MAX_NEEDED_FROM	2
 #define FROM_LOOP_MIN_NEEDED_TO		4
@@ -79,7 +80,7 @@
     {									      \
       if (FROM_DIRECTION)						      \
 	{								      \
-	  if (__builtin_expect (outbuf + 4 <= outend, 1))		      \
+	  if (__glibc_likely (outbuf + 4 <= outend))			      \
 	    {								      \
 	      /* Write out the last character.  */			      \
 	      *((uint32_t *) outbuf) = data->__statep->__count >> 3;	      \
@@ -92,7 +93,7 @@
 	}								      \
       else								      \
 	{								      \
-	  if (__builtin_expect (outbuf + 2 <= outend, 1))		      \
+	  if (__glibc_likely (outbuf + 2 <= outend))			      \
 	    {								      \
 	      /* Write out the last character.  */			      \
 	      uint32_t lasttwo = data->__statep->__count >> 3;		      \
@@ -119,7 +120,7 @@
 									      \
     /* Determine whether there is a buffered character pending.  */	      \
     ch = *statep >> 3;							      \
-    if (__builtin_expect (ch == 0, 1))					      \
+    if (__glibc_likely (ch == 0))					      \
       {									      \
 	/* No - so look at the next input byte.  */			      \
 	ch = *inptr;							      \
@@ -127,9 +128,9 @@
 	if (ch < 0x80)							      \
 	  {								      \
 	    /* Plain ISO646-JP character.  */				      \
-	    if (__builtin_expect (ch == 0x5c, 0))			      \
+	    if (__glibc_unlikely (ch == 0x5c))				      \
 	      ch = 0xa5;						      \
-	    else if (__builtin_expect (ch == 0x7e, 0))			      \
+	    else if (__glibc_unlikely (ch == 0x7e))			      \
 	      ch = 0x203e;						      \
 	    ++inptr;							      \
 	  }								      \
@@ -144,7 +145,7 @@
 	    /* Two byte character.  */					      \
 	    uint32_t ch2;						      \
 									      \
-	    if (__builtin_expect (inptr + 1 >= inend, 0))		      \
+	    if (__glibc_unlikely (inptr + 1 >= inend))			      \
 	      {								      \
 		/* The second byte is not available.  */		      \
 		result = __GCONV_INCOMPLETE_INPUT;			      \
@@ -154,7 +155,7 @@
 	    ch2 = inptr[1];						      \
 									      \
 	    /* The second byte must be in the range 0x{40..7E,80..FC}.  */    \
-	    if (__builtin_expect (ch2 < 0x40 || ch2 == 0x7f || ch2 > 0xfc, 0))\
+	    if (__glibc_unlikely (ch2 < 0x40 || ch2 == 0x7f || ch2 > 0xfc))   \
 	      {								      \
 		/* This is an illegal character.  */			      \
 		STANDARD_FROM_LOOP_ERR_HANDLER (1);			      \
@@ -332,7 +333,7 @@ static const struct
 	if (len > 0)							      \
 	  {								      \
 	    /* Output the combined character.  */			      \
-	    if (__builtin_expect (outptr + 1 >= outend, 0))		      \
+	    if (__glibc_unlikely (outptr + 1 >= outend))		      \
 	      {								      \
 		result = __GCONV_FULL_OUTPUT;				      \
 		break;							      \
@@ -347,7 +348,7 @@ static const struct
 									      \
       not_combining:							      \
 	/* Output the buffered character.  */				      \
-	if (__builtin_expect (outptr + 1 >= outend, 0))			      \
+	if (__glibc_unlikely (outptr + 1 >= outend))			      \
 	  {								      \
 	    result = __GCONV_FULL_OUTPUT;				      \
 	    break;							      \
@@ -421,7 +422,7 @@ static const struct
 	  }								      \
 									      \
 	/* Output the shifted representation.  */			      \
-	if (__builtin_expect (outptr + 1 >= outend, 0))			      \
+	if (__glibc_unlikely (outptr + 1 >= outend))			      \
 	  {								      \
 	    result = __GCONV_FULL_OUTPUT;				      \
 	    break;							      \

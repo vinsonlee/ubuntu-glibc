@@ -1,5 +1,5 @@
 /* Declarations for math functions.
-   Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,6 +27,9 @@
 
 __BEGIN_DECLS
 
+/* Get machine-dependent vector math functions declarations.  */
+#include <bits/math-vector.h>
+
 /* Get machine-dependent HUGE_VAL value (returned on overflow).
    On all IEEE754 machines, this is +Infinity.  */
 #include <bits/huge_val.h>
@@ -49,6 +52,16 @@ __BEGIN_DECLS
    so we can easily declare each function as both `name' and `__name',
    and can declare the float versions `namef' and `__namef'.  */
 
+#define __SIMD_DECL(function) __CONCAT (__DECL_SIMD_, function)
+
+#define __MATHCALL_VEC(function, suffix, args) 	\
+  __SIMD_DECL (__MATH_PRECNAME (function, suffix)) \
+  __MATHCALL (function, suffix, args)
+
+#define __MATHDECL_VEC(type, function,suffix, args) \
+  __SIMD_DECL (__MATH_PRECNAME (function, suffix)) \
+  __MATHDECL(type, function,suffix, args)
+
 #define __MATHCALL(function,suffix, args)	\
   __MATHDECL (_Mdouble_,function,suffix, args)
 #define __MATHDECL(type, function,suffix, args) \
@@ -64,6 +77,7 @@ __BEGIN_DECLS
 
 #define _Mdouble_		double
 #define __MATH_PRECNAME(name,r)	__CONCAT(name,r)
+#define __MATH_DECLARING_DOUBLE  1
 #define _Mdouble_BEGIN_NAMESPACE __BEGIN_NAMESPACE_STD
 #define _Mdouble_END_NAMESPACE   __END_NAMESPACE_STD
 #include <bits/mathcalls.h>
@@ -71,8 +85,9 @@ __BEGIN_DECLS
 #undef _Mdouble_BEGIN_NAMESPACE
 #undef _Mdouble_END_NAMESPACE
 #undef	__MATH_PRECNAME
+#undef __MATH_DECLARING_DOUBLE
 
-#if defined __USE_MISC || defined __USE_ISOC99
+#ifdef __USE_ISOC99
 
 
 /* Include the file of declarations again, this time using `float'
@@ -83,6 +98,7 @@ __BEGIN_DECLS
 # endif
 # define _Mdouble_		_Mfloat_
 # define __MATH_PRECNAME(name,r) name##f##r
+# define __MATH_DECLARING_DOUBLE  0
 # define _Mdouble_BEGIN_NAMESPACE __BEGIN_NAMESPACE_C99
 # define _Mdouble_END_NAMESPACE   __END_NAMESPACE_C99
 # include <bits/mathcalls.h>
@@ -90,9 +106,11 @@ __BEGIN_DECLS
 # undef _Mdouble_BEGIN_NAMESPACE
 # undef _Mdouble_END_NAMESPACE
 # undef	__MATH_PRECNAME
+# undef __MATH_DECLARING_DOUBLE
 
 # if !(defined __NO_LONG_DOUBLE_MATH && defined _LIBC) \
-     || defined __LDBL_COMPAT
+     || defined __LDBL_COMPAT \
+     || defined _LIBC_TEST
 #  ifdef __LDBL_COMPAT
 
 #   ifdef __USE_ISOC99
@@ -126,6 +144,7 @@ extern long double __REDIRECT_NTH (nexttowardl,
 #  endif
 #  define _Mdouble_		_Mlong_double_
 #  define __MATH_PRECNAME(name,r) name##l##r
+#  define __MATH_DECLARING_DOUBLE  0
 #  define _Mdouble_BEGIN_NAMESPACE __BEGIN_NAMESPACE_C99
 #  define _Mdouble_END_NAMESPACE   __END_NAMESPACE_C99
 #  define __MATH_DECLARE_LDOUBLE   1
@@ -134,10 +153,11 @@ extern long double __REDIRECT_NTH (nexttowardl,
 #  undef _Mdouble_BEGIN_NAMESPACE
 #  undef _Mdouble_END_NAMESPACE
 #  undef __MATH_PRECNAME
+#  undef __MATH_DECLARING_DOUBLE
 
 # endif /* !(__NO_LONG_DOUBLE_MATH && _LIBC) || __LDBL_COMPAT */
 
-#endif	/* Use misc or ISO C99.  */
+#endif	/* Use ISO C99.  */
 #undef	__MATHDECL_1
 #undef	__MATHDECL
 #undef	__MATHCALL
@@ -205,8 +225,16 @@ enum
       FP_NORMAL
   };
 
+/* GCC bug 66462 means we cannot use the math builtins with -fsignaling-nan,
+   so disable builtins if this is enabled.  When fixed in a newer GCC,
+   the __SUPPORT_SNAN__ check may be skipped for those versions.  */
+
 /* Return number of classification appropriate for X.  */
-# ifdef __NO_LONG_DOUBLE_MATH
+# if __GNUC_PREREQ (4,4) && !defined __SUPPORT_SNAN__			      \
+     && !defined __OPTIMIZE_SIZE__
+#  define fpclassify(x) __builtin_fpclassify (FP_NAN, FP_INFINITE,	      \
+     FP_NORMAL, FP_SUBNORMAL, FP_ZERO, x)
+# elif defined __NO_LONG_DOUBLE_MATH
 #  define fpclassify(x) \
      (sizeof (x) == sizeof (float) ? __fpclassifyf (x) : __fpclassify (x))
 # else
@@ -218,19 +246,29 @@ enum
 # endif
 
 /* Return nonzero value if sign of X is negative.  */
-# ifdef __NO_LONG_DOUBLE_MATH
+# if __GNUC_PREREQ (4,0)
 #  define signbit(x) \
-     (sizeof (x) == sizeof (float) ? __signbitf (x) : __signbit (x))
+     (sizeof (x) == sizeof (float)                                            \
+      ? __builtin_signbitf (x)                                                        \
+      : sizeof (x) == sizeof (double)                                         \
+      ? __builtin_signbit (x) : __builtin_signbitl (x))
 # else
-#  define signbit(x) \
+#  ifdef __NO_LONG_DOUBLE_MATH
+#   define signbit(x) \
+     (sizeof (x) == sizeof (float) ? __signbitf (x) : __signbit (x))
+#  else
+#   define signbit(x) \
      (sizeof (x) == sizeof (float)					      \
       ? __signbitf (x)							      \
       : sizeof (x) == sizeof (double)					      \
       ? __signbit (x) : __signbitl (x))
+#  endif
 # endif
 
 /* Return nonzero value if X is not +-Inf or NaN.  */
-# ifdef __NO_LONG_DOUBLE_MATH
+# if __GNUC_PREREQ (4,4) && !defined __SUPPORT_SNAN__
+#  define isfinite(x) __builtin_isfinite (x)
+# elif defined __NO_LONG_DOUBLE_MATH
 #  define isfinite(x) \
      (sizeof (x) == sizeof (float) ? __finitef (x) : __finite (x))
 # else
@@ -242,11 +280,17 @@ enum
 # endif
 
 /* Return nonzero value if X is neither zero, subnormal, Inf, nor NaN.  */
-# define isnormal(x) (fpclassify (x) == FP_NORMAL)
+# if __GNUC_PREREQ (4,4) && !defined __SUPPORT_SNAN__
+#  define isnormal(x) __builtin_isnormal (x)
+# else
+#  define isnormal(x) (fpclassify (x) == FP_NORMAL)
+# endif
 
 /* Return nonzero value if X is a NaN.  We could use `fpclassify' but
    we already have this functions `__isnan' and it is faster.  */
-# ifdef __NO_LONG_DOUBLE_MATH
+# if __GNUC_PREREQ (4,4) && !defined __SUPPORT_SNAN__
+#  define isnan(x) __builtin_isnan (x)
+# elif defined __NO_LONG_DOUBLE_MATH
 #  define isnan(x) \
      (sizeof (x) == sizeof (float) ? __isnanf (x) : __isnan (x))
 # else
@@ -258,7 +302,9 @@ enum
 # endif
 
 /* Return nonzero value if X is positive or negative infinity.  */
-# ifdef __NO_LONG_DOUBLE_MATH
+# if __GNUC_PREREQ (4,4) && !defined __SUPPORT_SNAN__
+#  define isinf(x) __builtin_isinf_sign (x)
+# elif defined __NO_LONG_DOUBLE_MATH
 #  define isinf(x) \
      (sizeof (x) == sizeof (float) ? __isinff (x) : __isinf (x))
 # else
@@ -314,7 +360,7 @@ extern _LIB_VERSION_TYPE _LIB_VERSION;
 #endif
 
 
-#ifdef __USE_SVID
+#ifdef __USE_MISC
 /* In SVID error handling, `matherr' is called with this description
    of the exceptional condition.
 
@@ -352,18 +398,18 @@ extern int matherr (struct exception *__exc);
 /* SVID mode specifies returning this large value instead of infinity.  */
 # define HUGE		3.40282347e+38F
 
-#else	/* !SVID */
+#else	/* !Misc.  */
 
 # ifdef __USE_XOPEN
 /* X/Open wants another strange constant.  */
 #  define MAXFLOAT	3.40282347e+38F
 # endif
 
-#endif	/* SVID */
+#endif	/* Misc.  */
 
 
 /* Some useful constants.  */
-#if defined __USE_BSD || defined __USE_XOPEN
+#if defined __USE_MISC || defined __USE_XOPEN
 # define M_E		2.7182818284590452354	/* e */
 # define M_LOG2E	1.4426950408889634074	/* log_2 e */
 # define M_LOG10E	0.43429448190325182765	/* log_10 e */

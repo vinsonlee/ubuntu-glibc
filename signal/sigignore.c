@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,8 +21,7 @@
 
 /* Set the disposition for SIG to SIG_IGN.  */
 int
-sigignore (sig)
-     int sig;
+sigignore (int sig)
 {
   __set_errno (ENOSYS);
   return -1;

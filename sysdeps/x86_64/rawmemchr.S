@@ -1,6 +1,6 @@
 /* fast SSE2 memchr with 64 byte loop and pmaxub instruction using
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -21,7 +21,7 @@
 #include <sysdep.h>
 
 	.text
-ENTRY (rawmemchr)
+ENTRY (__rawmemchr)
 	movd	%rsi, %xmm1
 	mov	%rdi, %rcx
 
@@ -201,7 +201,7 @@ L(return_null):
 	xor	%rax, %rax
 	ret
 
-END (rawmemchr)
+END (__rawmemchr)
 
-strong_alias (rawmemchr, __rawmemchr)
+weak_alias (__rawmemchr, rawmemchr)
 libc_hidden_builtin_def (__rawmemchr)

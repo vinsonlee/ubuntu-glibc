@@ -1,6 +1,6 @@
-#! /bin/sh
+#!/bin/sh
 # Generate test locale files.
-# Copyright (C) 2000-2014 Free Software Foundation, Inc.
+# Copyright (C) 2000-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,9 @@
 set -e
 
 common_objpfx="$1"; shift
-localedef="$1"; shift
+localedef_before_env="$1"; shift
+run_program_env="$1"; shift
+localedef_after_env="$1"; shift
 locfile="$1"; shift
 
 generate_locale ()
@@ -28,9 +30,9 @@ generate_locale ()
   charmap=$1
   input=$2
   out=$3
-  if I18NPATH=. GCONV_PATH=${common_objpfx}iconvdata \
-     ${localedef} --quiet -c -f $charmap -i $input \
-		  ${common_objpfx}localedata/$out
+  if ${localedef_before_env} ${run_program_env} I18NPATH=../localedata \
+     ${localedef_after_env} --quiet -c -f $charmap -i $input \
+			    ${common_objpfx}localedata/$out
   then
     # The makefile checks the timestamp of the LC_CTYPE file,
     # but localedef won't have touched it if it was able to

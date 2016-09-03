@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -32,10 +32,7 @@
 
 /* Set the state of FD to *TERMIOS_P.  */
 int
-tcsetattr (fd, optional_actions, termios_p)
-     int fd;
-     int optional_actions;
-     const struct termios *termios_p;
+tcsetattr (int fd, int optional_actions, const struct termios *termios_p)
 {
   struct termios myt;
 

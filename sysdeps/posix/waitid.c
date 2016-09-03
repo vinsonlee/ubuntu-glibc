@@ -1,5 +1,5 @@
 /* Pseudo implementation of waitid.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Zack Weinberg <zack@rabi.phys.columbia.edu>, 1997.
 
@@ -80,7 +80,7 @@ OUR_WAITID (idtype_t idtype, id_t id, siginfo_t *infop, int options)
 #endif
 #ifdef WEXITED
       || ((options & (WEXITED|WSTOPPED|WCONTINUED))
-	  != (WEXITED | (options & WUNTRACED)))
+	  != (WEXITED | (options & WSTOPPED)))
 #endif
       )
     {
@@ -149,11 +149,7 @@ OUR_WAITID (idtype_t idtype, id_t id, siginfo_t *infop, int options)
 
 
 int
-__waitid (idtype, id, infop, options)
-     idtype_t idtype;
-     id_t id;
-     siginfo_t *infop;
-     int options;
+__waitid (idtype_t idtype, id_t id, siginfo_t *infop, int options)
 {
   if (SINGLE_THREAD_P)
     return do_waitid (idtype, id, infop, options);

@@ -1,5 +1,5 @@
 /* Test restarting behaviour of wcsrtombs.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Bruno Haible <haible@ilog.fr>.
 
@@ -25,21 +25,21 @@
 #define show(expr, nexp, srcexp, bufexp) \
   {									\
     size_t res = expr;							\
-    printf (#expr " -> %Zd", res);					\
+    printf (#expr " -> %zu", res);					\
     dst += res;								\
     printf (", src = srcbuf+%td, dst = buf+%td",			\
 	    src - srcbuf, dst - (char *) buf);				\
     if (res != nexp || src != (srcexp) || dst != (char *) (bufexp))	\
       {									\
-	printf (", expected %Zd and srcbuf+%td and buf+%td", nexp,	\
+	printf (", expected %zu and srcbuf+%td and buf+%td", (size_t) nexp, \
 		(srcexp) - srcbuf, (bufexp) - (unsigned char *) buf);	\
 	result = 1;							\
       }									\
     putc ('\n', stdout);						\
   }
 
-int
-main (void)
+static int
+do_test (void)
 {
   unsigned char buf[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
   const unsigned char bufcheck[6] = { 0x25, 0xe2, 0x82, 0xac, 0xce, 0xbb };
@@ -73,3 +73,6 @@ main (void)
 
   return result;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

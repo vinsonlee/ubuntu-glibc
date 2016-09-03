@@ -1,5 +1,5 @@
 /* Standard debugging hooks for `malloc'.
-   Copyright (C) 1990-2014 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written May 1989 by Mike Haertel.
 
@@ -69,10 +69,8 @@ static int pedantic;
 # define flood memset
 #else
 static void flood (__ptr_t, int, size_t);
-static void flood (ptr, val, size)
-__ptr_t ptr;
-int val;
-size_t size;
+static void
+flood (__ptr_t ptr, int val, size_t size)
 {
   char *cp = ptr;
   while (size--)
@@ -371,8 +369,8 @@ mabort (enum mcheck_status status)
 #define malloc_opt_barrier(x) \
   ({ __typeof (x) __x = x; __asm ("" : "+m" (__x)); __x; })
 
-int mcheck (func)
-void (*func)(enum mcheck_status);
+int
+mcheck (void (*func) (enum mcheck_status))
 {
   abortfunc = (func != NULL) ? func : &mabort;
 
@@ -402,8 +400,8 @@ void (*func)(enum mcheck_status);
 libc_hidden_def (mcheck)
 #endif
 
-int mcheck_pedantic (func)
-void (*func)(enum mcheck_status);
+int
+mcheck_pedantic (void (*func) (enum mcheck_status))
 {
   int res = mcheck (func);
   if (res == 0)

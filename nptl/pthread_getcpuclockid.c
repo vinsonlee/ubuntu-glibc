@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,9 +22,7 @@
 
 
 int
-pthread_getcpuclockid (threadid, clockid)
-     pthread_t threadid;
-     clockid_t *clockid;
+pthread_getcpuclockid (pthread_t threadid, clockid_t *clockid)
 {
   struct pthread *pd = (struct pthread *) threadid;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1996.
 
@@ -21,7 +21,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 
@@ -56,12 +56,12 @@ dosearch (int instatus, char *inkey, int inkeylen, char *inval,
 {
   struct search_t *req = (struct search_t *) indata;
 
-  if (__builtin_expect (instatus != YP_TRUE, 0))
+  if (__glibc_unlikely (instatus != YP_TRUE))
     return 1;
 
   if (inkey && inkeylen > 0 && inval && invallen > 0)
     {
-      if (__builtin_expect ((size_t) (invallen + 1) > req->buflen, 0))
+      if (__glibc_unlikely ((size_t) (invallen + 1) > req->buflen))
 	{
 	  *req->errnop = ERANGE;
 	  req->status = NSS_STATUS_TRYAGAIN;
@@ -196,7 +196,7 @@ internal_nis_getservent_r (struct servent *serv, char *buffer,
     {
       struct response_t *bucket = intern.next;
 
-      if (__builtin_expect (intern.offset >= bucket->size, 0))
+      if (__glibc_unlikely (intern.offset >= bucket->size))
 	{
 	  if (bucket->next == NULL)
 	    return NSS_STATUS_NOTFOUND;
@@ -211,7 +211,7 @@ internal_nis_getservent_r (struct servent *serv, char *buffer,
         ++intern.offset;
 
       size_t len = strlen (p) + 1;
-      if (__builtin_expect (len > buflen, 0))
+      if (__glibc_unlikely (len > buflen))
 	{
 	  *errnop = ERANGE;
 	  return NSS_STATUS_TRYAGAIN;
@@ -228,7 +228,7 @@ internal_nis_getservent_r (struct servent *serv, char *buffer,
       p = memcpy (buffer, &bucket->mem[intern.offset], len);
 
       parse_res = _nss_files_parse_servent (p, serv, pdata, buflen, errnop);
-      if (__builtin_expect (parse_res == -1, 0))
+      if (__glibc_unlikely (parse_res == -1))
         return NSS_STATUS_TRYAGAIN;
 
       intern.offset += len;
@@ -265,12 +265,19 @@ _nss_nis_getservbyname_r (const char *name, const char *protocol,
     }
 
   char *domain;
-  if (__builtin_expect (yp_get_default_domain (&domain), 0))
+  if (__glibc_unlikely (yp_get_default_domain (&domain)))
     return NSS_STATUS_UNAVAIL;
 
   /* If the protocol is given, we could try if our NIS server knows
      about services.byservicename map. If yes, we only need one query.  */
   size_t keylen = strlen (name) + (protocol ? 1 + strlen (protocol) : 0);
+  /* Limit key length to the maximum size of an RPC packet.  */
+  if (keylen > UDPMSGSIZE)
+    {
+      *errnop = ERANGE;
+      return NSS_STATUS_UNAVAIL;
+    }
+
   char key[keylen + 1];
 
   /* key is: "name/proto" */
@@ -289,9 +296,9 @@ _nss_nis_getservbyname_r (const char *name, const char *protocol,
 
   /* If we found the key, it's ok and parse the result. If not,
      fall through and parse the complete table. */
-  if (__builtin_expect (status == YPERR_SUCCESS, 1))
+  if (__glibc_likely (status == YPERR_SUCCESS))
     {
-      if (__builtin_expect ((size_t) (len + 1) > buflen, 0))
+      if (__glibc_unlikely ((size_t) (len + 1) > buflen))
 	{
 	  free (result);
 	  *errnop = ERANGE;
@@ -306,7 +313,7 @@ _nss_nis_getservbyname_r (const char *name, const char *protocol,
 
       int parse_res = _nss_files_parse_servent (p, serv, (void *) buffer,
 						buflen, errnop);
-      if (__builtin_expect (parse_res < 0, 0))
+      if (__glibc_unlikely (parse_res < 0))
 	{
 	  if (parse_res == -1)
 	    return NSS_STATUS_TRYAGAIN;
@@ -336,7 +343,7 @@ _nss_nis_getservbyname_r (const char *name, const char *protocol,
   req.status = NSS_STATUS_NOTFOUND;
   status = yp_all (domain, "services.byname", &ypcb);
 
-  if (__builtin_expect (status != YPERR_SUCCESS, 0))
+  if (__glibc_unlikely (status != YPERR_SUCCESS))
     return yperr2nss (status);
 
   return req.status;
@@ -348,13 +355,20 @@ _nss_nis_getservbyport_r (int port, const char *protocol,
 			  size_t buflen, int *errnop)
 {
   char *domain;
-  if (__builtin_expect (yp_get_default_domain (&domain), 0))
+  if (__glibc_unlikely (yp_get_default_domain (&domain)))
     return NSS_STATUS_UNAVAIL;
 
   /* If the protocol is given, we only need one query.
      Otherwise try first port/tcp, then port/udp and then fallback
      to sequential scanning of services.byname.  */
   const char *proto = protocol != NULL ? protocol : "tcp";
+  /* Limit protocol name length to the maximum size of an RPC packet.  */
+  if (strlen (proto) > UDPMSGSIZE)
+    {
+      *errnop = ERANGE;
+      return NSS_STATUS_UNAVAIL;
+    }
+
   do
     {
       /* key is: "port/proto" */
@@ -370,9 +384,9 @@ _nss_nis_getservbyport_r (int port, const char *protocol,
 
       /* If we found the key, it's ok and parse the result. If not,
 	 fall through and parse the complete table. */
-      if (__builtin_expect (status == YPERR_SUCCESS, 1))
+      if (__glibc_likely (status == YPERR_SUCCESS))
 	{
-	  if (__builtin_expect ((size_t) (len + 1) > buflen, 0))
+	  if (__glibc_unlikely ((size_t) (len + 1) > buflen))
 	    {
 	      free (result);
 	      *errnop = ERANGE;
@@ -386,7 +400,7 @@ _nss_nis_getservbyport_r (int port, const char *protocol,
 	  free (result);
 	  int parse_res = _nss_files_parse_servent (p, serv, (void *) buffer,
 						    buflen, errnop);
-	  if (__builtin_expect (parse_res < 0, 0))
+	  if (__glibc_unlikely (parse_res < 0))
 	    {
 	      if (parse_res == -1)
 		return NSS_STATUS_TRYAGAIN;
@@ -417,7 +431,7 @@ _nss_nis_getservbyport_r (int port, const char *protocol,
   req.status = NSS_STATUS_NOTFOUND;
   int status = yp_all (domain, "services.byname", &ypcb);
 
-  if (__builtin_expect (status != YPERR_SUCCESS, 0))
+  if (__glibc_unlikely (status != YPERR_SUCCESS))
     return yperr2nss (status);
 
   return req.status;

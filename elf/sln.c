@@ -1,5 +1,5 @@
 /* `sln' program to create symbolic links between files.
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -87,8 +87,7 @@ usage (void)
 }
 
 static int
-makesymlinks (file)
-     const char *file;
+makesymlinks (const char *file)
 {
 #ifndef PATH_MAX
 #define PATH_MAX 4095
@@ -163,15 +162,13 @@ makesymlinks (file)
 }
 
 static int
-makesymlink (src, dest)
-     const char *src;
-     const char *dest;
+makesymlink (const char *src, const char *dest)
 {
-  struct stat stats;
+  struct stat64 stats;
   const char *error;
 
   /* Destination must not be a directory. */
-  if (lstat (dest, &stats) == 0)
+  if (lstat64 (dest, &stats) == 0)
     {
       if (S_ISDIR (stats.st_mode))
 	{

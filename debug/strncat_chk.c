@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,11 +21,7 @@
 
 
 char *
-__strncat_chk (s1, s2, n, s1len)
-     char *s1;
-     const char *s2;
-     size_t n;
-     size_t s1len;
+__strncat_chk (char *s1, const char *s2, size_t n, size_t s1len)
 {
   char c;
   char *s = s1;
@@ -33,7 +29,7 @@ __strncat_chk (s1, s2, n, s1len)
   /* Find the end of S1.  */
   do
     {
-      if (__builtin_expect (s1len-- == 0, 0))
+      if (__glibc_unlikely (s1len-- == 0))
 	__chk_fail ();
       c = *s1++;
     }
@@ -49,25 +45,25 @@ __strncat_chk (s1, s2, n, s1len)
       size_t n4 = n >> 2;
       do
 	{
-	  if (__builtin_expect (s1len-- == 0, 0))
+	  if (__glibc_unlikely (s1len-- == 0))
 	    __chk_fail ();
 	  c = *s2++;
 	  *++s1 = c;
 	  if (c == '\0')
 	    return s;
-	  if (__builtin_expect (s1len-- == 0, 0))
+	  if (__glibc_unlikely (s1len-- == 0))
 	    __chk_fail ();
 	  c = *s2++;
 	  *++s1 = c;
 	  if (c == '\0')
 	    return s;
-	  if (__builtin_expect (s1len-- == 0, 0))
+	  if (__glibc_unlikely (s1len-- == 0))
 	    __chk_fail ();
 	  c = *s2++;
 	  *++s1 = c;
 	  if (c == '\0')
 	    return s;
-	  if (__builtin_expect (s1len-- == 0, 0))
+	  if (__glibc_unlikely (s1len-- == 0))
 	    __chk_fail ();
 	  c = *s2++;
 	  *++s1 = c;
@@ -79,7 +75,7 @@ __strncat_chk (s1, s2, n, s1len)
 
   while (n > 0)
     {
-      if (__builtin_expect (s1len-- == 0, 0))
+      if (__glibc_unlikely (s1len-- == 0))
 	__chk_fail ();
       c = *s2++;
       *++s1 = c;
@@ -90,7 +86,7 @@ __strncat_chk (s1, s2, n, s1len)
 
   if (c != '\0')
     {
-      if (__builtin_expect (s1len-- == 0, 0))
+      if (__glibc_unlikely (s1len-- == 0))
 	__chk_fail ();
       *++s1 = '\0';
     }

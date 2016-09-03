@@ -1,5 +1,5 @@
 /* Compute complex natural logarithm.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -36,7 +36,7 @@ __clogl (__complex__ long double x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (__builtin_expect (rcls == FP_ZERO && icls == FP_ZERO, 0))
+  if (__glibc_unlikely (rcls == FP_ZERO && icls == FP_ZERO))
     {
       /* Real and imaginary part are 0.0.  */
       __imag__ result = signbit (__real__ x) ? M_PIl : 0.0;
@@ -44,7 +44,7 @@ __clogl (__complex__ long double x)
       /* Yes, the following line raises an exception.  */
       __real__ result = -1.0 / fabsl (__real__ x);
     }
-  else if (__builtin_expect (rcls != FP_NAN && icls != FP_NAN, 1))
+  else if (__glibc_likely (rcls != FP_NAN && icls != FP_NAN))
     {
       /* Neither real nor imaginary part is NaN.  */
       long double absx = fabsl (__real__ x), absy = fabsl (__imag__ x);
@@ -72,11 +72,8 @@ __clogl (__complex__ long double x)
 
       if (absx == 1.0L && scale == 0)
 	{
-	  long double absy2 = absy * absy;
-	  if (absy2 <= LDBL_MIN * 2.0L)
-	    __real__ result = absy2 / 2.0L - absy2 * absy2 / 4.0L;
-	  else
-	    __real__ result = __log1pl (absy2) / 2.0L;
+	  __real__ result = __log1pl (absy * absy) / 2.0L;
+	  math_check_force_underflow_nonneg (__real__ result);
 	}
       else if (absx > 1.0L && absx < 2.0L && absy < 1.0L && scale == 0)
 	{
@@ -86,14 +83,17 @@ __clogl (__complex__ long double x)
 	  __real__ result = __log1pl (d2m1) / 2.0L;
 	}
       else if (absx < 1.0L
-	       && absx >= 0.75L
+	       && absx >= 0.5L
 	       && absy < LDBL_EPSILON / 2.0L
 	       && scale == 0)
 	{
 	  long double d2m1 = (absx - 1.0L) * (absx + 1.0L);
 	  __real__ result = __log1pl (d2m1) / 2.0L;
 	}
-      else if (absx < 1.0L && (absx >= 0.75L || absy >= 0.5L) && scale == 0)
+      else if (absx < 1.0L
+	       && absx >= 0.5L
+	       && scale == 0
+	       && absx * absx + absy * absy >= 0.5L)
 	{
 	  long double d2m1 = __x2y2m1l (absx, absy);
 	  __real__ result = __log1pl (d2m1) / 2.0L;

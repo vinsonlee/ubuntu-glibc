@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -55,8 +55,7 @@ flush_cleanup (void *not_used)
 #endif
 
 void
-_IO_un_link (fp)
-     struct _IO_FILE_plus *fp;
+_IO_un_link (struct _IO_FILE_plus *fp)
 {
   if (fp->file._flags & _IO_LINKED)
     {
@@ -94,8 +93,7 @@ _IO_un_link (fp)
 libc_hidden_def (_IO_un_link)
 
 void
-_IO_link_in (fp)
-     struct _IO_FILE_plus *fp;
+_IO_link_in (struct _IO_FILE_plus *fp)
 {
   if ((fp->file._flags & _IO_LINKED) == 0)
     {
@@ -124,9 +122,7 @@ libc_hidden_def (_IO_link_in)
 _IO_ssize_t _IO_least_marker (_IO_FILE *fp, char *end_p);
 
 _IO_ssize_t
-_IO_least_marker (fp, end_p)
-     _IO_FILE *fp;
-     char *end_p;
+_IO_least_marker (_IO_FILE *fp, char *end_p)
 {
   _IO_ssize_t least_so_far = end_p - fp->_IO_read_base;
   struct _IO_marker *mark;
@@ -139,8 +135,7 @@ _IO_least_marker (fp, end_p)
 /* Switch current get area from backup buffer to (start of) main get area. */
 
 void
-_IO_switch_to_main_get_area (fp)
-     _IO_FILE *fp;
+_IO_switch_to_main_get_area (_IO_FILE *fp)
 {
   char *tmp;
   fp->_flags &= ~_IO_IN_BACKUP;
@@ -159,8 +154,7 @@ _IO_switch_to_main_get_area (fp)
 /* Switch current get area from main get area to (end of) backup area. */
 
 void
-_IO_switch_to_backup_area (fp)
-     _IO_FILE *fp;
+_IO_switch_to_backup_area (_IO_FILE *fp)
 {
   char *tmp;
   fp->_flags |= _IO_IN_BACKUP;
@@ -177,8 +171,7 @@ _IO_switch_to_backup_area (fp)
 }
 
 int
-_IO_switch_to_get_mode (fp)
-     _IO_FILE *fp;
+_IO_switch_to_get_mode (_IO_FILE *fp)
 {
   if (fp->_IO_write_ptr > fp->_IO_write_base)
     if (_IO_OVERFLOW (fp, EOF) == EOF)
@@ -201,8 +194,7 @@ _IO_switch_to_get_mode (fp)
 libc_hidden_def (_IO_switch_to_get_mode)
 
 void
-_IO_free_backup_area (fp)
-     _IO_FILE *fp;
+_IO_free_backup_area (_IO_FILE *fp)
 {
   if (_IO_in_backup (fp))
     _IO_switch_to_main_get_area (fp);  /* Just in case. */
@@ -215,8 +207,7 @@ libc_hidden_def (_IO_free_backup_area)
 
 #if 0
 int
-_IO_switch_to_put_mode (fp)
-     _IO_FILE *fp;
+_IO_switch_to_put_mode (_IO_FILE *fp)
 {
   fp->_IO_write_base = fp->_IO_read_ptr;
   fp->_IO_write_ptr = fp->_IO_read_ptr;
@@ -233,9 +224,7 @@ _IO_switch_to_put_mode (fp)
 #endif
 
 int
-__overflow (f, ch)
-     _IO_FILE *f;
-     int ch;
+__overflow (_IO_FILE *f, int ch)
 {
   /* This is a single-byte stream.  */
   if (f->_mode == 0)
@@ -254,9 +243,7 @@ static int
 #ifdef _LIBC
 internal_function
 #endif
-save_for_backup (fp, end_p)
-     _IO_FILE *fp;
-     char *end_p;
+save_for_backup (_IO_FILE *fp, char *end_p)
 {
   /* Append [_IO_read_base..end_p] to backup area. */
   _IO_ssize_t least_mark = _IO_least_marker (fp, end_p);
@@ -325,8 +312,7 @@ save_for_backup (fp, end_p)
 }
 
 int
-__underflow (fp)
-     _IO_FILE *fp;
+__underflow (_IO_FILE *fp)
 {
 #if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
   if (_IO_vtable_offset (fp) == 0 && _IO_fwide (fp, -1) != -1)
@@ -358,8 +344,7 @@ __underflow (fp)
 libc_hidden_def (__underflow)
 
 int
-__uflow (fp)
-     _IO_FILE *fp;
+__uflow (_IO_FILE *fp)
 {
 #if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
   if (_IO_vtable_offset (fp) == 0 && _IO_fwide (fp, -1) != -1)
@@ -391,14 +376,10 @@ __uflow (fp)
 libc_hidden_def (__uflow)
 
 void
-_IO_setb (f, b, eb, a)
-     _IO_FILE *f;
-     char *b;
-     char *eb;
-     int a;
+_IO_setb (_IO_FILE *f, char *b, char *eb, int a)
 {
   if (f->_IO_buf_base && !(f->_flags & _IO_USER_BUF))
-    FREE_BUF (f->_IO_buf_base, _IO_blen (f));
+    free (f->_IO_buf_base);
   f->_IO_buf_base = b;
   f->_IO_buf_end = eb;
   if (a)
@@ -409,8 +390,7 @@ _IO_setb (f, b, eb, a)
 libc_hidden_def (_IO_setb)
 
 void
-_IO_doallocbuf (fp)
-     _IO_FILE *fp;
+_IO_doallocbuf (_IO_FILE *fp)
 {
   if (fp->_IO_buf_base)
     return;
@@ -422,15 +402,13 @@ _IO_doallocbuf (fp)
 libc_hidden_def (_IO_doallocbuf)
 
 int
-_IO_default_underflow (fp)
-     _IO_FILE *fp;
+_IO_default_underflow (_IO_FILE *fp)
 {
   return EOF;
 }
 
 int
-_IO_default_uflow (fp)
-     _IO_FILE *fp;
+_IO_default_uflow (_IO_FILE *fp)
 {
   int ch = _IO_UNDERFLOW (fp);
   if (ch == EOF)
@@ -440,10 +418,7 @@ _IO_default_uflow (fp)
 libc_hidden_def (_IO_default_uflow)
 
 _IO_size_t
-_IO_default_xsputn (f, data, n)
-     _IO_FILE *f;
-     const void *data;
-     _IO_size_t n;
+_IO_default_xsputn (_IO_FILE *f, const void *data, _IO_size_t n)
 {
   const char *s = (char *) data;
   _IO_size_t more = n;
@@ -486,10 +461,7 @@ _IO_default_xsputn (f, data, n)
 libc_hidden_def (_IO_default_xsputn)
 
 _IO_size_t
-_IO_sgetn (fp, data, n)
-     _IO_FILE *fp;
-     void *data;
-     _IO_size_t n;
+_IO_sgetn (_IO_FILE *fp, void *data, _IO_size_t n)
 {
   /* FIXME handle putback buffer here! */
   return _IO_XSGETN (fp, data, n);
@@ -497,10 +469,7 @@ _IO_sgetn (fp, data, n)
 libc_hidden_def (_IO_sgetn)
 
 _IO_size_t
-_IO_default_xsgetn (fp, data, n)
-     _IO_FILE *fp;
-     void *data;
-     _IO_size_t n;
+_IO_default_xsgetn (_IO_FILE *fp, void *data, _IO_size_t n)
 {
   _IO_size_t more = n;
   char *s = (char*) data;
@@ -542,18 +511,14 @@ libc_hidden_def (_IO_default_xsgetn)
 #if 0
 /* Seems not to be needed. --drepper */
 int
-_IO_sync (fp)
-     _IO_FILE *fp;
+_IO_sync (_IO_FILE *fp)
 {
   return 0;
 }
 #endif
 
 _IO_FILE *
-_IO_default_setbuf (fp, p, len)
-     _IO_FILE *fp;
-     char *p;
-     _IO_ssize_t len;
+_IO_default_setbuf (_IO_FILE *fp, char *p, _IO_ssize_t len)
 {
     if (_IO_SYNC (fp) == EOF)
 	return NULL;
@@ -573,39 +538,40 @@ _IO_default_setbuf (fp, p, len)
 }
 
 _IO_off64_t
-_IO_default_seekpos (fp, pos, mode)
-     _IO_FILE *fp;
-     _IO_off64_t pos;
-     int mode;
+_IO_default_seekpos (_IO_FILE *fp, _IO_off64_t pos, int mode)
 {
   return _IO_SEEKOFF (fp, pos, 0, mode);
 }
 
 int
-_IO_default_doallocate (fp)
-     _IO_FILE *fp;
+_IO_default_doallocate (_IO_FILE *fp)
 {
   char *buf;
 
-  ALLOC_BUF (buf, _IO_BUFSIZ, EOF);
+  buf = malloc(_IO_BUFSIZ);
+  if (__glibc_unlikely (buf == NULL))
+    return EOF;
+
   _IO_setb (fp, buf, buf+_IO_BUFSIZ, 1);
   return 1;
 }
 libc_hidden_def (_IO_default_doallocate)
 
 void
-_IO_init (fp, flags)
-     _IO_FILE *fp;
-     int flags;
+_IO_init_internal (_IO_FILE *fp, int flags)
 {
   _IO_no_init (fp, flags, -1, NULL, NULL);
 }
-libc_hidden_def (_IO_init)
 
 void
-_IO_old_init (fp, flags)
-     _IO_FILE *fp;
-     int flags;
+_IO_init (_IO_FILE *fp, int flags)
+{
+  IO_set_accept_foreign_vtables (&_IO_vtable_check);
+  _IO_init_internal (fp, flags);
+}
+
+void
+_IO_old_init (_IO_FILE *fp, int flags)
 {
   fp->_flags = _IO_MAGIC|flags;
   fp->_flags2 = 0;
@@ -634,12 +600,8 @@ _IO_old_init (fp, flags)
 }
 
 void
-_IO_no_init (fp, flags, orientation, wd, jmp)
-     _IO_FILE *fp;
-     int flags;
-     int orientation;
-     struct _IO_wide_data *wd;
-     const struct _IO_jump_t *jmp;
+_IO_no_init (_IO_FILE *fp, int flags, int orientation,
+	     struct _IO_wide_data *wd, const struct _IO_jump_t *jmp)
 {
   _IO_old_init (fp, flags);
   fp->_mode = orientation;
@@ -670,8 +632,7 @@ _IO_no_init (fp, flags, orientation, wd, jmp)
 }
 
 int
-_IO_default_sync (fp)
-     _IO_FILE *fp;
+_IO_default_sync (_IO_FILE *fp)
 {
   return 0;
 }
@@ -680,14 +641,12 @@ _IO_default_sync (fp)
    current implementation, this function can get called twice! */
 
 void
-_IO_default_finish (fp, dummy)
-     _IO_FILE *fp;
-     int dummy;
+_IO_default_finish (_IO_FILE *fp, int dummy)
 {
   struct _IO_marker *mark;
   if (fp->_IO_buf_base && !(fp->_flags & _IO_USER_BUF))
     {
-      FREE_BUF (fp->_IO_buf_base, _IO_blen (fp));
+      free (fp->_IO_buf_base);
       fp->_IO_buf_base = fp->_IO_buf_end = NULL;
     }
 
@@ -710,19 +669,13 @@ _IO_default_finish (fp, dummy)
 libc_hidden_def (_IO_default_finish)
 
 _IO_off64_t
-_IO_default_seekoff (fp, offset, dir, mode)
-     _IO_FILE *fp;
-     _IO_off64_t offset;
-     int dir;
-     int mode;
+_IO_default_seekoff (_IO_FILE *fp, _IO_off64_t offset, int dir, int mode)
 {
   return _IO_pos_BAD;
 }
 
 int
-_IO_sputbackc (fp, c)
-     _IO_FILE *fp;
-     int c;
+_IO_sputbackc (_IO_FILE *fp, int c)
 {
   int result;
 
@@ -743,8 +696,7 @@ _IO_sputbackc (fp, c)
 libc_hidden_def (_IO_sputbackc)
 
 int
-_IO_sungetc (fp)
-     _IO_FILE *fp;
+_IO_sungetc (_IO_FILE *fp)
 {
   int result;
 
@@ -766,9 +718,7 @@ _IO_sungetc (fp)
 /* Seems not to be needed.  */
 #if 0
 void
-_IO_set_column (fp, c)
-     _IO_FILE *fp;
-     int c;
+_IO_set_column (_IO_FILE *fp, int c)
 {
   if (c == -1)
     fp->_column = -1;
@@ -777,9 +727,7 @@ _IO_set_column (fp, c)
 }
 #else
 int
-_IO_set_column (fp, i)
-     _IO_FILE *fp;
-     int i;
+_IO_set_column (_IO_FILE *fp, int i)
 {
   fp->_cur_column = i + 1;
   return 0;
@@ -789,10 +737,7 @@ _IO_set_column (fp, i)
 
 
 unsigned
-_IO_adjust_column (start, line, count)
-     unsigned start;
-     const char *line;
-     int count;
+_IO_adjust_column (unsigned start, const char *line, int count)
 {
   const char *ptr = line + count;
   while (ptr > line)
@@ -805,8 +750,7 @@ libc_hidden_def (_IO_adjust_column)
 #if 0
 /* Seems not to be needed. --drepper */
 int
-_IO_get_column (fp)
-     _IO_FILE *fp;
+_IO_get_column (_IO_FILE *fp)
 {
   if (fp->_cur_column)
     return _IO_adjust_column (fp->_cur_column - 1,
@@ -935,23 +879,21 @@ weak_alias (_IO_flush_all_linebuffered, _flushlbf)
    the atexit routine, just like _IO_cleanup.  The problem is we do
    not know whether the freeres code is called first or _IO_cleanup.
    if the former is the case, we set the DEALLOC_BUFFER variable to
-   true and _IO_unbuffer_write will take care of the rest.  If
-   _IO_unbuffer_write is called first we add the streams to a list
+   true and _IO_unbuffer_all will take care of the rest.  If
+   _IO_unbuffer_all is called first we add the streams to a list
    which the freeres function later can walk through.  */
-static void _IO_unbuffer_write (void);
+static void _IO_unbuffer_all (void);
 
 static bool dealloc_buffers;
 static _IO_FILE *freeres_list;
 
 static void
-_IO_unbuffer_write (void)
+_IO_unbuffer_all (void)
 {
   struct _IO_FILE *fp;
   for (fp = (_IO_FILE *) _IO_list_all; fp; fp = fp->_chain)
     {
       if (! (fp->_flags & _IO_UNBUFFERED)
-	  && (! (fp->_flags & _IO_NO_WRITES)
-	      || (fp->_flags & _IO_IS_APPENDING))
 	  /* Iff stream is un-orientated, it wasn't used. */
 	  && fp->_mode != 0)
 	{
@@ -974,10 +916,12 @@ _IO_unbuffer_write (void)
 	      fp->_freeres_list = freeres_list;
 	      freeres_list = fp;
 	      fp->_freeres_buf = fp->_IO_buf_base;
-	      fp->_freeres_size = _IO_blen (fp);
 	    }
 
 	  _IO_SETBUF (fp, NULL, 0);
+
+	  if (fp->_mode > 0)
+	    _IO_wsetb (fp, NULL, NULL, 0);
 
 #ifdef _IO_MTSAFE_IO
 	  if (cnt < MAXTRIES && fp->_lock != NULL)
@@ -998,7 +942,7 @@ libc_freeres_fn (buffer_free)
 
   while (freeres_list != NULL)
     {
-      FREE_BUF (freeres_list->_freeres_buf, freeres_list->_freeres_size);
+      free (freeres_list->_freeres_buf);
 
       freeres_list = freeres_list->_freeres_list;
     }
@@ -1019,16 +963,14 @@ _IO_cleanup (void)
 
      The following will make the standard streambufs be unbuffered,
      which forces any output from late destructors to be written out. */
-  _IO_unbuffer_write ();
+  _IO_unbuffer_all ();
 
   return result;
 }
 
 
 void
-_IO_init_marker (marker, fp)
-     struct _IO_marker *marker;
-     _IO_FILE *fp;
+_IO_init_marker (struct _IO_marker *marker, _IO_FILE *fp)
 {
   marker->_sbuf = fp;
   if (_IO_in_put_mode (fp))
@@ -1044,8 +986,7 @@ _IO_init_marker (marker, fp)
 }
 
 void
-_IO_remove_marker (marker)
-     struct _IO_marker *marker;
+_IO_remove_marker (struct _IO_marker *marker)
 {
   /* Unlink from sb's chain. */
   struct _IO_marker **ptr = &marker->_sbuf->_markers;
@@ -1068,17 +1009,14 @@ _IO_remove_marker (marker)
 #define BAD_DELTA EOF
 
 int
-_IO_marker_difference (mark1, mark2)
-     struct _IO_marker *mark1;
-     struct _IO_marker *mark2;
+_IO_marker_difference (struct _IO_marker *mark1, struct _IO_marker *mark2)
 {
   return mark1->_pos - mark2->_pos;
 }
 
 /* Return difference between MARK and current position of MARK's stream. */
 int
-_IO_marker_delta (mark)
-     struct _IO_marker *mark;
+_IO_marker_delta (struct _IO_marker *mark)
 {
   int cur_pos;
   if (mark->_sbuf == NULL)
@@ -1091,10 +1029,7 @@ _IO_marker_delta (mark)
 }
 
 int
-_IO_seekmark (fp, mark, delta)
-     _IO_FILE *fp;
-     struct _IO_marker *mark;
-     int delta;
+_IO_seekmark (_IO_FILE *fp, struct _IO_marker *mark, int delta)
 {
   if (mark->_sbuf != fp)
     return EOF;
@@ -1114,8 +1049,7 @@ _IO_seekmark (fp, mark, delta)
 }
 
 void
-_IO_unsave_markers (fp)
-     _IO_FILE *fp;
+_IO_unsave_markers (_IO_FILE *fp)
 {
   struct _IO_marker *mark = fp->_markers;
   if (mark)
@@ -1145,9 +1079,7 @@ libc_hidden_def (_IO_unsave_markers)
 #if 0
 /* Seems not to be needed. --drepper */
 int
-_IO_nobackup_pbackfail (fp, c)
-     _IO_FILE *fp;
-     int c;
+_IO_nobackup_pbackfail (_IO_FILE *fp, int c)
 {
   if (fp->_IO_read_ptr > fp->_IO_read_base)
 	fp->_IO_read_ptr--;
@@ -1158,9 +1090,7 @@ _IO_nobackup_pbackfail (fp, c)
 #endif
 
 int
-_IO_default_pbackfail (fp, c)
-     _IO_FILE *fp;
-     int c;
+_IO_default_pbackfail (_IO_FILE *fp, int c)
 {
   if (fp->_IO_read_ptr > fp->_IO_read_base && !_IO_in_backup (fp)
       && (unsigned char) fp->_IO_read_ptr[-1] == c)
@@ -1217,51 +1147,37 @@ _IO_default_pbackfail (fp, c)
 libc_hidden_def (_IO_default_pbackfail)
 
 _IO_off64_t
-_IO_default_seek (fp, offset, dir)
-     _IO_FILE *fp;
-     _IO_off64_t offset;
-     int dir;
+_IO_default_seek (_IO_FILE *fp, _IO_off64_t offset, int dir)
 {
   return _IO_pos_BAD;
 }
 
 int
-_IO_default_stat (fp, st)
-     _IO_FILE *fp;
-     void* st;
+_IO_default_stat (_IO_FILE *fp, void *st)
 {
   return EOF;
 }
 
 _IO_ssize_t
-_IO_default_read (fp, data, n)
-     _IO_FILE* fp;
-     void *data;
-     _IO_ssize_t n;
+_IO_default_read (_IO_FILE *fp, void *data, _IO_ssize_t n)
 {
   return -1;
 }
 
 _IO_ssize_t
-_IO_default_write (fp, data, n)
-     _IO_FILE *fp;
-     const void *data;
-     _IO_ssize_t n;
+_IO_default_write (_IO_FILE *fp, const void *data, _IO_ssize_t n)
 {
   return 0;
 }
 
 int
-_IO_default_showmanyc (fp)
-     _IO_FILE *fp;
+_IO_default_showmanyc (_IO_FILE *fp)
 {
   return -1;
 }
 
 void
-_IO_default_imbue (fp, locale)
-     _IO_FILE *fp;
-     void *locale;
+_IO_default_imbue (_IO_FILE *fp, void *locale)
 {
 }
 
@@ -1280,16 +1196,14 @@ _IO_iter_end (void)
 libc_hidden_def (_IO_iter_end)
 
 _IO_ITER
-_IO_iter_next(iter)
-    _IO_ITER iter;
+_IO_iter_next (_IO_ITER iter)
 {
   return iter->_chain;
 }
 libc_hidden_def (_IO_iter_next)
 
 _IO_FILE *
-_IO_iter_file(iter)
-    _IO_ITER iter;
+_IO_iter_file (_IO_ITER iter)
 {
   return iter;
 }

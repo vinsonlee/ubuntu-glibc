@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2014 Free Software Foundation, Inc.
+# Copyright (C) 1991-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -19,6 +19,8 @@
 #	Sub-makefile for string portion of library.
 #
 subdir	:= string
+
+include ../Makeconfig
 
 headers	:= string.h strings.h memory.h endian.h bits/endian.h \
 	   argz.h envz.h byteswap.h bits/byteswap.h bits/byteswap-16.h \
@@ -52,20 +54,16 @@ tests		:= tester inl-tester noinl-tester testcopy test-ffs	\
 		   tst-strtok tst-strxfrm bug-strcoll1 tst-strfry	\
 		   bug-strtok1 $(addprefix test-,$(strop-tests))	\
 		   bug-envz1 tst-strxfrm2 tst-endian tst-svc2		\
-		   tst-strtok_r
+		   tst-strtok_r bug-strcoll2
 
 xtests = tst-strcoll-overflow
 
+ifeq ($(run-built-tests),yes)
+tests-special += $(objpfx)tst-svc-cmp.out
+endif
+
 include ../Rules
 
-tester-ENV = LANGUAGE=C
-inl-tester-ENV = LANGUAGE=C
-noinl-tester-ENV = LANGUAGE=C
-tst-strxfrm-ENV = LOCPATH=$(common-objpfx)localedata
-tst-strxfrm2-ENV = LOCPATH=$(common-objpfx)localedata
-bug-strcoll1-ENV = LOCPATH=$(common-objpfx)localedata
-test-strcasecmp-ENV = LOCPATH=$(common-objpfx)localedata
-test-strncasecmp-ENV = LOCPATH=$(common-objpfx)localedata
 CFLAGS-inl-tester.c = -fno-builtin
 CFLAGS-noinl-tester.c = -fno-builtin
 CFLAGS-tst-strlen.c = -fno-builtin
@@ -74,9 +72,20 @@ CFLAGS-test-ffs.c = -fno-builtin
 CFLAGS-tst-inlcall.c = -fno-builtin
 
 ifeq ($(run-built-tests),yes)
-tests: $(objpfx)tst-svc.out
-$(objpfx)tst-svc.out: tst-svc.input $(objpfx)tst-svc
-	GCONV_PATH=$(common-objpfx)iconvdata LC_ALL=C \
-	  $(test-program-cmd) < $(word 1,$^) > $@
-	@cmp tst-svc.expect $(objpfx)tst-svc.out
+$(objpfx)tst-svc-cmp.out: tst-svc.expect $(objpfx)tst-svc.out
+	cmp $^ > $@; \
+	$(evaluate-test)
+
+LOCALES := de_DE.UTF-8 en_US.ISO-8859-1 en_US.UTF-8 \
+           tr_TR.ISO-8859-9 tr_TR.UTF-8 cs_CZ.UTF-8 \
+	   da_DK.ISO-8859-1
+include ../gen-locales.mk
+
+$(objpfx)test-strcasecmp.out: $(gen-locales)
+$(objpfx)test-strncasecmp.out: $(gen-locales)
+$(objpfx)tst-strxfrm.out: $(gen-locales)
+$(objpfx)tst-strxfrm2.out: $(gen-locales)
+# bug-strcoll2 needs cs_CZ.UTF-8 and da_DK.ISO-8859-1.
+$(objpfx)bug-strcoll2.out: $(gen-locales)
+
 endif

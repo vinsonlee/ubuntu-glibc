@@ -1,6 +1,6 @@
 /* Test backtrace and backtrace_symbols for signal frames, where a
    system call was interrupted by a signal.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,5 +17,12 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#define SIGACTION_FLAGS SA_SIGINFO
-#include <debug/tst-backtrace5.c>
+#include <signal.h>
+
+#ifdef SA_SIGINFO
+# define SIGACTION_FLAGS SA_SIGINFO
+# include <debug/tst-backtrace5.c>
+#else
+# define TEST_FUNCTION  0
+# include "../test-skeleton.c"
+#endif

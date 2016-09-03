@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,9 +21,7 @@
 
 /* Truncate the file referenced by FD to LENGTH bytes.  */
 int
-__ftruncate64 (fd, length)
-     int fd;
-     off64_t length;
+__ftruncate64 (int fd, off64_t length)
 {
   if ((off_t) length != length)
     {

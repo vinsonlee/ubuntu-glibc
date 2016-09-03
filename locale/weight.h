@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Ulrich Drepper, <drepper@cygnus.com>.
 
@@ -16,10 +16,15 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#ifndef _WEIGHT_H_
+#define _WEIGHT_H_	1
+
 /* Find index of weight.  */
-auto inline int32_t
-__attribute ((always_inline))
-findidx (const unsigned char **cpp, size_t len)
+static inline int32_t __attribute__ ((always_inline))
+findidx (const int32_t *table,
+	 const int32_t *indirect,
+	 const unsigned char *extra,
+	 const unsigned char **cpp, size_t len)
 {
   int_fast32_t i = table[*(*cpp)++];
   const unsigned char *cp;
@@ -130,3 +135,5 @@ findidx (const unsigned char **cpp, size_t len)
   /* NOTREACHED */
   return 0x43219876;
 }
+
+#endif	/* weight.h */

@@ -1,5 +1,5 @@
 /* Get priority ceiling setting from pthread_mutexattr_t.
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2006.
 
@@ -18,12 +18,12 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <pthreadP.h>
+#include <atomic.h>
 
 
 int
-pthread_mutexattr_getprioceiling (attr, prioceiling)
-     const pthread_mutexattr_t *attr;
-     int *prioceiling;
+pthread_mutexattr_getprioceiling (const pthread_mutexattr_t *attr,
+				  int *prioceiling)
 {
   const struct pthread_mutexattr *iattr;
   int ceiling;
@@ -35,10 +35,11 @@ pthread_mutexattr_getprioceiling (attr, prioceiling)
 
   if (! ceiling)
     {
-      if (__sched_fifo_min_prio == -1)
+      /* See __init_sched_fifo_prio.  */
+      if (atomic_load_relaxed (&__sched_fifo_min_prio) == -1)
 	__init_sched_fifo_prio ();
-      if (ceiling < __sched_fifo_min_prio)
-	ceiling = __sched_fifo_min_prio;
+      if (ceiling < atomic_load_relaxed (&__sched_fifo_min_prio))
+	ceiling = atomic_load_relaxed (&__sched_fifo_min_prio);
     }
 
   *prioceiling = ceiling;

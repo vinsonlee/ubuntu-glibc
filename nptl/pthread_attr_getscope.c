@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -21,9 +21,7 @@
 
 
 int
-__pthread_attr_getscope (attr, scope)
-     const pthread_attr_t *attr;
-     int *scope;
+__pthread_attr_getscope (const pthread_attr_t *attr, int *scope)
 {
   struct pthread_attr *iattr;
 

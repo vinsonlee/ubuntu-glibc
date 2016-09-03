@@ -1,5 +1,5 @@
 /* Mapping tables from GBK to GB2312 and vice versa.
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1999.
 
@@ -32,6 +32,7 @@
 #define MAX_NEEDED_FROM		2
 #define MIN_NEEDED_TO		1
 #define MAX_NEEDED_TO		2
+#define ONE_DIRECTION		0
 
 
 /* First define the conversion function from GBK to GB2312.  */
@@ -73,7 +74,7 @@
 		UCS4 -> GB2312 -> GBK -> UCS4				      \
 									      \
 	   might not produce identical text.  */			      \
-	if (__builtin_expect (inptr + 1 >= inend, 0))			      \
+	if (__glibc_unlikely (inptr + 1 >= inend))			      \
 	  {								      \
 	    /* The second character is not available.  Store		      \
 	       the intermediate result.  */				      \
@@ -81,7 +82,7 @@
 	    break;							      \
 	  }								      \
 									      \
-	if (__builtin_expect (outend - outptr < 2, 0))			      \
+	if (__glibc_unlikely (outend - outptr < 2))			      \
 	  {								      \
 	    /* We ran out of space.  */					      \
 	    result = __GCONV_FULL_OUTPUT;				      \
@@ -91,7 +92,7 @@
 	ch = (ch << 8) | inptr[1];					      \
 									      \
 	/* Map 0xA844 (U2015 in GBK) to 0xA1AA (U2015 in GB2312).  */	      \
-	if (__builtin_expect (ch == 0xa844, 0))				      \
+	if (__glibc_unlikely (ch == 0xa844))				      \
 	  ch = 0xa1aa;							      \
 									      \
 	/* Now determine whether the character is valid.  */		      \
@@ -134,7 +135,7 @@
 									      \
     if (ch > 0x7f)							      \
       {									      \
-	if (__builtin_expect (inptr + 1 >= inend, 0))			      \
+	if (__glibc_unlikely (inptr + 1 >= inend))			      \
 	  {								      \
 	    /* The second character is not available.  Store		      \
 		 the intermediate result.  */				      \
@@ -142,7 +143,7 @@
 	    break;							      \
 	  }								      \
 									      \
-	if (__builtin_expect (outend - outptr < 2, 0))			      \
+	if (__glibc_unlikely (outend - outptr < 2))			      \
 	  {								      \
 	    /* We ran out of space.  */					      \
 	    result = __GCONV_FULL_OUTPUT;				      \
