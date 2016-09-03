@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -22,7 +22,9 @@
 
 
 int
-__pthread_setcancelstate (int state, int *oldstate)
+__pthread_setcancelstate (state, oldstate)
+     int state;
+     int *oldstate;
 {
   volatile struct pthread *self;
 
@@ -53,7 +55,7 @@ __pthread_setcancelstate (int state, int *oldstate)
 	 atomically since other bits could be modified as well.  */
       int curval = THREAD_ATOMIC_CMPXCHG_VAL (self, cancelhandling, newval,
 					      oldval);
-      if (__glibc_likely (curval == oldval))
+      if (__builtin_expect (curval == oldval, 1))
 	{
 	  if (CANCEL_ENABLED_AND_CANCELED_AND_ASYNCHRONOUS (newval))
 	    __do_cancel ();
@@ -68,4 +70,3 @@ __pthread_setcancelstate (int state, int *oldstate)
   return 0;
 }
 strong_alias (__pthread_setcancelstate, pthread_setcancelstate)
-hidden_def (__pthread_setcancelstate)

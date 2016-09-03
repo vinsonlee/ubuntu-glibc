@@ -1,5 +1,5 @@
 /* Operating system support for run-time dynamic linker.  Generic Unix version.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ extern void __libc_check_standard_fds (void);
 ElfW(Addr) _dl_base_addr;
 #endif
 int __libc_enable_secure attribute_relro = 0;
-rtld_hidden_data_def (__libc_enable_secure)
+INTVARDEF(__libc_enable_secure)
 int __libc_multiple_libcs = 0;	/* Defining this here avoids the inclusion
 				   of init-first.  */
 /* This variable contains the lowest stack address ever used.  */
@@ -108,7 +108,7 @@ _dl_sysdep_start (void **start_argptr,
 #endif
 
   __libc_stack_end = DL_STACK_END (start_argptr);
-  DL_FIND_ARG_COMPONENTS (start_argptr, _dl_argc, _dl_argv, _environ,
+  DL_FIND_ARG_COMPONENTS (start_argptr, _dl_argc, INTUSE(_dl_argv), _environ,
 			  GLRO(dl_auxv));
 
   user_entry = (ElfW(Addr)) ENTRY_POINT;
@@ -148,7 +148,7 @@ _dl_sysdep_start (void **start_argptr,
 #ifndef HAVE_AUX_SECURE
 	seen = -1;
 #endif
-	__libc_enable_secure = av->a_un.a_val;
+	INTUSE(__libc_enable_secure) = av->a_un.a_val;
 	break;
       case AT_PLATFORM:
 	GLRO(dl_platform) = (void *) av->a_un.a_val;
@@ -199,7 +199,7 @@ _dl_sysdep_start (void **start_argptr,
 
       /* If one of the two pairs of IDs does not match this is a setuid
 	 or setgid run.  */
-      __libc_enable_secure = uid | gid;
+      INTUSE(__libc_enable_secure) = uid | gid;
     }
 #endif
 
@@ -243,7 +243,7 @@ _dl_sysdep_start (void **start_argptr,
   /* If this is a SUID program we make sure that FDs 0, 1, and 2 are
      allocated.  If necessary we are doing it ourself.  If it is not
      possible we stop the program.  */
-  if (__builtin_expect (__libc_enable_secure, 0))
+  if (__builtin_expect (INTUSE(__libc_enable_secure), 0))
     __libc_check_standard_fds ();
 
   (*dl_main) (phdr, phnum, &user_entry, GLRO(dl_auxv));

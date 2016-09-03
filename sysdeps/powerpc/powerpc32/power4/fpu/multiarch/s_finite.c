@@ -1,5 +1,5 @@
 /* Multiple versions of finite.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ strong_alias (__finite, __finitel)
 weak_alias (__finite, finitel)
 #endif
 
-#if IS_IN (libm)
+#ifdef IS_IN_libm
 # if LONG_DOUBLE_COMPAT (libm, GLIBC_2_0)
 compat_symbol (libm, finite, finitel, GLIBC_2_0);
 # endif

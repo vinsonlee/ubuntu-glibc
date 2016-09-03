@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -32,8 +32,6 @@
 #include <atomic.h>
 #include <kernel-features.h>
 #include <errno.h>
-#include <nptl-signals.h>
-
 
 /* Atomic operations on TLS memory.  */
 #ifndef THREAD_ATOMIC_CMPXCHG_VAL
@@ -161,12 +159,6 @@ enum
 #define FUTEX_TID_MASK		0x3fffffff
 
 
-/* pthread_once definitions.  See __pthread_once for how these are used.  */
-#define __PTHREAD_ONCE_INPROGRESS	1
-#define __PTHREAD_ONCE_DONE		2
-#define __PTHREAD_ONCE_FORK_GEN_INCR	4
-
-
 /* Internal variables.  */
 
 
@@ -188,6 +180,11 @@ hidden_proto (__stack_user)
 /* Attribute handling.  */
 extern struct pthread_attr *__attr_list attribute_hidden;
 extern int __attr_list_lock attribute_hidden;
+
+/* First available RT signal.  */
+extern int __current_sigrtmin attribute_hidden;
+/* Last available RT signal.  */
+extern int __current_sigrtmax attribute_hidden;
 
 /* Concurrency handling.  */
 extern int __concurrency_level attribute_hidden;
@@ -244,7 +241,7 @@ extern int __pthread_debug attribute_hidden;
 
 extern void __pthread_unwind (__pthread_unwind_buf_t *__buf)
      __cleanup_fct_attribute __attribute ((__noreturn__))
-#if !defined SHARED && !IS_IN (libpthread)
+#if !defined SHARED && !defined IS_IN_libpthread
      weak_function
 #endif
      ;
@@ -258,7 +255,7 @@ extern void __pthread_register_cancel (__pthread_unwind_buf_t *__buf)
      __cleanup_fct_attribute;
 extern void __pthread_unregister_cancel (__pthread_unwind_buf_t *__buf)
      __cleanup_fct_attribute;
-#if IS_IN (libpthread)
+#if defined NOT_IN_libc && defined IS_IN_libpthread
 hidden_proto (__pthread_unwind)
 hidden_proto (__pthread_unwind_next)
 hidden_proto (__pthread_register_cancel)
@@ -292,7 +289,7 @@ __do_cancel (void)
 #define CANCEL_RESET(oldtype) \
   __pthread_disable_asynccancel (oldtype)
 
-#if IS_IN (libc)
+#if !defined NOT_IN_libc
 /* Same as CANCEL_ASYNC, but for use in libc.so.  */
 # define LIBC_CANCEL_ASYNC() \
   __libc_enable_asynccancel ()
@@ -302,13 +299,13 @@ __do_cancel (void)
 # define LIBC_CANCEL_HANDLED() \
   __asm (".globl " __SYMBOL_PREFIX "__libc_enable_asynccancel"); \
   __asm (".globl " __SYMBOL_PREFIX "__libc_disable_asynccancel")
-#elif IS_IN (libpthread)
+#elif defined NOT_IN_libc && defined IS_IN_libpthread
 # define LIBC_CANCEL_ASYNC() CANCEL_ASYNC ()
 # define LIBC_CANCEL_RESET(val) CANCEL_RESET (val)
 # define LIBC_CANCEL_HANDLED() \
   __asm (".globl " __SYMBOL_PREFIX "__pthread_enable_asynccancel"); \
   __asm (".globl " __SYMBOL_PREFIX "__pthread_disable_asynccancel")
-#elif IS_IN (librt)
+#elif defined NOT_IN_libc && defined IS_IN_librt
 # define LIBC_CANCEL_ASYNC() \
   __librt_enable_asynccancel ()
 # define LIBC_CANCEL_RESET(val) \
@@ -321,6 +318,22 @@ __do_cancel (void)
 # define LIBC_CANCEL_RESET(val)	((void)(val)) /* Nothing, but evaluate it.  */
 # define LIBC_CANCEL_HANDLED()	/* Nothing.  */
 #endif
+
+/* The signal used for asynchronous cancelation.  */
+#define SIGCANCEL	__SIGRTMIN
+
+
+/* Signal needed for the kernel-supported POSIX timer implementation.
+   We can reuse the cancellation signal since we can distinguish
+   cancellation from timer expirations.  */
+#define SIGTIMER	SIGCANCEL
+
+
+/* Signal used to implement the setuid et.al. functions.  */
+#define SIGSETXID	(__SIGRTMIN + 1)
+
+/* Used to communicate with signal handler.  */
+extern struct xid_command *__xidcmd attribute_hidden;
 
 
 /* Internal prototypes.  */
@@ -347,7 +360,7 @@ extern int __make_stacks_executable (void **stack_endp)
 
 /* longjmp handling.  */
 extern void __pthread_cleanup_upto (__jmp_buf target, char *targetframe);
-#if IS_IN (libpthread)
+#if defined NOT_IN_libc && defined IS_IN_libpthread
 hidden_proto (__pthread_cleanup_upto)
 #endif
 
@@ -492,7 +505,7 @@ extern int __pthread_enable_asynccancel (void) attribute_hidden;
 extern void __pthread_disable_asynccancel (int oldtype)
      internal_function attribute_hidden;
 
-#if IS_IN (libpthread)
+#if defined NOT_IN_libc && defined IS_IN_libpthread
 hidden_proto (__pthread_mutex_init)
 hidden_proto (__pthread_mutex_destroy)
 hidden_proto (__pthread_mutex_lock)
@@ -504,7 +517,6 @@ hidden_proto (__pthread_key_create)
 hidden_proto (__pthread_getspecific)
 hidden_proto (__pthread_setspecific)
 hidden_proto (__pthread_once)
-hidden_proto (__pthread_setcancelstate)
 #endif
 
 extern int __pthread_cond_broadcast_2_0 (pthread_cond_2_0_t *cond);
@@ -532,25 +544,21 @@ extern int __librt_enable_asynccancel (void) attribute_hidden;
 extern void __librt_disable_asynccancel (int oldtype)
      internal_function attribute_hidden;
 
-#if IS_IN (libpthread)
+#ifdef IS_IN_libpthread
 /* Special versions which use non-exported functions.  */
 extern void __pthread_cleanup_push (struct _pthread_cleanup_buffer *buffer,
 				    void (*routine) (void *), void *arg)
      attribute_hidden;
-
-/* Replace cleanup macros defined in <pthread.h> with internal
-   versions that don't depend on unwind info and better support
-   cancellation.  */
 # undef pthread_cleanup_push
-# define pthread_cleanup_push(routine,arg)              \
-  { struct _pthread_cleanup_buffer _buffer;             \
-  __pthread_cleanup_push (&_buffer, (routine), (arg));
+# define pthread_cleanup_push(routine,arg) \
+  { struct _pthread_cleanup_buffer _buffer;				      \
+    __pthread_cleanup_push (&_buffer, (routine), (arg));
 
 extern void __pthread_cleanup_pop (struct _pthread_cleanup_buffer *buffer,
 				   int execute) attribute_hidden;
 # undef pthread_cleanup_pop
-# define pthread_cleanup_pop(execute)                   \
-  __pthread_cleanup_pop (&_buffer, (execute)); }
+# define pthread_cleanup_pop(execute) \
+    __pthread_cleanup_pop (&_buffer, (execute)); }
 #endif
 
 extern void __pthread_cleanup_push_defer (struct _pthread_cleanup_buffer *buffer,
@@ -570,8 +578,6 @@ extern void _pthread_cleanup_pop_restore (struct _pthread_cleanup_buffer *buffer
 
 extern void __nptl_deallocate_tsd (void) attribute_hidden;
 
-extern void __nptl_setxid_error (struct xid_command *cmdp, int error)
-  attribute_hidden;
 extern int __nptl_setxid (struct xid_command *cmdp) attribute_hidden;
 #ifndef SHARED
 extern void __nptl_set_robust (struct pthread *self);
@@ -632,6 +638,33 @@ check_stacksize_attr (size_t st)
     return 0;
 
   return EINVAL;
+}
+
+/* Defined in pthread_setaffinity.c.  */
+extern size_t __kernel_cpumask_size attribute_hidden;
+extern int __determine_cpumask_size (pid_t tid);
+
+/* Returns 0 if CS and SZ are valid values for the cpuset and cpuset size
+   respectively.  Otherwise it returns an error number.  */
+static inline int
+check_cpuset_attr (const cpu_set_t *cs, const size_t sz)
+{
+  if (__kernel_cpumask_size == 0)
+    {
+      int res = __determine_cpumask_size (THREAD_SELF->tid);
+      if (res)
+	return res;
+    }
+
+  /* Check whether the new bitmask has any bit set beyond the
+     last one the kernel accepts.  */
+  for (size_t cnt = __kernel_cpumask_size; cnt < sz; ++cnt)
+    if (((char *) cs)[cnt] != '\0')
+      /* Found a nonzero byte.  This means the user request cannot be
+	 fulfilled.  */
+      return EINVAL;
+
+  return 0;
 }
 
 #endif	/* pthreadP.h */

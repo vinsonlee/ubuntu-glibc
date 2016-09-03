@@ -1,5 +1,5 @@
 /* Common database routines for nss_db.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 #include <sys/mman.h>
 #include <not-cancel.h>
 
+#include <kernel-features.h>
 #include "nss_db.h"
 
 /* Open the database stored in FILE.  If succesful, store either a

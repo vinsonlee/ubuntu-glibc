@@ -1,5 +1,5 @@
-#if IS_IN (ldconfig)
+#ifdef IS_IN_ldconfig
 # include <sysdeps/i386/dl-procinfo.c>
 #else
-# include <sysdeps/x86_64/dl-procinfo.c>
+# include <sysdeps/generic/dl-procinfo.c>
 #endif

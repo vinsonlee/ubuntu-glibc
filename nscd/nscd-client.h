@@ -1,4 +1,4 @@
-/* Copyright (c) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1998.
 
@@ -24,8 +24,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <string.h>
-#include <time.h>
 #include <sys/types.h>
 #include <atomic.h>
 #include <nscd-types.h>
@@ -238,48 +236,6 @@ struct datahead
   } data[0];
 };
 
-static inline time_t
-datahead_init_common (struct datahead *head, nscd_ssize_t allocsize,
-		      nscd_ssize_t recsize, uint32_t ttl)
-{
-  /* Initialize so that we don't write out junk in uninitialized data to the
-     cache.  */
-  memset (head, 0, sizeof (*head));
-
-  head->allocsize = allocsize;
-  head->recsize = recsize;
-  head->usable = true;
-
-  head->ttl = ttl;
-
-  /* Compute and return the timeout time.  */
-  return head->timeout = time (NULL) + ttl;
-}
-
-static inline time_t
-datahead_init_pos (struct datahead *head, nscd_ssize_t allocsize,
-		   nscd_ssize_t recsize, uint8_t nreloads, uint32_t ttl)
-{
-  time_t ret = datahead_init_common (head, allocsize, recsize, ttl);
-
-  head->notfound = false;
-  head->nreloads = nreloads;
-
-  return ret;
-}
-
-static inline time_t
-datahead_init_neg (struct datahead *head, nscd_ssize_t allocsize,
-		   nscd_ssize_t recsize, uint32_t ttl)
-{
-  time_t ret = datahead_init_common (head, allocsize, recsize, ttl);
-
-  /* We don't need to touch nreloads here since it is set to our desired value
-     (0) when we clear the structure.  */
-  head->notfound = true;
-
-  return ret;
-}
 
 /* Structure for one hash table entry.  */
 struct hashentry
@@ -375,10 +331,10 @@ __nscd_acquire_maplock (volatile struct locked_map_ptr *mapptr)
 								1, 0) != 0, 0))
     {
       // XXX Best number of rounds?
-      if (__glibc_unlikely (++cnt > 5))
+      if (__builtin_expect (++cnt > 5, 0))
 	return false;
 
-      atomic_spin_nop ();
+      atomic_delay ();
     }
 
   return true;
@@ -413,7 +369,7 @@ __nscd_drop_map_ref (struct mapped_database *map, int *gc_cycle)
   if (map != NO_MAPPING)
     {
       int now_cycle = map->head->gc_cycle;
-      if (__glibc_unlikely (now_cycle != *gc_cycle))
+      if (__builtin_expect (now_cycle != *gc_cycle, 0))
 	{
 	  /* We might have read inconsistent data.  */
 	  *gc_cycle = now_cycle;

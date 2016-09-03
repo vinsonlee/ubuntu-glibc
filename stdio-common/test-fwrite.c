@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 
-static int
-do_test (void)
+int
+main (int argc, char *argv[])
 {
   FILE *f = tmpfile ();
   char obuf[99999], ibuf[sizeof obuf];
@@ -66,6 +66,3 @@ There is absolutely no warranty for GDB; type \"show warranty\" for details.\n\
   puts ("Test succeeded.");
   return 0;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

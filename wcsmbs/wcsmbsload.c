@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -24,7 +24,7 @@
 
 #include <locale/localeinfo.h>
 #include <wcsmbsload.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 
 
 /* These are the descriptions for the default conversion functions.  */
@@ -156,7 +156,7 @@ __wcsmbs_load_conv (struct __locale_data *new_category)
 
   /* We should repeat the test since while we waited some other thread
      might have run this function.  */
-  if (__glibc_likely (new_category->private.ctype == NULL))
+  if (__builtin_expect (new_category->private.ctype == NULL, 1))
     {
       /* We must find the real functions.  */
       const char *charset_name;

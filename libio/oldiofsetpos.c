@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,7 +31,9 @@
 #if SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_2)
 int
 attribute_compat_text_section
-_IO_old_fsetpos (_IO_FILE *fp, const _IO_fpos_t *posp)
+_IO_old_fsetpos (fp, posp)
+     _IO_FILE *fp;
+     const _IO_fpos_t *posp;
 {
   int result;
   CHECK_FILE (fp, EOF);

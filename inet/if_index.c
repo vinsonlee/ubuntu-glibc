@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,41 +20,44 @@
 #include <stddef.h>
 
 unsigned int
-__if_nametoindex (const char *ifname)
+if_nametoindex (const char *ifname)
 {
   __set_errno (ENOSYS);
   return 0;
 }
-libc_hidden_def (__if_nametoindex)
-weak_alias (__if_nametoindex, if_nametoindex)
-libc_hidden_weak (if_nametoindex)
+libc_hidden_def (if_nametoindex)
 stub_warning (if_nametoindex)
 
 char *
-__if_indextoname (unsigned int ifindex, char *ifname)
+if_indextoname (unsigned int ifindex, char *ifname)
 {
   __set_errno (ENOSYS);
   return NULL;
 }
-weak_alias (__if_indextoname, if_indextoname)
-libc_hidden_weak (if_indextoname)
+libc_hidden_def (if_indextoname)
 stub_warning (if_indextoname)
 
 void
-__if_freenameindex (struct if_nameindex *ifn)
+if_freenameindex (struct if_nameindex *ifn)
 {
 }
-libc_hidden_def (__if_freenameindex)
-weak_alias (__if_freenameindex, if_freenameindex)
-libc_hidden_weak (if_freenameindex)
 stub_warning (if_freenameindex)
 
 struct if_nameindex *
-__if_nameindex (void)
+if_nameindex (void)
 {
   __set_errno (ENOSYS);
   return NULL;
 }
-weak_alias (__if_nameindex, if_nameindex)
-libc_hidden_weak (if_nameindex)
 stub_warning (if_nameindex)
+
+#if 0
+void
+internal_function
+__protocol_available (int *have_inet, int *have_inet6)
+{
+  /* By default we assume that IPv4 is available, IPv6 not.  */
+  *have_inet = 1;
+  *have_inet6 = 0;
+}
+#endif

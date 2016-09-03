@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -21,13 +21,14 @@
 
 
 void *
-__pthread_getspecific (pthread_key_t key)
+__pthread_getspecific (key)
+     pthread_key_t key;
 {
   struct pthread_key_data *data;
 
   /* Special case access to the first 2nd-level block.  This is the
      usual case.  */
-  if (__glibc_likely (key < PTHREAD_KEY_2NDLEVEL_SIZE))
+  if (__builtin_expect (key < PTHREAD_KEY_2NDLEVEL_SIZE, 1))
     data = &THREAD_SELF->specific_1stblock[key];
   else
     {
@@ -57,7 +58,7 @@ __pthread_getspecific (pthread_key_t key)
     {
       uintptr_t seq = data->seq;
 
-      if (__glibc_unlikely (seq != __pthread_keys[key].seq))
+      if (__builtin_expect (seq != __pthread_keys[key].seq, 0))
 	result = data->data = NULL;
     }
 

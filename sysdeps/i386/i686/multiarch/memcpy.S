@@ -1,6 +1,6 @@
 /* Multiple versions of memcpy
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -24,24 +24,28 @@
 /* Define multiple versions only for the definition in lib and for
    DSO.  In static binaries we need memcpy before the initialization
    happened.  */
-#if defined SHARED && IS_IN (libc)
+#if defined SHARED && !defined NOT_IN_libc
 	.text
 ENTRY(memcpy)
 	.type	memcpy, @gnu_indirect_function
-	LOAD_GOT_AND_RTLD_GLOBAL_RO
-	LOAD_FUNC_GOT_EAX (__memcpy_ia32)
-	HAS_CPU_FEATURE (SSE2)
+	pushl	%ebx
+	cfi_adjust_cfa_offset (4)
+	cfi_rel_offset (ebx, 0)
+	LOAD_PIC_REG(bx)
+	cmpl	$0, KIND_OFFSET+__cpu_features@GOTOFF(%ebx)
+	jne	1f
+	call	__init_cpu_features
+1:	leal	__memcpy_ia32@GOTOFF(%ebx), %eax
+	testl	$bit_SSSE3, CPUID_OFFSET+index_SSSE3+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	LOAD_FUNC_GOT_EAX (__memcpy_sse2_unaligned)
-	HAS_ARCH_FEATURE (Fast_Unaligned_Load)
-	jnz	2f
-	HAS_CPU_FEATURE (SSSE3)
+	leal	__memcpy_ssse3@GOTOFF(%ebx), %eax
+	testl	$bit_Fast_Rep_String, FEATURE_OFFSET+index_Fast_Rep_String+__cpu_features@GOTOFF(%ebx)
 	jz	2f
-	LOAD_FUNC_GOT_EAX (__memcpy_ssse3)
-	HAS_ARCH_FEATURE (Fast_Rep_String)
-	jz	2f
-	LOAD_FUNC_GOT_EAX (__memcpy_ssse3_rep)
-2:	ret
+	leal	__memcpy_ssse3_rep@GOTOFF(%ebx), %eax
+2:	popl	%ebx
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (ebx)
+	ret
 END(memcpy)
 
 # undef ENTRY

@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1996.
 
@@ -81,8 +81,7 @@ set_big_endian (bool big_endian)
 
 /* Munge VALUE so that, when stored, it has the correct byte order
    for the output files.  */
-static uint32_t
-__attribute__ ((unused))
+static inline uint32_t
 maybe_swap_uint32 (uint32_t value)
 {
   return swap_endianness_p ? bswap_32 (value) : value;

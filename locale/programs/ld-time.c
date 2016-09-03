@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1995.
 
@@ -487,15 +487,11 @@ No definition for %s category found"), "LC_TIME"));
 	}
     }
 
-  /* Set up defaults based on ISO 30112 WD10 [2014].  */
   if (time->week_ndays == 0)
     time->week_ndays = 7;
 
   if (time->week_1stday == 0)
     time->week_1stday = 19971130;
-
-  if (time->week_1stweek == 0)
-    time->week_1stweek = 7;
 
   if (time->week_1stweek > time->week_ndays)
     WITH_CUR_LOCALE (error (0, 0, _("\

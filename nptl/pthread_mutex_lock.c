@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -20,10 +20,8 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/param.h>
 #include <not-cancel.h>
 #include "pthreadP.h"
-#include <atomic.h>
 #include <lowlevellock.h>
 #include <stap-probe.h>
 
@@ -60,7 +58,8 @@ static int __pthread_mutex_lock_full (pthread_mutex_t *mutex)
      __attribute_noinline__;
 
 int
-__pthread_mutex_lock (pthread_mutex_t *mutex)
+__pthread_mutex_lock (mutex)
+     pthread_mutex_t *mutex;
 {
   assert (sizeof (mutex->__size) >= sizeof (mutex->__data));
 
@@ -72,7 +71,7 @@ __pthread_mutex_lock (pthread_mutex_t *mutex)
 				 | PTHREAD_MUTEX_ELISION_FLAGS_NP), 0))
     return __pthread_mutex_lock_full (mutex);
 
-  if (__glibc_likely (type == PTHREAD_MUTEX_TIMED_NP))
+  if (__builtin_expect (type == PTHREAD_MUTEX_TIMED_NP, 1))
     {
       FORCE_ELISION (mutex, goto elision);
     simple:
@@ -81,7 +80,7 @@ __pthread_mutex_lock (pthread_mutex_t *mutex)
       assert (mutex->__data.__owner == 0);
     }
 #ifdef HAVE_ELISION
-  else if (__glibc_likely (type == PTHREAD_MUTEX_TIMED_ELISION_NP))
+  else if (__builtin_expect (type == PTHREAD_MUTEX_TIMED_ELISION_NP, 1))
     {
   elision: __attribute__((unused))
       /* This case can never happen on a system without elision,
@@ -102,7 +101,7 @@ __pthread_mutex_lock (pthread_mutex_t *mutex)
       if (mutex->__data.__owner == id)
 	{
 	  /* Just bump the counter.  */
-	  if (__glibc_unlikely (mutex->__data.__count + 1 == 0))
+	  if (__builtin_expect (mutex->__data.__count + 1 == 0, 0))
 	    /* Overflow of the counter.  */
 	    return EAGAIN;
 
@@ -135,7 +134,10 @@ __pthread_mutex_lock (pthread_mutex_t *mutex)
 		  LLL_MUTEX_LOCK (mutex);
 		  break;
 		}
-	      atomic_spin_nop ();
+
+#ifdef BUSY_WAIT_NOP
+	      BUSY_WAIT_NOP;
+#endif
 	    }
 	  while (LLL_MUTEX_TRYLOCK (mutex) != 0);
 
@@ -148,7 +150,7 @@ __pthread_mutex_lock (pthread_mutex_t *mutex)
       pid_t id = THREAD_GETMEM (THREAD_SELF, tid);
       assert (PTHREAD_MUTEX_TYPE (mutex) == PTHREAD_MUTEX_ERRORCHECK_NP);
       /* Check whether we already hold the mutex.  */
-      if (__glibc_unlikely (mutex->__data.__owner == id))
+      if (__builtin_expect (mutex->__data.__owner == id, 0))
 	return EDEADLK;
       goto simple;
     }
@@ -227,7 +229,7 @@ __pthread_mutex_lock_full (pthread_mutex_t *mutex)
 	    }
 
 	  /* Check whether we already hold the mutex.  */
-	  if (__glibc_unlikely ((oldval & FUTEX_TID_MASK) == id))
+	  if (__builtin_expect ((oldval & FUTEX_TID_MASK) == id, 0))
 	    {
 	      int kind = PTHREAD_MUTEX_TYPE (mutex);
 	      if (kind == PTHREAD_MUTEX_ROBUST_ERRORCHECK_NP)
@@ -243,7 +245,7 @@ __pthread_mutex_lock_full (pthread_mutex_t *mutex)
 				 NULL);
 
 		  /* Just bump the counter.  */
-		  if (__glibc_unlikely (mutex->__data.__count + 1 == 0))
+		  if (__builtin_expect (mutex->__data.__count + 1 == 0, 0))
 		    /* Overflow of the counter.  */
 		    return EAGAIN;
 
@@ -273,10 +275,6 @@ __pthread_mutex_lock_full (pthread_mutex_t *mutex)
       THREAD_SETMEM (THREAD_SELF, robust_head.list_op_pending, NULL);
       break;
 
-    /* The PI support requires the Linux futex system call.  If that's not
-       available, pthread_mutex_init should never have allowed the type to
-       be set.  So it will get the default case for an invalid type.  */
-#ifdef __NR_futex
     case PTHREAD_MUTEX_PI_RECURSIVE_NP:
     case PTHREAD_MUTEX_PI_ERRORCHECK_NP:
     case PTHREAD_MUTEX_PI_NORMAL_NP:
@@ -298,7 +296,7 @@ __pthread_mutex_lock_full (pthread_mutex_t *mutex)
 	oldval = mutex->__data.__lock;
 
 	/* Check whether we already hold the mutex.  */
-	if (__glibc_unlikely ((oldval & FUTEX_TID_MASK) == id))
+	if (__builtin_expect ((oldval & FUTEX_TID_MASK) == id, 0))
 	  {
 	    if (kind == PTHREAD_MUTEX_ERRORCHECK_NP)
 	      {
@@ -311,7 +309,7 @@ __pthread_mutex_lock_full (pthread_mutex_t *mutex)
 		THREAD_SETMEM (THREAD_SELF, robust_head.list_op_pending, NULL);
 
 		/* Just bump the counter.  */
-		if (__glibc_unlikely (mutex->__data.__count + 1 == 0))
+		if (__builtin_expect (mutex->__data.__count + 1 == 0, 0))
 		  /* Overflow of the counter.  */
 		  return EAGAIN;
 
@@ -322,9 +320,9 @@ __pthread_mutex_lock_full (pthread_mutex_t *mutex)
 	  }
 
 	int newval = id;
-# ifdef NO_INCR
+#ifdef NO_INCR
 	newval |= FUTEX_WAITERS;
-# endif
+#endif
 	oldval = atomic_compare_and_exchange_val_acq (&mutex->__data.__lock,
 						      newval, 0);
 
@@ -361,7 +359,7 @@ __pthread_mutex_lock_full (pthread_mutex_t *mutex)
 	    assert (robust || (oldval & FUTEX_OWNER_DIED) == 0);
 	  }
 
-	if (__glibc_unlikely (oldval & FUTEX_OWNER_DIED))
+	if (__builtin_expect (oldval & FUTEX_OWNER_DIED, 0))
 	  {
 	    atomic_and (&mutex->__data.__lock, ~FUTEX_OWNER_DIED);
 
@@ -378,9 +376,9 @@ __pthread_mutex_lock_full (pthread_mutex_t *mutex)
 	       incremented which is not correct because the old owner
 	       has to be discounted.  If we are not supposed to
 	       increment __nusers we actually have to decrement it here.  */
-# ifdef NO_INCR
+#ifdef NO_INCR
 	    --mutex->__data.__nusers;
-# endif
+#endif
 
 	    return EOWNERDEAD;
 	  }
@@ -410,7 +408,6 @@ __pthread_mutex_lock_full (pthread_mutex_t *mutex)
 	  }
       }
       break;
-#endif  /* __NR_futex.  */
 
     case PTHREAD_MUTEX_PP_RECURSIVE_NP:
     case PTHREAD_MUTEX_PP_ERRORCHECK_NP:
@@ -430,7 +427,7 @@ __pthread_mutex_lock_full (pthread_mutex_t *mutex)
 	    if (kind == PTHREAD_MUTEX_RECURSIVE_NP)
 	      {
 		/* Just bump the counter.  */
-		if (__glibc_unlikely (mutex->__data.__count + 1 == 0))
+		if (__builtin_expect (mutex->__data.__count + 1 == 0, 0))
 		  /* Overflow of the counter.  */
 		  return EAGAIN;
 
@@ -520,8 +517,8 @@ hidden_def (__pthread_mutex_lock)
 
 #ifdef NO_INCR
 void
-internal_function
-__pthread_mutex_cond_lock_adjust (pthread_mutex_t *mutex)
+__pthread_mutex_cond_lock_adjust (mutex)
+     pthread_mutex_t *mutex;
 {
   assert ((mutex->__data.__kind & PTHREAD_MUTEX_PRIO_INHERIT_NP) != 0);
   assert ((mutex->__data.__kind & PTHREAD_MUTEX_ROBUST_NORMAL_NP) == 0);

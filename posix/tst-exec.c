@@ -1,5 +1,5 @@
 /* Tests for exec.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
@@ -59,12 +59,12 @@ do_prepare (int argc, char *argv[])
    size_t name_len;
 
    name_len = strlen (test_dir);
-   name1 = xmalloc (name_len + sizeof ("/execXXXXXX"));
+   name1 = malloc (name_len + sizeof ("/execXXXXXX"));
    mempcpy (mempcpy (name1, test_dir, name_len),
 	    "/execXXXXXX", sizeof ("/execXXXXXX"));
    add_temp_file (name1);
 
-   name2 = xmalloc (name_len + sizeof ("/execXXXXXX"));
+   name2 = malloc (name_len + sizeof ("/execXXXXXX"));
    mempcpy (mempcpy (name2, test_dir, name_len),
 	    "/execXXXXXX", sizeof ("/execXXXXXX"));
    add_temp_file (name2);

@@ -1,5 +1,5 @@
 /* Measure __strcpy_chk functions.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -52,9 +52,6 @@ simple_strcpy_chk (char *dst, const char *src, size_t len)
 #include <paths.h>
 #include <setjmp.h>
 #include <signal.h>
-
-static int test_main (void);
-#include "../test-skeleton.c"
 
 volatile int chk_fail_ok;
 jmp_buf chk_fail_buf;
@@ -159,12 +156,28 @@ do_test (size_t align1, size_t align2, size_t len, size_t dlen, int max_char)
     putchar ('\n');
 }
 
-static int
+int
 test_main (void)
 {
   size_t i;
 
-  set_fortify_handler (handler);
+  struct sigaction sa;
+  sa.sa_handler = handler;
+  sa.sa_flags = 0;
+  sigemptyset (&sa.sa_mask);
+
+  sigaction (SIGABRT, &sa, NULL);
+
+  /* Avoid all the buffer overflow messages on stderr.  */
+  int fd = open (_PATH_DEVNULL, O_WRONLY);
+  if (fd == -1)
+    close (STDERR_FILENO);
+  else
+    {
+      dup2 (fd, STDERR_FILENO);
+      close (fd);
+    }
+  setenv ("LIBC_FATAL_STDERR_", "1", 1);
 
   test_init ();
 
@@ -241,3 +254,5 @@ test_main (void)
 
   return 0;
 }
+
+#include "../test-skeleton.c"

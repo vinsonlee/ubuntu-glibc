@@ -1,5 +1,5 @@
 /* hairy bits of Hurd file name lookup
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -62,15 +62,8 @@ __hurd_file_name_lookup_retry (error_t (*use_init_port)
 
   error_t lookup_op (file_t startdir)
     {
-      if (file_name[0] == '/' && file_name[1] != '\0')
-	{
-	  while (file_name[1] == '/')
-	    /* Remove double leading slash.  */
-	    file_name++;
-	  if (file_name[1] != '\0')
-	    /* Remove leading slash when we have more than the slash.  */
-	    file_name++;
-	}
+      while (file_name[0] == '/')
+	file_name++;
 
       return lookup_error ((*lookup) (startdir, file_name, flags, mode,
 				      &doretry, retryname, result));

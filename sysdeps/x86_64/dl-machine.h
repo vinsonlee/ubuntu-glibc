@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  x86-64 version.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>.
 
@@ -26,7 +26,6 @@
 #include <sysdep.h>
 #include <tls.h>
 #include <dl-tlsdesc.h>
-#include <cpu-features.c>
 
 /* Return nonzero iff ELF header is compatible with the running host.  */
 static inline int __attribute__ ((unused))
@@ -66,12 +65,8 @@ static inline int __attribute__ ((unused, always_inline))
 elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 {
   Elf64_Addr *got;
-  extern void _dl_runtime_resolve_sse (ElfW(Word)) attribute_hidden;
-  extern void _dl_runtime_resolve_avx (ElfW(Word)) attribute_hidden;
-  extern void _dl_runtime_resolve_avx512 (ElfW(Word)) attribute_hidden;
-  extern void _dl_runtime_profile_sse (ElfW(Word)) attribute_hidden;
-  extern void _dl_runtime_profile_avx (ElfW(Word)) attribute_hidden;
-  extern void _dl_runtime_profile_avx512 (ElfW(Word)) attribute_hidden;
+  extern void _dl_runtime_resolve (ElfW(Word)) attribute_hidden;
+  extern void _dl_runtime_profile (ElfW(Word)) attribute_hidden;
 
   if (l->l_info[DT_JMPREL] && lazy)
     {
@@ -97,14 +92,9 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 	 to intercept the calls to collect information.  In this case we
 	 don't store the address in the GOT so that all future calls also
 	 end in this function.  */
-      if (__glibc_unlikely (profile))
+      if (__builtin_expect (profile, 0))
 	{
-	  if (HAS_ARCH_FEATURE (AVX512F_Usable))
-	    *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_profile_avx512;
-	  else if (HAS_ARCH_FEATURE (AVX_Usable))
-	    *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_profile_avx;
-	  else
-	    *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_profile_sse;
+	  *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_profile;
 
 	  if (GLRO(dl_profile) != NULL
 	      && _dl_name_match_p (GLRO(dl_profile), l))
@@ -113,17 +103,9 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 	    GL(dl_profile_map) = l;
 	}
       else
-	{
-	  /* This function will get called to fix up the GOT entry
-	     indicated by the offset on the stack, and then jump to
-	     the resolved address.  */
-	  if (HAS_ARCH_FEATURE (AVX512F_Usable))
-	    *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_resolve_avx512;
-	  else if (HAS_ARCH_FEATURE (AVX_Usable))
-	    *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_resolve_avx;
-	  else
-	    *(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_resolve_sse;
-	}
+	/* This function will get called to fix up the GOT entry indicated by
+	   the offset on the stack, and then jump to the resolved address.  */
+	*(ElfW(Addr) *) (got + 2) = (ElfW(Addr)) &_dl_runtime_resolve;
     }
 
   if (l->l_info[ADDRIDX (DT_TLSDESC_GOT)] && lazy)
@@ -163,7 +145,7 @@ _dl_start_user:\n\
 	movq %rdx, %rsi\n\
 	# Save %rsp value in %r13.\n\
 	movq %rsp, %r13\n\
-	# And align stack for the _dl_init call. \n\
+	# And align stack for the _dl_init_internal call. \n\
 	andq $-16, %rsp\n\
 	# _dl_loaded -> rdi\n\
 	movq _rtld_local(%rip), %rdi\n\
@@ -174,7 +156,7 @@ _dl_start_user:\n\
 	# Clear %rbp to mark outermost frame obviously even for constructors.\n\
 	xorl %ebp, %ebp\n\
 	# Call the function to run the initializers.\n\
-	call _dl_init\n\
+	call _dl_init_internal@PLT\n\
 	# Pass our finalizer function to the user in %rdx, as per ELF ABI.\n\
 	leaq _dl_fini(%rip), %rdx\n\
 	# And make sure %rsp points to argc stored on the stack.\n\
@@ -187,11 +169,8 @@ _dl_start_user:\n\
 /* ELF_RTYPE_CLASS_PLT iff TYPE describes relocation of a PLT entry or
    TLS variable, so undefined references should not be allowed to
    define the value.
-   ELF_RTYPE_CLASS_COPY iff TYPE should not be allowed to resolve to one
-   of the main executable's symbols, as for a COPY reloc.
-   ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA iff TYPE describes relocation may
-   against protected data whose address be external due to copy relocation.
- */
+   ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
+   of the main executable's symbols, as for a COPY reloc.  */
 #define elf_machine_type_class(type)					      \
   ((((type) == R_X86_64_JUMP_SLOT					      \
      || (type) == R_X86_64_DTPMOD64					      \
@@ -199,8 +178,7 @@ _dl_start_user:\n\
      || (type) == R_X86_64_TPOFF64					      \
      || (type) == R_X86_64_TLSDESC)					      \
     * ELF_RTYPE_CLASS_PLT)						      \
-   | (((type) == R_X86_64_COPY) * ELF_RTYPE_CLASS_COPY)			      \
-   | (((type) == R_X86_64_GLOB_DAT) * ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA))
+   | (((type) == R_X86_64_COPY) * ELF_RTYPE_CLASS_COPY))
 
 /* A reloc type used for ld.so cmdline arg lookups to reject PLT entries.  */
 #define ELF_MACHINE_JMP_SLOT	R_X86_64_JUMP_SLOT
@@ -211,7 +189,6 @@ _dl_start_user:\n\
 
 /* The x86-64 never uses Elf64_Rel/Elf32_Rel relocations.  */
 #define ELF_MACHINE_NO_REL 1
-#define ELF_MACHINE_NO_RELA 0
 
 /* We define an initialization function.  This is called very early in
    _dl_sysdep_start.  */
@@ -223,12 +200,6 @@ dl_platform_init (void)
   if (GLRO(dl_platform) != NULL && *GLRO(dl_platform) == '\0')
     /* Avoid an empty string which would disturb us.  */
     GLRO(dl_platform) = NULL;
-
-#ifdef SHARED
-  /* init_cpu_features has been called early from __libc_start_main in
-     static executable.  */
-  init_cpu_features (&GLRO(dl_x86_cpu_features));
-#endif
 }
 
 static inline ElfW(Addr)
@@ -270,7 +241,7 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
   const unsigned long int r_type = ELFW(R_TYPE) (reloc->r_info);
 
 # if !defined RTLD_BOOTSTRAP || !defined HAVE_Z_COMBRELOC
-  if (__glibc_unlikely (r_type == R_X86_64_RELATIVE))
+  if (__builtin_expect (r_type == R_X86_64_RELATIVE, 0))
     {
 #  if !defined RTLD_BOOTSTRAP && !defined HAVE_Z_COMBRELOC
       /* This is defined in rtld.c, but nowhere in the static libc.a;
@@ -291,11 +262,11 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
 # if !defined RTLD_BOOTSTRAP
   /* l_addr + r_addend may be > 0xffffffff and R_X86_64_RELATIVE64
      relocation updates the whole 64-bit entry.  */
-  if (__glibc_unlikely (r_type == R_X86_64_RELATIVE64))
+  if (__builtin_expect (r_type == R_X86_64_RELATIVE64, 0))
     *(Elf64_Addr *) reloc_addr = (Elf64_Addr) map->l_addr + reloc->r_addend;
   else
 # endif
-  if (__glibc_unlikely (r_type == R_X86_64_NONE))
+  if (__builtin_expect (r_type == R_X86_64_NONE, 0))
     return;
   else
     {
@@ -448,7 +419,7 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
 	  *(unsigned int *) reloc_addr = value;
 
 	  const char *fmt;
-	  if (__glibc_unlikely (value > UINT_MAX))
+	  if (__builtin_expect (value > UINT_MAX, 0))
 	    {
 	      const char *strtab;
 
@@ -467,7 +438,7 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
 	case R_X86_64_PC32:
 	  value += reloc->r_addend - (ElfW(Addr)) reloc_addr;
 	  *(unsigned int *) reloc_addr = value;
-	  if (__glibc_unlikely (value != (int) value))
+	  if (__builtin_expect (value != (int) value, 0))
 	    {
 	      fmt = "\
 %s: Symbol `%s' causes overflow in R_X86_64_PC32 relocation\n";
@@ -513,7 +484,7 @@ elf_machine_rela_relative (ElfW(Addr) l_addr, const ElfW(Rela) *reloc,
 #if !defined RTLD_BOOTSTRAP
   /* l_addr + r_addend may be > 0xffffffff and R_X86_64_RELATIVE64
      relocation updates the whole 64-bit entry.  */
-  if (__glibc_unlikely (ELFW(R_TYPE) (reloc->r_info) == R_X86_64_RELATIVE64))
+  if (__builtin_expect (ELFW(R_TYPE) (reloc->r_info) == R_X86_64_RELATIVE64, 0))
     *(Elf64_Addr *) reloc_addr = (Elf64_Addr) l_addr + reloc->r_addend;
   else
 #endif
@@ -533,7 +504,7 @@ elf_machine_lazy_rel (struct link_map *map,
   const unsigned long int r_type = ELFW(R_TYPE) (reloc->r_info);
 
   /* Check for unexpected PLT reloc type.  */
-  if (__glibc_likely (r_type == R_X86_64_JUMP_SLOT))
+  if (__builtin_expect (r_type == R_X86_64_JUMP_SLOT, 1))
     {
       if (__builtin_expect (map->l_mach.plt, 0) == 0)
 	*reloc_addr += l_addr;
@@ -542,7 +513,7 @@ elf_machine_lazy_rel (struct link_map *map,
 	  map->l_mach.plt
 	  + (((ElfW(Addr)) reloc_addr) - map->l_mach.gotplt) * 2;
     }
-  else if (__glibc_likely (r_type == R_X86_64_TLSDESC))
+  else if (__builtin_expect (r_type == R_X86_64_TLSDESC, 1))
     {
       struct tlsdesc volatile * __attribute__((__unused__)) td =
 	(struct tlsdesc volatile *)reloc_addr;
@@ -551,10 +522,10 @@ elf_machine_lazy_rel (struct link_map *map,
       td->entry = (void*)(D_PTR (map, l_info[ADDRIDX (DT_TLSDESC_PLT)])
 			  + map->l_addr);
     }
-  else if (__glibc_unlikely (r_type == R_X86_64_IRELATIVE))
+  else if (__builtin_expect (r_type == R_X86_64_IRELATIVE, 0))
     {
       ElfW(Addr) value = map->l_addr + reloc->r_addend;
-      if (__glibc_likely (!skip_ifunc))
+      if (__builtin_expect (!skip_ifunc, 1))
 	value = ((ElfW(Addr) (*) (void)) value) ();
       *reloc_addr = value;
     }

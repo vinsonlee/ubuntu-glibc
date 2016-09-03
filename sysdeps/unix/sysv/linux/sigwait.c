@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <nptl/pthreadP.h>
 #include <sysdep-cancel.h>
 #include <sys/syscall.h>
 
@@ -86,7 +85,9 @@ do_sigwait (const sigset_t *set, int *sig)
 }
 
 int
-__sigwait (const sigset_t *set, int *sig)
+__sigwait (set, sig)
+     const sigset_t *set;
+     int *sig;
 {
   if (SINGLE_THREAD_P)
     return do_sigwait (set, sig);

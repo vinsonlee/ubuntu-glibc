@@ -46,10 +46,8 @@ function int timespec_get (struct timespec *, int)
 symbol CLK_TCK
 # endif
 # if !defined XPG3 && !defined XPG4
-#  if !defined POSIX && !defined UNIX98
 constant CLOCK_PROCESS_CPUTIME_ID
 constant CLOCK_THREAD_CPUTIME_ID
-#  endif
 
 type {struct itimerspec}
 
@@ -58,9 +56,7 @@ element {struct itimerspec} {struct timespec} it_value
 
 constant CLOCK_REALTIME
 constant TIMER_ABSTIME
-#  if !defined POSIX && !defined UNIX98
 constant CLOCK_MONOTONIC
-#  endif
 
 type clockid_t
 type timer_t
@@ -72,7 +68,7 @@ type locale_t
 tag {struct sigevent}
 # endif
 
-# if !defined XPG3 && !defined POSIX && !defined POSIX2008
+# if !defined POSIX && !defined POSIX2008
 variable int getdate_err
 # endif
 
@@ -91,7 +87,7 @@ function int clock_nanosleep (clockid_t, int, const struct timespec*, struct tim
 function int clock_settime (clockid_t, const struct timespec*)
 #endif
 function {char*} ctime_r (const time_t*, char*)
-# if !defined XPG3 && !defined POSIX && !defined POSIX2008
+# if !defined POSIX && !defined POSIX2008
 function {struct tm*} getdate (const char*)
 # endif
 function {struct tm*} gmtime_r (const time_t*, struct tm*)
@@ -120,9 +116,7 @@ variable {long int} timezone
 # endif
 variable {char*} tzname [2]
 
-# ifndef POSIX
 allow tm_*
-# endif
 allow clock_*
 allow timer_*
 allow it_*

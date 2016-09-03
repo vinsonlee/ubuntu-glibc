@@ -1,5 +1,5 @@
 /* Measure memmem functions.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ simple_memmem (const void *haystack, size_t haystack_len, const void *needle,
 
   /* Sanity check, otherwise the loop might search through the whole
      memory.  */
-  if (__glibc_unlikely (haystack_len < needle_len))
+  if (__builtin_expect (haystack_len < needle_len, 0))
     return NULL;
 
   for (begin = (const char *) haystack; begin <= last_possible; ++begin)

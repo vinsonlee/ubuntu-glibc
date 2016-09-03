@@ -1,6 +1,6 @@
-#!/bin/sh -f
+#! /bin/sh -f
 #
-# Copyright (C) 1998-2016 Free Software Foundation, Inc.
+# Copyright (C) 1998-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library and contains tests for
 # the rpmatch(3)-implementation.
 # contributed by Jochen Hein <jochen.hein@delphi.central.de>
@@ -26,6 +26,8 @@ tst_rpmatch=$2
 rc=0
 while IFS=\& read locale string result dummy; do
     if [ "$locale" != "#" ]; then
+	LOCPATH=${common_objpfx}localedata \
+	GCONV_PATH=${common_objpfx}/iconvdata \
 	${tst_rpmatch} $locale $string $result < /dev/null \
 	|| { echo "$locale $string $result  FAILED"; exit 1; }
     fi

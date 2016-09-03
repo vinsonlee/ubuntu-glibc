@@ -1,5 +1,5 @@
 /* ANSI C `remove' function to delete a file or directory.  Stub version.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,8 @@
 #include <stdio.h>
 
 int
-remove (const char *file)
+remove (file)
+     const char *file;
 {
   __set_errno (ENOSYS);
   return -1;

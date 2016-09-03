@@ -1,5 +1,5 @@
 /* Set current rounding direction.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
 #include <fenv.h>
 
 int
-__fesetround (int round)
+fesetround (int round)
 {
   unsigned short int cw;
   int mxcsr;
@@ -43,6 +43,4 @@ __fesetround (int round)
 
   return 0;
 }
-libm_hidden_def (__fesetround)
-weak_alias (__fesetround, fesetround)
-libm_hidden_weak (fesetround)
+libm_hidden_def (fesetround)

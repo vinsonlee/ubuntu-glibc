@@ -2,12 +2,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-static int
-do_test (void)
+int
+main( int argc, char *argv[] )
 {
   printf( "main\n" );
   exit(EXIT_SUCCESS);
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

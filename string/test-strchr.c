@@ -1,5 +1,5 @@
-/* Test STRCHR functions.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+/* Test and measure STRCHR functions.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Jakub Jelinek <jakub@redhat.com>, 1999.
    Added wcschr support by Liubov Dmitrieva <liubov.dmitrieva@gmail.com>, 2011
@@ -24,14 +24,10 @@
 #  define TEST_NAME "strchrnul"
 # else
 #  define TEST_NAME "strchr"
-# endif /* !USE_FOR_STRCHRNUL */
+# endif
 #else
-# ifdef USE_FOR_STRCHRNUL
-#  define TEST_NAME "wcschrnul"
-# else
-#  define TEST_NAME "wcschr"
-# endif /* !USE_FOR_STRCHRNUL */
-#endif /* WIDE */
+# define TEST_NAME "wcschr"
+#endif
 #include "test-string.h"
 
 #ifndef WIDE
@@ -41,37 +37,29 @@
 #  define simple_STRCHR simple_STRCHRNUL
 # else
 #  define STRCHR strchr
-# endif /* !USE_FOR_STRCHRNUL */
+# endif
 # define STRLEN strlen
 # define CHAR char
 # define BIG_CHAR CHAR_MAX
 # define MIDDLE_CHAR 127
 # define SMALL_CHAR 23
 # define UCHAR unsigned char
-# define L(s) s
 #else
 # include <wchar.h>
-# ifdef USE_FOR_STRCHRNUL
-#  define STRCHR wcschrnul
-#  define stupid_STRCHR stupid_WCSCHRNUL
-#  define simple_STRCHR simple_WCSCHRNUL
-# else
-#  define STRCHR wcschr
-# endif /* !USE_FOR_STRCHRNUL */
+# define STRCHR wcschr
 # define STRLEN wcslen
 # define CHAR wchar_t
 # define BIG_CHAR WCHAR_MAX
 # define MIDDLE_CHAR 1121
 # define SMALL_CHAR 851
 # define UCHAR wchar_t
-# define L(s) L ## s
-#endif /* WIDE */
+#endif
 
 #ifdef USE_FOR_STRCHRNUL
 # define NULLRET(endptr) endptr
 #else
 # define NULLRET(endptr) NULL
-#endif /* !USE_FOR_STRCHRNUL */
+#endif
 
 
 typedef CHAR *(*proto_t) (const CHAR *, int);
@@ -231,9 +219,9 @@ do_random_tests (void)
 static void
 check1 (void)
 {
-  CHAR s[] __attribute__((aligned(16))) = L ("\xff");
-  CHAR c = L ('\xfe');
-  CHAR *exp_result = stupid_STRCHR (s, c);
+  char s[] __attribute__((aligned(16))) = "\xff";
+  char c = '\xfe';
+  char *exp_result = stupid_STRCHR (s, c);
 
   FOR_EACH_IMPL (impl, 0)
     check_result (impl, s, c, exp_result);

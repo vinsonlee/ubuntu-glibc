@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@
 /* Return the current position of DIRP.  */
 /* XXX should be __telldir ? */
 long int
-telldir (DIR *dirp)
+telldir (dirp)
+     DIR *dirp;
 {
   return dirp->__entry_ptr;
 }

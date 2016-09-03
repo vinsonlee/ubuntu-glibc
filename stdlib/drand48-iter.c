@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -27,13 +27,15 @@ struct drand48_data __libc_drand48_data;
 
 
 int
-__drand48_iterate (unsigned short int xsubi[3], struct drand48_data *buffer)
+__drand48_iterate (xsubi, buffer)
+     unsigned short int xsubi[3];
+     struct drand48_data *buffer;
 {
   uint64_t X;
   uint64_t result;
 
   /* Initialize buffer, if not yet done.  */
-  if (__glibc_unlikely (!buffer->__init))
+  if (__builtin_expect (!buffer->__init, 0))
     {
       buffer->__a = 0x5deece66dull;
       buffer->__c = 0xb;

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -24,7 +24,8 @@
 /* Change the set of blocked signals to SET,
    wait until a signal arrives, and restore the set of blocked signals.  */
 int
-__sigsuspend (const sigset_t *set)
+__sigsuspend (set)
+     const sigset_t *set;
 {
   struct hurd_sigstate *ss;
   sigset_t newmask, oldmask, pending;

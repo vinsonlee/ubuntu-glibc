@@ -1,5 +1,5 @@
 /* FPU control word definitions.  Stub version.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Denis Joseph Barrow (djbarrow@de.ibm.com) and
    Martin Schwidefsky (schwidefsky@de.ibm.com).
    This file is part of the GNU C Library.
@@ -19,12 +19,12 @@
    <http://www.gnu.org/licenses/>.  */
 
 #ifndef _FPU_CONTROL_H
-#define _FPU_CONTROL_H
+# define _FPU_CONTROL_H
 
-#include <features.h>
+# include <features.h>
 
 /* These bits are reserved are not changed.  */
-#define _FPU_RESERVED 0x0707FFFC
+# define _FPU_RESERVED 0x070700FC
 
 /* The fdlibm code requires no interrupts for exceptions.  Don't
    change the rounding mode, it would break long double I/O!  */
@@ -34,8 +34,8 @@
 typedef unsigned int fpu_control_t;
 
 /* Macros for accessing the hardware control word.  */
-#define _FPU_GETCW(cw)  __asm__ __volatile__ ("efpc %0,0" : "=d" (cw))
-#define _FPU_SETCW(cw)  __asm__ __volatile__ ("sfpc  %0,0" : : "d" (cw))
+#define _FPU_GETCW(cw)  __asm__ volatile ("efpc %0,0" : "=d" (cw))
+#define _FPU_SETCW(cw)  __asm__ volatile ("sfpc  %0,0" : : "d" (cw))
 
 /* Default control word set at startup.  */
 extern fpu_control_t __fpu_control;

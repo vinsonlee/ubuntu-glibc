@@ -82,6 +82,8 @@ static const long double
 
   C1 = 6.93145751953125E-1L,
   C2 = 1.428606820309417232121458176568075500134E-6L,
+/* ln (2^16384 * (1 - 2^-113)) */
+  maxlog = 1.1356523406294143949491931077970764891253E4L,
 /* ln 2^-114 */
   minarg = -7.9018778583833765273564461846232128760607E1L, big = 1e290L;
 
@@ -103,16 +105,28 @@ __expm1l (long double x)
     return __expl (x);
   if (ix >= 0x7ff00000)
     {
-      /* Infinity (which must be negative infinity). */
+      /* Infinity. */
       if (((ix - 0x7ff00000) | lx) == 0)
-	return -1.0L;
-      /* NaN.  Invalid exception if signaling.  */
-      return x + x;
+	{
+	  if (sign)
+	    return -1.0L;
+	  else
+	    return x;
+	}
+      /* NaN. No invalid exception. */
+      return x;
     }
 
   /* expm1(+- 0) = +- 0.  */
   if ((ix | lx) == 0)
     return x;
+
+  /* Overflow.  */
+  if (x > maxlog)
+    {
+      __set_errno (ERANGE);
+      return (big * big);
+    }
 
   /* Minimum value.  */
   if (x < minarg)

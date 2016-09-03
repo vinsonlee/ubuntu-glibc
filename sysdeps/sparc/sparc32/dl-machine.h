@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  SPARC version.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -184,7 +184,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 
 /* ELF_RTYPE_CLASS_PLT iff TYPE describes relocation of a PLT entry, so
    PLT entries should not be allowed to define the value.
-   ELF_RTYPE_CLASS_COPY iff TYPE should not be allowed to resolve to one
+   ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
    of the main executable's symbols, as for a COPY reloc.  */
 #define elf_machine_type_class(type) \
   ((((type) == R_SPARC_JMP_SLOT						      \
@@ -197,7 +197,6 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 
 /* The SPARC never uses Elf32_Rel relocations.  */
 #define ELF_MACHINE_NO_REL 1
-#define ELF_MACHINE_NO_RELA 0
 
 /* Undo the sub %sp, 6*4, %sp; add %sp, 22*4, %o0 below to get at the
    value we want in __libc_stack_end.  */
@@ -282,7 +281,7 @@ _dl_start_user:\n\
 	add	%o3, 4, %o3\n\
 	mov	%i5, %o1\n\
 	add	%o2, %o3, %o3\n\
-	call	_dl_init\n\
+	call	_dl_init_internal\n\
 	 ld	[%o0], %o0\n\
   /* Pass our finalizer function to the user in %g1.  */\n\
 	" RTLD_GOT_ADDRESS(%l7, %g1, _dl_fini) "\n\
@@ -351,17 +350,17 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
   weak_extern (_dl_rtld_map);
 #endif
 
-  if (__glibc_unlikely (r_type == R_SPARC_NONE))
+  if (__builtin_expect (r_type == R_SPARC_NONE, 0))
     return;
 
-  if (__glibc_unlikely (r_type == R_SPARC_SIZE32))
+  if (__builtin_expect (r_type == R_SPARC_SIZE32, 0))
     {
       *reloc_addr = sym->st_size + reloc->r_addend;
       return;
     }
 
 #if !defined RTLD_BOOTSTRAP || !defined HAVE_Z_COMBRELOC
-  if (__glibc_unlikely (r_type == R_SPARC_RELATIVE))
+  if (__builtin_expect (r_type == R_SPARC_RELATIVE, 0))
     {
 # if !defined RTLD_BOOTSTRAP && !defined HAVE_Z_COMBRELOC
       if (map != &_dl_rtld_map) /* Already done in rtld itself. */
@@ -550,12 +549,12 @@ elf_machine_lazy_rel (struct link_map *map,
   Elf32_Addr *const reloc_addr = (void *) (l_addr + reloc->r_offset);
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
 
-  if (__glibc_likely (r_type == R_SPARC_JMP_SLOT))
+  if (__builtin_expect (r_type == R_SPARC_JMP_SLOT, 1))
     ;
   else if (r_type == R_SPARC_JMP_IREL)
     {
       Elf32_Addr value = map->l_addr + reloc->r_addend;
-      if (__glibc_likely (!skip_ifunc))
+      if (__builtin_expect (!skip_ifunc, 1))
 	value = ((Elf32_Addr (*) (int)) value) (GLRO(dl_hwcap));
       sparc_fixup_plt (reloc, reloc_addr, value, 1, 1);
     }

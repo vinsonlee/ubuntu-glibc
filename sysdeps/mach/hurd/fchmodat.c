@@ -1,5 +1,5 @@
 /* Change the protections of file relative to open directory.  Hurd version.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,11 @@
 #include <hurd/fd.h>
 
 int
-fchmodat (int fd, const char *file, mode_t mode, int flag)
+fchmodat (fd, file, mode, flag)
+     int fd;
+     const char *file;
+     mode_t mode;
+     int flag;
 {
   error_t err;
   file_t port = __file_name_lookup_at (fd, flag, file, 0, 0);

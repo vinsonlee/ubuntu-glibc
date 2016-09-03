@@ -17,8 +17,7 @@ void get8 (char *cp);
 void put8 (char *cp);
 void good_bye (void) __attribute__ ((noreturn));
 
-void
-good_bye (void)
+void good_bye ()
 {
   if(totfails == 0) {
     printf("Passed DES validation suite\n");
@@ -30,7 +29,9 @@ good_bye (void)
 }
 
 int
-main (int argc, char *argv[])
+main(argc, argv)
+     int argc;
+     char *argv[];
 {
 	char key[64],plain[64],cipher[64],answer[64];
 	int i;
@@ -79,7 +80,8 @@ main (int argc, char *argv[])
 	good_bye();
 }
 void
-get8 (char *cp)
+get8(cp)
+char *cp;
 {
 	int i,j,t;
 
@@ -93,7 +95,8 @@ get8 (char *cp)
 	}
 }
 void
-put8 (char *cp)
+put8(cp)
+char *cp;
 {
 	int i,j,t;
 

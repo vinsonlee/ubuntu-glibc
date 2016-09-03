@@ -1,6 +1,6 @@
 /* Multiple versions of mempcpy
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -24,48 +24,54 @@
 /* Define multiple versions only for the definition in lib and for
    DSO.  In static binaries we need mempcpy before the initialization
    happened.  */
-#if defined SHARED && IS_IN (libc)
-	.text
+#if defined SHARED && !defined NOT_IN_libc
 ENTRY(__mempcpy)
 	.type	__mempcpy, @gnu_indirect_function
-	LOAD_RTLD_GLOBAL_RO_RDX
-	lea	__mempcpy_erms(%rip), %RAX_LP
-	HAS_ARCH_FEATURE (Prefer_ERMS)
-	jnz	2f
-	HAS_ARCH_FEATURE (AVX512F_Usable)
-	jz	1f
-	lea	__mempcpy_avx512_no_vzeroupper(%rip), %RAX_LP
-	HAS_ARCH_FEATURE (Prefer_No_VZEROUPPER)
-	jnz	2f
-	lea	__mempcpy_avx512_unaligned_erms(%rip), %RAX_LP
-	HAS_CPU_FEATURE (ERMS)
-	jnz	2f
-	lea	__mempcpy_avx512_unaligned(%rip), %RAX_LP
-	ret
-1:	lea	__mempcpy_avx_unaligned(%rip), %RAX_LP
-	HAS_ARCH_FEATURE (AVX_Fast_Unaligned_Load)
-	jz	L(Fast_Unaligned_Load)
-	HAS_CPU_FEATURE (ERMS)
+	cmpl	$0, KIND_OFFSET+__cpu_features(%rip)
+	jne	1f
+	call	__init_cpu_features
+1:	leaq	__mempcpy_sse2(%rip), %rax
+	testl	$bit_SSSE3, __cpu_features+CPUID_OFFSET+index_SSSE3(%rip)
 	jz	2f
-	lea	__mempcpy_avx_unaligned_erms(%rip), %RAX_LP
-	ret
-L(Fast_Unaligned_Load):
-	lea	__mempcpy_sse2_unaligned(%rip), %RAX_LP
-	HAS_ARCH_FEATURE (Fast_Unaligned_Copy)
-	jz	L(SSSE3)
-	HAS_CPU_FEATURE (ERMS)
+	leaq	__mempcpy_ssse3(%rip), %rax
+	testl	$bit_Fast_Copy_Backward, __cpu_features+FEATURE_OFFSET+index_Fast_Copy_Backward(%rip)
 	jz	2f
-	lea	__mempcpy_sse2_unaligned_erms(%rip), %RAX_LP
-	ret
-L(SSSE3):
-	HAS_CPU_FEATURE (SSSE3)
-	jz	2f
-	lea    __mempcpy_ssse3_back(%rip), %RAX_LP
-	HAS_ARCH_FEATURE (Fast_Copy_Backward)
-	jnz	2f
-	lea	__mempcpy_ssse3(%rip), %RAX_LP
+	leaq	__mempcpy_ssse3_back(%rip), %rax
 2:	ret
 END(__mempcpy)
 
-weak_alias (__mempcpy, mempcpy)
+# undef ENTRY
+# define ENTRY(name) \
+	.type __mempcpy_sse2, @function; \
+	.p2align 4; \
+	.globl __mempcpy_sse2; \
+	.hidden __mempcpy_sse2; \
+	__mempcpy_sse2: cfi_startproc; \
+	CALL_MCOUNT
+# undef END
+# define END(name) \
+	cfi_endproc; .size __mempcpy_sse2, .-__mempcpy_sse2
+
+# undef ENTRY_CHK
+# define ENTRY_CHK(name) \
+	.type __mempcpy_chk_sse2, @function; \
+	.globl __mempcpy_chk_sse2; \
+	.p2align 4; \
+	__mempcpy_chk_sse2: cfi_startproc; \
+	CALL_MCOUNT
+# undef END_CHK
+# define END_CHK(name) \
+	cfi_endproc; .size __mempcpy_chk_sse2, .-__mempcpy_chk_sse2
+
+# undef libc_hidden_def
+# undef libc_hidden_builtin_def
+/* It doesn't make sense to send libc-internal mempcpy calls through a PLT.
+   The speedup we get from using SSSE3 instruction is likely eaten away
+   by the indirect call in the PLT.  */
+# define libc_hidden_def(name) \
+	.globl __GI_mempcpy; __GI_mempcpy = __mempcpy_sse2
+# define libc_hidden_builtin_def(name) \
+	.globl __GI___mempcpy; __GI___mempcpy = __mempcpy_sse2
 #endif
+
+#include "../mempcpy.S"

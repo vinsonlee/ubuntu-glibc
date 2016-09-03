@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -21,7 +21,6 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 
 
 int
@@ -29,7 +28,7 @@ do_test (void)
 {
   /* XXX This test might require architecture and system specific changes.
      There is no guarantee that this signal number is invalid.  */
-  int e = pthread_kill (pthread_self (), INT_MAX);
+  int e = pthread_kill (pthread_self (), SIGRTMAX + 10);
   if (e == 0)
     {
       puts ("kill didn't failed");

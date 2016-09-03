@@ -1,6 +1,6 @@
 /* Software floating-point emulation.
    Return 1 if a <= b
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson (rth@cygnus.com) and
 		  Jakub Jelinek (jj@ultra.linux.cz).
@@ -30,7 +30,9 @@ int _Q_fle(const long double a, const long double b)
 
   FP_UNPACK_RAW_Q(A, a);
   FP_UNPACK_RAW_Q(B, b);
-  FP_CMP_Q(r, B, A, -2, 2);
+  FP_CMP_Q(r, B, A, -2);
+  if (r == -2)
+    FP_SET_EXCEPTION(FP_EX_INVALID);
   FP_HANDLE_EXCEPTIONS;
 
   return (r >= 0);

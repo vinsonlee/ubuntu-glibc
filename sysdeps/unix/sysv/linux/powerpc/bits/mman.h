@@ -1,5 +1,5 @@
 /* Definitions for POSIX memory map interface.  Linux/PowerPC version.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -42,8 +42,6 @@
 #define MCL_CURRENT	0x2000		/* Lock all currently mapped pages.  */
 #define MCL_FUTURE	0x4000		/* Lock all additions to address
 					   space.  */
-#define MCL_ONFAULT	0x8000		/* Lock all pages that are
-					   faulted in.  */
 
 /* Include generic Linux declarations.  */
 #include <bits/mman-linux.h>

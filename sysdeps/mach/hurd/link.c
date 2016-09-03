@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,9 @@
 
 /* Make a link to FROM called TO.  */
 int
-__link (const char *from, const char *to)
+__link (from, to)
+     const char *from;
+     const char *to;
 {
   error_t err;
   file_t oldfile, linknode, todir;

@@ -1,5 +1,5 @@
-/* Test strncat functions.
-   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Test and measure strncat functions.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,64 +17,33 @@
    <http://www.gnu.org/licenses/>.  */
 
 #define TEST_MAIN
-#ifndef WIDE
-# define TEST_NAME "strncat"
-#else
-# define TEST_NAME "wcsncat"
-#endif /* WIDE */
+#define TEST_NAME "strncat"
 #include "test-string.h"
 
-#ifndef WIDE
-# define STRNCAT strncat
-# define CHAR char
-# define UCHAR unsigned char
-# define SIMPLE_STRNCAT simple_strncat
-# define STUPID_STRNCAT stupid_strncat
-# define STRLEN strlen
-# define MEMSET memset
-# define MEMCPY memcpy
-# define MEMCMP memcmp
-# define BIG_CHAR CHAR_MAX
-# define SMALL_CHAR 127
-#else
-# include <wchar.h>
-# define STRNCAT wcsncat
-# define CHAR wchar_t
-# define UCHAR wchar_t
-# define SIMPLE_STRNCAT simple_wcsncat
-# define STUPID_STRNCAT stupid_wcsncat
-# define STRLEN wcslen
-# define MEMSET wmemset
-# define MEMCPY wmemcpy
-# define MEMCMP wmemcmp
-# define BIG_CHAR WCHAR_MAX
-# define SMALL_CHAR 1273
-#endif /* WIDE */
+typedef char *(*proto_t) (char *, const char *, size_t);
+char *stupid_strncat (char *, const char *, size_t);
+char *simple_strncat (char *, const char *, size_t);
 
-typedef CHAR *(*proto_t) (CHAR *, const CHAR *, size_t);
-CHAR *STUPID_STRNCAT (CHAR *, const CHAR *, size_t);
-CHAR *SIMPLE_STRNCAT (CHAR *, const CHAR *, size_t);
+IMPL (stupid_strncat, 0)
+IMPL (strncat, 2)
 
-IMPL (STUPID_STRNCAT, 0)
-IMPL (STRNCAT, 2)
-
-CHAR *
-STUPID_STRNCAT (CHAR *dst, const CHAR *src, size_t n)
+char *
+stupid_strncat (char *dst, const char *src, size_t n)
 {
-  CHAR *ret = dst;
+  char *ret = dst;
   while (*dst++ != '\0');
   --dst;
   while (n--)
-    if ((*dst++ = *src++) == '\0')
+    if ( (*dst++ = *src++) == '\0')
       return ret;
   *dst = '\0';
   return ret;
 }
 
 static void
-do_one_test (impl_t *impl, CHAR *dst, const CHAR *src, size_t n)
+do_one_test (impl_t *impl, char *dst, const char *src, size_t n)
 {
-  size_t k = STRLEN (dst);
+  size_t k = strlen (dst);
   if (CALL (impl, dst, src, n) != dst)
     {
       error (0, 0, "Wrong result in function %s %p != %p", impl->name,
@@ -83,10 +52,10 @@ do_one_test (impl_t *impl, CHAR *dst, const CHAR *src, size_t n)
       return;
     }
 
-  size_t len = STRLEN (src);
-  if (MEMCMP (dst + k, src, len + 1 > n ? n : len + 1) != 0)
+  size_t len = strlen (src);
+  if (memcmp (dst + k, src, len + 1 > n ? n : len + 1) != 0)
     {
-      error (0, 0, "Incorrect concatenation in function %s",
+      error (0, 0, "Incorrect cancatination in function %s",
 	     impl->name);
       ret = 1;
       return;
@@ -105,20 +74,20 @@ do_test (size_t align1, size_t align2, size_t len1, size_t len2,
 	 size_t n, int max_char)
 {
   size_t i;
-  CHAR *s1, *s2;
+  char *s1, *s2;
 
   align1 &= 7;
-  if ((align1 + len1) * sizeof (CHAR) >= page_size)
+  if (align1 + len1 >= page_size)
     return;
-  if ((align1 + n) * sizeof (CHAR) > page_size)
+  if (align1 + n > page_size)
     return;
   align2 &= 7;
-  if ((align2 + len1 + len2) * sizeof (CHAR) >= page_size)
+  if (align2 + len1 + len2 >= page_size)
     return;
-  if ((align2 + len1 + n) * sizeof (CHAR) > page_size)
+  if (align2 + len1 + n > page_size)
     return;
-  s1 = (CHAR *) (buf1) + align1;
-  s2 = (CHAR *) (buf2) + align2;
+  s1 = (char *) (buf1 + align1);
+  s2 = (char *) (buf2 + align2);
 
   for (i = 0; i < len1; ++i)
     s1[i] = 32 + 23 * i % (max_char - 32);
@@ -138,10 +107,9 @@ static void
 do_random_tests (void)
 {
   size_t i, j, n, align1, align2, len1, len2, N;
-  UCHAR *p1 = (UCHAR *) (buf1 + page_size) - 512;
-  UCHAR *p2 = (UCHAR *) (buf2 + page_size) - 512;
-  UCHAR *p3 = (UCHAR *) buf1;
-  UCHAR *res;
+  unsigned char *p1 = buf1 + page_size - 512;
+  unsigned char *p2 = buf2 + page_size - 512;
+  unsigned char *res;
   fprintf (stdout, "Number of iterations in random test = %zd\n",
 	   ITERATIONS);
   for (n = 0; n < ITERATIONS; n++)
@@ -180,26 +148,26 @@ do_random_tests (void)
 	    p1[i] = 0;
 	  else
 	    {
-	      p1[i] = random () & BIG_CHAR;
+	      p1[i] = random () & 255;
 	      if (i >= align1 && i < len1 + align1 && !p1[i])
-		p1[i] = (random () & SMALL_CHAR) + 3;
+		p1[i] = (random () & 127) + 3;
 	    }
 	}
       for (i = 0; i < len2; i++)
 	{
-	  p3[i] = random () & BIG_CHAR;
-	  if (!p3[i])
-	    p3[i] = (random () & SMALL_CHAR) + 3;
+	  buf1[i] = random () & 255;
+	  if (!buf1[i])
+	    buf1[i] = (random () & 127) + 3;
 	}
-      p3[len2] = 0;
+      buf1[len2] = 0;
 
       FOR_EACH_IMPL (impl, 1)
 	{
-	  MEMSET (p2 - 64, '\1', align2 + 64);
-	  MEMSET (p2 + align2 + len2 + 1, '\1', 512 - align2 - len2 - 1);
-	  MEMCPY (p2 + align2, p3, len2 + 1);
-	  res = (UCHAR *) CALL (impl, (CHAR *) (p2 + align2),
-				(CHAR *) (p1 + align1), N);
+	  memset (p2 - 64, '\1', align2 + 64);
+	  memset (p2 + align2 + len2 + 1, '\1', 512 - align2 - len2 - 1);
+	  memcpy (p2 + align2, buf1, len2 + 1);
+	  res = (unsigned char *) CALL (impl, (char *) (p2 + align2),
+					(char *) (p1 + align1), N);
 	  if (res != p2 + align2)
 	    {
 	      error (0, 0, "Iteration %zd - wrong result in function %s "
@@ -219,7 +187,7 @@ do_random_tests (void)
 		  break;
 		}
 	    }
-	  if (MEMCMP (p2 + align2, p3, len2))
+	  if (memcmp (p2 + align2, buf1, len2))
 	    {
 	      error (0, 0, "Iteration %zd - garbage in string before, %s "
 		     "(%zd, %zd, %zd, %zd, %zd)",
@@ -252,7 +220,7 @@ do_random_tests (void)
 		  ret = 1;
 		}
 	    }
-	  if (MEMCMP (p1 + align1, p2 + align2 + len2,
+	  if (memcmp (p1 + align1, p2 + align2 + len2,
 		      (len1 + 1) > N ? N : len1 + 1))
 	    {
 	      error (0, 0, "Iteration %zd - different strings, %s "
@@ -265,7 +233,7 @@ do_random_tests (void)
 }
 
 int
-test_main (void)
+main (void)
 {
   size_t i, n;
 
@@ -278,30 +246,28 @@ test_main (void)
 
   for (n = 2; n <= 2048; n*=4)
     {
-      do_test (0, 2, 2, 2, n, SMALL_CHAR);
-      do_test (0, 0, 4, 4, n, SMALL_CHAR);
-      do_test (4, 0, 4, 4, n, BIG_CHAR);
-      do_test (0, 0, 8, 8, n, SMALL_CHAR);
-      do_test (0, 8, 8, 8, n, SMALL_CHAR);
+      do_test (0, 2, 2, 2, n, 127);
+      do_test (0, 0, 4, 4, n, 127);
+      do_test (4, 0, 4, 4, n, 255);
+      do_test (0, 0, 8, 8, n, 127);
+      do_test (0, 8, 8, 8, n, 127);
 
       for (i = 1; i < 8; ++i)
 	{
-	  do_test (0, 0, 8 << i, 8 << i, n, SMALL_CHAR);
-	  do_test (8 - i, 2 * i, 8 << i, 8 << i, n, SMALL_CHAR);
-	  do_test (0, 0, 8 << i, 2 << i, n, SMALL_CHAR);
-	  do_test (8 - i, 2 * i, 8 << i, 2 << i, n, SMALL_CHAR);
+	  do_test (0, 0, 8 << i, 8 << i, n, 127);
+	  do_test (8 - i, 2 * i, 8 << i, 8 << i, n, 127);
+	  do_test (0, 0, 8 << i, 2 << i, n, 127);
+	  do_test (8 - i, 2 * i, 8 << i, 2 << i, n, 127);
 	}
 
       for (i = 1; i < 8; ++i)
 	{
-	  do_test (i, 2 * i, 8 << i, 1, n, SMALL_CHAR);
-	  do_test (2 * i, i, 8 << i, 1, n, BIG_CHAR);
-	  do_test (i, i, 8 << i, 10, n, SMALL_CHAR);
+	  do_test (i, 2 * i, 8 << i, 1, n, 127);
+	  do_test (2 * i, i, 8 << i, 1, n, 255);
+	  do_test (i, i, 8 << i, 10, n, 127);
 	}
     }
 
   do_random_tests ();
   return ret;
 }
-
-#include "../test-skeleton.c"

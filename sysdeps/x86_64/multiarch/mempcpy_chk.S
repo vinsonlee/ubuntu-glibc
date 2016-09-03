@@ -1,6 +1,6 @@
 /* Multiple versions of __mempcpy_chk
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -24,44 +24,21 @@
 /* Define multiple versions only for the definition in lib and for
    DSO.  There are no multiarch mempcpy functions for static binaries.
  */
-#if IS_IN (libc)
+#ifndef NOT_IN_libc
 # ifdef SHARED
 	.text
 ENTRY(__mempcpy_chk)
 	.type	__mempcpy_chk, @gnu_indirect_function
-	LOAD_RTLD_GLOBAL_RO_RDX
-	HAS_ARCH_FEATURE (AVX512F_Usable)
-	jz	1f
-	lea	__mempcpy_chk_avx512_no_vzeroupper(%rip), %RAX_LP
-	HAS_ARCH_FEATURE (Prefer_No_VZEROUPPER)
-	jnz	2f
-	lea	__mempcpy_chk_avx512_unaligned_erms(%rip), %RAX_LP
-	HAS_CPU_FEATURE (ERMS)
-	jnz	2f
-	lea	__mempcpy_chk_avx512_unaligned(%rip), %RAX_LP
-	ret
-1:	lea	__mempcpy_chk_avx_unaligned(%rip), %RAX_LP
-	HAS_ARCH_FEATURE (AVX_Fast_Unaligned_Load)
-	jz	L(Fast_Unaligned_Load)
-	HAS_CPU_FEATURE (ERMS)
+	cmpl	$0, KIND_OFFSET+__cpu_features(%rip)
+	jne	1f
+	call	__init_cpu_features
+1:	leaq	__mempcpy_chk_sse2(%rip), %rax
+	testl	$bit_SSSE3, __cpu_features+CPUID_OFFSET+index_SSSE3(%rip)
 	jz	2f
-	lea	__mempcpy_chk_avx_unaligned_erms(%rip), %RAX_LP
-	ret
-L(Fast_Unaligned_Load):
-	lea	__mempcpy_chk_sse2_unaligned(%rip), %RAX_LP
-	HAS_ARCH_FEATURE (Fast_Unaligned_Copy)
-	jz	L(SSSE3)
-	HAS_CPU_FEATURE (ERMS)
+	leaq	__mempcpy_chk_ssse3(%rip), %rax
+	testl	$bit_Fast_Copy_Backward, __cpu_features+FEATURE_OFFSET+index_Fast_Copy_Backward(%rip)
 	jz	2f
-	lea	__mempcpy_chk_sse2_unaligned_erms(%rip), %RAX_LP
-	ret
-L(SSSE3):
-	HAS_CPU_FEATURE (SSSE3)
-	jz	2f
-	lea    __mempcpy_chk_ssse3_back(%rip), %RAX_LP
-	HAS_ARCH_FEATURE (Fast_Copy_Backward)
-	jnz	2f
-	lea	__mempcpy_chk_ssse3(%rip), %RAX_LP
+	leaq	__mempcpy_chk_ssse3_back(%rip), %rax
 2:	ret
 END(__mempcpy_chk)
 # else

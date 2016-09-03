@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -105,7 +105,7 @@ No definition for %s category found"), "LC_TELEPHONE"));
 	WITH_CUR_LOCALE (error (0, 0, _("%s: field `%s' not defined"),
 				"LC_TELEPHONE", "tel_int_fmt"));
       /* Use as the default value the value of the i18n locale.  */
-      telephone->tel_int_fmt = "+%c %a%t%l";
+      telephone->tel_int_fmt = "+%c %a %l";
     }
   else
     {
@@ -121,7 +121,7 @@ No definition for %s category found"), "LC_TELEPHONE"));
 	  {
 	    if (*cp == '%')
 	      {
-		if (strchr ("aAcCelt", *++cp) == NULL)
+		if (strchr ("aAlc", *++cp) == NULL)
 		  {
 		    WITH_CUR_LOCALE (error (0, 0, _("\
 %s: invalid escape sequence in field `%s'"), "LC_TELEPHONE", "tel_int_fmt"));
@@ -144,7 +144,7 @@ No definition for %s category found"), "LC_TELEPHONE"));
 	{
 	  if (*cp == '%')
 	    {
-	      if (strchr ("aAcCelt", *++cp) == NULL)
+	      if (strchr ("aAlc", *++cp) == NULL)
 		{
 		  WITH_CUR_LOCALE (error (0, 0, _("\
 %s: invalid escape sequence in field `%s'"), "LC_TELEPHONE", "tel_dom_fmt"));

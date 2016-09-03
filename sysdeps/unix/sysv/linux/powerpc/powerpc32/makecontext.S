@@ -1,5 +1,5 @@
 /* Set up a context to call a function.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -94,8 +94,6 @@ ENTRY(__makecontext)
 
 	blr
 
-	cfi_endproc
-	nop
 /*
  * If the function returns, it comes here.  We put ucp->uc_link in
  * r31, which is a callee-saved register.  We have to continue with
@@ -108,7 +106,6 @@ L(exitcode):
 4:	bl	HIDDEN_JUMPTARGET(exit)
 	b	4b
 
-	cfi_startproc
 END(__makecontext)
 
 versioned_symbol (libc, __makecontext, makecontext, GLIBC_2_3_4)
@@ -188,8 +185,6 @@ ENTRY(__novec_makecontext)
 
 	blr
 
-	cfi_endproc
-	nop
 /*
  * If the function returns, it comes here.  We put ucp->uc_link in
  * r31, which is a callee-saved register.  We have to continue with
@@ -202,7 +197,6 @@ L(novec_exitcode):
 4:	bl	HIDDEN_JUMPTARGET(exit)
 	b	4b
 
-	cfi_startproc
 END(__novec_makecontext)
 	.previous
 

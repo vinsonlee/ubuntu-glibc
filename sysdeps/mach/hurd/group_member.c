@@ -1,5 +1,5 @@
 /* `group_member' -- test if process is in a given group.  Hurd version.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,8 @@
 #include <hurd/id.h>
 
 int
-__group_member (gid_t gid)
+__group_member (gid)
+     gid_t gid;
 {
   int member = 0;
   error_t err;

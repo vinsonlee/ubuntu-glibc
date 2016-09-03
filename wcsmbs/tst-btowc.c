@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2000.
 
@@ -74,8 +74,8 @@ eof_test (void)
 
 
 /* Test the btowc() function for a few locales with known character sets.  */
-static int
-do_test (void)
+int
+main (void)
 {
   int result = 0;
 
@@ -172,6 +172,3 @@ do_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

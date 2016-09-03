@@ -8,9 +8,3 @@ libc {
     __vdso_clock_getres;
   }
 }
-
-libpthread {
-  GLIBC_2.19 {
-    longjmp; siglongjmp;
-  }
-}
