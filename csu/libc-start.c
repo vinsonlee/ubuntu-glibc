@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <ldsodefs.h>
-#include <exit-thread.h>
 
 extern void __libc_init_first (int argc, char **argv, char **envp);
 #ifndef SHARED
@@ -215,7 +214,7 @@ LIBC_START_MAIN (int (*main) (int, char **, char ** MAIN_AUXVEC_DECL),
 #endif
 
   /* Register the destructor of the dynamic linker if there is any.  */
-  if (__glibc_likely (rtld_fini != NULL))
+  if (__builtin_expect (rtld_fini != NULL, 1))
     __cxa_atexit ((void (*) (void *)) rtld_fini, NULL, NULL);
 
 #ifndef SHARED
@@ -246,7 +245,7 @@ LIBC_START_MAIN (int (*main) (int, char **, char ** MAIN_AUXVEC_DECL),
 
 #ifdef SHARED
   /* Auditing checkpoint: we have a new object.  */
-  if (__glibc_unlikely (GLRO(dl_naudit) > 0))
+  if (__builtin_expect (GLRO(dl_naudit) > 0, 0))
     {
       struct audit_ifaces *afct = GLRO(dl_audit);
       struct link_map *head = GL(dl_ns)[LM_ID_BASE]._ns_loaded;
@@ -261,20 +260,17 @@ LIBC_START_MAIN (int (*main) (int, char **, char ** MAIN_AUXVEC_DECL),
 #endif
 
 #ifdef SHARED
-  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_IMPCALLS))
+  if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_IMPCALLS, 0))
     GLRO(dl_debug_printf) ("\ntransferring control: %s\n\n", argv[0]);
 #endif
 
-#ifndef SHARED
-  _dl_debug_initialize (0, LM_ID_BASE);
-#endif
 #ifdef HAVE_CLEANUP_JMP_BUF
   /* Memory for the cancellation buffer.  */
   struct pthread_unwind_buf unwind_buf;
 
   int not_first_call;
   not_first_call = setjmp ((struct __jmp_buf_tag *) unwind_buf.cancel_jmp_buf);
-  if (__glibc_likely (! not_first_call))
+  if (__builtin_expect (! not_first_call, 1))
     {
       struct pthread *self = THREAD_SELF;
 
@@ -313,7 +309,7 @@ LIBC_START_MAIN (int (*main) (int, char **, char ** MAIN_AUXVEC_DECL),
 
       if (! atomic_decrement_and_test (ptr))
 	/* Not much left to do but to exit the thread, not the process.  */
-	__exit_thread ();
+	__exit_thread (0);
     }
 #else
   /* Nothing fancy, just call the function.  */

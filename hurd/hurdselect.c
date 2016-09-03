@@ -1,5 +1,5 @@
 /* Guts of both `select' and `poll' for Hurd.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ _hurd_select (int nfds,
   assert (sizeof (union typeword) == sizeof (mach_msg_type_t));
   assert (sizeof (uint32_t) == sizeof (mach_msg_type_t));
 
-  if (nfds < 0 || (pollfds == NULL && nfds > FD_SETSIZE))
+  if (nfds < 0 || nfds > FD_SETSIZE)
     {
       errno = EINVAL;
       return -1;
@@ -335,7 +335,7 @@ _hurd_select (int nfds,
       mach_msg_option_t options = (timeout == NULL ? 0 : MACH_RCV_TIMEOUT);
       error_t msgerr;
       while ((msgerr = __mach_msg (&msg.head,
-				   MACH_RCV_MSG | MACH_RCV_INTERRUPT | options,
+				   MACH_RCV_MSG | options,
 				   0, sizeof msg, portset, to,
 				   MACH_PORT_NULL)) == MACH_MSG_SUCCESS)
 	{
@@ -407,9 +407,13 @@ _hurd_select (int nfds,
 	    }
 	}
 
-      if (msgerr == MACH_RCV_INTERRUPTED)
-	/* Interruption on our side (e.g. signal reception).  */
-	err = EINTR;
+      if (err == MACH_RCV_TIMED_OUT)
+	/* This is the normal value for ERR.  We might have timed out and
+	   read no messages.  Otherwise, after receiving the first message,
+	   we poll for more messages.  We receive with a timeout of 0 to
+	   effect a poll, so ERR is MACH_RCV_TIMED_OUT when the poll finds no
+	   message waiting.  */
+	err = 0;
 
       if (got)
 	/* At least one descriptor is known to be ready now, so we will

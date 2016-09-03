@@ -1,5 +1,5 @@
 /* Linux implementation of waitid.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,14 +19,15 @@
 #include <stddef.h>
 #include <errno.h>
 #include <sys/wait.h>
-#include <sysdep-cancel.h>
+#include <sysdep.h>
 
-int
-__waitid (idtype_t idtype, id_t id, siginfo_t *infop, int options)
+static inline int
+do_waitid (idtype_t idtype, id_t id, siginfo_t *infop, int options)
 {
   /* The unused fifth argument is a `struct rusage *' that we could
      pass if we were using waitid to simulate wait3/wait4.  */
-  return SYSCALL_CANCEL (waitid, idtype, id, infop, options, NULL);
+  return INLINE_SYSCALL (waitid, 5, idtype, id, infop, options, NULL);
 }
-weak_alias (__waitid, waitid)
-strong_alias (__waitid, __libc_waitid)
+#define NO_DO_WAITID
+
+#include "sysdeps/posix/waitid.c"

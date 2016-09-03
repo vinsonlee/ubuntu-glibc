@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, August 1995.
 
@@ -19,7 +19,9 @@
 #include <stdlib.h>
 
 int
-lrand48_r (struct drand48_data *buffer, long int *result)
+lrand48_r (buffer, result)
+     struct drand48_data *buffer;
+     long int *result;
 {
   /* Be generous for the arguments, detect some errors.  */
   if (buffer == NULL)

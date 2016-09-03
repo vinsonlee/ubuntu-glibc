@@ -1,5 +1,5 @@
 /* Install given floating-point environment and raise exceptions.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -23,10 +23,6 @@
 int
 __feupdateenv (const fenv_t *envp)
 {
-#if defined FE_NOMASK_ENV && FE_ALL_EXCEPT != 0
-  if (envp == FE_NOMASK_ENV)
-    return 1;
-#endif
   /* Nothing to do.  */
   return 0;
 }
@@ -34,7 +30,6 @@ __feupdateenv (const fenv_t *envp)
 strong_alias (__feupdateenv, __old_feupdateenv)
 compat_symbol (libm, __old_feupdateenv, feupdateenv, GLIBC_2_1);
 #endif
-libm_hidden_def (__feupdateenv)
 libm_hidden_ver (__feupdateenv, feupdateenv)
 versioned_symbol (libm, __feupdateenv, feupdateenv, GLIBC_2_2);
 

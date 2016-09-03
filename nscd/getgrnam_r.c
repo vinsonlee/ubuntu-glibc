@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -17,16 +17,12 @@
 
 #include <grp.h>
 
-#include <grp-merge.h>
 
 #define LOOKUP_TYPE	struct group
 #define FUNCTION_NAME	getgrnam
 #define DATABASE_NAME	group
 #define ADD_PARAMS	const char *name
 #define ADD_VARIABLES	name
-
-#define DEEPCOPY_FN	__copy_grp
-#define MERGE_FN	__merge_grp
 
 /* We are nscd, so we don't want to be talking to ourselves.  */
 #undef	USE_NSCD

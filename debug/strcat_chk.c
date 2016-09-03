@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,10 @@
 
 /* Append SRC on the end of DEST.  */
 char *
-__strcat_chk (char *dest, const char *src, size_t destlen)
+__strcat_chk (dest, src, destlen)
+     char *dest;
+     const char *src;
+     size_t destlen;
 {
   char *s1 = dest;
   const char *s2 = src;
@@ -30,7 +33,7 @@ __strcat_chk (char *dest, const char *src, size_t destlen)
   /* Find the end of the string.  */
   do
     {
-      if (__glibc_unlikely (destlen-- == 0))
+      if (__builtin_expect (destlen-- == 0, 0))
 	__chk_fail ();
       c = *s1++;
     }
@@ -43,7 +46,7 @@ __strcat_chk (char *dest, const char *src, size_t destlen)
 
   do
     {
-      if (__glibc_unlikely (destlen-- == 0))
+      if (__builtin_expect (destlen-- == 0, 0))
 	__chk_fail ();
       c = *s2++;
       *++s1 = c;

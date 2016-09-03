@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,9 @@
 
 /* Truncate the file referenced by FD to LENGTH bytes.  */
 int
-truncate64 (const char *path, off64_t length)
+truncate64 (path, length)
+     const char *path;
+     off64_t length;
 {
   /* On PPC32 64bit values are aligned in odd/even register pairs.  */
   int result = INLINE_SYSCALL (truncate64, 4, path, 0,

@@ -20,8 +20,8 @@ static struct
 #define ntests (sizeof (tests) / sizeof (tests[0]))
 
 
-static int
-do_test (void)
+int
+main (void)
 {
   size_t cnt;
   int result = 0;
@@ -73,6 +73,3 @@ do_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

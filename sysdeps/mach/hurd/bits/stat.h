@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ struct stat
     __off64_t st_size;		/* Size in bytes.  */
 #endif
 
-#ifdef __USE_XOPEN2K8
+#if defined __USE_MISC || defined __USE_XOPEN2K8
     /* Nanosecond resolution timestamps are stored in a format
        equivalent to 'struct timespec'.  This is the type used
        whenever possible but the Unix namespace rules do not allow the
@@ -121,7 +121,7 @@ struct stat64
 
     __off64_t st_size;		/* Size in bytes.  */
 
-#ifdef __USE_XOPEN2K8
+#if defined __USE_MISC || defined __USE_XOPEN2K8
     /* Nanosecond resolution timestamps are stored in a format
        equivalent to 'struct timespec'.  This is the type used
        whenever possible but the Unix namespace rules do not allow the
@@ -222,37 +222,9 @@ struct stat64
 			   S_IUSEUNK|S_IUNKNOWN|07777))
 #endif
 
-#ifdef	__USE_MISC
 /* Default file creation mask (umask).  */
+#ifdef	__USE_BSD
 # define CMASK		0022
-
-/* Definitions of flags stored in file flags word.  */
-
-/* Super-user and owner changeable flags.  */
-# define UF_SETTABLE	0x0000ffff	/* mask of owner changeable flags */
-# define UF_NODUMP	0x00000001	/* do not dump file */
-# define UF_IMMUTABLE	0x00000002	/* file may not be changed */
-# define UF_APPEND	0x00000004	/* writes to file may only append */
-# define UF_OPAQUE	0x00000008	/* directory is opaque wrt. union */
-# define UF_NOUNLINK	0x00000010	/* file may not be removed or renamed */
-
-/* Super-user changeable flags.  */
-# define SF_SETTABLE	0xffff0000	/* mask of superuser changeable flags */
-# define SF_ARCHIVED	0x00010000	/* file is archived */
-# define SF_IMMUTABLE	0x00020000	/* file may not be changed */
-# define SF_APPEND	0x00040000	/* writes to file may only append */
-# define SF_NOUNLINK	0x00100000	/* file may not be removed or renamed */
-# define SF_SNAPSHOT	0x00200000	/* snapshot inode */
-
-__BEGIN_DECLS
-
-/* Set file flags for FILE to FLAGS.  */
-extern int chflags (__const char *__file, unsigned long int __flags) __THROW;
-
-/* Set file flags of the file referred to by FD to FLAGS.  */
-extern int fchflags (int __fd, unsigned long int __flags) __THROW;
-
-__END_DECLS
 #endif
 
 #endif	/* bits/stat.h */

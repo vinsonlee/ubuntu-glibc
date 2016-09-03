@@ -78,7 +78,6 @@
  *	 See HP-15C Advanced Functions Handbook, p.193.
  */
 
-#include <float.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -108,21 +107,18 @@ __log1p (double x)
   k = 1;
   if (hx < 0x3FDA827A)                          /* x < 0.41422  */
     {
-      if (__glibc_unlikely (ax >= 0x3ff00000))           /* x <= -1.0 */
+      if (__builtin_expect (ax >= 0x3ff00000, 0))     /* x <= -1.0 */
 	{
 	  if (x == -1.0)
-	    return -two54 / zero;               /* log1p(-1)=-inf */
+	    return -two54 / (x - x);            /* log1p(-1)=+inf */
 	  else
 	    return (x - x) / (x - x);           /* log1p(x<-1)=NaN */
 	}
-      if (__glibc_unlikely (ax < 0x3e200000))           /* |x| < 2**-29 */
+      if (__builtin_expect (ax < 0x3e200000, 0))     /* |x| < 2**-29 */
 	{
 	  math_force_eval (two54 + x);          /* raise inexact */
 	  if (ax < 0x3c900000)                  /* |x| < 2**-54 */
-	    {
-	      math_check_force_underflow (x);
-	      return x;
-	    }
+	    return x;
 	  else
 	    return x - x * x * 0.5;
 	}
@@ -131,7 +127,7 @@ __log1p (double x)
 	  k = 0; f = x; hu = 1;
 	}                       /* -0.2929<x<0.41422 */
     }
-  else if (__glibc_unlikely (hx >= 0x7ff00000))
+  else if (__builtin_expect (hx >= 0x7ff00000, 0))
     return x + x;
   if (k != 0)
     {
@@ -193,3 +189,8 @@ __log1p (double x)
   else
     return k * ln2_hi - ((hfsq - (s * (hfsq + R) + (k * ln2_lo + c))) - f);
 }
+weak_alias (__log1p, log1p)
+#ifdef NO_LONG_DOUBLE
+strong_alias (__log1p, __log1pl)
+weak_alias (__log1p, log1pl)
+#endif

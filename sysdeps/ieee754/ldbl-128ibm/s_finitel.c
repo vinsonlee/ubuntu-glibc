@@ -34,13 +34,13 @@ ___finitel (long double x)
 
   xhi = ldbl_high (x);
   EXTRACT_WORDS64 (hx, xhi);
-  hx &= 0x7ff0000000000000LL;
+  hx &= 0x7fffffffffffffffLL;
   hx -= 0x7ff0000000000000LL;
   return hx >> 63;
 }
 hidden_ver (___finitel, __finitel)
 weak_alias (___finitel, ____finitel)
-#if IS_IN (libm)
+#ifdef IS_IN_libm
 long_double_symbol (libm, ____finitel, finitel);
 long_double_symbol (libm, ___finitel, __finitel);
 #else

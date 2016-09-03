@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@uni-paderborn.de>, 1998.
 
@@ -31,7 +31,6 @@
 #include <sys/un.h>
 #include <not-cancel.h>
 #include <_itoa.h>
-#include <scratch_buffer.h>
 
 #include "nscd-client.h"
 #include "nscd_proto.h"
@@ -90,8 +89,7 @@ nscd_getgr_r (const char *key, size_t keylen, request_type type,
   int gc_cycle;
   int nretries = 0;
   const uint32_t *len = NULL;
-  struct scratch_buffer lenbuf;
-  scratch_buffer_init (&lenbuf);
+  size_t lensize = 0;
 
   /* If the mapping is available, try to search there instead of
      communicating with the nscd.  */
@@ -145,7 +143,7 @@ nscd_getgr_r (const char *key, size_t keylen, request_type type,
   /* No value found so far.  */
   *result = NULL;
 
-  if (__glibc_unlikely (gr_resp.found == -1))
+  if (__builtin_expect (gr_resp.found == -1, 0))
     {
       /* The daemon does not cache this database.  */
       __nss_not_use_nscd_group = 1;
@@ -166,7 +164,7 @@ nscd_getgr_r (const char *key, size_t keylen, request_type type,
 	       & (__alignof__ (char *) - 1));
       total_len = (align + (1 + gr_resp.gr_mem_cnt) * sizeof (char *)
 		   + gr_resp.gr_name_len + gr_resp.gr_passwd_len);
-      if (__glibc_unlikely (buflen < total_len))
+      if (__builtin_expect (buflen < total_len, 0))
 	{
 	no_room:
 	  __set_errno (ERANGE);
@@ -192,7 +190,7 @@ nscd_getgr_r (const char *key, size_t keylen, request_type type,
       if (gr_name == NULL)
 	{
 	  /* Handle a simple, usual case: no group members.  */
-	  if (__glibc_likely (gr_resp.gr_mem_cnt == 0))
+	  if (__builtin_expect (gr_resp.gr_mem_cnt == 0, 1))
 	    {
 	      size_t n = gr_resp.gr_name_len + gr_resp.gr_passwd_len;
 	      if (__builtin_expect (__readall (sock, resultbuf->gr_name, n)
@@ -202,10 +200,14 @@ nscd_getgr_r (const char *key, size_t keylen, request_type type,
 	  else
 	    {
 	      /* Allocate array to store lengths.  */
-	      if (!scratch_buffer_set_array_size
-		  (&lenbuf, gr_resp.gr_mem_cnt, sizeof (uint32_t)))
-		goto out_close;
-	      len = lenbuf.data;
+	      if (lensize == 0)
+		{
+		  lensize = gr_resp.gr_mem_cnt * sizeof (uint32_t);
+		  len = (uint32_t *) alloca (lensize);
+		}
+	      else if (gr_resp.gr_mem_cnt * sizeof (uint32_t) > lensize)
+		len = extend_alloca (len, lensize,
+				     gr_resp.gr_mem_cnt * sizeof (uint32_t));
 
 	      vec[0].iov_base = (void *) len;
 	      vec[0].iov_len = gr_resp.gr_mem_cnt * sizeof (uint32_t);
@@ -215,7 +217,7 @@ nscd_getgr_r (const char *key, size_t keylen, request_type type,
 
 	      /* Get this data.  */
 	      size_t n = __readvall (sock, vec, 2);
-	      if (__glibc_unlikely (n != total_len))
+	      if (__builtin_expect (n != total_len, 0))
 		goto out_close;
 	    }
 	}
@@ -237,7 +239,7 @@ nscd_getgr_r (const char *key, size_t keylen, request_type type,
 	  p += len[cnt];
 	}
 
-      if (__glibc_unlikely (gr_name + gr_name_len + total_len > recend))
+      if (__builtin_expect (gr_name + gr_name_len + total_len > recend, 0))
 	{
 	  /* len array might contain garbage during nscd GC cycle,
 	     retry rather than fail in that case.  */
@@ -245,7 +247,7 @@ nscd_getgr_r (const char *key, size_t keylen, request_type type,
 	    retval = -2;
 	  goto out_close;
 	}
-      if (__glibc_unlikely (total_len > buflen))
+      if (__builtin_expect (total_len > buflen, 0))
 	{
 	  /* len array might contain garbage during nscd GC cycle,
 	     retry rather than fail in that case.  */
@@ -323,8 +325,6 @@ nscd_getgr_r (const char *key, size_t keylen, request_type type,
       if (retval != -1)
 	goto retry;
     }
-
-  scratch_buffer_free (&lenbuf);
 
   return retval;
 }

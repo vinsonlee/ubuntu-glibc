@@ -1,5 +1,5 @@
 /* Return current rounding mode (soft-float edition).
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez <aldyh@redhat.com>, 2002.
    This file is part of the GNU C Library.
 
@@ -20,11 +20,10 @@
 #include "soft-fp.h"
 #include "soft-supp.h"
 
+#undef fegetround
 int
-__fegetround (void)
+fegetround (void)
 {
   return __sim_round_mode_thread;
 }
-libm_hidden_def (__fegetround)
-weak_alias (__fegetround, fegetround)
-libm_hidden_weak (fegetround)
+libm_hidden_def (fegetround)

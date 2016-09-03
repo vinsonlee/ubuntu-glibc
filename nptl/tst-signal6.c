@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -24,9 +24,7 @@
 #include <unistd.h>
 
 
-#ifdef SIGRTMIN
-
-# define N 2
+#define N 2
 static pthread_barrier_t bar;
 static struct
 {
@@ -189,9 +187,5 @@ do_test (void)
   return 0;
 }
 
-# define TEST_FUNCTION do_test ()
-
-#else
-# define TEST_FUNCTION 0
-#endif
+#define TEST_FUNCTION do_test ()
 #include "../test-skeleton.c"

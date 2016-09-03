@@ -1,5 +1,5 @@
 /* Test for correct rounding of printf floating-point output.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -136,7 +136,7 @@ static const struct hex_test hex_tests[] =
   };
 
 static int
-test_hex_in_one_mode (double d, const char *fmt, const char *const expected[4],
+test_hex_in_one_mode (double d, const char *fmt, const char *expected[4],
 		      const char *mode_name)
 {
   char buf[100];
@@ -164,7 +164,7 @@ test_hex_in_one_mode (double d, const char *fmt, const char *const expected[4],
 static int
 do_test (void)
 {
-  int save_round_mode __attribute__ ((unused)) = fegetround ();
+  int save_round_mode = fegetround ();
   int result = 0;
 
   for (size_t i = 0; i < sizeof (dec_tests) / sizeof (dec_tests[0]); i++)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 
 #define BUFFER_SIZE 0x1fc0
 
@@ -61,7 +61,8 @@ getfsent (void)
 
 
 struct fstab *
-getfsspec (const char *name)
+getfsspec (name)
+     const char *name;
 {
   struct fstab_state *state;
   struct mntent *m;
@@ -77,7 +78,8 @@ getfsspec (const char *name)
 
 
 struct fstab *
-getfsfile (const char *name)
+getfsfile (name)
+     const char *name;
 {
   struct fstab_state *state;
   struct mntent *m;

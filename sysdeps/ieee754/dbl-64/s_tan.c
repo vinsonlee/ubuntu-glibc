@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2014 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -34,7 +34,6 @@
 /*********************************************************************/
 
 #include <errno.h>
-#include <float.h>
 #include "endian.h"
 #include <dla.h>
 #include "mpa.h"
@@ -92,7 +91,6 @@ tan (double x)
   /* (I) The case abs(x) <= 1.259e-8 */
   if (w <= g1.d)
     {
-      math_check_force_underflow_nonneg (w);
       retval = x;
       goto ret;
     }

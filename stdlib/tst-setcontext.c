@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,7 +16,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,8 +73,8 @@ f2 (void)
 }
 
 void
-test_stack (volatile int a, volatile int b,
-	    volatile int c, volatile int d)
+test_stack(volatile int a, volatile int b,
+           volatile int c, volatile int d)
 {
   volatile int e = 5;
   volatile int f = 6;
@@ -83,7 +82,7 @@ test_stack (volatile int a, volatile int b,
 
   /* Test for cases where getcontext is clobbering the callers
      stack, including parameters.  */
-  getcontext (&uc);
+  getcontext(&uc);
 
   if (a != 1)
     {
@@ -145,9 +144,6 @@ main (void)
   atexit (check_called);
 
   char st1[32768];
-  stack_t stack_before, stack_after;
-
-  sigaltstack (NULL, &stack_before);
 
   puts ("making contexts");
   if (getcontext (&ctx[1]) != 0)
@@ -211,8 +207,6 @@ main (void)
   puts ("back at main program");
   back_in_main = 1;
 
-  sigaltstack (NULL, &stack_after);
-
   if (was_in_f1 == 0)
     {
       puts ("didn't reach f1");
@@ -221,21 +215,6 @@ main (void)
   if (was_in_f2 == 0)
     {
       puts ("didn't reach f2");
-      exit (1);
-    }
-
-  /* Check sigaltstack state is not clobbered as in BZ #16629.  */
-  if (stack_before.ss_sp != stack_after.ss_sp)
-    {
-      printf ("stack ss_sp mismatch: %p %p\n",
-	      stack_before.ss_sp, stack_after.ss_sp);
-      exit (1);
-    }
-
-  if (stack_before.ss_size != stack_after.ss_size)
-    {
-      printf ("stack ss_size mismatch: %zd %zd\n",
-	      stack_before.ss_size, stack_after.ss_size);
       exit (1);
     }
 

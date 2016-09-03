@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -20,7 +20,8 @@
 
 
 void
-srand48 (long seedval)
+srand48 (seedval)
+     long seedval;
 {
   (void) __srand48_r (seedval, &__libc_drand48_data);
 }

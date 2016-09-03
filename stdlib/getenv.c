@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,7 +30,8 @@
    two characters which we can access.  By doing this we can avoid using the
    `strncmp' most of the time.  */
 char *
-getenv (const char *name)
+getenv (name)
+     const char *name;
 {
   size_t len = strlen (name);
   char **ep;

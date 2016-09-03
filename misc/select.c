@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,8 +25,12 @@
    after waiting the interval specified therein.  Returns the number of ready
    descriptors, or -1 for errors.  */
 int
-__select (int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-	  struct timeval *timeout)
+__select (nfds, readfds, writefds, exceptfds, timeout)
+     int nfds;
+     fd_set *readfds;
+     fd_set *writefds;
+     fd_set *exceptfds;
+     struct timeval *timeout;
 {
   __set_errno (ENOSYS);
   return -1;

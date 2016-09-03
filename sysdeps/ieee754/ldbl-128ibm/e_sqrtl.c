@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2014 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -91,9 +91,11 @@ long double __ieee754_sqrtl(long double x)
     return c.x * i;
   }
   else {
-    if (k>=INT64_C(0x7ff0000000000000))
-      /* sqrt (-Inf) = NaN, sqrt (NaN) = NaN, sqrt (+Inf) = +Inf.  */
-      return x * x + x;
+    if (k>=INT64_C(0x7ff0000000000000)) {
+      if (a.i[0] == INT64_C(0xfff0000000000000))
+	return (big1-big1)/(big-big); /* sqrt (-Inf) = NaN.  */
+      return x; /* sqrt (NaN) = NaN, sqrt (+Inf) = +Inf.  */
+    }
     if (x == 0) return x;
     if (x < 0) return (big1-big1)/(big-big);
     return tm256*__ieee754_sqrtl(x*t512);

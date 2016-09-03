@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -21,7 +21,9 @@
 #include <stdlib.h>
 
 int
-drand48_r (struct drand48_data *buffer, double *result)
+drand48_r (buffer, result)
+     struct drand48_data *buffer;
+     double *result;
 {
   return __erand48_r (buffer->__x, buffer, result);
 }

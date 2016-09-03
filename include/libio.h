@@ -1,6 +1,3 @@
-#if !defined _ISOMAC && defined _IO_MTSAFE_IO
-# include <stdio-lock.h>
-#endif
 #include <libio/libio.h>
 
 #ifndef _ISOMAC

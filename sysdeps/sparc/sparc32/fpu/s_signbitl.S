@@ -1,5 +1,5 @@
 /* signbitl().  sparc32 version.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ ENTRY (___signbitl)
 	 srl	%o1, 31, %o0
 END (___signbitl)
 
-#if IS_IN (libm)
+#ifdef IS_IN_libm
 long_double_symbol (libm, ___signbitl, __signbitl);
 #else
 long_double_symbol (libc, ___signbitl, __signbitl);

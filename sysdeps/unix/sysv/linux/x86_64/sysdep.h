@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,11 +19,10 @@
 #define _LINUX_X86_64_SYSDEP_H 1
 
 /* There is some commonality.  */
-#include <sysdeps/unix/sysv/linux/sysdep.h>
 #include <sysdeps/unix/x86_64/sysdep.h>
 #include <tls.h>
 
-#if IS_IN (rtld)
+#ifdef IS_IN_rtld
 # include <dl-sysdep.h>		/* Defines RTLD_PRIVATE_ERRNO.  */
 #endif
 
@@ -116,7 +115,7 @@
   neg %eax;					\
   movl %eax, (%rcx)
 # else
-#  if IS_IN (libc)
+#  ifndef NOT_IN_libc
 #   define SYSCALL_ERROR_ERRNO __libc_errno
 #  else
 #   define SYSCALL_ERROR_ERRNO errno
@@ -194,7 +193,7 @@
 # define INLINE_SYSCALL(name, nr, args...) \
   ({									      \
     unsigned long int resultvar = INTERNAL_SYSCALL (name, , nr, args);	      \
-    if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (resultvar, )))	      \
+    if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (resultvar, ), 0))	      \
       {									      \
 	__set_errno (INTERNAL_SYSCALL_ERRNO (resultvar, ));		      \
 	resultvar = (unsigned long int) -1;				      \
@@ -208,7 +207,7 @@
 # define INLINE_SYSCALL_TYPES(name, nr, args...) \
   ({									      \
     unsigned long int resultvar = INTERNAL_SYSCALL_TYPES (name, , nr, args);  \
-    if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (resultvar, )))	      \
+    if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (resultvar, ), 0))	      \
       {									      \
 	__set_errno (INTERNAL_SYSCALL_ERRNO (resultvar, ));		      \
 	resultvar = (unsigned long int) -1;				      \
@@ -218,9 +217,6 @@
 # undef INTERNAL_SYSCALL_DECL
 # define INTERNAL_SYSCALL_DECL(err) do { } while (0)
 
-/* Registers clobbered by syscall.  */
-# define REGISTERS_CLOBBERED_BY_SYSCALL "cc", "r11", "cx"
-
 # define INTERNAL_SYSCALL_NCS(name, err, nr, args...) \
   ({									      \
     unsigned long int resultvar;					      \
@@ -229,7 +225,7 @@
     asm volatile (							      \
     "syscall\n\t"							      \
     : "=a" (resultvar)							      \
-    : "0" (name) ASM_ARGS_##nr : "memory", REGISTERS_CLOBBERED_BY_SYSCALL);   \
+    : "0" (name) ASM_ARGS_##nr : "memory", "cc", "r11", "cx");		      \
     (long int) resultvar; })
 # undef INTERNAL_SYSCALL
 # define INTERNAL_SYSCALL(name, err, nr, args...) \
@@ -243,7 +239,7 @@
     asm volatile (							      \
     "syscall\n\t"							      \
     : "=a" (resultvar)							      \
-    : "0" (name) ASM_ARGS_##nr : "memory", REGISTERS_CLOBBERED_BY_SYSCALL);   \
+    : "0" (name) ASM_ARGS_##nr : "memory", "cc", "r11", "cx");		      \
     (long int) resultvar; })
 # undef INTERNAL_SYSCALL_TYPES
 # define INTERNAL_SYSCALL_TYPES(name, err, nr, args...) \
@@ -256,10 +252,60 @@
 # undef INTERNAL_SYSCALL_ERRNO
 # define INTERNAL_SYSCALL_ERRNO(val, err)	(-(val))
 
-/* List of system calls which are supported as vsyscalls.  */
-# define HAVE_CLOCK_GETTIME_VSYSCALL    1
-# define HAVE_GETTIMEOFDAY_VSYSCALL     1
-# define HAVE_GETCPU_VSYSCALL		1
+# ifdef SHARED
+#  define INLINE_VSYSCALL(name, nr, args...) \
+  ({									      \
+    __label__ out;							      \
+    __label__ iserr;							      \
+    INTERNAL_SYSCALL_DECL (sc_err);					      \
+    long int sc_ret;							      \
+									      \
+    __typeof (__vdso_##name) vdsop = __vdso_##name;			      \
+    PTR_DEMANGLE (vdsop);						      \
+    if (vdsop != NULL)							      \
+      {									      \
+	sc_ret = vdsop (args);						      \
+	if (!INTERNAL_SYSCALL_ERROR_P (sc_ret, sc_err))			      \
+	  goto out;							      \
+	if (INTERNAL_SYSCALL_ERRNO (sc_ret, sc_err) != ENOSYS)		      \
+	  goto iserr;							      \
+      }									      \
+									      \
+    sc_ret = INTERNAL_SYSCALL (name, sc_err, nr, ##args);		      \
+    if (INTERNAL_SYSCALL_ERROR_P (sc_ret, sc_err))			      \
+      {									      \
+      iserr:								      \
+	__set_errno (INTERNAL_SYSCALL_ERRNO (sc_ret, sc_err));		      \
+	sc_ret = -1L;							      \
+      }									      \
+  out:									      \
+    sc_ret;								      \
+  })
+#  define INTERNAL_VSYSCALL(name, err, nr, args...) \
+  ({									      \
+    __label__ out;							      \
+    long int v_ret;							      \
+									      \
+    __typeof (__vdso_##name) vdsop = __vdso_##name;			      \
+    PTR_DEMANGLE (vdsop);						      \
+    if (vdsop != NULL)							      \
+      {									      \
+	v_ret = vdsop (args);						      \
+	if (!INTERNAL_SYSCALL_ERROR_P (v_ret, err)			      \
+	    || INTERNAL_SYSCALL_ERRNO (v_ret, err) != ENOSYS)		      \
+	  goto out;							      \
+      }									      \
+    v_ret = INTERNAL_SYSCALL (name, err, nr, ##args);			      \
+  out:									      \
+    v_ret;								      \
+  })
+
+# else
+#  define INLINE_VSYSCALL(name, nr, args...) \
+  INLINE_SYSCALL (name, nr, ##args)
+#  define INTERNAL_VSYSCALL(name, err, nr, args...) \
+  INTERNAL_SYSCALL (name, err, nr, ##args)
+# endif
 
 # define LOAD_ARGS_0()
 # define LOAD_REGS_0
@@ -347,7 +393,7 @@
 
 
 /* Pointer mangling support.  */
-#if IS_IN (rtld)
+#if defined NOT_IN_libc && defined IS_IN_rtld
 /* We cannot use the thread descriptor because in ld.so we use setjmp
    earlier than the descriptor is initialized.  */
 # ifdef __ASSEMBLER__
@@ -384,9 +430,5 @@
 						      pointer_guard)))
 # endif
 #endif
-
-/* How to pass the off{64}_t argument on p{readv,writev}{64}.  */
-#undef LO_HI_LONG
-#define LO_HI_LONG(val) (val)
 
 #endif /* linux/x86_64/sysdep.h */

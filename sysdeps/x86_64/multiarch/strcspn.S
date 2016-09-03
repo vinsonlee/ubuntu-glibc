@@ -1,6 +1,6 @@
 /* Multiple versions of strcspn
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -19,6 +19,9 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
+
+#ifdef HAVE_SSE4_SUPPORT
+
 #include <sysdep.h>
 #include <init-arch.h>
 
@@ -38,13 +41,15 @@
 /* Define multiple versions only for the definition in libc.  Don't
    define multiple versions for strpbrk in static library since we
    need strpbrk before the initialization happened.  */
-#if (defined SHARED || !defined USE_AS_STRPBRK) && IS_IN (libc)
+#if (defined SHARED || !defined USE_AS_STRPBRK) && !defined NOT_IN_libc
 	.text
 ENTRY(STRCSPN)
 	.type	STRCSPN, @gnu_indirect_function
-	LOAD_RTLD_GLOBAL_RO_RDX
-	leaq	STRCSPN_SSE2(%rip), %rax
-	HAS_CPU_FEATURE (SSE4_2)
+	cmpl	$0, __cpu_features+KIND_OFFSET(%rip)
+	jne	1f
+	call	__init_cpu_features
+1:	leaq	STRCSPN_SSE2(%rip), %rax
+	testl	$bit_SSE4_2, __cpu_features+CPUID_OFFSET+index_SSE4_2(%rip)
 	jz	2f
 	leaq	STRCSPN_SSE42(%rip), %rax
 2:	ret
@@ -60,7 +65,15 @@ END(STRCSPN)
 # undef END
 # define END(name) \
 	cfi_endproc; .size STRCSPN_SSE2, .-STRCSPN_SSE2
+# undef libc_hidden_builtin_def
+/* It doesn't make sense to send libc-internal strcspn calls through a PLT.
+   The speedup we get from using SSE4.2 instruction is likely eaten away
+   by the indirect call in the PLT.  */
+# define libc_hidden_builtin_def(name) \
+	.globl __GI_STRCSPN; __GI_STRCSPN = STRCSPN_SSE2
 #endif
+
+#endif /* HAVE_SSE4_SUPPORT */
 
 #ifdef USE_AS_STRPBRK
 #include "../strpbrk.S"

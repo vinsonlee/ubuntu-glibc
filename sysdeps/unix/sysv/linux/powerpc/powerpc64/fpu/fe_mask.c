@@ -1,5 +1,5 @@
 /* Procedure definition for FE_MASK_ENV for Linux/ppc64.
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include <sysdep.h>
 #include <sys/syscall.h>
 #include <sys/prctl.h>
+#include <kernel-features.h>
 
 const fenv_t *
 __fe_mask_env (void)

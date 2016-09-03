@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
    there.  If the WUNTRACED bit is set in OPTIONS, return status for stopped
    children; otherwise don't.  */
 pid_t
-__wait3 (int *stat_loc, int options, struct rusage *usage)
+__wait3 (__WAIT_STATUS_DEFN stat_loc, int options, struct rusage *usage)
 {
   if ((options & ~(WNOHANG|WUNTRACED)) != 0)
     {

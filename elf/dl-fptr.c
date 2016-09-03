@@ -1,5 +1,5 @@
 /* Manage function descriptors.  Generic version.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@
 #include <ldsodefs.h>
 #include <elf/dynamic-link.h>
 #include <dl-fptr.h>
-#include <dl-unmap-segments.h>
 #include <atomic.h>
 
 #ifndef ELF_MACHINE_BOOT_FPTR_TABLE_LEN
@@ -210,7 +209,7 @@ _dl_make_fptr (struct link_map *map, const ElfW(Sym) *sym,
   Elf_Symndx symidx;
   struct local *l;
 
-  if (__glibc_unlikely (ftab == NULL))
+  if (__builtin_expect (ftab == NULL, 0))
     ftab = make_fptr_table (map);
 
   symtab = (const void *) D_PTR (map, l_info[DT_SYMTAB]);
@@ -270,7 +269,8 @@ _dl_unmap (struct link_map *map)
   struct fdesc *head = NULL, *tail = NULL;
   size_t i;
 
-  _dl_unmap_segments (map);
+  __munmap ((void *) map->l_map_start,
+	    map->l_map_end - map->l_map_start);
 
   if (ftab == NULL)
     return;

@@ -55,6 +55,10 @@
  * SUCH DAMAGE.
  */
 
+#if defined(LIBC_SCCS) && !defined(lint)
+static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
+#endif /* LIBC_SCCS and not lint */
+
 #include <sys/param.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
@@ -99,17 +103,21 @@ libc_hidden_proto (iruserok_af)
 libc_freeres_ptr(static char *ahostbuf);
 
 int
-rcmd_af (char **ahost, u_short rport, const char *locuser, const char *remuser,
-	 const char *cmd, int *fd2p, sa_family_t af)
+rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
+	char **ahost;
+	u_short rport;
+	const char *locuser, *remuser, *cmd;
+	int *fd2p;
+	sa_family_t af;
 {
 	char paddr[INET6_ADDRSTRLEN];
 	struct addrinfo hints, *res, *ai;
 	union
 	{
-		struct sockaddr sa;
-		struct sockaddr_storage ss;
-		struct sockaddr_in sin;
-		struct sockaddr_in6 sin6;
+	  struct sockaddr sa;
+	  struct sockaddr_storage ss;
+	  struct sockaddr_in sin;
+	  struct sockaddr_in6 sin6;
 	} from;
 	struct pollfd pfd[2];
 	int32_t oldmask;
@@ -352,20 +360,21 @@ bad:
 libc_hidden_def (rcmd_af)
 
 int
-rcmd (char **ahost, u_short rport, const char *locuser, const char *remuser,
-      const char *cmd, int *fd2p)
+rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
+	char **ahost;
+	u_short rport;
+	const char *locuser, *remuser, *cmd;
+	int *fd2p;
 {
   return rcmd_af (ahost, rport, locuser, remuser, cmd, fd2p, AF_INET);
 }
 
 int
-rresvport_af (int *alport, sa_family_t family)
+rresvport_af(alport, family)
+	int *alport;
+	sa_family_t family;
 {
-	union {
-		struct sockaddr generic;
-		struct sockaddr_in in;
-		struct sockaddr_in6 in6;
-	} ss;
+	struct sockaddr_storage ss;
 	int s;
 	size_t len;
 	uint16_t *sport;
@@ -373,11 +382,11 @@ rresvport_af (int *alport, sa_family_t family)
 	switch(family){
 	case AF_INET:
 		len = sizeof(struct sockaddr_in);
-		sport = &ss.in.sin_port;
+		sport = &((struct sockaddr_in *)&ss)->sin_port;
 		break;
 	case AF_INET6:
 		len = sizeof(struct sockaddr_in6);
-		sport = &ss.in6.sin6_port;
+		sport = &((struct sockaddr_in6 *)&ss)->sin6_port;
 		break;
 	default:
 		__set_errno (EAFNOSUPPORT);
@@ -389,9 +398,9 @@ rresvport_af (int *alport, sa_family_t family)
 
 	memset (&ss, '\0', sizeof(ss));
 #ifdef SALEN
-	ss.generic.__ss_len = len;
+	ss.__ss_len = len;
 #endif
-	ss.generic.sa_family = family;
+	ss.ss_family = family;
 
 	/* Ignore invalid values.  */
 	if (*alport < IPPORT_RESERVED / 2)
@@ -402,7 +411,7 @@ rresvport_af (int *alport, sa_family_t family)
 	int start = *alport;
 	do {
 		*sport = htons((uint16_t) *alport);
-		if (__bind(s, &ss.generic, len) >= 0)
+		if (__bind(s, (struct sockaddr *)&ss, len) >= 0)
 			return s;
 		if (errno != EADDRINUSE) {
 			(void)__close(s);
@@ -418,7 +427,8 @@ rresvport_af (int *alport, sa_family_t family)
 libc_hidden_def (rresvport_af)
 
 int
-rresvport (int *alport)
+rresvport(alport)
+	int *alport;
 {
 	return rresvport_af(alport, AF_INET);
 }
@@ -427,8 +437,10 @@ int	__check_rhosts_file = 1;
 char	*__rcmd_errstr;
 
 int
-ruserok_af (const char *rhost, int superuser, const char *ruser,
-	    const char *luser, sa_family_t af)
+ruserok_af(rhost, superuser, ruser, luser, af)
+	const char *rhost, *ruser, *luser;
+	int superuser;
+	sa_family_t af;
 {
 	struct addrinfo hints, *res, *res0;
 	int gai;
@@ -452,8 +464,9 @@ ruserok_af (const char *rhost, int superuser, const char *ruser,
 libc_hidden_def (ruserok_af)
 
 int
-ruserok (const char *rhost, int superuser, const char *ruser,
-	 const char *luser)
+ruserok(rhost, superuser, ruser, luser)
+	const char *rhost, *ruser, *luser;
+	int superuser;
 {
 	return ruserok_af(rhost, superuser, ruser, luser, AF_INET);
 }
@@ -513,8 +526,11 @@ iruserfopen (const char *file, uid_t okuser)
  * Returns 0 if ok, -1 if not ok.
  */
 static int
-ruserok2_sa (struct sockaddr *ra, size_t ralen, int superuser,
-	     const char *ruser, const char *luser, const char *rhost)
+ruserok2_sa (ra, ralen, superuser, ruser, luser, rhost)
+     struct sockaddr *ra;
+     size_t ralen;
+     int superuser;
+     const char *ruser, *luser, *rhost;
 {
   FILE *hostf = NULL;
   int isbad = -1;
@@ -571,46 +587,52 @@ ruserok2_sa (struct sockaddr *ra, size_t ralen, int superuser,
  * ruserok_sa() is now discussed on ipng, so
  * currently disabled for external use
  */
-static int
-ruserok_sa (struct sockaddr *ra, size_t ralen, int superuser,
-	    const char *ruser, const char *luser)
+static int ruserok_sa(ra, ralen, superuser, ruser, luser)
+     struct sockaddr *ra;
+     size_t ralen;
+     int superuser;
+     const char *ruser, *luser;
 {
   return ruserok2_sa(ra, ralen, superuser, ruser, luser, "-");
 }
 
 /* This is the exported version.  */
 int
-iruserok_af (const void *raddr, int superuser, const char *ruser,
-	     const char *luser, sa_family_t af)
+iruserok_af (raddr, superuser, ruser, luser, af)
+     const void *raddr;
+     int superuser;
+     const char *ruser, *luser;
+     sa_family_t af;
 {
-  union {
-    struct sockaddr generic;
-    struct sockaddr_in in;
-    struct sockaddr_in6 in6;
-  } ra;
+  struct sockaddr_storage ra;
   size_t ralen;
 
   memset (&ra, '\0', sizeof(ra));
   switch (af){
   case AF_INET:
-    ra.in.sin_family = AF_INET;
-    memcpy (&ra.in.sin_addr, raddr, sizeof(struct in_addr));
+    ra.ss_family = AF_INET;
+    memcpy (&(((struct sockaddr_in *)&ra)->sin_addr), raddr,
+	    sizeof(struct in_addr));
     ralen = sizeof(struct sockaddr_in);
     break;
   case AF_INET6:
-    ra.in6.sin6_family = AF_INET6;
-    memcpy (&ra.in6.sin6_addr, raddr, sizeof(struct in6_addr));
+    ra.ss_family = AF_INET6;
+    memcpy (&(((struct sockaddr_in6 *)&ra)->sin6_addr), raddr,
+	    sizeof(struct in6_addr));
     ralen = sizeof(struct sockaddr_in6);
     break;
   default:
     return 0;
   }
-  return ruserok_sa (&ra.generic, ralen, superuser, ruser, luser);
+  return ruserok_sa ((struct sockaddr *)&ra, ralen, superuser, ruser, luser);
 }
 libc_hidden_def (iruserok_af)
 
 int
-iruserok (u_int32_t raddr, int superuser, const char *ruser, const char *luser)
+iruserok (raddr, superuser, ruser, luser)
+     u_int32_t raddr;
+     int superuser;
+     const char *ruser, *luser;
 {
   return iruserok_af (&raddr, superuser, ruser, luser, AF_INET);
 }
@@ -627,8 +649,10 @@ iruserok (u_int32_t raddr, int superuser, const char *ruser, const char *luser)
  * Returns 0 if ok, -1 if not ok.
  */
 int
-__ivaliduser (FILE *hostf, u_int32_t raddr, const char *luser,
-	      const char *ruser)
+__ivaliduser(hostf, raddr, luser, ruser)
+	FILE *hostf;
+	u_int32_t raddr;
+	const char *luser, *ruser;
 {
 	struct sockaddr_in ra;
 	memset(&ra, '\0', sizeof(ra));
@@ -739,8 +763,11 @@ __isempty (char *p)
  * Returns 0 if positive match, -1 if _not_ ok.
  */
 static int
-__validuser2_sa (FILE *hostf, struct sockaddr *ra, size_t ralen,
-		 const char *luser, const char *ruser, const char *rhost)
+__validuser2_sa(hostf, ra, ralen, luser, ruser, rhost)
+	FILE *hostf;
+	struct sockaddr *ra;
+	size_t ralen;
+	const char *luser, *ruser, *rhost;
 {
     const char *user;
     char *p;
@@ -776,43 +803,31 @@ __validuser2_sa (FILE *hostf, struct sockaddr *ra, size_t ralen,
 	*p = '\0';              /* <nul> terminate username (+host?) */
 
 	/* buf -> host(?) ; user -> username(?) */
-	if (*buf == '\0')
-	  break;
-	if (*user == '\0')
-	  user = luser;
 
-	/* First check the user part.  In a naive implementation we
-	   would check the host part first, then the user.  However,
-	   if we check the user first and reject the entry we will
-	   have saved doing any host lookups to normalize the comparison
-	   and that likely saves several DNS queries.  Therefore we
-	   check the user first.  */
-	ucheck = __icheckuser (user, ruser);
+	/* First check host part */
+	hcheck = __checkhost_sa (ra, ralen, buf, rhost);
 
-	/* Either we found the user, or we didn't and this is a
-	   negative host check.  We must do the negative host lookup
-	   in order to preserve the semantics of stopping on this line
-	   before processing others.  */
-	if (ucheck != 0 || *buf == '-') {
+	if (hcheck < 0)
+	    break;
 
-	    /* Next check host part.  */
-	    hcheck = __checkhost_sa (ra, ralen, buf, rhost);
+	if (hcheck) {
+	    /* Then check user part */
+	    if (! (*user))
+		user = luser;
 
-	    /* Negative '-host user(?)' match?  */
-	    if (hcheck < 0)
-		break;
+	    ucheck = __icheckuser (user, ruser);
 
-	    /* Positive 'host user' match?  */
-	    if (hcheck > 0 && ucheck > 0) {
+	    /* Positive 'host user' match? */
+	    if (ucheck > 0) {
 		retval = 0;
 		break;
 	    }
 
-	    /* Negative 'host -user' match?  */
-	    if (hcheck > 0 && ucheck < 0)
-	      break;
+	    /* Negative 'host -user' match? */
+	    if (ucheck < 0)
+		break;
 
-	    /* Neither, go on looking for match.  */
+	    /* Neither, go on looking for match */
 	}
     }
 

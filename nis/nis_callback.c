@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1997.
 
@@ -33,7 +33,7 @@
 #include <rpc/key_prot.h>
 #include <rpcsvc/nis.h>
 #include <rpcsvc/nis_callback.h>
-#include <libc-lock.h>
+#include <bits/libc-lock.h>
 
 #include "nis_xdr.h"
 #include "nis_intern.h"
@@ -271,18 +271,18 @@ __nis_create_callback (int (*callback) (const_nis_name, const nis_object *,
 
   cb = (struct nis_cb *) calloc (1,
 				 sizeof (struct nis_cb) + sizeof (nis_server));
-  if (__glibc_unlikely (cb == NULL))
+  if (__builtin_expect (cb == NULL, 0))
     goto failed;
   cb->serv = (nis_server *) (cb + 1);
   cb->serv->name = strdup (nis_local_principal ());
-  if (__glibc_unlikely (cb->serv->name == NULL))
+  if (__builtin_expect (cb->serv->name == NULL, 0))
     goto failed;
   cb->serv->ep.ep_val = (endpoint *) calloc (2, sizeof (endpoint));
-  if (__glibc_unlikely (cb->serv->ep.ep_val == NULL))
+  if (__builtin_expect (cb->serv->ep.ep_val == NULL, 0))
     goto failed;
   cb->serv->ep.ep_len = 1;
   cb->serv->ep.ep_val[0].family = strdup ("inet");
-  if (__glibc_unlikely (cb->serv->ep.ep_val[0].family == NULL))
+  if (__builtin_expect (cb->serv->ep.ep_val[0].family == NULL, 0))
     goto failed;
   cb->callback = callback;
   cb->userdata = userdata;
@@ -314,7 +314,7 @@ __nis_create_callback (int (*callback) (const_nis_name, const nis_object *,
     }
 
   cb->serv->ep.ep_val[0].proto = strdup ((flags & USE_DGRAM) ? "udp" : "tcp");
-  if (__glibc_unlikely (cb->serv->ep.ep_val[0].proto == NULL))
+  if (__builtin_expect (cb->serv->ep.ep_val[0].proto == NULL, 0))
     goto failed;
   cb->xprt = ((flags & USE_DGRAM)
 	      ? svcudp_bufcreate (sock, 100, 8192)

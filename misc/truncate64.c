@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,9 @@
 
 /* Truncate PATH to LENGTH bytes.  */
 int
-truncate64 (const char *path, off64_t length)
+truncate64 (path, length)
+     const char *path;
+     off64_t length;
 {
   if ((off_t) length != length)
     {

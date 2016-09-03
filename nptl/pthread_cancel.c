@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -18,14 +18,15 @@
 
 #include <errno.h>
 #include <signal.h>
-#include <stdlib.h>
 #include "pthreadP.h"
-#include <atomic.h>
+#include "atomic.h"
 #include <sysdep.h>
+#include <kernel-features.h>
 
 
 int
-pthread_cancel (pthread_t th)
+pthread_cancel (th)
+     pthread_t th;
 {
   volatile struct pthread *pd = (volatile struct pthread *) th;
 
@@ -63,7 +64,6 @@ pthread_cancel (pthread_t th)
 						    oldval))
 	    goto again;
 
-#ifdef SIGCANCEL
 	  /* The cancellation handler will take care of marking the
 	     thread as canceled.  */
 	  INTERNAL_SYSCALL_DECL (err);
@@ -81,20 +81,13 @@ pthread_cancel (pthread_t th)
 
 	  if (INTERNAL_SYSCALL_ERROR_P (val, err))
 	    result = INTERNAL_SYSCALL_ERRNO (val, err);
-#else
-          /* It should be impossible to get here at all, since
-             pthread_setcanceltype should never have allowed
-             PTHREAD_CANCEL_ASYNCHRONOUS to be set.  */
-          abort ();
-#endif
 
 	  break;
 	}
 
-	/* A single-threaded process should be able to kill itself, since
-	   there is nothing in the POSIX specification that says that it
-	   cannot.  So we set multiple_threads to true so that cancellation
-	   points get executed.  */
+	/* A single-threaded process should be able to kill itself, since there is
+	   nothing in the POSIX specification that says that it cannot.  So we set
+	   multiple_threads to true so that cancellation points get executed.  */
 	THREAD_SETMEM (THREAD_SELF, header.multiple_threads, 1);
 #ifndef TLS_MULTIPLE_THREADS_IN_TCB
 	__pthread_multiple_threads = *__libc_multiple_threads_ptr = 1;

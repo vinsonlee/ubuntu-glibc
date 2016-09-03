@@ -1,10 +1,7 @@
-#include <assert.h>
 #include <mcheck.h>
 #include <nl_types.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/resource.h>
 
 
 static const char *msgs[] =
@@ -15,37 +12,10 @@ static const char *msgs[] =
 };
 #define nmsgs (sizeof (msgs) / sizeof (msgs[0]))
 
-
-/* Test for unbounded alloca.  */
-static int
-do_bz17905 (void)
-{
-  char *buf;
-  struct rlimit rl;
-  nl_catd result __attribute__ ((unused));
-
-  const int sz = 1024 * 1024;
-
-  getrlimit (RLIMIT_STACK, &rl);
-  rl.rlim_cur = sz;
-  setrlimit (RLIMIT_STACK, &rl);
-
-  buf = malloc (sz + 1);
-  memset (buf, 'A', sz);
-  buf[sz] = '\0';
-  setenv ("NLSPATH", buf, 1);
-
-  result = catopen (buf, NL_CAT_LOCALE);
-  assert (result == (nl_catd) -1);
-
-  free (buf);
-  return 0;
-}
-
 #define ROUNDS 5
 
-static int
-do_test (void)
+int
+main (void)
 {
   int rnd;
   int result = 0;
@@ -92,9 +62,5 @@ do_test (void)
 	}
     }
 
-  result += do_bz17905 ();
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

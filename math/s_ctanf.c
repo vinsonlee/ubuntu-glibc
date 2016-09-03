@@ -1,5 +1,5 @@
 /* Complex tangent function for float.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -28,18 +28,11 @@ __ctanf (__complex__ float x)
 {
   __complex__ float res;
 
-  if (__glibc_unlikely (!isfinite (__real__ x) || !isfinite (__imag__ x)))
+  if (__builtin_expect (!isfinite (__real__ x) || !isfinite (__imag__ x), 0))
     {
-      if (isinf (__imag__ x))
+      if (__isinf_nsf (__imag__ x))
 	{
-	  if (isfinite (__real__ x) && fabsf (__real__ x) > 1.0f)
-	    {
-	      float sinrx, cosrx;
-	      __sincosf (__real__ x, &sinrx, &cosrx);
-	      __real__ res = __copysignf (0.0f, sinrx * cosrx);
-	    }
-	  else
-	    __real__ res = __copysignf (0.0, __real__ x);
+	  __real__ res = __copysignf (0.0, __real__ x);
 	  __imag__ res = __copysignf (1.0, __imag__ x);
 	}
       else if (__real__ x == 0.0)
@@ -51,7 +44,7 @@ __ctanf (__complex__ float x)
 	  __real__ res = __nanf ("");
 	  __imag__ res = __nanf ("");
 
-	  if (isinf (__real__ x))
+	  if (__isinf_nsf (__real__ x))
 	    feraiseexcept (FE_INVALID);
 	}
     }
@@ -64,7 +57,7 @@ __ctanf (__complex__ float x)
       /* tan(x+iy) = (sin(2x) + i*sinh(2y))/(cos(2x) + cosh(2y))
 	 = (sin(x)*cos(x) + i*sinh(y)*cosh(y)/(cos(x)^2 + sinh(y)^2). */
 
-      if (__glibc_likely (fabsf (__real__ x) > FLT_MIN))
+      if (__builtin_expect (fpclassify(__real__ x) != FP_SUBNORMAL, 1))
 	{
 	  __sincosf (__real__ x, &sinrx, &cosrx);
 	}
@@ -117,7 +110,6 @@ __ctanf (__complex__ float x)
 	  __real__ res = sinrx * cosrx / den;
 	  __imag__ res = sinhix * coshix / den;
 	}
-      math_check_force_underflow_complex (res);
     }
 
   return res;

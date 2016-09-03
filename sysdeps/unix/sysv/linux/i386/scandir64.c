@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,30 +17,34 @@
 
 #include <dirent.h>
 
-#define SCANDIR		__scandir64
-#define SCANDIR_TAIL	__scandir64_tail
-#define DIRENT_TYPE	struct dirent64
+#define SCANDIR __scandir64
+#define SCANDIRAT scandirat64
+#define READDIR __readdir64
+#define DIRENT_TYPE struct dirent64
+#define SKIP_SCANDIR_CANCEL 1
 
 #include <dirent/scandir.c>
 
-#undef	SCANDIR
-#undef	SCANDIR_TAIL
-#undef	DIRENT_TYPE
+#undef SCANDIR
+#undef READDIR
+#undef DIRENT_TYPE
 
 #include <shlib-compat.h>
 
 versioned_symbol (libc, __scandir64, scandir64, GLIBC_2_2);
 
-#if SHLIB_COMPAT (libc, GLIBC_2_1, GLIBC_2_2)
+#if SHLIB_COMPAT(libc, GLIBC_2_1, GLIBC_2_2)
 # include <string.h>
 # include <errno.h>
 # include "olddirent.h"
 
 int
-__old_scandir64 (const char *dir, struct __old_dirent64 ***namelist,
-		 int (*select) (const struct __old_dirent64 *),
-		 int (*cmp) (const struct __old_dirent64 **,
-			     const struct __old_dirent64 **))
+__old_scandir64 (dir, namelist, select, cmp)
+     const char *dir;
+     struct __old_dirent64 ***namelist;
+     int (*select) (const struct __old_dirent64 *);
+     int (*cmp) (const struct __old_dirent64 **,
+		 const struct __old_dirent64 **);
 {
   DIR *dp = __opendir (dir);
   struct __old_dirent64 **v = NULL;
@@ -81,7 +85,7 @@ __old_scandir64 (const char *dir, struct __old_dirent64 ***namelist,
 	  /* Ignore errors from select or readdir */
 	  __set_errno (0);
 
-	  if (__glibc_unlikely (c.cnt == vsize))
+	  if (__builtin_expect (c.cnt == vsize, 0))
 	    {
 	      struct __old_dirent64 **new;
 	      if (vsize == 0)

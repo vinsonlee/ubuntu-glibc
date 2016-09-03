@@ -1,13 +1,6 @@
 comment_char %
-escape_char /
-
-% This file is part of the GNU C Library and contains locale data.
-% The Free Software Foundation does not claim any copyright interest
-% in the locale data contained in this file.  The foregoing does not
-% affect the license of the GNU C Library as a whole.  It does not
-% exempt you from the conditions of the license if your use would
-% otherwise be governed by that license.
-
+escape_char  /
+%
 % Northern Saami Language Locale for Norway
 % Source: http://www.hum.uit.no/a/trond/loc.html
 % Contact: Børre Gaup
@@ -19,6 +12,8 @@ escape_char /
 % Application: general
 % Users: general
 % Charset: UTF-8
+% Distribution and use is free, also
+% for commercial purposes.
 
 LC_IDENTIFICATION
 title "Northern Saami language locale for Norway"
@@ -28,22 +23,23 @@ contact "Børre Gaup"
 email "boerre.gaup@pc.nu"
 tel ""
 fax ""
-language "Northern Sami"
+language "Northern Saami"
 territory "Norway"
 revision "0.1"
 date "2001-11-09"
 
-category "i18n:2012";LC_IDENTIFICATION
-category "i18n:2012";LC_CTYPE
-category "i18n:2012";LC_COLLATE
-category "i18n:2012";LC_TIME
-category "i18n:2012";LC_NUMERIC
-category "i18n:2012";LC_PAPER
-category "i18n:2012";LC_TELEPHONE
-category "i18n:2012";LC_MEASUREMENT
-category "i18n:2012";LC_ADDRESS
-category "i18n:2012";LC_MONETARY
-category "i18n:2012";LC_MESSAGES
+category se_NO:2000;LC_IDENTIFICATION
+category se_NO:2000;LC_CTYPE
+category se_NO:2000;LC_COLLATE
+category se_NO:2000;LC_TIME
+category se_NO:2000;LC_NUMERIC
+category se_NO:2000;LC_PAPER
+category se_NO:2000;LC_TELEPHONE
+category se_NO:2000;LC_MEASUREMENT
+category se_NO:2000;LC_ADDRESS
+category se_NO:2000;LC_MONETARY
+category se_NO:2000;LC_MESSAGES
+
 END LC_IDENTIFICATION
 
 
@@ -209,7 +205,7 @@ END LC_CTYPE
 
 LC_MONETARY
 int_curr_symbol         "<U004E><U004F><U004B><U0020>"
-currency_symbol         "<U006B><U0072>"
+currency_symbol         "<U0020><U0072><U0075>"
 mon_decimal_point       "<U002C>"
 mon_thousands_sep       "<U002E>"
 mon_grouping            3;3
@@ -280,20 +276,17 @@ date_fmt       "<U0025><U0041><U002C><U0020><U0025><U0042><U0020><U0025><U0064><
 <U0020><U0025><U005A>"
 
 % %a %b-%e %H:%M:%S %Z %Y søn jan-31 21:15:11 CET 2001
-week 7;19971130;4
-first_weekday 2
 END LC_TIME
 
 LC_MESSAGES
-yesexpr "<U005E><U005B><U002B><U0031><U004A><U006A><U0059><U0079><U005D>"
-noexpr  "<U005E><U005B><U002D><U0030><U0049><U0069><U004E><U006E><U005D>"
-yesstr  "<U006A><U006F>"
-nostr   "<U0069><U0069>"
+yesexpr     "<U005E><U005B><U004A><U006A><U0059><U0079><U005D><U002E><U002A>"
+noexpr      "<U005E><U005B><U0049><U0069><U005D><U002E><U002A>"
 END LC_MESSAGES
 
 
 LC_PAPER
-copy "i18n"
+height   297
+width    210
 END LC_PAPER
 
 LC_TELEPHONE
@@ -304,7 +297,8 @@ int_prefix     "<U0034><U0037>"
 END LC_TELEPHONE
 
 LC_MEASUREMENT
-copy "i18n"
+% metric
+measurement 1
 END LC_MEASUREMENT
 
 LC_NAME
@@ -318,7 +312,6 @@ postal_fmt    "<U0025><U0066><U0025><U004E><U0025><U0061><U0025><U004E>/
 <U0020><U0025><U0068><U0020><U0025><U0065><U0020><U0025><U0072><U0025>/
 <U004E><U0025><U007A><U0020><U0025><U0054><U0025>/
 <U004E><U0025><U0063><U0025><U004E>"
-country_name "<U004E><U006F><U0072><U0067><U0061>"
 country_ab2 "<U004E><U004F>"
 country_ab3 "<U004E><U004F><U0052>"
 country_num 578

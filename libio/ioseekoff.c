@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,7 +35,11 @@ extern int errno;
 #endif
 
 _IO_off64_t
-_IO_seekoff_unlocked (_IO_FILE *fp, _IO_off64_t offset, int dir, int mode)
+_IO_seekoff_unlocked (fp, offset, dir, mode)
+     _IO_FILE *fp;
+     _IO_off64_t offset;
+     int dir;
+     int mode;
 {
   if (dir != _IO_seek_cur && dir != _IO_seek_set && dir != _IO_seek_end)
     {
@@ -67,7 +71,11 @@ _IO_seekoff_unlocked (_IO_FILE *fp, _IO_off64_t offset, int dir, int mode)
 
 
 _IO_off64_t
-_IO_seekoff (_IO_FILE *fp, _IO_off64_t offset, int dir, int mode)
+_IO_seekoff (fp, offset, dir, mode)
+     _IO_FILE *fp;
+     _IO_off64_t offset;
+     int dir;
+     int mode;
 {
   _IO_off64_t retval;
 

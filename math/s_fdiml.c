@@ -1,5 +1,5 @@
 /* Return positive difference between arguments.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -23,11 +23,19 @@
 long double
 __fdiml (long double x, long double y)
 {
-  if (islessequal (x, y))
+  int clsx = fpclassify (x);
+  int clsy = fpclassify (y);
+
+  if (clsx == FP_NAN || clsy == FP_NAN)
+    /* Raise invalid flag for signaling but not quiet NaN.  */
+    return x - y;
+
+  if (x <= y)
     return 0.0f;
 
   long double r = x - y;
-  if (isinf (r) && !isinf (x) && !isinf (y))
+  if (fpclassify (r) == FP_INFINITE
+      && clsx != FP_INFINITE && clsy != FP_INFINITE)
     __set_errno (ERANGE);
 
   return r;

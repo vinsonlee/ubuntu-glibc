@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2014 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -42,7 +42,6 @@
 #include "endian.h"
 #include "mpa.h"
 #include "sincos32.h"
-#include <math.h>
 #include <math_private.h>
 #include <stap-probe.h>
 
@@ -119,11 +118,11 @@ __c32 (mp_no *x, mp_no *y, mp_no *z, int p)
       __mul (&c, &s, &t, p);
       __sub (&s, &t, &t1, p);
       __add (&t1, &t1, &s, p);
-      __sub (&__mptwo, &c, &t1, p);
+      __sub (&mptwo, &c, &t1, p);
       __mul (&t1, &c, &t2, p);
       __add (&t2, &t2, &c, p);
     }
-  __sub (&__mpone, &c, y, p);
+  __sub (&mpone, &c, y, p);
   __cpy (&s, z, p);
 }
 
@@ -319,7 +318,7 @@ __mpranred (double x, mp_no *y, int p)
   int i, k, n;
   mp_no a, b, c;
 
-  if (fabs (x) < 2.8e14)
+  if (ABS (x) < 2.8e14)
     {
       t = (x * hpinv.d + toint.d);
       xn = t - toint.d;
@@ -353,7 +352,7 @@ __mpranred (double x, mp_no *y, int p)
       if (c.d[1] >= HALFRAD)
 	{
 	  t += 1.0;
-	  __sub (&c, &__mpone, &b, p);
+	  __sub (&c, &mpone, &b, p);
 	  __mul (&b, &hp, y, p);
 	}
       else

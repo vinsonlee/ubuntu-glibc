@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -19,10 +19,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <time.h>
-#include <sys/param.h>
-#include <sys/time.h>
 #include "pthreadP.h"
-#include <atomic.h>
 #include <lowlevellock.h>
 #include <not-cancel.h>
 
@@ -41,8 +38,9 @@
 #endif
 
 int
-pthread_mutex_timedlock (pthread_mutex_t *mutex,
-			 const struct timespec *abstime)
+pthread_mutex_timedlock (mutex, abstime)
+     pthread_mutex_t *mutex;
+     const struct timespec *abstime;
 {
   int oldval;
   pid_t id = THREAD_GETMEM (THREAD_SELF, tid);
@@ -63,7 +61,7 @@ pthread_mutex_timedlock (pthread_mutex_t *mutex,
       if (mutex->__data.__owner == id)
 	{
 	  /* Just bump the counter.  */
-	  if (__glibc_unlikely (mutex->__data.__count + 1 == 0))
+	  if (__builtin_expect (mutex->__data.__count + 1 == 0, 0))
 	    /* Overflow of the counter.  */
 	    return EAGAIN;
 
@@ -86,11 +84,10 @@ pthread_mutex_timedlock (pthread_mutex_t *mutex,
       /* Error checking mutex.  */
     case PTHREAD_MUTEX_ERRORCHECK_NP:
       /* Check whether we already hold the mutex.  */
-      if (__glibc_unlikely (mutex->__data.__owner == id))
+      if (__builtin_expect (mutex->__data.__owner == id, 0))
 	return EDEADLK;
 
-      /* Don't do lock elision on an error checking mutex.  */
-      goto simple;
+      /* FALLTHROUGH */
 
     case PTHREAD_MUTEX_TIMED_NP:
       FORCE_ELISION (mutex, goto elision);
@@ -126,7 +123,10 @@ pthread_mutex_timedlock (pthread_mutex_t *mutex,
 					  PTHREAD_MUTEX_PSHARED (mutex));
 		  break;
 		}
-	      atomic_spin_nop ();
+
+#ifdef BUSY_WAIT_NOP
+	      BUSY_WAIT_NOP;
+#endif
 	    }
 	  while (lll_trylock (mutex->__data.__lock) != 0);
 
@@ -175,7 +175,7 @@ pthread_mutex_timedlock (pthread_mutex_t *mutex,
 	    }
 
 	  /* Check whether we already hold the mutex.  */
-	  if (__glibc_unlikely ((oldval & FUTEX_TID_MASK) == id))
+	  if (__builtin_expect ((oldval & FUTEX_TID_MASK) == id, 0))
 	    {
 	      int kind = PTHREAD_MUTEX_TYPE (mutex);
 	      if (kind == PTHREAD_MUTEX_ROBUST_ERRORCHECK_NP)
@@ -191,7 +191,7 @@ pthread_mutex_timedlock (pthread_mutex_t *mutex,
 				 NULL);
 
 		  /* Just bump the counter.  */
-		  if (__glibc_unlikely (mutex->__data.__count + 1 == 0))
+		  if (__builtin_expect (mutex->__data.__count + 1 == 0, 0))
 		    /* Overflow of the counter.  */
 		    return EAGAIN;
 
@@ -229,10 +229,6 @@ pthread_mutex_timedlock (pthread_mutex_t *mutex,
       THREAD_SETMEM (THREAD_SELF, robust_head.list_op_pending, NULL);
       break;
 
-    /* The PI support requires the Linux futex system call.  If that's not
-       available, pthread_mutex_init should never have allowed the type to
-       be set.  So it will get the default case for an invalid type.  */
-#ifdef __NR_futex
     case PTHREAD_MUTEX_PI_RECURSIVE_NP:
     case PTHREAD_MUTEX_PI_ERRORCHECK_NP:
     case PTHREAD_MUTEX_PI_NORMAL_NP:
@@ -254,7 +250,7 @@ pthread_mutex_timedlock (pthread_mutex_t *mutex,
 	oldval = mutex->__data.__lock;
 
 	/* Check whether we already hold the mutex.  */
-	if (__glibc_unlikely ((oldval & FUTEX_TID_MASK) == id))
+	if (__builtin_expect ((oldval & FUTEX_TID_MASK) == id, 0))
 	  {
 	    if (kind == PTHREAD_MUTEX_ERRORCHECK_NP)
 	      {
@@ -267,7 +263,7 @@ pthread_mutex_timedlock (pthread_mutex_t *mutex,
 		THREAD_SETMEM (THREAD_SELF, robust_head.list_op_pending, NULL);
 
 		/* Just bump the counter.  */
-		if (__glibc_unlikely (mutex->__data.__count + 1 == 0))
+		if (__builtin_expect (mutex->__data.__count + 1 == 0, 0))
 		  /* Overflow of the counter.  */
 		  return EAGAIN;
 
@@ -341,7 +337,7 @@ pthread_mutex_timedlock (pthread_mutex_t *mutex,
 	    assert (robust || (oldval & FUTEX_OWNER_DIED) == 0);
 	  }
 
-	if (__glibc_unlikely (oldval & FUTEX_OWNER_DIED))
+	if (__builtin_expect (oldval & FUTEX_OWNER_DIED, 0))
 	  {
 	    atomic_and (&mutex->__data.__lock, ~FUTEX_OWNER_DIED);
 
@@ -385,7 +381,6 @@ pthread_mutex_timedlock (pthread_mutex_t *mutex,
 	  }
 	}
       break;
-#endif  /* __NR_futex.  */
 
     case PTHREAD_MUTEX_PP_RECURSIVE_NP:
     case PTHREAD_MUTEX_PP_ERRORCHECK_NP:
@@ -405,7 +400,7 @@ pthread_mutex_timedlock (pthread_mutex_t *mutex,
 	    if (kind == PTHREAD_MUTEX_RECURSIVE_NP)
 	      {
 		/* Just bump the counter.  */
-		if (__glibc_unlikely (mutex->__data.__count + 1 == 0))
+		if (__builtin_expect (mutex->__data.__count + 1 == 0, 0))
 		  /* Overflow of the counter.  */
 		  return EAGAIN;
 

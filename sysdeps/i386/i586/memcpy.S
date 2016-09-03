@@ -1,5 +1,5 @@
 /* Highly optimized version for i586.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -20,6 +20,11 @@
 #include <sysdep.h>
 #include "asm-syntax.h"
 
+/* BEWARE: `#ifdef memcpy' means that memcpy is redefined as `mempcpy',
+   and the return value is the byte after the last one copied in
+   the destination. */
+#define MEMPCPY_P (defined memcpy)
+
 #define PARMS	4+8	/* space for 2 saved regs */
 #define RTN	PARMS
 #define DEST	RTN
@@ -27,7 +32,7 @@
 #define LEN	SRC+4
 
         .text
-#if defined PIC && IS_IN (libc)
+#if defined PIC && !defined NOT_IN_libc
 ENTRY (__memcpy_chk)
 	movl	12(%esp), %eax
 	cmpl	%eax, 16(%esp)
@@ -100,13 +105,13 @@ L(3):	movl	28(%edi), %edx
 
 	/* Correct extra loop counter modification.  */
 L(2):	addl	$32, %ecx
-#ifndef USE_AS_MEMPCPY
+#if !MEMPCPY_P
 	movl	DEST(%esp), %eax
 #endif
 
 L(1):	rep; movsb
 
-#ifdef USE_AS_MEMPCPY
+#if MEMPCPY_P
 	movl	%edi, %eax
 #endif
 
@@ -119,6 +124,6 @@ L(1):	rep; movsb
 
 	ret
 END (memcpy)
-#ifndef USE_AS_MEMPCPY
+#if !MEMPCPY_P
 libc_hidden_builtin_def (memcpy)
 #endif

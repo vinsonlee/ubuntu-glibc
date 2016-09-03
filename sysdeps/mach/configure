@@ -84,7 +84,7 @@ do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
     ac_cv_prog_MIG="${ac_tool_prefix}mig"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
@@ -124,7 +124,7 @@ do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
     ac_cv_prog_ac_ct_MIG="mig"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
@@ -164,11 +164,6 @@ if test "x$MIG" = xMISSING; then
 fi
 config_vars="$config_vars
 MIG = $MIG"
-
-if test -n "$sysheaders"; then
-  OLD_CPPFLAGS=$CPPFLAGS
-  CPPFLAGS="$CPPFLAGS $SYSINCLUDES"
-fi
 
 ### Sanity checks for Mach header installation
 
@@ -284,7 +279,7 @@ fi
 mach_interface_list=
 for ifc in mach mach4 \
 	   clock clock_priv host_priv host_security ledger lock_set \
-	   processor processor_set task task_notify thread_act vm_map \
+	   processor processor_set task thread_act vm_map \
 	   memory_object memory_object_default default_pager \
 	   i386/mach_i386 \
 	   ; do
@@ -316,7 +311,7 @@ do
     for ac_prog in grep ggrep; do
     for ac_exec_ext in '' $ac_executable_extensions; do
       ac_path_GREP="$as_dir/$ac_prog$ac_exec_ext"
-      as_fn_executable_p "$ac_path_GREP" || continue
+      { test -f "$ac_path_GREP" && $as_test_x "$ac_path_GREP"; } || continue
 # Check for GNU ac_path_GREP and select it if it is found.
   # Check for GNU $ac_path_GREP
 case `"$ac_path_GREP" --version 2>&1` in
@@ -382,7 +377,7 @@ do
     for ac_prog in egrep; do
     for ac_exec_ext in '' $ac_executable_extensions; do
       ac_path_EGREP="$as_dir/$ac_prog$ac_exec_ext"
-      as_fn_executable_p "$ac_path_EGREP" || continue
+      { test -f "$ac_path_EGREP" && $as_test_x "$ac_path_EGREP"; } || continue
 # Check for GNU ac_path_EGREP and select it if it is found.
   # Check for GNU $ac_path_EGREP
 case `"$ac_path_EGREP" --version 2>&1` in
@@ -557,8 +552,4 @@ $as_echo "$hurd_cv_mig_retcode" >&6; }
 if test $hurd_cv_mig_retcode = yes; then
   $as_echo "#define HAVE_MIG_RETCODE 1" >>confdefs.h
 
-fi
-
-if test -n "$sysheaders"; then
-  CPPFLAGS=$OLD_CPPFLAGS
 fi

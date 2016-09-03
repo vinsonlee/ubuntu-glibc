@@ -1,5 +1,5 @@
 /* Mapping tables for EUC-TW handling.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -31,7 +31,6 @@
 #define MIN_NEEDED_FROM		1
 #define MAX_NEEDED_FROM		4
 #define MIN_NEEDED_TO		4
-#define ONE_DIRECTION		0
 
 
 /* First define the conversion function from EUC-TW to UCS4.  */

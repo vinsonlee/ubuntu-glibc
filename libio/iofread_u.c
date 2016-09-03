@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,7 +30,11 @@
 #undef fread_unlocked
 
 _IO_size_t
-__fread_unlocked (void *buf, _IO_size_t size, _IO_size_t count, _IO_FILE *fp)
+fread_unlocked (buf, size, count, fp)
+     void *buf;
+     _IO_size_t size;
+     _IO_size_t count;
+     _IO_FILE *fp;
 {
   _IO_size_t bytes_requested = size * count;
   _IO_size_t bytes_read;
@@ -40,5 +44,4 @@ __fread_unlocked (void *buf, _IO_size_t size, _IO_size_t count, _IO_FILE *fp)
   bytes_read = _IO_sgetn (fp, (char *) buf, bytes_requested);
   return bytes_requested == bytes_read ? count : bytes_read / size;
 }
-libc_hidden_def (__fread_unlocked)
-weak_alias (__fread_unlocked, fread_unlocked)
+libc_hidden_def (fread_unlocked)

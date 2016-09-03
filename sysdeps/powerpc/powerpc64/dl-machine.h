@@ -1,6 +1,6 @@
 /* Machine-dependent ELF dynamic relocation inline functions.
    PowerPC64 version.
-   Copyright 1995-2016 Free Software Foundation, Inc.
+   Copyright 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include <sys/param.h>
 #include <dl-tls.h>
 #include <sysdep.h>
-#include <hwcapinfo.h>
 
 /* Translate a processor specific dynamic tag to the index
    in l_info array.  */
@@ -127,7 +126,7 @@ elf_machine_dynamic (void)
 #else
 # define DL_STARTING_UP_DEF \
 ".LC__dl_starting_up:\n"  \
-"	.tc __GI__dl_starting_up[TC],__GI__dl_starting_up\n"
+"	.tc _dl_starting_up_internal[TC],_dl_starting_up_internal\n"
 #endif
 
 
@@ -170,7 +169,7 @@ DL_STARTING_UP_DEF							\
 ".LC__dl_argc:\n"							\
 "	.tc _dl_argc[TC],_dl_argc\n"					\
 ".LC__dl_argv:\n"							\
-"	.tc __GI__dl_argv[TC],__GI__dl_argv\n"				\
+"	.tc _dl_argv_internal[TC],_dl_argv_internal\n"			\
 ".LC__dl_fini:\n"							\
 "	.tc _dl_fini[TC],_dl_fini\n"					\
 "	.popsection\n"							\
@@ -246,7 +245,7 @@ BODY_PREFIX "_dl_start_user:\n"						\
 "	" END_2(_dl_start_user) "\n"					\
 "	.popsection");
 
-/* ELF_RTYPE_CLASS_COPY iff TYPE should not be allowed to resolve to
+/* ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to
    one of the main executable's symbols, as for a COPY reloc.
 
    To make function pointer comparisons work on most targets, the
@@ -295,20 +294,6 @@ BODY_PREFIX "_dl_start_user:\n"						\
 
 /* The PowerPC never uses REL relocations.  */
 #define ELF_MACHINE_NO_REL 1
-#define ELF_MACHINE_NO_RELA 0
-
-/* We define an initialization function to initialize HWCAP/HWCAP2 and
-   platform data so it can be copied into the TCB later.  This is called
-   very early in _dl_sysdep_start for dynamically linked binaries.  */
-#ifdef SHARED
-# define DL_PLATFORM_INIT dl_platform_init ()
-
-static inline void __attribute__ ((unused))
-dl_platform_init (void)
-{
-  __tcb_parse_hwcap_and_convert_at_platform ();
-}
-#endif
 
 /* Stuff for the PLT.  */
 #if _CALL_ELF != 2
@@ -486,32 +471,19 @@ elf_machine_fixup_plt (struct link_map *map, lookup_t sym_map,
   Elf64_FuncDesc *plt = (Elf64_FuncDesc *) reloc_addr;
   Elf64_FuncDesc *rel = (Elf64_FuncDesc *) finaladdr;
   Elf64_Addr offset = 0;
-  Elf64_FuncDesc zero_fd = {0, 0, 0};
 
   PPC_DCBT (&plt->fd_aux);
   PPC_DCBT (&plt->fd_func);
+  PPC_DCBT (&rel->fd_aux);
+  PPC_DCBT (&rel->fd_func);
 
-  /* If sym_map is NULL, it's a weak undefined sym;  Set the plt to
-     zero.  finaladdr should be zero already in this case, but guard
-     against invalid plt relocations with non-zero addends.  */
+  /* If sym_map is NULL, it's a weak undefined sym;  Leave the plt zero.  */
   if (sym_map == NULL)
-    finaladdr = 0;
-
-  /* Don't die here if finaladdr is zero, die if this plt entry is
-     actually called.  Makes a difference when LD_BIND_NOW=1.
-     finaladdr may be zero for a weak undefined symbol, or when an
-     ifunc resolver returns zero.  */
-  if (finaladdr == 0)
-    rel = &zero_fd;
-  else
-    {
-      PPC_DCBT (&rel->fd_aux);
-      PPC_DCBT (&rel->fd_func);
-    }
+    return 0;
 
   /* If the opd entry is not yet relocated (because it's from a shared
      object that hasn't been processed yet), then manually reloc it.  */
-  if (finaladdr != 0 && map != sym_map && !sym_map->l_relocated
+  if (map != sym_map && !sym_map->l_relocated
 #if !defined RTLD_BOOTSTRAP && defined SHARED
       /* Bootstrap map doesn't have l_relocated set for it.  */
       && sym_map != &GL(dl_rtld_map)
@@ -549,13 +521,6 @@ elf_machine_plt_conflict (struct link_map *map, lookup_t sym_map,
 #if _CALL_ELF != 2
   Elf64_FuncDesc *plt = (Elf64_FuncDesc *) reloc_addr;
   Elf64_FuncDesc *rel = (Elf64_FuncDesc *) finaladdr;
-  Elf64_FuncDesc zero_fd = {0, 0, 0};
-
-  if (sym_map == NULL)
-    finaladdr = 0;
-
-  if (finaladdr == 0)
-    rel = &zero_fd;
 
   plt->fd_func = rel->fd_func;
   plt->fd_aux = rel->fd_aux;
@@ -657,9 +622,7 @@ resolve_ifunc (Elf64_Addr value,
       opd.fd_func = func->fd_func + sym_map->l_addr;
       opd.fd_toc = func->fd_toc + sym_map->l_addr;
       opd.fd_aux = func->fd_aux;
-      /* GCC 4.9+ eliminates the branch as dead code, force the odp set
-         dependency.  */
-      asm ("" : "=r" (value) : "0" (&opd), "X" (opd));
+      value = (Elf64_Addr) &opd;
     }
 #endif
 #endif
@@ -692,7 +655,7 @@ elf_machine_rela (struct link_map *map,
       return;
     }
 
-  if (__glibc_unlikely (r_type == R_PPC64_NONE))
+  if (__builtin_expect (r_type == R_PPC64_NONE, 0))
     return;
 
   /* We need SYM_MAP even in the absence of TLS, for elf_machine_fixup_plt
@@ -717,13 +680,13 @@ elf_machine_rela (struct link_map *map,
       return;
 
     case R_PPC64_IRELATIVE:
-      if (__glibc_likely (!skip_ifunc))
+      if (__builtin_expect (!skip_ifunc, 1))
 	value = resolve_ifunc (value, map, sym_map);
       *reloc_addr = value;
       return;
 
     case R_PPC64_JMP_IREL:
-      if (__glibc_likely (!skip_ifunc))
+      if (__builtin_expect (!skip_ifunc, 1))
 	value = resolve_ifunc (value, map, sym_map);
       /* Fall thru */
     case R_PPC64_JMP_SLOT:
@@ -735,32 +698,6 @@ elf_machine_rela (struct link_map *map,
       return;
 
     case R_PPC64_DTPMOD64:
-      if (map->l_info[DT_PPC64(OPT)]
-	  && (map->l_info[DT_PPC64(OPT)]->d_un.d_val & PPC64_OPT_TLS))
-	{
-#ifdef RTLD_BOOTSTRAP
-	  reloc_addr[0] = 0;
-	  reloc_addr[1] = (sym_map->l_tls_offset - TLS_TP_OFFSET
-			   + TLS_DTV_OFFSET);
-	  return;
-#else
-	  if (sym_map != NULL)
-	    {
-# ifndef SHARED
-	      CHECK_STATIC_TLS (map, sym_map);
-# else
-	      if (TRY_STATIC_TLS (map, sym_map))
-# endif
-		{
-		  reloc_addr[0] = 0;
-		  /* Set up for local dynamic.  */
-		  reloc_addr[1] = (sym_map->l_tls_offset - TLS_TP_OFFSET
-				   + TLS_DTV_OFFSET);
-		  return;
-		}
-	    }
-#endif
-	}
 #ifdef RTLD_BOOTSTRAP
       /* During startup the dynamic linker is always index 1.  */
       *reloc_addr = 1;
@@ -773,28 +710,6 @@ elf_machine_rela (struct link_map *map,
       return;
 
     case R_PPC64_DTPREL64:
-      if (map->l_info[DT_PPC64(OPT)]
-	  && (map->l_info[DT_PPC64(OPT)]->d_un.d_val & PPC64_OPT_TLS))
-	{
-#ifdef RTLD_BOOTSTRAP
-	  *reloc_addr = TLS_TPREL_VALUE (sym_map, sym, reloc);
-	  return;
-#else
-	  if (sym_map != NULL)
-	    {
-	      /* This reloc is always preceded by R_PPC64_DTPMOD64.  */
-# ifndef SHARED
-	      assert (HAVE_STATIC_TLS (map, sym_map));
-# else
-	      if (HAVE_STATIC_TLS (map, sym_map))
-#  endif
-		{
-		  *reloc_addr = TLS_TPREL_VALUE (sym_map, sym, reloc);
-		  return;
-		}
-	    }
-#endif
-	}
       /* During relocation all TLS symbols are defined and used.
 	 Therefore the offset is already correct.  */
 #ifndef RTLD_BOOTSTRAP

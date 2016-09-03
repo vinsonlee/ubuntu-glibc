@@ -1,5 +1,5 @@
 /* Complex hyperbole tangent for float.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -28,19 +28,12 @@ __ctanhf (__complex__ float x)
 {
   __complex__ float res;
 
-  if (__glibc_unlikely (!isfinite (__real__ x) || !isfinite (__imag__ x)))
+  if (__builtin_expect (!isfinite (__real__ x) || !isfinite (__imag__ x), 0))
     {
-      if (isinf (__real__ x))
+      if (__isinf_nsf (__real__ x))
 	{
 	  __real__ res = __copysignf (1.0, __real__ x);
-	  if (isfinite (__imag__ x) && fabsf (__imag__ x) > 1.0f)
-	    {
-	      float sinix, cosix;
-	      __sincosf (__imag__ x, &sinix, &cosix);
-	      __imag__ res = __copysignf (0.0f, sinix * cosix);
-	    }
-	  else
-	    __imag__ res = __copysignf (0.0, __imag__ x);
+	  __imag__ res = __copysignf (0.0, __imag__ x);
 	}
       else if (__imag__ x == 0.0)
 	{
@@ -51,7 +44,7 @@ __ctanhf (__complex__ float x)
 	  __real__ res = __nanf ("");
 	  __imag__ res = __nanf ("");
 
-	  if (isinf (__imag__ x))
+	  if (__isinf_nsf (__imag__ x))
 	    feraiseexcept (FE_INVALID);
 	}
     }
@@ -64,7 +57,7 @@ __ctanhf (__complex__ float x)
       /* tanh(x+iy) = (sinh(2x) + i*sin(2y))/(cosh(2x) + cos(2y))
 	 = (sinh(x)*cosh(x) + i*sin(y)*cos(y))/(sinh(x)^2 + cos(y)^2).  */
 
-      if (__glibc_likely (fabsf (__imag__ x) > FLT_MIN))
+      if (__builtin_expect (fpclassify(__imag__ x) != FP_SUBNORMAL, 1))
 	{
 	  __sincosf (__imag__ x, &sinix, &cosix);
 	}
@@ -117,7 +110,6 @@ __ctanhf (__complex__ float x)
 	  __real__ res = sinhrx * coshrx / den;
 	  __imag__ res = sinix * cosix / den;
 	}
-      math_check_force_underflow_complex (res);
     }
 
   return res;

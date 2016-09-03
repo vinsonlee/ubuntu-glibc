@@ -71,6 +71,7 @@ client (void *arg)
   struct thread_param *param = arg;
   unsigned int cnt;
   unsigned int nserv = param->nserv;
+  int clisock[nserv];
   struct pollfd servpoll[nserv];
   struct sockaddr_un servaddr;
   socklen_t servlen;
@@ -101,7 +102,7 @@ client (void *arg)
   for (cnt = 0; cnt < nserv; ++cnt)
     {
       servpoll[cnt].fd = socket (AF_UNIX, SOCK_STREAM, 0);
-      if (servpoll[cnt].fd < 0)
+      if (clisock < 0)
 	{
 	  puts ("cannot create socket in client");
 	  return NULL;
@@ -478,7 +479,7 @@ get_clockfreq (void)
     return result;
 
   fd = open ("/proc/cpuinfo", O_RDONLY);
-  if (__glibc_likely (fd != -1))
+  if (__builtin_expect (fd != -1, 1))
     {
       /* XXX AFAIK the /proc filesystem can generate "files" only up
          to a size of 4096 bytes.  */
@@ -490,7 +491,7 @@ get_clockfreq (void)
 	{
 	  char *mhz = memmem (buf, n, "cpu MHz", 7);
 
-	  if (__glibc_likely (mhz != NULL))
+	  if (__builtin_expect (mhz != NULL, 1))
 	    {
 	      char *endp = buf + n;
 	      int seen_decpoint = 0;

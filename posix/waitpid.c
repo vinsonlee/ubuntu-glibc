@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
    Return (pid_t) -1 for errors.  If the WUNTRACED bit is set in OPTIONS,
    return status for stopped children; otherwise don't.  */
 pid_t
-__waitpid (pid_t pid, int *stat_loc, int options)
+__libc_waitpid (pid_t pid, int *stat_loc, int options)
 {
   if ((options & ~(WNOHANG|WUNTRACED)) != 0)
     {
@@ -44,7 +44,8 @@ __waitpid (pid_t pid, int *stat_loc, int options)
   __set_errno (ENOSYS);
   return (pid_t) -1;
 }
-libc_hidden_def (__waitpid)
-weak_alias (__waitpid, waitpid)
+weak_alias (__libc_waitpid, __waitpid)
+libc_hidden_weak (__waitpid)
+weak_alias (__libc_waitpid, waitpid)
 
 stub_warning (waitpid)

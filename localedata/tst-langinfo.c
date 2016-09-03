@@ -1,5 +1,5 @@
 /* Test program for nl_langinfo() function.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>.
 
@@ -138,8 +138,8 @@ map_paramstr (const char *str)
 # define REASON(str)
 #endif
 
-static int
-do_test (void)
+int
+main (void)
 {
   int result = 0;
 
@@ -281,6 +281,3 @@ do_test (void)
 
   return result;
 }
-
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

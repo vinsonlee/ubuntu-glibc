@@ -1,5 +1,5 @@
 /* llround function.  PowerPC64 version.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -55,11 +55,6 @@ ENTRY (__llround)
 	fcmpu	cr1,fp1,fp12	/* x is negative? x < 0.0  */
 	blt-	cr6,.Lretzero	/* 0.5 > x < -0.5 so just return 0.  */
 	bge-	cr7,.Lnobias	/* 2^52 > x < -2^52 just convert with no bias.  */
-	/* Test whether an integer to avoid spurious "inexact".  */
-	fadd	fp3,fp2,fp9
-	fsub	fp3,fp3,fp9
-	fcmpu	cr5,fp2,fp3
-	beq	cr5,.Lnobias
 	fadd	fp3,fp2,fp10	/* |x|+=0.5 bias to prepare to round.  */
 	bge	cr1,.Lconvert	/* x is positive so don't negate x.  */
 	fnabs	fp3,fp3		/* -(|x|+=0.5)  */

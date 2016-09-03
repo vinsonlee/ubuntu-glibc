@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,7 +28,12 @@
 #include <errno.h>
 #include <fnmatch.h>
 #include <ctype.h>
-#include <string.h>
+
+#if HAVE_STRING_H || defined _LIBC
+# include <string.h>
+#else
+# include <strings.h>
+#endif
 
 #if defined STDC_HEADERS || defined _LIBC
 # include <stdlib.h>
@@ -166,7 +171,9 @@ static int posixly_correct;
 
 # if !defined HAVE___STRCHRNUL && !defined _LIBC
 static char *
-__strchrnul (const char *s, int c)
+__strchrnul (s, c)
+     const char *s;
+     int c;
 {
   char *result = strchr (s, c);
   if (result == NULL)
@@ -177,7 +184,9 @@ __strchrnul (const char *s, int c)
 
 # if HANDLE_MULTIBYTE && !defined HAVE___STRCHRNUL && !defined _LIBC
 static wchar_t *
-__wcschrnul (const wchar_t *s, wint_t c)
+__wcschrnul (s, c)
+     const wchar_t *s;
+     wint_t c;
 {
   wchar_t *result = wcschr (s, c);
   if (result == NULL)
@@ -216,16 +225,13 @@ __wcschrnul (const wchar_t *s, wint_t c)
 # define MEMPCPY(D, S, N) __mempcpy (D, S, N)
 # define MEMCHR(S, C, N) memchr (S, C, N)
 # define STRCOLL(S1, S2) strcoll (S1, S2)
-# define WIDE_CHAR_VERSION 0
-# include <locale/weight.h>
-# define FINDIDX findidx
 # include "fnmatch_loop.c"
 
 
 # if HANDLE_MULTIBYTE
 /* Note that this evaluates C many times.  */
 #  ifdef _LIBC
-#   define FOLD(c) ((flags & FNM_CASEFOLD) ? __towlower (c) : (c))
+#   define FOLD(c) ((flags & FNM_CASEFOLD) ? towlower (c) : (c))
 #  else
 #   define FOLD(c) ((flags & FNM_CASEFOLD) && ISUPPER (c) ? towlower (c) : (c))
 #  endif
@@ -241,15 +247,9 @@ __wcschrnul (const wchar_t *s, wint_t c)
 #  define STRLEN(S) __wcslen (S)
 #  define STRCAT(D, S) __wcscat (D, S)
 #  define MEMPCPY(D, S, N) __wmempcpy (D, S, N)
-#  define MEMCHR(S, C, N) __wmemchr (S, C, N)
+#  define MEMCHR(S, C, N) wmemchr (S, C, N)
 #  define STRCOLL(S1, S2) wcscoll (S1, S2)
 #  define WIDE_CHAR_VERSION 1
-/* Change the name the header defines so it doesn't conflict with
-   the <locale/weight.h> version included above.  */
-#  define findidx findidxwc
-#  include <locale/weightwc.h>
-#  undef findidx
-#  define FINDIDX findidxwc
 
 #  undef IS_CHAR_CLASS
 /* We have to convert the wide character string in a multibyte string.  But
@@ -323,7 +323,10 @@ is_char_class (const wchar_t *wcs)
 
 
 int
-fnmatch (const char *pattern, const char *string, int flags)
+fnmatch (pattern, string, flags)
+     const char *pattern;
+     const char *string;
+     int flags;
 {
 # if HANDLE_MULTIBYTE
   if (__builtin_expect (MB_CUR_MAX, 1) != 1)
@@ -341,16 +344,16 @@ fnmatch (const char *pattern, const char *string, int flags)
       memset (&ps, '\0', sizeof (ps));
       p = pattern;
 #ifdef _LIBC
-      n = __strnlen (pattern, 1024);
+      n = strnlen (pattern, 1024);
 #else
       n = strlen (pattern);
 #endif
-      if (__glibc_likely (n < 1024))
+      if (__builtin_expect (n < 1024, 1))
 	{
 	  wpattern = (wchar_t *) alloca_account ((n + 1) * sizeof (wchar_t),
 						 alloca_used);
 	  n = mbsrtowcs (wpattern, &p, n + 1, &ps);
-	  if (__glibc_unlikely (n == (size_t) -1))
+	  if (__builtin_expect (n == (size_t) -1, 0))
 	    /* Something wrong.
 	       XXX Do we have to set `errno' to something which mbsrtows hasn't
 	       already done?  */
@@ -365,12 +368,12 @@ fnmatch (const char *pattern, const char *string, int flags)
 	{
 	prepare_wpattern:
 	  n = mbsrtowcs (NULL, &pattern, 0, &ps);
-	  if (__glibc_unlikely (n == (size_t) -1))
+	  if (__builtin_expect (n == (size_t) -1, 0))
 	    /* Something wrong.
 	       XXX Do we have to set `errno' to something which mbsrtows hasn't
 	       already done?  */
 	    return -1;
-	  if (__glibc_unlikely (n >= (size_t) -1 / sizeof (wchar_t)))
+	  if (__builtin_expect (n >= (size_t) -1 / sizeof (wchar_t), 0))
 	    {
 	      __set_errno (ENOMEM);
 	      return -2;
@@ -385,17 +388,17 @@ fnmatch (const char *pattern, const char *string, int flags)
 
       assert (mbsinit (&ps));
 #ifdef _LIBC
-      n = __strnlen (string, 1024);
+      n = strnlen (string, 1024);
 #else
       n = strlen (string);
 #endif
       p = string;
-      if (__glibc_likely (n < 1024))
+      if (__builtin_expect (n < 1024, 1))
 	{
 	  wstring = (wchar_t *) alloca_account ((n + 1) * sizeof (wchar_t),
 						alloca_used);
 	  n = mbsrtowcs (wstring, &p, n + 1, &ps);
-	  if (__glibc_unlikely (n == (size_t) -1))
+	  if (__builtin_expect (n == (size_t) -1, 0))
 	    {
 	      /* Something wrong.
 		 XXX Do we have to set `errno' to something which
@@ -414,12 +417,12 @@ fnmatch (const char *pattern, const char *string, int flags)
 	{
 	prepare_wstring:
 	  n = mbsrtowcs (NULL, &string, 0, &ps);
-	  if (__glibc_unlikely (n == (size_t) -1))
+	  if (__builtin_expect (n == (size_t) -1, 0))
 	    /* Something wrong.
 	       XXX Do we have to set `errno' to something which mbsrtows hasn't
 	       already done?  */
 	    goto free_return;
-	  if (__glibc_unlikely (n >= (size_t) -1 / sizeof (wchar_t)))
+	  if (__builtin_expect (n >= (size_t) -1 / sizeof (wchar_t), 0))
 	    {
 	      free (wpattern_malloc);
 	      __set_errno (ENOMEM);

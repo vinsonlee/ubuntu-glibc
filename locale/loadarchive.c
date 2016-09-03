@@ -1,5 +1,5 @@
 /* Code to load locale data from the locale archive file.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 
 
 /* Name of the locale archive file.  */
-static const char archfname[] = COMPLOCALEDIR "/locale-archive";
+static const char archfname[] = LOCALEDIR "/locale-archive";
 
 /* Size of initial mapping window, optimal if large enough to
    cover the header plus the initial locale.  */
@@ -263,7 +263,7 @@ _nl_load_locale_from_archive (int category, const char **namep)
     }
 
   /* If there is no archive or it cannot be loaded for some reason fail.  */
-  if (__glibc_unlikely (headmap.ptr == NULL))
+  if (__builtin_expect (headmap.ptr == NULL, 0))
     goto close_and_out;
 
   /* We have the archive available.  To find the name we first have to
@@ -459,11 +459,11 @@ _nl_load_locale_from_archive (int category, const char **namep)
      Now we need the expected data structures to point into the data.  */
 
   lia = malloc (sizeof *lia);
-  if (__glibc_unlikely (lia == NULL))
+  if (__builtin_expect (lia == NULL, 0))
     return NULL;
 
   lia->name = strdup (*namep);
-  if (__glibc_unlikely (lia->name == NULL))
+  if (__builtin_expect (lia->name == NULL, 0))
     {
       free (lia);
       return NULL;
@@ -478,7 +478,7 @@ _nl_load_locale_from_archive (int category, const char **namep)
 	lia->data[cnt] = _nl_intern_locale_data (cnt,
 						 results[cnt].addr,
 						 results[cnt].len);
-	if (__glibc_likely (lia->data[cnt] != NULL))
+	if (__builtin_expect (lia->data[cnt] != NULL, 1))
 	  {
 	    /* _nl_intern_locale_data leaves us these fields to initialize.  */
 	    lia->data[cnt]->alloc = ld_archive;
@@ -515,7 +515,7 @@ _nl_archive_subfreeres (void)
 
       free (dead->name);
       for (category = 0; category < __LC_LAST; ++category)
-	if (category != LC_ALL && dead->data[category] != NULL)
+	if (category != LC_ALL)
 	  {
 	    /* _nl_unload_locale just does this free for the archive case.  */
 	    if (dead->data[category]->private.cleanup)
