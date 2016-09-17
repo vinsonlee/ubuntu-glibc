@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2007.
 
@@ -141,7 +141,7 @@ nscd_getserv_r (const char *crit, size_t critlen, const char *proto,
 				> recend, 0))
 	    goto out;
 
-#ifndef _STRING_ARCH_unaligned
+#if !_STRING_ARCH_unaligned
 	  /* The aliases_len array in the mapped database might very
 	     well be unaligned.  We will access it word-wise so on
 	     platforms which do not tolerate unaligned accesses we
@@ -189,7 +189,7 @@ nscd_getserv_r (const char *crit, size_t critlen, const char *proto,
   /* No value found so far.  */
   *result = NULL;
 
-  if (__builtin_expect (serv_resp.found == -1, 0))
+  if (__glibc_unlikely (serv_resp.found == -1))
     {
       /* The daemon does not cache this database.  */
       __nss_not_use_nscd_services = 1;
@@ -300,7 +300,7 @@ nscd_getserv_r (const char *crit, size_t critlen, const char *proto,
 	}
 
       /* See whether this would exceed the buffer capacity.  */
-      if (__builtin_expect (cp > buf + buflen, 0))
+      if (__glibc_unlikely (cp > buf + buflen))
 	{
 	  /* aliases_len array might contain garbage during nscd GC cycle,
 	     retry rather than fail in that case.  */

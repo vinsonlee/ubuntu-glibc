@@ -1,5 +1,5 @@
 /* Tests for fcntl.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
@@ -38,15 +38,25 @@ extern int do_test (int argc, char *argv[]);
 /* Name of the temporary files.  */
 static char *name;
 
+/* File descriptor to temporary file.  */
+static int fd;
+
 void
 do_prepare (int argc, char *argv[])
 {
    size_t name_len;
 
    name_len = strlen (test_dir);
-   name = malloc (name_len + sizeof ("/fcntlXXXXXX"));
+   name = xmalloc (name_len + sizeof ("/fcntlXXXXXX"));
    mempcpy (mempcpy (name, test_dir, name_len),
 	    "/fcntlXXXXXX", sizeof ("/fcntlXXXXXX"));
+  /* Create the temporary file.  */
+  fd = mkstemp (name);
+  if (fd == -1)
+    {
+      printf ("cannot open temporary file: %m\n");
+      exit (1);
+    }
    add_temp_file (name);
 }
 
@@ -54,20 +64,12 @@ do_prepare (int argc, char *argv[])
 int
 do_test (int argc, char *argv[])
 {
-  int fd;
   int fd2;
   int fd3;
   struct stat64 st;
   int val;
   int result = 0;
 
-  /* Create the temporary file.  */
-  fd = mkstemp (name);
-  if (fd == -1)
-    {
-      printf ("cannot open temporary file: %m\n");
-      return 1;
-    }
   if (fstat64 (fd, &st) != 0)
     {
       printf ("cannot stat test file: %m\n");

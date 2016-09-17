@@ -1,5 +1,5 @@
 /* Multiple versions of finite.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,10 +23,13 @@
 
 extern __typeof (__finite) __finite_ppc64 attribute_hidden;
 extern __typeof (__finite) __finite_power7 attribute_hidden;
+extern __typeof (__finite) __finite_power8 attribute_hidden;
 
 libc_ifunc (__finite,
-	    (hwcap & PPC_FEATURE_ARCH_2_06)
-	    ? __finite_power7
+	    (hwcap2 & PPC_FEATURE2_ARCH_2_07)
+	    ? __finite_power8 :
+	      (hwcap & PPC_FEATURE_ARCH_2_06)
+	      ? __finite_power7
             : __finite_ppc64);
 
 weak_alias (__finite, finite)
@@ -36,7 +39,7 @@ strong_alias (__finite, __finitel)
 weak_alias (__finite, finitel)
 #endif
 
-#ifdef IS_IN_libm
+#if IS_IN (libm)
 # if LONG_DOUBLE_COMPAT (libm, GLIBC_2_0)
 compat_symbol (libm, finite, finitel, GLIBC_2_0);
 # endif

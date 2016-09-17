@@ -1,5 +1,5 @@
 /* strcat version that uses fast strcpy/strlen.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,13 +18,16 @@
 
 #include <string.h>
 
-#undef strcat
+#ifndef STRCAT
+# undef strcat
+# define STRCAT  strcat
+#endif
 
 /* Append SRC on the end of DEST.  */
 char *
-strcat (char *dest, const char *src)
+STRCAT(char *dest, const char *src)
 {
   strcpy (dest + strlen (dest), src);
   return dest;
 }
-libc_hidden_builtin_def (strcat)
+libc_hidden_builtin_def (STRCAT)

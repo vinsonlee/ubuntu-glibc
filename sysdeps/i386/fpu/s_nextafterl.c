@@ -26,6 +26,7 @@ static char rcsid[] = "$NetBSD: $";
  *   Special cases:
  */
 
+#include <errno.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -85,7 +86,7 @@ long double __nextafterl(long double x, long double y)
 	    if(esy>=0||(esx>esy||((esx==esy)&&(hx>hy||((hx==hy)&&(lx>ly)))))){
 	      /* x < y, x -= ulp */
 		if(lx==0) {
-		    if (hx <= 0x80000000) {
+		    if (hx <= 0x80000000 && esx != 0xffff8000) {
 			esx -= 1;
 			hx = hx - 1;
 			if ((esx&0x7fff) > 0)
@@ -106,10 +107,15 @@ long double __nextafterl(long double x, long double y)
 	    }
 	}
 	esy = esx&0x7fff;
-	if(esy==0x7fff) return x+x;	/* overflow  */
+	if(esy==0x7fff) {
+	    long double u = x + x;	/* overflow  */
+	    math_force_eval (u);
+	    __set_errno (ERANGE);
+	}
 	if(esy==0) {
 	    long double u = x*x;		/* underflow */
 	    math_force_eval (u);		/* raise underflow flag */
+	    __set_errno (ERANGE);
 	}
 	SET_LDOUBLE_WORDS(x,esx,hx,lx);
 	return x;

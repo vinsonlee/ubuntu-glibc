@@ -1,5 +1,5 @@
 /* Run-time dynamic linker data structures for loaded ELF shared objects.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,13 +18,11 @@
 
 #ifndef	_LDSODEFS_H
 
-#include <kernel-features.h>
+/* We have the auxiliary vector.  */
+#define HAVE_AUX_VECTOR
 
 /* Get the real definitions.  */
 #include_next <ldsodefs.h>
-
-/* We have the auxiliary vector.  */
-#define HAVE_AUX_VECTOR
 
 /* We can assume that the kernel always provides the AT_UID, AT_EUID,
    AT_GID, and AT_EGID values in the auxiliary vector from 2.4.0 or so on.  */

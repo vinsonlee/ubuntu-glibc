@@ -1,5 +1,5 @@
 /* Test compilation of tgmath macros.
-   Copyright (C) 2007-2014 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2007.
 
@@ -334,8 +334,8 @@ test (const int Vint4, const long long int Vllong4)
   return result;
 }
 
-int
-main (void)
+static int
+do_test (void)
 {
   return test (vint1, vllong1);
 }
@@ -365,6 +365,9 @@ main (void)
 #define C Tcldouble
 #include "test-tgmath2.c"
 #endif
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"
 
 #else
 

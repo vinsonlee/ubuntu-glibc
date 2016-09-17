@@ -1,5 +1,5 @@
 /* General definitions for localedef(1).
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -112,7 +112,6 @@ struct localedef_t
 /* Global variables of the localedef program.  */
 extern int verbose;
 extern int be_quiet;
-extern int oldstyle_tables;
 extern const char *repertoire_global;
 extern int max_locarchive_open_retry;
 extern bool no_archive;

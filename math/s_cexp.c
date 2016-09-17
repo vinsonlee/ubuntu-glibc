@@ -1,5 +1,5 @@
 /* Return value of complex exponential function for double complex value.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -30,16 +30,16 @@ __cexp (__complex__ double x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (__builtin_expect (rcls >= FP_ZERO, 1))
+  if (__glibc_likely (rcls >= FP_ZERO))
     {
       /* Real part is finite.  */
-      if (__builtin_expect (icls >= FP_ZERO, 1))
+      if (__glibc_likely (icls >= FP_ZERO))
 	{
 	  /* Imaginary part is finite.  */
 	  const int t = (int) ((DBL_MAX_EXP - 1) * M_LN2);
 	  double sinix, cosix;
 
-	  if (__builtin_expect (icls != FP_SUBNORMAL, 1))
+	  if (__glibc_likely (fabs (__imag__ x) > DBL_MIN))
 	    {
 	      __sincos (__imag__ x, &sinix, &cosix);
 	    }
@@ -74,18 +74,7 @@ __cexp (__complex__ double x)
 	      __real__ retval = exp_val * cosix;
 	      __imag__ retval = exp_val * sinix;
 	    }
-	  if (fabs (__real__ retval) < DBL_MIN)
-	    {
-	      volatile double force_underflow
-		= __real__ retval * __real__ retval;
-	      (void) force_underflow;
-	    }
-	  if (fabs (__imag__ retval) < DBL_MIN)
-	    {
-	      volatile double force_underflow
-		= __imag__ retval * __imag__ retval;
-	      (void) force_underflow;
-	    }
+	  math_check_force_underflow_complex (retval);
 	}
       else
 	{
@@ -97,10 +86,10 @@ __cexp (__complex__ double x)
 	  feraiseexcept (FE_INVALID);
 	}
     }
-  else if (__builtin_expect (rcls == FP_INFINITE, 1))
+  else if (__glibc_likely (rcls == FP_INFINITE))
     {
       /* Real part is infinite.  */
-      if (__builtin_expect (icls >= FP_ZERO, 1))
+      if (__glibc_likely (icls >= FP_ZERO))
 	{
 	  /* Imaginary part is finite.  */
 	  double value = signbit (__real__ x) ? 0.0 : HUGE_VAL;
@@ -115,7 +104,7 @@ __cexp (__complex__ double x)
 	    {
 	      double sinix, cosix;
 
-	      if (__builtin_expect (icls != FP_SUBNORMAL, 1))
+	      if (__glibc_likely (fabs (__imag__ x) > DBL_MIN))
 		{
 		  __sincos (__imag__ x, &sinix, &cosix);
 		}

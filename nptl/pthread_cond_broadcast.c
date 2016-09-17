@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Martin Schwidefsky <schwidefsky@de.ibm.com>, 2003.
 
@@ -29,8 +29,7 @@
 
 
 int
-__pthread_cond_broadcast (cond)
-     pthread_cond_t *cond;
+__pthread_cond_broadcast (pthread_cond_t *cond)
 {
   LIBC_PROBE (cond_broadcast, 1, cond);
 
@@ -81,6 +80,7 @@ __pthread_cond_broadcast (cond)
 
 wake_all:
       lll_futex_wake (&cond->__data.__futex, INT_MAX, pshared);
+      return 0;
     }
 
   /* We are done.  */

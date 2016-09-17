@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2014 Free Software Foundation, Inc.
+# Copyright (C) 1991-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -83,11 +83,7 @@ common-generated += dummy.o dummy.c
 
 # This makes all the auxiliary and test programs.
 
-.PHONY: others tests bench
-ifeq ($(multi-arch),no)
-tests := $(filter-out $(tests-ifunc), $(tests))
-xtests := $(filter-out $(xtests-ifunc), $(xtests))
-endif
+.PHONY: others tests bench bench-build
 
 ifeq ($(build-programs),yes)
 others: $(addprefix $(objpfx),$(others) $(sysdep-others) $(extra-objs))
@@ -95,12 +91,23 @@ else
 others: $(addprefix $(objpfx),$(extra-objs))
 endif
 ifeq ($(run-built-tests),no)
-tests: $(addprefix $(objpfx),$(tests) $(test-srcs))
-xtests: tests
+tests: $(addprefix $(objpfx),$(tests) $(test-srcs)) $(tests-special)
+xtests: tests $(xtests-special)
 else
-tests: $(tests:%=$(objpfx)%.out)
-xtests: tests $(xtests:%=$(objpfx)%.out)
+tests: $(tests:%=$(objpfx)%.out) $(tests-special)
+xtests: tests $(xtests:%=$(objpfx)%.out) $(xtests-special)
 endif
+
+tests-special-notdir = $(patsubst $(objpfx)%, %, $(tests-special))
+xtests-special-notdir = $(patsubst $(objpfx)%, %, $(xtests-special))
+tests:
+	$(..)scripts/merge-test-results.sh -s $(objpfx) $(subdir) \
+	  $(sort $(tests) $(tests-special-notdir:.out=)) \
+	  > $(objpfx)subdir-tests.sum
+xtests:
+	$(..)scripts/merge-test-results.sh -s $(objpfx) $(subdir) \
+	  $(sort $(xtests) $(xtests-special-notdir:.out=)) \
+	  > $(objpfx)subdir-xtests.sum
 
 ifeq ($(build-programs),yes)
 binaries-all-notests = $(others) $(sysdep-others)
@@ -179,13 +186,29 @@ ifneq "$(strip $(tests) $(xtests) $(test-srcs))" ""
 # These are the implicit rules for making test outputs
 # from the test programs and whatever input files are present.
 
-make-test-out = $(test-wrapper-env) \
-		GCONV_PATH=$(common-objpfx)iconvdata LC_ALL=C \
-		$($*-ENV) $(host-test-program-cmd) $($*-ARGS)
+define make-test-out
+$(if $($*-ENV-only),$(test-wrapper-env-only) $($*-ENV-only),\
+     $(test-wrapper-env) $(run-program-env) $($*-ENV)) \
+$(host-test-program-cmd) $($*-ARGS)
+endef
 $(objpfx)%.out: %.input $(objpfx)%
-	$(make-test-out) > $@ < $(word 1,$^)
+	$(make-test-out) > $@ < $(word 1,$^); \
+	$(evaluate-test)
 $(objpfx)%.out: /dev/null $(objpfx)%	# Make it 2nd arg for canned sequence.
-	$(make-test-out) > $@
+	$(make-test-out) > $@; \
+	$(evaluate-test)
+
+# tests-unsupported lists tests that we will not try to build at all in
+# this configuration.  Note this runs every time because it does not
+# actually create its target.  The dependency on Makefile is meant to
+# ensure that it runs after a Makefile change to add a test to the list
+# when it previously ran and produced a .out file (probably for a failure).
+ifneq "$(strip $(tests-unsupported))" ""
+$(tests-unsupported:%=$(objpfx)%.out): $(objpfx)%.out: Makefile
+	@rm -f $@
+	$(..)scripts/evaluate-test.sh $(patsubst $(common-objpfx)%.out,%,$@) \
+				      77 false false > $(@:.out=.test-result)
+endif
 
 endif	# tests
 

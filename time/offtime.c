@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,10 +26,7 @@
    and store year, yday, mon, mday, wday, hour, min, sec into *TP.
    Return nonzero if successful.  */
 int
-__offtime (t, offset, tp)
-     const time_t *t;
-     long int offset;
-     struct tm *tp;
+__offtime (const time_t *t, long int offset, struct tm *tp)
 {
   time_t days, rem, y;
   const unsigned short int *ip;

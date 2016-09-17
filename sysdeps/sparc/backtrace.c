@@ -1,5 +1,5 @@
 /* Return backtrace of current program state.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David S. Miller <davem@davemloft.net>
 
@@ -108,7 +108,7 @@ __backtrace (void **array, int size)
   bool use_unwinder;
   int count;
 
-  if (!size)
+  if (size <= 0)
     return 0;
 
   use_unwinder = true;

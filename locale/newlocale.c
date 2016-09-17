@@ -1,5 +1,5 @@
 /* Return a reference to locale information record.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -18,7 +18,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <argz.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <errno.h>
 #include <locale.h>
 #include <stdlib.h>

@@ -89,11 +89,6 @@
  * SOFTWARE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "$BINDId: res_debug.c,v 8.34 2000/02/29 05:30:55 vixie Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -307,11 +302,8 @@ p_cdname(const u_char *cp, const u_char *msg, FILE *file) {
    length supplied).  */
 
 const u_char *
-p_fqnname(cp, msg, msglen, name, namelen)
-	const u_char *cp, *msg;
-	int msglen;
-	char *name;
-	int namelen;
+p_fqnname (const u_char *cp, const u_char *msg, int msglen, char *name,
+	   int namelen)
 {
 	int n, newlen;
 
@@ -790,9 +782,7 @@ latlon2ul (const char **latlonstrptr, int *which)
 /* converts a zone file representation in a string to an RDATA on-the-wire
  * representation. */
 int
-loc_aton(ascii, binary)
-	const char *ascii;
-	u_char *binary;
+loc_aton (const char *ascii, u_char *binary)
 {
 	const char *cp, *maxcp;
 	u_char *bcp;
@@ -901,9 +891,7 @@ loc_aton(ascii, binary)
 
 /* takes an on-the-wire LOC RR and formats it in a human readable format. */
 const char *
-loc_ntoa(binary, ascii)
-	const u_char *binary;
-	char *ascii;
+loc_ntoa (const u_char *binary, char *ascii)
 {
 	static const char error[] = "?";
 	static char tmpbuf[sizeof
@@ -1047,13 +1035,8 @@ p_secstodate (u_long secs) {
 	time_t clock = secs;
 	struct tm *time;
 
-#ifdef HAVE_TIME_R
 	struct tm timebuf;
-
-	time = gmtime_r(&clock, &timebuf);
-#else
-	time = gmtime(&clock);
-#endif
+	time = __gmtime_r(&clock, &timebuf);
 	time->tm_year += 1900;
 	time->tm_mon += 1;
 	sprintf(output, "%04d%02d%02d%02d%02d%02d",

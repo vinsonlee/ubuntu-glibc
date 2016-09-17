@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2014 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2016 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -50,8 +50,8 @@
 #endif
 
 #ifndef NO__CONST
-const mp_no mpone = { 1, { 1.0, 1.0 } };
-const mp_no mptwo = { 1, { 1.0, 2.0 } };
+const mp_no __mpone = { 1, { 1.0, 1.0 } };
+const mp_no __mptwo = { 1, { 1.0, 2.0 } };
 #endif
 
 #ifndef NO___ACR
@@ -119,7 +119,8 @@ __cpy (const mp_no *x, mp_no *y, int p)
 
 #ifndef NO___MP_DBL
 /* Convert a multiple precision number *X into a double precision
-   number *Y, normalized case  (|x| >= 2**(-1022))).  */
+   number *Y, normalized case (|x| >= 2**(-1022))).  X has precision
+   P, which is positive.  */
 static void
 norm (const mp_no *x, double *y, int p)
 {
@@ -135,7 +136,7 @@ norm (const mp_no *x, double *y, int p)
 	c = X[1] + R * X[2];
       else if (p == 3)
 	c = X[1] + R * (X[2] + R * X[3]);
-      else if (p == 4)
+      else /* p == 4.  */
 	c = (X[1] + R * X[2]) + R * R * (X[3] + R * X[4]);
     }
   else
@@ -877,7 +878,7 @@ __inv (const mp_no *x, mp_no *y, int p)
     {
       __cpy (y, &w, p);
       __mul (x, &w, y, p);
-      __sub (&mptwo, y, &z, p);
+      __sub (&__mptwo, y, &z, p);
       __mul (&w, &z, y, p);
     }
 }

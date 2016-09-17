@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -30,9 +30,7 @@
 
 
 int
-pthread_getattr_np (thread_id, attr)
-     pthread_t thread_id;
-     pthread_attr_t *attr;
+pthread_getattr_np (pthread_t thread_id, pthread_attr_t *attr)
 {
   struct pthread *thread = (struct pthread *) thread_id;
   struct pthread_attr *iattr = (struct pthread_attr *) attr;
@@ -57,10 +55,14 @@ pthread_getattr_np (thread_id, attr)
   iattr->guardsize = thread->reported_guardsize;
 
   /* The sizes are subject to alignment.  */
-  if (__builtin_expect (thread->stackblock != NULL, 1))
+  if (__glibc_likely (thread->stackblock != NULL))
     {
       iattr->stacksize = thread->stackblock_size;
+#if _STACK_GROWS_DOWN
       iattr->stackaddr = (char *) thread->stackblock + iattr->stacksize;
+#else
+      iattr->stackaddr = (char *) thread->stackblock;
+#endif
     }
   else
     {
@@ -105,7 +107,9 @@ pthread_getattr_np (thread_id, attr)
 
 	      char *line = NULL;
 	      size_t linelen = 0;
+#if _STACK_GROWS_DOWN
 	      uintptr_t last_to = 0;
+#endif
 
 	      while (! feof_unlocked (fp))
 		{
@@ -129,17 +133,24 @@ pthread_getattr_np (thread_id, attr)
 		         stack extension request.  */
 		      iattr->stacksize = (iattr->stacksize
 					  & -(intptr_t) GLRO(dl_pagesize));
-
+#if _STACK_GROWS_DOWN
 		      /* The limit might be too high.  */
 		      if ((size_t) iattr->stacksize
 			  > (size_t) iattr->stackaddr - last_to)
 			iattr->stacksize = (size_t) iattr->stackaddr - last_to;
-
+#else
+		      /* The limit might be too high.  */
+		      if ((size_t) iattr->stacksize
+			  > to - (size_t) iattr->stackaddr)
+			iattr->stacksize = to - (size_t) iattr->stackaddr;
+#endif
 		      /* We succeed and no need to look further.  */
 		      ret = 0;
 		      break;
 		    }
+#if _STACK_GROWS_DOWN
 		  last_to = to;
+#endif
 		}
 
 	      free (line);

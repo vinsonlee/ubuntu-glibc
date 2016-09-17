@@ -1,5 +1,5 @@
 /* bits/typesizes.h -- underlying types for *_t.  Hurd version.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -59,6 +59,7 @@
 #define __SSIZE_T_TYPE		__SWORD_TYPE
 #define __SYSCALL_SLONG_TYPE	__SLONGWORD_TYPE
 #define __SYSCALL_ULONG_TYPE	__ULONGWORD_TYPE
+#define __CPU_MASK_TYPE 	__ULONGWORD_TYPE
 
 /* Number of descriptors that can fit in an `fd_set'.  */
 #define	__FD_SETSIZE		256

@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,10 +25,7 @@
 /* Execute the file FD refers to, overlaying the running program image.
    ARGV and ENVP are passed to the new program, as for `execve'.  */
 int
-fexecve (fd, argv, envp)
-     int fd;
-     char *const argv[];
-     char *const envp[];
+fexecve (int fd, char *const argv[], char *const envp[])
 {
   if (fd < 0 || argv == NULL || envp == NULL)
     {

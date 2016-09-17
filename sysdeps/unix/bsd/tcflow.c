@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,9 +24,7 @@
 
 /* Suspend or restart transmission on FD.  */
 int
-tcflow (fd, action)
-     int fd;
-     int action;
+tcflow (int fd, int action)
 {
   switch (action)
     {

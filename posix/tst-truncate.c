@@ -1,5 +1,5 @@
 /* Tests for ftruncate and truncate.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2000.
 
@@ -59,7 +59,7 @@ do_prepare (int argc, char *argv[])
 #define FNAME2(s) "/" STRINGIFY(s) "XXXXXX"
 
    name_len = strlen (test_dir);
-   name = malloc (name_len + sizeof (FNAME));
+   name = xmalloc (name_len + sizeof (FNAME));
    mempcpy (mempcpy (name, test_dir, name_len), FNAME, sizeof (FNAME));
    add_temp_file (name);
 

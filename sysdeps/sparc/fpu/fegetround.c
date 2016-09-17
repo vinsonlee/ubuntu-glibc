@@ -1,5 +1,5 @@
 /* Return current rounding direction.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
 #include <fenv.h>
 
 int
-fegetround (void)
+__fegetround (void)
 {
   fenv_t tmp;
 
@@ -27,4 +27,6 @@ fegetround (void)
 
   return tmp & __FE_ROUND_MASK;
 }
-libm_hidden_def (fegetround)
+libm_hidden_def (__fegetround)
+weak_alias (__fegetround, fegetround)
+libm_hidden_weak (fegetround)

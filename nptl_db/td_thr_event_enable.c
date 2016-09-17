@@ -1,5 +1,5 @@
 /* Enable event process-wide.
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 1999.
 
@@ -21,9 +21,7 @@
 
 
 td_err_e
-td_thr_event_enable (th, onoff)
-     const td_thrhandle_t *th;
-     int onoff;
+td_thr_event_enable (const td_thrhandle_t *th, int onoff)
 {
   LOG ("td_thr_event_enable");
 

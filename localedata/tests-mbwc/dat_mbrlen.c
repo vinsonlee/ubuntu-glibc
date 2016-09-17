@@ -30,7 +30,7 @@ TST_MBRLEN tst_mbrlen_loc [] = {
 	},
 	{
 	  {
-	    { 0,		1,  0,		     },
+	    { 0,		1,  -2,		     },
 	    { 0,		1,  0,		     },
 	    { 0,		1,  1,		     },
 	  }
@@ -46,7 +46,7 @@ TST_MBRLEN tst_mbrlen_loc [] = {
 	},
 	{
 	  {
-	    { 0,		1,  0,		     },
+	    { 0,		1,  -2,		     },
 	    { 0,		1,  1,		     },
 	    { 0,		1,  1,		     },
 	  }
@@ -68,7 +68,7 @@ TST_MBRLEN tst_mbrlen_loc [] = {
 	},
 	{
 	  {
-	    { 0,		1,  0,		     },
+	    { 0,		1,  -2,		     },
 	    { 0,		1,  1,		     },
 	    { 0,		1,  1,		     },
 	  }
@@ -84,7 +84,7 @@ TST_MBRLEN tst_mbrlen_loc [] = {
 	},
 	{
 	  {
-	    { 0,		1,  0,		     },
+	    { 0,		1,  -2,		     },
 	    { EILSEQ,	1, -1,		     },
 	    { EILSEQ,	1, -1,		     },
 	  }
@@ -123,13 +123,9 @@ TST_MBRLEN tst_mbrlen_loc [] = {
 	{
 	  {
 	    { 0,		1, -2,		     },
-#ifdef SHOJI_IS_RIGHT
-	    { 0,		1, +2,		     },
-#else
 	    /* XXX ISO C explicitly says that the return value does not
 	       XXX reflect the bytes contained in the state.  */
 	    { 0,		1, +1,		     },
-#endif
 	    { 0,		1,  2,		     },
 	  }
 	}
@@ -144,7 +140,7 @@ TST_MBRLEN tst_mbrlen_loc [] = {
 	},
 	{
 	  {
-	    { 0,		1,  0,		     },
+	    { 0,		1,  -2,		     },
 	    { 0,		1, -2,		     },
 	    { EILSEQ,	1, -1,		     },
 	  }

@@ -1,5 +1,5 @@
 /* Dummy nop functions to elicit link-time warnings.
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 #include <sys/cdefs.h>
 
 static void
+__attribute__ ((used))
 nop (void)
 {
 }

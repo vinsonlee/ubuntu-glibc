@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@ jump (int val)
   longjmp (env, val);
 }
 
-int
-main (void)
+static int
+do_test (void)
 {
   int value;
 
@@ -115,3 +115,6 @@ main (void)
 
   return lose ? EXIT_FAILURE : EXIT_SUCCESS;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

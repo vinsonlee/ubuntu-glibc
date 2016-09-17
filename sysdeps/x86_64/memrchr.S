@@ -1,6 +1,6 @@
 /* fast SSE2 memrchr with 64 byte loop and pmaxub instruction using
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -21,7 +21,7 @@
 #include <sysdep.h>
 
 	.text
-ENTRY (memrchr)
+ENTRY (__memrchr)
 	movd	%rsi, %xmm1
 
 	sub	$16, %rdx
@@ -378,5 +378,5 @@ L(length_less16_part2_return):
 	lea	16(%rax, %rdi), %rax
 	ret
 
-END (memrchr)
-strong_alias (memrchr, __memrchr)
+END (__memrchr)
+weak_alias (__memrchr, memrchr)

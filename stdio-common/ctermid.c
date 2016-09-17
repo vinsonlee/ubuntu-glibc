@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,8 +23,7 @@
    If S is not NULL, the name is copied into it (it should be at
    least L_ctermid bytes long), otherwise a static buffer is used.  */
 char *
-ctermid (s)
-     char *s;
+ctermid (char *s)
 {
   __set_errno (ENOSYS);
   return NULL;

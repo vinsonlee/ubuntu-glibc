@@ -1,6 +1,6 @@
 /* mpn_lshift -- Shift left low level.
 
-Copyright (C) 1991-2014 Free Software Foundation, Inc.
+Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -31,17 +31,9 @@ along with the GNU MP Library; see the file COPYING.LIB.  If not, see
 */
 
 mp_limb_t
-#if __STDC__
 mpn_lshift (register mp_ptr wp,
 	    register mp_srcptr up, mp_size_t usize,
 	    register unsigned int cnt)
-#else
-mpn_lshift (wp, up, usize, cnt)
-     register mp_ptr wp;
-     register mp_srcptr up;
-     mp_size_t usize;
-     register unsigned int cnt;
-#endif
 {
   register mp_limb_t high_limb, low_limb;
   register unsigned sh_1, sh_2;

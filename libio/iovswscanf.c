@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -43,5 +43,6 @@ __vswscanf (const wchar_t *string, const wchar_t *format, _IO_va_list args)
   ret = _IO_vfwscanf ((_IO_FILE *) &sf._sbf, format, args, NULL);
   return ret;
 }
+libc_hidden_def (__vswscanf)
 ldbl_hidden_def (__vswscanf, vswscanf)
-ldbl_strong_alias (__vswscanf, vswscanf)
+ldbl_weak_alias (__vswscanf, vswscanf)

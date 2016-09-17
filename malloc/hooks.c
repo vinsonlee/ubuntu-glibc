@@ -1,5 +1,5 @@
 /* Malloc implementation for multiple threads without lock contention.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Wolfram Gloger <wg@malloc.de>, 2001.
 
@@ -88,11 +88,22 @@ __malloc_check_init (void)
    overruns.  The goal here is to avoid obscure crashes due to invalid
    usage, unlike in the MALLOC_DEBUG code. */
 
-#define MAGICBYTE(p) ((((size_t) p >> 3) ^ ((size_t) p >> 11)) & 0xFF)
+static unsigned char
+magicbyte (const void *p)
+{
+  unsigned char magic;
 
-/* Visualize the chunk as being partitioned into blocks of 256 bytes from the
-   highest address of the chunk, downwards.  The beginning of each block tells
-   us the size of the previous block, up to the actual size of the requested
+  magic = (((uintptr_t) p >> 3) ^ ((uintptr_t) p >> 11)) & 0xFF;
+  /* Do not return 1.  See the comment in mem2mem_check().  */
+  if (magic == 1)
+    ++magic;
+  return magic;
+}
+
+
+/* Visualize the chunk as being partitioned into blocks of 255 bytes from the
+   highest address of the chunk, downwards.  The end of each block tells
+   us the size of that block, up to the actual size of the requested
    memory.  Our magic byte is right at the end of the requested size, so we
    must reach it with this iteration, otherwise we have witnessed a memory
    corruption.  */
@@ -101,7 +112,7 @@ malloc_check_get_size (mchunkptr p)
 {
   size_t size;
   unsigned char c;
-  unsigned char magic = MAGICBYTE (p);
+  unsigned char magic = magicbyte (p);
 
   assert (using_malloc_checking == 1);
 
@@ -112,7 +123,8 @@ malloc_check_get_size (mchunkptr p)
       if (c <= 0 || size < (c + 2 * SIZE_SZ))
         {
           malloc_printerr (check_action, "malloc_check_get_size: memory corruption",
-                           chunk2mem (p));
+                           chunk2mem (p),
+			   chunk_is_mmapped (p) ? NULL : arena_for_chunk (p));
           return 0;
         }
     }
@@ -122,32 +134,36 @@ malloc_check_get_size (mchunkptr p)
 }
 
 /* Instrument a chunk with overrun detector byte(s) and convert it
-   into a user pointer with requested size sz. */
+   into a user pointer with requested size req_sz. */
 
 static void *
 internal_function
-mem2mem_check (void *ptr, size_t sz)
+mem2mem_check (void *ptr, size_t req_sz)
 {
   mchunkptr p;
   unsigned char *m_ptr = ptr;
-  size_t i;
+  size_t max_sz, block_sz, i;
+  unsigned char magic;
 
   if (!ptr)
     return ptr;
 
   p = mem2chunk (ptr);
-  for (i = chunksize (p) - (chunk_is_mmapped (p) ? 2 * SIZE_SZ + 1 : SIZE_SZ + 1);
-       i > sz;
-       i -= 0xFF)
+  magic = magicbyte (p);
+  max_sz = chunksize (p) - 2 * SIZE_SZ;
+  if (!chunk_is_mmapped (p))
+    max_sz += SIZE_SZ;
+  for (i = max_sz - 1; i > req_sz; i -= block_sz)
     {
-      if (i - sz < 0x100)
-        {
-          m_ptr[i] = (unsigned char) (i - sz);
-          break;
-        }
-      m_ptr[i] = 0xFF;
+      block_sz = MIN (i - req_sz, 0xff);
+      /* Don't allow the magic byte to appear in the chain of length bytes.
+         For the following to work, magicbyte cannot return 0x01.  */
+      if (block_sz == magic)
+        --block_sz;
+
+      m_ptr[i] = block_sz;
     }
-  m_ptr[sz] = MAGICBYTE (p);
+  m_ptr[req_sz] = magic;
   return (void *) m_ptr;
 }
 
@@ -166,11 +182,12 @@ mem2chunk_check (void *mem, unsigned char **magic_p)
     return NULL;
 
   p = mem2chunk (mem);
+  sz = chunksize (p);
+  magic = magicbyte (p);
   if (!chunk_is_mmapped (p))
     {
       /* Must be a chunk in conventional heap memory. */
       int contig = contiguous (&main_arena);
-      sz = chunksize (p);
       if ((contig &&
            ((char *) p < mp_.sbrk_base ||
             ((char *) p + sz) >= (mp_.sbrk_base + main_arena.system_mem))) ||
@@ -180,10 +197,9 @@ mem2chunk_check (void *mem, unsigned char **magic_p)
                                next_chunk (prev_chunk (p)) != p)))
         return NULL;
 
-      magic = MAGICBYTE (p);
       for (sz += SIZE_SZ - 1; (c = ((unsigned char *) p)[sz]) != magic; sz -= c)
         {
-          if (c <= 0 || sz < (c + 2 * SIZE_SZ))
+          if (c == 0 || sz < (c + 2 * SIZE_SZ))
             return NULL;
         }
     }
@@ -201,13 +217,12 @@ mem2chunk_check (void *mem, unsigned char **magic_p)
            offset < 0x2000) ||
           !chunk_is_mmapped (p) || (p->size & PREV_INUSE) ||
           ((((unsigned long) p - p->prev_size) & page_mask) != 0) ||
-          ((sz = chunksize (p)), ((p->prev_size + sz) & page_mask) != 0))
+          ((p->prev_size + sz) & page_mask) != 0)
         return NULL;
 
-      magic = MAGICBYTE (p);
       for (sz -= 1; (c = ((unsigned char *) p)[sz]) != magic; sz -= c)
         {
-          if (c <= 0 || sz < (c + 2 * SIZE_SZ))
+          if (c == 0 || sz < (c + 2 * SIZE_SZ))
             return NULL;
         }
     }
@@ -237,7 +252,8 @@ top_check (void)
         (char *) t + chunksize (t) == mp_.sbrk_base + main_arena.system_mem)))
     return 0;
 
-  malloc_printerr (check_action, "malloc: top chunk is corrupt", t);
+  malloc_printerr (check_action, "malloc: top chunk is corrupt", t,
+		   &main_arena);
 
   /* Try to set up a new top chunk. */
   brk = MORECORE (0);
@@ -295,7 +311,8 @@ free_check (void *mem, const void *caller)
     {
       (void) mutex_unlock (&main_arena.mutex);
 
-      malloc_printerr (check_action, "free(): invalid pointer", mem);
+      malloc_printerr (check_action, "free(): invalid pointer", mem,
+		       &main_arena);
       return;
     }
   if (chunk_is_mmapped (p))
@@ -333,7 +350,8 @@ realloc_check (void *oldmem, size_t bytes, const void *caller)
   (void) mutex_unlock (&main_arena.mutex);
   if (!oldp)
     {
-      malloc_printerr (check_action, "realloc(): invalid pointer", oldmem);
+      malloc_printerr (check_action, "realloc(): invalid pointer", oldmem,
+		       &main_arena);
       return malloc_check (bytes, NULL);
     }
   const INTERNAL_SIZE_T oldsize = chunksize (oldp);
@@ -447,7 +465,7 @@ memalign_check (size_t alignment, size_t bytes, const void *caller)
    then the hooks are reset to 0.  */
 
 #define MALLOC_STATE_MAGIC   0x444c4541l
-#define MALLOC_STATE_VERSION (0 * 0x100l + 4l) /* major*0x100 + minor */
+#define MALLOC_STATE_VERSION (0 * 0x100l + 5l) /* major*0x100 + minor */
 
 struct malloc_save_state
 {
@@ -462,7 +480,7 @@ struct malloc_save_state
   unsigned long mmap_threshold;
   int check_action;
   unsigned long max_sbrked_mem;
-  unsigned long max_total_mem;
+  unsigned long max_total_mem;	/* Always 0, for backwards compatibility.  */
   unsigned int n_mmaps;
   unsigned int max_n_mmaps;
   unsigned long mmapped_mem;
@@ -530,11 +548,7 @@ int
 __malloc_set_state (void *msptr)
 {
   struct malloc_save_state *ms = (struct malloc_save_state *) msptr;
-  size_t i;
-  mbinptr b;
 
-  disallow_malloc_check = 1;
-  ptmalloc_init ();
   if (ms->magic != MALLOC_STATE_MAGIC)
     return -1;
 
@@ -542,106 +556,60 @@ __malloc_set_state (void *msptr)
   if ((ms->version & ~0xffl) > (MALLOC_STATE_VERSION & ~0xffl))
     return -2;
 
-  (void) mutex_lock (&main_arena.mutex);
-  /* There are no fastchunks.  */
-  clear_fastchunks (&main_arena);
-  if (ms->version >= 4)
-    set_max_fast (ms->max_fast);
-  else
-    set_max_fast (64);  /* 64 used to be the value we always used.  */
-  for (i = 0; i < NFASTBINS; ++i)
-    fastbin (&main_arena, i) = 0;
-  for (i = 0; i < BINMAPSIZE; ++i)
-    main_arena.binmap[i] = 0;
-  top (&main_arena) = ms->av[2];
-  main_arena.last_remainder = 0;
-  for (i = 1; i < NBINS; i++)
-    {
-      b = bin_at (&main_arena, i);
-      if (ms->av[2 * i + 2] == 0)
-        {
-          assert (ms->av[2 * i + 3] == 0);
-          first (b) = last (b) = b;
-        }
-      else
-        {
-          if (ms->version >= 3 &&
-              (i < NSMALLBINS || (largebin_index (chunksize (ms->av[2 * i + 2])) == i &&
-                                  largebin_index (chunksize (ms->av[2 * i + 3])) == i)))
-            {
-              first (b) = ms->av[2 * i + 2];
-              last (b) = ms->av[2 * i + 3];
-              /* Make sure the links to the bins within the heap are correct.  */
-              first (b)->bk = b;
-              last (b)->fd = b;
-              /* Set bit in binblocks.  */
-              mark_bin (&main_arena, i);
-            }
-          else
-            {
-              /* Oops, index computation from chunksize must have changed.
-                 Link the whole list into unsorted_chunks.  */
-              first (b) = last (b) = b;
-              b = unsorted_chunks (&main_arena);
-              ms->av[2 * i + 2]->bk = b;
-              ms->av[2 * i + 3]->fd = b->fd;
-              b->fd->bk = ms->av[2 * i + 3];
-              b->fd = ms->av[2 * i + 2];
-            }
-        }
-    }
-  if (ms->version < 3)
-    {
-      /* Clear fd_nextsize and bk_nextsize fields.  */
-      b = unsorted_chunks (&main_arena)->fd;
-      while (b != unsorted_chunks (&main_arena))
-        {
-          if (!in_smallbin_range (chunksize (b)))
-            {
-              b->fd_nextsize = NULL;
-              b->bk_nextsize = NULL;
-            }
-          b = b->fd;
-        }
-    }
-  mp_.sbrk_base = ms->sbrk_base;
-  main_arena.system_mem = ms->sbrked_mem_bytes;
-  mp_.trim_threshold = ms->trim_threshold;
-  mp_.top_pad = ms->top_pad;
-  mp_.n_mmaps_max = ms->n_mmaps_max;
-  mp_.mmap_threshold = ms->mmap_threshold;
-  check_action = ms->check_action;
-  main_arena.max_system_mem = ms->max_sbrked_mem;
-  mp_.n_mmaps = ms->n_mmaps;
-  mp_.max_n_mmaps = ms->max_n_mmaps;
-  mp_.mmapped_mem = ms->mmapped_mem;
-  mp_.max_mmapped_mem = ms->max_mmapped_mem;
-  /* add version-dependent code here */
-  if (ms->version >= 1)
-    {
-      /* Check whether it is safe to enable malloc checking, or whether
-         it is necessary to disable it.  */
-      if (ms->using_malloc_checking && !using_malloc_checking &&
-          !disallow_malloc_check)
-        __malloc_check_init ();
-      else if (!ms->using_malloc_checking && using_malloc_checking)
-        {
-          __malloc_hook = NULL;
-          __free_hook = NULL;
-          __realloc_hook = NULL;
-          __memalign_hook = NULL;
-          using_malloc_checking = 0;
-        }
-    }
-  if (ms->version >= 4)
-    {
-      mp_.arena_test = ms->arena_test;
-      mp_.arena_max = ms->arena_max;
-      narenas = ms->narenas;
-    }
-  check_malloc_state (&main_arena);
+  /* We do not need to perform locking here because __malloc_set_state
+     must be called before the first call into the malloc subsytem
+     (usually via __malloc_initialize_hook).  pthread_create always
+     calls calloc and thus must be called only afterwards, so there
+     cannot be more than one thread when we reach this point.  */
 
-  (void) mutex_unlock (&main_arena.mutex);
+  /* Disable the malloc hooks (and malloc checking).  */
+  __malloc_hook = NULL;
+  __realloc_hook = NULL;
+  __free_hook = NULL;
+  __memalign_hook = NULL;
+  using_malloc_checking = 0;
+
+  /* Patch the dumped heap.  We no longer try to integrate into the
+     existing heap.  Instead, we mark the existing chunks as mmapped.
+     Together with the update to dumped_main_arena_start and
+     dumped_main_arena_end, realloc and free will recognize these
+     chunks as dumped fake mmapped chunks and never free them.  */
+
+  /* Find the chunk with the lowest address with the heap.  */
+  mchunkptr chunk = NULL;
+  {
+    size_t *candidate = (size_t *) ms->sbrk_base;
+    size_t *end = (size_t *) (ms->sbrk_base + ms->sbrked_mem_bytes);
+    while (candidate < end)
+      if (*candidate != 0)
+	{
+	  chunk = mem2chunk ((void *) (candidate + 1));
+	  break;
+	}
+      else
+	++candidate;
+  }
+  if (chunk == NULL)
+    return 0;
+
+  /* Iterate over the dumped heap and patch the chunks so that they
+     are treated as fake mmapped chunks.  */
+  mchunkptr top = ms->av[2];
+  while (chunk < top)
+    {
+      if (inuse (chunk))
+	{
+	  /* Mark chunk as mmapped, to trigger the fallback path.  */
+	  size_t size = chunksize (chunk);
+	  set_head (chunk, size | IS_MMAPPED);
+	}
+      chunk = next_chunk (chunk);
+    }
+
+  /* The dumped fake mmapped chunks all lie in this address range.  */
+  dumped_main_arena_start = (mchunkptr) ms->sbrk_base;
+  dumped_main_arena_end = top;
+
   return 0;
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,10 +23,7 @@
 
 /* Change the owner and group of the file referred to by FD.  */
 int
-__fchown (fd, owner, group)
-     int fd;
-     uid_t owner;
-     gid_t group;
+__fchown (int fd, uid_t owner, gid_t group)
 {
   error_t err;
 

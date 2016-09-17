@@ -1,6 +1,6 @@
 /* Test program for the wide character stream functions handling larger
    amounts of text.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>.
 
@@ -31,8 +31,8 @@
 #define SIZE 210000
 
 
-int
-main (void)
+static int
+do_test (void)
 {
   char name[] = "/tmp/widetext.out.XXXXXX";
   char mbbuf[SIZE];
@@ -291,7 +291,7 @@ main (void)
     {
       if (fgetws (wcp, &wc2buf[wcsize] - wcp + 1, fp) == NULL)
 	{
-	  printf ("%u: short read using fgetws (only %Zd of %Zd)\n",
+	  printf ("%u: short read using fgetws (only %td of %Zd)\n",
 		  __LINE__, wcp - wc2buf, wcsize);
 	  status = 1;
 	  break;
@@ -367,3 +367,6 @@ main (void)
 
   return status;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

@@ -1,5 +1,5 @@
 /* Load a shared object at runtime, relocate it, and run its initializer.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <sys/mman.h>		/* Check whether MAP_COPY is defined.  */
 #include <sys/param.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <ldsodefs.h>
 #include <caller.h>
 #include <sysdep-cancel.h>
@@ -147,7 +147,7 @@ add_to_global (struct link_map *new)
 	  ns->_ns_main_searchlist->r_list[new_nlist++] = map;
 
 	  /* We modify the global scope.  Report this.  */
-	  if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_SCOPES, 0))
+	  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_SCOPES))
 	    _dl_debug_printf ("\nadd %s [%lu] to global scope\n",
 			      map->l_name, map->l_ns);
 	}
@@ -211,18 +211,26 @@ dl_open_worker (void *a)
       struct link_map *l = _dl_find_dso_for_object ((ElfW(Addr)) caller_dlopen);
 
       if (l)
-        call_map = l;
+	call_map = l;
 
       if (args->nsid == __LM_ID_CALLER)
 	args->nsid = call_map->l_ns;
     }
 
-  assert (_dl_debug_initialize (0, args->nsid)->r_state == RT_CONSISTENT);
+  /* One might be tempted to assert that we are RT_CONSISTENT at this point, but that
+     may not be true if this is a recursive call to dlopen.  */
+  _dl_debug_initialize (0, args->nsid);
 
   /* Load the named object.  */
   struct link_map *new;
   args->map = new = _dl_map_object (call_map, file, lt_loaded, 0,
 				    mode | __RTLD_CALLMAP, args->nsid);
+
+  /* Mark the object as not deletable if the RTLD_NODELETE flags was passed.
+     Do this early so that we don't skip marking the object if it was
+     already loaded.  */
+  if (__glibc_unlikely (mode & RTLD_NODELETE))
+    new->l_flags_1 |= DF_1_NODELETE;
 
   /* If the pointer returned is NULL this means the RTLD_NOLOAD flag is
      set and the object is not already loaded.  */
@@ -232,7 +240,7 @@ dl_open_worker (void *a)
       return;
     }
 
-  if (__builtin_expect (mode & __RTLD_SPROF, 0))
+  if (__glibc_unlikely (mode & __RTLD_SPROF))
     /* This happens only if we load a DSO for 'sprof'.  */
     return;
 
@@ -240,10 +248,10 @@ dl_open_worker (void *a)
   ++new->l_direct_opencount;
 
   /* It was already open.  */
-  if (__builtin_expect (new->l_searchlist.r_list != NULL, 0))
+  if (__glibc_unlikely (new->l_searchlist.r_list != NULL))
     {
       /* Let the user know about the opencount.  */
-      if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_FILES, 0))
+      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES))
 	_dl_debug_printf ("opening file=%s [%lu]; direct_opencount=%u\n\n",
 			  new->l_name, new->l_ns, new->l_direct_opencount);
 
@@ -269,7 +277,7 @@ dl_open_worker (void *a)
 
 #ifdef SHARED
   /* Auditing checkpoint: we have added all objects.  */
-  if (__builtin_expect (GLRO(dl_naudit) > 0, 0))
+  if (__glibc_unlikely (GLRO(dl_naudit) > 0))
     {
       struct link_map *head = GL(dl_ns)[new->l_ns]._ns_loaded;
       /* Do not call the functions for any auditing object.  */
@@ -294,7 +302,7 @@ dl_open_worker (void *a)
   LIBC_PROBE (map_complete, 3, args->nsid, r, new);
 
   /* Print scope information.  */
-  if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_SCOPES, 0))
+  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_SCOPES))
     _dl_show_scope (new, 0);
 
   /* Only do lazy relocation if `LD_BIND_NOW' is not set.  */
@@ -344,7 +352,7 @@ dl_open_worker (void *a)
 	      if (runp != NULL)
 		/* Look through the dependencies of the object.  */
 		while (*runp != NULL)
-		  if (__builtin_expect (*runp++ == thisp, 0))
+		  if (__glibc_unlikely (*runp++ == thisp))
 		    {
 		      /* Move the current object to the back past the last
 			 object with it as the dependency.  */
@@ -391,7 +399,7 @@ dl_open_worker (void *a)
 	}
 
 #ifdef SHARED
-      if (__builtin_expect (GLRO(dl_profile) != NULL, 0))
+      if (__glibc_unlikely (GLRO(dl_profile) != NULL))
 	{
 	  /* If this here is the shared object which we want to profile
 	     make sure the profile is started.  We can find out whether
@@ -444,7 +452,7 @@ dl_open_worker (void *a)
 	    /* Avoid duplicates.  */
 	    continue;
 
-	  if (__builtin_expect (cnt + 1 >= imap->l_scope_max, 0))
+	  if (__glibc_unlikely (cnt + 1 >= imap->l_scope_max))
 	    {
 	      /* The 'r_scope' array is too small.  Allocate a new one
 		 dynamically.  */
@@ -511,7 +519,7 @@ dl_open_worker (void *a)
 	}
 
       /* Print scope information.  */
-      if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_SCOPES, 0))
+      if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_SCOPES))
 	_dl_show_scope (imap, from_scope);
     }
 
@@ -531,17 +539,7 @@ TLS generation counter wrapped!  Please report this."));
 	  && imap->l_tls_blocksize > 0)
 	{
 	  /* For static TLS we have to allocate the memory here and
-	     now.  This includes allocating memory in the DTV.  But we
-	     cannot change any DTV other than our own.  So, if we
-	     cannot guarantee that there is room in the DTV we don't
-	     even try it and fail the load.
-
-	     XXX We could track the minimum DTV slots allocated in
-	     all threads.  */
-	  if (! RTLD_SINGLE_THREAD_P && imap->l_tls_modid > DTV_SURPLUS)
-	    _dl_signal_error (0, "dlopen", NULL, N_("\
-cannot load any more object with static TLS"));
-
+	     now, but we can delay updating the DTV.  */
 	  imap->l_need_tls_init = 0;
 #ifdef SHARED
 	  /* Update the slot information data for at least the
@@ -572,11 +570,6 @@ cannot load any more object with static TLS"));
       /* It failed.  */
       return;
 
-  /* Mark the object as not deletable if the RTLD_NODELETE flags was
-     passed.  */
-  if (__builtin_expect (mode & RTLD_NODELETE, 0))
-    new->l_flags_1 |= DF_1_NODELETE;
-
 #ifndef SHARED
   /* We must be the static _dl_open in libc.a.  A static program that
      has loaded a dynamic object now has competition.  */
@@ -584,7 +577,7 @@ cannot load any more object with static TLS"));
 #endif
 
   /* Let the user know about the opencount.  */
-  if (__builtin_expect (GLRO(dl_debug_mask) & DL_DEBUG_FILES, 0))
+  if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_FILES))
     _dl_debug_printf ("opening file=%s [%lu]; direct_opencount=%u\n\n",
 		      new->l_name, new->l_ns, new->l_direct_opencount);
 }
@@ -601,14 +594,14 @@ _dl_open (const char *file, int mode, const void *caller_dlopen, Lmid_t nsid,
   /* Make sure we are alone.  */
   __rtld_lock_lock_recursive (GL(dl_load_lock));
 
-  if (__builtin_expect (nsid == LM_ID_NEWLM, 0))
+  if (__glibc_unlikely (nsid == LM_ID_NEWLM))
     {
       /* Find a new namespace.  */
       for (nsid = 1; DL_NNS > 1 && nsid < GL(dl_nns); ++nsid)
 	if (GL(dl_ns)[nsid]._ns_loaded == NULL)
 	  break;
 
-      if (__builtin_expect (nsid == DL_NNS, 0))
+      if (__glibc_unlikely (nsid == DL_NNS))
 	{
 	  /* No more namespace available.  */
 	  __rtld_lock_unlock_recursive (GL(dl_load_lock));
@@ -627,8 +620,14 @@ no more namespaces available for dlmopen()"));
   /* Never allow loading a DSO in a namespace which is empty.  Such
      direct placements is only causing problems.  Also don't allow
      loading into a namespace used for auditing.  */
-  else if (__builtin_expect (nsid != LM_ID_BASE && nsid != __LM_ID_CALLER, 0)
-	   && (GL(dl_ns)[nsid]._ns_nloaded == 0
+  else if (__glibc_unlikely (nsid != LM_ID_BASE && nsid != __LM_ID_CALLER)
+	   && (__glibc_unlikely (nsid < 0 || nsid >= GL(dl_nns))
+	       /* This prevents the [NSID] index expressions from being
+		  evaluated, so the compiler won't think that we are
+		  accessing an invalid index here in the !SHARED case where
+		  DL_NNS is 1 and so any NSID != 0 is invalid.  */
+	       || DL_NNS == 1
+	       || GL(dl_ns)[nsid]._ns_nloaded == 0
 	       || GL(dl_ns)[nsid]._ns_loaded->l_auditing))
     _dl_signal_error (EINVAL, file, NULL,
 		      N_("invalid target namespace in dlmopen()"));
@@ -656,7 +655,7 @@ no more namespaces available for dlmopen()"));
 #endif
 
   /* See if an error occurred during loading.  */
-  if (__builtin_expect (errstring != NULL, 0))
+  if (__glibc_unlikely (errstring != NULL))
     {
       /* Remove the object from memory.  It may be in an inconsistent
 	 state if relocation failed, for example.  */
@@ -672,7 +671,7 @@ no more namespaces available for dlmopen()"));
 	  if ((mode & __RTLD_AUDIT) == 0)
 	    GL(dl_tls_dtv_gaps) = true;
 
-	  _dl_close_worker (args.map);
+	  _dl_close_worker (args.map, true);
 	}
 
       assert (_dl_debug_initialize (0, args.nsid)->r_state == RT_CONSISTENT);
@@ -737,7 +736,7 @@ _dl_show_scope (struct link_map *l, int from)
   _dl_debug_printf ("\n");
 }
 
-#ifdef IS_IN_rtld
+#if IS_IN (rtld)
 /* Return non-zero if ADDR lies within one of L's segments.  */
 int
 internal_function

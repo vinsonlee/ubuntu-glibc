@@ -1,5 +1,5 @@
 /* ix87 specific implementation of arcsinh.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -52,6 +52,7 @@ ENTRY(__ieee754_acoshf)
 
 	// 1 <= x <= 2 => y = log1p(x-1+sqrt(2*(x-1)+(x-1)^2))
 	fsubl	MO(one)			// x-1 : log(2)
+	fabs				// acosh(1) is +0 in all rounding modes
 	fld	%st			// x-1 : x-1 : log(2)
 	fmul	%st(1)			// (x-1)^2 : x-1 : log(2)
 	fadd	%st(1)			// x-1+(x-1)^2 : x-1 : log(2)
@@ -90,9 +91,10 @@ ENTRY(__ieee754_acoshf)
 	fyl2x				// log(2*x+1/(x+sqrt(x^2-1)))
 	ret
 
-	// x < 1 => NaN
+	// x < 1 (or -NaN) => NaN
 	.align ALIGNARG(4)
-5:	fldz
+5:	flds	4(%esp)
+	fsub	%st
 	fdiv	%st, %st(0)
 	ret
 END(__ieee754_acoshf)

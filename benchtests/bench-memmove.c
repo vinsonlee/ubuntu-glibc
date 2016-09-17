@@ -1,5 +1,5 @@
 /* Measure memmove functions.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -70,6 +70,7 @@ do_one_test (impl_t *impl, char *dst, char *src, const char *orig_src,
   size_t i, iters = INNER_LOOP_ITERS;
   timing_t start, stop, cur;
 
+  /* This also clears the destination buffer set by the previous run.  */
   memcpy (src, orig_src, len);
 #ifdef TEST_BCOPY
   CALL (impl, src, dst, len);
@@ -174,6 +175,14 @@ test_main (void)
       do_test (32, 0, 16 * i);
       do_test (0, i, 16 * i);
       do_test (i, 0, 16 * i);
+    }
+
+  for (i = 32; i < 64; ++i)
+    {
+      do_test (0, 0, 32 * i);
+      do_test (i, 0, 32 * i);
+      do_test (0, i, 32 * i);
+      do_test (i, i, 32 * i);
     }
 
   return ret;

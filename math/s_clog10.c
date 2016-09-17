@@ -1,5 +1,5 @@
 /* Compute complex base 10 logarithm.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -25,6 +25,9 @@
 /* log_10 (2).  */
 #define M_LOG10_2 0.3010299956639811952137388947244930267682
 
+/* pi * log10 (e).  */
+#define M_PI_LOG10E 1.364376353841841347485783625431355770210
+
 __complex__ double
 __clog10 (__complex__ double x)
 {
@@ -32,15 +35,15 @@ __clog10 (__complex__ double x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (__builtin_expect (rcls == FP_ZERO && icls == FP_ZERO, 0))
+  if (__glibc_unlikely (rcls == FP_ZERO && icls == FP_ZERO))
     {
       /* Real and imaginary part are 0.0.  */
-      __imag__ result = signbit (__real__ x) ? M_PI : 0.0;
+      __imag__ result = signbit (__real__ x) ? M_PI_LOG10E : 0.0;
       __imag__ result = __copysign (__imag__ result, __imag__ x);
       /* Yes, the following line raises an exception.  */
       __real__ result = -1.0 / fabs (__real__ x);
     }
-  else if (__builtin_expect (rcls != FP_NAN && icls != FP_NAN, 1))
+  else if (__glibc_likely (rcls != FP_NAN && icls != FP_NAN))
     {
       /* Neither real nor imaginary part is NaN.  */
       double absx = fabs (__real__ x), absy = fabs (__imag__ x);
@@ -68,18 +71,8 @@ __clog10 (__complex__ double x)
 
       if (absx == 1.0 && scale == 0)
 	{
-	  double absy2 = absy * absy;
-	  if (absy2 <= DBL_MIN * 2.0 * M_LN10)
-	    {
-#if __FLT_EVAL_METHOD__ == 0
-	      __real__ result = (absy2 / 2.0 - absy2 * absy2 / 4.0) * M_LOG10E;
-#else
-	      volatile double force_underflow = absy2 * absy2 / 4.0;
-	      __real__ result = (absy2 / 2.0 - force_underflow) * M_LOG10E;
-#endif
-	    }
-	  else
-	    __real__ result = __log1p (absy2) * (M_LOG10E / 2.0);
+	  __real__ result = __log1p (absy * absy) * (M_LOG10E / 2.0);
+	  math_check_force_underflow_nonneg (__real__ result);
 	}
       else if (absx > 1.0 && absx < 2.0 && absy < 1.0 && scale == 0)
 	{
@@ -89,14 +82,17 @@ __clog10 (__complex__ double x)
 	  __real__ result = __log1p (d2m1) * (M_LOG10E / 2.0);
 	}
       else if (absx < 1.0
-	       && absx >= 0.75
+	       && absx >= 0.5
 	       && absy < DBL_EPSILON / 2.0
 	       && scale == 0)
 	{
 	  double d2m1 = (absx - 1.0) * (absx + 1.0);
 	  __real__ result = __log1p (d2m1) * (M_LOG10E / 2.0);
 	}
-      else if (absx < 1.0 && (absx >= 0.75 || absy >= 0.5) && scale == 0)
+      else if (absx < 1.0
+	       && absx >= 0.5
+	       && scale == 0
+	       && absx * absx + absy * absy >= 0.5)
 	{
 	  double d2m1 = __x2y2m1 (absx, absy);
 	  __real__ result = __log1p (d2m1) * (M_LOG10E / 2.0);

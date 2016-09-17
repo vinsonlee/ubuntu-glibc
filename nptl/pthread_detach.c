@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -22,8 +22,7 @@
 
 
 int
-pthread_detach (th)
-     pthread_t th;
+pthread_detach (pthread_t th)
 {
   struct pthread *pd = (struct pthread *) th;
 

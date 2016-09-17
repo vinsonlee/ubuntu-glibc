@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,10 +28,7 @@
    "XXXXXX"; they are replaced with a string that makes the filename
    unique.  Then open the file and return a fd. */
 int
-mkostemps (template, suffixlen, flags)
-     char *template;
-     int suffixlen;
-     int flags;
+mkostemps (char *template, int suffixlen, int flags)
 {
   if (suffixlen < 0)
     {

@@ -1,5 +1,5 @@
 /* List dynamic shared objects linked into given process.
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -34,6 +34,8 @@
 #include <unistd.h>
 #include <sys/ptrace.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <scratch_buffer.h>
 
 #include <ldsodefs.h>
 #include <version.h>
@@ -82,6 +84,7 @@ static char *exe;
 
 /* Local functions.  */
 static int get_process_info (int dfd, long int pid);
+static void wait_for_ptrace_stop (long int pid);
 
 
 int
@@ -116,18 +119,25 @@ main (int argc, char *argv[])
   if (dfd == -1)
     error (EXIT_FAILURE, errno, gettext ("cannot open %s"), buf);
 
-  size_t exesize = 1024;
-#ifdef PATH_MAX
-  exesize = PATH_MAX;
-#endif
-  exe = alloca (exesize);
+  struct scratch_buffer exebuf;
+  scratch_buffer_init (&exebuf);
   ssize_t nexe;
-  while ((nexe = readlinkat (dfd, "exe", exe, exesize)) == exesize)
-    extend_alloca (exe, exesize, 2 * exesize);
+  while ((nexe = readlinkat (dfd, "exe",
+			     exebuf.data, exebuf.length)) == exebuf.length)
+    {
+      if (!scratch_buffer_grow (&exebuf))
+	{
+	  nexe = -1;
+	  break;
+	}
+    }
   if (nexe == -1)
     exe = (char *) "<program name undetermined>";
   else
-    exe[nexe] = '\0';
+    {
+      exe = exebuf.data;
+      exe[nexe] = '\0';
+    }
 
   /* Stop all threads since otherwise the list of loaded modules might
      change while we are reading it.  */
@@ -170,6 +180,8 @@ main (int argc, char *argv[])
 		 tid);
 	}
 
+      wait_for_ptrace_stop (tid);
+
       struct thread_list *newp = alloca (sizeof (*newp));
       newp->tid = tid;
       newp->next = thread_list;
@@ -191,6 +203,27 @@ main (int argc, char *argv[])
   close (dfd);
 
   return status;
+}
+
+
+/* Wait for PID to enter ptrace-stop state after being attached.  */
+static void
+wait_for_ptrace_stop (long int pid)
+{
+  int status;
+
+  /* While waiting for SIGSTOP being delivered to the tracee we have to
+     reinject any other pending signal.  Ignore all other errors.  */
+  while (waitpid (pid, &status, __WALL) == pid && WIFSTOPPED (status))
+    {
+      /* The STOP signal should not be delivered to the tracee.  */
+      if (WSTOPSIG (status) == SIGSTOP)
+	return;
+      if (ptrace (PTRACE_CONT, pid, NULL,
+		  (void *) (uintptr_t) WSTOPSIG (status)))
+	/* The only possible error is that the process died.  */
+	return;
+    }
 }
 
 
@@ -236,7 +269,7 @@ print_version (FILE *stream, struct argp_state *state)
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
-"), "2014");
+"), "2016");
   fprintf (stream, gettext ("Written by %s.\n"), "Ulrich Drepper");
 }
 

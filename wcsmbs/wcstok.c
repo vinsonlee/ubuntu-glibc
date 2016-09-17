@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -23,10 +23,7 @@
 /* Parse WCS into tokens separated by characters in DELIM.  If WCS is
    NULL, the last string wcstok() was called with is used.  */
 wchar_t *
-wcstok (wcs, delim, save_ptr)
-     wchar_t *wcs;
-     const wchar_t *delim;
-     wchar_t **save_ptr;
+wcstok (wchar_t *wcs, const wchar_t *delim, wchar_t **save_ptr)
 {
   wchar_t *result;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -15,31 +15,19 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
-
-#if defined _LIBC || defined HAVE_CONFIG_H
-# include <string.h>
-#endif
+#include <string.h>
 
 #undef strpbrk
 
+#ifndef STRPBRK
+#define STRPBRK strpbrk
+#endif
+
 /* Find the first occurrence in S of any character in ACCEPT.  */
 char *
-strpbrk (s, accept)
-     const char *s;
-     const char *accept;
+STRPBRK (const char *s, const char *accept)
 {
-  while (*s != '\0')
-    {
-      const char *a = accept;
-      while (*a != '\0')
-	if (*a++ == *s)
-	  return (char *) s;
-      ++s;
-    }
-
-  return NULL;
+  s += strcspn (s, accept);
+  return *s ? (char *)s : NULL;
 }
 libc_hidden_builtin_def (strpbrk)

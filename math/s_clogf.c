@@ -1,5 +1,5 @@
 /* Compute complex natural logarithm.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -29,7 +29,7 @@ __clogf (__complex__ float x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (__builtin_expect (rcls == FP_ZERO && icls == FP_ZERO, 0))
+  if (__glibc_unlikely (rcls == FP_ZERO && icls == FP_ZERO))
     {
       /* Real and imaginary part are 0.0.  */
       __imag__ result = signbit (__real__ x) ? M_PI : 0.0;
@@ -37,7 +37,7 @@ __clogf (__complex__ float x)
       /* Yes, the following line raises an exception.  */
       __real__ result = -1.0 / fabsf (__real__ x);
     }
-  else if (__builtin_expect (rcls != FP_NAN && icls != FP_NAN, 1))
+  else if (__glibc_likely (rcls != FP_NAN && icls != FP_NAN))
     {
       /* Neither real nor imaginary part is NaN.  */
       float absx = fabsf (__real__ x), absy = fabsf (__imag__ x);
@@ -65,18 +65,8 @@ __clogf (__complex__ float x)
 
       if (absx == 1.0f && scale == 0)
 	{
-	  float absy2 = absy * absy;
-	  if (absy2 <= FLT_MIN * 2.0f)
-	    {
-#if __FLT_EVAL_METHOD__ == 0
-	      __real__ result = absy2 / 2.0f - absy2 * absy2 / 4.0f;
-#else
-	      volatile float force_underflow = absy2 * absy2 / 4.0f;
-	      __real__ result = absy2 / 2.0f - force_underflow;
-#endif
-	    }
-	  else
-	    __real__ result = __log1pf (absy2) / 2.0f;
+	  __real__ result = __log1pf (absy * absy) / 2.0f;
+	  math_check_force_underflow_nonneg (__real__ result);
 	}
       else if (absx > 1.0f && absx < 2.0f && absy < 1.0f && scale == 0)
 	{
@@ -86,14 +76,17 @@ __clogf (__complex__ float x)
 	  __real__ result = __log1pf (d2m1) / 2.0f;
 	}
       else if (absx < 1.0f
-	       && absx >= 0.75f
+	       && absx >= 0.5f
 	       && absy < FLT_EPSILON / 2.0f
 	       && scale == 0)
 	{
 	  float d2m1 = (absx - 1.0f) * (absx + 1.0f);
 	  __real__ result = __log1pf (d2m1) / 2.0f;
 	}
-      else if (absx < 1.0f && (absx >= 0.75f || absy >= 0.5f) && scale == 0)
+      else if (absx < 1.0f
+	       && absx >= 0.5f
+	       && scale == 0
+	       && absx * absx + absy * absy >= 0.5f)
 	{
 	  float d2m1 = __x2y2m1f (absx, absy);
 	  __real__ result = __log1pf (d2m1) / 2.0f;

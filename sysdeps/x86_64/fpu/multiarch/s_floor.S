@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.come>, 2011.
 
@@ -22,10 +22,9 @@
 
 ENTRY(__floor)
 	.type	__floor, @gnu_indirect_function
-	call	__get_cpu_features@plt
-	movq	%rax, %rdx
+	LOAD_RTLD_GLOBAL_RO_RDX
 	leaq	__floor_sse41(%rip), %rax
-	testl	$bit_SSE4_1, CPUID_OFFSET+index_SSE4_1(%rdx)
+	HAS_CPU_FEATURE (SSE4_1)
 	jnz	2f
 	leaq	__floor_c(%rip), %rax
 2:	ret
@@ -34,6 +33,6 @@ weak_alias (__floor, floor)
 
 
 ENTRY(__floor_sse41)
-	roundsd	$1, %xmm0, %xmm0
+	roundsd	$9, %xmm0, %xmm0
 	ret
 END(__floor_sse41)

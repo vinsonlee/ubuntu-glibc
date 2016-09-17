@@ -1,6 +1,6 @@
 /* mpn_rshift -- Shift right a low-level natural-number integer.
 
-Copyright (C) 1991-2014 Free Software Foundation, Inc.
+Copyright (C) 1991-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -21,6 +21,8 @@ along with the GNU MP Library; see the file COPYING.LIB.  If not, see
 #include <gmp.h>
 #include "gmp-impl.h"
 
+#include <assert.h>
+
 /* Shift U (pointed to by UP and USIZE limbs long) CNT bits to the right
    and store the USIZE least significant limbs of the result at WP.
    The bits shifted out to the right are returned.
@@ -31,27 +33,16 @@ along with the GNU MP Library; see the file COPYING.LIB.  If not, see
 */
 
 mp_limb_t
-#if __STDC__
 mpn_rshift (register mp_ptr wp,
 	    register mp_srcptr up, mp_size_t usize,
 	    register unsigned int cnt)
-#else
-mpn_rshift (wp, up, usize, cnt)
-     register mp_ptr wp;
-     register mp_srcptr up;
-     mp_size_t usize;
-     register unsigned int cnt;
-#endif
 {
   register mp_limb_t high_limb, low_limb;
   register unsigned sh_1, sh_2;
   register mp_size_t i;
   mp_limb_t retval;
 
-#ifdef DEBUG
-  if (usize == 0 || cnt == 0)
-    abort ();
-#endif
+  assert (usize != 0 && cnt != 0);
 
   sh_1 = cnt;
 

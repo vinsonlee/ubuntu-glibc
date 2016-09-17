@@ -171,32 +171,8 @@ __libc_clntudp_bufcreate (struct sockaddr_in *raddr, u_long program,
   cu->cu_xdrpos = XDR_GETPOS (&(cu->cu_outxdrs));
   if (*sockp < 0)
     {
-#ifdef SOCK_NONBLOCK
-# ifndef __ASSUME_SOCK_CLOEXEC
-      if (__have_sock_cloexec >= 0)
-# endif
-	{
-	  *sockp = __socket (AF_INET, SOCK_DGRAM|SOCK_NONBLOCK|flags,
-			     IPPROTO_UDP);
-# ifndef __ASSUME_SOCK_CLOEXEC
-	  if (__have_sock_cloexec == 0)
-	    __have_sock_cloexec = *sockp >= 0 || errno != EINVAL ? 1 : -1;
-# endif
-	}
-#endif
-#ifndef __ASSUME_SOCK_CLOEXEC
-# ifdef SOCK_CLOEXEC
-      if (__have_sock_cloexec < 0)
-# endif
-	{
-	  *sockp = __socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-# ifdef SOCK_CLOEXEC
-	  if (flags & SOCK_CLOEXEC)
-	    __fcntl (*sockp, F_SETFD, FD_CLOEXEC);
-# endif
-	}
-#endif
-      if (__builtin_expect (*sockp < 0, 0))
+      *sockp = __socket (AF_INET, SOCK_DGRAM|SOCK_NONBLOCK|flags, IPPROTO_UDP);
+      if (__glibc_unlikely (*sockp < 0))
 	{
 	  struct rpc_createerr *ce = &get_rpc_createerr ();
 	  ce->cf_stat = RPC_SYSTEMERROR;
@@ -205,16 +181,6 @@ __libc_clntudp_bufcreate (struct sockaddr_in *raddr, u_long program,
 	}
       /* attempt to bind to prov port */
       (void) bindresvport (*sockp, (struct sockaddr_in *) 0);
-#ifndef __ASSUME_SOCK_CLOEXEC
-# ifdef SOCK_CLOEXEC
-      if (__have_sock_cloexec < 0)
-# endif
-	{
-	  /* the sockets rpc controls are non-blocking */
-	  int dontblock = 1;
-	  (void) __ioctl (*sockp, FIONBIO, (char *) &dontblock);
-	}
-#endif
 #ifdef IP_RECVERR
       {
 	int on = 1;
@@ -254,12 +220,8 @@ clntudp_bufcreate (struct sockaddr_in *raddr, u_long program, u_long version,
 libc_hidden_nolink_sunrpc (clntudp_bufcreate, GLIBC_2_0)
 
 CLIENT *
-clntudp_create (raddr, program, version, wait, sockp)
-     struct sockaddr_in *raddr;
-     u_long program;
-     u_long version;
-     struct timeval wait;
-     int *sockp;
+clntudp_create (struct sockaddr_in *raddr, u_long program, u_long version,
+		struct timeval wait, int *sockp)
 {
   return __libc_clntudp_bufcreate (raddr, program, version, wait,
 				   sockp, UDPMSGSIZE, UDPMSGSIZE, 0);
@@ -295,14 +257,20 @@ is_network_up (int sock)
 }
 
 static enum clnt_stat
-clntudp_call (cl, proc, xargs, argsp, xresults, resultsp, utimeout)
-     CLIENT *cl;	/* client handle */
-     u_long proc;		/* procedure number */
-     xdrproc_t xargs;		/* xdr routine for args */
-     caddr_t argsp;		/* pointer to args */
-     xdrproc_t xresults;	/* xdr routine for results */
-     caddr_t resultsp;		/* pointer to results */
-     struct timeval utimeout;	/* seconds to wait before giving up */
+clntudp_call (/* client handle */
+	      CLIENT *cl,
+	      /* procedure number */
+	      u_long proc,
+	      /* xdr routine for args */
+	      xdrproc_t xargs,
+	      /* pointer to args */
+	      caddr_t argsp,
+	      /* xdr routine for results */
+	      xdrproc_t xresults,
+	      /* pointer to results */
+	      caddr_t resultsp,
+	      /* seconds to wait before giving up */
+	      struct timeval utimeout)
 {
   struct cu_data *cu = (struct cu_data *) cl->cl_private;
   XDR *xdrs;
@@ -420,8 +388,14 @@ send_again:
 	  struct sock_extended_err *e;
 	  struct sockaddr_in err_addr;
 	  struct iovec iov;
-	  char *cbuf = (char *) alloca (outlen + 256);
+	  char *cbuf = malloc (outlen + 256);
 	  int ret;
+
+	  if (cbuf == NULL)
+	    {
+	      cu->cu_error.re_errno = errno;
+	      return (cu->cu_error.re_status = RPC_CANTRECV);
+	    }
 
 	  iov.iov_base = cbuf + 256;
 	  iov.iov_len = outlen;
@@ -447,10 +421,12 @@ send_again:
 		 cmsg = CMSG_NXTHDR (&msg, cmsg))
 	      if (cmsg->cmsg_level == SOL_IP && cmsg->cmsg_type == IP_RECVERR)
 		{
+		  free (cbuf);
 		  e = (struct sock_extended_err *) CMSG_DATA(cmsg);
 		  cu->cu_error.re_errno = e->ee_errno;
 		  return (cu->cu_error.re_status = RPC_CANTRECV);
 		}
+	  free (cbuf);
 	}
 #endif
       do

@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,17 +25,9 @@
 ssize_t
 __libc_recv (int fd, void *buf, size_t n, int flags)
 {
-  if (SINGLE_THREAD_P)
-    return INLINE_SYSCALL (recvfrom, 6, fd, buf, n, flags, NULL, NULL);
-
-  int oldtype = LIBC_CANCEL_ASYNC ();
-
-  ssize_t result = INLINE_SYSCALL (recvfrom, 6, fd, buf, n, flags, NULL, NULL);
-
-  LIBC_CANCEL_RESET (oldtype);
-
-  return result;
+  return SYSCALL_CANCEL (recvfrom, fd, buf, n, flags, NULL, NULL);
 }
 
 weak_alias (__libc_recv, __recv)
+libc_hidden_weak (__recv)
 weak_alias (__recv, recv)

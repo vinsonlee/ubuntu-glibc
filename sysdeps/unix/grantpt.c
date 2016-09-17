@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Zack Weinberg <zack@rabi.phys.columbia.edu>, 1998.
 
@@ -108,7 +108,7 @@ grantpt (int fd)
   char *buf = _buf;
   struct stat64 st;
 
-  if (__builtin_expect (pts_name (fd, &buf, sizeof (_buf), &st), 0))
+  if (__glibc_unlikely (pts_name (fd, &buf, sizeof (_buf), &st)))
     {
       int save_errno = errno;
 
@@ -136,7 +136,7 @@ grantpt (int fd)
     }
 
   static int tty_gid = -1;
-  if (__builtin_expect (tty_gid == -1, 0))
+  if (__glibc_unlikely (tty_gid == -1))
     {
       char *grtmpbuf;
       struct group grbuf;
@@ -155,6 +155,7 @@ grantpt (int fd)
     }
   gid_t gid = tty_gid == -1 ? __getgid () : tty_gid;
 
+#if HAVE_PT_CHOWN
   /* Make sure the group of the device is that special group.  */
   if (st.st_gid != gid)
     {
@@ -164,9 +165,26 @@ grantpt (int fd)
 
   /* Make sure the permission mode is set to readable and writable by
      the owner, and writable by the group.  */
-  if ((st.st_mode & ACCESSPERMS) != (S_IRUSR|S_IWUSR|S_IWGRP))
+  mode_t mode = S_IRUSR|S_IWUSR|S_IWGRP;
+#else
+  /* When built without pt_chown, we have delegated the creation of the
+     pty node with the right group and permission mode to the kernel, and
+     non-root users are unlikely to be able to change it. Therefore let's
+     consider that POSIX enforcement is the responsibility of the whole
+     system and not only the GNU libc. Thus accept different group or
+     permission mode.  */
+
+  /* Make sure the permission is set to readable and writable by the
+     owner.  For security reasons, make it writable by the group only
+     when originally writable and when the group of the device is that
+     special group.  */
+  mode_t mode = S_IRUSR|S_IWUSR|
+	        ((st.st_gid == gid) ? (st.st_mode & S_IWGRP) : 0);
+#endif
+
+  if ((st.st_mode & ACCESSPERMS) != mode)
     {
-      if (__chmod (buf, S_IRUSR|S_IWUSR|S_IWGRP) < 0)
+      if (__chmod (buf, mode) < 0)
 	goto helper;
     }
 
@@ -176,7 +194,7 @@ grantpt (int fd)
   /* We have to use the helper program if it is available.  */
  helper:;
 
-#ifdef HAVE_PT_CHOWN
+#if HAVE_PT_CHOWN
   pid_t pid = __fork ();
   if (pid == -1)
     goto cleanup;
@@ -195,7 +213,7 @@ grantpt (int fd)
       CLOSE_ALL_FDS ();
 # endif
 
-      execle (_PATH_PT_CHOWN, basename (_PATH_PT_CHOWN), NULL, NULL);
+      execle (_PATH_PT_CHOWN, __basename (_PATH_PT_CHOWN), NULL, NULL);
       _exit (FAIL_EXEC);
     }
   else
@@ -229,7 +247,7 @@ grantpt (int fd)
 	    break;
 
 	  default:
-	    assert(! "getpt: internal error: invalid exit code from pt_chown");
+	    assert(! "grantpt: internal error: invalid exit code from pt_chown");
 	  }
     }
 #endif

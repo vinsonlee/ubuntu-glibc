@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -22,16 +22,17 @@
 
 
 int
-__pthread_setcanceltype (type, oldtype)
-     int type;
-     int *oldtype;
+__pthread_setcanceltype (int type, int *oldtype)
 {
-  volatile struct pthread *self;
-
   if (type < PTHREAD_CANCEL_DEFERRED || type > PTHREAD_CANCEL_ASYNCHRONOUS)
     return EINVAL;
 
-  self = THREAD_SELF;
+#ifndef SIGCANCEL
+  if (type == PTHREAD_CANCEL_ASYNCHRONOUS)
+    return ENOTSUP;
+#endif
+
+  volatile struct pthread *self = THREAD_SELF;
 
   int oldval = THREAD_GETMEM (self, cancelhandling);
   while (1)
@@ -55,7 +56,7 @@ __pthread_setcanceltype (type, oldtype)
 	 atomically since other bits could be modified as well.  */
       int curval = THREAD_ATOMIC_CMPXCHG_VAL (self, cancelhandling, newval,
 					      oldval);
-      if (__builtin_expect (curval == oldval, 1))
+      if (__glibc_likely (curval == oldval))
 	{
 	  if (CANCEL_ENABLED_AND_CANCELED_AND_ASYNCHRONOUS (newval))
 	    {

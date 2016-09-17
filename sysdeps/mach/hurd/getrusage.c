@@ -1,5 +1,5 @@
 /* getrusage -- Get resource usage information about processes.  Hurd version.
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,9 +26,7 @@
 /* Return resource usage information on process indicated by WHO
    and put it in *USAGE.  Returns 0 for success, -1 for failure.  */
 int
-__getrusage (who, usage)
-     enum __rusage_who who;
-     struct rusage *usage;
+__getrusage (enum __rusage_who who, struct rusage *usage)
 {
   struct task_basic_info bi;
   struct task_events_info ei;

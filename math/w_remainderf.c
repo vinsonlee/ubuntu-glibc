@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -24,11 +24,12 @@
 float
 __remainderf (float x, float y)
 {
-  if (((__builtin_expect (y == 0.0f, 0) && ! __isnanf (x))
-       || (__builtin_expect (__isinf_nsf (x), 0) && ! __isnanf (y)))
+  if (((__builtin_expect (y == 0.0f, 0) && ! isnan (x))
+       || (__builtin_expect (isinf (x), 0) && ! isnan (y)))
       && _LIB_VERSION != _IEEE_)
     return __kernel_standard_f (x, y, 128); /* remainder domain */
 
   return __ieee754_remainderf (x, y);
 }
 weak_alias (__remainderf, remainderf)
+weak_alias (__remainderf, dremf)

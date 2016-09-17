@@ -5,8 +5,8 @@
 #include <string.h>
 
 
-int
-main (int argc, char *argv[])
+static int
+do_test (void)
 {
   int result = 0;
   struct mntent mef;
@@ -73,7 +73,10 @@ main (int argc, char *argv[])
 	  puts ("Error while reading written entry back in");
 	  result = 1;
 	}
-    }
+   }
 
   return result;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

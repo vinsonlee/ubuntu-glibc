@@ -1,5 +1,5 @@
 /* setjmp for PowerPC.
-   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ ENTRY (__sigsetjmp_symbol)
 	SAVE_GP (29)
 	SAVE_GP (30)
 	SAVE_GP (31)
-#if defined NOT_IN_libc && defined IS_IN_rtld
+#if IS_IN (rtld)
 	li   r3,0
 	blr
 #else

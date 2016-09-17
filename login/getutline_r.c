@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>
    and Paul Janzen <pcj@primenet.com>, 1996.
@@ -18,7 +18,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <utmp.h>
 
 #include "utmp-private.h"

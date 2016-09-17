@@ -1,5 +1,5 @@
 /* Enumerate available IFUNC implementations of a function.  PowerPC32 version.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -58,6 +58,12 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
 	      IFUNC_IMPL_ADD (array, i, memcpy, hwcap & PPC_FEATURE_CELL_BE,
 			      __memcpy_cell)
 	      IFUNC_IMPL_ADD (array, i, memcpy, 1, __memcpy_ppc))
+
+  /* Support sysdeps/powerpc/powerpc32/power4/multiarch/memmove.c.  */
+  IFUNC_IMPL (i, name, memmove,
+	      IFUNC_IMPL_ADD (array, i, memmove, hwcap & PPC_FEATURE_HAS_VSX,
+			      __memmove_power7)
+	      IFUNC_IMPL_ADD (array, i, memmove, 1, __memmove_ppc))
 
   /* Support sysdeps/powerpc/powerpc32/power4/multiarch/memset.c.  */
   IFUNC_IMPL (i, name, memset,
