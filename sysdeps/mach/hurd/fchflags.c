@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 
 /* XXX should be __fchflags? */
 int
-fchflags (int fd, int flags)
+fchflags (int fd, unsigned long int flags)
 {
   error_t err;
 

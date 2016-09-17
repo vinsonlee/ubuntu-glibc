@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 #include <asm-syntax.h>
 
 #define CLONE_VM	0x00000100
-#define CLONE_THREAD	0x00010000
 
 /* The userland implementation is:
    int clone (int (*fn)(void *arg), void *child_stack, int flags, void *arg),
@@ -92,18 +91,13 @@ L(thread_start):
 	   the outermost frame obviously.  */
 	xorl	%ebp, %ebp
 
-#ifdef RESET_PID
-	testq	$CLONE_THREAD, %rdi
+	andq	$CLONE_VM, %rdi
 	jne	1f
-	testq	$CLONE_VM, %rdi
-	movl	$-1, %eax
-	jne	2f
 	movl	$SYS_ify(getpid), %eax
 	syscall
-2:	movl	%eax, %fs:PID
+	movl	%eax, %fs:PID
 	movl	%eax, %fs:TID
 1:
-#endif
 
 	/* Set up arguments for the function call.  */
 	popq	%rax		/* Function to call.  */
@@ -117,4 +111,5 @@ L(thread_start):
 	cfi_startproc;
 PSEUDO_END (__clone)
 
+libc_hidden_def (__clone)
 weak_alias (__clone, clone)

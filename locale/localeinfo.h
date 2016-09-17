@@ -1,5 +1,5 @@
 /* Declarations for internal libc locale interfaces
-   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -215,7 +215,7 @@ extern struct __locale_struct _nl_global_locale attribute_hidden;
 /* This fetches the thread-local locale_t pointer, either one set with
    uselocale or &_nl_global_locale.  */
 #define _NL_CURRENT_LOCALE	(__libc_tsd_get (__locale_t, LOCALE))
-#include <bits/libc-tsd.h>
+#include <libc-tsd.h>
 __libc_tsd_define (extern, __locale_t, LOCALE)
 
 
@@ -260,12 +260,15 @@ extern __thread struct __locale_data *const *_nl_current_##category \
 #define _NL_CURRENT_WORD(category, item) \
   ((uint32_t) (*_nl_current_##category)->values[_NL_ITEM_INDEX (item)].word)
 
-/* This is used in lc-CATEGORY.c to define _nl_current_CATEGORY.  */
+/* This is used in lc-CATEGORY.c to define _nl_current_CATEGORY.  The symbol
+   _nl_current_CATEGORY_used is set to a value unequal to zero to mark this
+   category as used.  On S390 the used relocation to load the symbol address
+   can only handle even addresses.  */
 #define _NL_CURRENT_DEFINE(category) \
   __thread struct __locale_data *const *_nl_current_##category \
     attribute_hidden = &_nl_global_locale.__locales[category]; \
   asm (".globl " __SYMBOL_PREFIX "_nl_current_" #category "_used\n" \
-       _NL_CURRENT_DEFINE_ABS (_nl_current_##category##_used, 1));
+       _NL_CURRENT_DEFINE_ABS (_nl_current_##category##_used, 2));
 #ifdef HAVE_ASM_SET_DIRECTIVE
 # define _NL_CURRENT_DEFINE_ABS(sym, val) ".set " #sym ", " #val
 #else
@@ -299,6 +302,27 @@ extern __thread struct __locale_data *const *_nl_current_##category \
 
 #endif
 
+/* Extract CATEGORY locale's string for ITEM.  */
+static inline const char *
+_nl_lookup (locale_t l, int category, int item)
+{
+  return l->__locales[category]->values[_NL_ITEM_INDEX (item)].string;
+}
+
+/* Extract CATEGORY locale's wide string for ITEM.  */
+static inline const wchar_t *
+_nl_lookup_wstr (locale_t l, int category, int item)
+{
+  return (wchar_t *) l->__locales[category]
+    ->values[_NL_ITEM_INDEX (item)].wstr;
+}
+
+/* Extract the CATEGORY locale's word for ITEM.  */
+static inline uint32_t
+_nl_lookup_word (locale_t l, int category, int item)
+{
+  return l->__locales[category]->values[_NL_ITEM_INDEX (item)].word;
+}
 
 /* Default search path if no LOCPATH environment variable.  */
 extern const char _nl_default_locale_path[] attribute_hidden;

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -31,12 +31,8 @@ __BEGIN_DECLS
 #define	__need_NULL
 #include <stddef.h>
 
-/* Provide correct C++ prototypes, and indicate this to the caller.  This
-   requires a compatible C++ standard library.  As a heuristic, we provide
-   these when the compiler indicates full conformance with C++98 or later,
-   and for older GCC versions that are known to provide a compatible
-   libstdc++.  */
-#if defined __cplusplus && (__cplusplus >= 199711L || __GNUC_PREREQ (4, 4))
+/* Tell the caller that we provide correct C++ prototypes.  */
+#if defined __cplusplus && __GNUC_PREREQ (4, 4)
 # define __CORRECT_ISO_CPP_STRING_H_PROTO
 #endif
 
@@ -54,11 +50,11 @@ __END_NAMESPACE_STD
 /* Copy no more than N bytes of SRC to DEST, stopping when C is found.
    Return the position in DEST one byte past where C was copied,
    or NULL if C was not found in the first N bytes of SRC.  */
-#if defined __USE_SVID || defined __USE_BSD || defined __USE_XOPEN
+#if defined __USE_MISC || defined __USE_XOPEN
 extern void *memccpy (void *__restrict __dest, const void *__restrict __src,
 		      int __c, size_t __n)
      __THROW __nonnull ((1, 2));
-#endif /* SVID.  */
+#endif /* Misc || X/Open.  */
 
 
 __BEGIN_NAMESPACE_STD
@@ -170,8 +166,7 @@ extern size_t strxfrm_l (char *__dest, const char *__src, size_t __n,
 			 __locale_t __l) __THROW __nonnull ((2, 4));
 #endif
 
-#if defined __USE_SVID || defined __USE_BSD || defined __USE_XOPEN_EXTENDED \
-    || defined __USE_XOPEN2K8
+#if defined __USE_XOPEN_EXTENDED || defined __USE_XOPEN2K8
 /* Duplicate S, returning an identical malloc'd string.  */
 extern char *strdup (const char *__s)
      __THROW __attribute_malloc__ __nonnull ((1));
@@ -355,7 +350,7 @@ extern char *__strtok_r (char *__restrict __s,
 			 const char *__restrict __delim,
 			 char **__restrict __save_ptr)
      __THROW __nonnull ((2, 3));
-#if defined __USE_POSIX || defined __USE_MISC
+#ifdef __USE_POSIX
 extern char *strtok_r (char *__restrict __s, const char *__restrict __delim,
 		       char **__restrict __save_ptr)
      __THROW __nonnull ((2, 3));
@@ -412,7 +407,7 @@ __BEGIN_NAMESPACE_STD
 /* Return a string describing the meaning of the `errno' code in ERRNUM.  */
 extern char *strerror (int __errnum) __THROW;
 __END_NAMESPACE_STD
-#if defined __USE_XOPEN2K || defined __USE_MISC
+#ifdef __USE_XOPEN2K
 /* Reentrant version of `strerror'.
    There are 2 flavors of `strerror_r', GNU which returns the string
    and may or may not use the supplied temporary buffer and POSIX one
@@ -450,7 +445,7 @@ extern char *strerror_l (int __errnum, __locale_t __l) __THROW;
    the namespace rules does not allow this.  */
 extern void __bzero (void *__s, size_t __n) __THROW __nonnull ((1));
 
-#ifdef __USE_BSD
+#ifdef __USE_MISC
 /* Copy N bytes of SRC to DEST (like memmove, but args reversed).  */
 extern void bcopy (const void *__src, void *__dest, size_t __n)
      __THROW __nonnull ((1, 2));
@@ -537,7 +532,7 @@ extern int strcasecmp (const char *__s1, const char *__s2)
 /* Compare no more than N chars of S1 and S2, ignoring case.  */
 extern int strncasecmp (const char *__s1, const char *__s2, size_t __n)
      __THROW __attribute_pure__ __nonnull ((1, 2));
-#endif /* Use BSD.  */
+#endif /* Use misc.  */
 
 #ifdef	__USE_GNU
 /* Again versions of a few functions which use the given locale instead
@@ -551,7 +546,7 @@ extern int strncasecmp_l (const char *__s1, const char *__s2,
      __THROW __attribute_pure__ __nonnull ((1, 2, 4));
 #endif
 
-#ifdef	__USE_BSD
+#ifdef	__USE_MISC
 /* Return the next DELIM-delimited token from *STRINGP,
    terminating it with a '\0', and update *STRINGP to point past it.  */
 extern char *strsep (char **__restrict __stringp,
@@ -607,7 +602,7 @@ extern char *basename (const char *__filename) __THROW __nonnull ((1));
 #endif
 
 
-#if defined __GNUC__ && __GNUC__ >= 2
+#if __GNUC_PREREQ (3,4)
 # if defined __OPTIMIZE__ && !defined __OPTIMIZE_SIZE__ \
      && !defined __NO_INLINE__ && !defined __cplusplus
 /* When using GNU CC we provide some optimized versions of selected
@@ -638,6 +633,23 @@ extern char *basename (const char *__filename) __THROW __nonnull ((1));
 # if __USE_FORTIFY_LEVEL > 0 && defined __fortify_function
 /* Functions with security checks.  */
 #  include <bits/string3.h>
+# endif
+#endif
+
+#if defined __USE_GNU && defined __OPTIMIZE__ \
+    && defined __extern_always_inline && __GNUC_PREREQ (3,2)
+# if !defined _FORCE_INLINES && !defined _HAVE_STRING_ARCH_mempcpy
+
+#define mempcpy(dest, src, n) __mempcpy_inline (dest, src, n)
+#define __mempcpy(dest, src, n) __mempcpy_inline (dest, src, n)
+
+__extern_always_inline void *
+__mempcpy_inline (void *__restrict __dest,
+		  const void *__restrict __src, size_t __n)
+{
+  return (char *) memcpy (__dest, __src, __n) + __n;
+}
+
 # endif
 #endif
 

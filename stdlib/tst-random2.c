@@ -1,5 +1,5 @@
 /* Test initstate saving the old state.
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2005.
 
@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int
-main (void)
+static int
+do_test (void)
 {
   int pass;
   int ret = 0;
@@ -56,3 +56,6 @@ main (void)
     }
   return ret;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,10 +25,7 @@
    LEN bytes of BUF.  The contents are not null-terminated.
    Returns the number of characters read, or -1 for errors.  */
 ssize_t
-__readlink (file_name, buf, len)
-     const char *file_name;
-     char *buf;
-     size_t len;
+__readlink (const char *file_name, char *buf, size_t len)
 {
   error_t err;
   file_t file;

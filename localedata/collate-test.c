@@ -1,5 +1,5 @@
 /* Test collation function using real data.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -121,9 +121,7 @@ main (int argc, char *argv[])
 
 
 static int
-xstrcoll (ptr1, ptr2)
-     const void *ptr1;
-     const void *ptr2;
+xstrcoll (const void *ptr1, const void *ptr2)
 {
   const struct lines *l1 = (const struct lines *) ptr1;
   const struct lines *l2 = (const struct lines *) ptr2;

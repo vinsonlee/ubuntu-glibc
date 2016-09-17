@@ -11,23 +11,27 @@ ifeq ($(subdir),malloc)
 CFLAGS-malloc.c += -DMORECORE_CLEARS=2
 endif
 
-ifeq ($(subdir),socket)
-sysdep_routines += internal_accept4 internal_recvmmsg internal_sendmmsg
-endif
-
 ifeq ($(subdir),misc)
 include $(firstword $(wildcard $(sysdirs:=/sysctl.mk)))
 
 sysdep_routines += clone llseek umount umount2 readahead \
 		   setfsuid setfsgid makedev epoll_pwait signalfd \
-		   eventfd eventfd_read eventfd_write prlimit
+		   eventfd eventfd_read eventfd_write prlimit \
+		   personality
 
 CFLAGS-gethostid.c = -fexceptions
 CFLAGS-tst-writev.c += "-DARTIFICIAL_LIMIT=0x80000000-__getpagesize()"
 
+# Note that bits/mman-linux.h is listed here though the file lives in the
+# top-level bits/ subdirectory instead of here in sysdeps/.../linux/bits/.
+# That is just so that other (non-Linux) configurations for whom the
+# bits/mman-linux.h definitions work well do not have to duplicate the
+# contents of the file.  The file must still be listed in sysdep_headers
+# here and in any non-Linux configuration that uses it; other
+# configurations will not install the file.
 sysdep_headers += sys/mount.h sys/acct.h sys/sysctl.h \
-		  sys/klog.h sys/kdaemon.h \
-		  sys/user.h sys/procfs.h sys/prctl.h \
+		  sys/klog.h \
+		  sys/user.h sys/prctl.h \
 		  sys/kd.h sys/soundcard.h sys/vt.h \
 		  sys/quota.h sys/fsuid.h \
 		  scsi/sg.h scsi/scsi.h scsi/scsi_ioctl.h sys/pci.h \
@@ -38,7 +42,7 @@ sysdep_headers += sys/mount.h sys/acct.h sys/sysctl.h \
 		  bits/socket_type.h bits/syscall.h bits/sysctl.h \
 		  bits/mman-linux.h
 
-tests += tst-clone tst-fanotify
+tests += tst-clone tst-clone2 tst-fanotify tst-personality
 
 # Generate the list of SYS_* macros for the system calls (__NR_* macros).
 
@@ -121,6 +125,8 @@ sysdep_headers += net/if_ppp.h net/ppp-comp.h \
 		  net/ppp_defs.h net/if_arp.h net/route.h net/ethernet.h \
 		  net/if_slip.h net/if_packet.h net/if_shaper.h
 sysdep_routines += cmsg_nxthdr
+CFLAGS-recvmmsg.c = -fexceptions -fasynchronous-unwind-tables
+CFLAGS-sendmmsg.c = -fexceptions -fasynchronous-unwind-tables
 endif
 
 ifeq ($(subdir),sunrpc)
@@ -134,9 +140,13 @@ endif
 ifeq ($(subdir),posix)
 sysdep_headers += bits/initspin.h
 
-sysdep_routines += exit-thread sched_getcpu
+sysdep_routines += sched_getcpu
 
-tests += tst-getcpu
+tests += tst-affinity tst-affinity-pid
+
+CFLAGS-fork.c = $(libio-mtsafe)
+CFLAGS-getpid.o = -fomit-frame-pointer
+CFLAGS-getpid.os = -fomit-frame-pointer
 endif
 
 ifeq ($(subdir),inet)
@@ -144,6 +154,7 @@ sysdep_headers += netinet/if_fddi.h netinet/if_tr.h \
 		  netipx/ipx.h netash/ash.h netax25/ax25.h netatalk/at.h \
 		  netrom/netrom.h netpacket/packet.h netrose/rose.h \
 		  neteconet/ec.h netiucv/iucv.h
+sysdep_routines += netlink_assert_response
 endif
 
 # Don't compile the ctype glue code, since there is no old non-GNU C library.
@@ -167,7 +178,11 @@ ifeq ($(subdir),elf)
 sysdep-rtld-routines += dl-brk dl-sbrk dl-getcwd dl-openat64 dl-opendir \
 			dl-fxstatat64
 
-CPPFLAGS-lddlibc4 += -DNOT_IN_libc
+libof-lddlibc4 = lddlibc4
+
+others += pldd
+install-bin += pldd
+$(objpfx)pldd: $(objpfx)xmalloc.o
 endif
 
 ifeq ($(subdir),rt)
@@ -178,4 +193,10 @@ endif
 ifeq ($(subdir),nscd)
 sysdep-CFLAGS += -DHAVE_EPOLL -DHAVE_SENDFILE -DHAVE_INOTIFY -DHAVE_NETLINK
 CFLAGS-gai.c += -DNEED_NETLINK
+endif
+
+ifeq ($(subdir),nptl)
+tests += tst-setgetname tst-align-clone tst-getpid1 \
+	tst-thread-affinity-pthread tst-thread-affinity-pthread2 \
+	tst-thread-affinity-sched
 endif

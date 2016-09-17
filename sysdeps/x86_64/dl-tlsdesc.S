@@ -1,5 +1,5 @@
 /* Thread-local storage handling in the ELF dynamic linker.  x86_64 version.
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -128,7 +128,7 @@ _dl_tlsdesc_dynamic:
 	movq	%r10, 40(%rsp)
 	movq	%r11, 48(%rsp)
 	/* %rdi already points to the tlsinfo data structure.  */
-	call	__tls_get_addr@PLT
+	call	HIDDEN_JUMPTARGET (__tls_get_addr)
 	movq	8(%rsp), %rdx
 	movq	16(%rsp), %rcx
 	movq	24(%rsp), %r8
@@ -163,14 +163,15 @@ _dl_tlsdesc_dynamic:
 	/* The PLT entry will have pushed the link_map pointer.  */
 _dl_tlsdesc_resolve_rela:
 	cfi_adjust_cfa_offset (8)
-	/* Save all call-clobbered registers.  */
-	subq	$72, %rsp
-	cfi_adjust_cfa_offset (72)
+	/* Save all call-clobbered registers.  Add 8 bytes for push in
+	   the PLT entry to align the stack.  */
+	subq	$80, %rsp
+	cfi_adjust_cfa_offset (80)
 	movq	%rax, (%rsp)
 	movq	%rdi, 8(%rsp)
 	movq	%rax, %rdi	/* Pass tlsdesc* in %rdi.  */
 	movq	%rsi, 16(%rsp)
-	movq	72(%rsp), %rsi	/* Pass link_map* in %rsi.  */
+	movq	80(%rsp), %rsi	/* Pass link_map* in %rsi.  */
 	movq	%r8, 24(%rsp)
 	movq	%r9, 32(%rsp)
 	movq	%r10, 40(%rsp)
@@ -187,8 +188,8 @@ _dl_tlsdesc_resolve_rela:
 	movq	48(%rsp), %r11
 	movq	56(%rsp), %rdx
 	movq	64(%rsp), %rcx
-	addq	$80, %rsp
-	cfi_adjust_cfa_offset (-80)
+	addq	$88, %rsp
+	cfi_adjust_cfa_offset (-88)
 	jmp	*(%rax)
 	cfi_endproc
 	.size	_dl_tlsdesc_resolve_rela, .-_dl_tlsdesc_resolve_rela

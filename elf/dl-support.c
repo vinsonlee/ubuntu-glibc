@@ -1,5 +1,5 @@
 /* Support for dynamic linking code in static libc.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <ldsodefs.h>
 #include <dl-machine.h>
-#include <bits/libc-lock.h>
+#include <libc-lock.h>
 #include <dl-cache.h>
 #include <dl-librecon.h>
 #include <dl-procinfo.h>
@@ -91,7 +91,6 @@ static struct link_map _dl_main_map =
     .l_scope = _dl_main_map.l_scope_mem,
     .l_local_scope = { &_dl_main_map.l_searchlist },
     .l_used = 1,
-    .l_flags_1 = DF_1_NODEFLIB,
     .l_tls_offset = NO_TLS_OFFSET,
     .l_serial = 1,
   };
@@ -128,12 +127,6 @@ void *_dl_random;
 
 /* Get architecture specific initializer.  */
 #include <dl-procinfo.c>
-
-/* We expect less than a second for relocation.  */
-#ifdef HP_SMALL_TIMING_AVAIL
-# undef HP_TIMING_AVAIL
-# define HP_TIMING_AVAIL HP_SMALL_TIMING_AVAIL
-#endif
 
 /* Initial value of the CPU clock.  */
 #ifndef HP_TIMING_NONAVAIL
@@ -251,6 +244,9 @@ _dl_aux_init (ElfW(auxv_t) *av)
       case AT_PHNUM:
 	GL(dl_phnum) = av->a_un.a_val;
 	break;
+      case AT_PLATFORM:
+	GLRO(dl_platform) = (void *) av->a_un.a_val;
+	break;
       case AT_HWCAP:
 	GLRO(dl_hwcap) = (unsigned long int) av->a_un.a_val;
 	break;
@@ -315,7 +311,7 @@ _dl_non_dynamic_init (void)
   _dl_main_map.l_phdr = GL(dl_phdr);
   _dl_main_map.l_phnum = GL(dl_phnum);
 
-  if (HP_TIMING_AVAIL)
+  if (HP_SMALL_TIMING_AVAIL)
     HP_TIMING_NOW (_dl_cpuclock_offset);
 
   _dl_verbose = *(getenv ("LD_WARN") ?: "") == '\0' ? 0 : 1;

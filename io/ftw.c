@@ -1,5 +1,5 @@
 /* File tree walker functions.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -66,9 +66,7 @@ char *alloca ();
 #include <string.h>
 #include <unistd.h>
 #include <not-cancel.h>
-#if HAVE_SYS_PARAM_H || defined _LIBC
-# include <sys/param.h>
-#endif
+#include <sys/param.h>
 #ifdef _LIBC
 # include <include/sys/stat.h>
 #else
@@ -819,21 +817,14 @@ ftw_startup (const char *dir, int is_nftw, void *func, int descriptors,
 /* Entry points.  */
 
 int
-FTW_NAME (path, func, descriptors)
-     const char *path;
-     FTW_FUNC_T func;
-     int descriptors;
+FTW_NAME (const char *path, FTW_FUNC_T func, int descriptors)
 {
   return ftw_startup (path, 0, func, descriptors, 0);
 }
 
 #ifndef _LIBC
 int
-NFTW_NAME (path, func, descriptors, flags)
-     const char *path;
-     NFTW_FUNC_T func;
-     int descriptors;
-     int flags;
+NFTW_NAME (const char *path, NFTW_FUNC_T func, int descriptors, int flags)
 {
   return ftw_startup (path, 1, func, descriptors, flags);
 }
@@ -844,11 +835,7 @@ NFTW_NAME (path, func, descriptors, flags)
 int NFTW_NEW_NAME (const char *, NFTW_FUNC_T, int, int);
 
 int
-NFTW_NEW_NAME (path, func, descriptors, flags)
-     const char *path;
-     NFTW_FUNC_T func;
-     int descriptors;
-     int flags;
+NFTW_NEW_NAME (const char *path, NFTW_FUNC_T func, int descriptors, int flags)
 {
   if (flags
       & ~(FTW_PHYS | FTW_MOUNT | FTW_CHDIR | FTW_DEPTH | FTW_ACTIONRETVAL))
@@ -869,11 +856,7 @@ int NFTW_OLD_NAME (const char *, NFTW_FUNC_T, int, int);
 
 int
 attribute_compat_text_section
-NFTW_OLD_NAME (path, func, descriptors, flags)
-     const char *path;
-     NFTW_FUNC_T func;
-     int descriptors;
-     int flags;
+NFTW_OLD_NAME (const char *path, NFTW_FUNC_T func, int descriptors, int flags)
 {
   flags &= (FTW_PHYS | FTW_MOUNT | FTW_CHDIR | FTW_DEPTH);
   return ftw_startup (path, 1, func, descriptors, flags);

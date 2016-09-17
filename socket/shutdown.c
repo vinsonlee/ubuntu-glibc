@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,9 +25,7 @@
      2 = No more receptions or transmissions.
    Returns 0 on success, -1 for errors.  */
 int
-shutdown (fd, how)
-     int fd;
-     int how;
+shutdown (int fd, int how)
 {
   __set_errno (ENOSYS);
   return -1;

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,8 +22,6 @@
 #include <sysdep.h>
 #include <sys/syscall.h>
 
-#include <kernel-features.h>
-
 /* The difference here is that the sigaction structure used in the
    kernel is not the same as we use in the libc.  Therefore we must
    translate it here.  */
@@ -33,10 +31,7 @@
 /* If ACT is not NULL, change the action for SIG to *ACT.
    If OACT is not NULL, put the old action for SIG in *OACT.  */
 int
-__libc_sigaction (sig, act, oact)
-     int sig;
-     const struct sigaction *act;
-     struct sigaction *oact;
+__libc_sigaction (int sig, const struct sigaction *act, struct sigaction *oact)
 {
   int result;
 
@@ -71,12 +66,4 @@ __libc_sigaction (sig, act, oact)
 }
 libc_hidden_def (__libc_sigaction)
 
-#ifdef WRAPPER_INCLUDE
-# include WRAPPER_INCLUDE
-#endif
-
-#ifndef LIBC_SIGACTION
-weak_alias (__libc_sigaction, __sigaction)
-libc_hidden_weak (__sigaction)
-weak_alias (__libc_sigaction, sigaction)
-#endif
+#include <nptl/sigaction.c>

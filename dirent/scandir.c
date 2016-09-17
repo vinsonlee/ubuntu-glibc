@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,23 +24,20 @@
 
 #undef  scandir64
 
-#include <fcntl.h>
-
 #ifndef SCANDIR
-# define SCANDIR scandir
-# define SCANDIRAT scandirat
-# define DIRENT_TYPE struct dirent
+# define SCANDIR        scandir
+# define SCANDIR_TAIL   __scandir_tail
+# define DIRENT_TYPE    struct dirent
 #endif
 
 
 int
-SCANDIR (dir, namelist, select, cmp)
-     const char *dir;
-     DIRENT_TYPE ***namelist;
-     int (*select) (const DIRENT_TYPE *);
-     int (*cmp) (const DIRENT_TYPE **, const DIRENT_TYPE **);
+SCANDIR (const char *dir,
+	 DIRENT_TYPE ***namelist,
+	 int (*select) (const DIRENT_TYPE *),
+	 int (*cmp) (const DIRENT_TYPE **, const DIRENT_TYPE **))
 {
-  return SCANDIRAT (AT_FDCWD, dir, namelist, select, cmp);
+  return SCANDIR_TAIL (__opendir (dir), namelist, select, cmp);
 }
 
 #ifdef _DIRENT_MATCHES_DIRENT64

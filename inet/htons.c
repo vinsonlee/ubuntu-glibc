@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,8 +21,7 @@
 #undef	ntohs
 
 uint16_t
-htons (x)
-     uint16_t x;
+htons (uint16_t x)
 {
 #if BYTE_ORDER == BIG_ENDIAN
   return x;

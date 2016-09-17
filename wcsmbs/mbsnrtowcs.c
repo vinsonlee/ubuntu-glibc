@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1996.
 
@@ -38,12 +38,8 @@ static mbstate_t state;
    implementation of stdio because we have to deal with unterminated
    buffers.  At most NMC bytes will be converted.  */
 size_t
-__mbsnrtowcs (dst, src, nmc, len, ps)
-     wchar_t *dst;
-     const char **src;
-     size_t nmc;
-     size_t len;
-     mbstate_t *ps;
+__mbsnrtowcs (wchar_t *dst, const char **src, size_t nmc, size_t len,
+	      mbstate_t *ps)
 {
   const unsigned char *srcend;
   struct __gconv_step_data data;
@@ -58,7 +54,6 @@ __mbsnrtowcs (dst, src, nmc, len, ps)
   data.__internal_use = 1;
   data.__flags = __GCONV_IS_LAST;
   data.__statep = ps ?: &state;
-  data.__trans = NULL;
 
   if (nmc == 0)
     return 0;

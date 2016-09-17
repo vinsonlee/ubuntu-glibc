@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -35,6 +35,7 @@
 
  */
 
+#include <float.h>
 #include <inttypes.h>
 #include <math.h>
 #include <math_private.h>
@@ -48,16 +49,17 @@ __ieee754_atanhf (float x)
   float t;
   if (isless (xa, 0.5f))
     {
-      if (__builtin_expect (xa < 0x1.0p-28f, 0))
+      if (__glibc_unlikely (xa < 0x1.0p-28f))
 	{
 	  math_force_eval (huge + x);
+	  math_check_force_underflow (x);
 	  return x;
 	}
 
       t = xa + xa;
       t = 0.5f * __log1pf (t + t * xa / (1.0f - xa));
     }
-  else if (__builtin_expect (isless (xa, 1.0f), 1))
+  else if (__glibc_likely (isless (xa, 1.0f)))
     t = 0.5f * __log1pf ((xa + xa) / (1.0f - xa));
   else
     {

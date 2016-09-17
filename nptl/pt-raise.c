@@ -1,5 +1,5 @@
 /* ISO C raise function for libpthread.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -22,8 +22,7 @@
 
 
 int
-raise (sig)
-     int sig;
+raise (int sig)
 {
   /* This is what POSIX says must happen.  */
   return pthread_kill (pthread_self (), sig);

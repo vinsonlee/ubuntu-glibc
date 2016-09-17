@@ -1,5 +1,5 @@
 /* Default memset/bzero implementation for PowerPC64.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,10 +18,9 @@
 
 #include <sysdep.h>
 
-#if defined SHARED && !defined NOT_IN_libc
-
 /* Copied from bzero.S to prevent the linker from inserting a stub
-   between bzero and memset.  */
+   between bzero and memset.  NOTE: this code should be positioned
+   before ENTRY/END_GEN_TB redefinition.  */
 ENTRY (__bzero_ppc)
         CALL_MCOUNT 3
         mr      r5,r4
@@ -29,6 +28,8 @@ ENTRY (__bzero_ppc)
         b       L(_memset)
 END_GEN_TB (__bzero_ppc,TB_TOCLESS)
 
+
+#if defined SHARED && IS_IN (libc)
 # undef EALIGN
 # define EALIGN(name, alignt, words)				\
   .section ".text";						\
@@ -46,11 +47,10 @@ END_GEN_TB (__bzero_ppc,TB_TOCLESS)
   END_2(__memset_ppc)
 
 # undef libc_hidden_builtin_def
-# define libc_hidden_builtin_def(name)				\
-  .globl __GI_memset; __GI_memset = __memset_ppc
+# define libc_hidden_builtin_def(name)
+#endif
 
 /* Do not implement __bzero at powerpc64/memset.S.  */
-# define NO_BZERO_IMPL
-#endif
+#define NO_BZERO_IMPL
 
 #include <sysdeps/powerpc/powerpc64/memset.S>

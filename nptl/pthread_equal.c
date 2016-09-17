@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -20,9 +20,7 @@
 
 
 int
-__pthread_equal (thread1, thread2)
-     pthread_t thread1;
-     pthread_t thread2;
+__pthread_equal (pthread_t thread1, pthread_t thread2)
 {
   return thread1 == thread2;
 }

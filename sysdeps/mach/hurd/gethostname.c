@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,9 +22,7 @@
    The result is null-terminated if LEN is large enough for the full
    name and the terminator.  */
 int
-__gethostname (name, len)
-     char *name;
-     size_t len;
+__gethostname (char *name, size_t len)
 {
   /* The host name is just the contents of the file /etc/hostname.  */
   ssize_t n = _hurd_get_host_config ("/etc/hostname", name, len);

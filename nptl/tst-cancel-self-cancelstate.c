@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ do_test (void)
   int ret = 0;
   volatile int should_fail = 1;
 
-  pthread_cleanup_push (cleanup, &should_fail);
+  pthread_cleanup_push (cleanup, (void *) &should_fail);
 
   if ((ret = pthread_setcancelstate (PTHREAD_CANCEL_DISABLE, NULL)) != 0)
     {

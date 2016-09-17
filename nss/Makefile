@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2014 Free Software Foundation, Inc.
+# Copyright (C) 1996-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,27 +20,39 @@
 #
 subdir	:= nss
 
+include ../Makeconfig
+
 headers			:= nss.h
 
 # This is the trivial part which goes into libc itself.
 routines		= nsswitch getnssent getnssent_r digits_dots \
+			  valid_field valid_list_field rewrite_field \
 			  $(addsuffix -lookup,$(databases))
 
 # These are the databases that go through nss dispatch.
 # Caution: if you add a database here, you must add its real name
 # in databases.def, too.
-databases		= proto service hosts network grp pwd rpc ethers \
-			  spwd netgrp key alias sgrp
+databases		= proto service hosts network grp pwd ethers \
+			  spwd netgrp alias sgrp
+
+ifneq (,$(filter sunrpc,$(subdirs)))
+databases		+= key rpc
+have-sunrpc		:= 1
+else
+have-sunrpc		:= 0
+endif
+CPPFLAGS-getent.c	= -DHAVE_SUNRPC=$(have-sunrpc)
 
 others                  := getent makedb
 install-bin             := getent makedb
 makedb-modules = xmalloc hash-string
 extra-objs		+= $(makedb-modules:=.o)
 
-tests			= test-netdb tst-nss-test1 test-digits-dots
+tests-static            = tst-field
+tests			= test-netdb tst-nss-test1 test-digits-dots \
+			  tst-nss-getpwent bug17079 \
+			  $(tests-static)
 xtests			= bug-erange
-
-include ../Makeconfig
 
 # Specify rules for the nss_* modules.  We have some services.
 services		:= files db
@@ -74,9 +86,9 @@ libnss_db-inhibit-o	= $(filter-out .os,$(object-suffixes))
 ifeq ($(build-static-nss),yes)
 routines                += $(libnss_files-routines)
 static-only-routines    += $(libnss_files-routines)
-tests-static		= tst-nss-static
-tests			+= $(tests-static)
+tests-static		+= tst-nss-static
 endif
+extra-test-objs		+= nss_test1.os
 
 include ../Rules
 
@@ -105,7 +117,7 @@ $(objpfx)makedb: $(makedb-modules:%=$(objpfx)%.o)
 $(inst_vardbdir)/Makefile: db-Makefile $(+force)
 	$(do-install)
 
-CFLAGS-nss_test1.c = -DNOT_IN_libc=1
+libof-nss_test1 = extramodules
 $(objpfx)/libnss_test1.so: $(objpfx)nss_test1.os $(link-libc-deps)
 	$(build-module)
 ifdef libnss_test1.so-version

@@ -52,8 +52,13 @@ ENTRY(__log1pl)
 	andb	$1,%ah
 	jz	2f
 
+	movzwl	8+8(%rsp), %eax
+	xorb	$0x80, %ah
+	cmpl	$0xc040, %eax
+	jae	5f
+
 	faddl	MO(one)
-	fyl2x
+5:	fyl2x
 	ret
 
 2:	fyl2xp1
@@ -63,7 +68,7 @@ ENTRY(__log1pl)
 	jnz	4b		// in case x is ±Inf
 	fstp	%st(1)
 	fstp	%st(1)
+	fadd	%st(0)
 	ret
 
 END (__log1pl)
-weak_alias (__log1pl, log1pl)

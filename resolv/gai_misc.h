@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2001.
 
@@ -31,7 +31,7 @@ struct waitlist
 #ifndef DONT_NEED_GAI_MISC_COND
     pthread_cond_t *cond;
 #endif
-    volatile int *counterp;
+    volatile unsigned int *counterp;
     /* The next field is used in asynchronous `lio_listio' operations.  */
     struct sigevent *sigevp;
     /* XXX See requestlist, it's used to work around the broken signal

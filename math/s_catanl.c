@@ -1,5 +1,5 @@
 /* Return arc tangent of complex long double value.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -36,7 +36,7 @@ __catanl (__complex__ long double x)
   int rcls = fpclassify (__real__ x);
   int icls = fpclassify (__imag__ x);
 
-  if (__builtin_expect (rcls <= FP_INFINITE || icls <= FP_INFINITE, 0))
+  if (__glibc_unlikely (rcls <= FP_INFINITE || icls <= FP_INFINITE))
     {
       if (rcls == FP_INFINITE)
 	{
@@ -62,7 +62,7 @@ __catanl (__complex__ long double x)
 	  __imag__ res = __nanl ("");
 	}
     }
-  else if (__builtin_expect (rcls == FP_ZERO && icls == FP_ZERO, 0))
+  else if (__glibc_unlikely (rcls == FP_ZERO && icls == FP_ZERO))
     {
       res = x;
     }
@@ -97,7 +97,11 @@ __catanl (__complex__ long double x)
 	    }
 
 	  if (absy < LDBL_EPSILON / 2.0L)
-	    den = (1.0L - absx) * (1.0L + absx);
+	    {
+	      den = (1.0L - absx) * (1.0L + absx);
+	      if (den == -0.0L)
+		den = 0.0L;
+	    }
 	  else if (absx >= 1.0L)
 	    den = (1.0L - absx) * (1.0L + absx) - absy * absy;
 	  else if (absx >= 0.75L || absy >= 0.5L)
@@ -135,16 +139,7 @@ __catanl (__complex__ long double x)
 	    }
 	}
 
-      if (fabsl (__real__ res) < LDBL_MIN)
-	{
-	  volatile long double force_underflow = __real__ res * __real__ res;
-	  (void) force_underflow;
-	}
-      if (fabsl (__imag__ res) < LDBL_MIN)
-	{
-	  volatile long double force_underflow = __imag__ res * __imag__ res;
-	  (void) force_underflow;
-	}
+      math_check_force_underflow_complex (res);
     }
 
   return res;

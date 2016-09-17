@@ -38,14 +38,23 @@ ENTRY(__ieee754_logl)
 	fld	%st		// x : x : log(2)
 	testb	$1, %ah
 	jnz	3f		// in case x is NaN or +-Inf
+	movzwl	8+8(%rsp), %eax
+	cmpl	$0xc000, %eax
+	jae	6f		// x <= -2, avoid overflow from -LDBL_MAX - 1.
 4:	fsubl	MO(one)		// x-1 : x : log(2)
-	fld	%st		// x-1 : x-1 : x : log(2)
+6:	fld	%st		// x-1 : x-1 : x : log(2)
 	fabs			// |x-1| : x-1 : x : log(2)
 	fcompl	MO(limit)	// x-1 : x : log(2)
 	fnstsw			// x-1 : x : log(2)
 	andb	$0x45, %ah
 	jz	2f
-	fstp	%st(1)		// x-1 : log(2)
+	fxam
+	fnstsw
+	andb	$0x45, %ah
+	cmpb	$0x40, %ah
+	jne	5f
+	fabs			// log(1) is +0 in all rounding modes.
+5:	fstp	%st(1)		// x-1 : log(2)
 	fyl2xp1			// log(x)
 	ret
 
@@ -57,6 +66,7 @@ ENTRY(__ieee754_logl)
 	jnz	4b		// in case x is +-Inf
 	fstp	%st(1)
 	fstp	%st(1)
+	fadd	%st(0)
 	ret
 END (__ieee754_logl)
 
@@ -72,7 +82,13 @@ ENTRY(__logl_finite)
 	fnstsw			// x-1 : x : log(2)
 	andb	$0x45, %ah
 	jz	2b
-	fstp	%st(1)		// x-1 : log(2)
+	fxam
+	fnstsw
+	andb	$0x45, %ah
+	cmpb	$0x40, %ah
+	jne	7f
+	fabs			// log(1) is +0 in all rounding modes.
+7:	fstp	%st(1)		// x-1 : log(2)
 	fyl2xp1			// log(x)
 	ret
 END (__logl_finite)

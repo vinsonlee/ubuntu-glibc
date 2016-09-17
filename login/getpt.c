@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Zack Weinberg <zack@rabi.phys.columbia.edu>, 1998.
 
@@ -31,8 +31,7 @@ weak_alias (__getpt, getpt)
 
 /* We cannot define posix_openpt in general for BSD systems.  */
 int
-__posix_openpt (oflag)
-     int oflag;
+__posix_openpt (int oflag)
 {
   __set_errno (ENOSYS);
   return -1;

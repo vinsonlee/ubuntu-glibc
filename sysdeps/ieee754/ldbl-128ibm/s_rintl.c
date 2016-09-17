@@ -1,6 +1,6 @@
 /* Round to int long double floating-point values.
    IBM extended format long double version.
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,10 +21,15 @@
    when it's coded in C.  */
 
 #include <math.h>
-#include <fenv_libc.h>
+#include <fenv.h>
 #include <math_ldbl_opt.h>
 #include <float.h>
 #include <ieee754.h>
+
+#ifdef USE_AS_NEARBYINTL
+# define rintl nearbyintl
+# define __rintl __nearbyintl
+#endif
 
 
 long double
@@ -40,11 +45,15 @@ __rintl (long double x)
 					     __builtin_inf ()), 1))
     {
       double orig_xh;
-      int save_round = __fegetround ();
+      int save_round = fegetround ();
 
       /* Long double arithmetic, including the canonicalisation below,
 	 only works in round-to-nearest mode.  */
+#ifdef USE_AS_NEARBYINTL
+      SET_RESTORE_ROUND_NOEX (FE_TONEAREST);
+#else
       fesetround (FE_TONEAREST);
+#endif
 
       /* Convert the high double to integer.  */
       orig_xh = xh;
@@ -103,8 +112,16 @@ __rintl (long double x)
       if (orig_xh < 0.0)
 	xh = -__builtin_fabs (xh);
 
+#ifdef USE_AS_NEARBYINTL
+      math_force_eval (xh);
+      math_force_eval (xl);
+#else
       fesetround (save_round);
+#endif
     }
+  else
+    /* Quiet signaling NaN arguments.  */
+    xh += xh;
 
   return ldbl_pack (xh, xl);
 }

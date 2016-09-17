@@ -1,5 +1,5 @@
 /* ix87 specific implementation of pow function.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -18,6 +18,7 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <machine/asm.h>
+#include <i386-math-asm.h>
 
 	.section .rodata.cst8,"aM",@progbits,8
 
@@ -53,6 +54,7 @@ minfinity:
 mzero:
 	.byte 0, 0, 0, 0, 0, 0, 0, 0x80
 	ASM_SIZE_DIRECTIVE(minf_mzero)
+DEFINE_DBL_MIN
 
 #ifdef PIC
 # define MO(op) op##@GOTOFF(%ecx)
@@ -144,17 +146,31 @@ ENTRY(__ieee754_pow)
 4:	fldl	MO(one)		// 1 : x
 	fxch
 
+	/* If y is even, take the absolute value of x.  Otherwise,
+	   ensure all intermediate values that might overflow have the
+	   sign of x.  */
+	testb	$1, %al
+	jnz	6f
+	fabs
+
 6:	shrdl	$1, %edx, %eax
 	jnc	5f
 	fxch
+	fabs
 	fmul	%st(1)		// x : ST*x
 	fxch
-5:	fmul	%st(0), %st	// x*x : ST*x
+5:	fld	%st		// x : x : ST*x
+	fabs			// |x| : x : ST*x
+	fmulp			// |x|*x : ST*x
 	shrl	$1, %edx
 	movl	%eax, %ecx
 	orl	%edx, %ecx
 	jnz	6b
 	fstp	%st(0)		// ST*x
+#ifdef	PIC
+	LOAD_PIC_REG (cx)
+#endif
+	DBL_NARROW_EVAL_UFLOW_NONNAN
 	ret
 
 	/* y is ±NAN */
@@ -207,27 +223,28 @@ ENTRY(__ieee754_pow)
 	fxch			// fract(y*log2(x)) : int(y*log2(x))
 	f2xm1			// 2^fract(y*log2(x))-1 : int(y*log2(x))
 	faddl	MO(one)		// 2^fract(y*log2(x)) : int(y*log2(x))
-	fscale			// 2^fract(y*log2(x))*2^int(y*log2(x)) : int(y*log2(x))
-	fstp	%st(1)		// 2^fract(y*log2(x))*2^int(y*log2(x))
+
+	// Before scaling, we must negate if x is negative and y is an
+	// odd integer.
 	testb	$2, %dh
-	jz	292f
+	jz	291f
 	// x is negative.  If y is an odd integer, negate the result.
-	fldl	20(%esp)	// y : abs(result)
-	fld	%st		// y : y : abs(result)
-	fabs			// |y| : y : abs(result)
-	fcompl	MO(p63)		// y : abs(result)
+	fldl	20(%esp)	// y : 2^fract(y*log2(x)) : int(y*log2(x))
+	fld	%st		// y : y : 2^fract(y*log2(x)) : int(y*log2(x))
+	fabs			// |y| : y : 2^fract(y*log2(x)) : int(y*log2(x))
+	fcompl	MO(p63)		// y : 2^fract(y*log2(x)) : int(y*log2(x))
 	fnstsw
 	sahf
-	jnc	291f
+	jnc	290f
 
 	// We must find out whether y is an odd integer.
-	fld	%st		// y : y : abs(result)
-	fistpll	(%esp)		// y : abs(result)
-	fildll	(%esp)		// int(y) : y : abs(result)
-	fucompp			// abs(result)
+	fld	%st		// y : y : 2^fract(y*log2(x)) : int(y*log2(x))
+	fistpll	(%esp)		// y : 2^fract(y*log2(x)) : int(y*log2(x))
+	fildll	(%esp)		// int(y) : y : 2^fract(y*log2(x)) : int(y*log2(x))
+	fucompp			// 2^fract(y*log2(x)) : int(y*log2(x))
 	fnstsw
 	sahf
-	jne	292f
+	jne	291f
 
 	// OK, the value is an integer, but is it odd?
 	popl	%eax
@@ -235,14 +252,18 @@ ENTRY(__ieee754_pow)
 	popl	%edx
 	cfi_adjust_cfa_offset (-4)
 	andb	$1, %al
-	jz	290f		// jump if not odd
+	jz	292f		// jump if not odd
 	// It's an odd integer.
 	fchs
-290:	ret
+	jmp	292f
+
 	cfi_adjust_cfa_offset (8)
-291:	fstp	%st(0)		// abs(result)
-292:	addl	$8, %esp
+290:	fstp	%st(0)		// 2^fract(y*log2(x)) : int(y*log2(x))
+291:	addl	$8, %esp
 	cfi_adjust_cfa_offset (-8)
+292:	fscale			// +/- 2^fract(y*log2(x))*2^int(y*log2(x)) : int(y*log2(x))
+	fstp	%st(1)		// +/- 2^fract(y*log2(x))*2^int(y*log2(x))
+	DBL_NARROW_EVAL_UFLOW_NONNAN
 	ret
 
 

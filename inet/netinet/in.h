@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -85,15 +85,17 @@ enum
 #define IPPROTO_SCTP		IPPROTO_SCTP
     IPPROTO_UDPLITE = 136, /* UDP-Lite protocol.  */
 #define IPPROTO_UDPLITE		IPPROTO_UDPLITE
+    IPPROTO_MPLS = 137,    /* MPLS in IP.  */
+#define IPPROTO_MPLS		IPPROTO_MPLS
     IPPROTO_RAW = 255,	   /* Raw IP packets.  */
 #define IPPROTO_RAW		IPPROTO_RAW
     IPPROTO_MAX
   };
 
-/* If __USE_KERNEL_IPV6_DEFS is defined then the user has included the kernel
+/* If __USE_KERNEL_IPV6_DEFS is 1 then the user has included the kernel
    network headers first and we should use those ABI-identical definitions
-   instead of our own.  */
-#ifndef __USE_KERNEL_IPV6_DEFS
+   instead of our own, otherwise 0.  */
+#if !__USE_KERNEL_IPV6_DEFS
 enum
   {
     IPPROTO_HOPOPTS = 0,   /* IPv6 Hop-by-Hop options.  */
@@ -204,20 +206,20 @@ enum
 #define INADDR_ALLRTRS_GROUP    ((in_addr_t) 0xe0000002) /* 224.0.0.2 */
 #define INADDR_MAX_LOCAL_GROUP  ((in_addr_t) 0xe00000ff) /* 224.0.0.255 */
 
-#ifndef __USE_KERNEL_IPV6_DEFS
+#if !__USE_KERNEL_IPV6_DEFS
 /* IPv6 address */
 struct in6_addr
   {
     union
       {
 	uint8_t	__u6_addr8[16];
-#if defined __USE_MISC || defined __USE_GNU
+#ifdef __USE_MISC
 	uint16_t __u6_addr16[8];
 	uint32_t __u6_addr32[4];
 #endif
       } __in6_u;
 #define s6_addr			__in6_u.__u6_addr8
-#if defined __USE_MISC || defined __USE_GNU
+#ifdef __USE_MISC
 # define s6_addr16		__in6_u.__u6_addr16
 # define s6_addr32		__in6_u.__u6_addr32
 #endif
@@ -247,7 +249,7 @@ struct sockaddr_in
 			   sizeof (struct in_addr)];
   };
 
-#ifndef __USE_KERNEL_IPV6_DEFS
+#if !__USE_KERNEL_IPV6_DEFS
 /* Ditto, for IPv6.  */
 struct sockaddr_in6
   {
@@ -259,7 +261,7 @@ struct sockaddr_in6
   };
 #endif /* !__USE_KERNEL_IPV6_DEFS */
 
-#if defined __USE_MISC || defined __USE_GNU
+#ifdef __USE_MISC
 /* IPv4 multicast request.  */
 struct ip_mreq
   {
@@ -283,7 +285,7 @@ struct ip_mreq_source
   };
 #endif
 
-#ifndef __USE_KERNEL_IPV6_DEFS
+#if !__USE_KERNEL_IPV6_DEFS
 /* Likewise, for IPv6.  */
 struct ipv6_mreq
   {
@@ -295,7 +297,7 @@ struct ipv6_mreq
   };
 #endif /* !__USE_KERNEL_IPV6_DEFS */
 
-#if defined __USE_MISC || defined __USE_GNU
+#ifdef __USE_MISC
 /* Multicast group request.  */
 struct group_req
   {
@@ -496,7 +498,7 @@ extern uint16_t htons (uint16_t __hostshort)
 
 #define IN6_IS_ADDR_MULTICAST(a) (((const uint8_t *) (a))[0] == 0xff)
 
-#if defined __USE_MISC || defined __USE_GNU
+#ifdef __USE_MISC
 /* Bind socket to a privileged IP port.  */
 extern int bindresvport (int __sockfd, struct sockaddr_in *__sock_in) __THROW;
 
@@ -530,6 +532,7 @@ extern int bindresvport6 (int __sockfd, struct sockaddr_in6 *__sock_in)
 #ifdef __USE_GNU
 struct cmsghdr;			/* Forward declaration.  */
 
+#if !__USE_KERNEL_IPV6_DEFS
 /* IPv6 packet information.  */
 struct in6_pktinfo
   {
@@ -543,7 +546,7 @@ struct ip6_mtuinfo
     struct sockaddr_in6 ip6m_addr; /* dst address including zone ID */
     uint32_t ip6m_mtu;		   /* path MTU in host byte order */
   };
-
+#endif /* !__USE_KERNEL_IPV6_DEFS */
 
 /* Obsolete hop-by-hop and Destination Options Processing (RFC 2292).  */
 extern int inet6_option_space (int __nbytes)

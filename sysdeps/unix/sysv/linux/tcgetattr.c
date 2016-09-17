@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,16 +30,14 @@
 
 /* Put the state of FD into *TERMIOS_P.  */
 int
-__tcgetattr (fd, termios_p)
-      int fd;
-      struct termios *termios_p;
+__tcgetattr (int fd, struct termios *termios_p)
 {
   struct __kernel_termios k_termios;
   int retval;
 
   retval = INLINE_SYSCALL (ioctl, 3, fd, TCGETS, &k_termios);
 
-  if (__builtin_expect (retval == 0, 1))
+  if (__glibc_likely (retval == 0))
     {
       termios_p->c_iflag = k_termios.c_iflag;
       termios_p->c_oflag = k_termios.c_oflag;

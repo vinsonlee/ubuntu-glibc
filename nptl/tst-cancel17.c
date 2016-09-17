@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -332,6 +332,22 @@ do_test (void)
     }
 
   puts ("early cancellation succeeded");
+
+  if (ap == &a2)
+    {
+      /* The aio_read(&a) was not canceled because the read request was
+	 already in progress. In the meanwhile aio_write(ap) wrote something
+	 to the pipe and the read request either has already been finished or
+	 is able to read the requested byte.
+	 Wait for the read request before returning from this function because
+	 the return value and error code from the read syscall will be written
+	 to the struct aiocb a, which lies on the stack of this function.
+	 Otherwise the stack from subsequent function calls - e.g. _dl_fini -
+	 will be corrupted, which can lead to undefined behaviour like a
+	 segmentation fault.  */
+      const struct aiocb *l[1] = { &a };
+      TEMP_FAILURE_RETRY (aio_suspend(l, 1, NULL));
+    }
 
   return 0;
 }

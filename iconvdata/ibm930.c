@@ -1,5 +1,5 @@
 /* Conversion from and to IBM930.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Masahide Washizawa <washi@yamato.ibm.co.jp>, 2000.
 
@@ -17,6 +17,11 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+/* IBM930 is designed for the representation of Japanese Katakana/Kanji
+   using a stateful EBCDIC encoding scheme.  It is also known as
+   CCSID 930 or CP930. See:
+   https://www-01.ibm.com/software/globalization/ccsid/ccsid930.html */
+
 #include <dlfcn.h>
 #include <stdint.h>
 #include <wchar.h>
@@ -31,6 +36,7 @@
 #define CHARSET_NAME	"IBM930//"
 #define FROM_LOOP	from_ibm930
 #define TO_LOOP		to_ibm930
+#define ONE_DIRECTION			0
 #define FROM_LOOP_MIN_NEEDED_FROM	1
 #define FROM_LOOP_MAX_NEEDED_FROM	2
 #define FROM_LOOP_MIN_NEEDED_TO		4
@@ -61,7 +67,7 @@
 	{								      \
 	  /* We are not in the initial state.  To switch back we have	      \
 	     to emit `SI'.  */						      \
-	  if (__builtin_expect (outbuf >= outend, 0))			      \
+	  if (__glibc_unlikely (outbuf >= outend))			      \
 	    /* We don't have enough room in the output buffer.  */	      \
 	    status = __GCONV_FULL_OUTPUT;				      \
 	  else								      \
@@ -104,24 +110,14 @@ enum
 									      \
     if (__builtin_expect (ch, 0) == SO)					      \
       {									      \
-	/* Shift OUT, change to DBCS converter.  */			      \
-	if (curcs == db)						      \
-	  {								      \
-	    result = __GCONV_ILLEGAL_INPUT;				      \
-	    break;							      \
-	  }								      \
+	/* Shift OUT, change to DBCS converter (redundant escape okay).  */   \
 	curcs = db;							      \
 	++inptr;							      \
 	continue;							      \
       }									      \
     else if (__builtin_expect (ch, 0) == SI)				      \
       {									      \
-	/* Shift IN, change to SBCS converter */			      \
-	if (curcs == sb)						      \
-	  {								      \
-	    result = __GCONV_ILLEGAL_INPUT;				      \
-	    break;							      \
-	  }								      \
+	/* Shift IN, change to SBCS converter (redundant escape okay).  */    \
 	curcs = sb;							      \
 	++inptr;							      \
 	continue;							      \
@@ -150,7 +146,7 @@ enum
 									      \
 	assert (curcs == db);						      \
 									      \
-	if (__builtin_expect (inptr + 1 >= inend, 0))			      \
+	if (__glibc_unlikely (inptr + 1 >= inend))			      \
 	  {								      \
 	    /* The second character is not available.  Store the	      \
 	       intermediate result. */					      \
@@ -197,7 +193,7 @@ enum
     const struct gap *rp2 = __ucs4_to_ibm930db_idx;			      \
     const char *cp;							      \
 									      \
-    if (__builtin_expect (ch >= 0xffff, 0))				      \
+    if (__glibc_unlikely (ch >= 0xffff))				      \
       {									      \
 	UNICODE_TAG_HANDLER (ch, 4);					      \
 									      \
@@ -227,7 +223,7 @@ enum
 	  {								      \
 	    if (curcs == sb)						      \
 	      {								      \
-		if (__builtin_expect (outptr + 1 > outend, 0))		      \
+		if (__glibc_unlikely (outptr + 1 > outend))		      \
 		  {							      \
 		    result = __GCONV_FULL_OUTPUT;			      \
 		    break;						      \
@@ -236,7 +232,7 @@ enum
 		curcs = db;						      \
 	      }								      \
 									      \
-	    if (__builtin_expect (outptr + 2 > outend, 0))		      \
+	    if (__glibc_unlikely (outptr + 2 > outend))			      \
 	      {								      \
 		result = __GCONV_FULL_OUTPUT;				      \
 		break;							      \
@@ -249,15 +245,16 @@ enum
       {									      \
 	if (curcs == db)						      \
 	  {								      \
-	    if (__builtin_expect (outptr + 1 > outend, 0))		      \
+	    if (__glibc_unlikely (outptr + 1 > outend))			      \
 	      {								      \
 		result = __GCONV_FULL_OUTPUT;				      \
 		break;							      \
 	      }								      \
 	    *outptr++ = SI;						      \
+	    curcs = sb;							      \
 	  }								      \
 									      \
-	if (__builtin_expect (outptr + 1 > outend, 0))			      \
+	if (__glibc_unlikely (outptr + 1 > outend))			      \
 	  {								      \
 	    result = __GCONV_FULL_OUTPUT;				      \
 	    break;							      \
@@ -268,7 +265,6 @@ enum
 	  *outptr++ = 0x5b;						      \
 	else								      \
 	  *outptr++ = cp[0];						      \
-	curcs = sb;							      \
       }									      \
 									      \
     /* Now that we wrote the output increment the input pointer.  */	      \

@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,9 +24,7 @@
 static int _IO_str_chk_overflow (_IO_FILE *fp, int c) __THROW;
 
 static int
-_IO_str_chk_overflow (fp, c)
-     _IO_FILE *fp;
-     int c;
+_IO_str_chk_overflow (_IO_FILE *fp, int c)
 {
   /* When we come to here this means the user supplied buffer is
      filled.  */
@@ -34,7 +32,7 @@ _IO_str_chk_overflow (fp, c)
 }
 
 
-static const struct _IO_jump_t _IO_str_chk_jumps =
+static const struct _IO_jump_t _IO_str_chk_jumps libio_vtable =
 {
   JUMP_INIT_DUMMY,
   JUMP_INIT(finish, _IO_str_finish),

@@ -1,5 +1,5 @@
 /* copysign().  PowerPC64/POWER6 version.
-   Copyright (C) 2010-2014 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Luis Machado <luisgpm@br.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -47,7 +47,7 @@ strong_alias (__copysign, __copysignl)
 weak_alias (__copysign, copysignl)
 #endif
 
-#ifdef IS_IN_libm
+#if IS_IN (libm)
 # if LONG_DOUBLE_COMPAT (libm, GLIBC_2_0)
 compat_symbol (libm, copysign, copysignl, GLIBC_2_0)
 # endif

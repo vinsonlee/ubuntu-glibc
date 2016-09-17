@@ -31,7 +31,7 @@ libnldbl-calls = asprintf dprintf fprintf fscanf fwprintf fwscanf iovfscanf \
 		 tanh acosh asinh atanh exp log log10 exp10 pow10 expm1 \
 		 log1p logb exp2 sqrt cbrt fabs floor j0 j1 y0 y1 erf erfc \
 		 lgamma tgamma gamma rint nearbyint round trunc \
-		 copysign fdim fmax fmin nextafter pow hypot fmod drem \
+		 copysign fdim fmax fmin nextafter pow hypot fmod \
 		 remainder ldexp scalbn frexp modf scalbln fma nan sincos \
 		 jn yn ilogb remquo lrint lround llrint llround nexttowardf \
 		 nexttoward conj cacos cacosh casin catan catanh ccos ccosh \
@@ -40,7 +40,8 @@ libnldbl-calls = asprintf dprintf fprintf fscanf fwprintf fwscanf iovfscanf \
 		 isoc99_scanf isoc99_fscanf isoc99_sscanf \
 		 isoc99_vscanf isoc99_vfscanf isoc99_vsscanf \
 		 isoc99_wscanf isoc99_fwscanf isoc99_swscanf \
-		 isoc99_vwscanf isoc99_vfwscanf isoc99_vswscanf
+		 isoc99_vwscanf isoc99_vfwscanf isoc99_vswscanf \
+		 nextup nextdown
 libnldbl-routines = $(libnldbl-calls:%=nldbl-%)
 libnldbl-inhibit-o = $(object-suffixes)
 libnldbl-static-only-routines = $(libnldbl-routines)
@@ -81,7 +82,6 @@ CFLAGS-nldbl-csinh.c = -fno-builtin-csinhl
 CFLAGS-nldbl-csqrt.c = -fno-builtin-csqrtl
 CFLAGS-nldbl-ctan.c = -fno-builtin-ctanl
 CFLAGS-nldbl-ctanh.c = -fno-builtin-ctanhl
-CFLAGS-nldbl-drem.c = -fno-builtin-dreml
 CFLAGS-nldbl-erf.c = -fno-builtin-erfl
 CFLAGS-nldbl-erfc.c = -fno-builtin-erfcl
 CFLAGS-nldbl-exp.c = -fno-builtin-expl
@@ -121,11 +121,13 @@ CFLAGS-nldbl-modf.c = -fno-builtin-modfl
 CFLAGS-nldbl-nan.c = -fno-builtin-nanl
 CFLAGS-nldbl-nearbyint.c = -fno-builtin-nearbyintl
 CFLAGS-nldbl-nextafter.c = -fno-builtin-nextafterl
+CFLAGS-nldbl-nextdown.c = -fno-builtin-nextdownl
 CFLAGS-nldbl-nexttoward.c = -fno-builtin-nexttoward -fno-builtin-nexttowardl
 CFLAGS-nldbl-nexttowardf.c = -fno-builtin-nexttowardf
+CFLAGS-nldbl-nextup.c = -fno-builtin-nextupl
 CFLAGS-nldbl-pow.c = -fno-builtin-powl
 CFLAGS-nldbl-pow10.c = -fno-builtin-pow10l
-CFLAGS-nldbl-remainder.c = -fno-builtin-remainderl
+CFLAGS-nldbl-remainder.c = -fno-builtin-remainderl -fno-builtin-dreml
 CFLAGS-nldbl-remquo.c = -fno-builtin-remquol
 CFLAGS-nldbl-rint.c = -fno-builtin-rintl
 CFLAGS-nldbl-round.c = -fno-builtin-roundl

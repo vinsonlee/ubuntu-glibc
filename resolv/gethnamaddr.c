@@ -49,9 +49,10 @@
  * --Copyright--
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
-#endif /* LIBC_SCCS and not lint */
+/* XXX This file is not used by any of the resolver functions implemented by
+   glibc (i.e. get*info and gethostby*).  It cannot be removed however because
+   it exports symbols in the libresolv ABI.  The file is not maintained any
+   more, nor are these functions.  */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,38 +66,11 @@ static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 #include <resolv.h>
 #include <ctype.h>
 #include <errno.h>
-#include <syslog.h>
-
-#define RESOLVSORT
-
-#ifndef LOG_AUTH
-# define LOG_AUTH 0
-#endif
-
-#define MULTI_PTRS_ARE_ALIASES 1	/* XXX - experimental */
-
-#if defined(BSD) && (BSD >= 199103) && defined(AF_INET6)
-# include <stdlib.h>
-# include <string.h>
-#else
-# include "../conf/portability.h"
-#endif
-
-#if defined(USE_OPTIONS_H)
-# include <../conf/options.h>
-#endif
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) ((size_t)sprintf x)
-#endif
+#include <stdlib.h>
+#include <string.h>
 
 #define	MAXALIASES	35
 #define	MAXADDRS	35
-
-static const char AskedForGot[] =
-			  "gethostby*.getanswer: asked for \"%s\", got \"%s\"";
 
 static char *h_addr_ptrs[MAXADDRS + 1];
 
@@ -110,9 +84,7 @@ static int stayopen = 0;
 static void map_v4v6_address (const char *src, char *dst) __THROW;
 static void map_v4v6_hostent (struct hostent *hp, char **bp, int *len) __THROW;
 
-#ifdef RESOLVSORT
 extern void addrsort (char **, int) __THROW;
-#endif
 
 #if PACKETSZ > 65536
 #define	MAXPACKET	PACKETSZ
@@ -142,9 +114,7 @@ extern int h_errno;
 
 #ifdef DEBUG
 static void
-Dprintf(msg, num)
-	char *msg;
-	int num;
+Dprintf (char *msg, int num)
 {
 	if (_res.options & RES_DEBUG) {
 		int save = errno;
@@ -326,31 +296,18 @@ getanswer (const querybuf *answer, int anslen, const char *qname, int qtype)
 			buflen -= n;
 			continue;
 		}
-		if ((type == T_SIG) || (type == T_KEY) || (type == T_NXT)) {
-			/* We don't support DNSSEC yet.  For now, ignore
-			 * the record and send a low priority message
-			 * to syslog.
-			 */
-			syslog(LOG_DEBUG|LOG_AUTH,
-	       "gethostby*.getanswer: asked for \"%s %s %s\", got type \"%s\"",
-			       qname, p_class(C_IN), p_type(qtype),
-			       p_type(type));
-			cp += n;
-			continue;
-		}
 		if (type != qtype) {
-			syslog(LOG_NOTICE|LOG_AUTH,
-	       "gethostby*.getanswer: asked for \"%s %s %s\", got type \"%s\"",
-			       qname, p_class(C_IN), p_type(qtype),
-			       p_type(type));
+			/* Log a low priority message if we get an unexpected
+			 * record, but skip it if we are using DNSSEC since it
+			 * uses many different types in responses that do not
+			 * match QTYPE.
+			 */
 			cp += n;
 			continue;		/* XXX - had_error++ ? */
 		}
 		switch (type) {
 		case T_PTR:
 			if (strcasecmp(tname, bp) != 0) {
-				syslog(LOG_NOTICE|LOG_AUTH,
-				       AskedForGot, qname, bp);
 				cp += n;
 				continue;	/* XXX - had_error++ ? */
 			}
@@ -359,7 +316,6 @@ getanswer (const querybuf *answer, int anslen, const char *qname, int qtype)
 				had_error++;
 				break;
 			}
-#if MULTI_PTRS_ARE_ALIASES
 			cp += n;
 			if (cp != erdata) {
 				__set_h_errno (NO_RECOVERY);
@@ -381,26 +337,9 @@ getanswer (const querybuf *answer, int anslen, const char *qname, int qtype)
 				buflen -= n;
 			}
 			break;
-#else
-			host.h_name = bp;
-			if (_res.options & RES_USE_INET6) {
-				n = strlen(bp) + 1;	/* for the \0 */
-				if (n >= MAXHOSTNAMELEN) {
-					had_error++;
-					break;
-				}
-				bp += n;
-				buflen -= n;
-				map_v4v6_hostent(&host, &bp, &buflen);
-			}
-			__set_h_errno (NETDB_SUCCESS);
-			return (&host);
-#endif
 		case T_A:
 		case T_AAAA:
 			if (strcasecmp(host.h_name, bp) != 0) {
-				syslog(LOG_NOTICE|LOG_AUTH,
-				       AskedForGot, host.h_name, bp);
 				cp += n;
 				continue;	/* XXX - had_error++ ? */
 			}
@@ -454,7 +393,6 @@ getanswer (const querybuf *answer, int anslen, const char *qname, int qtype)
 	if (haveanswer) {
 		*ap = NULL;
 		*hap = NULL;
-# if defined(RESOLVSORT)
 		/*
 		 * Note: we sort even if host can take only one address
 		 * in its return structures - should give it the "best"
@@ -462,7 +400,6 @@ getanswer (const querybuf *answer, int anslen, const char *qname, int qtype)
 		 */
 		if (_res.nsort && haveanswer > 1 && qtype == T_A)
 			addrsort(h_addr_ptrs, haveanswer);
-# endif /*RESOLVSORT*/
 		if (!host.h_name) {
 			n = strlen(qname) + 1;	/* for the \0 */
 			if (n > buflen || n >= MAXHOSTNAMELEN)
@@ -486,8 +423,7 @@ extern struct hostent *gethostbyname2(const char *name, int af);
 libresolv_hidden_proto (gethostbyname2)
 
 struct hostent *
-gethostbyname(name)
-	const char *name;
+gethostbyname (const char *name)
 {
 	struct hostent *hp;
 
@@ -504,9 +440,7 @@ gethostbyname(name)
 }
 
 struct hostent *
-gethostbyname2(name, af)
-	const char *name;
-	int af;
+gethostbyname2 (const char *name, int af)
 {
 	union
 	{
@@ -621,7 +555,7 @@ gethostbyname2(name, af)
 	buf.buf = origbuf = (querybuf *) alloca (1024);
 
 	if ((n = __libc_res_nsearch(&_res, name, C_IN, type, buf.buf->buf, 1024,
-				    &buf.ptr, NULL, NULL, NULL)) < 0) {
+				    &buf.ptr, NULL, NULL, NULL, NULL)) < 0) {
 		if (buf.buf != origbuf)
 			free (buf.buf);
 		Dprintf("res_nsearch failed (%d)\n", n);
@@ -637,10 +571,7 @@ gethostbyname2(name, af)
 libresolv_hidden_def (gethostbyname2)
 
 struct hostent *
-gethostbyaddr(addr, len, af)
-	const void *addr;
-	socklen_t len;
-	int af;
+gethostbyaddr (const void *addr, socklen_t len, int af)
 {
 	const u_char *uaddr = (const u_char *)addr;
 	static const u_char mapped[] = { 0,0, 0,0, 0,0, 0,0, 0,0, 0xff,0xff };
@@ -655,20 +586,14 @@ gethostbyaddr(addr, len, af)
 	querybuf *orig_buf;
 	struct hostent *hp;
 	char qbuf[MAXDNAME+1], *qp = NULL;
-#ifdef SUNSECURITY
-	struct hostent *rhp;
-	char **haddr;
-	u_long old_options;
-	char hname2[MAXDNAME+1];
-#endif /*SUNSECURITY*/
 
 	if (__res_maybe_init (&_res, 0) == -1) {
 		__set_h_errno (NETDB_INTERNAL);
 		return (NULL);
 	}
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
-	    (!bcmp(uaddr, mapped, sizeof mapped) ||
-	     !bcmp(uaddr, tunnelled, sizeof tunnelled))) {
+	    (!memcmp(uaddr, mapped, sizeof mapped) ||
+	     !memcmp(uaddr, tunnelled, sizeof tunnelled))) {
 		/* Unmap. */
 		addr += sizeof mapped;
 		uaddr += sizeof mapped;
@@ -703,9 +628,9 @@ gethostbyaddr(addr, len, af)
 	case AF_INET6:
 		qp = qbuf;
 		for (n = IN6ADDRSZ - 1; n >= 0; n--) {
-			qp += SPRINTF((qp, "%x.%x.",
-				       uaddr[n] & 0xf,
-				       (uaddr[n] >> 4) & 0xf));
+			qp += sprintf(qp, "%x.%x.",
+				      uaddr[n] & 0xf,
+				      (uaddr[n] >> 4) & 0xf);
 		}
 		strcpy(qp, "ip6.arpa");
 		break;
@@ -716,12 +641,12 @@ gethostbyaddr(addr, len, af)
 	buf.buf = orig_buf = (querybuf *) alloca (1024);
 
 	n = __libc_res_nquery(&_res, qbuf, C_IN, T_PTR, buf.buf->buf, 1024,
-			      &buf.ptr, NULL, NULL, NULL);
+			      &buf.ptr, NULL, NULL, NULL, NULL);
 	if (n < 0 && af == AF_INET6 && (_res.options & RES_NOIP6DOTINT) == 0) {
 		strcpy(qp, "ip6.int");
 		n = __libc_res_nquery(&_res, qbuf, C_IN, T_PTR, buf.buf->buf,
 				      buf.buf != orig_buf ? MAXPACKET : 1024,
-				      &buf.ptr, NULL, NULL, NULL);
+				      &buf.ptr, NULL, NULL, NULL, NULL);
 	}
 	if (n < 0) {
 		if (buf.buf != orig_buf)
@@ -736,38 +661,6 @@ gethostbyaddr(addr, len, af)
 		free (buf.buf);
 	if (!hp)
 		return (NULL);	/* h_errno was set by getanswer() */
-#ifdef SUNSECURITY
-	if (af == AF_INET) {
-	    /*
-	     * turn off search as the name should be absolute,
-	     * 'localhost' should be matched by defnames
-	     */
-	    strncpy(hname2, hp->h_name, MAXDNAME);
-	    hname2[MAXDNAME] = '\0';
-	    old_options = _res.options;
-	    _res.options &= ~RES_DNSRCH;
-	    _res.options |= RES_DEFNAMES;
-	    if (!(rhp = gethostbyname(hname2))) {
-		syslog(LOG_NOTICE|LOG_AUTH,
-		       "gethostbyaddr: No A record for %s (verifying [%s])",
-		       hname2, inet_ntoa(*((struct in_addr *)addr)));
-		_res.options = old_options;
-		__set_h_errno (HOST_NOT_FOUND);
-		return (NULL);
-	    }
-	    _res.options = old_options;
-	    for (haddr = rhp->h_addr_list; *haddr; haddr++)
-		if (!memcmp(*haddr, addr, INADDRSZ))
-			break;
-	    if (!*haddr) {
-		syslog(LOG_NOTICE|LOG_AUTH,
-		       "gethostbyaddr: A record of %s != PTR record [%s]",
-		       hname2, inet_ntoa(*((struct in_addr *)addr)));
-		__set_h_errno (HOST_NOT_FOUND);
-		return (NULL);
-	    }
-	}
-#endif /*SUNSECURITY*/
 	hp->h_addrtype = af;
 	hp->h_length = len;
 	memmove(host_addr, addr, len);
@@ -783,8 +676,7 @@ gethostbyaddr(addr, len, af)
 }
 
 void
-_sethtent(f)
-	int f;
+_sethtent (int f)
 {
 	if (!hostf)
 		hostf = fopen(_PATH_HOSTS, "rce" );
@@ -870,8 +762,7 @@ _gethtent (void)
 libresolv_hidden_def (_gethtent)
 
 struct hostent *
-_gethtbyname(name)
-	const char *name;
+_gethtbyname (const char *name)
 {
 	struct hostent *hp;
 
@@ -884,9 +775,7 @@ _gethtbyname(name)
 }
 
 struct hostent *
-_gethtbyname2(name, af)
-	const char *name;
-	int af;
+_gethtbyname2 (const char *name, int af)
 {
 	struct hostent *p;
 	char **cp;
@@ -908,16 +797,13 @@ _gethtbyname2(name, af)
 libresolv_hidden_def (_gethtbyname2)
 
 struct hostent *
-_gethtbyaddr(addr, len, af)
-	const char *addr;
-	size_t len;
-	int af;
+_gethtbyaddr (const char *addr, size_t len, int af)
 {
 	struct hostent *p;
 
 	_sethtent(0);
 	while ((p = _gethtent()))
-		if (p->h_addrtype == af && !bcmp(p->h_addr, addr, len))
+		if (p->h_addrtype == af && !memcmp(p->h_addr, addr, len))
 			break;
 	_endhtent();
 	return (p);
@@ -925,9 +811,7 @@ _gethtbyaddr(addr, len, af)
 libresolv_hidden_def (_gethtbyaddr)
 
 static void
-map_v4v6_address(src, dst)
-	const char *src;
-	char *dst;
+map_v4v6_address (const char *src, char *dst)
 {
 	u_char *p = (u_char *)dst;
 	char tmp[INADDRSZ];
@@ -945,10 +829,7 @@ map_v4v6_address(src, dst)
 }
 
 static void
-map_v4v6_hostent(hp, bpp, lenp)
-	struct hostent *hp;
-	char **bpp;
-	int *lenp;
+map_v4v6_hostent (struct hostent *hp, char **bpp, int *lenp)
 {
 	char **ap;
 
@@ -973,11 +854,8 @@ map_v4v6_hostent(hp, bpp, lenp)
 	}
 }
 
-#ifdef RESOLVSORT
 extern void
-addrsort(ap, num)
-	char **ap;
-	int num;
+addrsort (char **ap, int num)
 {
 	int i, j;
 	char **p;
@@ -1016,55 +894,3 @@ addrsort(ap, num)
 	    needsort++;
 	}
 }
-#endif
-
-#if defined(BSD43_BSD43_NFS) || defined(sun)
-/* some libc's out there are bound internally to these names (UMIPS) */
-void
-ht_sethostent(stayopen)
-	int stayopen;
-{
-	_sethtent(stayopen);
-}
-
-void
-ht_endhostent (void)
-{
-	_endhtent();
-}
-
-struct hostent *
-ht_gethostbyname(name)
-	char *name;
-{
-	return (_gethtbyname(name));
-}
-
-struct hostent *
-ht_gethostbyaddr(addr, len, af)
-	const char *addr;
-	size_t len;
-	int af;
-{
-	return (_gethtbyaddr(addr, len, af));
-}
-
-struct hostent *
-gethostent (void)
-{
-	return (_gethtent());
-}
-
-void
-dns_service (void)
-{
-	return;
-}
-
-#undef dn_skipname
-dn_skipname(comp_dn, eom)
-	const u_char *comp_dn, *eom;
-{
-	return (__dn_skipname(comp_dn, eom));
-}
-#endif /*old-style libc with yp junk in it*/

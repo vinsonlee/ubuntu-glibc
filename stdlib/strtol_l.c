@@ -1,5 +1,5 @@
 /* Convert string representing a number to integer value, using given locale.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -24,7 +24,6 @@
 
 #ifdef _LIBC
 # define USE_NUMBER_GROUPING
-# define STDC_HEADERS
 # define HAVE_LIMITS_H
 #endif
 
@@ -138,8 +137,8 @@
 # define UCHAR_TYPE wint_t
 # define STRING_TYPE wchar_t
 # define ISSPACE(Ch) __iswspace_l ((Ch), loc)
-# define ISALPHA(Ch) __iswalpha_l ((Ch), loc)
-# define TOUPPER(Ch) __towupper_l ((Ch), loc)
+# define ISALPHA(Ch) __iswalpha_l ((Ch), _nl_C_locobj_ptr)
+# define TOUPPER(Ch) __towupper_l ((Ch), _nl_C_locobj_ptr)
 #else
 # if defined _LIBC \
    || defined STDC_HEADERS || (!defined isascii && !defined HAVE_ISASCII)
@@ -151,8 +150,8 @@
 # define UCHAR_TYPE unsigned char
 # define STRING_TYPE char
 # define ISSPACE(Ch) __isspace_l ((Ch), loc)
-# define ISALPHA(Ch) __isalpha_l ((Ch), loc)
-# define TOUPPER(Ch) __toupper_l ((Ch), loc)
+# define ISALPHA(Ch) __isalpha_l ((Ch), _nl_C_locobj_ptr)
+# define TOUPPER(Ch) __toupper_l ((Ch), _nl_C_locobj_ptr)
 #endif
 
 #define INTERNAL(X) INTERNAL1(X)
@@ -223,12 +222,8 @@ extern const unsigned char __strtol_ull_rem_tab[] attribute_hidden;
    one converted is stored in *ENDPTR.  */
 
 INT
-INTERNAL (__strtol_l) (nptr, endptr, base, group, loc)
-     const STRING_TYPE *nptr;
-     STRING_TYPE **endptr;
-     int base;
-     int group;
-     __locale_t loc;
+INTERNAL (__strtol_l) (const STRING_TYPE *nptr, STRING_TYPE **endptr,
+		       int base, int group, __locale_t loc)
 {
   int negative;
   unsigned LONG int cutoff;
@@ -255,7 +250,7 @@ INTERNAL (__strtol_l) (nptr, endptr, base, group, loc)
      in the format described in <locale.h>.  */
   const char *grouping;
 
-  if (__builtin_expect (group, 0))
+  if (__glibc_unlikely (group))
     {
       grouping = _NL_CURRENT (LC_NUMERIC, GROUPING);
       if (*grouping <= 0 || *grouping == CHAR_MAX)
@@ -297,7 +292,7 @@ INTERNAL (__strtol_l) (nptr, endptr, base, group, loc)
   /* Skip white space.  */
   while (ISSPACE (*s))
     ++s;
-  if (__builtin_expect (*s == L_('\0'), 0))
+  if (__glibc_unlikely (*s == L_('\0')))
     goto noconv;
 
   /* Check for a sign.  */
@@ -331,7 +326,7 @@ INTERNAL (__strtol_l) (nptr, endptr, base, group, loc)
   if (base != 10)
     grouping = NULL;
 
-  if (__builtin_expect (grouping != NULL, 0))
+  if (__glibc_unlikely (grouping != NULL))
     {
 # ifndef USE_WIDE_CHAR
       thousands_len = strlen (thousands);
@@ -356,8 +351,8 @@ INTERNAL (__strtol_l) (nptr, endptr, base, group, loc)
 		&& (wchar_t) c != thousands
 # else
 		&& ({ for (cnt = 0; cnt < thousands_len; ++cnt)
-		      if (thousands[cnt] != end[cnt])
-			break;
+			if (thousands[cnt] != end[cnt])
+			  break;
 		      cnt < thousands_len; })
 # endif
 		&& (!ISALPHA (c)
@@ -499,7 +494,7 @@ INTERNAL (__strtol_l) (nptr, endptr, base, group, loc)
     overflow = 1;
 #endif
 
-  if (__builtin_expect (overflow, 0))
+  if (__glibc_unlikely (overflow))
     {
       __set_errno (ERANGE);
 #if UNSIGNED
@@ -547,11 +542,8 @@ INT
 #ifdef weak_function
 weak_function
 #endif
-__strtol_l (nptr, endptr, base, loc)
-     const STRING_TYPE *nptr;
-     STRING_TYPE **endptr;
-     int base;
-     __locale_t loc;
+__strtol_l (const STRING_TYPE *nptr, STRING_TYPE **endptr,
+	    int base, __locale_t loc)
 {
   return INTERNAL (__strtol_l) (nptr, endptr, base, 0, loc);
 }

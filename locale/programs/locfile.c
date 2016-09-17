@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1996.
 
@@ -84,7 +84,7 @@ locfile_read (struct localedef_t *result, const struct charmap_t *charmap)
 
 		  if (ldfile == NULL)
 		    {
-		      stpcpy (stpcpy (path, next), filename);
+		      stpcpy (stpcpy (stpcpy (path, next), "/"), filename);
 
 		      ldfile = lr_open (path, locfile_hash);
 		    }

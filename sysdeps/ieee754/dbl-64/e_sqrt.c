@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * written by International Business Machines Corp.
- * Copyright (C) 2001-2014 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2016 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -21,7 +21,7 @@
 /*                                                                   */
 /* FUNCTION:    usqrt                                                */
 /*                                                                   */
-/* FILES NEEDED: dla.h endian.h mydefs.h uroot.h                     */
+/* FILES NEEDED: dla.h endian.h mydefs.h                             */
 /*               uroot.tbl                                           */
 /*                                                                   */
 /* An ultimate sqrt routine. Given an IEEE double machine number x   */
@@ -47,7 +47,6 @@
 double
 __ieee754_sqrt (double x)
 {
-#include "uroot.h"
   static const double
     rt0 = 9.99999999859990725855365213134618E-01,
     rt1 = 4.99999999495955425917856814202739E-01,
@@ -66,7 +65,7 @@ __ieee754_sqrt (double x)
   /*----------------- 2^-1022  <= | x |< 2^1024  -----------------*/
   if (k > 0x000fffff && k < 0x7ff00000)
     {
-      int rm = fegetround ();
+      int rm = __fegetround ();
       fenv_t env;
       libc_feholdexcept_setround (&env, FE_TONEAREST);
       double ret;
@@ -134,7 +133,7 @@ __ieee754_sqrt (double x)
 	return x;       /* sqrt(+0)=+0, sqrt(-0)=-0 */
       if (k < 0)
 	return (x - x) / (x - x); /* sqrt(-ve)=sNaN */
-      return tm256.x * __ieee754_sqrt (x * t512.x);
+      return 0x1p-256 * __ieee754_sqrt (x * 0x1p512);
     }
 }
 strong_alias (__ieee754_sqrt, __sqrt_finite)

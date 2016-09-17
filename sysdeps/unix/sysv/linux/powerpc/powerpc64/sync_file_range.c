@@ -1,5 +1,5 @@
 /* Selective file content synch'ing.
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,29 +23,8 @@
 #include <sysdep-cancel.h>
 #include <sys/syscall.h>
 
-
-#if defined __NR_sync_file_range2
 int
 sync_file_range (int fd, __off64_t from, __off64_t to, unsigned int flags)
 {
-  if (SINGLE_THREAD_P)
-    return INLINE_SYSCALL (sync_file_range2, 4, fd, flags, from, to);
-
-  int result;
-  int oldtype = LIBC_CANCEL_ASYNC ();
-
-  result = INLINE_SYSCALL (sync_file_range2, 4, fd, flags, from, to);
-
-  LIBC_CANCEL_RESET (oldtype);
-
-  return result;
+  return SYSCALL_CANCEL (sync_file_range2, fd, flags, from, to);
 }
-#else
-int
-sync_file_range (int fd, __off64_t from, __off64_t to, unsigned int flags)
-{
-  __set_errno (ENOSYS);
-  return -1;
-}
-stub_warning (sync_file_range)
-#endif

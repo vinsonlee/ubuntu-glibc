@@ -22,6 +22,12 @@ limit:	.tfloat 0.29
 	   but it helps to optimize the code.  */
 one:	.double 1.0
 
+#ifdef PIC
+# define MO(op) op##@GOTOFF(%edx)
+#else
+# define MO(op) op
+#endif
+
 /*
  * Use the fyl2xp1 function when the argument is in the range -0.29 to 0.29,
  * otherwise fyl2x with the needed extra computation.
@@ -43,22 +49,19 @@ ENTRY(__log1pl)
 	jc	3f		// in case x is NaN or ±Inf
 4:
 	fabs
-#ifdef PIC
-	fldt	limit@GOTOFF(%edx)
-#else
-	fldt	limit
-#endif
+	fldt	MO(limit)
 	fcompp
 	fnstsw
 	sahf
 	jnc	2f
 
-#ifdef PIC
-	faddl	one@GOTOFF(%edx)
-#else
-	faddl	one
-#endif
-	fyl2x
+	movzwl	4+8(%esp), %eax
+	xorb	$0x80, %ah
+	cmpl	$0xc040, %eax
+	jae	5f
+
+	faddl	MO(one)
+5:	fyl2x
 	ret
 
 2:	fyl2xp1
@@ -67,7 +70,7 @@ ENTRY(__log1pl)
 3:	jp	4b		// in case x is ±Inf
 	fstp	%st(1)
 	fstp	%st(1)
+	fadd	%st(0)
 	ret
 
 END (__log1pl)
-weak_alias (__log1pl, log1pl)

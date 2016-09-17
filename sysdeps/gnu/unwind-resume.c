@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>.
 
@@ -20,14 +20,17 @@
 #include <stdio.h>
 #include <unwind.h>
 #include <gnu/lib-names.h>
+#include <sysdep.h>
+#include <unwind-resume.h>
 
-static void (*libgcc_s_resume) (struct _Unwind_Exception *exc);
-static _Unwind_Reason_Code (*libgcc_s_personality)
-  (int, _Unwind_Action, _Unwind_Exception_Class, struct _Unwind_Exception *,
-   struct _Unwind_Context *);
 
-static void
-init (void)
+void (*__libgcc_s_resume) (struct _Unwind_Exception *exc)
+  attribute_hidden __attribute__ ((noreturn));
+
+static _Unwind_Reason_Code (*libgcc_s_personality) PERSONALITY_PROTO;
+
+void attribute_hidden __attribute__ ((cold))
+__libgcc_s_init (void)
 {
   void *resume, *personality;
   void *handle;
@@ -37,28 +40,43 @@ init (void)
   if (handle == NULL
       || (resume = __libc_dlsym (handle, "_Unwind_Resume")) == NULL
       || (personality = __libc_dlsym (handle, "__gcc_personality_v0")) == NULL)
-    __libc_fatal (LIBGCC_S_SO " must be installed for pthread_cancel to work\n");
+    __libc_fatal (LIBGCC_S_SO
+                  " must be installed for pthread_cancel to work\n");
 
-  libgcc_s_resume = resume;
+#ifdef PTR_MANGLE
+  PTR_MANGLE (resume);
+#endif
+  __libgcc_s_resume = resume;
+#ifdef PTR_MANGLE
+  PTR_MANGLE (personality);
+#endif
   libgcc_s_personality = personality;
 }
 
+#if !HAVE_ARCH_UNWIND_RESUME
 void
 _Unwind_Resume (struct _Unwind_Exception *exc)
 {
-  if (__builtin_expect (libgcc_s_resume == NULL, 0))
-    init ();
-  libgcc_s_resume (exc);
+  if (__glibc_unlikely (__libgcc_s_resume == NULL))
+    __libgcc_s_init ();
+
+  __typeof (__libgcc_s_resume) resume = __libgcc_s_resume;
+#ifdef PTR_DEMANGLE
+  PTR_DEMANGLE (resume);
+#endif
+  (*resume) (exc);
 }
+#endif
 
 _Unwind_Reason_Code
-__gcc_personality_v0 (int version, _Unwind_Action actions,
-		      _Unwind_Exception_Class exception_class,
-                      struct _Unwind_Exception *ue_header,
-                      struct _Unwind_Context *context)
+__gcc_personality_v0 PERSONALITY_PROTO
 {
-  if (__builtin_expect (libgcc_s_personality == NULL, 0))
-    init ();
-  return libgcc_s_personality (version, actions, exception_class,
-			       ue_header, context);
+  if (__glibc_unlikely (libgcc_s_personality == NULL))
+    __libgcc_s_init ();
+
+  __typeof (libgcc_s_personality) personality = libgcc_s_personality;
+#ifdef PTR_DEMANGLE
+  PTR_DEMANGLE (personality);
+#endif
+  return (*personality) PERSONALITY_ARGS;
 }
