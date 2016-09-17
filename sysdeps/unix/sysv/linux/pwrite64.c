@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -16,55 +16,25 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <errno.h>
-#include <endian.h>
 #include <unistd.h>
-
 #include <sysdep-cancel.h>
-#include <sys/syscall.h>
 
-#include <kernel-features.h>
-
-#ifdef __NR_pwrite64		/* Newer kernels renamed but it's the same.  */
-# ifdef __NR_pwrite
-#  error "__NR_pwrite and __NR_pwrite64 both defined???"
-# endif
-# define __NR_pwrite __NR_pwrite64
+#ifndef __NR_pwrite64
+# define __NR_pwrite64 __NR_pwrite
 #endif
 
-
-static ssize_t
-do_pwrite64 (int fd, const void *buf, size_t count, off64_t offset)
-{
-  ssize_t result;
-
-  result = INLINE_SYSCALL (pwrite, 5, fd, buf, count,
-			   __LONG_LONG_PAIR ((off_t) (offset >> 32),
-					     (off_t) (offset & 0xffffffff)));
-
-  return result;
-}
-
-
 ssize_t
-__libc_pwrite64 (fd, buf, count, offset)
-     int fd;
-     const void *buf;
-     size_t count;
-     off64_t offset;
+__libc_pwrite64 (int fd, const void *buf, size_t count, off64_t offset)
 {
-  if (SINGLE_THREAD_P)
-    return do_pwrite64 (fd, buf, count, offset);
-
-  int oldtype = LIBC_CANCEL_ASYNC ();
-
-  ssize_t result = do_pwrite64 (fd, buf, count, offset);
-
-  LIBC_CANCEL_RESET (oldtype);
-
-  return result;
+  return SYSCALL_CANCEL (pwrite64, fd, buf, count,
+			 __ALIGNMENT_ARG SYSCALL_LL64 (offset));
 }
-
 weak_alias (__libc_pwrite64, __pwrite64)
 libc_hidden_weak (__pwrite64)
 weak_alias (__libc_pwrite64, pwrite64)
+
+#ifdef __OFF_T_MATCHES_OFF64_T
+strong_alias (__libc_pwrite64, __libc_pwrite)
+weak_alias (__libc_pwrite64, __pwrite)
+weak_alias (__libc_pwrite64, pwrite)
+#endif

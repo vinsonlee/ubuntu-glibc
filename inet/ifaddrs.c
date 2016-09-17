@@ -1,5 +1,5 @@
 /* getifaddrs -- get names and addresses of all network interfaces
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,16 +24,17 @@
    network interface on the host machine.  If successful, store the
    list in *IFAP and return 0.  On errors, return -1 and set `errno'.  */
 int
-getifaddrs (struct ifaddrs **ifap)
+__getifaddrs (struct ifaddrs **ifap)
 {
   __set_errno (ENOSYS);
   return -1;
 }
-libc_hidden_def (getifaddrs)
+weak_alias (__getifaddrs, getifaddrs)
+libc_hidden_weak (getifaddrs)
 stub_warning (getifaddrs)
 
 void
-freeifaddrs (struct ifaddrs *ifa)
+__freeifaddrs (struct ifaddrs *ifa)
 {
   if (ifa == NULL)
     return;			/* a la free, why not? */
@@ -41,5 +42,6 @@ freeifaddrs (struct ifaddrs *ifa)
   /* Can't be called properly if getifaddrs never succeeded.  */
   abort ();
 }
-libc_hidden_def (freeifaddrs)
+weak_alias (__freeifaddrs, freeifaddrs)
+libc_hidden_weak (freeifaddrs)
 stub_warning (freeifaddrs)

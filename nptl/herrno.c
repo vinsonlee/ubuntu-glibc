@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,12 +23,12 @@
 
 /* We need to have the error status variable of the resolver
    accessible in the libc.  */
-extern __thread int h_errno;
+extern __thread int __h_errno;
 
 
 /* When threaded, h_errno may be a per-thread variable.  */
 int *
 __h_errno_location (void)
 {
-  return &h_errno;
+  return &__h_errno;
 }

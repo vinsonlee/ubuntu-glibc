@@ -13,7 +13,7 @@ Copied from sysdeps/generic/hp-timing.h
 
 --- /dev/null
 +++ b/sysdeps/mach/hurd/hp-timing.h
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,42 @@
 +/* High precision, low overhead timing functions.  Generic version.
 +   Copyright (C) 1998, 2000 Free Software Foundation, Inc.
 +   This file is part of the GNU C Library.
@@ -41,6 +41,7 @@ Copied from sysdeps/generic/hp-timing.h
 +
 +/* Provide dummy definitions.  */
 +#define HP_TIMING_AVAIL		(0)
++#define HP_SMALL_TIMING_AVAIL	(0)
 +#define HP_TIMING_INLINE	(0)
 +typedef int hp_timing_t;
 +#define HP_TIMING_ZERO(Var)

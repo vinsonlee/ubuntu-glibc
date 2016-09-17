@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 1996.
 
@@ -21,10 +21,7 @@
 
 
 wchar_t *
-__wmemcpy (s1, s2, n)
-     wchar_t *s1;
-     const wchar_t *s2;
-     size_t n;
+__wmemcpy (wchar_t *s1, const wchar_t *s2, size_t n)
 {
   return (wchar_t *) memcpy ((char *) s1, (char *) s2, n * sizeof (wchar_t));
 }

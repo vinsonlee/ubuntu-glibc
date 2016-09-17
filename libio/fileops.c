@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Per Bothner <bothner@cygnus.com>.
 
@@ -32,6 +32,7 @@
 #include "libioP.h"
 #include <assert.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -91,7 +92,9 @@ extern struct __gconv_trans_data __libio_translit attribute_hidden;
 
    The position in the buffer that corresponds to the position
    in external file system is normally _IO_read_end, except in putback
-   mode, when it is _IO_save_end.
+   mode, when it is _IO_save_end and also when the file is in append mode,
+   since switching from read to write mode automatically sends the position in
+   the external file system to the end of file.
    If the field _fb._offset is >= 0, it gives the offset in
    the file as a whole corresponding to eGptr(). (?)
 
@@ -137,8 +140,7 @@ extern struct __gconv_trans_data __libio_translit attribute_hidden;
 
 
 void
-_IO_new_file_init (fp)
-     struct _IO_FILE_plus *fp;
+_IO_new_file_init_internal (struct _IO_FILE_plus *fp)
 {
   /* POSIX.1 allows another file handle to be used to change the position
      of our file descriptor.  Hence we actually don't know the actual
@@ -149,11 +151,18 @@ _IO_new_file_init (fp)
   _IO_link_in (fp);
   fp->file._fileno = -1;
 }
-libc_hidden_ver (_IO_new_file_init, _IO_file_init)
+
+/* External version of _IO_new_file_init_internal which switches off
+   vtable validation.  */
+void
+_IO_new_file_init (struct _IO_FILE_plus *fp)
+{
+  IO_set_accept_foreign_vtables (&_IO_vtable_check);
+  _IO_new_file_init_internal (fp);
+}
 
 int
-_IO_new_file_close_it (fp)
-     _IO_FILE *fp;
+_IO_new_file_close_it (_IO_FILE *fp)
 {
   int write_status;
   if (!_IO_file_is_open (fp))
@@ -195,9 +204,7 @@ _IO_new_file_close_it (fp)
 libc_hidden_ver (_IO_new_file_close_it, _IO_file_close_it)
 
 void
-_IO_new_file_finish (fp, dummy)
-     _IO_FILE *fp;
-     int dummy;
+_IO_new_file_finish (_IO_FILE *fp, int dummy)
 {
   if (_IO_file_is_open (fp))
     {
@@ -210,17 +217,12 @@ _IO_new_file_finish (fp, dummy)
 libc_hidden_ver (_IO_new_file_finish, _IO_file_finish)
 
 _IO_FILE *
-_IO_file_open (fp, filename, posix_mode, prot, read_write, is32not64)
-     _IO_FILE *fp;
-     const char *filename;
-     int posix_mode;
-     int prot;
-     int read_write;
-     int is32not64;
+_IO_file_open (_IO_FILE *fp, const char *filename, int posix_mode, int prot,
+	       int read_write, int is32not64)
 {
   int fdesc;
 #ifdef _LIBC
-  if (__builtin_expect (fp->_flags2 & _IO_FLAGS2_NOTCANCEL, 0))
+  if (__glibc_unlikely (fp->_flags2 & _IO_FLAGS2_NOTCANCEL))
     fdesc = open_not_cancel (filename,
 			     posix_mode | (is32not64 ? 0 : O_LARGEFILE), prot);
   else
@@ -232,24 +234,26 @@ _IO_file_open (fp, filename, posix_mode, prot, read_write, is32not64)
     return NULL;
   fp->_fileno = fdesc;
   _IO_mask_flags (fp, read_write,_IO_NO_READS+_IO_NO_WRITES+_IO_IS_APPENDING);
-  if ((read_write & _IO_IS_APPENDING) && (read_write & _IO_NO_READS))
-    if (_IO_SEEKOFF (fp, (_IO_off64_t)0, _IO_seek_end, _IOS_INPUT|_IOS_OUTPUT)
-	== _IO_pos_BAD && errno != ESPIPE)
-      {
-	close_not_cancel (fdesc);
-	return NULL;
-      }
+  /* For append mode, send the file offset to the end of the file.  Don't
+     update the offset cache though, since the file handle is not active.  */
+  if ((read_write & (_IO_IS_APPENDING | _IO_NO_READS))
+      == (_IO_IS_APPENDING | _IO_NO_READS))
+    {
+      _IO_off64_t new_pos = _IO_SYSSEEK (fp, 0, _IO_seek_end);
+      if (new_pos == _IO_pos_BAD && errno != ESPIPE)
+	{
+	  close_not_cancel (fdesc);
+	  return NULL;
+	}
+    }
   _IO_link_in ((struct _IO_FILE_plus *) fp);
   return fp;
 }
 libc_hidden_def (_IO_file_open)
 
 _IO_FILE *
-_IO_new_file_fopen (fp, filename, mode, is32not64)
-     _IO_FILE *fp;
-     const char *filename;
-     const char *mode;
-     int is32not64;
+_IO_new_file_fopen (_IO_FILE *fp, const char *filename, const char *mode,
+		    int is32not64)
 {
   int oflags = 0, omode;
   int read_write;
@@ -357,7 +361,15 @@ _IO_new_file_fopen (fp, filename, mode, is32not64)
 	  struct gconv_fcts fcts;
 	  struct _IO_codecvt *cc;
 	  char *endp = __strchrnul (cs + 5, ',');
-	  char ccs[endp - (cs + 5) + 3];
+	  char *ccs = malloc (endp - (cs + 5) + 3);
+
+	  if (ccs == NULL)
+	    {
+	      int malloc_err = errno;  /* Whatever malloc failed with.  */
+	      (void) _IO_file_close_it (fp);
+	      __set_errno (malloc_err);
+	      return NULL;
+	    }
 
 	  *((char *) __mempcpy (ccs, cs + 5, endp - (cs + 5))) = '\0';
 	  strip (ccs, ccs);
@@ -369,9 +381,12 @@ _IO_new_file_fopen (fp, filename, mode, is32not64)
 		 This means we cannot proceed since the user explicitly asked
 		 for these.  */
 	      (void) _IO_file_close_it (fp);
+	      free (ccs);
 	      __set_errno (EINVAL);
 	      return NULL;
 	    }
+
+	  free (ccs);
 
 	  assert (fcts.towc_nsteps == 1);
 	  assert (fcts.tomb_nsteps == 1);
@@ -396,23 +411,18 @@ _IO_new_file_fopen (fp, filename, mode, is32not64)
 	  cc->__cd_in.__cd.__data[0].__flags = __GCONV_IS_LAST;
 	  cc->__cd_in.__cd.__data[0].__statep = &result->_wide_data->_IO_state;
 
-	  /* XXX For now no transliteration.  */
-	  cc->__cd_in.__cd.__data[0].__trans = NULL;
-
 	  cc->__cd_out.__cd.__nsteps = fcts.tomb_nsteps;
 	  cc->__cd_out.__cd.__steps = fcts.tomb;
 
 	  cc->__cd_out.__cd.__data[0].__invocation_counter = 0;
 	  cc->__cd_out.__cd.__data[0].__internal_use = 1;
-	  cc->__cd_out.__cd.__data[0].__flags = __GCONV_IS_LAST;
+	  cc->__cd_out.__cd.__data[0].__flags
+	    = __GCONV_IS_LAST | __GCONV_TRANSLIT;
 	  cc->__cd_out.__cd.__data[0].__statep =
 	    &result->_wide_data->_IO_state;
 
-	  /* And now the transliteration.  */
-	  cc->__cd_out.__cd.__data[0].__trans = &__libio_translit;
-
 	  /* From now on use the wide character callback functions.  */
-	  ((struct _IO_FILE_plus *) fp)->vtable = fp->_wide_data->_wide_vtable;
+	  _IO_JUMPS_FILE_plus (fp) = fp->_wide_data->_wide_vtable;
 
 	  /* Set the mode now.  */
 	  result->_mode = 1;
@@ -424,9 +434,7 @@ _IO_new_file_fopen (fp, filename, mode, is32not64)
 libc_hidden_ver (_IO_new_file_fopen, _IO_file_fopen)
 
 _IO_FILE *
-_IO_new_file_attach (fp, fd)
-     _IO_FILE *fp;
-     int fd;
+_IO_new_file_attach (_IO_FILE *fp, int fd)
 {
   if (_IO_file_is_open (fp))
     return NULL;
@@ -446,10 +454,7 @@ _IO_new_file_attach (fp, fd)
 libc_hidden_ver (_IO_new_file_attach, _IO_file_attach)
 
 _IO_FILE *
-_IO_new_file_setbuf (fp, p, len)
-     _IO_FILE *fp;
-     char *p;
-     _IO_ssize_t len;
+_IO_new_file_setbuf (_IO_FILE *fp, char *p, _IO_ssize_t len)
 {
   if (_IO_default_setbuf (fp, p, len) == NULL)
     return NULL;
@@ -464,15 +469,12 @@ libc_hidden_ver (_IO_new_file_setbuf, _IO_file_setbuf)
 
 
 _IO_FILE *
-_IO_file_setbuf_mmap (fp, p, len)
-     _IO_FILE *fp;
-     char *p;
-     _IO_ssize_t len;
+_IO_file_setbuf_mmap (_IO_FILE *fp, char *p, _IO_ssize_t len)
 {
   _IO_FILE *result;
 
   /* Change the function table.  */
-  _IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_file_jumps;
+  _IO_JUMPS_FILE_plus (fp) = &_IO_file_jumps;
   fp->_wide_data->_wide_vtable = &_IO_wfile_jumps;
 
   /* And perform the normal operation.  */
@@ -481,7 +483,7 @@ _IO_file_setbuf_mmap (fp, p, len)
   /* If the call failed, restore to using mmap.  */
   if (result == NULL)
     {
-      _IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_file_jumps_mmap;
+      _IO_JUMPS_FILE_plus (fp) = &_IO_file_jumps_mmap;
       fp->_wide_data->_wide_vtable = &_IO_wfile_jumps_mmap;
     }
 
@@ -494,10 +496,7 @@ static _IO_size_t new_do_write (_IO_FILE *, const char *, _IO_size_t);
    Then mark FP as having empty buffers. */
 
 int
-_IO_new_do_write (fp, data, to_do)
-     _IO_FILE *fp;
-     const char *data;
-     _IO_size_t to_do;
+_IO_new_do_write (_IO_FILE *fp, const char *data, _IO_size_t to_do)
 {
   return (to_do == 0
 	  || (_IO_size_t) new_do_write (fp, data, to_do) == to_do) ? 0 : EOF;
@@ -506,10 +505,7 @@ libc_hidden_ver (_IO_new_do_write, _IO_do_write)
 
 static
 _IO_size_t
-new_do_write (fp, data, to_do)
-     _IO_FILE *fp;
-     const char *data;
-     _IO_size_t to_do;
+new_do_write (_IO_FILE *fp, const char *data, _IO_size_t to_do)
 {
   _IO_size_t count;
   if (fp->_flags & _IO_IS_APPENDING)
@@ -533,14 +529,13 @@ new_do_write (fp, data, to_do)
   _IO_setg (fp, fp->_IO_buf_base, fp->_IO_buf_base, fp->_IO_buf_base);
   fp->_IO_write_base = fp->_IO_write_ptr = fp->_IO_buf_base;
   fp->_IO_write_end = (fp->_mode <= 0
-		       && (fp->_flags & (_IO_LINE_BUF+_IO_UNBUFFERED))
+		       && (fp->_flags & (_IO_LINE_BUF | _IO_UNBUFFERED))
 		       ? fp->_IO_buf_base : fp->_IO_buf_end);
   return count;
 }
 
 int
-_IO_new_file_underflow (fp)
-     _IO_FILE *fp;
+_IO_new_file_underflow (_IO_FILE *fp)
 {
   _IO_ssize_t count;
 #if 0
@@ -613,7 +608,13 @@ _IO_new_file_underflow (fp)
   }
   fp->_IO_read_end += count;
   if (count == 0)
-    return EOF;
+    {
+      /* If a stream is read to EOF, the calling application may switch active
+	 handles.  As a result, our offset cache would no longer be valid, so
+	 unset it.  */
+      fp->_offset = _IO_pos_BAD;
+      return EOF;
+    }
   if (fp->_offset != _IO_pos_BAD)
     _IO_pos_adjust (fp->_offset, count);
   return *(unsigned char *) fp->_IO_read_ptr;
@@ -710,9 +711,9 @@ mmap_remap_check (_IO_FILE *fp)
       fp->_IO_buf_base = fp->_IO_buf_end = NULL;
       _IO_setg (fp, NULL, NULL, NULL);
       if (fp->_mode <= 0)
-	_IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_file_jumps;
+	_IO_JUMPS_FILE_plus (fp) = &_IO_file_jumps;
       else
-	_IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_wfile_jumps;
+	_IO_JUMPS_FILE_plus (fp) = &_IO_wfile_jumps;
       fp->_wide_data->_wide_vtable = &_IO_wfile_jumps;
 
       return 1;
@@ -726,7 +727,7 @@ _IO_file_underflow_mmap (_IO_FILE *fp)
   if (fp->_IO_read_ptr < fp->_IO_read_end)
     return *(unsigned char *) fp->_IO_read_ptr;
 
-  if (__builtin_expect (mmap_remap_check (fp), 0))
+  if (__glibc_unlikely (mmap_remap_check (fp)))
     /* We punted to the regular file functions.  */
     return _IO_UNDERFLOW (fp);
 
@@ -780,9 +781,9 @@ decide_maybe_mmap (_IO_FILE *fp)
 	      fp->_offset = st.st_size;
 
 	      if (fp->_mode <= 0)
-		_IO_JUMPS ((struct _IO_FILE_plus *)fp) = &_IO_file_jumps_mmap;
+		_IO_JUMPS_FILE_plus (fp) = &_IO_file_jumps_mmap;
 	      else
-		_IO_JUMPS ((struct _IO_FILE_plus *)fp) = &_IO_wfile_jumps_mmap;
+		_IO_JUMPS_FILE_plus (fp) = &_IO_wfile_jumps_mmap;
 	      fp->_wide_data->_wide_vtable = &_IO_wfile_jumps_mmap;
 
 	      return;
@@ -793,9 +794,9 @@ decide_maybe_mmap (_IO_FILE *fp)
   /* We couldn't use mmap, so revert to the vanilla file operations.  */
 
   if (fp->_mode <= 0)
-    _IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_file_jumps;
+    _IO_JUMPS_FILE_plus (fp) = &_IO_file_jumps;
   else
-    _IO_JUMPS ((struct _IO_FILE_plus *) fp) = &_IO_wfile_jumps;
+    _IO_JUMPS_FILE_plus (fp) = &_IO_wfile_jumps;
   fp->_wide_data->_wide_vtable = &_IO_wfile_jumps;
 }
 
@@ -810,9 +811,7 @@ _IO_file_underflow_maybe_mmap (_IO_FILE *fp)
 
 
 int
-_IO_new_file_overflow (f, ch)
-      _IO_FILE *f;
-      int ch;
+_IO_new_file_overflow (_IO_FILE *f, int ch)
 {
   if (f->_flags & _IO_NO_WRITES) /* SET ERROR */
     {
@@ -836,7 +835,7 @@ _IO_new_file_overflow (f, ch)
 	 makes room for subsequent output.
 	 Otherwise, set the read pointers to _IO_read_end (leaving that
 	 alone, so it can continue to correspond to the external position). */
-      if (__builtin_expect (_IO_in_backup (f), 0))
+      if (__glibc_unlikely (_IO_in_backup (f)))
 	{
 	  size_t nbackup = f->_IO_read_end - f->_IO_read_ptr;
 	  _IO_free_backup_area (f);
@@ -853,7 +852,7 @@ _IO_new_file_overflow (f, ch)
       f->_IO_read_base = f->_IO_read_ptr = f->_IO_read_end;
 
       f->_flags |= _IO_CURRENTLY_PUTTING;
-      if (f->_mode <= 0 && f->_flags & (_IO_LINE_BUF+_IO_UNBUFFERED))
+      if (f->_mode <= 0 && f->_flags & (_IO_LINE_BUF | _IO_UNBUFFERED))
 	f->_IO_write_end = f->_IO_write_ptr;
     }
   if (ch == EOF)
@@ -873,8 +872,7 @@ _IO_new_file_overflow (f, ch)
 libc_hidden_ver (_IO_new_file_overflow, _IO_file_overflow)
 
 int
-_IO_new_file_sync (fp)
-     _IO_FILE *fp;
+_IO_new_file_sync (_IO_FILE *fp)
 {
   _IO_ssize_t delta;
   int retval = 0;
@@ -929,17 +927,81 @@ _IO_file_sync_mmap (_IO_FILE *fp)
   return 0;
 }
 
+/* ftell{,o} implementation.  The only time we modify the state of the stream
+   is when we have unflushed writes.  In that case we seek to the end and
+   record that offset in the stream object.  */
+static _IO_off64_t
+do_ftell (_IO_FILE *fp)
+{
+  _IO_off64_t result, offset = 0;
+
+  /* No point looking at unflushed data if we haven't allocated buffers
+     yet.  */
+  if (fp->_IO_buf_base != NULL)
+    {
+      bool unflushed_writes = fp->_IO_write_ptr > fp->_IO_write_base;
+
+      bool append_mode = (fp->_flags & _IO_IS_APPENDING) == _IO_IS_APPENDING;
+
+      /* When we have unflushed writes in append mode, seek to the end of the
+	 file and record that offset.  This is the only time we change the file
+	 stream state and it is safe since the file handle is active.  */
+      if (unflushed_writes && append_mode)
+	{
+	  result = _IO_SYSSEEK (fp, 0, _IO_seek_end);
+	  if (result == _IO_pos_BAD)
+	    return EOF;
+	  else
+	    fp->_offset = result;
+	}
+
+      /* Adjust for unflushed data.  */
+      if (!unflushed_writes)
+	offset -= fp->_IO_read_end - fp->_IO_read_ptr;
+      /* We don't trust _IO_read_end to represent the current file offset when
+	 writing in append mode because the value would have to be shifted to
+	 the end of the file during a flush.  Use the write base instead, along
+	 with the new offset we got above when we did a seek to the end of the
+	 file.  */
+      else if (append_mode)
+	offset += fp->_IO_write_ptr - fp->_IO_write_base;
+      /* For all other modes, _IO_read_end represents the file offset.  */
+      else
+	offset += fp->_IO_write_ptr - fp->_IO_read_end;
+    }
+
+  if (fp->_offset != _IO_pos_BAD)
+    result = fp->_offset;
+  else
+    result = _IO_SYSSEEK (fp, 0, _IO_seek_cur);
+
+  if (result == EOF)
+    return result;
+
+  result += offset;
+
+  if (result < 0)
+    {
+      __set_errno (EINVAL);
+      return EOF;
+    }
+
+  return result;
+}
 
 _IO_off64_t
-_IO_new_file_seekoff (fp, offset, dir, mode)
-     _IO_FILE *fp;
-     _IO_off64_t offset;
-     int dir;
-     int mode;
+_IO_new_file_seekoff (_IO_FILE *fp, _IO_off64_t offset, int dir, int mode)
 {
   _IO_off64_t result;
   _IO_off64_t delta, new_offset;
   long count;
+
+  /* Short-circuit into a separate function.  We don't want to mix any
+     functionality and we don't want to touch anything inside the FILE
+     object. */
+  if (mode == 0)
+    return do_ftell (fp);
+
   /* POSIX.1 8.2.3.7 says that after a call the fflush() the file
      offset of the underlying file must be exact.  */
   int must_be_exact = (fp->_IO_read_base == fp->_IO_read_end
@@ -948,9 +1010,6 @@ _IO_new_file_seekoff (fp, offset, dir, mode)
   bool was_writing = (fp->_IO_write_ptr > fp->_IO_write_base
 		      || _IO_in_put_mode (fp));
 
-  if (mode == 0)
-    dir = _IO_seek_cur, offset = 0; /* Don't move any pointers. */
-
   /* Flush unwritten characters.
      (This may do an unneeded write if we seek within the buffer.
      But to be able to switch to reading, we would need to set
@@ -958,7 +1017,7 @@ _IO_new_file_seekoff (fp, offset, dir, mode)
      which assumes file_ptr() is eGptr.  Anyway, since we probably
      end up flushing when we close(), it doesn't make much difference.)
      FIXME: simulate mem-mapped files. */
-  else if (was_writing && _IO_switch_to_get_mode (fp))
+  if (was_writing && _IO_switch_to_get_mode (fp))
     return EOF;
 
   if (fp->_IO_buf_base == NULL)
@@ -978,30 +1037,10 @@ _IO_new_file_seekoff (fp, offset, dir, mode)
     {
     case _IO_seek_cur:
       /* Adjust for read-ahead (bytes is buffer). */
-      if (mode != 0 || !was_writing)
-	offset -= fp->_IO_read_end - fp->_IO_read_ptr;
-      else
-	{
-	  /* _IO_read_end coincides with fp._offset, so the actual file position
-	     is fp._offset - (_IO_read_end - new_write_ptr).  This is fine
-	     even if fp._offset is not set, since fp->_IO_read_end is then at
-	     _IO_buf_base and this adjustment is for unbuffered output.  */
-	  offset -= fp->_IO_read_end - fp->_IO_write_ptr;
-	}
+      offset -= fp->_IO_read_end - fp->_IO_read_ptr;
 
       if (fp->_offset == _IO_pos_BAD)
-	{
-	  if (mode != 0)
-	    goto dumb;
-	  else
-	    {
-	      result = _IO_SYSSEEK (fp, 0, dir);
-	      if (result == EOF)
-		return result;
-
-	      fp->_offset = result;
-	    }
-	}
+	goto dumb;
       /* Make offset absolute, assuming current pointer is file_ptr(). */
       offset += fp->_offset;
       if (offset < 0)
@@ -1027,10 +1066,6 @@ _IO_new_file_seekoff (fp, offset, dir, mode)
       }
     }
   /* At this point, dir==_IO_seek_set. */
-
-  /* If we are only interested in the current position we've found it now.  */
-  if (mode == 0)
-    return offset;
 
   /* If destination is within current buffer, optimize: */
   if (fp->_offset != _IO_pos_BAD && fp->_IO_read_base != NULL
@@ -1111,11 +1146,7 @@ resync:
 libc_hidden_ver (_IO_new_file_seekoff, _IO_file_seekoff)
 
 _IO_off64_t
-_IO_file_seekoff_mmap (fp, offset, dir, mode)
-     _IO_FILE *fp;
-     _IO_off64_t offset;
-     int dir;
-     int mode;
+_IO_file_seekoff_mmap (_IO_FILE *fp, _IO_off64_t offset, int dir, int mode)
 {
   _IO_off64_t result;
 
@@ -1186,10 +1217,7 @@ _IO_file_seekoff_maybe_mmap (_IO_FILE *fp, _IO_off64_t offset, int dir,
 }
 
 _IO_ssize_t
-_IO_file_read (fp, buf, size)
-     _IO_FILE *fp;
-     void *buf;
-     _IO_ssize_t size;
+_IO_file_read (_IO_FILE *fp, void *buf, _IO_ssize_t size)
 {
   return (__builtin_expect (fp->_flags2 & _IO_FLAGS2_NOTCANCEL, 0)
 	  ? read_not_cancel (fp->_fileno, buf, size)
@@ -1198,27 +1226,21 @@ _IO_file_read (fp, buf, size)
 libc_hidden_def (_IO_file_read)
 
 _IO_off64_t
-_IO_file_seek (fp, offset, dir)
-     _IO_FILE *fp;
-     _IO_off64_t offset;
-     int dir;
+_IO_file_seek (_IO_FILE *fp, _IO_off64_t offset, int dir)
 {
   return __lseek64 (fp->_fileno, offset, dir);
 }
 libc_hidden_def (_IO_file_seek)
 
 int
-_IO_file_stat (fp, st)
-     _IO_FILE *fp;
-     void *st;
+_IO_file_stat (_IO_FILE *fp, void *st)
 {
   return __fxstat64 (_STAT_VER, fp->_fileno, (struct stat64 *) st);
 }
 libc_hidden_def (_IO_file_stat)
 
 int
-_IO_file_close_mmap (fp)
-     _IO_FILE *fp;
+_IO_file_close_mmap (_IO_FILE *fp)
 {
   /* In addition to closing the file descriptor we have to unmap the file.  */
   (void) __munmap (fp->_IO_buf_base, fp->_IO_buf_end - fp->_IO_buf_base);
@@ -1229,8 +1251,7 @@ _IO_file_close_mmap (fp)
 }
 
 int
-_IO_file_close (fp)
-     _IO_FILE *fp;
+_IO_file_close (_IO_FILE *fp)
 {
   /* Cancelling close should be avoided if possible since it leaves an
      unrecoverable state behind.  */
@@ -1239,10 +1260,7 @@ _IO_file_close (fp)
 libc_hidden_def (_IO_file_close)
 
 _IO_ssize_t
-_IO_new_file_write (f, data, n)
-     _IO_FILE *f;
-     const void *data;
-     _IO_ssize_t n;
+_IO_new_file_write (_IO_FILE *f, const void *data, _IO_ssize_t n)
 {
   _IO_ssize_t to_do = n;
   while (to_do > 0)
@@ -1266,10 +1284,7 @@ _IO_new_file_write (f, data, n)
 }
 
 _IO_size_t
-_IO_new_file_xsputn (f, data, n)
-     _IO_FILE *f;
-     const void *data;
-     _IO_size_t n;
+_IO_new_file_xsputn (_IO_FILE *f, const void *data, _IO_size_t n)
 {
   const char *s = (const char *) data;
   _IO_size_t to_do = n;
@@ -1349,10 +1364,7 @@ _IO_new_file_xsputn (f, data, n)
 libc_hidden_ver (_IO_new_file_xsputn, _IO_file_xsputn)
 
 _IO_size_t
-_IO_file_xsgetn (fp, data, n)
-     _IO_FILE *fp;
-     void *data;
-     _IO_size_t n;
+_IO_file_xsgetn (_IO_FILE *fp, void *data, _IO_size_t n)
 {
   _IO_size_t want, have;
   _IO_ssize_t count;
@@ -1449,12 +1461,8 @@ _IO_file_xsgetn (fp, data, n)
 }
 libc_hidden_def (_IO_file_xsgetn)
 
-static _IO_size_t _IO_file_xsgetn_mmap (_IO_FILE *, void *, _IO_size_t);
 static _IO_size_t
-_IO_file_xsgetn_mmap (fp, data, n)
-     _IO_FILE *fp;
-     void *data;
-     _IO_size_t n;
+_IO_file_xsgetn_mmap (_IO_FILE *fp, void *data, _IO_size_t n)
 {
   _IO_size_t have;
   char *read_ptr = fp->_IO_read_ptr;
@@ -1464,7 +1472,7 @@ _IO_file_xsgetn_mmap (fp, data, n)
 
   if (have < n)
     {
-      if (__builtin_expect (_IO_in_backup (fp), 0))
+      if (__glibc_unlikely (_IO_in_backup (fp)))
 	{
 #ifdef _LIBC
 	  s = __mempcpy (s, read_ptr, have);
@@ -1481,7 +1489,7 @@ _IO_file_xsgetn_mmap (fp, data, n)
       if (have < n)
 	{
 	  /* Check that we are mapping all of the file, in case it grew.  */
-	  if (__builtin_expect (mmap_remap_check (fp), 0))
+	  if (__glibc_unlikely (mmap_remap_check (fp)))
 	    /* We punted mmap, so complete with the vanilla code.  */
 	    return s - (char *) data + _IO_XSGETN (fp, data, n);
 
@@ -1508,12 +1516,8 @@ _IO_file_xsgetn_mmap (fp, data, n)
   return s - (char *) data;
 }
 
-static _IO_size_t _IO_file_xsgetn_maybe_mmap (_IO_FILE *, void *, _IO_size_t);
 static _IO_size_t
-_IO_file_xsgetn_maybe_mmap (fp, data, n)
-     _IO_FILE *fp;
-     void *data;
-     _IO_size_t n;
+_IO_file_xsgetn_maybe_mmap (_IO_FILE *fp, void *data, _IO_size_t n)
 {
   /* We only get here if this is the first attempt to read something.
      Decide which operations to use and then punt to the chosen one.  */
@@ -1538,7 +1542,7 @@ versioned_symbol (libc, _IO_new_file_write, _IO_file_write, GLIBC_2_1);
 versioned_symbol (libc, _IO_new_file_xsputn, _IO_file_xsputn, GLIBC_2_1);
 #endif
 
-const struct _IO_jump_t _IO_file_jumps =
+const struct _IO_jump_t _IO_file_jumps libio_vtable =
 {
   JUMP_INIT_DUMMY,
   JUMP_INIT(finish, _IO_file_finish),
@@ -1563,7 +1567,7 @@ const struct _IO_jump_t _IO_file_jumps =
 };
 libc_hidden_data_def (_IO_file_jumps)
 
-const struct _IO_jump_t _IO_file_jumps_mmap =
+const struct _IO_jump_t _IO_file_jumps_mmap libio_vtable =
 {
   JUMP_INIT_DUMMY,
   JUMP_INIT(finish, _IO_file_finish),
@@ -1587,7 +1591,7 @@ const struct _IO_jump_t _IO_file_jumps_mmap =
   JUMP_INIT(imbue, _IO_default_imbue)
 };
 
-const struct _IO_jump_t _IO_file_jumps_maybe_mmap =
+const struct _IO_jump_t _IO_file_jumps_maybe_mmap libio_vtable =
 {
   JUMP_INIT_DUMMY,
   JUMP_INIT(finish, _IO_file_finish),

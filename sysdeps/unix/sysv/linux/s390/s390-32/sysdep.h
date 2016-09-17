@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
    This file is part of the GNU C Library.
 
@@ -21,6 +21,7 @@
 
 #include <sysdeps/s390/s390-32/sysdep.h>
 #include <sysdeps/unix/sysdep.h>
+#include <sysdeps/unix/sysv/linux/sysdep.h>
 #include <dl-sysdep.h>	/* For RTLD_PRIVATE_ERRNO.  */
 #include <tls.h>
 
@@ -105,7 +106,7 @@
     br    %r14;								      \
 2:  .long rtld_errno-1b
 # elif defined _LIBC_REENTRANT
-#  ifndef NOT_IN_libc
+#  if IS_IN (libc)
 #   define SYSCALL_ERROR_ERRNO __libc_errno
 #  else
 #   define SYSCALL_ERROR_ERRNO errno
@@ -182,7 +183,7 @@
 #define INLINE_SYSCALL(name, nr, args...)				      \
   ({									      \
     unsigned int _ret = INTERNAL_SYSCALL (name, , nr, args);		      \
-    if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (_ret, ), 0))	      \
+    if (__glibc_unlikely (INTERNAL_SYSCALL_ERROR_P (_ret, )))		      \
      {									      \
        __set_errno (INTERNAL_SYSCALL_ERRNO (_ret, ));			      \
        _ret = 0xffffffff;						      \
@@ -196,38 +197,38 @@
 #define INTERNAL_SYSCALL_DIRECT(name, err, nr, args...)			      \
   ({									      \
     DECLARGS_##nr(args)							      \
-    register int _ret asm("2");						      \
-    asm volatile (							      \
-    "svc    %b1\n\t"							      \
-    : "=d" (_ret)							      \
-    : "i" (__NR_##name) ASMFMT_##nr					      \
-    : "memory" );							      \
+    register int _ret __asm__("2");					      \
+    __asm__ __volatile__ (						      \
+			  "svc    %b1\n\t"				      \
+			  : "=d" (_ret)					      \
+			  : "i" (__NR_##name) ASMFMT_##nr		      \
+			  : "memory" );					      \
     _ret; })
 
 #undef INTERNAL_SYSCALL_SVC0
 #define INTERNAL_SYSCALL_SVC0(name, err, nr, args...)			      \
   ({									      \
     DECLARGS_##nr(args)							      \
-    register unsigned long _nr asm("1") = (unsigned long)(__NR_##name);	      \
-    register int _ret asm("2");						      \
-    asm volatile (							      \
-    "svc    0\n\t"							      \
-    : "=d" (_ret)							      \
-    : "d" (_nr) ASMFMT_##nr						      \
-    : "memory" );							      \
+    register unsigned long _nr __asm__("1") = (unsigned long)(__NR_##name);   \
+    register int _ret __asm__("2");					      \
+    __asm__ __volatile__ (						      \
+			  "svc    0\n\t"				      \
+			  : "=d" (_ret)					      \
+			  : "d" (_nr) ASMFMT_##nr			      \
+			  : "memory" );					      \
     _ret; })
 
 #undef INTERNAL_SYSCALL_NCS
 #define INTERNAL_SYSCALL_NCS(no, err, nr, args...)			      \
   ({									      \
     DECLARGS_##nr(args)							      \
-    register unsigned long _nr asm("1") = (unsigned long)(no);		      \
-    register int _ret asm("2");						      \
-    asm volatile (							      \
-    "svc    0\n\t"							      \
-    : "=d" (_ret)							      \
-    : "d" (_nr) ASMFMT_##nr						      \
-    : "memory" );							      \
+    register unsigned long _nr __asm__("1") = (unsigned long)(no);	      \
+    register int _ret __asm__("2");					      \
+    __asm__ __volatile__ (						      \
+			  "svc    0\n\t"				      \
+			  : "=d" (_ret)					      \
+			  : "d" (_nr) ASMFMT_##nr			      \
+			  : "memory" );					      \
     _ret; })
 
 #undef INTERNAL_SYSCALL
@@ -245,22 +246,22 @@
 
 #define DECLARGS_0()
 #define DECLARGS_1(arg1) \
-	register unsigned long gpr2 asm ("2") = (unsigned long)(arg1);
+	register unsigned long gpr2 __asm__ ("2") = (unsigned long)(arg1);
 #define DECLARGS_2(arg1, arg2) \
 	DECLARGS_1(arg1) \
-	register unsigned long gpr3 asm ("3") = (unsigned long)(arg2);
+	register unsigned long gpr3 __asm__ ("3") = (unsigned long)(arg2);
 #define DECLARGS_3(arg1, arg2, arg3) \
 	DECLARGS_2(arg1, arg2) \
-	register unsigned long gpr4 asm ("4") = (unsigned long)(arg3);
+	register unsigned long gpr4 __asm__ ("4") = (unsigned long)(arg3);
 #define DECLARGS_4(arg1, arg2, arg3, arg4) \
 	DECLARGS_3(arg1, arg2, arg3) \
-	register unsigned long gpr5 asm ("5") = (unsigned long)(arg4);
+	register unsigned long gpr5 __asm__ ("5") = (unsigned long)(arg4);
 #define DECLARGS_5(arg1, arg2, arg3, arg4, arg5) \
 	DECLARGS_4(arg1, arg2, arg3, arg4) \
-	register unsigned long gpr6 asm ("6") = (unsigned long)(arg5);
+	register unsigned long gpr6 __asm__ ("6") = (unsigned long)(arg5);
 #define DECLARGS_6(arg1, arg2, arg3, arg4, arg5, arg6) \
 	DECLARGS_5(arg1, arg2, arg3, arg4, arg5) \
-	register unsigned long gpr7 asm ("7") = (unsigned long)(arg6);
+	register unsigned long gpr7 __asm__ ("7") = (unsigned long)(arg6);
 
 #define ASMFMT_0
 #define ASMFMT_1 , "0" (gpr2)
@@ -281,63 +282,8 @@
 /* List of system calls which are supported as vsyscalls.  */
 #define HAVE_CLOCK_GETRES_VSYSCALL	1
 #define HAVE_CLOCK_GETTIME_VSYSCALL	1
-
-/* This version is for kernels that implement system calls that
-   behave like function calls as far as register saving.
-   It falls back to the syscall in the case that the vDSO doesn't
-   exist or fails for ENOSYS */
-#ifdef SHARED
-# define INLINE_VSYSCALL(name, nr, args...) \
-  ({									      \
-    __label__ out;							      \
-    __label__ iserr;							      \
-    long int _ret;							      \
-									      \
-    if (__vdso_##name != NULL)						      \
-      {									      \
-	_ret = INTERNAL_VSYSCALL_NCS (__vdso_##name, , nr, ##args);	      \
-	if (!INTERNAL_SYSCALL_ERROR_P (_ret, ))				      \
-	  goto out;							      \
-	if (INTERNAL_SYSCALL_ERRNO (_ret, ) != ENOSYS)			      \
-	  goto iserr;							      \
-      }									      \
-									      \
-    _ret = INTERNAL_SYSCALL (name, , nr, ##args);			      \
-    if (INTERNAL_SYSCALL_ERROR_P (_ret, ))				      \
-      {									      \
-      iserr:								      \
-	__set_errno (INTERNAL_SYSCALL_ERRNO (_ret, ));			      \
-	_ret = -1L;							      \
-      }									      \
-  out:									      \
-    (int) _ret;								      \
-  })
-#else
-# define INLINE_VSYSCALL(name, nr, args...) \
-  INLINE_SYSCALL (name, nr, ##args)
-#endif
-
-#ifdef SHARED
-# define INTERNAL_VSYSCALL(name, err, nr, args...) \
-  ({									      \
-    __label__ out;							      \
-    long int _ret;							      \
-									      \
-    if (__vdso_##name != NULL)						      \
-      {									      \
-	_ret = INTERNAL_VSYSCALL_NCS (__vdso_##name, err, nr, ##args);	      \
-	if (!INTERNAL_SYSCALL_ERROR_P (_ret, err)			      \
-	    || INTERNAL_SYSCALL_ERRNO (_ret, err) != ENOSYS)		      \
-	  goto out;							      \
-      }									      \
-    _ret = INTERNAL_SYSCALL (name, err, nr, ##args);			      \
-  out:									      \
-    _ret;								      \
-  })
-#else
-# define INTERNAL_VSYSCALL(name, err, nr, args...) \
-  INTERNAL_SYSCALL (name, err, nr, ##args)
-#endif
+#define HAVE_GETTIMEOFDAY_VSYSCALL	1
+#define HAVE_GETCPU_VSYSCALL		1
 
 /* This version is for internal uses when there is no desire
    to set errno */
@@ -345,28 +291,30 @@
   ({									      \
     long int _ret = ENOSYS;						      \
 									      \
-    if (__vdso_##name != NULL)						      \
-      _ret = INTERNAL_VSYSCALL_NCS (__vdso_##name, err, nr, ##args);	      \
+    __typeof (__vdso_##name) vdsop = __vdso_##name;			      \
+    PTR_DEMANGLE (vdsop);						      \
+    if (vdsop != NULL)							      \
+      _ret = INTERNAL_VSYSCALL_CALL (vdsop, err, nr, ##args);		      \
     else								      \
       err = 1 << 28;							      \
     _ret;								      \
   })
 
-#define INTERNAL_VSYSCALL_NCS(fn, err, nr, args...)			      \
+#define INTERNAL_VSYSCALL_CALL(fn, err, nr, args...)			      \
   ({									      \
     DECLARGS_##nr(args)							      \
-    register long _ret asm("2");						      \
-    asm volatile (							      \
-    "lr 10,14\n\t"                                                           \
-    "basr 14,%1\n\t"							      \
-    "lr 14,10\n\t"                                                           \
-    : "=d" (_ret)							      \
-    : "d" (fn) ASMFMT_##nr						      \
-    : "cc", "memory", "0", "1", "10" CLOBBER_##nr);                          \
+    register long _ret __asm__("2");					      \
+    __asm__ __volatile__ (						      \
+			  "lr 10,14\n\t"				      \
+			  "basr 14,%1\n\t"				      \
+			  "lr 14,10\n\t"				      \
+			  : "=d" (_ret)					      \
+			  : "d" (fn) ASMFMT_##nr			      \
+			  : "cc", "memory", "0", "1", "10" CLOBBER_##nr);     \
     _ret; })
 
 /* Pointer mangling support.  */
-#if defined NOT_IN_libc && defined IS_IN_rtld
+#if IS_IN (rtld)
 /* We cannot use the thread descriptor because in ld.so we use setjmp
    earlier than the descriptor is initialized.  */
 #else

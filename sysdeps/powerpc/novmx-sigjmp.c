@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 
 #include <bits/wordsize.h>
 #include <shlib-compat.h>
-#if !defined NOT_IN_libc && defined SHARED
+#if IS_IN (libc) && defined SHARED
 # if SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_3_4)
 #  include <stddef.h>
 #  include <novmxsetjmp.h>
@@ -41,4 +41,4 @@ __novmx__sigjmp_save (__novmx__sigjmp_buf env, int savemask)
 }
 
 # endif /* SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_3_4) */
-#endif /* !NOT_IN_libc && SHARED  */
+#endif /* IS_IN (libc) && SHARED  */

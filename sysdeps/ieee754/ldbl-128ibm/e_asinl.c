@@ -59,6 +59,7 @@
  */
 
 
+#include <float.h>
 #include <math.h>
 #include <math_private.h>
 long double sqrtl (long double);
@@ -134,7 +135,7 @@ __ieee754_asinl (long double x)
   long double a, t, w, p, q, c, r, s;
   int flag;
 
-  if (__glibc_unlikely (__isnanl (x)))
+  if (__glibc_unlikely (isnan (x)))
     return x + x;
   flag = 0;
   a = __builtin_fabsl (x);
@@ -146,8 +147,10 @@ __ieee754_asinl (long double x)
     {
       if (a < 6.938893903907228e-18L) /* |x| < 2**-57 */
 	{
-	  if (huge + x > one)
-	    return x;		/* return x with inexact if x!=0 */
+	  math_check_force_underflow (x);
+	  long double force_inexact =  huge + x;
+	  math_force_eval (force_inexact);
+	  return x;		/* return x with inexact if x!=0 */
 	}
       else
 	{

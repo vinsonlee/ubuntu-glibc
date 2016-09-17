@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,9 +23,7 @@
 
 /* Create a directory named FILE_NAME with protections MODE.  */
 int
-__mkdir (file_name, mode)
-     const char *file_name;
-     mode_t mode;
+__mkdir (const char *file_name, mode_t mode)
 {
   error_t err;
   const char *name;

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 2002.
 
@@ -37,12 +37,8 @@
 
 size_t
 attribute_hidden
-__mbsrtowcs_l (dst, src, len, ps, l)
-     wchar_t *dst;
-     const char **src;
-     size_t len;
-     mbstate_t *ps;
-     __locale_t l;
+__mbsrtowcs_l (wchar_t *dst, const char **src, size_t len, mbstate_t *ps,
+	       __locale_t l)
 {
   struct __gconv_step_data data;
   size_t result;
@@ -56,7 +52,6 @@ __mbsrtowcs_l (dst, src, len, ps, l)
   data.__internal_use = 1;
   data.__flags = __GCONV_IS_LAST;
   data.__statep = ps;
-  data.__trans = NULL;
 
   /* Get the conversion functions.  */
   fcts = get_gconv_fcts (l->__locales[LC_CTYPE]);

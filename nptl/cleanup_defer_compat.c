@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -20,10 +20,8 @@
 
 
 void
-_pthread_cleanup_push_defer (buffer, routine, arg)
-     struct _pthread_cleanup_buffer *buffer;
-     void (*routine) (void *);
-     void *arg;
+_pthread_cleanup_push_defer (struct _pthread_cleanup_buffer *buffer,
+			     void (*routine) (void *), void *arg)
 {
   struct pthread *self = THREAD_SELF;
 
@@ -34,14 +32,14 @@ _pthread_cleanup_push_defer (buffer, routine, arg)
   int cancelhandling = THREAD_GETMEM (self, cancelhandling);
 
   /* Disable asynchronous cancellation for now.  */
-  if (__builtin_expect (cancelhandling & CANCELTYPE_BITMASK, 0))
+  if (__glibc_unlikely (cancelhandling & CANCELTYPE_BITMASK))
     while (1)
       {
 	int curval = THREAD_ATOMIC_CMPXCHG_VAL (self, cancelhandling,
 						cancelhandling
 						& ~CANCELTYPE_BITMASK,
 						cancelhandling);
-	if (__builtin_expect (curval == cancelhandling, 1))
+	if (__glibc_likely (curval == cancelhandling))
 	  /* Successfully replaced the value.  */
 	  break;
 
@@ -59,9 +57,8 @@ strong_alias (_pthread_cleanup_push_defer, __pthread_cleanup_push_defer)
 
 
 void
-_pthread_cleanup_pop_restore (buffer, execute)
-     struct _pthread_cleanup_buffer *buffer;
-     int execute;
+_pthread_cleanup_pop_restore (struct _pthread_cleanup_buffer *buffer,
+			      int execute)
 {
   struct pthread *self = THREAD_SELF;
 
@@ -78,7 +75,7 @@ _pthread_cleanup_pop_restore (buffer, execute)
 						  cancelhandling
 						  | CANCELTYPE_BITMASK,
 						  cancelhandling);
-	  if (__builtin_expect (curval == cancelhandling, 1))
+	  if (__glibc_likely (curval == cancelhandling))
 	    /* Successfully replaced the value.  */
 	    break;
 

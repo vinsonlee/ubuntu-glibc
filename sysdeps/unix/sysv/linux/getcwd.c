@@ -1,5 +1,5 @@
 /* Determine current working directory.  Linux version.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -27,12 +27,10 @@
 #include <sysdep.h>
 #include <sys/syscall.h>
 
-#include <kernel-features.h>
-
 
 /* If we compile the file for use in ld.so we don't need the feature
    that getcwd() allocates the buffers itself.  */
-#ifdef IS_IN_rtld
+#if IS_IN (rtld)
 # define NO_ALLOCATION	1
 #endif
 

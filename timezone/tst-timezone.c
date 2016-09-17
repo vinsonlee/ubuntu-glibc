@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 1998.
 
@@ -87,8 +87,8 @@ check_tzvars (const char *name, int dayl, int timez, const char *const tznam[])
 }
 
 
-int
-main (int argc, char ** argv)
+static int
+do_test (void)
 {
   time_t t;
   const struct test_times *pt;
@@ -126,8 +126,8 @@ main (int argc, char ** argv)
     strcpy (envstring, "TZ=Europe/London");
     putenv (envstring);
     t = mktime (&tmBuf);
-    snprintf (buf, sizeof (buf), "TZ=%s %ld %d %d %d %d %d %d %d %d %d",
-	      getenv ("TZ"), t,
+    snprintf (buf, sizeof (buf), "TZ=%s %jd %d %d %d %d %d %d %d %d %d",
+	      getenv ("TZ"), (intmax_t) t,
 	      tmBuf.tm_sec, tmBuf.tm_min, tmBuf.tm_hour,
 	      tmBuf.tm_mday, tmBuf.tm_mon, tmBuf.tm_year,
 	      tmBuf.tm_wday, tmBuf.tm_yday, tmBuf.tm_isdst);
@@ -149,8 +149,8 @@ main (int argc, char ** argv)
     strcpy (envstring, "TZ=GMT");
     /* No putenv call needed!  */
     t = mktime (&tmBuf);
-    snprintf (buf, sizeof (buf), "TZ=%s %ld %d %d %d %d %d %d %d %d %d",
-	      getenv ("TZ"), t,
+    snprintf (buf, sizeof (buf), "TZ=%s %jd %d %d %d %d %d %d %d %d %d",
+	      getenv ("TZ"), (intmax_t) t,
 	      tmBuf.tm_sec, tmBuf.tm_min, tmBuf.tm_hour,
 	      tmBuf.tm_mday, tmBuf.tm_mon, tmBuf.tm_year,
 	      tmBuf.tm_wday, tmBuf.tm_yday, tmBuf.tm_isdst);
@@ -166,3 +166,6 @@ main (int argc, char ** argv)
 
   return failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

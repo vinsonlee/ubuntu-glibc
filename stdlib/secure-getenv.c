@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,8 +24,7 @@
    what values to accept from the environment.  This special version
    checks for SUID or SGID first before doing any work.  */
 char *
-__libc_secure_getenv (name)
-     const char *name;
+__libc_secure_getenv (const char *name)
 {
   return __libc_enable_secure ? NULL : getenv (name);
 }

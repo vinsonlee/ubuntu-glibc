@@ -1,5 +1,5 @@
 /* Constants for fenv_bits.h (soft float edition).
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez <aldyh@redhat.com>, 2002.
    This file is part of the GNU C Library.
 
@@ -27,8 +27,8 @@ const unsigned long long __fe_dfl_env __attribute__ ((aligned (8))) =
 
 /* Floating-point environment where none of the exceptions are masked.  */
 const unsigned long long __fe_enabled_env __attribute__ ((aligned (8))) =
-0xfff80000000000f8ULL;
+0x0000000000000000ULL;
 
-/* Floating-point environment with the NI bit set.  */
-const unsigned long long __fe_nonieee_env __attribute__ ((aligned (8))) =
-0xfff8000000000004ULL;
+/* Floating-point environment with the NI bit set.  No difference for
+   soft float from the default environment.  */
+strong_alias (__fe_dfl_env, __fe_nonieee_env)

@@ -1,4 +1,4 @@
-/* Copyright (c) 1997-2014 Free Software Foundation, Inc.
+/* Copyright (c) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1997.
 
@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <string.h>
 #include <rpcsvc/nis.h>
+#include <libc-internal.h>
 
 #include "nis_xdr.h"
 #include "nis_intern.h"
@@ -92,7 +93,7 @@ __create_ib_request (const_nis_name name, unsigned int flags)
       if (cptr != NULL)
 	*cptr++ = '\0';
 
-      if (__builtin_expect (val == NULL, 0))
+      if (__glibc_unlikely (val == NULL))
 	{
 	  nis_free_request (ibreq);
 	  return NULL;
@@ -175,12 +176,20 @@ __follow_path (char **tablepath, char **tableptr, struct ib_request *ibreq,
 
       *tableptr = *tablepath;
     }
+
+  /* Since tableptr is only set here, and it's set when tablepath is NULL,
+     which it is initially defined as, we know it will always be set here.  */
+  DIAG_PUSH_NEEDS_COMMENT;
+  DIAG_IGNORE_NEEDS_COMMENT (4.7, "-Wmaybe-uninitialized");
+
   if (*tableptr == NULL)
     return NIS_NOTFOUND;
 
   char *newname = strsep (tableptr, ":");
   if (newname[0] == '\0')
     return NIS_NOTFOUND;
+
+  DIAG_POP_NEEDS_COMMENT;
 
   newname = strdup (newname);
   if (newname == NULL)
@@ -282,7 +291,7 @@ nis_list (const_nis_name name, unsigned int flags,
 	}
 
       while (__nisbind_connect (&bptr) != NIS_SUCCESS)
-	if (__builtin_expect (__nisbind_next (&bptr) != NIS_SUCCESS, 0))
+	if (__glibc_unlikely (__nisbind_next (&bptr) != NIS_SUCCESS))
 	  {
 	    NIS_RES_STATUS (res) = NIS_NAMEUNREACHABLE;
 	    goto fail;
@@ -302,7 +311,7 @@ nis_list (const_nis_name name, unsigned int flags,
 			       (xdrproc_t) _xdr_nis_result,
 			       (caddr_t) res, RPCTIMEOUT);
 
-      if (__builtin_expect (clnt_status != RPC_SUCCESS, 0))
+      if (__glibc_unlikely (clnt_status != RPC_SUCCESS))
 	NIS_RES_STATUS (res) = NIS_RPCERROR;
       else
 	switch (NIS_RES_STATUS (res))
@@ -316,7 +325,7 @@ nis_list (const_nis_name name, unsigned int flags,
 		free (ibreq->ibr_name);
 		ibreq->ibr_name = NULL;
 		/* If we hit the link limit, bail.  */
-		if (__builtin_expect (count_links > NIS_MAXLINKS, 0))
+		if (__glibc_unlikely (count_links > NIS_MAXLINKS))
 		  {
 		    NIS_RES_STATUS (res) = NIS_LINKNAMEERROR;
 		    ++done;
@@ -491,7 +500,7 @@ nis_list (const_nis_name name, unsigned int flags,
 		/* Try the next domainname if we don't follow a link.  */
 		free (ibreq->ibr_name);
 		ibreq->ibr_name = NULL;
-		if (__builtin_expect (count_links, 0))
+		if (__glibc_unlikely (count_links))
 		  {
 		    NIS_RES_STATUS (res) = NIS_LINKNAMEERROR;
 		    ++done;
@@ -597,7 +606,7 @@ nis_add_entry (const_nis_name name, const nis_object *obj2, unsigned int flags)
 				   (caddr_t) ibreq,
 				   (xdrproc_t) _xdr_nis_result,
 				   (caddr_t) res, 0, NULL);
-  if (__builtin_expect (status != NIS_SUCCESS, 0))
+  if (__glibc_unlikely (status != NIS_SUCCESS))
     NIS_RES_STATUS (res) = status;
 
   nis_free_request (ibreq);
@@ -654,7 +663,7 @@ nis_modify_entry (const_nis_name name, const nis_object *obj2,
 			 (xdrproc_t) _xdr_ib_request,
 			 (caddr_t) ibreq, (xdrproc_t) _xdr_nis_result,
 			 (caddr_t) res, 0, NULL);
-  if (__builtin_expect (status != NIS_SUCCESS, 0))
+  if (__glibc_unlikely (status != NIS_SUCCESS))
     NIS_RES_STATUS (res) = status;
 
   nis_free_request (ibreq);
@@ -739,7 +748,7 @@ nis_first_entry (const_nis_name name)
 			 (caddr_t) ibreq, (xdrproc_t) _xdr_nis_result,
 			 (caddr_t) res, 0, NULL);
 
-  if (__builtin_expect (status != NIS_SUCCESS, 0))
+  if (__glibc_unlikely (status != NIS_SUCCESS))
     NIS_RES_STATUS (res) = status;
 
   nis_free_request (ibreq);
@@ -782,7 +791,7 @@ nis_next_entry (const_nis_name name, const netobj *cookie)
 			 (caddr_t) ibreq, (xdrproc_t) _xdr_nis_result,
 			 (caddr_t) res, 0, NULL);
 
-  if (__builtin_expect (status != NIS_SUCCESS, 0))
+  if (__glibc_unlikely (status != NIS_SUCCESS))
     NIS_RES_STATUS (res) = status;
 
   if (cookie != NULL)

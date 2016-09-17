@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -25,15 +25,11 @@
    Operates just like `read' (see <unistd.h>) except that data are
    put in VECTOR instead of a contiguous buffer.  */
 ssize_t
-__libc_readv (fd, vector, count)
-     int fd;
-     const struct iovec *vector;
-     int count;
+__readv (int fd, const struct iovec *vector, int count)
 {
   __set_errno (ENOSYS);
   return -1;
 }
-strong_alias (__libc_readv, __readv)
-weak_alias (__libc_readv, readv)
+weak_alias (__readv, readv)
 
 stub_warning (readv)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,11 +23,7 @@
 
 /* Send N bytes of BUF to socket FD.  Returns the number sent or -1.  */
 ssize_t
-__send (fd, buf, n, flags)
-     int fd;
-     const void *buf;
-     size_t n;
-     int flags;
+__send (int fd, const void *buf, size_t n, int flags)
 {
   error_t err;
   size_t wrote;

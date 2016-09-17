@@ -1,7 +1,7 @@
 /* Round float to int floating-point values without generating
    an inexact exception, sparc32 v9 version.
 
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by David S. Miller <davem@davemloft.net>, 2013.
 
@@ -35,6 +35,7 @@
 #define SIGN_BIT	%f12			/* -0.0 */
 
 ENTRY (__nearbyintf)
+	fcmps	%fcc3, %f1, %f1			/* Check for sNaN */
 	st	%fsr, [%sp + 88]
 	st	%o0, [%sp + 68]
 	sethi	%hi(TWO_TWENTYTHREE), %o2

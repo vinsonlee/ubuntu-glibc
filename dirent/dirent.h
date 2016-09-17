@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ typedef __ino64_t ino64_t;
 
 #include <bits/dirent.h>
 
-#if (defined __USE_BSD || defined __USE_MISC) && !defined d_fileno
+#if defined __USE_MISC && !defined d_fileno
 # define d_ino	d_fileno		 /* Backward compatibility.  */
 #endif
 
@@ -92,7 +92,7 @@ typedef __ino64_t ino64_t;
 #endif
 
 
-#ifdef __USE_BSD
+#ifdef __USE_MISC
 /* File types for `d_type'.  */
 enum
   {
@@ -173,7 +173,7 @@ extern struct dirent *__REDIRECT (readdir, (DIR *__dirp), readdir64)
 extern struct dirent64 *readdir64 (DIR *__dirp) __nonnull ((1));
 #endif
 
-#if defined __USE_POSIX || defined __USE_MISC
+#ifdef __USE_POSIX
 /* Reentrant version of `readdir'.  Return in RESULT a pointer to the
    next entry.
 
@@ -183,14 +183,15 @@ extern struct dirent64 *readdir64 (DIR *__dirp) __nonnull ((1));
 extern int readdir_r (DIR *__restrict __dirp,
 		      struct dirent *__restrict __entry,
 		      struct dirent **__restrict __result)
-     __nonnull ((1, 2, 3));
+     __nonnull ((1, 2, 3)) __attribute_deprecated__;
 # else
 #  ifdef __REDIRECT
 extern int __REDIRECT (readdir_r,
 		       (DIR *__restrict __dirp,
 			struct dirent *__restrict __entry,
 			struct dirent **__restrict __result),
-		       readdir64_r) __nonnull ((1, 2, 3));
+		       readdir64_r)
+  __nonnull ((1, 2, 3)) __attribute_deprecated__;
 #  else
 #   define readdir_r readdir64_r
 #  endif
@@ -200,14 +201,14 @@ extern int __REDIRECT (readdir_r,
 extern int readdir64_r (DIR *__restrict __dirp,
 			struct dirent64 *__restrict __entry,
 			struct dirent64 **__restrict __result)
-     __nonnull ((1, 2, 3));
+  __nonnull ((1, 2, 3)) __attribute_deprecated__;
 # endif
 #endif	/* POSIX or misc */
 
 /* Rewind DIRP to the beginning of the directory.  */
 extern void rewinddir (DIR *__dirp) __THROW __nonnull ((1));
 
-#if defined __USE_BSD || defined __USE_MISC || defined __USE_XOPEN
+#if defined __USE_MISC || defined __USE_XOPEN
 # include <bits/types.h>
 
 /* Seek to position POS on DIRP.  */
@@ -217,7 +218,7 @@ extern void seekdir (DIR *__dirp, long int __pos) __THROW __nonnull ((1));
 extern long int telldir (DIR *__dirp) __THROW __nonnull ((1));
 #endif
 
-#if defined __USE_BSD || defined __USE_MISC || defined __USE_XOPEN2K8
+#ifdef __USE_XOPEN2K8
 
 /* Return the file descriptor used by DIRP.  */
 extern int dirfd (DIR *__dirp) __THROW __nonnull ((1));
@@ -226,7 +227,7 @@ extern int dirfd (DIR *__dirp) __THROW __nonnull ((1));
 #  define dirfd(dirp)	_DIR_dirfd (dirp)
 # endif
 
-# if defined __USE_BSD || defined __USE_MISC
+# ifdef __USE_MISC
 #  ifndef MAXNAMLEN
 /* Get the definitions of the POSIX.1 limits.  */
 #  include <bits/posix1_lim.h>
@@ -340,10 +341,10 @@ extern int alphasort64 (const struct dirent64 **__e1,
 			const struct dirent64 **__e2)
      __THROW __attribute_pure__ __nonnull ((1, 2));
 # endif
-#endif /* Use BSD or misc or XPG7.  */
+#endif /* Use XPG7.  */
 
 
-#if defined __USE_BSD || defined __USE_MISC
+#ifdef __USE_MISC
 /* Read directory entries from FD into BUF, reading at most NBYTES.
    Reading starts at offset *BASEP, and *BASEP is updated with the new
    position after reading.  Returns the number of bytes read; zero when at
@@ -371,7 +372,7 @@ extern __ssize_t getdirentries64 (int __fd, char *__restrict __buf,
 				  __off64_t *__restrict __basep)
      __THROW __nonnull ((2, 4));
 # endif
-#endif /* Use BSD or misc.  */
+#endif /* Use misc.  */
 
 #ifdef __USE_GNU
 /* Function to compare two `struct dirent's by name & version.  */

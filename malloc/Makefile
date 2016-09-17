@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2014 Free Software Foundation, Inc.
+# Copyright (C) 1991-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,17 +20,22 @@
 #
 subdir	:= malloc
 
-all:
+include ../Makeconfig
 
 dist-headers := malloc.h
 headers := $(dist-headers) obstack.h mcheck.h
 tests := mallocbug tst-malloc tst-valloc tst-calloc tst-obstack \
 	 tst-mallocstate tst-mcheck tst-mallocfork tst-trim1 \
 	 tst-malloc-usable tst-realloc tst-posix_memalign \
-	 tst-pvalloc tst-memalign
+	 tst-pvalloc tst-memalign tst-mallopt tst-scratch_buffer \
+	 tst-malloc-backtrace tst-malloc-thread-exit \
+	 tst-malloc-thread-fail tst-malloc-fork-deadlock \
+	 tst-mallocfork2
 test-srcs = tst-mtrace
 
-routines = malloc morecore mcheck mtrace obstack
+routines = malloc morecore mcheck mtrace obstack \
+  scratch_buffer_grow scratch_buffer_grow_preserve \
+  scratch_buffer_set_array_size
 
 install-lib := libmcheck.a
 non-lib.a := libmcheck.a
@@ -42,20 +47,21 @@ extra-libs-others = $(extra-libs)
 libmemusage-routines = memusage
 libmemusage-inhibit-o = $(filter-out .os,$(object-suffixes))
 
+$(objpfx)tst-malloc-backtrace: $(shared-thread-library)
+$(objpfx)tst-malloc-thread-exit: $(shared-thread-library)
+$(objpfx)tst-malloc-thread-fail: $(shared-thread-library)
+$(objpfx)tst-malloc-fork-deadlock: $(shared-thread-library)
+
 # These should be removed by `make clean'.
 extra-objs = mcheck-init.o libmcheck.a
 
 # Include the cleanup handler.
 aux := set-freeres thread-freeres
 
-include ../Makeconfig
-
-CPPFLAGS-memusagestat = -DNOT_IN_libc
-
 # The Perl script to analyze the output of the mtrace functions.
 ifneq ($(PERL),no)
 install-bin-script = mtrace
-generated = mtrace
+generated += mtrace
 
 # The Perl script will print addresses and to do this nicely we must know
 # whether we are on a 32 or 64 bit machine.
@@ -91,8 +97,21 @@ endif
 do-memusagestat: $(objpfx)memusagestat
 
 memusagestat-modules = memusagestat
+
+cpp-srcs-left := $(memusagestat-modules)
+lib := memusagestat
+include $(patsubst %,$(..)cppflags-iterator.mk,$(cpp-srcs-left))
+
 $(objpfx)memusagestat: $(memusagestat-modules:%=$(objpfx)%.o)
 	$(LINK.o) -o $@ $^ $(libgd-LDFLAGS) -lgd -lpng -lz -lm
+
+ifeq ($(run-built-tests),yes)
+ifeq (yes,$(build-shared))
+ifneq ($(PERL),no)
+tests-special += $(objpfx)tst-mtrace.out
+endif
+endif
+endif
 
 include ../Rules
 
@@ -109,9 +128,10 @@ lib: $(objpfx)libmcheck.a
 ifeq ($(run-built-tests),yes)
 ifeq (yes,$(build-shared))
 ifneq ($(PERL),no)
-tests: $(objpfx)tst-mtrace.out
 $(objpfx)tst-mtrace.out: tst-mtrace.sh $(objpfx)tst-mtrace
-	$(SHELL) $< $(common-objpfx) '$(test-program-prefix)'
+	$(SHELL) $< $(common-objpfx) '$(test-program-prefix-before-env)' \
+		 '$(run-program-env)' '$(test-program-prefix-after-env)' ; \
+	$(evaluate-test)
 endif
 endif
 endif
@@ -142,7 +162,7 @@ $(objpfx)memusage: memusage.sh
 
 
 # The implementation uses `dlsym'
-$(objpfx)libmemusage.so: $(common-objpfx)dlfcn/libdl.so
+$(objpfx)libmemusage.so: $(libdl)
 
 # Extra dependencies
 $(foreach o,$(all-object-suffixes),$(objpfx)malloc$(o)): arena.c hooks.c

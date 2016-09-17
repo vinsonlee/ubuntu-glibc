@@ -1,5 +1,5 @@
 /* Declarations and macros for the basic Mach things set at startup.
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -30,6 +30,11 @@ extern mach_port_t mach_task_self (void);
 extern mach_port_t __mach_task_self_;
 #define __mach_task_self()	(__mach_task_self_ + 0)	/* Not an lvalue.  */
 #define mach_task_self()	(__mach_task_self ())
+
+/* This cache is initialized at startup.  */
+extern mach_port_t __mach_host_self_;
+#define __mach_host_self()	(__mach_host_self_ + 0)	/* Not an lvalue.  */
+#define mach_host_self()	(__mach_host_self ())
 
 /* Kernel page size.  */
 extern vm_size_t __vm_page_size;

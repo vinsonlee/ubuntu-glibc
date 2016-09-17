@@ -1,4 +1,4 @@
-/* Copyright (C) 1994-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -37,11 +37,7 @@
    null terminator), or -1 on error or EOF.  */
 
 _IO_ssize_t
-_IO_getdelim (lineptr, n, delimiter, fp)
-     char **lineptr;
-     _IO_size_t *n;
-     int delimiter;
-     _IO_FILE *fp;
+_IO_getdelim (char **lineptr, _IO_size_t *n, int delimiter, _IO_FILE *fp)
 {
   _IO_ssize_t result;
   _IO_ssize_t cur_len = 0;
@@ -89,7 +85,7 @@ _IO_getdelim (lineptr, n, delimiter, fp)
       t = (char *) memchr ((void *) fp->_IO_read_ptr, delimiter, len);
       if (t != NULL)
 	len = (t - fp->_IO_read_ptr) + 1;
-      if (__builtin_expect (len >= SSIZE_MAX - cur_len, 0))
+      if (__glibc_unlikely (len >= SSIZE_MAX - cur_len))
 	{
 	  __set_errno (EOVERFLOW);
 	  result = -1;

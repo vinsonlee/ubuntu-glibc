@@ -46,6 +46,9 @@ extern int __ffs (int __i) __attribute__ ((const));
 extern char *__strerror_r (int __errnum, char *__buf, size_t __buflen);
 #endif
 
+/* Get _STRING_ARCH_unaligned.  */
+#include <string_private.h>
+
 /* Now the real definitions.  We do this here since some of the functions
    above are defined as macros in the headers.  */
 #include <string/string.h>
@@ -57,7 +60,7 @@ extern __typeof (strcasecmp_l) __strcasecmp_l;
 extern __typeof (strncasecmp_l) __strncasecmp_l;
 
 /* Alternative version which doesn't pollute glibc's namespace.  */
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 # undef strndupa
 # define strndupa(s, n)							      \
   (__extension__							      \
@@ -82,6 +85,8 @@ libc_hidden_proto (__strndup)
 libc_hidden_proto (__strerror_r)
 libc_hidden_proto (__strverscmp)
 libc_hidden_proto (basename)
+extern char *__basename (const char *__filename) __THROW __nonnull ((1));
+libc_hidden_proto (__basename)
 libc_hidden_proto (strcoll)
 libc_hidden_proto (__strcoll_l)
 libc_hidden_proto (__strxfrm_l)
@@ -89,7 +94,10 @@ libc_hidden_proto (__strtok_r)
 extern char *__strsep_g (char **__stringp, const char *__delim);
 libc_hidden_proto (__strsep_g)
 libc_hidden_proto (strnlen)
+libc_hidden_proto (__strnlen)
 libc_hidden_proto (memmem)
+extern __typeof (memmem) __memmem;
+libc_hidden_proto (__memmem)
 libc_hidden_proto (__ffs)
 
 libc_hidden_builtin_proto (memchr)
@@ -112,6 +120,34 @@ libc_hidden_builtin_proto (strrchr)
 libc_hidden_builtin_proto (strspn)
 libc_hidden_builtin_proto (strstr)
 libc_hidden_builtin_proto (ffs)
+
+#if IS_IN (rtld)
+extern __typeof (__stpcpy) __stpcpy attribute_hidden;
+extern __typeof (__strdup) __strdup attribute_hidden;
+extern __typeof (__strerror_r) __strerror_r attribute_hidden;
+extern __typeof (__strsep_g) __strsep_g attribute_hidden;
+
+extern __typeof (memchr) memchr attribute_hidden;
+extern __typeof (memcmp) memcmp attribute_hidden;
+extern __typeof (memcpy) memcpy attribute_hidden;
+extern __typeof (memmove) memmove attribute_hidden;
+extern __typeof (memset) memset attribute_hidden;
+extern __typeof (rawmemchr) rawmemchr attribute_hidden;
+extern __typeof (stpcpy) stpcpy attribute_hidden;
+extern __typeof (strchr) strchr attribute_hidden;
+extern __typeof (strcmp) strcmp attribute_hidden;
+extern __typeof (strlen) strlen attribute_hidden;
+extern __typeof (strnlen) strnlen attribute_hidden;
+extern __typeof (strsep) strsep attribute_hidden;
+#endif
+
+#if (!IS_IN (libc) || !defined SHARED) \
+  && !defined NO_MEMPCPY_STPCPY_REDIRECT
+/* Redirect calls to __builtin_mempcpy and __builtin_stpcpy to call
+   __mempcpy and __stpcpy if not inlined.  */
+extern __typeof (mempcpy) mempcpy __asm__ ("__mempcpy");
+extern __typeof (stpcpy) stpcpy __asm__ ("__stpcpy");
+#endif
 
 # ifndef _ISOMAC
 #  ifndef index

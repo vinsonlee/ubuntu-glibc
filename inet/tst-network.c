@@ -1,5 +1,5 @@
 /* Test for inet_network.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Jaeger <aj@suse.de>, 2000.
 
@@ -51,8 +51,8 @@ struct
 };
 
 
-int
-main (void)
+static int
+do_test (void)
 {
   int errors = 0;
   size_t i;
@@ -76,3 +76,6 @@ main (void)
 
   return errors != 0;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

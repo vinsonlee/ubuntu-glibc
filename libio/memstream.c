@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ static int _IO_mem_sync (_IO_FILE* fp) __THROW;
 static void _IO_mem_finish (_IO_FILE* fp, int) __THROW;
 
 
-static const struct _IO_jump_t _IO_mem_jumps =
+static const struct _IO_jump_t _IO_mem_jumps libio_vtable =
 {
   JUMP_INIT_DUMMY,
   JUMP_INIT (finish, _IO_mem_finish),
@@ -61,9 +61,7 @@ static const struct _IO_jump_t _IO_mem_jumps =
    necessary.  *BUFLOC and *SIZELOC are updated with the buffer's location
    and the number of characters written on fflush or fclose.  */
 _IO_FILE *
-open_memstream (bufloc, sizeloc)
-     char **bufloc;
-     _IO_size_t *sizeloc;
+__open_memstream (char **bufloc, _IO_size_t *sizeloc)
 {
   struct locked_FILE
   {
@@ -88,8 +86,8 @@ open_memstream (bufloc, sizeloc)
       free (new_f);
       return NULL;
     }
-  _IO_init (&new_f->fp._sf._sbf._f, 0);
-  _IO_JUMPS ((struct _IO_FILE_plus *) &new_f->fp._sf._sbf) = &_IO_mem_jumps;
+  _IO_init_internal (&new_f->fp._sf._sbf._f, 0);
+  _IO_JUMPS_FILE_plus (&new_f->fp._sf._sbf) = &_IO_mem_jumps;
   _IO_str_init_static_internal (&new_f->fp._sf, buf, _IO_BUFSIZ, buf);
   new_f->fp._sf._sbf._f._flags &= ~_IO_USER_BUF;
   new_f->fp._sf._s._allocate_buffer = (_IO_alloc_type) malloc;
@@ -100,12 +98,12 @@ open_memstream (bufloc, sizeloc)
 
   return (_IO_FILE *) &new_f->fp._sf._sbf;
 }
-libc_hidden_def (open_memstream)
+libc_hidden_def (__open_memstream)
+weak_alias (__open_memstream, open_memstream)
 
 
 static int
-_IO_mem_sync (fp)
-     _IO_FILE* fp;
+_IO_mem_sync (_IO_FILE *fp)
 {
   struct _IO_FILE_memstream *mp = (struct _IO_FILE_memstream *) fp;
 
@@ -125,9 +123,7 @@ _IO_mem_sync (fp)
 
 
 static void
-_IO_mem_finish (fp, dummy)
-     _IO_FILE* fp;
-     int dummy;
+_IO_mem_finish (_IO_FILE *fp, int dummy)
 {
   struct _IO_FILE_memstream *mp = (struct _IO_FILE_memstream *) fp;
 

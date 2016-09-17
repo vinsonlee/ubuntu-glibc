@@ -1,5 +1,5 @@
 /* Generic conversion to and from T.61.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -373,6 +373,7 @@ static const char from_ucs4[][2] =
 #define MIN_NEEDED_FROM		1
 #define MAX_NEEDED_FROM		2
 #define MIN_NEEDED_TO		4
+#define ONE_DIRECTION		0
 
 /* First define the conversion function from T.61 to UCS4.  */
 #define MIN_NEEDED_INPUT	MIN_NEEDED_FROM
@@ -390,7 +391,7 @@ static const char from_ucs4[][2] =
 	   is also available.  */					      \
 	uint32_t ch2;							      \
 									      \
-	if (__builtin_expect (inptr + 1 >= inend, 0))			      \
+	if (__glibc_unlikely (inptr + 1 >= inend))			      \
 	  {								      \
 	    /* The second character is not available.  */		      \
 	    result = __GCONV_INCOMPLETE_INPUT;				      \
@@ -487,7 +488,7 @@ static const char from_ucs4[][2] =
     /* Now test for a possible second byte and write this if possible.  */    \
     if (cp[1] != '\0')							      \
       {									      \
-	if (__builtin_expect (outptr >= outend, 0))			      \
+	if (__glibc_unlikely (outptr >= outend))			      \
 	  {								      \
 	    /* The result does not fit into the buffer.  */		      \
 	    --outptr;							      \

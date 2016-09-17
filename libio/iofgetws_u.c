@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,10 +28,7 @@
 #include <wchar.h>
 
 wchar_t *
-fgetws_unlocked (buf, n, fp)
-     wchar_t *buf;
-     int n;
-     _IO_FILE *fp;
+fgetws_unlocked (wchar_t *buf, int n, _IO_FILE *fp)
 {
   _IO_size_t count;
   wchar_t *result;
@@ -39,7 +36,7 @@ fgetws_unlocked (buf, n, fp)
   CHECK_FILE (fp, NULL);
   if (n <= 0)
     return NULL;
-  if (__builtin_expect (n == 1, 0))
+  if (__glibc_unlikely (n == 1))
     {
       /* Another irregular case: since we have to store a NUL byte and
 	 there is only room for exactly one byte, we don't have to

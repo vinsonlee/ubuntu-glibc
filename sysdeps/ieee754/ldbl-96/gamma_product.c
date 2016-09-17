@@ -1,5 +1,5 @@
 /* Compute a product of X, X+1, ..., with an error estimate.
-   Copyright (C) 2013-2014 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -36,10 +36,7 @@ __gamma_product (double x, double x_eps, int n, double *eps)
   for (int i = 1; i < n; i++)
     ret *= x_full + i;
 
-#if FLT_EVAL_METHOD != 0
-  volatile
-#endif
-  double fret = ret;
+  double fret = math_narrow_eval ((double) ret);
   *eps = (ret - fret) / fret;
 
   return fret;

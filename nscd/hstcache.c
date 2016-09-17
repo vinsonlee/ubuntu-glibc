@@ -1,5 +1,5 @@
 /* Cache handling for host lookup.
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -152,15 +152,11 @@ cache_addhst (struct database_dyn *db, int fd, request_header *req,
 	  else if ((dataset = mempool_alloc (db, (sizeof (struct dataset)
 						  + req->key_len), 1)) != NULL)
 	    {
-	      dataset->head.allocsize = sizeof (struct dataset) + req->key_len;
-	      dataset->head.recsize = total;
-	      dataset->head.notfound = true;
-	      dataset->head.nreloads = 0;
-	      dataset->head.usable = true;
-
-	      /* Compute the timeout time.  */
-	      dataset->head.ttl = ttl == INT32_MAX ? db->negtimeout : ttl;
-	      timeout = dataset->head.timeout = t + dataset->head.ttl;
+	      timeout = datahead_init_neg (&dataset->head,
+					   (sizeof (struct dataset)
+					    + req->key_len), total,
+					   (ttl == INT32_MAX
+					    ? db->negtimeout : ttl));
 
 	      /* This is the reply.  */
 	      memcpy (&dataset->resp, resp, total);
@@ -257,15 +253,10 @@ cache_addhst (struct database_dyn *db, int fd, request_header *req,
 	  alloca_used = true;
 	}
 
-      dataset->head.allocsize = total + req->key_len;
-      dataset->head.recsize = total - offsetof (struct dataset, resp);
-      dataset->head.notfound = false;
-      dataset->head.nreloads = he == NULL ? 0 : (dh->nreloads + 1);
-      dataset->head.usable = true;
-
-      /* Compute the timeout time.  */
-      dataset->head.ttl = ttl == INT32_MAX ? db->postimeout : ttl;
-      timeout = dataset->head.timeout = t + dataset->head.ttl;
+      timeout = datahead_init_pos (&dataset->head, total + req->key_len,
+				   total - offsetof (struct dataset, resp),
+				   he == NULL ? 0 : dh->nreloads + 1,
+				   ttl == INT32_MAX ? db->postimeout : ttl);
 
       dataset->resp.version = NSCD_VERSION;
       dataset->resp.found = 1;
@@ -480,7 +471,7 @@ addhstbyX (struct database_dyn *db, int fd, request_header *req,
   int errval = 0;
   int32_t ttl = INT32_MAX;
 
-  if (__builtin_expect (debug_level > 0, 0))
+  if (__glibc_unlikely (debug_level > 0))
     {
       const char *str;
       char buf[INET6_ADDRSTRLEN + 1];
@@ -502,7 +493,7 @@ addhstbyX (struct database_dyn *db, int fd, request_header *req,
     {
       errno = 0;
 
-      if (__builtin_expect (buflen > 32768, 0))
+      if (__glibc_unlikely (buflen > 32768))
 	{
 	  char *old_buffer = buffer;
 	  buflen *= 2;

@@ -1,5 +1,5 @@
 /* Test compilation of tgmath macros.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com> and
    Ulrich Drepper <drepper@redhat.com>, 2001.
@@ -50,12 +50,12 @@ int count_cdouble;
 int count_cfloat;
 int count_cldouble;
 
-#define NCALLS     115
+#define NCALLS     119
 #define NCALLS_INT 4
 #define NCCALLS    47
 
-int
-main (void)
+static int
+do_test (void)
 {
   int result = 0;
 
@@ -210,6 +210,9 @@ main (void)
 #include "test-tgmath.c"
 #endif
 
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"
+
 #else
 
 #ifdef DEBUG
@@ -271,7 +274,9 @@ F(compile_test) (void)
   b = lgamma (lgamma (a));
   a = rint (rint (x));
   b = nextafter (nextafter (a, b), nextafter (c, x));
-  a = nexttoward (nexttoward (x, a), c);
+  a = nextdown (nextdown (a));
+  b = nexttoward (nexttoward (x, a), c);
+  a = nextup (nextup (a));
   b = remainder (remainder (a, b), remainder (c, x));
   a = scalb (scalb (x, a), (TYPE) (6));
   k = scalbn (a, 7) + scalbln (c, 10l);
@@ -774,11 +779,27 @@ TYPE
 }
 
 TYPE
+(F(nextdown)) (TYPE x)
+{
+  ++count;
+  P ();
+  return x;
+}
+
+TYPE
 (F(nexttoward)) (TYPE x, long double y)
 {
   ++count;
   P ();
   return x + y;
+}
+
+TYPE
+(F(nextup)) (TYPE x)
+{
+  ++count;
+  P ();
+  return x;
 }
 
 TYPE

@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, August 1995.
 
@@ -21,9 +21,7 @@
 #include <limits.h>
 
 int
-__seed48_r (seed16v, buffer)
-     unsigned short int seed16v[3];
-     struct drand48_data *buffer;
+__seed48_r (unsigned short int seed16v[3], struct drand48_data *buffer)
 {
   /* Save old value at a private place to be used as return value.  */
   memcpy (buffer->__old_x, buffer->__x, sizeof (buffer->__x));

@@ -1,5 +1,5 @@
 /* Cancel requests associated with given file descriptor.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -38,9 +38,7 @@
 
 
 int
-aio_cancel (fildes, aiocbp)
-     int fildes;
-     struct aiocb *aiocbp;
+aio_cancel (int fildes, struct aiocb *aiocbp)
 {
   struct requestlist *req = NULL;
   int result = AIO_ALLDONE;

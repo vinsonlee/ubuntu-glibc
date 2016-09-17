@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 2003.
 
@@ -20,8 +20,8 @@
 #include <wchar.h>
 
 
-int
-main (void)
+static int
+do_test (void)
 {
   int result = 0;
 
@@ -74,3 +74,6 @@ main (void)
 
   return result;
 }
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"

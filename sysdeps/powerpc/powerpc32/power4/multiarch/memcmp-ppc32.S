@@ -1,5 +1,5 @@
 /* Default memcmp implementation for PowerPC32.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
 
 #include <sysdep.h>
 
-#ifndef NOT_IN_libc
+#if IS_IN (libc)
 # undef EALIGN
 # define EALIGN(name, alignt, words)				\
   .globl C_SYMBOL_NAME(__memcmp_ppc);				\

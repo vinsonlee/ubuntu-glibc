@@ -1,5 +1,5 @@
 /* logb(). PowerPC/POWER7 version.
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -58,6 +58,7 @@ __logb (double x)
       int ma;
 
       EXTRACT_WORDS (ix, lx, x);
+      ix &= 0x7fffffff;
       if (ix == 0)
 	ma = __builtin_clz (lx) + 32;
       else

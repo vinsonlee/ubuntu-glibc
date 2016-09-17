@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -25,9 +25,7 @@
 
 
 int
-pthread_setschedprio (threadid, prio)
-     pthread_t threadid;
-     int prio;
+pthread_setschedprio (pthread_t threadid, int prio)
 {
   struct pthread *pd = (struct pthread *) threadid;
 
@@ -48,7 +46,7 @@ pthread_setschedprio (threadid, prio)
     param.sched_priority = pd->tpp->priomax;
 
   /* Try to set the scheduler information.  */
-  if (__builtin_expect (sched_setparam (pd->tid, &param) == -1, 0))
+  if (__glibc_unlikely (sched_setparam (pd->tid, &param) == -1))
     result = errno;
   else
     {

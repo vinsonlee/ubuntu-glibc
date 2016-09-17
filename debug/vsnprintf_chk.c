@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 #include "../libio/libioP.h"
 #include "../libio/strfile.h"
 
-extern const struct _IO_jump_t _IO_strn_jumps attribute_hidden;
+extern const struct _IO_jump_t _IO_strn_jumps libio_vtable attribute_hidden;
 
 /* Write formatted output into S, according to the format
    string FORMAT, writing no more than MAXLEN characters.  */
@@ -33,7 +33,7 @@ ___vsnprintf_chk (char *s, size_t maxlen, int flags, size_t slen,
      Though, maxlen is supposed to be the size of buffer pointed
      to by s, so a conforming program can't pass such maxlen
      to *snprintf.  */
-  if (__builtin_expect (slen < maxlen, 0))
+  if (__glibc_unlikely (slen < maxlen))
     __chk_fail ();
 
   _IO_strnfile sf;

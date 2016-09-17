@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,12 +22,8 @@
    to *OPTVAL (which is OPTLEN bytes long).
    Returns 0 on success, -1 for errors.  */
 int
-__setsockopt (fd, level, optname, optval, optlen)
-     int fd;
-     int level;
-     int optname;
-     const __ptr_t optval;
-     socklen_t optlen;
+__setsockopt (int fd, int level, int optname, const __ptr_t optval,
+	      socklen_t optlen)
 {
   __set_errno (ENOSYS);
   return -1;
