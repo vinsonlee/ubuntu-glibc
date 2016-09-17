@@ -1,3 +1,25 @@
+glibc (2.24-3) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * patches/kfreebsd/local-sysdeps.diff: update to revision 6102 (from
+    glibc-bsd).
+  * debian/control.in/main: Drop "Provides: locales" for locales-all.
+    Closes: #837694.
+  * Mark libc-l10n as Multi-Arch: foreign.
+
+  [ Samuel Thibault ]
+  * hurd-i386/tg-poll_errors_fixes.diff: Fix spurious port destroy on io_select
+    returning an error.
+  * hurd-i386/cvs-libpthread.diff: Update from upstream. Fixes spurious
+    dependencies of libp11, libgnutls30, libbsd0.
+
+  [ John David Anglin ]
+  * patches/hppa/submitted-sysdeps-cancel.diff: new patch to fix syscall
+    cancellation issues.  Closes: #837518.
+  * testsuite-xfail-debian.mk: HPPA updates.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sat, 17 Sep 2016 20:00:44 +0200
+
 glibc (2.24-2) unstable; urgency=medium
 
   [ Samuel Thibault ]

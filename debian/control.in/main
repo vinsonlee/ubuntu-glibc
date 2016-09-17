@@ -58,6 +58,7 @@ Package: libc-l10n
 Architecture: all
 Section: localization
 Priority: standard
+Multi-Arch: foreign
 Depends: ${misc:Depends}
 Breaks: locales (<< 2.21-1)
 Replaces: locales (<< 2.21-1)
@@ -117,7 +118,6 @@ Priority: extra
 Multi-Arch: foreign
 Depends: libc-l10n (>> @GLIBC_VERSION@), ${misc:Depends}
 Breaks: locales (<< 2.13-17)
-Provides: locales
 Build-Profiles: <!stage1>
 Description: GNU C Library: Precompiled locale data
  This package contains the precompiled locale data for all supported locales.
