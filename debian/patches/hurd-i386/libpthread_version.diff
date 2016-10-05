@@ -4,10 +4,8 @@ This dates when libpthread was moved to glibc and some features were added.
 TODO: _DEBIAN_ in versions however pose problem. Remove the _DEBIAN_ version
 once packages are rebuilt against 2.21.
 
-Index: glibc-2.24/libpthread/Versions
-===================================================================
---- glibc-2.24.orig/libpthread/Versions
-+++ glibc-2.24/libpthread/Versions
+--- a/libpthread/Versions
++++ b/libpthread/Versions
 @@ -1,5 +1,5 @@
  libc {
 -  GLIBC_2.13 {
@@ -15,7 +13,7 @@ Index: glibc-2.24/libpthread/Versions
      pthread_attr_destroy; pthread_attr_getdetachstate;
      pthread_attr_getinheritsched; pthread_attr_getschedparam;
      pthread_attr_getschedpolicy; pthread_attr_getscope; pthread_attr_init;
-@@ -20,6 +20,24 @@ libc {
+@@ -16,6 +16,24 @@ libc {
    GLIBC_2.22 {
      __register_atfork;
    }
@@ -38,9 +36,9 @@ Index: glibc-2.24/libpthread/Versions
 +    __pthread_get_cleanup_stack;
 +  }
    GLIBC_PRIVATE {
-     __libc_alloca_cutoff;
      __libc_pthread_init;
-@@ -136,7 +154,13 @@ libpthread {
+   }
+@@ -132,7 +151,13 @@ libpthread {
      __pthread_spin_lock; __pthread_spin_trylock; __pthread_spin_unlock;
      _pthread_spin_lock;
    }
@@ -55,10 +53,8 @@ Index: glibc-2.24/libpthread/Versions
      pthread_hurd_cond_wait_np;
      pthread_hurd_cond_timedwait_np;
    }
-Index: glibc-2.24/libpthread/sysdeps/mach/hurd/pt-hurd-cond-timedwait.c
-===================================================================
---- glibc-2.24.orig/libpthread/sysdeps/mach/hurd/pt-hurd-cond-timedwait.c
-+++ glibc-2.24/libpthread/sysdeps/mach/hurd/pt-hurd-cond-timedwait.c
+--- a/libpthread/sysdeps/mach/hurd/pt-hurd-cond-timedwait.c
++++ b/libpthread/sysdeps/mach/hurd/pt-hurd-cond-timedwait.c
 @@ -23,6 +23,8 @@
  
  #include <pt-internal.h>
@@ -88,10 +84,8 @@ Index: glibc-2.24/libpthread/sysdeps/mach/hurd/pt-hurd-cond-timedwait.c
  
  int
  __pthread_hurd_cond_timedwait_internal (pthread_cond_t *cond,
-Index: glibc-2.24/libpthread/sysdeps/mach/hurd/pt-hurd-cond-wait.c
-===================================================================
---- glibc-2.24.orig/libpthread/sysdeps/mach/hurd/pt-hurd-cond-wait.c
-+++ glibc-2.24/libpthread/sysdeps/mach/hurd/pt-hurd-cond-wait.c
+--- a/libpthread/sysdeps/mach/hurd/pt-hurd-cond-wait.c
++++ b/libpthread/sysdeps/mach/hurd/pt-hurd-cond-wait.c
 @@ -23,6 +23,8 @@
  
  #include <pt-internal.h>
@@ -120,13 +114,11 @@ Index: glibc-2.24/libpthread/sysdeps/mach/hurd/pt-hurd-cond-wait.c
 +}
 +compat_symbol (libpthread, __pthread_hurd_cond_wait_np_2_13, pthread_hurd_cond_wait_np, GLIBC_2_13_DEBIAN_38);
 +#endif
-Index: glibc-2.24/libpthread/forward.c
-===================================================================
---- glibc-2.24.orig/libpthread/forward.c
-+++ glibc-2.24/libpthread/forward.c
-@@ -24,20 +24,42 @@
+--- a/libpthread/forward.c
++++ b/libpthread/forward.c
+@@ -20,20 +23,42 @@
+ #include <shlib-compat.h>
  #include <pthread-functions.h>
- #include <fork.h>
  
 +#include <shlib-compat.h>
 +
@@ -168,7 +160,7 @@ Index: glibc-2.24/libpthread/forward.c
  
  /* Same as FORWARD2, only without return.  */
  # define FORWARD_NORETURN(name, rettype, decl, params, defaction) \
-@@ -48,10 +70,22 @@ name decl								      \
+@@ -47,10 +69,22 @@ name decl								      \
      defaction;								      \
  									      \
    PTHFCT_CALL (ptr_##name, params);			      \
@@ -192,7 +184,7 @@ Index: glibc-2.24/libpthread/forward.c
  
  FORWARD (pthread_attr_destroy, (pthread_attr_t *attr), (attr), 0)
  
-@@ -108,7 +142,10 @@ FORWARD (pthread_equal, (pthread_t threa
+@@ -107,7 +141,10 @@ FORWARD (pthread_equal, (pthread_t threa
  
  /* Use an alias to avoid warning, as pthread_exit is declared noreturn.  */
  FORWARD_NORETURN (__pthread_exit, void, (void *retval), (retval), exit (EXIT_SUCCESS))
@@ -204,7 +196,7 @@ Index: glibc-2.24/libpthread/forward.c
  
  
  FORWARD (pthread_getschedparam,
-@@ -131,16 +168,21 @@ FORWARD (pthread_mutex_unlock, (pthread_
+@@ -130,16 +167,21 @@ FORWARD (pthread_mutex_unlock, (pthread_
  
  
  FORWARD2 (pthread_self, pthread_t, (void), (), return 0)

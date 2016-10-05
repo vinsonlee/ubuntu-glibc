@@ -25,9 +25,7 @@ $(patsubst %,$(stamp)binaryinst_%,$(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGUL
 	else \
 		dh_installchangelogs -p$(curpass) debian/changelog.upstream ; \
 	fi
-	dh_systemd_enable -p$(curpass)
 	dh_installinit -p$(curpass)
-	dh_systemd_start -p$(curpass)
 	dh_installdocs -p$(curpass) 
 	dh_lintian -p $(curpass)
 	dh_link -p$(curpass)
@@ -87,7 +85,8 @@ endif
 		-exec chmod a+x '{}' ';'
 	dh_makeshlibs -Xgconv/ -p$(curpass) -V "$(call xx,shlib_dep)"
 	# Add relevant udeb: lines in shlibs files
-	sh ./debian/shlibs-add-udebs $(curpass)
+	chmod a+x debian/shlibs-add-udebs
+	./debian/shlibs-add-udebs $(curpass)
 
 	dh_installdeb -p$(curpass)
 	dh_shlibdeps -p$(curpass)
@@ -157,26 +156,13 @@ $(stamp)debhelper-common:
 	  esac; \
 	done
 
-	# Install nscd systemd files on linux
-ifeq ($(DEB_HOST_ARCH_OS),linux)
-	cp nscd/nscd.service debian/nscd.service
-	cp nscd/nscd.tmpfiles debian/nscd.tmpfile
-endif
-
 	# Generate common substvars files.
 	: > tmp.substvars
 ifeq ($(filter stage2,$(DEB_BUILD_PROFILES)),)
 	echo 'libgcc:Depends=libgcc1 [!hppa !m68k], libgcc2 [m68k], libgcc4 [hppa]' >> tmp.substvars
 endif
 ifeq ($(DEB_HOST_ARCH_OS),linux)
-	# cross-toolchain-base builds both linux-libc-dev and libc-dev package in one step,
-	# not using an installed linux-libc-dev package.  Injecting the dependency by the env.
-	if [ -n "$$CTB_LIBC_DEV_DEPENDS" ]; then \
-	  depends=$$CTB_LIBC_DEV_DEPENDS; \
-	else \
-	  depends=$$(dpkg-query -f '$${binary:Package} (>= $${Version}) ' -W linux-libc-dev:$(DEB_HOST_ARCH) | sed -e 's/:\S\+//'); \
-	fi; \
-	echo "libc-dev:Depends=$$depends" >> tmp.substvars
+	echo "libc-dev:Depends=$$(dpkg-query -f '$${binary:Package} (>= $${Version}) ' -W linux-libc-dev:$(DEB_HOST_ARCH) | sed -e 's/:\S\+//')" >> tmp.substvars
 endif
 
 	for pkg in $(DEB_ARCH_REGULAR_PACKAGES) $(DEB_INDEP_REGULAR_PACKAGES) $(DEB_UDEB_PACKAGES); do \
@@ -292,7 +278,5 @@ clean::
 	rm -f debian/*.NEWS
 	rm -f debian/*.README.Debian
 	rm -f debian/*.triggers
-	rm -f debian/*.service
-	rm -f debian/*.tmpfile
 
 	rm -f $(stamp)binaryinst*

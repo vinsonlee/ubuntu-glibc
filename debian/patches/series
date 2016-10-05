@@ -36,6 +36,7 @@ alpha/local-string-functions.diff
 alpha/submitted-fegetenv-namespace.diff
 alpha/submitted-termios_h.diff
 alpha/submitted-fts64.diff
+alpha/submitted-math-fixes.diff
 
 amd64/local-blacklist-for-Intel-TSX.diff
 
@@ -56,7 +57,6 @@ hppa/submitted-dladdr.diff
 hppa/local-stack-grows-up.diff
 hppa/submitted-setcontext.diff
 hppa/submitted-sysdeps-cancel.diff
-hppa/cvs-atomic-machine.diff
 
 hurd-i386/local-enable-ldconfig.diff
 hurd-i386/tg-context_functions.diff
@@ -64,6 +64,7 @@ hurd-i386/tg-tls.diff
 hurd-i386/tg-tls-threadvar.diff
 hurd-i386/tg-tlsdesc.sym.diff
 hurd-i386/tg-sysvshm.diff
+hurd-i386/tg-extern_inline.diff
 hurd-i386/tg-_dl_random.diff
 hurd-i386/tg-thread-cancel.diff
 hurd-i386/tg-bigmem.diff
@@ -85,7 +86,13 @@ hurd-i386/tg-hurdsig-SA_SIGINFO.diff
 hurd-i386/tg-hurdsig-fixes-2.diff
 hurd-i386/tg-hooks.diff
 hurd-i386/cvs-libpthread.diff
+hurd-i386/cvs-libpthread-2.23.diff
+hurd-i386/libpthread_spin-lock.diff
 hurd-i386/libpthread_build.diff
+hurd-i386/libpthread_sigmask.diff
+hurd-i386/libpthread_clean.diff
+hurd-i386/cvs-libpthread_clean2.diff
+hurd-i386/cvs-libpthread_build.diff
 hurd-i386/tg-libpthread_depends.diff
 hurd-i386/libpthread_version.diff
 hurd-i386/submitted-exec_filename.diff
@@ -98,7 +105,6 @@ hurd-i386/tg-ifaddrs_v6.diff
 hurd-i386/tg-remap_getcwd.diff
 hurd-i386/tg-exec-static.diff
 hurd-i386/tg-EIEIO-fr.diff
-hurd-i386/tg-EGREGIOUS-fr.diff
 hurd-i386/tg-io_select_timeout.diff
 hurd-i386/tg-poll_errors_fixes.diff
 hurd-i386/unsubmitted-clock_t_centiseconds.diff
@@ -115,36 +121,31 @@ hurd-i386/submitted-bind_umask2.diff
 hurd-i386/local-libpthread-stacksize.diff
 hurd-i386/tg-WRLCK-upgrade.diff
 hurd-i386/tg-reboot-startup.diff
+hurd-i386/libpthread-versions.diff
 hurd-i386/cvs-revert-gnu-gnu-cleanup.diff
-hurd-i386/tg-allocalim.diff
+hurd-i386/unsubmitted-libc_alloca_cutoff.diff
 hurd-i386/libpthread_pthread_types.diff
+hurd-i386/unsubmitted-libpthread-semaphore.h.diff
 hurd-i386/local-bootstrap.diff
 hurd-i386/local-mach_print.diff
+hurd-i386/cvs-hidden.diff
+hurd-i386/cvs-libpthread-api.diff
+hurd-i386/cvs-libpthread-sigstate.diff
 hurd-i386/submitted-hurd-abilist.diff
+hurd-i386/cvs-pt-kill.diff
 hurd-i386/local-versions.diff
 #hurd-i386/submitted-anon-mmap-shared.diff
 hurd-i386/cvs-check-local-headers.diff
 hurd-i386/tg-faccessat.diff
-hurd-i386/tg-extern_inline.diff
 hurd-i386/tg-eintr.diff
+#hurd-i386/cvs-register_atfork.diff
 hurd-i386/git-recvmsg.diff
 hurd-i386/tg-gsync-libc.diff
 hurd-i386/cvs-adjtime-NULL.diff
-hurd-i386/tg-pthread_deps.diff
-hurd-i386/cvs-mallocfork.diff
-hurd-i386/tg-libpthread-gsync-spin.diff
-hurd-i386/tg-ONSTACK.diff
-hurd-i386/tg-libpthread-gsync-mutex.diff
-hurd-i386/tg-NOFOLLOW.diff
-hurd-i386/tg-NOFOLLOW-DIRECTORY.diff
-hurd-i386/tg-libc_rwlock_recursive.diff
-hurd-i386/cvs-hurd_signal.h_c++.diff
-hurd-i386/tg-magic-pid.diff
-hurd-i386/tg-mlockall.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
-i386/cvs-cpuid-level2.diff
+i386/local-cpuid-level2.diff
 i386/unsubmitted-quiet-ldconfig.diff
 
 kfreebsd/submitted-waitid.diff
@@ -165,7 +166,6 @@ m68k/submitted-gcc34-seccomment.diff
 mips/submitted-rld_map.diff
 
 powerpc/local-powerpc8xx-dcbz.diff
-powerpc/cvs-lock-elision.diff
 
 sh4/local-fpscr_values.diff
 
@@ -215,10 +215,6 @@ any/local-libpic.diff
 any/local-bootstrap-headers.diff
 any/submitted-dlopen-noload.diff
 any/submitted-perl-inc.diff
-any/submitted-unicode-9.0.0.diff
-#any/cvs-resolv-internal-qtype.diff
-any/cvs-ttyname-namespaces.diff
-any/cvs-pthread-free.diff
 
 # Ubuntu patches live in their own little world, to maintain sanity
 ubuntu/lddebug-scopes.diff

@@ -1,4 +1,3 @@
-t/gsync-libc
 From: Agustina Arzille <avarzille@riseup.net>
 Subject: [PATCH] Introduce gsync-based locks to glibc.
 
@@ -23,12 +22,6 @@ Subject: [PATCH] Introduce gsync-based locks to glibc.
 * sysdeps/mach/hurd/malloc-machine.h: Reimplemented malloc locks.
 * sysdeps/mach/hurd/setpgid.c: (setpgid): Use gsync for synchronization.
 * sysdeps/mach/hurd/setsid.c: (setsid): Likewise.
-
-t/libc_cleanup
-From: Agustina Arzille <avarzille@riseup.net>
-Subject: [PATCH] Use gcc's cleanup attributes
-
-cleanup routines now use gcc's cleanup attribute
 
 ---
  hurd/Makefile                      |   1 +
@@ -580,7 +573,8 @@ Index: glibc-2.23/mach/lock-intern.h
  
  void __spin_lock_init (__spin_lock_t *__lock);
  
- #if defined __USE_EXTERN_INLINES && defined _LIBC
+-#ifdef __USE_EXTERN_INLINES
++#if defined __USE_EXTERN_INLINES && defined _LIBC
  _EXTERN_INLINE void
  __spin_lock_init (__spin_lock_t *__lock)
  {
@@ -597,7 +591,8 @@ Index: glibc-2.23/mach/lock-intern.h
  
  void __spin_lock (__spin_lock_t *__lock);
  
- #if defined __USE_EXTERN_INLINES && defined _LIBC
+-#ifdef __USE_EXTERN_INLINES
++#if defined __USE_EXTERN_INLINES && defined _LIBC
  _EXTERN_INLINE void
  __spin_lock (__spin_lock_t *__lock)
  {
@@ -665,7 +660,8 @@ Index: glibc-2.23/mach/lock-intern.h
  
  void __mutex_lock (void *__lock);
  
- #if defined __USE_EXTERN_INLINES && defined _LIBC
+-#ifdef __USE_EXTERN_INLINES
++#if defined __USE_EXTERN_INLINES && defined _LIBC
  _EXTERN_INLINE void
  __mutex_lock (void *__lock)
  {
@@ -675,7 +671,12 @@ Index: glibc-2.23/mach/lock-intern.h
  }
  #endif
  
-@@ -97,19 +116,18 @@ __mutex_lock (void *__lock)
+@@ -93,23 +112,22 @@ __mutex_lock (void *__lock)
+ 
+ void __mutex_unlock (void *__lock);
+ 
+-#ifdef __USE_EXTERN_INLINES
++#if defined __USE_EXTERN_INLINES && defined _LIBC
  _EXTERN_INLINE void
  __mutex_unlock (void *__lock)
  {
@@ -688,7 +689,8 @@ Index: glibc-2.23/mach/lock-intern.h
  
  int __mutex_trylock (void *__lock);
  
- #if defined __USE_EXTERN_INLINES && defined _LIBC
+-#ifdef __USE_EXTERN_INLINES
++#if defined __USE_EXTERN_INLINES && defined _LIBC
  _EXTERN_INLINE int
  __mutex_trylock (void *__lock)
  {
@@ -811,21 +813,21 @@ Index: glibc-2.23/sysdeps/mach/Makefile
  endif
  
 +ifeq (crypt,$(subdir))
-+  LDLIBS-crypt.so += $(objdir)/mach/libmachuser.so
++  LDLIBS-crypt.so += -lmachuser
 +else ifeq (dlfcn,$(subdir))
-+  LDLIBS-dl.so += $(objdir)/mach/libmachuser.so
++  LDLIBS-dl.so += -lmachuser
 +else ifeq (nis,$(subdir))
-+  LDLIBS-nsl.so += $(objdir)/mach/libmachuser.so
-+  LDLIBS-nss_nis.so += $(objdir)/mach/libmachuser.so
-+  LDLIBS-nss_nisplus.so += $(objdir)/mach/libmachuser.so
-+  LDLIBS-nss_compat.so += $(objdir)/mach/libmachuser.so
++  LDLIBS-nsl.so += -lmachuser
++  LDLIBS-nss_nis.so += -lmachuser
++  LDLIBS-nss_nisplus.so += -lmachuser
++  LDLIBS-nss_compat.so += -lmachuser
 +else ifeq (nss,$(subdir))
-+  LDLIBS-nss.so += $(objdir)/mach/libmachuser.so
-+  LDLIBS-nss_files.so += $(objdir)/mach/libmachuser.so
++  LDLIBS-nss.so += -lmachuser
++  LDLIBS-nss_files.so += -lmachuser
 +else ifeq (posix,$(subdir))
-+  LDLIBS-tst-rfc3484 += $(objdir)/mach/libmachuser.so
-+  LDLIBS-tst-rfc3484-2 += $(objdir)/mach/libmachuser.so
-+  LDLIBS-tst-rfc3484-3 += $(objdir)/mach/libmachuser.so
++  LDLIBS-tst-rfc3484 += -lmachuser
++  LDLIBS-tst-rfc3484-2 += -lmachuser
++  LDLIBS-tst-rfc3484-3 += -lmachuser
 +endif
 +
  endif	# in-Makerules
