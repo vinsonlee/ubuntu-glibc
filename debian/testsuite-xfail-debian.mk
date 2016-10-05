@@ -75,6 +75,7 @@ test-xfail-test-misc = yes
 test-xfail-tst-backtrace6 = yes
 test-xfail-tst-makecontext = yes
 test-xfail-tst-mqueue5 = yes
+test-xfail-tst-signal6 = yes
 test-xfail-tst-stack4 = yes
 test-xfail-tst-waitid = yes
 
@@ -90,6 +91,7 @@ ifeq ($(config-machine)-$(config-os),arm-linux-gnueabihf)
 test-xfail-test-fenv = yes
 test-xfail-tst-backtrace6 = yes
 test-xfail-tst-makecontext = yes
+test-xfail-tst-signal6 = yes
 test-xfail-tst-stack4 = yes
 test-xfail-tst-mqueue5 = yes
 test-xfail-tst-waitid = yes
@@ -100,88 +102,23 @@ endif
 # hppa
 ######################################################################
 ifeq ($(config-machine)-$(config-os),hppa-linux-gnu)
-test-xfail-POSIX/aio.h/conform = yes
-test-xfail-POSIX/mqueue.h/conform = yes
-test-xfail-POSIX/pthread.h/conform = yes
-test-xfail-POSIX/regex.h/conform = yes
-test-xfail-POSIX/semaphore.h/conform = yes
-test-xfail-POSIX/signal.h/conform = yes
-test-xfail-POSIX/sys/mman.h/conform = yes
-test-xfail-POSIX/sys/types.h/conform = yes
-test-xfail-POSIX2008/aio.h/conform = yes
-test-xfail-POSIX2008/mqueue.h/conform = yes
-test-xfail-POSIX2008/pthread.h/conform = yes
-test-xfail-POSIX2008/regex.h/conform = yes
-test-xfail-POSIX2008/semaphore.h/conform = yes
-test-xfail-POSIX2008/spawn.h/conform = yes
-test-xfail-POSIX2008/sys/mman.h/conform = yes
-test-xfail-POSIX2008/sys/types.h/conform = yes
-test-xfail-UNIX98/aio.h/conform = yes
-test-xfail-UNIX98/ftw.h/conform = yes
-test-xfail-UNIX98/mqueue.h/conform = yes
-test-xfail-UNIX98/pthread.h/conform = yes
-test-xfail-UNIX98/regex.h/conform = yes
-test-xfail-UNIX98/semaphore.h/conform = yes
-test-xfail-UNIX98/sys/mman.h/conform = yes
-test-xfail-UNIX98/sys/types.h/conform = yes
-test-xfail-UNIX98/sys/uio.h/conform = yes
-test-xfail-XOPEN2K/ftw.h/conform = yes
-test-xfail-XOPEN2K/pthread.h/conform = yes
-test-xfail-XOPEN2K/regex.h/conform = yes
-test-xfail-XOPEN2K/spawn.h/conform = yes
-test-xfail-XOPEN2K/stdlib.h/conform = yes
-test-xfail-XOPEN2K/sys/mman.h/conform = yes
-test-xfail-XOPEN2K/sys/types.h/conform = yes
-test-xfail-XOPEN2K/sys/uio.h/conform = yes
-test-xfail-XOPEN2K8/aio.h/conform = yes
-test-xfail-XOPEN2K8/ftw.h/conform = yes
-test-xfail-XOPEN2K8/mqueue.h/conform = yes
-test-xfail-XOPEN2K8/pthread.h/conform = yes
-test-xfail-XOPEN2K8/regex.h/conform = yes
-test-xfail-XOPEN2K8/semaphore.h/conform = yes
-test-xfail-XOPEN2K8/spawn.h/conform = yes
-test-xfail-XOPEN2K8/stdlib.h/conform = yes
-test-xfail-XOPEN2K8/sys/mman.h/conform = yes
-test-xfail-XOPEN2K8/sys/types.h/conform = yes
-test-xfail-XOPEN2K8/sys/uio.h/conform = yes
-test-xfail-XPG4/sys/mman.h/conform = yes
 test-xfail-check-execstack = yes
 test-xfail-check-localplt = yes
 test-xfail-check-textrel = yes
-test-xfail-malloc/tst-trim1 = yes
-test-xfail-tst-addr1 = yes
-test-xfail-tst-attr3 = yes
 test-xfail-tst-audit2 = yes
 test-xfail-tst-backtrace2 = yes
 test-xfail-tst-backtrace3 = yes
 test-xfail-tst-backtrace4 = yes
 test-xfail-tst-backtrace5 = yes
 test-xfail-tst-backtrace6 = yes
-test-xfail-tst-cancel3 = yes
-test-xfail-tst-cancel4 = yes
-test-xfail-tst-cancel5 = yes
-test-xfail-tst-cancel9 = yes
-test-xfail-tst-cancelx20 = yes
-test-xfail-tst-cancelx21 = yes
-test-xfail-tst-cancelx3 = yes
-test-xfail-tst-cancelx4 = yes
-test-xfail-tst-cancelx5 = yes
-test-xfail-tst-cancelx9 = yes
-test-xfail-tst-cleanup4 = yes
 test-xfail-tst-cleanupx4 = yes
-test-xfail-tst-cputimer2 = yes
-test-xfail-tst-cputimer3 = yes
-test-xfail-tst-longjmp_chk2 = yes
 test-xfail-tst-makecontext = yes
-test-xfail-tst-mqueue8 = yes
-test-xfail-tst-mqueue8x = yes
 test-xfail-tst-protected1a = yes
 test-xfail-tst-protected1b = yes
 test-xfail-tst-setcontext2 = yes
-test-xfail-tst-setcontext3 = yes
-test-xfail-tst-stack1 = yes
-test-xfail-tst-stack4 = yes
-test-xfail-tst-trim1 = yes
+# The following tests sometimes fail due to timeouts.
+test-xfail-tst-barrier5 = yes
+test-xfail-tst-cond25 = yes
 endif
 
 
@@ -304,8 +241,6 @@ test-xfail-test-misc = yes
 test-xfail-tst-ptsname = yes
 test-xfail-tst-audit9 = yes
 
-test-xfail-POSIX2008/errno.h/conform = yes
-test-xfail-POSIX2008/limits.h/conform = yes
 test-xfail-POSIX2008/mqueue.h/conform = yes
 test-xfail-POSIX2008/pthread.h/conform = yes
 test-xfail-POSIX2008/semaphore.h/conform = yes
@@ -314,14 +249,12 @@ test-xfail-POSIX2008/sys/statvfs.h/conform = yes
 test-xfail-POSIX2008/sys/un.h/conform = yes
 test-xfail-POSIX2008/termios.h/conform = yes
 test-xfail-POSIX/fcntl.h/conform = yes
-test-xfail-POSIX/limits.h/conform = yes
 test-xfail-POSIX/mqueue.h/conform = yes
 test-xfail-POSIX/pthread.h/conform = yes
 test-xfail-POSIX/sched.h/conform = yes
 test-xfail-POSIX/semaphore.h/conform = yes
 test-xfail-POSIX/sys/stat.h/conform = yes
 test-xfail-POSIX/time.h/conform = yes
-test-xfail-UNIX98/limits.h/conform = yes
 test-xfail-UNIX98/mqueue.h/conform = yes
 test-xfail-UNIX98/pthread.h/conform = yes
 test-xfail-UNIX98/sched.h/conform = yes
@@ -329,15 +262,12 @@ test-xfail-UNIX98/semaphore.h/conform = yes
 test-xfail-UNIX98/sys/stat.h/conform = yes
 test-xfail-UNIX98/termios.h/conform = yes
 test-xfail-UNIX98/time.h/conform = yes
-test-xfail-XOPEN2K8/errno.h/conform = yes
 test-xfail-XOPEN2K8/mqueue.h/conform = yes
 test-xfail-XOPEN2K8/pthread.h/conform = yes
 test-xfail-XOPEN2K8/semaphore.h/conform = yes
 test-xfail-XOPEN2K8/sys/stat.h/conform = yes
-test-xfail-XOPEN2K/limits.h/conform = yes
 test-xfail-XOPEN2K/pthread.h/conform = yes
 test-xfail-XOPEN2K/sys/stat.h/conform = yes
-test-xfail-XPG4/limits.h/conform = yes
 test-xfail-XPG4/sys/resource.h/conform = yes
 test-xfail-XPG4/sys/statvfs.h/conform = yes
 test-xfail-XPG4/sys/un.h/conform = yes
@@ -807,7 +737,6 @@ test-xfail-tst-preadwrite64 = yes
 
 # fixed upstream
 test-xfail-POSIX/signal.h/conform = yes
-test-xfail-POSIX/termios.h/conform = yes
 
 # happens on linux-i386 too
 test-xfail-annexc = yes
