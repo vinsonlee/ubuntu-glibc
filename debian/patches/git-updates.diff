@@ -1,10 +1,115 @@
 GIT update of git://sourceware.org/git/glibc.git/release/2.24/master from glibc-2.24
 
 diff --git a/ChangeLog b/ChangeLog
-index c44c926..84ae7a7 100644
+index c44c926..7521d86 100644
 --- a/ChangeLog
 +++ b/ChangeLog
-@@ -1,3 +1,24 @@
+@@ -1,3 +1,129 @@
++2016-09-02  Roland McGrath  <roland@hack.frob.com>
++
++	* sysdeps/arm/nacl/libc.abilist: Add GLIBC_2.24 A.
++
++	* sysdeps/nacl/dup.c: Add libc_hidden_def.
++
++2016-09-02  Roland McGrath  <roland@hack.frob.com>
++
++	* sysdeps/posix/wait3.c: Don't treat STAT_LOC as a union, since it's
++	not any more.
++
++2016-09-02  Roland McGrath  <roland@hack.frob.com>
++
++	* sysdeps/nacl/clock.c (clock): nacl_abi_clock_t -> nacl_irt_clock_t
++
++2016-08-17  Florian Weimer  <fweimer@redhat.com>
++
++	Reduce time to expected nptl/tst-once5 failure.
++	* nptl/tst-once5.cc (TIMEOUT): Define.
++
++2016-08-18  Florian Weimer  <fweimer@redhat.com>
++
++	[BZ #16907]
++	* argp/argp.h: Switch to __BEGIN_DECLS and __END_DECLS.
++	(__THROW, __NTH, __attribute__, __restrict): Remove definitions.
++	* argp/argp-fmtstream.h: Add __BEGIN_DECLS and __END_DECLS.
++	(__attribute__): Remove definition.
++
++2016-08-15  Andreas Schwab  <schwab@suse.de>
++
++	[BZ #20435]
++	* sysdeps/unix/sysv/linux/arm/setcontext.S (__startcontext): Mark
++	as .cantunwind.
++
++2016-08-17  Florian Weimer  <fweimer@redhat.com>
++
++	[BZ #20452]
++	Avoid additional copies of objects in libc.a in static libraries.
++	* sysdeps/ia64/nptl/Makefile (libpthread-shared-only-routines):
++	Add ptw-sysdep, ptw-sigblock, ptw-sigprocmask.
++	* sysdeps/mips/Makefile (librt-shared-only-routines): Add
++	rt-sysdep.
++	* sysdeps/mips/nptl/Makefile (libpthread-shared-only-routines):
++	Add nptl-sysdep.
++	* sysdeps/s390/nptl/Makefile (libpthread-shared-only-routines):
++	Add ptw-sysdep.
++	* sysdeps/unix/alpha/Makefile (librt-shared-only-routines): Add
++	rt-sysdep.
++	* sysdeps/unix/sysv/linux/alpha/Makefile
++	(libpthread-shared-only-routines): Add ptw-sysdep,
++	ptw-sigprocmask, ptw-rt_sigaction.
++	* sysdeps/unix/sysv/linux/ia64/Makefile
++	(librt-shared-only-routines): Add rt-sysdep.
++	* sysdeps/unix/sysv/linux/i386/Makefile
++	(libpthread-shared-only-routines): Add libc-do-syscall.
++	* sysdeps/unix/sysv/linux/microblaze/Makefile
++	(libpthread-shared-only-routines): Add sysdep.
++	* sysdeps/unix/sysv/linux/powerpc/Makefile
++	(librt-shared-only-routines): Add rt-sysdep.
++	(libpthread-shared-only-routines): Add sysdep.
++	* sysdeps/unix/sysv/linux/s390/Makefile
++	(librt-shared-only-routines): Add rt-sysdep.
++	* sysdeps/unix/sysv/linux/sparc/Makefile
++	(librt-shared-only-routines): Add rt-sysdep.
++	(libpthread-shared-only-routines): Add sysdep.
++	* sysdeps/unix/sysv/linux/tile/Makefile
++	(libpthread-shared-only-routines): Likewise.
++
++2016-08-05  Aurelien Jarno  <aurelien@aurel32.net>
++
++	* sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/Makefile
++	[$(subdir) = math && $(have-as-vis3) = yes] (libm-sysdep_routines):
++	Remove s_fdimf-vis3, s_fdim-vis3.
++	* sysdeps/sparc/sparc32/fpu/s_fdim.S: Delete file.
++	* sysdeps/sparc/sparc32/fpu/s_fdimf.S: Likewise.
++	* sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdim-vis3.S: Likewise.
++	* sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdim.S: Likewise.
++	* sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdimf-vis3.S: Likewise.
++	* sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdimf.S: Likewise.
++	* sysdeps/sparc/sparc32/sparcv9/fpu/s_fdim.S: Likewise.
++	* sysdeps/sparc/sparc32/sparcv9/fpu/s_fdimf.S: Likewise.
++	* sysdeps/sparc/sparc64/fpu/s_fdim.S: Likewise.
++	* sysdeps/sparc/sparc64/fpu/s_fdimf.S: Likewise.
++
++2016-08-02  David S. Miller  <davem@davemloft.net>
++
++	* sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_nearbyint-vis3.S
++	(__nearbyint_vis3): Don't check for sNaN before float register is
++	loaded with the incoming argument.
++	* sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_nearbyintf-vis3.S
++	(__nearbyintf_vis3): Likewise.
++	* sysdeps/sparc/sparc32/sparcv9/fpu/s_nearbyint.S (__nearbyint):
++	Likewise.
++	* sysdeps/sparc/sparc32/sparcv9/fpu/s_nearbyintf.S (__nearbyintf):
++	Likewise.
++
++2016-08-03  Aurelien Jarno  <aurelien@aurel32.net>
++
++	* sysdeps/powerpc/ifunc-sel.h (ifunc_sel): Replace beqlr instructions
++	by beq instructions jumping to the end of the function.
++	* sysdeps/powerpc/ifunc-sel.h (ifunc_sel): Add "11", "12", "cr0" to the
++	clobber list. Use "i" constraint instead of "X".
++	(ifunc_one): Add "12" to the clobber list. Use "i" constraint instead
++	of "X".
++
 +2016-08-04  Carlos O'Donell  <carlos@redhat.com>
 +
 +	* po/de.po: Update from Translation Project.
@@ -29,6 +134,136 @@ index c44c926..84ae7a7 100644
  2016-08-01  Carlos O'Donell  <carlos@redhat.com>
  
  	* version.h (RELEASE): Set to "stable"
+diff --git a/NEWS b/NEWS
+index b0447e7..4a042db 100644
+--- a/NEWS
++++ b/NEWS
+@@ -5,6 +5,17 @@ See the end for copying conditions.
+ Please send GNU C library bug reports via <http://sourceware.org/bugzilla/>
+ using `glibc' in the "product" field.
+ 
++Version 2.24.1
++
++Security related changes:
++
++* On ARM EABI (32-bit), generating a backtrace for execution contexts which
++  have been created with makecontext could fail to terminate due to a
++  missing .cantunwind annotation.  This has been observed to lead to a hang
++  (denial of service) in some Go applications compiled with gccgo.  Reported
++  by Andreas Schwab.  (CVE-2016-6323)
++
++
+ Version 2.24
+ 
+ * The minimum Linux kernel version that this version of the GNU C Library
+diff --git a/argp/argp-fmtstream.h b/argp/argp-fmtstream.h
+index bdeaa54..e8c5797 100644
+--- a/argp/argp-fmtstream.h
++++ b/argp/argp-fmtstream.h
+@@ -29,21 +29,6 @@
+ #include <string.h>
+ #include <unistd.h>
+ 
+-#ifndef __attribute__
+-/* This feature is available in gcc versions 2.5 and later.  */
+-# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5) || \
+-  defined __STRICT_ANSI__
+-#  define __attribute__(Spec) /* empty */
+-# endif
+-/* The __-protected variants of `format' and `printf' attributes
+-   are accepted by gcc versions 2.6.4 (effectively 2.7) and later.  */
+-# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7) || \
+-  defined __STRICT_ANSI__
+-#  define __format__ format
+-#  define __printf__ printf
+-# endif
+-#endif
+-
+ #if defined (__GNU_LIBRARY__) && defined (HAVE_LINEWRAP_H)
+ /* line_wrap_stream is available, so use that.  */
+ #define ARGP_FMTSTREAM_USE_LINEWRAP
+@@ -111,6 +96,8 @@ struct argp_fmtstream
+ 
+ typedef struct argp_fmtstream *argp_fmtstream_t;
+ 
++__BEGIN_DECLS
++
+ /* Return an argp_fmtstream that outputs to STREAM, and which prefixes lines
+    written on it with LMARGIN spaces and limits them to RMARGIN columns
+    total.  If WMARGIN >= 0, words that extend past RMARGIN are wrapped by
+@@ -297,6 +284,8 @@ __argp_fmtstream_point (argp_fmtstream_t __fs)
+ 
+ #endif /* __OPTIMIZE__ */
+ 
++__END_DECLS
++
+ #endif /* ARGP_FMTSTREAM_USE_LINEWRAP */
+ 
+ #endif /* argp-fmtstream.h */
+diff --git a/argp/argp.h b/argp/argp.h
+index e67bbef..7cb5a69 100644
+--- a/argp/argp.h
++++ b/argp/argp.h
+@@ -28,48 +28,12 @@
+ #define __need_error_t
+ #include <errno.h>
+ 
+-#ifndef __THROW
+-# define __THROW
+-#endif
+-#ifndef __NTH
+-# define __NTH(fct) fct __THROW
+-#endif
+-
+-#ifndef __attribute__
+-/* This feature is available in gcc versions 2.5 and later.  */
+-# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5) || \
+-  defined __STRICT_ANSI__
+-#  define __attribute__(Spec) /* empty */
+-# endif
+-/* The __-protected variants of `format' and `printf' attributes
+-   are accepted by gcc versions 2.6.4 (effectively 2.7) and later.  */
+-# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7) || \
+-  defined __STRICT_ANSI__
+-#  define __format__ format
+-#  define __printf__ printf
+-# endif
+-#endif
+-
+-/* GCC 2.95 and later have "__restrict"; C99 compilers have
+-   "restrict", and "configure" may have defined "restrict".  */
+-#ifndef __restrict
+-# if ! (2 < __GNUC__ || (2 == __GNUC__ && 95 <= __GNUC_MINOR__))
+-#  if defined restrict || 199901L <= __STDC_VERSION__
+-#   define __restrict restrict
+-#  else
+-#   define __restrict
+-#  endif
+-# endif
+-#endif
+-
+ #ifndef __error_t_defined
+ typedef int error_t;
+ # define __error_t_defined
+ #endif
+ 
+-#ifdef  __cplusplus
+-extern "C" {
+-#endif
++__BEGIN_DECLS
+ 
+ /* A description of a particular option.  A pointer to an array of
+    these is passed in the OPTIONS field of an argp structure.  Each option
+@@ -590,8 +554,6 @@ __NTH (__option_is_end (const struct argp_option *__opt))
+ # endif
+ #endif /* Use extern inlines.  */
+ 
+-#ifdef  __cplusplus
+-}
+-#endif
++__END_DECLS
+ 
+ #endif /* argp.h */
 diff --git a/malloc/arena.c b/malloc/arena.c
 index 229783f..4e16593 100644
 --- a/malloc/arena.c
@@ -108,6 +343,18 @@ index 229783f..4e16593 100644
      (void) mutex_unlock (&free_list_lock);
    }
  
+diff --git a/nptl/tst-once5.cc b/nptl/tst-once5.cc
+index 978d827..513ac53 100644
+--- a/nptl/tst-once5.cc
++++ b/nptl/tst-once5.cc
+@@ -75,5 +75,7 @@ do_test (void)
+   return result;
+ }
+ 
++// The test currently hangs and is XFAILed.  Reduce the timeout.
++#define TIMEOUT 1
+ #define TEST_FUNCTION do_test ()
+ #include "../test-skeleton.c"
 diff --git a/po/de.po b/po/de.po
 index 1383e8c..ca14c7e 100644
 --- a/po/de.po
@@ -873,11 +1120,664 @@ index 49d1f23..e046577 100644
 -
 -#~ msgid "cannot create internal descriptors"
 -#~ msgstr "kan inte skapa interna deskriptorer"
+diff --git a/sysdeps/arm/nacl/libc.abilist b/sysdeps/arm/nacl/libc.abilist
+index 2f7751d..dfa7198 100644
+--- a/sysdeps/arm/nacl/libc.abilist
++++ b/sysdeps/arm/nacl/libc.abilist
+@@ -1840,4 +1840,5 @@ GLIBC_2.23 fts64_close F
+ GLIBC_2.23 fts64_open F
+ GLIBC_2.23 fts64_read F
+ GLIBC_2.23 fts64_set F
++GLIBC_2.24 GLIBC_2.24 A
+ GLIBC_2.24 quick_exit F
+diff --git a/sysdeps/ia64/nptl/Makefile b/sysdeps/ia64/nptl/Makefile
+index 48f1327..1e6be8e 100644
+--- a/sysdeps/ia64/nptl/Makefile
++++ b/sysdeps/ia64/nptl/Makefile
+@@ -21,4 +21,5 @@ endif
+ 
+ ifeq ($(subdir),nptl)
+ libpthread-routines += ptw-sysdep ptw-sigblock ptw-sigprocmask
++libpthread-shared-only-routines += ptw-sysdep ptw-sigblock ptw-sigprocmask
+ endif
+diff --git a/sysdeps/mips/Makefile b/sysdeps/mips/Makefile
+index 3d35523..7c1d779 100644
+--- a/sysdeps/mips/Makefile
++++ b/sysdeps/mips/Makefile
+@@ -9,6 +9,7 @@ endif
+ 
+ ifeq ($(subdir),rt)
+ librt-sysdep_routines += rt-sysdep
++librt-shared-only-routines += rt-sysdep
+ endif
+ 
+ ifeq ($(subdir),debug)
+diff --git a/sysdeps/mips/nptl/Makefile b/sysdeps/mips/nptl/Makefile
+index 117744f..dda154d 100644
+--- a/sysdeps/mips/nptl/Makefile
++++ b/sysdeps/mips/nptl/Makefile
+@@ -21,4 +21,5 @@ endif
+ 
+ ifeq ($(subdir),nptl)
+ libpthread-sysdep_routines += nptl-sysdep
++libpthread-shared-only-routines += nptl-sysdep
+ endif
+diff --git a/sysdeps/nacl/clock.c b/sysdeps/nacl/clock.c
+index 664ad65..b6fbcfd 100644
+--- a/sysdeps/nacl/clock.c
++++ b/sysdeps/nacl/clock.c
+@@ -24,6 +24,6 @@
+ clock_t
+ clock (void)
+ {
+-  nacl_abi_clock_t result;
++  nacl_irt_clock_t result;
+   return NACL_CALL (__nacl_irt_basic.clock (&result), result);
+ }
+diff --git a/sysdeps/nacl/dup.c b/sysdeps/nacl/dup.c
+index 34a7cd4..cbce3f5 100644
+--- a/sysdeps/nacl/dup.c
++++ b/sysdeps/nacl/dup.c
+@@ -27,4 +27,5 @@ __dup (int fd)
+   int result;
+   return NACL_CALL (__nacl_irt_fdio.dup (fd, &result), result);
+ }
++libc_hidden_def (__dup)
+ weak_alias (__dup, dup)
+diff --git a/sysdeps/posix/wait3.c b/sysdeps/posix/wait3.c
+index cf43d97..73722d2 100644
+--- a/sysdeps/posix/wait3.c
++++ b/sysdeps/posix/wait3.c
+@@ -33,7 +33,7 @@ __wait3 (int *stat_loc, int options, struct rusage *usage)
+       __set_errno (ENOSYS);
+       return (pid_t) -1;
+     }
+-  return __waitpid (WAIT_ANY, stat_loc.__iptr, options);
++  return __waitpid (WAIT_ANY, stat_loc, options);
+ }
+ 
+ weak_alias (__wait3, wait3)
+diff --git a/sysdeps/powerpc/ifunc-sel.h b/sysdeps/powerpc/ifunc-sel.h
+index 526d8ed..ac589bd 100644
+--- a/sysdeps/powerpc/ifunc-sel.h
++++ b/sysdeps/powerpc/ifunc-sel.h
+@@ -17,15 +17,17 @@ ifunc_sel (int (*f1) (void), int (*f2) (void), int (*f3) (void))
+ 	   "addis %0,11,%2-1b@ha\n\t"
+ 	   "addi %0,%0,%2-1b@l\n\t"
+ 	   "cmpwi 12,1\n\t"
+-	   "beqlr\n\t"
++	   "beq 2f\n\t"
+ 	   "addis %0,11,%3-1b@ha\n\t"
+ 	   "addi %0,%0,%3-1b@l\n\t"
+ 	   "cmpwi 12,-1\n\t"
+-	   "beqlr\n\t"
++	   "beq 2f\n\t"
+ 	   "addis %0,11,%4-1b@ha\n\t"
+-	   "addi %0,%0,%4-1b@l"
++	   "addi %0,%0,%4-1b@l\n\t"
++	   "2:"
+ 	   : "=r" (ret)
+-	   : "X" (&global), "X" (f1), "X" (f2), "X" (f3));
++	   : "i" (&global), "i" (f1), "i" (f2), "i" (f3)
++	   : "11", "12", "cr0");
+   return ret;
+ }
+ 
+@@ -40,7 +42,8 @@ ifunc_one (int (*f1) (void))
+ 	   "addis %0,%0,%1-1b@ha\n\t"
+ 	   "addi %0,%0,%1-1b@l"
+ 	   : "=r" (ret)
+-	   : "X" (f1));
++	   : "i" (f1)
++	   : "12");
+   return ret;
+ }
+ #endif
+diff --git a/sysdeps/s390/nptl/Makefile b/sysdeps/s390/nptl/Makefile
+index 5734b98..3a391c8 100644
+--- a/sysdeps/s390/nptl/Makefile
++++ b/sysdeps/s390/nptl/Makefile
+@@ -21,4 +21,5 @@ endif
+ 
+ ifeq ($(subdir),nptl)
+ libpthread-routines += ptw-sysdep
++libpthread-shared-only-routines += ptw-sysdep
+ endif
+diff --git a/sysdeps/sparc/sparc32/fpu/s_fdim.S b/sysdeps/sparc/sparc32/fpu/s_fdim.S
+deleted file mode 100644
+index e93970f..0000000
+--- a/sysdeps/sparc/sparc32/fpu/s_fdim.S
++++ /dev/null
+@@ -1,42 +0,0 @@
+-/* Compute positive difference, sparc 32-bit.
+-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by David S. Miller <davem@davemloft.net>.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-#include <sysdep.h>
+-#include <math_ldbl_opt.h>
+-
+-ENTRY(__fdim)
+-	std	%o0, [%sp + 72]
+-	std	%o2, [%sp + 80]
+-	ldd	[%sp + 72], %f0
+-	ldd	[%sp + 80], %f2
+-	fcmpd	%f0, %f2
+-	st	%g0, [%sp + 72]
+-	fbug	1f
+-	 st	%g0, [%sp + 76]
+-	ldd	[%sp + 72], %f0
+-	fnegs	%f0, %f2
+-	fmovs	%f1, %f3
+-1:	retl
+-	 fsubd	%f0, %f2, %f0
+-END(__fdim)
+-weak_alias (__fdim, fdim)
+-
+-#if LONG_DOUBLE_COMPAT(libm, GLIBC_2_1)
+-compat_symbol (libm, __fdim, fdiml, GLIBC_2_1);
+-#endif
+diff --git a/sysdeps/sparc/sparc32/fpu/s_fdimf.S b/sysdeps/sparc/sparc32/fpu/s_fdimf.S
+deleted file mode 100644
+index c3fe8af..0000000
+--- a/sysdeps/sparc/sparc32/fpu/s_fdimf.S
++++ /dev/null
+@@ -1,35 +0,0 @@
+-/* Compute positive difference, sparc 32-bit.
+-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by David S. Miller <davem@davemloft.net>.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-#include <sysdep.h>
+-
+-ENTRY(__fdimf)
+-	st	%o0, [%sp + 72]
+-	st	%o1, [%sp + 76]
+-	ld	[%sp + 72], %f0
+-	ld	[%sp + 76], %f1
+-	fcmps	%f0, %f1
+-	fbug	1f
+-	 st	%g0, [%sp + 72]
+-	ld	[%sp + 72], %f0
+-	fnegs	%f0, %f1
+-1:	retl
+-	 fsubs	%f0, %f1, %f0
+-END(__fdimf)
+-weak_alias (__fdimf, fdimf)
+diff --git a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/Makefile b/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/Makefile
+index ebbe28b..13d3c6d 100644
+--- a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/Makefile
++++ b/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/Makefile
+@@ -4,8 +4,8 @@ libm-sysdep_routines += m_copysignf-vis3 m_copysign-vis3 s_fabs-vis3 \
+ 			s_fabsf-vis3 s_llrintf-vis3 s_llrint-vis3 \
+ 			s_rintf-vis3 s_rint-vis3 w_sqrt-vis3 w_sqrtf-vis3 \
+ 			s_fminf-vis3 s_fmin-vis3 s_fmaxf-vis3 s_fmax-vis3 \
+-			s_fmaf-vis3 s_fma-vis3 s_fdimf-vis3 s_fdim-vis3 \
+-			s_nearbyint-vis3 s_nearbyintf-vis3
++			s_fmaf-vis3 s_fma-vis3 s_nearbyint-vis3 \
++			s_nearbyintf-vis3
+ sysdep_routines += s_copysignf-vis3 s_copysign-vis3
+ endif
+ endif
+diff --git a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdim-vis3.S b/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdim-vis3.S
+deleted file mode 100644
+index 4a479b1..0000000
+--- a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdim-vis3.S
++++ /dev/null
+@@ -1,34 +0,0 @@
+-/* Compute positive difference, sparc 32-bit+v9+vis3.
+-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by David S. Miller <davem@davemloft.net>.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-#include <sysdep.h>
+-
+-ENTRY(__fdim_vis3)
+-	movwtos	%o0, %f0
+-	movwtos	%o1, %f1
+-	movwtos	%o2, %f2
+-	movwtos	%o3, %f3
+-	fcmpd	%f0, %f2
+-	fbug	1f
+-	 nop
+-	fzero	%f0
+-	fnegd	%f0, %f2
+-1:	retl
+-	 fsubd	%f0, %f2, %f0
+-END(__fdim_vis3)
+diff --git a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdim.S b/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdim.S
+deleted file mode 100644
+index 4b13408..0000000
+--- a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdim.S
++++ /dev/null
+@@ -1,19 +0,0 @@
+-#include <sparc-ifunc.h>
+-#include <math_ldbl_opt.h>
+-
+-SPARC_ASM_VIS3_IFUNC(fdim)
+-
+-weak_alias (__fdim, fdim)
+-
+-#if LONG_DOUBLE_COMPAT(libm, GLIBC_2_1)
+-compat_symbol (libm, __fdim, fdiml, GLIBC_2_1);
+-#endif
+-
+-# undef weak_alias
+-# define weak_alias(a, b)
+-# undef compat_symbol
+-# define compat_symbol(a, b, c, d)
+-
+-#define __fdim __fdim_generic
+-
+-#include "../s_fdim.S"
+diff --git a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdimf-vis3.S b/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdimf-vis3.S
+deleted file mode 100644
+index 081fc15..0000000
+--- a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdimf-vis3.S
++++ /dev/null
+@@ -1,32 +0,0 @@
+-/* Compute positive difference, sparc 32-bit+v9+vis3.
+-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by David S. Miller <davem@davemloft.net>.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-#include <sysdep.h>
+-
+-ENTRY(__fdimf_vis3)
+-	movwtos	%o0, %f0
+-	movwtos	%o1, %f1
+-	fcmps	%f0, %f1
+-	fbug	1f
+-	 nop
+-	fzeros	%f0
+-	fnegs	%f0, %f1
+-1:	retl
+-	 fsubs	%f0, %f1, %f0
+-END(__fdimf_vis3)
+diff --git a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdimf.S b/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdimf.S
+deleted file mode 100644
+index 30381d6..0000000
+--- a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_fdimf.S
++++ /dev/null
+@@ -1,12 +0,0 @@
+-#include <sparc-ifunc.h>
+-
+-SPARC_ASM_VIS3_IFUNC(fdimf)
+-
+-weak_alias (__fdimf, fdimf)
+-
+-# undef weak_alias
+-# define weak_alias(a, b)
+-
+-#define __fdimf __fdimf_generic
+-
+-#include "../s_fdimf.S"
+diff --git a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_nearbyint-vis3.S b/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_nearbyint-vis3.S
+index d9ff0cc..ff81b0d 100644
+--- a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_nearbyint-vis3.S
++++ b/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_nearbyint-vis3.S
+@@ -36,15 +36,15 @@
+ #define SIGN_BIT	%f12			/* -0.0 */
+ 
+ ENTRY (__nearbyint_vis3)
++	sllx	%o0, 32, %o0
++	or	%o0, %o1, %o0
++	movxtod	%o0, %f0
+ 	fcmpd	%fcc3, %f0, %f0			/* Check for sNaN */
+ 	st	%fsr, [%sp + 88]
+ 	sethi	%hi(TWO_FIFTYTWO), %o2
+ 	sethi	%hi(0xf8003e0), %o5
+ 	ld	[%sp + 88], %o4
+-	sllx	%o0, 32, %o0
+ 	or	%o5, %lo(0xf8003e0), %o5
+-	or	%o0, %o1, %o0
+-	movxtod	%o0, %f0
+ 	andn	%o4, %o5, %o4
+ 	fzero	ZERO
+ 	st	%o4, [%sp + 80]
+diff --git a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_nearbyintf-vis3.S b/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_nearbyintf-vis3.S
+index 5cd1eb0..833a0df 100644
+--- a/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_nearbyintf-vis3.S
++++ b/sysdeps/sparc/sparc32/sparcv9/fpu/multiarch/s_nearbyintf-vis3.S
+@@ -35,9 +35,9 @@
+ #define SIGN_BIT	%f12			/* -0.0 */
+ 
+ ENTRY (__nearbyintf_vis3)
++	movwtos	%o0, %f1
+ 	fcmps	%fcc3, %f1, %f1			/* Check for sNaN */
+ 	st	%fsr, [%sp + 88]
+-	movwtos	%o0, %f1
+ 	sethi	%hi(TWO_TWENTYTHREE), %o2
+ 	sethi	%hi(0xf8003e0), %o5
+ 	ld	[%sp + 88], %o4
+diff --git a/sysdeps/sparc/sparc32/sparcv9/fpu/s_fdim.S b/sysdeps/sparc/sparc32/sparcv9/fpu/s_fdim.S
+deleted file mode 100644
+index 37f7f44..0000000
+--- a/sysdeps/sparc/sparc32/sparcv9/fpu/s_fdim.S
++++ /dev/null
+@@ -1,40 +0,0 @@
+-/* Compute positive difference, sparc 32-bit+v9.
+-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by David S. Miller <davem@davemloft.net>.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-#include <sysdep.h>
+-#include <math_ldbl_opt.h>
+-
+-ENTRY(__fdim)
+-	std	%o0, [%sp + 72]
+-	std	%o2, [%sp + 80]
+-	ldd	[%sp + 72], %f0
+-	ldd	[%sp + 80], %f2
+-	fcmpd	%f0, %f2
+-	fbug	1f
+-	 nop
+-	fzero	%f0
+-	fnegd	%f0, %f2
+-1:	retl
+-	 fsubd	%f0, %f2, %f0
+-END(__fdim)
+-weak_alias (__fdim, fdim)
+-
+-#if LONG_DOUBLE_COMPAT(libm, GLIBC_2_1)
+-compat_symbol (libm, __fdim, fdiml, GLIBC_2_1);
+-#endif
+diff --git a/sysdeps/sparc/sparc32/sparcv9/fpu/s_fdimf.S b/sysdeps/sparc/sparc32/sparcv9/fpu/s_fdimf.S
+deleted file mode 100644
+index 9e0e3f2..0000000
+--- a/sysdeps/sparc/sparc32/sparcv9/fpu/s_fdimf.S
++++ /dev/null
+@@ -1,35 +0,0 @@
+-/* Compute positive difference, sparc 32-bit+v9.
+-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by David S. Miller <davem@davemloft.net>.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-#include <sysdep.h>
+-
+-ENTRY(__fdimf)
+-	st	%o0, [%sp + 72]
+-	st	%o1, [%sp + 76]
+-	ld	[%sp + 72], %f0
+-	ld	[%sp + 76], %f1
+-	fcmps	%f0, %f1
+-	fbug	1f
+-	 nop
+-	fzeros	%f0
+-	fnegs	%f0, %f1
+-1:	retl
+-	 fsubs	%f0, %f1, %f0
+-END(__fdimf)
+-weak_alias (__fdimf, fdimf)
+diff --git a/sysdeps/sparc/sparc32/sparcv9/fpu/s_nearbyint.S b/sysdeps/sparc/sparc32/sparcv9/fpu/s_nearbyint.S
+index 84a1097..198440a 100644
+--- a/sysdeps/sparc/sparc32/sparcv9/fpu/s_nearbyint.S
++++ b/sysdeps/sparc/sparc32/sparcv9/fpu/s_nearbyint.S
+@@ -36,21 +36,21 @@
+ #define SIGN_BIT	%f12			/* -0.0 */
+ 
+ ENTRY (__nearbyint)
++	sllx	%o0, 32, %o0
++	or	%o0, %o1, %o0
++	stx	%o0, [%sp + 72]
++	ldd	[%sp + 72], %f0
+ 	fcmpd	%fcc3, %f0, %f0			/* Check for sNaN */
+ 	st	%fsr, [%sp + 88]
+ 	sethi	%hi(TWO_FIFTYTWO), %o2
+ 	sethi	%hi(0xf8003e0), %o5
+ 	ld	[%sp + 88], %o4
+-	sllx	%o0, 32, %o0
+ 	or	%o5, %lo(0xf8003e0), %o5
+-	or	%o0, %o1, %o0
+ 	andn	%o4, %o5, %o4
+ 	fzero	ZERO
+ 	st	%o4, [%sp + 80]
+-	stx	%o0, [%sp + 72]
+ 	sllx	%o2, 32, %o2
+ 	fnegd	ZERO, SIGN_BIT
+-	ldd	[%sp + 72], %f0
+ 	ld	[%sp + 80], %fsr
+ 	stx	%o2, [%sp + 72]
+ 	fabsd	%f0, %f14
+diff --git a/sysdeps/sparc/sparc32/sparcv9/fpu/s_nearbyintf.S b/sysdeps/sparc/sparc32/sparcv9/fpu/s_nearbyintf.S
+index d5cf5ce..9be41f6 100644
+--- a/sysdeps/sparc/sparc32/sparcv9/fpu/s_nearbyintf.S
++++ b/sysdeps/sparc/sparc32/sparcv9/fpu/s_nearbyintf.S
+@@ -35,9 +35,10 @@
+ #define SIGN_BIT	%f12			/* -0.0 */
+ 
+ ENTRY (__nearbyintf)
++	st	%o0, [%sp + 68]
++	ld	[%sp + 68], %f1
+ 	fcmps	%fcc3, %f1, %f1			/* Check for sNaN */
+ 	st	%fsr, [%sp + 88]
+-	st	%o0, [%sp + 68]
+ 	sethi	%hi(TWO_TWENTYTHREE), %o2
+ 	sethi	%hi(0xf8003e0), %o5
+ 	ld	[%sp + 88], %o4
+@@ -46,7 +47,6 @@ ENTRY (__nearbyintf)
+ 	fnegs	ZERO, SIGN_BIT
+ 	andn	%o4, %o5, %o4
+ 	st	%o4, [%sp + 80]
+-	ld	[%sp + 68], %f1
+ 	ld	[%sp + 80], %fsr
+ 	st	%o2, [%sp + 68]
+ 	fabss	%f1, %f14
+diff --git a/sysdeps/sparc/sparc64/fpu/s_fdim.S b/sysdeps/sparc/sparc64/fpu/s_fdim.S
+deleted file mode 100644
+index 7fae72a..0000000
+--- a/sysdeps/sparc/sparc64/fpu/s_fdim.S
++++ /dev/null
+@@ -1,32 +0,0 @@
+-/* Compute positive difference, sparc 64-bit.
+-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by David S. Miller <davem@davemloft.net>.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-#include <sysdep.h>
+-#include <math_ldbl_opt.h>
+-
+-ENTRY(__fdim)
+-	fcmpd	%f0, %f2
+-	fbug	1f
+-	 nop
+-	fzero	%f0
+-	fnegd	%f0, %f2
+-1:	retl
+-	 fsubd	%f0, %f2, %f0
+-END(__fdim)
+-weak_alias (__fdim, fdim)
+diff --git a/sysdeps/sparc/sparc64/fpu/s_fdimf.S b/sysdeps/sparc/sparc64/fpu/s_fdimf.S
+deleted file mode 100644
+index 356c23c..0000000
+--- a/sysdeps/sparc/sparc64/fpu/s_fdimf.S
++++ /dev/null
+@@ -1,31 +0,0 @@
+-/* Compute positive difference, sparc 64-bit.
+-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by David S. Miller <davem@davemloft.net>.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-#include <sysdep.h>
+-
+-ENTRY(__fdimf)
+-	fcmps	%f1, %f3
+-	fbug	1f
+-	 nop
+-	fzeros	%f1
+-	fnegs	%f1, %f3
+-1:	retl
+-	 fsubs	%f1, %f3, %f0
+-END(__fdimf)
+-weak_alias (__fdimf, fdimf)
+diff --git a/sysdeps/unix/alpha/Makefile b/sysdeps/unix/alpha/Makefile
+index 441aa02..0660847 100644
+--- a/sysdeps/unix/alpha/Makefile
++++ b/sysdeps/unix/alpha/Makefile
+@@ -1,3 +1,4 @@
+ ifeq ($(subdir),rt)
+ librt-sysdep_routines += rt-sysdep
++librt-shared-only-routines += rt-sysdep
+ endif
+diff --git a/sysdeps/unix/sysv/linux/alpha/Makefile b/sysdeps/unix/sysv/linux/alpha/Makefile
+index c089545..3b523b7 100644
+--- a/sysdeps/unix/sysv/linux/alpha/Makefile
++++ b/sysdeps/unix/sysv/linux/alpha/Makefile
+@@ -40,4 +40,5 @@ endif   # math
+ ifeq ($(subdir),nptl)
+ # pull in __syscall_error routine, __sigprocmask, __syscall_rt_sigaction
+ libpthread-routines += ptw-sysdep ptw-sigprocmask ptw-rt_sigaction
++libpthread-shared-only-routines += ptw-sysdep ptw-sigprocmask ptw-rt_sigaction
+ endif
+diff --git a/sysdeps/unix/sysv/linux/arm/setcontext.S b/sysdeps/unix/sysv/linux/arm/setcontext.S
+index 603e508..d1f168f 100644
+--- a/sysdeps/unix/sysv/linux/arm/setcontext.S
++++ b/sysdeps/unix/sysv/linux/arm/setcontext.S
+@@ -86,12 +86,19 @@ weak_alias(__setcontext, setcontext)
+ 
+ 	/* Called when a makecontext() context returns.  Start the
+ 	   context in R4 or fall through to exit().  */
++	/* Unwind descriptors are looked up based on PC - 2, so we have to
++	   make sure to mark the instruction preceding the __startcontext
++	   label as .cantunwind.  */
++	.fnstart
++	.cantunwind
++	nop
+ ENTRY(__startcontext)
+ 	movs    r0, r4
+ 	bne     PLTJMP(__setcontext)
+ 
+ 	@ New context was 0 - exit
+ 	b       PLTJMP(HIDDEN_JUMPTARGET(exit))
++	.fnend
+ END(__startcontext)
+ 
+ #ifdef PIC
 diff --git a/sysdeps/unix/sysv/linux/i386/Makefile b/sysdeps/unix/sysv/linux/i386/Makefile
-index 71ba61e..b015ff7 100644
+index 71ba61e..6073a9f 100644
 --- a/sysdeps/unix/sysv/linux/i386/Makefile
 +++ b/sysdeps/unix/sysv/linux/i386/Makefile
-@@ -48,9 +48,11 @@ endif
+@@ -31,6 +31,7 @@ endif
+ # libpthread uses six-argument inline syscalls.
+ ifeq ($(subdir),nptl)
+ libpthread-sysdep_routines += libc-do-syscall
++libpthread-shared-only-routines += libc-do-syscall
+ endif
+ 
+ ifeq ($(subdir),resource)
+@@ -48,9 +49,11 @@ endif
  ifeq ($(subdir),nptl)
  # pull in __syscall_error routine
  libpthread-routines += sysdep
@@ -888,4 +1788,86 @@ index 71ba61e..b015ff7 100644
  # pull in __syscall_error routine
  librt-routines += sysdep
 +librt-shared-only-routines += sysdep
+ endif
+diff --git a/sysdeps/unix/sysv/linux/ia64/Makefile b/sysdeps/unix/sysv/linux/ia64/Makefile
+index 1de62c5..4d6766d 100644
+--- a/sysdeps/unix/sysv/linux/ia64/Makefile
++++ b/sysdeps/unix/sysv/linux/ia64/Makefile
+@@ -19,6 +19,7 @@ endif
+ 
+ ifeq ($(subdir),rt)
+ librt-routines += rt-sysdep
++librt-shared-only-routines += rt-sysdep
+ endif
+ 
+ ifeq ($(subdir),nptl)
+diff --git a/sysdeps/unix/sysv/linux/microblaze/Makefile b/sysdeps/unix/sysv/linux/microblaze/Makefile
+index 44a838f..d178bc6 100644
+--- a/sysdeps/unix/sysv/linux/microblaze/Makefile
++++ b/sysdeps/unix/sysv/linux/microblaze/Makefile
+@@ -5,4 +5,5 @@ endif
+ ifeq ($(subdir),nptl)
+ # pull in __syscall_error routine
+ libpthread-routines += sysdep
+-endif
+\ No newline at end of file
++libpthread-shared-only-routines += sysdep
++endif
+diff --git a/sysdeps/unix/sysv/linux/powerpc/Makefile b/sysdeps/unix/sysv/linux/powerpc/Makefile
+index c89ed9e..2cfb46e 100644
+--- a/sysdeps/unix/sysv/linux/powerpc/Makefile
++++ b/sysdeps/unix/sysv/linux/powerpc/Makefile
+@@ -8,6 +8,7 @@ abi-64-v2-condition := __WORDSIZE == 64 && _CALL_ELF == 2
+ 
+ ifeq ($(subdir),rt)
+ librt-routines += rt-sysdep
++librt-shared-only-routines += rt-sysdep
+ endif
+ 
+ ifeq ($(subdir),stdlib)
+@@ -34,4 +35,5 @@ ifeq ($(subdir),nptl)
+ libpthread-routines += sysdep
+ libpthread-sysdep_routines += elision-lock elision-unlock elision-timed \
+ 			      elision-trylock
++libpthread-shared-only-routines += sysdep
+ endif
+diff --git a/sysdeps/unix/sysv/linux/s390/Makefile b/sysdeps/unix/sysv/linux/s390/Makefile
+index 497ffd5..f8ed013 100644
+--- a/sysdeps/unix/sysv/linux/s390/Makefile
++++ b/sysdeps/unix/sysv/linux/s390/Makefile
+@@ -6,6 +6,7 @@ abi-64-condition := __WORDSIZE == 64
+ 
+ ifeq ($(subdir),rt)
+ librt-routines += rt-sysdep
++librt-shared-only-routines += rt-sysdep
+ endif
+ 
+ ifeq ($(subdir),stdlib)
+diff --git a/sysdeps/unix/sysv/linux/sparc/Makefile b/sysdeps/unix/sysv/linux/sparc/Makefile
+index e67aecf..a67d199 100644
+--- a/sysdeps/unix/sysv/linux/sparc/Makefile
++++ b/sysdeps/unix/sysv/linux/sparc/Makefile
+@@ -6,6 +6,7 @@ abi-64-condition := __WORDSIZE == 64
+ 
+ ifeq ($(subdir),rt)
+ librt-routines += rt-sysdep
++librt-shared-only-routines += rt-sysdep
+ endif
+ 
+ ifeq ($(subdir),sysvipc)
+@@ -15,4 +16,5 @@ endif
+ ifeq ($(subdir),nptl)
+ # pull in __syscall_error routine
+ libpthread-routines += sysdep
++libpthread-shared-only-routines += sysdep
+ endif
+diff --git a/sysdeps/unix/sysv/linux/tile/Makefile b/sysdeps/unix/sysv/linux/tile/Makefile
+index 1c1cfff..43acea3 100644
+--- a/sysdeps/unix/sysv/linux/tile/Makefile
++++ b/sysdeps/unix/sysv/linux/tile/Makefile
+@@ -25,4 +25,5 @@ endif
+ ifeq ($(subdir),nptl)
+ # pull in __syscall_error routine
+ libpthread-routines += sysdep
++libpthread-shared-only-routines += sysdep
  endif
