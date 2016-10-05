@@ -55,6 +55,8 @@ hppa/local-fptr-table-size.diff
 hppa/submitted-gmon-start.diff
 hppa/submitted-dladdr.diff
 hppa/local-stack-grows-up.diff
+hppa/submitted-setcontext.diff
+hppa/submitted-sysdeps-cancel.diff
 
 hurd-i386/local-enable-ldconfig.diff
 hurd-i386/tg-context_functions.diff
@@ -133,9 +135,13 @@ hurd-i386/submitted-hurd-abilist.diff
 hurd-i386/cvs-pt-kill.diff
 hurd-i386/local-versions.diff
 #hurd-i386/submitted-anon-mmap-shared.diff
+hurd-i386/cvs-check-local-headers.diff
 hurd-i386/tg-faccessat.diff
 hurd-i386/tg-eintr.diff
 #hurd-i386/cvs-register_atfork.diff
+hurd-i386/git-recvmsg.diff
+hurd-i386/tg-gsync-libc.diff
+hurd-i386/cvs-adjtime-NULL.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
@@ -160,12 +166,10 @@ m68k/submitted-gcc34-seccomment.diff
 mips/submitted-rld_map.diff
 
 powerpc/local-powerpc8xx-dcbz.diff
-powerpc/submitted-powerpc-ifunc-sel.diff
 
 sh4/local-fpscr_values.diff
 
 sparc/submitted-sparc64-socketcall.diff
-sparc/submitted-sparc-fdim.diff
 sparc/cvs-test-strncmp.diff
 
 all/local-alias-et_EE.diff
@@ -209,8 +213,8 @@ any/local-ldconfig-ignore-ld.so.diff
 any/local-dynamic-resolvconf.diff
 any/local-libpic.diff
 any/local-bootstrap-headers.diff
-any/submitted-argp-attribute.diff
 any/submitted-dlopen-noload.diff
+any/submitted-perl-inc.diff
 
 # Ubuntu patches live in their own little world, to maintain sanity
 ubuntu/lddebug-scopes.diff
