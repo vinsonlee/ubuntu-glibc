@@ -1,5 +1,5 @@
 # configuration options for all flavours
-extra_config_options = --enable-multi-arch
+extra_config_options = --enable-multi-arch --enable-lock-elision
 MIN_KERNEL_SUPPORTED := 2.6.32
 libc_extra_cflags = -mno-tls-direct-seg-refs -fno-regmove
 
