@@ -1,3 +1,20 @@
+glibc (2.23-0ubuntu4) xenial; urgency=medium
+
+  * debian/rules.d/tarball.mk: Apply --no-renames to make the diff readable.
+  * debian/patches/git-updates.diff: Update from release/2.23/master branch:
+    - Include fix for potential makecontext() hang on ARMv7 (CVE-2016-6323)
+    - Include fix for SEGV in sock_eq with nss_hesiod module (LP: #1571456)
+    - Include malloc fixes, addressing multithread deadlocks (LP: #1630302)
+    - debian/patches/hurd-i386/cvs-libpthread.so.diff: Dropped, upstreamed.
+    - debian/patches/any/submitted-argp-attribute.diff: Dropped, upstreamed.
+    - debian/patches/hurd-i386/tg-hurdsig-fixes-2.diff: Rebased to upstream.
+  * debian/patches/ubuntu/local-altlocaledir.diff: Updated to latest version
+    from Martin that limits scope to LC_MESSAGES, fixing segv (LP: #1577460)
+  * debian/patches/any/cvs-cos-precision.diff: Fix cos() bugs (LP: #1614966)
+  * debian/testsuite-xfail-debian.mk: Allow nptl/tst-signal6 to fail on ARM.
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Fri, 14 Oct 2016 00:00:34 -0600
+
 glibc (2.23-0ubuntu3) xenial; urgency=medium
 
   * Merge with 2.23 from experimental, bringing in upstream updates:
