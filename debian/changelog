@@ -1,3 +1,19 @@
+glibc (2.24-5) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/sysdeps/linux.mk: fix cross-compilation by also looking at headers
+    in $(LINUX_HEADERS).
+  * debian/testsuite-xfail-debian.mk: allow nptl/tst-stack4 to fail on HPPA.
+
+  [ Samuel Thibault ]
+  * hurd-i386/cvs-libpthread-static-weak.diff: New patch to fix weak
+    references when linking in libpthread statically.
+  * hurd-i386/cvs-pthread-atfork.diff: New patch to fix unregistering atfork
+    handlers at library unload. Closes: #841068.
+  * debhelper.in/libc-dev.install.hurd-i386: Install libpthread_nonshared.a.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 18 Oct 2016 23:10:46 +0200
+
 glibc (2.24-4) unstable; urgency=medium
 
   [ Samuel Thibault ]
@@ -49,7 +65,7 @@ glibc (2.24-4) unstable; urgency=medium
 
   [ Aurelien Jarno ]
   * debian/sysdeps/linux.mk: Install both kernel and library headers symlinks
-    using a singlee for loop.
+    using a single for loop.
   * debian/sysdeps/linux.mk: Also install a /usr/include/<triplet>/arch
     symlink if it exists, needed for the tilegx architecture.
   * debian/control.in/main: add a dependency on lsb-base (>= 3.0-6) for ncsd.
