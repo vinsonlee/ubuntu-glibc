@@ -1,3 +1,9 @@
+glibc (2.23-0ubuntu5) xenial; urgency=medium
+
+  * Disable lock-elision on all targets to avoid regressions (LP: #1642390)
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 16 Nov 2016 13:53:50 -0700
+
 glibc (2.23-0ubuntu4) xenial; urgency=medium
 
   * debian/rules.d/tarball.mk: Apply --no-renames to make the diff readable.
