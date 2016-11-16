@@ -1,3 +1,9 @@
+glibc (2.24-3ubuntu2) yakkety; urgency=medium
+
+  * Disable lock-elision on all targets to avoid regressions (LP: #1642390)
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 16 Nov 2016 13:53:50 -0700
+
 glibc (2.24-3ubuntu1) yakkety; urgency=medium
 
   * Merge with 2.24 from Debian sid, bringing in minor packaging changes and
