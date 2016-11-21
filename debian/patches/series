@@ -65,7 +65,6 @@ hurd-i386/tg-tls.diff
 hurd-i386/tg-tls-threadvar.diff
 hurd-i386/tg-tlsdesc.sym.diff
 hurd-i386/tg-sysvshm.diff
-hurd-i386/tg-extern_inline.diff
 hurd-i386/tg-_dl_random.diff
 hurd-i386/tg-thread-cancel.diff
 hurd-i386/tg-bigmem.diff
@@ -100,6 +99,7 @@ hurd-i386/tg-ifaddrs_v6.diff
 hurd-i386/tg-remap_getcwd.diff
 hurd-i386/tg-exec-static.diff
 hurd-i386/tg-EIEIO-fr.diff
+hurd-i386/tg-EGREGIOUS-fr.diff
 hurd-i386/tg-io_select_timeout.diff
 hurd-i386/tg-poll_errors_fixes.diff
 hurd-i386/unsubmitted-clock_t_centiseconds.diff
@@ -126,15 +126,15 @@ hurd-i386/local-versions.diff
 #hurd-i386/submitted-anon-mmap-shared.diff
 hurd-i386/cvs-check-local-headers.diff
 hurd-i386/tg-faccessat.diff
+hurd-i386/tg-extern_inline.diff
 hurd-i386/tg-eintr.diff
 hurd-i386/git-recvmsg.diff
 hurd-i386/tg-gsync-libc.diff
 hurd-i386/cvs-adjtime-NULL.diff
 hurd-i386/tg-pthread_deps.diff
 hurd-i386/cvs-mallocfork.diff
-hurd-i386/cvs-setcancelstate.diff
-hurd-i386/cvs-libpthread-static-weak.diff
-hurd-i386/cvs-pthread-atfork.diff
+hurd-i386/tg-libpthread-gsync-spin.diff
+hurd-i386/tg-ONSTACK.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
@@ -208,3 +208,4 @@ any/local-libpic.diff
 any/local-bootstrap-headers.diff
 any/submitted-dlopen-noload.diff
 any/submitted-perl-inc.diff
+any/submitted-unicode-9.0.0.diff
