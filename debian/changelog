@@ -1,3 +1,20 @@
+glibc (2.19-18+deb8u7) stable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * Update from upstream stable branch:
+    - Do not unconditionally use the fsqrt instruction on 64-bit PowerPC
+      CPUs.  Closes: #843904.
+  * debian/patches/any/cvs-hesiod-resolver.diff: patch from upstream to
+    fix a regression introduced by cvs-resolv-ipv6-nameservers.diff in
+    hesiod.  Closes: #821358.
+  * debian/sysdeps/{amd64,i386,x32}.mk: disable lock elision (aka Intel TSX)
+    on x86 architectures. This causes programs (wrongly) unlocking an already
+    unlocked mutex to abort. More importantly most of the other distributions
+    decided to disable it, so we don't want to be the only distribution left
+    testing this code path.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 24 Nov 2016 23:48:11 +0100
+
 glibc (2.19-18+deb8u6) stable; urgency=medium
 
   * Update from upstream stable branch:

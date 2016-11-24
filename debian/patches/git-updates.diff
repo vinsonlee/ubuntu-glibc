@@ -1,10 +1,27 @@
 GIT update of git://sourceware.org/git/glibc.git/release/2.19/master from glibc-2.19
 
 diff --git a/ChangeLog b/ChangeLog
-index 81c393a..30da116 100644
+index 81c393a..92b8a2e 100644
 --- a/ChangeLog
 +++ b/ChangeLog
-@@ -1,3 +1,622 @@
+@@ -1,3 +1,639 @@
++2015-01-28  Adhemerval Zanellla  <azanella@linux.vnet.ibm.com>
++
++	[BZ #16576]
++	* sysdeps/powerpc/fpu/math_private.h [__CPU_HAS_FSQRT]: Remove define
++	and use _ARCH_PPCSQ instead.
++	(__ieee754_sqrt): Likewise.
++	(__ieee754_sqrtf): Likewise.
++	* sysdeps/powerpc/fpu/e_sqrt.c (__slow_ieee754_sqrt): Build only if
++	_ARCH_PPCSQ is defined.
++	(__ieee754_sqrt): Use _ARCH_PPCSQ to select wheter to use hardware
++	fsqrt instruction.
++	* sysdeps/powerpc/fpu/e_sqrtf.c (__ieee754_sqrtf): Build only if
++	_ARCH_PPCSQ is defined.
++	(__ieee754_sqrtf): Use _ARCH_PPCSQ to select wheter to use hardware
++	fsqrts instruction.
++	* sysdeps/powerpc/powerpc64/fpu/e_sqrt.c: Remove file.
++
 +2016-08-15  Andreas Schwab  <schwab@suse.de>
 +
 +	[BZ #20435]
@@ -628,7 +645,7 @@ index 81c393a..30da116 100644
  
  	[BZ #16529]
 diff --git a/NEWS b/NEWS
-index 98b479e..a1bb834 100644
+index 98b479e..f62b876 100644
 --- a/NEWS
 +++ b/NEWS
 @@ -5,6 +5,104 @@ See the end for copying conditions.
@@ -639,11 +656,11 @@ index 98b479e..a1bb834 100644
 +
 +* The following bugs are resolved with this release:
 +
-+  15946, 16009, 16545, 16574, 16623, 16657, 16695, 16743, 16758, 16759,
-+  16760, 16878, 16882, 16885, 16916, 16932, 16943, 16958, 17048, 17062,
-+  17069, 17079, 17137, 17153, 17213, 17263, 17269, 17325, 17523, 17555,
-+  17905, 18007, 18032, 18080, 18240, 18287, 18508, 18665, 18905, 18928,
-+  19018, 19779, 19791, 19879, 20010, 20112.
++  15946, 16009, 16545, 16574, 16576, 16623, 16657, 16695, 16743, 16758,
++  16759, 16760, 16878, 16882, 16885, 16916, 16932, 16943, 16958, 17048,
++  17062, 17069, 17079, 17137, 17153, 17213, 17263, 17269, 17325, 17523,
++  17555, 17905, 18007, 18032, 18080, 18240, 18287, 18508, 18665, 18905,
++  18928, 19018, 19779, 19791, 19879, 20010, 20112.
 +
 +* A buffer overflow in gethostbyname_r and related functions performing DNS
 +  requests has been fixed.  If the NSS functions were called with a
@@ -6521,6 +6538,146 @@ index 64d192a..4b7ec36 100644
      {
        va_list arg;
        va_start (arg, oflag);
+diff --git a/sysdeps/powerpc/fpu/e_sqrt.c b/sysdeps/powerpc/fpu/e_sqrt.c
+index 0368e57..24dfe68 100644
+--- a/sysdeps/powerpc/fpu/e_sqrt.c
++++ b/sysdeps/powerpc/fpu/e_sqrt.c
+@@ -24,6 +24,7 @@
+ #include <sysdep.h>
+ #include <ldsodefs.h>
+ 
++#ifndef _ARCH_PPCSQ
+ static const double almost_half = 0.5000000000000001;	/* 0.5 + 2^-53 */
+ static const ieee_float_shape_type a_nan = {.word = 0x7fc00000 };
+ static const ieee_float_shape_type a_inf = {.word = 0x7f800000 };
+@@ -152,6 +153,7 @@ __slow_ieee754_sqrt (double x)
+     }
+   return f_wash (x);
+ }
++#endif /* _ARCH_PPCSQ  */
+ 
+ #undef __ieee754_sqrt
+ double
+@@ -159,16 +161,11 @@ __ieee754_sqrt (double x)
+ {
+   double z;
+ 
+-  /* If the CPU is 64-bit we can use the optional FP instructions.  */
+-  if (__CPU_HAS_FSQRT)
+-    {
+-      /* Volatile is required to prevent the compiler from moving the
+-	 fsqrt instruction above the branch.  */
+-      __asm __volatile ("	fsqrt	%0,%1\n"
+-				:"=f" (z):"f" (x));
+-    }
+-  else
+-    z = __slow_ieee754_sqrt (x);
++#ifdef _ARCH_PPCSQ
++  asm ("fsqrt %0,%1\n" :"=f" (z):"f" (x));
++#else
++  z = __slow_ieee754_sqrt (x);
++#endif
+ 
+   return z;
+ }
+diff --git a/sysdeps/powerpc/fpu/e_sqrtf.c b/sysdeps/powerpc/fpu/e_sqrtf.c
+index fcc74ae..7d2bfb7 100644
+--- a/sysdeps/powerpc/fpu/e_sqrtf.c
++++ b/sysdeps/powerpc/fpu/e_sqrtf.c
+@@ -24,6 +24,7 @@
+ #include <sysdep.h>
+ #include <ldsodefs.h>
+ 
++#ifndef _ARCH_PPCSQ
+ static const float almost_half = 0.50000006;	/* 0.5 + 2^-24 */
+ static const ieee_float_shape_type a_nan = {.word = 0x7fc00000 };
+ static const ieee_float_shape_type a_inf = {.word = 0x7f800000 };
+@@ -128,6 +129,7 @@ __slow_ieee754_sqrtf (float x)
+     }
+   return f_washf (x);
+ }
++#endif /* _ARCH_PPCSQ  */
+ 
+ #undef __ieee754_sqrtf
+ float
+@@ -135,16 +137,11 @@ __ieee754_sqrtf (float x)
+ {
+   double z;
+ 
+-  /* If the CPU is 64-bit we can use the optional FP instructions.  */
+-  if (__CPU_HAS_FSQRT)
+-    {
+-      /* Volatile is required to prevent the compiler from moving the
+-	 fsqrt instruction above the branch.  */
+-      __asm __volatile ("	fsqrts	%0,%1\n"
+-				:"=f" (z):"f" (x));
+-    }
+-  else
+-    z = __slow_ieee754_sqrtf (x);
++#ifdef _ARCH_PPCSQ
++  asm ("fsqrts	%0,%1\n" :"=f" (z):"f" (x));
++#else
++  z = __slow_ieee754_sqrtf (x);
++#endif
+ 
+   return z;
+ }
+diff --git a/sysdeps/powerpc/fpu/math_private.h b/sysdeps/powerpc/fpu/math_private.h
+index dde153d..9048715 100644
+--- a/sysdeps/powerpc/fpu/math_private.h
++++ b/sysdeps/powerpc/fpu/math_private.h
+@@ -25,26 +25,17 @@
+ #include <fenv_private.h>
+ #include_next <math_private.h>
+ 
+-# if __WORDSIZE == 64 || defined _ARCH_PWR4
+-#  define __CPU_HAS_FSQRT 1
+-# else
+-#  define __CPU_HAS_FSQRT ((GLRO(dl_hwcap) & PPC_FEATURE_64) != 0)
+-# endif
+-
+ extern double __slow_ieee754_sqrt (double);
+ extern __always_inline double
+ __ieee754_sqrt (double __x)
+ {
+   double __z;
+ 
+-  if (__CPU_HAS_FSQRT)
+-    {
+-      /* Volatile is required to prevent the compiler from moving the
+-         fsqrt instruction above the branch.  */
+-      __asm __volatile ("fsqrt	%0,%1" : "=f" (__z) : "f" (__x));
+-    }
+-  else
+-     __z = __slow_ieee754_sqrt(__x);
++#ifdef _ARCH_PPCSQ
++   asm ("fsqrt	%0,%1" : "=f" (__z) : "f" (__x));
++#else
++   __z = __slow_ieee754_sqrt(__x);
++#endif
+ 
+   return __z;
+ }
+@@ -55,14 +46,11 @@ __ieee754_sqrtf (float __x)
+ {
+   float __z;
+ 
+-  if (__CPU_HAS_FSQRT)
+-    {
+-      /* Volatile is required to prevent the compiler from moving the
+-         fsqrts instruction above the branch.  */
+-      __asm __volatile ("fsqrts	%0,%1" : "=f" (__z) : "f" (__x));
+-    }
+-  else
+-     __z = __slow_ieee754_sqrtf(__x);
++#ifdef _ARCH_PPCSQ
++  asm ("fsqrts	%0,%1" : "=f" (__z) : "f" (__x));
++#else
++   __z = __slow_ieee754_sqrtf(__x);
++#endif
+ 
+   return __z;
+ }
 diff --git a/sysdeps/powerpc/powerpc64/entry.h b/sysdeps/powerpc/powerpc64/entry.h
 index 76ead1d..30553c1 100644
 --- a/sysdeps/powerpc/powerpc64/entry.h
@@ -6538,6 +6695,78 @@ index 76ead1d..30553c1 100644
    ({ extern unsigned long int _start_as_data[] asm ("_start");  \
       _start_as_data[0]; })
 +#endif
+diff --git a/sysdeps/powerpc/powerpc64/fpu/e_sqrt.c b/sysdeps/powerpc/powerpc64/fpu/e_sqrt.c
+deleted file mode 100644
+index 08d5f69..0000000
+--- a/sysdeps/powerpc/powerpc64/fpu/e_sqrt.c
++++ /dev/null
+@@ -1,30 +0,0 @@
+-/* Double-precision floating point square root.
+-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-#include <math.h>
+-#include <math_private.h>
+-
+-#undef __ieee754_sqrt
+-double
+-__ieee754_sqrt (double x)
+-{
+-  double z;
+-  __asm __volatile ("fsqrt %0,%1" : "=f" (z) : "f" (x));
+-  return z;
+-}
+-strong_alias (__ieee754_sqrt, __sqrt_finite)
+diff --git a/sysdeps/powerpc/powerpc64/fpu/e_sqrtf.c b/sysdeps/powerpc/powerpc64/fpu/e_sqrtf.c
+deleted file mode 100644
+index 598e7cb..0000000
+--- a/sysdeps/powerpc/powerpc64/fpu/e_sqrtf.c
++++ /dev/null
+@@ -1,30 +0,0 @@
+-/* Single-precision floating point square root.
+-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-#include <math.h>
+-#include <math_private.h>
+-
+-#undef __ieee754_sqrtf
+-float
+-__ieee754_sqrtf (float x)
+-{
+-  double z;
+-  __asm ("fsqrts %0,%1" : "=f" (z) : "f" (x));
+-  return z;
+-}
+-strong_alias (__ieee754_sqrtf, __sqrtf_finite)
 diff --git a/sysdeps/s390/Makefile b/sysdeps/s390/Makefile
 deleted file mode 100644
 index 42978dc..0000000
