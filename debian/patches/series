@@ -273,3 +273,4 @@ any/cvs-vfprintf.diff
 any/cvs-wscanf.diff
 any/cvs-ldconfig-aux-cache.diff
 any/cvs-grantpt-pty-owner.diff
+any/cvs-hesiod-resolver.diff
