@@ -1,3 +1,58 @@
+glibc (2.24-7) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * hurd-i386/tg-hurdsig-SA_SIGINFO.diff: Fix passing address to legacy SIGBUS
+    handlers.
+  * hurd-i386/tg-libpthread-gsync-mutex.diff: New patch to make mutexes use
+    gsync too.
+  * hurd-i386/tg-NOFOLLOW.diff: New patch to fix O_NOFOLLOW errors.
+  * hurd-i386/tg-NOFOLLOW-DIRECTORY.diff: New patch to fix O_NOFOLLOW |
+    O_DIRECTORY errors.
+
+  [ Aurelien Jarno ]
+  * debian/patches/git-updates.diff: update from upstream stable branch.
+  * debian/rules: build with -no-pie -fno-PIE. Closes: #845512, #845521.
+
+  [ Matthias Klose ]
+  * Allow to inject the libc-dev dependency on linux-libc-dev by the build
+    environment.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 25 Nov 2016 23:09:39 +0100
+
+glibc (2.24-6) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * libc0.3.symbols.hurd-i386: Drop removed RPCs.
+  * hurd-i386/cvs-libpthread.diff: Update to latest upstream version.
+    - hurd-i386/cvs-libpthread-static-weak.diff: Drop, merged upstream.
+    - hurd-i386/cvs-pthread-atfork.diff: Drop, merged upstream.
+    - hurd-i386/cvs-setcancelstate.diff: Drop, merged upstream.
+  * hurd-i386/tg-libpthread-gsync-spin.diff: New patch to make spinlocks use
+    gsync too.  Thanks Svante Signell for investigating issues with the first
+    version.
+  * hurd-i386/tg-ONSTACK.diff: New patch to fix SS_ONSTACK support.
+    Closes: #551470.
+  * hurd-i386/tg-extern_inline.diff: Update to upstream.
+    - hurd-i386/tg-sigstate_thread_reference.diff: Refresh.
+    - hurd-i386/tg-gsync-libc.diff: Refresh.
+  * hurd-i386/tg-hurdsig-SA_SIGINFO.diff: Update to upstream.
+  * hurd-i386/tg-EGREGIOUS-fr.diff: New patch to fix grammar in french
+    translation.
+
+  [ Aurelien Jarno ]
+  * debian/patches/git-updates.diff: update from upstream stable branch:
+    - Fix pread/pwrite syscalls on SH4.
+    - Fix build on powerpc/ppc64el with binutils from trunk.  Closes: #843691.
+    - Fix flexible array usage in gconv.h.  Closes: #841304.
+    - Fix linknamespace parallel test failures.  Closes: #844132.
+  * debian/patches/any/submitted-unicode-9.0.0.diff: proposed patch to update
+    Unicode support to version 9.0.0.  Closes: #842466.
+  * debian/patches/localedata/locale-C.diff: update to Unicode 9.0.0.
+  * debian/patches/localedata/submitted-en_AU-date_fmt.diff: improve date_fmt
+    for en_AU locale.  Closes: #841916.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Mon, 21 Nov 2016 19:22:48 +0100
+
 glibc (2.24-5) unstable; urgency=medium
 
   [ Aurelien Jarno ]

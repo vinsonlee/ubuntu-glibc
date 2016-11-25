@@ -1,10 +1,72 @@
 GIT update of git://sourceware.org/git/glibc.git/release/2.24/master from glibc-2.24
 
 diff --git a/ChangeLog b/ChangeLog
-index c44c926..3cad282 100644
+index c44c926..e6ea2df 100644
 --- a/ChangeLog
 +++ b/ChangeLog
-@@ -1,3 +1,152 @@
+@@ -1,3 +1,214 @@
++2016-11-24  Aurelien Jarno  <aurelien@aurel32.net>
++
++	* sysdeps/x86_64/memcpy_chk.S (__memcpy_chk): Check for SHARED
++	instead of PIC.
++
++2016-11-23  Matthew Fortune  <Matthew.Fortune@imgtec.com>
++	    Maciej W. Rozycki  <macro@imgtec.com>
++
++	* sysdeps/mips/mips32/crti.S (_init): Add `.insn' pseudo-op at
++	`.Lno_weak_fn' label.
++	* sysdeps/mips/mips64/n32/crti.S (_init): Likewise.
++	* sysdeps/mips/mips64/n64/crti.S (_init): Likewise.
++
++2016-11-22  Adhemerval Zanella  <adhemerva.zanella@linaro.org>
++
++	[BZ #20847]
++	* posix/execvpe.c (maybe_script_execute): Remove write past allocated
++	array bounds.
++	(__execvpe): Likewise.
++
++2016-11-15  Denis Kaganovich  <mahatma@eu.by>
++	    Magnus Granberg  <zorry@gentoo.org>
++	    Mike Frysinger  <vapier@gentoo.org>
++
++	[BZ #20662]
++	* configure.ac (libc_cv_predef_stack_protector): Also check for
++	__stack_chk_fail_local symbols.
++	* configure: Regenerated.
++
++2016-11-03  Joseph Myers  <joseph@codesourcery.com>
++
++	* conform/Makefile ($(linknamespace-header-tests)): Also depend on
++	$(linknamespace-symlists-tests).
++
++2016-11-06  Aurelien Jarno  <aurelien@aurel32.net>
++
++	* iconv/gconv.h (__gconv_info): Define __data element using a
++	zero-length array.
++
++2016-10-25  Joseph Myers  <joseph@codesourcery.com>
++
++	* sysdeps/powerpc/powerpc32/power6/memset.S (memset): Use cmplwi
++	instead of cmpli.
++	* sysdeps/powerpc/powerpc64/power6/memset.S (memset): Use cmpldi
++	instead of cmpli.
++
++2016-10-24  Adhemerval Zanella  <adhemerval.zanella@linaro.org>
++
++	* sysdeps/unix/sysv/linux/pread.c (__libc_pread): Use SYSCALL_LL_PRW.
++	* sysdeps/unix/sysv/linux/pwrite.c (__libc_pwrite): Likewise.
++	* sysdeps/unix/sysv/linux/pread64.c (__libc_pread64): Use
++	SYSCALL_LL64_PRW.
++	* sysdeps/unix/sysv/linux/pwrite64.c (__libc_pwrite64): Likewise.
++	* sysdeps/unix/sysv/linux/sh/kernel-features.h: Define
++	__ASSUME_PRW_DUMMY_ARG.
++	* sysdeps/unix/sysv/linux/sh/pread.c: Remove file.
++	* sysdeps/unix/sysv/linux/sh/pread64.c: Likewise.
++	* sysdeps/unix/sysv/linux/sh/pwrite.c: Likewise.
++	* sysdeps/unix/sysv/linux/sh/pwrite64.c: Likewise.
++	* sysdeps/unix/sysv/linux/sysdep.h: Define SYSCALL_LL_PRW and
++	SYSCALL_LL_PRW64 based on __ASSUME_PRW_DUMMY_ARG.
++
 +2016-10-05  Tulio Magno Quites Machado Filho  <tuliom@linux.vnet.ibm.com>
 +
 +	* sysdeps/powerpc/fpu/libm-test-ulps: Regenerated.
@@ -287,6 +349,75 @@ index e67bbef..7cb5a69 100644
 +__END_DECLS
  
  #endif /* argp.h */
+diff --git a/configure b/configure
+index 17625e1..9b5a486 100755
+--- a/configure
++++ b/configure
+@@ -6289,12 +6289,14 @@ echo >&5 "libc_undefs='$libc_undefs'"
+ # symbols (resolved by the linker), so filter out unknown symbols.
+ # This will fail to produce the correct result if the compiler
+ # defaults to -fstack-protector but this produces an undefined symbol
+-# other than __stack_chk_fail.  However, compilers like that have not
+-# been encountered in practice.
+-libc_undefs=`echo "$libc_undefs" | egrep '^(foobar|__stack_chk_fail)$'`
++# other than __stack_chk_fail or __stack_chk_fail_local. However,
++# compilers like that have not been encountered in practice.
++libc_undefs=`echo "$libc_undefs" | \
++  egrep '^(foobar|__stack_chk_fail|__stack_chk_fail_local)$'`
+ case "$libc_undefs" in
+ foobar) libc_cv_predef_stack_protector=no ;;
+ '__stack_chk_fail
++foobar'|'__stack_chk_fail_local
+ foobar') libc_cv_predef_stack_protector=yes ;;
+ *) as_fn_error $? "unexpected symbols in test: $libc_undefs" "$LINENO" 5 ;;
+ esac
+diff --git a/configure.ac b/configure.ac
+index 33bcd62..8277d9f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1626,12 +1626,14 @@ echo >&AS_MESSAGE_LOG_FD "libc_undefs='$libc_undefs'"
+ # symbols (resolved by the linker), so filter out unknown symbols.
+ # This will fail to produce the correct result if the compiler
+ # defaults to -fstack-protector but this produces an undefined symbol
+-# other than __stack_chk_fail.  However, compilers like that have not
+-# been encountered in practice.
+-libc_undefs=`echo "$libc_undefs" | egrep '^(foobar|__stack_chk_fail)$'`
++# other than __stack_chk_fail or __stack_chk_fail_local. However,
++# compilers like that have not been encountered in practice.
++libc_undefs=`echo "$libc_undefs" | \
++  egrep '^(foobar|__stack_chk_fail|__stack_chk_fail_local)$'`
+ case "$libc_undefs" in
+ foobar) libc_cv_predef_stack_protector=no ;;
+ '__stack_chk_fail
++foobar'|'__stack_chk_fail_local
+ foobar') libc_cv_predef_stack_protector=yes ;;
+ *) AC_MSG_ERROR([unexpected symbols in test: $libc_undefs]) ;;
+ esac],
+diff --git a/conform/Makefile b/conform/Makefile
+index 32a0937..762aac9 100644
+--- a/conform/Makefile
++++ b/conform/Makefile
+@@ -229,6 +229,7 @@ $(linknamespace-symlist-stdlibs-tests): $(objpfx)symlist-stdlibs-%: \
+ 
+ $(linknamespace-header-tests): $(objpfx)%/linknamespace.out: \
+ 			       linknamespace.pl \
++			       $(linknamespace-symlists-tests) \
+ 			       $(linknamespace-symlist-stdlibs-tests)
+ 	(set -e; std_hdr=$*; std=$${std_hdr%%/*}; hdr=$${std_hdr#*/}; \
+ 	 mkdir -p $(@D)/scratch; \
+diff --git a/iconv/gconv.h b/iconv/gconv.h
+index 8d8ce58..a870280 100644
+--- a/iconv/gconv.h
++++ b/iconv/gconv.h
+@@ -139,7 +139,7 @@ typedef struct __gconv_info
+ {
+   size_t __nsteps;
+   struct __gconv_step *__steps;
+-  __extension__ struct __gconv_step_data __data __flexarr;
++  __extension__ struct __gconv_step_data __data[0];
+ } *__gconv_t;
+ 
+ /* Transliteration using the locale's data.  */
 diff --git a/malloc/arena.c b/malloc/arena.c
 index 229783f..4e16593 100644
 --- a/malloc/arena.c
@@ -1358,6 +1489,59 @@ index 49d1f23..e046577 100644
 -
 -#~ msgid "cannot create internal descriptors"
 -#~ msgstr "kan inte skapa interna deskriptorer"
+diff --git a/posix/execvpe.c b/posix/execvpe.c
+index d933f9c..7cdb06a 100644
+--- a/posix/execvpe.c
++++ b/posix/execvpe.c
+@@ -48,12 +48,13 @@ maybe_script_execute (const char *file, char *const argv[], char *const envp[])
+ 	}
+     }
+ 
+-  /* Construct an argument list for the shell.  */
++  /* Construct an argument list for the shell.  It will contain at minimum 3
++     arguments (current shell, script, and an ending NULL.  */
+   char *new_argv[argc + 1];
+   new_argv[0] = (char *) _PATH_BSHELL;
+   new_argv[1] = (char *) file;
+   if (argc > 1)
+-    memcpy (new_argv + 2, argv + 1, argc * sizeof(char *));
++    memcpy (new_argv + 2, argv + 1, (argc - 1) * sizeof(char *));
+   else
+     new_argv[2] = NULL;
+ 
+@@ -91,10 +92,11 @@ __execvpe (const char *file, char *const argv[], char *const envp[])
+   /* Although GLIBC does not enforce NAME_MAX, we set it as the maximum
+      size to avoid unbounded stack allocation.  Same applies for
+      PATH_MAX.  */
+-  size_t file_len = __strnlen (file, NAME_MAX + 1);
++  size_t file_len = __strnlen (file, NAME_MAX) + 1;
+   size_t path_len = __strnlen (path, PATH_MAX - 1) + 1;
+ 
+-  if ((file_len > NAME_MAX)
++  /* NAME_MAX does not include the terminating null character.  */
++  if (((file_len-1) > NAME_MAX)
+       || !__libc_alloca_cutoff (path_len + file_len + 1))
+     {
+       errno = ENAMETOOLONG;
+@@ -103,6 +105,9 @@ __execvpe (const char *file, char *const argv[], char *const envp[])
+ 
+   const char *subp;
+   bool got_eacces = false;
++  /* The resulting string maximum size would be potentially a entry
++     in PATH plus '/' (path_len + 1) and then the the resulting file name
++     plus '\0' (file_len since it already accounts for the '\0').  */
+   char buffer[path_len + file_len + 1];
+   for (const char *p = path; ; p = subp)
+     {
+@@ -123,7 +128,7 @@ __execvpe (const char *file, char *const argv[], char *const envp[])
+          execute.  */
+       char *pend = mempcpy (buffer, p, subp - p);
+       *pend = '/';
+-      memcpy (pend + (p < subp), file, file_len + 1);
++      memcpy (pend + (p < subp), file, file_len);
+ 
+       __execve (buffer, argv, envp);
+ 
 diff --git a/sysdeps/arm/nacl/libc.abilist b/sysdeps/arm/nacl/libc.abilist
 index 2f7751d..dfa7198 100644
 --- a/sysdeps/arm/nacl/libc.abilist
@@ -1390,6 +1574,42 @@ index 3d35523..7c1d779 100644
  endif
  
  ifeq ($(subdir),debug)
+diff --git a/sysdeps/mips/mips32/crti.S b/sysdeps/mips/mips32/crti.S
+index 5c0ad73..dfbbdc4 100644
+--- a/sysdeps/mips/mips32/crti.S
++++ b/sysdeps/mips/mips32/crti.S
+@@ -74,6 +74,7 @@ _init:
+ 	.reloc 1f,R_MIPS_JALR,PREINIT_FUNCTION
+ 1:	jalr $25
+ .Lno_weak_fn:
++	.insn
+ #else
+ 	lw $25,%got(PREINIT_FUNCTION)($28)
+ 	.reloc 1f,R_MIPS_JALR,PREINIT_FUNCTION
+diff --git a/sysdeps/mips/mips64/n32/crti.S b/sysdeps/mips/mips64/n32/crti.S
+index 00b89f3..afe6d8e 100644
+--- a/sysdeps/mips/mips64/n32/crti.S
++++ b/sysdeps/mips/mips64/n32/crti.S
+@@ -74,6 +74,7 @@ _init:
+ 	.reloc 1f,R_MIPS_JALR,PREINIT_FUNCTION
+ 1:	jalr $25
+ .Lno_weak_fn:
++	.insn
+ #else
+ 	lw $25,%got_disp(PREINIT_FUNCTION)($28)
+ 	.reloc 1f,R_MIPS_JALR,PREINIT_FUNCTION
+diff --git a/sysdeps/mips/mips64/n64/crti.S b/sysdeps/mips/mips64/n64/crti.S
+index f59b20c..4049d29 100644
+--- a/sysdeps/mips/mips64/n64/crti.S
++++ b/sysdeps/mips/mips64/n64/crti.S
+@@ -74,6 +74,7 @@ _init:
+ 	.reloc 1f,R_MIPS_JALR,PREINIT_FUNCTION
+ 1:	jalr $25
+ .Lno_weak_fn:
++	.insn
+ #else
+ 	ld $25,%got_disp(PREINIT_FUNCTION)($28)
+ 	.reloc 1f,R_MIPS_JALR,PREINIT_FUNCTION
 diff --git a/sysdeps/mips/nptl/Makefile b/sysdeps/mips/nptl/Makefile
 index 117744f..dda154d 100644
 --- a/sysdeps/mips/nptl/Makefile
@@ -1770,6 +1990,19 @@ index 526d8ed..ac589bd 100644
    return ret;
  }
  #endif
+diff --git a/sysdeps/powerpc/powerpc32/power6/memset.S b/sysdeps/powerpc/powerpc32/power6/memset.S
+index b2a222e..d5dbe83 100644
+--- a/sysdeps/powerpc/powerpc32/power6/memset.S
++++ b/sysdeps/powerpc/powerpc32/power6/memset.S
+@@ -394,7 +394,7 @@ L(cacheAlignedx):
+ /* A simple loop for the longer (>640 bytes) lengths.  This form limits
+    the branch miss-predicted to exactly 1 at loop exit.*/
+ L(cacheAligned512):
+-	cmpli	cr1,rLEN,128
++	cmplwi	cr1,rLEN,128
+ 	blt	cr1,L(cacheAligned1)
+ 	dcbz	0,rMEMP
+ 	addi	rLEN,rLEN,-128
 diff --git a/sysdeps/powerpc/powerpc32/power9/multiarch/Implies b/sysdeps/powerpc/powerpc32/power9/multiarch/Implies
 index 4393b56..1a46ef0 100644
 --- a/sysdeps/powerpc/powerpc32/power9/multiarch/Implies
@@ -1777,6 +2010,19 @@ index 4393b56..1a46ef0 100644
 @@ -1 +1 @@
 -powerpc/powerpc32/power8/fpu/multiarch
 +powerpc/powerpc32/power8/multiarch
+diff --git a/sysdeps/powerpc/powerpc64/power6/memset.S b/sysdeps/powerpc/powerpc64/power6/memset.S
+index c2d1c4e..d445b1e 100644
+--- a/sysdeps/powerpc/powerpc64/power6/memset.S
++++ b/sysdeps/powerpc/powerpc64/power6/memset.S
+@@ -251,7 +251,7 @@ L(cacheAlignedx):
+ /* A simple loop for the longer (>640 bytes) lengths.  This form limits
+    the branch miss-predicted to exactly 1 at loop exit.*/
+ L(cacheAligned512):
+-	cmpli	cr1,rLEN,128
++	cmpldi	cr1,rLEN,128
+ 	blt	cr1,L(cacheAligned1)
+ 	dcbz	0,rMEMP
+ 	addi	rLEN,rLEN,-128
 diff --git a/sysdeps/powerpc/powerpc64/power9/fpu/Implies b/sysdeps/powerpc/powerpc64/power9/fpu/Implies
 index fad2505..ae0dbaf 100644
 --- a/sysdeps/powerpc/powerpc64/power9/fpu/Implies
@@ -2382,6 +2628,62 @@ index c89ed9e..2cfb46e 100644
  			      elision-trylock
 +libpthread-shared-only-routines += sysdep
  endif
+diff --git a/sysdeps/unix/sysv/linux/pread.c b/sysdeps/unix/sysv/linux/pread.c
+index 1bcff64..46d974d 100644
+--- a/sysdeps/unix/sysv/linux/pread.c
++++ b/sysdeps/unix/sysv/linux/pread.c
+@@ -28,8 +28,7 @@
+ ssize_t
+ __libc_pread (int fd, void *buf, size_t count, off_t offset)
+ {
+-  return SYSCALL_CANCEL (pread, fd, buf, count,
+-			 __ALIGNMENT_ARG SYSCALL_LL (offset));
++  return SYSCALL_CANCEL (pread, fd, buf, count, SYSCALL_LL_PRW (offset));
+ }
+ 
+ strong_alias (__libc_pread, __pread)
+diff --git a/sysdeps/unix/sysv/linux/pread64.c b/sysdeps/unix/sysv/linux/pread64.c
+index 58c6aeb..f51beae 100644
+--- a/sysdeps/unix/sysv/linux/pread64.c
++++ b/sysdeps/unix/sysv/linux/pread64.c
+@@ -26,8 +26,7 @@
+ ssize_t
+ __libc_pread64 (int fd, void *buf, size_t count, off64_t offset)
+ {
+-  return SYSCALL_CANCEL (pread64, fd, buf, count,
+-			 __ALIGNMENT_ARG SYSCALL_LL64 (offset));
++  return SYSCALL_CANCEL (pread64, fd, buf, count, SYSCALL_LL64_PRW (offset));
+ }
+ 
+ weak_alias (__libc_pread64, __pread64)
+diff --git a/sysdeps/unix/sysv/linux/pwrite.c b/sysdeps/unix/sysv/linux/pwrite.c
+index 9c502be..1371df8 100644
+--- a/sysdeps/unix/sysv/linux/pwrite.c
++++ b/sysdeps/unix/sysv/linux/pwrite.c
+@@ -28,8 +28,7 @@
+ ssize_t
+ __libc_pwrite (int fd, const void *buf, size_t count, off_t offset)
+ {
+-  return SYSCALL_CANCEL (pwrite, fd, buf, count,
+-			 __ALIGNMENT_ARG SYSCALL_LL (offset));
++  return SYSCALL_CANCEL (pwrite, fd, buf, count, SYSCALL_LL_PRW (offset));
+ }
+ 
+ strong_alias (__libc_pwrite, __pwrite)
+diff --git a/sysdeps/unix/sysv/linux/pwrite64.c b/sysdeps/unix/sysv/linux/pwrite64.c
+index b49e6bc..22f1f05 100644
+--- a/sysdeps/unix/sysv/linux/pwrite64.c
++++ b/sysdeps/unix/sysv/linux/pwrite64.c
+@@ -26,8 +26,7 @@
+ ssize_t
+ __libc_pwrite64 (int fd, const void *buf, size_t count, off64_t offset)
+ {
+-  return SYSCALL_CANCEL (pwrite64, fd, buf, count,
+-			 __ALIGNMENT_ARG SYSCALL_LL64 (offset));
++  return SYSCALL_CANCEL (pwrite64, fd, buf, count, SYSCALL_LL64_PRW (offset));
+ }
+ weak_alias (__libc_pwrite64, __pwrite64)
+ libc_hidden_weak (__pwrite64)
 diff --git a/sysdeps/unix/sysv/linux/s390/Makefile b/sysdeps/unix/sysv/linux/s390/Makefile
 index 497ffd5..f8ed013 100644
 --- a/sysdeps/unix/sysv/linux/s390/Makefile
@@ -2394,6 +2696,135 @@ index 497ffd5..f8ed013 100644
  endif
  
  ifeq ($(subdir),stdlib)
+diff --git a/sysdeps/unix/sysv/linux/sh/kernel-features.h b/sysdeps/unix/sysv/linux/sh/kernel-features.h
+index ad05fc3..c5240fa 100644
+--- a/sysdeps/unix/sysv/linux/sh/kernel-features.h
++++ b/sysdeps/unix/sysv/linux/sh/kernel-features.h
+@@ -44,3 +44,8 @@
+ 
+ /* SH does not have a 64-bit inode field.  */
+ #undef __ASSUME_ST_INO_64_BIT
++
++/* SH4 ABI does not really require argument alignment for 64-bits, but
++   the kernel interface for p{read,write}64 adds a dummy long argument
++   before the offset.  */
++#define __ASSUME_PRW_DUMMY_ARG	1
+diff --git a/sysdeps/unix/sysv/linux/sh/pread.c b/sysdeps/unix/sysv/linux/sh/pread.c
+deleted file mode 100644
+index d3f99f3..0000000
+--- a/sysdeps/unix/sysv/linux/sh/pread.c
++++ /dev/null
+@@ -1,23 +0,0 @@
+-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-/* SH4 ABI does not really require argument alignment for 64-bits, but
+-   the kernel interface for pread adds a dummy long argument before the
+-   offset.  */
+-#define __ALIGNMENT_ARG
+-#include <sysdeps/unix/sysv/linux/pread.c>
+diff --git a/sysdeps/unix/sysv/linux/sh/pread64.c b/sysdeps/unix/sysv/linux/sh/pread64.c
+deleted file mode 100644
+index b2e8a25..0000000
+--- a/sysdeps/unix/sysv/linux/sh/pread64.c
++++ /dev/null
+@@ -1,23 +0,0 @@
+-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-/* SH4 ABI does not really require argument alignment for 64-bits, but
+-   the kernel interface for pread adds a dummy long argument before the
+-   offset.  */
+-#define __ALIGNMENT_ARG
+-#include <sysdeps/unix/sysv/linux/pread64.c>
+diff --git a/sysdeps/unix/sysv/linux/sh/pwrite.c b/sysdeps/unix/sysv/linux/sh/pwrite.c
+deleted file mode 100644
+index 391ed5e..0000000
+--- a/sysdeps/unix/sysv/linux/sh/pwrite.c
++++ /dev/null
+@@ -1,23 +0,0 @@
+-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-/* SH4 ABI does not really require argument alignment for 64-bits, but
+-   the kernel interface for pwrite adds a dummy long argument before the
+-   offset.  */
+-#define __ALIGNMENT_ARG
+-#include <sysdeps/unix/sysv/linux/pwrite.c>
+diff --git a/sysdeps/unix/sysv/linux/sh/pwrite64.c b/sysdeps/unix/sysv/linux/sh/pwrite64.c
+deleted file mode 100644
+index 683a5d9..0000000
+--- a/sysdeps/unix/sysv/linux/sh/pwrite64.c
++++ /dev/null
+@@ -1,23 +0,0 @@
+-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by Ralf Baechle <ralf@gnu.org>, 1998.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, see
+-   <http://www.gnu.org/licenses/>.  */
+-
+-/* SH4 ABI does not really require argument alignment for 64-bits, but
+-   the kernel interface for pread adds a dummy long argument before the
+-   offset.  */
+-#define __ALIGNMENT_ARG
+-#include <sysdeps/unix/sysv/linux/pwrite64.c>
 diff --git a/sysdeps/unix/sysv/linux/sparc/Makefile b/sysdeps/unix/sysv/linux/sparc/Makefile
 index e67aecf..a67d199 100644
 --- a/sysdeps/unix/sysv/linux/sparc/Makefile
@@ -2459,6 +2890,27 @@ index bb3eecf..67e1c42 100644
  
    return ec;
  }
+diff --git a/sysdeps/unix/sysv/linux/sysdep.h b/sysdeps/unix/sysv/linux/sysdep.h
+index a469f57..e3ecd56 100644
+--- a/sysdeps/unix/sysv/linux/sysdep.h
++++ b/sysdeps/unix/sysv/linux/sysdep.h
+@@ -48,6 +48,16 @@
+   __LONG_LONG_PAIR ((long) ((val) >> 32), (long) ((val) & 0xffffffff))
+ #endif
+ 
++/* Provide a common macro to pass 64-bit value on pread and pwrite
++   syscalls.  */
++#ifdef __ASSUME_PRW_DUMMY_ARG
++# define SYSCALL_LL_PRW(val)   0, SYSCALL_LL (val)
++# define SYSCALL_LL64_PRW(val) 0, SYSCALL_LL64 (val)
++#else
++# define SYSCALL_LL_PRW(val)   __ALIGNMENT_ARG SYSCALL_LL (val)
++# define SYSCALL_LL64_PRW(val) __ALIGNMENT_ARG SYSCALL_LL64 (val)
++#endif
++
+ /* Provide a macro to pass the off{64}_t argument on p{readv,writev}{64}.  */
+ #define LO_HI_LONG(val) \
+  (long) (val), \
 diff --git a/sysdeps/unix/sysv/linux/tile/Makefile b/sysdeps/unix/sysv/linux/tile/Makefile
 index 1c1cfff..43acea3 100644
 --- a/sysdeps/unix/sysv/linux/tile/Makefile
@@ -2469,3 +2921,16 @@ index 1c1cfff..43acea3 100644
  libpthread-routines += sysdep
 +libpthread-shared-only-routines += sysdep
  endif
+diff --git a/sysdeps/x86_64/memcpy_chk.S b/sysdeps/x86_64/memcpy_chk.S
+index 2296b55..a95b3ad 100644
+--- a/sysdeps/x86_64/memcpy_chk.S
++++ b/sysdeps/x86_64/memcpy_chk.S
+@@ -19,7 +19,7 @@
+ #include <sysdep.h>
+ #include "asm-syntax.h"
+ 
+-#ifndef PIC
++#ifndef SHARED
+ 	/* For libc.so this is defined in memcpy.S.
+ 	   For libc.a, this is a separate source to avoid
+ 	   memcpy bringing in __chk_fail and all routines
