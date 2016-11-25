@@ -1,3 +1,4 @@
+t/gsync-libc
 From: Agustina Arzille <avarzille@riseup.net>
 Subject: [PATCH] Introduce gsync-based locks to glibc.
 
@@ -22,6 +23,12 @@ Subject: [PATCH] Introduce gsync-based locks to glibc.
 * sysdeps/mach/hurd/malloc-machine.h: Reimplemented malloc locks.
 * sysdeps/mach/hurd/setpgid.c: (setpgid): Use gsync for synchronization.
 * sysdeps/mach/hurd/setsid.c: (setsid): Likewise.
+
+t/libc_cleanup
+From: Agustina Arzille <avarzille@riseup.net>
+Subject: [PATCH] Use gcc's cleanup attributes
+
+cleanup routines now use gcc's cleanup attribute
 
 ---
  hurd/Makefile                      |   1 +
@@ -314,15 +321,15 @@ Index: glibc-2.23/hurd/hurdlock.c
 +
 +void lll_robust_unlock (void *ptr, int flags)
 +{
++  unsigned int val = atomic_load_relaxed((unsigned int *)ptr);
 +  while (1)
 +    {
-+      unsigned int val = *(unsigned int *)ptr;
 +      if (val & LLL_WAITERS)
 +        {
 +          lll_set_wake (ptr, 0, flags);
 +          break;
 +        }
-+      else if (atomic_compare_and_exchange_bool_rel ((int *)ptr, 0, val) == 0)
++      else if (atomic_compare_exchange_weak_release ((unsigned int *)ptr, &val, 0))
 +        break;
 +    }
 +}
@@ -573,8 +580,7 @@ Index: glibc-2.23/mach/lock-intern.h
  
  void __spin_lock_init (__spin_lock_t *__lock);
  
--#ifdef __USE_EXTERN_INLINES
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
+ #if defined __USE_EXTERN_INLINES && defined _LIBC
  _EXTERN_INLINE void
  __spin_lock_init (__spin_lock_t *__lock)
  {
@@ -591,8 +597,7 @@ Index: glibc-2.23/mach/lock-intern.h
  
  void __spin_lock (__spin_lock_t *__lock);
  
--#ifdef __USE_EXTERN_INLINES
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
+ #if defined __USE_EXTERN_INLINES && defined _LIBC
  _EXTERN_INLINE void
  __spin_lock (__spin_lock_t *__lock)
  {
@@ -660,8 +665,7 @@ Index: glibc-2.23/mach/lock-intern.h
  
  void __mutex_lock (void *__lock);
  
--#ifdef __USE_EXTERN_INLINES
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
+ #if defined __USE_EXTERN_INLINES && defined _LIBC
  _EXTERN_INLINE void
  __mutex_lock (void *__lock)
  {
@@ -671,12 +675,7 @@ Index: glibc-2.23/mach/lock-intern.h
  }
  #endif
  
-@@ -93,23 +112,22 @@ __mutex_lock (void *__lock)
- 
- void __mutex_unlock (void *__lock);
- 
--#ifdef __USE_EXTERN_INLINES
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
+@@ -97,19 +116,18 @@ __mutex_lock (void *__lock)
  _EXTERN_INLINE void
  __mutex_unlock (void *__lock)
  {
@@ -689,8 +688,7 @@ Index: glibc-2.23/mach/lock-intern.h
  
  int __mutex_trylock (void *__lock);
  
--#ifdef __USE_EXTERN_INLINES
-+#if defined __USE_EXTERN_INLINES && defined _LIBC
+ #if defined __USE_EXTERN_INLINES && defined _LIBC
  _EXTERN_INLINE int
  __mutex_trylock (void *__lock)
  {
@@ -1101,7 +1099,7 @@ Index: glibc-2.23/sysdeps/mach/hurd/libc-lock.h
 ===================================================================
 --- glibc-2.23.orig/sysdeps/mach/hurd/libc-lock.h
 +++ /dev/null
-@@ -1,216 +0,0 @@
+@@ -1,219 +0,0 @@
 -/* libc-internal interface for mutex locks.  Hurd version using Mach cthreads.
 -   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 -   This file is part of the GNU C Library.
@@ -1128,6 +1126,9 @@ Index: glibc-2.23/sysdeps/mach/hurd/libc-lock.h
 -#include <tls.h>
 -#endif
 -#include <cthreads.h>
+-
+-/* The locking here is very inexpensive, even for inlining.  */
+-#define _IO_lock_inexpensive  1
 -
 -typedef struct mutex __libc_lock_t;
 -typedef struct
@@ -1323,8 +1324,8 @@ Index: glibc-2.23/sysdeps/mach/hurd/malloc-machine.h
 --- glibc-2.23.orig/sysdeps/mach/hurd/malloc-machine.h
 +++ glibc-2.23/sysdeps/mach/hurd/malloc-machine.h
 @@ -22,15 +22,14 @@
- 
- #undef thread_atfork_static
+ #ifndef _MALLOC_MACHINE_H
+ #define _MALLOC_MACHINE_H
  
 -#include <atomic.h>
  #include <libc-lock.h>
