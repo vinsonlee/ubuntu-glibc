@@ -90,7 +90,11 @@ from argv[0] but argv[0] only contains the executable name by convention.
  /* Inform the proc server we have exited with STATUS, and kill the
 --- a/hurd/hurdexec.c
 +++ b/hurd/hurdexec.c
-@@ -28,13 +28,33 @@
+@@ -25,16 +25,37 @@
+ #include <hurd/fd.h>
+ #include <hurd/signal.h>
+ #include <hurd/id.h>
++#include <hurd/fs_experimental.h>
  #include <assert.h>
  #include <argz.h>
  
@@ -125,7 +129,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
    error_t err;
    char *args, *env;
    size_t argslen, envlen;
-@@ -216,7 +236,7 @@ _hurd_exec (task_t task, file_t file,
+@@ -216,7 +237,7 @@ _hurd_exec (task_t task, file_t file,
        /* We have euid != svuid or egid != svgid.  POSIX.1 says that exec
  	 sets svuid = euid and svgid = egid.  So we must get a new auth
  	 port and reauthenticate everything with it.  We'll pass the new
@@ -134,7 +138,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
  
        auth_t newauth;
  
-@@ -360,13 +380,27 @@ _hurd_exec (task_t task, file_t file,
+@@ -360,13 +381,27 @@ _hurd_exec (task_t task, file_t file,
        if (__sigismember (&_hurdsig_traced, SIGKILL))
  	flags |= EXEC_SIGTRAP;
  #endif
@@ -169,7 +173,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
      }
  
    /* Release references to the standard ports.  */
-@@ -401,3 +435,13 @@ _hurd_exec (task_t task, file_t file,
+@@ -401,3 +436,13 @@ _hurd_exec (task_t task, file_t file,
    free (env);
    return err;
  }
@@ -185,7 +189,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
 +#endif
 --- a/sysdeps/mach/hurd/execve.c
 +++ b/sysdeps/mach/hurd/execve.c
-@@ -34,7 +34,8 @@ __execve (file_name, argv, envp)
+@@ -31,7 +31,8 @@ __execve (const char *file_name, char *c
      return -1;
  
    /* Hopefully this will not return.  */
@@ -211,16 +215,23 @@ from argv[0] but argv[0] only contains the executable name by convention.
    return __hurd_fail (err);
 --- a/sysdeps/mach/hurd/spawni.c
 +++ b/sysdeps/mach/hurd/spawni.c
-@@ -43,7 +43,7 @@ __spawni (pid_t *pid, const char *file,
- 	  int xflags)
+@@ -29,6 +29,7 @@
+ #include <hurd/id.h>
+ #include <hurd/lookup.h>
+ #include <hurd/resource.h>
++#include <hurd/fs_experimental.h>
+ #include <assert.h>
+ #include <argz.h>
+ #include "spawn_int.h"
+@@ -44,6 +45,7 @@ __spawni (pid_t *pid, const char *file,
  {
    pid_t new_pid;
--  char *path, *p, *name;
-+  char *path, *p, *name, *filename;
+   char *path, *p, *name;
++  const char *filename;
    size_t len;
    size_t pathlen;
    short int flags;
-@@ -59,14 +59,14 @@ __spawni (pid_t *pid, const char *file,
+@@ -59,14 +61,14 @@ __spawni (pid_t *pid, const char *file,
       that remains visible after an exec is registration with the proc
       server, and the inheritance of various values and ports.  All those
       inherited values and ports are what get collected up and passed in the
@@ -243,7 +254,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
       except that all errors will be detected here (in the parent process)
       and return proper errno codes rather than the child dying with 127.
  
-@@ -546,7 +546,7 @@ __spawni (pid_t *pid, const char *file,
+@@ -546,7 +548,7 @@ __spawni (pid_t *pid, const char *file,
  
    if ((xflags & SPAWN_XFLAGS_USE_PATH) == 0 || strchr (file, '/') != NULL)
      /* The FILE parameter is actually a path.  */
@@ -252,7 +263,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
    else
      {
        /* We have to search for FILE on the path.  */
-@@ -573,20 +573,18 @@ __spawni (pid_t *pid, const char *file,
+@@ -573,20 +575,18 @@ __spawni (pid_t *pid, const char *file,
        p = path;
        do
  	{
@@ -276,7 +287,7 @@ from argv[0] but argv[0] only contains the executable name by convention.
  	  switch (err)
  	    {
  	    case EACCES:
-@@ -623,14 +621,27 @@ __spawni (pid_t *pid, const char *file,
+@@ -623,14 +623,27 @@ __spawni (pid_t *pid, const char *file,
  
      inline error_t exec (file_t file)
        {
