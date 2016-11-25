@@ -1,3 +1,24 @@
+glibc (2.24-7) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * hurd-i386/tg-hurdsig-SA_SIGINFO.diff: Fix passing address to legacy SIGBUS
+    handlers.
+  * hurd-i386/tg-libpthread-gsync-mutex.diff: New patch to make mutexes use
+    gsync too.
+  * hurd-i386/tg-NOFOLLOW.diff: New patch to fix O_NOFOLLOW errors.
+  * hurd-i386/tg-NOFOLLOW-DIRECTORY.diff: New patch to fix O_NOFOLLOW |
+    O_DIRECTORY errors.
+
+  [ Aurelien Jarno ]
+  * debian/patches/git-updates.diff: update from upstream stable branch.
+  * debian/rules: build with -no-pie -fno-PIE. Closes: #845512, #845521.
+
+  [ Matthias Klose ]
+  * Allow to inject the libc-dev dependency on linux-libc-dev by the build
+    environment.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 25 Nov 2016 23:09:39 +0100
+
 glibc (2.24-6) unstable; urgency=medium
 
   [ Samuel Thibault ]
