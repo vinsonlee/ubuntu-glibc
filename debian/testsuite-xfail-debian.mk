@@ -116,6 +116,7 @@ test-xfail-tst-makecontext = yes
 test-xfail-tst-protected1a = yes
 test-xfail-tst-protected1b = yes
 test-xfail-tst-setcontext2 = yes
+test-xfail-tst-stack4 = yes
 # The following tests sometimes fail due to timeouts.
 test-xfail-tst-barrier5 = yes
 test-xfail-tst-cond25 = yes
@@ -135,7 +136,6 @@ tests-unsupported += test-as-const-signal-defines
 tests-unsupported += tst-cputimer1
 tests-unsupported += tst-cputimer2
 tests-unsupported += tst-cputimer3
-tests-unsupported += tst-cputimer4
 tests-unsupported += tst-timer4
 tests-unsupported += tst-timer5
 tests-unsupported += tst-malloc-backtrace
@@ -145,18 +145,9 @@ tests-unsupported += tst-malloc-thread-fail
 
 # Need actual porting
 test-xfail-exe = yes
-test-xfail-tst-mqueue5 = yes
 test-xfail-tst-pselect = yes
 test-xfail-tst-ptrguard1-static = yes
 test-xfail-tst-ptrguard1 = yes
-test-xfail-tst-secure-getenv = yes
-test-xfail-tst-timer2 = yes
-
-# We don't have auxv yet
-test-xfail-tst-auxv = yes
-
-# check-c++-types.sh support will be fixed in hurd (>> 1:0.7.git20160316-1)
-test-xfail-c++-types-check = yes
 
 # We don't provide ABI reference yet
 test-xfail-check-abi-libcrypt = yes
@@ -178,11 +169,8 @@ test-xfail-check-abi-librt = yes
 test-xfail-tst-pathconf = yes
 
 # Need investigation
-test-xfail-bug-regex31-mem = yes
 test-xfail-check-execstack = yes
 test-xfail-check-localplt = yes
-test-xfail-check-textrel = yes
-test-xfail-opendir-tst1 = yes
 test-xfail-test-idouble = yes
 test-xfail-test-ifloat = yes
 test-xfail-tst-aio10 = yes
@@ -194,19 +182,15 @@ test-xfail-tst-backtrace4 = yes
 test-xfail-tst-backtrace5 = yes
 test-xfail-tst-chk2 = yes
 test-xfail-tst-chk3 = yes
-test-xfail-tst-chk4 = yes
 test-xfail-tst-chk5 = yes
 test-xfail-tst-chk6 = yes
-test-xfail-tst-error1-mem = yes
 test-xfail-tst-fdopendir2 = yes
 test-xfail-tst-fdopendir = yes
-test-xfail-tst-fnmatch-mem = yes
 test-xfail-tst-futimesat = yes
 test-xfail-tst-getconf = yes
 test-xfail-tst-grantpt = yes
 test-xfail-tst-lfschk2 = yes
 test-xfail-tst-lfschk3 = yes
-test-xfail-tst-lfschk4 = yes
 test-xfail-tst-lfschk5 = yes
 test-xfail-tst-lfschk6 = yes
 test-xfail-tst-longjmp_chk2 = yes
@@ -214,14 +198,8 @@ test-xfail-tst-mallocfork2 = yes
 test-xfail-tst-sprofil = yes
 test-xfail-tst-stackguard1-static = yes
 test-xfail-tst-stackguard1 = yes
-test-xfail-tststatic2 = yes
-test-xfail-tststatic3 = yes
-test-xfail-tststatic4 = yes
-test-xfail-tststatic5 = yes
-test-xfail-tststatic = yes
 test-xfail-tst-strtod-round = yes
 test-xfail-tst-sysconf = yes
-test-xfail-tst-tls9-static = yes
 test-xfail-tst-vfork3-mem = yes
 
 # This generates GiBs of data instead of sparse files, putting build box on its knees
@@ -236,37 +214,29 @@ test-xfail-tst-clock_nanosleep = yes
 test-xfail-tst-nanosleep = yes
 
 # new in 2.21
-test-xfail-bug-atexit3 = yes
 test-xfail-test-misc = yes
 test-xfail-tst-ptsname = yes
 test-xfail-tst-audit9 = yes
 
 test-xfail-POSIX2008/mqueue.h/conform = yes
 test-xfail-POSIX2008/pthread.h/conform = yes
-test-xfail-POSIX2008/semaphore.h/conform = yes
 test-xfail-POSIX2008/sys/stat.h/conform = yes
 test-xfail-POSIX2008/sys/statvfs.h/conform = yes
 test-xfail-POSIX2008/sys/un.h/conform = yes
 test-xfail-POSIX2008/termios.h/conform = yes
 test-xfail-POSIX/fcntl.h/conform = yes
 test-xfail-POSIX/mqueue.h/conform = yes
-test-xfail-POSIX/pthread.h/conform = yes
 test-xfail-POSIX/sched.h/conform = yes
-test-xfail-POSIX/semaphore.h/conform = yes
 test-xfail-POSIX/sys/stat.h/conform = yes
 test-xfail-POSIX/time.h/conform = yes
 test-xfail-UNIX98/mqueue.h/conform = yes
-test-xfail-UNIX98/pthread.h/conform = yes
 test-xfail-UNIX98/sched.h/conform = yes
-test-xfail-UNIX98/semaphore.h/conform = yes
 test-xfail-UNIX98/sys/stat.h/conform = yes
 test-xfail-UNIX98/termios.h/conform = yes
 test-xfail-UNIX98/time.h/conform = yes
 test-xfail-XOPEN2K8/mqueue.h/conform = yes
 test-xfail-XOPEN2K8/pthread.h/conform = yes
-test-xfail-XOPEN2K8/semaphore.h/conform = yes
 test-xfail-XOPEN2K8/sys/stat.h/conform = yes
-test-xfail-XOPEN2K/pthread.h/conform = yes
 test-xfail-XOPEN2K/sys/stat.h/conform = yes
 test-xfail-XPG4/sys/resource.h/conform = yes
 test-xfail-XPG4/sys/statvfs.h/conform = yes
@@ -582,8 +552,6 @@ test-xfail-XPG4/utmpx.h/linknamespace = yes
 
 # new in 2.22
 test-xfail-tst-audit3 = yes
-test-xfail-tst-dlmodcount = yes
-test-xfail-tst-nodelete2 = yes
 test-xfail-tst-prelink = yes
 test-xfail-tst-tls-atexit = yes
 
@@ -743,20 +711,8 @@ test-xfail-annexc = yes
 test-xfail-tst-backtrace6 = yes
 test-xfail-tst-waitid = yes
 
-# don't seem to happen any more with 2.19 already
-test-xfail-bug22 = yes
-test-xfail-bug-getcontext = yes
-test-xfail-test-assert-perr = yes
-test-xfail-test-assert = yes
-test-xfail-test-float = yes
-test-xfail-tst-aio8 = yes
-test-xfail-tst-chk1 = yes
-test-xfail-tst-dlmopen1 = yes
-test-xfail-tst-gettext4 = yes
-test-xfail-tst-gettext5 = yes
-test-xfail-tst-gettext6 = yes
-test-xfail-tst-lfschk1 = yes
-test-xfail-tst-tls18 = yes
+# seems fixed in 2.24-3?
+test-xfail-tst-secure-getenv = yes
 endif
 
 
