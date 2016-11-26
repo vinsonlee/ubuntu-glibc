@@ -73,6 +73,11 @@ EOF
             update-locale "LANG=$DEFAULT_ENVIRONMENT"
         fi
     fi
+    # Remove cruft from locales from Ubuntu << 16.04:
+    if dpkg --compare-versions "$2" lt 2.23; then
+        rm -f /var/lib/locales/supported.d/local
+        rm -rf /var/lib/belocs
+    fi
 fi
 
 #DEBHELPER#
