@@ -1,8 +1,14 @@
+glibc (2.24-7ubuntu2) zesty; urgency=medium
+
+  * Disable lock-elision on all targets to avoid regressions (LP: #1642390)
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Mon, 05 Dec 2016 05:36:48 -0700
+
 glibc (2.24-7ubuntu1) zesty; urgency=medium
 
-  * Merge with Debian (2.24-7).
+  * Merge with 2.24 from Debian sid, with upstream and packaging updates.
 
- -- Matthias Klose <doko@ubuntu.com>  Sat, 26 Nov 2016 19:19:33 +0100
+ -- Adam Conrad <adconrad@ubuntu.com>  Wed, 30 Nov 2016 10:01:13 -0700
 
 glibc (2.24-7) unstable; urgency=medium
 
