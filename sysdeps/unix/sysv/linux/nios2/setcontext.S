@@ -29,10 +29,10 @@ ENTRY(__setcontext)
 	mov	r10, r4
 
 	/* Restore signal mask.  */
-	/* rt_sigprocmask (SIG_SETMASK, NULL, &ucp->uc_sigmask, _NSIG8) */
+	/* rt_sigprocmask (SIG_SETMASK, &ucp->uc_sigmask, NULL, _NSIG8) */
 	movi	r7, _NSIG8
-	addi	r6, r4, UCONTEXT_SIGMASK
-	mov	r5, zero
+	addi	r5, r4, UCONTEXT_SIGMASK
+	mov	r6, zero
 	movi	r4, SIG_SETMASK
 	movi	r2, SYS_ify (rt_sigprocmask)
 	trap
@@ -89,15 +89,15 @@ ENTRY(__startcontext)
 	mov	r4, r16
 	bne	r4, zero, __setcontext
 
-	/* If uc_link == zero, call _exit.  */
+	/* If uc_link == zero, call exit.  */
 #ifdef PIC
 	nextpc	r22
 1:	movhi	r8, %hiadj(_gp_got - 1b)
 	addi	r8, r8, %lo(_gp_got - 1b)
 	add	r22, r22, r8
-	ldw	r8, %call(HIDDEN_JUMPTARGET(_exit))(r22)
+	ldw	r8, %call(HIDDEN_JUMPTARGET(exit))(r22)
 	jmp	r8
 #else
-	jmpi	_exit
+	jmpi	exit
 #endif
 END(__startcontext)
