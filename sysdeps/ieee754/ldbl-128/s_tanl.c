@@ -1,7 +1,7 @@
 /* s_tanl.c -- long double version of s_tan.c.
  * Conversion to IEEE quad long double by Jakub Jelinek, jj@ultra.linux.cz.
  */
-  
+
 /* @(#)s_tan.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -44,15 +44,11 @@
  *	TRIG(x) returns trig(x) nearly rounded
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <errno.h>
+#include <math.h>
+#include <math_private.h>
 
-#ifdef __STDC__
-	long double __tanl(long double x)
-#else
-	long double __tanl(x)
-	long double x;
-#endif
+long double __tanl(long double x)
 {
 	long double y[2],z=0.0L;
 	int64_t n, ix;
@@ -65,7 +61,14 @@
 	if(ix <= 0x3ffe921fb54442d1LL) return __kernel_tanl(x,z,1);
 
     /* tanl(Inf or NaN) is NaN */
-	else if (ix>=0x7fff000000000000LL) return x-x;		/* NaN */
+	else if (ix>=0x7fff000000000000LL) {
+	    if (ix == 0x7fff000000000000LL) {
+		GET_LDOUBLE_LSW64(n,x);
+		if (n == 0)
+		    __set_errno (EDOM);
+	    }
+	    return x-x;		/* NaN */
+	}
 
     /* argument reduction needed */
 	else {

@@ -1,6 +1,6 @@
 /* Software floating-point emulation.
    Convert a to 32bit unsigned integer
-   Copyright (C) 1997,1999,2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson (rth@cygnus.com) and
 		  Jakub Jelinek (jj@ultra.linux.cz).
@@ -25,21 +25,22 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, 51 Franklin Street, Fifth Floor, Boston,
-   MA 02110-1301, USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "soft-fp.h"
 #include "quad.h"
 
-USItype __fixunstfsi(TFtype a)
+USItype
+__fixunstfsi (TFtype a)
 {
   FP_DECL_EX;
-  FP_DECL_Q(A);
+  FP_DECL_Q (A);
   USItype r;
 
-  FP_UNPACK_RAW_Q(A, a);
-  FP_TO_INT_Q(r, A, SI_BITS, 0);
+  FP_INIT_EXCEPTIONS;
+  FP_UNPACK_RAW_Q (A, a);
+  FP_TO_INT_Q (r, A, SI_BITS, 0);
   FP_HANDLE_EXCEPTIONS;
 
   return r;

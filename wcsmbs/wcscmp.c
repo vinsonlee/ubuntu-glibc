@@ -1,4 +1,4 @@
-/* Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
@@ -13,32 +13,34 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <wchar.h>
 
+#ifndef WCSCMP
+# define WCSCMP wcscmp
+#endif
 
 /* Compare S1 and S2, returning less than, equal to or
    greater than zero if S1 is lexicographically less than,
    equal to or greater than S2.	 */
 int
-wcscmp (s1, s2)
+WCSCMP (s1, s2)
      const wchar_t *s1;
      const wchar_t *s2;
 {
-  wint_t c1, c2;
+  wchar_t c1, c2;
 
   do
     {
-      c1 = (wint_t) *s1++;
-      c2 = (wint_t) *s2++;
-      if (c1 == L'\0')
+      c1 = *s1++;
+      c2 = *s2++;
+      if (c2 == L'\0')
 	return c1 - c2;
     }
   while (c1 == c2);
 
-  return c1 - c2;
+  return c1 < c2 ? -1 : 1;
 }
-libc_hidden_def (wcscmp)
+libc_hidden_def (WCSCMP)

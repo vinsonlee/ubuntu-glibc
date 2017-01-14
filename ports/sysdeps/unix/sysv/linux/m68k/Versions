@@ -1,3 +1,8 @@
+ld {
+  GLIBC_PRIVATE {
+    _dl_var_init;
+  }
+}
 libc {
   GLIBC_2.0 {
     # Exception handling support functions from libgcc
@@ -28,5 +33,22 @@ libc {
 
     # v*
     versionsort64;
+  }
+  GLIBC_2.11 {
+    fallocate64;
+  }
+  GLIBC_2.12 {
+    __m68k_read_tp;
+  }
+  GLIBC_PRIVATE {
+    __vdso_atomic_cmpxchg_32; __vdso_atomic_barrier;
+  }
+}
+
+ld {
+  GLIBC_PRIVATE {
+    __rtld___vdso_read_tp;
+    __rtld___vdso_atomic_cmpxchg_32;
+    __rtld___vdso_atomic_barrier;
   }
 }

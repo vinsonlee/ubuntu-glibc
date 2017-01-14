@@ -1,5 +1,5 @@
 /* Definition for thread-local data handling.  NPTL/hppa version.
-   Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _TLS_H
 #define _TLS_H	1
@@ -41,12 +40,6 @@ typedef union dtv
 #else /* __ASSEMBLER__ */
 # include <tcb-offsets.h>
 #endif /* __ASSEMBLER__ */
-
-
-/* We require TLS support in the tools.  */
-#ifndef HAVE_TLS_SUPPORT
-# error "TLS support is required."
-#endif
 
 /* Signal that TLS support is available.  */
 #define USE_TLS	1
@@ -122,7 +115,7 @@ typedef struct
    elf_gregset_t.  The thread descriptor is sizeof (struct pthread) away.  */
 # define DB_THREAD_SELF \
   REGISTER (32, 32, 53 * 4, -sizeof (struct pthread))
- 
+
 /* Access to data in the thread descriptor is easy.  */
 # define THREAD_GETMEM(descr, member) \
   descr->member
@@ -140,11 +133,13 @@ static inline struct pthread *__get_cr27(void)
   return (struct pthread *) cr27;
 }
 
+/* We write to cr27, clobber r26 as the input argument, and clobber
+   r31 as the link register.  */
 static inline void __set_cr27(struct pthread *cr27)
 {
   asm ( "ble	0xe0(%%sr2, %%r0)\n\t"
 	"copy	%0, %%r26"
-	: : "r" (cr27) : "r26" );
+	: : "r" (cr27) : "r26", "r31" );
 }
 
 /* Get and set the global scope generation counter in struct pthread.  */

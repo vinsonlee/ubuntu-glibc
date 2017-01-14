@@ -1,5 +1,5 @@
 /* Cache handling for passwd lookup.
-   Copyright (C) 1998-2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -14,8 +14,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include <alloca.h>
 #include <assert.h>
@@ -77,13 +76,13 @@ static const pw_response_header notfound =
 };
 
 
-static void
+static time_t
 cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	     const void *key, struct passwd *pwd, uid_t owner,
-	     struct hashentry *he, struct datahead *dh, int errval)
+	     struct hashentry *const he, struct datahead *dh, int errval)
 {
+  bool all_written = true;
   ssize_t total;
-  ssize_t written;
   time_t t = time (NULL);
 
   /* We allocate all data in one memory block: the iov vector,
@@ -97,6 +96,7 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 
   assert (offsetof (struct dataset, resp) == offsetof (struct datahead, data));
 
+  time_t timeout = MAX_TIMEOUT_VALUE;
   if (pwd == NULL)
     {
       if (he != NULL && errval == EAGAIN)
@@ -108,22 +108,32 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	    /* Do not reset the value if we never not reload the record.  */
 	    dh->nreloads = reload_count - 1;
 
-	  written = total = 0;
+	  /* Reload with the same time-to-live value.  */
+	  timeout = dh->timeout = t + db->postimeout;
+
+	  total = 0;
 	}
       else
 	{
 	  /* We have no data.  This means we send the standard reply for this
 	     case.  */
-	  written = total = sizeof (notfound);
+	  total = sizeof (notfound);
 
-	  if (fd != -1)
-	    written = TEMP_FAILURE_RETRY (send (fd, &notfound, total,
-						MSG_NOSIGNAL));
+	  if (fd != -1
+	      && TEMP_FAILURE_RETRY (send (fd, &notfound, total,
+					   MSG_NOSIGNAL)) != total)
+	    all_written = false;
 
-	  dataset = mempool_alloc (db, sizeof (struct dataset) + req->key_len,
-				   IDX_result_data);
-	  /* If we cannot permanently store the result, so be it.  */
-	  if (dataset != NULL)
+	  /* If we have a transient error or cannot permanently store
+	     the result, so be it.  */
+	  if (errno == EAGAIN || __builtin_expect (db->negtimeout == 0, 0))
+	    {
+	      /* Mark the old entry as obsolete.  */
+	      if (dh != NULL)
+		dh->usable = false;
+	    }
+	  else if ((dataset = mempool_alloc (db, (sizeof (struct dataset)
+						  + req->key_len), 1)) != NULL)
 	    {
 	      dataset->head.allocsize = sizeof (struct dataset) + req->key_len;
 	      dataset->head.recsize = total;
@@ -132,7 +142,7 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	      dataset->head.usable = true;
 
 	      /* Compute the timeout time.  */
-	      dataset->head.timeout = t + db->negtimeout;
+	      timeout = dataset->head.timeout = t + db->negtimeout;
 
 	      /* This is the reply.  */
 	      memcpy (&dataset->resp, &notfound, total);
@@ -150,9 +160,6 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 			 + sizeof (struct dataset) + req->key_len, MS_ASYNC);
 		}
 
-	      /* Now get the lock to safely insert the records.  */
-	      pthread_rwlock_rdlock (&db->lock);
-
 	      (void) cache_add (req->type, key_copy, req->key_len,
 				&dataset->head, true, db, owner, he == NULL);
 
@@ -162,8 +169,6 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	      if (dh != NULL)
 		dh->usable = false;
 	    }
-	  else
-	    ++db->head->addfailed;
 	}
     }
   else
@@ -185,9 +190,9 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
       n = snprintf (buf, buf_len, "%d%c%n%s", pwd->pw_uid, '\0',
 		    &key_offset, (char *) key) + 1;
 
-      written = total = (offsetof (struct dataset, strdata)
-			 + pw_name_len + pw_passwd_len
-			 + pw_gecos_len + pw_dir_len + pw_shell_len);
+      total = (offsetof (struct dataset, strdata)
+	       + pw_name_len + pw_passwd_len
+	       + pw_gecos_len + pw_dir_len + pw_shell_len);
 
       /* If we refill the cache, first assume the reconrd did not
 	 change.  Allocate memory on the cache since it is likely
@@ -197,12 +202,7 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
       dataset = NULL;
 
       if (he == NULL)
-	{
-	  dataset = (struct dataset *) mempool_alloc (db, total + n,
-						      IDX_result_data);
-	  if (dataset == NULL)
-	    ++db->head->addfailed;
-	}
+	dataset = (struct dataset *) mempool_alloc (db, total + n, 1);
 
       if (dataset == NULL)
 	{
@@ -222,7 +222,7 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
       dataset->head.usable = true;
 
       /* Compute the timeout time.  */
-      dataset->head.timeout = t + db->postimeout;
+      timeout = dataset->head.timeout = t + db->postimeout;
 
       dataset->resp.version = NSCD_VERSION;
       dataset->resp.found = 1;
@@ -257,19 +257,10 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	{
 	  assert (fd == -1);
 
-#if 0
-	  if (dataset->head.datasize == dh->allocsize
+	  if (dataset->head.allocsize == dh->allocsize
 	      && dataset->head.recsize == dh->recsize
 	      && memcmp (&dataset->resp, dh->data,
 			 dh->allocsize - offsetof (struct dataset, resp)) == 0)
-#else
-	  if (dataset->head.allocsize != dh->allocsize)
-	    goto nnn;
-	  if (dataset->head.recsize != dh->recsize)
-	    goto nnn;
-	  if(memcmp (&dataset->resp, dh->data,
-			 dh->allocsize - offsetof (struct dataset, resp)) == 0)
-#endif
 	    {
 	      /* The data has not changed.  We will just bump the
 		 timeout value.  Note that the new record has been
@@ -279,12 +270,10 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	    }
 	  else
 	    {
- nnn:;
 	      /* We have to create a new record.  Just allocate
 		 appropriate memory and copy it.  */
 	      struct dataset *newp
-		= (struct dataset *) mempool_alloc (db, total + n,
-						    IDX_result_data);
+		= (struct dataset *) mempool_alloc (db, total + n, 1);
 	      if (newp != NULL)
 		{
 		  /* Adjust pointer into the memory block.  */
@@ -294,8 +283,6 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 		  dataset = memcpy (newp, dataset, total + n);
 		  alloca_used = false;
 		}
-	      else
-		++db->head->addfailed;
 
 	      /* Mark the old record as obsolete.  */
 	      dh->usable = false;
@@ -313,25 +300,32 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	    {
 	      assert (db->wr_fd != -1);
 	      assert ((char *) &dataset->resp > (char *) db->data);
-	      assert ((char *) &dataset->resp - (char *) db->head
+	      assert ((char *) dataset - (char *) db->head
 		      + total
 		      <= (sizeof (struct database_pers_head)
-                          + db->head->module * sizeof (ref_t)
-                          + db->head->data_size));
-	      written = sendfileall (fd, db->wr_fd,
-				     (char *) &dataset->resp
-				     - (char *) db->head, total);
+			  + db->head->module * sizeof (ref_t)
+			  + db->head->data_size));
+	      ssize_t written = sendfileall (fd, db->wr_fd,
+					     (char *) &dataset->resp
+					     - (char *) db->head,
+					     dataset->head.recsize);
+	      if (written != dataset->head.recsize)
+		{
 # ifndef __ASSUME_SENDFILE
-	      if (written == -1 && errno == ENOSYS)
-		goto use_write;
+		  if (written == -1 && errno == ENOSYS)
+		    goto use_write;
 # endif
+		  all_written = false;
+		}
 	    }
 	  else
 # ifndef __ASSUME_SENDFILE
 	  use_write:
 # endif
 #endif
-	    written = writeall (fd, &dataset->resp, total);
+	    if (writeall (fd, &dataset->resp, dataset->head.recsize)
+		!= dataset->head.recsize)
+	      all_written = false;
 	}
 
 
@@ -348,9 +342,6 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 		     ((uintptr_t) dataset & pagesize_m1) + total + n,
 		     MS_ASYNC);
 	    }
-
-	  /* Now get the lock to safely insert the records.  */
-	  pthread_rwlock_rdlock (&db->lock);
 
 	  /* NB: in the following code we always must add the entry
 	     marked with FIRST first.  Otherwise we end up with
@@ -394,12 +385,14 @@ cache_addpw (struct database_dyn *db, int fd, request_header *req,
 	}
     }
 
-  if (__builtin_expect (written != total, 0) && debug_level > 0)
+  if (__builtin_expect (!all_written, 0) && debug_level > 0)
     {
       char buf[256];
       dbg_log (_("short write in %s: %s"),  __FUNCTION__,
 	       strerror_r (errno, buf, sizeof (buf)));
     }
+
+  return timeout;
 }
 
 
@@ -421,7 +414,7 @@ lookup (int type, union keytype key, struct passwd *resultbufp, char *buffer,
 }
 
 
-static void
+static time_t
 addpwbyX (struct database_dyn *db, int fd, request_header *req,
 	  union keytype key, const char *keystr, uid_t c_uid,
 	  struct hashentry *he, struct datahead *dh)
@@ -478,10 +471,13 @@ addpwbyX (struct database_dyn *db, int fd, request_header *req,
     }
 
   /* Add the entry to the cache.  */
-  cache_addpw (db, fd, req, keystr, pwd, c_uid, he, dh, errval);
+  time_t timeout = cache_addpw (db, fd, req, keystr, pwd, c_uid, he, dh,
+				errval);
 
   if (use_malloc)
     free (buffer);
+
+  return timeout;
 }
 
 
@@ -495,7 +491,7 @@ addpwbyname (struct database_dyn *db, int fd, request_header *req,
 }
 
 
-void
+time_t
 readdpwbyname (struct database_dyn *db, struct hashentry *he,
 	       struct datahead *dh)
 {
@@ -506,7 +502,7 @@ readdpwbyname (struct database_dyn *db, struct hashentry *he,
     };
   union keytype u = { .v = db->data + he->key };
 
-  addpwbyX (db, -1, &req, u, db->data + he->key, he->owner, he, dh);
+  return addpwbyX (db, -1, &req, u, db->data + he->key, he->owner, he, dh);
 }
 
 
@@ -520,7 +516,7 @@ addpwbyuid (struct database_dyn *db, int fd, request_header *req,
   if (*(char *) key == '\0' || *ep != '\0')  /* invalid numeric uid */
     {
       if (debug_level > 0)
-        dbg_log (_("Invalid numeric uid \"%s\"!"), (char *) key);
+	dbg_log (_("Invalid numeric uid \"%s\"!"), (char *) key);
 
       errno = EINVAL;
       return;
@@ -532,7 +528,7 @@ addpwbyuid (struct database_dyn *db, int fd, request_header *req,
 }
 
 
-void
+time_t
 readdpwbyuid (struct database_dyn *db, struct hashentry *he,
 	      struct datahead *dh)
 {
@@ -549,5 +545,5 @@ readdpwbyuid (struct database_dyn *db, struct hashentry *he,
     };
   union keytype u = { .u = uid };
 
-  addpwbyX (db, -1, &req, u, db->data + he->key, he->owner, he, dh);
+  return addpwbyX (db, -1, &req, u, db->data + he->key, he->owner, he, dh);
 }

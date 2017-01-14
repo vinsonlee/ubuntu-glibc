@@ -1,5 +1,5 @@
 /* Test program for character classes and mappings.
-   Copyright (C) 1999 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1999.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <ctype.h>
 #include <locale.h>
@@ -41,7 +40,7 @@ main (void)
       /* Test basic table handling (basic == not more than 256 characters).
 	 The charmaps swaps the normal lower-upper case meaning of the
 	 ASCII characters used in the source code while the Unicode mapping
-	 in the repertoire map has the normal correspondants.  This test
+	 in the repertoire map has the normal correspondents.  This test
 	 shows the independence of the tables for `char' and `wchar_t'
 	 characters.  */
 

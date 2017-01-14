@@ -1,5 +1,4 @@
-/* Copyright (C) 1991,92,94,95,97,98,2000,2002,2003,2004
-   Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* Copy of sysdeps/generic/longjmp.c modified for backward compatibility
    with old non AltiVec/VMX longjmp.  */
@@ -52,13 +50,7 @@ weak_alias (__novmx__libc_siglongjmp, __novmx_longjmp)
 weak_alias (__novmx__libc_siglongjmp, __novmxlongjmp)
 weak_alias (__novmx__libc_siglongjmp, __novmxsiglongjmp)
 
-# if __WORDSIZE == 64
-symbol_version (__novmx_longjmp,_longjmp,GLIBC_2.3);
-symbol_version (__novmxlongjmp,longjmp,GLIBC_2.3);
-symbol_version (__novmxsiglongjmp,siglongjmp,GLIBC_2.3);
-# else
-symbol_version (__novmx_longjmp,_longjmp,GLIBC_2.0);
-symbol_version (__novmxlongjmp,longjmp,GLIBC_2.0);
-symbol_version (__novmxsiglongjmp,siglongjmp,GLIBC_2.0);
-# endif
+compat_symbol (libc, __novmx_longjmp, _longjmp, GLIBC_2_0);
+compat_symbol (libc, __novmxlongjmp, longjmp, GLIBC_2_0);
+compat_symbol (libc, __novmxsiglongjmp, siglongjmp, GLIBC_2_0);
 #endif /* defined SHARED && SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_3_4))  */

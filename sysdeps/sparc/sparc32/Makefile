@@ -1,4 +1,4 @@
-# Copyright (C) 1991,92,93,94,95,96,97,98,2000 Free Software Foundation, Inc.
+# Copyright (C) 1991-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -12,17 +12,12 @@
 # Lesser General Public License for more details.
 
 # You should have received a copy of the GNU Lesser General Public
-# License along with the GNU C Library; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307 USA.
+# License along with the GNU C Library; if not, see
+# <http://www.gnu.org/licenses/>.
 
 ifeq ($(subdir),gnulib)
 sysdep_routines = dotmul umul $(divrem) alloca
 endif	# gnulib
-
-ifeq ($(subdir),csu)
-CFLAGS-initfini.s += -mcpu=v7
-endif
 
 # We distribute these files, even though they are generated,
 # so as to avoid the need for a functioning m4 to build the library.
@@ -50,8 +45,5 @@ $(divrem:%=$(sysdep_dir)/sparc/sparc32/%.S): $(sysdep_dir)/sparc/sparc32/divrem.
 # Make it unwritable so noone will edit it by mistake.
 	-chmod a-w $@-tmp
 	mv -f $@-tmp $@
-ifeq ($(with-cvs),yes)
-	test ! -d CVS || cvs commit -m'Regenerated from $<' $@
-endif
 
 sysdep-realclean := $(sysdep-realclean) $(divrem:%=sysdeps/sparc/sparc32/%.S)

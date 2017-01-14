@@ -1,4 +1,4 @@
-/* Copyright (C) 2003 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2003.
 
@@ -13,16 +13,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <tls.h>
 
-#if HAVE___THREAD && defined HAVE_TLS_MODEL_ATTRIBUTE
 
 static int i;
 int bar;
@@ -44,7 +42,7 @@ test1 (void)
   for (s = 0; s < sizeof (foo) / sizeof (void *); ++s)
     {
       if (foo [s])
-        abort ();
+	abort ();
       foo [s] = &foo[s];
     }
 }
@@ -57,9 +55,7 @@ test2 (void)
   for (s = 0; s < sizeof (foo) / sizeof (void *); ++s)
     {
       if (foo [s] != &foo [s])
-        abort ();
+	abort ();
       foo [s] = &foo [s ^ 1];
     }
 }
-
-#endif

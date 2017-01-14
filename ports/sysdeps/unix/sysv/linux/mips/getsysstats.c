@@ -1,5 +1,5 @@
 /* Determine various system internal values, Linux/MIPS version.
-   Copyright (C) 2001 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,13 +13,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 
 /* We need to define a special parser for /proc/cpuinfo.  */
-#define GET_NPROCS_PARSER(FP, BUFFER, RESULT)				  \
+#define GET_NPROCS_PARSER(FD, BUFFER, CP, RE, BUFFER_END, RESULT)	  \
   do									  \
     {									  \
       (RESULT) = 0;							  \
@@ -27,8 +26,9 @@
 	 "cpu model".  We don't have to fear extremely long lines since	  \
 	 the kernel will not generate them.  8192 bytes are really	  \
 	 enough.  */							  \
-      while (fgets_unlocked (BUFFER, sizeof (BUFFER), FP) != NULL)	  \
-	if (strncmp (BUFFER, "cpu model", 9) == 0)			  \
+      char *l;								  \
+      while ((l = next_line (FD, BUFFER, &CP, &RE, BUFFER_END)) != NULL)  \
+	if (strncmp (l, "cpu model", 9) == 0)				  \
 	  ++(RESULT);							  \
     }									  \
   while (0)

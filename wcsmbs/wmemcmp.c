@@ -1,4 +1,4 @@
-/* Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1996.
 
@@ -13,40 +13,42 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <wchar.h>
 
+#ifndef WMEMCMP
+# define WMEMCMP wmemcmp
+#endif
 
 int
-wmemcmp (s1, s2, n)
+WMEMCMP (s1, s2, n)
      const wchar_t *s1;
      const wchar_t *s2;
      size_t n;
 {
-  register wint_t c1;
-  register wint_t c2;
+  wchar_t c1;
+  wchar_t c2;
 
   while (n >= 4)
     {
-      c1 = (wint_t) s1[0];
-      c2 = (wint_t) s2[0];
+      c1 = s1[0];
+      c2 = s2[0];
       if (c1 - c2 != 0)
-	return c1 - c2;
-      c1 = (wint_t) s1[1];
-      c2 = (wint_t) s2[1];
+	return c1 > c2 ? 1 : -1;
+      c1 = s1[1];
+      c2 = s2[1];
       if (c1 - c2 != 0)
-	return c1 - c2;
-      c1 = (wint_t) s1[2];
-      c2 = (wint_t) s2[2];
+	return c1 > c2 ? 1 : -1;
+      c1 = s1[2];
+      c2 = s2[2];
       if (c1 - c2 != 0)
-	return c1 - c2;
-      c1 = (wint_t) s1[3];
-      c2 = (wint_t) s2[3];
+	return c1 > c2 ? 1 : -1;
+      c1 = s1[3];
+      c2 = s2[3];
       if (c1 - c2 != 0)
-	return c1 - c2;
+	return c1 > c2 ? 1 : -1;
       s1 += 4;
       s2 += 4;
       n -= 4;
@@ -54,30 +56,30 @@ wmemcmp (s1, s2, n)
 
   if (n > 0)
     {
-      c1 = (wint_t) s1[0];
-      c2 = (wint_t) s2[0];
+      c1 = s1[0];
+      c2 = s2[0];
       if (c1 - c2 != 0)
-	return c1 - c2;
+	return c1 > c2 ? 1 : -1;
       ++s1;
       ++s2;
       --n;
     }
   if (n > 0)
     {
-      c1 = (wint_t) s1[0];
-      c2 = (wint_t) s2[0];
+      c1 = s1[0];
+      c2 = s2[0];
       if (c1 - c2 != 0)
-	return c1 - c2;
+	return c1 > c2 ? 1 : -1;
       ++s1;
       ++s2;
       --n;
     }
   if (n > 0)
     {
-      c1 = (wint_t) s1[0];
-      c2 = (wint_t) s2[0];
+      c1 = s1[0];
+      c2 = s2[0];
       if (c1 - c2 != 0)
-	return c1 - c2;
+	return c1 > c2 ? 1 : -1;
     }
 
   return 0;

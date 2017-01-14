@@ -1,4 +1,4 @@
-/* Copyright (C) 1993,1995,1997-2003,2004, 2006 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Ulrich Drepper <drepper@cygnus.com>.
    Based on the single byte version by Per Bothner <bothner@cygnus.com>.
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.
 
    As a special exception, if you link the code in this file with
    files compiled with a GNU compiler to produce an executable,
@@ -113,7 +112,7 @@ _IO_wdo_write (fp, data, to_do)
 
   return to_do == 0 ? 0 : WEOF;
 }
-INTDEF(_IO_wdo_write)
+libc_hidden_def (_IO_wdo_write)
 
 
 wint_t
@@ -123,8 +122,6 @@ _IO_wfile_underflow (fp)
   struct _IO_codecvt *cd;
   enum __codecvt_result status;
   _IO_ssize_t count;
-  int tries;
-  const char *read_ptr_copy;
 
   if (__builtin_expect (fp->_flags & _IO_NO_READS, 0))
     {
@@ -186,7 +183,7 @@ _IO_wfile_underflow (fp)
 	  free (fp->_IO_save_base);
 	  fp->_flags &= ~_IO_IN_BACKUP;
 	}
-      INTUSE(_IO_doallocbuf) (fp);
+      _IO_doallocbuf (fp);
 
       fp->_IO_read_base = fp->_IO_read_ptr = fp->_IO_read_end =
 	fp->_IO_buf_base;
@@ -203,7 +200,7 @@ _IO_wfile_underflow (fp)
 	  free (fp->_wide_data->_IO_save_base);
 	  fp->_flags &= ~_IO_IN_BACKUP;
 	}
-      INTUSE(_IO_wdoallocbuf) (fp);
+      _IO_wdoallocbuf (fp);
     }
 
   /* Flush all line buffered files before reading. */
@@ -211,7 +208,7 @@ _IO_wfile_underflow (fp)
   if (fp->_flags & (_IO_LINE_BUF|_IO_UNBUFFERED))
     {
 #if 0
-      INTUSE(_IO_flush_all_linebuffered) ();
+      _IO_flush_all_linebuffered ();
 #else
       /* We used to flush all line-buffered stream.  This really isn't
 	 required by any standard.  My recollection is that
@@ -228,7 +225,7 @@ _IO_wfile_underflow (fp)
 #endif
     }
 
-  INTUSE(_IO_switch_to_get_mode) (fp);
+  _IO_switch_to_get_mode (fp);
 
   fp->_wide_data->_IO_read_base = fp->_wide_data->_IO_read_ptr =
     fp->_wide_data->_IO_buf_base;
@@ -236,13 +233,15 @@ _IO_wfile_underflow (fp)
   fp->_wide_data->_IO_write_base = fp->_wide_data->_IO_write_ptr =
     fp->_wide_data->_IO_write_end = fp->_wide_data->_IO_buf_base;
 
-  tries = 0;
+  const char *read_ptr_copy;
+  char accbuf[MB_LEN_MAX];
+  size_t naccbuf = 0;
  again:
   count = _IO_SYSREAD (fp, fp->_IO_read_end,
 		       fp->_IO_buf_end - fp->_IO_read_end);
   if (count <= 0)
     {
-      if (count == 0 && tries == 0)
+      if (count == 0 && naccbuf == 0)
 	fp->_flags |= _IO_EOF_SEEN;
       else
 	fp->_flags |= _IO_ERR_SEEN, count = 0;
@@ -250,9 +249,9 @@ _IO_wfile_underflow (fp)
   fp->_IO_read_end += count;
   if (count == 0)
     {
-      if (tries != 0)
+      if (naccbuf != 0)
 	/* There are some bytes in the external buffer but they don't
-           convert to anything.  */
+	   convert to anything.  */
 	__set_errno (EILSEQ);
       return WEOF;
     }
@@ -262,18 +261,31 @@ _IO_wfile_underflow (fp)
   /* Now convert the read input.  */
   fp->_wide_data->_IO_last_state = fp->_wide_data->_IO_state;
   fp->_IO_read_base = fp->_IO_read_ptr;
+  const char *from = fp->_IO_read_ptr;
+  const char *to = fp->_IO_read_end;
+  size_t to_copy = count;
+  if (__builtin_expect (naccbuf != 0, 0))
+    {
+      to_copy = MIN (sizeof (accbuf) - naccbuf, count);
+      to = __mempcpy (&accbuf[naccbuf], from, to_copy);
+      naccbuf += to_copy;
+      from = accbuf;
+    }
   status = (*cd->__codecvt_do_in) (cd, &fp->_wide_data->_IO_state,
-				   fp->_IO_read_ptr, fp->_IO_read_end,
-				   &read_ptr_copy,
+				   from, to, &read_ptr_copy,
 				   fp->_wide_data->_IO_read_end,
 				   fp->_wide_data->_IO_buf_end,
 				   &fp->_wide_data->_IO_read_end);
 
-  fp->_IO_read_ptr = (char *) read_ptr_copy;
+  if (__builtin_expect (naccbuf != 0, 0))
+    fp->_IO_read_ptr += MAX (0, read_ptr_copy - &accbuf[naccbuf - to_copy]);
+  else
+    fp->_IO_read_ptr = (char *) read_ptr_copy;
   if (fp->_wide_data->_IO_read_end == fp->_wide_data->_IO_buf_base)
     {
-      if (status == __codecvt_error || fp->_IO_read_end == fp->_IO_buf_end)
+      if (status == __codecvt_error)
 	{
+	out_eilseq:
 	  __set_errno (EILSEQ);
 	  fp->_flags |= _IO_ERR_SEEN;
 	  return WEOF;
@@ -281,20 +293,52 @@ _IO_wfile_underflow (fp)
 
       /* The read bytes make no complete character.  Try reading again.  */
       assert (status == __codecvt_partial);
-      ++tries;
+
+      if (naccbuf == 0)
+	{
+	  if (fp->_IO_read_base < fp->_IO_read_ptr)
+	    {
+	      /* Partially used the buffer for some input data that
+		 produces no output.  */
+	      size_t avail = fp->_IO_read_end - fp->_IO_read_ptr;
+	      memmove (fp->_IO_read_base, fp->_IO_read_ptr, avail);
+	      fp->_IO_read_ptr = fp->_IO_read_base;
+	      fp->_IO_read_end -= avail;
+	      goto again;
+	    }
+	  naccbuf = fp->_IO_read_end - fp->_IO_read_ptr;
+	  if (naccbuf >= sizeof (accbuf))
+	    goto out_eilseq;
+
+	  memcpy (accbuf, fp->_IO_read_ptr, naccbuf);
+	}
+      else
+	{
+	  size_t used = read_ptr_copy - accbuf;
+	  if (used > 0)
+	    {
+	      memmove (accbuf, read_ptr_copy, naccbuf - used);
+	      naccbuf -= used;
+	    }
+
+	  if (naccbuf == sizeof (accbuf))
+	    goto out_eilseq;
+	}
+
+      fp->_IO_read_ptr = fp->_IO_read_end = fp->_IO_read_base;
+
       goto again;
     }
 
   return *fp->_wide_data->_IO_read_ptr;
 }
-INTDEF(_IO_wfile_underflow)
+libc_hidden_def (_IO_wfile_underflow)
 
 
 static wint_t
 _IO_wfile_underflow_mmap (_IO_FILE *fp)
 {
   struct _IO_codecvt *cd;
-  enum __codecvt_result status;
   const char *read_stop;
 
   if (__builtin_expect (fp->_flags & _IO_NO_READS, 0))
@@ -327,18 +371,18 @@ _IO_wfile_underflow_mmap (_IO_FILE *fp)
 	  free (fp->_wide_data->_IO_save_base);
 	  fp->_flags &= ~_IO_IN_BACKUP;
 	}
-      INTUSE(_IO_wdoallocbuf) (fp);
+      _IO_wdoallocbuf (fp);
     }
 
   fp->_wide_data->_IO_last_state = fp->_wide_data->_IO_state;
   fp->_wide_data->_IO_read_base = fp->_wide_data->_IO_read_ptr =
     fp->_wide_data->_IO_buf_base;
-  status = (*cd->__codecvt_do_in) (cd, &fp->_wide_data->_IO_state,
-				   fp->_IO_read_ptr, fp->_IO_read_end,
-				   &read_stop,
-				   fp->_wide_data->_IO_read_ptr,
-				   fp->_wide_data->_IO_buf_end,
-				   &fp->_wide_data->_IO_read_end);
+  (*cd->__codecvt_do_in) (cd, &fp->_wide_data->_IO_state,
+			  fp->_IO_read_ptr, fp->_IO_read_end,
+			  &read_stop,
+			  fp->_wide_data->_IO_read_ptr,
+			  fp->_wide_data->_IO_buf_end,
+			  &fp->_wide_data->_IO_read_end);
 
   fp->_IO_read_ptr = (char *) read_stop;
 
@@ -382,13 +426,13 @@ _IO_wfile_overflow (f, wch)
       /* Allocate a buffer if needed. */
       if (f->_wide_data->_IO_write_base == 0)
 	{
-	  INTUSE(_IO_wdoallocbuf) (f);
+	  _IO_wdoallocbuf (f);
 	  _IO_wsetg (f, f->_wide_data->_IO_buf_base,
 		     f->_wide_data->_IO_buf_base, f->_wide_data->_IO_buf_base);
 
 	  if (f->_IO_write_base == NULL)
 	    {
-	      INTUSE(_IO_doallocbuf) (f);
+	      _IO_doallocbuf (f);
 	      _IO_setg (f, f->_IO_buf_base, f->_IO_buf_base, f->_IO_buf_base);
 	    }
 	}
@@ -437,7 +481,7 @@ _IO_wfile_overflow (f, wch)
       return WEOF;
   return wch;
 }
-INTDEF(_IO_wfile_overflow)
+libc_hidden_def (_IO_wfile_overflow)
 
 wint_t
 _IO_wfile_sync (fp)
@@ -467,9 +511,9 @@ _IO_wfile_sync (fp)
       else
 	{
 	  /* We have to find out the hard way how much to back off.
-             To do this we determine how much input we needed to
-             generate the wide characters up to the current reading
-             position.  */
+	     To do this we determine how much input we needed to
+	     generate the wide characters up to the current reading
+	     position.  */
 	  int nread;
 
 	  fp->_wide_data->_IO_state = fp->_wide_data->_IO_last_state;
@@ -499,7 +543,58 @@ _IO_wfile_sync (fp)
   /*    setg(base(), ptr, ptr); */
   return retval;
 }
-INTDEF(_IO_wfile_sync)
+libc_hidden_def (_IO_wfile_sync)
+
+/* Adjust the internal buffer pointers to reflect the state in the external
+   buffer.  The content between fp->_IO_read_base and fp->_IO_read_ptr is
+   assumed to be converted and available in the range
+   fp->_wide_data->_IO_read_base and fp->_wide_data->_IO_read_end.
+
+   Returns 0 on success and -1 on error with the _IO_ERR_SEEN flag set.  */
+static int
+adjust_wide_data (_IO_FILE *fp, bool do_convert)
+{
+  struct _IO_codecvt *cv = fp->_codecvt;
+
+  int clen = (*cv->__codecvt_do_encoding) (cv);
+
+  /* Take the easy way out for constant length encodings if we don't need to
+     convert.  */
+  if (!do_convert && clen > 0)
+    {
+      fp->_wide_data->_IO_read_end += ((fp->_IO_read_ptr - fp->_IO_read_base)
+				       / clen);
+      goto done;
+    }
+
+  enum __codecvt_result status;
+  const char *read_stop = (const char *) fp->_IO_read_base;
+  do
+    {
+
+      fp->_wide_data->_IO_last_state = fp->_wide_data->_IO_state;
+      status = (*cv->__codecvt_do_in) (cv, &fp->_wide_data->_IO_state,
+				       fp->_IO_read_base, fp->_IO_read_ptr,
+				       &read_stop,
+				       fp->_wide_data->_IO_read_base,
+				       fp->_wide_data->_IO_buf_end,
+				       &fp->_wide_data->_IO_read_end);
+
+      /* Should we return EILSEQ?  */
+      if (__builtin_expect (status == __codecvt_error, 0))
+	{
+	  fp->_flags |= _IO_ERR_SEEN;
+	  return -1;
+	}
+    }
+  while (__builtin_expect (status == __codecvt_partial, 0));
+
+done:
+  /* Now seek to _IO_read_end to behave as if we have read it all in.  */
+  fp->_wide_data->_IO_read_ptr = fp->_wide_data->_IO_read_end;
+
+  return 0;
+}
 
 _IO_off64_t
 _IO_wfile_seekoff (fp, offset, dir, mode)
@@ -517,6 +612,10 @@ _IO_wfile_seekoff (fp, offset, dir, mode)
 			== fp->_wide_data->_IO_read_end)
 		       && (fp->_wide_data->_IO_write_base
 			   == fp->_wide_data->_IO_write_ptr));
+
+  bool was_writing = ((fp->_wide_data->_IO_write_ptr
+		       > fp->_wide_data->_IO_write_base)
+		      || _IO_in_put_mode (fp));
 
   if (mode == 0)
     {
@@ -536,7 +635,7 @@ _IO_wfile_seekoff (fp, offset, dir, mode)
 
 	  /* There is no more data in the backup buffer.  We can
 	     switch back.  */
-	  INTUSE(_IO_switch_to_main_wget_area) (fp);
+	  _IO_switch_to_main_wget_area (fp);
 	}
 
       dir = _IO_seek_cur, offset = 0; /* Don't move any pointers. */
@@ -545,15 +644,12 @@ _IO_wfile_seekoff (fp, offset, dir, mode)
   /* Flush unwritten characters.
      (This may do an unneeded write if we seek within the buffer.
      But to be able to switch to reading, we would need to set
-     egptr to ptr.  That can't be done in the current design,
+     egptr to pptr.  That can't be done in the current design,
      which assumes file_ptr() is eGptr.  Anyway, since we probably
      end up flushing when we close(), it doesn't make much difference.)
      FIXME: simulate mem-mapped files. */
-
-  if (fp->_wide_data->_IO_write_ptr > fp->_wide_data->_IO_write_base
-      || _IO_in_put_mode (fp))
-    if (INTUSE(_IO_switch_to_wget_mode) (fp))
-      return WEOF;
+  else if (was_writing && _IO_switch_to_wget_mode (fp))
+    return WEOF;
 
   if (fp->_wide_data->_IO_buf_base == NULL)
     {
@@ -563,7 +659,7 @@ _IO_wfile_seekoff (fp, offset, dir, mode)
 	  free (fp->_wide_data->_IO_read_base);
 	  fp->_flags &= ~_IO_IN_BACKUP;
 	}
-      INTUSE(_IO_doallocbuf) (fp);
+      _IO_doallocbuf (fp);
       _IO_setp (fp, fp->_IO_buf_base, fp->_IO_buf_base);
       _IO_setg (fp, fp->_IO_buf_base, fp->_IO_buf_base, fp->_IO_buf_base);
       _IO_wsetp (fp, fp->_wide_data->_IO_buf_base,
@@ -579,30 +675,112 @@ _IO_wfile_seekoff (fp, offset, dir, mode)
 
     case _IO_seek_cur:
       /* Adjust for read-ahead (bytes is buffer).  To do this we must
-         find out which position in the external buffer corresponds to
-         the current position in the internal buffer.  */
+	 find out which position in the external buffer corresponds to
+	 the current position in the internal buffer.  */
       cv = fp->_codecvt;
       clen = (*cv->__codecvt_do_encoding) (cv);
 
-      if (clen > 0)
-	offset -= (fp->_wide_data->_IO_read_end
-		   - fp->_wide_data->_IO_read_ptr) * clen;
+      if (mode != 0 || !was_writing)
+	{
+	  if (clen > 0)
+	    {
+	      offset -= (fp->_wide_data->_IO_read_end
+			 - fp->_wide_data->_IO_read_ptr) * clen;
+	      /* Adjust by readahead in external buffer.  */
+	      offset -= fp->_IO_read_end - fp->_IO_read_ptr;
+	    }
+	  else
+	    {
+	      int nread;
+
+	    flushed:
+	      delta = (fp->_wide_data->_IO_read_ptr
+		       - fp->_wide_data->_IO_read_base);
+	      fp->_wide_data->_IO_state = fp->_wide_data->_IO_last_state;
+	      nread = (*cv->__codecvt_do_length) (cv,
+						  &fp->_wide_data->_IO_state,
+						  fp->_IO_read_base,
+						  fp->_IO_read_end, delta);
+	      fp->_IO_read_ptr = fp->_IO_read_base + nread;
+	      fp->_wide_data->_IO_read_end = fp->_wide_data->_IO_read_ptr;
+	      offset -= fp->_IO_read_end - fp->_IO_read_base - nread;
+	    }
+	}
       else
 	{
-	  int nread;
+	  char *new_write_ptr = fp->_IO_write_ptr;
 
-	  delta = fp->_wide_data->_IO_read_ptr - fp->_wide_data->_IO_read_base;
-	  fp->_wide_data->_IO_state = fp->_wide_data->_IO_last_state;
-	  nread = (*cv->__codecvt_do_length) (cv, &fp->_wide_data->_IO_state,
-					      fp->_IO_read_base,
-					      fp->_IO_read_end, delta);
-	  fp->_IO_read_ptr = fp->_IO_read_base + nread;
-	  fp->_wide_data->_IO_read_end = fp->_wide_data->_IO_read_ptr;
-	  offset -= fp->_IO_read_end - fp->_IO_read_base - nread;
+	  if (clen > 0)
+	    offset += (fp->_wide_data->_IO_write_ptr
+		       - fp->_wide_data->_IO_write_base) / clen;
+	  else
+	    {
+	      enum __codecvt_result status = __codecvt_ok;
+	      delta = (fp->_wide_data->_IO_write_ptr
+		       - fp->_wide_data->_IO_write_base);
+	      const wchar_t *write_base = fp->_wide_data->_IO_write_base;
+
+	      /* FIXME: This actually ends up in two iterations of conversion,
+		 one here and the next when the buffer actually gets flushed.
+		 It may be possible to optimize this in future so that
+		 wdo_write identifies already converted content and does not
+		 redo it.  In any case, this is much better than having to
+		 flush buffers for every ftell.  */
+	      do
+		{
+		  /* There is not enough space in the buffer to do the entire
+		     conversion, so there is no point trying to avoid the
+		     buffer flush.  Just do it and go back to how it was with
+		     the read mode.  */
+		  if (status == __codecvt_partial
+		      || (delta > 0 && new_write_ptr == fp->_IO_buf_end))
+		    {
+		      if (_IO_switch_to_wget_mode (fp))
+			return WEOF;
+		      goto flushed;
+		    }
+
+		  const wchar_t *new_wbase = fp->_wide_data->_IO_write_base;
+		  fp->_wide_data->_IO_state = fp->_wide_data->_IO_last_state;
+		  status = (*cv->__codecvt_do_out) (cv,
+						    &fp->_wide_data->_IO_state,
+						    write_base,
+						    write_base + delta,
+						    &new_wbase,
+						    new_write_ptr,
+						    fp->_IO_buf_end,
+						    &new_write_ptr);
+
+		  delta -= new_wbase - write_base;
+
+		  /* If there was an error, then return WEOF.
+		     TODO: set buffer state.  */
+		  if (__builtin_expect (status == __codecvt_error, 0))
+		      return WEOF;
+		}
+	      while (delta > 0);
+	    }
+
+	  /* _IO_read_end coincides with fp._offset, so the actual file position
+	     is fp._offset - (_IO_read_end - new_write_ptr).  This is fine
+	     even if fp._offset is not set, since fp->_IO_read_end is then at
+	     _IO_buf_base and this adjustment is for unbuffered output.  */
+	  offset -= fp->_IO_read_end - new_write_ptr;
 	}
 
       if (fp->_offset == _IO_pos_BAD)
-	goto dumb;
+	{
+	  if (mode != 0)
+	    goto dumb;
+	  else
+	    {
+	      result = _IO_SYSSEEK (fp, 0, dir);
+	      if (result == EOF)
+		return result;
+	      fp->_offset = result;
+	    }
+	}
+
       /* Make offset absolute, assuming current pointer is file_ptr(). */
       offset += fp->_offset;
 
@@ -612,7 +790,7 @@ _IO_wfile_seekoff (fp, offset, dir, mode)
       break;
     case _IO_seek_end:
       {
-	struct _G_stat64 st;
+	struct stat64 st;
 	if (_IO_SYSSTAT (fp, &st) == 0 && S_ISREG (st.st_mode))
 	  {
 	    offset += st.st_size;
@@ -632,87 +810,27 @@ _IO_wfile_seekoff (fp, offset, dir, mode)
   if (fp->_offset != _IO_pos_BAD && fp->_IO_read_base != NULL
       && !_IO_in_backup (fp))
     {
-      /* Offset relative to start of main get area. */
-      _IO_off64_t rel_offset = (offset - fp->_offset
-				+ (fp->_IO_read_end - fp->_IO_read_base));
-      if (rel_offset >= 0)
+      _IO_off64_t start_offset = (fp->_offset
+				  - (fp->_IO_read_end - fp->_IO_buf_base));
+      if (offset >= start_offset && offset < fp->_offset)
 	{
-#if 0
-	  if (_IO_in_backup (fp))
-	    _IO_switch_to_main_get_area (fp);
-#endif
-	  if (rel_offset <= fp->_IO_read_end - fp->_IO_read_base)
-	    {
-	      enum __codecvt_result status;
-	      struct _IO_codecvt *cd = fp->_codecvt;
-	      const char *read_ptr_copy;
+	  _IO_setg (fp, fp->_IO_buf_base,
+		    fp->_IO_buf_base + (offset - start_offset),
+		    fp->_IO_read_end);
+	  _IO_setp (fp, fp->_IO_buf_base, fp->_IO_buf_base);
+	  _IO_wsetg (fp, fp->_wide_data->_IO_buf_base,
+		     fp->_wide_data->_IO_buf_base,
+		     fp->_wide_data->_IO_buf_base);
+	  _IO_wsetp (fp, fp->_wide_data->_IO_buf_base,
+		     fp->_wide_data->_IO_buf_base);
 
-	      fp->_IO_read_ptr = fp->_IO_read_base + rel_offset;
-	      _IO_setp (fp, fp->_IO_buf_base, fp->_IO_buf_base);
+	  if (adjust_wide_data (fp, false))
+	    goto dumb;
 
-	      /* Now set the pointer for the internal buffer.  This
-                 might be an iterative process.  Though the read
-                 pointer is somewhere in the current external buffer
-                 this does not mean we can convert this whole buffer
-                 at once fitting in the internal buffer.  */
-	      fp->_wide_data->_IO_state = fp->_wide_data->_IO_last_state;
-	      read_ptr_copy = fp->_IO_read_base;
-	      fp->_wide_data->_IO_read_ptr = fp->_wide_data->_IO_read_base;
-	      do
-		{
-		  wchar_t buffer[1024];
-		  wchar_t *ignore;
-		  status = (*cd->__codecvt_do_in) (cd,
-						   &fp->_wide_data->_IO_state,
-						   read_ptr_copy,
-						   fp->_IO_read_ptr,
-						   &read_ptr_copy,
-						   buffer,
-						   buffer
-						   + (sizeof (buffer)
-						      / sizeof (buffer[0])),
-						   &ignore);
-		  if (status != __codecvt_ok && status != __codecvt_partial)
-		    {
-		      fp->_flags |= _IO_ERR_SEEN;
-		      goto dumb;
-		    }
-		}
-	      while (read_ptr_copy != fp->_IO_read_ptr);
-
-	      fp->_wide_data->_IO_read_ptr = fp->_wide_data->_IO_read_base;
-
-	      _IO_mask_flags (fp, 0, _IO_EOF_SEEN);
-	      goto resync;
-	    }
-#ifdef TODO
-	    /* If we have streammarkers, seek forward by reading ahead. */
-	    if (_IO_have_markers (fp))
-	      {
-		int to_skip = rel_offset
-		  - (fp->_IO_read_ptr - fp->_IO_read_base);
-		if (ignore (to_skip) != to_skip)
-		  goto dumb;
-		_IO_mask_flags (fp, 0, _IO_EOF_SEEN);
-		goto resync;
-	      }
-#endif
-	}
-#ifdef TODO
-      if (rel_offset < 0 && rel_offset >= Bbase () - Bptr ())
-	{
-	  if (!_IO_in_backup (fp))
-	    _IO_switch_to_backup_area (fp);
-	  gbump (fp->_IO_read_end + rel_offset - fp->_IO_read_ptr);
 	  _IO_mask_flags (fp, 0, _IO_EOF_SEEN);
 	  goto resync;
 	}
-#endif
     }
-
-#ifdef TODO
-  INTUSE(_IO_unsave_markers) (fp);
-#endif
 
   if (fp->_flags & _IO_NO_READS)
     goto dumb;
@@ -746,12 +864,19 @@ _IO_wfile_seekoff (fp, offset, dir, mode)
   _IO_setg (fp, fp->_IO_buf_base, fp->_IO_buf_base + delta,
 	    fp->_IO_buf_base + count);
   _IO_setp (fp, fp->_IO_buf_base, fp->_IO_buf_base);
+  _IO_wsetg (fp, fp->_wide_data->_IO_buf_base,
+	     fp->_wide_data->_IO_buf_base, fp->_wide_data->_IO_buf_base);
+  _IO_wsetp (fp, fp->_wide_data->_IO_buf_base, fp->_wide_data->_IO_buf_base);
+
+  if (adjust_wide_data (fp, true))
+    goto dumb;
+
   fp->_offset = result + count;
   _IO_mask_flags (fp, 0, _IO_EOF_SEEN);
   return offset;
  dumb:
 
-  INTUSE(_IO_unsave_markers) (fp);
+  _IO_unsave_markers (fp);
   result = _IO_SYSSEEK (fp, offset, dir);
   if (result != EOF)
     {
@@ -770,13 +895,13 @@ resync:
   /* We need to do it since it is possible that the file offset in
      the kernel may be changed behind our back. It may happen when
      we fopen a file and then do a fork. One process may access the
-     the file and the kernel file offset will be changed. */
+     file and the kernel file offset will be changed. */
   if (fp->_offset >= 0)
     _IO_SYSSEEK (fp, fp->_offset, 0);
 
   return offset;
 }
-INTDEF(_IO_wfile_seekoff)
+libc_hidden_def (_IO_wfile_seekoff)
 
 
 _IO_size_t
@@ -785,7 +910,7 @@ _IO_wfile_xsputn (f, data, n)
      const void *data;
      _IO_size_t n;
 {
-  register const wchar_t *s = (const wchar_t *) data;
+  const wchar_t *s = (const wchar_t *) data;
   _IO_size_t to_do = n;
   int must_flush = 0;
   _IO_size_t count;
@@ -803,7 +928,7 @@ _IO_wfile_xsputn (f, data, n)
       count = f->_wide_data->_IO_buf_end - f->_wide_data->_IO_write_ptr;
       if (count >= n)
 	{
-	  register const wchar_t *p;
+	  const wchar_t *p;
 	  for (p = s + n; p > s; )
 	    {
 	      if (*--p == L'\n')
@@ -833,8 +958,8 @@ _IO_wfile_xsputn (f, data, n)
 	}
       else
 	{
-	  register wchar_t *p = f->_wide_data->_IO_write_ptr;
-	  register int i = (int) count;
+	  wchar_t *p = f->_wide_data->_IO_write_ptr;
+	  int i = (int) count;
 	  while (--i >= 0)
 	    *p++ = *s++;
 	  f->_wide_data->_IO_write_ptr = p;
@@ -842,38 +967,38 @@ _IO_wfile_xsputn (f, data, n)
       to_do -= count;
     }
   if (to_do > 0)
-    to_do -= INTUSE(_IO_wdefault_xsputn) (f, s, to_do);
+    to_do -= _IO_wdefault_xsputn (f, s, to_do);
   if (must_flush
       && f->_wide_data->_IO_write_ptr != f->_wide_data->_IO_write_base)
-    INTUSE(_IO_wdo_write) (f, f->_wide_data->_IO_write_base,
-			   f->_wide_data->_IO_write_ptr
-			   - f->_wide_data->_IO_write_base);
+    _IO_wdo_write (f, f->_wide_data->_IO_write_base,
+		   f->_wide_data->_IO_write_ptr
+		   - f->_wide_data->_IO_write_base);
 
   return n - to_do;
 }
-INTDEF(_IO_wfile_xsputn)
+libc_hidden_def (_IO_wfile_xsputn)
 
 
 const struct _IO_jump_t _IO_wfile_jumps =
 {
   JUMP_INIT_DUMMY,
   JUMP_INIT(finish, _IO_new_file_finish),
-  JUMP_INIT(overflow, (_IO_overflow_t) INTUSE(_IO_wfile_overflow)),
-  JUMP_INIT(underflow, (_IO_underflow_t) INTUSE(_IO_wfile_underflow)),
-  JUMP_INIT(uflow, (_IO_underflow_t) INTUSE(_IO_wdefault_uflow)),
-  JUMP_INIT(pbackfail, (_IO_pbackfail_t) INTUSE(_IO_wdefault_pbackfail)),
-  JUMP_INIT(xsputn, INTUSE(_IO_wfile_xsputn)),
-  JUMP_INIT(xsgetn, INTUSE(_IO_file_xsgetn)),
-  JUMP_INIT(seekoff, INTUSE(_IO_wfile_seekoff)),
+  JUMP_INIT(overflow, (_IO_overflow_t) _IO_wfile_overflow),
+  JUMP_INIT(underflow, (_IO_underflow_t) _IO_wfile_underflow),
+  JUMP_INIT(uflow, (_IO_underflow_t) _IO_wdefault_uflow),
+  JUMP_INIT(pbackfail, (_IO_pbackfail_t) _IO_wdefault_pbackfail),
+  JUMP_INIT(xsputn, _IO_wfile_xsputn),
+  JUMP_INIT(xsgetn, _IO_file_xsgetn),
+  JUMP_INIT(seekoff, _IO_wfile_seekoff),
   JUMP_INIT(seekpos, _IO_default_seekpos),
   JUMP_INIT(setbuf, _IO_new_file_setbuf),
-  JUMP_INIT(sync, (_IO_sync_t) INTUSE(_IO_wfile_sync)),
+  JUMP_INIT(sync, (_IO_sync_t) _IO_wfile_sync),
   JUMP_INIT(doallocate, _IO_wfile_doallocate),
-  JUMP_INIT(read, INTUSE(_IO_file_read)),
+  JUMP_INIT(read, _IO_file_read),
   JUMP_INIT(write, _IO_new_file_write),
-  JUMP_INIT(seek, INTUSE(_IO_file_seek)),
-  JUMP_INIT(close, INTUSE(_IO_file_close)),
-  JUMP_INIT(stat, INTUSE(_IO_file_stat)),
+  JUMP_INIT(seek, _IO_file_seek),
+  JUMP_INIT(close, _IO_file_close),
+  JUMP_INIT(stat, _IO_file_stat),
   JUMP_INIT(showmanyc, _IO_default_showmanyc),
   JUMP_INIT(imbue, _IO_default_imbue)
 };
@@ -884,22 +1009,22 @@ const struct _IO_jump_t _IO_wfile_jumps_mmap =
 {
   JUMP_INIT_DUMMY,
   JUMP_INIT(finish, _IO_new_file_finish),
-  JUMP_INIT(overflow, (_IO_overflow_t) INTUSE(_IO_wfile_overflow)),
+  JUMP_INIT(overflow, (_IO_overflow_t) _IO_wfile_overflow),
   JUMP_INIT(underflow, (_IO_underflow_t) _IO_wfile_underflow_mmap),
-  JUMP_INIT(uflow, (_IO_underflow_t) INTUSE(_IO_wdefault_uflow)),
-  JUMP_INIT(pbackfail, (_IO_pbackfail_t) INTUSE(_IO_wdefault_pbackfail)),
-  JUMP_INIT(xsputn, INTUSE(_IO_wfile_xsputn)),
-  JUMP_INIT(xsgetn, INTUSE(_IO_file_xsgetn)),
-  JUMP_INIT(seekoff, INTUSE(_IO_wfile_seekoff)),
+  JUMP_INIT(uflow, (_IO_underflow_t) _IO_wdefault_uflow),
+  JUMP_INIT(pbackfail, (_IO_pbackfail_t) _IO_wdefault_pbackfail),
+  JUMP_INIT(xsputn, _IO_wfile_xsputn),
+  JUMP_INIT(xsgetn, _IO_file_xsgetn),
+  JUMP_INIT(seekoff, _IO_wfile_seekoff),
   JUMP_INIT(seekpos, _IO_default_seekpos),
   JUMP_INIT(setbuf, _IO_file_setbuf_mmap),
-  JUMP_INIT(sync, (_IO_sync_t) INTUSE(_IO_wfile_sync)),
+  JUMP_INIT(sync, (_IO_sync_t) _IO_wfile_sync),
   JUMP_INIT(doallocate, _IO_wfile_doallocate),
-  JUMP_INIT(read, INTUSE(_IO_file_read)),
+  JUMP_INIT(read, _IO_file_read),
   JUMP_INIT(write, _IO_new_file_write),
-  JUMP_INIT(seek, INTUSE(_IO_file_seek)),
+  JUMP_INIT(seek, _IO_file_seek),
   JUMP_INIT(close, _IO_file_close_mmap),
-  JUMP_INIT(stat, INTUSE(_IO_file_stat)),
+  JUMP_INIT(stat, _IO_file_stat),
   JUMP_INIT(showmanyc, _IO_default_showmanyc),
   JUMP_INIT(imbue, _IO_default_imbue)
 };
@@ -908,22 +1033,22 @@ const struct _IO_jump_t _IO_wfile_jumps_maybe_mmap =
 {
   JUMP_INIT_DUMMY,
   JUMP_INIT(finish, _IO_new_file_finish),
-  JUMP_INIT(overflow, (_IO_overflow_t) INTUSE(_IO_wfile_overflow)),
+  JUMP_INIT(overflow, (_IO_overflow_t) _IO_wfile_overflow),
   JUMP_INIT(underflow, (_IO_underflow_t) _IO_wfile_underflow_maybe_mmap),
-  JUMP_INIT(uflow, (_IO_underflow_t) INTUSE(_IO_wdefault_uflow)),
-  JUMP_INIT(pbackfail, (_IO_pbackfail_t) INTUSE(_IO_wdefault_pbackfail)),
-  JUMP_INIT(xsputn, INTUSE(_IO_wfile_xsputn)),
-  JUMP_INIT(xsgetn, INTUSE(_IO_file_xsgetn)),
-  JUMP_INIT(seekoff, INTUSE(_IO_wfile_seekoff)),
+  JUMP_INIT(uflow, (_IO_underflow_t) _IO_wdefault_uflow),
+  JUMP_INIT(pbackfail, (_IO_pbackfail_t) _IO_wdefault_pbackfail),
+  JUMP_INIT(xsputn, _IO_wfile_xsputn),
+  JUMP_INIT(xsgetn, _IO_file_xsgetn),
+  JUMP_INIT(seekoff, _IO_wfile_seekoff),
   JUMP_INIT(seekpos, _IO_default_seekpos),
   JUMP_INIT(setbuf, _IO_file_setbuf_mmap),
-  JUMP_INIT(sync, (_IO_sync_t) INTUSE(_IO_wfile_sync)),
+  JUMP_INIT(sync, (_IO_sync_t) _IO_wfile_sync),
   JUMP_INIT(doallocate, _IO_wfile_doallocate),
-  JUMP_INIT(read, INTUSE(_IO_file_read)),
+  JUMP_INIT(read, _IO_file_read),
   JUMP_INIT(write, _IO_new_file_write),
-  JUMP_INIT(seek, INTUSE(_IO_file_seek)),
-  JUMP_INIT(close, INTUSE(_IO_file_close)),
-  JUMP_INIT(stat, INTUSE(_IO_file_stat)),
+  JUMP_INIT(seek, _IO_file_seek),
+  JUMP_INIT(close, _IO_file_close),
+  JUMP_INIT(stat, _IO_file_stat),
   JUMP_INIT(showmanyc, _IO_default_showmanyc),
   JUMP_INIT(imbue, _IO_default_imbue)
 };

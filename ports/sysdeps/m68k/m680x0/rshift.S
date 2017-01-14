@@ -1,6 +1,6 @@
 /* mc68020 __mpn_rshift -- Shift right a low-level natural-number integer.
 
-Copyright (C) 1996, 1998 Free Software Foundation, Inc.
+Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -15,9 +15,7 @@ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library; see the file COPYING.LIB.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-MA 02111-1307, USA. */
+along with the GNU MP Library.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /*
   INPUT PARAMETERS
@@ -39,6 +37,13 @@ MA 02111-1307, USA. */
 ENTRY(__mpn_rshift)
 /* Save used registers on the stack.  */
 	moveml	R(d2)-R(d6)/R(a2),MEM_PREDEC(sp)
+	cfi_adjust_cfa_offset (6*4)
+	cfi_rel_offset (R(d2), 0)
+	cfi_rel_offset (R(d3), 4)
+	cfi_rel_offset (R(d4), 8)
+	cfi_rel_offset (R(d5), 12)
+	cfi_rel_offset (R(d6), 16)
+	cfi_rel_offset (R(a2), 20)
 
 /* Copy the arguments to registers.  */
 	movel	MEM_DISP(sp,28),R(res_ptr)
@@ -100,12 +105,21 @@ L(Lend:)
 
 /* Restore used registers from stack frame.  */
 	moveml	MEM_POSTINC(sp),R(d2)-R(d6)/R(a2)
+	cfi_remember_state
+	cfi_adjust_cfa_offset (-6*4)
+	cfi_restore (R(d2))
+	cfi_restore (R(d3))
+	cfi_restore (R(d4))
+	cfi_restore (R(d5))
+	cfi_restore (R(d6))
+	cfi_restore (R(a2))
 	rts
 
 /* We loop from most significant end of the arrays, which is only
    permissible if the source and destination don't overlap, since the
    function is documented to work for overlapping source and destination.  */
 
+	cfi_restore_state
 L(Lspecial:)
 #if (defined (__mc68020__) || defined (__NeXT__) || defined(mc68020))
 	lea	MEM_INDX1(s_ptr,s_size,l,4),R(s_ptr)
@@ -142,5 +156,12 @@ L(LL1:)
 L(LLend:)
 /* Restore used registers from stack frame.  */
 	moveml	MEM_POSTINC(sp),R(d2)-R(d6)/R(a2)
+	cfi_adjust_cfa_offset (-6*4)
+	cfi_restore (R(d2))
+	cfi_restore (R(d3))
+	cfi_restore (R(d4))
+	cfi_restore (R(d5))
+	cfi_restore (R(d6))
+	cfi_restore (R(a2))
 	rts
 END(__mpn_rshift)

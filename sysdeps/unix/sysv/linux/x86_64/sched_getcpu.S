@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,14 +12,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <tls.h>
 #define _ERRNO_H	1
 #include <bits/errno.h>
+#include <kernel-features.h>
 
 /* For the calculation see asm/vsyscall.h.  */
 #define VSYSCALL_ADDR_vgetcpu	0xffffffffff600800
@@ -35,16 +35,40 @@ ENTRY (sched_getcpu)
 	movl	$VGETCPU_CACHE_OFFSET, %edx
 	addq	%fs:0, %rdx
 
+#ifdef SHARED
+	movq	__vdso_getcpu(%rip), %rax
+	PTR_DEMANGLE (%rax)
+	callq	*%rax
+#else
+# ifdef __NR_getcpu
+	movl	$__NR_getcpu, %eax
+	syscall
+#  ifndef __ASSUME_GETCPU_SYSCALL
+	cmpq	$-ENOSYS, %rax
+	jne	1f
+#  endif
+# endif
+# ifndef __ASSUME_GETCPU_SYSCALL
 	movq	$VSYSCALL_ADDR_vgetcpu, %rax
 	callq	*%rax
+1:
+# else
+#  ifndef __NR_getcpu
+#   error "cannot happen"
+#  endif
+# endif
+#endif
+
+	/* Local variable is result if the call is successful.  */
+	movl	(%rsp), %edx
+	/* Restore stack pointer before we might jump to
+	SYSCALL_ERROR_LABEL which returns to the caller.  */
+	add	$0x8, %rsp
+	cfi_adjust_cfa_offset(-8)
 
 	cmpq	$-4095, %rax
 	jae	SYSCALL_ERROR_LABEL
 
-	movl	(%rsp), %eax
-
-L(pseudo_end):
-	add	$0x8, %rsp
-	cfi_adjust_cfa_offset(-8)
+	movl	%edx, %eax
 	ret
 PSEUDO_END(sched_getcpu)

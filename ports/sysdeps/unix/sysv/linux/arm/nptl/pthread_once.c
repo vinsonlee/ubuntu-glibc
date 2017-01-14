@@ -1,4 +1,4 @@
-/* Copyright (C) 2004, 2005 Free Software Foundation, Inc.
+/* Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "pthreadP.h"
 #include <lowlevellock.h>
@@ -87,13 +86,4 @@ __pthread_once (pthread_once_t *once_control, void (*init_routine) (void))
   return 0;
 }
 weak_alias (__pthread_once, pthread_once)
-strong_alias (__pthread_once, __pthread_once_internal)
-
-#if defined(__USING_SJLJ_EXCEPTIONS__) && !defined(__PIC__)
-/* When statically linked, if pthread_create is used, this file
-   will be brought in.  The exception handling code in GCC assumes
-   that if pthread_create is available, so are these.  */
-const void *include_pthread_getspecific attribute_hidden = pthread_getspecific;
-const void *include_pthread_setspecific attribute_hidden = pthread_setspecific;
-const void *include_pthread_key_create attribute_hidden = pthread_key_create;
-#endif
+hidden_def (__pthread_once)

@@ -1,5 +1,4 @@
-/* Copyright (C) 1991,1993,1995-1997,2001,2002,2003
-   Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <grp.h>
@@ -255,6 +253,16 @@ __sysconf (name)
     case _SC_XBS5_LP64_OFF64:
     case _SC_XBS5_LPBIG_OFFBIG:
 
+    case _SC_POSIX_V6_ILP32_OFF32:
+    case _SC_POSIX_V6_ILP32_OFFBIG:
+    case _SC_POSIX_V6_LP64_OFF64:
+    case _SC_POSIX_V6_LPBIG_OFFBIG:
+
+    case _SC_POSIX_V7_ILP32_OFF32:
+    case _SC_POSIX_V7_ILP32_OFFBIG:
+    case _SC_POSIX_V7_LP64_OFF64:
+    case _SC_POSIX_V7_LPBIG_OFFBIG:
+
     case _SC_XOPEN_LEGACY:
     case _SC_XOPEN_REALTIME:
     case _SC_XOPEN_REALTIME_THREADS:
@@ -270,4 +278,3 @@ weak_alias (__sysconf, sysconf)
 libc_hidden_def (__sysconf)
 
 stub_warning (sysconf)
-#include <stub-tag.h>

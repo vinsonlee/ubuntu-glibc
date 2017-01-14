@@ -37,10 +37,8 @@ static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #include <ctype.h>
 #include <string.h>
 
-#ifdef USE_IN_LIBIO
-# define flockfile(s) _IO_flockfile (s)
-# define funlockfile(s) _IO_funlockfile (s)
-#endif
+#define flockfile(s) _IO_flockfile (s)
+#define funlockfile(s) _IO_funlockfile (s)
 
 static char zapchar;
 static FILE *tf;
@@ -49,7 +47,7 @@ struct ttyent *
 getttynam(tty)
 	const char *tty;
 {
-	register struct ttyent *t;
+	struct ttyent *t;
 
 	setttyent();
 	while ((t = getttyent()))
@@ -63,11 +61,11 @@ static char *skip (char *) __THROW internal_function;
 static char *value (char *) __THROW internal_function;
 
 struct ttyent *
-getttyent()
+getttyent (void)
 {
 	static struct ttyent tty;
-	register int c;
-	register char *p;
+	int c;
+	char *p;
 #define	MAXLINELENGTH	100
 	static char line[MAXLINELENGTH];
 
@@ -144,10 +142,10 @@ libc_hidden_def (getttyent)
 static char *
 internal_function
 skip(p)
-	register char *p;
+	char *p;
 {
-	register char *t;
-	register int c, q;
+	char *t;
+	int c, q;
 
 	for (q = 0, t = p; (c = *p) != '\0'; p++) {
 		if (c == '"') {
@@ -179,20 +177,20 @@ skip(p)
 static char *
 internal_function
 value(p)
-	register char *p;
+	char *p;
 {
 
 	return ((p = index(p, '=')) ? ++p : NULL);
 }
 
 int
-setttyent()
+setttyent (void)
 {
 
 	if (tf) {
 		(void)rewind(tf);
 		return (1);
-	} else if ((tf = fopen(_PATH_TTYS, "rc"))) {
+	} else if ((tf = fopen(_PATH_TTYS, "rce"))) {
 		/* We do the locking ourselves.  */
 		__fsetlocking (tf, FSETLOCKING_BYCALLER);
 		return (1);
@@ -202,7 +200,7 @@ setttyent()
 libc_hidden_def (setttyent)
 
 int
-endttyent()
+endttyent (void)
 {
 	int rval;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997, 1998, 1999, 2002, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@vt.uni-paderborn.de>, 1997.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
 #include <unistd.h>
@@ -55,7 +54,7 @@ user2netname (char netname[MAXNETNAMELEN + 1], const uid_t uid,
     netname[i - 1] = '\0';
   return 1;
 }
-libc_hidden_def (user2netname)
+libc_hidden_nolink_sunrpc (user2netname, GLIBC_2_1)
 
 int
 host2netname (char netname[MAXNETNAMELEN + 1], const char *host,
@@ -116,7 +115,11 @@ host2netname (char netname[MAXNETNAMELEN + 1], const char *host,
   sprintf (netname, "%s.%s@%s", OPSYS, hostname, domainname);
   return 1;
 }
+#ifdef EXPORT_RPC_SYMBOLS
 libc_hidden_def (host2netname)
+#else
+libc_hidden_nolink_sunrpc (host2netname, GLIBC_2_1)
+#endif
 
 int
 getnetname (char name[MAXNETNAMELEN + 1])
@@ -131,7 +134,7 @@ getnetname (char name[MAXNETNAMELEN + 1])
     dummy = user2netname (name, uid, NULL);
   return (dummy);
 }
-libc_hidden_def (getnetname)
+libc_hidden_nolink_sunrpc (getnetname, GLIBC_2_1)
 
 /* Type of the lookup function for netname2user.  */
 typedef int (*netname2user_function) (const char netname[MAXNETNAMELEN + 1],
@@ -181,16 +184,19 @@ netname2user (const char netname[MAXNETNAMELEN + 1], uid_t * uidp, gid_t * gidp,
 
   return status == NSS_STATUS_SUCCESS;
 }
+#ifdef EXPORT_RPC_SYMBOLS
 libc_hidden_def (netname2user)
+#else
+libc_hidden_nolink_sunrpc (netname2user, GLIBC_2_1)
+#endif
 
 int
 netname2host (const char netname[MAXNETNAMELEN + 1], char *hostname,
 	      const int hostlen)
 {
   char *p1, *p2;
-  char buffer[MAXNETNAMELEN + 1];
 
-  p1 = strchr (buffer, '.');
+  p1 = strchr (netname, '.');
   if (p1 == NULL)
     return 0;
   p1++;
@@ -208,3 +214,4 @@ netname2host (const char netname[MAXNETNAMELEN + 1], char *hostname,
 
   return 1;
 }
+libc_hidden_nolink_sunrpc (netname2host, GLIBC_2_1)

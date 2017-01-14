@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1995.
 
@@ -13,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -113,23 +112,26 @@ void (*argp_program_version_hook) (FILE *, struct argp_state *) = print_version;
 #define OPT_REPLACE 307
 #define OPT_DELETE_FROM_ARCHIVE 308
 #define OPT_LIST_ARCHIVE 309
+#define OPT_LITTLE_ENDIAN 400
+#define OPT_BIG_ENDIAN 401
 
 /* Definitions of arguments for argp functions.  */
 static const struct argp_option options[] =
 {
   { NULL, 0, NULL, 0, N_("Input Files:") },
-  { "charmap", 'f', "FILE", 0,
+  { "charmap", 'f', N_("FILE"), 0,
     N_("Symbolic character names defined in FILE") },
-  { "inputfile", 'i', "FILE", 0, N_("Source definitions are found in FILE") },
-  { "repertoire-map", 'u', "FILE", 0,
+  { "inputfile", 'i', N_("FILE"), 0,
+    N_("Source definitions are found in FILE") },
+  { "repertoire-map", 'u', N_("FILE"), 0,
     N_("FILE contains mapping from symbolic names to UCS4 values") },
 
   { NULL, 0, NULL, 0, N_("Output control:") },
   { "force", 'c', NULL, 0,
     N_("Create output even if warning messages were issued") },
   { "old-style", OPT_OLDSTYLE, NULL, 0, N_("Create old-style tables") },
-  { "prefix", OPT_PREFIX, "PATH", 0, N_("Optional output file prefix") },
-  { "posix", OPT_POSIX, NULL, 0, N_("Be strictly POSIX conform") },
+  { "prefix", OPT_PREFIX, N_("PATH"), 0, N_("Optional output file prefix") },
+  { "posix", OPT_POSIX, NULL, 0, N_("Strictly conform to POSIX") },
   { "quiet", OPT_QUIET, NULL, 0,
     N_("Suppress warnings and information messages") },
   { "verbose", 'v', NULL, 0, N_("Print more messages") },
@@ -142,8 +144,12 @@ static const struct argp_option options[] =
   { "delete-from-archive", OPT_DELETE_FROM_ARCHIVE, NULL, 0,
     N_("Remove locales named by parameters from archive") },
   { "list-archive", OPT_LIST_ARCHIVE, NULL, 0, N_("List content of archive") },
-  { "alias-file", 'A', "FILE", 0,
+  { "alias-file", 'A', N_("FILE"), 0,
     N_("locale.alias file to consult when making archive")},
+  { "little-endian", OPT_LITTLE_ENDIAN, NULL, 0,
+    N_("Generate little-endian output") },
+  { "big-endian", OPT_BIG_ENDIAN, NULL, 0,
+    N_("Generate big-endian output") },
   { NULL, 0, NULL, 0, NULL }
 };
 
@@ -168,9 +174,6 @@ static struct argp argp =
   options, parse_opt, args_doc, doc, NULL, more_help
 };
 
-
-/* Prototypes for global functions.  */
-extern void *xmalloc (size_t __n);
 
 /* Prototypes for local functions.  */
 static void error_print (void);
@@ -206,7 +209,7 @@ main (int argc, char *argv[])
 
   /* Handle a few special cases.  */
   if (list_archive)
-    show_archive_content (verbose);
+    show_archive_content (remaining > 1 ? argv[remaining] : NULL, verbose);
   if (add_to_archive)
     return add_locales_to_archive (argc - remaining, &argv[remaining],
 				   replace_archive);
@@ -329,6 +332,12 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case OPT_LIST_ARCHIVE:
       list_archive = true;
       break;
+    case OPT_LITTLE_ENDIAN:
+      set_big_endian (false);
+      break;
+    case OPT_BIG_ENDIAN:
+      set_big_endian (true);
+      break;
     case 'c':
       force_output = 1;
       break;
@@ -358,20 +367,26 @@ static char *
 more_help (int key, const char *text, void *input)
 {
   char *cp;
+  char *tp;
 
   switch (key)
     {
     case ARGP_KEY_HELP_EXTRA:
       /* We print some extra information.  */
+      if (asprintf (&tp, gettext ("\
+For bug reporting instructions, please see:\n\
+%s.\n"), REPORT_BUGS_TO) < 0)
+	return NULL;
       if (asprintf (&cp, gettext ("\
 System's directory for character maps : %s\n\
-                       repertoire maps: %s\n\
-                       locale path    : %s\n\
+		       repertoire maps: %s\n\
+		       locale path    : %s\n\
 %s"),
-		    CHARMAP_PATH, REPERTOIREMAP_PATH, LOCALE_PATH, gettext ("\
-For bug reporting instructions, please see:\n\
-<http://www.gnu.org/software/libc/bugs.html>.\n")) < 0)
-	return NULL;
+		    CHARMAP_PATH, REPERTOIREMAP_PATH, LOCALE_PATH, tp) < 0)
+	{
+	  free (tp);
+	  return NULL;
+	}
       return cp;
     default:
       break;
@@ -383,12 +398,12 @@ For bug reporting instructions, please see:\n\
 static void
 print_version (FILE *stream, struct argp_state *state)
 {
-  fprintf (stream, "localedef (GNU %s) %s\n", PACKAGE, VERSION);
+  fprintf (stream, "localedef %s%s\n", PKGVERSION, VERSION);
   fprintf (stream, gettext ("\
 Copyright (C) %s Free Software Foundation, Inc.\n\
 This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\
-"), "2008");
+"), "2014");
   fprintf (stream, gettext ("Written by %s.\n"), "Ulrich Drepper");
 }
 
@@ -417,7 +432,6 @@ construct_output_path (char *path)
 	 contains a reference to the codeset.  This should be
 	 normalized.  */
       char *startp;
-      size_t n;
 
       startp = path;
       /* We must be prepared for finding a CEN name or a location of
@@ -441,6 +455,7 @@ construct_output_path (char *path)
       /* We put an additional '\0' at the end of the string because at
 	 the end of the function we need another byte for the trailing
 	 '/'.  */
+      ssize_t n;
       if (normal == NULL)
 	n = asprintf (&result, "%s%s/%s%c",
 		      output_prefix ?: "", LOCALEDIR, path, '\0');

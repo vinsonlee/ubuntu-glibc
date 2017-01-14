@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2000, 2002, 2004, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1998.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _NSCD_PROTO_H
 #define _NSCD_PROTO_H 1
@@ -36,6 +35,7 @@ extern int __nss_not_use_nscd_passwd attribute_hidden;
 extern int __nss_not_use_nscd_group attribute_hidden;
 extern int __nss_not_use_nscd_hosts attribute_hidden;
 extern int __nss_not_use_nscd_services attribute_hidden;
+extern int __nss_not_use_nscd_netgroup attribute_hidden;
 
 extern int __nscd_getpwnam_r (const char *name, struct passwd *resultbuf,
 			      char *buffer, size_t buflen,
@@ -71,5 +71,9 @@ extern int __nscd_getservbyname_r (const char *name, const char *proto,
 extern int __nscd_getservbyport_r (int port, const char *proto,
 				   struct servent *result_buf, char *buf,
 				   size_t buflen, struct servent **result);
+extern int __nscd_innetgr (const char *netgroup, const char *host,
+			   const char *user, const char *domain);
+extern int __nscd_setnetgrent (const char *group, struct __netgrent *datap);
+
 
 #endif /* _NSCD_PROTO_H */

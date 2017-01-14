@@ -1,5 +1,5 @@
 /* Enable floating-point exceptions.
-   Copyright (C) 2000, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Geoffrey Keating <geoffk@geoffk.org>, 2000.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <fenv_libc.h>
 
@@ -33,20 +32,20 @@ feenableexcept (int excepts)
 
   fe.fenv = fegetenv_register ();
   if (excepts & FE_INEXACT)
-    fe.l[1] |= (1 << (31 - FPSCR_XE));
+    fe.l |= (1 << (31 - FPSCR_XE));
   if (excepts & FE_DIVBYZERO)
-    fe.l[1] |= (1 << (31 - FPSCR_ZE));
+    fe.l |= (1 << (31 - FPSCR_ZE));
   if (excepts & FE_UNDERFLOW)
-    fe.l[1] |= (1 << (31 - FPSCR_UE));
+    fe.l |= (1 << (31 - FPSCR_UE));
   if (excepts & FE_OVERFLOW)
-    fe.l[1] |= (1 << (31 - FPSCR_OE));
+    fe.l |= (1 << (31 - FPSCR_OE));
   if (excepts & FE_INVALID)
-    fe.l[1] |= (1 << (31 - FPSCR_VE));
+    fe.l |= (1 << (31 - FPSCR_VE));
   fesetenv_register (fe.fenv);
 
   new = __fegetexcept ();
   if (new != 0 && result == 0)
-    (void)__fe_nomask_env ();
+    (void) __fe_nomask_env_priv ();
 
   if ((new & excepts) != excepts)
     result = -1;

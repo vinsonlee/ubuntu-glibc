@@ -1,5 +1,5 @@
 /* Copy a sign bit between floating-point values.  PowerPC64 version.
-   Copyright (C) 1997, 1999, 2000, 2002, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* This has been coded in assembler because GCC makes such a mess of it
    when it's coded in C.  */
@@ -28,15 +27,12 @@ ENTRY(__copysign)
 /* double [f1] copysign (double [f1] x, double [f2] y);
    copysign(x,y) returns a value with the magnitude of x and
    with the sign bit of y.  */
-	stdu	r1,-48(r1)
-	cfi_adjust_cfa_offset (48)
-	stfd	fp2,24(r1)
+	stfd	fp2,56(r1)
 	nop
 	nop
 	nop
-	ld	r3,24(r1)
+	ld	r3,56(r1)
 	cmpdi   r3,0
-	addi    r1,r1,48
 	blt     L(0)
 	fabs    fp1,fp1
 	blr

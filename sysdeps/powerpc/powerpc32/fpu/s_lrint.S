@@ -1,5 +1,5 @@
 /* Round double to long int.  PowerPC32 version.
-   Copyright (C) 2004, 2006 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include <math_ldbl_opt.h>
@@ -25,10 +24,10 @@ ENTRY (__lrint)
 	stwu	r1,-16(r1)
 	fctiw	fp13,fp1
 	stfd	fp13,8(r1)
-	nop	/* Insure the following load is in a different dispatch group */
+	nop	/* Ensure the following load is in a different dispatch group */
 	nop	/* to avoid pipe stall on POWER4&5.  */
 	nop
-	lwz	r3,12(r1)
+	lwz	r3,8+LOWORD(r1)
 	addi	r1,r1,16
 	blr
 	END (__lrint)

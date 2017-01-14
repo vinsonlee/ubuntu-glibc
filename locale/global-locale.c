@@ -1,5 +1,5 @@
 /* Locale object representing the global locale controlled by setlocale.
-   Copyright (C) 2002, 2006, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,15 +13,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <locale.h>
 #include "localeinfo.h"
 
 #define DEFINE_CATEGORY(category, category_name, items, a) \
-extern struct locale_data _nl_C_##category; weak_extern (_nl_C_##category)
+extern struct __locale_data _nl_C_##category; weak_extern (_nl_C_##category)
 #include "categories.def"
 #undef	DEFINE_CATEGORY
 
@@ -60,16 +59,6 @@ struct __locale_struct _nl_global_locale attribute_hidden =
   };
 
 #include <tls.h>
-#if HAVE___THREAD
+
 /* The tsd macros don't permit an initializer.  */
 __thread __locale_t __libc_tsd_LOCALE = &_nl_global_locale;
-#else
-__libc_tsd_define (, __locale_t, LOCALE)
-/* This is a bad kludge presuming the variable name used by the macros.
-   Using typeof makes sure to barf if we do not match the macro definition.
-   This ifndef is a further bad kludge for Hurd, where there is an explicit
-   initialization.  */
-# ifndef _HURD_THREADVAR_H
-__typeof (__libc_tsd_LOCALE_data) __libc_tsd_LOCALE_data = &_nl_global_locale;
-# endif
-#endif

@@ -1,4 +1,4 @@
-#if !defined ISO && !defined POSIX
+#if !defined ISO && !defined ISO99 && !defined ISO11 && !defined POSIX
 constant CODESET
 constant D_T_FMT
 constant D_FMT
@@ -55,7 +55,15 @@ constant YESEXPR
 constant NOEXPR
 constant CRNCYSTR
 
+type nl_item
+# if defined XOPEN2K8 || defined POSIX2008
+type locale_t
+# endif
+
 function {char*} nl_langinfo (nl_item)
+# if defined XOPEN2K8 || defined POSIX2008
+function {char*} nl_langinfo_l (nl_item, locale_t)
+# endif
 
 allow-header nl_types.h
 

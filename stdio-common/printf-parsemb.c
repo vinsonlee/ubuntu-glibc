@@ -1,5 +1,5 @@
 /* Helper functions for parsing printf format strings.
-   Copyright (C) 1995-2000,2002,2003,2004,2006 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of th GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <ctype.h>
 #include <limits.h>
@@ -31,12 +30,14 @@
 # define INT_T		int
 # define L_(Str)	Str
 # define ISDIGIT(Ch)	isdigit (Ch)
+# define HANDLE_REGISTERED_MODIFIER __handle_registered_modifier_mb
 #else
 # define CHAR_T		wchar_t
 # define UCHAR_T	unsigned int
 # define INT_T		wint_t
 # define L_(Str)	L##Str
 # define ISDIGIT(Ch)	iswdigit (Ch)
+# define HANDLE_REGISTERED_MODIFIER __handle_registered_modifier_wc
 #endif
 
 #include "printf-parse.h"
@@ -86,12 +87,15 @@ __parse_one_specmb (const UCHAR_T *format, size_t posn,
 
       n = read_int (&format);
 
-      if (n > 0 && *format == L_('$'))
+      if (n != 0 && *format == L_('$'))
 	/* Is positional parameter.  */
 	{
 	  ++format;		/* Skip the '$'.  */
-	  spec->data_arg = n - 1;
-	  *max_ref_arg = MAX (*max_ref_arg, n);
+	  if (n != -1)
+	    {
+	      spec->data_arg = n - 1;
+	      *max_ref_arg = MAX (*max_ref_arg, n);
+	    }
 	}
       else
 	/* Oops; that was actually the width and/or 0 padding flag.
@@ -159,10 +163,13 @@ __parse_one_specmb (const UCHAR_T *format, size_t posn,
 	  /* The width argument might be found in a positional parameter.  */
 	  n = read_int (&format);
 
-	  if (n > 0 && *format == L_('$'))
+	  if (n != 0 && *format == L_('$'))
 	    {
-	      spec->width_arg = n - 1;
-	      *max_ref_arg = MAX (*max_ref_arg, n);
+	      if (n != -1)
+		{
+		  spec->width_arg = n - 1;
+		  *max_ref_arg = MAX (*max_ref_arg, n);
+		}
 	      ++format;		/* Skip '$'.  */
 	    }
 	}
@@ -176,9 +183,13 @@ __parse_one_specmb (const UCHAR_T *format, size_t posn,
 	}
     }
   else if (ISDIGIT (*format))
-    /* Constant width specification.  */
-    spec->info.width = read_int (&format);
+    {
+      int n = read_int (&format);
 
+      /* Constant width specification.  */
+      if (n != -1)
+	spec->info.width = n;
+    }
   /* Get the precision.  */
   spec->prec_arg = -1;
   /* -1 means none given; 0 means explicit 0.  */
@@ -195,10 +206,13 @@ __parse_one_specmb (const UCHAR_T *format, size_t posn,
 	    {
 	      n = read_int (&format);
 
-	      if (n > 0 && *format == L_('$'))
+	      if (n != 0 && *format == L_('$'))
 		{
-		  spec->prec_arg = n - 1;
-		  *max_ref_arg = MAX (*max_ref_arg, n);
+		  if (n != -1)
+		    {
+		      spec->prec_arg = n - 1;
+		      *max_ref_arg = MAX (*max_ref_arg, n);
+		    }
 		  ++format;
 		}
 	    }
@@ -212,7 +226,12 @@ __parse_one_specmb (const UCHAR_T *format, size_t posn,
 	    }
 	}
       else if (ISDIGIT (*format))
-	spec->info.prec = read_int (&format);
+	{
+	  int n = read_int (&format);
+
+	  if (n != -1)
+	    spec->info.prec = n;
+	}
       else
 	/* "%.?" is treated like "%.0?".  */
 	spec->info.prec = 0;
@@ -223,72 +242,79 @@ __parse_one_specmb (const UCHAR_T *format, size_t posn,
   spec->info.is_short = 0;
   spec->info.is_long = 0;
   spec->info.is_char = 0;
+  spec->info.user = 0;
 
-  switch (*format++)
-    {
-    case L_('h'):
-      /* ints are short ints or chars.  */
-      if (*format != L_('h'))
-	spec->info.is_short = 1;
-      else
-	{
-	  ++format;
-	  spec->info.is_char = 1;
-	}
-      break;
-    case L_('l'):
-      /* ints are long ints.  */
-      spec->info.is_long = 1;
-      if (*format != L_('l'))
+  if (__builtin_expect (__printf_modifier_table == NULL, 1)
+      || __printf_modifier_table[*format] == NULL
+      || HANDLE_REGISTERED_MODIFIER (&format, &spec->info) != 0)
+    switch (*format++)
+      {
+      case L_('h'):
+	/* ints are short ints or chars.  */
+	if (*format != L_('h'))
+	  spec->info.is_short = 1;
+	else
+	  {
+	    ++format;
+	    spec->info.is_char = 1;
+	  }
 	break;
-      ++format;
-      /* FALLTHROUGH */
-    case L_('L'):
-      /* doubles are long doubles, and ints are long long ints.  */
-    case L_('q'):
-      /* 4.4 uses this for long long.  */
-      spec->info.is_long_double = 1;
-      break;
-    case L_('z'):
-    case L_('Z'):
-      /* ints are size_ts.  */
-      assert (sizeof (size_t) <= sizeof (unsigned long long int));
+      case L_('l'):
+	/* ints are long ints.  */
+	spec->info.is_long = 1;
+	if (*format != L_('l'))
+	  break;
+	++format;
+	/* FALLTHROUGH */
+      case L_('L'):
+	/* doubles are long doubles, and ints are long long ints.  */
+      case L_('q'):
+	/* 4.4 uses this for long long.  */
+	spec->info.is_long_double = 1;
+	break;
+      case L_('z'):
+      case L_('Z'):
+	/* ints are size_ts.  */
+	assert (sizeof (size_t) <= sizeof (unsigned long long int));
 #if LONG_MAX != LONG_LONG_MAX
-      spec->info.is_long_double = sizeof (size_t) > sizeof (unsigned long int);
+	spec->info.is_long_double = (sizeof (size_t)
+				     > sizeof (unsigned long int));
 #endif
-      spec->info.is_long = sizeof (size_t) > sizeof (unsigned int);
-      break;
-    case L_('t'):
-      assert (sizeof (ptrdiff_t) <= sizeof (long long int));
+	spec->info.is_long = sizeof (size_t) > sizeof (unsigned int);
+	break;
+      case L_('t'):
+	assert (sizeof (ptrdiff_t) <= sizeof (long long int));
 #if LONG_MAX != LONG_LONG_MAX
-      spec->info.is_long_double = (sizeof (ptrdiff_t) > sizeof (long int));
+	spec->info.is_long_double = (sizeof (ptrdiff_t) > sizeof (long int));
 #endif
-      spec->info.is_long = sizeof (ptrdiff_t) > sizeof (int);
-      break;
-    case L_('j'):
-      assert (sizeof (uintmax_t) <= sizeof (unsigned long long int));
+	spec->info.is_long = sizeof (ptrdiff_t) > sizeof (int);
+	break;
+      case L_('j'):
+	assert (sizeof (uintmax_t) <= sizeof (unsigned long long int));
 #if LONG_MAX != LONG_LONG_MAX
-      spec->info.is_long_double = (sizeof (uintmax_t)
-				   > sizeof (unsigned long int));
+	spec->info.is_long_double = (sizeof (uintmax_t)
+				     > sizeof (unsigned long int));
 #endif
-      spec->info.is_long = sizeof (uintmax_t) > sizeof (unsigned int);
-      break;
-    default:
-      /* Not a recognized modifier.  Backup.  */
-      --format;
-      break;
-    }
+	spec->info.is_long = sizeof (uintmax_t) > sizeof (unsigned int);
+	break;
+      default:
+	/* Not a recognized modifier.  Backup.  */
+	--format;
+	break;
+      }
 
   /* Get the format specification.  */
   spec->info.spec = (wchar_t) *format++;
-  if (__builtin_expect (__printf_function_table != NULL, 0)
-      && spec->info.spec <= UCHAR_MAX
-      && __printf_arginfo_table[spec->info.spec] != NULL)
-    /* We don't try to get the types for all arguments if the format
-       uses more than one.  The normal case is covered though.  */
-    spec->ndata_args = (*__printf_arginfo_table[spec->info.spec])
-      (&spec->info, 1, &spec->data_arg_type);
-  else
+  spec->size = -1;
+  if (__builtin_expect (__printf_function_table == NULL, 1)
+      || spec->info.spec > UCHAR_MAX
+      || __printf_arginfo_table[spec->info.spec] == NULL
+      /* We don't try to get the types for all arguments if the format
+	 uses more than one.  The normal case is covered though.  If
+	 the call returns -1 we continue with the normal specifiers.  */
+      || (int) (spec->ndata_args = (*__printf_arginfo_table[spec->info.spec])
+				   (&spec->info, 1, &spec->data_arg_type,
+				    &spec->size)) < 0)
     {
       /* Find the data argument types of a built-in spec.  */
       spec->ndata_args = 1;

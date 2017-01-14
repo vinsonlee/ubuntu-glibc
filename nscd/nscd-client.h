@@ -1,5 +1,4 @@
-/* Copyright (c) 1998, 1999, 2000, 2003, 2004, 2005, 2006, 2007
-   Free Software Foundation, Inc.
+/* Copyright (c) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Thorsten Kukuk <kukuk@suse.de>, 1998.
 
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* This file defines everything that client code should need to
    know to talk to the nscd daemon.  */
@@ -44,7 +42,7 @@
 /* Path for the configuration file.  */
 #define _PATH_NSCDCONF	 "/etc/nscd.conf"
 
-/* Maximu allowed length for the key.  */
+/* Maximum allowed length for the key.  */
 #define MAXKEYLEN 1024
 
 
@@ -70,6 +68,9 @@ typedef enum
   GETSERVBYNAME,
   GETSERVBYPORT,
   GETFDSERV,
+  GETNETGRENT,
+  INNETGR,
+  GETFDNETGR,
   LASTREQ
 } request_type;
 
@@ -171,6 +172,24 @@ typedef struct
 } serv_response_header;
 
 
+/* Structure send in reply to netgroup query.  Note that this struct is
+   sent also if the service is disabled or there is no record found.  */
+typedef struct
+{
+  int32_t version;
+  int32_t found;
+  nscd_ssize_t nresults;
+  nscd_ssize_t result_len;
+} netgroup_response_header;
+
+typedef struct
+{
+  int32_t version;
+  int32_t found;
+  int32_t result;
+} innetgroup_response_header;
+
+
 /* Type for offsets in data part of database.  */
 typedef uint32_t ref_t;
 /* Value for invalid/no reference.  */
@@ -178,6 +197,10 @@ typedef uint32_t ref_t;
 
 /* Timestamp type.  */
 typedef uint64_t nscd_time_t;
+
+/* Maximum timestamp.  */
+#define MAX_TIMEOUT_VALUE \
+  (sizeof (time_t) == sizeof (long int) ? LONG_MAX : INT_MAX)
 
 /* Alignment requirement of the beginning of the data region.  */
 #define ALIGN 16
@@ -192,7 +215,8 @@ struct datahead
   uint8_t notfound;		/* Nonzero if data has not been found.  */
   uint8_t nreloads;		/* Reloads without use.  */
   uint8_t usable;		/* False if the entry must be ignored.  */
-  uint64_t :40;			/* Alignment.  */
+  uint8_t unused;		/* Unused.  */
+  uint32_t ttl;			/* TTL value used.  */
 
   /* We need to have the following element aligned for the response
      header data types and their use in the 'struct dataset' types
@@ -205,6 +229,8 @@ struct datahead
     ai_response_header aidata;
     initgr_response_header initgrdata;
     serv_response_header servdata;
+    netgroup_response_header netgroupdata;
+    innetgroup_response_header innetgroupdata;
     nscd_ssize_t align1;
     nscd_time_t align2;
   } data[0];
@@ -232,10 +258,15 @@ struct hashentry
 
 
 /* Current persistent database version.  */
-#define DB_VERSION	1
+#define DB_VERSION	2
 
 /* Maximum time allowed between updates of the timestamp.  */
 #define MAPPING_TIMEOUT (5 * 60)
+
+
+/* Used indices for the EXTRA_DATA element of 'database_pers_head'.
+   Each database has its own indices.  */
+#define NSCD_HST_IDX_CONF_TIMESTAMP	0
 
 
 /* Header of persistent database file.  */
@@ -246,6 +277,8 @@ struct database_pers_head
   volatile int32_t gc_cycle;
   volatile int32_t nscd_certainly_running;
   volatile nscd_time_t timestamp;
+  /* Room for extensions.  */
+  volatile uint32_t extra_data[4];
 
   nscd_ssize_t module;
   nscd_ssize_t data_size;
@@ -288,11 +321,36 @@ struct locked_map_ptr
 };
 #define libc_locked_map_ptr(class, name) class struct locked_map_ptr name
 
+/* Try acquiring lock for mapptr, returns true if it succeeds, false
+   if not.  */
+static inline bool
+__nscd_acquire_maplock (volatile struct locked_map_ptr *mapptr)
+{
+  int cnt = 0;
+  while (__builtin_expect (atomic_compare_and_exchange_val_acq (&mapptr->lock,
+								1, 0) != 0, 0))
+    {
+      // XXX Best number of rounds?
+      if (__builtin_expect (++cnt > 5, 0))
+	return false;
+
+      atomic_delay ();
+    }
+
+  return true;
+}
+
 
 /* Open socket connection to nscd server.  */
 extern int __nscd_open_socket (const char *key, size_t keylen,
 			       request_type type, void *response,
 			       size_t responselen) attribute_hidden;
+
+/* Try to get a file descriptor for the shared meory segment
+   containing the database.  */
+extern struct mapped_database *__nscd_get_mapping (request_type type,
+						   const char *key,
+						   struct mapped_database **mappedp) attribute_hidden;
 
 /* Get reference of mapping.  */
 extern struct mapped_database *__nscd_get_map_ref (request_type type,
@@ -304,8 +362,9 @@ extern struct mapped_database *__nscd_get_map_ref (request_type type,
 extern void __nscd_unmap (struct mapped_database *mapped);
 
 /* Drop reference of mapping.  */
-static inline int __nscd_drop_map_ref (struct mapped_database *map,
-				       int *gc_cycle)
+static int
+__attribute__ ((unused))
+__nscd_drop_map_ref (struct mapped_database *map, int *gc_cycle)
 {
   if (map != NO_MAPPING)
     {
@@ -329,7 +388,8 @@ static inline int __nscd_drop_map_ref (struct mapped_database *map,
 extern struct datahead *__nscd_cache_search (request_type type,
 					     const char *key,
 					     size_t keylen,
-					     const struct mapped_database *mapped);
+					     const struct mapped_database *mapped,
+					     size_t datalen);
 
 /* Wrappers around read, readv and write that only read/write less than LEN
    bytes on error or EOF.  */
@@ -341,5 +401,8 @@ extern ssize_t writeall (int fd, const void *buf, size_t len)
   attribute_hidden;
 extern ssize_t sendfileall (int tofd, int fromfd, off_t off, size_t len)
   attribute_hidden;
+
+/* Get netlink timestamp counter from mapped area or zero.  */
+extern uint32_t __nscd_get_nl_timestamp (void);
 
 #endif /* nscd.h */

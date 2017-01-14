@@ -36,7 +36,7 @@
  *    IEEE      -1, 8       100000      1.9e-34     4.3e-35
  */
 
-/* Copyright 2001 by Stephen L. Moshier 
+/* Copyright 2001 by Stephen L. Moshier
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -49,12 +49,12 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
 /* Coefficients for log(1+x) = x - x^2 / 2 + x^3 P(x)/Q(x)
  * 1/sqrt(2) <= 1+x < sqrt(2)
@@ -117,7 +117,6 @@ static const long double C2 = 1.428606820309417232121458176568075500134E-6L;
 static const long double sqrth = 0.7071067811865475244008443621048490392848L;
 /* ln (2^16384 * (1 - 2^-113)) */
 static const long double maxlog = 1.1356523406294143949491931077970764891253E4L;
-static const long double big = 2e4932L;
 static const long double zero = 0.0L;
 
 long double
@@ -138,6 +137,12 @@ __log1pl (long double xm1)
   if (((hx & 0x7fffffff) == 0)
       && (u.parts32.w1 | u.parts32.w2 | u.parts32.w3) == 0)
     return xm1;
+
+  if ((hx & 0x7fffffff) < 0x3f8e0000)
+    {
+      if ((int) xm1 == 0)
+	return xm1;
+    }
 
   x = xm1 + 1.0L;
 

@@ -102,19 +102,19 @@ ruserpass(host, aname, apass)
 	int t, usedefault = 0;
 	struct stat64 stb;
 
-	hdir = __secure_getenv("HOME");
+	hdir = __libc_secure_getenv("HOME");
 	if (hdir == NULL) {
 		/* If we can't get HOME, fail instead of trying ".",
 		   which is no improvement. This really should call
 		   getpwuid(getuid()).  */
 		/*hdir = ".";*/
-	  	return -1;
+		return -1;
 	}
 
 	buf = alloca (strlen (hdir) + 8);
 
 	__stpcpy (__stpcpy (buf, hdir), "/.netrc");
-	cfile = fopen(buf, "rc");
+	cfile = fopen(buf, "rce");
 	if (cfile == NULL) {
 		if (errno != ENOENT)
 			warn("%s", buf);
@@ -289,7 +289,7 @@ bad:
 libc_hidden_def (ruserpass)
 
 static int
-token()
+token (void)
 {
 	char *cp;
 	int c;

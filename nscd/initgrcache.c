@@ -1,5 +1,5 @@
 /* Cache handling for host lookup.
-   Copyright (C) 2004, 2005, 2006, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2004.
 
@@ -14,8 +14,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <errno.h>
@@ -52,9 +51,9 @@ static const initgr_response_header notfound =
 #include "../grp/compat-initgroups.c"
 
 
-static void
+static time_t
 addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
-		void *key, uid_t uid, struct hashentry *he,
+		void *key, uid_t uid, struct hashentry *const he,
 		struct datahead *dh)
 {
   /* Search for the entry matching the key.  Please note that we don't
@@ -81,17 +80,16 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
     }
 
   static service_user *group_database;
-  service_user *nip = NULL;
+  service_user *nip;
   int no_more;
 
-  if (group_database != NULL)
-    {
-      nip = group_database;
-      no_more = 0;
-    }
-  else
+  if (group_database == NULL)
     no_more = __nss_database_lookup ("group", NULL,
-				     "compat [NOTFOUND=return] files", &nip);
+				     "compat [NOTFOUND=return] files",
+				     &group_database);
+  else
+    no_more = 0;
+  nip = group_database;
 
  /* We always use sysconf even if NGROUPS_MAX is defined.  That way, the
      limit can be raised in the kernel configuration without having to
@@ -172,13 +170,16 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
 	nip = nip->next;
     }
 
+  bool all_written;
   ssize_t total;
-  ssize_t written;
+  time_t timeout;
  out:
+  all_written = true;
+  timeout = MAX_TIMEOUT_VALUE;
   if (!any_success)
     {
       /* Nothing found.  Create a negative result record.  */
-      written = total = sizeof (notfound);
+      total = sizeof (notfound);
 
       if (he != NULL && all_tryagain)
 	{
@@ -188,19 +189,29 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
 	  if (reload_count != UINT_MAX && dh->nreloads == reload_count)
 	    /* Do not reset the value if we never not reload the record.  */
 	    dh->nreloads = reload_count - 1;
+
+	  /* Reload with the same time-to-live value.  */
+	  timeout = dh->timeout = time (NULL) + db->postimeout;
 	}
       else
 	{
 	  /* We have no data.  This means we send the standard reply for this
 	     case.  */
-	  if (fd != -1)
-	    written = TEMP_FAILURE_RETRY (send (fd, &notfound, total,
-						MSG_NOSIGNAL));
+	  if (fd != -1
+	      && TEMP_FAILURE_RETRY (send (fd, &notfound, total,
+					   MSG_NOSIGNAL)) != total)
+	    all_written = false;
 
-	  dataset = mempool_alloc (db, sizeof (struct dataset) + req->key_len,
-				   IDX_result_data);
-	  /* If we cannot permanently store the result, so be it.  */
-	  if (dataset != NULL)
+	  /* If we have a transient error or cannot permanently store
+	     the result, so be it.  */
+	  if (all_tryagain || __builtin_expect (db->negtimeout == 0, 0))
+	    {
+	      /* Mark the old entry as obsolete.  */
+	      if (dh != NULL)
+		dh->usable = false;
+	    }
+	  else if ((dataset = mempool_alloc (db, (sizeof (struct dataset)
+						  + req->key_len), 1)) != NULL)
 	    {
 	      dataset->head.allocsize = sizeof (struct dataset) + req->key_len;
 	      dataset->head.recsize = total;
@@ -209,7 +220,7 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
 	      dataset->head.usable = true;
 
 	      /* Compute the timeout time.  */
-	      dataset->head.timeout = time (NULL) + db->negtimeout;
+	      timeout = dataset->head.timeout = time (NULL) + db->negtimeout;
 
 	      /* This is the reply.  */
 	      memcpy (&dataset->resp, &notfound, total);
@@ -227,9 +238,6 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
 			 + sizeof (struct dataset) + req->key_len, MS_ASYNC);
 		}
 
-	      /* Now get the lock to safely insert the records.  */
-	      pthread_rwlock_rdlock (&db->lock);
-
 	      (void) cache_add (req->type, key_copy, req->key_len,
 				&dataset->head, true, db, uid, he == NULL);
 
@@ -239,15 +247,12 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
 	      if (dh != NULL)
 		dh->usable = false;
 	    }
-	  else
-	    ++db->head->addfailed;
 	}
     }
   else
     {
 
-      written = total = (offsetof (struct dataset, strdata)
-			 + start * sizeof (int32_t));
+      total = offsetof (struct dataset, strdata) + start * sizeof (int32_t);
 
       /* If we refill the cache, first assume the reconrd did not
 	 change.  Allocate memory on the cache since it is likely
@@ -257,13 +262,8 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
       dataset = NULL;
 
       if (he == NULL)
-	{
-	  dataset = (struct dataset *) mempool_alloc (db,
-						      total + req->key_len,
-						      IDX_result_data);
-	  if (dataset == NULL)
-	    ++db->head->addfailed;
-	}
+	dataset = (struct dataset *) mempool_alloc (db, total + req->key_len,
+						    1);
 
       if (dataset == NULL)
 	{
@@ -283,7 +283,7 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
       dataset->head.usable = true;
 
       /* Compute the timeout time.  */
-      dataset->head.timeout = time (NULL) + db->postimeout;
+      timeout = dataset->head.timeout = time (NULL) + db->postimeout;
 
       dataset->resp.version = NSCD_VERSION;
       dataset->resp.found = 1;
@@ -334,7 +334,7 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
 		 appropriate memory and copy it.  */
 	      struct dataset *newp
 		= (struct dataset *) mempool_alloc (db, total + req->key_len,
-						    IDX_result_data);
+						    1);
 	      if (newp != NULL)
 		{
 		  /* Adjust pointer into the memory block.  */
@@ -343,8 +343,6 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
 		  dataset = memcpy (newp, dataset, total + req->key_len);
 		  alloca_used = false;
 		}
-	      else
-		++db->head->addfailed;
 
 	      /* Mark the old record as obsolete.  */
 	      dh->usable = false;
@@ -362,25 +360,32 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
 	    {
 	      assert (db->wr_fd != -1);
 	      assert ((char *) &dataset->resp > (char *) db->data);
-	      assert ((char *) &dataset->resp - (char *) db->head
+	      assert ((char *) dataset - (char *) db->head
 		      + total
 		      <= (sizeof (struct database_pers_head)
 			  + db->head->module * sizeof (ref_t)
 			  + db->head->data_size));
-	      written = sendfileall (fd, db->wr_fd,
-				     (char *) &dataset->resp
-				     - (char *) db->head, total);
+	      ssize_t written = sendfileall (fd, db->wr_fd,
+					     (char *) &dataset->resp
+					     - (char *) db->head,
+					     dataset->head.recsize);
+	      if (written != dataset->head.recsize)
+		{
 # ifndef __ASSUME_SENDFILE
-	      if (written == -1 && errno == ENOSYS)
-		goto use_write;
+		  if (written == -1 && errno == ENOSYS)
+		    goto use_write;
 # endif
+		  all_written = false;
+		}
 	    }
 	  else
 # ifndef __ASSUME_SENDFILE
 	  use_write:
 # endif
 #endif
-	    written = writeall (fd, &dataset->resp, total);
+	    if (writeall (fd, &dataset->resp, dataset->head.recsize)
+		!= dataset->head.recsize)
+	      all_written = false;
 	}
 
 
@@ -398,9 +403,6 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
 		     req->key_len, MS_ASYNC);
 	    }
 
-	  /* Now get the lock to safely insert the records.  */
-	  pthread_rwlock_rdlock (&db->lock);
-
 	  (void) cache_add (INITGROUPS, cp, req->key_len, &dataset->head, true,
 			    db, uid, he == NULL);
 
@@ -410,12 +412,14 @@ addinitgroupsX (struct database_dyn *db, int fd, request_header *req,
 
   free (groups);
 
-  if (__builtin_expect (written != total, 0) && debug_level > 0)
+  if (__builtin_expect (!all_written, 0) && debug_level > 0)
     {
       char buf[256];
       dbg_log (_("short write in %s: %s"), __FUNCTION__,
 	       strerror_r (errno, buf, sizeof (buf)));
     }
+
+  return timeout;
 }
 
 
@@ -427,7 +431,7 @@ addinitgroups (struct database_dyn *db, int fd, request_header *req, void *key,
 }
 
 
-void
+time_t
 readdinitgroups (struct database_dyn *db, struct hashentry *he,
 		 struct datahead *dh)
 {
@@ -437,5 +441,5 @@ readdinitgroups (struct database_dyn *db, struct hashentry *he,
       .key_len = he->len
     };
 
-  addinitgroupsX (db, -1, &req, db->data + he->key, he->owner, he, dh);
+  return addinitgroupsX (db, -1, &req, db->data + he->key, he->owner, he, dh);
 }

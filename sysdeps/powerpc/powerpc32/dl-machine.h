@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  PowerPC version.
-   Copyright (C) 1995-2002, 2003, 2005, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef dl_machine_h
 #define dl_machine_h
@@ -24,6 +23,7 @@
 
 #include <assert.h>
 #include <dl-tls.h>
+#include <dl-irel.h>
 
 /* Translate a processor specific dynamic tag to the index
    in l_info array.  */
@@ -41,16 +41,13 @@ static inline Elf32_Addr * __attribute__ ((const))
 ppc_got (void)
 {
   Elf32_Addr *got;
-#ifdef HAVE_ASM_PPC_REL16
+
   asm ("bcl 20,31,1f\n"
        "1:	mflr %0\n"
        "	addis %0,%0,_GLOBAL_OFFSET_TABLE_-1b@ha\n"
        "	addi %0,%0,_GLOBAL_OFFSET_TABLE_-1b@l\n"
        : "=b" (got) : : "lr");
-#else
-  asm (" bl _GLOBAL_OFFSET_TABLE_-4@local"
-       : "=l" (got));
-#endif
+
   return got;
 }
 
@@ -138,7 +135,6 @@ __elf_preferred_address(struct link_map *loader, size_t maplength,
 /* We never want to use a PLT entry as the destination of a
    reloc, when what is being relocated is a branch. This is
    partly for efficiency, but mostly so we avoid loops.  */
-#if !defined RTLD_BOOTSTRAP || USE___THREAD
 #define elf_machine_type_class(type)			\
   ((((type) == R_PPC_JMP_SLOT				\
     || (type) == R_PPC_REL24				\
@@ -146,13 +142,6 @@ __elf_preferred_address(struct link_map *loader, size_t maplength,
 	&& (type) <= R_PPC_DTPREL32)			\
     || (type) == R_PPC_ADDR24) * ELF_RTYPE_CLASS_PLT)	\
    | (((type) == R_PPC_COPY) * ELF_RTYPE_CLASS_COPY))
-#else
-#define elf_machine_type_class(type) \
-  ((((type) == R_PPC_JMP_SLOT				\
-    || (type) == R_PPC_REL24				\
-    || (type) == R_PPC_ADDR24) * ELF_RTYPE_CLASS_PLT)	\
-   | (((type) == R_PPC_COPY) * ELF_RTYPE_CLASS_COPY))
-#endif
 
 /* A reloc type used for ld.so cmdline arg lookups to reject PLT entries.  */
 #define ELF_MACHINE_JMP_SLOT	R_PPC_JMP_SLOT
@@ -226,7 +215,6 @@ elf_machine_runtime_setup (struct link_map *map,
 
 /* Change the PLT entry whose reloc is 'reloc' to call the actual routine.  */
 extern Elf32_Addr __elf_machine_fixup_plt (struct link_map *map,
-					   const Elf32_Rela *reloc,
 					   Elf32_Addr *reloc_addr,
 					   Elf32_Addr finaladdr);
 
@@ -237,7 +225,7 @@ elf_machine_fixup_plt (struct link_map *map, lookup_t t,
 {
   if (map->l_info[DT_PPC(GOT)] == 0)
     /* Handle old style PLT.  */
-    return __elf_machine_fixup_plt (map, reloc, reloc_addr, finaladdr);
+    return __elf_machine_fixup_plt (map, reloc_addr, finaladdr);
 
   *reloc_addr = finaladdr;
   return finaladdr;
@@ -284,7 +272,7 @@ extern void _dl_reloc_overflow (struct link_map *map,
 auto inline void __attribute__ ((always_inline))
 elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 		  const Elf32_Sym *sym, const struct r_found_version *version,
-		  void *const reloc_addr_arg)
+		  void *const reloc_addr_arg, int skip_ifunc)
 {
   Elf32_Addr *const reloc_addr = reloc_addr_arg;
   const Elf32_Sym *const refsym = sym;
@@ -317,6 +305,12 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
   value = reloc->r_addend;
 #endif
 
+  if (sym != NULL
+      && __builtin_expect (ELFW(ST_TYPE) (sym->st_info) == STT_GNU_IFUNC, 0)
+      && __builtin_expect (sym->st_shndx != SHN_UNDEF, 1)
+      && __builtin_expect (!skip_ifunc, 1))
+    value = elf_ifunc_invoke (value);
+
   /* A small amount of code is duplicated here for speed.  In libc,
      more than 90% of the relocs are R_PPC_RELATIVE; in the X11 shared
      libraries, 60% are R_PPC_RELATIVE, 24% are R_PPC_GLOB_DAT or
@@ -330,8 +324,7 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
       *reloc_addr = value;
       break;
 
-#if (!defined RTLD_BOOTSTRAP || USE___THREAD) \
-    && !defined RESOLVE_CONFLICT_FIND_MAP
+#ifndef RESOLVE_CONFLICT_FIND_MAP
 # ifdef RTLD_BOOTSTRAP
 #  define NOT_BOOTSTRAP 0
 # else
@@ -390,13 +383,10 @@ elf_machine_rela_relative (Elf32_Addr l_addr, const Elf32_Rela *reloc,
 
 auto inline void __attribute__ ((always_inline))
 elf_machine_lazy_rel (struct link_map *map,
-		      Elf32_Addr l_addr, const Elf32_Rela *reloc)
+		      Elf32_Addr l_addr, const Elf32_Rela *reloc,
+		      int skip_ifunc)
 {
   /* elf_machine_runtime_setup handles this. */
 }
-
-/* The SVR4 ABI specifies that the JMPREL relocs must be inside the
-   DT_RELA table.  */
-#define ELF_MACHINE_PLTREL_OVERLAP 1
 
 #endif /* RESOLVE_MAP */

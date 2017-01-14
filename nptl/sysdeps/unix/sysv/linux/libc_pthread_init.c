@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2003, 2005, 2006, 2007 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <unistd.h>
 #include <list.h>
@@ -56,10 +55,10 @@ __libc_pthread_init (ptr, reclaim, functions)
   union ptrhack
   {
     struct pthread_functions pf;
-    void *parr[1];
-  } const *src;
-  union ptrhack *dest;
 # define NPTRS (sizeof (struct pthread_functions) / sizeof (void *))
+    void *parr[NPTRS];
+  } __attribute__ ((may_alias)) const *src;
+  union ptrhack *dest;
 
   src = (const void *) functions;
   dest = (void *) &__libc_pthread_functions;

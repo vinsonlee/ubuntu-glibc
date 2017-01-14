@@ -1,7 +1,7 @@
 /* strchrnul (str, ch) -- Return pointer to first occurrence of CH in STR
    or the final NUL byte.
    For Motorola 68000.
-   Copyright (C) 1999 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Schwab <schwab@gnu.org>.
 
@@ -16,9 +16,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 #include "asm-syntax.h"
@@ -27,7 +26,11 @@
 ENTRY(__strchrnul)
 	/* Save the callee-saved registers we use.  */
 	movel	R(d2),MEM_PREDEC(sp)
+	cfi_adjust_cfa_offset (4)
 	movel	R(d3),MEM_PREDEC(sp)
+	cfi_adjust_cfa_offset (4)
+	cfi_rel_offset (R(d2), 4)
+	cfi_rel_offset (R(d3), 0)
 
 	/* Get string pointer and character.  */
 	movel	MEM_DISP(sp,12),R(a0)
@@ -253,7 +256,11 @@ L(L8:)
 L(L9:)
 	movel	R(a0),R(d0)
 	movel	MEM_POSTINC(sp),R(d3)
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (R(d3))
 	movel	MEM_POSTINC(sp),R(d2)
+	cfi_adjust_cfa_offset (-4)
+	cfi_restore (R(d2))
 	rts
 END(__strchrnul)
 

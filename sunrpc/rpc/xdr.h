@@ -1,36 +1,34 @@
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
- */
-
-/*
  * xdr.h, External Data Representation Serialization Routines.
  *
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ * Copyright (c) 2010, 2012, Oracle America, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the "Oracle America, Inc." nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *   FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *   COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ *   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *   GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ *   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _RPC_XDR_H
@@ -116,13 +114,13 @@ struct XDR
       {
 	bool_t (*x_getlong) (XDR *__xdrs, long *__lp);
 	/* get a long from underlying stream */
-	bool_t (*x_putlong) (XDR *__xdrs, __const long *__lp);
+	bool_t (*x_putlong) (XDR *__xdrs, const long *__lp);
 	/* put a long to " */
 	bool_t (*x_getbytes) (XDR *__xdrs, caddr_t __addr, u_int __len);
 	/* get some bytes from " */
-	bool_t (*x_putbytes) (XDR *__xdrs, __const char *__addr, u_int __len);
+	bool_t (*x_putbytes) (XDR *__xdrs, const char *__addr, u_int __len);
 	/* put some bytes to " */
-	u_int (*x_getpostn) (__const XDR *__xdrs);
+	u_int (*x_getpostn) (const XDR *__xdrs);
 	/* returns bytes off from beginning */
 	bool_t (*x_setpostn) (XDR *__xdrs, u_int __pos);
 	/* lets you reposition the stream */
@@ -132,7 +130,7 @@ struct XDR
 	/* free privates of this xdr_stream */
 	bool_t (*x_getint32) (XDR *__xdrs, int32_t *__ip);
 	/* get a int from underlying stream */
-	bool_t (*x_putint32) (XDR *__xdrs, __const int32_t *__ip);
+	bool_t (*x_putint32) (XDR *__xdrs, const int32_t *__ip);
 	/* put a int to " */
       }
      *x_ops;
@@ -165,14 +163,14 @@ typedef bool_t (*xdrproc_t) (XDR *, void *,...);
  * u_int         pos;
  */
 #define XDR_GETINT32(xdrs, int32p)                      \
-        (*(xdrs)->x_ops->x_getint32)(xdrs, int32p)
+	(*(xdrs)->x_ops->x_getint32)(xdrs, int32p)
 #define xdr_getint32(xdrs, int32p)                      \
-        (*(xdrs)->x_ops->x_getint32)(xdrs, int32p)
+	(*(xdrs)->x_ops->x_getint32)(xdrs, int32p)
 
 #define XDR_PUTINT32(xdrs, int32p)                      \
-        (*(xdrs)->x_ops->x_putint32)(xdrs, int32p)
+	(*(xdrs)->x_ops->x_putint32)(xdrs, int32p)
 #define xdr_putint32(xdrs, int32p)                      \
-        (*(xdrs)->x_ops->x_putint32)(xdrs, int32p)
+	(*(xdrs)->x_ops->x_putint32)(xdrs, int32p)
 
 #define XDR_GETLONG(xdrs, longp)			\
 	(*(xdrs)->x_ops->x_getlong)(xdrs, longp)
@@ -223,7 +221,7 @@ typedef bool_t (*xdrproc_t) (XDR *, void *,...);
 /*
  * Support struct for discriminated unions.
  * You create an array of xdrdiscrim structures, terminated with
- * a entry with a null procedure pointer.  The xdr_union routine gets
+ * an entry with a null procedure pointer.  The xdr_union routine gets
  * the discriminant value and then searches the array of structures
  * for a matching value.  If a match is found the associated xdr routine
  * is called to handle that part of the union.  If there is
@@ -315,8 +313,8 @@ extern bool_t xdr_bytes (XDR *__xdrs, char **__cpp, u_int *__sizep,
 extern bool_t xdr_opaque (XDR *__xdrs, caddr_t __cp, u_int __cnt) __THROW;
 extern bool_t xdr_string (XDR *__xdrs, char **__cpp, u_int __maxsize) __THROW;
 extern bool_t xdr_union (XDR *__xdrs, enum_t *__dscmp, char *__unp,
-			 __const struct xdr_discrim *__choices,
-			 xdrproc_t dfault) __THROW;
+			 const struct xdr_discrim *__choices,
+			 xdrproc_t __dfault) __THROW;
 extern bool_t xdr_char (XDR *__xdrs, char *__cp) __THROW;
 extern bool_t xdr_u_char (XDR *__xdrs, u_char *__cp) __THROW;
 extern bool_t xdr_vector (XDR *__xdrs, char *__basep, u_int __nelem,
@@ -349,7 +347,7 @@ extern bool_t xdr_netobj (XDR *__xdrs, struct netobj *__np) __THROW;
  */
 
 /* XDR using memory buffers */
-extern void xdrmem_create (XDR *__xdrs, __const caddr_t __addr,
+extern void xdrmem_create (XDR *__xdrs, const caddr_t __addr,
 			   u_int __size, enum xdr_op __xop) __THROW;
 
 /* XDR using stdio library */

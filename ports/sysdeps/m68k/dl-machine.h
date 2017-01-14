@@ -1,5 +1,5 @@
 /* Machine-dependent ELF dynamic relocation inline functions.  m68k version.
-   Copyright (C) 1996-2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef dl_machine_h
 #define dl_machine_h
@@ -24,6 +23,7 @@
 
 #include <sys/param.h>
 #include <sysdep.h>
+#include <dl-tls.h>
 
 /* Return nonzero iff ELF header is compatible with the running host.  */
 static inline int
@@ -106,6 +106,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 }
 
 #define ELF_MACHINE_RUNTIME_FIXUP_ARGS long int save_a0, long int save_a1
+#define ELF_MACHINE_RUNTIME_FIXUP_PARAMS save_a0, save_a1
 
 
 /* Mask identifying addresses reserved for the user program,
@@ -121,6 +122,7 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
 	.globl _start\n\
 	.type _start,@function\n\
 _start:\n\
+	sub.l %fp, %fp\n\
 	move.l %sp, -(%sp)\n\
 	jbsr _dl_start\n\
 	addq.l #4, %sp\n\
@@ -159,12 +161,16 @@ _dl_start_user:\n\
 	.size _dl_start_user, . - _dl_start_user\n\
 	.previous");
 
-/* ELF_RTYPE_CLASS_PLT iff TYPE describes relocation of a PLT entry, so
-   PLT entries should not be allowed to define the value.
+/* ELF_RTYPE_CLASS_PLT iff TYPE describes relocation of a PLT entry or
+   TLS variable, so undefined references should not be allowed to
+   define the value.
    ELF_RTYPE_CLASS_NOCOPY iff TYPE should not be allowed to resolve to one
    of the main executable's symbols, as for a COPY reloc.  */
 #define elf_machine_type_class(type) \
-  ((((type) == R_68K_JMP_SLOT) * ELF_RTYPE_CLASS_PLT)	\
+  ((((type) == R_68K_JMP_SLOT	     \
+     || (type) == R_68K_TLS_DTPMOD32 \
+     || (type) == R_68K_TLS_DTPREL32 \
+     || (type) == R_68K_TLS_TPREL32) * ELF_RTYPE_CLASS_PLT)	\
    | (((type) == R_68K_COPY) * ELF_RTYPE_CLASS_COPY))
 
 /* A reloc type used for ld.so cmdline arg lookups to reject PLT entries.  */
@@ -204,7 +210,7 @@ elf_machine_plt_value (struct link_map *map, const Elf32_Rela *reloc,
 auto inline void __attribute__ ((unused, always_inline))
 elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 		  const Elf32_Sym *sym, const struct r_found_version *version,
-		  void *const reloc_addr_arg)
+		  void *const reloc_addr_arg, int skip_ifunc)
 {
   Elf32_Addr *const reloc_addr = reloc_addr_arg;
   const unsigned int r_type = ELF32_R_TYPE (reloc->r_info);
@@ -232,8 +238,7 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 	      strtab = (const void *) D_PTR (map, l_info[DT_STRTAB]);
 	      _dl_error_printf ("\
 %s: Symbol `%s' has different size in shared object, consider re-linking\n",
-				rtld_progname ?: "<program name unknown>",
-				strtab + refsym->st_name);
+				RTLD_PROGNAME, strtab + refsym->st_name);
 	    }
 	  memcpy (reloc_addr_arg, (void *) value,
 		  MIN (sym->st_size, refsym->st_size));
@@ -262,6 +267,25 @@ elf_machine_rela (struct link_map *map, const Elf32_Rela *reloc,
 	case R_68K_PC32:
 	  *reloc_addr = value + reloc->r_addend - (Elf32_Addr) reloc_addr;
 	  break;
+#ifndef RTLD_BOOTSTRAP
+	case R_68K_TLS_DTPMOD32:
+	  /* Get the information from the link map returned by the
+	     resolv function.  */
+	  if (sym_map != NULL)
+	    *reloc_addr = sym_map->l_tls_modid;
+	  break;
+	case R_68K_TLS_DTPREL32:
+	  if (sym != NULL)
+	    *reloc_addr = TLS_DTPREL_VALUE (sym, reloc);
+	  break;
+	case R_68K_TLS_TPREL32:
+	  if (sym != NULL)
+	    {
+	      CHECK_STATIC_TLS (map, sym_map);
+	      *reloc_addr = TLS_TPREL_VALUE (sym_map, sym, reloc);
+	    }
+	  break;
+#endif /* !RTLD_BOOTSTRAP */
 	case R_68K_NONE:		/* Alright, Wilbur.  */
 	  break;
 	default:
@@ -281,7 +305,8 @@ elf_machine_rela_relative (Elf32_Addr l_addr, const Elf32_Rela *reloc,
 
 auto inline void __attribute__ ((unused, always_inline))
 elf_machine_lazy_rel (struct link_map *map,
-		      Elf32_Addr l_addr, const Elf32_Rela *reloc)
+		      Elf32_Addr l_addr, const Elf32_Rela *reloc,
+		      int skip_ifunc)
 {
   Elf32_Addr *const reloc_addr = (void *) (l_addr + reloc->r_offset);
   if (ELF32_R_TYPE (reloc->r_info) == R_68K_JMP_SLOT)

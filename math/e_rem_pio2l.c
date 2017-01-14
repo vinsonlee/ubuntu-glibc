@@ -1,7 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <errno.h>
-#include "math_private.h"
+#include <math_private.h>
 
 int
 __ieee754_rem_pio2l (long double x, long double *y)
@@ -12,4 +12,3 @@ __ieee754_rem_pio2l (long double x, long double *y)
 }
 
 stub_warning (__ieee754_rem_pio2l)
-#include <stub-tag.h>

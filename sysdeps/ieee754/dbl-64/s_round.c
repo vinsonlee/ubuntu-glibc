@@ -1,5 +1,5 @@
 /* Round double to integer away from zero.
-   Copyright (C) 1997 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -14,13 +14,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
 
-#include "math_private.h"
+#include <math_private.h>
 
 
 static const double huge = 1.0e300;
@@ -38,13 +37,12 @@ __round (double x)
     {
       if (j0 < 0)
 	{
-	  if (huge + x > 0.0)
-	    {
-	      i0 &= 0x80000000;
-	      if (j0 == -1)
-		i0 |= 0x3ff00000;
-	      i1 = 0;
-	    }
+	  math_force_eval (huge + x);
+
+	  i0 &= 0x80000000;
+	  if (j0 == -1)
+	    i0 |= 0x3ff00000;
+	  i1 = 0;
 	}
       else
 	{
@@ -52,13 +50,12 @@ __round (double x)
 	  if (((i0 & i) | i1) == 0)
 	    /* X is integral.  */
 	    return x;
-	  if (huge + x > 0.0)
-	    {
-	      /* Raise inexact if x != 0.  */
-	      i0 += 0x00080000 >> j0;
-	      i0 &= ~i;
-	      i1 = 0;
-	    }
+	  math_force_eval (huge + x);
+
+	  /* Raise inexact if x != 0.  */
+	  i0 += 0x00080000 >> j0;
+	  i0 &= ~i;
+	  i1 = 0;
 	}
     }
   else if (j0 > 51)
@@ -76,14 +73,13 @@ __round (double x)
 	/* X is integral.  */
 	return x;
 
-      if (huge + x > 0.0)
-	{
-	  /* Raise inexact if x != 0.  */
-	  u_int32_t j = i1 + (1 << (51 - j0));
-	  if (j < i1)
-	    i0 += 1;
-	  i1 = j;
-	}
+      math_force_eval (huge + x);
+
+      /* Raise inexact if x != 0.  */
+      u_int32_t j = i1 + (1 << (51 - j0));
+      if (j < i1)
+	i0 += 1;
+      i1 = j;
       i1 &= ~i;
     }
 

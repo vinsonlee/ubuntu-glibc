@@ -6,7 +6,7 @@ libc {
     # functions used in inline functions or macros
     __strto*_internal;
 
-    # functions used in other libraries
+    # compatibility symbol
     __secure_getenv;
 
     # a*
@@ -97,9 +97,26 @@ libc {
   GLIBC_2.8 {
     qsort_r;
   }
+  GLIBC_2.10 {
+    quick_exit; __cxa_at_quick_exit;
+  }
+  GLIBC_2.13 {
+    __fentry__;
+  }
+  GLIBC_2.17 {
+    secure_getenv;
+  }
+  GLIBC_2.18 {
+    __cxa_thread_atexit_impl;
+  }
   GLIBC_PRIVATE {
     # functions which have an additional interface since they are
     # are cancelable.
     __libc_system;
+    # Variable which needs a dynamic symbol table entry.
+    __abort_msg;
+    # Used from other libraries
+    __libc_secure_getenv;
+    __call_tls_dtors;
   }
 }

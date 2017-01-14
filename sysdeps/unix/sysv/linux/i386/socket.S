@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-1998,2002,2003,2005 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep-cancel.h>
 #include <socketcall.h>
@@ -24,7 +23,7 @@
 #define P2(a, b) a##b
 
 	.text
-/* The socket-oriented system calls are handled unusally in Linux.
+/* The socket-oriented system calls are handled unusally in Linux/i386.
    They are all gated through the single `socketcall' system call number.
    `socketcall' takes two arguments: the first is the subcode, specifying
    which socket function is being called; and the second is a pointer to
@@ -69,7 +68,6 @@ ENTRY (__socket)
 	jae SYSCALL_ERROR_LABEL
 
 	/* Successful; return the syscall's value.  */
-L(pseudo_end):
 	ret
 
 

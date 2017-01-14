@@ -42,7 +42,7 @@
  *
  */
 
-/* Copyright 2001 by Stephen L. Moshier <moshier@na-net.ornl.gov> 
+/* Copyright 2001 by Stephen L. Moshier <moshier@na-net.ornl.gov>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -55,10 +55,10 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
-#include "math_private.h"
+#include <math_private.h>
 
 /* log(1+x) = x - .5 x^2 + x^3 l(x)
    -.0078125 <= x <= +.0078125
@@ -212,9 +212,8 @@ __ieee754_logl(long double x)
     }
 
   /* Extract exponent and reduce domain to 0.703125 <= u < 1.40625  */
-  e = (int) (m >> 16) - (int) 0x3ffe;
-  m &= 0xffff;
-  u.parts32.w0 = m | 0x3ffe0000;
+  u.value = __frexpl (x, &e);
+  m = u.parts32.w0 & 0xffff;
   m |= 0x10000;
   /* Find lookup table index k from high order bits of the significand. */
   if (m < 0x16800)
@@ -251,7 +250,7 @@ __ieee754_logl(long double x)
       /* log(u) = log( t u/t ) = log(t) + log(u/t)
 	 log(t) is tabulated in the lookup table.
 	 Express log(u/t) = log(1+z),  where z = u/t - 1 = (u-t)/t.
-         cf. Cody & Waite. */
+	 cf. Cody & Waite. */
       z = (u.value - t.value) / t.value;
     }
   /* Series expansion of log(1+z).  */
@@ -277,3 +276,4 @@ __ieee754_logl(long double x)
   y += e * ln2a;
   return y;
 }
+strong_alias (__ieee754_logl, __logl_finite)

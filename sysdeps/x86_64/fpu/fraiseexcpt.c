@@ -1,5 +1,5 @@
 /* Raise given exceptions.
-   Copyright (C) 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,15 +13,14 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <fenv.h>
 #include <math.h>
 
 int
-feraiseexcept (int excepts)
+__feraiseexcept (int excepts)
 {
   /* Raise exceptions represented by EXPECTS.  But we must raise only
      one signal at a time.  It is important that if the overflow/underflow
@@ -31,7 +30,7 @@ feraiseexcept (int excepts)
   /* First: invalid exception.  */
   if ((FE_INVALID & excepts) != 0)
     {
-      /* One example of a invalid operation is 0.0 / 0.0.  */
+      /* One example of an invalid operation is 0.0 / 0.0.  */
       float f = 0.0;
 
       __asm__ __volatile__ ("divss %0, %0 " : : "x" (f));
@@ -117,4 +116,5 @@ feraiseexcept (int excepts)
   /* Success.  */
   return 0;
 }
+strong_alias (__feraiseexcept, feraiseexcept)
 libm_hidden_def (feraiseexcept)

@@ -1,5 +1,5 @@
 /* Print size value using units for orders of magnitude.
-   Copyright (C) 1997-2002, 2004, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
    Based on a proposal by Larry McVoy <lm@sgi.com>.
@@ -15,9 +15,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <ctype.h>
 #include <ieee754.h>
@@ -29,7 +28,7 @@
 /* This defines make it possible to use the same code for GNU C library and
    the GNU I/O library.	 */
 #define PUT(f, s, n) _IO_sputn (f, s, n)
-#define PAD(f, c, n) (wide ? _IO_wpadn (f, c, n) : INTUSE(_IO_padn) (f, c, n))
+#define PAD(f, c, n) (wide ? _IO_wpadn (f, c, n) : _IO_padn (f, c, n))
 /* We use this file GNU C library and GNU I/O library.	So make
    names equal.	 */
 #undef putc
@@ -43,7 +42,7 @@
 #define outchar(ch)							      \
   do									      \
     {									      \
-      register const int outc = (ch);					      \
+      const int outc = (ch);						      \
       if (putc (outc, fp) == EOF)					      \
 	return -1;							      \
       ++done;								      \
@@ -52,7 +51,7 @@
 #define PRINT(ptr, wptr, len)						      \
   do									      \
     {									      \
-      register size_t outlen = (len);					      \
+      size_t outlen = (len);						      \
       if (len > 20)							      \
 	{								      \
 	  if (PUT (fp, wide ? (const char *) wptr : ptr, outlen) != outlen)   \
@@ -104,12 +103,12 @@ __printf_size (FILE *fp, const struct printf_info *info,
   union
     {
       union ieee754_double dbl;
-      union ieee854_long_double ldbl;
+      long double ldbl;
     }
   fpnum;
   const void *ptr = &fpnum;
 
-  int negative = 0;
+  int fpnum_sign = 0;
 
   /* "NaN" or "Inf" for the special cases.  */
   const char *special = NULL;
@@ -118,32 +117,31 @@ __printf_size (FILE *fp, const struct printf_info *info,
   struct printf_info fp_info;
   int done = 0;
   int wide = info->wide;
-
+  int res;
 
   /* Fetch the argument value.	*/
 #ifndef __NO_LONG_DOUBLE_MATH
   if (info->is_long_double && sizeof (long double) > sizeof (double))
     {
-      fpnum.ldbl.d = *(const long double *) args[0];
+      fpnum.ldbl = *(const long double *) args[0];
 
       /* Check for special values: not a number or infinity.  */
-      if (__isnanl (fpnum.ldbl.d))
+      if (__isnanl (fpnum.ldbl))
 	{
 	  special = "nan";
 	  wspecial = L"nan";
-	  negative = 0;
+	  // fpnum_sign = 0;	Already zero
 	}
-      else if (__isinfl (fpnum.ldbl.d))
+      else if ((res = __isinfl (fpnum.ldbl)))
 	{
+	  fpnum_sign = res;
 	  special = "inf";
 	  wspecial = L"inf";
-
-	  negative = fpnum.ldbl.d < 0;
 	}
       else
-	while (fpnum.ldbl.d >= divisor && tag[1] != '\0')
+	while (fpnum.ldbl >= divisor && tag[1] != '\0')
 	  {
-	    fpnum.ldbl.d /= divisor;
+	    fpnum.ldbl /= divisor;
 	    ++tag;
 	  }
     }
@@ -157,14 +155,13 @@ __printf_size (FILE *fp, const struct printf_info *info,
 	{
 	  special = "nan";
 	  wspecial = L"nan";
-	  negative = 0;
+	  // fpnum_sign = 0;	Already zero
 	}
-      else if (__isinf (fpnum.dbl.d))
+      else if ((res = __isinf (fpnum.dbl.d)))
 	{
+	  fpnum_sign = res;
 	  special = "inf";
 	  wspecial = L"inf";
-
-	  negative = fpnum.dbl.d < 0;
 	}
       else
 	while (fpnum.dbl.d >= divisor && tag[1] != '\0')
@@ -178,14 +175,14 @@ __printf_size (FILE *fp, const struct printf_info *info,
     {
       int width = info->prec > info->width ? info->prec : info->width;
 
-      if (negative || info->showsign || info->space)
+      if (fpnum_sign < 0 || info->showsign || info->space)
 	--width;
       width -= 3;
 
       if (!info->left && width > 0)
 	PADN (' ', width);
 
-      if (negative)
+      if (fpnum_sign < 0)
 	outchar ('-');
       else if (info->showsign)
 	outchar ('+');

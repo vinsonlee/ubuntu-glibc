@@ -1,4 +1,4 @@
-/* Copyright (C) 2001, 2002, 2003, 2005 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
 
@@ -31,7 +30,9 @@ NESTED (syscall, SZREG, ra)
 	.mask 0x00010000, -SZREG
 	.fmask 0x00000000, 0
 	PTR_ADDIU sp, -SZREG
+	cfi_adjust_cfa_offset (SZREG)
 	REG_S s0, (sp)
+	cfi_rel_offset (s0, 0)
 
 	move s0, a0
 	move a0, a1		/* shift arg1 - arg7.  */
@@ -46,15 +47,17 @@ NESTED (syscall, SZREG, ra)
 	syscall			/* Do the system call.  */
 
 	REG_L s0, (sp)
+	cfi_restore (s0)
 	PTR_ADDIU sp, SZREG
+	cfi_adjust_cfa_offset (-SZREG)
 	bne a3, zero, L(error)
 
 	ret
 
 L(error):
-	SETUP_GP64 (a0, syscall)
+	SETUP_GP64_REG (a0, syscall)
 	PTR_LA t9, __syscall_error
-	RESTORE_GP64
+	RESTORE_GP64_REG
 	jr t9
 
 END (syscall)

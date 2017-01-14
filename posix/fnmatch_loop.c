@@ -1,5 +1,4 @@
-/* Copyright (C) 1991-1993,1996-2001,2003-2005,2007
-   Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +12,10 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
+
+#include <stdint.h>
 
 struct STRUCT
 {
@@ -28,25 +28,27 @@ struct STRUCT
    it matches, nonzero if not.  */
 static int FCT (const CHAR *pattern, const CHAR *string,
 		const CHAR *string_end, int no_leading_period, int flags,
-		struct STRUCT *ends)
+		struct STRUCT *ends, size_t alloca_used)
      internal_function;
 static int EXT (INT opt, const CHAR *pattern, const CHAR *string,
-		const CHAR *string_end, int no_leading_period, int flags)
+		const CHAR *string_end, int no_leading_period, int flags,
+		size_t alloca_used)
      internal_function;
 static const CHAR *END (const CHAR *patternp) internal_function;
 
 static int
 internal_function
-FCT (pattern, string, string_end, no_leading_period, flags, ends)
+FCT (pattern, string, string_end, no_leading_period, flags, ends, alloca_used)
      const CHAR *pattern;
      const CHAR *string;
      const CHAR *string_end;
      int no_leading_period;
      int flags;
      struct STRUCT *ends;
+     size_t alloca_used;
 {
-  register const CHAR *p = pattern, *n = string;
-  register UCHAR c;
+  const CHAR *p = pattern, *n = string;
+  UCHAR c;
 #ifdef _LIBC
 # if WIDE_CHAR_VERSION
   const char *collseq = (const char *)
@@ -67,10 +69,8 @@ FCT (pattern, string, string_end, no_leading_period, flags, ends)
 	case L('?'):
 	  if (__builtin_expect (flags & FNM_EXTMATCH, 0) && *p == '(')
 	    {
-	      int res;
-
-	      res = EXT (c, p, n, string_end, no_leading_period,
-			 flags);
+	      int res = EXT (c, p, n, string_end, no_leading_period,
+			     flags, alloca_used);
 	      if (res != -1)
 		return res;
 	    }
@@ -99,10 +99,8 @@ FCT (pattern, string, string_end, no_leading_period, flags, ends)
 	case L('*'):
 	  if (__builtin_expect (flags & FNM_EXTMATCH, 0) && *p == '(')
 	    {
-	      int res;
-
-	      res = EXT (c, p, n, string_end, no_leading_period,
-			 flags);
+	      int res = EXT (c, p, n, string_end, no_leading_period,
+			     flags, alloca_used);
 	      if (res != -1)
 		return res;
 	    }
@@ -191,7 +189,7 @@ FCT (pattern, string, string_end, no_leading_period, flags, ends)
 
 		  for (--p; n < endp; ++n, no_leading_period = 0)
 		    if (FCT (p, n, string_end, no_leading_period, flags2,
-			     &end) == 0)
+			     &end, alloca_used) == 0)
 		      goto found;
 		}
 	      else if (c == L('/') && (flags & FNM_FILE_NAME))
@@ -200,7 +198,7 @@ FCT (pattern, string, string_end, no_leading_period, flags, ends)
 		    ++n;
 		  if (n < string_end && *n == L('/')
 		      && (FCT (p, n + 1, string_end, flags & FNM_PERIOD, flags,
-			       NULL) == 0))
+			       NULL, alloca_used) == 0))
 		    return 0;
 		}
 	      else
@@ -214,7 +212,7 @@ FCT (pattern, string, string_end, no_leading_period, flags, ends)
 		  for (--p; n < endp; ++n, no_leading_period = 0)
 		    if (FOLD ((UCHAR) *n) == c
 			&& (FCT (p, n, string_end, no_leading_period, flags2,
-				 &end) == 0))
+				 &end, alloca_used) == 0))
 		      {
 		      found:
 			if (end.pattern == NULL)
@@ -237,7 +235,9 @@ FCT (pattern, string, string_end, no_leading_period, flags, ends)
 	case L('['):
 	  {
 	    /* Nonzero if the sense of the character class is inverted.  */
-	    register int not;
+	    const CHAR *p_init = p;
+	    const CHAR *n_init = n;
+	    int not;
 	    CHAR cold;
 	    UCHAR fn;
 
@@ -412,7 +412,7 @@ FCT (pattern, string, string_end, no_leading_period, flags, ends)
 			  _NL_CURRENT (LC_COLLATE, _NL_COLLATE_INDIRECTMB);
 # endif
 
-			idx = findidx (&cp);
+			idx = findidx (&cp, 1);
 			if (idx != 0)
 			  {
 			    /* We found a table entry.  Now see whether the
@@ -422,7 +422,7 @@ FCT (pattern, string, string_end, no_leading_period, flags, ends)
 			    int32_t idx2;
 			    const UCHAR *np = (const UCHAR *) n;
 
-			    idx2 = findidx (&np);
+			    idx2 = findidx (&np, string_end - n);
 			    if (idx2 != 0
 				&& (idx >> 24) == (idx2 >> 24)
 				&& len == weights[idx2 & 0xffffff])
@@ -447,8 +447,13 @@ FCT (pattern, string, string_end, no_leading_period, flags, ends)
 		  }
 #endif
 		else if (c == L('\0'))
-		  /* [ (unterminated) loses.  */
-		  return FNM_NOMATCH;
+		  {
+		    /* [ unterminated, treat as normal character.  */
+		    p = p_init;
+		    n = n_init;
+		    c = L('[');
+		    goto normal_match;
+		  }
 		else
 		  {
 		    int is_range = 0;
@@ -749,7 +754,7 @@ FCT (pattern, string, string_end, no_leading_period, flags, ends)
 					       _NL_COLLATE_SYMB_EXTRAMB);
 
 				/* Locate the character in the hashing
-                                   table.  */
+				   table.  */
 				hash = elem_hash (str, c1);
 
 				idx = 0;
@@ -971,9 +976,8 @@ FCT (pattern, string, string_end, no_leading_period, flags, ends)
 	case L('!'):
 	  if (__builtin_expect (flags & FNM_EXTMATCH, 0) && *p == '(')
 	    {
-	      int res;
-
-	      res = EXT (c, p, n, string_end, no_leading_period, flags);
+	      int res = EXT (c, p, n, string_end, no_leading_period, flags,
+			     alloca_used);
 	      if (res != -1)
 		return res;
 	    }
@@ -1052,26 +1056,32 @@ END (const CHAR *pattern)
 static int
 internal_function
 EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
-     int no_leading_period, int flags)
+     int no_leading_period, int flags, size_t alloca_used)
 {
   const CHAR *startp;
   int level;
   struct patternlist
   {
     struct patternlist *next;
+    CHAR malloced;
     CHAR str[0];
   } *list = NULL;
   struct patternlist **lastp = &list;
   size_t pattern_len = STRLEN (pattern);
+  int any_malloced = 0;
   const CHAR *p;
   const CHAR *rs;
+  int retval = 0;
 
   /* Parse the pattern.  Store the individual parts in the list.  */
   level = 0;
   for (startp = p = pattern + 1; level >= 0; ++p)
     if (*p == L('\0'))
-      /* This is an invalid pattern.  */
-      return -1;
+      {
+	/* This is an invalid pattern.  */
+	retval = -1;
+	goto out;
+      }
     else if (*p == L('['))
       {
 	/* Handle brackets special.  */
@@ -1088,8 +1098,11 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
 	/* Skip over all characters of the list.  */
 	while (*p != L(']'))
 	  if (*p++ == L('\0'))
-	    /* This is no valid pattern.  */
-	    return -1;
+	    {
+	      /* This is no valid pattern.  */
+	      retval = -1;
+	      goto out;
+	    }
       }
     else if ((*p == L('?') || *p == L('*') || *p == L('+') || *p == L('@')
 	      || *p == L('!')) && p[1] == L('('))
@@ -1102,15 +1115,25 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
 	    /* This means we found the end of the pattern.  */
 #define NEW_PATTERN \
 	    struct patternlist *newp;					      \
-									      \
-	    if (opt == L('?') || opt == L('@'))				      \
-	      newp = alloca (sizeof (struct patternlist)		      \
-			     + (pattern_len * sizeof (CHAR)));		      \
+	    size_t slen = (opt == L('?') || opt == L('@')		      \
+			   ? pattern_len : (p - startp + 1));		      \
+	    slen = sizeof (struct patternlist) + (slen * sizeof (CHAR));      \
+	    int malloced = ! __libc_use_alloca (alloca_used + slen);	      \
+	    if (__builtin_expect (malloced, 0))				      \
+	      {								      \
+		newp = malloc (slen);					      \
+		if (newp == NULL)					      \
+		  {							      \
+		    retval = -2;					      \
+		    goto out;						      \
+		  }							      \
+		any_malloced = 1;					      \
+	      }								      \
 	    else							      \
-	      newp = alloca (sizeof (struct patternlist)		      \
-			     + ((p - startp + 1) * sizeof (CHAR)));	      \
-	    *((CHAR *) MEMPCPY (newp->str, startp, p - startp)) = L('\0');    \
+	      newp = alloca_account (slen, alloca_used);		      \
 	    newp->next = NULL;						      \
+	    newp->malloced = malloced;					      \
+	    *((CHAR *) MEMPCPY (newp->str, startp, p - startp)) = L('\0');    \
 	    *lastp = newp;						      \
 	    lastp = &newp->next
 	    NEW_PATTERN;
@@ -1131,8 +1154,9 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
   switch (opt)
     {
     case L('*'):
-      if (FCT (p, string, string_end, no_leading_period, flags, NULL) == 0)
-	return 0;
+      if (FCT (p, string, string_end, no_leading_period, flags, NULL,
+	       alloca_used) == 0)
+	goto success;
       /* FALLTHROUGH */
 
     case L('+'):
@@ -1143,7 +1167,7 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
 	       current pattern.  */
 	    if (FCT (list->str, string, rs, no_leading_period,
 		     flags & FNM_FILE_NAME ? flags : flags & ~FNM_PERIOD,
-		     NULL) == 0
+		     NULL, alloca_used) == 0
 		/* This was successful.  Now match the rest with the rest
 		   of the pattern.  */
 		&& (FCT (p, rs, string_end,
@@ -1151,7 +1175,7 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
 			 ? no_leading_period
 			 : rs[-1] == '/' && NO_LEADING_PERIOD (flags) ? 1 : 0,
 			 flags & FNM_FILE_NAME
-			 ? flags : flags & ~FNM_PERIOD, NULL) == 0
+			 ? flags : flags & ~FNM_PERIOD, NULL, alloca_used) == 0
 		    /* This didn't work.  Try the whole pattern.  */
 		    || (rs != string
 			&& FCT (pattern - 1, rs, string_end,
@@ -1160,18 +1184,21 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
 				: (rs[-1] == '/' && NO_LEADING_PERIOD (flags)
 				   ? 1 : 0),
 				flags & FNM_FILE_NAME
-				? flags : flags & ~FNM_PERIOD, NULL) == 0)))
+				? flags : flags & ~FNM_PERIOD, NULL,
+				alloca_used) == 0)))
 	      /* It worked.  Signal success.  */
-	      return 0;
+	      goto success;
 	}
       while ((list = list->next) != NULL);
 
       /* None of the patterns lead to a match.  */
-      return FNM_NOMATCH;
+      retval = FNM_NOMATCH;
+      break;
 
     case L('?'):
-      if (FCT (p, string, string_end, no_leading_period, flags, NULL) == 0)
-	return 0;
+      if (FCT (p, string, string_end, no_leading_period, flags, NULL,
+	       alloca_used) == 0)
+	goto success;
       /* FALLTHROUGH */
 
     case L('@'):
@@ -1183,13 +1210,14 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
 	if (FCT (STRCAT (list->str, p), string, string_end,
 		 no_leading_period,
 		 flags & FNM_FILE_NAME ? flags : flags & ~FNM_PERIOD,
-		 NULL) == 0)
+		 NULL, alloca_used) == 0)
 	  /* It worked.  Signal success.  */
-	  return 0;
+	  goto success;
       while ((list = list->next) != NULL);
 
       /* None of the patterns lead to a match.  */
-      return FNM_NOMATCH;
+      retval = FNM_NOMATCH;
+      break;
 
     case L('!'):
       for (rs = string; rs <= string_end; ++rs)
@@ -1199,7 +1227,7 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
 	  for (runp = list; runp != NULL; runp = runp->next)
 	    if (FCT (runp->str, string, rs,  no_leading_period,
 		     flags & FNM_FILE_NAME ? flags : flags & ~FNM_PERIOD,
-		     NULL) == 0)
+		     NULL, alloca_used) == 0)
 	      break;
 
 	  /* If none of the patterns matched see whether the rest does.  */
@@ -1209,21 +1237,34 @@ EXT (INT opt, const CHAR *pattern, const CHAR *string, const CHAR *string_end,
 		       ? no_leading_period
 		       : rs[-1] == '/' && NO_LEADING_PERIOD (flags) ? 1 : 0,
 		       flags & FNM_FILE_NAME ? flags : flags & ~FNM_PERIOD,
-		       NULL) == 0))
+		       NULL, alloca_used) == 0))
 	    /* This is successful.  */
-	    return 0;
+	    goto success;
 	}
 
       /* None of the patterns together with the rest of the pattern
 	 lead to a match.  */
-      return FNM_NOMATCH;
+      retval = FNM_NOMATCH;
+      break;
 
     default:
       assert (! "Invalid extended matching operator");
+      retval = -1;
       break;
     }
 
-  return -1;
+ success:
+ out:
+  if (any_malloced)
+    while (list != NULL)
+      {
+	struct patternlist *old = list;
+	list = list->next;
+	if (old->malloced)
+	  free (old);
+      }
+
+  return retval;
 }
 
 

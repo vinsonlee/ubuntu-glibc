@@ -1,5 +1,5 @@
 /* Miscellaneous support functions for dynamic linker
-   Copyright (C) 1997-2002, 2003, 2004, 2006 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
 #include <fcntl.h>
@@ -26,24 +25,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
 #include <sysdep.h>
-#include <stdio-common/_itoa.h>
-#include <bits/libc-lock.h>
+#include <_itoa.h>
+#include <dl-writev.h>
 
-#ifndef MAP_ANON
-/* This is the only dl-sysdep.c function that is actually needed at run-time
-   by _dl_map_object.  */
-
-int
-_dl_sysdep_open_zero_fill (void)
-{
-  return __open ("/dev/zero", O_RDONLY);
-}
-#endif
 
 /* Read the whole contents of FILE into new mmap'd space with given
    protections.  *SIZEP gets the size of the file.  On error MAP_FAILED
@@ -55,7 +45,11 @@ _dl_sysdep_read_whole_file (const char *file, size_t *sizep, int prot)
 {
   void *result = MAP_FAILED;
   struct stat64 st;
-  int fd = __open (file, O_RDONLY);
+  int flags = O_RDONLY;
+#ifdef O_CLOEXEC
+  flags |= O_CLOEXEC;
+#endif
+  int fd = __open (file, flags);
   if (fd >= 0)
     {
       if (__fxstat64 (_STAT_VER, fd, &st) >= 0)
@@ -247,25 +241,7 @@ _dl_debug_vdprintf (int fd, int tag_p, const char *fmt, va_list arg)
     }
 
   /* Finally write the result.  */
-#ifdef HAVE_INLINED_SYSCALLS
-  INTERNAL_SYSCALL_DECL (err);
-  INTERNAL_SYSCALL (writev, err, 3, fd, &iov, niov);
-#elif RTLD_PRIVATE_ERRNO
-  /* We have to take this lock just to be sure we don't clobber the private
-     errno when it's being used by another thread that cares about it.
-     Yet we must be sure not to try calling the lock functions before
-     the thread library is fully initialized.  */
-  if (__builtin_expect (INTUSE (_dl_starting_up), 0))
-    __writev (fd, iov, niov);
-  else
-    {
-      __rtld_lock_lock_recursive (GL(dl_load_lock));
-      __writev (fd, iov, niov);
-      __rtld_lock_unlock_recursive (GL(dl_load_lock));
-    }
-#else
-  __writev (fd, iov, niov);
-#endif
+  _dl_writev (fd, iov, niov);
 }
 
 
@@ -322,4 +298,69 @@ _dl_name_match_p (const char *name, const struct link_map *map)
       runp = runp->next;
 
   return 0;
+}
+
+
+unsigned long int
+internal_function
+_dl_higher_prime_number (unsigned long int n)
+{
+  /* These are primes that are near, but slightly smaller than, a
+     power of two.  */
+  static const uint32_t primes[] = {
+    UINT32_C (7),
+    UINT32_C (13),
+    UINT32_C (31),
+    UINT32_C (61),
+    UINT32_C (127),
+    UINT32_C (251),
+    UINT32_C (509),
+    UINT32_C (1021),
+    UINT32_C (2039),
+    UINT32_C (4093),
+    UINT32_C (8191),
+    UINT32_C (16381),
+    UINT32_C (32749),
+    UINT32_C (65521),
+    UINT32_C (131071),
+    UINT32_C (262139),
+    UINT32_C (524287),
+    UINT32_C (1048573),
+    UINT32_C (2097143),
+    UINT32_C (4194301),
+    UINT32_C (8388593),
+    UINT32_C (16777213),
+    UINT32_C (33554393),
+    UINT32_C (67108859),
+    UINT32_C (134217689),
+    UINT32_C (268435399),
+    UINT32_C (536870909),
+    UINT32_C (1073741789),
+    UINT32_C (2147483647),
+				       /* 4294967291L */
+    UINT32_C (2147483647) + UINT32_C (2147483644)
+  };
+
+  const uint32_t *low = &primes[0];
+  const uint32_t *high = &primes[sizeof (primes) / sizeof (primes[0])];
+
+  while (low != high)
+    {
+      const uint32_t *mid = low + (high - low) / 2;
+      if (n > *mid)
+       low = mid + 1;
+      else
+       high = mid;
+    }
+
+#if 0
+  /* If we've run out of primes, abort.  */
+  if (n > *low)
+    {
+      fprintf (stderr, "Cannot find prime bigger than %lu\n", n);
+      abort ();
+    }
+#endif
+
+  return *low;
 }

@@ -49,12 +49,12 @@
     Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA */
+    License along with this library; if not, see
+    <http://www.gnu.org/licenses/>.  */
 
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 #include <math_ldbl_opt.h>
 
 /* Coefficients for log(1+x) = x - x^2 / 2 + x^3 P(x)/Q(x)
@@ -126,19 +126,18 @@ long double
 __log1pl (long double xm1)
 {
   long double x, y, z, r, s;
-  ieee854_long_double_shape_type u;
-  int32_t hx;
+  double xhi;
+  int32_t hx, lx;
   int e;
 
   /* Test for NaN or infinity input. */
-  u.value = xm1;
-  hx = u.parts32.w0;
+  xhi = ldbl_high (xm1);
+  EXTRACT_WORDS (hx, lx, xhi);
   if (hx >= 0x7ff00000)
     return xm1;
 
   /* log1p(+- 0) = +- 0.  */
-  if (((hx & 0x7fffffff) == 0)
-      && (u.parts32.w1 | (u.parts32.w2 & 0x7fffffff) | u.parts32.w3) == 0)
+  if (((hx & 0x7fffffff) | lx) == 0)
     return xm1;
 
   x = xm1 + 1.0L;

@@ -1,5 +1,5 @@
 /* getifaddrs -- get names and addresses of all network interfaces
-   Copyright (C) 2003-2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <alloca.h>
 #include <assert.h>
@@ -36,17 +35,6 @@
 #include <kernel-features.h>
 
 #include "netlinkaccess.h"
-
-
-/* We don't know if we have NETLINK support compiled in in our
-   Kernel, so include the old implementation as fallback.  */
-#if __ASSUME_NETLINK_SUPPORT == 0
-int __no_netlink_support attribute_hidden;
-
-# define getifaddrs fallback_getifaddrs
-# include "sysdeps/gnu/ifaddrs.c"
-# undef getifaddrs
-#endif
 
 
 /* There is a problem with this type.  The address length for
@@ -275,9 +263,6 @@ __netlink_open (struct netlink_handle *h)
     close_and_out:
       __netlink_close (h);
     out:
-#if __ASSUME_NETLINK_SUPPORT == 0
-      __no_netlink_support = 1;
-#endif
       return -1;
     }
   /* Determine the ID the kernel assigned for this netlink connection.
@@ -315,17 +300,19 @@ map_newlink (int index, struct ifaddrs_storage *ifas, int *map, int max)
       else if (map[i] == index)
 	return i;
     }
-  /* This should never be reached. If this will be reached, we have
-     a very big problem.  */
-  abort ();
+
+  /* This means interfaces changed between the reading of the
+     RTM_GETLINK and RTM_GETADDR information.  We have to repeat
+     everything.  */
+  return -1;
 }
 
 
 /* Create a linked list of `struct ifaddrs' structures, one for each
    network interface on the host machine.  If successful, store the
-   list in *IFAP and 2004, 2005, 2006, return 0.  On errors, return -1 and set `errno'.  */
-int
-getifaddrs (struct ifaddrs **ifap)
+   list in *IFAP and return 0.  On errors, return -1 and set `errno'.  */
+static int
+getifaddrs_internal (struct ifaddrs **ifap)
 {
   struct netlink_handle nh = { 0, 0, 0, NULL, NULL };
   struct netlink_res *nlp;
@@ -339,17 +326,8 @@ getifaddrs (struct ifaddrs **ifap)
 
   *ifap = NULL;
 
-  if (! __no_netlink_support && __netlink_open (&nh) < 0)
-    {
-#if __ASSUME_NETLINK_SUPPORT != 0
-      return -1;
-#endif
-    }
-
-#if __ASSUME_NETLINK_SUPPORT == 0
-  if (__no_netlink_support)
-    return fallback_getifaddrs (ifap);
-#endif
+  if (__netlink_open (&nh) < 0)
+    return -1;
 
   /* Tell the kernel that we wish to get a list of all
      active interfaces, collect all data for every interface.  */
@@ -481,6 +459,13 @@ getifaddrs (struct ifaddrs **ifap)
 		 kernel.  */
 	      ifa_index = map_newlink (ifim->ifi_index - 1, ifas,
 				       map_newlink_data, newlink);
+	      if (__builtin_expect (ifa_index == -1, 0))
+		{
+		try_again:
+		  result = -EAGAIN;
+		  free (ifas);
+		  goto exit_free;
+		}
 	      ifas[ifa_index].ifa.ifa_flags = ifim->ifi_flags;
 
 	      while (RTA_OK (rta, rtasize))
@@ -565,9 +550,11 @@ getifaddrs (struct ifaddrs **ifap)
 		 that we have holes in the interface part of the list,
 		 but we always have already the interface for this address.  */
 	      ifa_index = newlink + newaddr_idx;
-	      ifas[ifa_index].ifa.ifa_flags
-		= ifas[map_newlink (ifam->ifa_index - 1, ifas,
-				    map_newlink_data, newlink)].ifa.ifa_flags;
+	      int idx = map_newlink (ifam->ifa_index - 1, ifas,
+				     map_newlink_data, newlink);
+	      if (__builtin_expect (idx == -1, 0))
+		goto try_again;
+	      ifas[ifa_index].ifa.ifa_flags = ifas[idx].ifa.ifa_flags;
 	      if (ifa_index > 0)
 		ifas[ifa_index - 1].ifa.ifa_next = &ifas[ifa_index].ifa;
 	      ++newaddr_idx;
@@ -747,9 +734,13 @@ getifaddrs (struct ifaddrs **ifap)
 	      /* If we didn't get the interface name with the
 		 address, use the name from the interface entry.  */
 	      if (ifas[ifa_index].ifa.ifa_name == NULL)
-		ifas[ifa_index].ifa.ifa_name
-		  = ifas[map_newlink (ifam->ifa_index - 1, ifas,
-				      map_newlink_data, newlink)].ifa.ifa_name;
+		{
+		  int idx = map_newlink (ifam->ifa_index - 1, ifas,
+					 map_newlink_data, newlink);
+		  if (__builtin_expect (idx == -1, 0))
+		    goto try_again;
+		  ifas[ifa_index].ifa.ifa_name = ifas[idx].ifa.ifa_name;
+		}
 
 	      /* Calculate the netmask.  */
 	      if (ifas[ifa_index].ifa.ifa_addr
@@ -826,14 +817,28 @@ getifaddrs (struct ifaddrs **ifap)
 
   return result;
 }
+
+
+/* Create a linked list of `struct ifaddrs' structures, one for each
+   network interface on the host machine.  If successful, store the
+   list in *IFAP and return 0.  On errors, return -1 and set `errno'.  */
+int
+getifaddrs (struct ifaddrs **ifap)
+{
+  int res;
+
+  do
+    res = getifaddrs_internal (ifap);
+  while (res == -EAGAIN);
+
+  return res;
+}
 libc_hidden_def (getifaddrs)
 
 
-#if __ASSUME_NETLINK_SUPPORT != 0
 void
 freeifaddrs (struct ifaddrs *ifa)
 {
   free (ifa);
 }
 libc_hidden_def (freeifaddrs)
-#endif

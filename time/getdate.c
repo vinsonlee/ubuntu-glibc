@@ -1,5 +1,5 @@
 /* Convert a string representation of time to a time value.
-   Copyright (C) 1997,1998,1999,2000,2001,2003 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Mark Kettenis <kettenis@phys.uva.nl>, 1997.
 
@@ -14,9 +14,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <limits.h>
 #include <stdio.h>
@@ -26,6 +25,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <ctype.h>
+#include <alloca.h>
 
 #define TM_YEAR_BASE 1900
 
@@ -44,7 +45,7 @@ static int check_mday (int year, int mon, int mday);
      6  memory allication failed (not enough memory available),
      7  there is no line in the template that matches the input,
      8  invalid input specification Example: February 31 or a time is
-        specified that can not be represented in a time_t (representing
+	specified that can not be represented in a time_t (representing
 	the time in seconds since 00:00:00 UTC, January 1, 1970) */
 int getdate_err;
 
@@ -129,12 +130,50 @@ __getdate_r (const char *string, struct tm *tp)
     return 2;
 
   /* Open the template file.  */
-  fp = fopen (datemsk, "rc");
+  fp = fopen (datemsk, "rce");
   if (fp == NULL)
     return 2;
 
   /* No threads reading this stream.  */
   __fsetlocking (fp, FSETLOCKING_BYCALLER);
+
+  /* Skip leading whitespace.  */
+  while (isspace (*string))
+    string++;
+
+  size_t inlen, oldlen;
+
+  oldlen = inlen = strlen (string);
+
+  /* Skip trailing whitespace.  */
+  while (inlen > 0 && isspace (string[inlen - 1]))
+    inlen--;
+
+  char *instr = NULL;
+
+  if (inlen < oldlen)
+    {
+      bool using_malloc = false;
+
+      if (__libc_use_alloca (inlen + 1))
+	instr = alloca (inlen + 1);
+      else
+	{
+	  instr = malloc (inlen + 1);
+	  if (instr == NULL)
+	    {
+	      fclose (fp);
+	      return 6;
+	    }
+	  using_malloc = true;
+	}
+      memcpy (instr, string, inlen);
+      instr[inlen] = '\0';
+      string = instr;
+
+      if (!using_malloc)
+	instr = NULL;
+    }
 
   line = NULL;
   len = 0;
@@ -159,6 +198,8 @@ __getdate_r (const char *string, struct tm *tp)
 	break;
     }
   while (!feof_unlocked (fp));
+
+  free (instr);
 
   /* Free the buffer.  */
   free (line);

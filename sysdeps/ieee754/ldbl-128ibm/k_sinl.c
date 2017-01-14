@@ -1,5 +1,5 @@
 /* Quad-precision floating point sine on <-pi/4,pi/4>.
-   Copyright (C) 1999,2004,2006 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jj@ultra.linux.cz>
 
@@ -14,12 +14,11 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 
 static const long double c[] = {
 #define ONE c[0]
@@ -83,7 +82,10 @@ __kernel_sinl(long double x, long double y, int iy)
   long double h, l, z, sin_l, cos_l_m1;
   int64_t ix;
   u_int32_t tix, hix, index;
-  GET_LDOUBLE_MSW64 (ix, x);
+  double xhi, hhi;
+
+  xhi = ldbl_high (x);
+  EXTRACT_WORDS64 (ix, xhi);
   tix = ((u_int64_t)ix) >> 32;
   tix &= ~0x80000000;			/* tix = |x|'s high 32 bits */
   if (tix < 0x3fc30000)			/* |x| < 0.1484375 */
@@ -120,8 +122,8 @@ __kernel_sinl(long double x, long double y, int iy)
 /*
     The following should work for double but generates the wrong index.
     For now the code above converts double to ieee extended to compute
-    the index back to double for the h value. 
-    
+    the index back to double for the h value.
+
       index = 0x3fe - (tix >> 20);
       hix = (tix + (0x2000 << index)) & (0xffffc000 << index);
       x = fabsl (x);
@@ -133,9 +135,10 @@ __kernel_sinl(long double x, long double y, int iy)
 	case 2: index = (hix - 0x3fc30000) >> 14; break;
 	}
 */
-      SET_LDOUBLE_WORDS64(h, ((u_int64_t)hix) << 32, 0);
+      INSERT_WORDS64 (hhi, ((uint64_t)hix) << 32);
+      h = hhi;
       if (iy)
-	l = y - (h - x);
+	l = (ix < 0 ? -y : y) - (h - x);
       else
 	l = x - h;
       z = l * l;

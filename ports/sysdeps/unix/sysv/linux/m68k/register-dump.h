@@ -1,5 +1,5 @@
 /* Dump registers.
-   Copyright (C) 1998, 2002, 2004 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Andreas Schwab <schwab@gnu.org>.
 
@@ -14,13 +14,12 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <stddef.h>
 #include <sys/uio.h>
-#include <stdio-common/_itoa.h>
+#include <_itoa.h>
 
 /* We will print the register dump in this format:
 
@@ -40,7 +39,6 @@
 
 */
 
-#ifndef __mcoldfire__
 /* Linux saves only the call-clobbered registers in the sigcontext.  We
    need to use a trampoline that saves the rest so that the C code can
    access them.  We use the sc_fpstate field, since the handler is not
@@ -59,14 +57,17 @@ catch_segfault:\n\
 	/* Clear the first 4 bytes to make it a null fp state, just\n\
 	   in case the handler does return.  */\n\
 	clr.l (%%a0)+\n\
-	movem.l %%d2-%%d7/%%a2-%%a6,(%%a0)\n\
-	fmovem.x %%fp2-%%fp7,11*4(%%a0)\n\
-	jra real_catch_segfault"
+	movem.l %%d2-%%d7/%%a2-%%a6,(%%a0)\n"
+#ifndef __mcoldfire__
+       "fmovem.x %%fp2-%%fp7,11*4(%%a0)\n"
+#elif defined __mcffpu__
+       "fmovem.d %%fp2-%%fp7,11*4(%%a0)\n"
+#endif
+       "jra real_catch_segfault"
        : : "n" (offsetof (struct sigcontext, sc_fpstate)));
 }
 #define catch_segfault(a,b) \
   __attribute_used__ real_catch_segfault(a,b)
-#endif
 
 static void
 hexvalue (unsigned long int value, char *buf, size_t len)
@@ -104,36 +105,19 @@ register_dump (int fd, struct sigcontext *ctx)
   /* Generate strings of register contents.  */
   hexvalue (ctx->sc_d0, regs[0], 8);
   hexvalue (ctx->sc_d1, regs[1], 8);
-#ifdef __mcoldfire__
-  hexvalue (ctx->sc_d2, regs[2], 8);
-  hexvalue (ctx->sc_d3, regs[3], 8);
-  hexvalue (ctx->sc_d4, regs[4], 8);
-  hexvalue (ctx->sc_d5, regs[5], 8);
-  hexvalue (ctx->sc_d6, regs[6], 8);
-  hexvalue (ctx->sc_d7, regs[7], 8);
-#else
   hexvalue (*p++, regs[2], 8);
   hexvalue (*p++, regs[3], 8);
   hexvalue (*p++, regs[4], 8);
   hexvalue (*p++, regs[5], 8);
   hexvalue (*p++, regs[6], 8);
   hexvalue (*p++, regs[7], 8);
-#endif
   hexvalue (ctx->sc_a0, regs[8], 8);
   hexvalue (ctx->sc_a1, regs[9], 8);
-#ifdef __mcoldfire__
-  hexvalue (ctx->sc_a2, regs[10], 8);
-  hexvalue (ctx->sc_a3, regs[11], 8);
-  hexvalue (ctx->sc_a4, regs[12], 8);
-  hexvalue (ctx->sc_a5, regs[13], 8);
-  hexvalue (ctx->sc_a6, regs[14], 8);
-#else
   hexvalue (*p++, regs[10], 8);
   hexvalue (*p++, regs[11], 8);
   hexvalue (*p++, regs[12], 8);
   hexvalue (*p++, regs[13], 8);
   hexvalue (*p++, regs[14], 8);
-#endif
   hexvalue (ctx->sc_usp, regs[15], 8);
   hexvalue (ctx->sc_pc, regs[16], 8);
   hexvalue (ctx->sc_sr, regs[17], 4);
@@ -142,9 +126,6 @@ register_dump (int fd, struct sigcontext *ctx)
   for (i = 0; i < 2; i++)
     for (j = 0; j < fpreg_size; j += 8)
       hexvalue (*pfp++, fpregs[i] + j, 8);
-#ifdef __mcoldfire__
-  p = pfp;
-#endif
   for (i = 2; i < 8; i++)
     for (j = 0; j < fpreg_size; j += 8)
       hexvalue (*p++, fpregs[i] + j, 8);

@@ -1,58 +1,72 @@
-/* e_atanhf.c -- float version of e_atanh.c.
- * Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com.
+/* Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
+   Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
+
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
+
+
+/* __ieee754_atanh(x)
+   Method :
+      1.Reduced x to positive by atanh(-x) = -atanh(x)
+      2.For x>=0.5
+		    1              2x                          x
+	atanh(x) = --- * log(1 + -------) = 0.5 * log1p(2 * --------)
+		    2             1 - x                      1 - x
+
+	For x<0.5
+	atanh(x) = 0.5*log1p(2x+2x*x/(1-x))
+
+   Special cases:
+	atanh(x) is NaN if |x| > 1 with signal;
+	atanh(NaN) is that NaN with no signal;
+	atanh(+-1) is +-INF with signal.
+
  */
 
-/*
- * ====================================================
- * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
- *
- * Developed at SunPro, a Sun Microsystems, Inc. business.
- * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
- * is preserved.
- * ====================================================
- */
+#include <inttypes.h>
+#include <math.h>
+#include <math_private.h>
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_atanhf.c,v 1.4 1995/05/10 20:44:56 jtc Exp $";
-#endif
+static const float huge = 1e30;
 
-#include "math.h"
-#include "math_private.h"
-
-#ifdef __STDC__
-static const float one = 1.0, huge = 1e30;
-#else
-static float one = 1.0, huge = 1e30;
-#endif
-
-#ifdef __STDC__
-static const float zero = 0.0;
-#else
-static float zero = 0.0;
-#endif
-
-#ifdef __STDC__
-	float __ieee754_atanhf(float x)
-#else
-	float __ieee754_atanhf(x)
-	float x;
-#endif
+float
+__ieee754_atanhf (float x)
 {
-	float t;
-	int32_t hx,ix;
-	GET_FLOAT_WORD(hx,x);
-	ix = hx&0x7fffffff;
-	if (ix>0x3f800000) 		/* |x|>1 */
-	    return (x-x)/(x-x);
-	if(ix==0x3f800000) 
-	    return x/zero;
-	if(ix<0x31800000&&(huge+x)>zero) return x;	/* x<2**-28 */
-	SET_FLOAT_WORD(x,ix);
-	if(ix<0x3f000000) {		/* x < 0.5 */
-	    t = x+x;
-	    t = (float)0.5*__log1pf(t+t*x/(one-x));
-	} else 
-	    t = (float)0.5*__log1pf((x+x)/(one-x));
-	if(hx>=0) return t; else return -t;
+  float xa = fabsf (x);
+  float t;
+  if (isless (xa, 0.5f))
+    {
+      if (__builtin_expect (xa < 0x1.0p-28f, 0))
+	{
+	  math_force_eval (huge + x);
+	  return x;
+	}
+
+      t = xa + xa;
+      t = 0.5f * __log1pf (t + t * xa / (1.0f - xa));
+    }
+  else if (__builtin_expect (isless (xa, 1.0f), 1))
+    t = 0.5f * __log1pf ((xa + xa) / (1.0f - xa));
+  else
+    {
+      if (isgreater (xa, 1.0f))
+	return (x - x) / (x - x);
+
+      return x / 0.0f;
+    }
+
+  return __copysignf (t, x);
 }
+strong_alias (__ieee754_atanhf, __atanhf_finite)

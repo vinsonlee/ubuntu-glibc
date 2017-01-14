@@ -1,6 +1,5 @@
 /* Internal header for parsing printf format strings.
-   Copyright (C) 1995-1999, 2000, 2002, 2003, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of th GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <printf.h>
 #include <stdint.h>
@@ -42,6 +40,8 @@ struct printf_spec
     int data_arg_type;		/* Type of first argument.  */
     /* Number of arguments consumed by this format specifier.  */
     size_t ndata_args;
+    /* Size of the parameter for PA_USER type.  */
+    int size;
   };
 
 
@@ -60,22 +60,34 @@ union printf_arg
     const char *pa_string;
     const wchar_t *pa_wstring;
     void *pa_pointer;
+    void *pa_user;
   };
 
 
 #ifndef DONT_NEED_READ_INT
 /* Read a simple integer from a string and update the string pointer.
    It is assumed that the first character is a digit.  */
-static unsigned int
+static int
 read_int (const UCHAR_T * *pstr)
 {
-  unsigned int retval = **pstr - L_('0');
+  int retval = **pstr - L_('0');
 
   while (ISDIGIT (*++(*pstr)))
-    {
-      retval *= 10;
-      retval += **pstr - L_('0');
-    }
+    if (retval >= 0)
+      {
+	if (INT_MAX / 10 < retval)
+	  retval = -1;
+	else
+	  {
+	    int digit = **pstr - L_('0');
+
+	    retval *= 10;
+	    if (INT_MAX - digit < retval)
+	      retval = -1;
+	    else
+	      retval += digit;
+	  }
+      }
 
   return retval;
 }
@@ -83,8 +95,9 @@ read_int (const UCHAR_T * *pstr)
 
 
 /* These are defined in reg-printf.c.  */
-extern printf_arginfo_function **__printf_arginfo_table attribute_hidden;
+extern printf_arginfo_size_function **__printf_arginfo_table attribute_hidden;
 extern printf_function **__printf_function_table attribute_hidden;
+extern printf_va_arg_function **__printf_va_arg_table attribute_hidden;
 
 
 /* Find the next spec in FORMAT, or the end of the string.  Returns
@@ -114,3 +127,18 @@ extern size_t __parse_one_specmb (const unsigned char *format, size_t posn,
 extern size_t __parse_one_specwc (const unsigned int *format, size_t posn,
 				  struct printf_spec *spec,
 				  size_t *max_ref_arg) attribute_hidden;
+
+
+
+/* This variable is defined in reg-modifier.c.  */
+struct printf_modifier_record;
+extern struct printf_modifier_record **__printf_modifier_table
+     attribute_hidden;
+
+/* Handle registered modifiers.  */
+extern int __handle_registered_modifier_mb (const unsigned char **format,
+					    struct printf_info *info)
+     attribute_hidden;
+extern int __handle_registered_modifier_wc (const unsigned int **format,
+					    struct printf_info *info)
+     attribute_hidden;

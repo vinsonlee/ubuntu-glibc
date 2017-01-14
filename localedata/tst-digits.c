@@ -1,4 +1,4 @@
-/* Copyright (C) 2000 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gnu.org>, 2000.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <ctype.h>
 #include <langinfo.h>
@@ -179,7 +178,7 @@ main (void)
   printf ("%d failures in wprintf tests\n", failures);
   status = failures != 0;
 
-  /* ctype tests.  This makes sure that the multibyte chracter digit
+  /* ctype tests.  This makes sure that the multibyte character digit
      representations are not handle in this table.  */
   failures = 0;
   for (cnt = 0; cnt < 256; ++cnt)

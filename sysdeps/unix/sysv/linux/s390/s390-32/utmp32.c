@@ -1,4 +1,4 @@
-/* Copyright (C) 2008 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2014 Free Software Foundation, Inc.
    Contributed by Andreas Krebbel <Andreas.Krebbel@de.ibm.com>.
    This file is part of the GNU C Library.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sys/types.h>
 #include <utmp.h>
@@ -31,7 +30,7 @@
    calls.  */
 #define ALLOCATE_UTMP32_OUT(OUT)			\
   static struct utmp32 *OUT = NULL;			\
-  							\
+							\
   if (OUT == NULL)					\
     {							\
       OUT = malloc (sizeof (struct utmp32));		\
@@ -62,7 +61,7 @@
 struct utmp32 *
 getutid32 (const struct utmp32 *id)
 {
-  ACCESS_UTMP_ENTRY (getutid, id)
+  ACCESS_UTMP_ENTRY (__getutid, id)
 }
 symbol_version (getutid32, getutid, GLIBC_2.0);
 
@@ -71,7 +70,7 @@ symbol_version (getutid32, getutid, GLIBC_2.0);
 struct utmp32 *
 getutline32 (const struct utmp32 *line)
 {
-  ACCESS_UTMP_ENTRY (getutline, line)
+  ACCESS_UTMP_ENTRY (__getutline, line)
 }
 symbol_version (getutline32, getutline, GLIBC_2.0);
 
@@ -79,7 +78,7 @@ symbol_version (getutline32, getutline, GLIBC_2.0);
 struct utmp32 *
 pututline32 (const struct utmp32 *utmp_ptr)
 {
-  ACCESS_UTMP_ENTRY (pututline, utmp_ptr)
+  ACCESS_UTMP_ENTRY (__pututline, utmp_ptr)
 }
 symbol_version (pututline32, pututline, GLIBC_2.0);
 
@@ -90,7 +89,7 @@ getutent32 (void)
   struct utmp *out64;
   ALLOCATE_UTMP32_OUT (out32);
 
-  out64 = getutent ();
+  out64 = __getutent ();
   if (!out64)
     return NULL;
 
@@ -108,7 +107,7 @@ getutent32_r (struct utmp32 *buffer, struct utmp32 **result)
   struct utmp *out64p;
   int ret;
 
-  ret = getutent_r (&out64, &out64p);
+  ret = __getutent_r (&out64, &out64p);
   if (ret == -1)
     {
       *result = NULL;
@@ -133,7 +132,7 @@ getutid32_r (const struct utmp32 *id, struct utmp32 *buffer,
 
   utmp_convert32to64 (id, &in64);
 
-  ret = getutid_r (&in64, &out64, &out64p);
+  ret = __getutid_r (&in64, &out64, &out64p);
   if (ret == -1)
     {
       *result = NULL;
@@ -158,7 +157,7 @@ getutline32_r (const struct utmp32 *line,
 
   utmp_convert32to64 (line, &in64);
 
-  ret = getutline_r (&in64, &out64, &out64p);
+  ret = __getutline_r (&in64, &out64, &out64p);
   if (ret == -1)
     {
       *result = NULL;
@@ -180,6 +179,6 @@ updwtmp32 (const char *wtmp_file, const struct utmp32 *utmp)
   struct utmp in32;
 
   utmp_convert32to64 (utmp, &in32);
-  updwtmp (wtmp_file, &in32);
+  __updwtmp (wtmp_file, &in32);
 }
 symbol_version (updwtmp32, updwtmp, GLIBC_2.0);

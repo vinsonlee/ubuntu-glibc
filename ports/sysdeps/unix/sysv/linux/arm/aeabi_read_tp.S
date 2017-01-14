@@ -1,4 +1,4 @@
-/* Copyright (C) 2005 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,13 +29,10 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <sysdep.h>
-
-#ifdef HAVE_TLS_SUPPORT
 
 /* GCC will emit calls to this routine under -mtp=soft.  Linux has an
    equivalent helper function (which clobbers fewer registers than
@@ -44,8 +41,15 @@
 
 	.hidden __aeabi_read_tp
 ENTRY (__aeabi_read_tp)
+#ifdef ARCH_HAS_HARD_TP
+	mrc	p15, 0, r0, c13, c0, 3
+	bx	lr
+#elif defined(__thumb2__)
+	movw	r0, #0x0fe0
+	movt	r0, #0xffff
+	bx	r0
+#else
 	mov	r0, #0xffff0fff
 	sub	pc, r0, #31
-END (__aeabi_read_tp)
-
 #endif
+END (__aeabi_read_tp)

@@ -1,6 +1,5 @@
 /* Minimal replacements for basic facilities used in the dynamic linker.
-   Copyright (C) 1995-1998,2000-2002,2004-2006,2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -14,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <limits.h>
@@ -27,7 +25,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <ldsodefs.h>
-#include <stdio-common/_itoa.h>
+#include <_itoa.h>
 
 #include <assert.h>
 
@@ -51,16 +49,6 @@ extern unsigned long int weak_function strtoul (const char *nptr,
 void * weak_function
 __libc_memalign (size_t align, size_t n)
 {
-#ifdef MAP_ANON
-#define	_dl_zerofd (-1)
-#else
-  extern int _dl_zerofd;
-
-  if (_dl_zerofd == -1)
-    _dl_zerofd = _dl_sysdep_open_zero_fill ();
-#define MAP_ANON 0
-#endif
-
   if (alloc_end == 0)
     {
       /* Consume any unused space in the last page of our data segment.  */
@@ -87,7 +75,7 @@ __libc_memalign (size_t align, size_t n)
 	  nup = GLRO(dl_pagesize);
 	}
       page = __mmap (0, nup, PROT_READ|PROT_WRITE,
-		     MAP_ANON|MAP_PRIVATE, _dl_zerofd, 0);
+		     MAP_ANON|MAP_PRIVATE, -1, 0);
       if (page == MAP_FAILED)
 	return NULL;
       if (page != alloc_end)
@@ -243,6 +231,7 @@ __strtoul_internal (const char *nptr, char **endptr, int base, int group)
 {
   unsigned long int result = 0;
   long int sign = 1;
+  unsigned max_digit;
 
   while (*nptr == ' ' || *nptr == '\t')
     ++nptr;
@@ -264,6 +253,7 @@ __strtoul_internal (const char *nptr, char **endptr, int base, int group)
 
   assert (base == 0);
   base = 10;
+  max_digit = 9;
   if (*nptr == '0')
     {
       if (nptr[1] == 'x' || nptr[1] == 'X')
@@ -272,14 +262,31 @@ __strtoul_internal (const char *nptr, char **endptr, int base, int group)
 	  nptr += 2;
 	}
       else
-	base = 8;
+	{
+	  base = 8;
+	  max_digit = 7;
+	}
     }
 
-  while (*nptr >= '0' && *nptr <= '9')
+  while (1)
     {
-      unsigned long int digval = *nptr - '0';
-      if (result > ULONG_MAX / 10
-	  || (result == ULONG_MAX / 10 && digval > ULONG_MAX % 10))
+      unsigned long int digval;
+      if (*nptr >= '0' && *nptr <= '0' + max_digit)
+        digval = *nptr - '0';
+      else if (base == 16)
+        {
+	  if (*nptr >= 'a' && *nptr <= 'f')
+	    digval = *nptr - 'a' + 10;
+	  else if (*nptr >= 'A' && *nptr <= 'F')
+	    digval = *nptr - 'A' + 10;
+	  else
+	    break;
+	}
+      else
+        break;
+
+      if (result > ULONG_MAX / base
+	  || (result == ULONG_MAX / base && digval > ULONG_MAX % base))
 	{
 	  errno = ERANGE;
 	  if (endptr != NULL)
@@ -308,12 +315,10 @@ _itoa (value, buflim, base, upper_case)
      unsigned int base;
      int upper_case;
 {
-  extern const char INTUSE(_itoa_lower_digits)[] attribute_hidden;
-
   assert (! upper_case);
 
   do
-    *--buflim = INTUSE(_itoa_lower_digits)[value % base];
+    *--buflim = _itoa_lower_digits[value % base];
   while ((value /= base) != 0);
 
   return buflim;
@@ -373,5 +378,5 @@ rtld_hidden_def (__chk_fail)
 
 /* The '_itoa_lower_digits' variable in libc.so is able to handle bases
    up to 36.  We don't need this here.  */
-const char INTUSE(_itoa_lower_digits)[16] attribute_hidden
-  = "0123456789abcdef";
+const char _itoa_lower_digits[16] = "0123456789abcdef";
+rtld_hidden_data_def (_itoa_lower_digits)

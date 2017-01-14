@@ -27,34 +27,30 @@ static char rcsid[] = "$NetBSD: $";
  * with *exp=0.
  */
 
-#include "math.h"
-#include "math_private.h"
+#include <math.h>
+#include <math_private.h>
 #include <math_ldbl_opt.h>
 
-#ifdef __STDC__
 static const long double
-#else
-static long double
-#endif
 two107 = 162259276829213363391578010288128.0; /* 0x4670000000000000, 0 */
 
-#ifdef __STDC__
-	long double __frexpl(long double x, int *eptr)
-#else
-	long double __frexpl(x, eptr)
-	long double x; int *eptr;
-#endif
+long double __frexpl(long double x, int *eptr)
 {
-	u_int64_t hx, lx, ix, ixl;
+	uint64_t hx, lx, ix, ixl;
 	int64_t explo;
-	GET_LDOUBLE_WORDS64(hx,lx,x);
+	double xhi, xlo;
+
+	ldbl_unpack (x, &xhi, &xlo);
+	EXTRACT_WORDS64 (hx, xhi);
+	EXTRACT_WORDS64 (lx, xlo);
 	ixl = 0x7fffffffffffffffULL&lx;
 	ix =  0x7fffffffffffffffULL&hx;
 	*eptr = 0;
-	if(ix>=0x7ff0000000000000ULL||((ix|ixl)==0)) return x;	/* 0,inf,nan */
+	if(ix>=0x7ff0000000000000ULL||ix==0) return x;	/* 0,inf,nan */
 	if (ix<0x0010000000000000ULL) {		/* subnormal */
 	    x *= two107;
-	    GET_LDOUBLE_MSW64(hx,x);
+	    xhi = ldbl_high (x);
+	    EXTRACT_WORDS64 (hx, xhi);
 	    ix = hx&0x7fffffffffffffffULL;
 	    *eptr = -107;
 	}
@@ -63,7 +59,7 @@ two107 = 162259276829213363391578010288128.0; /* 0x4670000000000000, 0 */
 	if (ixl != 0ULL) {
 	  explo = (ixl>>52) - (ix>>52) + 0x3fe;
 	  if ((ixl&0x7ff0000000000000ULL) == 0LL) {
-	    /* the lower double is a denomal so we need to correct its
+	    /* the lower double is a denormal so we need to correct its
 	       mantissa and perhaps its exponent.  */
 	    int cnt;
 
@@ -82,7 +78,9 @@ two107 = 162259276829213363391578010288128.0; /* 0x4670000000000000, 0 */
 	  lx = 0ULL;
 
 	hx = (hx&0x800fffffffffffffULL) | 0x3fe0000000000000ULL;
-	SET_LDOUBLE_WORDS64(x,hx,lx);
+	INSERT_WORDS64 (xhi, hx);
+	INSERT_WORDS64 (xlo, lx);
+	x = ldbl_pack (xhi, xlo);
 	return x;
 }
 #ifdef IS_IN_libm

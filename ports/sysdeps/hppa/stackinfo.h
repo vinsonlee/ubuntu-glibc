@@ -1,4 +1,4 @@
-/* Copyright (C) 1999 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,15 +12,20 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* This file contains a bit of information about the stack allocation
    of the processor.  */
 
 #ifndef _STACKINFO_H
 #define _STACKINFO_H	1
+
+#include <elf.h>
+
+/* Default to an executable stack.  PF_X can be overridden if PT_GNU_STACK is
+ * present, but it is presumed absent.  */
+#define DEFAULT_STACK_PERMS (PF_R|PF_W|PF_X)
 
 /* On PA the stack grows up.  */
 #define _STACK_GROWS_UP	1

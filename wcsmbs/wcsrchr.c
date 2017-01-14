@@ -1,4 +1,4 @@
-/* Copyright (C) 1995, 1996, 1999 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper, <drepper@gnu.ai.mit.edu>
 
@@ -13,18 +13,20 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <wchar.h>
 
+#ifndef WCSRCHR
+# define WCSRCHR wcsrchr
+#endif
 
 /* Find the last occurrence of WC in WCS.  */
 wchar_t *
-wcsrchr (wcs, wc)
-     register const wchar_t *wcs;
-     register const wchar_t wc;
+WCSRCHR (wcs, wc)
+     const wchar_t *wcs;
+     const wchar_t wc;
 {
   const wchar_t *retval = NULL;
 

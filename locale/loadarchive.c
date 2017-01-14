@@ -1,5 +1,5 @@
 /* Code to load locale data from the locale archive file.
-   Copyright (C) 2002, 2003, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <locale.h>
 #include <stddef.h>
@@ -26,6 +25,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -85,7 +85,7 @@ struct locale_in_archive
 {
   struct locale_in_archive *next;
   char *name;
-  struct locale_data *data[__LC_LAST];
+  struct __locale_data *data[__LC_LAST];
 };
 static struct locale_in_archive *archloaded;
 
@@ -129,7 +129,7 @@ calculate_head_size (const struct locarhead *h)
    already been loaded from the archive, just returns the existing data
    structure.  If successful, sets *NAMEP to point directly into the mapped
    archive string table; that way, the next call can short-circuit strcmp.  */
-struct locale_data *
+struct __locale_data *
 internal_function
 _nl_load_locale_from_archive (int category, const char **namep)
 {
@@ -203,7 +203,7 @@ _nl_load_locale_from_archive (int category, const char **namep)
       archmapped = &headmap;
 
       /* The archive has never been opened.  */
-      fd = open_not_cancel_2 (archfname, O_RDONLY|O_LARGEFILE);
+      fd = open_not_cancel_2 (archfname, O_RDONLY|O_LARGEFILE|O_CLOEXEC);
       if (fd < 0)
 	/* Cannot open the archive, for whatever reason.  */
 	return NULL;
@@ -273,6 +273,10 @@ _nl_load_locale_from_archive (int category, const char **namep)
   head = headmap.ptr;
   namehashtab = (struct namehashent *) ((char *) head
 					+ head->namehash_offset);
+
+  /* Avoid division by 0 if the file is corrupted.  */
+  if (__glibc_unlikely (head->namehash_size == 0))
+    goto close_and_out;
 
   idx = hval % head->namehash_size;
   incr = 1 + hval % (head->namehash_size - 2);
@@ -394,7 +398,8 @@ _nl_load_locale_from_archive (int category, const char **namep)
 	  if (fd == -1)
 	    {
 	      struct stat64 st;
-	      fd = open_not_cancel_2 (archfname, O_RDONLY|O_LARGEFILE);
+	      fd = open_not_cancel_2 (archfname,
+				      O_RDONLY|O_LARGEFILE|O_CLOEXEC);
 	      if (fd == -1)
 		/* Cannot open the archive, for whatever reason.  */
 		return NULL;

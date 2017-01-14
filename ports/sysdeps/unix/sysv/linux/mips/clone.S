@@ -1,4 +1,4 @@
-/* Copyright (C) 1996, 1997, 2000, 2003, 2005 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ralf Baechle <ralf@linux-mips.org>, 1996.
 
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 /* clone() is even more special than fork() as it mucks with stacks
    and invokes a function in the right context after its all over.  */
@@ -35,6 +34,7 @@
 	     void *parent_tidptr, void *tls, void *child_tidptr) */
 
 	.text
+	.set		nomips16
 #if _MIPS_SIM == _ABIO32
 # define EXTRA_LOCALS 1
 #else
@@ -48,7 +48,8 @@ NESTED(__clone,4*SZREG,sp)
 	SETUP_GP
 #endif
 	PTR_SUBU sp, FRAMESZ
-	SETUP_GP64 (GPOFF, __clone)
+	cfi_adjust_cfa_offset (FRAMESZ)
+	SETUP_GP64_STACK (GPOFF, __clone)
 #ifdef __PIC__
 	SAVE_GP (GPOFF)
 #endif
@@ -89,26 +90,35 @@ NESTED(__clone,4*SZREG,sp)
 
 	/* Do the system call */
 	li		v0,__NR_clone
+	cfi_endproc
 	syscall
 
 	bnez		a3,L(error)
 	beqz		v0,L(thread_start)
 
 	/* Successful return from the parent */
-	RESTORE_GP64
+	cfi_startproc
+	cfi_adjust_cfa_offset (FRAMESZ)
+	SETUP_GP64_STACK_CFI (GPOFF)
+	cfi_remember_state
+	RESTORE_GP64_STACK
 	PTR_ADDU	sp, FRAMESZ
+	cfi_adjust_cfa_offset (-FRAMESZ)
 	ret
 
 	/* Something bad happened -- no child created */
 L(error):
+	cfi_restore_state
 #ifdef __PIC__
 	PTR_LA		t9,__syscall_error
-	RESTORE_GP64
+	RESTORE_GP64_STACK
 	PTR_ADDU	sp, FRAMESZ
+	cfi_adjust_cfa_offset (-FRAMESZ)
 	jr		t9
 #else
-	RESTORE_GP64
+	RESTORE_GP64_STACK
 	PTR_ADDU	sp, FRAMESZ
+	cfi_adjust_cfa_offset (-FRAMESZ)
 	j		__syscall_error
 #endif
 	END(__clone)
@@ -119,6 +129,7 @@ L(error):
 
 ENTRY(__thread_start)
 L(thread_start):
+	cfi_undefined ($31)
 	/* cp is already loaded.  */
 	SAVE_GP (GPOFF)
 	/* The stackframe has been created on entry of clone().  */

@@ -1,5 +1,5 @@
 /* Get file-specific information about a file.  Linux version.
-   Copyright (C) 2003, 2004, 2006, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -13,9 +13,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <fcntl.h>
@@ -35,6 +34,34 @@
 static long int posix_sysconf (int name);
 
 
+#ifndef HAS_CPUCLOCK
+static long int
+has_cpuclock (int name)
+{
+# if defined __NR_clock_getres || HP_TIMING_AVAIL
+  /* If we have HP_TIMING, we will fall back on that if the system
+     call does not work, so we support it either way.  */
+#  if !HP_TIMING_AVAIL
+  /* Check using the clock_getres system call.  */
+  struct timespec ts;
+  INTERNAL_SYSCALL_DECL (err);
+  int r = INTERNAL_SYSCALL (clock_getres, err, 2,
+			    (name == _SC_CPUTIME
+			     ? CLOCK_PROCESS_CPUTIME_ID
+			     : CLOCK_THREAD_CPUTIME_ID),
+			    &ts);
+  if (INTERNAL_SYSCALL_ERROR_P (r, err))
+    return -1;
+#  endif
+  return _POSIX_VERSION;
+# else
+  return -1;
+# endif
+}
+# define HAS_CPUCLOCK(name) has_cpuclock (name)
+#endif
+
+
 /* Get the value of the system variable NAME.  */
 long int
 __sysconf (int name)
@@ -43,6 +70,7 @@ __sysconf (int name)
 
   switch (name)
     {
+      struct rlimit rlimit;
 #ifdef __NR_clock_getres
     case _SC_MONOTONIC_CLOCK:
       /* Check using the clock_getres system call.  */
@@ -55,41 +83,20 @@ __sysconf (int name)
       }
 #endif
 
-#if defined __NR_clock_getres || HP_TIMING_AVAIL
     case _SC_CPUTIME:
     case _SC_THREAD_CPUTIME:
-      {
-	/* If we have HP_TIMING, we will fall back on that if the system
-	   call does not work, so we support it either way.  */
-# if !HP_TIMING_AVAIL
-	/* Check using the clock_getres system call.  */
-	struct timespec ts;
-	INTERNAL_SYSCALL_DECL (err);
-	int r = INTERNAL_SYSCALL (clock_getres, err, 2,
-				  (name == _SC_CPUTIME
-				   ? CLOCK_PROCESS_CPUTIME_ID
-				   : CLOCK_THREAD_CPUTIME_ID),
-				  &ts);
-	if (INTERNAL_SYSCALL_ERROR_P (r, err))
-	  return -1;
-# endif
-	return _POSIX_VERSION;
-      }
-#endif
+      return HAS_CPUCLOCK (name);
 
     case _SC_ARG_MAX:
-#if __LINUX_KERNEL_VERSION < 0x020617
-      /* Determine whether this is a kernel 2.6.23 or later.  Only
-	 then do we have an argument limit determined by the stack
-	 size.  */
-      if (GLRO(dl_discover_osversion) () >= 0x020617)
+#if !__ASSUME_ARG_MAX_STACK_BASED
+      /* Determine whether this is a kernel with an argument limit
+	 determined by the stack size.  */
+      if (GLRO(dl_discover_osversion) ()
+	  >= __LINUX_ARG_MAX_STACK_BASED_MIN_KERNEL)
 #endif
-	{
-	  /* Use getrlimit to get the stack limit.  */
-	  struct rlimit rlimit;
-	  if (__getrlimit (RLIMIT_STACK, &rlimit) == 0)
-	    return MAX (legacy_ARG_MAX, rlimit.rlim_cur / 4);
-	}
+	/* Use getrlimit to get the stack limit.  */
+	if (__getrlimit (RLIMIT_STACK, &rlimit) == 0)
+	  return MAX (legacy_ARG_MAX, rlimit.rlim_cur / 4);
 
       return legacy_ARG_MAX;
 
@@ -100,6 +107,9 @@ __sysconf (int name)
       break;
 
     case _SC_SIGQUEUE_MAX:
+      if (__getrlimit (RLIMIT_SIGPENDING, &rlimit) == 0)
+	return rlimit.rlim_cur;
+
       /* The /proc/sys/kernel/rtsig-max file contains the answer.  */
       procfname = "/proc/sys/kernel/rtsig-max";
       break;

@@ -2,7 +2,7 @@ comment_char %
 escape_char  /
 % Distribution and use is
 
-LC_IDENTIFICATION 
+LC_IDENTIFICATION
 title "Limburgish Language Locale for Belgium"
 source "information from Kenneth Christiansen"
 address ""
@@ -48,7 +48,8 @@ country_ab3   "<U0042><U0045><U004C>"
 country_car   "<U0042>"
 country_num 56
 %FIXME country_isbn "2"
-lang_name "<U004C><U0069><U006D><U0062><U0075><U0072><U0067><U0073>"
+% Lèmbörgs
+lang_name    "<U004C><U00E8><U006D><U0062><U00F6><U0072><U0067><U0073>"
 lang_ab "<U006C><U0069>"
 lang_term "<U006C><U0069><U006D>"
 lang_lib "<U006C><U0069><U006D>"
@@ -84,7 +85,8 @@ copy "nl_BE"
 END LC_TELEPHONE
 
 LC_MEASUREMENT
-copy "nl_BE"
+% metric
+measurement 1
 END LC_MEASUREMENT
 
 LC_NUMERIC
@@ -126,7 +128,7 @@ d_fmt   "<U0025><U0064><U002E><U0025><U006D><U002E><U0025><U0059>"
 t_fmt   "<U0025><U0054>"
 am_pm   "";""
 t_fmt_ampm ""
-week	7;19971201;4
-first_weekday	1
-first_workday	1
+week	7;19971130;4
+first_weekday	2
+first_workday	2
 END LC_TIME

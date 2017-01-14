@@ -1,4 +1,4 @@
-/* Copyright (C) 1997, 2000 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -12,9 +12,8 @@
    Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, write to the Free
-   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-   02111-1307 USA.  */
+   License along with the GNU C Library.  If not, see
+   <http://www.gnu.org/licenses/>.  */
 
 #ifndef _SYS_STATFS_H
 # error "Never include <bits/statfs.h> directly; use <sys/statfs.h> instead."
@@ -45,7 +44,8 @@ struct statfs
 	/* Linux specials */
     __fsid_t f_fsid;
     long int f_namelen;
-    long int f_spare[6];
+    long int f_flags;
+    long int f_spare[5];
   };
 
 #ifdef __USE_LARGEFILE64
@@ -64,7 +64,8 @@ struct statfs64
 	/* Linux specials */
     __fsid_t f_fsid;
     long int f_namelen;
-    long int f_spare[6];
+    long int f_flags;
+    long int f_spare[5];
   };
 #endif
 
