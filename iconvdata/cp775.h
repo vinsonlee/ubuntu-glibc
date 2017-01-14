@@ -1,5 +1,5 @@
 /* Mapping table for CP775.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
 
@@ -294,7 +294,7 @@ static const uint32_t to_ucs4[256] =
 
    where gap.pl is the file in this directory.
  */
-static struct gap from_idx[] =
+static const struct gap from_idx[] =
 {
   { .start = 0x0000, .end = 0x007f, .idx =     0 },
   { .start = 0x00a0, .end = 0x00c9, .idx =   -32 },

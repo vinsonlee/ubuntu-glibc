@@ -1,4 +1,4 @@
-# Copyright (C) 1994-2015 Free Software Foundation, Inc.
+# Copyright (C) 1994-2016 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -90,13 +90,11 @@ CPPFLAGS += -Dgethostbyname=res_gethostbyname \
 	    -Dgetnetbyname=res_getnetbyname \
 	    -Dgetnetbyaddr=res_getnetbyaddr
 
-ifeq (yes,$(have-ssp))
-CFLAGS-libresolv += -fstack-protector
-endif
+CFLAGS-libresolv += $(stack-protector)
 CFLAGS-res_hconf.c = -fexceptions
 
 # The BIND code elicits some harmless warnings.
-+cflags += -Wno-strict-prototypes -Wno-write-strings
++cflags += -Wno-write-strings
 
 # The DNS NSS modules needs the resolver.
 $(objpfx)libnss_dns.so: $(objpfx)libresolv.so

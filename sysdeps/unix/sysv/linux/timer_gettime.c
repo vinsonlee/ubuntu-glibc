@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -29,9 +29,7 @@
 
 
 int
-timer_gettime (timerid, value)
-     timer_t timerid;
-     struct itimerspec *value;
+timer_gettime (timer_t timerid, struct itimerspec *value)
 {
 #undef timer_gettime
   struct timer *kt = (struct timer *) timerid;

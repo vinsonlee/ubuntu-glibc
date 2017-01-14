@@ -1,6 +1,6 @@
 /* Multiple versions of strspn
    All versions must be listed in ifunc-impl-list.c.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by Intel Corporation.
    This file is part of the GNU C Library.
 
@@ -19,9 +19,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
-
-#ifdef HAVE_SSE4_SUPPORT
-
 #include <sysdep.h>
 #include <init-arch.h>
 
@@ -30,11 +27,9 @@
 	.text
 ENTRY(strspn)
 	.type	strspn, @gnu_indirect_function
-	cmpl	$0, __cpu_features+KIND_OFFSET(%rip)
-	jne	1f
-	call	__init_cpu_features
-1:	leaq	__strspn_sse2(%rip), %rax
-	testl	$bit_SSE4_2, __cpu_features+CPUID_OFFSET+index_SSE4_2(%rip)
+	LOAD_RTLD_GLOBAL_RO_RDX
+	leaq	__strspn_sse2(%rip), %rax
+	HAS_CPU_FEATURE (SSE4_2)
 	jz	2f
 	leaq	__strspn_sse42(%rip), %rax
 2:	ret
@@ -51,7 +46,5 @@ END(strspn)
 # define END(name) \
 	cfi_endproc; .size __strspn_sse2, .-__strspn_sse2
 #endif
-
-#endif /* HAVE_SSE4_SUPPORT */
 
 #include "../strspn.S"

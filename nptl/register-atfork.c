@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -80,11 +80,8 @@ fork_handler_alloc (void)
 
 
 int
-__register_atfork (prepare, parent, child, dso_handle)
-     void (*prepare) (void);
-     void (*parent) (void);
-     void (*child) (void);
-     void *dso_handle;
+__register_atfork (void (*prepare) (void), void (*parent) (void),
+		   void (*child) (void), void *dso_handle)
 {
   /* Get the lock to not conflict with other allocations.  */
   lll_lock (__fork_lock, LLL_PRIVATE);

@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * Written by International Business Machines Corp.
- * Copyright (C) 2001-2015 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2016 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -34,7 +34,6 @@
 /**/ nZERO	    = {{0x80000000, 0}},	  /* -0.0          */
 /**/ INF            = {{0x7ff00000, 0x00000000}}, /* INF           */
 /**/ nINF           = {{0xfff00000, 0x00000000}}, /* -INF          */
-/**/ sqrt_2         = {{0x3ff6a09e, 0x667f3bcc}}, /* sqrt(2)       */
 /**/ ln2a           = {{0x3fe62e42, 0xfefa3800}}, /* ln(2) 43 bits */
 /**/ ln2b           = {{0x3d2ef357, 0x93c76730}}, /* ln(2)-ln2a    */
 /**/ bigu           = {{0x4297ffff, 0xfffffd2c}}, /* 1.5*2**42 -724*2**-10  */
@@ -48,7 +47,6 @@
 /**/ nZERO	    = {{0, 0x80000000}},	  /* -0.0          */
 /**/ INF            = {{0x00000000, 0x7ff00000}}, /* INF           */
 /**/ nINF           = {{0x00000000, 0xfff00000}}, /* -INF           */
-/**/ sqrt_2         = {{0x667f3bcc, 0x3ff6a09e}}, /* sqrt(2)       */
 /**/ ln2a           = {{0xfefa3800, 0x3fe62e42}}, /* ln(2) 43 bits */
 /**/ ln2b           = {{0x93c76730, 0x3d2ef357}}, /* ln(2)-ln2a    */
 /**/ bigu           = {{0xfffffd2c, 0x4297ffff}}, /* 1.5*2**42 -724*2**-10  */

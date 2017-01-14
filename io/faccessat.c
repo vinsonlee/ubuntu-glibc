@@ -1,5 +1,5 @@
 /* Test for access to file, relative to open directory.  Stub version.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,11 +23,7 @@
 #include <sys/types.h>
 
 int
-faccessat (fd, file, type, flag)
-     int fd;
-     const char *file;
-     int type;
-     int flag;
+faccessat (int fd, const char *file, int type, int flag)
 {
   if (file == NULL || (flag & ~(AT_SYMLINK_NOFOLLOW | AT_EACCESS)) != 0
       || (type & ~(R_OK|W_OK|X_OK|F_OK)) != 0)

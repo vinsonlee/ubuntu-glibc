@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Jakub Jelinek <jakub@redhat.com>, 2000.
 
@@ -20,6 +20,7 @@
 #define _LINUX_SPARC_SYSDEP_H 1
 
 #include <sysdeps/unix/sysdep.h>
+#include <sysdeps/unix/sysv/linux/sysdep.h>
 #include <sysdeps/sparc/sysdep.h>
 
 #ifdef __ASSEMBLER__
