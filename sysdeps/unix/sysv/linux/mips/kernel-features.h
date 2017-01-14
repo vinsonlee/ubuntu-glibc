@@ -19,31 +19,24 @@
 
 #include <sgidefs.h>
 
-/* Support for the accept4 syscall was added in 2.6.31.  */
-#define __ASSUME_ACCEPT4_SYSCALL	1
-
-/* Support for the recvmmsg syscall was added in 2.6.33.  */
-#if __LINUX_KERNEL_VERSION >= 0x020621
-# define __ASSUME_RECVMMSG_SYSCALL	1
-#endif
-
-/* Support for the sendmmsg syscall was added in 3.1.  */
-#if __LINUX_KERNEL_VERSION >= 0x030100
-# define __ASSUME_SENDMMSG_SYSCALL	1
-#endif
-
 #include_next <kernel-features.h>
-
-/* The n32 syscall ABI did not have a getdents64 syscall until
-   2.6.35.  */
-#if _MIPS_SIM == _ABIN32 && __LINUX_KERNEL_VERSION < 0x020623
-# undef __ASSUME_GETDENTS64_SYSCALL
-#endif
 
 /* The MIPS kernel does not support futex_atomic_cmpxchg_inatomic if
    emulating LL/SC.  */
 #if __mips == 1 || defined _MIPS_ARCH_R5900
-# undef __ASSUME_FUTEX_LOCK_PI
 # undef __ASSUME_REQUEUE_PI
 # undef __ASSUME_SET_ROBUST_LIST
+#endif
+
+/* Define this if your 32-bit syscall API requires 64-bit register
+   pairs to start with an even-number register.  */
+#if _MIPS_SIM == _ABIO32
+# define __ASSUME_ALIGNED_REGISTER_PAIRS	1
+#endif
+
+/* Define that mips64-n32 is a ILP32 ABI to set the correct interface to
+   pass 64-bits values through syscalls.  */
+#if _MIPS_SIM == _ABIN32
+# define __ASSUME_WORDSIZE64_ILP32	1
+# define __ASSUME_OFF_DIFF_OFF64        1
 #endif

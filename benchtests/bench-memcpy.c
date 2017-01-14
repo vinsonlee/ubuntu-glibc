@@ -55,6 +55,10 @@ do_one_test (impl_t *impl, char *dst, const char *src,
   size_t i, iters = INNER_LOOP_ITERS;
   timing_t start, stop, cur;
 
+  /* Must clear the destination buffer set by the previous run.  */
+  for (i = 0; i < len; i++)
+    dst[i] = 0;
+
   if (CALL (impl, dst, src, len) != MEMCPY_RESULT (dst, len))
     {
       error (0, 0, "Wrong result in function %s %p %p", impl->name,
@@ -147,6 +151,14 @@ test_main (void)
       do_test (i, 0, 16 * i);
       do_test (0, i, 16 * i);
       do_test (i, i, 16 * i);
+    }
+
+  for (i = 32; i < 64; ++i)
+    {
+      do_test (0, 0, 32 * i);
+      do_test (i, 0, 32 * i);
+      do_test (0, i, 32 * i);
+      do_test (i, i, 32 * i);
     }
 
   do_test (0, 0, getpagesize ());
