@@ -1,3 +1,24 @@
+2016-07-21  Gustavo Romero  <gromero@linux.vnet.ibm.com>
+
+	* sysdeps/unix/sysv/linux/powerpc/sys/ucontext.h: Fix missing verb
+	and typo in a comment about AT_HWCAP entry.
+
+2016-07-21  Szabolcs Nagy  <szabolcs.nagy@arm.com>
+
+	* sysdeps/aarch64/libm-test-ulps: Updated.
+
+2016-07-20  Stefan Liebler  <stli@linux.vnet.ibm.com>
+
+	* sysdeps/s390/s390-32/memcpy.S (memcpy): Eliminate the usage
+	of r13 as it is not restored in mvcle case.
+
+2016-07-19  Mike Frysinger  <vapier@gentoo.org>
+
+	* sysdeps/unix/sysv/linux/microblaze/sysdep.h (inline_syscall0):
+	Rename "ret" to "__ret".
+	(inline_syscall1, inline_syscall2, inline_syscall3, inline_syscall4,
+	inline_syscall5, inline_syscall6): Likewise.
+
 2016-07-19   Will Newton  <will.newton@gmail.com>
 
 	* elf/elf.h (R_METAG_REL8, R_METAG_REL16, R_METAG_TLS_GD
