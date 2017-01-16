@@ -36,7 +36,6 @@ alpha/local-string-functions.diff
 alpha/submitted-fegetenv-namespace.diff
 alpha/submitted-termios_h.diff
 alpha/submitted-fts64.diff
-alpha/submitted-math-fixes.diff
 
 amd64/local-blacklist-for-Intel-TSX.diff
 
@@ -140,6 +139,8 @@ hurd-i386/tg-NOFOLLOW.diff
 hurd-i386/tg-NOFOLLOW-DIRECTORY.diff
 hurd-i386/tg-libc_rwlock_recursive.diff
 hurd-i386/cvs-hurd_signal.h_c++.diff
+hurd-i386/tg-magic-pid.diff
+hurd-i386/tg-mlockall.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
@@ -214,3 +215,4 @@ any/local-bootstrap-headers.diff
 any/submitted-dlopen-noload.diff
 any/submitted-perl-inc.diff
 any/submitted-unicode-9.0.0.diff
+any/cvs-resolv-internal-qtype.diff
