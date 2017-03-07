@@ -1,12 +1,3 @@
-glibc (2.23-0ubuntu7) xenial-security; urgency=medium
-
-  * REGRESSION UPDATE: Previous update introduced ABI breakage in
-    internal glibc query ABI
-    - Revert patches/any/CVE-2015-5180-regression.diff
-      (LP: #1674532)
-
- -- Steve Beattie <sbeattie@ubuntu.com>  Tue, 21 Mar 2017 08:54:23 -0700
-
 glibc (2.23-0ubuntu6) xenial-security; urgency=medium
 
   * SECURITY UPDATE: DNS resolver NULL pointer dereference with
