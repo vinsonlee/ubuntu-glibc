@@ -142,7 +142,6 @@ hurd-i386/local-ihash-use.diff
 hurd-i386/cvs-errnos.d.diff
 hurd-i386/cvs-mach-syscalls.mk.diff
 hurd-i386/local-versions.diff
-hurd-i386/cvs-libpthread.so.diff
 hurd-i386/submitted-auxv.diff
 hurd-i386/submitted-anon-mmap-shared.diff
 
@@ -217,10 +216,10 @@ any/local-ldconfig-ignore-ld.so.diff
 any/local-dynamic-resolvconf.diff
 any/local-libpic.diff
 any/local-bootstrap-headers.diff
-any/submitted-argp-attribute.diff
 any/submitted-dlopen-noload.diff
 any/cvs-tst-malloc-thread-exit.diff
 any/cvs-sys-personality-h.diff
+any/cvs-cos-precision.diff
 
 # Ubuntu patches live in their own little world, to maintain sanity
 ubuntu/lddebug-scopes.diff
@@ -241,3 +240,4 @@ ubuntu/localedata/lv_LV-currency.diff
 ubuntu/localedata/pt_BR-d_fmt.diff
 ubuntu/localedata/sd_PK.diff
 ubuntu/localedata/ug_CN@latin.diff
+any/CVE-2015-5180.diff
