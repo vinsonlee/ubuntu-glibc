@@ -1,3 +1,10 @@
+glibc (2.24-9ubuntu2) zesty; urgency=medium
+
+  * debian/patches/any/cvs-resolv-internal-qtype.diff: Revert to avoid
+    failure in name resolution on upgrades from yakkety (LP: #1674532)
+
+ -- Adam Conrad <adconrad@ubuntu.com>  Tue, 21 Mar 2017 15:27:15 -0600
+
 glibc (2.24-9ubuntu1) zesty; urgency=medium
 
   * Merge with Debian testing, bringing in packaging and upstream fixes.
