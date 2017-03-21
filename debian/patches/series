@@ -36,7 +36,6 @@ alpha/local-string-functions.diff
 alpha/submitted-fegetenv-namespace.diff
 alpha/submitted-termios_h.diff
 alpha/submitted-fts64.diff
-alpha/submitted-math-fixes.diff
 
 amd64/local-blacklist-for-Intel-TSX.diff
 
@@ -138,6 +137,10 @@ hurd-i386/tg-ONSTACK.diff
 hurd-i386/tg-libpthread-gsync-mutex.diff
 hurd-i386/tg-NOFOLLOW.diff
 hurd-i386/tg-NOFOLLOW-DIRECTORY.diff
+hurd-i386/tg-libc_rwlock_recursive.diff
+hurd-i386/cvs-hurd_signal.h_c++.diff
+hurd-i386/tg-magic-pid.diff
+hurd-i386/tg-mlockall.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
@@ -162,6 +165,7 @@ m68k/submitted-gcc34-seccomment.diff
 mips/submitted-rld_map.diff
 
 powerpc/local-powerpc8xx-dcbz.diff
+powerpc/cvs-lock-elision.diff
 
 sh4/local-fpscr_values.diff
 
@@ -212,6 +216,9 @@ any/local-bootstrap-headers.diff
 any/submitted-dlopen-noload.diff
 any/submitted-perl-inc.diff
 any/submitted-unicode-9.0.0.diff
+#any/cvs-resolv-internal-qtype.diff
+any/cvs-ttyname-namespaces.diff
+any/cvs-pthread-free.diff
 
 # Ubuntu patches live in their own little world, to maintain sanity
 ubuntu/lddebug-scopes.diff
