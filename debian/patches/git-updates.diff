@@ -1,10 +1,16 @@
 GIT update of git://sourceware.org/git/glibc.git/release/2.19/master from glibc-2.19
 
 diff --git a/ChangeLog b/ChangeLog
-index 81c393a..92b8a2e 100644
+index 81c393a..a81d623 100644
 --- a/ChangeLog
 +++ b/ChangeLog
-@@ -1,3 +1,639 @@
+@@ -1,3 +1,645 @@
++2015-02-12  Joseph Myers  <joseph@codesourcery.com>
++
++	[BZ #17964]
++	* sysdeps/powerpc/fpu/e_sqrt.c (__slow_ieee754_sqrt): Use
++	__builtin_fma instead of relying on contraction of a * b + c.
++
 +2015-01-28  Adhemerval Zanellla  <azanella@linux.vnet.ibm.com>
 +
 +	[BZ #16576]
@@ -645,7 +651,7 @@ index 81c393a..92b8a2e 100644
  
  	[BZ #16529]
 diff --git a/NEWS b/NEWS
-index 98b479e..f62b876 100644
+index 98b479e..bdbf52b 100644
 --- a/NEWS
 +++ b/NEWS
 @@ -5,6 +5,104 @@ See the end for copying conditions.
@@ -659,8 +665,8 @@ index 98b479e..f62b876 100644
 +  15946, 16009, 16545, 16574, 16576, 16623, 16657, 16695, 16743, 16758,
 +  16759, 16760, 16878, 16882, 16885, 16916, 16932, 16943, 16958, 17048,
 +  17062, 17069, 17079, 17137, 17153, 17213, 17263, 17269, 17325, 17523,
-+  17555, 17905, 18007, 18032, 18080, 18240, 18287, 18508, 18665, 18905,
-+  18928, 19018, 19779, 19791, 19879, 20010, 20112.
++  17555, 17905, 17964, 18007, 18032, 18080, 18240, 18287, 18508, 18665,
++  18905, 18928, 19018, 19779, 19791, 19879, 20010, 20112.
 +
 +* A buffer overflow in gethostbyname_r and related functions performing DNS
 +  requests has been fixed.  If the NSS functions were called with a
@@ -6539,7 +6545,7 @@ index 64d192a..4b7ec36 100644
        va_list arg;
        va_start (arg, oflag);
 diff --git a/sysdeps/powerpc/fpu/e_sqrt.c b/sysdeps/powerpc/fpu/e_sqrt.c
-index 0368e57..24dfe68 100644
+index 0368e57..022d71b 100644
 --- a/sysdeps/powerpc/fpu/e_sqrt.c
 +++ b/sysdeps/powerpc/fpu/e_sqrt.c
 @@ -24,6 +24,7 @@
@@ -6550,7 +6556,64 @@ index 0368e57..24dfe68 100644
  static const double almost_half = 0.5000000000000001;	/* 0.5 + 2^-53 */
  static const ieee_float_shape_type a_nan = {.word = 0x7fc00000 };
  static const ieee_float_shape_type a_inf = {.word = 0x7f800000 };
-@@ -152,6 +153,7 @@ __slow_ieee754_sqrt (double x)
+@@ -98,38 +99,41 @@ __slow_ieee754_sqrt (double x)
+ 	  /* Here we have three Newton-Raphson iterations each of a
+ 	     division and a square root and the remainder of the
+ 	     argument reduction, all interleaved.   */
+-	  sd = -(sg * sg - sx);
++	  sd = -__builtin_fma (sg, sg, -sx);
+ 	  fsgi = (xi0 + 0x40000000) >> 1 & 0x7ff00000;
+ 	  sy2 = sy + sy;
+-	  sg = sy * sd + sg;	/* 16-bit approximation to sqrt(sx). */
++	  sg = __builtin_fma (sy, sd, sg);	/* 16-bit approximation to
++						   sqrt(sx). */
+ 
+ 	  /* schedule the INSERT_WORDS (fsg, fsgi, 0) to get separation
+ 	     between the store and the load.  */
+ 	  INSERT_WORDS (fsg, fsgi, 0);
+ 	  iw_u.parts.msw = fsgi;
+ 	  iw_u.parts.lsw = (0);
+-	  e = -(sy * sg - almost_half);
+-	  sd = -(sg * sg - sx);
++	  e = -__builtin_fma (sy, sg, -almost_half);
++	  sd = -__builtin_fma (sg, sg, -sx);
+ 	  if ((xi0 & 0x7ff00000) == 0)
+ 	    goto denorm;
+-	  sy = sy + e * sy2;
+-	  sg = sg + sy * sd;	/* 32-bit approximation to sqrt(sx).  */
++	  sy = __builtin_fma (e, sy2, sy);
++	  sg = __builtin_fma (sy, sd, sg);	/* 32-bit approximation to
++						   sqrt(sx).  */
+ 	  sy2 = sy + sy;
+ 	  /* complete the INSERT_WORDS (fsg, fsgi, 0) operation.  */
+ 	  fsg = iw_u.value;
+-	  e = -(sy * sg - almost_half);
+-	  sd = -(sg * sg - sx);
+-	  sy = sy + e * sy2;
++	  e = -__builtin_fma (sy, sg, -almost_half);
++	  sd = -__builtin_fma (sg, sg, -sx);
++	  sy = __builtin_fma (e, sy2, sy);
+ 	  shx = sx * fsg;
+-	  sg = sg + sy * sd;	/* 64-bit approximation to sqrt(sx),
+-				   but perhaps rounded incorrectly.  */
++	  sg = __builtin_fma (sy, sd, sg);	/* 64-bit approximation to
++						   sqrt(sx), but perhaps
++						   rounded incorrectly.  */
+ 	  sy2 = sy + sy;
+ 	  g = sg * fsg;
+-	  e = -(sy * sg - almost_half);
+-	  d = -(g * sg - shx);
+-	  sy = sy + e * sy2;
++	  e = -__builtin_fma (sy, sg, -almost_half);
++	  d = -__builtin_fma (g, sg, -shx);
++	  sy = __builtin_fma (e, sy2, sy);
+ 	  fesetenv_register (fe);
+-	  return g + sy * d;
++	  return __builtin_fma (sy, d, g);
+ 	denorm:
+ 	  /* For denormalised numbers, we normalise, calculate the
+ 	     square root, and return an adjusted result.  */
+@@ -152,6 +156,7 @@ __slow_ieee754_sqrt (double x)
      }
    return f_wash (x);
  }
@@ -6558,7 +6621,7 @@ index 0368e57..24dfe68 100644
  
  #undef __ieee754_sqrt
  double
-@@ -159,16 +161,11 @@ __ieee754_sqrt (double x)
+@@ -159,16 +164,11 @@ __ieee754_sqrt (double x)
  {
    double z;
  
