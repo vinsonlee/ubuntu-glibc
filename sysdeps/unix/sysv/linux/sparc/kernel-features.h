@@ -21,19 +21,12 @@
 #define __ASSUME_SOCKETCALL		1
 
 /* The accept4 syscall was added for SPARC in 2.6.28.  */
-#define __ASSUME_ACCEPT4_SYSCALL	1
 #define __ASSUME_ACCEPT4_SYSCALL_WITH_SOCKETCALL	1
 
 /* The recvmmsg syscall was added for SPARC in 2.6.33.  */
-#if __LINUX_KERNEL_VERSION >= 0x020621
-# define __ASSUME_RECVMMSG_SYSCALL	1
-#endif
 #define __ASSUME_RECVMMSG_SYSCALL_WITH_SOCKETCALL	1
 
 /* The sendmmsg syscall was added for SPARC in 3.0.  */
-#if __LINUX_KERNEL_VERSION >= 0x030000
-# define __ASSUME_SENDMMSG_SYSCALL	1
-#endif
 #define __ASSUME_SENDMMSG_SYSCALL_WITH_SOCKETCALL	1
 
 #include_next <kernel-features.h>
@@ -41,7 +34,6 @@
 /* 32-bit SPARC kernels do not support
    futex_atomic_cmpxchg_inatomic.  */
 #if !defined __arch64__ && !defined __sparc_v9__
-# undef __ASSUME_FUTEX_LOCK_PI
 # undef __ASSUME_REQUEUE_PI
 # undef __ASSUME_SET_ROBUST_LIST
 #endif
