@@ -1,3 +1,17 @@
+glibc (2.24-11+deb9u1) stretch-security; urgency=medium
+
+  * debian/patches/any/local-CVE-2017-1000366-rtld-LD_AUDIT.diff,
+    debian/patches/any/local-CVE-2017-1000366-rtld-LD_LIBRARY_PATH.diff,
+    debian/patches/any/local-CVE-2017-1000366-rtld-LD_PRELOAD.diff: add
+    patches to protect the dynamic linker against stack clashes
+    (CVE-2017-1000366).
+  * debian/patches/any/cvs-vectorized-strcspn-guards.diff: patch backported
+    from upstream to allow usage of strcspn in ld.so.
+  * debian/patches/any/cvs-hwcap-AT_SECURE.diff: patch backported from
+    upstream to disable HWCAP for AT_SECURE programs.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 15 Jun 2017 21:17:14 +0200
+
 glibc (2.24-11) unstable; urgency=medium
 
   [ Aurelien Jarno ]
