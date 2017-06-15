@@ -1,20 +1,5 @@
-glibc (2.24-12) unstable; urgency=high
+glibc (2.24-11+deb9u1) stretch-security; urgency=medium
 
-  [ Aurelien Jarno ]
-  * debian/patches/git-updates.diff: update from upstream stable branch:
-    - Drop patches/any/cvs-remove-pid-tid-cache-clone.diff (merged upstream).
-    - Remove wrong assertion on parent PID in fork.
-    - Fix 64-bit atomics on m68k.  Closes: #855692.
-  * debian/debhelper.in/libc.templates: update the kernel 3.2 warning to
-    mention that the support limitation comes from Debian and not from
-    upstream.  Closes: #864720.
-  * debian/rules, debian/rules.d/build.mk: do not capture the build path
-    when generating glibc-source tarball.  Closes: #861183.
-  * debian/control.in/main: build-depends on gperf.  Closes: #847478.
-  * debian/patches/hppa/submitted-longjmp.diff: new patch from Helge Deller
-    to fix longjmp on hppa.  Closes: #858738.
-  * debian/sysdeps/mipsel.mk, debian/sysdeps/mips64el.mk: leave the default
-    GCC ISA level, currently MIPS32R2/MIPS64R2.
   * debian/patches/any/local-CVE-2017-1000366-rtld-LD_AUDIT.diff,
     debian/patches/any/local-CVE-2017-1000366-rtld-LD_LIBRARY_PATH.diff,
     debian/patches/any/local-CVE-2017-1000366-rtld-LD_PRELOAD.diff: add
@@ -25,10 +10,7 @@ glibc (2.24-12) unstable; urgency=high
   * debian/patches/any/cvs-hwcap-AT_SECURE.diff: patch backported from
     upstream to disable HWCAP for AT_SECURE programs.
 
-  [ John Paul Adrian Glaubitz ]
-  * debian/sysdeps/sh3.mk: copy from sh4.mk.  Closes: #851867.
-
- -- Aurelien Jarno <aurel32@debian.org>  Sun, 18 Jun 2017 20:04:53 +0200
+ -- Aurelien Jarno <aurel32@debian.org>  Thu, 15 Jun 2017 21:17:14 +0200
 
 glibc (2.24-11) unstable; urgency=medium
 
