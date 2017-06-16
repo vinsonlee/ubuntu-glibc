@@ -1,3 +1,15 @@
+glibc (2.19-18+deb8u10) jessie-security; urgency=medium
+
+  * debian/patches/any/local-CVE-2017-1000366-rtld-LD_AUDIT.diff,
+    debian/patches/any/local-CVE-2017-1000366-rtld-LD_LIBRARY_PATH.diff,
+    debian/patches/any/local-CVE-2017-1000366-rtld-LD_PRELOAD.diff: add
+    patches to protect the dynamic linker against stack clashes
+    (CVE-2017-1000366).
+  * debian/patches/any/cvs-hwcap-AT_SECURE.diff: patch backported from
+    upstream to disable HWCAP for AT_SECURE programs.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Fri, 16 Jun 2017 23:13:21 +0200
+
 glibc (2.19-18+deb8u9) stable; urgency=medium
 
   * Remove patches/any/cvs-resolv-internal-qtype.diff, it breaks the

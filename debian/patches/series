@@ -274,3 +274,7 @@ any/cvs-wscanf.diff
 any/cvs-ldconfig-aux-cache.diff
 any/cvs-grantpt-pty-owner.diff
 any/cvs-hesiod-resolver.diff
+any/local-CVE-2017-1000366-rtld-LD_LIBRARY_PATH.diff
+any/local-CVE-2017-1000366-rtld-LD_PRELOAD.diff
+any/local-CVE-2017-1000366-rtld-LD_AUDIT.diff
+any/cvs-hwcap-AT_SECURE.diff
