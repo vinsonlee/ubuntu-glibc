@@ -1,3 +1,22 @@
+glibc (2.24-3ubuntu2.2) yakkety-security; urgency=medium
+
+  * SECURITY UPDATE: LD_LIBRARY_PATH stack corruption
+    - debian/patches/any/CVE-2017-1000366.patch: Completely ignore
+      LD_LIBRARY_PATH for AT_SECURE=1 programs
+    - CVE-2017-1000366
+  * SECURITY UPDATE: LD_PRELOAD stack corruption
+    - debian/patches/any/upstream-harden-rtld-Reject-overly-long-LD_PRELOAD.patch:
+      Reject overly long names or names containing directories in
+      LD_PRELOAD for AT_SECURE=1 programs.
+    - debian/patches/any/cve-i686-Add-missing-IS_IN-libc-guards.patch:
+      prerequisite patch
+  * debian/patches/any/cvs-harden-glibc-malloc-metadata.patch: add
+    additional consistency check for 1-byte overflows
+  * debian/patches/any/cvs-harden-ignore-LD_HWCAP_MASK.patch: ignore
+    LD_HWCAP_MASK for AT_SECURE=1 programs
+
+ -- Steve Beattie <sbeattie@ubuntu.com>  Fri, 16 Jun 2017 11:55:05 -0700
+
 glibc (2.24-3ubuntu2) yakkety; urgency=medium
 
   * Disable lock-elision on all targets to avoid regressions (LP: #1642390)
