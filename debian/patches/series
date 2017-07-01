@@ -46,6 +46,8 @@ arm/local-soname-hack.diff
 arm/local-vfp-sysdeps.diff
 arm/unsubmitted-ldso-multilib.diff
 arm/local-arm-futex.diff
+arm/cvs-rtld-startup.diff
+arm/submitted-strip-bit-0.diff
 
 hppa/local-inlining.diff
 hppa/local-elf-make-cflags.diff
@@ -57,6 +59,7 @@ hppa/local-stack-grows-up.diff
 hppa/submitted-setcontext.diff
 hppa/submitted-sysdeps-cancel.diff
 hppa/cvs-atomic-machine.diff
+hppa/submitted-longjmp.diff
 
 hurd-i386/local-enable-ldconfig.diff
 hurd-i386/tg-context_functions.diff
@@ -141,6 +144,8 @@ hurd-i386/tg-libc_rwlock_recursive.diff
 hurd-i386/cvs-hurd_signal.h_c++.diff
 hurd-i386/tg-magic-pid.diff
 hurd-i386/tg-mlockall.diff
+hurd-i386/cvs-truncate64.diff
+hurd-i386/cvs-send-recv-posix.diff
 
 i386/local-biarch.diff
 i386/local-cmov.diff
@@ -165,7 +170,6 @@ m68k/submitted-gcc34-seccomment.diff
 mips/submitted-rld_map.diff
 
 powerpc/local-powerpc8xx-dcbz.diff
-powerpc/cvs-lock-elision.diff
 
 sh4/local-fpscr_values.diff
 
@@ -216,7 +220,14 @@ any/local-bootstrap-headers.diff
 any/submitted-dlopen-noload.diff
 any/submitted-perl-inc.diff
 any/submitted-unicode-9.0.0.diff
-#any/cvs-resolv-internal-qtype.diff
+any/cvs-malloc-hardening.diff
+any/local-CVE-2017-1000366-rtld-LD_LIBRARY_PATH.diff
+any/local-CVE-2017-1000366-rtld-LD_PRELOAD.diff
+any/local-CVE-2017-1000366-rtld-LD_AUDIT.diff
+any/cvs-vectorized-strcspn-guards.diff
+any/cvs-hwcap-AT_SECURE.diff
+any/cvs-common-symbols.diff
+any/cvs-resolv-internal-qtype.diff
 any/cvs-ttyname-namespaces.diff
 any/cvs-pthread-free.diff
 
