@@ -148,7 +148,9 @@ $(stamp)check_%: $(stamp)build_%
 	    echo "|     Encountered regressions that don't match expected failures.     |" ; \
 	    echo "+---------------------------------------------------------------------+" ; \
 	    grep -E '^FAIL:' $(DEB_BUILDDIR)/tests.sum | sort ; \
-	    exit 1 ; \
+	    if ! dpkg-parsechangelog | egrep -q '^Version:.*\+deb[0-9]+u[0-9]+' ; then \
+	        exit 1 ; \
+	    fi ; \
 	  else \
 	    echo "+---------------------------------------------------------------------+" ; \
 	    echo "| Passed regression testing.  Give yourself a hearty pat on the back. |" ; \
@@ -315,14 +317,14 @@ $(stamp)build_locales-all: $(stamp)/build_libc
 
 $(stamp)source: $(stamp)patch
 	mkdir -p $(build-tree)
-	cd .. && \
-		find $(GLIBC_SOURCES) -print0 | \
-		LC_ALL=C sort -z | \
-		tar -c -J --null --no-recursion -T - \
-			--mode=go=rX,u+rw,a-s \
-			--clamp-mtime --mtime "@$(SOURCE_DATE_EPOCH)" \
-			--owner=root --group=root --numeric-owner \
-			-f $(CURDIR)/$(build-tree)/glibc-$(GLIBC_VERSION).tar.xz
+	find $(GLIBC_SOURCES) -print0 | \
+	LC_ALL=C sort -z | \
+	tar -c -J --null --no-recursion -T - \
+		--mode=go=rX,u+rw,a-s \
+		--clamp-mtime --mtime "@$(SOURCE_DATE_EPOCH)" \
+		--owner=root --group=root --numeric-owner \
+		--xform='s=^=glibc-$(GLIBC_VERSION)/=' \
+		-f $(CURDIR)/$(build-tree)/glibc-$(GLIBC_VERSION).tar.xz
 	mkdir -p debian/glibc-source/usr/src/glibc
 	tar cf - --files-from debian/glibc-source.filelist \
 		--clamp-mtime --mtime "@$(SOURCE_DATE_EPOCH)" \
