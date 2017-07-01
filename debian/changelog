@@ -1,21 +1,82 @@
-glibc (2.24-9ubuntu2.2) zesty-security; urgency=medium
+glibc (2.24-12ubuntu1) artful; urgency=medium
 
-  * SECURITY UPDATE: LD_LIBRARY_PATH stack corruption
-    - debian/patches/any/CVE-2017-1000366.patch: Completely ignore
-      LD_LIBRARY_PATH for AT_SECURE=1 programs
-    - CVE-2017-1000366
-  * SECURITY UPDATE: LD_PRELOAD stack corruption
-    - debian/patches/any/upstream-harden-rtld-Reject-overly-long-LD_PRELOAD.patch:
-      Reject overly long names or names containing directories in
-      LD_PRELOAD for AT_SECURE=1 programs.
-    - debian/patches/any/cve-i686-Add-missing-IS_IN-libc-guards.patch:
-      prerequisite patch
-  * debian/patches/any/cvs-harden-glibc-malloc-metadata.patch: add
-    additional consistency check for 1-byte overflows
-  * debian/patches/any/cvs-harden-ignore-LD_HWCAP_MASK.patch: ignore
-    LD_HWCAP_MASK for AT_SECURE=1 programs
+  * Merge with Debian testing, bringing in packaging and upstream fixes.
+    - any/cvs-resolv-internal-qtype.diff: Revert to avoid an ABI break.
+    - ubuntu/local-disable-ld_audit.diff: Rewrite to apply to new code.
+  * any/cvs-common-symbols.diff: Apply to fix build with newer binutils.
+  * arm/cvs-rtld-startup.diff: Backport fix for rtld startup on arm64.
+  * arm/submitted-strip-bit-0.diff: ML fix to the ld.so crash on armv7t.
 
- -- Steve Beattie <sbeattie@ubuntu.com>  Fri, 16 Jun 2017 11:42:30 -0700
+ -- Adam Conrad <adconrad@ubuntu.com>  Sat, 01 Jul 2017 15:13:50 -0600
+
+glibc (2.24-12) unstable; urgency=high
+
+  [ Aurelien Jarno ]
+  * debian/patches/git-updates.diff: update from upstream stable branch:
+    - Drop patches/any/cvs-remove-pid-tid-cache-clone.diff (merged upstream).
+    - Remove wrong assertion on parent PID in fork.
+    - Fix 64-bit atomics on m68k.  Closes: #855692.
+  * debian/debhelper.in/libc.templates: update the kernel 3.2 warning to
+    mention that the support limitation comes from Debian and not from
+    upstream.  Closes: #864720.
+  * debian/rules, debian/rules.d/build.mk: do not capture the build path
+    when generating glibc-source tarball.  Closes: #861183.
+  * debian/control.in/main: build-depends on gperf.  Closes: #847478.
+  * debian/patches/hppa/submitted-longjmp.diff: new patch from Helge Deller
+    to fix longjmp on hppa.  Closes: #858738.
+  * debian/sysdeps/mipsel.mk, debian/sysdeps/mips64el.mk: leave the default
+    GCC ISA level, currently MIPS32R2/MIPS64R2.
+  * debian/patches/any/local-CVE-2017-1000366-rtld-LD_AUDIT.diff,
+    debian/patches/any/local-CVE-2017-1000366-rtld-LD_LIBRARY_PATH.diff,
+    debian/patches/any/local-CVE-2017-1000366-rtld-LD_PRELOAD.diff: add
+    patches to protect the dynamic linker against stack clashes
+    (CVE-2017-1000366).
+  * debian/patches/any/cvs-vectorized-strcspn-guards.diff: patch backported
+    from upstream to allow usage of strcspn in ld.so.
+  * debian/patches/any/cvs-hwcap-AT_SECURE.diff: patch backported from
+    upstream to disable HWCAP for AT_SECURE programs.
+
+  [ John Paul Adrian Glaubitz ]
+  * debian/sysdeps/sh3.mk: copy from sh4.mk.  Closes: #851867.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 18 Jun 2017 20:04:53 +0200
+
+glibc (2.24-11) unstable; urgency=medium
+
+  [ Aurelien Jarno ]
+  * debian/patches/git-updates.diff: update from upstream stable branch:
+    - Improve memcpy/memset performance on Skylake server.
+  * debian/patches/any/cvs-malloc-hardening.diff: patch backported from
+    upstream to further harden glibc malloc metadata against 1-byte
+    overflows.  Closes: #862950.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Sun, 28 May 2017 19:29:33 +0200
+
+glibc (2.24-10) unstable; urgency=medium
+
+  [ Samuel Thibault ]
+  * hurd-i386/cvs-truncate64.diff: New patch to support 64bit truncate.
+  * hurd-i386/cvs-send-recv-posix.diff: New patch to make send/recv more
+    posix.
+
+  [ Aurelien Jarno ]
+  * debian/patches/git-updates.diff: update from upstream stable branch:
+    - Fix readahead on mips64el.
+    - Improve branch predication in _dl_runtime_resolve_avx512_opt;
+    - Fix symbol redirect for fts_set on 32-bit architectures.
+    - Fix AVX2/AVX512 optimized unaligned memset.
+    - Don't use PLT nor GOT in static archives on amd64.
+    - Drop GLIBC_TUNABLES in setxid processes.
+    - Fix write-after-destroy in lock elision on powerpc/ppc64el.
+  * Drop patches/any/cvs-resolv-internal-qtype.diff, merged upstream.
+  * any/cvs-remove-pid-tid-cache-clone.diff: patch from upstream to remove
+    cached PID/TID in clone.  Closes: #857909.
+  * debian/rules.d/build.mk: do not fail the build in case of testsuite
+    regressions when building a +debXuX version. That way changes in the
+    environment (e.g.: kernel) do not prevent security or stable versions
+    to be built.
+
+ -- Aurelien Jarno <aurel32@debian.org>  Wed, 12 Apr 2017 00:13:55 +0200
 
 glibc (2.24-9ubuntu2) zesty; urgency=medium
 
