@@ -86,6 +86,13 @@ The main configuration file, which has a simple format: every
 line that is not empty and does not begin with a # is treated as a 
 locale definition that is to be built. 
  
+\fB/var/lib/locales/supported.d/\fP
+.PP
+A directory containing locale.gen snippets provided by language-pack
+packages.  Do not edit these manually, they will be overwritten on
+package upgrades.
+.PP
+
 .SH "SEE ALSO" 
 .PP 
 localedef(1), locale(1), locale.gen(5). 

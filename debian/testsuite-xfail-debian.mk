@@ -75,6 +75,7 @@ test-xfail-test-misc = yes
 test-xfail-tst-backtrace6 = yes
 test-xfail-tst-makecontext = yes
 test-xfail-tst-mqueue5 = yes
+test-xfail-tst-signal6 = yes
 test-xfail-tst-stack4 = yes
 test-xfail-tst-waitid = yes
 
@@ -90,6 +91,7 @@ ifeq ($(config-machine)-$(config-os),arm-linux-gnueabihf)
 test-xfail-test-fenv = yes
 test-xfail-tst-backtrace6 = yes
 test-xfail-tst-makecontext = yes
+test-xfail-tst-signal6 = yes
 test-xfail-tst-stack4 = yes
 test-xfail-tst-mqueue5 = yes
 test-xfail-tst-waitid = yes

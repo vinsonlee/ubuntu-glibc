@@ -46,6 +46,8 @@ arm/local-soname-hack.diff
 arm/local-vfp-sysdeps.diff
 arm/unsubmitted-ldso-multilib.diff
 arm/local-arm-futex.diff
+arm/cvs-rtld-startup.diff
+arm/submitted-strip-bit-0.diff
 
 hppa/local-inlining.diff
 hppa/local-elf-make-cflags.diff
@@ -224,3 +226,25 @@ any/local-CVE-2017-1000366-rtld-LD_PRELOAD.diff
 any/local-CVE-2017-1000366-rtld-LD_AUDIT.diff
 any/cvs-vectorized-strcspn-guards.diff
 any/cvs-hwcap-AT_SECURE.diff
+any/cvs-common-symbols.diff
+any/cvs-resolv-internal-qtype.diff
+any/cvs-ttyname-namespaces.diff
+any/cvs-pthread-free.diff
+
+# Ubuntu patches live in their own little world, to maintain sanity
+ubuntu/lddebug-scopes.diff
+ubuntu/local-altlocaledir.diff
+ubuntu/local-disable-ld_audit.diff
+ubuntu/local-disable-nscd-netgroup-caching.diff
+ubuntu/submitted-no-sprintf-pre-truncate.diff
+ubuntu/submitted-no-stack-backtrace.diff
+ubuntu/localedata/bn-language.diff
+ubuntu/localedata/ckb_IQ-new_locale.diff
+ubuntu/localedata/en_CA-dateformat.diff
+ubuntu/localedata/en_IE-am_pm.diff
+ubuntu/localedata/eo_US.diff
+ubuntu/localedata/es_DO-am_pm.diff
+ubuntu/localedata/lv_LV-currency.diff
+ubuntu/localedata/pt_BR-d_fmt.diff
+ubuntu/localedata/sd_PK.diff
+ubuntu/localedata/ug_CN@latin.diff
