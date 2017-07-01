@@ -1167,6 +1167,10 @@ test-xfail-tst-waitid = yes
 test-xfail-test-double = yes
 test-xfail-test-double-finite = yes
 test-xfail-test-idouble = yes
+
+# This failure is due to a bug in the Octeon 3 FPU
+test-xfail-test-float = yes
+test-xfail-test-float-finite = yes
 endif
 
 
@@ -1182,6 +1186,10 @@ test-xfail-tst-cond16 = yes
 test-xfail-tst-mqueue5 = yes
 test-xfail-tst-stack4 = yes
 test-xfail-tst-waitid = yes
+
+# This failure is due to a bug in the Octeon 3 FPU
+test-xfail-test-float = yes
+test-xfail-test-float-finite = yes
 endif
 
 
