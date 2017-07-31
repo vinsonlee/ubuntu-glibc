@@ -46,6 +46,7 @@ arm/local-soname-hack.diff
 arm/local-vfp-sysdeps.diff
 arm/unsubmitted-ldso-multilib.diff
 arm/local-arm-futex.diff
+arm/submitted-strip-bit-0.diff
 
 hppa/local-inlining.diff
 hppa/local-elf-make-cflags.diff
@@ -57,6 +58,7 @@ hppa/local-stack-grows-up.diff
 hppa/submitted-setcontext.diff
 hppa/submitted-sysdeps-cancel.diff
 hppa/cvs-atomic-machine.diff
+hppa/submitted-longjmp.diff
 
 hurd-i386/local-enable-ldconfig.diff
 hurd-i386/tg-context_functions.diff
@@ -215,12 +217,5 @@ any/local-dynamic-resolvconf.diff
 any/local-libpic.diff
 any/local-bootstrap-headers.diff
 any/submitted-dlopen-noload.diff
-any/submitted-perl-inc.diff
 any/submitted-unicode-9.0.0.diff
-any/cvs-remove-pid-tid-cache-clone.diff
 any/cvs-malloc-hardening.diff
-any/local-CVE-2017-1000366-rtld-LD_LIBRARY_PATH.diff
-any/local-CVE-2017-1000366-rtld-LD_PRELOAD.diff
-any/local-CVE-2017-1000366-rtld-LD_AUDIT.diff
-any/cvs-vectorized-strcspn-guards.diff
-any/cvs-hwcap-AT_SECURE.diff
