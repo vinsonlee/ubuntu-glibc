@@ -112,6 +112,11 @@ libc {
   GLIBC_2.24 {
     quick_exit;
   }
+  GLIBC_2.25 {
+    # s*
+    strfromd; strfromf; strfroml;
+    getrandom; getentropy;
+  }
   GLIBC_PRIVATE {
     # functions which have an additional interface since they are
     # are cancelable.

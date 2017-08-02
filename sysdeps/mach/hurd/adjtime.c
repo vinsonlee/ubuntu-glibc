@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -28,10 +28,14 @@ __adjtime (const struct timeval *delta, struct timeval *olddelta)
 {
   error_t err;
   mach_port_t hostpriv;
+  struct timeval dummy;
 
   err = __get_privileged_ports (&hostpriv, NULL);
   if (err)
     return __hurd_fail (EPERM);
+
+  if (olddelta == NULL)
+    olddelta = &dummy;
 
   err = __host_adjust_time (hostpriv,
 			    /* `time_value_t' and `struct timeval' are in

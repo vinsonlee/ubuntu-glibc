@@ -1,5 +1,5 @@
 /* Test pthread_setname_np and pthread_getname_np.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ get_self_comm (long tid, char *buf, size_t len)
 {
   int res = 0;
 #define FMT "/proc/self/task/%lu/comm"
-  char fname[sizeof (FMT) + 8];
+  char fname[sizeof (FMT) + 32];
   sprintf (fname, FMT, (unsigned long) tid);
 
   int fd = open (fname, O_RDONLY);

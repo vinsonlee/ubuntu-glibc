@@ -1,5 +1,5 @@
 /* Multiple versions of stpncpy. PowerPC64 version.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,6 +17,8 @@
    <http://www.gnu.org/licenses/>.  */
 
 #if IS_IN (libc)
+# define stpncpy __redirect_stpncpy
+# define __stpncpy __redirect___stpncpy
 # include <string.h>
 # include <shlib-compat.h>
 # include "init-arch.h"
@@ -24,13 +26,14 @@
 extern __typeof (__stpncpy) __stpncpy_ppc attribute_hidden;
 extern __typeof (__stpncpy) __stpncpy_power7 attribute_hidden;
 extern __typeof (__stpncpy) __stpncpy_power8 attribute_hidden;
+# undef stpncpy
+# undef __stpncpy
 
-libc_ifunc (__stpncpy,
-            (hwcap2 & PPC_FEATURE2_ARCH_2_07)
-            ? __stpncpy_power8 :
-              (hwcap & PPC_FEATURE_HAS_VSX)
-              ? __stpncpy_power7
-            : __stpncpy_ppc);
-
+libc_ifunc_redirected (__redirect___stpncpy, __stpncpy,
+		       (hwcap2 & PPC_FEATURE2_ARCH_2_07)
+		       ? __stpncpy_power8
+		       : (hwcap & PPC_FEATURE_HAS_VSX)
+			 ? __stpncpy_power7
+			 : __stpncpy_ppc);
 weak_alias (__stpncpy, stpncpy)
 #endif

@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson.
 
@@ -23,6 +23,9 @@
 double
 __rint (double x)
 {
+  if (isnan (x))
+    return x + x;
+
   if (isless (fabs (x), 9007199254740992.0))	/* 1 << DBL_MANT_DIG */
     {
       double tmp1, new_x;

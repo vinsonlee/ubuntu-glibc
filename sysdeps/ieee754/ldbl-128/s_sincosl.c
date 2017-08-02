@@ -1,5 +1,5 @@
 /* Compute sine and cosine of argument.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997 and
 		  Jakub Jelinek <jj@ultra.linux.cz>.
@@ -24,7 +24,7 @@
 #include <math_private.h>
 
 void
-__sincosl (long double x, long double *sinx, long double *cosx)
+__sincosl (_Float128 x, _Float128 *sinx, _Float128 *cosx)
 {
   int64_t ix;
 
@@ -34,7 +34,7 @@ __sincosl (long double x, long double *sinx, long double *cosx)
   /* |x| ~< pi/4 */
   ix &= 0x7fffffffffffffffLL;
   if (ix <= 0x3ffe921fb54442d1LL)
-    __kernel_sincosl (x, 0.0L, sinx, cosx, 0);
+    __kernel_sincosl (x, 0, sinx, cosx, 0);
   else if (ix >= 0x7fff000000000000LL)
     {
       /* sin(Inf or NaN) is NaN */
@@ -45,7 +45,7 @@ __sincosl (long double x, long double *sinx, long double *cosx)
   else
     {
       /* Argument reduction needed.  */
-      long double y[2];
+      _Float128 y[2];
       int n;
 
       n = __ieee754_rem_pio2l (x, y);

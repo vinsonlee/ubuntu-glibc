@@ -1,5 +1,5 @@
 /* xstat using old-style Unix stat system call.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ int
 __xstat (int vers, const char *name, struct stat *buf)
 {
   if (vers == _STAT_VER_KERNEL)
-    return INLINE_SYSCALL (stat, 2, name, (struct kernel_stat *) buf);
+    return INLINE_SYSCALL (stat, 2, name, buf);
 
 #ifdef STAT_IS_KERNEL_STAT
   return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
@@ -52,7 +52,7 @@ __xstat (int vers, const char *name, struct stat *buf)
 }
 hidden_def (__xstat)
 weak_alias (__xstat, _xstat);
-#ifdef XSTAT_IS_XSTAT64
+#if XSTAT_IS_XSTAT64
 #undef __xstat64
 strong_alias (__xstat, __xstat64);
 hidden_ver (__xstat, __xstat64)

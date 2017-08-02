@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2016 Free Software Foundation, Inc.
+# Copyright (C) 1991-2017 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -30,7 +30,21 @@ tests := mallocbug tst-malloc tst-valloc tst-calloc tst-obstack \
 	 tst-pvalloc tst-memalign tst-mallopt tst-scratch_buffer \
 	 tst-malloc-backtrace tst-malloc-thread-exit \
 	 tst-malloc-thread-fail tst-malloc-fork-deadlock \
-	 tst-mallocfork2
+	 tst-mallocfork2 \
+	 tst-interpose-nothread \
+	 tst-interpose-thread \
+
+tests-static := \
+	 tst-interpose-static-nothread \
+	 tst-interpose-static-thread \
+	 tst-malloc-usable-static \
+
+ifneq (no,$(have-tunables))
+tests += tst-malloc-usable-tunables
+tests-static += tst-malloc-usable-static-tunables
+endif
+
+tests += $(tests-static)
 test-srcs = tst-mtrace
 
 routines = malloc morecore mcheck mtrace obstack \
@@ -44,6 +58,15 @@ non-lib.a := libmcheck.a
 extra-libs = libmemusage
 extra-libs-others = $(extra-libs)
 
+# Helper objects for some tests.
+extra-tests-objs += \
+  tst-interpose-aux-nothread.o \
+  tst-interpose-aux-thread.o \
+
+test-extras = \
+  tst-interpose-aux-nothread \
+  tst-interpose-aux-thread \
+
 libmemusage-routines = memusage
 libmemusage-inhibit-o = $(filter-out .os,$(object-suffixes))
 
@@ -51,6 +74,9 @@ $(objpfx)tst-malloc-backtrace: $(shared-thread-library)
 $(objpfx)tst-malloc-thread-exit: $(shared-thread-library)
 $(objpfx)tst-malloc-thread-fail: $(shared-thread-library)
 $(objpfx)tst-malloc-fork-deadlock: $(shared-thread-library)
+
+# Export the __malloc_initialize_hook variable to libc.so.
+LDFLAGS-tst-mallocstate = -rdynamic
 
 # These should be removed by `make clean'.
 extra-objs = mcheck-init.o libmcheck.a
@@ -138,6 +164,9 @@ endif
 
 tst-mcheck-ENV = MALLOC_CHECK_=3
 tst-malloc-usable-ENV = MALLOC_CHECK_=3
+tst-malloc-usable-static-ENV = $(tst-malloc-usable-ENV)
+tst-malloc-usable-tunables-ENV = GLIBC_TUNABLES=glibc.malloc.check=3
+tst-malloc-usable-static-tunables-ENV = $(tst-malloc-usable-tunables-ENV)
 
 # Uncomment this for test releases.  For public releases it is too expensive.
 #CPPFLAGS-malloc.o += -DMALLOC_DEBUG=1
@@ -166,3 +195,14 @@ $(objpfx)libmemusage.so: $(libdl)
 
 # Extra dependencies
 $(foreach o,$(all-object-suffixes),$(objpfx)malloc$(o)): arena.c hooks.c
+
+# Compile the tests with a flag which suppresses the mallopt call in
+# the test skeleton.
+$(tests:%=$(objpfx)%.o): CPPFLAGS += -DTEST_NO_MALLOPT
+
+$(objpfx)tst-interpose-nothread: $(objpfx)tst-interpose-aux-nothread.o
+$(objpfx)tst-interpose-thread: \
+  $(objpfx)tst-interpose-aux-thread.o $(shared-thread-library)
+$(objpfx)tst-interpose-static-nothread: $(objpfx)tst-interpose-aux-nothread.o
+$(objpfx)tst-interpose-static-thread: \
+  $(objpfx)tst-interpose-aux-thread.o $(static-thread-library)

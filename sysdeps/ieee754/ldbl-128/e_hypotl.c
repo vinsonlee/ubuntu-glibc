@@ -48,10 +48,10 @@
 #include <math.h>
 #include <math_private.h>
 
-long double
-__ieee754_hypotl(long double x, long double y)
+_Float128
+__ieee754_hypotl(_Float128 x, _Float128 y)
 {
-	long double a,b,t1,t2,y1,y2,w;
+	_Float128 a,b,t1,t2,y1,y2,w;
 	int64_t j,k,ha,hb;
 
 	GET_LDOUBLE_MSW64(ha,x);
@@ -67,6 +67,8 @@ __ieee754_hypotl(long double x, long double y)
 	   if(ha >= 0x7fff000000000000LL) {	/* Inf or NaN */
 	       u_int64_t low;
 	       w = a+b;			/* for sNaN */
+	       if (issignaling (a) || issignaling (b))
+		 return w;
 	       GET_LDOUBLE_LSW64(low,a);
 	       if(((ha&0xffffffffffffLL)|low)==0) w = a;
 	       GET_LDOUBLE_LSW64(low,b);
@@ -127,7 +129,7 @@ __ieee754_hypotl(long double x, long double y)
 	}
 	if(k!=0) {
 	    u_int64_t high;
-	    t1 = 1.0L;
+	    t1 = 1;
 	    GET_LDOUBLE_MSW64(high,t1);
 	    SET_LDOUBLE_MSW64(t1,high+(k<<48));
 	    w *= t1;

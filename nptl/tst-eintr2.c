@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2003.
 
@@ -23,6 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+
+static int do_test (void);
+
+#define TEST_FUNCTION do_test ()
+#include "../test-skeleton.c"
 
 #include "eintr.c"
 
@@ -103,6 +108,7 @@ do_test (void)
       exit (1);
     }
 
+  delayed_exit (3);
   /* This call must never return.  */
   e = pthread_mutex_lock (&m1);
   printf ("main: mutex_lock returned: %s\n",
@@ -110,8 +116,3 @@ do_test (void)
 
   return 1;
 }
-
-#define EXPECTED_SIGNAL SIGALRM
-#define TIMEOUT 3
-#define TEST_FUNCTION do_test ()
-#include "../test-skeleton.c"

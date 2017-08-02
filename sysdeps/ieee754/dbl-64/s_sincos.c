@@ -1,5 +1,5 @@
 /* Compute sine and cosine of argument.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -80,8 +80,8 @@ __sincos (double x, double *sinx, double *cosx)
       double a, da;
       int4 n = reduce_sincos_1 (x, &a, &da);
 
-      *sinx = do_sincos_1 (a, da, x, n, 0);
-      *cosx = do_sincos_1 (a, da, x, n, 1);
+      *sinx = do_sincos_1 (a, da, x, n, false);
+      *cosx = do_sincos_1 (a, da, x, n, true);
 
       return;
     }
@@ -90,8 +90,8 @@ __sincos (double x, double *sinx, double *cosx)
       double a, da;
       int4 n = reduce_sincos_2 (x, &a, &da);
 
-      *sinx = do_sincos_2 (a, da, x, n, 0);
-      *cosx = do_sincos_2 (a, da, x, n, 1);
+      *sinx = do_sincos_2 (a, da, x, n, false);
+      *cosx = do_sincos_2 (a, da, x, n, true);
 
       return;
     }

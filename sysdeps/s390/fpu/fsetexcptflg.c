@@ -1,5 +1,5 @@
 /* Set floating-point environment exception handling.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Denis Joseph Barrow (djbarrow@de.ibm.com).
 
@@ -45,8 +45,7 @@ fesetexceptflag (const fexcept_t *flagp, int excepts)
     & newexcepts;
 
   /* Store the new status word (along with the rest of the environment.
-     Possibly new exceptions are set but they won't get executed unless
-     the next floating-point instruction.  */
+     Possibly new exceptions are set but they won't get executed.  */
   _FPU_SETCW (temp);
 
   /* Success.  */

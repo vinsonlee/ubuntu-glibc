@@ -1,5 +1,5 @@
 /* Word-wrapping and line-truncating streams.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Miles Bader <miles@gnu.ai.mit.edu>.
 
@@ -28,21 +28,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-
-#ifndef __attribute__
-/* This feature is available in gcc versions 2.5 and later.  */
-# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5) || \
-  defined __STRICT_ANSI__
-#  define __attribute__(Spec) /* empty */
-# endif
-/* The __-protected variants of `format' and `printf' attributes
-   are accepted by gcc versions 2.6.4 (effectively 2.7) and later.  */
-# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7) || \
-  defined __STRICT_ANSI__
-#  define __format__ format
-#  define __printf__ printf
-# endif
-#endif
 
 #if defined (__GNU_LIBRARY__) && defined (HAVE_LINEWRAP_H)
 /* line_wrap_stream is available, so use that.  */
@@ -110,6 +95,8 @@ struct argp_fmtstream
 };
 
 typedef struct argp_fmtstream *argp_fmtstream_t;
+
+__BEGIN_DECLS
 
 /* Return an argp_fmtstream that outputs to STREAM, and which prefixes lines
    written on it with LMARGIN spaces and limits them to RMARGIN columns
@@ -296,6 +283,8 @@ __argp_fmtstream_point (argp_fmtstream_t __fs)
 #endif
 
 #endif /* __OPTIMIZE__ */
+
+__END_DECLS
 
 #endif /* ARGP_FMTSTREAM_USE_LINEWRAP */
 

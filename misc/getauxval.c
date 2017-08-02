@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,7 +23,9 @@
 unsigned long int
 __getauxval (unsigned long int type)
 {
+#ifdef HAVE_AUX_VECTOR
   ElfW(auxv_t) *p;
+#endif
 
   if (type == AT_HWCAP)
     return GLRO(dl_hwcap);

@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -1082,7 +1082,7 @@ static const uint8_t jump_table[] =
     LABEL (form_wcharacter):						      \
       {									      \
 	/* Wide character.  */						      \
-	char buf[MB_CUR_MAX];						      \
+	char buf[MB_LEN_MAX];						      \
 	mbstate_t mbstate;						      \
 	size_t len;							      \
 									      \

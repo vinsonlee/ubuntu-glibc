@@ -1,5 +1,5 @@
 /* Multiple versions of isinf.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,6 +16,9 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#define __isinf __redirect___isinf
+#define __isinff __redirect___isinff
+#define __isinfl __redirect___isinfl
 #include <math.h>
 #include <math_ldbl_opt.h>
 #include <shlib-compat.h>
@@ -24,13 +27,16 @@
 extern __typeof (__isinf) __isinf_ppc64 attribute_hidden;
 extern __typeof (__isinf) __isinf_power7 attribute_hidden;
 extern __typeof (__isinf) __isinf_power8 attribute_hidden;
+#undef __isinf
+#undef __isinff
+#undef __isinfl
 
-libc_ifunc (__isinf,
-	    (hwcap2 & PPC_FEATURE2_ARCH_2_07)
-	    ? __isinf_power8 :
-	      (hwcap & PPC_FEATURE_ARCH_2_06)
-	      ? __isinf_power7
-            : __isinf_ppc64);
+libc_ifunc_redirected (__redirect___isinf, __isinf,
+		       (hwcap2 & PPC_FEATURE2_ARCH_2_07)
+		       ? __isinf_power8
+		       : (hwcap & PPC_FEATURE_ARCH_2_06)
+			 ? __isinf_power7
+			 : __isinf_ppc64);
 
 weak_alias (__isinf, isinf)
 

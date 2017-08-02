@@ -26,15 +26,15 @@ static char rcsid[] = "$NetBSD: $";
 #include <math.h>
 #include <math_private.h>
 
-long double
-__logbl (long double x)
+_Float128
+__logbl (_Float128 x)
 {
   int64_t lx, hx, ex;
 
   GET_LDOUBLE_WORDS64 (hx, lx, x);
   hx &= 0x7fffffffffffffffLL;	/* high |x| */
   if ((hx | lx) == 0)
-    return -1.0 / fabs (x);
+    return -1.0 / fabsl (x);
   if (hx >= 0x7fff000000000000LL)
     return x * x;
   if ((ex = hx >> 48) == 0)	/* IEEE 754 logb */
@@ -48,7 +48,7 @@ __logbl (long double x)
 	ma = __builtin_clzll (hx);
       ex -= ma - 16;
     }
-  return (long double) (ex - 16383);
+  return (_Float128) (ex - 16383);
 }
 
 weak_alias (__logbl, logbl)

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -168,4 +168,13 @@ extern const fenv_t __fe_nonieee_env;
    this allows the fastest possible floating point execution.*/
 # define FE_MASK_ENV	FE_DFL_ENV
 
+#endif
+
+#if __GLIBC_USE (IEC_60559_BFP_EXT)
+/* Type representing floating-point control modes.  */
+typedef double femode_t;
+
+/* Default floating-point control modes.  */
+extern const femode_t __fe_dfl_mode;
+# define FE_DFL_MODE	(&__fe_dfl_mode)
 #endif

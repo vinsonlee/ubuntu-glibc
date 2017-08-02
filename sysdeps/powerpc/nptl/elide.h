@@ -1,5 +1,5 @@
 /* elide.h: Generic lock elision support for powerpc.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -102,6 +102,9 @@ __elide_unlock (int is_lock_free)
 {
   if (is_lock_free)
     {
+      /* This code is expected to crash when trying to unlock a lock not
+	 held by this thread.  More information is available in the
+	 __pthread_rwlock_unlock() implementation.  */
       __libc_tend (0);
       return true;
     }

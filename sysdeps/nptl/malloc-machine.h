@@ -1,6 +1,6 @@
 /* Basic platform-independent macro definitions for mutexes,
    thread-specific data and parameters for malloc.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,14 +22,6 @@
 
 #include <atomic.h>
 #include <libc-lock.h>
-
-__libc_lock_define (typedef, mutex_t)
-
-#define mutex_init(m)		__libc_lock_init (*(m))
-#define mutex_lock(m)		__libc_lock_lock (*(m))
-#define mutex_trylock(m)	__libc_lock_trylock (*(m))
-#define mutex_unlock(m)		__libc_lock_unlock (*(m))
-
 #include <sysdeps/generic/malloc-machine.h>
 
 #endif /* !defined(_MALLOC_MACHINE_H) */

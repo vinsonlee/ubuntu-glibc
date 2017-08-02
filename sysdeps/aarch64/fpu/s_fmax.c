@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -18,4 +18,4 @@
 
 #define FUNC fmax
 #define INSN "fmaxnm"
-#include <s_fmin.c>
+#include <fpu/s_fmin.c>

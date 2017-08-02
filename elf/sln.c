@@ -1,5 +1,5 @@
 /* `sln' program to create symbolic links between files.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -15,10 +15,6 @@
    You should have received a copy of the GNU Lesser General Public
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
-
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
 
 #include <error.h>
 #include <errno.h>
@@ -36,10 +32,6 @@
 #include "../version.h"
 
 #define PACKAGE _libc_intl_domainname
-
-#if !defined S_ISDIR && defined S_IFDIR
-#define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
-#endif
 
 static int makesymlink (const char *src, const char *dest);
 static int makesymlinks (const char *file);
@@ -89,9 +81,6 @@ usage (void)
 static int
 makesymlinks (const char *file)
 {
-#ifndef PATH_MAX
-#define PATH_MAX 4095
-#endif
   char *buffer = NULL;
   size_t bufferlen = 0;
   int ret;
@@ -190,11 +179,7 @@ makesymlink (const char *src, const char *dest)
       return -1;
     }
 
-#ifdef S_ISLNK
   if (symlink (src, dest) == 0)
-#else
-  if (link (src, dest) == 0)
-#endif
     {
       /* Destination must exist by now. */
       if (access (dest, F_OK))

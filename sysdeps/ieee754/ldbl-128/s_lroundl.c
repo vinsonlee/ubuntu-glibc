@@ -1,5 +1,5 @@
 /* Round long double value to long int.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997 and
 		  Jakub Jelinek <jj@ultra.linux.cz>, 1999.
@@ -26,7 +26,7 @@
 #include <fix-fp-int-convert-overflow.h>
 
 long int
-__lroundl (long double x)
+__lroundl (_Float128 x)
 {
   int64_t j0;
   u_int64_t i1, i0;
@@ -88,13 +88,13 @@ __lroundl (long double x)
 	 unspecified.  */
 #ifdef FE_INVALID
       if (FIX_LDBL_LONG_CONVERT_OVERFLOW
-	  && !(sign == -1 && x > (long double) LONG_MIN - 0.5L))
+	  && !(sign == -1 && x > (_Float128) LONG_MIN - L(0.5)))
 	{
 	  feraiseexcept (FE_INVALID);
 	  return sign == 1 ? LONG_MAX : LONG_MIN;
 	}
       else if (!FIX_LDBL_LONG_CONVERT_OVERFLOW
-	       && x <= (long double) LONG_MIN - 0.5L)
+	       && x <= (_Float128) LONG_MIN - L(0.5))
 	{
 	  /* If truncation produces LONG_MIN, the cast will not raise
 	     the exception, but may raise "inexact".  */

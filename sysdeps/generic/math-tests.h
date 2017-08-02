@@ -1,5 +1,5 @@
 /* Configuration for math tests.  Generic version.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -39,6 +39,14 @@
    are run unless overridden.  */
 #ifndef SNAN_TESTS_TYPE_CAST
 # define SNAN_TESTS_TYPE_CAST	1
+#endif
+
+/* Indicate whether operations on signaling NaNs preserve the payload
+   (if possible; it is not possible with a zero payload if the high
+   bit is set for signaling NaNs) when generating a quiet NaN, and
+   this should be tested.  */
+#ifndef SNAN_TESTS_PRESERVE_PAYLOAD
+# define SNAN_TESTS_PRESERVE_PAYLOAD	1
 #endif
 
 /* Indicate whether to run tests involving a given rounding mode for a
@@ -86,4 +94,13 @@
 #ifndef EXCEPTION_ENABLE_SUPPORTED
 # define EXCEPTION_ENABLE_SUPPORTED(EXCEPT)			\
    (EXCEPTION_TESTS_float || EXCEPTION_TESTS_double)
+#endif
+
+/* Indicate whether exception traps, if enabled, occur whenever an
+   exception flag is set explicitly, so it is not possible to set flag
+   bits with traps enabled without causing traps to be taken.  If
+   traps cannot be enabled, the value of this macro does not
+   matter.  */
+#ifndef EXCEPTION_SET_FORCES_TRAP
+# define EXCEPTION_SET_FORCES_TRAP 0
 #endif

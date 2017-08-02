@@ -1,5 +1,5 @@
 /* Return projection of complex float value to Riemann sphere.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,14 +24,18 @@
 
 #undef __cprojf
 #undef cprojf
-#define __cprojf internal_cprojf
 
 static _Complex float internal_cprojf (_Complex float x);
 
-#include <math/s_cprojf.c>
-#include "cfloat-compat.h"
+#define M_DECL_FUNC(f) internal_cprojf
+#include <math-type-macros-float.h>
 
-#undef __cprojf
+/* Disable any aliasing from base template.  */
+#undef declare_mgen_alias
+#define declare_mgen_alias(__to, __from)
+
+#include <math/s_cproj_template.c>
+#include "cfloat-compat.h"
 
 c1_cfloat_rettype
 __c1_cprojf (c1_cfloat_decl (x))

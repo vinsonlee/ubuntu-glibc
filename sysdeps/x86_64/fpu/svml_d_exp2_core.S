@@ -1,5 +1,5 @@
 /* Function exp vectorized with SSE2.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 
 	.text
 ENTRY (_ZGVbN2v_exp)
-WRAPPER_IMPL_SSE2 exp
+WRAPPER_IMPL_SSE2 __exp_finite
 END (_ZGVbN2v_exp)
 
 #ifndef USE_MULTIARCH

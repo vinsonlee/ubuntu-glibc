@@ -1,5 +1,5 @@
 /* Generic declarations for DTV-based TLS handling in the dynamic linker.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -19,15 +19,17 @@
 #ifndef _DL_DTV_H
 #define _DL_DTV_H
 
+struct dtv_pointer
+{
+  void *val;                    /* Pointer to data, or TLS_DTV_UNALLOCATED.  */
+  void *to_free;                /* Unaligned pointer, for deallocation.  */
+};
+
 /* Type for the dtv.  */
 typedef union dtv
 {
   size_t counter;
-  struct
-  {
-    void *val;
-    bool is_static;
-  } pointer;
+  struct dtv_pointer pointer;
 } dtv_t;
 
 /* Value used for dtv entries for which the allocation is delayed.  */

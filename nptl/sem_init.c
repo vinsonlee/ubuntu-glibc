@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -49,6 +49,8 @@ __new_sem_init (sem_t *sem, int pshared, unsigned int value)
   isem->data = value;
 #else
   isem->value = value << SEM_VALUE_SHIFT;
+  /* pad is used as a mutex on pre-v9 sparc and ignored otherwise.  */
+  isem->pad = 0;
   isem->nwaiters = 0;
 #endif
 

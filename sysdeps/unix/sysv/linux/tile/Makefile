@@ -8,8 +8,7 @@ sysdep_headers += sys/reg.h
 sysdep_headers += sys/cachectl.h
 sysdep_routines += cacheflush
 
-# Control dataplane properties of current thread.
-sysdep_headers += sys/dataplane.h
+# Control dataplane properties of current thread (compatibility only).
 sysdep_routines += set_dataplane
 
 endif
@@ -25,4 +24,5 @@ endif
 ifeq ($(subdir),nptl)
 # pull in __syscall_error routine
 libpthread-routines += sysdep
+libpthread-shared-only-routines += sysdep
 endif

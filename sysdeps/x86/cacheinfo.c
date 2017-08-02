@@ -1,5 +1,5 @@
 /* x86_64 cache info.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -259,7 +259,9 @@ intel_check_word (int name, unsigned int value, bool *has_level_2,
 static long int __attribute__ ((noinline))
 handle_intel (int name, unsigned int maxidx)
 {
-  assert (maxidx >= 2);
+  /* Return -1 for older CPUs.  */
+  if (maxidx < 2)
+    return -1;
 
   /* OK, we can use the CPUID instruction to get all info about the
      caches.  */

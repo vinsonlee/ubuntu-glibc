@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Ulrich Drepper, <drepper@cygnus.com>.
 
@@ -18,6 +18,8 @@
 
 #ifndef _WEIGHT_H_
 #define _WEIGHT_H_	1
+
+#include <libc-internal.h>
 
 /* Find index of weight.  */
 static inline int32_t __attribute__ ((always_inline))
@@ -61,9 +63,17 @@ findidx (const int32_t *table,
 	     already.  */
 	  size_t cnt;
 
+	  /* With GCC 5.3 when compiling with -Os the compiler warns
+	     that seq2.back_us, which becomes usrc, might be used
+	     uninitialized.  This can't be true because we pass a length
+	     of -1 for len at the same time which means that this loop
+	     never executes.  */
+	  DIAG_PUSH_NEEDS_COMMENT;
+	  DIAG_IGNORE_Os_NEEDS_COMMENT (5, "-Wmaybe-uninitialized");
 	  for (cnt = 0; cnt < nhere && cnt < len; ++cnt)
 	    if (cp[cnt] != usrc[cnt])
 	      break;
+	  DIAG_POP_NEEDS_COMMENT;
 
 	  if (cnt == nhere)
 	    {

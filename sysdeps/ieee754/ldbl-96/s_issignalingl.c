@@ -1,5 +1,5 @@
 /* Test for signaling NaN.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,13 +18,14 @@
 
 #include <math.h>
 #include <math_private.h>
+#include <nan-high-order-bit.h>
 
 int
 __issignalingl (long double x)
 {
   u_int32_t exi, hxi, lxi;
   GET_LDOUBLE_WORDS (exi, hxi, lxi, x);
-#ifdef HIGH_ORDER_BIT_IS_SET_FOR_SNAN
+#if HIGH_ORDER_BIT_IS_SET_FOR_SNAN
 # error not implemented
 #else
   /* To keep the following comparison simple, toggle the quiet/signaling bit,

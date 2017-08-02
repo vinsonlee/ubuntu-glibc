@@ -1,5 +1,5 @@
 /* sigstack, sigaltstack definitions.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,7 +16,10 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifndef _SIGNAL_H
+#ifndef _BITS_SIGSTACK_H
+#define _BITS_SIGSTACK_H 1
+
+#if !defined _SIGNAL_H && !defined _SYS_UCONTEXT_H
 # error "Never include this file directly.  Use <signal.h> instead"
 #endif
 
@@ -52,3 +55,5 @@ enum
 
 /* System default stack size.  */
 #define SIGSTKSZ	(MINSIGSTKSZ + 32768)
+
+#endif /* bits/sigstack.h */

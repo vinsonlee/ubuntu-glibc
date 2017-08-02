@@ -1,5 +1,5 @@
 /* Function expf vectorized with AVX2.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -184,7 +184,7 @@ ENTRY(_ZGVdN8v_expf_avx2)
         vmovss    324(%rsp,%r15,8), %xmm0
         vzeroupper
 
-        call      JUMPTARGET(expf)
+        call      JUMPTARGET(__expf_finite)
 
         vmovss    %xmm0, 388(%rsp,%r15,8)
         jmp       .LBL_1_8
@@ -194,7 +194,7 @@ ENTRY(_ZGVdN8v_expf_avx2)
         vmovss    320(%rsp,%r15,8), %xmm0
         vzeroupper
 
-        call      JUMPTARGET(expf)
+        call      JUMPTARGET(__expf_finite)
 
         vmovss    %xmm0, 384(%rsp,%r15,8)
         jmp       .LBL_1_7

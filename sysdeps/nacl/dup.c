@@ -1,5 +1,5 @@
 /* Duplicate a file descriptor.  NaCl version.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -27,4 +27,5 @@ __dup (int fd)
   int result;
   return NACL_CALL (__nacl_irt_fdio.dup (fd, &result), result);
 }
+libc_hidden_def (__dup)
 weak_alias (__dup, dup)

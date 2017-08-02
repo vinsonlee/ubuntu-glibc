@@ -1,5 +1,5 @@
 /* Internal declarations for sys/sysinfo.h.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,6 +21,9 @@
 
 #include_next <sys/sysinfo.h>
 
+# ifndef _ISOMAC
+
 extern __typeof (sysinfo) __sysinfo __THROW;
 
+# endif /* _ISOMAC */
 #endif /* sys/sysinfo.h */

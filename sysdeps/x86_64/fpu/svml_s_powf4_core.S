@@ -1,5 +1,5 @@
 /* Function powf vectorized with SSE2.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 
 	.text
 ENTRY (_ZGVbN4vv_powf)
-WRAPPER_IMPL_SSE2_ff powf
+WRAPPER_IMPL_SSE2_ff __powf_finite
 END (_ZGVbN4vv_powf)
 
 #ifndef USE_MULTIARCH

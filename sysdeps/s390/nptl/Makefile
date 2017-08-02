@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2016 Free Software Foundation, Inc.
+# Copyright (C) 2003-2017 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -20,5 +20,6 @@ gen-as-const-headers += tcb-offsets.sym
 endif
 
 ifeq ($(subdir),nptl)
-libpthread-routines += ptw-sysdep
+libpthread-routines += sysdep
+libpthread-shared-only-routines += sysdep
 endif

@@ -1,5 +1,5 @@
 /* Test strncmp and wcsncmp functions.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Jakub Jelinek <jakub@redhat.com>, 1999.
 
@@ -156,6 +156,9 @@ do_test_limit (size_t align1, size_t align2, size_t len, size_t n, int max_char,
   size_t i, align_n;
   CHAR *s1, *s2;
 
+  align1 &= ~(CHARBYTES - 1);
+  align2 &= ~(CHARBYTES - 1);
+
   if (n == 0)
     {
       s1 = (CHAR *) (buf1 + page_size);
@@ -203,6 +206,9 @@ do_test (size_t align1, size_t align2, size_t len, size_t n, int max_char,
 {
   size_t i;
   CHAR *s1, *s2;
+
+  align1 &= ~(CHARBYTES - 1);
+  align2 &= ~(CHARBYTES - 1);
 
   if (n == 0)
     return;

@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,9 +23,10 @@
 #include <features.h>
 #include <signal.h>
 
-/* We need the signal context definitions even if they are not used
-   included in <signal.h>.  */
+/* We need the signal context definitions even if they are not exposed
+   by <signal.h>.  */
 #include <bits/sigcontext.h>
+#include <bits/sigstack.h>
 
 
 /* Type for general register.  */

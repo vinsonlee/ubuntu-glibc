@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2016 Free Software Foundation, Inc.
+# Copyright (C) 2005-2017 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 #
 # The GNU C Library is free software; you can redistribute it and/or
@@ -21,4 +21,5 @@ endif
 
 ifeq ($(subdir),nptl)
 libpthread-sysdep_routines += nptl-sysdep
+libpthread-shared-only-routines += nptl-sysdep
 endif

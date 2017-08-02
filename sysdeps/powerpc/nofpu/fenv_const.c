@@ -1,5 +1,5 @@
 /* Constants for fenv_bits.h (soft float edition).
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez <aldyh@redhat.com>, 2002.
    This file is part of the GNU C Library.
 
@@ -24,6 +24,10 @@
    signalling exceptions as default.  */
 const unsigned long long __fe_dfl_env __attribute__ ((aligned (8))) =
 0x000000003e000000ULL;
+
+/* The same representation is used for femode_t.  */
+extern const unsigned long long __fe_dfl_mode
+  __attribute__ ((aligned (8), alias ("__fe_dfl_env")));
 
 /* Floating-point environment where none of the exceptions are masked.  */
 const unsigned long long __fe_enabled_env __attribute__ ((aligned (8))) =

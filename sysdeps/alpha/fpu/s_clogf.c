@@ -1,5 +1,5 @@
 /* Return natural logarithm of complex float value.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,14 +24,18 @@
 
 #undef __clogf
 #undef clogf
-#define __clogf internal_clogf
 
 static _Complex float internal_clogf (_Complex float x);
 
-#include <math/s_clogf.c>
-#include "cfloat-compat.h"
+#define M_DECL_FUNC(f) internal_clogf
+#include <math-type-macros-float.h>
 
-#undef __clogf
+/* Disable any aliasing from base template.  */
+#undef declare_mgen_alias
+#define declare_mgen_alias(__to, __from)
+
+#include <math/s_clog_template.c>
+#include "cfloat-compat.h"
 
 c1_cfloat_rettype
 __c1_clogf (c1_cfloat_decl (x))

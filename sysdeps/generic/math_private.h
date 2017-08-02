@@ -317,8 +317,6 @@ extern long double __kernel_cosl (long double,long double);
 extern long double __kernel_tanl (long double,long double,int);
 extern void __kernel_sincosl (long double,long double,
 			      long double *,long double *, int);
-extern int   __kernel_rem_pio2l (long double*,long double*,int,int,
-				 int,const int*);
 
 #ifndef NO_LONG_DOUBLE
 /* prototypes required to compile the ldbl-96 support without warnings */
@@ -429,12 +427,7 @@ extern long double __lgamma_productl (long double t, long double x,
    })
 #endif
 
-#define fabs_tg(x) __builtin_choose_expr			\
-  (__builtin_types_compatible_p (__typeof (x), float),		\
-   __builtin_fabsf (x),						\
-   __builtin_choose_expr					\
-   (__builtin_types_compatible_p (__typeof (x), double),	\
-    __builtin_fabs (x), __builtin_fabsl (x)))
+#define fabs_tg(x) __MATH_TG ((x), (__typeof (x)) __builtin_fabs, (x))
 #define min_of_type(type) __builtin_choose_expr		\
   (__builtin_types_compatible_p (type, float),		\
    FLT_MIN,						\
@@ -776,12 +769,5 @@ libc_feresetround_noex_ctx (struct rm_ctx *ctx)
 #define SET_RESTORE_ROUND_53BIT(RM) \
   SET_RESTORE_ROUND_GENERIC (RM, libc_feholdsetround_53bit,	      \
 			     libc_feresetround_53bit)
-
-#define __nan(str) \
-  (__builtin_constant_p (str) && str[0] == '\0' ? NAN : __nan (str))
-#define __nanf(str) \
-  (__builtin_constant_p (str) && str[0] == '\0' ? NAN : __nan (str))
-#define __nanl(str) \
-  (__builtin_constant_p (str) && str[0] == '\0' ? NAN : __nan (str))
 
 #endif /* _MATH_PRIVATE_H_ */

@@ -1,5 +1,5 @@
 /* Multiple versions of memcmp.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,8 +17,11 @@
    <http://www.gnu.org/licenses/>.  */
 
 #if IS_IN (libc)
+# define memcmp __redirect_memcmp
+# include <string.h>
+# undef memcmp
 # include <ifunc-resolve.h>
 
-s390_libc_ifunc (memcmp)
-__asm__(".weak bcmp ; bcmp = memcmp");
+s390_libc_ifunc (__redirect_memcmp, __memcmp, memcmp)
+weak_alias (memcmp, bcmp);
 #endif

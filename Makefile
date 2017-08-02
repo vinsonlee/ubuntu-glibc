@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2016 Free Software Foundation, Inc.
+# Copyright (C) 1991-2017 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -60,7 +60,8 @@ endif # $(AUTOCONF) = no
 		   $(addprefix install-, no-libc.a bin lib data headers others)
 
 headers := limits.h values.h features.h gnu-versions.h \
-	   bits/xopen_lim.h gnu/libc-version.h stdc-predef.h
+	   bits/xopen_lim.h gnu/libc-version.h stdc-predef.h \
+	   bits/libc-header-start.h
 
 echo-headers: subdir_echo-headers
 
@@ -315,6 +316,29 @@ tests-special += $(objpfx)begin-end-check.out
 $(objpfx)begin-end-check.out: scripts/begin-end-check.pl
 	$(PERL) scripts/begin-end-check.pl $(installed-headers) > $@; \
 	$(evaluate-test)
+endif
+
+ifneq "$(headers)" ""
+# Special test of all the installed headers in this directory.
+tests-special += $(objpfx)check-installed-headers-c.out
+libof-check-installed-headers-c := nonlib
+$(objpfx)check-installed-headers-c.out: \
+    scripts/check-installed-headers.sh $(headers)
+	$(SHELL) $(..)scripts/check-installed-headers.sh c \
+	  "$(CC) $(filter-out -std=%,$(CFLAGS)) -D_ISOMAC $(+includes)" \
+	  $(headers) > $@; \
+	$(evaluate-test)
+
+ifneq "$(CXX)" ""
+tests-special += $(objpfx)check-installed-headers-cxx.out
+libof-check-installed-headers-cxx := nonlib
+$(objpfx)check-installed-headers-cxx.out: \
+    scripts/check-installed-headers.sh $(headers)
+	$(SHELL) $(..)scripts/check-installed-headers.sh c++ \
+	  "$(CXX) $(filter-out -std=%,$(CXXFLAGS)) -D_ISOMAC $(+includes)" \
+	  $(headers) > $@; \
+	$(evaluate-test)
+endif
 endif
 
 define summarize-tests

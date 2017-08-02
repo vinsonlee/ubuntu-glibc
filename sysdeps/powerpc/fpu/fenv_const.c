@@ -1,5 +1,5 @@
 /* Constants for fenv_bits.h.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,6 +22,10 @@
 /* If the default argument is used we use this value.  */
 const unsigned long long __fe_dfl_env __attribute__ ((aligned (8))) =
 0xfff8000000000000ULL;
+
+/* The same representation is used for femode_t.  */
+extern const unsigned long long __fe_dfl_mode
+  __attribute__ ((aligned (8), alias ("__fe_dfl_env")));
 
 /* Floating-point environment where none of the exceptions are masked.  */
 const unsigned long long __fe_enabled_env __attribute__ ((aligned (8))) =

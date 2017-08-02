@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2017 Free Software Foundation, Inc.
 
    This file is part of the GNU C Library.
 
@@ -20,4 +20,4 @@
 #define INSN "fmaxnm"
 #define TYPE float
 #define REGS "s"
-#include <s_fmin.c>
+#include <fpu/s_fmin.c>

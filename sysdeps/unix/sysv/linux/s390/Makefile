@@ -6,6 +6,7 @@ abi-64-condition := __WORDSIZE == 64
 
 ifeq ($(subdir),rt)
 librt-routines += rt-sysdep
+librt-shared-only-routines += rt-sysdep
 endif
 
 ifeq ($(subdir),stdlib)
@@ -21,7 +22,7 @@ ifeq ($(enable-lock-elision),yes)
 libpthread-sysdep_routines += elision-lock elision-unlock elision-timed \
 			      elision-trylock
 
-elision-CFLAGS = -mhtm
+elision-CFLAGS = -mhtm -msoft-float
 CFLAGS-elision-lock.c = $(elision-CFLAGS)
 CFLAGS-elision-timed.c = $(elision-CFLAGS)
 CFLAGS-elision-trylock.c = $(elision-CFLAGS)
