@@ -1,3 +1,40 @@
+2017-01-01  Joseph Myers  <joseph@codesourcery.com>
+
+	* All files with FSF copyright notices: Update copyright dates
+	using scripts/update-copyrights.
+
+2016-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	[BZ #20974]
+	* localedata/bs_BA (LC_MESSAGES): Delete "*." from the end of
+	yesexpr and noexpr.
+
+2016-11-26  Mike Frysinger  <vapier@gentoo.org>
+
+	[BZ #20864]
+	* localedata/GBK: Map 0x80 to U20AC.
+
+2016-08-24  Ernestas Kulik  <ernestas.kulik@gmail.com>
+
+	[BZ #20497]
+	* locales/lt_LT (d_fmt): Change periods to dashes.
+
+2016-08-15  Märt Põder  <tramm@p6drad-teel.net>
+
+	[BZ #20459]
+	* locales/et_EE (n_cs_precedes, p_cs_precedes): Adjust to
+	Requirements of information technology in Estonian language and
+	cultural environment.
+
+2016-08-10  Martin Pitt  <martin.pitt@ubuntu.com>
+
+	[BZ #9842]
+	* locales/en_CA (d_fmt): Change to %Y-%m-%d.
+
+2016-08-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* charmaps/CP10007: Change M$ to Microsoft.
+
 2016-07-07  Aurelien Jarno  <aurelien@aurel32.net>
 
 	* locales/de_LI (postal_fmt): Fix indentation.

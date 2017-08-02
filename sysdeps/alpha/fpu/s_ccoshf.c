@@ -1,5 +1,5 @@
 /* Return hyperbole cosine of complex float value.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,14 +24,18 @@
 
 #undef __ccoshf
 #undef ccoshf
-#define __ccoshf internal_ccoshf
 
 static _Complex float internal_ccoshf (_Complex float x);
 
-#include <math/s_ccoshf.c>
-#include "cfloat-compat.h"
+#define M_DECL_FUNC(f) internal_ccoshf
+#include <math-type-macros-float.h>
 
-#undef __ccoshf
+/* Disable any aliasing from base template.  */
+#undef declare_mgen_alias
+#define declare_mgen_alias(__to, __from)
+
+#include <math/s_ccosh_template.c>
+#include "cfloat-compat.h"
 
 c1_cfloat_rettype
 __c1_ccoshf (c1_cfloat_decl (x))

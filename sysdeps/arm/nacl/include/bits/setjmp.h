@@ -1,5 +1,5 @@
 /* Private jmp_buf-related definitions.  NaCl/ARM version.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,6 +24,8 @@
 # include <sysdeps/arm/bits/setjmp.h>
 #endif
 
+# ifndef _ISOMAC
+
 /* Register list for a ldm/stm instruction to load/store
    the general registers from a __jmp_buf.
 
@@ -35,4 +37,5 @@
 /* Index of __jmp_buf where the sp register resides.  */
 #define __JMP_BUF_SP		0
 
+# endif /* _ISOMAC */
 #endif  /* include/bits/setjmp.h */

@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ __libc_recvmsg (int fd, struct msghdr *message, int flags)
 					       &message->msg_flags, amount)))
     return __hurd_sockfail (fd, flags, err);
 
-  if (message->msg_name != NULL)
+  if (message->msg_name != NULL && aport != MACH_PORT_NULL)
     {
       char *buf = message->msg_name;
       mach_msg_type_number_t buflen = message->msg_namelen;
@@ -98,6 +98,8 @@ __libc_recvmsg (int fd, struct msghdr *message, int flags)
       if (buflen > 0)
 	((struct sockaddr *) message->msg_name)->sa_family = type;
     }
+  else if (message->msg_name != NULL)
+    message->msg_namelen = 0;
 
   __mach_port_deallocate (__mach_task_self (), aport);
 

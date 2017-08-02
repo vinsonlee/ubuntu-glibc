@@ -1,5 +1,5 @@
 /* Function pow vectorized with AVX2.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -367,7 +367,7 @@ ENTRY (_ZGVdN4vv_pow_avx2)
         vmovsd    264(%rsp,%r15), %xmm1
         vzeroupper
 
-        call      JUMPTARGET(pow)
+        call      JUMPTARGET(__pow_finite)
 
         vmovsd    %xmm0, 328(%rsp,%r15)
         jmp       .LBL_1_8
@@ -379,7 +379,7 @@ ENTRY (_ZGVdN4vv_pow_avx2)
         vmovsd    256(%rsp,%r15), %xmm1
         vzeroupper
 
-        call      JUMPTARGET(pow)
+        call      JUMPTARGET(__pow_finite)
 
         vmovsd    %xmm0, 320(%rsp,%r15)
         jmp       .LBL_1_7

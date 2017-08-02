@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -128,18 +128,12 @@ __libc_fork (void)
 	 handlers may use malloc, and the libio list lock has an
 	 indirect malloc dependency as well (via the getdelim
 	 function).  */
-      __malloc_fork_lock_parent ();
+      call_function_static_weak (__malloc_fork_lock_parent);
     }
 
 #ifndef NDEBUG
   pid_t ppid = THREAD_GETMEM (THREAD_SELF, tid);
 #endif
-
-  /* We need to prevent the getpid() code to update the PID field so
-     that, if a signal arrives in the child very early and the signal
-     handler uses getpid(), the value returned is correct.  */
-  pid_t parentpid = THREAD_GETMEM (THREAD_SELF, pid);
-  THREAD_SETMEM (THREAD_SELF, pid, -parentpid);
 
 #ifdef ARCH_FORK
   pid = ARCH_FORK ();
@@ -159,9 +153,6 @@ __libc_fork (void)
       if (__fork_generation_pointer != NULL)
 	*__fork_generation_pointer += __PTHREAD_ONCE_FORK_GEN_INCR;
 
-      /* Adjust the PID field for the new process.  */
-      THREAD_SETMEM (self, pid, THREAD_GETMEM (self, tid));
-
 #if HP_TIMING_AVAIL
       /* The CPU clock of the thread and process have to be set to zero.  */
       hp_timing_t now;
@@ -171,12 +162,20 @@ __libc_fork (void)
 #endif
 
 #ifdef __NR_set_robust_list
-      /* Initialize the robust mutex list which has been reset during
-	 the fork.  We do not check for errors since if it fails here
-	 it failed at process start as well and noone could have used
-	 robust mutexes.  We also do not have to set
-	 self->robust_head.futex_offset since we inherit the correct
-	 value from the parent.  */
+      /* Initialize the robust mutex list setting in the kernel which has
+	 been reset during the fork.  We do not check for errors because if
+	 it fails here, it must have failed at process startup as well and
+	 nobody could have used robust mutexes.
+	 Before we do that, we have to clear the list of robust mutexes
+	 because we do not inherit ownership of mutexes from the parent.
+	 We do not have to set self->robust_head.futex_offset since we do
+	 inherit the correct value from the parent.  We do not need to clear
+	 the pending operation because it must have been zero when fork was
+	 called.  */
+# ifdef __PTHREAD_MUTEX_HAVE_PREV
+      self->robust_prev = &self->robust_head;
+# endif
+      self->robust_head.list = &self->robust_head;
 # ifdef SHARED
       if (__builtin_expect (__libc_pthread_functions_init, 0))
 	PTHFCT_CALL (ptr_set_robust, (self));
@@ -192,7 +191,7 @@ __libc_fork (void)
       if (multiple_threads)
 	{
 	  /* Release malloc locks.  */
-	  __malloc_fork_unlock_child ();
+	  call_function_static_weak (__malloc_fork_unlock_child);
 
 	  /* Reset the file list.  These are recursive mutexes.  */
 	  fresetlockfiles ();
@@ -233,14 +232,11 @@ __libc_fork (void)
     {
       assert (THREAD_GETMEM (THREAD_SELF, tid) == ppid);
 
-      /* Restore the PID value.  */
-      THREAD_SETMEM (THREAD_SELF, pid, parentpid);
-
       /* Release acquired locks in the multi-threaded case.  */
       if (multiple_threads)
 	{
 	  /* Release malloc locks, parent process variant.  */
-	  __malloc_fork_unlock_parent ();
+	  call_function_static_weak (__malloc_fork_unlock_parent);
 
 	  /* We execute this even if the 'fork' call failed.  */
 	  _IO_list_unlock ();

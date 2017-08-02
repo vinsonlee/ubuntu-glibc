@@ -1,5 +1,5 @@
 /* Multiple versions of stpcpy.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,13 +17,18 @@
    <http://www.gnu.org/licenses/>.  */
 
 #if defined HAVE_S390_VX_ASM_SUPPORT && IS_IN (libc)
+# define stpcpy __redirect_stpcpy
+# define __stpcpy __redirect___stpcpy
+/* Omit the stpcpy inline definitions because it would redefine stpcpy.  */
+# define __NO_STRING_INLINES
 # define NO_MEMPCPY_STPCPY_REDIRECT
 # include <string.h>
+# undef stpcpy
+# undef __stpcpy
 # include <ifunc-resolve.h>
 
-s390_vx_libc_ifunc (__stpcpy)
+s390_vx_libc_ifunc_redirected (__redirect___stpcpy, __stpcpy);
 weak_alias (__stpcpy, stpcpy)
-libc_hidden_builtin_def (stpcpy)
 
 #else
 # include <string/stpcpy.c>

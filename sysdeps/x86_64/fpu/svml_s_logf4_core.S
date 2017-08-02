@@ -1,5 +1,5 @@
 /* Function logf vectorized with SSE2.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 
 	.text
 ENTRY (_ZGVbN4v_logf)
-WRAPPER_IMPL_SSE2 logf
+WRAPPER_IMPL_SSE2 __logf_finite
 END (_ZGVbN4v_logf)
 
 #ifndef USE_MULTIARCH

@@ -1,5 +1,5 @@
 /* Multiple versions of memchr.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,8 +17,11 @@
    <http://www.gnu.org/licenses/>.  */
 
 #if defined HAVE_S390_VX_ASM_SUPPORT && IS_IN (libc)
+# define memchr __redirect_memchr
 # include <string.h>
+# undef memchr
 # include <ifunc-resolve.h>
 
-s390_vx_libc_ifunc2 (__memchr, memchr)
+s390_vx_libc_ifunc2_redirected (__redirect_memchr, __memchr, memchr)
+
 #endif

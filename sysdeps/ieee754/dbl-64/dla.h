@@ -1,7 +1,7 @@
 /*
  * IBM Accurate Mathematical Library
  * Written by International Business Machines Corp.
- * Copyright (C) 2001-2016 Free Software Foundation, Inc.
+ * Copyright (C) 2001-2017 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -56,6 +56,10 @@
 #define  ESUB(x,y,z,zz)  \
 	   z=(x)-(y);  zz=(fabs(x)>fabs(y)) ? (((x)-(z))-(y)) : ((x)-((y)+(z)));
 
+
+#ifdef __FP_FAST_FMA
+# define DLA_FMS(x, y, z) __builtin_fma (x, y, -(z))
+#endif
 
 /* Exact multiplication of two single-length floating point numbers,   */
 /* Veltkamp. The macro produces a double-length number (z,zz) that     */

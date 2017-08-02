@@ -1,4 +1,4 @@
-# Copyright (C) 1991-2016 Free Software Foundation, Inc.
+# Copyright (C) 1991-2017 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ headers	:= sys/utsname.h sys/times.h sys/wait.h sys/types.h unistd.h	      \
 	   bits/local_lim.h tar.h bits/utsname.h bits/confname.h	      \
 	   bits/waitflags.h bits/waitstatus.h sys/unistd.h sched.h	      \
 	   bits/sched.h re_comp.h wait.h bits/environments.h cpio.h	      \
-	   sys/sysmacros.h spawn.h bits/unistd.h
+	   spawn.h bits/unistd.h
 
 routines :=								      \
 	uname								      \
@@ -90,11 +90,12 @@ tests		:= tstgetopt testfnm runtests runptests	     \
 		   bug-getopt5 tst-getopt_long1 bug-regex34 bug-regex35 \
 		   tst-pathconf tst-getaddrinfo4 tst-rxspencer-no-utf8 \
 		   tst-fnmatch3 bug-regex36 tst-getaddrinfo5 \
-		   tst-posix_spawn-fd
+		   tst-posix_spawn-fd \
+		   tst-posix_fadvise tst-posix_fadvise64
 xtests		:= bug-ga2
 ifeq (yes,$(build-shared))
 test-srcs	:= globtest
-tests           += wordexp-test tst-exec tst-spawn tst-spawn2
+tests           += wordexp-test tst-exec tst-spawn tst-spawn2 tst-spawn3
 endif
 tests-static	= tst-exec-static tst-spawn-static
 tests		+= $(tests-static)

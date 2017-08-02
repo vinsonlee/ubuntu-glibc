@@ -1,6 +1,6 @@
 /* Common utilities for testing strtod and its derivatives.
    This file is part of the GNU C Library.
-   Copyright (C) 2016 Free Software Foundation, Inc.
+   Copyright (C) 2016-2017 Free Software Foundation, Inc.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -23,14 +23,13 @@
 
 /* Splat n variants of the same test for the various strtod functions.  */
 #define GEN_TEST_STRTOD_FOREACH(mfunc, ...)			 \
-    mfunc (  f,       float, snprintf,  "", f, f, ##__VA_ARGS__) \
-    mfunc (  d,      double, snprintf,  "",  ,  , ##__VA_ARGS__) \
-    mfunc ( ld, long double, snprintf, "L", L, l, ##__VA_ARGS__)
+    mfunc (  f,       float, strfromf, f, f, ##__VA_ARGS__)	 \
+    mfunc (  d,      double, strfromd,  ,  , ##__VA_ARGS__)	 \
+    mfunc ( ld, long double, strfroml, L, l, ##__VA_ARGS__)
 /* The arguments to the generated macros are:
    FSUF - Function suffix
    FTYPE - float type
    FTOSTR - float to string func
-   FTOSTRM - Optional modifier for FTOSTR format
    LSUF - Literal suffix
    CSUF - C standardish suffix for many of the math functions
 */

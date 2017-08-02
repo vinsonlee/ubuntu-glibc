@@ -1,5 +1,5 @@
 /* Multiple versions of wcscmp.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -17,10 +17,12 @@
    <http://www.gnu.org/licenses/>.  */
 
 #if defined HAVE_S390_VX_ASM_SUPPORT && IS_IN (libc)
+# define __wcscmp __redirect___wcscmp
 # include <wchar.h>
+# undef __wcscmp
 # include <ifunc-resolve.h>
 
-s390_vx_libc_ifunc (__wcscmp)
+s390_vx_libc_ifunc_redirected (__redirect___wcscmp, __wcscmp)
 weak_alias (__wcscmp, wcscmp)
 
 #else

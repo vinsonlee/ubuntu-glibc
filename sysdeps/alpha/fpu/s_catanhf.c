@@ -1,5 +1,5 @@
 /* Return arc hyperbole tangent of complex float value.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,14 +24,18 @@
 
 #undef __catanhf
 #undef catanhf
-#define __catanhf internal_catanhf
 
 static _Complex float internal_catanhf (_Complex float x);
 
-#include <math/s_catanhf.c>
-#include "cfloat-compat.h"
+#define M_DECL_FUNC(f) internal_catanhf
+#include <math-type-macros-float.h>
 
-#undef __catanhf
+/* Disable any aliasing from base template.  */
+#undef declare_mgen_alias
+#define declare_mgen_alias(__to, __from)
+
+#include <math/s_catanh_template.c>
+#include "cfloat-compat.h"
 
 c1_cfloat_rettype
 __c1_catanhf (c1_cfloat_decl (x))

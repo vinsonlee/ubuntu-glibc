@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson.
 
@@ -22,6 +22,9 @@
 float
 __rintf (float x)
 {
+  if (isnanf (x))
+    return x + x;
+
   if (isless (fabsf (x), 16777216.0f))	/* 1 << FLT_MANT_DIG */
     {
       /* Note that Alpha S_Floating is stored in registers in a

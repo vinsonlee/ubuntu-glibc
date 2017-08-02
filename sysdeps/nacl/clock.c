@@ -1,5 +1,5 @@
 /* Return the time used by the program so far.  NaCl version.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,6 +24,6 @@
 clock_t
 clock (void)
 {
-  nacl_abi_clock_t result;
+  nacl_irt_clock_t result;
   return NACL_CALL (__nacl_irt_basic.clock (&result), result);
 }

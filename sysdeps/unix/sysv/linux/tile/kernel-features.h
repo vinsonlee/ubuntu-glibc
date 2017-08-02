@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
 
@@ -23,4 +23,5 @@
    pairs to start with an even-number register.  */
 #ifndef _LP64
 # define __ASSUME_ALIGNED_REGISTER_PAIRS	1
+# define __ASSUME_FADVISE64_64_NO_ALIGN		1
 #endif

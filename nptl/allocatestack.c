@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -245,9 +245,7 @@ get_cached_stack (size_t *sizep, void **memp)
   /* Clear the DTV.  */
   dtv_t *dtv = GET_DTV (TLS_TPADJ (result));
   for (size_t cnt = 0; cnt < dtv[-1].counter; ++cnt)
-    if (! dtv[1 + cnt].pointer.is_static
-	&& dtv[1 + cnt].pointer.val != TLS_DTV_UNALLOCATED)
-      free (dtv[1 + cnt].pointer.val);
+    free (dtv[1 + cnt].pointer.to_free);
   memset (dtv, '\0', (dtv[-1].counter + 1) * sizeof (dtv_t));
 
   /* Re-initialize the TLS.  */
@@ -440,9 +438,6 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
       SETUP_THREAD_SYSINFO (pd);
 #endif
 
-      /* The process ID is also the same as that of the caller.  */
-      pd->pid = THREAD_GETMEM (THREAD_SELF, pid);
-
       /* Don't allow setxid until cloned.  */
       pd->setxid_futex = -1;
 
@@ -578,9 +573,6 @@ allocate_stack (const struct pthread_attr *attr, struct pthread **pdp,
 
 	  /* Don't allow setxid until cloned.  */
 	  pd->setxid_futex = -1;
-
-	  /* The process ID is also the same as that of the caller.  */
-	  pd->pid = THREAD_GETMEM (THREAD_SELF, pid);
 
 	  /* Allocate the DTV for this thread.  */
 	  if (_dl_allocate_tls (TLS_TPADJ (pd)) == NULL)
@@ -875,9 +867,6 @@ __reclaim_stacks (void)
 	  /* This marks the stack as free.  */
 	  curp->tid = 0;
 
-	  /* The PID field must be initialized for the new process.  */
-	  curp->pid = self->pid;
-
 	  /* Account for the size of the stack.  */
 	  stack_cache_actsize += curp->stackblock_size;
 
@@ -901,13 +890,6 @@ __reclaim_stacks (void)
 		  }
 	    }
 	}
-    }
-
-  /* Reset the PIDs in any cached stacks.  */
-  list_for_each (runp, &stack_cache)
-    {
-      struct pthread *curp = list_entry (runp, struct pthread, list);
-      curp->pid = self->pid;
     }
 
   /* Add the stack of all running threads to the cache.  */
@@ -1054,9 +1036,9 @@ setxid_signal_thread (struct xid_command *cmdp, struct pthread *t)
     return 0;
 
   int val;
+  pid_t pid = __getpid ();
   INTERNAL_SYSCALL_DECL (err);
-  val = INTERNAL_SYSCALL (tgkill, err, 3, THREAD_GETMEM (THREAD_SELF, pid),
-			  t->tid, SIGSETXID);
+  val = INTERNAL_SYSCALL_CALL (tgkill, err, pid, t->tid, SIGSETXID);
 
   /* If this failed, it must have had not started yet or else exited.  */
   if (!INTERNAL_SYSCALL_ERROR_P (val, err))
@@ -1209,9 +1191,7 @@ init_one_static_tls (struct pthread *curp, struct link_map *map)
 #  error "Either TLS_TCB_AT_TP or TLS_DTV_AT_TP must be defined"
 # endif
 
-  /* We cannot delay the initialization of the Static TLS area, since
-     it can be accessed with LE or IE, but since the DTV is only used
-     by GD and LD, we can delay its update to avoid a race.  */
+  /* Initialize the memory.  */
   memset (__mempcpy (dest, map->l_tls_initimage, map->l_tls_initimage_size),
 	  '\0', map->l_tls_blocksize - map->l_tls_initimage_size);
 }

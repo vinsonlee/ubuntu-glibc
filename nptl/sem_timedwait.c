@@ -1,5 +1,5 @@
 /* sem_timedwait -- wait on a semaphore with timeout.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Paul Mackerras <paulus@au.ibm.com>, 2003.
 
@@ -29,6 +29,9 @@ sem_timedwait (sem_t *sem, const struct timespec *abstime)
       __set_errno (EINVAL);
       return -1;
     }
+
+  /* Check sem_wait.c for a more detailed explanation why it is required.  */
+  __pthread_testcancel ();
 
   if (__new_sem_wait_fast ((struct new_sem *) sem, 0) == 0)
     return 0;

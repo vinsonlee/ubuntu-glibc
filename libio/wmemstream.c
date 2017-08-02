@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -112,8 +112,6 @@ _IO_wmem_sync (_IO_FILE *fp)
       _IO_wstr_overflow (fp, '\0');
       --fp->_wide_data->_IO_write_ptr;
     }
-  else
-    *fp->_wide_data->_IO_write_ptr = '\0';
 
   *mp->bufloc = fp->_wide_data->_IO_write_base;
   *mp->sizeloc = (fp->_wide_data->_IO_write_ptr

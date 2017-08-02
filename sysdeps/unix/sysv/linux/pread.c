@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1997.
 
@@ -28,8 +28,7 @@
 ssize_t
 __libc_pread (int fd, void *buf, size_t count, off_t offset)
 {
-  return SYSCALL_CANCEL (pread, fd, buf, count,
-			 __ALIGNMENT_ARG SYSCALL_LL (offset));
+  return SYSCALL_CANCEL (pread, fd, buf, count, SYSCALL_LL_PRW (offset));
 }
 
 strong_alias (__libc_pread, __pread)

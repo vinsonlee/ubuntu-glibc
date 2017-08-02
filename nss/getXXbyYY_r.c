@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1996.
 
@@ -274,8 +274,7 @@ INTERNAL (REENTRANT_NAME) (ADD_PARAMS, LOOKUP_TYPE *resbuf, char *buffer,
 	    }
 #endif /* need _res */
 #ifdef NEED__RES_HCONF
-	  if (!_res_hconf.initialized)
-	    _res_hconf_init ();
+	  _res_hconf_init ();
 #endif /* need _res_hconf */
 
 	  void *tmp_ptr = fct.l;

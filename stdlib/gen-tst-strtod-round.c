@@ -1,6 +1,6 @@
 /* Generate table of tests in tst-strtod-round.c from
    tst-strtod-round-data.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -50,12 +50,12 @@ string_to_fp (mpfr_t f, const char *s, mpfr_rnd_t rnd)
   mpfr_init2 (f2, 100000);
   int r0 = mpfr_strtofr (f2, s, NULL, 0, rnd);
   int r = mpfr_set (f, f2, rnd);
-  mpfr_subnormalize (f, r, rnd);
+  r |= mpfr_subnormalize (f, r, rnd);
   mpfr_clear (f2);
   return r0 | r;
 #else
   int r = mpfr_strtofr (f, s, NULL, 0, rnd);
-  mpfr_subnormalize (f, r, rnd);
+  r |= mpfr_subnormalize (f, r, rnd);
   return r;
 #endif
 }

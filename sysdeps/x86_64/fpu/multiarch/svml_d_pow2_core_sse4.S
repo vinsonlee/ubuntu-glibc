@@ -1,5 +1,5 @@
 /* Function pow vectorized with SSE4.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -413,7 +413,7 @@ ENTRY (_ZGVbN2vv_pow_sse4)
         movsd     72(%rsp,%r15), %xmm0
         movsd     136(%rsp,%r15), %xmm1
 
-        call      JUMPTARGET(pow)
+        call      JUMPTARGET(__pow_finite)
 
         movsd     %xmm0, 200(%rsp,%r15)
         jmp       .LBL_1_8
@@ -424,7 +424,7 @@ ENTRY (_ZGVbN2vv_pow_sse4)
         movsd     64(%rsp,%r15), %xmm0
         movsd     128(%rsp,%r15), %xmm1
 
-        call      JUMPTARGET(pow)
+        call      JUMPTARGET(__pow_finite)
 
         movsd     %xmm0, 192(%rsp,%r15)
         jmp       .LBL_1_7

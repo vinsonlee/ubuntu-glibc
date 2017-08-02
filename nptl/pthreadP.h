@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
 
@@ -150,9 +150,16 @@ enum
    | PTHREAD_MUTEXATTR_PROTOCOL_MASK | PTHREAD_MUTEXATTR_PRIO_CEILING_MASK)
 
 
-/* Check whether rwlock prefers readers.   */
-#define PTHREAD_RWLOCK_PREFER_READER_P(rwlock) \
-  ((rwlock)->__data.__flags == 0)
+/* For the following, see pthread_rwlock_common.c.  */
+#define PTHREAD_RWLOCK_WRPHASE		1
+#define PTHREAD_RWLOCK_WRLOCKED		2
+#define PTHREAD_RWLOCK_RWAITING		4
+#define PTHREAD_RWLOCK_READER_SHIFT	3
+#define PTHREAD_RWLOCK_READER_OVERFLOW	((unsigned int) 1 \
+					 << (sizeof (unsigned int) * 8 - 1))
+#define PTHREAD_RWLOCK_WRHANDOVER	((unsigned int) 1 \
+					 << (sizeof (unsigned int) * 8 - 1))
+#define PTHREAD_RWLOCK_FUTEX_USED	2
 
 
 /* Bits used in robust mutex implementation.  */
@@ -165,6 +172,13 @@ enum
 #define __PTHREAD_ONCE_INPROGRESS	1
 #define __PTHREAD_ONCE_DONE		2
 #define __PTHREAD_ONCE_FORK_GEN_INCR	4
+
+
+/* Condition variable definitions.  See __pthread_cond_wait_common.
+   Need to be defined here so there is one place from which
+   nptl_lock_constants can grab them.  */
+#define __PTHREAD_COND_CLOCK_MONOTONIC_MASK 2
+#define __PTHREAD_COND_SHARED_MASK 1
 
 
 /* Internal variables.  */
@@ -491,6 +505,7 @@ extern int __pthread_setcanceltype (int type, int *oldtype);
 extern int __pthread_enable_asynccancel (void) attribute_hidden;
 extern void __pthread_disable_asynccancel (int oldtype)
      internal_function attribute_hidden;
+extern void __pthread_testcancel (void);
 
 #if IS_IN (libpthread)
 hidden_proto (__pthread_mutex_init)
@@ -505,6 +520,7 @@ hidden_proto (__pthread_getspecific)
 hidden_proto (__pthread_setspecific)
 hidden_proto (__pthread_once)
 hidden_proto (__pthread_setcancelstate)
+hidden_proto (__pthread_testcancel)
 #endif
 
 extern int __pthread_cond_broadcast_2_0 (pthread_cond_2_0_t *cond);

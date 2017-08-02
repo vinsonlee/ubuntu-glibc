@@ -1,5 +1,5 @@
 /* Function powf vectorized with AVX2.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -317,7 +317,7 @@ ENTRY(_ZGVdN8vv_powf_avx2)
         vmovss    132(%rsp,%r15,8), %xmm1
         vzeroupper
 
-        call      JUMPTARGET(powf)
+        call      JUMPTARGET(__powf_finite)
 
         vmovss    %xmm0, 196(%rsp,%r15,8)
         jmp       .LBL_1_8
@@ -328,7 +328,7 @@ ENTRY(_ZGVdN8vv_powf_avx2)
         vmovss    128(%rsp,%r15,8), %xmm1
         vzeroupper
 
-        call      JUMPTARGET(powf)
+        call      JUMPTARGET(__powf_finite)
 
         vmovss    %xmm0, 192(%rsp,%r15,8)
         jmp       .LBL_1_7

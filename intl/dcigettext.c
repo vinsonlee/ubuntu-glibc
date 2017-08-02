@@ -1,5 +1,5 @@
 /* Implementation of the internal dcigettext function.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2017 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as published by
@@ -187,7 +187,7 @@ static void *mempcpy (void *dest, const void *src, size_t n);
 #endif
 
 #if !defined PATH_MAX && defined _PC_PATH_MAX
-# define PATH_MAX (pathconf ("/", _PC_PATH_MAX) < 1 ? 1024 : pathconf ("/", _PC_PATH_MAX))
+# define PATH_MAX (__pathconf ("/", _PC_PATH_MAX) < 1 ? 1024 : __pathconf ("/", _PC_PATH_MAX))
 #endif
 
 /* Don't include sys/param.h if it already has been.  */

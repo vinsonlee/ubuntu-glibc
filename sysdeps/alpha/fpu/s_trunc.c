@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Richard Henderson.
 
@@ -28,12 +28,11 @@ __trunc (double x)
   double two52 = copysign (0x1.0p52, x);
   double r, tmp;
 
+  if (isgreaterequal (fabs (x), 0x1.0p52))
+    return x;
+
   __asm (
-#ifdef _IEEE_FP_INEXACT
-	 "addt/suic %2, %3, %1\n\tsubt/suic %1, %3, %0"
-#else
 	 "addt/suc %2, %3, %1\n\tsubt/suc %1, %3, %0"
-#endif
 	 : "=&f"(r), "=&f"(tmp)
 	 : "f"(x), "f"(two52));
 

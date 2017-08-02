@@ -1,5 +1,5 @@
 /* Multiple versions of memcmp.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -18,17 +18,19 @@
 
 /* Define multiple versions only for definition in libc.  */
 #if IS_IN (libc)
+# define memcmp __redirect_memcmp
 # include <string.h>
 # include <shlib-compat.h>
 # include "init-arch.h"
 
 extern __typeof (memcmp) __memcmp_ppc attribute_hidden;
 extern __typeof (memcmp) __memcmp_power7 attribute_hidden;
+# undef memcmp
 
 /* Avoid DWARF definition DIE on ifunc symbol so that GDB can handle
    ifunc symbol properly.  */
-libc_ifunc (memcmp,
-            (hwcap & PPC_FEATURE_HAS_VSX)
-            ? __memcmp_power7
-            : __memcmp_ppc);
+libc_ifunc_redirected (__redirect_memcmp, memcmp,
+		       (hwcap & PPC_FEATURE_HAS_VSX)
+		       ? __memcmp_power7
+		       : __memcmp_ppc);
 #endif

@@ -1,6 +1,6 @@
 /* Initialize CPU feature data.
    This file is part of the GNU C Library.
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    The GNU C Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 static void
 get_common_indeces (struct cpu_features *cpu_features,
 		    unsigned int *family, unsigned int *model,
-		    unsigned int *extended_model)
+		    unsigned int *extended_model, unsigned int *stepping)
 {
   if (family)
     {
@@ -34,6 +34,7 @@ get_common_indeces (struct cpu_features *cpu_features,
       *family = (eax >> 8) & 0x0f;
       *model = (eax >> 4) & 0x0f;
       *extended_model = (eax >> 12) & 0xf0;
+      *stepping = eax & 0x0f;
       if (*family == 0x0f)
 	{
 	  *family += (eax >> 20) & 0xff;
@@ -60,12 +61,20 @@ get_common_indeces (struct cpu_features *cpu_features,
 	{
 	  /* Determine if AVX is usable.  */
 	  if (CPU_FEATURES_CPU_P (cpu_features, AVX))
-	    cpu_features->feature[index_arch_AVX_Usable]
-	      |= bit_arch_AVX_Usable;
-	  /* Determine if AVX2 is usable.  */
-	  if (CPU_FEATURES_CPU_P (cpu_features, AVX2))
-	    cpu_features->feature[index_arch_AVX2_Usable]
-	      |= bit_arch_AVX2_Usable;
+	    {
+	      cpu_features->feature[index_arch_AVX_Usable]
+		|= bit_arch_AVX_Usable;
+	      /* The following features depend on AVX being usable.  */
+	      /* Determine if AVX2 is usable.  */
+	      if (CPU_FEATURES_CPU_P (cpu_features, AVX2))
+		cpu_features->feature[index_arch_AVX2_Usable]
+		  |= bit_arch_AVX2_Usable;
+	      /* Determine if FMA is usable.  */
+	      if (CPU_FEATURES_CPU_P (cpu_features, FMA))
+		cpu_features->feature[index_arch_FMA_Usable]
+		  |= bit_arch_FMA_Usable;
+	    }
+
 	  /* Check if OPMASK state, upper 256-bit of ZMM0-ZMM15 and
 	     ZMM16-ZMM31 state are enabled.  */
 	  if ((xcrlow & (bit_Opmask_state | bit_ZMM0_15_state
@@ -83,10 +92,6 @@ get_common_indeces (struct cpu_features *cpu_features,
 		      |= bit_arch_AVX512DQ_Usable;
 		}
 	    }
-	  /* Determine if FMA is usable.  */
-	  if (CPU_FEATURES_CPU_P (cpu_features, FMA))
-	    cpu_features->feature[index_arch_FMA_Usable]
-	      |= bit_arch_FMA_Usable;
 	}
     }
 }
@@ -112,11 +117,12 @@ init_cpu_features (struct cpu_features *cpu_features)
   /* This spells out "GenuineIntel".  */
   if (ebx == 0x756e6547 && ecx == 0x6c65746e && edx == 0x49656e69)
     {
-      unsigned int extended_model;
+      unsigned int extended_model, stepping;
 
       kind = arch_kind_intel;
 
-      get_common_indeces (cpu_features, &family, &model, &extended_model);
+      get_common_indeces (cpu_features, &family, &model, &extended_model,
+			  &stepping);
 
       if (family == 0x06)
 	{
@@ -197,6 +203,20 @@ init_cpu_features (struct cpu_features *cpu_features)
 		    | bit_arch_Fast_Unaligned_Copy
 		    | bit_arch_Prefer_PMINUB_for_stringop);
 	      break;
+
+	    case 0x3f:
+	      /* Xeon E7 v3 with stepping >= 4 has working TSX.  */
+	      if (stepping >= 4)
+		break;
+	    case 0x3c:
+	    case 0x45:
+	    case 0x46:
+	      /* Disable Intel TSX on Haswell processors (except Xeon E7 v3
+		 with stepping >= 4) to avoid TSX on kernels that weren't
+		 updated with the latest microcode package (which disables
+		 broken feature by default).  */
+	      cpu_features->cpuid[COMMON_CPUID_INDEX_7].ebx &= ~(bit_cpu_RTM);
+	      break;
 	    }
 	}
 
@@ -205,15 +225,30 @@ init_cpu_features (struct cpu_features *cpu_features)
       if (CPU_FEATURES_ARCH_P (cpu_features, AVX2_Usable))
 	cpu_features->feature[index_arch_AVX_Fast_Unaligned_Load]
 	  |= bit_arch_AVX_Fast_Unaligned_Load;
+
+      /* To avoid SSE transition penalty, use _dl_runtime_resolve_slow.
+         If XGETBV suports ECX == 1, use _dl_runtime_resolve_opt.  */
+      cpu_features->feature[index_arch_Use_dl_runtime_resolve_slow]
+	|= bit_arch_Use_dl_runtime_resolve_slow;
+      if (cpu_features->max_cpuid >= 0xd)
+	{
+	  unsigned int eax;
+
+	  __cpuid_count (0xd, 1, eax, ebx, ecx, edx);
+	  if ((eax & (1 << 2)) != 0)
+	    cpu_features->feature[index_arch_Use_dl_runtime_resolve_opt]
+	      |= bit_arch_Use_dl_runtime_resolve_opt;
+	}
     }
   /* This spells out "AuthenticAMD".  */
   else if (ebx == 0x68747541 && ecx == 0x444d4163 && edx == 0x69746e65)
     {
-      unsigned int extended_model;
+      unsigned int extended_model, stepping;
 
       kind = arch_kind_amd;
 
-      get_common_indeces (cpu_features, &family, &model, &extended_model);
+      get_common_indeces (cpu_features, &family, &model, &extended_model,
+			  &stepping);
 
       ecx = cpu_features->cpuid[COMMON_CPUID_INDEX_1].ecx;
 
@@ -250,7 +285,7 @@ init_cpu_features (struct cpu_features *cpu_features)
   else
     {
       kind = arch_kind_other;
-      get_common_indeces (cpu_features, NULL, NULL, NULL);
+      get_common_indeces (cpu_features, NULL, NULL, NULL, NULL);
     }
 
   /* Support i586 if CX8 is available.  */

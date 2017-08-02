@@ -1,6 +1,6 @@
 /* Set flags signalling availability of kernel features based on given
    kernel version number.  PowerPC version.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -46,4 +46,12 @@
 # define __ASSUME_ALIGNED_REGISTER_PAIRS	1
 #endif
 
+/* powerpc compat fadvise64_64 reorganize the syscall argument.  */
+#ifndef __powerpc64__
+# define __ASSUME_FADVISE64_64_6ARG		1
+#endif
+
 #include_next <kernel-features.h>
+
+/* powerpc only supports ipc syscall.  */
+#undef __ASSUME_DIRECT_SYSVIPC_SYSCALLS

@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Ulrich Drepper <drepper@gmail.com>, 2011.
 
@@ -16,7 +16,6 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include <fenv.h>
 #include <math.h>
 #include <math_private.h>
 
@@ -26,10 +25,7 @@ __attribute__ ((noinline))
 invalid_fn (double x, double fn)
 {
   if (__rint (fn) != fn)
-    {
-      __feraiseexcept (FE_INVALID);
-      return __nan ("");
-    }
+    return (fn - fn) / (fn - fn);
   else if (fn > 65000.0)
     return __scalbn (x, 65000);
   else

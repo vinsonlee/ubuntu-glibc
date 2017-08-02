@@ -1,5 +1,5 @@
 /* Configuration for math tests.  PowerPC version.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -23,5 +23,11 @@
    renders certain tests infeasible in this scenario.
    <http://gcc.gnu.org/PR56828>.  */
 #define SNAN_TESTS_TYPE_CAST	0
+
+#ifndef __NO_FPRS__
+/* Setting exception flags in FPSCR results in enabled traps for those
+   exceptions being taken.  */
+# define EXCEPTION_SET_FORCES_TRAP 1
+#endif
 
 #include_next <math-tests.h>

@@ -1,5 +1,5 @@
 /* Operating system support for run-time dynamic linker.  Hurd version.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -43,6 +43,8 @@
 #include <entry.h>
 #include <dl-machine.h>
 #include <dl-procinfo.h>
+
+#include <dl-tunables.h>
 
 extern void __mach_init (void);
 
@@ -142,6 +144,8 @@ _dl_sysdep_start (void **start_argptr,
 	_dl_hurd_data = (void *) p;
 
       __libc_enable_secure = _dl_hurd_data->flags & EXEC_SECURE;
+
+      __tunables_init (_environ);
 
       if (_dl_hurd_data->flags & EXEC_STACK_ARGS &&
 	  _dl_hurd_data->user_entry == 0)
@@ -473,7 +477,8 @@ __mmap (__ptr_t addr, size_t len, int prot, int flags, int fd, off_t offset)
       err = __io_map ((mach_port_t) fd, &memobj_rd, &memobj_wr);
       if (err)
 	return __hurd_fail (err), MAP_FAILED;
-      __mach_port_deallocate (__mach_task_self (), memobj_wr);
+      if (memobj_wr != MACH_PORT_NULL)
+	__mach_port_deallocate (__mach_task_self (), memobj_wr);
     }
 
   mapaddr = (vm_address_t) addr;

@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ __wait3 (int *stat_loc, int options, struct rusage *usage)
       __set_errno (ENOSYS);
       return (pid_t) -1;
     }
-  return __waitpid (WAIT_ANY, stat_loc.__iptr, options);
+  return __waitpid (WAIT_ANY, stat_loc, options);
 }
 
 weak_alias (__wait3, wait3)

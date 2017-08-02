@@ -1,9 +1,363 @@
 GNU C Library NEWS -- history of user-visible changes.
-Copyright (C) 1992-2016 Free Software Foundation, Inc.
+Copyright (C) 1992-2017 Free Software Foundation, Inc.
 See the end for copying conditions.
 
 Please send GNU C library bug reports via <http://sourceware.org/bugzilla/>
 using `glibc' in the "product" field.
+
+Version 2.25
+
+* The feature test macro __STDC_WANT_LIB_EXT2__, from ISO/IEC TR
+  24731-2:2010, is supported to enable declarations of functions from that
+  TR.  Note that not all functions from that TR are supported by the GNU C
+  Library.
+
+* The feature test macro __STDC_WANT_IEC_60559_BFP_EXT__, from ISO/IEC TS
+  18661-1:2014, is supported to enable declarations of functions and macros
+  from that TS.  Note that not all features from that TS are supported by
+  the GNU C Library.
+
+* The feature test macro __STDC_WANT_IEC_60559_FUNCS_EXT__, from ISO/IEC TS
+  18661-4:2015, is supported to enable declarations of functions and macros
+  from that TS.  Note that most features from that TS are not supported by
+  the GNU C Library.
+
+* The nonstandard feature selection macros _REENTRANT and _THREAD_SAFE are
+  now treated as compatibility synonyms for _POSIX_C_SOURCE=199506L.
+  Since the GNU C Library defaults to a much newer revision of POSIX, this
+  will only affect programs that specifically request an old conformance
+  mode.  For instance, a program compiled with -std=c89 -D_REENTRANT will
+  see a change in the visible declarations, but a program compiled with
+  just -D_REENTRANT, or -std=c99 -D_POSIX_C_SOURCE=200809L -D_REENTRANT,
+  will not.
+
+  Some C libraries once required _REENTRANT and/or _THREAD_SAFE to be
+  defined by all multithreaded code, but glibc has not required this for
+  many years.
+
+* The inclusion of <sys/sysmacros.h> by <sys/types.h> is deprecated.  This
+  means that in a future release, the macros “major”, “minor”, and “makedev”
+  will only be available from <sys/sysmacros.h>.
+
+  These macros are not part of POSIX nor XSI, and their names frequently
+  collide with user code; see for instance glibc bug 19239 and Red Hat bug
+  130601.  <stdlib.h> includes <sys/types.h> under _GNU_SOURCE, and C++ code
+  presently cannot avoid being compiled under _GNU_SOURCE, exacerbating the
+  problem.
+
+* New <fenv.h> features from TS 18661-1:2014 are added to libm: the
+  fesetexcept, fetestexceptflag, fegetmode and fesetmode functions, the
+  femode_t type and the FE_DFL_MODE and FE_SNANS_ALWAYS_SIGNAL macros.
+
+* Integer width macros from TS 18661-1:2014 are added to <limits.h>:
+  CHAR_WIDTH, SCHAR_WIDTH, UCHAR_WIDTH, SHRT_WIDTH, USHRT_WIDTH, INT_WIDTH,
+  UINT_WIDTH, LONG_WIDTH, ULONG_WIDTH, LLONG_WIDTH, ULLONG_WIDTH; and to
+  <stdint.h>: INT8_WIDTH, UINT8_WIDTH, INT16_WIDTH, UINT16_WIDTH,
+  INT32_WIDTH, UINT32_WIDTH, INT64_WIDTH, UINT64_WIDTH, INT_LEAST8_WIDTH,
+  UINT_LEAST8_WIDTH, INT_LEAST16_WIDTH, UINT_LEAST16_WIDTH,
+  INT_LEAST32_WIDTH, UINT_LEAST32_WIDTH, INT_LEAST64_WIDTH,
+  UINT_LEAST64_WIDTH, INT_FAST8_WIDTH, UINT_FAST8_WIDTH, INT_FAST16_WIDTH,
+  UINT_FAST16_WIDTH, INT_FAST32_WIDTH, UINT_FAST32_WIDTH, INT_FAST64_WIDTH,
+  UINT_FAST64_WIDTH, INTPTR_WIDTH, UINTPTR_WIDTH, INTMAX_WIDTH,
+  UINTMAX_WIDTH, PTRDIFF_WIDTH, SIG_ATOMIC_WIDTH, SIZE_WIDTH, WCHAR_WIDTH,
+  WINT_WIDTH.
+
+* New <math.h> features are added from TS 18661-1:2014:
+
+  - Signaling NaN macros: SNANF, SNAN, SNANL.
+
+  - Nearest integer functions: roundeven, roundevenf, roundevenl, fromfp,
+    fromfpf, fromfpl, ufromfp, ufromfpf, ufromfpl, fromfpx, fromfpxf,
+    fromfpxl, ufromfpx, ufromfpxf, ufromfpxl.
+
+  - llogb functions: the llogb, llogbf and llogbl functions, and the
+    FP_LLOGB0 and FP_LLOGBNAN macros.
+
+  - Max-min magnitude functions: fmaxmag, fmaxmagf, fmaxmagl, fminmag,
+    fminmagf, fminmagl.
+
+  - Comparison macros: iseqsig.
+
+  - Classification macros: iscanonical, issubnormal, iszero.
+
+  - Total order functions: totalorder, totalorderf, totalorderl,
+    totalordermag, totalordermagf, totalordermagl.
+
+  - Canonicalize functions: canonicalize, canonicalizef, canonicalizel.
+
+  - NaN functions: getpayload, getpayloadf, getpayloadl, setpayload,
+    setpayloadf, setpayloadl, setpayloadsig, setpayloadsigf, setpayloadsigl.
+
+* The functions strfromd, strfromf, and strfroml, from ISO/IEC TS 18661-1:2014,
+  are added to libc.  They convert a floating-point number into string.
+
+* Most of glibc can now be built with the stack smashing protector enabled.
+  It is recommended to build glibc with --enable-stack-protector=strong.
+  Implemented by Nick Alcock (Oracle).
+
+* The function explicit_bzero, from OpenBSD, has been added to libc.  It is
+  intended to be used instead of memset() to erase sensitive data after use;
+  the compiler will not optimize out calls to explicit_bzero even if they
+  are "unnecessary" (in the sense that no _correct_ program can observe the
+  effects of the memory clear).
+
+* On ColdFire, MicroBlaze, Nios II and SH3, the float_t type is now defined
+  to float instead of double.  This does not affect the ABI of any libraries
+  that are part of the GNU C Library, but may affect the ABI of other
+  libraries that use this type in their interfaces.
+
+* On x86_64, when compiling with -mfpmath=387 or -mfpmath=sse+387, the
+  float_t and double_t types are now defined to long double instead of float
+  and double.  These options are not the default, and this does not affect
+  the ABI of any libraries that are part of the GNU C Library, but it may
+  affect the ABI of other libraries that use this type in their interfaces,
+  if they are compiled or used with those options.
+
+* The getentropy and getrandom functions, and the <sys/random.h> header file
+  have been added.
+
+* The buffer size for byte-oriented stdio streams is now limited to 8192
+  bytes by default.  Previously, on Linux, the default buffer size on most
+  file systems was 4096 bytes (and thus remains unchanged), except on
+  network file systems, where the buffer size was unpredictable and could be
+  as large as several megabytes.
+
+* The <sys/quota.h> header now includes the <linux/quota.h> header.  Support
+  for the Linux quota interface which predates kernel version 2.4.22 has
+  been removed.
+
+* The malloc_get_state and malloc_set_state functions have been removed.
+  Already-existing binaries that dynamically link to these functions will
+  get a hidden implementation in which malloc_get_state is a stub.  As far
+  as we know, these functions are used only by GNU Emacs and this change
+  will not adversely affect already-built Emacs executables.  Any undumped
+  Emacs executables, which normally exist only during an Emacs build, should
+  be rebuilt by re-running “./configure; make” in the Emacs build tree.
+
+* The “ip6-dotint” and “no-ip6-dotint” resolver options, and the
+  corresponding RES_NOIP6DOTINT flag from <resolv.h> have been removed.
+  “no-ip6-dotint” had already been the default, and support for the
+  “ip6-dotint” option was removed from the Internet in 2006.
+
+* The "ip6-bytestring" resolver option and the corresponding RES_USEBSTRING
+  flag from <resolv.h> have been removed.  The option relied on a
+  backwards-incompatible DNS extension which was never deployed on the
+  Internet.
+
+* The flags RES_AAONLY, RES_PRIMARY, RES_NOCHECKNAME, RES_KEEPTSIG,
+  RES_BLAST defined in the <resolv.h> header file have been deprecated.
+  They were already unimplemented.
+
+* The "inet6" option in /etc/resolv.conf and the RES_USE_INET6 flag for
+  _res.flags are deprecated.  The flag was standardized in RFC 2133, but
+  removed again from the IETF name lookup interface specification in RFC
+  2553.  Applications should use getaddrinfo instead.
+
+* DNSSEC-related declarations and definitions have been removed from the
+  <arpa/nameser.h> header file, and libresolv will no longer attempt to
+  decode the data part of DNSSEC record types.  Previous versions of glibc
+  only implemented minimal support for the previous version of DNSSEC, which
+  is incompatible with the currently deployed version.
+
+* The resource record type classification macros ns_t_qt_p, ns_t_mrr_p,
+  ns_t_rr_p, ns_t_udp_p, ns_t_xfr_p have been removed from the
+  <arpa/nameser.h> header file because the distinction between RR types and
+  meta-RR types is not officially standardized, subject to revision, and
+  thus not suitable for encoding in a macro.
+
+* The types res_sendhookact, res_send_qhook, re_send_rhook, and the qhook
+  and rhook members of the res_state type in <resolv.h> have been removed.
+  The glibc stub resolver did not support these hooks, but the header file
+  did not reflect that.
+
+* For multi-arch support it is recommended to use a GCC which has
+  been built with support for GNU indirect functions.  This ensures
+  that correct debugging information is generated for functions
+  selected by IFUNC resolvers.  This support can either be enabled by
+  configuring GCC with '--enable-gnu-indirect-function', or by
+  enabling it by default by setting 'default_gnu_indirect_function'
+  variable for a particular architecture in the GCC source file
+  'gcc/config.gcc'.
+
+* GDB pretty printers have been added for mutex and condition variable
+  structures in POSIX Threads. When installed and loaded in gdb these pretty
+  printers show various pthread variables in human-readable form when read
+  using the 'print' or 'display' commands in gdb.
+
+* Tunables feature added to allow tweaking of the runtime for an application
+  program.  This feature can be enabled with the '--enable-tunables' configure
+  flag.  The GNU C Library manual has details on usage and README.tunables has
+  instructions on adding new tunables to the library.
+
+* A new version of condition variables functions have been implemented in
+  the NPTL implementation of POSIX Threads to provide stronger ordering
+  guarantees.
+
+* A new version of pthread_rwlock functions have been implemented to use a more
+  scalable algorithm primarily through not using a critical section anymore to
+  make state changes.
+
+Security related changes:
+
+* On ARM EABI (32-bit), generating a backtrace for execution contexts which
+  have been created with makecontext could fail to terminate due to a
+  missing .cantunwind annotation.  This has been observed to lead to a hang
+  (denial of service) in some Go applications compiled with gccgo.  Reported
+  by Andreas Schwab.  (CVE-2016-6323)
+
+* The DNS stub resolver functions would crash due to a NULL pointer
+  dereference when processing a query with a valid DNS question type which
+  was used internally in the implementation.  The stub resolver now uses a
+  question type which is outside the range of valid question type values.
+  (CVE-2015-5180)
+
+The following bugs are resolved with this release:
+
+  [4099] stdio: Overly agressive caching by stream i/o functions.
+  [7065] build: Support building glibc with -fstack-protector or -fstack-
+    protector-all
+  [9842] localedata: en_CA: incorrect date format
+  [13165] nptl: pthread_cond_wait() can consume a signal that was sent
+    before it started waiting
+  [14139] manual: Do not hardcode platform names in manual/libm-err-tab.pl
+  [15765] nptl: sem_open is wrongly a cancellation point
+  [16421] network: IN6_IS_ADDR_UNSPECIFIED can use undefined s6_addr32
+  [16458] libc: endian.h and netinet/in.h byte order macros return values of
+    wrong type
+  [16628] dynamic-link: Segfault after a binary without pthread dlopen()s a
+    library linked with pthread
+  [16630] nptl: Use SYSENTER for pthread_cond_broadcast/signal() (i.e. fix
+    "FIXME: Ingo" issue)
+  [16907] libc: <argp.h> compiled with --std=cXX disables __attribute__
+  [17252] libc: getrandom and getentropy syscall
+  [17730] malloc: thread-local storage is sometimes improperly free()'d
+    after being __libc_memalign()'d
+  [18241] stdio: failed fseek on memstream does not set errno and can fail
+    when it shouldnt
+  [18243] nptl: sem_wait, sem_timedwait are cancellation points shm_open is
+    not
+  [18463] nptl: pthread_cond_broadcast issue when surrounded by
+    PTHREAD_PRIO_INHERIT mutex on ARM
+  [18784] network: res_query and related function crash for special record
+    type queries (CVE-2015-5180)
+  [19380] math: strtod does not raise "inexact"
+  [19387] string: Integer overflow in memchr
+  [19390] string: Integer overflow in strncat
+  [19398] build: linknamespace tests fail with massively parallel build
+  [19402] nptl: Deadlock with robust shared mutex and asynchronous
+    termination
+  [19469] malloc: M_PERTURB in test-skeleton.c invalidates malloc tests
+  [19473] malloc: Turn malloc_get_state etc. in compatibility symbols
+  [19514] libc: [PATCH] Fix spelling errors in spelling
+    "implement"/"implementation" in several places
+  [19582] network: Deprecate RES_USE_INET6
+  [19673] manual: clog10 docs appear to be erroneous
+  [19810] dynamic-link: dlopen with both RTLD_NOLOAD and RTLD_NODELETE
+    causes a segmentation fault
+  [19826] libc: invalid pointer returned from __tls_get_addr with static
+    linking
+  [20016] network: resolv: Remove hooks support from the API
+  [20019] dynamic-link: NULL pointer dereference in libc.so.6 IFUNC due to
+    uninitialized GOT
+  [20033] math: [x86_64] vectorized math function don't call the __finite
+    versions
+  [20116] nptl: use after free in pthread_create
+  [20181] stdio: open_memstream(): writes not at end of stream corrupt data
+  [20292] dynamic-link: Comparison in elf/dl-open.c _dl_addr_inside_object
+    is always true.
+  [20311] nptl: please install proc_service.h
+  [20366] libc: Compilation errors in installed headers in strict-compliance
+    modes
+  [20370] malloc: malloc: Arena free list management is still racy
+    (incorrect fix in bug 19243)
+  [20386] libc: assert (X = 0) does not result in GCC warning
+  [20432] malloc: malloc: Minimize interface required for interposition
+  [20435] libc: Missing unwind info in __startcontext causes infinite loop
+    in _Unwind_Backtrace (CVE-2016-6323)
+  [20444] hurd: recvmsg: PF_LOCAL sockets and msg_name lead to SIGLOST
+  [20452] nptl: Addition of sysdep.o to libpthread.a breaks relinking
+    libpthread.a
+  [20455] math: [powerpc] fesetexceptflag fails to clear FE_INVALID
+  [20459] localedata: et_EE: locale has wrong {p,n}_cs_precedes value
+  [20477] network: resolv: incorrect double-checked locking related to
+    _res_hconf
+  [20478] libc: libc_ifunc macro and similar usages leads to false debug-
+    information.
+  [20495] math: x86_64 performance degradation due to AVX/SSE transition
+    penalty
+  [20497] localedata: lt_LT: LC_TIME d_fmt used is obsolete
+  [20508] dynamic-link: _dl_runtime_resolve_avx/_dl_runtime_profile_avx512
+    cause transition penalty
+  [20517] math: sparcv9 missing fdiml compat symbol
+  [20524] manual: strverscmp is inconsistent
+  [20525] libc: <sys/quota.h> should be based on kernel headers
+  [20539] math: GCC 7 -static -lm fails to link at -O3
+  [20554] libc: ld: bss-plt forced due to /usr/lib/libc_nonshared.a(ppc-
+    mcount.oS)
+  [20558] string: POSIX bcopy/bzero decls do not implement Object Size
+    Checking
+  [20591] network: Remove obsolete DNSSEC support
+  [20592] network: DNS resource record type classification macros in
+    <arpa/nameser.h> are incorrect
+  [20593] network: Update DNS RR type definitions
+  [20611] network: getaddrinfo accepts invalid numeric scope IDs
+  [20615] build: glibc build fails when using --with-cpu=power9 --enable-
+    multi-arch
+  [20629] network: libresolv: Remove support for bitstring labels
+    (RES_USEBSTRING)
+  [20647] libc: GLIBC quitting every program - glibc on Pentium-S leads to
+    assertion: "maxidx >= 2"
+  [20660] math: [arm] Use VSQRT
+  [20662] libc: checking whether x86_64-pc-linux-gnu-gcc implicitly enables
+    -fstack-protector no (32bit gcc 6.2.0 pie and ssp enable)
+  [20689] libc: Test for FMA should also check for AVX.
+  [20707] glob: gl_pathv entries not set to NULL with GLOB_DOOFFS
+  [20715] math: iszero macro breaks existing code
+  [20718] math: [powerpc] copysignl raises "invalid" for sNaN
+  [20728] libc: powerpc: Missing TOC stub in clone
+  [20729] build: glibc-2.24 fails to build for i486 with -Os
+  [20750] build: Build fails with default PIE enabled gcc-6.x
+  [20768] math: [alpha] sqrt fegetenv namespace
+  [20785] libc: binutils 2.28 fails to assemble power6/memset.S file in
+    glibc
+  [20787] math: float_t is defined as float incorrectly on x86_64 even if
+    __FLT_EVAL_METHOD__ is 2
+  [20790] network: rpcgen buffer overrun in get_prog_declaration
+  [20822] nptl: race condition in __lll_unlock_elision on powerpc
+  [20829] libc: crypt snprintf namespace
+  [20847] libc: tst-vfork3 failure
+  [20855] math: Default bits/mathdef.h has inappropriate float_t
+  [20859] math: [sh4] FP_ILOGB0 invalid
+  [20864] localedata: iconv: cp936 missing single-byte euro sign (0x80,
+    U+20AC), not same as GBK
+  [20915] dynamic-link: global-dynamic TLS broken on aarch64
+  [20916] math: pow handling of sNaN arguments
+  [20918] build: Building with --enable-nss-crypt fails tst-linkall-static.
+  [20919] math: Bad pow (qNaN, 0) result with -lieee
+  [20940] math: hypot sNaN handling
+  [20947] math: fmax, fmin sNaN handling
+  [20956] libc: debug/tst-backtrace3-6 don't work with -O3 anymore
+  [20964] network: sunrpc: Stack-based buffer overflow in getrpcport with
+    RES_USE_INET6
+  [20971] string: powerpc64/power7 memchr overflows internal pointer check
+  [20973] nptl: robust mutexes: Lost wake-ups
+  [20974] locale: bs_BA: yesexpr/noexpr regexes accept any character
+  [20978] nis: strlen on null pointer in nss_nisplus
+  [20985] nptl: robust mutexes: lowlevelrobustlock assembly on x86 blocks on
+    wrong condition
+  [21014] string: i686 memchr overflows internal pointer check
+  [21019] libc: [mips] n32 lseek incorrect on overflow
+  [21022] libc: [microblaze] __backtrace get_frame_size namespace
+  [21026] libc: [MIPS] readahead syscall is broken on n64
+  [21028] math: Fallback fesetexceptflag should always succeed
+  [21045] libc: [powerpc-nofpu] swapcontext does not restore signal mask
+  [21047] math: arm: fpu_control.h: _FPU_GETCW/_FPU_SETCW is rejected by
+    clang
+  [21053] libc: [SH] Namespace pollution from sys/ucontext.h
+  [21061] librt: [microblaze] librt lost clock_* exports
+  [21073] libc: tunables: insecure environment variables passed to
+    subprocesses with AT_SECURE
+  [21081] string: Missing vzeroupper in memset-vec-unaligned-erms.S
 
 Version 2.24
 
@@ -3371,7 +3725,7 @@ Version 1.04
 ----------------------------------------------------------------------
 Copyright information:
 
-Copyright (C) 1992-2016 Free Software Foundation, Inc.
+Copyright (C) 1992-2017 Free Software Foundation, Inc.
 
    Permission is granted to anyone to make or distribute verbatim copies
    of this document as received, in any medium, provided that the

@@ -1,5 +1,5 @@
 /* Return base 10 logarithm of complex float value.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,14 +24,18 @@
 
 #undef __clog10f
 #undef clog10f
-#define __clog10f internal_clog10f
 
 static _Complex float internal_clog10f (_Complex float x);
 
-#include <math/s_clog10f.c>
-#include "cfloat-compat.h"
+#define M_DECL_FUNC(f) internal_clog10f
+#include <math-type-macros-float.h>
 
-#undef __clog10f
+/* Disable any aliasing from base template.  */
+#undef declare_mgen_alias
+#define declare_mgen_alias(__to, __from)
+
+#include <math/s_clog10_template.c>
+#include "cfloat-compat.h"
 
 c1_cfloat_rettype
 __c1_clog10f (c1_cfloat_decl (x))

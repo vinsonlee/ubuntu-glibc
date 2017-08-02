@@ -1,5 +1,5 @@
 /* Function pow vectorized with SSE2.
-   Copyright (C) 2014-2016 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 
 	.text
 ENTRY (_ZGVbN2vv_pow)
-WRAPPER_IMPL_SSE2_ff pow
+WRAPPER_IMPL_SSE2_ff __pow_finite
 END (_ZGVbN2vv_pow)
 
 #ifndef USE_MULTIARCH

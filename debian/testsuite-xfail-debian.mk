@@ -10,6 +10,15 @@ test-xfail-tst-timer = yes
 # see https://sourceware.org/bugzilla/show_bug.cgi?id=19303
 test-xfail-tst-cancel24-static = yes
 
+# These failures are due to local-dynamic-resolvconf.diff, which
+# automatically reload a changed /etc/resolv.conf file.  A better
+# version of this patch has been merged in glibc 2.26, but is not
+# easily backportable.  Just ignore the failures for now.
+test-xfail-tst-bug18665-tcp = yes
+test-xfail-tst-res_use_inet6 = yes
+test-xfail-tst-resolv-basic = yes
+test-xfail-tst-resolv-search = yes
+
 
 ######################################################################
 # alpha (including optimized flavours)
@@ -1130,6 +1139,18 @@ test-xfail-XOPEN2K8/sys/stat.h/conform = yes
 test-xfail-XOPEN2K/sys/stat.h/conform = yes
 test-xfail-XPG3/sys/stat.h/conform = yes
 test-xfail-XPG4/sys/stat.h/conform = yes
+
+# Theses failures are due to a bug in the cvt.s.d instruction on some FPU
+# (at least Octeon 3 and XBurst). The tininess detection is done on a
+# before-rounding basis instead of an after-rounding basis.
+test-xfail-test-float = yes
+test-xfail-test-float-finite = yes
+
+# Theses failures are due to a bug in the cvt.d.s instruction on some FPU
+# (at least Octeon 3 and XBurst). The qNaN payload is not preserved in
+# the conversion and a new qNaN is generated.
+test-xfail-tst-strfrom = yes
+test-xfail-tst-strfrom-locale = yes
 endif
 
 
@@ -1322,6 +1343,14 @@ test-xfail-tst-cancelx17 = yes
 test-xfail-tst-protected1a = yes
 test-xfail-tst-protected1b = yes
 test-xfail-tst-waitid = yes
+
+# The pow and setpayloadsig functions fail to handle some corner cases
+# involving NaN due to the use of load-and-test instruction.  This is
+# however not a regression compared to 2.24 and is fixed in GCC 7.
+test-xfail-test-double = yes
+test-xfail-test-idouble = yes
+test-xfail-test-ifloat = yes
+test-xfail-test-ildouble = yes
 endif
 
 

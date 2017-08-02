@@ -1,5 +1,5 @@
 /* Multiple versions of finitef.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -16,6 +16,7 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#define __finitef __redirect___finitef
 #include <math.h>
 #include <shlib-compat.h>
 #include "init-arch.h"
@@ -23,10 +24,11 @@
 extern __typeof (__finitef) __finitef_ppc32 attribute_hidden;
 /* The power7 finite(double) works for float.  */
 extern __typeof (__finitef) __finite_power7 attribute_hidden;
+#undef __finitef
 
-libc_ifunc (__finitef,
-	    (hwcap & PPC_FEATURE_ARCH_2_06)
-	    ? __finite_power7
-            : __finitef_ppc32);
+libc_ifunc_redirected  (__redirect___finitef, __finitef,
+			(hwcap & PPC_FEATURE_ARCH_2_06)
+			? __finite_power7
+			: __finitef_ppc32);
 
 weak_alias (__finitef, finitef)
