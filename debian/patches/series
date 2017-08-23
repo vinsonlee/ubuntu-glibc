@@ -244,3 +244,5 @@ any/CVE-2017-1000366.patch
 any/upstream-harden-rtld-Reject-overly-long-LD_PRELOAD.patch
 any/cvs-harden-glibc-malloc-metadata.patch
 any/cvs-harden-ignore-LD_HWCAP_MASK.patch
+
+0001-Require-binutils-2.24-to-build-x86-64-glibc-BZ-20139.patch

@@ -1,0 +1,790 @@
+From f43cb35c9b3c35addc6dc0f1427caf51786ca1d2 Mon Sep 17 00:00:00 2001
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Date: Fri, 1 Jul 2016 05:54:43 -0700
+Subject: [PATCH] Require binutils 2.24 to build x86-64 glibc [BZ #20139]
+
+If assembler doesn't support AVX512DQ, _dl_runtime_resolve_avx is used
+to save the first 8 vector registers, which only saves the lower 256
+bits of vector register, for lazy binding.  When it is called on AVX512
+platform, the upper 256 bits of ZMM registers are clobbered.  Parameters
+passed in ZMM registers will be wrong when the function is called the
+first time.  This patch requires binutils 2.24, whose assembler can store
+and load ZMM registers, to build x86-64 glibc.  Since mathvec library
+needs assembler support for AVX512DQ,  we disable mathvec if assembler
+doesn't support AVX512DQ.
+
+	[BZ #20139]
+	* config.h.in (HAVE_AVX512_ASM_SUPPORT): Renamed to ...
+	(HAVE_AVX512DQ_ASM_SUPPORT): This.
+	* sysdeps/x86_64/configure.ac: Require assembler from binutils
+	2.24 or above.
+	(HAVE_AVX512_ASM_SUPPORT): Removed.
+	(HAVE_AVX512DQ_ASM_SUPPORT): New.
+	* sysdeps/x86_64/configure: Regenerated.
+	* sysdeps/x86_64/dl-trampoline.S: Make HAVE_AVX512_ASM_SUPPORT
+	check unconditional.
+	* sysdeps/x86_64/multiarch/ifunc-impl-list.c: Likewise.
+	* sysdeps/x86_64/multiarch/memcpy.S: Likewise.
+	* sysdeps/x86_64/multiarch/memcpy_chk.S: Likewise.
+	* sysdeps/x86_64/multiarch/memmove-avx512-no-vzeroupper.S:
+	Likewise.
+	* sysdeps/x86_64/multiarch/memmove-avx512-unaligned-erms.S:
+	Likewise.
+	* sysdeps/x86_64/multiarch/memmove.S: Likewise.
+	* sysdeps/x86_64/multiarch/memmove_chk.S: Likewise.
+	* sysdeps/x86_64/multiarch/mempcpy.S: Likewise.
+	* sysdeps/x86_64/multiarch/mempcpy_chk.S: Likewise.
+	* sysdeps/x86_64/multiarch/memset-avx512-no-vzeroupper.S:
+	Likewise.
+	* sysdeps/x86_64/multiarch/memset-avx512-unaligned-erms.S:
+	Likewise.
+	* sysdeps/x86_64/multiarch/memset.S: Likewise.
+	* sysdeps/x86_64/multiarch/memset_chk.S: Likewise.
+	* sysdeps/x86_64/fpu/multiarch/svml_d_cos8_core_avx512.S: Check
+	HAVE_AVX512DQ_ASM_SUPPORT instead of HAVE_AVX512_ASM_SUPPORT.
+	* sysdeps/x86_64/fpu/multiarch/svml_d_exp8_core_avx512.S:
+	Likewise.
+	* sysdeps/x86_64/fpu/multiarch/svml_d_log8_core_avx512.S:
+	Likewise.
+	* sysdeps/x86_64/fpu/multiarch/svml_d_pow8_core_avx512.S:
+	Likewise.
+	* sysdeps/x86_64/fpu/multiarch/svml_d_sin8_core_avx512.S:
+	Likewise.
+	* sysdeps/x86_64/fpu/multiarch/svml_d_sincos8_core_avx512.:
+	Likewise.
+	* sysdeps/x86_64/fpu/multiarch/svml_s_cosf16_core_avx512.S:
+	Likewise.
+	* sysdeps/x86_64/fpu/multiarch/svml_s_expf16_core_avx512.S:
+	Likewise.
+	* sysdeps/x86_64/fpu/multiarch/svml_s_logf16_core_avx512.S:
+	Likewise.
+	* sysdeps/x86_64/fpu/multiarch/svml_s_powf16_core_avx512.S:
+	Likewise.
+	* sysdeps/x86_64/fpu/multiarch/svml_s_sincosf16_core_avx51:
+	Likewise.
+	* sysdeps/x86_64/fpu/multiarch/svml_s_sinf16_core_avx512.S:
+	Likewise.
+---
+ ChangeLog                                          | 54 +++++++++++++
+ config.h.in                                        |  4 +-
+ sysdeps/x86_64/configure                           | 89 +++++++++++++++++++---
+ sysdeps/x86_64/configure.ac                        | 25 +++---
+ sysdeps/x86_64/dl-trampoline.S                     | 37 ++++-----
+ .../x86_64/fpu/multiarch/svml_d_cos8_core_avx512.S |  4 +-
+ .../x86_64/fpu/multiarch/svml_d_exp8_core_avx512.S |  4 +-
+ .../x86_64/fpu/multiarch/svml_d_log8_core_avx512.S |  4 +-
+ .../x86_64/fpu/multiarch/svml_d_pow8_core_avx512.S |  4 +-
+ .../x86_64/fpu/multiarch/svml_d_sin8_core_avx512.S |  4 +-
+ .../fpu/multiarch/svml_d_sincos8_core_avx512.S     |  4 +-
+ .../fpu/multiarch/svml_s_cosf16_core_avx512.S      |  4 +-
+ .../fpu/multiarch/svml_s_expf16_core_avx512.S      |  4 +-
+ .../fpu/multiarch/svml_s_logf16_core_avx512.S      |  4 +-
+ .../fpu/multiarch/svml_s_powf16_core_avx512.S      |  4 +-
+ .../fpu/multiarch/svml_s_sincosf16_core_avx512.S   |  4 +-
+ .../fpu/multiarch/svml_s_sinf16_core_avx512.S      |  4 +-
+ sysdeps/x86_64/multiarch/ifunc-impl-list.c         | 16 ----
+ sysdeps/x86_64/multiarch/memcpy.S                  |  2 -
+ sysdeps/x86_64/multiarch/memcpy_chk.S              |  2 -
+ .../multiarch/memmove-avx512-no-vzeroupper.S       |  2 +-
+ .../multiarch/memmove-avx512-unaligned-erms.S      |  2 +-
+ sysdeps/x86_64/multiarch/memmove.S                 |  2 -
+ sysdeps/x86_64/multiarch/memmove_chk.S             |  2 -
+ sysdeps/x86_64/multiarch/mempcpy.S                 |  2 -
+ sysdeps/x86_64/multiarch/mempcpy_chk.S             |  2 -
+ .../x86_64/multiarch/memset-avx512-no-vzeroupper.S |  2 +-
+ .../multiarch/memset-avx512-unaligned-erms.S       |  2 +-
+ sysdeps/x86_64/multiarch/memset.S                  |  2 -
+ sysdeps/x86_64/multiarch/memset_chk.S              |  2 -
+ 30 files changed, 192 insertions(+), 105 deletions(-)
+
+--- a/config.h.in
++++ b/config.h.in
+@@ -62,8 +62,8 @@
+ /* Define if compiler supports AVX512.  */
+ #undef  HAVE_AVX512_SUPPORT
+ 
+-/* Define if assembler supports AVX512.  */
+-#undef  HAVE_AVX512_ASM_SUPPORT
++/* Define if assembler supports AVX512DQ.  */
++#undef  HAVE_AVX512DQ_ASM_SUPPORT
+ 
+ /* Define if assembler supports vector instructions on S390.  */
+ #undef  HAVE_S390_VX_ASM_SUPPORT
+--- a/sysdeps/x86_64/configure
++++ b/sysdeps/x86_64/configure
+@@ -1,13 +1,76 @@
+ # This file is generated from configure.ac by Autoconf.  DO NOT EDIT!
+  # Local configure fragment for sysdeps/x86_64.
+ 
+-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for AVX512 support in assembler" >&5
+-$as_echo_n "checking for AVX512 support in assembler... " >&6; }
+-if ${libc_cv_asm_avx512+:} false; then :
++for ac_prog in $AS
++do
++  # Extract the first word of "$ac_prog", so it can be a program name with args.
++set dummy $ac_prog; ac_word=$2
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
++$as_echo_n "checking for $ac_word... " >&6; }
++if ${ac_cv_prog_AS+:} false; then :
++  $as_echo_n "(cached) " >&6
++else
++  if test -n "$AS"; then
++  ac_cv_prog_AS="$AS" # Let the user override the test.
++else
++as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
++for as_dir in $PATH
++do
++  IFS=$as_save_IFS
++  test -z "$as_dir" && as_dir=.
++    for ac_exec_ext in '' $ac_executable_extensions; do
++  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
++    ac_cv_prog_AS="$ac_prog"
++    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
++    break 2
++  fi
++done
++  done
++IFS=$as_save_IFS
++
++fi
++fi
++AS=$ac_cv_prog_AS
++if test -n "$AS"; then
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $AS" >&5
++$as_echo "$AS" >&6; }
++else
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
++$as_echo "no" >&6; }
++fi
++
++
++  test -n "$AS" && break
++done
++
++if test -z "$AS"; then
++  ac_verc_fail=yes
++else
++  # Found it, now check the version.
++  { $as_echo "$as_me:${as_lineno-$LINENO}: checking version of $AS" >&5
++$as_echo_n "checking version of $AS... " >&6; }
++  ac_prog_version=`$AS --version 2>&1 | sed -n 's/^.*GNU assembler.* \([0-9]*\.[0-9.]*\).*$/\1/p'`
++  case $ac_prog_version in
++    '') ac_prog_version="v. ?.??, bad"; ac_verc_fail=yes;;
++    2.2[4-9]*|2.[3-9][0-9]*|[3-9].*|[1-9][0-9]*)
++       ac_prog_version="$ac_prog_version, ok"; ac_verc_fail=no;;
++    *) ac_prog_version="$ac_prog_version, bad"; ac_verc_fail=yes;;
++
++  esac
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_prog_version" >&5
++$as_echo "$ac_prog_version" >&6; }
++fi
++if test $ac_verc_fail = yes; then
++  critic_missing="$critic_missing The program AS is required in version >= 2.24 for target x86_64."
++fi
++
++
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for AVX512DQ support in assembler" >&5
++$as_echo_n "checking for AVX512DQ support in assembler... " >&6; }
++if ${libc_cv_asm_avx512dq+:} false; then :
+   $as_echo_n "(cached) " >&6
+ else
+   cat > conftest.s <<\EOF
+-        vmovdqu64 %zmm0, (%rsp)
+         vandpd (%rax), %zmm6, %zmm1
+ EOF
+ if { ac_try='${CC-cc} -c $ASFLAGS conftest.s 1>&5'
+@@ -16,16 +79,16 @@
+   ac_status=$?
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; }; then
+-  libc_cv_asm_avx512=yes
++  libc_cv_asm_avx512dq=yes
+ else
+-  libc_cv_asm_avx512=no
++  libc_cv_asm_avx512dq=no
+ fi
+ rm -f conftest*
+ fi
+-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libc_cv_asm_avx512" >&5
+-$as_echo "$libc_cv_asm_avx512" >&6; }
+-if test $libc_cv_asm_avx512 = yes; then
+-  $as_echo "#define HAVE_AVX512_ASM_SUPPORT 1" >>confdefs.h
++{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libc_cv_asm_avx512dq" >&5
++$as_echo "$libc_cv_asm_avx512dq" >&6; }
++if test $libc_cv_asm_avx512dq = yes; then
++  $as_echo "#define HAVE_AVX512DQ_ASM_SUPPORT 1" >>confdefs.h
+ 
+ fi
+ 
+@@ -40,7 +103,7 @@
+   ac_status=$?
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; }; then :
+-  libc_cv_cc_avx512=$libc_cv_asm_avx512
++  libc_cv_cc_avx512=$libc_cv_asm_avx512dq
+ else
+   libc_cv_cc_avx512=no
+ fi
+@@ -88,4 +151,6 @@
+ 
+ $as_echo "#define PI_STATIC_AND_HIDDEN 1" >>confdefs.h
+ 
+-# work around problem with autoconf and empty lines at the end of files
++
++test -n "$critic_missing" && as_fn_error $? "
++*** $critic_missing" "$LINENO" 5
+--- a/sysdeps/x86_64/configure.ac
++++ b/sysdeps/x86_64/configure.ac
+@@ -1,25 +1,30 @@
+ GLIBC_PROVIDES dnl See aclocal.m4 in the top level source directory.
+ # Local configure fragment for sysdeps/x86_64.
+ 
+-dnl Check if asm supports AVX512.
+-AC_CACHE_CHECK(for AVX512 support in assembler, libc_cv_asm_avx512, [dnl
++dnl Accept as 2.24 or newer for AVX512 load and store.
++AC_CHECK_PROG_VER(AS, $AS, --version,
++		  [GNU assembler.* \([0-9]*\.[0-9.]*\)],
++		  [2.2[4-9]*|2.[3-9][0-9]*|[3-9].*|[1-9][0-9]*],
++		  critic_missing="$critic_missing The program AS is required in version >= 2.24 for target x86_64.")
++
++dnl Check if asm supports AVX512DQ.
++AC_CACHE_CHECK(for AVX512DQ support in assembler, libc_cv_asm_avx512dq, [dnl
+ cat > conftest.s <<\EOF
+-        vmovdqu64 %zmm0, (%rsp)
+         vandpd (%rax), %zmm6, %zmm1
+ EOF
+ if AC_TRY_COMMAND(${CC-cc} -c $ASFLAGS conftest.s 1>&AS_MESSAGE_LOG_FD); then
+-  libc_cv_asm_avx512=yes
++  libc_cv_asm_avx512dq=yes
+ else
+-  libc_cv_asm_avx512=no
++  libc_cv_asm_avx512dq=no
+ fi
+ rm -f conftest*])
+-if test $libc_cv_asm_avx512 = yes; then
+-  AC_DEFINE(HAVE_AVX512_ASM_SUPPORT)
++if test $libc_cv_asm_avx512dq = yes; then
++  AC_DEFINE(HAVE_AVX512DQ_ASM_SUPPORT)
+ fi
+ 
+ dnl Check if -mavx512f works.
+ AC_CACHE_CHECK(for AVX512 support, libc_cv_cc_avx512, [dnl
+-LIBC_TRY_CC_OPTION([-mavx512f], [libc_cv_cc_avx512=$libc_cv_asm_avx512], [libc_cv_cc_avx512=no])
++LIBC_TRY_CC_OPTION([-mavx512f], [libc_cv_cc_avx512=$libc_cv_asm_avx512dq], [libc_cv_cc_avx512=no])
+ ])
+ if test $libc_cv_cc_avx512 = yes; then
+   AC_DEFINE(HAVE_AVX512_SUPPORT)
+@@ -48,4 +53,6 @@
+ dnl It is always possible to access static and hidden symbols in an
+ dnl position independent way.
+ AC_DEFINE(PI_STATIC_AND_HIDDEN)
+-# work around problem with autoconf and empty lines at the end of files
++
++test -n "$critic_missing" && AC_MSG_ERROR([
++*** $critic_missing])
+--- a/sysdeps/x86_64/dl-trampoline.S
++++ b/sysdeps/x86_64/dl-trampoline.S
+@@ -77,30 +77,23 @@
+ 
+ #define RESTORE_AVX
+ 
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+-# define VEC_SIZE		64
+-# define VMOVA			vmovdqa64
+-# if DL_RUNTIME_RESOLVE_REALIGN_STACK || VEC_SIZE <= DL_STACK_ALIGNMENT
+-#  define VMOV			vmovdqa64
+-# else
+-#  define VMOV			vmovdqu64
+-# endif
+-# define VEC(i)			zmm##i
+-# define _dl_runtime_resolve	_dl_runtime_resolve_avx512
+-# define _dl_runtime_profile	_dl_runtime_profile_avx512
+-# include "dl-trampoline.h"
+-# undef _dl_runtime_resolve
+-# undef _dl_runtime_profile
+-# undef VEC
+-# undef VMOV
+-# undef VMOVA
+-# undef VEC_SIZE
++#define VEC_SIZE		64
++#define VMOVA			vmovdqa64
++#if DL_RUNTIME_RESOLVE_REALIGN_STACK || VEC_SIZE <= DL_STACK_ALIGNMENT
++# define VMOV			vmovdqa64
+ #else
+-strong_alias (_dl_runtime_resolve_avx, _dl_runtime_resolve_avx512)
+-	.hidden _dl_runtime_resolve_avx512
+-strong_alias (_dl_runtime_profile_avx, _dl_runtime_profile_avx512)
+-	.hidden _dl_runtime_profile_avx512
++# define VMOV			vmovdqu64
+ #endif
++#define VEC(i)			zmm##i
++#define _dl_runtime_resolve	_dl_runtime_resolve_avx512
++#define _dl_runtime_profile	_dl_runtime_profile_avx512
++#include "dl-trampoline.h"
++#undef _dl_runtime_resolve
++#undef _dl_runtime_profile
++#undef VEC
++#undef VMOV
++#undef VMOVA
++#undef VEC_SIZE
+ 
+ #define VEC_SIZE		32
+ #define VMOVA			vmovdqa
+--- a/sysdeps/x86_64/fpu/multiarch/svml_d_cos8_core_avx512.S
++++ b/sysdeps/x86_64/fpu/multiarch/svml_d_cos8_core_avx512.S
+@@ -22,7 +22,7 @@
+ 
+ 	.text
+ ENTRY (_ZGVeN8v_cos_knl)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN4v_cos
+ #else
+ /*
+@@ -236,7 +236,7 @@
+ END (_ZGVeN8v_cos_knl)
+ 
+ ENTRY (_ZGVeN8v_cos_skx)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN4v_cos
+ #else
+ /*
+--- a/sysdeps/x86_64/fpu/multiarch/svml_d_exp8_core_avx512.S
++++ b/sysdeps/x86_64/fpu/multiarch/svml_d_exp8_core_avx512.S
+@@ -22,7 +22,7 @@
+ 
+ 	.text
+ ENTRY (_ZGVeN8v_exp_knl)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN4v_exp
+ #else
+ /*
+@@ -238,7 +238,7 @@
+ END (_ZGVeN8v_exp_knl)
+ 
+ ENTRY (_ZGVeN8v_exp_skx)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN4v_exp
+ #else
+ /*
+--- a/sysdeps/x86_64/fpu/multiarch/svml_d_log8_core_avx512.S
++++ b/sysdeps/x86_64/fpu/multiarch/svml_d_log8_core_avx512.S
+@@ -22,7 +22,7 @@
+ 
+ 	.text
+ ENTRY (_ZGVeN8v_log_knl)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN4v_log
+ #else
+ /*
+@@ -237,7 +237,7 @@
+ END (_ZGVeN8v_log_knl)
+ 
+ ENTRY (_ZGVeN8v_log_skx)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN4v_log
+ #else
+ /*
+--- a/sysdeps/x86_64/fpu/multiarch/svml_d_pow8_core_avx512.S
++++ b/sysdeps/x86_64/fpu/multiarch/svml_d_pow8_core_avx512.S
+@@ -82,7 +82,7 @@
+ 
+ 	.text
+ ENTRY (_ZGVeN8vv_pow_knl)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512_ff _ZGVdN4vv_pow
+ #else
+         pushq     %rbp
+@@ -409,7 +409,7 @@
+ END (_ZGVeN8vv_pow_knl)
+ 
+ ENTRY (_ZGVeN8vv_pow_skx)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512_ff _ZGVdN4vv_pow
+ #else
+         pushq     %rbp
+--- a/sysdeps/x86_64/fpu/multiarch/svml_d_sin8_core_avx512.S
++++ b/sysdeps/x86_64/fpu/multiarch/svml_d_sin8_core_avx512.S
+@@ -22,7 +22,7 @@
+ 
+ 	.text
+ ENTRY (_ZGVeN8v_sin_knl)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN4v_sin
+ #else
+ /*
+@@ -237,7 +237,7 @@
+ END (_ZGVeN8v_sin_knl)
+ 
+ ENTRY (_ZGVeN8v_sin_skx)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN4v_sin
+ #else
+ /*
+--- a/sysdeps/x86_64/fpu/multiarch/svml_d_sincos8_core_avx512.S
++++ b/sysdeps/x86_64/fpu/multiarch/svml_d_sincos8_core_avx512.S
+@@ -37,7 +37,7 @@
+ 
+ 	.text
+ ENTRY (_ZGVeN8vvv_sincos_knl)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512_fFF _ZGVdN4vvv_sincos
+ #else
+         pushq     %rbp
+@@ -307,7 +307,7 @@
+ END (_ZGVeN8vvv_sincos_knl)
+ 
+ ENTRY (_ZGVeN8vvv_sincos_skx)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512_fFF _ZGVdN4vvv_sincos
+ #else
+         pushq     %rbp
+--- a/sysdeps/x86_64/fpu/multiarch/svml_s_cosf16_core_avx512.S
++++ b/sysdeps/x86_64/fpu/multiarch/svml_s_cosf16_core_avx512.S
+@@ -22,7 +22,7 @@
+ 
+ 	.text
+ ENTRY (_ZGVeN16v_cosf_knl)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN8v_cosf
+ #else
+ /*
+@@ -239,7 +239,7 @@
+ END (_ZGVeN16v_cosf_knl)
+ 
+ ENTRY (_ZGVeN16v_cosf_skx)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN8v_cosf
+ #else
+ /*
+--- a/sysdeps/x86_64/fpu/multiarch/svml_s_expf16_core_avx512.S
++++ b/sysdeps/x86_64/fpu/multiarch/svml_s_expf16_core_avx512.S
+@@ -22,7 +22,7 @@
+ 
+ 	.text
+ ENTRY (_ZGVeN16v_expf_knl)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN8v_expf
+ #else
+ /*
+@@ -227,7 +227,7 @@
+ END (_ZGVeN16v_expf_knl)
+ 
+ ENTRY (_ZGVeN16v_expf_skx)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN8v_expf
+ #else
+ /*
+--- a/sysdeps/x86_64/fpu/multiarch/svml_s_logf16_core_avx512.S
++++ b/sysdeps/x86_64/fpu/multiarch/svml_s_logf16_core_avx512.S
+@@ -22,7 +22,7 @@
+ 
+ 	.text
+ ENTRY (_ZGVeN16v_logf_knl)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN8v_logf
+ #else
+ /*
+@@ -211,7 +211,7 @@
+ END (_ZGVeN16v_logf_knl)
+ 
+ ENTRY (_ZGVeN16v_logf_skx)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN8v_logf
+ #else
+ /*
+--- a/sysdeps/x86_64/fpu/multiarch/svml_s_powf16_core_avx512.S
++++ b/sysdeps/x86_64/fpu/multiarch/svml_s_powf16_core_avx512.S
+@@ -82,7 +82,7 @@
+ 
+ 	.text
+ ENTRY (_ZGVeN16vv_powf_knl)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512_ff _ZGVdN8vv_powf
+ #else
+         pushq     %rbp
+@@ -359,7 +359,7 @@
+ END (_ZGVeN16vv_powf_knl)
+ 
+ ENTRY (_ZGVeN16vv_powf_skx)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512_ff _ZGVdN8vv_powf
+ #else
+         pushq     %rbp
+--- a/sysdeps/x86_64/fpu/multiarch/svml_s_sinf16_core_avx512.S
++++ b/sysdeps/x86_64/fpu/multiarch/svml_s_sinf16_core_avx512.S
+@@ -22,7 +22,7 @@
+ 
+ 	.text
+ ENTRY(_ZGVeN16v_sinf_knl)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN8v_sinf
+ #else
+ /*
+@@ -243,7 +243,7 @@
+ END(_ZGVeN16v_sinf_knl)
+ 
+ ENTRY (_ZGVeN16v_sinf_skx)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512 _ZGVdN8v_sinf
+ #else
+ /*
+--- a/sysdeps/x86_64/multiarch/ifunc-impl-list.c
++++ b/sysdeps/x86_64/multiarch/ifunc-impl-list.c
+@@ -48,11 +48,9 @@
+ 
+   /* Support sysdeps/x86_64/multiarch/memmove_chk.c.  */
+   IFUNC_IMPL (i, name, __memmove_chk,
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	      IFUNC_IMPL_ADD (array, i, __memmove_chk,
+ 			      HAS_ARCH_FEATURE (AVX512F_Usable),
+ 			      __memmove_chk_avx512_no_vzeroupper)
+-#endif
+ 	      IFUNC_IMPL_ADD (array, i, __memmove_chk,
+ 			      HAS_ARCH_FEATURE (AVX_Usable),
+ 			      __memmove_chk_avx_unaligned)
+@@ -70,11 +68,9 @@
+ 	      IFUNC_IMPL_ADD (array, i, memmove,
+ 			      HAS_ARCH_FEATURE (AVX_Usable),
+ 			      __memmove_avx_unaligned)
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	      IFUNC_IMPL_ADD (array, i, memmove,
+ 			      HAS_ARCH_FEATURE (AVX512F_Usable),
+ 			      __memmove_avx512_no_vzeroupper)
+-#endif
+ 	      IFUNC_IMPL_ADD (array, i, memmove, HAS_CPU_FEATURE (SSSE3),
+ 			      __memmove_ssse3_back)
+ 	      IFUNC_IMPL_ADD (array, i, memmove, HAS_CPU_FEATURE (SSSE3),
+@@ -88,11 +84,9 @@
+ 	      IFUNC_IMPL_ADD (array, i, __memset_chk,
+ 			      HAS_ARCH_FEATURE (AVX2_Usable),
+ 			      __memset_chk_avx2)
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	      IFUNC_IMPL_ADD (array, i, __memset_chk,
+ 			      HAS_ARCH_FEATURE (AVX512F_Usable),
+ 			      __memset_chk_avx512_no_vzeroupper)
+-#endif
+ 	      )
+ 
+   /* Support sysdeps/x86_64/multiarch/memset.S.  */
+@@ -101,11 +95,9 @@
+ 	      IFUNC_IMPL_ADD (array, i, memset,
+ 			      HAS_ARCH_FEATURE (AVX2_Usable),
+ 			      __memset_avx2)
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	      IFUNC_IMPL_ADD (array, i, memset,
+ 			      HAS_ARCH_FEATURE (AVX512F_Usable),
+ 			      __memset_avx512_no_vzeroupper)
+-#endif
+ 	     )
+ 
+   /* Support sysdeps/x86_64/multiarch/stpncpy.S.  */
+@@ -263,11 +255,9 @@
+ #ifdef SHARED
+   /* Support sysdeps/x86_64/multiarch/memcpy_chk.S.  */
+   IFUNC_IMPL (i, name, __memcpy_chk,
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	      IFUNC_IMPL_ADD (array, i, __memcpy_chk,
+ 			      HAS_ARCH_FEATURE (AVX512F_Usable),
+ 			      __memcpy_chk_avx512_no_vzeroupper)
+-#endif
+ 	      IFUNC_IMPL_ADD (array, i, __memcpy_chk,
+ 			      HAS_ARCH_FEATURE (AVX_Usable),
+ 			      __memcpy_chk_avx_unaligned)
+@@ -289,21 +279,17 @@
+ 			      __memcpy_ssse3_back)
+ 	      IFUNC_IMPL_ADD (array, i, memcpy, HAS_CPU_FEATURE (SSSE3),
+ 			      __memcpy_ssse3)
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	      IFUNC_IMPL_ADD (array, i, memcpy,
+ 			      HAS_ARCH_FEATURE (AVX512F_Usable),
+ 			      __memcpy_avx512_no_vzeroupper)
+-#endif
+ 	      IFUNC_IMPL_ADD (array, i, memcpy, 1, __memcpy_sse2_unaligned)
+ 	      IFUNC_IMPL_ADD (array, i, memcpy, 1, __memcpy_sse2))
+ 
+   /* Support sysdeps/x86_64/multiarch/mempcpy_chk.S.  */
+   IFUNC_IMPL (i, name, __mempcpy_chk,
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	      IFUNC_IMPL_ADD (array, i, __mempcpy_chk,
+ 			      HAS_ARCH_FEATURE (AVX512F_Usable),
+ 			      __mempcpy_chk_avx512_no_vzeroupper)
+-#endif
+ 	      IFUNC_IMPL_ADD (array, i, __mempcpy_chk,
+ 			      HAS_ARCH_FEATURE (AVX_Usable),
+ 			      __mempcpy_chk_avx_unaligned)
+@@ -318,11 +304,9 @@
+ 
+   /* Support sysdeps/x86_64/multiarch/mempcpy.S.  */
+   IFUNC_IMPL (i, name, mempcpy,
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	      IFUNC_IMPL_ADD (array, i, mempcpy,
+ 			      HAS_ARCH_FEATURE (AVX512F_Usable),
+ 			      __mempcpy_avx512_no_vzeroupper)
+-#endif
+ 	      IFUNC_IMPL_ADD (array, i, mempcpy,
+ 			      HAS_ARCH_FEATURE (AVX_Usable),
+ 			      __mempcpy_avx_unaligned)
+--- a/sysdeps/x86_64/multiarch/memset-avx512-no-vzeroupper.S
++++ b/sysdeps/x86_64/multiarch/memset-avx512-no-vzeroupper.S
+@@ -18,7 +18,7 @@
+ 
+ #include <sysdep.h>
+ 
+-#if defined HAVE_AVX512_ASM_SUPPORT && IS_IN (libc)
++#if IS_IN (libc)
+ 
+ #include "asm-syntax.h"
+ #ifndef MEMSET
+--- a/sysdeps/x86_64/fpu/multiarch/svml_s_sincosf16_core_avx512.S
++++ b/sysdeps/x86_64/fpu/multiarch/svml_s_sincosf16_core_avx512.S
+@@ -50,7 +50,7 @@
+ 
+ 	.text
+ ENTRY (_ZGVeN16vvv_sincosf_knl)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512_fFF _ZGVdN8vvv_sincosf
+ #else
+         pushq     %rbp
+@@ -270,7 +270,7 @@
+ END (_ZGVeN16vvv_sincosf_knl)
+ 
+ ENTRY (_ZGVeN16vvv_sincosf_skx)
+-#ifndef HAVE_AVX512_ASM_SUPPORT
++#ifndef HAVE_AVX512DQ_ASM_SUPPORT
+ WRAPPER_IMPL_AVX512_fFF _ZGVdN8vvv_sincosf
+ #else
+         pushq     %rbp
+--- a/sysdeps/x86_64/multiarch/memcpy.S
++++ b/sysdeps/x86_64/multiarch/memcpy.S
+@@ -30,14 +30,12 @@
+ ENTRY(__new_memcpy)
+ 	.type	__new_memcpy, @gnu_indirect_function
+ 	LOAD_RTLD_GLOBAL_RO_RDX
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	HAS_ARCH_FEATURE (AVX512F_Usable)
+ 	jz	1f
+ 	HAS_ARCH_FEATURE (Prefer_No_VZEROUPPER)
+ 	jz	1f
+ 	leaq    __memcpy_avx512_no_vzeroupper(%rip), %rax
+ 	ret
+-#endif
+ 1:	leaq	__memcpy_avx_unaligned(%rip), %rax
+ 	HAS_ARCH_FEATURE (AVX_Fast_Unaligned_Load)
+ 	jz 2f
+--- a/sysdeps/x86_64/multiarch/memcpy_chk.S
++++ b/sysdeps/x86_64/multiarch/memcpy_chk.S
+@@ -30,14 +30,12 @@
+ ENTRY(__memcpy_chk)
+ 	.type	__memcpy_chk, @gnu_indirect_function
+ 	LOAD_RTLD_GLOBAL_RO_RDX
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	HAS_ARCH_FEATURE (AVX512F_Usable)
+ 	jz      1f
+ 	HAS_ARCH_FEATURE (Prefer_No_VZEROUPPER)
+ 	jz      1f
+ 	leaq    __memcpy_chk_avx512_no_vzeroupper(%rip), %rax
+ 	ret
+-#endif
+ 1:	leaq	__memcpy_chk_sse2(%rip), %rax
+ 	HAS_CPU_FEATURE (SSSE3)
+ 	jz	2f
+--- a/sysdeps/x86_64/multiarch/mempcpy.S
++++ b/sysdeps/x86_64/multiarch/mempcpy.S
+@@ -28,14 +28,12 @@
+ ENTRY(__mempcpy)
+ 	.type	__mempcpy, @gnu_indirect_function
+ 	LOAD_RTLD_GLOBAL_RO_RDX
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	HAS_ARCH_FEATURE (AVX512F_Usable)
+ 	jz	1f
+ 	HAS_ARCH_FEATURE (Prefer_No_VZEROUPPER)
+ 	jz	1f
+ 	leaq    __mempcpy_avx512_no_vzeroupper(%rip), %rax
+ 	ret
+-#endif
+ 1:	leaq	__mempcpy_sse2(%rip), %rax
+ 	HAS_CPU_FEATURE (SSSE3)
+ 	jz	2f
+--- a/sysdeps/x86_64/multiarch/mempcpy_chk.S
++++ b/sysdeps/x86_64/multiarch/mempcpy_chk.S
+@@ -30,14 +30,12 @@
+ ENTRY(__mempcpy_chk)
+ 	.type	__mempcpy_chk, @gnu_indirect_function
+ 	LOAD_RTLD_GLOBAL_RO_RDX
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	HAS_ARCH_FEATURE (AVX512F_Usable)
+ 	jz	1f
+ 	HAS_ARCH_FEATURE (Prefer_No_VZEROUPPER)
+ 	jz	1f
+ 	leaq    __mempcpy_chk_avx512_no_vzeroupper(%rip), %rax
+ 	ret
+-#endif
+ 1:	leaq	__mempcpy_chk_sse2(%rip), %rax
+ 	HAS_CPU_FEATURE (SSSE3)
+ 	jz	2f
+--- a/sysdeps/x86_64/multiarch/memset.S
++++ b/sysdeps/x86_64/multiarch/memset.S
+@@ -30,13 +30,11 @@
+ 	HAS_ARCH_FEATURE (AVX2_Usable)
+ 	jz	2f
+ 	leaq	__memset_avx2(%rip), %rax
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	HAS_ARCH_FEATURE (AVX512F_Usable)
+ 	jz	2f
+ 	HAS_ARCH_FEATURE (Prefer_No_VZEROUPPER)
+ 	jz	2f
+ 	leaq	__memset_avx512_no_vzeroupper(%rip), %rax
+-#endif
+ 2:	ret
+ END(memset)
+ #endif
+--- a/sysdeps/x86_64/multiarch/memset_chk.S
++++ b/sysdeps/x86_64/multiarch/memset_chk.S
+@@ -30,13 +30,11 @@
+ 	HAS_ARCH_FEATURE (AVX2_Usable)
+ 	jz	2f
+ 	leaq	__memset_chk_avx2(%rip), %rax
+-#ifdef HAVE_AVX512_ASM_SUPPORT
+ 	HAS_ARCH_FEATURE (AVX512F_Usable)
+ 	jz	2f
+ 	HAS_ARCH_FEATURE (Prefer_No_VZEROUPPER)
+ 	jz	2f
+ 	leaq	__memset_chk_avx512_no_vzeroupper(%rip), %rax
+-#endif
+ 2:	ret
+ END(__memset_chk)
+ 
+--- a/sysdeps/x86_64/multiarch/memcpy-avx512-no-vzeroupper.S
++++ b/sysdeps/x86_64/multiarch/memcpy-avx512-no-vzeroupper.S
+@@ -18,7 +18,7 @@
+ 
+ #include <sysdep.h>
+ 
+-#if defined HAVE_AVX512_ASM_SUPPORT && IS_IN (libc) \
++#if IS_IN (libc) \
+     && (defined SHARED \
+ 	|| defined USE_AS_MEMMOVE \
+ 	|| !defined USE_MULTIARCH)
