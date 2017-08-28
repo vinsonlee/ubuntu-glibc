@@ -1,3 +1,12 @@
+glibc (2.23-0ubuntu9ppa1~ubuntu16.04.1) xenial; urgency=medium
+
+  * Backported AVX regression fixes.
+    - Require binutils 2.24 to build x86-64 glibc [BZ #20139]
+    - X86-64: Add _dl_runtime_resolve_avx[512]_{opt|slow} [BZ #20508]
+    - x86-64: Improve branch predication in _dl_runtime_resolve_avx512_opt [BZ #21258]
+
+ -- Vinson Lee <vlee@freedesktop.org>  Mon, 28 Aug 2017 16:08:41 -0700
+
 glibc (2.23-0ubuntu9) xenial-security; urgency=medium
 
   * SECURITY UPDATE: LD_LIBRARY_PATH stack corruption
